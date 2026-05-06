@@ -60,6 +60,7 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
   const [status, setStatus] = useState("all");
   const [filterCollapsed, setFilterCollapsed] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
+  const [inspectorDirty, setInspectorDirty] = useState(false);
   const [showNames, setShowNames] = useState(true);
   const [pending, startTransition] = useTransition();
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -141,20 +142,36 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
     return searchOk && departmentOk && statusOk;
   }
 
+  function canDiscardInspectorChanges() {
+    if (!inspectorDirty) return true;
+    return window.confirm("You have unsaved seat edits. Discard them?");
+  }
+
   function selectSeat(seatId: string) {
+    if (selectedSeatId === seatId) {
+      setMoveSeatMode(false);
+      setAddSeatMode(false);
+      setInspectorCollapsed(false);
+      return true;
+    }
+
+    if (selectedSeatId && !canDiscardInspectorChanges()) return false;
     setSelectedSeatId(seatId);
+    setInspectorDirty(false);
     setMoveSeatMode(false);
     setAddSeatMode(false);
     setInspectorCollapsed(false);
+    return true;
   }
 
   function selectEmployeeSeat(seatId: string) {
-    selectSeat(seatId);
-    setFilterCollapsed(true);
+    if (selectSeat(seatId)) setFilterCollapsed(true);
   }
 
   function startAddSeatMode() {
+    if (selectedSeatId && !canDiscardInspectorChanges()) return;
     setSelectedSeatId(null);
+    setInspectorDirty(false);
     setMoveSeatMode(false);
     setAddSeatMode(true);
     setAdvancedOpen(false);
@@ -166,7 +183,9 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
   }
 
   function clearSelection() {
+    if (selectedSeatId && !canDiscardInspectorChanges()) return;
     setSelectedSeatId(null);
+    setInspectorDirty(false);
     setMoveSeatMode(false);
     setAddSeatMode(false);
     setInspectorCollapsed(false);
@@ -190,6 +209,7 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
             });
             setLocalSeats(current => replaceSeat(current, created));
             setSelectedSeatId(created.id);
+            setInspectorDirty(false);
             setAddSeatMode(false);
             setMoveSeatMode(false);
           } catch (error) {
@@ -197,7 +217,9 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
           }
         });
       } else if (!dragState) {
+        if (selectedSeatId && !canDiscardInspectorChanges()) return;
         setSelectedSeatId(null);
+        setInspectorDirty(false);
         setMoveSeatMode(false);
       }
       return;
@@ -273,7 +295,7 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
         </div>
       </header>
 
-      <main className={`grid ${filterCollapsed ? "grid-cols-[46px_minmax(0,1fr)]" : "grid-cols-[256px_minmax(0,1fr)]"} gap-3 p-2.5`}>
+      <main className={["grid grid-cols-1 gap-3 p-2.5", filterCollapsed ? "lg:grid-cols-[46px_minmax(0,1fr)]" : "lg:grid-cols-[256px_minmax(0,1fr)]"].join(" ")}>
         <FilterPanel
           search={search}
           department={department}
@@ -290,12 +312,12 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
         />
 
         <section className="min-w-0 space-y-2">
-          <div className="flex min-h-[42px] items-center justify-between rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-white backdrop-blur">
+          <div className="flex min-h-[42px] flex-col gap-2 rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-white backdrop-blur sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-sm font-bold leading-tight">{canEdit ? "Draft seat map" : "Published seat map"}</div>
               <div className="text-[11px] leading-tight text-white/60">{toolbarMessage}</div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               <Button
                 className="min-h-8 px-3 text-xs"
                 onClick={() => setShowNames(current => !current)}
@@ -312,11 +334,11 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
             </div>
           )}
 
-          <div className="rounded-[22px] border border-white/80 bg-white p-2 shadow-soft">
-            <div className="relative mx-auto max-h-[calc(100vh-112px)] overflow-auto rounded-[15px] border border-slate-200 bg-[#f6f4f1]">
+          <div className="min-w-0 rounded-[22px] border border-white/80 bg-white p-2 shadow-soft">
+            <div className="relative mx-auto max-h-[calc(100vh-112px)] w-full max-w-full overflow-auto overscroll-contain rounded-[15px] border border-slate-200 bg-[#f6f4f1]">
               <div
                 ref={mapRef}
-                className={["relative mx-auto w-full max-w-[1561px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
+                className={["relative mx-auto w-[900px] max-w-none lg:w-full lg:max-w-[1561px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
                 onPointerDown={handleMapPointerDown}
                 onPointerMove={handleMapPointerMove}
                 onPointerUp={handleMapPointerUp}
@@ -376,7 +398,9 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
         moveSeatMode={moveSeatMode}
         collapsed={inspectorCollapsed}
         onClose={() => {
+          if (selectedSeatId && !canDiscardInspectorChanges()) return;
           setSelectedSeatId(null);
+          setInspectorDirty(false);
           setMoveSeatMode(false);
           setInspectorCollapsed(false);
         }}
@@ -388,13 +412,16 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
         }}
         onSeatUpdated={seat => {
           setActionError(null);
+          setInspectorDirty(false);
           setLocalSeats(current => replaceSeat(current, seat));
           setLocalEmployees(current => replaceEmployee(current, seat));
         }}
         onError={setActionError}
+        onDirtyChange={setInspectorDirty}
         onSeatDeleted={seatId => {
           setLocalSeats(current => removeSeat(current, seatId));
           setSelectedSeatId(null);
+          setInspectorDirty(false);
           setMoveSeatMode(false);
           setInspectorCollapsed(false);
         }}

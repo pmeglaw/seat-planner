@@ -45,21 +45,21 @@ export function FilterPanel({
 }: FilterPanelProps) {
   if (collapsed) {
     return (
-      <aside className="sticky top-[60px] self-start">
+      <aside className="self-start lg:sticky lg:top-[60px]">
         <button
           type="button"
           onClick={onToggle}
-          className="flex min-h-[210px] w-[46px] flex-col items-center justify-center rounded-2xl border border-white/80 bg-white/95 px-2 py-3 shadow-soft transition hover:bg-white"
+          className="flex min-h-11 w-full items-center justify-center rounded-2xl border border-white/80 bg-white/95 px-3 py-2 shadow-soft transition hover:bg-white lg:min-h-[210px] lg:w-[46px] lg:flex-col lg:px-2 lg:py-3"
         >
-          <span className="rotate-180 text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-700 [writing-mode:vertical-rl]">Filters</span>
-          <span className="mt-2 rotate-180 text-[10px] text-slate-400 [writing-mode:vertical-rl]">Search · Dept · Status</span>
+          <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-700 lg:rotate-180 lg:[writing-mode:vertical-rl]">Filters</span>
+          <span className="ml-2 text-[10px] text-slate-400 lg:ml-0 lg:mt-2 lg:rotate-180 lg:[writing-mode:vertical-rl]">Search · Dept · Status</span>
         </button>
       </aside>
     );
   }
 
   return (
-    <aside className="sticky top-[60px] max-h-[calc(100vh-72px)] self-start overflow-auto rounded-2xl border border-white/75 bg-white/95 p-3 shadow-soft">
+    <aside className="max-h-none self-start overflow-auto rounded-2xl border border-white/75 bg-white/95 p-3 shadow-soft lg:sticky lg:top-[60px] lg:max-h-[calc(100vh-72px)]">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-bold text-slate-900">Filter Map</h2>
