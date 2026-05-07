@@ -23,13 +23,18 @@ type AdvancedDrawerProps = {
   employees: Employee[];
   departmentOptions: DepartmentOption[];
   zoneOptions: ZoneOption[];
+  selectedSeat: SeatWithEmployee | null;
   addSeatMode: boolean;
+  addSeatZone: string;
+  moveSeatMode: boolean;
   pending: boolean;
   showNames: boolean;
   onClose: () => void;
   onStartAddSeat: () => void;
   onCancelAddSeat: () => void;
+  onAddSeatZoneChange: (zone: string) => void;
   onPublish: () => void;
+  onToggleMoveSeat: () => void;
   onToggleShowNames: () => void;
   onClearSelection: () => void;
   onEmployeeCreated: (employee: Employee) => void;
@@ -85,13 +90,18 @@ export function AdvancedDrawer({
   employees,
   departmentOptions,
   zoneOptions,
+  selectedSeat,
   addSeatMode,
+  addSeatZone,
+  moveSeatMode,
   pending,
   showNames,
   onClose,
   onStartAddSeat,
   onCancelAddSeat,
+  onAddSeatZoneChange,
   onPublish,
+  onToggleMoveSeat,
   onToggleShowNames,
   onClearSelection,
   onEmployeeCreated,
@@ -369,7 +379,7 @@ export function AdvancedDrawer({
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-slate-950">Advanced</h2>
-            <p className="mt-1 text-xs text-slate-500">Admin tools for map controls, people, departments, zones, imports, and publishing.</p>
+            <p className="mt-1 text-xs text-slate-500">Map utilities and admin management tools. Assignment edits stay in the seat inspector.</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100">
             Close
@@ -394,13 +404,28 @@ export function AdvancedDrawer({
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-            <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Seat tools</div>
+            <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Seat utilities</div>
+            <label className="mt-3 block">
+              <span className="text-xs font-semibold text-slate-600">Zone for new seats</span>
+              <select value={addSeatZone} onChange={event => onAddSeatZoneChange(event.target.value)} className={fieldClassName} disabled={busy || addSeatMode}>
+                <option value="all">Generic seat ID</option>
+                {zones.map(zone => (
+                  <option key={zone} value={zone}>{zone}</option>
+                ))}
+              </select>
+            </label>
             <div className="mt-3 flex flex-col gap-2">
               {addSeatMode ? (
                 <Button type="button" variant="danger" onClick={onCancelAddSeat} disabled={busy}>Cancel Add Seat</Button>
               ) : (
                 <Button type="button" variant="primary" onClick={onStartAddSeat} disabled={busy}>Add Seat</Button>
               )}
+              <Button type="button" onClick={onToggleMoveSeat} disabled={busy || !selectedSeat}>
+                {moveSeatMode ? "Lock Selected Seat" : "Move Selected Seat"}
+              </Button>
+              <p className="text-xs leading-5 text-slate-500">
+                {selectedSeat ? `Selected: ${selectedSeat.label}` : "Select a seat first to use move tools."}
+              </p>
               <Button type="button" onClick={onPublish} disabled={busy}>Publish Draft Map</Button>
             </div>
           </div>
@@ -420,6 +445,13 @@ export function AdvancedDrawer({
               </Button>
             </div>
             <p className="mt-2 text-xs leading-5 text-slate-500">CSV import updates draft assignments only. It never changes marker coordinates.</p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Admin Management</div>
+              <p className="mt-1 text-xs leading-5 text-slate-500">Employees, departments, and zones are separate from map utilities. A dedicated management page can replace this section in a later pass.</p>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">

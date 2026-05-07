@@ -80,6 +80,16 @@ export async function createSeatAction(input: {
   const seatKey = `${baseKey}-${Date.now().toString(36)}`;
   const zone = normalizeOptionalText(input.zone ?? input.department);
 
+  const { data: duplicateSeat, error: duplicateSeatError } = await supabase
+    .from("seats")
+    .select("id")
+    .eq("layer", "draft")
+    .ilike("label", label)
+    .maybeSingle();
+
+  if (duplicateSeatError) throw new Error(duplicateSeatError.message);
+  if (duplicateSeat) throw new Error(`Seat label ${label} already exists.`);
+
   await upsertZoneOption(supabase, zone);
 
   const { data, error } = await supabase
@@ -140,6 +150,17 @@ export async function updateSeatAction(input: {
   if (!employeeId && input.status === "assigned" && !employeeName) {
     throw new Error("Assigned seats require an employee name or selected employee.");
   }
+
+  const { data: duplicateLabel, error: duplicateLabelError } = await supabase
+    .from("seats")
+    .select("id,label")
+    .eq("layer", "draft")
+    .ilike("label", label)
+    .neq("id", input.seatId)
+    .maybeSingle();
+
+  if (duplicateLabelError) throw new Error(duplicateLabelError.message);
+  if (duplicateLabel) throw new Error(`Seat label ${label} already exists.`);
 
   if (employeeId) {
     const { data: duplicate, error: duplicateError } = await supabase
