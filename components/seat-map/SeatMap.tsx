@@ -6,6 +6,7 @@ import Image from "next/image";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { createSeatAction, moveSeatAction, publishSeatMapAction } from "@/app/actions";
 import { normalizePoint } from "@/lib/seatMath";
+import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
 import { FilterPanel } from "@/components/seat-map/FilterPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
@@ -45,10 +46,6 @@ function replaceSeat(seats: SeatWithEmployee[], nextSeat: SeatWithEmployee) {
   return seats.map(seat => (seat.id === nextSeat.id ? normalizedSeat : seat));
 }
 
-function removeSeat(seats: SeatWithEmployee[], seatId: string) {
-  return seats.filter(seat => seat.id !== seatId);
-}
-
 function replaceEmployee(employees: Employee[], seat: SeatWithEmployee) {
   const nextEmployee = seat.employee;
   if (!nextEmployee) return employees;
@@ -84,14 +81,6 @@ function getInitials(name: string) {
   return parts.slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?";
 }
 
-function buildNewDeskLabel(seats: SeatWithEmployee[]) {
-  const existingLabels = new Set(seats.map(seat => seat.label.trim().toLowerCase()));
-  for (let index = 1; index < 1000; index += 1) {
-    const label = `New Desk ${String(index).padStart(2, "0")}`;
-    if (!existingLabels.has(label.toLowerCase())) return label;
-  }
-  return `New Desk ${Date.now().toString(36)}`;
-}
 
 export function SeatMap({
   seats,
@@ -108,6 +97,7 @@ export function SeatMap({
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [moveSeatMode, setMoveSeatMode] = useState(false);
   const [addSeatMode, setAddSeatMode] = useState(false);
+  const [addSeatZone, setAddSeatZone] = useState("all");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [dragState, setDragState] = useState<DragState>(null);
   const [search, setSearch] = useState("");
@@ -147,6 +137,12 @@ export function SeatMap({
     });
     return Array.from(values).sort();
   }, [localSeats, localZoneOptions]);
+
+  useEffect(() => {
+    if (addSeatZone !== "all" && !zones.includes(addSeatZone)) {
+      setAddSeatZone("all");
+    }
+  }, [addSeatZone, zones]);
 
   const stats = useMemo(() => ({
     total: localSeats.length,
@@ -270,11 +266,12 @@ export function SeatMap({
       startTransition(async () => {
         try {
           setActionError(null);
+          const targetZone = addSeatZone === "all" ? null : addSeatZone;
           const created = await createSeatAction({
-            label: buildNewDeskLabel(localSeats),
+            label: buildNextSeatLabel(localSeats, targetZone),
             x: point.x,
             y: point.y,
-            zone: zone === "all" ? null : zone
+            zone: targetZone
           });
           setLocalSeats(current => replaceSeat(current, created));
           setSelectedSeatId(created.id);
@@ -332,6 +329,22 @@ export function SeatMap({
   }
 
   function publishDraftMap() {
+    const unavailable = localSeats.filter(seat => seat.status === "unavailable").length;
+    const confirmed = window.confirm(
+      [
+        "Publish draft map to the viewer-facing seat map?",
+        "",
+        `Total seats: ${stats.total}`,
+        `Assigned seats: ${stats.assigned}`,
+        `Available seats: ${stats.available}`,
+        `Reserved seats: ${stats.reserved}`,
+        `Unavailable seats: ${unavailable}`,
+        "",
+        "This will update what viewers see."
+      ].join("\n")
+    );
+    if (!confirmed) return;
+
     startTransition(async () => {
       try {
         setActionError(null);
@@ -347,7 +360,7 @@ export function SeatMap({
     ? "Add Seat mode is active. Click an empty point on the map to place a marker."
     : moveSeatMode
       ? "Move Seat mode is active. Drag the selected marker to reposition it."
-      : "Marker movement is locked unless Move Seat is enabled.";
+      : "Select a seat to assign or update employee details.";
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -449,13 +462,23 @@ export function SeatMap({
         employees={localEmployees}
         departmentOptions={localDepartmentOptions}
         zoneOptions={localZoneOptions}
+        selectedSeat={selectedSeat}
         addSeatMode={addSeatMode}
+        addSeatZone={addSeatZone}
+        moveSeatMode={moveSeatMode}
         pending={pending}
         showNames={showNames}
         onClose={() => setAdvancedOpen(false)}
         onStartAddSeat={startAddSeatMode}
         onCancelAddSeat={cancelAddSeatMode}
+        onAddSeatZoneChange={setAddSeatZone}
         onPublish={publishDraftMap}
+        onToggleMoveSeat={() => {
+          if (!selectedSeatId) return;
+          setAddSeatMode(false);
+          setMoveSeatMode(current => !current);
+          setAdvancedOpen(false);
+        }}
         onToggleShowNames={() => setShowNames(current => !current)}
         onClearSelection={clearSelection}
         onEmployeeCreated={employee => {
@@ -531,8 +554,8 @@ export function SeatMap({
       <SeatInspector
         seat={selectedSeat}
         employees={localEmployees}
+        departmentOptions={localDepartmentOptions}
         canEdit={canEdit}
-        moveSeatMode={moveSeatMode}
         collapsed={inspectorCollapsed}
         onClose={() => {
           if (selectedSeatId && !canDiscardInspectorChanges()) return;
@@ -542,11 +565,6 @@ export function SeatMap({
           setInspectorCollapsed(false);
         }}
         onToggleCollapse={() => setInspectorCollapsed(current => !current)}
-        onToggleMoveMode={() => {
-          if (!selectedSeatId) return;
-          setAddSeatMode(false);
-          setMoveSeatMode(current => !current);
-        }}
         onSeatUpdated={seat => {
           setActionError(null);
           setInspectorDirty(false);
@@ -555,13 +573,6 @@ export function SeatMap({
         }}
         onError={setActionError}
         onDirtyChange={setInspectorDirty}
-        onSeatDeleted={seatId => {
-          setLocalSeats(current => removeSeat(current, seatId));
-          setSelectedSeatId(null);
-          setInspectorDirty(false);
-          setMoveSeatMode(false);
-          setInspectorCollapsed(false);
-        }}
       />
     </div>
   );

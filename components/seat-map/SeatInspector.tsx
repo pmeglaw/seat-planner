@@ -2,21 +2,19 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import type { Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
-import { deleteSeatAction, updateSeatAction } from "@/app/actions";
+import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
+import { updateSeatAction } from "@/app/actions";
 import { Button } from "@/components/ui/Button";
 
 type SeatInspectorProps = {
   seat: SeatWithEmployee | null;
   employees: Employee[];
+  departmentOptions: DepartmentOption[];
   canEdit: boolean;
-  moveSeatMode: boolean;
   collapsed: boolean;
   onClose: () => void;
   onToggleCollapse: () => void;
-  onToggleMoveMode: () => void;
   onSeatUpdated: (seat: SeatWithEmployee) => void;
-  onSeatDeleted: (seatId: string) => void;
   onError: (message: string | null) => void;
   onDirtyChange: (dirty: boolean) => void;
 };
@@ -70,14 +68,12 @@ function formsEqual(left: SeatInspectorForm, right: SeatInspectorForm) {
 export function SeatInspector({
   seat,
   employees,
+  departmentOptions,
   canEdit,
-  moveSeatMode,
   collapsed,
   onClose,
   onToggleCollapse,
-  onToggleMoveMode,
   onSeatUpdated,
-  onSeatDeleted,
   onError,
   onDirtyChange
 }: SeatInspectorProps) {
@@ -89,11 +85,23 @@ export function SeatInspector({
   const activeSeatSnapshotRef = useRef(formSnapshot(emptyForm));
 
   const sortedEmployees = useMemo(
-    () => [...employees].sort((a, b) => a.full_name.localeCompare(b.full_name)),
+    () => [...employees].filter(employee => employee.active).sort((a, b) => a.full_name.localeCompare(b.full_name)),
     [employees]
   );
 
+  const departments = useMemo(() => {
+    const values = new Set<string>();
+    departmentOptions.filter(item => item.active).forEach(item => values.add(item.name));
+    sortedEmployees.forEach(employee => {
+      if (employee.department) values.add(employee.department);
+    });
+    if (form.department) values.add(form.department);
+    return Array.from(values).sort();
+  }, [departmentOptions, sortedEmployees, form.department]);
+
   const isDirty = useMemo(() => !formsEqual(form, initialForm), [form, initialForm]);
+  const hasAssignedPerson = Boolean(form.employeeId || form.employeeName.trim());
+  const effectiveStatus: SeatStatus = hasAssignedPerson ? "assigned" : form.status === "assigned" ? "available" : form.status;
 
   useEffect(() => {
     onDirtyChange(isDirty);
@@ -133,37 +141,52 @@ export function SeatInspector({
     setForm(current => ({ ...current, [field]: value }));
   }
 
-  function handleEmployeeSelect(event: ChangeEvent<HTMLSelectElement>) {
-    const employeeId = event.target.value;
-    const employee = sortedEmployees.find(emp => emp.id === employeeId) ?? null;
+  function findEmployeeByName(name: string) {
+    const cleanName = name.trim().toLowerCase();
+    if (!cleanName) return null;
+    return sortedEmployees.find(employee => employee.full_name.trim().toLowerCase() === cleanName) ?? null;
+  }
 
-    if (!employee) {
-      setForm(current => ({
+  function handleEmployeeNameChange(event: ChangeEvent<HTMLInputElement>) {
+    const employeeName = event.target.value;
+    const matchedEmployee = findEmployeeByName(employeeName);
+
+    setForm(current => {
+      const nextStatus: SeatStatus = employeeName.trim()
+        ? "assigned"
+        : current.status === "reserved" || current.status === "unavailable"
+          ? current.status
+          : "available";
+
+      if (!matchedEmployee) {
+        return {
+          ...current,
+          employeeId: "",
+          employeeName,
+          status: nextStatus
+        };
+      }
+
+      return {
         ...current,
-        employeeId: "",
-        employeeName: "",
-        employeePosition: "",
-        department: "",
-        status: current.status === "assigned" ? "available" : current.status
-      }));
-      return;
-    }
-
-    setForm(current => ({
-      ...current,
-      employeeId: employee.id,
-      employeeName: employee.full_name,
-      employeePosition: employee.position ?? "",
-      department: employee.department ?? current.department,
-      status: "assigned"
-    }));
+        employeeId: matchedEmployee.id,
+        employeeName: matchedEmployee.full_name,
+        employeePosition: matchedEmployee.position ?? "",
+        department: matchedEmployee.department ?? current.department,
+        status: "assigned"
+      };
+    });
   }
 
   function handleTextChange(
-    field: keyof Omit<SeatInspectorForm, "status">,
+    field: keyof Omit<SeatInspectorForm, "status" | "employeeId" | "employeeName" | "zone" | "label">,
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
     updateField(field, event.target.value);
+  }
+
+  function handleDepartmentChange(event: ChangeEvent<HTMLSelectElement>) {
+    updateField("department", event.target.value);
   }
 
   function handleStatusChange(event: ChangeEvent<HTMLSelectElement>) {
@@ -173,8 +196,17 @@ export function SeatInspector({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (form.status === "assigned" && !form.employeeId && !form.employeeName.trim()) {
-      const message = "Assigned seats require an employee name or selected employee.";
+    const employeeName = form.employeeName.trim();
+    const matchedEmployee = findEmployeeByName(employeeName);
+    const employeeId = matchedEmployee?.id ?? (form.employeeId || null);
+    const nextStatus: SeatStatus = employeeId || employeeName
+      ? "assigned"
+      : form.status === "reserved" || form.status === "unavailable"
+        ? form.status
+        : "available";
+
+    if (nextStatus === "assigned" && !employeeId && !employeeName) {
+      const message = "Assigned seats require an employee name.";
       setLocalError(message);
       onError(message);
       return;
@@ -187,12 +219,12 @@ export function SeatInspector({
         const updated = await updateSeatAction({
           seatId: selectedSeat.id,
           label: form.label,
-          status: form.status,
-          employeeId: form.employeeId || null,
-          employeeName: form.employeeName.trim() || null,
+          status: nextStatus,
+          employeeId,
+          employeeName: employeeName || null,
           employeePosition: form.employeePosition.trim() || null,
           department: form.department.trim() || null,
-          zone: form.zone.trim() || null,
+          zone: selectedSeat.zone ?? selectedSeat.department ?? null,
           notes: form.notes.trim() || null
         });
         const nextForm = formFromSeat(updated);
@@ -202,26 +234,7 @@ export function SeatInspector({
         onDirtyChange(false);
         onSeatUpdated(updated);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Could not save seat.";
-        setLocalError(message);
-        onError(message);
-      }
-    });
-  }
-
-  function handleDelete() {
-    const confirmed = window.confirm(`Delete ${selectedSeat.label}? This removes the draft seat marker.`);
-    if (!confirmed) return;
-
-    startTransition(async () => {
-      try {
-        setLocalError(null);
-        onError(null);
-        await deleteSeatAction(selectedSeat.id);
-        onDirtyChange(false);
-        onSeatDeleted(selectedSeat.id);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Could not delete seat.";
+        const message = error instanceof Error ? error.message : "Could not update assignment.";
         setLocalError(message);
         onError(message);
       }
@@ -229,6 +242,7 @@ export function SeatInspector({
   }
 
   const fieldClassName = "mt-1 w-full rounded-xl border border-white/70 bg-white/82 px-3 py-2 text-sm text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)] outline-none backdrop-blur focus:border-brand focus:bg-white/95 focus:ring-4 focus:ring-orange-100";
+  const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/60 bg-white/58 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white/88";
 
   if (collapsed) {
     return (
@@ -236,6 +250,8 @@ export function SeatInspector({
         <button
           type="button"
           onClick={onToggleCollapse}
+          aria-label="Expand inspector"
+          title="Expand inspector"
           className="flex min-h-[220px] w-[46px] flex-col items-center justify-center rounded-2xl border border-white/70 bg-white/72 px-2 py-3 shadow-soft backdrop-blur-xl transition hover:bg-white/88"
         >
           <span className="rotate-180 text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-700 [writing-mode:vertical-rl]">Inspector</span>
@@ -249,35 +265,26 @@ export function SeatInspector({
     <aside className="fixed right-3 top-[78px] z-40 max-h-[calc(100vh-90px)] w-[332px] max-w-[calc(100vw-1.5rem)] overflow-auto rounded-3xl border border-white/65 bg-white/72 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.22)] backdrop-blur-2xl supports-[backdrop-filter]:bg-white/62">
       <div className="mb-4 flex items-start justify-between gap-3 border-b border-white/50 pb-3">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Seat Inspector</h2>
+          <h2 className="text-base font-bold text-slate-900">Seat Assignment</h2>
           <p className="mt-1 text-xs text-slate-500">{selectedSeat.label}{isDirty ? " · Unsaved changes" : ""}</p>
         </div>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={onToggleCollapse} className="rounded-lg px-2 py-1 text-[11px] font-bold text-slate-600 hover:bg-white/70">Collapse</button>
-          <button type="button" onClick={onClose} className="rounded-lg px-2 py-1 text-[11px] font-bold text-slate-600 hover:bg-white/70">Close</button>
+          <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className={iconButtonClassName}>−</button>
+          <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className={iconButtonClassName}>×</button>
         </div>
       </div>
 
       {canEdit ? (
         <form onSubmit={handleSubmit} className="space-y-3">
           <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Seat label</span>
-            <input value={form.label} onChange={event => handleTextChange("label", event)} className={fieldClassName} />
-          </label>
-
-          <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Assigned employee</span>
-            <select value={form.employeeId} onChange={handleEmployeeSelect} className={fieldClassName}>
-              <option value="">Unassigned</option>
-              {sortedEmployees.map(emp => (
-                <option key={emp.id} value={emp.id}>{emp.full_name}</option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee name</span>
-            <input value={form.employeeName} onChange={event => handleTextChange("employeeName", event)} className={fieldClassName} />
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee Name</span>
+            <input
+              list="seat-inspector-employee-options"
+              value={form.employeeName}
+              onChange={handleEmployeeNameChange}
+              placeholder="Search or enter employee name"
+              className={fieldClassName}
+            />
           </label>
 
           <label className="block">
@@ -286,33 +293,12 @@ export function SeatInspector({
           </label>
 
           <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee department</span>
-            <input value={form.department} onChange={event => handleTextChange("department", event)} className={fieldClassName} />
-          </label>
-
-          <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Zone</span>
-            <input value={form.zone} onChange={event => handleTextChange("zone", event)} className={fieldClassName} />
-          </label>
-
-          <div className="grid grid-cols-2 gap-2 rounded-xl border border-white/60 bg-white/58 p-2 text-xs text-slate-600">
-            <div>
-              <div className="font-bold uppercase tracking-wide text-slate-400">X</div>
-              <div className="font-mono text-slate-800">{Number(selectedSeat.x).toFixed(6)}</div>
-            </div>
-            <div>
-              <div className="font-bold uppercase tracking-wide text-slate-400">Y</div>
-              <div className="font-mono text-slate-800">{Number(selectedSeat.y).toFixed(6)}</div>
-            </div>
-          </div>
-
-          <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Status</span>
-            <select value={form.status} onChange={handleStatusChange} className={fieldClassName}>
-              <option value="available">Available</option>
-              <option value="assigned">Assigned</option>
-              <option value="reserved">Reserved</option>
-              <option value="unavailable">Unavailable</option>
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Department</span>
+            <select value={form.department} onChange={handleDepartmentChange} className={fieldClassName}>
+              <option value="">No department</option>
+              {departments.map(department => (
+                <option key={department} value={department}>{department}</option>
+              ))}
             </select>
           </label>
 
@@ -321,25 +307,34 @@ export function SeatInspector({
             <textarea value={form.notes} onChange={event => handleTextChange("notes", event)} className={`${fieldClassName} min-h-24`} />
           </label>
 
+          <label className="block">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Status</span>
+            <select value={effectiveStatus} onChange={handleStatusChange} disabled={hasAssignedPerson} className={fieldClassName}>
+              {hasAssignedPerson && <option value="assigned">Assigned</option>}
+              <option value="available">Available</option>
+              <option value="reserved">Reserved</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+            <span className="mt-1 block text-[11px] leading-4 text-slate-500">
+              Employee assignment automatically sets the status to assigned. Empty seats stay available unless marked reserved or unavailable.
+            </span>
+          </label>
+
           {localError && (
             <div className="rounded-xl border border-rose-200/80 bg-rose-50/86 p-2 text-xs font-semibold text-rose-700 backdrop-blur">
               {localError}
             </div>
           )}
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            <Button type="submit" variant="primary" disabled={pending || !isDirty}>Save Seat</Button>
-            <Button type="button" onClick={onToggleMoveMode} disabled={pending}>
-              {moveSeatMode ? "Lock Seat" : "Move Seat"}
+          <div className="pt-2">
+            <Button type="submit" variant="primary" disabled={pending || !isDirty} className="w-full">
+              {selectedSeat.employee ? "Update Assignment" : "Assign Seat"}
             </Button>
-            <Button type="button" variant="danger" onClick={handleDelete} disabled={pending}>Delete</Button>
           </div>
 
-          {moveSeatMode && (
-            <p className="rounded-xl border border-orange-100 bg-orange-50/86 p-2 text-xs font-semibold text-orange-800 backdrop-blur">
-              Move Seat mode is active. Drag this selected marker, then release to save.
-            </p>
-          )}
+          <datalist id="seat-inspector-employee-options">
+            {sortedEmployees.map(employee => <option key={employee.id} value={employee.full_name} />)}
+          </datalist>
         </form>
       ) : (
         <div className="rounded-xl border border-white/60 bg-white/68 p-3 text-sm backdrop-blur">
