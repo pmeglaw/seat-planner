@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { SeatMap } from "@/components/seat-map/SeatMap";
 import { createClient } from "@/lib/supabase/server";
-import type { Employee, SeatWithEmployee } from "@/lib/types";
+import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -48,14 +48,28 @@ export default async function AdminPage() {
     .eq("active", true)
     .order("full_name");
 
-  if (seatsError || employeesError) {
-    throw new Error(seatsError?.message ?? employeesError?.message);
+  const { data: departments, error: departmentsError } = await supabase
+    .from("department_options")
+    .select("*")
+    .eq("active", true)
+    .order("name");
+
+  const { data: zones, error: zonesError } = await supabase
+    .from("zone_options")
+    .select("*")
+    .eq("active", true)
+    .order("name");
+
+  if (seatsError || employeesError || departmentsError || zonesError) {
+    throw new Error(seatsError?.message ?? employeesError?.message ?? departmentsError?.message ?? zonesError?.message);
   }
 
   return (
     <SeatMap
       seats={(seats ?? []) as SeatWithEmployee[]}
       employees={(employees ?? []) as Employee[]}
+      departmentOptions={(departments ?? []) as DepartmentOption[]}
+      zoneOptions={(zones ?? []) as ZoneOption[]}
       canEdit
     />
   );

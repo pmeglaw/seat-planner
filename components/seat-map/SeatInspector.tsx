@@ -27,6 +27,7 @@ type SeatInspectorForm = {
   employeeName: string;
   employeePosition: string;
   department: string;
+  zone: string;
   status: SeatStatus;
   notes: string;
 };
@@ -37,6 +38,7 @@ const emptyForm: SeatInspectorForm = {
   employeeName: "",
   employeePosition: "",
   department: "",
+  zone: "",
   status: "available",
   notes: ""
 };
@@ -47,10 +49,15 @@ function formFromSeat(seat: SeatWithEmployee): SeatInspectorForm {
     employeeId: seat.employee_id ?? "",
     employeeName: seat.employee?.full_name ?? "",
     employeePosition: seat.employee?.position ?? "",
-    department: seat.department ?? seat.employee?.department ?? "",
+    department: seat.employee?.department ?? "",
+    zone: seat.zone ?? seat.department ?? "",
     status: seat.status,
     notes: seat.notes ?? ""
   };
+}
+
+function formSnapshot(form: SeatInspectorForm) {
+  return JSON.stringify(form);
 }
 
 function formsEqual(left: SeatInspectorForm, right: SeatInspectorForm) {
@@ -79,6 +86,7 @@ export function SeatInspector({
   const [form, setForm] = useState<SeatInspectorForm>(emptyForm);
   const [initialForm, setInitialForm] = useState<SeatInspectorForm>(emptyForm);
   const activeSeatIdRef = useRef<string | null>(null);
+  const activeSeatSnapshotRef = useRef(formSnapshot(emptyForm));
 
   const sortedEmployees = useMemo(
     () => [...employees].sort((a, b) => a.full_name.localeCompare(b.full_name)),
@@ -94,6 +102,7 @@ export function SeatInspector({
   useEffect(() => {
     if (!seat) {
       activeSeatIdRef.current = null;
+      activeSeatSnapshotRef.current = formSnapshot(emptyForm);
       setForm(emptyForm);
       setInitialForm(emptyForm);
       setLocalError(null);
@@ -101,16 +110,20 @@ export function SeatInspector({
       return;
     }
 
-    if (activeSeatIdRef.current !== seat.id) {
-      const nextForm = formFromSeat(seat);
+    const nextForm = formFromSeat(seat);
+    const nextSnapshot = formSnapshot(nextForm);
+    const isNewSeat = activeSeatIdRef.current !== seat.id;
+
+    if (isNewSeat || (!isDirty && activeSeatSnapshotRef.current !== nextSnapshot)) {
       activeSeatIdRef.current = seat.id;
+      activeSeatSnapshotRef.current = nextSnapshot;
       setForm(nextForm);
       setInitialForm(nextForm);
       setLocalError(null);
       onError(null);
       onDirtyChange(false);
     }
-  }, [seat, onDirtyChange, onError]);
+  }, [seat, isDirty, onDirtyChange, onError]);
 
   if (!seat) return null;
 
@@ -130,6 +143,7 @@ export function SeatInspector({
         employeeId: "",
         employeeName: "",
         employeePosition: "",
+        department: "",
         status: current.status === "assigned" ? "available" : current.status
       }));
       return;
@@ -178,9 +192,11 @@ export function SeatInspector({
           employeeName: form.employeeName.trim() || null,
           employeePosition: form.employeePosition.trim() || null,
           department: form.department.trim() || null,
+          zone: form.zone.trim() || null,
           notes: form.notes.trim() || null
         });
         const nextForm = formFromSeat(updated);
+        activeSeatSnapshotRef.current = formSnapshot(nextForm);
         setForm(nextForm);
         setInitialForm(nextForm);
         onDirtyChange(false);
@@ -270,9 +286,25 @@ export function SeatInspector({
           </label>
 
           <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Department</span>
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee department</span>
             <input value={form.department} onChange={event => handleTextChange("department", event)} className={fieldClassName} />
           </label>
+
+          <label className="block">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Zone</span>
+            <input value={form.zone} onChange={event => handleTextChange("zone", event)} className={fieldClassName} />
+          </label>
+
+          <div className="grid grid-cols-2 gap-2 rounded-xl border border-white/60 bg-white/58 p-2 text-xs text-slate-600">
+            <div>
+              <div className="font-bold uppercase tracking-wide text-slate-400">X</div>
+              <div className="font-mono text-slate-800">{Number(selectedSeat.x).toFixed(6)}</div>
+            </div>
+            <div>
+              <div className="font-bold uppercase tracking-wide text-slate-400">Y</div>
+              <div className="font-mono text-slate-800">{Number(selectedSeat.y).toFixed(6)}</div>
+            </div>
+          </div>
 
           <label className="block">
             <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Status</span>
@@ -312,7 +344,7 @@ export function SeatInspector({
       ) : (
         <div className="rounded-xl border border-white/60 bg-white/68 p-3 text-sm backdrop-blur">
           <div className="font-bold text-slate-900">{selectedSeat.employee?.full_name ?? "Unassigned"}</div>
-          <div className="mt-1 text-slate-500">{selectedSeat.employee?.position ?? selectedSeat.department ?? "No position"}</div>
+          <div className="mt-1 text-slate-500">{selectedSeat.employee?.position ?? selectedSeat.zone ?? selectedSeat.department ?? "No position"}</div>
           <div className="mt-2 text-xs font-bold uppercase tracking-wide text-slate-400">{selectedSeat.status}</div>
         </div>
       )}
