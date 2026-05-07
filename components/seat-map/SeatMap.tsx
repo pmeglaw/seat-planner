@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { PointerEvent } from "react";
 import Image from "next/image";
-import type { Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
+import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { createSeatAction, moveSeatAction, publishSeatMapAction } from "@/app/actions";
 import { normalizePoint } from "@/lib/seatMath";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/Button";
 type SeatMapProps = {
   seats: SeatWithEmployee[];
   employees: Employee[];
+  departmentOptions?: DepartmentOption[];
+  zoneOptions?: ZoneOption[];
   canEdit: boolean;
 };
 
@@ -23,10 +25,24 @@ type DragState = {
   pointerId: number;
 } | null;
 
+function normalizeSeat(seat: SeatWithEmployee): SeatWithEmployee {
+  return {
+    ...seat,
+    x: Number(seat.x),
+    y: Number(seat.y),
+    zone: seat.zone ?? seat.department ?? null
+  };
+}
+
+function normalizeSeats(seats: SeatWithEmployee[]) {
+  return seats.map(normalizeSeat);
+}
+
 function replaceSeat(seats: SeatWithEmployee[], nextSeat: SeatWithEmployee) {
+  const normalizedSeat = normalizeSeat(nextSeat);
   const exists = seats.some(seat => seat.id === nextSeat.id);
-  if (!exists) return [...seats, nextSeat].sort((a, b) => a.label.localeCompare(b.label));
-  return seats.map(seat => (seat.id === nextSeat.id ? nextSeat : seat));
+  if (!exists) return [...seats, normalizedSeat].sort((a, b) => a.label.localeCompare(b.label));
+  return seats.map(seat => (seat.id === nextSeat.id ? normalizedSeat : seat));
 }
 
 function removeSeat(seats: SeatWithEmployee[], seatId: string) {
@@ -41,14 +57,53 @@ function replaceEmployee(employees: Employee[], seat: SeatWithEmployee) {
   return employees.map(employee => (employee.id === nextEmployee.id ? nextEmployee : employee));
 }
 
+function upsertEmployee(employees: Employee[], nextEmployee: Employee) {
+  const exists = employees.some(employee => employee.id === nextEmployee.id);
+  if (!exists) return [...employees, nextEmployee].sort((a, b) => a.full_name.localeCompare(b.full_name));
+  return employees.map(employee => (employee.id === nextEmployee.id ? nextEmployee : employee));
+}
+
+function upsertDepartmentOption(options: DepartmentOption[], nextOption: DepartmentOption) {
+  const exists = options.some(option => option.id === nextOption.id || option.name === nextOption.name);
+  if (!exists) return [...options, nextOption].sort((a, b) => a.name.localeCompare(b.name));
+  return options.map(option => (option.id === nextOption.id || option.name === nextOption.name ? nextOption : option));
+}
+
+function upsertZoneOption(options: ZoneOption[], nextOption: ZoneOption) {
+  const exists = options.some(option => option.id === nextOption.id || option.name === nextOption.name);
+  if (!exists) return [...options, nextOption].sort((a, b) => a.name.localeCompare(b.name));
+  return options.map(option => (option.id === nextOption.id || option.name === nextOption.name ? nextOption : option));
+}
+
+function getSeatZone(seat: SeatWithEmployee) {
+  return seat.zone ?? seat.department ?? "";
+}
+
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return parts.slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?";
 }
 
-export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
-  const [localSeats, setLocalSeats] = useState(seats);
+function buildNewDeskLabel(seats: SeatWithEmployee[]) {
+  const existingLabels = new Set(seats.map(seat => seat.label.trim().toLowerCase()));
+  for (let index = 1; index < 1000; index += 1) {
+    const label = `New Desk ${String(index).padStart(2, "0")}`;
+    if (!existingLabels.has(label.toLowerCase())) return label;
+  }
+  return `New Desk ${Date.now().toString(36)}`;
+}
+
+export function SeatMap({
+  seats,
+  employees,
+  departmentOptions = [],
+  zoneOptions = [],
+  canEdit
+}: SeatMapProps) {
+  const [localSeats, setLocalSeats] = useState(() => normalizeSeats(seats));
   const [localEmployees, setLocalEmployees] = useState(employees);
+  const [localDepartmentOptions, setLocalDepartmentOptions] = useState(departmentOptions);
+  const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
   const [actionError, setActionError] = useState<string | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [moveSeatMode, setMoveSeatMode] = useState(false);
@@ -57,6 +112,7 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
   const [dragState, setDragState] = useState<DragState>(null);
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("all");
+  const [zone, setZone] = useState("all");
   const [status, setStatus] = useState("all");
   const [filterCollapsed, setFilterCollapsed] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
@@ -65,22 +121,32 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
   const [pending, startTransition] = useTransition();
   const mapRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => setLocalSeats(seats), [seats]);
+  useEffect(() => setLocalSeats(normalizeSeats(seats)), [seats]);
   useEffect(() => setLocalEmployees(employees), [employees]);
+  useEffect(() => setLocalDepartmentOptions(departmentOptions), [departmentOptions]);
+  useEffect(() => setLocalZoneOptions(zoneOptions), [zoneOptions]);
   useEffect(() => {
     if (!selectedSeatId) setInspectorCollapsed(false);
   }, [selectedSeatId]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
+    localDepartmentOptions.filter(item => item.active).forEach(item => values.add(item.name));
     localEmployees.forEach(emp => {
       if (emp.department) values.add(emp.department);
     });
+    return Array.from(values).sort();
+  }, [localDepartmentOptions, localEmployees]);
+
+  const zones = useMemo(() => {
+    const values = new Set<string>();
+    localZoneOptions.filter(item => item.active).forEach(item => values.add(item.name));
     localSeats.forEach(seat => {
-      if (seat.department) values.add(seat.department);
+      const seatZone = getSeatZone(seat);
+      if (seatZone) values.add(seatZone);
     });
     return Array.from(values).sort();
-  }, [localEmployees, localSeats]);
+  }, [localSeats, localZoneOptions]);
 
   const stats = useMemo(() => ({
     total: localSeats.length,
@@ -102,7 +168,7 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
           initials: getInitials(employee.full_name),
           seatId: assignedSeat?.id ?? null,
           seatLabel: assignedSeat?.label ?? null,
-          searchable: [employee.full_name, employee.position, employee.department, assignedSeat?.label].filter(Boolean).join(" " ).toLowerCase()
+          searchable: [employee.full_name, employee.position, employee.department, assignedSeat?.label, assignedSeat ? getSeatZone(assignedSeat) : ""].filter(Boolean).join(" ").toLowerCase()
         };
       })
       .filter(result => !needle || result.searchable.includes(needle))
@@ -125,7 +191,7 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
     const haystack = [
       seat.label,
       seat.status,
-      seat.department,
+      getSeatZone(seat),
       seat.employee?.full_name,
       seat.employee?.position,
       seat.employee?.department
@@ -134,12 +200,14 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
       .join(" ")
       .toLowerCase();
 
-    const seatDepartment = seat.department ?? seat.employee?.department ?? "";
+    const seatDepartment = seat.employee?.department ?? "";
+    const seatZone = getSeatZone(seat);
     const searchOk = !needle || haystack.includes(needle);
     const departmentOk = department === "all" || seatDepartment === department;
+    const zoneOk = zone === "all" || seatZone === zone;
     const statusOk = status === "all" || seat.status === (status as SeatStatus);
 
-    return searchOk && departmentOk && statusOk;
+    return searchOk && departmentOk && zoneOk && statusOk;
   }
 
   function canDiscardInspectorChanges() {
@@ -193,36 +261,38 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
 
   function handleMapPointerDown(event: PointerEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement;
-    if (!target.closest("[data-seat-id]")) {
-      if (canEdit && addSeatMode) {
-        const point = eventToPoint(event);
-        if (!point) return;
+    if (target.closest("[data-seat-id]")) return;
 
-        startTransition(async () => {
-          try {
-            setActionError(null);
-            const nextNumber = localSeats.length + 101;
-            const created = await createSeatAction({
-              label: `Desk ${nextNumber}`,
-              x: point.x,
-              y: point.y
-            });
-            setLocalSeats(current => replaceSeat(current, created));
-            setSelectedSeatId(created.id);
-            setInspectorDirty(false);
-            setAddSeatMode(false);
-            setMoveSeatMode(false);
-          } catch (error) {
-            setActionError(error instanceof Error ? error.message : "Could not create seat.");
-          }
-        });
-      } else if (!dragState) {
-        if (selectedSeatId && !canDiscardInspectorChanges()) return;
-        setSelectedSeatId(null);
-        setInspectorDirty(false);
-        setMoveSeatMode(false);
-      }
+    if (canEdit && addSeatMode) {
+      const point = eventToPoint(event);
+      if (!point) return;
+
+      startTransition(async () => {
+        try {
+          setActionError(null);
+          const created = await createSeatAction({
+            label: buildNewDeskLabel(localSeats),
+            x: point.x,
+            y: point.y,
+            zone: zone === "all" ? null : zone
+          });
+          setLocalSeats(current => replaceSeat(current, created));
+          setSelectedSeatId(created.id);
+          setInspectorDirty(false);
+          setAddSeatMode(false);
+          setMoveSeatMode(false);
+        } catch (error) {
+          setActionError(error instanceof Error ? error.message : "Could not create seat.");
+        }
+      });
       return;
+    }
+
+    if (!dragState) {
+      if (selectedSeatId && !canDiscardInspectorChanges()) return;
+      setSelectedSeatId(null);
+      setInspectorDirty(false);
+      setMoveSeatMode(false);
     }
   }
 
@@ -280,7 +350,7 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
       : "Marker movement is locked unless Move Seat is enabled.";
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <header className="sticky top-0 z-30 flex min-h-[50px] items-center justify-between border-b border-white/10 bg-slate-950/50 px-4 py-2 text-white backdrop-blur">
         <div>
           <h1 className="text-[15px] font-bold">Office Seat Planner</h1>
@@ -301,6 +371,8 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
           department={department}
           status={status}
           departments={departments}
+          zone={zone}
+          zones={zones}
           collapsed={filterCollapsed}
           stats={stats}
           employeeResults={employeeResults}
@@ -308,6 +380,7 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
           onEmployeeSelect={selectEmployeeSeat}
           onSearchChange={setSearch}
           onDepartmentChange={setDepartment}
+          onZoneChange={setZone}
           onStatusChange={setStatus}
         />
 
@@ -317,19 +390,10 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
               <div className="text-sm font-bold leading-tight">{canEdit ? "Draft seat map" : "Published seat map"}</div>
               <div className="text-[11px] leading-tight text-white/60">{toolbarMessage}</div>
             </div>
-            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-              <Button
-                className="min-h-8 px-3 text-xs"
-                onClick={() => setShowNames(current => !current)}
-              >
-                {showNames ? "Hide Names" : "Show Names"}
-              </Button>
-              <Button className="min-h-8 px-3 text-xs" onClick={clearSelection}>Clear Selection</Button>
-            </div>
           </div>
 
           {actionError && (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
+            <div className="whitespace-pre-wrap rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
               {actionError}
             </div>
           )}
@@ -383,12 +447,85 @@ export function SeatMap({ seats, employees, canEdit }: SeatMapProps) {
         open={advancedOpen}
         seats={localSeats}
         employees={localEmployees}
+        departmentOptions={localDepartmentOptions}
+        zoneOptions={localZoneOptions}
         addSeatMode={addSeatMode}
         pending={pending}
+        showNames={showNames}
         onClose={() => setAdvancedOpen(false)}
         onStartAddSeat={startAddSeatMode}
         onCancelAddSeat={cancelAddSeatMode}
         onPublish={publishDraftMap}
+        onToggleShowNames={() => setShowNames(current => !current)}
+        onClearSelection={clearSelection}
+        onEmployeeCreated={employee => {
+          setActionError(null);
+          setLocalEmployees(current => upsertEmployee(current, employee));
+        }}
+        onEmployeeUpdated={employee => {
+          setActionError(null);
+          setLocalEmployees(current => upsertEmployee(current, employee));
+          setLocalSeats(current => current.map(seat => (
+            seat.employee_id === employee.id ? { ...seat, employee } : seat
+          )));
+        }}
+        onEmployeeDeleted={employeeId => {
+          setActionError(null);
+          setLocalEmployees(current => current.filter(employee => employee.id !== employeeId));
+          setLocalSeats(current => current.map(seat => {
+            if (seat.employee_id !== employeeId) return seat;
+            return { ...seat, employee_id: null, employee: null, status: "available" };
+          }));
+        }}
+        onDepartmentCreated={departmentOption => {
+          setActionError(null);
+          setLocalDepartmentOptions(current => upsertDepartmentOption(current, departmentOption));
+        }}
+        onDepartmentRenamed={(from, to) => {
+          setActionError(null);
+          setLocalDepartmentOptions(current => current
+            .map(option => option.name === from ? { ...option, active: false } : option)
+            .concat([{ id: to, name: to, active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }]));
+          setLocalEmployees(current => current.map(employee => (
+            employee.department === from ? { ...employee, department: to } : employee
+          )));
+        }}
+        onDepartmentDeleted={departmentName => {
+          setActionError(null);
+          setLocalDepartmentOptions(current => current.map(option => option.name === departmentName ? { ...option, active: false } : option));
+          setLocalEmployees(current => current.map(employee => (
+            employee.department === departmentName ? { ...employee, department: null } : employee
+          )));
+        }}
+        onZoneCreated={zoneOption => {
+          setActionError(null);
+          setLocalZoneOptions(current => upsertZoneOption(current, zoneOption));
+        }}
+        onZoneRenamed={(from, to) => {
+          setActionError(null);
+          setLocalZoneOptions(current => current
+            .map(option => option.name === from ? { ...option, active: false } : option)
+            .concat([{ id: to, name: to, active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }]));
+          setLocalSeats(current => current.map(seat => (
+            getSeatZone(seat) === from ? { ...seat, zone: to } : seat
+          )));
+        }}
+        onZoneDeleted={zoneName => {
+          setActionError(null);
+          setLocalZoneOptions(current => current.map(option => option.name === zoneName ? { ...option, active: false } : option));
+          setLocalSeats(current => current.map(seat => (
+            getSeatZone(seat) === zoneName ? { ...seat, zone: null } : seat
+          )));
+        }}
+        onCsvImported={payload => {
+          setActionError(null);
+          setLocalSeats(normalizeSeats(payload.seats));
+          setLocalEmployees(payload.employees);
+          setSelectedSeatId(null);
+          setInspectorDirty(false);
+          setMoveSeatMode(false);
+        }}
+        onError={setActionError}
       />
 
       <SeatInspector

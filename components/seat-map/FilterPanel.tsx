@@ -12,8 +12,10 @@ type EmployeeResult = {
 type FilterPanelProps = {
   search: string;
   department: string;
+  zone: string;
   status: string;
   departments: string[];
+  zones: string[];
   collapsed: boolean;
   stats: {
     total: number;
@@ -26,14 +28,17 @@ type FilterPanelProps = {
   onEmployeeSelect: (seatId: string) => void;
   onSearchChange: (value: string) => void;
   onDepartmentChange: (value: string) => void;
+  onZoneChange: (value: string) => void;
   onStatusChange: (value: string) => void;
 };
 
 export function FilterPanel({
   search,
   department,
+  zone,
   status,
   departments,
+  zones,
   collapsed,
   stats,
   employeeResults,
@@ -41,6 +46,7 @@ export function FilterPanel({
   onEmployeeSelect,
   onSearchChange,
   onDepartmentChange,
+  onZoneChange,
   onStatusChange
 }: FilterPanelProps) {
   if (collapsed) {
@@ -52,7 +58,7 @@ export function FilterPanel({
           className="flex min-h-11 w-full items-center justify-center rounded-2xl border border-white/80 bg-white/95 px-3 py-2 shadow-soft transition hover:bg-white lg:min-h-[210px] lg:w-[46px] lg:flex-col lg:px-2 lg:py-3"
         >
           <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-700 lg:rotate-180 lg:[writing-mode:vertical-rl]">Filters</span>
-          <span className="ml-2 text-[10px] text-slate-400 lg:ml-0 lg:mt-2 lg:rotate-180 lg:[writing-mode:vertical-rl]">Search · Dept · Status</span>
+          <span className="ml-2 text-[10px] text-slate-400 lg:ml-0 lg:mt-2 lg:rotate-180 lg:[writing-mode:vertical-rl]">Search · Dept · Zone</span>
         </button>
       </aside>
     );
@@ -63,7 +69,7 @@ export function FilterPanel({
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-bold text-slate-900">Filter Map</h2>
-          <p className="mt-1 text-xs leading-5 text-slate-500">Search employees, departments, positions, and seats.</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">Search employees, departments, zones, positions, and seats.</p>
         </div>
         <button type="button" onClick={onToggle} className="rounded-lg px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100">
           Collapse
@@ -91,6 +97,20 @@ export function FilterPanel({
             <option value="all">All departments</option>
             {departments.map(dep => (
               <option key={dep} value={dep}>{dep}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Zone</span>
+          <select
+            value={zone}
+            onChange={event => onZoneChange(event.target.value)}
+            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+          >
+            <option value="all">All zones</option>
+            {zones.map(value => (
+              <option key={value} value={value}>{value}</option>
             ))}
           </select>
         </label>

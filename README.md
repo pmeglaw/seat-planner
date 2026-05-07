@@ -37,6 +37,12 @@ Run the SQL files in order:
 ```bash
 supabase/migrations/001_initial_schema.sql
 supabase/migrations/002_seed_initial_data.sql
+supabase/migrations/003_function_execute_hardening.sql
+supabase/migrations/004_live_security_cleanup.sql
+supabase/migrations/005_policy_advisor_cleanup.sql
+supabase/migrations/006_remaining_advisor_cleanup.sql
+supabase/migrations/007_departments_zones_management.sql
+supabase/migrations/008_drop_management_unused_indexes.sql
 ```
 
 After creating your first user, promote yourself to admin:
@@ -60,6 +66,11 @@ This starter enforces admin behavior with:
 
 Do not expose service-role keys in the browser.
 
+Supabase free projects may continue to show the Auth advisor warning for leaked
+password protection because that feature is not available on the free plan. The
+database-side Seat Planner security-definer and RLS advisor items are handled by
+the migrations above.
+
 ## Next implementation step
 
 Port the v15/v14 interaction logic into the React components:
@@ -74,11 +85,13 @@ Port the v15/v14 interaction logic into the React components:
 
 ## Current milestone
 
-This package is Step 2 of the production conversion. It includes the first interactive admin tools from the v15 HTML prototype: Advanced drawer, Add Seat mode, Move Seat mode, inspector save/delete, direct employee entry, and publish action wiring.
+This package is Step 3 of the production conversion. It includes admin employee and department management, separate employee departments vs. physical seat zones, Advanced drawer map controls, Add Seat coordinate persistence, Move Seat mode, inspector save/delete, direct employee entry, and publish action wiring.
 
 ## Auth callback fix
 
-Magic-link auth redirects to `/auth/callback?next=/`, where the route handler exchanges the auth code for a server cookie session using `supabase.auth.exchangeCodeForSession(code)`.
+Magic-link auth redirects to `/auth/confirm`. The route accepts Supabase PKCE
+`code` redirects and `token_hash` email-template links, then stores the session
+in server cookies.
 
 Supabase Auth URL configuration for local dev:
 
@@ -86,3 +99,5 @@ Supabase Auth URL configuration for local dev:
 - Redirect URLs: `http://localhost:3001/**`
 
 Restart the Next.js dev server after changing `.env.local` or Auth URL settings.
+
+See `docs/magic-link-auth.md` for the Magic Link email template.

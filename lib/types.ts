@@ -20,6 +20,22 @@ export type Employee = {
   updated_at: string;
 };
 
+export type DepartmentOption = {
+  id: string;
+  name: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ZoneOption = {
+  id: string;
+  name: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Seat = {
   id: string;
   seat_key: string;
@@ -29,6 +45,7 @@ export type Seat = {
   status: SeatStatus;
   layer: SeatLayer;
   employee_id: string | null;
+  zone?: string | null;
   department: string | null;
   notes: string | null;
   created_at: string;
@@ -43,6 +60,7 @@ export type SeatCreateInput = {
   label: string;
   x: number;
   y: number;
+  zone?: string | null;
   department?: string | null;
   notes?: string | null;
 };
@@ -52,6 +70,7 @@ export type SeatUpdateInput = {
   label?: string;
   status?: SeatStatus;
   employee_id?: string | null;
+  zone?: string | null;
   department?: string | null;
   notes?: string | null;
 };
@@ -60,6 +79,17 @@ export type EmployeeCreateInput = {
   full_name: string;
   position?: string | null;
   department?: string | null;
+};
+
+export type CsvAssignmentRow = {
+  seat_label: string;
+  employee_name: string;
+  employee_email: string;
+  position: string;
+  department: string;
+  zone: string;
+  status: string;
+  notes: string;
 };
 
 export const SEAT_STATUSES: SeatStatus[] = [
