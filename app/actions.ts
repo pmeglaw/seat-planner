@@ -102,7 +102,8 @@ export async function createSeatAction(input: {
       layer: "draft",
       status: "available",
       zone,
-      department: null
+      department: null,
+      is_custom: true
     })
     .select("*, employee:employees(*)")
     .single();
@@ -475,11 +476,25 @@ export async function deleteZoneAction(zone: string) {
 export async function deleteSeatAction(seatId: string) {
   const supabase = await requireAdmin();
 
+  const { data: seat, error: seatError } = await supabase
+    .from("seats")
+    .select("id,label,layer,is_custom")
+    .eq("id", seatId)
+    .eq("layer", "draft")
+    .single();
+
+  if (seatError) throw new Error(seatError.message);
+
+  if (!seat?.is_custom) {
+    throw new Error(`${seat?.label ?? "This seat"} is an original seat and cannot be deleted.`);
+  }
+
   const { error } = await supabase
     .from("seats")
     .delete()
     .eq("id", seatId)
-    .eq("layer", "draft");
+    .eq("layer", "draft")
+    .eq("is_custom", true);
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin");

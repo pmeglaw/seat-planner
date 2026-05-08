@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { PointerEvent } from "react";
 import Image from "next/image";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
-import { createSeatAction, moveSeatAction, publishSeatMapAction } from "@/app/actions";
+import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction } from "@/app/actions";
 import { normalizePoint } from "@/lib/seatMath";
 import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
@@ -31,7 +31,8 @@ function normalizeSeat(seat: SeatWithEmployee): SeatWithEmployee {
     ...seat,
     x: Number(seat.x),
     y: Number(seat.y),
-    zone: seat.zone ?? seat.department ?? null
+    zone: seat.zone ?? seat.department ?? null,
+    is_custom: Boolean(seat.is_custom)
   };
 }
 
@@ -328,6 +329,35 @@ export function SeatMap({
     });
   }
 
+  function deleteSelectedSeat() {
+    if (!selectedSeat) {
+      setActionError("Select a custom seat first.");
+      return;
+    }
+
+    if (!selectedSeat.is_custom) {
+      setActionError(`${selectedSeat.label} is an original seat and cannot be deleted.`);
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete custom seat ${selectedSeat.label}? This removes it from the draft map. Publish the draft to update the viewer map.`);
+    if (!confirmed) return;
+
+    startTransition(async () => {
+      try {
+        setActionError(null);
+        const result = await deleteSeatAction(selectedSeat.id);
+        setLocalSeats(current => current.filter(seat => seat.id !== result.seatId));
+        setSelectedSeatId(null);
+        setInspectorDirty(false);
+        setMoveSeatMode(false);
+        setAdvancedOpen(false);
+      } catch (error) {
+        setActionError(error instanceof Error ? error.message : "Could not delete custom seat.");
+      }
+    });
+  }
+
   function publishDraftMap() {
     const unavailable = localSeats.filter(seat => seat.status === "unavailable").length;
     const confirmed = window.confirm(
@@ -481,6 +511,7 @@ export function SeatMap({
         }}
         onToggleShowNames={() => setShowNames(current => !current)}
         onClearSelection={clearSelection}
+        onDeleteSelectedSeat={deleteSelectedSeat}
         onEmployeeCreated={employee => {
           setActionError(null);
           setLocalEmployees(current => upsertEmployee(current, employee));
