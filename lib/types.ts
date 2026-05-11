@@ -48,6 +48,7 @@ export type Seat = {
   zone?: string | null;
   department: string | null;
   notes: string | null;
+  is_custom?: boolean | null;
   created_at: string;
   updated_at: string;
 };
