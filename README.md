@@ -101,3 +101,15 @@ Supabase Auth URL configuration for local dev:
 Restart the Next.js dev server after changing `.env.local` or Auth URL settings.
 
 See `docs/magic-link-auth.md` for the Magic Link email template.
+
+
+## v1.0.8 Auth Reliability
+
+The login screen now supports email/password sign-in as the primary flow, with magic link as a fallback. Password reset links route through `/auth/confirm` and then `/auth/update-password`.
+
+Recommended Supabase Auth settings:
+
+- Email provider enabled
+- Minimum password length: 12
+- Redirect URL: `https://seats.megeredchianlaw.com/auth/confirm`
+- Local redirect URL: `http://localhost:3000/auth/confirm`
