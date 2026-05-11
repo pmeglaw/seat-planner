@@ -15,7 +15,7 @@ export default async function HomePage() {
     data: { user }
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login");
+  if (!user) redirect("/login?next=/");
 
   const { data: seats, error: seatsError } = await supabase
     .from("seats")
