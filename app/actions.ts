@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseAssignmentCsv } from "@/lib/csv";
+import type { DraftSnapshot } from "@/lib/draftHistory";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
-import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
+import { SEAT_STATUSES, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
 
 type CsvDraftSeat = {
   id: string;
@@ -16,6 +17,9 @@ type CsvEmployeeRecord = {
   id: string;
   full_name: string;
 };
+
+type DraftSeatRestoreRecord = Omit<SeatWithEmployee, "employee">;
+type DraftEmployeeRestoreRecord = Employee;
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -51,6 +55,29 @@ async function getDraftSeatById(supabase: Awaited<ReturnType<typeof requireAdmin
   return data as SeatWithEmployee;
 }
 
+async function getDraftMapPayload(supabase: Awaited<ReturnType<typeof requireAdmin>>) {
+  const { data: seats, error: seatsError } = await supabase
+    .from("seats")
+    .select("*, employee:employees(*)")
+    .eq("layer", "draft")
+    .order("label");
+
+  const { data: employees, error: employeesError } = await supabase
+    .from("employees")
+    .select("*")
+    .eq("active", true)
+    .order("full_name");
+
+  if (seatsError || employeesError) {
+    throw new Error(seatsError?.message ?? employeesError?.message ?? "Could not reload draft history state.");
+  }
+
+  return {
+    seats: (seats ?? []) as SeatWithEmployee[],
+    employees: (employees ?? []) as Employee[]
+  };
+}
+
 function buildSeatKey(label: string) {
   return label
     .toLowerCase()
@@ -65,6 +92,51 @@ function normalizeOptionalText(value?: string | null) {
 
 function normalizeEmployeeNameKey(value: string) {
   return value.trim().toLowerCase();
+}
+
+function normalizeRestoreSeat(seat: SeatWithEmployee): DraftSeatRestoreRecord {
+  if (seat.layer !== "draft") {
+    throw new Error("Undo/redo can only restore draft seats.");
+  }
+
+  const id = assertNonEmpty(seat.id, "Seat id");
+  const seatKey = assertNonEmpty(seat.seat_key, "Seat key");
+  const label = assertNonEmpty(seat.label, "Seat label");
+  const point = validateSeatCoordinates(Number(seat.x), Number(seat.y));
+
+  if (!SEAT_STATUSES.includes(seat.status)) {
+    throw new Error(`Invalid seat status '${seat.status}'.`);
+  }
+
+  return {
+    id,
+    seat_key: seatKey,
+    label,
+    x: point.x,
+    y: point.y,
+    status: normalizeSeatStatus(seat.status, Boolean(seat.employee_id)),
+    layer: "draft",
+    employee_id: seat.employee_id || null,
+    zone: normalizeOptionalText(seat.zone ?? null),
+    department: normalizeOptionalText(seat.department ?? null),
+    notes: normalizeOptionalText(seat.notes ?? null),
+    is_custom: Boolean(seat.is_custom),
+    created_at: seat.created_at,
+    updated_at: seat.updated_at
+  };
+}
+
+function normalizeRestoreEmployee(employee: Employee): DraftEmployeeRestoreRecord {
+  return {
+    id: assertNonEmpty(employee.id, "Employee id"),
+    full_name: assertNonEmpty(employee.full_name, "Employee name"),
+    position: normalizeOptionalText(employee.position ?? null),
+    department: normalizeOptionalText(employee.department ?? null),
+    avatar_url: normalizeOptionalText(employee.avatar_url ?? null),
+    active: employee.active !== false,
+    created_at: employee.created_at,
+    updated_at: employee.updated_at
+  };
 }
 
 async function upsertDepartmentOption(supabase: Awaited<ReturnType<typeof requireAdmin>>, name: string | null) {
@@ -683,6 +755,148 @@ export async function importAssignmentsCsvAction(csvText: string) {
     employees: (updatedEmployees ?? []) as Employee[],
     count: parsed.rows.length
   };
+}
+
+export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
+  const supabase = await requireAdmin();
+  const seatsToRestore = (snapshot.seats ?? []).map(normalizeRestoreSeat);
+  const employeesToRestore = (snapshot.employees ?? []).map(normalizeRestoreEmployee);
+
+  if (seatsToRestore.length === 0) {
+    throw new Error("Cannot restore an empty draft map snapshot.");
+  }
+
+  const labelKeys = new Set<string>();
+  for (const seat of seatsToRestore) {
+    const labelKey = seat.label.trim().toLowerCase();
+    if (labelKeys.has(labelKey)) {
+      throw new Error(`Cannot restore duplicate draft seat label '${seat.label}'.`);
+    }
+    labelKeys.add(labelKey);
+  }
+
+  const employeeIds = new Set(seatsToRestore.map(seat => seat.employee_id).filter((id): id is string => Boolean(id)));
+  const employeeSnapshotById = new Map(employeesToRestore.map(employee => [employee.id, employee]));
+
+  for (const employee of employeesToRestore) {
+    await upsertDepartmentOption(supabase, employee.department);
+    const { error } = await supabase
+      .from("employees")
+      .upsert({
+        id: employee.id,
+        full_name: employee.full_name,
+        position: employee.position,
+        department: employee.department,
+        avatar_url: employee.avatar_url,
+        active: employee.active
+      }, { onConflict: "id" });
+
+    if (error) throw new Error(error.message);
+  }
+
+  const zoneNames = new Set(seatsToRestore.map(seat => seat.zone ?? seat.department ?? null).filter((name): name is string => Boolean(name)));
+  for (const zoneName of zoneNames) {
+    await upsertZoneOption(supabase, zoneName);
+  }
+
+  if (employeeIds.size > 0) {
+    const ids = Array.from(employeeIds);
+    const { data: existingEmployees, error } = await supabase
+      .from("employees")
+      .select("id")
+      .in("id", ids);
+
+    if (error) throw new Error(error.message);
+
+    const existingIds = new Set((existingEmployees ?? []).map(employee => employee.id as string));
+    const missingIds = ids.filter(id => !existingIds.has(id) && !employeeSnapshotById.has(id));
+    if (missingIds.length > 0) {
+      throw new Error("Cannot restore draft history because an assigned employee record is missing.");
+    }
+  }
+
+  const { data: currentSeats, error: currentSeatsError } = await supabase
+    .from("seats")
+    .select("id,label,is_custom")
+    .eq("layer", "draft");
+
+  if (currentSeatsError) throw new Error(currentSeatsError.message);
+
+  const currentById = new Map((currentSeats ?? []).map(seat => [seat.id as string, seat]));
+  const snapshotIds = new Set(seatsToRestore.map(seat => seat.id));
+  const missingProtectedSeats = (currentSeats ?? [])
+    .filter(seat => !seat.is_custom && !snapshotIds.has(seat.id as string))
+    .map(seat => seat.label as string);
+
+  if (missingProtectedSeats.length > 0) {
+    throw new Error(`Cannot restore draft history because protected original seats are missing from the snapshot: ${missingProtectedSeats.join(", ")}.`);
+  }
+
+  const { error: clearAssignmentsError } = await supabase
+    .from("seats")
+    .update({ employee_id: null, status: "available" })
+    .eq("layer", "draft")
+    .eq("status", "assigned");
+
+  if (clearAssignmentsError) throw new Error(clearAssignmentsError.message);
+
+  const customSeatIdsToDelete = (currentSeats ?? [])
+    .filter(seat => seat.is_custom && !snapshotIds.has(seat.id as string))
+    .map(seat => seat.id as string);
+
+  if (customSeatIdsToDelete.length > 0) {
+    const { error: deleteError } = await supabase
+      .from("seats")
+      .delete()
+      .eq("layer", "draft")
+      .eq("is_custom", true)
+      .in("id", customSeatIdsToDelete);
+
+    if (deleteError) throw new Error(deleteError.message);
+  }
+
+  for (const seat of seatsToRestore) {
+    const patch = {
+      seat_key: seat.seat_key,
+      label: seat.label,
+      x: seat.x,
+      y: seat.y,
+      status: seat.status,
+      employee_id: seat.employee_id,
+      zone: seat.zone,
+      department: seat.department,
+      notes: seat.notes,
+      is_custom: seat.is_custom
+    };
+
+    if (currentById.has(seat.id)) {
+      const { error } = await supabase
+        .from("seats")
+        .update(patch)
+        .eq("id", seat.id)
+        .eq("layer", "draft");
+
+      if (error) throw new Error(error.message);
+      continue;
+    }
+
+    if (!seat.is_custom) {
+      throw new Error(`Cannot restore protected original seat ${seat.label} because it no longer exists.`);
+    }
+
+    const { error } = await supabase
+      .from("seats")
+      .insert({
+        id: seat.id,
+        ...patch,
+        layer: "draft"
+      });
+
+    if (error) throw new Error(error.message);
+  }
+
+  revalidatePath("/admin");
+  return getDraftMapPayload(supabase);
 }
 
 export async function publishSeatMapAction() {

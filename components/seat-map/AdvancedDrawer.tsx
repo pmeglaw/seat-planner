@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useRef, useState, useTransition } from "react";
+import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
 import { importAssignmentsCsvAction } from "@/app/actions";
@@ -27,7 +28,8 @@ type AdvancedDrawerProps = {
   onToggleShowNames: () => void;
   onClearSelection: () => void;
   onDeleteSelectedSeat: () => void;
-  onCsvImported: (payload: { seats: SeatWithEmployee[]; employees: Employee[] }) => void;
+  onBeforeCsvImport: () => DraftSnapshot;
+  onCsvImported: (payload: { seats: SeatWithEmployee[]; employees: Employee[]; count: number }, beforeSnapshot: DraftSnapshot) => void;
   onError: (message: string | null) => void;
 };
 
@@ -87,6 +89,7 @@ export function AdvancedDrawer({
   onToggleShowNames,
   onClearSelection,
   onDeleteSelectedSeat,
+  onBeforeCsvImport,
   onCsvImported,
   onError
 }: AdvancedDrawerProps) {
@@ -164,8 +167,9 @@ export function AdvancedDrawer({
         const confirmed = window.confirm(buildCsvPreviewMessage(parsed.rows.length, assignedCount, clearCount, reservedCount, unavailableCount));
         if (!confirmed) return;
 
+        const beforeSnapshot = onBeforeCsvImport();
         const payload = await importAssignmentsCsvAction(text);
-        onCsvImported({ seats: payload.seats, employees: payload.employees });
+        onCsvImported({ seats: payload.seats, employees: payload.employees, count: payload.count }, beforeSnapshot);
         if (fileInputRef.current) fileInputRef.current.value = "";
       } catch (error) {
         reportError(error, "Could not import CSV.");

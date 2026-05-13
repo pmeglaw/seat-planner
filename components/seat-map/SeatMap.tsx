@@ -4,8 +4,19 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { PointerEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  canRedoDraftHistory,
+  canUndoDraftHistory,
+  clearDraftHistory,
+  createDraftHistory,
+  createDraftSnapshot,
+  pushDraftHistory,
+  redoDraftHistory,
+  undoDraftHistory,
+  type DraftSnapshot
+} from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
-import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction } from "@/app/actions";
+import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction } from "@/app/actions";
 import { normalizePoint } from "@/lib/seatMath";
 import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
@@ -25,6 +36,7 @@ type SeatMapProps = {
 type DragState = {
   seatId: string;
   pointerId: number;
+  beforeSnapshot: DraftSnapshot;
 } | null;
 
 function normalizeSeat(seat: SeatWithEmployee): SeatWithEmployee {
@@ -92,6 +104,7 @@ export function SeatMap({
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [inspectorDirty, setInspectorDirty] = useState(false);
   const [showNames, setShowNames] = useState(true);
+  const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
   const [pending, startTransition] = useTransition();
   const mapRef = useRef<HTMLDivElement | null>(null);
 
@@ -156,6 +169,17 @@ export function SeatMap({
   }, [localEmployees, localSeats, search]);
 
   const selectedSeat = localSeats.find(seat => seat.id === selectedSeatId) ?? null;
+  const undoAvailable = canUndoDraftHistory(draftHistory);
+  const redoAvailable = canRedoDraftHistory(draftHistory);
+  const nextUndoLabel = draftHistory.undoStack.at(-1)?.label ?? null;
+  const nextRedoLabel = draftHistory.redoStack.at(-1)?.label ?? null;
+  const historyStatusMessage = inspectorDirty
+    ? "Save or discard inspector edits before undo/redo."
+    : nextUndoLabel
+      ? `Undo next: ${nextUndoLabel}`
+      : nextRedoLabel
+        ? `Redo available: ${nextRedoLabel}`
+        : "No draft edits to undo.";
 
   function eventToPoint(event: Pick<PointerEvent<HTMLElement>, "clientX" | "clientY">) {
     const rect = mapRef.current?.getBoundingClientRect();
@@ -193,6 +217,64 @@ export function SeatMap({
   function canDiscardInspectorChanges() {
     if (!inspectorDirty) return true;
     return window.confirm("You have unsaved seat edits. Discard them?");
+  }
+
+  function captureDraftSnapshot() {
+    return createDraftSnapshot(localSeats, localEmployees);
+  }
+
+  function applyRestoredDraftPayload(payload: { seats: SeatWithEmployee[]; employees: Employee[] }) {
+    const restoredSeats = normalizeSeats(payload.seats);
+    setLocalSeats(restoredSeats);
+    setLocalEmployees(payload.employees);
+    setSelectedSeatId(current => (current && restoredSeats.some(seat => seat.id === current) ? current : null));
+    setInspectorDirty(false);
+    setMoveSeatMode(false);
+    setAddSeatMode(false);
+    setDragState(null);
+  }
+
+  function recordDraftHistory(label: string, before: DraftSnapshot, afterSeats: SeatWithEmployee[], afterEmployees: Employee[]) {
+    const after = createDraftSnapshot(afterSeats, afterEmployees);
+    setDraftHistory(current => pushDraftHistory(current, { label, before, after }));
+  }
+
+  function describeSeatUpdate(before: DraftSnapshot, updated: SeatWithEmployee) {
+    const previous = before.seats.find(seat => seat.id === updated.id);
+    if (!previous) return `Update ${updated.label}`;
+    if (previous.employee_id && !updated.employee_id) return `Vacate ${updated.label}`;
+    if (!previous.employee_id && updated.employee_id) return `Assign ${updated.label}`;
+    if (previous.employee_id !== updated.employee_id) return `Change assignment ${updated.label}`;
+    if (previous.status !== updated.status) return `Change status ${updated.label}`;
+    return `Update ${updated.label}`;
+  }
+
+  function restoreHistorySnapshot(snapshot: DraftSnapshot, nextHistory: typeof draftHistory, actionLabel: string) {
+    if (inspectorDirty && !canDiscardInspectorChanges()) return;
+
+    startTransition(async () => {
+      try {
+        setActionError(null);
+        const restored = await restoreDraftSnapshotAction(snapshot);
+        applyRestoredDraftPayload(restored);
+        setDraftHistory(nextHistory);
+        setAdvancedOpen(false);
+      } catch (error) {
+        setActionError(error instanceof Error ? error.message : `Could not ${actionLabel.toLowerCase()} draft edit.`);
+      }
+    });
+  }
+
+  function undoDraftEdit() {
+    const result = undoDraftHistory(draftHistory);
+    if (!result) return;
+    restoreHistorySnapshot(result.snapshot, result.history, "Undo");
+  }
+
+  function redoDraftEdit() {
+    const result = redoDraftHistory(draftHistory);
+    if (!result) return;
+    restoreHistorySnapshot(result.snapshot, result.history, "Redo");
   }
 
   function selectSeat(seatId: string) {
@@ -246,6 +328,7 @@ export function SeatMap({
     if (canEdit && addSeatMode) {
       const point = eventToPoint(event);
       if (!point) return;
+      const beforeSnapshot = captureDraftSnapshot();
 
       startTransition(async () => {
         try {
@@ -257,7 +340,9 @@ export function SeatMap({
             y: point.y,
             zone: targetZone
           });
-          setLocalSeats(current => replaceSeat(current, created));
+          const afterSeats = replaceSeat(beforeSnapshot.seats, created);
+          recordDraftHistory(`Add ${created.label}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
+          setLocalSeats(afterSeats);
           setSelectedSeatId(created.id);
           setInspectorDirty(false);
           setAddSeatMode(false);
@@ -282,7 +367,7 @@ export function SeatMap({
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
-    setDragState({ seatId, pointerId: event.pointerId });
+    setDragState({ seatId, pointerId: event.pointerId, beforeSnapshot: captureDraftSnapshot() });
   }
 
   function handleMapPointerMove(event: PointerEvent<HTMLDivElement>) {
@@ -297,16 +382,23 @@ export function SeatMap({
     if (!dragState) return;
     const point = eventToPoint(event);
     const seatId = dragState.seatId;
+    const beforeSnapshot = dragState.beforeSnapshot;
     setDragState(null);
     setMoveSeatMode(false);
-    if (!point) return;
+    if (!point) {
+      applyRestoredDraftPayload(beforeSnapshot);
+      return;
+    }
 
     startTransition(async () => {
       try {
         setActionError(null);
         const updated = await moveSeatAction({ seatId, x: point.x, y: point.y });
-        setLocalSeats(current => replaceSeat(current, updated));
+        const afterSeats = replaceSeat(beforeSnapshot.seats, updated);
+        recordDraftHistory(`Move ${updated.label}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
+        setLocalSeats(afterSeats);
       } catch (error) {
+        applyRestoredDraftPayload(beforeSnapshot);
         setActionError(error instanceof Error ? error.message : "Could not move seat.");
       }
     });
@@ -325,12 +417,16 @@ export function SeatMap({
 
     const confirmed = window.confirm(`Delete custom seat ${selectedSeat.label}? This removes it from the draft map. Publish the draft to update the viewer map.`);
     if (!confirmed) return;
+    const beforeSnapshot = captureDraftSnapshot();
+    const deletedSeatLabel = selectedSeat.label;
 
     startTransition(async () => {
       try {
         setActionError(null);
         const result = await deleteSeatAction(selectedSeat.id);
-        setLocalSeats(current => current.filter(seat => seat.id !== result.seatId));
+        const afterSeats = beforeSnapshot.seats.filter(seat => seat.id !== result.seatId);
+        recordDraftHistory(`Delete ${deletedSeatLabel}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
+        setLocalSeats(afterSeats);
         setSelectedSeatId(null);
         setInspectorDirty(false);
         setMoveSeatMode(false);
@@ -362,6 +458,7 @@ export function SeatMap({
       try {
         setActionError(null);
         await publishSeatMapAction();
+        setDraftHistory(clearDraftHistory());
         setAdvancedOpen(false);
       } catch (error) {
         setActionError(error instanceof Error ? error.message : "Could not publish seat map.");
@@ -424,6 +521,29 @@ export function SeatMap({
               <div className="text-sm font-bold leading-tight">{canEdit ? "Draft seat map" : "Published seat map"}</div>
               <div className="text-[11px] leading-tight text-white/60">{toolbarMessage}</div>
             </div>
+            {canEdit && (
+              <div className="flex flex-col gap-1 sm:items-end">
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    className="min-h-8 px-3 text-xs"
+                    disabled={pending || inspectorDirty || !undoAvailable}
+                    onClick={undoDraftEdit}
+                  >
+                    Undo
+                  </Button>
+                  <Button
+                    type="button"
+                    className="min-h-8 px-3 text-xs"
+                    disabled={pending || inspectorDirty || !redoAvailable}
+                    onClick={redoDraftEdit}
+                  >
+                    Redo
+                  </Button>
+                </div>
+                <div className="max-w-[260px] text-right text-[11px] leading-tight text-white/55">{historyStatusMessage}</div>
+              </div>
+            )}
           </div>
 
           {actionError && (
@@ -502,9 +622,12 @@ export function SeatMap({
         onToggleShowNames={() => setShowNames(current => !current)}
         onClearSelection={clearSelection}
         onDeleteSelectedSeat={deleteSelectedSeat}
-        onCsvImported={payload => {
+        onBeforeCsvImport={captureDraftSnapshot}
+        onCsvImported={(payload, beforeSnapshot) => {
           setActionError(null);
-          setLocalSeats(normalizeSeats(payload.seats));
+          const afterSeats = normalizeSeats(payload.seats);
+          recordDraftHistory(`Import ${payload.count} CSV row${payload.count === 1 ? "" : "s"}`, beforeSnapshot, afterSeats, payload.employees);
+          setLocalSeats(afterSeats);
           setLocalEmployees(payload.employees);
           setSelectedSeatId(null);
           setInspectorDirty(false);
@@ -527,11 +650,15 @@ export function SeatMap({
           setInspectorCollapsed(false);
         }}
         onToggleCollapse={() => setInspectorCollapsed(current => !current)}
-        onSeatUpdated={seat => {
+        onBeforeSeatUpdate={captureDraftSnapshot}
+        onSeatUpdated={(seat, beforeSnapshot) => {
           setActionError(null);
           setInspectorDirty(false);
-          setLocalSeats(current => replaceSeat(current, seat));
-          setLocalEmployees(current => replaceEmployee(current, seat));
+          const afterSeats = replaceSeat(beforeSnapshot.seats, seat);
+          const afterEmployees = replaceEmployee(beforeSnapshot.employees, seat);
+          recordDraftHistory(describeSeatUpdate(beforeSnapshot, seat), beforeSnapshot, afterSeats, afterEmployees);
+          setLocalSeats(afterSeats);
+          setLocalEmployees(afterEmployees);
         }}
         onError={setActionError}
         onDirtyChange={setInspectorDirty}
