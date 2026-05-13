@@ -6,6 +6,17 @@ import { parseAssignmentCsv } from "@/lib/csv";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
+type CsvDraftSeat = {
+  id: string;
+  label: string;
+  employee_id: string | null;
+};
+
+type CsvEmployeeRecord = {
+  id: string;
+  full_name: string;
+};
+
 async function requireAdmin() {
   const supabase = await createClient();
   const {
@@ -52,18 +63,26 @@ function normalizeOptionalText(value?: string | null) {
   return value?.trim() || null;
 }
 
+function normalizeEmployeeNameKey(value: string) {
+  return value.trim().toLowerCase();
+}
+
 async function upsertDepartmentOption(supabase: Awaited<ReturnType<typeof requireAdmin>>, name: string | null) {
   if (!name) return;
-  await supabase
+  const { error } = await supabase
     .from("department_options")
     .upsert({ name, active: true }, { onConflict: "name" });
+
+  if (error) throw new Error(error.message);
 }
 
 async function upsertZoneOption(supabase: Awaited<ReturnType<typeof requireAdmin>>, name: string | null) {
   if (!name) return;
-  await supabase
+  const { error } = await supabase
     .from("zone_options")
     .upsert({ name, active: true }, { onConflict: "name" });
+
+  if (error) throw new Error(error.message);
 }
 
 export async function createSeatAction(input: {
@@ -513,17 +532,50 @@ export async function importAssignmentsCsvAction(csvText: string) {
 
   if (seatsError) throw new Error(seatsError.message);
 
-  const seatByLabel = new Map((seats ?? []).map(seat => [String(seat.label).trim().toLowerCase(), seat]));
+  const { data: employees, error: employeesError } = await supabase
+    .from("employees")
+    .select("id,full_name");
+
+  if (employeesError) throw new Error(employeesError.message);
+
+  const seatByLabel = new Map((seats ?? []).map(seat => [String(seat.label).trim().toLowerCase(), seat as CsvDraftSeat]));
+  const employeesByName = new Map<string, CsvEmployeeRecord[]>();
+
+  (employees ?? []).forEach(employee => {
+    const key = normalizeEmployeeNameKey(String(employee.full_name ?? ""));
+    if (!key) return;
+    const matches = employeesByName.get(key) ?? [];
+    matches.push(employee as CsvEmployeeRecord);
+    employeesByName.set(key, matches);
+  });
 
   parsed.rows.forEach((row, index) => {
     if (row.seat_label && !seatByLabel.has(row.seat_label.trim().toLowerCase())) {
       issues.push({ row: index + 2, message: `Unknown seat label '${row.seat_label}'.` });
+    }
+
+    const employeeName = row.employee_name.trim();
+    if (employeeName && (employeesByName.get(normalizeEmployeeNameKey(employeeName))?.length ?? 0) > 1) {
+      issues.push({ row: index + 2, message: `Employee name '${employeeName}' matches multiple records. Rename or clean up duplicates before importing.` });
     }
   });
 
   if (issues.length > 0) {
     throw new Error(issues.map(issue => `Row ${issue.row}: ${issue.message}`).join("\n"));
   }
+
+  const employeeByName = new Map<string, CsvEmployeeRecord>();
+  employeesByName.forEach((matches, key) => {
+    if (matches.length === 1) employeeByName.set(key, matches[0]);
+  });
+
+  const seatUpdates: Array<{
+    seatId: string;
+    employeeId: string | null;
+    status: SeatStatus;
+    zone: string | null;
+    notes: string | null;
+  }> = [];
 
   for (const row of parsed.rows) {
     const seat = seatByLabel.get(row.seat_label.trim().toLowerCase());
@@ -536,13 +588,8 @@ export async function importAssignmentsCsvAction(csvText: string) {
 
     if (row.employee_name.trim()) {
       const employeeName = row.employee_name.trim();
-      const { data: existingEmployee, error: findError } = await supabase
-        .from("employees")
-        .select("id")
-        .ilike("full_name", employeeName)
-        .maybeSingle();
-
-      if (findError) throw new Error(findError.message);
+      const employeeKey = normalizeEmployeeNameKey(employeeName);
+      const existingEmployee = employeeByName.get(employeeKey);
 
       await upsertDepartmentOption(supabase, department);
       if (existingEmployee?.id) {
@@ -572,21 +619,43 @@ export async function importAssignmentsCsvAction(csvText: string) {
 
         if (employeeCreateError) throw new Error(employeeCreateError.message);
         employeeId = newEmployee.id;
+        employeeByName.set(employeeKey, { id: newEmployee.id, full_name: employeeName });
       }
     }
 
     await upsertZoneOption(supabase, zone);
     const status = normalizeSeatStatus(row.status || (employeeId ? "assigned" : "available"), Boolean(employeeId));
 
+    seatUpdates.push({
+      seatId: seat.id,
+      employeeId,
+      status,
+      zone,
+      notes
+    });
+  }
+
+  for (const update of seatUpdates) {
+    if (update.employeeId) {
+      const { error: clearOldAssignmentError } = await supabase
+        .from("seats")
+        .update({ employee_id: null, status: "available" })
+        .eq("layer", "draft")
+        .eq("employee_id", update.employeeId)
+        .neq("id", update.seatId);
+
+      if (clearOldAssignmentError) throw new Error(clearOldAssignmentError.message);
+    }
+
     const { error: seatUpdateError } = await supabase
       .from("seats")
       .update({
-        employee_id: employeeId,
-        status,
-        zone,
-        notes
+        employee_id: update.employeeId,
+        status: update.status,
+        zone: update.zone,
+        notes: update.notes
       })
-      .eq("id", seat.id)
+      .eq("id", update.seatId)
       .eq("layer", "draft");
 
     if (seatUpdateError) throw new Error(seatUpdateError.message);

@@ -45,7 +45,29 @@ function parseAssignmentCsv(text) {
     });
     if (!row.seat_label) issues.push(`Row ${rowIndex + 2}: Seat label is required.`);
     if (row.status === "assigned" && !row.employee_name) issues.push(`Row ${rowIndex + 2}: Assigned rows require employee_name.`);
+    if ((row.status === "reserved" || row.status === "unavailable") && row.employee_name) {
+      issues.push(`Row ${rowIndex + 2}: Rows with employee_name cannot be ${row.status}.`);
+    }
+    if (row.employee_email && !row.employee_name) {
+      issues.push(`Row ${rowIndex + 2}: employee_email requires employee_name.`);
+    }
     return row;
+  });
+  const seenSeats = new Set();
+  const seenAssignedEmployees = new Set();
+  rows.forEach((row, rowIndex) => {
+    const seatKey = row.seat_label.trim().toLowerCase();
+    if (seatKey) {
+      if (seenSeats.has(seatKey)) issues.push(`Row ${rowIndex + 2}: Duplicate seat row '${row.seat_label}'.`);
+      seenSeats.add(seatKey);
+    }
+    if (row.employee_name.trim() && row.status !== "reserved" && row.status !== "unavailable") {
+      const employeeKey = row.employee_name.trim().toLowerCase();
+      if (seenAssignedEmployees.has(employeeKey)) {
+        issues.push(`Row ${rowIndex + 2}: Employee '${row.employee_name}' appears as assigned more than once.`);
+      }
+      seenAssignedEmployees.add(employeeKey);
+    }
   });
   return { rows, issues };
 }
@@ -70,6 +92,24 @@ test("CSV parser accepts assignment rows", () => {
 test("CSV parser rejects assigned rows without employee name", () => {
   const result = parseAssignmentCsv(`seat_label,employee_name,employee_email,position,department,zone,status,notes\nN01,,,,North Pod,North Pod,assigned,\n`);
   assert.equal(result.issues.length, 1);
+});
+
+test("CSV parser rejects employee names on reserved or unavailable rows", () => {
+  const result = parseAssignmentCsv(`seat_label,employee_name,employee_email,position,department,zone,status,notes\nN01,Jane Doe,jane@example.com,Case Manager,Intake,North Pod,reserved,\nN02,John Doe,john@example.com,Case Manager,Intake,North Pod,unavailable,\n`);
+  assert.deepEqual(result.issues, [
+    "Row 2: Rows with employee_name cannot be reserved.",
+    "Row 3: Rows with employee_name cannot be unavailable."
+  ]);
+});
+
+test("CSV parser rejects duplicate employee names even when emails differ", () => {
+  const result = parseAssignmentCsv(`seat_label,employee_name,employee_email,position,department,zone,status,notes\nN01,Jane Doe,jane@example.com,Case Manager,Intake,North Pod,assigned,\nN02,Jane Doe,jane.alt@example.com,Case Manager,Intake,North Pod,assigned,\n`);
+  assert.deepEqual(result.issues, ["Row 3: Employee 'Jane Doe' appears as assigned more than once."]);
+});
+
+test("CSV parser rejects email-only employee identity", () => {
+  const result = parseAssignmentCsv(`seat_label,employee_name,employee_email,position,department,zone,status,notes\nN01,,jane@example.com,Case Manager,Intake,North Pod,available,\n`);
+  assert.deepEqual(result.issues, ["Row 2: employee_email requires employee_name."]);
 });
 
 test("CSV stringifier escapes commas and quotes", () => {

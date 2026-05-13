@@ -5,6 +5,7 @@
 - [ ] `.env.local` exists locally and contains the correct Supabase URL and anon key.
 - [ ] Supabase schema has `profiles`, `employees`, and `seats` tables.
 - [ ] `public.seats` has 60 draft seats and 60 published seats.
+- [ ] No duplicate seat labels exist within the same layer.
 - [ ] Admin profile exists for `patrick@megeredchianlaw.com`.
 
 ## Local QA
@@ -27,6 +28,9 @@ npm run build
 - [ ] Save Seat persists after refresh.
 - [ ] Move Seat mode prevents accidental movement.
 - [ ] Advanced drawer actions work.
+- [ ] Advanced drawer destructive actions are separated and disabled for protected original seats.
+- [ ] `/admin/management` handles employee, department, and zone edits.
+- [ ] CSV import shows a preview and rejects invalid employee/status rows.
 - [ ] Publish Draft Map updates viewer map.
 
 ## Deployment
@@ -35,3 +39,4 @@ npm run build
 - [ ] Add `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Vercel.
 - [ ] Add production domain to Supabase Auth redirect URLs.
 - [ ] Confirm RLS policies are enabled and admin-only mutations are protected.
+- [ ] Confirm `public.publish_seat_map()` is `security invoker` and `app_private.publish_seat_map()` is `security definer`.

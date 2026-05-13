@@ -43,6 +43,10 @@ supabase/migrations/005_policy_advisor_cleanup.sql
 supabase/migrations/006_remaining_advisor_cleanup.sql
 supabase/migrations/007_departments_zones_management.sql
 supabase/migrations/008_drop_management_unused_indexes.sql
+supabase/migrations/009_v105_management_csv_cleanup.sql
+supabase/migrations/010_v107_seat_protection.sql
+supabase/migrations/011_publish_seat_map_rpc_security.sql
+supabase/migrations/012_v111_advanced_drawer_safety.sql
 ```
 
 After creating your first user, promote yourself to admin:
@@ -95,8 +99,8 @@ in server cookies.
 
 Supabase Auth URL configuration for local dev:
 
-- Site URL: `http://localhost:3001`
-- Redirect URLs: `http://localhost:3001/**`
+- Site URL: `http://localhost:3000`
+- Redirect URLs: `http://localhost:3000/**`
 
 Restart the Next.js dev server after changing `.env.local` or Auth URL settings.
 
@@ -113,3 +117,7 @@ Recommended Supabase Auth settings:
 - Minimum password length: 12
 - Redirect URL: `https://seats.megeredchianlaw.com/auth/confirm`
 - Local redirect URL: `http://localhost:3000/auth/confirm`
+
+## v1.1.1 Advanced Drawer Safety
+
+The Advanced drawer is now reserved for draft map tools, CSV/backups, publishing, and destructive custom-seat actions. Employee, department, and zone management lives on `/admin/management`.

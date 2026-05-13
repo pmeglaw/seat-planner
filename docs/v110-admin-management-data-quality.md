@@ -69,7 +69,7 @@ No Supabase migration required.
 - Rename/delete a department
 - Rename/delete a zone
 - Return to `/admin`
-- Confirm Advanced drawer no longer contains employee/department/zone editor forms
+- Confirm Advanced drawer no longer contains employee/department/zone editor forms after applying v1.1.1
 - Download CSV template
 - Export current CSV
 - Import valid CSV and confirm preview prompt appears

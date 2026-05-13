@@ -27,6 +27,18 @@ The same changes are mirrored locally as:
 - `public.get_or_create_dm_thread(uuid)` no longer has direct `anon` or `authenticated` execute privileges.
 - Seat data checks are clean: no out-of-bounds coordinates, blank labels, assigned seats without employees, duplicate seat keys, or duplicate draft employee assignments.
 
+## Follow-up security drift
+
+On 2026-05-12, the live project again reported `public.publish_seat_map()` as an authenticated `SECURITY DEFINER` function. The original `006` cleanup was correct, but later publish migrations re-created the public wrapper as `SECURITY DEFINER` while updating the private publish implementation for `zone` and `is_custom` columns.
+
+Corrective local changes:
+
+- `supabase/migrations/009_v105_management_csv_cleanup.sql` keeps `public.publish_seat_map()` as a `security invoker` wrapper.
+- `supabase/migrations/010_v107_seat_protection.sql` keeps `public.publish_seat_map()` as a `security invoker` wrapper.
+- `supabase/migrations/011_publish_seat_map_rpc_security.sql` is the forward migration to apply to the live project.
+
+Apply `011_publish_seat_map_rpc_security.sql` to `wujsniclwzefvufavama` next, then verify `public.publish_seat_map()` has `security_definer = false` and `app_private.publish_seat_map()` remains `security_definer = true`.
+
 ## Remaining advisor notes
 
 - The Auth leaked password protection warning remains because that setting is not available on Supabase free projects.
