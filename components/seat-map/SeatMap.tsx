@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { PointerEvent } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction } from "@/app/actions";
 import { normalizePoint } from "@/lib/seatMath";
@@ -53,24 +54,6 @@ function replaceEmployee(employees: Employee[], seat: SeatWithEmployee) {
   const exists = employees.some(employee => employee.id === nextEmployee.id);
   if (!exists) return [...employees, nextEmployee].sort((a, b) => a.full_name.localeCompare(b.full_name));
   return employees.map(employee => (employee.id === nextEmployee.id ? nextEmployee : employee));
-}
-
-function upsertEmployee(employees: Employee[], nextEmployee: Employee) {
-  const exists = employees.some(employee => employee.id === nextEmployee.id);
-  if (!exists) return [...employees, nextEmployee].sort((a, b) => a.full_name.localeCompare(b.full_name));
-  return employees.map(employee => (employee.id === nextEmployee.id ? nextEmployee : employee));
-}
-
-function upsertDepartmentOption(options: DepartmentOption[], nextOption: DepartmentOption) {
-  const exists = options.some(option => option.id === nextOption.id || option.name === nextOption.name);
-  if (!exists) return [...options, nextOption].sort((a, b) => a.name.localeCompare(b.name));
-  return options.map(option => (option.id === nextOption.id || option.name === nextOption.name ? nextOption : option));
-}
-
-function upsertZoneOption(options: ZoneOption[], nextOption: ZoneOption) {
-  const exists = options.some(option => option.id === nextOption.id || option.name === nextOption.name);
-  if (!exists) return [...options, nextOption].sort((a, b) => a.name.localeCompare(b.name));
-  return options.map(option => (option.id === nextOption.id || option.name === nextOption.name ? nextOption : option));
 }
 
 function getSeatZone(seat: SeatWithEmployee) {
@@ -401,9 +384,17 @@ export function SeatMap({
         </div>
         <div className="flex items-center gap-2">
           {canEdit && (
-            <Button variant="ghost" className="min-h-8 px-3 text-xs" onClick={() => setAdvancedOpen(true)}>
-              Advanced
-            </Button>
+            <>
+              <Link
+                href="/admin/management"
+                className="inline-flex min-h-8 items-center justify-center rounded-md border border-white/15 bg-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+              >
+                Management
+              </Link>
+              <Button variant="ghost" className="min-h-8 px-3 text-xs" onClick={() => setAdvancedOpen(true)}>
+                Advanced
+              </Button>
+            </>
           )}
         </div>
       </header>
@@ -490,7 +481,6 @@ export function SeatMap({
         open={advancedOpen}
         seats={localSeats}
         employees={localEmployees}
-        departmentOptions={localDepartmentOptions}
         zoneOptions={localZoneOptions}
         selectedSeat={selectedSeat}
         addSeatMode={addSeatMode}
@@ -512,65 +502,6 @@ export function SeatMap({
         onToggleShowNames={() => setShowNames(current => !current)}
         onClearSelection={clearSelection}
         onDeleteSelectedSeat={deleteSelectedSeat}
-        onEmployeeCreated={employee => {
-          setActionError(null);
-          setLocalEmployees(current => upsertEmployee(current, employee));
-        }}
-        onEmployeeUpdated={employee => {
-          setActionError(null);
-          setLocalEmployees(current => upsertEmployee(current, employee));
-          setLocalSeats(current => current.map(seat => (
-            seat.employee_id === employee.id ? { ...seat, employee } : seat
-          )));
-        }}
-        onEmployeeDeleted={employeeId => {
-          setActionError(null);
-          setLocalEmployees(current => current.filter(employee => employee.id !== employeeId));
-          setLocalSeats(current => current.map(seat => {
-            if (seat.employee_id !== employeeId) return seat;
-            return { ...seat, employee_id: null, employee: null, status: "available" };
-          }));
-        }}
-        onDepartmentCreated={departmentOption => {
-          setActionError(null);
-          setLocalDepartmentOptions(current => upsertDepartmentOption(current, departmentOption));
-        }}
-        onDepartmentRenamed={(from, to) => {
-          setActionError(null);
-          setLocalDepartmentOptions(current => current
-            .map(option => option.name === from ? { ...option, active: false } : option)
-            .concat([{ id: to, name: to, active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }]));
-          setLocalEmployees(current => current.map(employee => (
-            employee.department === from ? { ...employee, department: to } : employee
-          )));
-        }}
-        onDepartmentDeleted={departmentName => {
-          setActionError(null);
-          setLocalDepartmentOptions(current => current.map(option => option.name === departmentName ? { ...option, active: false } : option));
-          setLocalEmployees(current => current.map(employee => (
-            employee.department === departmentName ? { ...employee, department: null } : employee
-          )));
-        }}
-        onZoneCreated={zoneOption => {
-          setActionError(null);
-          setLocalZoneOptions(current => upsertZoneOption(current, zoneOption));
-        }}
-        onZoneRenamed={(from, to) => {
-          setActionError(null);
-          setLocalZoneOptions(current => current
-            .map(option => option.name === from ? { ...option, active: false } : option)
-            .concat([{ id: to, name: to, active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }]));
-          setLocalSeats(current => current.map(seat => (
-            getSeatZone(seat) === from ? { ...seat, zone: to } : seat
-          )));
-        }}
-        onZoneDeleted={zoneName => {
-          setActionError(null);
-          setLocalZoneOptions(current => current.map(option => option.name === zoneName ? { ...option, active: false } : option));
-          setLocalSeats(current => current.map(seat => (
-            getSeatZone(seat) === zoneName ? { ...seat, zone: null } : seat
-          )));
-        }}
         onCsvImported={payload => {
           setActionError(null);
           setLocalSeats(normalizeSeats(payload.seats));

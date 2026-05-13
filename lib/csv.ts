@@ -109,6 +109,10 @@ function emptyAssignmentRow(): CsvAssignmentRow {
   };
 }
 
+export function createAssignmentCsvTemplate() {
+  return stringifyCsv([]);
+}
+
 export function parseAssignmentCsv(text: string): CsvValidationResult {
   const rawRows = parseCsv(text);
   if (rawRows.length === 0) {
@@ -142,6 +146,14 @@ export function parseAssignmentCsv(text: string): CsvValidationResult {
       issues.push({ row: rowIndex + 2, message: "Assigned rows require employee_name." });
     }
 
+    if ((row.status.toLowerCase() === "reserved" || row.status.toLowerCase() === "unavailable") && row.employee_name.trim()) {
+      issues.push({ row: rowIndex + 2, message: `Rows with employee_name cannot be ${row.status.toLowerCase()}.` });
+    }
+
+    if (row.employee_email.trim() && !row.employee_name.trim()) {
+      issues.push({ row: rowIndex + 2, message: "employee_email requires employee_name." });
+    }
+
     return {
       ...row,
       status: row.status.toLowerCase()
@@ -157,8 +169,8 @@ export function parseAssignmentCsv(text: string): CsvValidationResult {
       seenSeats.add(seatKey);
     }
 
-    if (row.employee_name.trim() && (row.status === "assigned" || !row.status)) {
-      const employeeKey = row.employee_email.trim().toLowerCase() || row.employee_name.trim().toLowerCase();
+    if (row.employee_name.trim() && row.status !== "reserved" && row.status !== "unavailable") {
+      const employeeKey = row.employee_name.trim().toLowerCase();
       if (seenAssignedEmployees.has(employeeKey)) {
         issues.push({ row: index + 2, message: `Employee '${row.employee_name}' appears as assigned more than once.` });
       }
