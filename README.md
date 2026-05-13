@@ -121,3 +121,7 @@ Recommended Supabase Auth settings:
 ## v1.1.1 Advanced Drawer Safety
 
 The Advanced drawer is now reserved for draft map tools, CSV/backups, publishing, and destructive custom-seat actions. Employee, department, and zone management lives on `/admin/management`.
+
+## v1.1.2 Undo / Redo Draft History
+
+Admin draft edits now have Undo and Redo controls on the draft map toolbar. History is scoped to draft map actions and clears after a successful Publish Draft Map. No Supabase migration is required for this patch.

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
 import { updateSeatAction } from "@/app/actions";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +15,8 @@ type SeatInspectorProps = {
   collapsed: boolean;
   onClose: () => void;
   onToggleCollapse: () => void;
-  onSeatUpdated: (seat: SeatWithEmployee) => void;
+  onBeforeSeatUpdate: () => DraftSnapshot;
+  onSeatUpdated: (seat: SeatWithEmployee, beforeSnapshot: DraftSnapshot) => void;
   onError: (message: string | null) => void;
   onDirtyChange: (dirty: boolean) => void;
 };
@@ -73,6 +75,7 @@ export function SeatInspector({
   collapsed,
   onClose,
   onToggleCollapse,
+  onBeforeSeatUpdate,
   onSeatUpdated,
   onError,
   onDirtyChange
@@ -212,6 +215,8 @@ export function SeatInspector({
       return;
     }
 
+    const beforeSnapshot = onBeforeSeatUpdate();
+
     startTransition(async () => {
       try {
         setLocalError(null);
@@ -232,7 +237,7 @@ export function SeatInspector({
         setForm(nextForm);
         setInitialForm(nextForm);
         onDirtyChange(false);
-        onSeatUpdated(updated);
+        onSeatUpdated(updated, beforeSnapshot);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not update assignment.";
         setLocalError(message);
