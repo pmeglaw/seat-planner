@@ -144,6 +144,7 @@ export function AdminManagementPanel({
   }, [activeEmployees, localSeats, search]);
 
   const selectedEmployee = activeEmployees.find(employee => employee.id === selectedEmployeeId) ?? null;
+  const selectedEmployeeSeatLabel = selectedEmployee ? getAssignedSeatLabel(selectedEmployee.id, localSeats) : "Unassigned";
   const assignedEmployees = activeEmployees.filter(employee => localSeats.some(seat => seat.employee_id === employee.id)).length;
   const unassignedEmployees = activeEmployees.length - assignedEmployees;
   const fieldClassName = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100";
@@ -474,6 +475,17 @@ export function AdminManagementPanel({
                   <input list="management-department-options" value={employeeForm.department} onChange={event => setEmployeeForm(current => ({ ...current, department: event.target.value }))} className={fieldClassName} />
                 </label>
               </div>
+              {selectedEmployee && (
+                <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+                  <div className="font-black uppercase tracking-wide">Deactivation impact</div>
+                  <div className="mt-1">
+                    Current draft seat: <span className="font-bold">{selectedEmployeeSeatLabel}</span>.
+                    {selectedEmployeeSeatLabel === "Unassigned"
+                      ? " Deactivation removes this employee from the active directory."
+                      : " Deactivation clears this draft assignment. Published assignments are protected server-side."}
+                  </div>
+                </div>
+              )}
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button type="button" variant="primary" onClick={saveEmployee} disabled={pending || !employeeForm.fullName.trim()}>{selectedEmployee ? "Save employee" : "Add employee"}</Button>
                 {selectedEmployee && <Button type="button" variant="danger" onClick={deleteEmployee} disabled={pending}>Deactivate</Button>}

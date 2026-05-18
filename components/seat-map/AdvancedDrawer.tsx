@@ -57,7 +57,7 @@ function formatCsvIssues(issues: Array<{ row: number; message: string }>) {
 
 function buildCsvPreviewMessage(rowCount: number, assignedCount: number, clearCount: number, reservedCount: number, unavailableCount: number) {
   return [
-    "Import CSV into the draft map?",
+    "Review CSV import before applying?",
     "",
     `Rows: ${rowCount}`,
     `Assignments: ${assignedCount}`,
@@ -65,7 +65,9 @@ function buildCsvPreviewMessage(rowCount: number, assignedCount: number, clearCo
     `Reserved seats: ${reservedCount}`,
     `Unavailable seats: ${unavailableCount}`,
     "",
-    "This updates draft assignments only and will not move markers."
+    "This updates draft assignments only.",
+    "Marker positions and the published viewer map will not change.",
+    "Undo is available after import until the next publish."
   ].join("\n");
 }
 
@@ -186,10 +188,15 @@ export function AdvancedDrawer({
         onClick={onClose}
       />
 
-      <aside className="fixed right-3 top-[68px] z-50 max-h-[calc(100vh-82px)] w-[400px] max-w-[calc(100vw-1.5rem)] overflow-auto rounded-3xl border border-white/70 bg-white/96 p-4 shadow-soft backdrop-blur">
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="advanced-drawer-title"
+        className="fixed right-3 top-[68px] z-50 max-h-[calc(100vh-82px)] w-[400px] max-w-[calc(100vw-1.5rem)] overflow-auto rounded-3xl border border-white/70 bg-white/96 p-4 shadow-soft backdrop-blur"
+      >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-bold text-slate-950">Advanced</h2>
+            <h2 id="advanced-drawer-title" className="text-base font-bold text-slate-950">Advanced tools</h2>
             <p className="mt-1 text-xs text-slate-500">Draft map tools, import/export, publishing, and protected actions.</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100">
@@ -247,7 +254,7 @@ export function AdvancedDrawer({
           <div className={sectionClassName}>
             <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">CSV and backups</div>
             <div className="mt-3 flex flex-col gap-2">
-              <Button type="button" onClick={downloadTemplate} disabled={busy}>Download CSV Template</Button>
+              <Button type="button" onClick={downloadTemplate} disabled={busy}>Download Blank CSV Template</Button>
               <Button type="button" onClick={exportCsv} disabled={busy}>Export Current CSV</Button>
               <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={event => importCsv(event.target.files?.[0])} />
               <Button type="button" onClick={() => fileInputRef.current?.click()} disabled={busy}>Import CSV</Button>
@@ -259,7 +266,7 @@ export function AdvancedDrawer({
                 Export JSON Backup
               </Button>
             </div>
-            <p className="mt-2 text-xs leading-5 text-slate-500">CSV import previews changes first, updates draft assignments only, and never changes marker coordinates.</p>
+            <p className="mt-2 text-xs leading-5 text-slate-500">Template is blank. Export Current CSV includes the current draft assignment rows. Import previews changes first, updates draft assignments only, and never changes marker coordinates.</p>
           </div>
 
           <div className={sectionClassName}>

@@ -139,6 +139,7 @@ export function SeatInspector({
   if (!seat) return null;
 
   const selectedSeat = seat;
+  const selectedSeatZone = selectedSeat.zone ?? selectedSeat.department ?? "No zone";
 
   function updateField<K extends keyof SeatInspectorForm>(field: K, value: SeatInspectorForm[K]) {
     setForm(current => ({ ...current, [field]: value }));
@@ -272,6 +273,11 @@ export function SeatInspector({
         <div>
           <h2 className="text-base font-bold text-slate-900">Seat Assignment</h2>
           <p className="mt-1 text-xs text-slate-500">{selectedSeat.label}{isDirty ? " · Unsaved changes" : ""}</p>
+          <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-bold">
+            <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{selectedSeat.status}</span>
+            <span className="rounded-full bg-orange-50 px-2 py-1 text-orange-800">{selectedSeatZone}</span>
+            <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{selectedSeat.is_custom ? "Custom seat" : "Original seat"}</span>
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className={iconButtonClassName}>−</button>
@@ -290,6 +296,9 @@ export function SeatInspector({
               placeholder="Search or enter employee name"
               className={fieldClassName}
             />
+            <span className="mt-1 block text-[11px] leading-4 text-slate-500">
+              Existing names are matched automatically. A new name creates an active employee record when saved.
+            </span>
           </label>
 
           <label className="block">

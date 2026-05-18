@@ -199,6 +199,8 @@ export function LoginForm() {
 
       {message && (
         <p
+          role={messageType === "error" ? "alert" : "status"}
+          aria-live={messageType === "error" ? "assertive" : "polite"}
           className={cx(
             "mt-4 rounded-xl p-3 text-sm",
             messageType === "error" && "bg-rose-50 text-rose-700",

@@ -30,6 +30,7 @@ type FilterPanelProps = {
   onDepartmentChange: (value: string) => void;
   onZoneChange: (value: string) => void;
   onStatusChange: (value: string) => void;
+  onClearFilters: () => void;
 };
 
 export function FilterPanel({
@@ -47,8 +48,11 @@ export function FilterPanel({
   onSearchChange,
   onDepartmentChange,
   onZoneChange,
-  onStatusChange
+  onStatusChange,
+  onClearFilters
 }: FilterPanelProps) {
+  const filtersActive = Boolean(search.trim()) || department !== "all" || zone !== "all" || status !== "all";
+
   if (collapsed) {
     return (
       <aside className="self-start lg:sticky lg:top-[60px]">
@@ -71,9 +75,16 @@ export function FilterPanel({
           <h2 className="text-sm font-bold text-slate-900">Filter Map</h2>
           <p className="mt-1 text-xs leading-5 text-slate-500">Search employees, departments, zones, positions, and seats.</p>
         </div>
-        <button type="button" onClick={onToggle} className="rounded-lg px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100">
-          Collapse
-        </button>
+        <div className="flex items-center gap-1">
+          {filtersActive && (
+            <button type="button" onClick={onClearFilters} className="rounded-lg px-2 py-1 text-[11px] font-bold text-brand hover:bg-orange-50">
+              Clear
+            </button>
+          )}
+          <button type="button" onClick={onToggle} className="rounded-lg px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100">
+            Collapse
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -185,7 +196,13 @@ export function FilterPanel({
             </button>
           )) : (
             <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-              No employees match the current filters.
+              <div className="font-semibold text-slate-700">No employees match the current filters.</div>
+              <div className="mt-1">Clear filters or search by seat label, employee name, position, department, or zone.</div>
+              {filtersActive && (
+                <button type="button" onClick={onClearFilters} className="mt-2 text-xs font-bold text-brand hover:text-brand-dark">
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
         </div>
