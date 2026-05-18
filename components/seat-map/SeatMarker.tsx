@@ -65,6 +65,7 @@ export function SeatMarker({
         "group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-visible border",
         "font-black leading-none tracking-[0.01em] shadow-[0_8px_18px_rgba(31,35,39,0.16),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur",
         "transition-all duration-150 ease-out hover:z-20 hover:scale-[1.02] hover:border-orange-200 hover:bg-orange-50/80",
+        "focus-visible:z-40 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-orange-500",
         statusClass,
         namesVisible
           ? "min-h-[40px] min-w-[108px] rounded-2xl px-3 py-1.5 text-left"

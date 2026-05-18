@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seat Planner UX Preview</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-soft: #111827;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --line: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --brand: #f97316;
+      --brand-dark: #c2410c;
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --shadow: 0 22px 60px rgba(15, 23, 42, 0.22);
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(249, 115, 22, 0.16), transparent 36rem),
+        linear-gradient(135deg, #0f172a, #172033 54%, #0f172a);
+      color: var(--text);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid rgba(249, 115, 22, 0.55);
+      outline-offset: 2px;
+    }
+
+    .app {
+      display: grid;
+      min-height: 100vh;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(280px, 520px) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 12px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(15, 23, 42, 0.88);
+      color: white;
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      min-width: 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 3px;
+      color: #fdba74;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 12px;
+    }
+
+    .search {
+      position: relative;
+    }
+
+    .search input {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 0 14px;
+    }
+
+    .search input::placeholder {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: white;
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 750;
+      line-height: 1;
+      transition: 140ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+    }
+
+    .btn.primary {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: white;
+    }
+
+    .btn.primary:hover {
+      background: var(--brand-dark);
+    }
+
+    .btn.dark {
+      border-color: rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    .btn.danger {
+      border-color: #fecdd3;
+      background: #fff1f2;
+      color: var(--danger);
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr) 340px;
+      gap: 12px;
+      padding: 12px;
+      min-height: 0;
+    }
+
+    .panel {
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow);
+    }
+
+    .filters {
+      align-self: start;
+      max-height: calc(100vh - 88px);
+      overflow: auto;
+      padding: 14px;
+    }
+
+    .panel-head {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .panel-head h2,
+    .inspector h2,
+    .drawer h2,
+    .modal h2 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .panel-head p,
+    .helper {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .link-btn {
+      border: 0;
+      background: transparent;
+      color: var(--brand-dark);
+      padding: 4px 0;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .field {
+      margin-top: 12px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 5px;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: white;
+      color: var(--text);
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-soft);
+      padding: 10px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .results {
+      margin-top: 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .result {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .avatar {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      place-items: center;
+      border-radius: 999px;
+      background: #ffedd5;
+      color: var(--brand-dark);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .truncate {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .result strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .result span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .canvas-wrap {
+      min-width: 0;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      background: white;
+      padding: 10px;
+      box-shadow: var(--shadow);
+    }
+
+    .notice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      background: #f0fdf4;
+      color: #166534;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .mode {
+      margin-bottom: 10px;
+      border: 1px solid #fed7aa;
+      border-radius: 12px;
+      background: #fff7ed;
+      color: #9a3412;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .map-frame {
+      position: relative;
+      overflow: auto;
+      max-height: calc(100vh - 146px);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8f5f0;
+    }
+
+    .map {
+      position: relative;
+      width: 1180px;
+      max-width: none;
+      margin: 0 auto;
+    }
+
+    .map img {
+      display: block;
+      width: 100%;
+      height: auto;
+      user-select: none;
+    }
+
+    .marker {
+      position: absolute;
+      z-index: 5;
+      transform: translate(-50%, -50%);
+      min-width: 92px;
+      min-height: 36px;
+      border: 1px solid #bbf7d0;
+      border-radius: 14px;
+      background: rgba(236, 253, 245, 0.96);
+      color: #064e3b;
+      padding: 6px 9px;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+      text-align: left;
+      font-size: 10px;
+      font-weight: 850;
+      backdrop-filter: blur(8px);
+    }
+
+    .marker .name {
+      display: block;
+      max-width: 82px;
+      margin-top: 2px;
+      overflow: hidden;
+      color: #047857;
+      font-size: 9px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .marker.open {
+      min-width: 38px;
+      min-height: 30px;
+      border-color: #cbd5e1;
+      border-radius: 999px;
+      background: white;
+      color: #334155;
+      text-align: center;
+    }
+
+    .marker.selected {
+      z-index: 10;
+      border-color: var(--brand);
+      background: #fff7ed;
+      color: #9a3412;
+      outline: 4px solid rgba(249, 115, 22, 0.25);
+    }
+
+    .marker.reserved {
+      border-color: #fde68a;
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .inspector {
+      align-self: start;
+      max-height: calc(100vh - 88px);
+      overflow: auto;
+      padding: 14px;
+    }
+
+    .seat-summary {
+      border: 1px solid #fed7aa;
+      border-radius: 14px;
+      background: #fff7ed;
+      padding: 12px;
+    }
+
+    .seat-summary h2 {
+      font-size: 18px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .chip {
+      border-radius: 999px;
+      background: white;
+      color: #475569;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .chip.orange {
+      background: #ffedd5;
+      color: #9a3412;
+    }
+
+    .section {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel-soft);
+      padding: 12px;
+    }
+
+    .section h3 {
+      margin: 0 0 4px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .drawer,
+    .modal-backdrop {
+      display: none;
+    }
+
+    body.show-drawer .drawer {
+      display: block;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 74px;
+      right: 16px;
+      z-index: 90;
+      width: min(420px, calc(100vw - 32px));
+      max-height: calc(100vh - 92px);
+      overflow: auto;
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    body.show-publish .modal-backdrop.publish,
+    body.show-csv .modal-backdrop.csv {
+      display: grid;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      place-items: center;
+      background: rgba(15, 23, 42, 0.55);
+      padding: 20px;
+    }
+
+    .modal {
+      width: min(620px, 100%);
+      border: 1px solid rgba(255, 255, 255, 0.76);
+      border-radius: 20px;
+      background: white;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .warning-box {
+      margin-top: 14px;
+      border: 1px solid #fed7aa;
+      border-radius: 14px;
+      background: #fff7ed;
+      color: #9a3412;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .management-preview {
+      margin: 0 12px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.09);
+      color: white;
+      padding: 14px;
+    }
+
+    .management-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .mgmt-card {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 12px;
+    }
+
+    .mgmt-card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+
+    .mgmt-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 9px;
+      margin-top: 9px;
+      color: rgba(255, 255, 255, 0.76);
+      font-size: 12px;
+    }
+
+    .footer-note {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1180px) {
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .filters,
+      .inspector {
+        max-height: none;
+      }
+
+      .management-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        padding: 12px;
+      }
+
+      .actions .btn {
+        flex: 1 1 auto;
+      }
+
+      .metric-grid,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <p class="eyebrow">Megeredchian Law internal</p>
+        <h1>Seat Planner</h1>
+        <p>Draft map. Changes stay private until published.</p>
+      </div>
+
+      <div class="search" role="search">
+        <input aria-label="Search employees, seats, positions, departments, and zones" placeholder="Search employees, seats, positions, departments, zones...">
+      </div>
+
+      <div class="actions" aria-label="Primary admin actions">
+        <button class="btn dark" title="Undo Assign W11">Undo Assign W11</button>
+        <button class="btn dark" disabled title="No draft edits to redo">Redo</button>
+        <button class="btn dark" type="button" onclick="document.body.classList.add('show-drawer')">Advanced tools</button>
+        <button class="btn primary" type="button" onclick="document.body.classList.add('show-publish')">Publish Draft Map</button>
+      </div>
+    </header>
+
+    <main class="shell">
+      <aside class="filters panel" aria-label="Map filters">
+        <div class="panel-head">
+          <div>
+            <h2>Filters</h2>
+            <p>Search narrows visible markers and employee results.</p>
+          </div>
+          <button class="link-btn">Clear</button>
+        </div>
+
+        <div class="field">
+          <label for="department">Department</label>
+          <select id="department">
+            <option>All departments</option>
+            <option>Litigation</option>
+            <option>Intake</option>
+            <option>Operations</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="zone">Zone</label>
+          <select id="zone">
+            <option>All zones</option>
+            <option>West Pod</option>
+            <option>North Pod</option>
+            <option>Center West</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status">
+            <option>All statuses</option>
+            <option>Assigned</option>
+            <option>Available</option>
+            <option>Reserved</option>
+            <option>Unavailable</option>
+          </select>
+        </div>
+
+        <div class="stats" aria-label="Draft map statistics">
+          <div class="stat"><strong>64</strong><span>Total seats</span></div>
+          <div class="stat"><strong>42</strong><span>Assigned</span></div>
+          <div class="stat"><strong>16</strong><span>Available</span></div>
+          <div class="stat"><strong>6</strong><span>Reserved</span></div>
+        </div>
+
+        <div class="results">
+          <button class="result">
+            <span class="avatar">AS</span>
+            <span><strong class="truncate">Alex Shahbazian</strong><span class="truncate">Attorney · Litigation</span></span>
+            <strong>W11</strong>
+          </button>
+          <button class="result">
+            <span class="avatar">PA</span>
+            <span><strong class="truncate">Patrick A</strong><span class="truncate">Admin · Operations</span></span>
+            <strong>W08</strong>
+          </button>
+          <button class="result" disabled title="No assigned seat">
+            <span class="avatar">JM</span>
+            <span><strong class="truncate">Jordan Manager</strong><span class="truncate">Unassigned</span></span>
+            <strong>-</strong>
+          </button>
+        </div>
+      </aside>
+
+      <section class="canvas-wrap" aria-label="Draft seat map workspace">
+        <div class="notice">
+          <span>Saved changes to W11. Undo is available until publish.</span>
+          <span>Draft only</span>
+        </div>
+        <div class="mode">Move mode is off. Select a marker, then use Advanced tools to move a seat.</div>
+
+        <div class="map-frame">
+          <div class="map">
+            <img src="../public/images/office-floor-plan.png" alt="Office floor plan">
+            <button class="marker selected" style="left: 29%; top: 36%;" onclick="selectSeat('W11', 'Alex Shahbazian')">
+              W11 <span class="name">Alex Shahbazian</span>
+            </button>
+            <button class="marker" style="left: 25%; top: 52%;" onclick="selectSeat('W08', 'Patrick A')">
+              W08 <span class="name">Patrick A</span>
+            </button>
+            <button class="marker open" style="left: 49%; top: 48%;" onclick="selectSeat('N03', 'Open')">N03</button>
+            <button class="marker reserved" style="left: 65%; top: 41%;" onclick="selectSeat('E02', 'Reserved')">
+              E02 <span class="name">Reserved</span>
+            </button>
+            <button class="marker open" style="left: 77%; top: 60%;" onclick="selectSeat('SE04', 'Open')">SE04</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="inspector panel" aria-label="Selected seat inspector">
+        <div class="seat-summary">
+          <p class="eyebrow">Selected seat</p>
+          <h2 id="seat-title">W11</h2>
+          <div class="chips">
+            <span class="chip orange">Assigned</span>
+            <span class="chip">West Pod</span>
+            <span class="chip">Original seat</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Assignment</h3>
+          <p class="helper">Existing names are matched automatically. A new name creates an employee record when saved.</p>
+          <div class="field">
+            <label for="employee">Employee name</label>
+            <input id="employee" value="Alex Shahbazian">
+          </div>
+          <div class="field">
+            <label for="position">Position</label>
+            <input id="position" value="Attorney">
+          </div>
+          <div class="field">
+            <label for="dept">Department</label>
+            <input id="dept" value="Litigation">
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Seat state</h3>
+          <div class="field">
+            <label for="seat-status">Status</label>
+            <select id="seat-status">
+              <option>Assigned</option>
+              <option>Available</option>
+              <option>Reserved</option>
+              <option>Unavailable</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Notes</h3>
+          <div class="field">
+            <label for="notes">Internal notes</label>
+            <textarea id="notes" rows="3" placeholder="Optional context for admins"></textarea>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="btn primary" style="flex:1;">Save changes</button>
+          <button class="btn">Vacate</button>
+        </div>
+      </aside>
+    </main>
+
+    <section class="management-preview" aria-label="Management preview examples">
+      <div class="panel-head" style="margin-bottom:0;">
+        <div>
+          <p class="eyebrow">Design review preview</p>
+          <h2 style="margin:0; color:white;">Management examples</h2>
+          <p class="footer-note">Static examples for employee, department, and zone management hierarchy. This section is not part of the proposed map screen.</p>
+        </div>
+      </div>
+      <div class="management-grid">
+        <div class="mgmt-card">
+          <h3>Employee row</h3>
+          <div class="mgmt-row"><span>Patrick A</span><strong>W08</strong></div>
+          <div class="warning-box" style="margin-top:10px;">Deactivate clears draft seat W08. Published assignments are protected server-side.</div>
+        </div>
+        <div class="mgmt-card">
+          <h3>Departments</h3>
+          <div class="mgmt-row"><span>Litigation</span><strong>14 employees</strong></div>
+          <div class="mgmt-row"><span>Operations</span><strong>5 employees</strong></div>
+        </div>
+        <div class="mgmt-card">
+          <h3>Zones</h3>
+          <div class="mgmt-row"><span>West Pod</span><strong>18 draft seats</strong></div>
+          <div class="mgmt-row"><span>North Pod</span><strong>12 draft seats</strong></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <div class="panel-head">
+      <div>
+        <h2 id="drawer-title">Advanced tools</h2>
+        <p>Less common draft actions, CSV tools, backups, and protected destructive actions.</p>
+      </div>
+      <button class="link-btn" onclick="document.body.classList.remove('show-drawer')">Close</button>
+    </div>
+
+    <div class="section">
+      <h3>Map display</h3>
+      <button class="btn">Hide names</button>
+      <button class="btn">Clear selection</button>
+    </div>
+
+    <div class="section">
+      <h3>Custom seats</h3>
+      <p class="helper">Move mode requires selecting a seat first. Original seats are protected from deletion.</p>
+      <div style="display:grid; gap:8px; margin-top:10px;">
+        <button class="btn primary">Add custom seat</button>
+        <button class="btn">Move selected seat</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>CSV and backups</h3>
+      <p class="helper">Template is blank. Export Current CSV includes current draft assignments.</p>
+      <div style="display:grid; gap:8px; margin-top:10px;">
+        <button class="btn">Download blank CSV template</button>
+        <button class="btn">Export current CSV</button>
+        <button class="btn" onclick="document.body.classList.add('show-csv')">Import CSV</button>
+        <button class="btn">Download JSON backup</button>
+      </div>
+    </div>
+
+    <div class="section" style="border-color:#fecdd3; background:#fff1f2;">
+      <h3 style="color:#991b1b;">Danger zone</h3>
+      <p class="helper" style="color:#9f1239;">Only custom draft seats can be deleted. Published map is unchanged until publish.</p>
+      <button class="btn danger" style="margin-top:10px; width:100%;">Delete selected custom seat</button>
+    </div>
+  </aside>
+
+  <div class="modal-backdrop publish" role="presentation">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="publish-title">
+      <p class="eyebrow">Publish review</p>
+      <h2 id="publish-title">Publish draft map?</h2>
+      <p class="helper">Viewers will see this version after publish. Undo/Redo history clears after publish.</p>
+      <div class="metric-grid">
+        <div class="stat"><strong>64</strong><span>Total seats</span></div>
+        <div class="stat"><strong>42</strong><span>Assigned</span></div>
+        <div class="stat"><strong>16</strong><span>Available</span></div>
+        <div class="stat"><strong>6</strong><span>Reserved</span></div>
+        <div class="stat"><strong>0</strong><span>Unavailable</span></div>
+        <div class="stat"><strong>4</strong><span>Custom seats</span></div>
+      </div>
+      <div class="warning-box">Use Cancel if you need to review or undo more draft changes first.</div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button class="btn" onclick="document.body.classList.remove('show-publish')">Cancel</button>
+        <button class="btn primary" onclick="document.body.classList.remove('show-publish')">Publish draft map</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop csv" role="presentation">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="csv-title">
+      <p class="eyebrow">CSV import review</p>
+      <h2 id="csv-title">Review import before applying</h2>
+      <p class="helper">This updates draft assignments only. Marker positions and the published viewer map will not change.</p>
+      <div class="metric-grid">
+        <div class="stat"><strong>30</strong><span>Rows</span></div>
+        <div class="stat"><strong>28</strong><span>Assignments</span></div>
+        <div class="stat"><strong>2</strong><span>Clear assignments</span></div>
+        <div class="stat"><strong>0</strong><span>Reserved</span></div>
+        <div class="stat"><strong>0</strong><span>Unavailable</span></div>
+        <div class="stat"><strong>0</strong><span>Blocking errors</span></div>
+      </div>
+      <div class="warning-box">Undo is available after import until the next publish.</div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button class="btn" onclick="document.body.classList.remove('show-csv')">Cancel</button>
+        <button class="btn primary" onclick="document.body.classList.remove('show-csv')">Import 30 rows</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function selectSeat(label, name) {
+      document.getElementById("seat-title").textContent = label;
+      document.getElementById("employee").value = name === "Open" || name === "Reserved" ? "" : name;
+      document.querySelectorAll(".marker").forEach(function(marker) {
+        marker.classList.remove("selected");
+      });
+      event.currentTarget.classList.add("selected");
+    }
+
+    document.addEventListener("keydown", function(event) {
+      if (event.key !== "Escape") return;
+      document.body.classList.remove("show-drawer", "show-publish", "show-csv");
+    });
+  </script>
+</body>
+</html>

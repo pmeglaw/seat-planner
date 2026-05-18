@@ -26,12 +26,17 @@ npm run build
 - [ ] Hide Names / Show Names works.
 - [ ] Seat inspector glass UI displays correctly.
 - [ ] Save Seat persists after refresh.
+- [ ] Undo and Redo restore saved draft assignment/status/notes edits.
+- [ ] Undo and Redo restore add, move, and delete custom-seat actions.
+- [ ] Undo and Redo are disabled when there is no matching draft history.
 - [ ] Move Seat mode prevents accidental movement.
 - [ ] Advanced drawer actions work.
 - [ ] Advanced drawer destructive actions are separated and disabled for protected original seats.
 - [ ] `/admin/management` handles employee, department, and zone edits.
 - [ ] CSV import shows a preview and rejects invalid employee/status rows.
+- [ ] CSV import can be undone/redone before publishing.
 - [ ] Publish Draft Map updates viewer map.
+- [ ] Publish Draft Map clears Undo/Redo history.
 
 ## Deployment
 
