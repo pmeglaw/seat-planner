@@ -1,66 +1,67 @@
 # AGENTS.md
 
-## Repo Layout
+## Purpose And Stack
 
-This is a private Next.js App Router seat-planning app using React, TypeScript, Tailwind CSS, Supabase Auth, Supabase Postgres, RLS, and server actions.
+This repo is a private office seat-planning app. Authenticated viewers see the published seating map at `/`; admins edit a draft map at `/admin`, manage data at `/admin/management`, and publish draft changes when ready.
 
-- `app/`: routes, layouts, auth pages, and server actions.
-- `app/page.tsx`: authenticated viewer map using the published seat layer.
-- `app/admin/page.tsx`: admin draft map editor.
-- `app/admin/management/page.tsx`: employee, department, and zone management.
-- `components/`: client UI, including the seat map, inspector, filters, drawer, auth forms, and admin management panel.
-- `lib/`: business logic, validators, Supabase helpers, auth messages, CSV helpers, and draft history.
-- `tests/`: Node test runner `.mjs` tests for focused business logic.
-- `supabase/migrations/`: schema, seed data, RLS, and security migrations. Run them in numeric order.
-- `public/images/office-floor-plan.png`: floor plan image used by the map.
-- `docs/`: setup, QA, release, auth, and patch notes.
+Tech stack: Next.js App Router, React, TypeScript, Tailwind CSS, Supabase Auth, Supabase Postgres, RLS, and Next.js server actions.
 
 ## Commands
 
-Package manager: npm. Use `package-lock.json`.
+Package manager: npm. Use the existing `package-lock.json`.
 
 - Install: `npm ci`
-- Dev/run: `npm run dev`
+- Dev: `npm run dev`
+- Build: `npm run build`
+- Lint: `npm run lint`
 - Test: `npm test`
 - Typecheck: `npm run typecheck`
-- Lint: `npm run lint`
-- Build: `npm run build`
 
-`npm test` runs `node --test tests/*.test.mjs`. If dependencies are missing, it can fail because `tests/draft-history.test.mjs` imports `typescript`.
+`npm test` runs `node --test tests/*.test.mjs`. It requires installed dependencies because some tests import `typescript`.
 
-## Local Setup
+## Important Folders
+
+- `app/`: App Router routes, layouts, auth pages, and `app/actions.ts` server actions.
+- `components/`: UI for the seat map, inspector, filters, advanced drawer, auth forms, and admin management.
+- `lib/`: Supabase clients, auth helpers, validators, CSV logic, seat math, seat labels, seat protection, and draft history.
+- `tests/`: focused Node `.mjs` tests for business logic.
+- `supabase/migrations/`: database schema, seed data, RLS policies, and security migrations.
+- `public/images/`: static assets, including the office floor plan.
+- `docs/`: release, QA, auth, implementation, and patch notes.
+
+## Supabase And Env
 
 - Copy `.env.local.example` to `.env.local`.
 - Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-- Apply all SQL files in `supabase/migrations/` in order.
-- Create the first Supabase user, then promote the intended admin in `public.profiles`.
-- Configure Supabase Auth redirect URLs for local testing, including `http://localhost:3000/**` and `/auth/confirm`.
+- Never add service-role keys to browser-accessible env vars or client code.
+- Apply `supabase/migrations/*.sql` in numeric order.
+- After creating the first user, promote the admin in `public.profiles`.
+- For local auth, configure Supabase redirect URLs such as `http://localhost:3000/**` and `http://localhost:3000/auth/confirm`.
 
 ## Coding Conventions
 
-- Keep changes small and reviewable.
-- Prefer existing components, helpers, server actions, and Tailwind patterns.
-- Keep business rules in focused `lib/` helpers when practical, with tests nearby in `tests/`.
-- Use TypeScript strictly; avoid `any` unless there is no clean alternative.
-- Preserve the operational, map-first UI style. Viewer mode should stay simpler than admin mode.
-- Use server actions in `app/actions.ts` for mutations that touch Supabase.
-- Keep auth/session behavior in the existing `lib/supabase/*` and middleware patterns.
+- Keep changes small and consistent with existing patterns.
+- Prefer existing helpers and components before adding new abstractions.
+- Put shared business rules in `lib/` and cover risky logic with tests in `tests/`.
+- Keep mutations that touch Supabase in server actions and enforce admin access with `requireAdmin()`.
+- Treat Supabase RLS, `profiles.role`, and server-side checks as the security boundary.
+- Use strict TypeScript; avoid `any` unless the alternative is worse.
+- Preserve the operational, map-first Tailwind UI. Viewer flows should stay simpler than admin flows.
 
-## Constraints
+## Safe Change Rules
 
-- Do not add production dependencies without asking first.
+- Only modify files needed for the task.
+- Ask before adding production dependencies.
 - Do not commit, push, or open PRs unless explicitly asked.
 - Do not print, expose, commit, or transmit secrets.
-- Never use Supabase service-role keys in browser-accessible code.
-- Treat Supabase RLS, `profiles.role`, and server-side `requireAdmin()` as the authorization boundary.
-- Client-side admin UI checks are convenience only, not security.
-- Draft and published seat layers are separate; admin edits draft, viewer reads published.
-- Protected original seats must not be deleted directly; only custom seats are removable.
+- Do not bypass RLS/admin checks with client-only guards.
+- Keep draft and published seat behavior separate: admins edit draft, viewers read published.
+- Do not allow protected original seats to be deleted directly; only custom seats are removable.
 
 ## Done Means
 
-- The requested behavior is implemented and scoped to the relevant files.
-- Relevant checks have been run, usually `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build` for broad app changes.
-- If a check cannot run, report why and give the exact command to run.
-- Documentation-only changes do not require tests, but say tests were skipped and why.
-- Summarize changed files and any remaining risks before handing back.
+- The requested change is implemented and scoped to the relevant files.
+- Relevant checks were run. For broad app changes, run `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`.
+- If a check cannot run, explain why and provide the exact command to run.
+- Documentation-only changes can skip tests, but say so explicitly.
+- Summarize changed files and remaining risks.
