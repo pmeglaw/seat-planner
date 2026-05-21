@@ -140,6 +140,8 @@ export function SeatInspector({
 
   const selectedSeat = seat;
   const selectedSeatZone = selectedSeat.zone ?? selectedSeat.department ?? "No zone";
+  const selectedSeatEmployeeName = selectedSeat.employee?.full_name ?? "this employee";
+  const hasCurrentAssignment = Boolean(selectedSeat.employee_id);
 
   function updateField<K extends keyof SeatInspectorForm>(field: K, value: SeatInspectorForm[K]) {
     setForm(current => ({ ...current, [field]: value }));
@@ -247,6 +249,52 @@ export function SeatInspector({
     });
   }
 
+  function handleVacateSeat() {
+    if (!hasCurrentAssignment || pending) return;
+
+    const confirmed = window.confirm(
+      [
+        `Vacate ${selectedSeat.label}?`,
+        "",
+        `This clears ${selectedSeatEmployeeName} from this draft seat.`,
+        ...(isDirty ? ["Any unsaved inspector edits will be discarded."] : []),
+        "The published viewer map will not change until the draft is published."
+      ].join("\n")
+    );
+
+    if (!confirmed) return;
+
+    const beforeSnapshot = onBeforeSeatUpdate();
+
+    startTransition(async () => {
+      try {
+        setLocalError(null);
+        onError(null);
+        const updated = await updateSeatAction({
+          seatId: selectedSeat.id,
+          label: selectedSeat.label,
+          status: "available",
+          employeeId: null,
+          employeeName: null,
+          employeePosition: null,
+          department: null,
+          zone: selectedSeat.zone ?? selectedSeat.department ?? null,
+          notes: selectedSeat.notes?.trim() || null
+        });
+        const nextForm = formFromSeat(updated);
+        activeSeatSnapshotRef.current = formSnapshot(nextForm);
+        setForm(nextForm);
+        setInitialForm(nextForm);
+        onDirtyChange(false);
+        onSeatUpdated(updated, beforeSnapshot);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Could not vacate seat.";
+        setLocalError(message);
+        onError(message);
+      }
+    });
+  }
+
   const fieldClassName = "mt-1 w-full rounded-xl border border-white/70 bg-white/82 px-3 py-2 text-sm text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)] outline-none backdrop-blur focus:border-brand focus:bg-white/95 focus:ring-4 focus:ring-orange-100";
   const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/60 bg-white/58 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white/88";
 
@@ -287,6 +335,17 @@ export function SeatInspector({
 
       {canEdit ? (
         <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="rounded-2xl border border-white/60 bg-white/60 p-3 text-xs leading-5 text-slate-600 backdrop-blur">
+            <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">
+              {hasCurrentAssignment ? "Assigned seat" : "Open seat"}
+            </div>
+            <p className="mt-1">
+              {hasCurrentAssignment
+                ? `Update the assignment details or vacate ${selectedSeat.label} from the draft map.`
+                : "Choose an employee name to assign this draft seat."}
+            </p>
+          </div>
+
           <label className="block">
             <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee Name</span>
             <input
@@ -340,10 +399,15 @@ export function SeatInspector({
             </div>
           )}
 
-          <div className="pt-2">
+          <div className="grid gap-2 pt-2">
             <Button type="submit" variant="primary" disabled={pending || !isDirty} className="w-full">
-              {selectedSeat.employee ? "Update Assignment" : "Assign Seat"}
+              {hasCurrentAssignment ? "Update Assignment" : "Assign Seat"}
             </Button>
+            {hasCurrentAssignment && (
+              <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} className="w-full">
+                Vacate Seat
+              </Button>
+            )}
           </div>
 
           <datalist id="seat-inspector-employee-options">
