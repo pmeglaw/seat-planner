@@ -32,3 +32,7 @@ export function resolvePublishHistoryProfiles(
 export function getPublishHistoryActor(event: PublishHistoryEvent) {
   return event.published_by_email ?? event.published_by ?? "Unknown admin";
 }
+
+export function getLatestPublishEvent(events: PublishHistoryEvent[]) {
+  return events[0] ?? null;
+}
