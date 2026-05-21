@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
-import { getPublishHistoryActor, type PublishHistoryEvent } from "@/lib/publishHistory";
+import { getLatestPublishEvent, getPublishHistoryActor, type PublishHistoryEvent } from "@/lib/publishHistory";
 import {
   createDepartmentAction,
   createEmployeeAction,
@@ -29,6 +29,8 @@ type AdminManagementPanelProps = {
   seats: SeatWithEmployee[];
   departmentOptions: DepartmentOption[];
   zoneOptions: ZoneOption[];
+  initialTab?: ManagementTab;
+  initialPublishHistoryEvents?: PublishHistoryEvent[];
 };
 
 type ManagementTab = "employees" | "departments" | "zones" | "publishHistory";
@@ -112,13 +114,15 @@ export function AdminManagementPanel({
   employees,
   seats,
   departmentOptions,
-  zoneOptions
+  zoneOptions,
+  initialTab = "employees",
+  initialPublishHistoryEvents
 }: AdminManagementPanelProps) {
   const [localEmployees, setLocalEmployees] = useState(employees);
   const [localDepartmentOptions, setLocalDepartmentOptions] = useState(departmentOptions);
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
   const [localSeats, setLocalSeats] = useState(seats);
-  const [activeTab, setActiveTab] = useState<ManagementTab>("employees");
+  const [activeTab, setActiveTab] = useState<ManagementTab>(initialTab);
   const [search, setSearch] = useState("");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [employeeForm, setEmployeeForm] = useState<EmployeeForm>(emptyEmployeeForm);
@@ -129,8 +133,8 @@ export function AdminManagementPanel({
   const [editingZone, setEditingZone] = useState("");
   const [zoneDraft, setZoneDraft] = useState("");
   const [publishHistoryState, setPublishHistoryState] = useState<PublishHistoryState>({
-    status: "idle",
-    events: [],
+    status: initialPublishHistoryEvents ? "loaded" : "idle",
+    events: initialPublishHistoryEvents ?? [],
     error: null
   });
   const [message, setMessage] = useState<string | null>(null);
@@ -177,6 +181,14 @@ export function AdminManagementPanel({
   const selectedEmployeeSeatLabel = selectedEmployee ? getAssignedSeatLabel(selectedEmployee.id, localSeats) : "Unassigned";
   const assignedEmployees = activeEmployees.filter(employee => localSeats.some(seat => seat.employee_id === employee.id)).length;
   const unassignedEmployees = activeEmployees.length - assignedEmployees;
+  const latestPublish = getLatestPublishEvent(publishHistoryState.events);
+  const managementSummaryCards = [
+    { label: "Draft seats", value: localSeats.length, detail: "Editable map" },
+    { label: "Active employees", value: activeEmployees.length, detail: "Directory" },
+    { label: "Assigned", value: assignedEmployees, detail: "Draft seats" },
+    { label: "Unassigned", value: unassignedEmployees, detail: "Employees" },
+    { label: "Active zones", value: zoneNames.length, detail: "Filters" }
+  ];
   const fieldClassName = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100";
 
   const loadPublishHistory = useCallback(async () => {
@@ -416,15 +428,15 @@ export function AdminManagementPanel({
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-3 py-4 text-slate-950 sm:px-6">
+    <main className="min-h-screen bg-slate-950 px-3 py-5 text-slate-950 sm:px-6 sm:py-6">
       <div className="mx-auto max-w-7xl space-y-4">
-        <header className="rounded-3xl border border-white/10 bg-white p-5 shadow-soft">
+        <header className="rounded-3xl border border-white/10 bg-white p-5 shadow-soft sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">Admin tools</p>
               <h1 className="mt-1 text-2xl font-black text-slate-950">Management</h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Manage employees, departments, and physical map zones outside the daily seat-assignment workflow.
+                Manage people, departments, zones, and publish audit visibility outside the daily seat-map workflow.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -439,32 +451,26 @@ export function AdminManagementPanel({
           <div className={["rounded-2xl border px-4 py-3 text-sm font-semibold", error ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"].join(" ")}>{error ?? message}</div>
         )}
 
-        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <div className="rounded-2xl border border-white/10 bg-white p-4 shadow-soft">
-            <div className="text-2xl font-black">{activeEmployees.length}</div>
-            <div className="text-xs font-bold uppercase tracking-wide text-slate-500">Active employees</div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white p-4 shadow-soft">
-            <div className="text-2xl font-black">{assignedEmployees}</div>
-            <div className="text-xs font-bold uppercase tracking-wide text-slate-500">Assigned</div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white p-4 shadow-soft">
-            <div className="text-2xl font-black">{unassignedEmployees}</div>
-            <div className="text-xs font-bold uppercase tracking-wide text-slate-500">Unassigned</div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white p-4 shadow-soft">
-            <div className="text-2xl font-black">{zoneNames.length}</div>
-            <div className="text-xs font-bold uppercase tracking-wide text-slate-500">Active zones</div>
-          </div>
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+          {managementSummaryCards.map(card => (
+            <div key={card.label} className="rounded-2xl border border-white/10 bg-white p-4 shadow-soft">
+              <div className="flex items-baseline justify-between gap-2">
+                <div className="text-2xl font-black">{card.value}</div>
+                <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">{card.detail}</div>
+              </div>
+              <div className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">{card.label}</div>
+            </div>
+          ))}
         </section>
 
-        <nav className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/10 p-2 text-white backdrop-blur">
+        <nav className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/10 p-1.5 text-white backdrop-blur">
           {managementTabs.map(tab => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={["rounded-xl px-4 py-2 text-sm font-bold transition", activeTab === tab.id ? "bg-white text-slate-950" : "bg-white/10 text-white hover:bg-white/15"].join(" ")}
+              className={["rounded-xl px-4 py-2 text-sm font-bold transition", activeTab === tab.id ? "bg-white text-slate-950 shadow-sm" : "bg-white/10 text-white hover:bg-white/15"].join(" ")}
+              aria-current={activeTab === tab.id ? "page" : undefined}
             >
               {tab.label}
             </button>
@@ -482,7 +488,7 @@ export function AdminManagementPanel({
                 <input
                   value={search}
                   onChange={event => setSearch(event.target.value)}
-                  placeholder="Search employees, positions, departments, seats..."
+                  placeholder="Search employees..."
                   className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100 md:w-80"
                 />
               </div>
@@ -507,6 +513,12 @@ export function AdminManagementPanel({
                     </button>
                   );
                 })}
+                {filteredEmployees.length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500 lg:col-span-2">
+                    <div className="font-black text-slate-950">No employees match this search</div>
+                    <p className="mt-1">Try a different name, department, position, or seat label.</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -559,7 +571,7 @@ export function AdminManagementPanel({
                 <h2 className="text-lg font-black">Departments</h2>
                 <p className="text-sm text-slate-500">Employee departments are separate from physical seating zones.</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <input value={newDepartmentName} onChange={event => setNewDepartmentName(event.target.value)} placeholder="New department" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100" />
                 <Button type="button" variant="primary" onClick={createDepartment} disabled={pending || !newDepartmentName.trim()}>Add</Button>
               </div>
@@ -585,6 +597,12 @@ export function AdminManagementPanel({
                   )}
                 </div>
               ))}
+              {departmentNames.length === 0 && (
+                <div className="p-5 text-sm text-slate-500">
+                  <div className="font-black text-slate-950">No departments yet</div>
+                  <p className="mt-1">Add a department to keep employee records easier to scan.</p>
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -596,7 +614,7 @@ export function AdminManagementPanel({
                 <h2 className="text-lg font-black">Zones</h2>
                 <p className="text-sm text-slate-500">Zones are physical map areas used for filtering and custom-seat label prefixes.</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <input value={newZoneName} onChange={event => setNewZoneName(event.target.value)} placeholder="New zone" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100" />
                 <Button type="button" variant="primary" onClick={createZone} disabled={pending || !newZoneName.trim()}>Add</Button>
               </div>
@@ -622,82 +640,138 @@ export function AdminManagementPanel({
                   )}
                 </div>
               ))}
+              {zoneNames.length === 0 && (
+                <div className="p-5 text-sm text-slate-500">
+                  <div className="font-black text-slate-950">No zones yet</div>
+                  <p className="mt-1">Add a zone to organize map filters and custom-seat labels.</p>
+                </div>
+              )}
             </div>
           </section>
         )}
 
         {activeTab === "publishHistory" && (
-          <section className="rounded-3xl border border-white/10 bg-white p-4 shadow-soft">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
+          <section className="rounded-3xl border border-white/10 bg-white p-4 shadow-soft sm:p-5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="max-w-2xl">
                 <h2 className="text-lg font-black">Publish History</h2>
-                <p className="text-sm text-slate-500">Recent completed publishes from the draft map.</p>
+                <p className="text-sm leading-6 text-slate-500">
+                  Recent completed publishes from the draft map, including published seat count and admin identity when the profile can be resolved.
+                </p>
               </div>
               <Button type="button" onClick={loadPublishHistory} disabled={publishHistoryState.status === "loading"}>
-                {publishHistoryState.status === "loading" ? "Loading" : "Refresh"}
+                {publishHistoryState.status === "loading" ? "Loading" : "Refresh history"}
               </Button>
             </div>
 
             {publishHistoryState.status === "loading" && (
-              <div className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200">
-                {[0, 1, 2].map(item => (
-                  <div key={item} className="grid gap-3 p-3 md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)]">
-                    <div className="h-5 animate-pulse rounded bg-slate-100" />
-                    <div className="h-5 animate-pulse rounded bg-slate-100" />
-                    <div className="h-5 animate-pulse rounded bg-slate-100" />
+              <>
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    <div className="h-14 animate-pulse rounded-xl bg-white" />
+                    <div className="h-14 animate-pulse rounded-xl bg-white" />
+                    <div className="h-14 animate-pulse rounded-xl bg-white" />
                   </div>
-                ))}
-              </div>
+                </div>
+                <div className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200">
+                  {[0, 1, 2].map(item => (
+                    <div key={item} className="grid gap-3 p-3 md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_80px]">
+                      <div className="h-5 animate-pulse rounded bg-slate-100" />
+                      <div className="h-5 animate-pulse rounded bg-slate-100" />
+                      <div className="h-5 animate-pulse rounded bg-slate-100" />
+                      <div className="h-5 animate-pulse rounded bg-slate-100" />
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
 
             {publishHistoryState.status === "error" && (
-              <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                <div className="font-black">Could not load publish history.</div>
-                <div className="mt-1 whitespace-pre-wrap">{publishHistoryState.error}</div>
-                <Button type="button" variant="danger" className="mt-3" onClick={loadPublishHistory}>
+              <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="font-black">Could not load publish history.</div>
+                  <div className="mt-1 whitespace-pre-wrap">{publishHistoryState.error}</div>
+                </div>
+                <Button type="button" variant="danger" onClick={loadPublishHistory}>
                   Retry
                 </Button>
               </div>
             )}
 
             {publishHistoryState.status === "loaded" && publishHistoryState.events.length === 0 && (
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6">
                 <h3 className="text-sm font-black text-slate-950">No publish events yet</h3>
-                <p className="mt-1 text-sm text-slate-500">Published maps will appear here with their seat count and publisher.</p>
+                <p className="mt-1 max-w-xl text-sm leading-6 text-slate-500">
+                  Published maps will appear here after the first successful publish audit event is written.
+                </p>
               </div>
             )}
 
             {publishHistoryState.status === "loaded" && publishHistoryState.events.length > 0 && (
-              <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
-                <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)] bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500 md:grid">
-                  <div>Created At</div>
-                  <div>Seat Count</div>
-                  <div>Published By</div>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {publishHistoryState.events.map((event, index) => (
-                    <div
-                      key={`${event.created_at}-${event.published_by ?? "unknown"}-${index}`}
-                      className="grid gap-3 p-3 text-sm md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)] md:items-center"
-                    >
+              <>
+                {latestPublish && (
+                  <div className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+                    <div className="text-[11px] font-black uppercase tracking-wide text-brand-dark">Latest Publish</div>
+                    <div className="mt-3 grid gap-3 md:grid-cols-3">
                       <div>
-                        <div className="text-[11px] font-black uppercase tracking-wide text-slate-500 md:hidden">Created At</div>
-                        <div className="font-semibold text-slate-950">{formatPublishDate(event.created_at)}</div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-orange-700">Created</div>
+                        <div className="mt-1 text-sm font-black text-slate-950">{formatPublishDate(latestPublish.created_at)}</div>
                       </div>
                       <div>
-                        <div className="text-[11px] font-black uppercase tracking-wide text-slate-500 md:hidden">Seat Count</div>
-                        <div className="font-black text-slate-950">{event.seat_count.toLocaleString()}</div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-orange-700">Seat Count</div>
+                        <div className="mt-1 text-sm font-black text-slate-950">{latestPublish.seat_count.toLocaleString()}</div>
                       </div>
                       <div className="min-w-0">
-                        <div className="text-[11px] font-black uppercase tracking-wide text-slate-500 md:hidden">Published By</div>
-                        <div className="break-all font-semibold text-slate-700" title={event.published_by ?? undefined}>
-                          {getPublishHistoryActor(event)}
+                        <div className="text-xs font-bold uppercase tracking-wide text-orange-700">Published By</div>
+                        <div className="mt-1 break-all text-sm font-black text-slate-950" title={latestPublish.published_by ?? undefined}>
+                          {getPublishHistoryActor(latestPublish)}
                         </div>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                )}
+
+                <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+                  <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_80px] bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500 md:grid">
+                    <div>Created At</div>
+                    <div>Seat Count</div>
+                    <div>Published By</div>
+                    <div>State</div>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {publishHistoryState.events.map((event, index) => (
+                      <div
+                        key={`${event.created_at}-${event.published_by ?? "unknown"}-${index}`}
+                        className="grid gap-3 p-3 text-sm md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_80px] md:items-center"
+                      >
+                        <div>
+                          <div className="text-[11px] font-black uppercase tracking-wide text-slate-500 md:hidden">Created At</div>
+                          <div className="font-semibold text-slate-950">{formatPublishDate(event.created_at)}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-black uppercase tracking-wide text-slate-500 md:hidden">Seat Count</div>
+                          <div className="font-black text-slate-950">{event.seat_count.toLocaleString()}</div>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-black uppercase tracking-wide text-slate-500 md:hidden">Published By</div>
+                          <div className="break-all font-semibold text-slate-700" title={event.published_by ?? undefined}>
+                            {getPublishHistoryActor(event)}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-black uppercase tracking-wide text-slate-500 md:hidden">State</div>
+                          {index === 0 ? (
+                            <span className="inline-flex rounded-full bg-orange-100 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-brand-dark">Latest</span>
+                          ) : (
+                            <span className="text-xs font-semibold text-slate-400">Previous</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </section>
         )}

@@ -53,3 +53,28 @@ test("publish history falls back to raw publisher id when no profile email exist
   assert.equal(event.published_by_email, null);
   assert.equal(publishHistory.getPublishHistoryActor(event), "missing-profile");
 });
+
+test("latest publish event uses the newest fetched row", () => {
+  const events = publishHistory.resolvePublishHistoryProfiles(
+    [
+      {
+        created_at: "2026-05-21T18:00:00.000Z",
+        seat_count: 61,
+        published_by: "user-1"
+      },
+      {
+        created_at: "2026-05-20T16:00:00.000Z",
+        seat_count: 60,
+        published_by: "user-2"
+      }
+    ],
+    [
+      {
+        id: "user-1",
+        email: "admin@example.com"
+      }
+    ]
+  );
+
+  assert.equal(publishHistory.getLatestPublishEvent(events).seat_count, 61);
+});
