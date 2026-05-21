@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
+import { getPublishHistoryActor, type PublishHistoryEvent } from "@/lib/publishHistory";
 import {
   createDepartmentAction,
   createEmployeeAction,
@@ -10,6 +11,7 @@ import {
   deleteDepartmentAction,
   deleteEmployeeAction,
   deleteZoneAction,
+  getPublishHistoryAction,
   renameDepartmentAction,
   renameZoneAction,
   updateEmployeeAction
@@ -29,7 +31,20 @@ type AdminManagementPanelProps = {
   zoneOptions: ZoneOption[];
 };
 
-type ManagementTab = "employees" | "departments" | "zones";
+type ManagementTab = "employees" | "departments" | "zones" | "publishHistory";
+
+type PublishHistoryState = {
+  status: "idle" | "loading" | "loaded" | "error";
+  events: PublishHistoryEvent[];
+  error: string | null;
+};
+
+const managementTabs: Array<{ id: ManagementTab; label: string }> = [
+  { id: "employees", label: "Employees" },
+  { id: "departments", label: "Departments" },
+  { id: "zones", label: "Zones" },
+  { id: "publishHistory", label: "Publish History" }
+];
 
 const emptyEmployeeForm: EmployeeForm = {
   fullName: "",
@@ -61,6 +76,16 @@ function getInitials(name: string) {
     .slice(0, 2)
     .map(part => part[0]?.toUpperCase())
     .join("") || "?";
+}
+
+function formatPublishDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value || "Unknown date";
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(date);
 }
 
 function countEmployeesByDepartment(employees: Employee[]) {
@@ -103,6 +128,11 @@ export function AdminManagementPanel({
   const [newZoneName, setNewZoneName] = useState("");
   const [editingZone, setEditingZone] = useState("");
   const [zoneDraft, setZoneDraft] = useState("");
+  const [publishHistoryState, setPublishHistoryState] = useState<PublishHistoryState>({
+    status: "idle",
+    events: [],
+    error: null
+  });
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -148,6 +178,34 @@ export function AdminManagementPanel({
   const assignedEmployees = activeEmployees.filter(employee => localSeats.some(seat => seat.employee_id === employee.id)).length;
   const unassignedEmployees = activeEmployees.length - assignedEmployees;
   const fieldClassName = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100";
+
+  const loadPublishHistory = useCallback(async () => {
+    setPublishHistoryState(current => ({
+      ...current,
+      status: "loading",
+      error: null
+    }));
+
+    try {
+      const events = await getPublishHistoryAction();
+      setPublishHistoryState({
+        status: "loaded",
+        events,
+        error: null
+      });
+    } catch (errorValue) {
+      setPublishHistoryState(current => ({
+        ...current,
+        status: "error",
+        error: errorValue instanceof Error ? errorValue.message : "Could not load publish history."
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== "publishHistory" || publishHistoryState.status !== "idle") return;
+    void loadPublishHistory();
+  }, [activeTab, loadPublishHistory, publishHistoryState.status]);
 
   function showSuccess(nextMessage: string) {
     setError(null);
@@ -401,14 +459,14 @@ export function AdminManagementPanel({
         </section>
 
         <nav className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/10 p-2 text-white backdrop-blur">
-          {(["employees", "departments", "zones"] as ManagementTab[]).map(tab => (
+          {managementTabs.map(tab => (
             <button
-              key={tab}
+              key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab)}
-              className={["rounded-xl px-4 py-2 text-sm font-bold capitalize transition", activeTab === tab ? "bg-white text-slate-950" : "bg-white/10 text-white hover:bg-white/15"].join(" ")}
+              onClick={() => setActiveTab(tab.id)}
+              className={["rounded-xl px-4 py-2 text-sm font-bold transition", activeTab === tab.id ? "bg-white text-slate-950" : "bg-white/10 text-white hover:bg-white/15"].join(" ")}
             >
-              {tab}
+              {tab.label}
             </button>
           ))}
         </nav>
@@ -565,6 +623,82 @@ export function AdminManagementPanel({
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {activeTab === "publishHistory" && (
+          <section className="rounded-3xl border border-white/10 bg-white p-4 shadow-soft">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-lg font-black">Publish History</h2>
+                <p className="text-sm text-slate-500">Recent completed publishes from the draft map.</p>
+              </div>
+              <Button type="button" onClick={loadPublishHistory} disabled={publishHistoryState.status === "loading"}>
+                {publishHistoryState.status === "loading" ? "Loading" : "Refresh"}
+              </Button>
+            </div>
+
+            {publishHistoryState.status === "loading" && (
+              <div className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200">
+                {[0, 1, 2].map(item => (
+                  <div key={item} className="grid gap-3 p-3 md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)]">
+                    <div className="h-5 animate-pulse rounded bg-slate-100" />
+                    <div className="h-5 animate-pulse rounded bg-slate-100" />
+                    <div className="h-5 animate-pulse rounded bg-slate-100" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {publishHistoryState.status === "error" && (
+              <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                <div className="font-black">Could not load publish history.</div>
+                <div className="mt-1 whitespace-pre-wrap">{publishHistoryState.error}</div>
+                <Button type="button" variant="danger" className="mt-3" onClick={loadPublishHistory}>
+                  Retry
+                </Button>
+              </div>
+            )}
+
+            {publishHistoryState.status === "loaded" && publishHistoryState.events.length === 0 && (
+              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+                <h3 className="text-sm font-black text-slate-950">No publish events yet</h3>
+                <p className="mt-1 text-sm text-slate-500">Published maps will appear here with their seat count and publisher.</p>
+              </div>
+            )}
+
+            {publishHistoryState.status === "loaded" && publishHistoryState.events.length > 0 && (
+              <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+                <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)] bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500 md:grid">
+                  <div>Created At</div>
+                  <div>Seat Count</div>
+                  <div>Published By</div>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {publishHistoryState.events.map((event, index) => (
+                    <div
+                      key={`${event.created_at}-${event.published_by ?? "unknown"}-${index}`}
+                      className="grid gap-3 p-3 text-sm md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)] md:items-center"
+                    >
+                      <div>
+                        <div className="text-[11px] font-black uppercase tracking-wide text-slate-500 md:hidden">Created At</div>
+                        <div className="font-semibold text-slate-950">{formatPublishDate(event.created_at)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] font-black uppercase tracking-wide text-slate-500 md:hidden">Seat Count</div>
+                        <div className="font-black text-slate-950">{event.seat_count.toLocaleString()}</div>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-black uppercase tracking-wide text-slate-500 md:hidden">Published By</div>
+                        <div className="break-all font-semibold text-slate-700" title={event.published_by ?? undefined}>
+                          {getPublishHistoryActor(event)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         )}
 

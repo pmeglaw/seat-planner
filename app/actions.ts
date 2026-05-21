@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseAssignmentCsv } from "@/lib/csv";
 import type { DraftSnapshot } from "@/lib/draftHistory";
+import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/publishHistory";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import { SEAT_STATUSES, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
 
@@ -897,6 +898,46 @@ export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
 
   revalidatePath("/admin");
   return getDraftMapPayload(supabase);
+}
+
+export async function getPublishHistoryAction(limit = 10) {
+  const supabase = await requireAdmin();
+  const requestedLimit = Number.isFinite(limit) ? Math.trunc(limit) : 10;
+  const pageSize = Math.min(Math.max(requestedLimit, 1), 25);
+
+  const { data, error } = await supabase
+    .from("publish_events")
+    .select("created_at,seat_count,published_by")
+    .order("created_at", { ascending: false })
+    .limit(pageSize);
+
+  if (error) throw new Error(error.message);
+
+  const events = ((data ?? []) as Array<{
+    created_at: string;
+    seat_count: number | string | null;
+    published_by: string | null;
+  }>).map(record => {
+    const seatCount = Number(record.seat_count ?? 0);
+
+    return {
+      created_at: record.created_at,
+      seat_count: Number.isFinite(seatCount) ? seatCount : 0,
+      published_by: record.published_by
+    };
+  }) satisfies PublishEventRecord[];
+
+  const publisherIds = Array.from(new Set(events.map(event => event.published_by).filter((id): id is string => Boolean(id))));
+  if (publisherIds.length === 0) return resolvePublishHistoryProfiles(events, []);
+
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id,email")
+    .in("id", publisherIds);
+
+  if (profilesError) throw new Error(profilesError.message);
+
+  return resolvePublishHistoryProfiles(events, (profiles ?? []) as Array<{ id: string; email: string | null }>);
 }
 
 export async function publishSeatMapAction() {
