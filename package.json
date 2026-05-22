@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "qa:handoff": "node tools/seat-planner-improvement-loop/generate-handoff.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs"
   },
