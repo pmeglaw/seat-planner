@@ -527,7 +527,9 @@ export function SeatMap({
     ? "Add Seat mode is active. Click an empty point on the map to place a marker."
     : moveSeatMode
       ? "Move Seat mode is active. Drag the selected marker to reposition it."
-      : "Select a seat to assign or update employee details.";
+      : canEdit
+        ? "Select a seat to assign or update employee details."
+        : "Select a seat to view assignment details.";
 
   return (
     <div className="min-h-screen overflow-x-hidden">
