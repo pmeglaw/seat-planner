@@ -1,0 +1,149 @@
+{
+  "version": "1.2.4",
+  "purpose": "Developer-only QA matrix for Seat Planner Codex handoffs.",
+  "categories": [
+    {
+      "name": "Auth and routing",
+      "risk": "high",
+      "goal": "Auth gates and route responsibilities remain unchanged.",
+      "checks": [
+        "/admin requires authenticated admin access.",
+        "/admin/management requires authenticated admin access.",
+        "Viewer and admin routes do not share admin-only UI state."
+      ],
+      "evidence": [
+        "Manual browser smoke test",
+        "npm run build"
+      ]
+    },
+    {
+      "name": "Viewer/public map",
+      "risk": "high",
+      "goal": "Viewer route shows the published map and viewer-only copy.",
+      "checks": [
+        "Viewer route reads published seats only.",
+        "Viewer route does not show admin controls.",
+        "Viewer inspector copy says: \"Select a seat to view assignment details.\""
+      ],
+      "evidence": [
+        "Manual browser smoke test",
+        "npm run build"
+      ]
+    },
+    {
+      "name": "Admin draft map",
+      "risk": "high",
+      "goal": "Admin map continues to edit draft seats only.",
+      "checks": [
+        "Admin route reads draft seats.",
+        "Assignment controls remain scoped to admin routes.",
+        "Admin assignment copy does not appear on the viewer route."
+      ],
+      "evidence": [
+        "Manual browser smoke test",
+        "npm run typecheck"
+      ]
+    },
+    {
+      "name": "Management page",
+      "risk": "medium",
+      "goal": "Admin management remains protected and operational.",
+      "checks": [
+        "Management page requires auth.",
+        "Management workflows do not reference removed legacy tables.",
+        "CSV/data-quality behavior remains covered by existing tests."
+      ],
+      "evidence": [
+        "npm test",
+        "npm run typecheck"
+      ]
+    },
+    {
+      "name": "Publish workflow",
+      "risk": "high",
+      "goal": "Publishing preserves draft/published separation and audit behavior.",
+      "checks": [
+        "Publishing draft data updates published map intentionally.",
+        "Publishing does not collapse draft and published seat behavior.",
+        "Publish history behavior remains covered by existing tests."
+      ],
+      "evidence": [
+        "npm test",
+        "npm run build"
+      ]
+    },
+    {
+      "name": "Assignment/vacate workflow",
+      "risk": "high",
+      "goal": "Assignment and vacate interactions remain reversible and safe.",
+      "checks": [
+        "Vacate confirmation preserves assignment when cancelled.",
+        "Protected original seats cannot be directly deleted.",
+        "Custom seat removal remains separate from protected seat behavior."
+      ],
+      "evidence": [
+        "npm test",
+        "Manual browser smoke test"
+      ]
+    },
+    {
+      "name": "Search/filter behavior",
+      "risk": "medium",
+      "goal": "Search and filter controls continue to find expected assignments.",
+      "checks": [
+        "Search finds expected assigned users.",
+        "Filters do not hide valid assigned-seat matches unexpectedly.",
+        "Viewer search remains simpler than admin workflows."
+      ],
+      "evidence": [
+        "Manual browser smoke test",
+        "npm run typecheck"
+      ]
+    },
+    {
+      "name": "Mobile smoke test",
+      "risk": "medium",
+      "goal": "Mobile map remains usable, readable, and non-overlapping.",
+      "checks": [
+        "Seat markers remain readable on mobile viewport.",
+        "Inspector and map controls do not overlap incoherently.",
+        "Core viewer/admin map workflows remain usable on mobile."
+      ],
+      "evidence": [
+        "Manual browser smoke test",
+        "npm run build"
+      ]
+    },
+    {
+      "name": "Supabase/runtime table access",
+      "risk": "high",
+      "goal": "Runtime code references current Supabase objects only.",
+      "checks": [
+        "No removed legacy tables are referenced by app/runtime code.",
+        "No schema drift is introduced by tooling-only changes.",
+        "RLS and server-side admin boundaries remain the security boundary."
+      ],
+      "evidence": [
+        "rg for stale table names",
+        "npm run typecheck"
+      ]
+    },
+    {
+      "name": "Build/lint/typecheck/tests",
+      "risk": "high",
+      "goal": "Standard verification remains green before handoff.",
+      "checks": [
+        "npm test passes.",
+        "npm run typecheck passes.",
+        "npm run lint passes.",
+        "npm run build passes."
+      ],
+      "evidence": [
+        "npm test",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build"
+      ]
+    }
+  ]
+}
