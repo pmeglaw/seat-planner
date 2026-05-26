@@ -13,8 +13,10 @@ type SeatInspectorProps = {
   departmentOptions: DepartmentOption[];
   canEdit: boolean;
   collapsed: boolean;
+  swapMode: boolean;
   onClose: () => void;
   onToggleCollapse: () => void;
+  onStartSwapSeat: () => void;
   onBeforeSeatUpdate: () => DraftSnapshot;
   onSeatUpdated: (seat: SeatWithEmployee, beforeSnapshot: DraftSnapshot) => void;
   onError: (message: string | null) => void;
@@ -73,8 +75,10 @@ export function SeatInspector({
   departmentOptions,
   canEdit,
   collapsed,
+  swapMode,
   onClose,
   onToggleCollapse,
+  onStartSwapSeat,
   onBeforeSeatUpdate,
   onSeatUpdated,
   onError,
@@ -264,6 +268,17 @@ export function SeatInspector({
     setForm(initialForm);
     setLocalError(null);
     onError(null);
+    onDirtyChange(false);
+  }
+
+  function handleStartSwapSeat() {
+    if (isDirty) {
+      const confirmed = window.confirm("Discard unsaved inspector edits before starting a seat swap?");
+      if (!confirmed) return;
+      handleResetEdits();
+    }
+
+    onStartSwapSeat();
   }
 
   function handleVacateSeat() {
@@ -312,18 +327,20 @@ export function SeatInspector({
     });
   }
 
-  const fieldClassName = "mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand focus:ring-4 focus:ring-orange-100 disabled:bg-slate-50 disabled:text-slate-500";
-  const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-black text-slate-600 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100";
+  const fieldClassName = "mt-1 w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand focus:ring-4 focus:ring-orange-100 disabled:bg-slate-50 disabled:text-slate-500";
+  const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100";
+
+  if (collapsed && swapMode) return null;
 
   if (collapsed) {
     return (
-      <aside className="fixed right-3 top-[76px] z-40">
+      <aside className="fixed right-3 top-[70px] z-40">
         <button
           type="button"
           onClick={onToggleCollapse}
           aria-label="Expand inspector"
           title="Expand inspector"
-          className="flex min-h-[210px] w-[46px] flex-col items-center justify-center rounded-lg border border-slate-200 bg-white/92 px-2 py-3 text-slate-700 shadow-[0_14px_40px_rgba(15,23,42,0.14)] backdrop-blur-xl transition hover:bg-white"
+          className="flex min-h-[168px] w-[46px] flex-col items-center justify-center rounded-full border border-white/70 bg-white/80 px-2 py-4 text-slate-700 shadow-[0_14px_40px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white"
         >
           <span className="rotate-180 text-[11px] font-extrabold uppercase tracking-[0.18em] [writing-mode:vertical-rl]">Inspector</span>
           <span className="mt-2 rotate-180 text-[10px] text-slate-400 [writing-mode:vertical-rl]">{selectedSeat.label}</span>
@@ -333,18 +350,19 @@ export function SeatInspector({
   }
 
   return (
-    <aside className="fixed inset-x-3 bottom-3 z-40 max-h-[72vh] overflow-auto rounded-lg border border-slate-200 bg-white/95 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.22)] backdrop-blur-2xl supports-[backdrop-filter]:bg-white/90 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[76px] sm:max-h-[calc(100vh-90px)] sm:w-[360px] sm:max-w-[calc(100vw-2rem)]">
+    <aside className="fixed inset-x-3 bottom-3 z-40 max-h-[72vh] overflow-auto rounded-2xl border border-white/70 bg-white/95 p-4 shadow-[0_26px_80px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-white/90 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[70px] sm:max-h-[calc(100vh-84px)] sm:w-[350px] sm:max-w-[calc(100vw-2rem)]">
       <div className="mb-3 flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-black leading-none text-slate-950">{selectedSeat.label}</h2>
+            <h2 className="text-xl font-black leading-none text-slate-950">{selectedSeat.label}</h2>
             {isDirty && <span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-amber-700 ring-1 ring-amber-200">Unsaved</span>}
+            {swapMode && <span className="rounded-full bg-sky-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">Swap</span>}
           </div>
-          <p className="mt-1 text-xs font-semibold text-slate-500">{canEdit ? "Draft seat details" : "Published read-only details"}</p>
+          <p className="mt-1 text-xs font-semibold text-slate-500">{canEdit ? "Draft task panel" : "Published read-only"}</p>
           <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-bold">
-            <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{selectedSeat.status}</span>
-            <span className="rounded-full bg-orange-50 px-2 py-1 text-orange-800">{selectedSeatZone}</span>
-            <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{selectedSeat.is_custom ? "Custom" : "Original"}</span>
+            <span className="rounded-full bg-white/80 px-2 py-1 text-slate-600 ring-1 ring-slate-200">{selectedSeat.status}</span>
+            <span className="rounded-full bg-orange-50/90 px-2 py-1 text-orange-800 ring-1 ring-orange-100">{selectedSeatZone}</span>
+            <span className="rounded-full bg-white/80 px-2 py-1 text-slate-600 ring-1 ring-slate-200">{selectedSeat.is_custom ? "Custom" : "Original"}</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -354,88 +372,89 @@ export function SeatInspector({
       </div>
 
       {canEdit ? (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <section className="space-y-3">
-            <div>
-              <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Assignment</div>
-              <p className="mt-1 text-xs leading-5 text-slate-500">
-                {hasCurrentAssignment ? `Currently assigned to ${selectedSeatEmployeeName}.` : "Open draft seat."}
-              </p>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <section className="rounded-2xl border border-slate-200 bg-white/60 p-3">
+            <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Assignment</div>
+            <div className="mt-1 text-lg font-black leading-tight text-slate-950">
+              {employeeNameValue || (hasCurrentAssignment ? selectedSeatEmployeeName : "Open seat")}
             </div>
-
-            <label className="block">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee name</span>
-              <input
-                list="seat-inspector-employee-options"
-                value={form.employeeName}
-                onChange={handleEmployeeNameChange}
-                placeholder="Search or enter employee name"
-                className={fieldClassName}
-              />
-              <span className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide", employeeNameValue ? "bg-orange-50 text-brand-dark ring-1 ring-orange-100" : "bg-slate-100 text-slate-500"].join(" ")}>
-                {assignmentStateText}
-              </span>
-            </label>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="block">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Position</span>
-                <input value={form.employeePosition} onChange={event => handleTextChange("employeePosition", event)} className={fieldClassName} />
-              </label>
-
-              <label className="block">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Department</span>
-                <select value={form.department} onChange={handleDepartmentChange} className={fieldClassName}>
-                  <option value="">No department</option>
-                  {departments.map(department => (
-                    <option key={department} value={department}>{department}</option>
-                  ))}
-                </select>
-              </label>
+            <div className="mt-1 text-xs font-semibold text-slate-500">
+              {hasCurrentAssignment ? "Draft assignment" : "Ready to assign"}
             </div>
           </section>
 
-          <section className="space-y-3 border-t border-slate-100 pt-4">
-            <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Seat state</div>
+          <label className="block">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee name</span>
+            <input
+              list="seat-inspector-employee-options"
+              value={form.employeeName}
+              onChange={handleEmployeeNameChange}
+              placeholder="Search or enter employee name"
+              className={fieldClassName}
+            />
+            <span className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide", employeeNameValue ? "bg-orange-50 text-brand-dark ring-1 ring-orange-100" : "bg-slate-100 text-slate-500"].join(" ")}>
+              {assignmentStateText}
+            </span>
+          </label>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Status</span>
-              <select value={effectiveStatus} onChange={handleStatusChange} disabled={hasAssignedPerson} className={fieldClassName}>
-                {hasAssignedPerson && <option value="assigned">Assigned</option>}
+              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Team</span>
+              <select value={form.department} onChange={handleDepartmentChange} className={fieldClassName}>
+                <option value="">No team</option>
+                {departments.map(department => (
+                  <option key={department} value={department}>{department}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Role</span>
+              <input value={form.employeePosition} onChange={event => handleTextChange("employeePosition", event)} placeholder="Optional" className={fieldClassName} />
+            </label>
+          </div>
+
+          {!hasAssignedPerson && (
+            <label className="block">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Seat status</span>
+              <select value={effectiveStatus} onChange={handleStatusChange} className={fieldClassName}>
                 <option value="available">Available</option>
                 <option value="reserved">Reserved</option>
                 <option value="unavailable">Unavailable</option>
               </select>
-              {hasAssignedPerson && (
-                <span className="mt-1 block text-[11px] leading-4 text-slate-500">Assigned seats keep assigned status until the employee is removed.</span>
-              )}
             </label>
+          )}
 
-            <label className="block">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Notes</span>
-              <textarea value={form.notes} onChange={event => handleTextChange("notes", event)} className={`${fieldClassName} min-h-24`} />
-            </label>
-          </section>
+          <label className="block">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Notes</span>
+            <textarea value={form.notes} onChange={event => handleTextChange("notes", event)} placeholder="Optional seat note" className={`${fieldClassName} min-h-20`} />
+          </label>
 
           {localError && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-xs font-semibold text-rose-700">
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-xs font-semibold text-rose-700">
               {localError}
             </div>
           )}
 
-          <div className="grid gap-2 border-t border-slate-100 pt-4">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <Button type="submit" variant="primary" disabled={pending || !isDirty} className="w-full">
-                {hasCurrentAssignment ? "Save changes" : "Assign seat"}
+          <div className="grid gap-2 border-t border-slate-100 pt-3">
+            <Button type="submit" variant="primary" disabled={pending || !isDirty} className="w-full rounded-xl">
+              {hasCurrentAssignment ? "Update seat" : "Assign seat"}
+            </Button>
+            <div className={["grid gap-2", hasCurrentAssignment || isDirty ? "grid-cols-2" : "grid-cols-1"].join(" ")}>
+              <Button type="button" onClick={handleStartSwapSeat} disabled={pending} className="w-full rounded-xl">
+                Swap seat
               </Button>
-              <Button type="button" onClick={handleResetEdits} disabled={pending || !isDirty} className="w-full">
-                Discard edits
-              </Button>
+              {hasCurrentAssignment && (
+                <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} className="w-full rounded-xl">
+                  Vacate
+                </Button>
+              )}
+              {isDirty && (
+                <Button type="button" onClick={handleResetEdits} disabled={pending} className="w-full rounded-xl">
+                  Discard edits
+                </Button>
+              )}
             </div>
-            {hasCurrentAssignment && (
-              <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} className="w-full">
-                Vacate seat
-              </Button>
-            )}
           </div>
 
           <datalist id="seat-inspector-employee-options">
@@ -443,26 +462,22 @@ export function SeatInspector({
           </datalist>
         </form>
       ) : (
-        <div className="space-y-4 text-sm">
-          <section>
+        <div className="space-y-3 text-sm">
+          <section className="rounded-2xl border border-slate-200 bg-white/60 p-3">
             <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Assignment</div>
-            <div className="mt-2 text-base font-black text-slate-950">{selectedSeat.employee?.full_name ?? "Unassigned"}</div>
-            <div className="mt-1 text-sm text-slate-500">{selectedSeat.employee?.position ?? "No position"}</div>
-            {selectedSeat.employee?.department && <div className="mt-1 text-sm text-slate-500">{selectedSeat.employee.department}</div>}
-          </section>
-          <section className="border-t border-slate-100 pt-4">
-            <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Seat</div>
-            <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-              <div className="rounded-lg bg-slate-50 p-2">
-                <div className="font-bold uppercase tracking-wide text-slate-400">Status</div>
-                <div className="mt-1 font-black text-slate-900">{selectedSeat.status}</div>
+            <div className="mt-1 text-lg font-black leading-tight text-slate-950">{selectedSeat.employee?.full_name ?? "Open seat"}</div>
+            {(selectedSeat.employee?.position || selectedSeat.employee?.department) && (
+              <div className="mt-1 text-sm text-slate-500">
+                {[selectedSeat.employee?.position, selectedSeat.employee?.department].filter(Boolean).join(" · ")}
               </div>
-              <div className="rounded-lg bg-slate-50 p-2">
-                <div className="font-bold uppercase tracking-wide text-slate-400">Zone</div>
-                <div className="mt-1 font-black text-slate-900">{selectedSeatZone}</div>
-              </div>
-            </div>
+            )}
           </section>
+          {selectedSeat.notes && (
+            <section className="rounded-2xl border border-slate-200 bg-white/60 p-3">
+              <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Notes</div>
+              <p className="mt-1 text-sm leading-5 text-slate-600">{selectedSeat.notes}</p>
+            </section>
+          )}
         </div>
       )}
     </aside>

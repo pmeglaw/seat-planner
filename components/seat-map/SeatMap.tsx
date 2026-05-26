@@ -16,7 +16,7 @@ import {
   type DraftSnapshot
 } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
-import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction } from "@/app/actions";
+import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
 import { normalizePoint } from "@/lib/seatMath";
 import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
@@ -37,6 +37,11 @@ type DragState = {
   seatId: string;
   pointerId: number;
   beforeSnapshot: DraftSnapshot;
+} | null;
+
+type SwapConfirmState = {
+  sourceSeatId: string;
+  targetSeatId: string;
 } | null;
 
 function normalizeSeat(seat: SeatWithEmployee): SeatWithEmployee {
@@ -101,10 +106,12 @@ export function SeatMap({
   const [department, setDepartment] = useState("all");
   const [zone, setZone] = useState("all");
   const [status, setStatus] = useState("all");
-  const [filterCollapsed, setFilterCollapsed] = useState(false);
+  const [filterCollapsed, setFilterCollapsed] = useState(true);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [inspectorDirty, setInspectorDirty] = useState(false);
   const [showNames, setShowNames] = useState(false);
+  const [swapSourceSeatId, setSwapSourceSeatId] = useState<string | null>(null);
+  const [swapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
   const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
   const [pending, startTransition] = useTransition();
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -125,14 +132,20 @@ export function SeatMap({
     function handleEscape(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
 
+      if (swapConfirm) {
+        setSwapConfirm(null);
+        return;
+      }
+
       if (advancedOpen) {
         setAdvancedOpen(false);
         return;
       }
 
-      if (addSeatMode || moveSeatMode) {
+      if (addSeatMode || moveSeatMode || swapSourceSeatId) {
         setAddSeatMode(false);
         setMoveSeatMode(false);
+        setSwapSourceSeatId(null);
         setDragState(null);
         setActionNotice("Draft map mode canceled.");
         return;
@@ -146,7 +159,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, advancedOpen, inspectorDirty, moveSeatMode, selectedSeatId]);
+  }, [addSeatMode, advancedOpen, inspectorDirty, moveSeatMode, selectedSeatId, swapConfirm, swapSourceSeatId]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -201,6 +214,14 @@ export function SeatMap({
   }, [localEmployees, localSeats, search]);
 
   const selectedSeat = localSeats.find(seat => seat.id === selectedSeatId) ?? null;
+  const swapSourceSeat = swapSourceSeatId ? localSeats.find(seat => seat.id === swapSourceSeatId) ?? null : null;
+  const swapTargetSeat = swapConfirm ? localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null : null;
+  const activeFilterCount = [
+    search.trim(),
+    department !== "all" ? department : "",
+    zone !== "all" ? zone : "",
+    status !== "all" ? status : ""
+  ].filter(Boolean).length;
   const undoAvailable = canUndoDraftHistory(draftHistory);
   const redoAvailable = canRedoDraftHistory(draftHistory);
   const nextUndoLabel = draftHistory.undoStack.at(-1)?.label ?? null;
@@ -263,6 +284,8 @@ export function SeatMap({
     setInspectorDirty(false);
     setMoveSeatMode(false);
     setAddSeatMode(false);
+    setSwapSourceSeatId(null);
+    setSwapConfirm(null);
     setDragState(null);
   }
 
@@ -319,10 +342,54 @@ export function SeatMap({
     setStatus("all");
   }
 
+  function seatPersonLabel(seat: SeatWithEmployee | null) {
+    return seat?.employee?.full_name ?? "Open";
+  }
+
+  function buildSwapSummary(sourceSeat: SeatWithEmployee, targetSeat: SeatWithEmployee) {
+    return `${sourceSeat.label} (${seatPersonLabel(sourceSeat)}) <-> ${targetSeat.label} (${seatPersonLabel(targetSeat)})`;
+  }
+
+  function requestSwapTarget(targetSeatId: string) {
+    if (!swapSourceSeatId) return false;
+    const sourceSeat = localSeats.find(seat => seat.id === swapSourceSeatId) ?? null;
+    const targetSeat = localSeats.find(seat => seat.id === targetSeatId) ?? null;
+
+    if (!sourceSeat || !targetSeat) {
+      setActionError("Could not find both seats for swapping.");
+      return false;
+    }
+
+    if (sourceSeat.id === targetSeat.id) {
+      setActionNotice("Choose a different target seat to complete the swap.");
+      return true;
+    }
+
+    if (!sourceSeat.employee_id && !targetSeat.employee_id) {
+      setActionError("Swap requires at least one assigned seat.");
+      return false;
+    }
+
+    setActionError(null);
+    setActionNotice(null);
+    setSwapConfirm({ sourceSeatId: sourceSeat.id, targetSeatId: targetSeat.id });
+    return true;
+  }
+
   function selectSeat(seatId: string) {
+    if (canEdit && swapSourceSeatId) {
+      if (seatId !== swapSourceSeatId) return requestSwapTarget(seatId);
+      setSelectedSeatId(seatId);
+      setInspectorCollapsed(true);
+      setActionNotice(null);
+      return true;
+    }
+
     if (selectedSeatId === seatId) {
       setMoveSeatMode(false);
       setAddSeatMode(false);
+      setSwapSourceSeatId(null);
+      setSwapConfirm(null);
       setInspectorCollapsed(false);
       return true;
     }
@@ -332,6 +399,8 @@ export function SeatMap({
     setInspectorDirty(false);
     setMoveSeatMode(false);
     setAddSeatMode(false);
+    setSwapSourceSeatId(null);
+    setSwapConfirm(null);
     setInspectorCollapsed(false);
     return true;
   }
@@ -345,6 +414,8 @@ export function SeatMap({
     setSelectedSeatId(null);
     setInspectorDirty(false);
     setMoveSeatMode(false);
+    setSwapSourceSeatId(null);
+    setSwapConfirm(null);
     setAddSeatMode(true);
     setAdvancedOpen(false);
     setInspectorCollapsed(false);
@@ -360,7 +431,82 @@ export function SeatMap({
     setInspectorDirty(false);
     setMoveSeatMode(false);
     setAddSeatMode(false);
+    setSwapSourceSeatId(null);
+    setSwapConfirm(null);
     setInspectorCollapsed(false);
+  }
+
+  function startSwapSeatMode(skipDirtyCheck = false) {
+    if (!canEdit) return;
+
+    if (!selectedSeat) {
+      setActionError("Select the source seat first, then choose Swap seat.");
+      setActionNotice(null);
+      setAdvancedOpen(false);
+      return;
+    }
+
+    if (!skipDirtyCheck && inspectorDirty && !canDiscardInspectorChanges()) return;
+
+    setActionError(null);
+    setActionNotice(null);
+    setInspectorDirty(false);
+    setMoveSeatMode(false);
+    setAddSeatMode(false);
+    setDragState(null);
+    setSwapConfirm(null);
+    setSwapSourceSeatId(selectedSeat.id);
+    setAdvancedOpen(false);
+    setInspectorCollapsed(true);
+  }
+
+  function cancelSwapSeatMode() {
+    setSwapSourceSeatId(null);
+    setSwapConfirm(null);
+    setInspectorCollapsed(false);
+    setActionNotice("Swap mode canceled.");
+  }
+
+  function confirmSwapSeats() {
+    if (!swapConfirm) return;
+    const sourceSeat = localSeats.find(seat => seat.id === swapConfirm.sourceSeatId) ?? null;
+    const targetSeat = localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null;
+
+    if (!sourceSeat || !targetSeat) {
+      setActionError("Could not find both seats for swapping.");
+      setSwapConfirm(null);
+      return;
+    }
+
+    const beforeSnapshot = captureDraftSnapshot();
+    const swapLabel = `Swap ${sourceSeat.label} and ${targetSeat.label}`;
+
+    startTransition(async () => {
+      try {
+        setActionError(null);
+        setActionNotice(null);
+        const payload = await swapSeatAssignmentsAction({
+          sourceSeatId: sourceSeat.id,
+          targetSeatId: targetSeat.id
+        });
+        const afterSeats = normalizeSeats(payload.seats);
+        recordDraftHistory(swapLabel, beforeSnapshot, afterSeats, payload.employees);
+        setLocalSeats(afterSeats);
+        setLocalEmployees(payload.employees);
+        setSelectedSeatId(targetSeat.id);
+        setInspectorDirty(false);
+        setMoveSeatMode(false);
+        setAddSeatMode(false);
+        setSwapSourceSeatId(null);
+        setSwapConfirm(null);
+        setInspectorCollapsed(false);
+        setAdvancedOpen(false);
+        setActionNotice(`Swapped ${buildSwapSummary(sourceSeat, targetSeat)}.`);
+      } catch (error) {
+        setActionNotice(null);
+        setActionError(error instanceof Error ? error.message : "Could not swap seats.");
+      }
+    });
   }
 
   function handleMapPointerDown(event: PointerEvent<HTMLDivElement>) {
@@ -396,6 +542,11 @@ export function SeatMap({
           setActionError(error instanceof Error ? error.message : "Could not create seat.");
         }
       });
+      return;
+    }
+
+    if (swapSourceSeatId) {
+      setActionNotice(null);
       return;
     }
 
@@ -479,6 +630,8 @@ export function SeatMap({
         setSelectedSeatId(null);
         setInspectorDirty(false);
         setMoveSeatMode(false);
+        setSwapSourceSeatId(null);
+        setSwapConfirm(null);
         setAdvancedOpen(false);
         setActionNotice(`Deleted custom seat ${deletedSeatLabel}. Undo is available until publish.`);
       } catch (error) {
@@ -527,43 +680,102 @@ export function SeatMap({
     ? "Add Seat mode is active. Click an empty point on the map to place a marker."
     : moveSeatMode
       ? "Move Seat mode is active. Drag the selected marker to reposition it."
+      : swapSourceSeat
+        ? `Swap mode: ${swapSourceSeat.label} is the source. Select a target seat to review the swap.`
       : canEdit
         ? "Select a seat to assign or update employee details."
         : "Select a seat to view assignment details.";
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#eef2f7]">
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/88 px-3 py-2 text-slate-950 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur sm:px-4">
-        <div className="flex min-h-[42px] items-center justify-between gap-3">
+      <header className="sticky top-0 z-30 border-b border-white/70 bg-white/80 px-3 py-2 text-slate-950 shadow-[0_10px_34px_rgba(15,23,42,0.07)] backdrop-blur-2xl sm:px-4">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 lg:grid-cols-[minmax(190px,260px)_minmax(260px,1fr)_auto]">
           <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-2">
-              <h1 className="truncate text-[15px] font-black">Office Seat Planner</h1>
-              <span className={["hidden rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide sm:inline-flex", canEdit ? "bg-orange-50 text-brand-dark ring-1 ring-orange-200" : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"].join(" ")}>
-                {canEdit ? "Draft" : "Published"}
-              </span>
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-2">
+                <h1 className="truncate text-[15px] font-black leading-tight">Office Seat Planner</h1>
+                <span className={["rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", canEdit ? "bg-orange-50/80 text-brand-dark ring-orange-200" : "bg-emerald-50/80 text-emerald-700 ring-emerald-200"].join(" ")}>
+                  {canEdit ? "Draft" : "Published"}
+                </span>
+              </div>
+              <p className="truncate text-[11px] leading-tight text-slate-500">{canEdit ? "Admin map" : "Viewer map"}</p>
             </div>
-            <p className="truncate text-[11px] text-slate-500">{canEdit ? "Admin workspace" : "Read-only viewer map"}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-          {canEdit && (
-            <>
-              <Link
-                href="/admin/management"
-                className="inline-flex min-h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-              >
-                Management
-              </Link>
-              <Button variant="secondary" className="min-h-8 px-3 text-xs shadow-sm" onClick={() => setAdvancedOpen(true)}>
-                Tools
-              </Button>
-            </>
-          )}
+
+          <div className="col-span-2 flex min-w-0 items-center gap-2 lg:col-span-1">
+            <label className="relative min-w-0 flex-1">
+              <span className="sr-only">Search employee, seat, team, or zone</span>
+              <input
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                placeholder="Search employee, seat, team, or zone"
+                className="h-9 w-full rounded-full border border-white/70 bg-white/75 px-4 pr-10 text-sm text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.06)] outline-none backdrop-blur-xl transition placeholder:text-slate-400 focus:border-orange-200 focus:bg-white focus:ring-4 focus:ring-orange-100"
+              />
+              {search.trim() && (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  onClick={() => setSearch("")}
+                >
+                  x
+                </button>
+              )}
+            </label>
+            <button
+              type="button"
+              onClick={() => setFilterCollapsed(current => !current)}
+              className={["inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 text-xs font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100", activeFilterCount ? "border-orange-200 bg-orange-50/80 text-brand-dark" : "border-white/70 bg-white/70 text-slate-700"].join(" ")}
+            >
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-black text-white">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div className="col-start-2 row-start-1 flex min-w-0 flex-wrap items-center justify-end gap-2 lg:col-auto lg:row-auto">
+            {canEdit && (
+              <>
+                <Button
+                  type="button"
+                  className="min-h-8 rounded-full px-3 py-1 text-xs"
+                  disabled={pending || inspectorDirty || !undoAvailable}
+                  aria-label={nextUndoLabel ? `Undo ${nextUndoLabel}` : "Undo draft edit"}
+                  title={historyStatusMessage}
+                  onClick={undoDraftEdit}
+                >
+                  Undo
+                </Button>
+                <Button
+                  type="button"
+                  className="min-h-8 rounded-full px-3 py-1 text-xs"
+                  disabled={pending || inspectorDirty || !redoAvailable}
+                  aria-label={nextRedoLabel ? `Redo ${nextRedoLabel}` : "Redo draft edit"}
+                  title={historyStatusMessage}
+                  onClick={redoDraftEdit}
+                >
+                  Redo
+                </Button>
+                <Link
+                  href="/admin/management"
+                  className="hidden min-h-8 items-center justify-center rounded-full border border-white/70 bg-white/70 px-3 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:inline-flex"
+                >
+                  Management
+                </Link>
+                <Button variant="secondary" className="min-h-8 rounded-full px-3 py-1 text-xs shadow-sm" onClick={() => setAdvancedOpen(true)}>
+                  Tools
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
 
-      <main className={["grid grid-cols-1 gap-3 p-3 sm:p-4", filterCollapsed ? "lg:grid-cols-[46px_minmax(0,1fr)]" : "lg:grid-cols-[248px_minmax(0,1fr)]"].join(" ")}>
-        <div className="order-2 lg:order-1">
+      <main className={["grid grid-cols-1 gap-3 p-3 sm:p-4", filterCollapsed ? "lg:grid-cols-[52px_minmax(0,1fr)]" : "lg:grid-cols-[248px_minmax(0,1fr)]"].join(" ")}>
+        <div className={[filterCollapsed ? "order-2" : "order-1", "lg:order-1"].join(" ")}>
           <FilterPanel
             search={search}
             department={department}
@@ -576,7 +788,6 @@ export function SeatMap({
             employeeResults={employeeResults}
             onToggle={() => setFilterCollapsed(current => !current)}
             onEmployeeSelect={selectEmployeeSeat}
-            onSearchChange={setSearch}
             onDepartmentChange={setDepartment}
             onZoneChange={setZone}
             onStatusChange={setStatus}
@@ -584,45 +795,17 @@ export function SeatMap({
           />
         </div>
 
-        <section className="order-1 min-w-0 space-y-2 lg:order-2">
-          <div className="flex min-h-[52px] flex-col gap-3 rounded-lg border border-slate-200 bg-white/92 px-3 py-2.5 text-slate-950 shadow-[0_12px_36px_rgba(15,23,42,0.08)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="text-sm font-black leading-tight">{canEdit ? "Draft seat map" : "Published seat map"}</div>
-                <span className={["rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide", canEdit ? "bg-orange-50 text-brand-dark" : "bg-emerald-50 text-emerald-700"].join(" ")}>
-                  {canEdit ? "Private until published" : "Viewer read-only"}
-                </span>
-              </div>
-              <div className="mt-1 text-[11px] leading-tight text-slate-500">{toolbarMessage}</div>
+        <section className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 space-y-2 lg:order-2"].join(" ")}>
+          {(addSeatMode || moveSeatMode || swapSourceSeatId) && (
+            <div className="flex flex-col gap-2 rounded-2xl border border-orange-200 bg-white/80 px-3 py-2 text-xs font-semibold text-brand-dark shadow-[0_12px_34px_rgba(194,65,12,0.12)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+              <span>{toolbarMessage}</span>
+              {swapSourceSeatId && (
+                <button type="button" onClick={cancelSwapSeatMode} className="shrink-0 self-start whitespace-nowrap rounded-full bg-orange-50 px-3 py-1 text-[11px] font-black text-brand-dark ring-1 ring-orange-100 sm:self-auto">
+                  Cancel swap
+                </button>
+              )}
             </div>
-            {canEdit && (
-              <div className="flex flex-col gap-1 sm:items-end">
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    className="min-h-8 px-3 text-xs"
-                    disabled={pending || inspectorDirty || !undoAvailable}
-                    aria-label={nextUndoLabel ? `Undo ${nextUndoLabel}` : "Undo draft edit"}
-                    title={nextUndoLabel ? `Undo ${nextUndoLabel}` : "No draft edits to undo"}
-                    onClick={undoDraftEdit}
-                  >
-                    Undo
-                  </Button>
-                  <Button
-                    type="button"
-                    className="min-h-8 px-3 text-xs"
-                    disabled={pending || inspectorDirty || !redoAvailable}
-                    aria-label={nextRedoLabel ? `Redo ${nextRedoLabel}` : "Redo draft edit"}
-                    title={nextRedoLabel ? `Redo ${nextRedoLabel}` : "No draft edits to redo"}
-                    onClick={redoDraftEdit}
-                  >
-                    Redo
-                  </Button>
-                </div>
-                <div className="max-w-[280px] text-left text-[11px] leading-tight text-slate-500 sm:text-right">{historyStatusMessage}</div>
-              </div>
-            )}
-          </div>
+          )}
 
           {actionError && (
             <div role="alert" className="whitespace-pre-wrap rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
@@ -630,14 +813,14 @@ export function SeatMap({
             </div>
           )}
 
-          {actionNotice && (
+          {actionNotice && !swapSourceSeatId && (
             <div role="status" aria-live="polite" className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
               {actionNotice}
             </div>
           )}
 
-          <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-1.5 shadow-[0_24px_70px_rgba(15,23,42,0.14)]">
-            <div className="relative mx-auto max-h-[68vh] w-full max-w-full overflow-auto overscroll-contain rounded-md border border-slate-200 bg-[#f6f4f1] sm:max-h-[calc(100vh-132px)]">
+          <div className="min-w-0 rounded-[18px] border border-white/70 bg-white/75 p-1.5 shadow-[0_26px_80px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl">
+            <div className="relative mx-auto max-h-[72vh] w-full max-w-full overflow-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-[#f6f4f1] sm:max-h-[calc(100vh-92px)]">
               <div
                 ref={mapRef}
                 className={["relative mx-auto w-[960px] max-w-none lg:w-full lg:max-w-[1561px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
@@ -669,6 +852,9 @@ export function SeatMap({
                       canEdit={canEdit}
                       showNames={showNames}
                       moveSeatMode={moveSeatMode}
+                      swapMode={Boolean(swapSourceSeatId)}
+                      swapSource={seat.id === swapSourceSeatId}
+                      swapTarget={seat.id === swapConfirm?.targetSeatId}
                       dragging={dragState?.seatId === seat.id}
                       onSelect={selectSeat}
                       onMovePointerDown={handleMovePointerDown}
@@ -690,16 +876,21 @@ export function SeatMap({
         addSeatMode={addSeatMode}
         addSeatZone={addSeatZone}
         moveSeatMode={moveSeatMode}
+        swapSeatMode={Boolean(swapSourceSeatId)}
         pending={pending}
         showNames={showNames}
         onClose={() => setAdvancedOpen(false)}
         onStartAddSeat={startAddSeatMode}
         onCancelAddSeat={cancelAddSeatMode}
         onAddSeatZoneChange={setAddSeatZone}
+        onStartSwapSeat={() => startSwapSeatMode()}
+        onCancelSwapSeat={cancelSwapSeatMode}
         onPublish={publishDraftMap}
         onToggleMoveSeat={() => {
           if (!selectedSeatId) return;
           setAddSeatMode(false);
+          setSwapSourceSeatId(null);
+          setSwapConfirm(null);
           setMoveSeatMode(current => !current);
           setAdvancedOpen(false);
         }}
@@ -719,6 +910,23 @@ export function SeatMap({
           setMoveSeatMode(false);
           setActionNotice(`Imported ${payload.count} CSV row${payload.count === 1 ? "" : "s"} into the draft map.`);
         }}
+        onJsonImported={async (snapshot, beforeSnapshot) => {
+          setActionError(null);
+          setActionNotice(null);
+          const restored = await restoreDraftSnapshotAction(snapshot);
+          const afterSeats = normalizeSeats(restored.seats);
+          recordDraftHistory("Import JSON backup", beforeSnapshot, afterSeats, restored.employees);
+          setLocalSeats(afterSeats);
+          setLocalEmployees(restored.employees);
+          setSelectedSeatId(null);
+          setInspectorDirty(false);
+          setMoveSeatMode(false);
+          setAddSeatMode(false);
+          setSwapSourceSeatId(null);
+          setSwapConfirm(null);
+          setAdvancedOpen(false);
+          setActionNotice("Imported JSON backup into the draft map.");
+        }}
         onError={message => {
           setActionError(message);
           if (message) setActionNotice(null);
@@ -731,14 +939,18 @@ export function SeatMap({
         departmentOptions={localDepartmentOptions}
         canEdit={canEdit}
         collapsed={inspectorCollapsed}
+        swapMode={Boolean(swapSourceSeatId)}
         onClose={() => {
           if (selectedSeatId && !canDiscardInspectorChanges()) return;
           setSelectedSeatId(null);
           setInspectorDirty(false);
           setMoveSeatMode(false);
+          setSwapSourceSeatId(null);
+          setSwapConfirm(null);
           setInspectorCollapsed(false);
         }}
         onToggleCollapse={() => setInspectorCollapsed(current => !current)}
+        onStartSwapSeat={() => startSwapSeatMode(true)}
         onBeforeSeatUpdate={captureDraftSnapshot}
         onSeatUpdated={(seat, beforeSnapshot) => {
           setActionError(null);
@@ -757,6 +969,58 @@ export function SeatMap({
         }}
         onDirtyChange={setInspectorDirty}
       />
+
+      {swapConfirm && swapSourceSeat && swapTargetSeat && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 p-3 backdrop-blur-[2px] sm:items-center">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="swap-confirm-title"
+            className="w-full max-w-md rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 id="swap-confirm-title" className="text-base font-black">Confirm seat swap</h2>
+                <p className="mt-1 text-sm leading-5 text-slate-500">This updates draft seats only. Viewers will not see it until publish.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSwapConfirm(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Cancel swap confirmation"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Source</div>
+                <div className="mt-1 text-sm font-black text-slate-950">{swapSourceSeat.label}</div>
+                <div className="text-sm text-slate-500">{seatPersonLabel(swapSourceSeat)}</div>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Target</div>
+                <div className="mt-1 text-sm font-black text-slate-950">{swapTargetSeat.label}</div>
+                <div className="text-sm text-slate-500">{seatPersonLabel(swapTargetSeat)}</div>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-orange-200 bg-orange-50/70 p-3 text-sm font-semibold text-brand-dark">
+              {buildSwapSummary(swapSourceSeat, swapTargetSeat)}
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Button type="button" onClick={() => setSwapConfirm(null)} disabled={pending} className="w-full">
+                Cancel
+              </Button>
+              <Button type="button" variant="primary" onClick={confirmSwapSeats} disabled={pending} className="w-full">
+                Confirm swap
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

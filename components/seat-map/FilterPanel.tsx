@@ -26,7 +26,6 @@ type FilterPanelProps = {
   employeeResults: EmployeeResult[];
   onToggle: () => void;
   onEmployeeSelect: (seatId: string) => void;
-  onSearchChange: (value: string) => void;
   onDepartmentChange: (value: string) => void;
   onZoneChange: (value: string) => void;
   onStatusChange: (value: string) => void;
@@ -45,7 +44,6 @@ export function FilterPanel({
   employeeResults,
   onToggle,
   onEmployeeSelect,
-  onSearchChange,
   onDepartmentChange,
   onZoneChange,
   onStatusChange,
@@ -67,16 +65,20 @@ export function FilterPanel({
 
   if (collapsed) {
     return (
-      <aside className="self-start lg:sticky lg:top-[60px]">
+      <aside className="self-start lg:sticky lg:top-[62px]">
         <button
           type="button"
           onClick={onToggle}
-          className="relative flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-slate-700 shadow-[0_12px_32px_rgba(15,23,42,0.08)] transition hover:bg-white lg:min-h-[210px] lg:w-[46px] lg:flex-col lg:px-2 lg:py-3"
+          className="relative flex min-h-11 w-full items-center justify-center rounded-full border border-white/70 bg-white/70 px-4 py-2 text-slate-700 shadow-[0_12px_32px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white lg:min-h-[164px] lg:w-[48px] lg:flex-col lg:px-2 lg:py-4"
         >
-          {filtersActive && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-brand ring-2 ring-white lg:right-auto lg:top-3" />}
+          {filtersActive && (
+            <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-black text-white ring-2 ring-white lg:right-auto lg:top-3">
+              {activeFilters.length}
+            </span>
+          )}
           <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] lg:rotate-180 lg:[writing-mode:vertical-rl]">Filters</span>
           <span className="ml-2 text-[10px] text-slate-400 lg:ml-0 lg:mt-2 lg:rotate-180 lg:[writing-mode:vertical-rl]">
-            {filtersActive ? `${activeFilters.length} active` : "Search"}
+            {filtersActive ? "Active" : "Refine"}
           </span>
         </button>
       </aside>
@@ -84,9 +86,9 @@ export function FilterPanel({
   }
 
   return (
-    <aside className="max-h-none self-start overflow-auto rounded-lg border border-slate-200 bg-white/95 p-3 shadow-[0_14px_36px_rgba(15,23,42,0.08)] lg:sticky lg:top-[60px] lg:max-h-[calc(100vh-76px)]">
+    <aside className="max-h-none self-start overflow-auto rounded-2xl border border-white/70 bg-white/80 p-3 shadow-[0_14px_38px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl lg:sticky lg:top-[62px] lg:max-h-[calc(100vh-78px)]">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-black text-slate-900">Find seats</h2>
+        <h2 className="text-sm font-black text-slate-900">Filters</h2>
         <div className="flex items-center gap-1">
           {filtersActive && (
             <button type="button" onClick={onClearFilters} className="rounded-md px-2 py-1 text-[11px] font-bold text-brand hover:bg-orange-50">
@@ -99,27 +101,17 @@ export function FilterPanel({
         </div>
       </div>
 
-      <label className="block">
-        <span className="sr-only">Search employees, seats, positions, departments, and zones</span>
-        <input
-          value={search}
-          onChange={event => onSearchChange(event.target.value)}
-          placeholder="Search employee, seat, role..."
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-orange-100"
-        />
-      </label>
-
       {activeFilters.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mb-3 flex flex-wrap gap-1.5">
           {activeFilters.map(filter => (
-            <span key={filter} className="max-w-full truncate rounded-full bg-orange-50 px-2 py-1 text-[10px] font-bold text-brand-dark ring-1 ring-orange-100">
+            <span key={filter} className="max-w-full truncate rounded-full bg-white/80 px-2 py-1 text-[10px] font-bold text-brand-dark ring-1 ring-orange-100">
               {filter}
             </span>
           ))}
         </div>
       )}
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <label className="block">
           <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Department</span>
           <select
