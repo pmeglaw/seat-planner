@@ -104,7 +104,7 @@ export function SeatMap({
   const [filterCollapsed, setFilterCollapsed] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [inspectorDirty, setInspectorDirty] = useState(false);
-  const [showNames, setShowNames] = useState(true);
+  const [showNames, setShowNames] = useState(false);
   const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
   const [pending, startTransition] = useTransition();
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -532,54 +532,68 @@ export function SeatMap({
         : "Select a seat to view assignment details.";
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
-      <header className="sticky top-0 z-30 flex min-h-[50px] items-center justify-between border-b border-white/10 bg-slate-950/50 px-4 py-2 text-white backdrop-blur">
-        <div>
-          <h1 className="text-[15px] font-bold">Office Seat Planner</h1>
-          <p className="text-[11px] text-white/60">{canEdit ? "Admin draft view" : "Published viewer view"}</p>
-        </div>
-        <div className="flex items-center gap-2">
+    <div className="min-h-screen overflow-x-hidden bg-[#eef2f7]">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/88 px-3 py-2 text-slate-950 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur sm:px-4">
+        <div className="flex min-h-[42px] items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="truncate text-[15px] font-black">Office Seat Planner</h1>
+              <span className={["hidden rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide sm:inline-flex", canEdit ? "bg-orange-50 text-brand-dark ring-1 ring-orange-200" : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"].join(" ")}>
+                {canEdit ? "Draft" : "Published"}
+              </span>
+            </div>
+            <p className="truncate text-[11px] text-slate-500">{canEdit ? "Admin workspace" : "Read-only viewer map"}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
           {canEdit && (
             <>
               <Link
                 href="/admin/management"
-                className="inline-flex min-h-8 items-center justify-center rounded-md border border-white/15 bg-white/10 px-3 text-xs font-semibold text-white transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+                className="inline-flex min-h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >
                 Management
               </Link>
-              <Button variant="ghost" className="min-h-8 px-3 text-xs" onClick={() => setAdvancedOpen(true)}>
-                Advanced
+              <Button variant="secondary" className="min-h-8 px-3 text-xs shadow-sm" onClick={() => setAdvancedOpen(true)}>
+                Tools
               </Button>
             </>
           )}
+          </div>
         </div>
       </header>
 
-      <main className={["grid grid-cols-1 gap-3 p-2.5", filterCollapsed ? "lg:grid-cols-[46px_minmax(0,1fr)]" : "lg:grid-cols-[256px_minmax(0,1fr)]"].join(" ")}>
-        <FilterPanel
-          search={search}
-          department={department}
-          status={status}
-          departments={departments}
-          zone={zone}
-          zones={zones}
-          collapsed={filterCollapsed}
-          stats={stats}
-          employeeResults={employeeResults}
-          onToggle={() => setFilterCollapsed(current => !current)}
-          onEmployeeSelect={selectEmployeeSeat}
-          onSearchChange={setSearch}
-          onDepartmentChange={setDepartment}
-          onZoneChange={setZone}
-          onStatusChange={setStatus}
-          onClearFilters={clearFilters}
-        />
+      <main className={["grid grid-cols-1 gap-3 p-3 sm:p-4", filterCollapsed ? "lg:grid-cols-[46px_minmax(0,1fr)]" : "lg:grid-cols-[248px_minmax(0,1fr)]"].join(" ")}>
+        <div className="order-2 lg:order-1">
+          <FilterPanel
+            search={search}
+            department={department}
+            status={status}
+            departments={departments}
+            zone={zone}
+            zones={zones}
+            collapsed={filterCollapsed}
+            stats={stats}
+            employeeResults={employeeResults}
+            onToggle={() => setFilterCollapsed(current => !current)}
+            onEmployeeSelect={selectEmployeeSeat}
+            onSearchChange={setSearch}
+            onDepartmentChange={setDepartment}
+            onZoneChange={setZone}
+            onStatusChange={setStatus}
+            onClearFilters={clearFilters}
+          />
+        </div>
 
-        <section className="min-w-0 space-y-2">
-          <div className="flex min-h-[42px] flex-col gap-2 rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-white backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="text-sm font-bold leading-tight">{canEdit ? "Draft seat map" : "Published seat map"}</div>
-              <div className="text-[11px] leading-tight text-white/60">{toolbarMessage}</div>
+        <section className="order-1 min-w-0 space-y-2 lg:order-2">
+          <div className="flex min-h-[52px] flex-col gap-3 rounded-lg border border-slate-200 bg-white/92 px-3 py-2.5 text-slate-950 shadow-[0_12px_36px_rgba(15,23,42,0.08)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-sm font-black leading-tight">{canEdit ? "Draft seat map" : "Published seat map"}</div>
+                <span className={["rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide", canEdit ? "bg-orange-50 text-brand-dark" : "bg-emerald-50 text-emerald-700"].join(" ")}>
+                  {canEdit ? "Private until published" : "Viewer read-only"}
+                </span>
+              </div>
+              <div className="mt-1 text-[11px] leading-tight text-slate-500">{toolbarMessage}</div>
             </div>
             {canEdit && (
               <div className="flex flex-col gap-1 sm:items-end">
@@ -605,7 +619,7 @@ export function SeatMap({
                     Redo
                   </Button>
                 </div>
-                <div className="max-w-[260px] text-right text-[11px] leading-tight text-white/55">{historyStatusMessage}</div>
+                <div className="max-w-[280px] text-left text-[11px] leading-tight text-slate-500 sm:text-right">{historyStatusMessage}</div>
               </div>
             )}
           </div>
@@ -622,11 +636,11 @@ export function SeatMap({
             </div>
           )}
 
-          <div className="min-w-0 rounded-[22px] border border-white/80 bg-white p-2 shadow-soft">
-            <div className="relative mx-auto max-h-[calc(100vh-112px)] w-full max-w-full overflow-auto overscroll-contain rounded-[15px] border border-slate-200 bg-[#f6f4f1]">
+          <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-1.5 shadow-[0_24px_70px_rgba(15,23,42,0.14)]">
+            <div className="relative mx-auto max-h-[68vh] w-full max-w-full overflow-auto overscroll-contain rounded-md border border-slate-200 bg-[#f6f4f1] sm:max-h-[calc(100vh-132px)]">
               <div
                 ref={mapRef}
-                className={["relative mx-auto w-[900px] max-w-none lg:w-full lg:max-w-[1561px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
+                className={["relative mx-auto w-[960px] max-w-none lg:w-full lg:max-w-[1561px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
                 onPointerDown={handleMapPointerDown}
                 onPointerMove={handleMapPointerMove}
                 onPointerUp={handleMapPointerUp}
