@@ -14,6 +14,7 @@ export type Employee = {
   full_name: string;
   position: string | null;
   department: string | null;
+  phone_extension: string | null;
   avatar_url: string | null;
   active: boolean;
   created_at: string;
@@ -80,6 +81,7 @@ export type EmployeeCreateInput = {
   full_name: string;
   position?: string | null;
   department?: string | null;
+  phone_extension?: string | null;
 };
 
 export type CsvAssignmentRow = {
