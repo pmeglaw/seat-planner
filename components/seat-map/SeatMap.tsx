@@ -245,13 +245,16 @@ export function SeatMap({
   const redoAvailable = canRedoDraftHistory(draftHistory);
   const nextUndoLabel = draftHistory.undoStack.at(-1)?.label ?? null;
   const nextRedoLabel = draftHistory.redoStack.at(-1)?.label ?? null;
-  const historyStatusMessage = inspectorDirty
-    ? "Save or discard inspector edits before undo/redo."
+  const undoTitle = inspectorDirty
+    ? "Save or discard inspector edits before undo."
     : nextUndoLabel
-      ? `Undo next: ${nextUndoLabel}`
-      : nextRedoLabel
-        ? `Redo available: ${nextRedoLabel}`
-        : "No draft edits to undo. Draft history clears after publish.";
+      ? `Undo ${nextUndoLabel}`
+      : "No draft edits to undo.";
+  const redoTitle = inspectorDirty
+    ? "Save or discard inspector edits before redo."
+    : nextRedoLabel
+      ? `Redo ${nextRedoLabel}`
+      : "No draft edits to redo.";
 
   function eventToPoint(event: Pick<PointerEvent<HTMLElement>, "clientX" | "clientY">) {
     const rect = mapRef.current?.getBoundingClientRect();
@@ -764,7 +767,7 @@ export function SeatMap({
                   className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/70 text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !undoAvailable}
                   aria-label={nextUndoLabel ? `Undo ${nextUndoLabel}` : "Undo draft edit"}
-                  title={historyStatusMessage}
+                  title={undoTitle}
                   onClick={undoDraftEdit}
                 >
                   <UndoIcon />
@@ -774,7 +777,7 @@ export function SeatMap({
                   className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/70 text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !redoAvailable}
                   aria-label={nextRedoLabel ? `Redo ${nextRedoLabel}` : "Redo draft edit"}
-                  title={historyStatusMessage}
+                  title={redoTitle}
                   onClick={redoDraftEdit}
                 >
                   <RedoIcon />
