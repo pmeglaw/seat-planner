@@ -235,6 +235,7 @@ export function SeatInspector({
           ...current,
           employeeId: "",
           employeeName,
+          phoneExtension: "",
           status: nextStatus
         };
       }
