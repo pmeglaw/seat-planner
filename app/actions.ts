@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseAssignmentCsv } from "@/lib/csv";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/publishHistory";
+import { buildSeatSwapPlan } from "@/lib/seatSwap";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import { SEAT_STATUSES, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
 
@@ -344,6 +345,89 @@ export async function updateSeatAction(input: {
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
   return getDraftSeatById(supabase, input.seatId);
+}
+
+export async function swapSeatAssignmentsAction(input: {
+  sourceSeatId: string;
+  targetSeatId: string;
+}) {
+  const supabase = await requireAdmin();
+  const sourceSeatId = assertNonEmpty(input.sourceSeatId, "Source seat");
+  const targetSeatId = assertNonEmpty(input.targetSeatId, "Target seat");
+
+  const { data: seats, error: seatsError } = await supabase
+    .from("seats")
+    .select("*, employee:employees(*)")
+    .eq("layer", "draft")
+    .in("id", [sourceSeatId, targetSeatId]);
+
+  if (seatsError) throw new Error(seatsError.message);
+
+  const draftSeats = (seats ?? []) as SeatWithEmployee[];
+  const sourceSeat = draftSeats.find(seat => seat.id === sourceSeatId);
+  const targetSeat = draftSeats.find(seat => seat.id === targetSeatId);
+
+  if (!sourceSeat || !targetSeat) {
+    throw new Error("Both seats must exist on the draft map before swapping.");
+  }
+
+  const originalSourceSeat = sourceSeat;
+  const originalTargetSeat = targetSeat;
+  const plan = buildSeatSwapPlan(sourceSeat, targetSeat);
+
+  const { error: clearError } = await supabase
+    .from("seats")
+    .update({ employee_id: null, status: "available" })
+    .eq("layer", "draft")
+    .in("id", [sourceSeatId, targetSeatId]);
+
+  if (clearError) throw new Error(clearError.message);
+
+  async function updateDraftSeatAssignment(patch: { seatId: string; employeeId: string | null; status: SeatStatus }) {
+    const { error } = await supabase
+      .from("seats")
+      .update({
+        employee_id: patch.employeeId,
+        status: patch.status
+      })
+      .eq("id", patch.seatId)
+      .eq("layer", "draft");
+
+    if (error) throw new Error(error.message);
+  }
+
+  async function restoreOriginalAssignments() {
+    await supabase
+      .from("seats")
+      .update({ employee_id: null, status: "available" })
+      .eq("layer", "draft")
+      .in("id", [sourceSeatId, targetSeatId]);
+
+    await updateDraftSeatAssignment({
+      seatId: originalSourceSeat.id,
+      employeeId: originalSourceSeat.employee_id,
+      status: originalSourceSeat.status
+    });
+    await updateDraftSeatAssignment({
+      seatId: originalTargetSeat.id,
+      employeeId: originalTargetSeat.employee_id,
+      status: originalTargetSeat.status
+    });
+  }
+
+  try {
+    await updateDraftSeatAssignment(plan.sourcePatch);
+    await updateDraftSeatAssignment(plan.targetPatch);
+  } catch (error) {
+    await restoreOriginalAssignments();
+    throw error instanceof Error ? error : new Error("Could not swap seats.");
+  }
+
+  revalidatePath("/admin");
+  return {
+    ...(await getDraftMapPayload(supabase)),
+    summary: plan.summary
+  };
 }
 
 export async function createEmployeeAction(input: {
