@@ -380,53 +380,12 @@ export async function swapSeatAssignmentsAction(input: {
   const originalTargetSeat = targetSeat;
   const plan = buildSeatSwapPlan(sourceSeat, targetSeat);
 
-  const { error: clearError } = await supabase
-    .from("seats")
-    .update({ employee_id: null, status: "available" })
-    .eq("layer", "draft")
-    .in("id", [sourceSeatId, targetSeatId]);
+  const { error } = await supabase.rpc("swap_draft_seat_assignments", {
+    source_draft_seat_id: originalSourceSeat.id,
+    target_draft_seat_id: originalTargetSeat.id
+  });
 
-  if (clearError) throw new Error(clearError.message);
-
-  async function updateDraftSeatAssignment(patch: { seatId: string; employeeId: string | null; status: SeatStatus }) {
-    const { error } = await supabase
-      .from("seats")
-      .update({
-        employee_id: patch.employeeId,
-        status: patch.status
-      })
-      .eq("id", patch.seatId)
-      .eq("layer", "draft");
-
-    if (error) throw new Error(error.message);
-  }
-
-  async function restoreOriginalAssignments() {
-    await supabase
-      .from("seats")
-      .update({ employee_id: null, status: "available" })
-      .eq("layer", "draft")
-      .in("id", [sourceSeatId, targetSeatId]);
-
-    await updateDraftSeatAssignment({
-      seatId: originalSourceSeat.id,
-      employeeId: originalSourceSeat.employee_id,
-      status: originalSourceSeat.status
-    });
-    await updateDraftSeatAssignment({
-      seatId: originalTargetSeat.id,
-      employeeId: originalTargetSeat.employee_id,
-      status: originalTargetSeat.status
-    });
-  }
-
-  try {
-    await updateDraftSeatAssignment(plan.sourcePatch);
-    await updateDraftSeatAssignment(plan.targetPatch);
-  } catch (error) {
-    await restoreOriginalAssignments();
-    throw error instanceof Error ? error : new Error("Could not swap seats.");
-  }
+  if (error) throw new Error(error.message);
 
   revalidatePath("/admin");
   return {

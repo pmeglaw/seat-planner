@@ -23,6 +23,7 @@ function employee(name) {
     full_name: name,
     position: null,
     department: null,
+    phone_extension: null,
     avatar_url: null,
     active: true,
     created_at: "2026-01-01T00:00:00Z",
@@ -87,6 +88,21 @@ test("seat swap plan preserves reserved open seat state when assignment moves ou
     seatId: "seat-W02",
     employeeId: "emp-alex-admin",
     status: "assigned"
+  });
+});
+
+test("seat swap plan supports open-to-assigned swaps", () => {
+  const plan = buildSeatSwapPlan(seat("W01", null, "reserved"), seat("W02", "Jordan Manager"));
+
+  assert.deepEqual(plan.sourcePatch, {
+    seatId: "seat-W01",
+    employeeId: "emp-jordan-manager",
+    status: "assigned"
+  });
+  assert.deepEqual(plan.targetPatch, {
+    seatId: "seat-W02",
+    employeeId: null,
+    status: "reserved"
   });
 });
 
