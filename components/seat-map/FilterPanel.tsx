@@ -111,13 +111,13 @@ export function FilterPanel({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <label className="block">
           <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Department</span>
           <select
             value={department}
             onChange={event => onDepartmentChange(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+            className="mt-1 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
           >
             <option value="all">All departments</option>
             {departments.map(dep => (
@@ -131,7 +131,7 @@ export function FilterPanel({
           <select
             value={zone}
             onChange={event => onZoneChange(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+            className="mt-1 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
           >
             <option value="all">All zones</option>
             {zones.map(value => (
@@ -145,7 +145,7 @@ export function FilterPanel({
           <select
             value={status}
             onChange={event => onStatusChange(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+            className="mt-1 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
           >
             <option value="all">All statuses</option>
             <option value="available">Available</option>
@@ -156,11 +156,11 @@ export function FilterPanel({
         </label>
       </div>
 
-      <div className="mt-4 grid grid-cols-4 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-        {statItems.map(item => (
-          <div key={item.label} className="border-r border-slate-200 px-2 py-2 text-center last:border-r-0">
+      <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+        {statItems.map((item, index) => (
+          <div key={item.label} className={["border-slate-200 px-2 py-2 text-center", index % 2 === 0 ? "border-r" : "", index < statItems.length - 2 ? "border-b" : ""].join(" ")}>
             <div className="text-sm font-black text-slate-900">{item.value}</div>
-            <div className="truncate text-[10px] font-bold uppercase tracking-wide text-slate-500">{item.label}</div>
+            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{item.label}</div>
           </div>
         ))}
       </div>

@@ -22,6 +22,7 @@ type EmployeeForm = {
   fullName: string;
   position: string;
   department: string;
+  phoneExtension: string;
 };
 
 type AdminManagementPanelProps = {
@@ -51,14 +52,16 @@ const managementTabs: Array<{ id: ManagementTab; label: string }> = [
 const emptyEmployeeForm: EmployeeForm = {
   fullName: "",
   position: "",
-  department: ""
+  department: "",
+  phoneExtension: ""
 };
 
 function formFromEmployee(employee: Employee): EmployeeForm {
   return {
     fullName: employee.full_name,
     position: employee.position ?? "",
-    department: employee.department ?? ""
+    department: employee.department ?? "",
+    phoneExtension: employee.phone_extension ?? ""
   };
 }
 
@@ -172,7 +175,7 @@ export function AdminManagementPanel({
     const needle = search.trim().toLowerCase();
     return activeEmployees.filter(employee => {
       const assignment = getAssignedSeatLabel(employee.id, localSeats);
-      const haystack = [employee.full_name, employee.position, employee.department, assignment].filter(Boolean).join(" ").toLowerCase();
+      const haystack = [employee.full_name, employee.position, employee.department, employee.phone_extension, assignment].filter(Boolean).join(" ").toLowerCase();
       return !needle || haystack.includes(needle);
     });
   }, [activeEmployees, localSeats, search]);
@@ -251,7 +254,8 @@ export function AdminManagementPanel({
         const payload = {
           fullName: employeeForm.fullName,
           position: employeeForm.position,
-          department: employeeForm.department
+          department: employeeForm.department,
+          phoneExtension: employeeForm.phoneExtension
         };
         const employee = selectedEmployee
           ? await updateEmployeeAction({ employeeId: selectedEmployee.id, ...payload })
@@ -506,7 +510,9 @@ export function AdminManagementPanel({
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-black text-brand-dark">{getInitials(employee.full_name)}</div>
                         <div className="min-w-0">
                           <div className="truncate text-sm font-black text-slate-950">{employee.full_name}</div>
-                          <div className="mt-1 truncate text-xs text-slate-500">{[employee.position, employee.department].filter(Boolean).join(" · ") || "No position or department"}</div>
+                          <div className="mt-1 truncate text-xs text-slate-500">
+                            {[employee.position, employee.department, employee.phone_extension ? `Ext. ${employee.phone_extension}` : null].filter(Boolean).join(" · ") || "No position or department"}
+                          </div>
                           <div className="mt-2 text-xs font-bold text-slate-600">{seatLabel}</div>
                         </div>
                       </div>
@@ -536,10 +542,16 @@ export function AdminManagementPanel({
                   <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Name</span>
                   <input value={employeeForm.fullName} onChange={event => setEmployeeForm(current => ({ ...current, fullName: event.target.value }))} className={fieldClassName} />
                 </label>
-                <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Position</span>
-                  <input value={employeeForm.position} onChange={event => setEmployeeForm(current => ({ ...current, position: event.target.value }))} className={fieldClassName} />
-                </label>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Position</span>
+                    <input value={employeeForm.position} onChange={event => setEmployeeForm(current => ({ ...current, position: event.target.value }))} className={fieldClassName} />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Phone Ext.</span>
+                    <input value={employeeForm.phoneExtension} onChange={event => setEmployeeForm(current => ({ ...current, phoneExtension: event.target.value }))} className={fieldClassName} inputMode="numeric" />
+                  </label>
+                </div>
                 <label className="block">
                   <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Department</span>
                   <input list="management-department-options" value={employeeForm.department} onChange={event => setEmployeeForm(current => ({ ...current, department: event.target.value }))} className={fieldClassName} />

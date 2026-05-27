@@ -134,6 +134,7 @@ function normalizeRestoreEmployee(employee: Employee): DraftEmployeeRestoreRecor
     full_name: assertNonEmpty(employee.full_name, "Employee name"),
     position: normalizeOptionalText(employee.position ?? null),
     department: normalizeOptionalText(employee.department ?? null),
+    phone_extension: normalizeOptionalText(employee.phone_extension ?? null),
     avatar_url: normalizeOptionalText(employee.avatar_url ?? null),
     active: employee.active !== false,
     created_at: employee.created_at,
@@ -228,6 +229,7 @@ export async function updateSeatAction(input: {
   employeeId?: string | null;
   employeeName?: string | null;
   employeePosition?: string | null;
+  phoneExtension?: string | null;
   department?: string | null;
   zone?: string | null;
   notes?: string | null;
@@ -237,7 +239,8 @@ export async function updateSeatAction(input: {
   const label = assertNonEmpty(input.label, "Seat label");
   let employeeId = input.employeeId || null;
   const employeeName = input.employeeName?.trim() ?? "";
-  const employeePosition = input.employeePosition?.trim() ?? "";
+  const employeePosition = "employeePosition" in input ? normalizeOptionalText(input.employeePosition) : undefined;
+  const phoneExtension = "phoneExtension" in input ? normalizeOptionalText(input.phoneExtension) : undefined;
   const department = normalizeOptionalText(input.department);
   const zone = normalizeOptionalText(input.zone);
 
@@ -286,7 +289,8 @@ export async function updateSeatAction(input: {
         .from("employees")
         .insert({
           full_name: employeeName,
-          position: employeePosition || null,
+          position: employeePosition ?? null,
+          phone_extension: phoneExtension ?? null,
           department,
           avatar_url: null,
           active: true
@@ -316,7 +320,8 @@ export async function updateSeatAction(input: {
     await upsertDepartmentOption(supabase, department);
     const patch: Record<string, string | null | boolean> = { active: true };
     if (employeeName) patch.full_name = employeeName;
-    patch.position = employeePosition || null;
+    if (employeePosition !== undefined) patch.position = employeePosition;
+    if (phoneExtension !== undefined) patch.phone_extension = phoneExtension;
     patch.department = department;
 
     const { error: employeeError } = await supabase
@@ -434,6 +439,7 @@ export async function createEmployeeAction(input: {
   fullName: string;
   position?: string | null;
   department?: string | null;
+  phoneExtension?: string | null;
 }) {
   const supabase = await requireAdmin();
   const fullName = assertNonEmpty(input.fullName, "Employee name");
@@ -447,6 +453,7 @@ export async function createEmployeeAction(input: {
       full_name: fullName,
       position: input.position?.trim() || null,
       department,
+      phone_extension: normalizeOptionalText(input.phoneExtension),
       avatar_url: null,
       active: true
     })
@@ -463,6 +470,7 @@ export async function updateEmployeeAction(input: {
   fullName: string;
   position?: string | null;
   department?: string | null;
+  phoneExtension?: string | null;
 }) {
   const supabase = await requireAdmin();
   const fullName = assertNonEmpty(input.fullName, "Employee name");
@@ -476,6 +484,7 @@ export async function updateEmployeeAction(input: {
       full_name: fullName,
       position: input.position?.trim() || null,
       department,
+      phone_extension: normalizeOptionalText(input.phoneExtension),
       active: true
     })
     .eq("id", input.employeeId)
@@ -872,6 +881,7 @@ export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
         full_name: employee.full_name,
         position: employee.position,
         department: employee.department,
+        phone_extension: employee.phone_extension,
         avatar_url: employee.avatar_url,
         active: employee.active
       }, { onConflict: "id" });

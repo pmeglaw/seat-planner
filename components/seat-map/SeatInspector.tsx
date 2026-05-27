@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import type { ChangeEvent, FormEvent } from "react";
+import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
 import { updateSeatAction } from "@/app/actions";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 
 type SeatInspectorProps = {
   seat: SeatWithEmployee | null;
+  seats: SeatWithEmployee[];
   employees: Employee[];
   departmentOptions: DepartmentOption[];
   canEdit: boolean;
@@ -27,7 +28,7 @@ type SeatInspectorForm = {
   label: string;
   employeeId: string;
   employeeName: string;
-  employeePosition: string;
+  phoneExtension: string;
   department: string;
   zone: string;
   status: SeatStatus;
@@ -38,7 +39,7 @@ const emptyForm: SeatInspectorForm = {
   label: "",
   employeeId: "",
   employeeName: "",
-  employeePosition: "",
+  phoneExtension: "",
   department: "",
   zone: "",
   status: "available",
@@ -50,7 +51,7 @@ function formFromSeat(seat: SeatWithEmployee): SeatInspectorForm {
     label: seat.label,
     employeeId: seat.employee_id ?? "",
     employeeName: seat.employee?.full_name ?? "",
-    employeePosition: seat.employee?.position ?? "",
+    phoneExtension: seat.employee?.phone_extension ?? "",
     department: seat.employee?.department ?? "",
     zone: seat.zone ?? seat.department ?? "",
     status: seat.status,
@@ -71,6 +72,7 @@ function formsEqual(left: SeatInspectorForm, right: SeatInspectorForm) {
 
 export function SeatInspector({
   seat,
+  seats,
   employees,
   departmentOptions,
   canEdit,
@@ -88,13 +90,39 @@ export function SeatInspector({
   const [localError, setLocalError] = useState<string | null>(null);
   const [form, setForm] = useState<SeatInspectorForm>(emptyForm);
   const [initialForm, setInitialForm] = useState<SeatInspectorForm>(emptyForm);
+  const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
+  const [activeEmployeeIndex, setActiveEmployeeIndex] = useState(0);
   const activeSeatIdRef = useRef<string | null>(null);
   const activeSeatSnapshotRef = useRef(formSnapshot(emptyForm));
+  const employeeInputRef = useRef<HTMLInputElement | null>(null);
 
   const sortedEmployees = useMemo(
     () => [...employees].filter(employee => employee.active).sort((a, b) => a.full_name.localeCompare(b.full_name)),
     [employees]
   );
+
+  const employeeOptions = useMemo(() => sortedEmployees.map(employee => {
+    const assignedSeat = seats.find(item => item.employee_id === employee.id) ?? null;
+    const phoneExtension = employee.phone_extension ? `Ext. ${employee.phone_extension}` : null;
+    const metaParts = [employee.department, employee.position, phoneExtension].filter(Boolean);
+    return {
+      employee,
+      assignedSeatLabel: assignedSeat?.label ?? "Unassigned",
+      meta: metaParts.join(" · ") || "No department or title",
+      searchable: [employee.full_name, employee.department, employee.position, employee.phone_extension, assignedSeat?.label]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+    };
+  }), [seats, sortedEmployees]);
+
+  const filteredEmployeeOptions = useMemo(() => {
+    const needle = form.employeeName.trim().toLowerCase();
+    if (!needle) return employeeOptions.slice(0, 8);
+    return employeeOptions
+      .filter(option => option.searchable.includes(needle))
+      .slice(0, 8);
+  }, [employeeOptions, form.employeeName]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -116,6 +144,10 @@ export function SeatInspector({
   }, [form.employeeName, sortedEmployees]);
 
   useEffect(() => {
+    setActiveEmployeeIndex(current => Math.min(Math.max(current, 0), Math.max(filteredEmployeeOptions.length - 1, 0)));
+  }, [filteredEmployeeOptions.length]);
+
+  useEffect(() => {
     onDirtyChange(isDirty);
   }, [isDirty, onDirtyChange]);
 
@@ -126,6 +158,8 @@ export function SeatInspector({
       setForm(emptyForm);
       setInitialForm(emptyForm);
       setLocalError(null);
+      setEmployeeComboboxOpen(false);
+      setActiveEmployeeIndex(0);
       onDirtyChange(false);
       return;
     }
@@ -140,6 +174,8 @@ export function SeatInspector({
       setForm(nextForm);
       setInitialForm(nextForm);
       setLocalError(null);
+      setEmployeeComboboxOpen(false);
+      setActiveEmployeeIndex(0);
       onError(null);
       onDirtyChange(false);
     }
@@ -155,7 +191,7 @@ export function SeatInspector({
   const assignmentStateText = employeeNameValue
     ? matchedEmployee
       ? "Matched existing employee"
-      : "New employee will be created"
+      : "Create new employee on save"
     : "No employee assigned";
 
   function updateField<K extends keyof SeatInspectorForm>(field: K, value: SeatInspectorForm[K]) {
@@ -168,9 +204,24 @@ export function SeatInspector({
     return sortedEmployees.find(employee => employee.full_name.trim().toLowerCase() === cleanName) ?? null;
   }
 
+  function selectEmployee(employee: Employee) {
+    setForm(current => ({
+      ...current,
+      employeeId: employee.id,
+      employeeName: employee.full_name,
+      phoneExtension: employee.phone_extension ?? "",
+      department: employee.department ?? current.department,
+      status: "assigned"
+    }));
+    setEmployeeComboboxOpen(false);
+    setActiveEmployeeIndex(0);
+  }
+
   function handleEmployeeNameChange(event: ChangeEvent<HTMLInputElement>) {
     const employeeName = event.target.value;
     const matchedEmployee = findEmployeeByName(employeeName);
+    setEmployeeComboboxOpen(true);
+    setActiveEmployeeIndex(0);
 
     setForm(current => {
       const nextStatus: SeatStatus = employeeName.trim()
@@ -192,11 +243,38 @@ export function SeatInspector({
         ...current,
         employeeId: matchedEmployee.id,
         employeeName: matchedEmployee.full_name,
-        employeePosition: matchedEmployee.position ?? "",
+        phoneExtension: matchedEmployee.phone_extension ?? "",
         department: matchedEmployee.department ?? current.department,
         status: "assigned"
       };
     });
+  }
+
+  function handleEmployeeNameKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setEmployeeComboboxOpen(true);
+      setActiveEmployeeIndex(current => Math.min(current + 1, Math.max(filteredEmployeeOptions.length - 1, 0)));
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setEmployeeComboboxOpen(true);
+      setActiveEmployeeIndex(current => Math.max(current - 1, 0));
+      return;
+    }
+
+    if (event.key === "Enter" && employeeComboboxOpen && filteredEmployeeOptions[activeEmployeeIndex]) {
+      event.preventDefault();
+      selectEmployee(filteredEmployeeOptions[activeEmployeeIndex].employee);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setEmployeeComboboxOpen(false);
+    }
   }
 
   function handleTextChange(
@@ -245,7 +323,7 @@ export function SeatInspector({
           status: nextStatus,
           employeeId,
           employeeName: employeeName || null,
-          employeePosition: form.employeePosition.trim() || null,
+          phoneExtension: form.phoneExtension.trim() || null,
           department: form.department.trim() || null,
           zone: selectedSeat.zone ?? selectedSeat.department ?? null,
           notes: form.notes.trim() || null
@@ -385,13 +463,76 @@ export function SeatInspector({
 
           <label className="block">
             <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee name</span>
-            <input
-              list="seat-inspector-employee-options"
-              value={form.employeeName}
-              onChange={handleEmployeeNameChange}
-              placeholder="Search or enter employee name"
-              className={fieldClassName}
-            />
+            <div className="relative">
+              <input
+                ref={employeeInputRef}
+                value={form.employeeName}
+                onChange={handleEmployeeNameChange}
+                onFocus={() => setEmployeeComboboxOpen(true)}
+                onBlur={() => window.setTimeout(() => setEmployeeComboboxOpen(false), 120)}
+                onKeyDown={handleEmployeeNameKeyDown}
+                placeholder="Search or enter employee name"
+                role="combobox"
+                aria-expanded={employeeComboboxOpen}
+                aria-controls="seat-inspector-employee-listbox"
+                aria-autocomplete="list"
+                aria-activedescendant={employeeComboboxOpen && filteredEmployeeOptions[activeEmployeeIndex] ? `seat-inspector-employee-option-${filteredEmployeeOptions[activeEmployeeIndex].employee.id}` : undefined}
+                className={`${fieldClassName} pr-10`}
+              />
+              <button
+                type="button"
+                aria-label="Show employee options"
+                title="Show employee options"
+                onMouseDown={event => event.preventDefault()}
+                onClick={() => {
+                  setEmployeeComboboxOpen(current => !current);
+                  employeeInputRef.current?.focus();
+                }}
+                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                v
+              </button>
+              {employeeComboboxOpen && (
+                <div
+                  id="seat-inspector-employee-listbox"
+                  role="listbox"
+                  className="absolute z-50 mt-2 max-h-64 w-full overflow-auto rounded-2xl border border-white/70 bg-white/95 p-1.5 shadow-[0_18px_48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl"
+                >
+                  {filteredEmployeeOptions.length > 0 ? filteredEmployeeOptions.map((option, index) => (
+                    <button
+                      key={option.employee.id}
+                      id={`seat-inspector-employee-option-${option.employee.id}`}
+                      type="button"
+                      role="option"
+                      aria-selected={form.employeeId === option.employee.id}
+                      onMouseDown={event => event.preventDefault()}
+                      onMouseEnter={() => setActiveEmployeeIndex(index)}
+                      onClick={() => selectEmployee(option.employee)}
+                      className={[
+                        "flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition",
+                        index === activeEmployeeIndex ? "bg-orange-50 text-slate-950" : "text-slate-800 hover:bg-slate-50"
+                      ].join(" ")}
+                    >
+                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-black text-brand-dark ring-1 ring-orange-100">
+                        {option.employee.full_name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?"}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-black">{option.employee.full_name}</span>
+                        <span className="block truncate text-xs text-slate-500">{option.meta}</span>
+                      </span>
+                      <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
+                        {option.assignedSeatLabel}
+                      </span>
+                    </button>
+                  )) : (
+                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
+                      <div className="font-black text-slate-700">No existing employee match</div>
+                      <div>Create new employee on save.</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             <span className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide", employeeNameValue ? "bg-orange-50 text-brand-dark ring-1 ring-orange-100" : "bg-slate-100 text-slate-500"].join(" ")}>
               {assignmentStateText}
             </span>
@@ -409,8 +550,8 @@ export function SeatInspector({
             </label>
 
             <label className="block">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Role</span>
-              <input value={form.employeePosition} onChange={event => handleTextChange("employeePosition", event)} placeholder="Optional" className={fieldClassName} />
+              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Phone Ext.</span>
+              <input value={form.phoneExtension} onChange={event => handleTextChange("phoneExtension", event)} placeholder="Optional" className={fieldClassName} inputMode="numeric" />
             </label>
           </div>
 
@@ -456,10 +597,6 @@ export function SeatInspector({
               )}
             </div>
           </div>
-
-          <datalist id="seat-inspector-employee-options">
-            {sortedEmployees.map(employee => <option key={employee.id} value={employee.full_name} />)}
-          </datalist>
         </form>
       ) : (
         <div className="space-y-3 text-sm">
@@ -469,6 +606,11 @@ export function SeatInspector({
             {(selectedSeat.employee?.position || selectedSeat.employee?.department) && (
               <div className="mt-1 text-sm text-slate-500">
                 {[selectedSeat.employee?.position, selectedSeat.employee?.department].filter(Boolean).join(" · ")}
+              </div>
+            )}
+            {selectedSeat.employee?.phone_extension && (
+              <div className="mt-2 inline-flex rounded-full bg-white/80 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
+                Ext. {selectedSeat.employee.phone_extension}
               </div>
             )}
           </section>

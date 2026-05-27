@@ -82,6 +82,24 @@ function getInitials(name: string) {
   return parts.slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?";
 }
 
+function UndoIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+      <path d="M7.2 5.2 4 8.4l3.2 3.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4.6 8.4h7.1a4.2 4.2 0 1 1-2.9 7.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RedoIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+      <path d="m12.8 5.2 3.2 3.2-3.2 3.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15.4 8.4H8.3a4.2 4.2 0 1 0 2.9 7.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 
 export function SeatMap({
   seats,
@@ -198,7 +216,8 @@ export function SeatMap({
     return localEmployees
       .map(employee => {
         const assignedSeat = localSeats.find(seat => seat.employee_id === employee.id) ?? null;
-        const metaParts = [employee.position, employee.department, assignedSeat ? assignedSeat.label : "Unassigned"].filter(Boolean);
+        const phoneExtension = employee.phone_extension ? `Ext. ${employee.phone_extension}` : null;
+        const metaParts = [employee.position, employee.department, phoneExtension, assignedSeat ? assignedSeat.label : "Unassigned"].filter(Boolean);
         return {
           id: employee.id,
           name: employee.full_name,
@@ -206,7 +225,7 @@ export function SeatMap({
           initials: getInitials(employee.full_name),
           seatId: assignedSeat?.id ?? null,
           seatLabel: assignedSeat?.label ?? null,
-          searchable: [employee.full_name, employee.position, employee.department, assignedSeat?.label, assignedSeat ? getSeatZone(assignedSeat) : ""].filter(Boolean).join(" ").toLowerCase()
+          searchable: [employee.full_name, employee.position, employee.department, employee.phone_extension, assignedSeat?.label, assignedSeat ? getSeatZone(assignedSeat) : ""].filter(Boolean).join(" ").toLowerCase()
         };
       })
       .filter(result => !needle || result.searchable.includes(needle))
@@ -251,7 +270,8 @@ export function SeatMap({
       getSeatZone(seat),
       seat.employee?.full_name,
       seat.employee?.position,
-      seat.employee?.department
+      seat.employee?.department,
+      seat.employee?.phone_extension
     ]
       .filter(Boolean)
       .join(" ")
@@ -739,26 +759,26 @@ export function SeatMap({
           <div className="col-start-2 row-start-1 flex min-w-0 flex-wrap items-center justify-end gap-2 lg:col-auto lg:row-auto">
             {canEdit && (
               <>
-                <Button
+                <button
                   type="button"
-                  className="min-h-8 rounded-full px-3 py-1 text-xs"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/70 text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !undoAvailable}
                   aria-label={nextUndoLabel ? `Undo ${nextUndoLabel}` : "Undo draft edit"}
                   title={historyStatusMessage}
                   onClick={undoDraftEdit}
                 >
-                  Undo
-                </Button>
-                <Button
+                  <UndoIcon />
+                </button>
+                <button
                   type="button"
-                  className="min-h-8 rounded-full px-3 py-1 text-xs"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/70 text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !redoAvailable}
                   aria-label={nextRedoLabel ? `Redo ${nextRedoLabel}` : "Redo draft edit"}
                   title={historyStatusMessage}
                   onClick={redoDraftEdit}
                 >
-                  Redo
-                </Button>
+                  <RedoIcon />
+                </button>
                 <Link
                   href="/admin/management"
                   className="hidden min-h-8 items-center justify-center rounded-full border border-white/70 bg-white/70 px-3 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:inline-flex"
@@ -774,7 +794,7 @@ export function SeatMap({
         </div>
       </header>
 
-      <main className={["grid grid-cols-1 gap-3 p-3 sm:p-4", filterCollapsed ? "lg:grid-cols-[52px_minmax(0,1fr)]" : "lg:grid-cols-[248px_minmax(0,1fr)]"].join(" ")}>
+      <main className={["grid grid-cols-1 gap-3 p-3 sm:p-4", filterCollapsed ? "lg:grid-cols-[52px_minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]"].join(" ")}>
         <div className={[filterCollapsed ? "order-2" : "order-1", "lg:order-1"].join(" ")}>
           <FilterPanel
             search={search}
@@ -935,6 +955,7 @@ export function SeatMap({
 
       <SeatInspector
         seat={selectedSeat}
+        seats={localSeats}
         employees={localEmployees}
         departmentOptions={localDepartmentOptions}
         canEdit={canEdit}
