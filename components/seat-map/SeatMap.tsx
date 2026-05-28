@@ -103,10 +103,8 @@ function RedoIcon() {
 function NamesIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
-      <rect x="3.2" y="5" width="13.6" height="10" rx="2.2" fill="currentColor" opacity="0.12" />
-      <rect x="3.2" y="5" width="13.6" height="10" rx="2.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="7.2" cy="10" r="1.7" fill="currentColor" />
-      <path d="M10.3 8.6h3.5M10.3 11.4h2.7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M2.7 10s2.6-4.4 7.3-4.4S17.3 10 17.3 10s-2.6 4.4-7.3 4.4S2.7 10 2.7 10Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="10" cy="10" r="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
     </svg>
   );
 }
