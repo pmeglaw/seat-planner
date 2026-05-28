@@ -773,12 +773,11 @@ export function SeatMap({
               aria-label={namesToggleLabel}
               title={namesToggleLabel}
               className={[
-                "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:px-3",
+                "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border shadow-sm backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
                 showNames ? "border-slate-300 bg-slate-900/90 text-white hover:bg-slate-800" : "border-white/70 bg-white/70 text-slate-700 hover:bg-white"
               ].join(" ")}
             >
               <NamesIcon />
-              <span className="hidden sm:inline">Names</span>
             </button>
           </div>
 
