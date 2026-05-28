@@ -102,9 +102,10 @@ function RedoIcon() {
 
 function NamesIcon() {
   return (
-    <span aria-hidden="true" className="text-[11px] font-black leading-none tracking-normal">
-      Aa
-    </span>
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+      <path d="M2.7 10s2.6-4.4 7.3-4.4S17.3 10 17.3 10s-2.6 4.4-7.3 4.4S2.7 10 2.7 10Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="10" cy="10" r="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
   );
 }
 
@@ -772,12 +773,11 @@ export function SeatMap({
               aria-label={namesToggleLabel}
               title={namesToggleLabel}
               className={[
-                "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:px-3",
+                "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border shadow-sm backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
                 showNames ? "border-slate-300 bg-slate-900/90 text-white hover:bg-slate-800" : "border-white/70 bg-white/70 text-slate-700 hover:bg-white"
               ].join(" ")}
             >
               <NamesIcon />
-              <span className="hidden sm:inline">Names</span>
             </button>
           </div>
 
