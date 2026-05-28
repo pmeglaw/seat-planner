@@ -100,6 +100,14 @@ function RedoIcon() {
   );
 }
 
+function NamesIcon() {
+  return (
+    <span aria-hidden="true" className="text-[11px] font-black leading-none tracking-normal">
+      Aa
+    </span>
+  );
+}
+
 
 export function SeatMap({
   seats,
@@ -708,6 +716,7 @@ export function SeatMap({
       : canEdit
         ? "Select a seat to assign or update employee details."
         : "Select a seat to view assignment details.";
+  const namesToggleLabel = showNames ? "Hide employee names on map" : "Show employee names on map";
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#eef2f7]">
@@ -756,6 +765,19 @@ export function SeatMap({
                   {activeFilterCount}
                 </span>
               )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowNames(current => !current)}
+              aria-label={namesToggleLabel}
+              title={namesToggleLabel}
+              className={[
+                "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:px-3",
+                showNames ? "border-slate-300 bg-slate-900/90 text-white hover:bg-slate-800" : "border-white/70 bg-white/70 text-slate-700 hover:bg-white"
+              ].join(" ")}
+            >
+              <NamesIcon />
+              <span className="hidden sm:inline">Names</span>
             </button>
           </div>
 
@@ -901,7 +923,6 @@ export function SeatMap({
         moveSeatMode={moveSeatMode}
         swapSeatMode={Boolean(swapSourceSeatId)}
         pending={pending}
-        showNames={showNames}
         onClose={() => setAdvancedOpen(false)}
         onStartAddSeat={startAddSeatMode}
         onCancelAddSeat={cancelAddSeatMode}
@@ -917,7 +938,6 @@ export function SeatMap({
           setMoveSeatMode(current => !current);
           setAdvancedOpen(false);
         }}
-        onToggleShowNames={() => setShowNames(current => !current)}
         onClearSelection={clearSelection}
         onDeleteSelectedSeat={deleteSelectedSeat}
         onBeforeCsvImport={captureDraftSnapshot}
