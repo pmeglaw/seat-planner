@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseAssignmentCsv } from "@/lib/csv";
 import type { DraftSnapshot } from "@/lib/draftHistory";
+import { answerMapOperationsQuestion } from "@/lib/mapOperationsAgent";
 import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/publishHistory";
 import { buildSeatSwapPlan } from "@/lib/seatSwap";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
-import { SEAT_STATUSES, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
+import { SEAT_STATUSES, type AskPlannerRequest, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
 
 type CsvDraftSeat = {
   id: string;
@@ -78,6 +79,36 @@ async function getDraftMapPayload(supabase: Awaited<ReturnType<typeof requireAdm
     seats: (seats ?? []) as SeatWithEmployee[],
     employees: (employees ?? []) as Employee[]
   };
+}
+
+export async function askPlannerAction(input: AskPlannerRequest) {
+  const supabase = await requireAdmin();
+  const question = typeof input?.question === "string" ? input.question : "";
+  const { seats, employees } = await getDraftMapPayload(supabase);
+
+  const { data: departments, error: departmentsError } = await supabase
+    .from("department_options")
+    .select("*")
+    .eq("active", true)
+    .order("name");
+
+  const { data: zones, error: zonesError } = await supabase
+    .from("zone_options")
+    .select("*")
+    .eq("active", true)
+    .order("name");
+
+  if (departmentsError || zonesError) {
+    throw new Error(departmentsError?.message ?? zonesError?.message ?? "Could not load map options for Ask Planner.");
+  }
+
+  return answerMapOperationsQuestion({
+    question,
+    seats,
+    employees,
+    departmentOptions: (departments ?? []) as DepartmentOption[],
+    zoneOptions: (zones ?? []) as ZoneOption[]
+  });
 }
 
 function buildSeatKey(label: string) {

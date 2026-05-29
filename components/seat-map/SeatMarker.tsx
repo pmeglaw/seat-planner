@@ -14,6 +14,7 @@ type SeatMarkerProps = {
   swapMode: boolean;
   swapSource: boolean;
   swapTarget: boolean;
+  highlighted: boolean;
   dragging: boolean;
   onSelect: (seatId: string) => void;
   onMovePointerDown: (event: PointerEvent<HTMLButtonElement>, seatId: string) => void;
@@ -29,6 +30,7 @@ export function SeatMarker({
   swapMode,
   swapSource,
   swapTarget,
+  highlighted,
   dragging,
   onSelect,
   onMovePointerDown
@@ -38,7 +40,7 @@ export function SeatMarker({
   const displayName = employeeName || "Open seat";
   const namesVisible = showNames && hasEmployee && !dimmed;
   const isMovable = canEdit && selected && moveSeatMode;
-  const expanded = selected || dragging || swapSource || swapTarget;
+  const expanded = selected || dragging || swapSource || swapTarget || highlighted;
   const showChip = namesVisible || expanded;
 
   const statusAccentClass =
@@ -85,13 +87,14 @@ export function SeatMarker({
         selected ? "border-orange-300 bg-white/90 text-orange-950 ring-4 ring-orange-200/70 shadow-[0_18px_38px_rgba(194,65,12,0.25),inset_0_1px_0_rgba(255,255,255,0.98)]" : "",
         swapSource ? "border-sky-300 bg-sky-50/85 text-sky-950 ring-4 ring-sky-200/70" : "",
         swapTarget ? "border-emerald-300 bg-emerald-50/85 text-emerald-950 ring-4 ring-emerald-200/70" : "",
+        highlighted && !selected && !swapSource && !swapTarget ? "border-cyan-300 bg-cyan-50/90 text-cyan-950 ring-4 ring-cyan-200/75 shadow-[0_18px_38px_rgba(8,145,178,0.18),inset_0_1px_0_rgba(255,255,255,0.98)]" : "",
         swapMode && !swapSource ? "hover:ring-4 hover:ring-sky-200/70" : "",
         dimmed ? "opacity-45 saturate-50" : "",
         isMovable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
         dragging ? "z-40 scale-[1.06] shadow-[0_22px_44px_rgba(31,35,39,0.28)]" : ""
       ].join(" ")}
       style={pointToStyle({ x: seat.x, y: seat.y })}
-      aria-label={`${seat.label}: ${displayName}. ${seat.status} seat.${selected ? " Selected." : " Open details."}`}
+      aria-label={`${seat.label}: ${displayName}. ${seat.status} seat.${highlighted ? " Highlighted by Ask Planner." : ""}${selected ? " Selected." : " Open details."}`}
     >
       {showChip ? (
         <span className="pointer-events-none flex w-full min-w-0 items-center gap-2">

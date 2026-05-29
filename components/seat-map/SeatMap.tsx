@@ -20,6 +20,7 @@ import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapActio
 import { normalizePoint } from "@/lib/seatMath";
 import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
+import { AskPlannerDrawer } from "@/components/seat-map/AskPlannerDrawer";
 import { FilterPanel } from "@/components/seat-map/FilterPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
@@ -128,6 +129,8 @@ export function SeatMap({
   const [addSeatMode, setAddSeatMode] = useState(false);
   const [addSeatZone, setAddSeatZone] = useState("all");
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [askPlannerOpen, setAskPlannerOpen] = useState(false);
+  const [plannerHighlightedSeatIds, setPlannerHighlightedSeatIds] = useState<string[]>([]);
   const [dragState, setDragState] = useState<DragState>(null);
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("all");
@@ -152,6 +155,14 @@ export function SeatMap({
   }, [selectedSeatId]);
 
   useEffect(() => {
+    setPlannerHighlightedSeatIds(current => {
+      const seatIds = new Set(localSeats.map(seat => seat.id));
+      const next = current.filter(seatId => seatIds.has(seatId));
+      return next.length === current.length ? current : next;
+    });
+  }, [localSeats]);
+
+  useEffect(() => {
     function isEditableTarget(target: EventTarget | null) {
       return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement;
     }
@@ -161,6 +172,11 @@ export function SeatMap({
 
       if (swapConfirm) {
         setSwapConfirm(null);
+        return;
+      }
+
+      if (askPlannerOpen) {
+        setAskPlannerOpen(false);
         return;
       }
 
@@ -186,7 +202,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, advancedOpen, inspectorDirty, moveSeatMode, selectedSeatId, swapConfirm, swapSourceSeatId]);
+  }, [addSeatMode, advancedOpen, askPlannerOpen, inspectorDirty, moveSeatMode, selectedSeatId, swapConfirm, swapSourceSeatId]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -244,6 +260,7 @@ export function SeatMap({
   const selectedSeat = localSeats.find(seat => seat.id === selectedSeatId) ?? null;
   const swapSourceSeat = swapSourceSeatId ? localSeats.find(seat => seat.id === swapSourceSeatId) ?? null : null;
   const swapTargetSeat = swapConfirm ? localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null : null;
+  const plannerHighlightedSeatIdSet = useMemo(() => new Set(plannerHighlightedSeatIds), [plannerHighlightedSeatIds]);
   const activeFilterCount = [
     search.trim(),
     department !== "all" ? department : "",
@@ -466,6 +483,13 @@ export function SeatMap({
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
     setInspectorCollapsed(false);
+  }
+
+  function selectPlannerHighlightedSeat(seatId: string) {
+    if (selectSeat(seatId)) {
+      setAskPlannerOpen(false);
+      setInspectorCollapsed(false);
+    }
   }
 
   function startSwapSeatMode(skipDirtyCheck = false) {
@@ -810,7 +834,24 @@ export function SeatMap({
                 >
                   Management
                 </Link>
-                <Button variant="secondary" className="min-h-8 rounded-full px-3 py-1 text-xs shadow-sm" onClick={() => setAdvancedOpen(true)}>
+                <Button
+                  variant="secondary"
+                  className="min-h-8 rounded-full px-3 py-1 text-xs shadow-sm"
+                  onClick={() => {
+                    setAdvancedOpen(false);
+                    setAskPlannerOpen(true);
+                  }}
+                >
+                  Ask Planner
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="min-h-8 rounded-full px-3 py-1 text-xs shadow-sm"
+                  onClick={() => {
+                    setAskPlannerOpen(false);
+                    setAdvancedOpen(true);
+                  }}
+                >
                   Tools
                 </Button>
               </>
@@ -900,6 +941,7 @@ export function SeatMap({
                       swapMode={Boolean(swapSourceSeatId)}
                       swapSource={seat.id === swapSourceSeatId}
                       swapTarget={seat.id === swapConfirm?.targetSeatId}
+                      highlighted={plannerHighlightedSeatIdSet.has(seat.id)}
                       dragging={dragState?.seatId === seat.id}
                       onSelect={selectSeat}
                       onMovePointerDown={handleMovePointerDown}
@@ -975,6 +1017,18 @@ export function SeatMap({
           if (message) setActionNotice(null);
         }}
       />
+
+      {canEdit && (
+        <AskPlannerDrawer
+          open={askPlannerOpen}
+          draftDirty={inspectorDirty}
+          highlightedSeatIds={plannerHighlightedSeatIds}
+          onClose={() => setAskPlannerOpen(false)}
+          onHighlightSeats={setPlannerHighlightedSeatIds}
+          onClearHighlights={() => setPlannerHighlightedSeatIds([])}
+          onSelectSeat={selectPlannerHighlightedSeat}
+        />
+      )}
 
       <SeatInspector
         seat={selectedSeat}

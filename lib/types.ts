@@ -95,6 +95,29 @@ export type CsvAssignmentRow = {
   notes: string;
 };
 
+export type AskPlannerRequest = {
+  question: string;
+};
+
+export type AskPlannerStatus = "answered" | "refused" | "needs_clarification";
+export type AskPlannerConfidence = "low" | "medium" | "high";
+
+export type AskPlannerHighlight = {
+  seatId: string;
+  label: string;
+  reason: string;
+};
+
+export type AskPlannerResponse = {
+  status: AskPlannerStatus;
+  answer: string;
+  summary: string;
+  confidence: AskPlannerConfidence;
+  highlights: AskPlannerHighlight[];
+  warnings: string[];
+  followUps: string[];
+};
+
 export const SEAT_STATUSES: SeatStatus[] = [
   "available",
   "assigned",

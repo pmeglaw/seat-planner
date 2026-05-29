@@ -1,0 +1,492 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+import ts from "typescript";
+
+async function importTsModule(relativePath) {
+  const source = await readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
+  const transpiled = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.ESNext,
+      target: ts.ScriptTarget.ES2022
+    }
+  });
+  const moduleUrl = `data:text/javascript;base64,${Buffer.from(transpiled.outputText).toString("base64")}`;
+  return import(moduleUrl);
+}
+
+const agent = await importTsModule("lib/mapOperationsAgent.ts");
+
+function employee(id, fullName, department, active = true) {
+  return {
+    id,
+    full_name: fullName,
+    position: "Planner",
+    department,
+    phone_extension: "1234",
+    avatar_url: null,
+    active,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z"
+  };
+}
+
+function seat(id, label, status, zone, employeeRecord = null) {
+  return {
+    id,
+    seat_key: label.toLowerCase(),
+    label,
+    x: 0.2,
+    y: 0.3,
+    status,
+    layer: "draft",
+    employee_id: employeeRecord?.id ?? null,
+    zone,
+    department: null,
+    notes: null,
+    is_custom: false,
+    employee: employeeRecord,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z"
+  };
+}
+
+const alice = employee("emp-alice", "Alice Adams", "Ops");
+const bob = employee("emp-bob", "Bob Brown", "Ops");
+const cara = employee("emp-cara", "Cara Chen", "Finance");
+const inactive = employee("emp-inactive", "Inactive Person", "Ops", false);
+
+function baseContext() {
+  return agent.createMapOperationsContext({
+    employees: [alice, bob, cara, inactive],
+    seats: [
+      seat("seat-n01", "N01", "available", "North Pod"),
+      seat("seat-n02", "N02", "assigned", "North Pod", alice),
+      seat("seat-s01", "S01", "reserved", "South Pod"),
+      seat("seat-s02", "S02", "unavailable", "South Pod")
+    ],
+    departmentOptions: [{ id: "dep-ops", name: "Ops", active: true, created_at: "", updated_at: "" }],
+    zoneOptions: [{ id: "zone-north", name: "North Pod", active: true, created_at: "", updated_at: "" }]
+  });
+}
+
+function askPlannerPayload(overrides = {}) {
+  return {
+    question: "Which seats are open in North Pod?",
+    employees: [alice, bob, cara],
+    seats: [
+      seat("seat-n01", "N01", "available", "North Pod"),
+      seat("seat-n02", "N02", "assigned", "North Pod", alice)
+    ],
+    departmentOptions: [{ id: "dep-ops", name: "Ops", active: true, created_at: "", updated_at: "" }],
+    zoneOptions: [{ id: "zone-north", name: "North Pod", active: true, created_at: "", updated_at: "" }],
+    ...overrides
+  };
+}
+
+function openAIResponse(payload) {
+  return new Response(JSON.stringify(payload), {
+    status: 200,
+    headers: { "Content-Type": "application/json" }
+  });
+}
+
+function toolResponse(id, calls) {
+  return openAIResponse({
+    id,
+    output: calls.map(call => ({
+      type: "function_call",
+      name: call.name,
+      call_id: call.callId,
+      arguments: JSON.stringify(call.arguments ?? {})
+    }))
+  });
+}
+
+function finalResponse(answer = "North Pod has one open seat.") {
+  return openAIResponse({
+    id: "resp-final",
+    output: [{
+      type: "message",
+      content: [{
+        type: "output_text",
+        text: JSON.stringify({
+          status: "answered",
+          answer,
+          summary: "Open seat found.",
+          confidence: "high",
+          highlights: [{ seatId: "seat-n01", label: "N01", reason: "Available in North Pod." }],
+          warnings: [],
+          followUps: []
+        })
+      }]
+    }]
+  });
+}
+
+async function withMockedOpenAI(responses, callback) {
+  const originalFetch = globalThis.fetch;
+  const originalApiKey = process.env.OPENAI_API_KEY;
+  const originalModel = process.env.OPENAI_MODEL;
+  const requests = [];
+
+  globalThis.fetch = async (_url, init) => {
+    requests.push(JSON.parse(init.body));
+    const response = responses[Math.min(requests.length - 1, responses.length - 1)];
+    return typeof response === "function" ? response(requests[requests.length - 1]) : response;
+  };
+  process.env.OPENAI_API_KEY = "test-openai-key";
+  process.env.OPENAI_MODEL = "gpt-test";
+
+  try {
+    return await callback(requests);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalApiKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = originalApiKey;
+    }
+    if (originalModel === undefined) {
+      delete process.env.OPENAI_MODEL;
+    } else {
+      process.env.OPENAI_MODEL = originalModel;
+    }
+  }
+}
+
+test("map summary counts seats by status, zone, and department", () => {
+  const summary = agent.runReadOnlyPlannerTool(baseContext(), "get_map_summary", {});
+
+  assert.equal(summary.totals.total, 4);
+  assert.equal(summary.totals.assigned, 1);
+  assert.equal(summary.totals.available, 1);
+  assert.equal(summary.totals.reserved, 1);
+  assert.equal(summary.totals.unavailable, 1);
+  assert.equal(summary.totals.activeEmployees, 3);
+  assert.equal(summary.totals.unassignedActiveEmployees, 2);
+
+  const north = summary.byZone.find(item => item.name === "North Pod");
+  assert.equal(north.total, 2);
+  assert.equal(north.assigned, 1);
+
+  const ops = summary.byDepartment.find(item => item.name === "Ops");
+  assert.equal(ops.activeEmployees, 2);
+  assert.equal(ops.assignedSeats, 1);
+  assert.equal(ops.unassignedEmployees, 1);
+});
+
+test("seat search filters by zone, status, occupancy, and caps results", () => {
+  const result = agent.runReadOnlyPlannerTool(baseContext(), "search_seats", {
+    zone: "North Pod",
+    status: "available",
+    occupied: false,
+    query: "",
+    department: "",
+    customOnly: null,
+    limit: 10
+  });
+
+  assert.equal(result.count, 1);
+  assert.equal(result.seats[0].label, "N01");
+
+  const personResult = agent.runReadOnlyPlannerTool(baseContext(), "search_seats", {
+    query: "Alice",
+    status: "all",
+    zone: "",
+    department: "",
+    occupied: null,
+    customOnly: null,
+    limit: 1
+  });
+
+  assert.equal(personResult.count, 1);
+  assert.equal(personResult.seats[0].label, "N02");
+});
+
+test("list people reports assigned and unassigned active employees", () => {
+  const unassigned = agent.runReadOnlyPlannerTool(baseContext(), "list_people", {
+    assignment: "unassigned",
+    department: "",
+    query: "",
+    limit: 10
+  });
+
+  assert.equal(unassigned.count, 2);
+  assert.deepEqual(unassigned.people.map(person => person.fullName).sort(), ["Bob Brown", "Cara Chen"]);
+});
+
+test("read-only tool outputs exclude nonessential phone extensions and seat notes", () => {
+  const context = agent.createMapOperationsContext({
+    employees: [alice],
+    seats: [{ ...seat("seat-note", "N03", "assigned", "North Pod", alice), notes: "Private note" }]
+  });
+
+  const seatResult = agent.runReadOnlyPlannerTool(context, "search_seats", {
+    query: "",
+    status: "all",
+    zone: "",
+    department: "",
+    occupied: null,
+    customOnly: null,
+    limit: 10
+  });
+  const peopleResult = agent.runReadOnlyPlannerTool(context, "list_people", {
+    assignment: "all",
+    department: "",
+    query: "",
+    limit: 10
+  });
+
+  assert.equal("phoneExtension" in seatResult.seats[0], false);
+  assert.equal("notes" in seatResult.seats[0], false);
+  assert.equal("phoneExtension" in peopleResult.people[0], false);
+});
+
+test("map health flags deterministic data quality issues", () => {
+  const dupeAlice = employee("emp-alice-copy", "Alice Adams", "Ops");
+  const unhealthyContext = agent.createMapOperationsContext({
+    employees: [alice, bob, dupeAlice],
+    seats: [
+      { ...seat("bad-assigned", "B01", "assigned", "North Pod"), employee_id: null, employee: null },
+      seat("bad-status", "B02", "reserved", "North Pod", alice),
+      seat("dupe-label-a", "D01", "available", null),
+      seat("dupe-label-b", "D01", "assigned", null, alice)
+    ]
+  });
+
+  const health = agent.runReadOnlyPlannerTool(unhealthyContext, "get_map_health", {});
+  const codes = health.issues.map(issue => issue.code);
+
+  assert.ok(codes.includes("assigned_status_without_employee"));
+  assert.ok(codes.includes("employee_with_non_assigned_status"));
+  assert.ok(codes.includes("employee_assigned_to_multiple_seats"));
+  assert.ok(codes.includes("missing_zone"));
+  assert.ok(codes.includes("duplicate_seat_label"));
+  assert.ok(codes.includes("duplicate_employee_name"));
+  assert.ok(codes.includes("unassigned_active_employees"));
+});
+
+test("planner response validation removes unknown highlights and normalizes labels", () => {
+  const context = baseContext();
+  const response = agent.validateAskPlannerResponse({
+    status: "answered",
+    answer: "North Pod has one open seat.",
+    summary: "Open seat found.",
+    confidence: "high",
+    highlights: [
+      { seatId: "seat-n01", label: "Wrong", reason: "Available in North Pod." },
+      { seatId: "missing-seat", label: "Missing", reason: "Should be removed." }
+    ],
+    warnings: ["Limited to draft data."],
+    followUps: ["Show all reserved seats"]
+  }, context.seats);
+
+  assert.equal(response.highlights.length, 1);
+  assert.equal(response.highlights[0].seatId, "seat-n01");
+  assert.equal(response.highlights[0].label, "N01");
+});
+
+test("planner model resolution keeps OPENAI_MODEL optional with a single default", () => {
+  assert.equal(agent.ASK_PLANNER_DEFAULT_MODEL, "gpt-5.5");
+  assert.equal(agent.resolveAskPlannerModel({}), agent.ASK_PLANNER_DEFAULT_MODEL);
+  assert.equal(agent.resolveAskPlannerModel({ OPENAI_MODEL: "  gpt-custom  " }), "gpt-custom");
+});
+
+test("OpenAI model access errors are friendly and do not expose raw API payloads", () => {
+  const unavailable = agent.formatOpenAIAdminError(400, {
+    error: {
+      message: "The model `gpt-missing` does not exist or you do not have access to it.",
+      code: "model_not_found",
+      param: "model"
+    }
+  }, "gpt-missing");
+
+  assert.match(unavailable, /cannot use the configured OpenAI model "gpt-missing"/);
+  assert.match(unavailable, /OPENAI_MODEL/);
+  assert.doesNotMatch(unavailable, /model_not_found/);
+  assert.doesNotMatch(unavailable, /does not exist/);
+
+  const unauthorized = agent.formatOpenAIAdminError(403, {
+    error: {
+      message: "Project does not have access.",
+      code: "permission_denied"
+    }
+  }, "gpt-private");
+
+  assert.match(unauthorized, /cannot use the configured OpenAI model "gpt-private"/);
+});
+
+test("OpenAI failure diagnostics keep only safe server-side fields", () => {
+  const diagnostic = agent.buildOpenAIFailureDiagnostic({
+    status: 403,
+    statusText: "Forbidden",
+    model: "gpt-private",
+    requestId: "req_safe_123",
+    payload: {
+      error: {
+        type: "invalid_request_error",
+        code: "model_not_found",
+        param: "model",
+        message: "Authorization: Bearer sk-testSECRET12345 for jane@example.com failed; call 555-123-4567"
+      }
+    }
+  });
+
+  assert.deepEqual({
+    status: diagnostic.status,
+    statusText: diagnostic.statusText,
+    errorType: diagnostic.errorType,
+    errorCode: diagnostic.errorCode,
+    errorParam: diagnostic.errorParam,
+    model: diagnostic.model,
+    requestId: diagnostic.requestId
+  }, {
+    status: 403,
+    statusText: "Forbidden",
+    errorType: "invalid_request_error",
+    errorCode: "model_not_found",
+    errorParam: "model",
+    model: "gpt-private",
+    requestId: "req_safe_123"
+  });
+  assert.match(diagnostic.errorMessage, /redacted-authorization/);
+  assert.match(diagnostic.errorMessage, /redacted-email/);
+  assert.match(diagnostic.errorMessage, /redacted-phone/);
+  assert.doesNotMatch(diagnostic.errorMessage, /sk-testSECRET12345/);
+  assert.doesNotMatch(diagnostic.errorMessage, /jane@example\.com/);
+  assert.doesNotMatch(diagnostic.errorMessage, /555-123-4567/);
+});
+
+test("Responses loop returns a matching function_call_output for a single function call", async () => {
+  await withMockedOpenAI([
+    toolResponse("resp-tools", [
+      {
+        name: "search_seats",
+        callId: "call_single",
+        arguments: { query: "", status: "available", zone: "North Pod", department: "", occupied: false, customOnly: null, limit: 10 }
+      }
+    ]),
+    finalResponse()
+  ], async requests => {
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload());
+
+    assert.equal(result.status, "answered");
+    assert.equal(requests.length, 2);
+    assert.equal(requests[1].previous_response_id, "resp-tools");
+    assert.deepEqual(requests[1].input.map(item => item.call_id), ["call_single"]);
+    assert.equal(requests[1].input[0].type, "function_call_output");
+    assert.equal(typeof requests[1].input[0].output, "string");
+    assert.equal(JSON.parse(requests[1].input[0].output).seats[0].id, "seat-n01");
+  });
+});
+
+test("Responses loop returns outputs for every function call in one response", async () => {
+  await withMockedOpenAI([
+    toolResponse("resp-many-tools", [
+      { name: "get_map_summary", callId: "call_summary" },
+      {
+        name: "search_seats",
+        callId: "call_search",
+        arguments: { query: "", status: "available", zone: "North Pod", department: "", occupied: false, customOnly: null, limit: 10 }
+      },
+      { name: "get_map_health", callId: "call_health" },
+      { name: "list_people", callId: "call_people", arguments: { query: "", department: "", assignment: "unassigned", limit: 10 } },
+      { name: "get_zone_department_breakdown", callId: "call_breakdown" }
+    ]),
+    finalResponse()
+  ], async requests => {
+    await agent.answerMapOperationsQuestion(askPlannerPayload());
+
+    assert.equal(requests.length, 2);
+    assert.deepEqual(requests[1].input.map(item => item.call_id), [
+      "call_summary",
+      "call_search",
+      "call_health",
+      "call_people",
+      "call_breakdown"
+    ]);
+    requests[1].input.forEach(item => {
+      assert.equal(item.type, "function_call_output");
+      assert.equal(typeof item.output, "string");
+    });
+  });
+});
+
+test("Responses loop returns a safe output for an unknown tool", async () => {
+  await withMockedOpenAI([
+    toolResponse("resp-unknown-tool", [
+      { name: "publish_map", callId: "call_unknown", arguments: { unsafe: true } }
+    ]),
+    finalResponse("I cannot publish from Ask Planner.")
+  ], async requests => {
+    await agent.answerMapOperationsQuestion(askPlannerPayload({ question: "Publish the map" }));
+    const output = JSON.parse(requests[1].input[0].output);
+
+    assert.equal(requests[1].input[0].call_id, "call_unknown");
+    assert.match(output.error, /Unknown read-only tool/);
+  });
+});
+
+test("Responses loop returns a safe output when a read-only tool throws", () => {
+  const output = agent.buildFunctionCallOutput(
+    baseContext(),
+    { name: "search_seats", callId: "call_throw", argumentsText: "{}" },
+    () => {
+      throw new Error("Private tool detail with 555-123-4567");
+    }
+  );
+
+  assert.equal(output.type, "function_call_output");
+  assert.equal(output.call_id, "call_throw");
+  assert.equal(typeof output.output, "string");
+  assert.deepEqual(JSON.parse(output.output), {
+    error: "Read-only tool failed. Ask Planner can continue with other available read-only data."
+  });
+  assert.doesNotMatch(output.output, /555-123-4567/);
+});
+
+test("Responses loop stops after the final assistant message", async () => {
+  await withMockedOpenAI([
+    toolResponse("resp-tools", [{ name: "get_map_summary", callId: "call_summary" }]),
+    finalResponse("Final answer after one lookup."),
+    toolResponse("resp-extra", [{ name: "get_map_health", callId: "call_extra" }])
+  ], async requests => {
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload());
+
+    assert.equal(result.answer, "Final answer after one lookup.");
+    assert.equal(requests.length, 2);
+  });
+});
+
+test("Responses loop cap produces a friendly sanitized error", async () => {
+  await withMockedOpenAI([
+    toolResponse("resp-loop-1", [{ name: "get_map_summary", callId: "call_1" }]),
+    toolResponse("resp-loop-2", [{ name: "get_map_summary", callId: "call_2" }]),
+    toolResponse("resp-loop-3", [{ name: "get_map_summary", callId: "call_3" }]),
+    toolResponse("resp-loop-4", [{ name: "get_map_summary", callId: "call_4" }]),
+    toolResponse("resp-loop-5", [{ name: "get_map_summary", callId: "call_5" }])
+  ], async requests => {
+    await assert.rejects(
+      () => agent.answerMapOperationsQuestion(askPlannerPayload()),
+      error => {
+        assert.match(error.message, /needed too many read-only lookups/i);
+        assert.doesNotMatch(error.message, /test-openai-key|Authorization|Bearer|seat-n01|Alice Adams|1234/);
+        return true;
+      }
+    );
+    assert.equal(requests.length, 5);
+  });
+});
+
+test("askPlannerAction remains read-only at the source level", async () => {
+  const source = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
+  const match = source.match(/export async function askPlannerAction[\s\S]+?\n}\r?\n\r?\nfunction buildSeatKey/);
+  assert.ok(match, "askPlannerAction should appear before buildSeatKey");
+
+  const actionSource = match[0];
+  assert.doesNotMatch(actionSource, /\.(?:insert|update|upsert|delete|rpc)\s*\(/);
+  assert.doesNotMatch(actionSource, /revalidatePath/);
+  assert.doesNotMatch(actionSource, /publishSeatMapAction/);
+  assert.doesNotMatch(actionSource, /moveSeatAction|updateSeatAction|deleteSeatAction|restoreDraftSnapshotAction|swapSeatAssignmentsAction|importAssignmentsCsvAction/);
+});

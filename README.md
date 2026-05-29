@@ -30,6 +30,15 @@ npm run dev
 
 Add your Supabase values to `.env.local`.
 
+Ask Planner on `/admin` also requires a server-only OpenAI key:
+
+```bash
+OPENAI_API_KEY=your-server-side-openai-api-key
+OPENAI_MODEL=gpt-5.5
+```
+
+Do not prefix the OpenAI key with `NEXT_PUBLIC_`; it must only be available to server actions.
+
 ## Supabase setup
 
 Run the SQL files in order:
