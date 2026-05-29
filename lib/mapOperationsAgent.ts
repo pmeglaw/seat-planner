@@ -18,8 +18,16 @@ const MAX_HIGHLIGHTS = 20;
 const MAX_WARNINGS = 6;
 const MAX_FOLLOW_UPS = 5;
 const OPENAI_TIMEOUT_MS = 22000;
+const BROAD_OPEN_NO_HIGHLIGHT_WARNING =
+  "No seats highlighted for this broad answer. Ask for a specific zone, department, or smaller group to highlight seats.";
 
 const WRITE_ACTION_PATTERN = /\b(publish|move|assign|vacate|delete|remove|clear|import|restore|swap|update|edit|create|add)\b/i;
+const BROAD_OPEN_QUESTION_PATTERNS = [
+  /^(which|what) (seats|desks) (are )?(currently )?(open|available)$/,
+  /^(which|what) (open|available) (seats|desks)( are there)?$/,
+  /^(show|list|find) (all )?(open|available) (seats|desks)$/,
+  /^(show|list|find) (all )?(seats|desks) (that are )?(currently )?(open|available)$/
+];
 
 type MapOperationsData = {
   seats: SeatWithEmployee[];
@@ -241,6 +249,10 @@ function statusCounts(seats: SeatWithEmployee[]) {
 
 function sortByName<T extends { name: string }>(items: T[]) {
   return items.sort((left, right) => left.name.localeCompare(right.name));
+}
+
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return count === 1 ? singular : plural;
 }
 
 function assignedSeatByEmployeeId(seats: SeatWithEmployee[]) {
@@ -595,6 +607,70 @@ export function validateAskPlannerResponse(value: unknown, seats: SeatWithEmploy
     highlights,
     warnings: safeStringArray(source.warnings, MAX_WARNINGS),
     followUps: safeStringArray(source.followUps, MAX_FOLLOW_UPS)
+  };
+}
+
+function normalizeQuestionForIntent(question: string) {
+  return question
+    .toLowerCase()
+    .replace(/[''`]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function isBroadOpenSeatQuestion(question: string) {
+  const normalized = normalizeQuestionForIntent(question);
+  return BROAD_OPEN_QUESTION_PATTERNS.some(pattern => pattern.test(normalized));
+}
+
+function availableDraftSeats(context: MapOperationsContext) {
+  return context.seats.filter(seat => seat.status === "available" && !hasEmployee(seat));
+}
+
+function openSeatZoneCounts(openSeats: SeatWithEmployee[]) {
+  const counts = new Map<string, number>();
+  openSeats.forEach(seat => {
+    const zone = getSeatZoneLabel(seat);
+    counts.set(zone, (counts.get(zone) ?? 0) + 1);
+  });
+  return Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((left, right) => right.count - left.count || left.name.localeCompare(right.name));
+}
+
+function broadOpenFollowUps(context: MapOperationsContext, zoneCounts: Array<{ name: string; count: number }>) {
+  const names = new Set<string>();
+  zoneCounts.forEach(zone => {
+    if (zone.name !== "Unzoned") names.add(zone.name);
+  });
+  context.zoneOptions.filter(zone => zone.active).forEach(zone => names.add(zone.name));
+  return Array.from(names)
+    .slice(0, MAX_FOLLOW_UPS)
+    .map(zone => `Open seats in ${zone}`);
+}
+
+export function buildBroadOpenSeatsResponse(context: MapOperationsContext): AskPlannerResponse {
+  const openSeats = availableDraftSeats(context);
+  const zoneCounts = openSeatZoneCounts(openSeats);
+  const count = openSeats.length;
+  const zoneCount = zoneCounts.length;
+  const zoneSummary = zoneCounts.length > 0
+    ? ` By zone: ${zoneCounts.map(zone => `${zone.name} (${zone.count})`).join(", ")}.`
+    : "";
+
+  return {
+    status: "answered",
+    answer: count > 0
+      ? `I found ${count} open ${pluralize(count, "seat")} in the saved draft map.${zoneSummary}`
+      : "I found no open seats in the saved draft map.",
+    summary: count > 0
+      ? `${count} open ${pluralize(count, "seat")} across ${zoneCount} ${pluralize(zoneCount, "zone")}.`
+      : "No open seats found in saved draft data.",
+    confidence: "high",
+    highlights: [],
+    warnings: [BROAD_OPEN_NO_HIGHLIGHT_WARNING],
+    followUps: broadOpenFollowUps(context, zoneCounts)
   };
 }
 
@@ -968,12 +1044,16 @@ export async function answerMapOperationsQuestion(input: MapOperationsData & { q
     throw new Error(`Ask Planner questions are limited to ${MAX_QUESTION_LENGTH} characters.`);
   }
 
+  const context = createMapOperationsContext(input);
+  if (isBroadOpenSeatQuestion(question)) {
+    return buildBroadOpenSeatsResponse(context);
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error("Ask Planner is not configured. Add OPENAI_API_KEY to the server environment.");
   }
 
-  const context = createMapOperationsContext(input);
   const model = resolveAskPlannerModel();
   const tools = buildReadOnlyTools();
   const text = { format: buildResponseSchema() };

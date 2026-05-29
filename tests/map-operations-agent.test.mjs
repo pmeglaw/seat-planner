@@ -84,6 +84,26 @@ function askPlannerPayload(overrides = {}) {
   };
 }
 
+function broadOpenPayload(question = "Which seats are open?") {
+  return askPlannerPayload({
+    question,
+    employees: [alice, bob, cara],
+    seats: [
+      seat("seat-center-01", "C01", "available", "Center Desks"),
+      seat("seat-center-02", "C02", "available", "Center Desks"),
+      seat("seat-north-01", "N01", "available", "North Pod"),
+      seat("seat-east-01", "E01", "available", "East Pod"),
+      seat("seat-east-02", "E02", "assigned", "East Pod", alice),
+      seat("seat-west-01", "W01", "reserved", "West Pod")
+    ],
+    zoneOptions: [
+      { id: "zone-center", name: "Center Desks", active: true, created_at: "", updated_at: "" },
+      { id: "zone-north", name: "North Pod", active: true, created_at: "", updated_at: "" },
+      { id: "zone-east", name: "East Pod", active: true, created_at: "", updated_at: "" }
+    ]
+  });
+}
+
 function openAIResponse(payload) {
   return new Response(JSON.stringify(payload), {
     status: 200,
@@ -162,6 +182,34 @@ async function withMockedOpenAI(responses, callback) {
 
   try {
     return await callback(requests);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalApiKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = originalApiKey;
+    }
+    if (originalModel === undefined) {
+      delete process.env.OPENAI_MODEL;
+    } else {
+      process.env.OPENAI_MODEL = originalModel;
+    }
+  }
+}
+
+async function withOpenAIDisabled(callback) {
+  const originalFetch = globalThis.fetch;
+  const originalApiKey = process.env.OPENAI_API_KEY;
+  const originalModel = process.env.OPENAI_MODEL;
+
+  globalThis.fetch = async () => {
+    assert.fail("Broad open-seat shortcut should not call OpenAI");
+  };
+  delete process.env.OPENAI_API_KEY;
+  delete process.env.OPENAI_MODEL;
+
+  try {
+    return await callback();
   } finally {
     globalThis.fetch = originalFetch;
     if (originalApiKey === undefined) {
@@ -327,6 +375,76 @@ test("planner response validation accepts broad answers with zero highlights", (
   assert.deepEqual(response.followUps, ["Which seats are open in North Pod?", "Which open seats are near Ops?"]);
 });
 
+test("broad open-seat shortcut returns a structured response without OpenAI", async () => {
+  await withOpenAIDisabled(async () => {
+    const result = await agent.answerMapOperationsQuestion(broadOpenPayload("Which seats are open?"));
+
+    assert.equal(result.status, "answered");
+    assert.equal(result.confidence, "high");
+    assert.match(result.answer, /4 open seats/i);
+    assert.match(result.answer, /Center Desks \(2\)/);
+    assert.match(result.answer, /North Pod \(1\)/);
+    assert.match(result.answer, /East Pod \(1\)/);
+    assert.match(result.summary, /4 open seats across 3 zones/i);
+    assert.deepEqual(result.highlights, []);
+    assert.match(result.warnings[0], /No seats highlighted for this broad answer/i);
+    assert.ok(result.followUps.includes("Open seats in Center Desks"));
+    assert.ok(result.followUps.includes("Open seats in North Pod"));
+    assert.ok(result.followUps.includes("Open seats in East Pod"));
+  });
+});
+
+test("broad open and available prompt synonyms use the deterministic shortcut", async () => {
+  const prompts = [
+    "What seats are open?",
+    "Show open seats",
+    "Which seats are available?",
+    "Show available seats",
+    "List all available desks"
+  ];
+
+  await withOpenAIDisabled(async () => {
+    for (const prompt of prompts) {
+      assert.equal(agent.isBroadOpenSeatQuestion(prompt), true, `${prompt} should be treated as broad`);
+      const result = await agent.answerMapOperationsQuestion(broadOpenPayload(prompt));
+
+      assert.equal(result.status, "answered");
+      assert.equal(result.highlights.length, 0);
+      assert.match(result.answer, /open seats/i);
+      assert.match(result.warnings[0], /broad answer/i);
+    }
+  });
+});
+
+test("narrow open-seat prompts still use the OpenAI path and validate highlights", async () => {
+  await withMockedOpenAI([
+    toolResponse("resp-narrow-open-tools", [
+      {
+        name: "search_seats",
+        callId: "call_narrow_open",
+        arguments: { query: "", status: "available", zone: "Center Desks", department: "", occupied: false, customOnly: null, limit: 10 }
+      }
+    ]),
+    finalResponse({
+      answer: "Center Desks has two open seats.",
+      summary: "Open seats found in Center Desks.",
+      confidence: "high",
+      highlights: [{ seatId: "seat-center-01", label: "C01", reason: "Available in Center Desks." }],
+      warnings: [],
+      followUps: ["Show open seats in North Pod"]
+    })
+  ], async requests => {
+    const result = await agent.answerMapOperationsQuestion(broadOpenPayload("Open seats in Center Desks"));
+
+    assert.equal(agent.isBroadOpenSeatQuestion("Open seats in Center Desks"), false);
+    assert.equal(requests.length, 2);
+    assert.equal(requests[1].previous_response_id, "resp-narrow-open-tools");
+    assert.equal(result.highlights.length, 1);
+    assert.equal(result.highlights[0].seatId, "seat-center-01");
+    assert.equal(result.highlights[0].label, "C01");
+  });
+});
+
 test("planner model resolution keeps OPENAI_MODEL optional with a single default", () => {
   assert.equal(agent.ASK_PLANNER_DEFAULT_MODEL, "gpt-5.5");
   assert.equal(agent.resolveAskPlannerModel({}), agent.ASK_PLANNER_DEFAULT_MODEL);
@@ -425,7 +543,7 @@ test("Responses loop returns a matching function_call_output for a single functi
   });
 });
 
-test("Broad open-seat response parses with zero highlights and no parse error", async () => {
+test("Scoped OpenAI open-seat response parses with zero highlights and no parse error", async () => {
   await withMockedOpenAI([
     toolResponse("resp-broad-open-tools", [
       {
@@ -443,7 +561,7 @@ test("Broad open-seat response parses with zero highlights and no parse error", 
       followUps: ["Which seats are open in North Pod?", "Which seats are open in South Pod?"]
     })
   ], async requests => {
-    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({ question: "Which seats are open?" }));
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({ question: "Which open seats are near Ops?" }));
 
     assert.equal(result.status, "answered");
     assert.equal(result.highlights.length, 0);
@@ -472,7 +590,7 @@ test("JSON response wrapped in a code fence parses as a structured Ask Planner r
       followUps: ["Open seats in North Pod"]
     })
   ], async () => {
-    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({ question: "Which seats are open?" }));
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({ question: "Which open seats are near Ops?" }));
 
     assert.equal(result.status, "answered");
     assert.equal(result.highlights.length, 0);
@@ -588,4 +706,12 @@ test("askPlannerAction remains read-only at the source level", async () => {
   assert.doesNotMatch(actionSource, /revalidatePath/);
   assert.doesNotMatch(actionSource, /publishSeatMapAction/);
   assert.doesNotMatch(actionSource, /moveSeatAction|updateSeatAction|deleteSeatAction|restoreDraftSnapshotAction|swapSeatAssignmentsAction|importAssignmentsCsvAction/);
+});
+
+test("map operations agent helper has no Supabase write calls or publish hooks", async () => {
+  const source = await readFile(new URL("../lib/mapOperationsAgent.ts", import.meta.url), "utf8");
+
+  assert.doesNotMatch(source, /\.(?:insert|update|upsert|delete|rpc)\s*\(/);
+  assert.doesNotMatch(source, /revalidatePath/);
+  assert.doesNotMatch(source, /publishSeatMapAction/);
 });
