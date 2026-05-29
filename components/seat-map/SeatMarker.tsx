@@ -40,8 +40,9 @@ export function SeatMarker({
   const displayName = employeeName || "Open seat";
   const namesVisible = showNames && hasEmployee && !dimmed;
   const isMovable = canEdit && selected && moveSeatMode;
-  const expanded = selected || dragging || swapSource || swapTarget || highlighted;
+  const expanded = selected || dragging || swapSource || swapTarget;
   const showChip = namesVisible || expanded;
+  const plannerHighlighted = highlighted && !selected && !swapSource && !swapTarget;
 
   const statusAccentClass =
     seat.status === "assigned"
@@ -85,9 +86,10 @@ export function SeatMarker({
           : "h-[28px] min-h-[28px] min-w-[36px] rounded-full px-2 py-0 text-center text-[10px] hover:min-w-[102px] hover:rounded-xl hover:px-2.5 hover:text-left focus-visible:min-w-[102px] focus-visible:rounded-xl focus-visible:px-2.5 focus-visible:text-left",
         expanded ? "z-30 min-h-[40px] min-w-[122px] max-w-[158px] rounded-xl bg-white/90 px-3 py-1.5 text-left sm:min-w-[132px]" : "",
         selected ? "border-orange-300 bg-white/90 text-orange-950 ring-4 ring-orange-200/70 shadow-[0_18px_38px_rgba(194,65,12,0.25),inset_0_1px_0_rgba(255,255,255,0.98)]" : "",
+        highlighted && selected ? "outline outline-2 outline-offset-2 outline-cyan-300/90" : "",
         swapSource ? "border-sky-300 bg-sky-50/85 text-sky-950 ring-4 ring-sky-200/70" : "",
         swapTarget ? "border-emerald-300 bg-emerald-50/85 text-emerald-950 ring-4 ring-emerald-200/70" : "",
-        highlighted && !selected && !swapSource && !swapTarget ? "border-cyan-300 bg-cyan-50/90 text-cyan-950 ring-4 ring-cyan-200/75 shadow-[0_18px_38px_rgba(8,145,178,0.18),inset_0_1px_0_rgba(255,255,255,0.98)]" : "",
+        plannerHighlighted ? "border-cyan-400 bg-cyan-50/90 text-cyan-950 ring-2 ring-cyan-300/80 shadow-[0_12px_28px_rgba(8,145,178,0.24),inset_0_1px_0_rgba(255,255,255,0.98)]" : "",
         swapMode && !swapSource ? "hover:ring-4 hover:ring-sky-200/70" : "",
         dimmed ? "opacity-45 saturate-50" : "",
         isMovable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",

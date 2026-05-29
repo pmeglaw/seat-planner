@@ -726,6 +726,8 @@ function buildInstructions(context: MapOperationsContext) {
     "Never publish, move seats, assign employees, vacate seats, delete seats, import data, restore data, or change anything.",
     "If the user asks for a write action, refuse that action and offer read-only findings or next steps an admin can review manually.",
     "Highlight only seats that directly support the answer. Use draft seat IDs exactly as returned by tools.",
+    "For broad answers that would highlight many seats, set highlights to an empty array, explain that broad answers may not highlight seats in warnings, and suggest narrower follow-ups by zone, department, or group.",
+    "Your final answer must be one JSON object matching the response schema. Do not wrap it in Markdown, code fences, or prose outside the JSON object.",
     "Keep answers concise and operational. Mention uncertainty in warnings when data is missing or capped.",
     `Current persisted draft snapshot totals: ${summary.total} seats, ${summary.assigned} assigned, ${summary.available} available, ${summary.reserved} reserved, ${summary.unavailable} unavailable, ${summary.activeEmployees} active employees.`
   ].join("\n");
@@ -928,11 +930,33 @@ function extractOutputText(response: OpenAIResponsePayload) {
 }
 
 function parsePlannerJson(text: string) {
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    throw new Error("Ask Planner returned an unreadable response. Try rephrasing the question.");
+  const candidates = [
+    text,
+    extractFencedJson(text),
+    extractEmbeddedJsonObject(text)
+  ].filter((candidate): candidate is string => Boolean(candidate));
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate) as unknown;
+    } catch {
+      // Try the next safe wrapper shape.
+    }
   }
+
+  throw new Error("Ask Planner returned an unreadable response. Try rephrasing the question.");
+}
+
+function extractFencedJson(text: string) {
+  const match = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  return match?.[1]?.trim() || null;
+}
+
+function extractEmbeddedJsonObject(text: string) {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end <= start) return null;
+  return text.slice(start, end + 1).trim();
 }
 
 export async function answerMapOperationsQuestion(input: MapOperationsData & { question: string }): Promise<AskPlannerResponse> {
@@ -953,9 +977,10 @@ export async function answerMapOperationsQuestion(input: MapOperationsData & { q
   const model = resolveAskPlannerModel();
   const tools = buildReadOnlyTools();
   const text = { format: buildResponseSchema() };
+  const instructions = buildInstructions(context);
   let request: OpenAIResponseBody = {
     model,
-    instructions: buildInstructions(context),
+    instructions,
     input: buildInput(question),
     tools,
     tool_choice: "auto",
@@ -979,6 +1004,7 @@ export async function answerMapOperationsQuestion(input: MapOperationsData & { q
 
     request = {
       model,
+      instructions,
       previous_response_id: response.id,
       input: buildFunctionCallOutputs(context, toolCalls),
       tools,

@@ -836,13 +836,22 @@ export function SeatMap({
                 </Link>
                 <Button
                   variant="secondary"
-                  className="min-h-8 rounded-full px-3 py-1 text-xs shadow-sm"
+                  aria-label={plannerHighlightedSeatIds.length > 0 ? `Open Ask Planner, ${plannerHighlightedSeatIds.length} seats highlighted` : "Open Ask Planner"}
+                  className={[
+                    "min-h-8 rounded-full px-3 py-1 text-xs shadow-sm",
+                    plannerHighlightedSeatIds.length > 0 ? "border-cyan-200 bg-cyan-50 text-cyan-900 hover:bg-cyan-100" : ""
+                  ].join(" ")}
                   onClick={() => {
                     setAdvancedOpen(false);
                     setAskPlannerOpen(true);
                   }}
                 >
                   Ask Planner
+                  {plannerHighlightedSeatIds.length > 0 && (
+                    <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-600 px-1.5 text-[10px] font-black text-white">
+                      {plannerHighlightedSeatIds.length}
+                    </span>
+                  )}
                 </Button>
                 <Button
                   variant="secondary"
@@ -1022,6 +1031,7 @@ export function SeatMap({
         <AskPlannerDrawer
           open={askPlannerOpen}
           draftDirty={inspectorDirty}
+          zones={zones}
           highlightedSeatIds={plannerHighlightedSeatIds}
           onClose={() => setAskPlannerOpen(false)}
           onHighlightSeats={setPlannerHighlightedSeatIds}

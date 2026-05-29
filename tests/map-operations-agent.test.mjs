@@ -103,22 +103,44 @@ function toolResponse(id, calls) {
   });
 }
 
-function finalResponse(answer = "North Pod has one open seat.") {
+function plannerResponsePayload(overrides = {}) {
+  return {
+    status: "answered",
+    answer: "North Pod has one open seat.",
+    summary: "Open seat found.",
+    confidence: "high",
+    highlights: [{ seatId: "seat-n01", label: "N01", reason: "Available in North Pod." }],
+    warnings: [],
+    followUps: [],
+    ...overrides
+  };
+}
+
+function finalResponse(answerOrOverrides = "North Pod has one open seat.") {
+  const payload = typeof answerOrOverrides === "string"
+    ? plannerResponsePayload({ answer: answerOrOverrides })
+    : plannerResponsePayload(answerOrOverrides);
+
   return openAIResponse({
     id: "resp-final",
     output: [{
       type: "message",
       content: [{
         type: "output_text",
-        text: JSON.stringify({
-          status: "answered",
-          answer,
-          summary: "Open seat found.",
-          confidence: "high",
-          highlights: [{ seatId: "seat-n01", label: "N01", reason: "Available in North Pod." }],
-          warnings: [],
-          followUps: []
-        })
+        text: JSON.stringify(payload)
+      }]
+    }]
+  });
+}
+
+function fencedFinalResponse(overrides = {}) {
+  return openAIResponse({
+    id: "resp-final-fenced",
+    output: [{
+      type: "message",
+      content: [{
+        type: "output_text",
+        text: `Here is the structured answer:\n\n\`\`\`json\n${JSON.stringify(plannerResponsePayload(overrides))}\n\`\`\``
       }]
     }]
   });
@@ -287,6 +309,24 @@ test("planner response validation removes unknown highlights and normalizes labe
   assert.equal(response.highlights[0].label, "N01");
 });
 
+test("planner response validation accepts broad answers with zero highlights", () => {
+  const context = baseContext();
+  const response = agent.validateAskPlannerResponse({
+    status: "answered",
+    answer: "There are multiple open seats across the saved draft map.",
+    summary: "Broad open-seat summary.",
+    confidence: "medium",
+    highlights: [],
+    warnings: ["No seats highlighted for this broad answer. Ask for a specific zone, department, or smaller group to highlight seats."],
+    followUps: ["Which seats are open in North Pod?", "Which open seats are near Ops?"]
+  }, context.seats);
+
+  assert.equal(response.status, "answered");
+  assert.equal(response.highlights.length, 0);
+  assert.match(response.warnings[0], /broad answer/i);
+  assert.deepEqual(response.followUps, ["Which seats are open in North Pod?", "Which open seats are near Ops?"]);
+});
+
 test("planner model resolution keeps OPENAI_MODEL optional with a single default", () => {
   assert.equal(agent.ASK_PLANNER_DEFAULT_MODEL, "gpt-5.5");
   assert.equal(agent.resolveAskPlannerModel({}), agent.ASK_PLANNER_DEFAULT_MODEL);
@@ -373,11 +413,70 @@ test("Responses loop returns a matching function_call_output for a single functi
 
     assert.equal(result.status, "answered");
     assert.equal(requests.length, 2);
+    assert.ok(requests[0].instructions.includes("Your final answer must be one JSON object"));
+    assert.equal(requests[0].text.format.name, "ask_planner_response");
+    assert.ok(requests[1].instructions.includes("Your final answer must be one JSON object"));
+    assert.equal(requests[1].text.format.name, "ask_planner_response");
     assert.equal(requests[1].previous_response_id, "resp-tools");
     assert.deepEqual(requests[1].input.map(item => item.call_id), ["call_single"]);
     assert.equal(requests[1].input[0].type, "function_call_output");
     assert.equal(typeof requests[1].input[0].output, "string");
     assert.equal(JSON.parse(requests[1].input[0].output).seats[0].id, "seat-n01");
+  });
+});
+
+test("Broad open-seat response parses with zero highlights and no parse error", async () => {
+  await withMockedOpenAI([
+    toolResponse("resp-broad-open-tools", [
+      {
+        name: "search_seats",
+        callId: "call_broad_open",
+        arguments: { query: "", status: "available", zone: "", department: "", occupied: false, customOnly: null, limit: 30 }
+      }
+    ]),
+    finalResponse({
+      answer: "The saved draft map has open seats across multiple areas.",
+      summary: "Open seats are available; narrow by zone or department for map highlights.",
+      confidence: "medium",
+      highlights: [],
+      warnings: ["No seats highlighted for this broad answer. Ask for a specific zone, department, or smaller group to highlight seats."],
+      followUps: ["Which seats are open in North Pod?", "Which seats are open in South Pod?"]
+    })
+  ], async requests => {
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({ question: "Which seats are open?" }));
+
+    assert.equal(result.status, "answered");
+    assert.equal(result.highlights.length, 0);
+    assert.match(result.summary, /narrow by zone/i);
+    assert.match(result.warnings[0], /broad answer/i);
+    assert.ok(result.followUps.includes("Which seats are open in North Pod?"));
+    assert.equal(requests.length, 2);
+    assert.equal(requests[1].previous_response_id, "resp-broad-open-tools");
+  });
+});
+
+test("JSON response wrapped in a code fence parses as a structured Ask Planner response", async () => {
+  await withMockedOpenAI([
+    toolResponse("resp-fenced-tools", [
+      {
+        name: "search_seats",
+        callId: "call_fenced_open",
+        arguments: { query: "", status: "available", zone: "", department: "", occupied: false, customOnly: null, limit: 30 }
+      }
+    ]),
+    fencedFinalResponse({
+      answer: "There is one open seat in the saved draft data.",
+      summary: "Code-fenced JSON was recovered safely.",
+      highlights: [],
+      warnings: ["No seats highlighted for this broad answer."],
+      followUps: ["Open seats in North Pod"]
+    })
+  ], async () => {
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({ question: "Which seats are open?" }));
+
+    assert.equal(result.status, "answered");
+    assert.equal(result.highlights.length, 0);
+    assert.equal(result.summary, "Code-fenced JSON was recovered safely.");
   });
 });
 
