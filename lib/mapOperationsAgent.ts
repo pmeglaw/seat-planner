@@ -1051,7 +1051,7 @@ export async function answerMapOperationsQuestion(input: MapOperationsData & { q
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error("Ask Planner is not configured. Add OPENAI_API_KEY to the server environment.");
+    throw new Error("Ask Planner is not configured for this environment. Add OPENAI_API_KEY as a server-side environment variable and redeploy.");
   }
 
   const model = resolveAskPlannerModel();

@@ -16,6 +16,11 @@ type AskPlannerDrawerProps = {
   onSelectSeat: (seatId: string) => void;
 };
 
+type DrawerError = {
+  title: string;
+  message: string;
+};
+
 const emptyResponse: AskPlannerResponse | null = null;
 
 function statusLabel(status: AskPlannerResponse["status"]) {
@@ -42,7 +47,7 @@ export function AskPlannerDrawer({
 }: AskPlannerDrawerProps) {
   const [question, setQuestion] = useState("");
   const [response, setResponse] = useState<AskPlannerResponse | null>(emptyResponse);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<DrawerError | null>(null);
   const [pending, startTransition] = useTransition();
   const questionRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -71,24 +76,45 @@ export function AskPlannerDrawer({
   function friendlyDrawerError(message: string) {
     const lowerMessage = message.toLowerCase();
     if (lowerMessage.includes("not configured") || lowerMessage.includes("openai_api_key")) {
-      return "Ask Planner is not configured yet. Add OPENAI_API_KEY on the server, then try again.";
+      return {
+        title: "Ask Planner is not configured",
+        message: "Add OPENAI_API_KEY as a server-side environment variable for this environment, then redeploy."
+      };
     }
     if (lowerMessage.includes("configured openai model") || lowerMessage.includes("openai_model")) {
-      return "Ask Planner cannot use the configured OpenAI model. Check OPENAI_MODEL and project model access.";
+      return {
+        title: "OpenAI model unavailable",
+        message: "Check OPENAI_MODEL and project model access, then try again."
+      };
     }
     if (lowerMessage.includes("rate limited")) {
-      return "Ask Planner is temporarily rate limited. Try again shortly.";
+      return {
+        title: "Ask Planner is rate limited",
+        message: "OpenAI is temporarily rate limiting requests. Try again shortly."
+      };
     }
     if (lowerMessage.includes("could not reach openai")) {
-      return "Ask Planner could not reach OpenAI. Try again shortly.";
+      return {
+        title: "OpenAI is not reachable",
+        message: "Ask Planner could not reach OpenAI. Try again shortly."
+      };
     }
     if (lowerMessage.includes("took too long")) {
-      return "Ask Planner took too long to answer. Try a narrower question.";
+      return {
+        title: "Ask Planner timed out",
+        message: "Try a narrower question or try again shortly."
+      };
     }
     if (lowerMessage.includes("needs a question") || lowerMessage.includes("limited to")) {
-      return message;
+      return {
+        title: "Question needs a tweak",
+        message
+      };
     }
-    return "Ask Planner could not answer right now. Try again shortly or ask a narrower question.";
+    return {
+      title: "Ask Planner could not answer",
+      message: "Try again shortly or ask a narrower question."
+    };
   }
 
   function choosePrompt(prompt: string) {
@@ -223,8 +249,9 @@ export function AskPlannerDrawer({
           )}
 
           {error && (
-            <div role="alert" className="whitespace-pre-wrap rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold leading-6 text-rose-700">
-              {error}
+            <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-700">
+              <div className="font-black">{error.title}</div>
+              <p className="mt-1 font-semibold">{error.message}</p>
             </div>
           )}
 

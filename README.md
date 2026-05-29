@@ -34,10 +34,24 @@ Ask Planner on `/admin` also requires a server-only OpenAI key:
 
 ```bash
 OPENAI_API_KEY=your-server-side-openai-api-key
-OPENAI_MODEL=gpt-5.5
+OPENAI_MODEL=gpt-5.5 # optional
 ```
 
 Do not prefix the OpenAI key with `NEXT_PUBLIC_`; it must only be available to server actions.
+
+For Vercel, add `OPENAI_API_KEY` as a server-side environment variable for Production.
+Also add it for Preview if you test Ask Planner in preview deployments. Redeploy after
+adding or changing OpenAI environment variables. `OPENAI_MODEL` is optional and defaults
+to the app-configured model when omitted.
+
+Ask Planner manual QA checklist:
+
+- Admin `/admin` shows the Ask Planner drawer; viewer `/` does not.
+- "Which seats are open?" returns a broad read-only answer with no data changes.
+- "Open seats in Center Desks" highlights matching seats when available.
+- "What looks unhealthy?" returns map health findings.
+- "Move Alice to N01" is refused/read-only.
+- Highlight chips only select/open the seat inspector.
 
 ## Supabase setup
 

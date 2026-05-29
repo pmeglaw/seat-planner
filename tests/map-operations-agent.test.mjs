@@ -445,6 +445,56 @@ test("narrow open-seat prompts still use the OpenAI path and validate highlights
   });
 });
 
+test("map health prompt uses the read-only OpenAI path", async () => {
+  await withMockedOpenAI([
+    toolResponse("resp-health-tools", [
+      { name: "get_map_health", callId: "call_health" }
+    ]),
+    finalResponse({
+      answer: "The saved draft map has one health warning to review.",
+      summary: "Map health checked.",
+      confidence: "high",
+      highlights: [],
+      warnings: ["One active employee is unassigned."],
+      followUps: ["Show unassigned employees"]
+    })
+  ], async requests => {
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({ question: "What looks unhealthy?" }));
+
+    assert.equal(requests.length, 2);
+    assert.equal(requests[1].previous_response_id, "resp-health-tools");
+    assert.equal(requests[1].input[0].call_id, "call_health");
+    assert.equal(result.status, "answered");
+    assert.match(result.answer, /health warning/i);
+    assert.equal(result.highlights.length, 0);
+  });
+});
+
+test("write prompts are refused through the read-only path without mutating input data", async () => {
+  const payload = askPlannerPayload({ question: "Move Alice to N01" });
+  const before = JSON.stringify({ seats: payload.seats, employees: payload.employees });
+
+  await withMockedOpenAI([
+    finalResponse({
+      status: "refused",
+      answer: "I cannot move seats or change assignments. I can only provide read-only findings from the saved draft map.",
+      summary: "Write action refused.",
+      confidence: "high",
+      highlights: [],
+      warnings: ["Ask Planner is read-only."],
+      followUps: ["Which seats are open?"]
+    })
+  ], async requests => {
+    const result = await agent.answerMapOperationsQuestion(payload);
+
+    assert.equal(requests.length, 1);
+    assert.match(requests[0].input, /may request a write action/i);
+    assert.equal(result.status, "refused");
+    assert.match(result.answer, /cannot move seats/i);
+    assert.equal(JSON.stringify({ seats: payload.seats, employees: payload.employees }), before);
+  });
+});
+
 test("planner model resolution keeps OPENAI_MODEL optional with a single default", () => {
   assert.equal(agent.ASK_PLANNER_DEFAULT_MODEL, "gpt-5.5");
   assert.equal(agent.resolveAskPlannerModel({}), agent.ASK_PLANNER_DEFAULT_MODEL);
@@ -473,6 +523,35 @@ test("OpenAI model access errors are friendly and do not expose raw API payloads
   }, "gpt-private");
 
   assert.match(unauthorized, /cannot use the configured OpenAI model "gpt-private"/);
+});
+
+test("missing OpenAI configuration error is sanitized and production-actionable", async () => {
+  await withOpenAIDisabled(async () => {
+    await assert.rejects(
+      () => agent.answerMapOperationsQuestion(askPlannerPayload({ question: "What looks unhealthy?" })),
+      error => {
+        assert.match(error.message, /not configured for this environment/i);
+        assert.match(error.message, /OPENAI_API_KEY/);
+        assert.match(error.message, /server-side environment variable/i);
+        assert.match(error.message, /redeploy/i);
+        assert.doesNotMatch(error.message, /sk-|Bearer|Authorization/);
+        return true;
+      }
+    );
+  });
+});
+
+test("OpenAI rate-limit errors stay friendly and sanitized", () => {
+  const rateLimited = agent.formatOpenAIAdminError(429, {
+    error: {
+      message: "Rate limit details with request payload should not surface.",
+      code: "rate_limit_exceeded",
+      type: "requests"
+    }
+  }, "gpt-test");
+
+  assert.equal(rateLimited, "Ask Planner is temporarily rate limited by OpenAI. Try again shortly.");
+  assert.doesNotMatch(rateLimited, /request payload|rate_limit_exceeded/);
 });
 
 test("OpenAI failure diagnostics keep only safe server-side fields", () => {
@@ -714,4 +793,6 @@ test("map operations agent helper has no Supabase write calls or publish hooks",
   assert.doesNotMatch(source, /\.(?:insert|update|upsert|delete|rpc)\s*\(/);
   assert.doesNotMatch(source, /revalidatePath/);
   assert.doesNotMatch(source, /publishSeatMapAction/);
+  assert.match(source, /AbortController/);
+  assert.match(source, /OPENAI_TIMEOUT_MS/);
 });
