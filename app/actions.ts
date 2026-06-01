@@ -84,6 +84,7 @@ async function getDraftMapPayload(supabase: Awaited<ReturnType<typeof requireAdm
 export async function askPlannerAction(input: AskPlannerRequest) {
   const supabase = await requireAdmin();
   const question = typeof input?.question === "string" ? input.question : "";
+  const seatId = typeof input?.seatId === "string" ? input.seatId : null;
   const { seats, employees } = await getDraftMapPayload(supabase);
 
   const { data: departments, error: departmentsError } = await supabase
@@ -104,6 +105,7 @@ export async function askPlannerAction(input: AskPlannerRequest) {
 
   return answerMapOperationsQuestion({
     question,
+    seatId,
     seats,
     employees,
     departmentOptions: (departments ?? []) as DepartmentOption[],

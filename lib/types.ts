@@ -97,6 +97,7 @@ export type CsvAssignmentRow = {
 
 export type AskPlannerRequest = {
   question: string;
+  seatId?: string | null;
 };
 
 export type AskPlannerStatus = "answered" | "refused" | "needs_clarification";

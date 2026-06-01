@@ -20,6 +20,8 @@ const MAX_FOLLOW_UPS = 5;
 const OPENAI_TIMEOUT_MS = 22000;
 const BROAD_OPEN_NO_HIGHLIGHT_WARNING =
   "No seats highlighted for this broad answer. Ask for a specific zone, department, or smaller group to highlight seats.";
+const MISSING_EXPLAIN_SEAT_MESSAGE =
+  "Ask Planner could not find that seat in saved draft data. Select a current draft seat or ask about another seat.";
 
 const WRITE_ACTION_PATTERN = /\b(publish|move|assign|vacate|delete|remove|clear|import|restore|swap|update|edit|create|add)\b/i;
 const BROAD_OPEN_QUESTION_PATTERNS = [
@@ -28,6 +30,7 @@ const BROAD_OPEN_QUESTION_PATTERNS = [
   /^(show|list|find) (all )?(open|available) (seats|desks)$/,
   /^(show|list|find) (all )?(seats|desks) (that are )?(currently )?(open|available)$/
 ];
+const EXPLAIN_SEAT_QUESTION_PATTERN = /^(?:explain|describe|summarize) (?:this )?(?:seat|desk)\s+(.+)$/i;
 
 type MapOperationsData = {
   seats: SeatWithEmployee[];
@@ -253,6 +256,10 @@ function sortByName<T extends { name: string }>(items: T[]) {
 
 function pluralize(count: number, singular: string, plural = `${singular}s`) {
   return count === 1 ? singular : plural;
+}
+
+function squaredDistance(left: SeatWithEmployee, right: SeatWithEmployee) {
+  return (left.x - right.x) ** 2 + (left.y - right.y) ** 2;
 }
 
 function assignedSeatByEmployeeId(seats: SeatWithEmployee[]) {
@@ -674,6 +681,97 @@ export function buildBroadOpenSeatsResponse(context: MapOperationsContext): AskP
   };
 }
 
+function cleanExplainSeatTarget(question: string) {
+  const normalized = question.trim().replace(/[?.!]+$/g, "").trim();
+  const match = normalized.match(EXPLAIN_SEAT_QUESTION_PATTERN);
+  return match?.[1]?.trim() || "";
+}
+
+export function isExplainSeatQuestion(question: string) {
+  return Boolean(cleanExplainSeatTarget(question));
+}
+
+function findSeatToExplain(context: MapOperationsContext, question: string, seatId?: string | null) {
+  const cleanSeatId = cleanText(seatId);
+  if (cleanSeatId) {
+    const byId = context.seats.find(seat => seat.id === cleanSeatId);
+    if (byId) return byId;
+  }
+
+  const target = normalizeKey(cleanExplainSeatTarget(question));
+  if (!target) return null;
+
+  return context.seats.find(seat => normalizeKey(seat.label) === target || normalizeKey(seat.seat_key) === target) ?? null;
+}
+
+function nearbySeatsInSameZone(context: MapOperationsContext, seat: SeatWithEmployee) {
+  const zone = getSeatZone(seat);
+  if (!zone) return [];
+
+  return context.seats
+    .filter(candidate => candidate.id !== seat.id && normalizeKey(getSeatZone(candidate)) === normalizeKey(zone))
+    .sort((left, right) => squaredDistance(seat, left) - squaredDistance(seat, right) || left.label.localeCompare(right.label))
+    .slice(0, 4);
+}
+
+function buildSeatAssignmentDescription(seat: SeatWithEmployee) {
+  if (!seat.employee) return "Assignment: Open seat.";
+
+  const details = [
+    seat.employee.full_name,
+    seat.employee.position,
+    seat.employee.department
+  ].filter(Boolean);
+  return `Assignment: ${details.join(" / ")}.`;
+}
+
+export function buildExplainSeatResponse(context: MapOperationsContext, question: string, seatId?: string | null): AskPlannerResponse {
+  const seat = findSeatToExplain(context, question, seatId);
+  if (!seat) {
+    throw new Error(MISSING_EXPLAIN_SEAT_MESSAGE);
+  }
+
+  const zone = getSeatZoneLabel(seat);
+  const health = getMapHealth(context);
+  const seatIssues = health.issues.filter(issue => issue.seatIds.includes(seat.id));
+  const nearbySeats = nearbySeatsInSameZone(context, seat);
+  const nearbySummary = nearbySeats.length > 0
+    ? `Nearby on the map in ${zone}: ${nearbySeats.map(candidate => `${candidate.label} (${candidate.status})`).join(", ")}.`
+    : `No nearby same-zone seats were found in saved draft data.`;
+  const issueSummary = seatIssues.length > 0
+    ? `Map health warnings for this seat: ${seatIssues.map(issue => issue.message).join(" ")}`
+    : "No map-health warnings were found for this seat.";
+  const statusSummary = seat.status === "available" && !hasEmployee(seat)
+    ? "Availability: open."
+    : `Status: ${seat.status}.`;
+
+  return {
+    status: "answered",
+    answer: [
+      `Seat ${seat.label} has draft seat ID ${seat.id}.`,
+      `Location: ${zone}.`,
+      statusSummary,
+      `Type: ${seat.is_custom ? "custom" : "original"} draft seat.`,
+      buildSeatAssignmentDescription(seat),
+      nearbySummary,
+      issueSummary
+    ].join("\n"),
+    summary: `${seat.label} is a ${seat.status} seat in ${zone}.`,
+    confidence: "high",
+    highlights: [{
+      seatId: seat.id,
+      label: seat.label,
+      reason: "Selected seat explained by Ask Planner."
+    }],
+    warnings: seatIssues.map(issue => issue.message).slice(0, MAX_WARNINGS),
+    followUps: [
+      zone !== "Unzoned" ? `Open seats in ${zone}` : "",
+      "What looks unhealthy?",
+      zone !== "Unzoned" ? `Explain nearby seats in ${zone}` : ""
+    ].filter(Boolean).slice(0, MAX_FOLLOW_UPS)
+  };
+}
+
 function buildReadOnlyTools() {
   return [
     {
@@ -1035,7 +1133,7 @@ function extractEmbeddedJsonObject(text: string) {
   return text.slice(start, end + 1).trim();
 }
 
-export async function answerMapOperationsQuestion(input: MapOperationsData & { question: string }): Promise<AskPlannerResponse> {
+export async function answerMapOperationsQuestion(input: MapOperationsData & { question: string; seatId?: string | null }): Promise<AskPlannerResponse> {
   const question = input.question.trim();
   if (!question) {
     throw new Error("Ask Planner needs a question.");
@@ -1045,6 +1143,9 @@ export async function answerMapOperationsQuestion(input: MapOperationsData & { q
   }
 
   const context = createMapOperationsContext(input);
+  if (input.seatId || isExplainSeatQuestion(question)) {
+    return buildExplainSeatResponse(context, question, input.seatId);
+  }
   if (isBroadOpenSeatQuestion(question)) {
     return buildBroadOpenSeatsResponse(context);
   }

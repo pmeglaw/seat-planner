@@ -18,6 +18,7 @@ type SeatInspectorProps = {
   onClose: () => void;
   onToggleCollapse: () => void;
   onStartSwapSeat: () => void;
+  onExplainSeat?: (seat: SeatWithEmployee) => void;
   onBeforeSeatUpdate: () => DraftSnapshot;
   onSeatUpdated: (seat: SeatWithEmployee, beforeSnapshot: DraftSnapshot) => void;
   onError: (message: string | null) => void;
@@ -81,6 +82,7 @@ export function SeatInspector({
   onClose,
   onToggleCollapse,
   onStartSwapSeat,
+  onExplainSeat,
   onBeforeSeatUpdate,
   onSeatUpdated,
   onError,
@@ -443,6 +445,15 @@ export function SeatInspector({
             <span className="rounded-full bg-orange-50/90 px-2 py-1 text-orange-800 ring-1 ring-orange-100">{selectedSeatZone}</span>
             <span className="rounded-full bg-white/80 px-2 py-1 text-slate-600 ring-1 ring-slate-200">{selectedSeat.is_custom ? "Custom" : "Original"}</span>
           </div>
+          {canEdit && onExplainSeat && (
+            <button
+              type="button"
+              onClick={() => onExplainSeat(selectedSeat)}
+              className="mt-3 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-[11px] font-black text-cyan-800 transition hover:bg-cyan-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100"
+            >
+              Explain this seat
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className={iconButtonClassName}>-</button>

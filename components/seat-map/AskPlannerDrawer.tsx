@@ -1,14 +1,21 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { askPlannerAction } from "@/app/actions";
 import type { AskPlannerResponse } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
+
+export type AskPlannerQueuedRequest = {
+  id: number;
+  question: string;
+  seatId?: string | null;
+};
 
 type AskPlannerDrawerProps = {
   open: boolean;
   draftDirty: boolean;
   zones: string[];
+  queuedRequest: AskPlannerQueuedRequest | null;
   highlightedSeatIds: string[];
   onClose: () => void;
   onHighlightSeats: (seatIds: string[]) => void;
@@ -35,10 +42,55 @@ function statusClassName(status: AskPlannerResponse["status"]) {
   return "bg-emerald-50 text-emerald-700 ring-emerald-200";
 }
 
+function friendlyDrawerError(message: string): DrawerError {
+  const lowerMessage = message.toLowerCase();
+  if (lowerMessage.includes("not configured") || lowerMessage.includes("openai_api_key")) {
+    return {
+      title: "Ask Planner is not configured",
+      message: "Add OPENAI_API_KEY as a server-side environment variable for this environment, then redeploy."
+    };
+  }
+  if (lowerMessage.includes("configured openai model") || lowerMessage.includes("openai_model")) {
+    return {
+      title: "OpenAI model unavailable",
+      message: "Check OPENAI_MODEL and project model access, then try again."
+    };
+  }
+  if (lowerMessage.includes("rate limited")) {
+    return {
+      title: "Ask Planner is rate limited",
+      message: "OpenAI is temporarily rate limiting requests. Try again shortly."
+    };
+  }
+  if (lowerMessage.includes("could not reach openai")) {
+    return {
+      title: "OpenAI is not reachable",
+      message: "Ask Planner could not reach OpenAI. Try again shortly."
+    };
+  }
+  if (lowerMessage.includes("took too long")) {
+    return {
+      title: "Ask Planner timed out",
+      message: "Try a narrower question or try again shortly."
+    };
+  }
+  if (lowerMessage.includes("needs a question") || lowerMessage.includes("limited to")) {
+    return {
+      title: "Question needs a tweak",
+      message
+    };
+  }
+  return {
+    title: "Ask Planner could not answer",
+    message: "Try again shortly or ask a narrower question."
+  };
+}
+
 export function AskPlannerDrawer({
   open,
   draftDirty,
   zones,
+  queuedRequest,
   highlightedSeatIds,
   onClose,
   onHighlightSeats,
@@ -50,6 +102,7 @@ export function AskPlannerDrawer({
   const [error, setError] = useState<DrawerError | null>(null);
   const [pending, startTransition] = useTransition();
   const questionRef = useRef<HTMLTextAreaElement | null>(null);
+  const processedQueuedRequestIdRef = useRef<number | null>(null);
 
   const suggestedPrompts = useMemo(() => {
     const zonePrompt = zones[0] ?? "North Pod";
@@ -71,59 +124,13 @@ export function AskPlannerDrawer({
     ];
   }, [highlightedSeatIds, response?.highlights, zones]);
 
-  if (!open) return null;
-
-  function friendlyDrawerError(message: string) {
-    const lowerMessage = message.toLowerCase();
-    if (lowerMessage.includes("not configured") || lowerMessage.includes("openai_api_key")) {
-      return {
-        title: "Ask Planner is not configured",
-        message: "Add OPENAI_API_KEY as a server-side environment variable for this environment, then redeploy."
-      };
-    }
-    if (lowerMessage.includes("configured openai model") || lowerMessage.includes("openai_model")) {
-      return {
-        title: "OpenAI model unavailable",
-        message: "Check OPENAI_MODEL and project model access, then try again."
-      };
-    }
-    if (lowerMessage.includes("rate limited")) {
-      return {
-        title: "Ask Planner is rate limited",
-        message: "OpenAI is temporarily rate limiting requests. Try again shortly."
-      };
-    }
-    if (lowerMessage.includes("could not reach openai")) {
-      return {
-        title: "OpenAI is not reachable",
-        message: "Ask Planner could not reach OpenAI. Try again shortly."
-      };
-    }
-    if (lowerMessage.includes("took too long")) {
-      return {
-        title: "Ask Planner timed out",
-        message: "Try a narrower question or try again shortly."
-      };
-    }
-    if (lowerMessage.includes("needs a question") || lowerMessage.includes("limited to")) {
-      return {
-        title: "Question needs a tweak",
-        message
-      };
-    }
-    return {
-      title: "Ask Planner could not answer",
-      message: "Try again shortly or ask a narrower question."
-    };
-  }
-
   function choosePrompt(prompt: string) {
     setQuestion(prompt);
     setError(null);
     window.setTimeout(() => questionRef.current?.focus(), 0);
   }
 
-  function askPlanner(prompt = question) {
+  const askPlanner = useCallback((prompt = question, seatId?: string | null) => {
     const cleanQuestion = prompt.trim();
     if (!cleanQuestion || pending) return;
 
@@ -132,7 +139,7 @@ export function AskPlannerDrawer({
         setError(null);
         setResponse(null);
         onHighlightSeats([]);
-        const payload = await askPlannerAction({ question: cleanQuestion });
+        const payload = await askPlannerAction({ question: cleanQuestion, seatId: seatId ?? null });
         setResponse(payload);
         onHighlightSeats(payload.highlights.map(highlight => highlight.seatId));
       } catch (askError) {
@@ -141,7 +148,19 @@ export function AskPlannerDrawer({
         setError(friendlyDrawerError(askError instanceof Error ? askError.message : "Ask Planner could not answer."));
       }
     });
-  }
+  }, [onHighlightSeats, pending, question]);
+
+  useEffect(() => {
+    if (!open || !queuedRequest || pending) return;
+    if (processedQueuedRequestIdRef.current === queuedRequest.id) return;
+
+    processedQueuedRequestIdRef.current = queuedRequest.id;
+    setQuestion(queuedRequest.question);
+    setError(null);
+    askPlanner(queuedRequest.question, queuedRequest.seatId ?? null);
+  }, [askPlanner, open, pending, queuedRequest]);
+
+  if (!open) return null;
 
   return (
     <>

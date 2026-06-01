@@ -375,6 +375,89 @@ test("planner response validation accepts broad answers with zero highlights", (
   assert.deepEqual(response.followUps, ["Which seats are open in North Pod?", "Which open seats are near Ops?"]);
 });
 
+test("explain selected seat returns structured response without OpenAI and minimizes sensitive fields", async () => {
+  const explainedSeat = {
+    ...seat("seat-c03", "C03", "assigned", "Center Desks", alice),
+    x: 0.5,
+    y: 0.5,
+    notes: "Private seat note"
+  };
+  const nearbySeat = { ...seat("seat-c04", "C04", "available", "Center Desks"), x: 0.52, y: 0.51 };
+  const fartherSeat = { ...seat("seat-c05", "C05", "reserved", "Center Desks"), x: 0.7, y: 0.7 };
+
+  await withOpenAIDisabled(async () => {
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({
+      question: "Explain seat C03",
+      seatId: "seat-c03",
+      employees: [alice],
+      seats: [explainedSeat, nearbySeat, fartherSeat],
+      zoneOptions: [{ id: "zone-center", name: "Center Desks", active: true, created_at: "", updated_at: "" }]
+    }));
+
+    assert.equal(result.status, "answered");
+    assert.equal(result.confidence, "high");
+    assert.deepEqual(result.highlights, [{
+      seatId: "seat-c03",
+      label: "C03",
+      reason: "Selected seat explained by Ask Planner."
+    }]);
+    assert.match(result.answer, /Seat C03 has draft seat ID seat-c03/);
+    assert.match(result.answer, /Location: Center Desks/);
+    assert.match(result.answer, /Status: assigned/);
+    assert.match(result.answer, /Assignment: Alice Adams \/ Planner \/ Ops/);
+    assert.match(result.answer, /Nearby on the map in Center Desks: C04 \(available\), C05 \(reserved\)/);
+    assert.ok(result.followUps.includes("Open seats in Center Desks"));
+    assert.ok(result.followUps.includes("What looks unhealthy?"));
+    assert.doesNotMatch(result.answer, /1234|Private seat note|Ext\./);
+  });
+});
+
+test("explain seat can fall back to exact label when no seatId is supplied", async () => {
+  await withOpenAIDisabled(async () => {
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({
+      question: "Explain seat N01",
+      seatId: null
+    }));
+
+    assert.equal(result.status, "answered");
+    assert.equal(result.highlights[0].seatId, "seat-n01");
+    assert.match(result.answer, /Seat N01/);
+  });
+});
+
+test("explain selected seat includes seat-specific map health warnings", async () => {
+  const unhealthySeat = { ...seat("seat-bad", "B01", "assigned", "North Pod"), employee_id: null, employee: null };
+
+  await withOpenAIDisabled(async () => {
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({
+      question: "Explain seat B01",
+      seatId: "seat-bad",
+      seats: [unhealthySeat]
+    }));
+
+    assert.equal(result.status, "answered");
+    assert.equal(result.highlights[0].seatId, "seat-bad");
+    assert.match(result.answer, /Map health warnings for this seat/);
+    assert.match(result.warnings[0], /assigned status but no employee/);
+  });
+});
+
+test("explain selected seat reports stale or missing draft seats safely", async () => {
+  await withOpenAIDisabled(async () => {
+    await assert.rejects(
+      () => agent.answerMapOperationsQuestion(askPlannerPayload({
+        question: "Explain seat Missing",
+        seatId: "missing-seat"
+      })),
+      error => {
+        assert.match(error.message, /could not find that seat in saved draft data/i);
+        assert.doesNotMatch(error.message, /OPENAI_API_KEY|Bearer|Authorization/);
+        return true;
+      }
+    );
+  });
+});
+
 test("broad open-seat shortcut returns a structured response without OpenAI", async () => {
   await withOpenAIDisabled(async () => {
     const result = await agent.answerMapOperationsQuestion(broadOpenPayload("Which seats are open?"));

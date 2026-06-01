@@ -20,7 +20,7 @@ import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapActio
 import { normalizePoint } from "@/lib/seatMath";
 import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
-import { AskPlannerDrawer } from "@/components/seat-map/AskPlannerDrawer";
+import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import { FilterPanel } from "@/components/seat-map/FilterPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
@@ -130,6 +130,7 @@ export function SeatMap({
   const [addSeatZone, setAddSeatZone] = useState("all");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [askPlannerOpen, setAskPlannerOpen] = useState(false);
+  const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
   const [plannerHighlightedSeatIds, setPlannerHighlightedSeatIds] = useState<string[]>([]);
   const [dragState, setDragState] = useState<DragState>(null);
   const [search, setSearch] = useState("");
@@ -490,6 +491,18 @@ export function SeatMap({
       setAskPlannerOpen(false);
       setInspectorCollapsed(false);
     }
+  }
+
+  function explainSeatWithPlanner(seat: SeatWithEmployee) {
+    if (!canEdit) return;
+
+    setAdvancedOpen(false);
+    setAskPlannerOpen(true);
+    setAskPlannerQueuedRequest(current => ({
+      id: (current?.id ?? 0) + 1,
+      question: `Explain seat ${seat.label}`,
+      seatId: seat.id
+    }));
   }
 
   function startSwapSeatMode(skipDirtyCheck = false) {
@@ -1032,6 +1045,7 @@ export function SeatMap({
           open={askPlannerOpen}
           draftDirty={inspectorDirty}
           zones={zones}
+          queuedRequest={askPlannerQueuedRequest}
           highlightedSeatIds={plannerHighlightedSeatIds}
           onClose={() => setAskPlannerOpen(false)}
           onHighlightSeats={setPlannerHighlightedSeatIds}
@@ -1059,6 +1073,7 @@ export function SeatMap({
         }}
         onToggleCollapse={() => setInspectorCollapsed(current => !current)}
         onStartSwapSeat={() => startSwapSeatMode(true)}
+        onExplainSeat={explainSeatWithPlanner}
         onBeforeSeatUpdate={captureDraftSnapshot}
         onSeatUpdated={(seat, beforeSnapshot) => {
           setActionError(null);
