@@ -21,3 +21,13 @@ test("inspector copy uses Job Title instead of Team", async () => {
   assert.doesNotMatch(source, />\s*Team\s*</);
   assert.doesNotMatch(source, /No team/);
 });
+
+test("typing an unmatched employee name clears stale job title", async () => {
+  const source = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
+  const unmatchedBranch = source.match(/if \(!matchedEmployee\) \{[\s\S]*?return \{[\s\S]*?\};\s*\}/);
+
+  assert.ok(unmatchedBranch, "SeatInspector should handle unmatched employee names.");
+  assert.match(unmatchedBranch[0], /employeeId:\s*""/);
+  assert.match(unmatchedBranch[0], /employeePosition:\s*""/);
+  assert.match(unmatchedBranch[0], /phoneExtension:\s*""/);
+});
