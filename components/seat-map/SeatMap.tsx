@@ -757,8 +757,8 @@ export function SeatMap({
   const namesToggleLabel = showNames ? "Hide employee names on map" : "Show employee names on map";
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#eef2f7]">
-      <header className="sticky top-0 z-30 border-b border-white/70 bg-white/80 px-3 py-2 text-slate-950 shadow-[0_10px_34px_rgba(15,23,42,0.07)] backdrop-blur-2xl sm:px-4">
+    <div className={["min-h-screen overflow-x-hidden bg-[#eef2f7]", canEdit ? "lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden" : ""].join(" ")}>
+      <header className={["sticky top-0 z-30 border-b border-white/70 bg-white/80 px-3 py-2 text-slate-950 shadow-[0_10px_34px_rgba(15,23,42,0.07)] backdrop-blur-2xl sm:px-4", canEdit ? "lg:shrink-0" : ""].join(" ")}>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 lg:grid-cols-[minmax(190px,260px)_minmax(260px,1fr)_auto]">
           <div className="min-w-0">
             <div className="min-w-0">
@@ -882,7 +882,7 @@ export function SeatMap({
         </div>
       </header>
 
-      <main className={["grid grid-cols-1 gap-3 p-3 sm:p-4", filterCollapsed ? "lg:grid-cols-[52px_minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]"].join(" ")}>
+      <main className={["grid grid-cols-1 gap-3 p-3 sm:p-4", filterCollapsed ? "lg:grid-cols-[52px_minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]", canEdit ? "lg:min-h-0 lg:flex-1 lg:overflow-hidden" : ""].join(" ")}>
         <div className={[filterCollapsed ? "order-2" : "order-1", "lg:order-1"].join(" ")}>
           <FilterPanel
             search={search}
@@ -903,7 +903,7 @@ export function SeatMap({
           />
         </div>
 
-        <section className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 space-y-2 lg:order-2"].join(" ")}>
+        <section className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 space-y-2 lg:order-2", canEdit ? "lg:flex lg:min-h-0 lg:flex-col lg:space-y-0 lg:gap-2" : ""].join(" ")}>
           {(addSeatMode || moveSeatMode || swapSourceSeatId) && (
             <div className="flex flex-col gap-2 rounded-2xl border border-orange-200 bg-white/80 px-3 py-2 text-xs font-semibold text-brand-dark shadow-[0_12px_34px_rgba(194,65,12,0.12)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
               <span>{toolbarMessage}</span>
@@ -927,8 +927,8 @@ export function SeatMap({
             </div>
           )}
 
-          <div className="min-w-0 rounded-[18px] border border-white/70 bg-white/75 p-1.5 shadow-[0_26px_80px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl">
-            <div className="relative mx-auto max-h-[72vh] w-full max-w-full overflow-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-[#f6f4f1] sm:max-h-[calc(100vh-92px)]">
+          <div className={["min-w-0 rounded-[18px] border border-white/70 bg-white/75 p-1.5 shadow-[0_26px_80px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl", canEdit ? "lg:flex lg:min-h-0 lg:flex-1" : ""].join(" ")}>
+            <div className={["relative mx-auto max-h-[72vh] w-full max-w-full overflow-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-[#f6f4f1] sm:max-h-[calc(100vh-92px)]", canEdit ? "lg:min-h-0 lg:flex-1 lg:max-h-none" : ""].join(" ")}>
               <div
                 ref={mapRef}
                 className={["relative mx-auto w-[960px] max-w-none lg:w-full lg:max-w-[1561px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
