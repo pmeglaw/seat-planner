@@ -928,7 +928,11 @@ export function SeatMap({
           )}
 
           <div className={["min-w-0 rounded-[18px] border border-white/70 bg-white/75 p-1.5 shadow-[0_26px_80px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl", canEdit ? "lg:flex lg:min-h-0 lg:flex-1" : ""].join(" ")}>
-            <div className={["relative mx-auto max-h-[72vh] w-full max-w-full overflow-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-[#f6f4f1] sm:max-h-[calc(100vh-92px)]", canEdit ? "lg:min-h-0 lg:flex-1 lg:max-h-none" : ""].join(" ")}>
+            <div
+              className={["relative mx-auto max-h-[72vh] w-full max-w-full overflow-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-[#f6f4f1] sm:max-h-[calc(100vh-92px)]", canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200 lg:min-h-0 lg:flex-1 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden" : ""].join(" ")}
+              tabIndex={canEdit ? 0 : undefined}
+              aria-label={canEdit ? "Admin seat map viewport. Use wheel, trackpad, touch, or arrow keys to pan the map." : undefined}
+            >
               <div
                 ref={mapRef}
                 className={["relative mx-auto w-[960px] max-w-none lg:w-full lg:max-w-[1561px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
