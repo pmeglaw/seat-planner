@@ -755,6 +755,17 @@ export function SeatMap({
         ? "Select a seat to assign or update employee details."
         : "Select a seat to view assignment details.";
   const namesToggleLabel = showNames ? "Hide employee names on map" : "Show employee names on map";
+  const desktopMapGridClass = filterCollapsed
+    ? canEdit
+      ? "lg:grid-cols-[minmax(0,1fr)]"
+      : "lg:grid-cols-[52px_minmax(0,1fr)]"
+    : "lg:grid-cols-[288px_minmax(0,1fr)]";
+  const filterPanelShellClass = [
+    filterCollapsed ? "order-2" : "order-1",
+    "lg:order-1",
+    canEdit && filterCollapsed ? "lg:hidden" : "",
+    canEdit && !filterCollapsed ? "lg:min-h-0 lg:self-stretch lg:[&>aside]:h-full lg:[&>aside]:max-h-full lg:[&>aside]:top-0" : ""
+  ].join(" ");
 
   return (
     <div className={["min-h-screen overflow-x-hidden bg-[#eef2f7]", canEdit ? "lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden" : ""].join(" ")}>
@@ -882,8 +893,8 @@ export function SeatMap({
         </div>
       </header>
 
-      <main className={["grid grid-cols-1 gap-3 p-3 sm:p-4", filterCollapsed ? "lg:grid-cols-[52px_minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]", canEdit ? "lg:min-h-0 lg:flex-1 lg:overflow-hidden" : ""].join(" ")}>
-        <div className={[filterCollapsed ? "order-2" : "order-1", "lg:order-1"].join(" ")}>
+      <main className={["grid grid-cols-1 gap-3 p-3 sm:p-4", desktopMapGridClass, canEdit ? "lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden" : ""].join(" ")}>
+        <div className={filterPanelShellClass}>
           <FilterPanel
             search={search}
             department={department}
