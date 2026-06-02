@@ -1,32 +1,24 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
+import ts from "typescript";
 
-function inferSeatPrefixFromZone(zone) {
-  const text = (zone ?? "").trim().toLowerCase();
-  if (!text) return "S";
-  if (text.includes("northeast") || text.includes("north east")) return "NE";
-  if (text.includes("southeast") || text.includes("south east")) return "SE";
-  if (text.includes("center west") || text.includes("central west")) return "CW";
-  if (text.includes("west")) return "W";
-  if (text.includes("east")) return "E";
-  if (text.includes("north")) return "N";
-  return "S";
+async function importTsModule(relativePath) {
+  const source = await readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
+  const transpiled = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.ESNext,
+      target: ts.ScriptTarget.ES2022
+    }
+  });
+  const moduleUrl = `data:text/javascript;base64,${Buffer.from(transpiled.outputText).toString("base64")}`;
+  return import(moduleUrl);
 }
 
-function buildNextSeatLabel(seats, zone) {
-  const prefix = inferSeatPrefixFromZone(zone);
-  const pattern = new RegExp(`^${prefix}(\\d+)$`, "i");
-  const existingLabels = new Set(seats.map(seat => seat.label.trim().toUpperCase()));
-  let maxNumber = 0;
-  for (const seat of seats) {
-    const match = seat.label.trim().toUpperCase().match(pattern);
-    if (match) maxNumber = Math.max(maxNumber, Number(match[1]));
-  }
-  for (let nextNumber = maxNumber + 1; nextNumber < 1000; nextNumber += 1) {
-    const label = `${prefix}${String(nextNumber).padStart(2, "0")}`;
-    if (!existingLabels.has(label)) return label;
-  }
-  return `${prefix}-1`;
+const { buildNextSeatLabel, inferSeatPrefixFromZone } = await importTsModule("lib/seatLabels.ts");
+
+function seat(label, zone) {
+  return { label, zone, department: null };
 }
 
 test("zone prefixes match existing seat label patterns", () => {
@@ -37,7 +29,31 @@ test("zone prefixes match existing seat label patterns", () => {
   assert.equal(inferSeatPrefixFromZone("Center West"), "CW");
 });
 
-test("new seat labels use the selected zone and next number", () => {
-  assert.equal(buildNextSeatLabel([{ label: "W01" }, { label: "W12" }], "West Pod"), "W13");
-  assert.equal(buildNextSeatLabel([{ label: "NE01" }, { label: "NE04" }], "Northeast Pod"), "NE05");
+test("center desks continue from C01 through C08", () => {
+  const seats = Array.from({ length: 8 }, (_, index) => seat(`C${String(index + 1).padStart(2, "0")}`, "Center Desks"));
+  assert.equal(buildNextSeatLabel(seats, "Center Desks"), "C09");
+});
+
+test("seat labels use the smallest available positive number in the zone", () => {
+  const seats = [1, 2, 3, 4, 6, 7, 8].map(number => seat(`C${String(number).padStart(2, "0")}`, "Center Desks"));
+  assert.equal(buildNextSeatLabel(seats, "Center Desks"), "C05");
+});
+
+test("generated labels avoid collisions with all draft labels", () => {
+  const seats = [
+    seat("C01", "Center Desks"),
+    seat("C02", "Center Desks"),
+    seat("C04", "Center Desks"),
+    seat("C03", "Other Zone")
+  ];
+  assert.equal(buildNextSeatLabel(seats, "Center Desks"), "C05");
+});
+
+test("existing zone prefix and padding are preserved", () => {
+  const seats = [seat("LAB001", "Lab Area")];
+  assert.equal(buildNextSeatLabel(seats, "Lab Area"), "LAB002");
+});
+
+test("unknown helper-level zones derive a safe prefix", () => {
+  assert.equal(buildNextSeatLabel([], "Quiet Area"), "QA01");
 });

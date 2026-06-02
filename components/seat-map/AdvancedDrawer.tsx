@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import type { DraftSnapshot } from "@/lib/draftHistory";
-import type { Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
+import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
 import { importAssignmentsCsvAction } from "@/app/actions";
 
@@ -12,17 +12,14 @@ type AdvancedDrawerProps = {
   open: boolean;
   seats: SeatWithEmployee[];
   employees: Employee[];
-  zoneOptions: ZoneOption[];
   selectedSeat: SeatWithEmployee | null;
   addSeatMode: boolean;
-  addSeatZone: string;
   moveSeatMode: boolean;
   swapSeatMode: boolean;
   pending: boolean;
   onClose: () => void;
   onStartAddSeat: () => void;
   onCancelAddSeat: () => void;
-  onAddSeatZoneChange: (zone: string) => void;
   onStartSwapSeat: () => void;
   onCancelSwapSeat: () => void;
   onPublish: () => void;
@@ -47,10 +44,6 @@ function downloadFile(filename: string, content: string, type: string) {
 
 function downloadJson(filename: string, payload: unknown) {
   downloadFile(filename, JSON.stringify(payload, null, 2), "application/json");
-}
-
-function getSeatZone(seat: SeatWithEmployee) {
-  return seat.zone ?? seat.department ?? "";
 }
 
 function formatCsvIssues(issues: Array<{ row: number; message: string }>) {
@@ -133,17 +126,14 @@ export function AdvancedDrawer({
   open,
   seats,
   employees,
-  zoneOptions,
   selectedSeat,
   addSeatMode,
-  addSeatZone,
   moveSeatMode,
   swapSeatMode,
   pending,
   onClose,
   onStartAddSeat,
   onCancelAddSeat,
-  onAddSeatZoneChange,
   onStartSwapSeat,
   onCancelSwapSeat,
   onPublish,
@@ -160,19 +150,8 @@ export function AdvancedDrawer({
   const [localError, setLocalError] = useState<string | null>(null);
   const [localPending, startTransition] = useTransition();
 
-  const zones = useMemo(() => {
-    const values = new Set<string>();
-    zoneOptions.filter(item => item.active).forEach(item => values.add(item.name));
-    seats.forEach(seat => {
-      const zone = getSeatZone(seat);
-      if (zone) values.add(zone);
-    });
-    return Array.from(values).sort();
-  }, [seats, zoneOptions]);
-
   const busy = pending || localPending;
   const selectedSeatIsCustom = Boolean(selectedSeat?.is_custom);
-  const fieldClassName = "mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-orange-100";
 
   if (!open) return null;
 
@@ -343,22 +322,13 @@ export function AdvancedDrawer({
             </div>
           </section>
 
-          <ToolGroup title="Layout tools" description="Custom seat defaults">
-            <label className="block">
-              <span className="text-xs font-semibold text-slate-600">Zone for new custom seats</span>
-              <select value={addSeatZone} onChange={event => onAddSeatZoneChange(event.target.value)} className={fieldClassName} disabled={busy || addSeatMode}>
-                <option value="all">Generic seat ID</option>
-                {zones.map(zone => (
-                  <option key={zone} value={zone}>{zone}</option>
-                ))}
-              </select>
-            </label>
+          <ToolGroup title="Layout tools" description="Custom seat placement">
             <p className="text-xs leading-5 text-slate-500">
               {selectedSeat
                 ? selectedSeatIsCustom
                   ? `Custom seat ${selectedSeat.label} can be moved or deleted.`
                   : `Original seat ${selectedSeat.label} is deletion protected.`
-                : "Choose a zone before adding a custom seat."}
+                : "Add Seat assigns the zone and next label automatically when you click inside a seating zone."}
             </p>
           </ToolGroup>
 

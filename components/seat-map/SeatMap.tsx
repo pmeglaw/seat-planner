@@ -18,7 +18,7 @@ import {
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
 import { normalizePoint } from "@/lib/seatMath";
-import { buildNextSeatLabel } from "@/lib/seatLabels";
+import { inferSeatZoneFromPoint } from "@/lib/seatZones";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import { FilterPanel } from "@/components/seat-map/FilterPanel";
@@ -127,7 +127,6 @@ export function SeatMap({
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [moveSeatMode, setMoveSeatMode] = useState(false);
   const [addSeatMode, setAddSeatMode] = useState(false);
-  const [addSeatZone, setAddSeatZone] = useState("all");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [askPlannerOpen, setAskPlannerOpen] = useState(false);
   const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
@@ -223,12 +222,6 @@ export function SeatMap({
     });
     return Array.from(values).sort();
   }, [localSeats, localZoneOptions]);
-
-  useEffect(() => {
-    if (addSeatZone !== "all" && !zones.includes(addSeatZone)) {
-      setAddSeatZone("all");
-    }
-  }, [addSeatZone, zones]);
 
   const stats = useMemo(() => ({
     total: localSeats.length,
@@ -585,18 +578,22 @@ export function SeatMap({
     if (canEdit && addSeatMode) {
       const point = eventToPoint(event);
       if (!point) return;
+      const targetZone = inferSeatZoneFromPoint(point);
+      if (!targetZone) {
+        setActionNotice(null);
+        setActionError("Click inside a known seating zone to add a custom seat.");
+        return;
+      }
+
       const beforeSnapshot = captureDraftSnapshot();
 
       startTransition(async () => {
         try {
           setActionError(null);
           setActionNotice(null);
-          const targetZone = addSeatZone === "all" ? null : addSeatZone;
           const created = await createSeatAction({
-            label: buildNextSeatLabel(localSeats, targetZone),
             x: point.x,
-            y: point.y,
-            zone: targetZone
+            y: point.y
           });
           const afterSeats = replaceSeat(beforeSnapshot.seats, created);
           recordDraftHistory(`Add ${created.label}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
@@ -746,7 +743,7 @@ export function SeatMap({
   }
 
   const toolbarMessage = addSeatMode
-    ? "Add Seat mode is active. Click an empty point on the map to place a marker."
+    ? "Add Seat mode is active. Click inside a seating zone to place an automatically numbered marker."
     : moveSeatMode
       ? "Move Seat mode is active. Drag the selected marker to reposition it."
       : swapSourceSeat
@@ -785,11 +782,11 @@ export function SeatMap({
 
           <div className="col-span-2 flex min-w-0 items-center gap-2 lg:col-span-1">
             <label className="relative min-w-0 flex-1">
-              <span className="sr-only">Search employee, seat, team, or zone</span>
+              <span className="sr-only">Search employee, seat, job title, department, or zone</span>
               <input
                 value={search}
                 onChange={event => setSearch(event.target.value)}
-                placeholder="Search employee, seat, team, or zone"
+                placeholder="Search employee, seat, job title, department, or zone"
                 className="h-9 w-full rounded-full border border-white/70 bg-white/75 px-4 pr-10 text-sm text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.06)] outline-none backdrop-blur-xl transition placeholder:text-slate-400 focus:border-orange-200 focus:bg-white focus:ring-4 focus:ring-orange-100"
               />
               {search.trim() && (
@@ -995,17 +992,14 @@ export function SeatMap({
         open={advancedOpen}
         seats={localSeats}
         employees={localEmployees}
-        zoneOptions={localZoneOptions}
         selectedSeat={selectedSeat}
         addSeatMode={addSeatMode}
-        addSeatZone={addSeatZone}
         moveSeatMode={moveSeatMode}
         swapSeatMode={Boolean(swapSourceSeatId)}
         pending={pending}
         onClose={() => setAdvancedOpen(false)}
         onStartAddSeat={startAddSeatMode}
         onCancelAddSeat={cancelAddSeatMode}
-        onAddSeatZoneChange={setAddSeatZone}
         onStartSwapSeat={() => startSwapSeatMode()}
         onCancelSwapSeat={cancelSwapSeatMode}
         onPublish={publishDraftMap}

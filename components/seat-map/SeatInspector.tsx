@@ -29,6 +29,7 @@ type SeatInspectorForm = {
   label: string;
   employeeId: string;
   employeeName: string;
+  employeePosition: string;
   phoneExtension: string;
   department: string;
   zone: string;
@@ -40,6 +41,7 @@ const emptyForm: SeatInspectorForm = {
   label: "",
   employeeId: "",
   employeeName: "",
+  employeePosition: "",
   phoneExtension: "",
   department: "",
   zone: "",
@@ -52,6 +54,7 @@ function formFromSeat(seat: SeatWithEmployee): SeatInspectorForm {
     label: seat.label,
     employeeId: seat.employee_id ?? "",
     employeeName: seat.employee?.full_name ?? "",
+    employeePosition: seat.employee?.position ?? "",
     phoneExtension: seat.employee?.phone_extension ?? "",
     department: seat.employee?.department ?? "",
     zone: seat.zone ?? seat.department ?? "",
@@ -211,6 +214,7 @@ export function SeatInspector({
       ...current,
       employeeId: employee.id,
       employeeName: employee.full_name,
+      employeePosition: employee.position ?? "",
       phoneExtension: employee.phone_extension ?? "",
       department: employee.department ?? current.department,
       status: "assigned"
@@ -246,6 +250,7 @@ export function SeatInspector({
         ...current,
         employeeId: matchedEmployee.id,
         employeeName: matchedEmployee.full_name,
+        employeePosition: matchedEmployee.position ?? "",
         phoneExtension: matchedEmployee.phone_extension ?? "",
         department: matchedEmployee.department ?? current.department,
         status: "assigned"
@@ -326,6 +331,7 @@ export function SeatInspector({
           status: nextStatus,
           employeeId,
           employeeName: employeeName || null,
+          employeePosition: form.employeePosition.trim() || null,
           phoneExtension: form.phoneExtension.trim() || null,
           department: form.department.trim() || null,
           zone: selectedSeat.zone ?? selectedSeat.department ?? null,
@@ -552,13 +558,8 @@ export function SeatInspector({
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Team</span>
-              <select value={form.department} onChange={handleDepartmentChange} className={fieldClassName}>
-                <option value="">No team</option>
-                {departments.map(department => (
-                  <option key={department} value={department}>{department}</option>
-                ))}
-              </select>
+              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Job Title</span>
+              <input value={form.employeePosition} onChange={event => handleTextChange("employeePosition", event)} placeholder="Optional" className={fieldClassName} />
             </label>
 
             <label className="block">
@@ -566,6 +567,16 @@ export function SeatInspector({
               <input value={form.phoneExtension} onChange={event => handleTextChange("phoneExtension", event)} placeholder="Optional" className={fieldClassName} inputMode="numeric" />
             </label>
           </div>
+
+          <label className="block">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Department</span>
+            <select value={form.department} onChange={handleDepartmentChange} className={fieldClassName}>
+              <option value="">No department</option>
+              {departments.map(department => (
+                <option key={department} value={department}>{department}</option>
+              ))}
+            </select>
+          </label>
 
           {!hasAssignedPerson && (
             <label className="block">

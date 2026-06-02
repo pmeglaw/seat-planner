@@ -59,11 +59,8 @@ export type SeatWithEmployee = Seat & {
 };
 
 export type SeatCreateInput = {
-  label: string;
   x: number;
   y: number;
-  zone?: string | null;
-  department?: string | null;
   notes?: string | null;
 };
 

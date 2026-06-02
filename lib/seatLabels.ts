@@ -1,7 +1,37 @@
 import type { SeatWithEmployee } from "@/lib/types";
 
+type SeatLabelSource = Pick<SeatWithEmployee, "label"> & Partial<Pick<SeatWithEmployee, "zone" | "department">>;
+
+type SeatLabelPattern = {
+  prefix: string;
+  digitWidth: number;
+  count: number;
+  firstIndex: number;
+};
+
 function normalizeLabel(value: string) {
   return value.trim().toUpperCase();
+}
+
+function normalizeZone(value?: string | null) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function getSeatZone(seat: SeatLabelSource) {
+  return seat.zone ?? seat.department ?? null;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function parseNumberedLabel(label: string) {
+  const match = normalizeLabel(label).match(/^([A-Z]+)(\d+)$/);
+  if (!match) return null;
+  return {
+    prefix: match[1],
+    digitWidth: match[2].length
+  };
 }
 
 export function inferSeatPrefixFromZone(zone?: string | null) {
@@ -31,23 +61,52 @@ export function inferSeatPrefixFromZone(zone?: string | null) {
 }
 
 export function buildNextSeatLabel(
-  seats: Pick<SeatWithEmployee, "label">[],
+  seats: SeatLabelSource[],
   zone?: string | null
 ) {
-  const prefix = inferSeatPrefixFromZone(zone);
-  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = new RegExp(`^${escapedPrefix}(\\d+)$`, "i");
-  const existingLabels = new Set(seats.map(seat => normalizeLabel(seat.label)));
-  let maxNumber = 0;
+  const zoneKey = normalizeZone(zone);
+  const zoneSeats = seats.filter(seat => normalizeZone(getSeatZone(seat)) === zoneKey);
+  const patterns = new Map<string, SeatLabelPattern>();
 
-  for (const seat of seats) {
-    const match = normalizeLabel(seat.label).match(pattern);
+  zoneSeats.forEach((seat, index) => {
+    const parsed = parseNumberedLabel(seat.label);
+    if (!parsed) return;
+
+    const current = patterns.get(parsed.prefix);
+    if (!current) {
+      patterns.set(parsed.prefix, {
+        prefix: parsed.prefix,
+        digitWidth: parsed.digitWidth,
+        count: 1,
+        firstIndex: index
+      });
+      return;
+    }
+
+    current.count += 1;
+    current.digitWidth = Math.max(current.digitWidth, parsed.digitWidth);
+  });
+
+  const pattern = Array.from(patterns.values()).sort((left, right) => {
+    if (right.count !== left.count) return right.count - left.count;
+    return left.firstIndex - right.firstIndex;
+  })[0];
+  const prefix = pattern?.prefix ?? inferSeatPrefixFromZone(zone);
+  const digitWidth = Math.max(pattern?.digitWidth ?? 2, 2);
+  const escapedPrefix = escapeRegExp(prefix);
+  const prefixPattern = new RegExp(`^${escapedPrefix}(\\d+)$`, "i");
+  const existingLabels = new Set(seats.map(seat => normalizeLabel(seat.label)));
+  const zoneNumbers = new Set<number>();
+
+  for (const seat of zoneSeats) {
+    const match = normalizeLabel(seat.label).match(prefixPattern);
     if (!match) continue;
-    maxNumber = Math.max(maxNumber, Number(match[1]));
+    zoneNumbers.add(Number(match[1]));
   }
 
-  for (let nextNumber = maxNumber + 1; nextNumber < 1000; nextNumber += 1) {
-    const label = `${prefix}${String(nextNumber).padStart(2, "0")}`;
+  for (let nextNumber = 1; nextNumber < 1000; nextNumber += 1) {
+    if (zoneNumbers.has(nextNumber)) continue;
+    const label = `${prefix}${String(nextNumber).padStart(digitWidth, "0")}`;
     if (!existingLabels.has(normalizeLabel(label))) return label;
   }
 

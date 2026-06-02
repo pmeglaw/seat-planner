@@ -6,7 +6,9 @@ import { parseAssignmentCsv } from "@/lib/csv";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import { answerMapOperationsQuestion } from "@/lib/mapOperationsAgent";
 import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/publishHistory";
+import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { buildSeatSwapPlan } from "@/lib/seatSwap";
+import { inferSeatZoneFromPoint } from "@/lib/seatZones";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import { SEAT_STATUSES, type AskPlannerRequest, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
 
@@ -194,28 +196,27 @@ async function upsertZoneOption(supabase: Awaited<ReturnType<typeof requireAdmin
 }
 
 export async function createSeatAction(input: {
-  label: string;
   x: number;
   y: number;
-  zone?: string | null;
-  department?: string | null;
 }) {
   const supabase = await requireAdmin();
-  const label = assertNonEmpty(input.label, "Seat label");
   const point = validateSeatCoordinates(input.x, input.y);
+  const zone = inferSeatZoneFromPoint(point);
+
+  if (!zone) {
+    throw new Error("Click inside a known seating zone to add a custom seat.");
+  }
+
+  const { data: draftSeats, error: draftSeatsError } = await supabase
+    .from("seats")
+    .select("label,zone,department")
+    .eq("layer", "draft");
+
+  if (draftSeatsError) throw new Error(draftSeatsError.message);
+
+  const label = buildNextSeatLabel((draftSeats ?? []) as Array<Pick<SeatWithEmployee, "label" | "zone" | "department">>, zone);
   const baseKey = buildSeatKey(label);
   const seatKey = `${baseKey}-${Date.now().toString(36)}`;
-  const zone = normalizeOptionalText(input.zone ?? input.department);
-
-  const { data: duplicateSeat, error: duplicateSeatError } = await supabase
-    .from("seats")
-    .select("id")
-    .eq("layer", "draft")
-    .ilike("label", label)
-    .maybeSingle();
-
-  if (duplicateSeatError) throw new Error(duplicateSeatError.message);
-  if (duplicateSeat) throw new Error(`Seat label ${label} already exists.`);
 
   await upsertZoneOption(supabase, zone);
 
