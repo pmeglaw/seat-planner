@@ -139,11 +139,13 @@ export function SeatMap({
   const [filterCollapsed, setFilterCollapsed] = useState(true);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [inspectorDirty, setInspectorDirty] = useState(false);
+  const [searchSelectionNotice, setSearchSelectionNotice] = useState<string | null>(null);
   const [showNames, setShowNames] = useState(false);
   const [swapSourceSeatId, setSwapSourceSeatId] = useState<string | null>(null);
   const [swapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
   const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
   const [pending, startTransition] = useTransition();
+  const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => setLocalSeats(normalizeSeats(seats)), [seats]);
@@ -261,20 +263,11 @@ export function SeatMap({
     zone !== "all" ? zone : "",
     status !== "all" ? status : ""
   ].filter(Boolean).length;
+  const filtersActive = activeFilterCount > 0;
+  const matchingSeats = filtersActive ? localSeats.filter(seat => matchesFilters(seat)) : localSeats;
+  const selectedSeatMatchesFilters = selectedSeat ? matchesFilters(selectedSeat) : true;
   const undoAvailable = canUndoDraftHistory(draftHistory);
   const redoAvailable = canRedoDraftHistory(draftHistory);
-  const nextUndoLabel = draftHistory.undoStack.at(-1)?.label ?? null;
-  const nextRedoLabel = draftHistory.redoStack.at(-1)?.label ?? null;
-  const undoTitle = inspectorDirty
-    ? "Save or discard inspector edits before undo."
-    : nextUndoLabel
-      ? `Undo ${nextUndoLabel}`
-      : "No draft edits to undo.";
-  const redoTitle = inspectorDirty
-    ? "Save or discard inspector edits before redo."
-    : nextRedoLabel
-      ? `Redo ${nextRedoLabel}`
-      : "No draft edits to redo.";
 
   function eventToPoint(event: Pick<PointerEvent<HTMLElement>, "clientX" | "clientY">) {
     const rect = mapRef.current?.getBoundingClientRect();
@@ -383,6 +376,58 @@ export function SeatMap({
     setDepartment("all");
     setZone("all");
     setStatus("all");
+    setSearchSelectionNotice(null);
+  }
+
+  function clearSearch() {
+    setSearch("");
+    setSearchSelectionNotice(null);
+  }
+
+  function clampScrollPosition(value: number, max: number) {
+    return Math.min(Math.max(value, 0), Math.max(max, 0));
+  }
+
+  function scrollMapToPoint(x: number, y: number) {
+    const viewport = mapViewportRef.current;
+    const map = mapRef.current;
+    if (!viewport || !map) return;
+
+    const left = clampScrollPosition((x * map.offsetWidth) - (viewport.clientWidth / 2), viewport.scrollWidth - viewport.clientWidth);
+    const top = clampScrollPosition((y * map.offsetHeight) - (viewport.clientHeight / 2), viewport.scrollHeight - viewport.clientHeight);
+    viewport.scrollTo({ left, top, behavior: "smooth" });
+  }
+
+  function centerSeatInMap(seatId: string) {
+    const seat = localSeats.find(item => item.id === seatId);
+    if (!seat) return;
+    scrollMapToPoint(seat.x, seat.y);
+  }
+
+  function fitSeatsInMap(seatsToFit: SeatWithEmployee[]) {
+    if (!seatsToFit.length) return;
+    if (seatsToFit.length === 1) {
+      scrollMapToPoint(seatsToFit[0].x, seatsToFit[0].y);
+      return;
+    }
+
+    const bounds = seatsToFit.reduce(
+      (current, seat) => ({
+        minX: Math.min(current.minX, seat.x),
+        maxX: Math.max(current.maxX, seat.x),
+        minY: Math.min(current.minY, seat.y),
+        maxY: Math.max(current.maxY, seat.y)
+      }),
+      { minX: 1, maxX: 0, minY: 1, maxY: 0 }
+    );
+
+    scrollMapToPoint((bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2);
+  }
+
+  function queueCenterSeatInMap(seatId: string) {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => centerSeatInMap(seatId));
+    });
   }
 
   function seatPersonLabel(seat: SeatWithEmployee | null) {
@@ -425,6 +470,7 @@ export function SeatMap({
       setSelectedSeatId(seatId);
       setInspectorCollapsed(true);
       setActionNotice(null);
+      setSearchSelectionNotice(null);
       return true;
     }
 
@@ -434,6 +480,7 @@ export function SeatMap({
       setSwapSourceSeatId(null);
       setSwapConfirm(null);
       setInspectorCollapsed(false);
+      setSearchSelectionNotice(null);
       return true;
     }
 
@@ -445,11 +492,18 @@ export function SeatMap({
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
     setInspectorCollapsed(false);
+    setSearchSelectionNotice(null);
     return true;
   }
 
   function selectEmployeeSeat(seatId: string) {
-    if (selectSeat(seatId)) setFilterCollapsed(true);
+    if (!selectSeat(seatId)) return;
+
+    setFilterCollapsed(true);
+    queueCenterSeatInMap(seatId);
+
+    const seat = localSeats.find(item => item.id === seatId);
+    if (seat) setSearchSelectionNotice(`Opened ${seat.label} from search result.`);
   }
 
   function startAddSeatMode() {
@@ -462,6 +516,7 @@ export function SeatMap({
     setAddSeatMode(true);
     setAdvancedOpen(false);
     setInspectorCollapsed(false);
+    setSearchSelectionNotice(null);
   }
 
   function cancelAddSeatMode() {
@@ -477,6 +532,7 @@ export function SeatMap({
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
     setInspectorCollapsed(false);
+    setSearchSelectionNotice(null);
   }
 
   function selectPlannerHighlightedSeat(seatId: string) {
@@ -751,7 +807,16 @@ export function SeatMap({
       : canEdit
         ? "Select a seat to assign or update employee details."
         : "Select a seat to view assignment details.";
-  const namesToggleLabel = showNames ? "Hide employee names on map" : "Show employee names on map";
+  const namesToggleLabel = showNames ? "Hide names" : "Show names";
+  const mapResultSummary = matchingSeats.length === 1 ? "1 map result" : `${matchingSeats.length} map results`;
+  const mapResultVerb = matchingSeats.length === 1 ? "matches" : "match";
+  const mapResultContextLabel = search.trim() ? "the current search and filters" : "the current filters";
+  const selectedSeatMismatchNotice = selectedSeat && filtersActive && !selectedSeatMatchesFilters
+    ? search.trim()
+      ? "This selected seat does not match the current search."
+      : "This selected seat does not match the current filters."
+    : null;
+  const clearSearchContextLabel = search.trim() ? "Clear search" : "Clear filters";
   const desktopMapGridClass = filterCollapsed
     ? canEdit
       ? "lg:grid-cols-[minmax(0,1fr)]"
@@ -785,7 +850,10 @@ export function SeatMap({
               <span className="sr-only">Search employee, seat, job title, department, or zone</span>
               <input
                 value={search}
-                onChange={event => setSearch(event.target.value)}
+                onChange={event => {
+                  setSearch(event.target.value);
+                  setSearchSelectionNotice(null);
+                }}
                 placeholder="Search employee, seat, job title, department, or zone"
                 className="h-9 w-full rounded-full border border-white/70 bg-white/75 px-4 pr-10 text-sm text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.06)] outline-none backdrop-blur-xl transition placeholder:text-slate-400 focus:border-orange-200 focus:bg-white focus:ring-4 focus:ring-orange-100"
               />
@@ -794,7 +862,7 @@ export function SeatMap({
                   type="button"
                   aria-label="Clear search"
                   className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                  onClick={() => setSearch("")}
+                  onClick={clearSearch}
                 >
                   x
                 </button>
@@ -818,11 +886,12 @@ export function SeatMap({
               aria-label={namesToggleLabel}
               title={namesToggleLabel}
               className={[
-                "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border shadow-sm backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
+                "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border px-2.5 text-xs font-black shadow-sm backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
                 showNames ? "border-slate-300 bg-slate-900/90 text-white hover:bg-slate-800" : "border-white/70 bg-white/70 text-slate-700 hover:bg-white"
               ].join(" ")}
             >
               <NamesIcon />
+              <span className="hidden sm:inline">{namesToggleLabel}</span>
             </button>
           </div>
 
@@ -831,23 +900,25 @@ export function SeatMap({
               <>
                 <button
                   type="button"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/70 text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
+                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !undoAvailable}
-                  aria-label={nextUndoLabel ? `Undo ${nextUndoLabel}` : "Undo draft edit"}
-                  title={undoTitle}
+                  aria-label="Undo last map change"
+                  title="Undo last map change"
                   onClick={undoDraftEdit}
                 >
                   <UndoIcon />
+                  <span className="hidden xl:inline">Undo</span>
                 </button>
                 <button
                   type="button"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/70 text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
+                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !redoAvailable}
-                  aria-label={nextRedoLabel ? `Redo ${nextRedoLabel}` : "Redo draft edit"}
-                  title={redoTitle}
+                  aria-label="Redo last undone change"
+                  title="Redo last undone change"
                   onClick={redoDraftEdit}
                 >
                   <RedoIcon />
+                  <span className="hidden xl:inline">Redo</span>
                 </button>
                 <Link
                   href="/admin/management"
@@ -876,13 +947,15 @@ export function SeatMap({
                 </Button>
                 <Button
                   variant="secondary"
+                  aria-label="Map tools"
+                  title="Map tools"
                   className="min-h-8 rounded-full px-3 py-1 text-xs shadow-sm"
                   onClick={() => {
                     setAskPlannerOpen(false);
                     setAdvancedOpen(true);
                   }}
                 >
-                  Tools
+                  Map tools
                 </Button>
               </>
             )}
@@ -902,6 +975,7 @@ export function SeatMap({
             collapsed={filterCollapsed}
             stats={stats}
             employeeResults={employeeResults}
+            selectedSeatId={selectedSeatId}
             onToggle={() => setFilterCollapsed(current => !current)}
             onEmployeeSelect={selectEmployeeSeat}
             onDepartmentChange={setDepartment}
@@ -912,6 +986,43 @@ export function SeatMap({
         </div>
 
         <section className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 space-y-2 lg:order-2", canEdit ? "lg:flex lg:min-h-0 lg:flex-col lg:space-y-0 lg:gap-2" : ""].join(" ")}>
+          {(filtersActive || searchSelectionNotice) && (
+            <div className="flex flex-col gap-2 rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-600 shadow-[0_12px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                {searchSelectionNotice && (
+                  <div className="truncate font-black text-brand-dark">{searchSelectionNotice}</div>
+                )}
+                {filtersActive && (
+                  <div className={searchSelectionNotice ? "mt-0.5 truncate text-[11px] text-slate-500" : "truncate font-black text-slate-700"}>
+                    {mapResultSummary} {mapResultVerb} {mapResultContextLabel}.
+                  </div>
+                )}
+              </div>
+              {filtersActive && (
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fitSeatsInMap(matchingSeats)}
+                    disabled={!matchingSeats.length}
+                    aria-label={matchingSeats.length === 1 ? "Fit one result on the map" : `Fit ${matchingSeats.length} results on the map`}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 transition hover:border-orange-200 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Fit results
+                  </button>
+                  {search.trim() && (
+                    <button
+                      type="button"
+                      onClick={clearSearch}
+                      className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] font-black text-brand-dark transition hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                    >
+                      Clear search
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {(addSeatMode || moveSeatMode || swapSourceSeatId) && (
             <div className="flex flex-col gap-2 rounded-2xl border border-orange-200 bg-white/80 px-3 py-2 text-xs font-semibold text-brand-dark shadow-[0_12px_34px_rgba(194,65,12,0.12)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
               <span>{toolbarMessage}</span>
@@ -937,6 +1048,7 @@ export function SeatMap({
 
           <div className={["min-w-0 rounded-[18px] border border-white/70 bg-white/75 p-1.5 shadow-[0_26px_80px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl", canEdit ? "lg:flex lg:min-h-0 lg:flex-1" : ""].join(" ")}>
             <div
+              ref={mapViewportRef}
               className={["relative mx-auto max-h-[72vh] w-full max-w-full overflow-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-[#f6f4f1] sm:max-h-[calc(100vh-92px)]", canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200 lg:min-h-0 lg:flex-1 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden" : ""].join(" ")}
               tabIndex={canEdit ? 0 : undefined}
               aria-label={canEdit ? "Admin seat map viewport. Use wheel, trackpad, touch, or arrow keys to pan the map." : undefined}
@@ -1071,6 +1183,8 @@ export function SeatMap({
         canEdit={canEdit}
         collapsed={inspectorCollapsed}
         swapMode={Boolean(swapSourceSeatId)}
+        searchMismatchNotice={selectedSeatMismatchNotice}
+        searchMismatchClearLabel={clearSearchContextLabel}
         onClose={() => {
           if (selectedSeatId && !canDiscardInspectorChanges()) return;
           setSelectedSeatId(null);
@@ -1079,7 +1193,9 @@ export function SeatMap({
           setSwapSourceSeatId(null);
           setSwapConfirm(null);
           setInspectorCollapsed(false);
+          setSearchSelectionNotice(null);
         }}
+        onClearSearchContext={search.trim() ? clearSearch : clearFilters}
         onToggleCollapse={() => setInspectorCollapsed(current => !current)}
         onStartSwapSeat={() => startSwapSeatMode(true)}
         onExplainSeat={explainSeatWithPlanner}

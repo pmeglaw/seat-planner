@@ -15,7 +15,10 @@ type SeatInspectorProps = {
   canEdit: boolean;
   collapsed: boolean;
   swapMode: boolean;
+  searchMismatchNotice?: string | null;
+  searchMismatchClearLabel?: string;
   onClose: () => void;
+  onClearSearchContext?: () => void;
   onToggleCollapse: () => void;
   onStartSwapSeat: () => void;
   onExplainSeat?: (seat: SeatWithEmployee) => void;
@@ -82,7 +85,10 @@ export function SeatInspector({
   canEdit,
   collapsed,
   swapMode,
+  searchMismatchNotice = null,
+  searchMismatchClearLabel = "Clear search",
   onClose,
+  onClearSearchContext,
   onToggleCollapse,
   onStartSwapSeat,
   onExplainSeat,
@@ -198,6 +204,11 @@ export function SeatInspector({
       ? "Matched existing employee"
       : "Create new employee on save"
     : "No employee assigned";
+  const primaryActionLabel = hasCurrentAssignment
+    ? "Save draft changes"
+    : hasAssignedPerson
+      ? "Assign employee"
+      : "Save draft changes";
 
   function updateField<K extends keyof SeatInspectorForm>(field: K, value: SeatInspectorForm[K]) {
     setForm(current => ({ ...current, [field]: value }));
@@ -438,8 +449,11 @@ export function SeatInspector({
   }
 
   return (
-    <aside className="fixed inset-x-3 bottom-3 z-40 max-h-[72vh] overflow-auto rounded-2xl border border-white/70 bg-white/95 p-4 shadow-[0_26px_80px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-white/90 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[70px] sm:max-h-[calc(100vh-84px)] sm:w-[350px] sm:max-w-[calc(100vw-2rem)]">
-      <div className="mb-3 flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+    <aside
+      aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
+      className="fixed inset-x-3 bottom-3 z-40 flex max-h-[72vh] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-[0_26px_80px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-white/90 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[70px] sm:max-h-[calc(100vh-84px)] sm:w-[350px] sm:max-w-[calc(100vw-2rem)]"
+    >
+      <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-slate-100 bg-white/95 px-4 py-4 backdrop-blur-xl supports-[backdrop-filter]:bg-white/90">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-black leading-none text-slate-950">{selectedSeat.label}</h2>
@@ -469,153 +483,183 @@ export function SeatInspector({
       </div>
 
       {canEdit ? (
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <section className="rounded-2xl border border-slate-200 bg-white/60 p-3">
-            <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Assignment</div>
-            <div className="mt-1 text-lg font-black leading-tight text-slate-950">
-              {employeeNameValue || (hasCurrentAssignment ? selectedSeatEmployeeName : "Open seat")}
-            </div>
-            <div className="mt-1 text-xs font-semibold text-slate-500">
-              {hasCurrentAssignment ? "Draft assignment" : "Ready to assign"}
-            </div>
-          </section>
-
-          <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee name</span>
-            <div className="relative">
-              <input
-                ref={employeeInputRef}
-                value={form.employeeName}
-                onChange={handleEmployeeNameChange}
-                onFocus={() => setEmployeeComboboxOpen(true)}
-                onBlur={() => window.setTimeout(() => setEmployeeComboboxOpen(false), 120)}
-                onKeyDown={handleEmployeeNameKeyDown}
-                placeholder="Search or enter employee name"
-                role="combobox"
-                aria-expanded={employeeComboboxOpen}
-                aria-controls="seat-inspector-employee-listbox"
-                aria-autocomplete="list"
-                aria-activedescendant={employeeComboboxOpen && filteredEmployeeOptions[activeEmployeeIndex] ? `seat-inspector-employee-option-${filteredEmployeeOptions[activeEmployeeIndex].employee.id}` : undefined}
-                className={`${fieldClassName} pr-10`}
-              />
-              <button
-                type="button"
-                aria-label="Show employee options"
-                title="Show employee options"
-                onMouseDown={event => event.preventDefault()}
-                onClick={() => {
-                  setEmployeeComboboxOpen(current => !current);
-                  employeeInputRef.current?.focus();
-                }}
-                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-              >
-                v
-              </button>
-              {employeeComboboxOpen && (
-                <div
-                  id="seat-inspector-employee-listbox"
-                  role="listbox"
-                  className="absolute z-50 mt-2 max-h-64 w-full overflow-auto rounded-2xl border border-white/70 bg-white/95 p-1.5 shadow-[0_18px_48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl"
-                >
-                  {filteredEmployeeOptions.length > 0 ? filteredEmployeeOptions.map((option, index) => (
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-3">
+            {searchMismatchNotice && (
+              <section className="rounded-2xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900">
+                <div className="font-black">{searchMismatchNotice}</div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-full bg-white/80 px-3 py-1.5 font-black text-amber-950 ring-1 ring-amber-200 transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100"
+                  >
+                    Clear selection
+                  </button>
+                  {onClearSearchContext && (
                     <button
-                      key={option.employee.id}
-                      id={`seat-inspector-employee-option-${option.employee.id}`}
                       type="button"
-                      role="option"
-                      aria-selected={form.employeeId === option.employee.id}
-                      onMouseDown={event => event.preventDefault()}
-                      onMouseEnter={() => setActiveEmployeeIndex(index)}
-                      onClick={() => selectEmployee(option.employee)}
-                      className={[
-                        "flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition",
-                        index === activeEmployeeIndex ? "bg-orange-50 text-slate-950" : "text-slate-800 hover:bg-slate-50"
-                      ].join(" ")}
+                      onClick={onClearSearchContext}
+                      className="rounded-full bg-white/80 px-3 py-1.5 font-black text-amber-950 ring-1 ring-amber-200 transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100"
                     >
-                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-black text-brand-dark ring-1 ring-orange-100">
-                        {option.employee.full_name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?"}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-black">{option.employee.full_name}</span>
-                        <span className="block truncate text-xs text-slate-500">{option.meta}</span>
-                      </span>
-                      <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
-                        {option.assignedSeatLabel}
-                      </span>
+                      {searchMismatchClearLabel}
                     </button>
-                  )) : (
-                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-                      <div className="font-black text-slate-700">No existing employee match</div>
-                      <div>Create new employee on save.</div>
-                    </div>
                   )}
                 </div>
-              )}
-            </div>
-            <span className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide", employeeNameValue ? "bg-orange-50 text-brand-dark ring-1 ring-orange-100" : "bg-slate-100 text-slate-500"].join(" ")}>
-              {assignmentStateText}
-            </span>
-          </label>
+              </section>
+            )}
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <section className="rounded-2xl border border-slate-200 bg-white/60 p-3">
+              <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Assignment</div>
+              <div className="mt-1 text-lg font-black leading-tight text-slate-950">
+                {employeeNameValue || (hasCurrentAssignment ? selectedSeatEmployeeName : "Open seat")}
+              </div>
+              <div className="mt-1 text-xs font-semibold text-slate-500">
+                {hasCurrentAssignment ? "Draft assignment" : "Ready to assign"}
+              </div>
+            </section>
+
             <label className="block">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Job Title</span>
-              <input value={form.employeePosition} onChange={event => handleTextChange("employeePosition", event)} placeholder="Optional" className={fieldClassName} />
+              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee name</span>
+              <div className="relative">
+                <input
+                  ref={employeeInputRef}
+                  value={form.employeeName}
+                  onChange={handleEmployeeNameChange}
+                  onFocus={() => setEmployeeComboboxOpen(true)}
+                  onBlur={() => window.setTimeout(() => setEmployeeComboboxOpen(false), 120)}
+                  onKeyDown={handleEmployeeNameKeyDown}
+                  placeholder="Search or enter employee name"
+                  role="combobox"
+                  aria-expanded={employeeComboboxOpen}
+                  aria-controls="seat-inspector-employee-listbox"
+                  aria-autocomplete="list"
+                  aria-activedescendant={employeeComboboxOpen && filteredEmployeeOptions[activeEmployeeIndex] ? `seat-inspector-employee-option-${filteredEmployeeOptions[activeEmployeeIndex].employee.id}` : undefined}
+                  className={`${fieldClassName} pr-10`}
+                />
+                <button
+                  type="button"
+                  aria-label="Show employee options"
+                  title="Show employee options"
+                  onMouseDown={event => event.preventDefault()}
+                  onClick={() => {
+                    setEmployeeComboboxOpen(current => !current);
+                    employeeInputRef.current?.focus();
+                  }}
+                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                >
+                  v
+                </button>
+                {employeeComboboxOpen && (
+                  <div
+                    id="seat-inspector-employee-listbox"
+                    role="listbox"
+                    className="absolute z-50 mt-2 max-h-64 w-full overflow-auto rounded-2xl border border-white/70 bg-white/95 p-1.5 shadow-[0_18px_48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl"
+                  >
+                    {filteredEmployeeOptions.length > 0 ? filteredEmployeeOptions.map((option, index) => (
+                      <button
+                        key={option.employee.id}
+                        id={`seat-inspector-employee-option-${option.employee.id}`}
+                        type="button"
+                        role="option"
+                        aria-selected={form.employeeId === option.employee.id}
+                        onMouseDown={event => event.preventDefault()}
+                        onMouseEnter={() => setActiveEmployeeIndex(index)}
+                        onClick={() => selectEmployee(option.employee)}
+                        className={[
+                          "flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition",
+                          index === activeEmployeeIndex ? "bg-orange-50 text-slate-950" : "text-slate-800 hover:bg-slate-50"
+                        ].join(" ")}
+                      >
+                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-black text-brand-dark ring-1 ring-orange-100">
+                          {option.employee.full_name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?"}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-black">{option.employee.full_name}</span>
+                          <span className="block truncate text-xs text-slate-500">{option.meta}</span>
+                        </span>
+                        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
+                          {option.assignedSeatLabel}
+                        </span>
+                      </button>
+                    )) : (
+                      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
+                        <div className="font-black text-slate-700">No existing employee match</div>
+                        <div>Create new employee on save.</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <span className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide", employeeNameValue ? "bg-orange-50 text-brand-dark ring-1 ring-orange-100" : "bg-slate-100 text-slate-500"].join(" ")}>
+                {assignmentStateText}
+              </span>
             </label>
 
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Job Title</span>
+                <input value={form.employeePosition} onChange={event => handleTextChange("employeePosition", event)} placeholder="Optional" className={fieldClassName} />
+              </label>
+
+              <label className="block">
+                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Phone Ext.</span>
+                <input value={form.phoneExtension} onChange={event => handleTextChange("phoneExtension", event)} placeholder="Optional" className={fieldClassName} inputMode="numeric" />
+              </label>
+            </div>
+
             <label className="block">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Phone Ext.</span>
-              <input value={form.phoneExtension} onChange={event => handleTextChange("phoneExtension", event)} placeholder="Optional" className={fieldClassName} inputMode="numeric" />
+              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Department</span>
+              <select value={form.department} onChange={handleDepartmentChange} className={fieldClassName}>
+                <option value="">No department</option>
+                {departments.map(department => (
+                  <option key={department} value={department}>{department}</option>
+                ))}
+              </select>
+            </label>
+
+            {!hasAssignedPerson && (
+              <label className="block">
+                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Seat status</span>
+                <select value={effectiveStatus} onChange={handleStatusChange} className={fieldClassName}>
+                  <option value="available">Available</option>
+                  <option value="reserved">Reserved</option>
+                  <option value="unavailable">Unavailable</option>
+                </select>
+              </label>
+            )}
+
+            <label className="block">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Notes</span>
+              <textarea value={form.notes} onChange={event => handleTextChange("notes", event)} placeholder="Optional seat note" className={`${fieldClassName} min-h-20`} />
             </label>
           </div>
 
-          <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Department</span>
-            <select value={form.department} onChange={handleDepartmentChange} className={fieldClassName}>
-              <option value="">No department</option>
-              {departments.map(department => (
-                <option key={department} value={department}>{department}</option>
-              ))}
-            </select>
-          </label>
-
-          {!hasAssignedPerson && (
-            <label className="block">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Seat status</span>
-              <select value={effectiveStatus} onChange={handleStatusChange} className={fieldClassName}>
-                <option value="available">Available</option>
-                <option value="reserved">Reserved</option>
-                <option value="unavailable">Unavailable</option>
-              </select>
-            </label>
-          )}
-
-          <label className="block">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Notes</span>
-            <textarea value={form.notes} onChange={event => handleTextChange("notes", event)} placeholder="Optional seat note" className={`${fieldClassName} min-h-20`} />
-          </label>
-
-          {localError && (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-xs font-semibold text-rose-700">
-              {localError}
+          <div className="sticky bottom-0 z-20 border-t border-slate-100 bg-white/95 px-4 py-3 shadow-[0_-16px_36px_rgba(15,23,42,0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/90">
+            {localError && (
+              <div className="mb-2 rounded-xl border border-rose-200 bg-rose-50 p-2 text-xs font-semibold text-rose-700">
+                {localError}
+              </div>
+            )}
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+              <Button type="button" onClick={onClose} aria-label={`Cancel editing ${selectedSeat.label}`} className="rounded-xl px-4">
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" disabled={pending || !isDirty} aria-label={`${primaryActionLabel} for ${selectedSeat.label}`} className="w-full rounded-xl">
+                {primaryActionLabel}
+              </Button>
             </div>
-          )}
-
-          <div className="grid gap-2 border-t border-slate-100 pt-3">
-            <Button type="submit" variant="primary" disabled={pending || !isDirty} className="w-full rounded-xl">
-              {hasCurrentAssignment ? "Update seat" : "Assign seat"}
-            </Button>
-            <div className={["grid gap-2", hasCurrentAssignment || isDirty ? "grid-cols-2" : "grid-cols-1"].join(" ")}>
-              <Button type="button" onClick={handleStartSwapSeat} disabled={pending} className="w-full rounded-xl">
+            <div className={["mt-2 grid gap-2", hasCurrentAssignment || isDirty ? "grid-cols-2" : "grid-cols-1"].join(" ")}>
+              <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Start seat swap for ${selectedSeat.label}`} className="w-full rounded-xl">
                 Swap seat
               </Button>
               {hasCurrentAssignment && (
-                <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} className="w-full rounded-xl">
+                <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="w-full rounded-xl">
                   Vacate
                 </Button>
               )}
               {isDirty && (
-                <Button type="button" onClick={handleResetEdits} disabled={pending} className="w-full rounded-xl">
+                <Button type="button" onClick={handleResetEdits} disabled={pending} aria-label={`Discard edits for ${selectedSeat.label}`} className="w-full rounded-xl">
                   Discard edits
                 </Button>
               )}
@@ -623,7 +667,7 @@ export function SeatInspector({
           </div>
         </form>
       ) : (
-        <div className="space-y-3 text-sm">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-3 text-sm">
           <section className="rounded-2xl border border-slate-200 bg-white/60 p-3">
             <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Assignment</div>
             <div className="mt-1 text-lg font-black leading-tight text-slate-950">{selectedSeat.employee?.full_name ?? "Open seat"}</div>

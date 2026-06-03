@@ -24,6 +24,7 @@ type FilterPanelProps = {
     reserved: number;
   };
   employeeResults: EmployeeResult[];
+  selectedSeatId: string | null;
   onToggle: () => void;
   onEmployeeSelect: (seatId: string) => void;
   onDepartmentChange: (value: string) => void;
@@ -42,6 +43,7 @@ export function FilterPanel({
   collapsed,
   stats,
   employeeResults,
+  selectedSeatId,
   onToggle,
   onEmployeeSelect,
   onDepartmentChange,
@@ -156,6 +158,53 @@ export function FilterPanel({
         </label>
       </div>
 
+      <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">People · {employeeResults.length}</div>
+          {filtersActive && <div className="text-[11px] font-semibold text-brand-dark">Filtered</div>}
+        </div>
+        <div className="max-h-[260px] space-y-2 overflow-auto pr-1">
+          {employeeResults.length ? employeeResults.map(result => {
+            const selected = Boolean(result.seatId && result.seatId === selectedSeatId);
+
+            return (
+              <button
+                key={result.id}
+                type="button"
+                disabled={!result.seatId}
+                aria-current={selected ? "true" : undefined}
+                onClick={() => result.seatId && onEmployeeSelect(result.seatId)}
+                className={[
+                  "flex w-full items-center gap-3 rounded-lg border bg-white p-2 text-left shadow-sm transition hover:border-orange-200 hover:bg-orange-50/40 disabled:cursor-default disabled:opacity-60",
+                  selected ? "border-orange-300 bg-orange-50/80 ring-2 ring-orange-100" : "border-slate-200"
+                ].join(" ")}
+              >
+                <span className={["flex h-8 w-8 flex-none items-center justify-center rounded-full text-xs font-black ring-1", selected ? "bg-white text-brand-dark ring-orange-200" : "bg-slate-100 text-slate-700 ring-slate-200"].join(" ")}>
+                  {result.initials}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-slate-900">{result.name}</span>
+                  <span className="block truncate text-xs text-slate-500">{result.meta}</span>
+                </span>
+                <span className={["shrink-0 text-[11px] font-black", selected ? "text-brand-dark" : "text-slate-400"].join(" ")}>
+                  {selected ? "Selected" : result.seatLabel ?? "—"}
+                </span>
+              </button>
+            );
+          }) : (
+            <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+              <div className="font-semibold text-slate-700">No employees match the current filters.</div>
+              <div className="mt-1">Clear filters or search by seat label, employee name, position, department, or zone.</div>
+              {filtersActive && (
+                <button type="button" onClick={onClearFilters} className="mt-2 text-xs font-bold text-brand hover:text-brand-dark">
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
         {statItems.map((item, index) => (
           <div key={item.label} className={["border-slate-200 px-2 py-2 text-center", index % 2 === 0 ? "border-r" : "", index < statItems.length - 2 ? "border-b" : ""].join(" ")}>
@@ -172,43 +221,6 @@ export function FilterPanel({
           <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />Assigned</div>
           <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" />Reserved</div>
           <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-slate-400" />Unavailable</div>
-        </div>
-      </div>
-
-      <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
-        <div className="flex items-center justify-between">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">People</div>
-          <div className="text-[11px] text-slate-400">{employeeResults.length}</div>
-        </div>
-        <div className="max-h-[230px] space-y-2 overflow-auto pr-1">
-          {employeeResults.length ? employeeResults.map(result => (
-            <button
-              key={result.id}
-              type="button"
-              disabled={!result.seatId}
-              onClick={() => result.seatId && onEmployeeSelect(result.seatId)}
-              className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-2 text-left shadow-sm transition hover:border-orange-200 hover:bg-orange-50/40 disabled:cursor-default disabled:opacity-60"
-            >
-              <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-slate-100 text-xs font-black text-slate-700 ring-1 ring-slate-200">
-                {result.initials}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-bold text-slate-900">{result.name}</span>
-                <span className="block truncate text-xs text-slate-500">{result.meta}</span>
-              </span>
-              <span className="text-[11px] font-bold text-slate-400">{result.seatLabel ?? "—"}</span>
-            </button>
-          )) : (
-            <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-              <div className="font-semibold text-slate-700">No employees match the current filters.</div>
-              <div className="mt-1">Clear filters or search by seat label, employee name, position, department, or zone.</div>
-              {filtersActive && (
-                <button type="button" onClick={onClearFilters} className="mt-2 text-xs font-bold text-brand hover:text-brand-dark">
-                  Clear filters
-                </button>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </aside>
