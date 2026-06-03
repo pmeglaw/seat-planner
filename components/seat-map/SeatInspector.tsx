@@ -433,16 +433,16 @@ export function SeatInspector({
 
   if (collapsed) {
     return (
-      <aside className="fixed right-3 top-[70px] z-40">
+      <aside className="fixed inset-x-3 bottom-3 z-40 sm:inset-x-auto sm:bottom-auto sm:right-3 sm:top-[70px]">
         <button
           type="button"
           onClick={onToggleCollapse}
-          aria-label="Expand inspector"
-          title="Expand inspector"
-          className="flex min-h-[168px] w-[46px] flex-col items-center justify-center rounded-full border border-white/70 bg-white/80 px-2 py-4 text-slate-700 shadow-[0_14px_40px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white"
+          aria-label={`View details for ${selectedSeat.label}`}
+          title={`View details for ${selectedSeat.label}`}
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-2 text-slate-700 shadow-[0_14px_40px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white sm:min-h-[168px] sm:w-[46px] sm:flex-col sm:px-2 sm:py-4"
         >
-          <span className="rotate-180 text-[11px] font-extrabold uppercase tracking-[0.18em] [writing-mode:vertical-rl]">Inspector</span>
-          <span className="mt-2 rotate-180 text-[10px] text-slate-400 [writing-mode:vertical-rl]">{selectedSeat.label}</span>
+          <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] sm:rotate-180 sm:[writing-mode:vertical-rl]">View details</span>
+          <span className="rounded-full bg-orange-50 px-2 py-1 text-[10px] font-black text-brand-dark ring-1 ring-orange-100 sm:mt-2 sm:rotate-180 sm:bg-transparent sm:px-0 sm:py-0 sm:text-slate-400 sm:ring-0 sm:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
         </button>
       </aside>
     );
@@ -451,7 +451,7 @@ export function SeatInspector({
   return (
     <aside
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
-      className="fixed inset-x-3 bottom-3 z-40 flex max-h-[72vh] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-[0_26px_80px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-white/90 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[70px] sm:max-h-[calc(100vh-84px)] sm:w-[350px] sm:max-w-[calc(100vw-2rem)]"
+      className="fixed inset-x-3 bottom-3 z-40 flex max-h-[62vh] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-[0_26px_80px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-white/90 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[70px] sm:max-h-[calc(100vh-84px)] sm:w-[350px] sm:max-w-[calc(100vw-2rem)]"
     >
       <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-slate-100 bg-white/95 px-4 py-4 backdrop-blur-xl supports-[backdrop-filter]:bg-white/90">
         <div className="min-w-0">
@@ -477,7 +477,16 @@ export function SeatInspector({
           )}
         </div>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className={iconButtonClassName}>-</button>
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-label={`Back to map from ${selectedSeat.label} details`}
+            title="Back to map"
+            className="inline-flex h-8 items-center justify-center rounded-full border border-orange-100 bg-orange-50 px-3 text-[11px] font-black text-brand-dark shadow-sm transition hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:hidden"
+          >
+            Back to map
+          </button>
+          <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:inline-flex">-</button>
           <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className={iconButtonClassName}>x</button>
         </div>
       </div>

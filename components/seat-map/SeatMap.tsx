@@ -853,7 +853,7 @@ export function SeatMap({
   return (
     <div className={["min-h-screen overflow-x-hidden bg-[#eef2f7]", canEdit ? "lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden" : ""].join(" ")}>
       <header className={["sticky top-0 z-30 border-b border-white/70 bg-white/80 px-3 py-2 text-slate-950 shadow-[0_10px_34px_rgba(15,23,42,0.07)] backdrop-blur-2xl sm:px-4", canEdit ? "lg:shrink-0" : ""].join(" ")}>
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 lg:grid-cols-[minmax(190px,260px)_minmax(260px,1fr)_auto]">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(190px,260px)_minmax(260px,1fr)_auto]">
           <div className="min-w-0">
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-2">
@@ -866,8 +866,8 @@ export function SeatMap({
             </div>
           </div>
 
-          <div className="col-span-2 flex min-w-0 items-center gap-2 lg:col-span-1">
-            <label className="relative min-w-0 flex-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-1 lg:flex-nowrap">
+            <label className="relative min-w-0 flex-[1_1_100%] sm:flex-1">
               <span className="sr-only">Search employee, seat, job title, department, or zone</span>
               <input
                 value={search}
@@ -914,9 +914,23 @@ export function SeatMap({
               <NamesIcon />
               <span className="hidden sm:inline">{namesToggleLabel}</span>
             </button>
+            {canEdit && (
+              <Button
+                variant="secondary"
+                aria-label="Map tools"
+                title="Map tools"
+                className="h-9 min-h-9 rounded-full px-3 py-1 text-xs shadow-sm"
+                onClick={() => {
+                  setAskPlannerOpen(false);
+                  setAdvancedOpen(true);
+                }}
+              >
+                Map tools
+              </Button>
+            )}
           </div>
 
-          <div className="col-start-2 row-start-1 flex min-w-0 flex-wrap items-center justify-end gap-2 lg:col-auto lg:row-auto">
+          <div className="hidden min-w-0 flex-wrap items-center justify-end gap-2 sm:col-start-2 sm:row-start-1 sm:flex lg:col-auto lg:row-auto">
             {canEdit && (
               <>
                 <button
@@ -966,25 +980,13 @@ export function SeatMap({
                     </span>
                   )}
                 </Button>
-                <Button
-                  variant="secondary"
-                  aria-label="Map tools"
-                  title="Map tools"
-                  className="min-h-8 rounded-full px-3 py-1 text-xs shadow-sm"
-                  onClick={() => {
-                    setAskPlannerOpen(false);
-                    setAdvancedOpen(true);
-                  }}
-                >
-                  Map tools
-                </Button>
               </>
             )}
           </div>
         </div>
       </header>
 
-      <main className={["grid grid-cols-1 gap-3 p-3 sm:p-4", desktopMapGridClass, canEdit ? "lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden" : ""].join(" ")}>
+      <main className={["grid grid-cols-1 gap-3 p-2 sm:p-4", desktopMapGridClass, canEdit ? "lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden" : ""].join(" ")}>
         <div className={filterPanelShellClass}>
           <FilterPanel
             search={search}

@@ -88,7 +88,7 @@ export function FilterPanel({
   }
 
   return (
-    <aside className="max-h-none self-start overflow-auto rounded-2xl border border-white/70 bg-white/80 p-3 shadow-[0_14px_38px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl lg:sticky lg:top-[62px] lg:max-h-[calc(100vh-78px)]">
+    <aside className="max-h-[55vh] self-start overflow-auto overscroll-contain rounded-2xl border border-white/70 bg-white/80 p-3 shadow-[0_14px_38px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl sm:max-h-[62vh] lg:sticky lg:top-[62px] lg:max-h-[calc(100vh-78px)]">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-sm font-black text-slate-900">Filters</h2>
         <div className="flex items-center gap-1">
@@ -163,7 +163,7 @@ export function FilterPanel({
           <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">People · {employeeResults.length}</div>
           {filtersActive && <div className="text-[11px] font-semibold text-brand-dark">Filtered</div>}
         </div>
-        <div className="max-h-[260px] space-y-2 overflow-auto pr-1">
+        <div className="max-h-[180px] space-y-2 overflow-auto overscroll-contain pr-1 sm:max-h-[260px]">
           {employeeResults.length ? employeeResults.map(result => {
             const selected = Boolean(result.seatId && result.seatId === selectedSeatId);
 
