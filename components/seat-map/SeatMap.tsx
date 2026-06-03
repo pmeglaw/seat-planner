@@ -45,6 +45,9 @@ type SwapConfirmState = {
   targetSeatId: string;
 } | null;
 
+const NAME_LABEL_COLLISION_X_THRESHOLD = 0.07;
+const NAME_LABEL_COLLISION_Y_THRESHOLD = 0.07;
+
 function normalizeSeat(seat: SeatWithEmployee): SeatWithEmployee {
   return {
     ...seat,
@@ -266,6 +269,24 @@ export function SeatMap({
   const filtersActive = activeFilterCount > 0;
   const matchingSeats = filtersActive ? localSeats.filter(seat => matchesFilters(seat)) : localSeats;
   const selectedSeatMatchesFilters = selectedSeat ? matchesFilters(selectedSeat) : true;
+  const crowdedNameSeatIdSet = useMemo(() => {
+    const crowded = new Set<string>();
+    const assignedSeats = localSeats.filter(seat => seat.employee);
+
+    assignedSeats.forEach(seat => {
+      const hasNearbySeat = localSeats.some(otherSeat => {
+        if (otherSeat.id === seat.id) return false;
+        return (
+          Math.abs(otherSeat.x - seat.x) <= NAME_LABEL_COLLISION_X_THRESHOLD &&
+          Math.abs(otherSeat.y - seat.y) <= NAME_LABEL_COLLISION_Y_THRESHOLD
+        );
+      });
+
+      if (hasNearbySeat) crowded.add(seat.id);
+    });
+
+    return crowded;
+  }, [localSeats]);
   const undoAvailable = canUndoDraftHistory(draftHistory);
   const redoAvailable = canRedoDraftHistory(draftHistory);
 
@@ -1075,24 +1096,30 @@ export function SeatMap({
                 />
 
                 <div className="absolute inset-0">
-                  {localSeats.map(seat => (
-                    <SeatMarker
-                      key={seat.id}
-                      seat={seat}
-                      selected={seat.id === selectedSeatId}
-                      dimmed={!matchesFilters(seat)}
-                      canEdit={canEdit}
-                      showNames={showNames}
-                      moveSeatMode={moveSeatMode}
-                      swapMode={Boolean(swapSourceSeatId)}
-                      swapSource={seat.id === swapSourceSeatId}
-                      swapTarget={seat.id === swapConfirm?.targetSeatId}
-                      highlighted={plannerHighlightedSeatIdSet.has(seat.id)}
-                      dragging={dragState?.seatId === seat.id}
-                      onSelect={selectSeat}
-                      onMovePointerDown={handleMovePointerDown}
-                    />
-                  ))}
+                  {localSeats.map(seat => {
+                    const seatMatchesFilters = matchesFilters(seat);
+
+                    return (
+                      <SeatMarker
+                        key={seat.id}
+                        seat={seat}
+                        selected={seat.id === selectedSeatId}
+                        dimmed={!seatMatchesFilters}
+                        canEdit={canEdit}
+                        showNames={showNames}
+                        searchResult={Boolean(search.trim()) && seatMatchesFilters}
+                        compactNameLabel={crowdedNameSeatIdSet.has(seat.id)}
+                        moveSeatMode={moveSeatMode}
+                        swapMode={Boolean(swapSourceSeatId)}
+                        swapSource={seat.id === swapSourceSeatId}
+                        swapTarget={seat.id === swapConfirm?.targetSeatId}
+                        highlighted={plannerHighlightedSeatIdSet.has(seat.id)}
+                        dragging={dragState?.seatId === seat.id}
+                        onSelect={selectSeat}
+                        onMovePointerDown={handleMovePointerDown}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             </div>
