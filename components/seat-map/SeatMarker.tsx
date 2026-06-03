@@ -22,6 +22,26 @@ type SeatMarkerProps = {
   onMovePointerDown: (event: PointerEvent<HTMLButtonElement>, seatId: string) => void;
 };
 
+function getEmployeeNameParts(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const firstName = parts[0] ?? "";
+  const lastInitial = parts
+    .slice(1)
+    .reverse()
+    .map(part => part.match(/[A-Za-z0-9]/)?.[0]?.toUpperCase() ?? "")
+    .find(Boolean) ?? "";
+
+  return { firstName, lastInitial };
+}
+
+function getPassiveEmployeeLabel(name: string) {
+  const { firstName, lastInitial } = getEmployeeNameParts(name);
+  if (!firstName) return name.trim().toUpperCase();
+
+  const compactName = firstName.length <= 4 && lastInitial ? `${firstName} ${lastInitial}.` : firstName;
+  return compactName.toUpperCase();
+}
+
 export function SeatMarker({
   seat,
   selected,
@@ -49,6 +69,7 @@ export function SeatMarker({
   const plannerHighlighted = highlighted && !selected && !swapSource && !swapTarget;
   const prominentName = activeMarker || (searchProminent && hasEmployee) || plannerHighlighted;
   const nameTextVisible = Boolean(employeeName) && (namesVisible || activeMarker);
+  const compactEmployeeName = getPassiveEmployeeLabel(employeeName);
   const labelMode = nameTextVisible
     ? prominentName
       ? "prominent"
@@ -80,9 +101,9 @@ export function SeatMarker({
     ? labelMode === "prominent"
       ? "min-h-[42px] w-[148px] max-w-[148px] rounded-xl px-3 py-1.5 text-left sm:w-[156px] sm:max-w-[156px]"
       : labelMode === "compact"
-        ? "min-h-[32px] w-[88px] max-w-[88px] rounded-lg px-2 py-1.5 text-left hover:w-[124px] hover:max-w-[124px] focus-visible:w-[124px] focus-visible:max-w-[124px]"
+        ? "min-h-[32px] w-[88px] max-w-[88px] rounded-lg px-2 py-1.5 text-left hover:w-[124px] hover:max-w-[124px] focus-visible:w-[124px] focus-visible:max-w-[124px] lg:min-h-[34px] lg:hover:w-[128px] lg:hover:max-w-[128px] lg:focus-visible:w-[128px] lg:focus-visible:max-w-[128px]"
         : labelMode === "passive"
-          ? "min-h-[34px] w-[108px] max-w-[108px] rounded-xl px-2.5 py-1.5 text-left hover:w-[136px] hover:max-w-[136px] focus-visible:w-[136px] focus-visible:max-w-[136px]"
+          ? "min-h-[34px] w-[96px] max-w-[96px] rounded-xl px-2.5 py-1.5 text-left hover:w-[136px] hover:max-w-[136px] focus-visible:w-[136px] focus-visible:max-w-[136px] lg:hover:w-[136px] lg:hover:max-w-[136px] lg:focus-visible:w-[136px] lg:focus-visible:max-w-[136px]"
           : "h-[30px] min-h-[30px] min-w-[38px] rounded-full px-2 py-0 text-center"
     : "h-[28px] min-h-[28px] min-w-[36px] rounded-full px-2 py-0 text-center text-[10px] hover:min-w-[102px] hover:rounded-xl hover:px-2.5 hover:text-left focus-visible:min-w-[102px] focus-visible:rounded-xl focus-visible:px-2.5 focus-visible:text-left";
 
@@ -94,14 +115,18 @@ export function SeatMarker({
         : "";
 
   const dotSizeClass = labelMode === "prominent" ? "h-2.5 w-2.5 ring-4" : "h-2 w-2 ring-2";
-  const codeTextClass = labelMode === "prominent" ? "text-[10px]" : "text-[9px]";
+  const codeTextClass = labelMode === "prominent" ? "text-[10px]" : "text-[9px] lg:text-[10px]";
   const chipGapClass = labelMode === "prominent" ? "gap-2" : "gap-1.5";
   const nameTextClass =
     labelMode === "prominent"
       ? "max-w-[106px] text-[10px] sm:max-w-[114px] sm:text-[11px]"
       : labelMode === "compact"
-        ? "max-w-[58px] text-[9px] group-hover:max-w-[94px] group-hover:text-[10px] group-focus-visible:max-w-[94px] group-focus-visible:text-[10px]"
-        : "max-w-[74px] text-[9.5px] group-hover:max-w-[102px] group-hover:text-[10px] group-focus-visible:max-w-[102px] group-focus-visible:text-[10px]";
+        ? "max-w-[58px] text-[9px] group-hover:max-w-[94px] group-hover:text-[10px] group-focus-visible:max-w-[94px] group-focus-visible:text-[10px] lg:text-[10px] lg:group-hover:max-w-[96px] lg:group-focus-visible:max-w-[96px]"
+        : "max-w-[62px] text-[10px] group-hover:max-w-[102px] group-focus-visible:max-w-[102px] lg:group-hover:max-w-[102px] lg:group-focus-visible:max-w-[102px]";
+  const fullNameRevealClass =
+    labelMode === "compact"
+      ? "hidden max-w-[94px] truncate text-[10px] font-bold leading-tight opacity-95 group-hover:block group-focus-visible:block lg:max-w-[96px]"
+      : "hidden max-w-[102px] truncate text-[10px] font-bold leading-tight opacity-95 group-hover:block group-focus-visible:block";
 
   return (
     <button
@@ -145,9 +170,20 @@ export function SeatMarker({
           <span className="flex min-w-0 flex-col items-start text-left">
             <span className={["whitespace-nowrap font-black leading-tight", codeTextClass].join(" ")}>{seat.label}</span>
             {nameTextVisible && (
-              <span className={["truncate font-bold leading-tight opacity-95", nameTextClass].join(" ")}>
-                {employeeName}
-              </span>
+              prominentName ? (
+                <span className={["truncate font-bold leading-tight opacity-95", nameTextClass].join(" ")}>
+                  {employeeName}
+                </span>
+              ) : (
+                <>
+                  <span className={["truncate font-bold leading-tight opacity-95 group-hover:hidden group-focus-visible:hidden", nameTextClass].join(" ")}>
+                    {compactEmployeeName}
+                  </span>
+                  <span className={fullNameRevealClass}>
+                    {employeeName}
+                  </span>
+                </>
+              )
             )}
           </span>
         </span>
