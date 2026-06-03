@@ -654,7 +654,13 @@ export function SeatInspector({
               <Button type="button" onClick={onClose} aria-label={`Cancel editing ${selectedSeat.label}`} className="rounded-xl px-4">
                 Cancel
               </Button>
-              <Button type="submit" variant="primary" disabled={pending || !isDirty} aria-label={`${primaryActionLabel} for ${selectedSeat.label}`} className="w-full rounded-xl">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={pending || !isDirty}
+                aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
+                className="w-full rounded-xl disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:hover:border-slate-200 disabled:hover:bg-slate-100"
+              >
                 {primaryActionLabel}
               </Button>
             </div>
