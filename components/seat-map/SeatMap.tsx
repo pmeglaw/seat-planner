@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { PointerEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -150,6 +150,26 @@ export function SeatMap({
   const [pending, startTransition] = useTransition();
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapToolsButtonRef = useRef<HTMLButtonElement | null>(null);
+  const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  const focusMapToolsButton = useCallback(() => {
+    window.setTimeout(() => mapToolsButtonRef.current?.focus(), 0);
+  }, []);
+
+  const focusAskPlannerButton = useCallback(() => {
+    window.setTimeout(() => askPlannerButtonRef.current?.focus(), 0);
+  }, []);
+
+  const closeAdvancedDrawer = useCallback(() => {
+    setAdvancedOpen(false);
+    focusMapToolsButton();
+  }, [focusMapToolsButton]);
+
+  const closeAskPlannerDrawer = useCallback(() => {
+    setAskPlannerOpen(false);
+    focusAskPlannerButton();
+  }, [focusAskPlannerButton]);
 
   useEffect(() => setLocalSeats(normalizeSeats(seats)), [seats]);
   useEffect(() => setLocalEmployees(employees), [employees]);
@@ -181,12 +201,12 @@ export function SeatMap({
       }
 
       if (askPlannerOpen) {
-        setAskPlannerOpen(false);
+        closeAskPlannerDrawer();
         return;
       }
 
       if (advancedOpen) {
-        setAdvancedOpen(false);
+        closeAdvancedDrawer();
         return;
       }
 
@@ -199,6 +219,11 @@ export function SeatMap({
         return;
       }
 
+      if (!filterCollapsed && !isEditableTarget(event.target)) {
+        setFilterCollapsed(true);
+        return;
+      }
+
       if (!isEditableTarget(event.target) && selectedSeatId && !inspectorDirty) {
         setSelectedSeatId(null);
         setInspectorCollapsed(false);
@@ -207,7 +232,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, advancedOpen, askPlannerOpen, inspectorDirty, moveSeatMode, selectedSeatId, swapConfirm, swapSourceSeatId]);
+  }, [addSeatMode, advancedOpen, askPlannerOpen, closeAdvancedDrawer, closeAskPlannerDrawer, filterCollapsed, inspectorDirty, moveSeatMode, selectedSeatId, swapConfirm, swapSourceSeatId]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -840,6 +865,20 @@ export function SeatMap({
       : "This selected seat does not match the current filters."
     : null;
   const clearSearchContextLabel = search.trim() ? "Clear search" : "Clear filters";
+  const undoTitle = pending
+    ? "Wait for the current map change to finish"
+    : inspectorDirty
+      ? "Save or cancel inspector edits before undoing"
+      : undoAvailable
+        ? "Undo last map change"
+        : "No map changes to undo";
+  const redoTitle = pending
+    ? "Wait for the current map change to finish"
+    : inspectorDirty
+      ? "Save or cancel inspector edits before redoing"
+      : redoAvailable
+        ? "Redo last undone change"
+        : "No undone map changes to redo";
   const desktopMapGridClass = filterCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]";
   const showFilterPanel = !filterCollapsed || canEdit;
   const filterPanelShellClass = [
@@ -881,7 +920,8 @@ export function SeatMap({
                 <button
                   type="button"
                   aria-label="Clear search"
-                  className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90"
+                  title="Clear search"
+                  className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
                   onClick={clearSearch}
                 >
                   x
@@ -891,6 +931,10 @@ export function SeatMap({
             <button
               type="button"
               onClick={() => setFilterCollapsed(current => !current)}
+              aria-controls="seat-map-filter-panel"
+              aria-expanded={!filterCollapsed}
+              aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
+              title={filterCollapsed ? "Open filters" : "Collapse filters"}
               className={["inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 text-xs font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100", activeFilterCount ? "border-orange-200 bg-orange-50/80 text-brand-dark" : "border-white/70 bg-white/70 text-slate-700"].join(" ")}
             >
               Filters
@@ -915,8 +959,12 @@ export function SeatMap({
             </button>
             {canEdit && (
               <Button
+                ref={mapToolsButtonRef}
                 variant="secondary"
                 aria-label="Map tools"
+                aria-controls="advanced-drawer"
+                aria-expanded={advancedOpen}
+                aria-haspopup="dialog"
                 title="Map tools"
                 className="h-9 min-h-9 rounded-full px-3 py-1 text-xs shadow-sm"
                 onClick={() => {
@@ -937,7 +985,7 @@ export function SeatMap({
                   className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !undoAvailable}
                   aria-label="Undo last map change"
-                  title="Undo last map change"
+                  title={undoTitle}
                   onClick={undoDraftEdit}
                 >
                   <UndoIcon />
@@ -948,7 +996,7 @@ export function SeatMap({
                   className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !redoAvailable}
                   aria-label="Redo last undone change"
-                  title="Redo last undone change"
+                  title={redoTitle}
                   onClick={redoDraftEdit}
                 >
                   <RedoIcon />
@@ -961,8 +1009,12 @@ export function SeatMap({
                   Management
                 </Link>
                 <Button
+                  ref={askPlannerButtonRef}
                   variant="secondary"
                   aria-label={plannerHighlightedSeatIds.length > 0 ? `Open Ask Planner, ${plannerHighlightedSeatIds.length} seats highlighted` : "Open Ask Planner"}
+                  aria-controls="ask-planner-drawer"
+                  aria-expanded={askPlannerOpen}
+                  aria-haspopup="dialog"
                   className={[
                     "min-h-8 rounded-full px-3 py-1 text-xs shadow-sm",
                     plannerHighlightedSeatIds.length > 0 ? "border-cyan-200 bg-cyan-50 text-cyan-900 hover:bg-cyan-100" : ""
@@ -1038,6 +1090,7 @@ export function SeatMap({
                     <button
                       type="button"
                       onClick={clearSearch}
+                      aria-label="Clear search"
                       className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] font-black text-brand-dark transition hover:bg-orange-100 active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
                     >
                       Clear search
@@ -1140,7 +1193,7 @@ export function SeatMap({
         moveSeatMode={moveSeatMode}
         swapSeatMode={Boolean(swapSourceSeatId)}
         pending={pending}
-        onClose={() => setAdvancedOpen(false)}
+        onClose={closeAdvancedDrawer}
         onStartAddSeat={startAddSeatMode}
         onCancelAddSeat={cancelAddSeatMode}
         onStartSwapSeat={() => startSwapSeatMode()}
@@ -1183,7 +1236,7 @@ export function SeatMap({
           setAddSeatMode(false);
           setSwapSourceSeatId(null);
           setSwapConfirm(null);
-          setAdvancedOpen(false);
+          closeAdvancedDrawer();
           setActionNotice("Imported JSON backup into the draft map.");
         }}
         onError={message => {
@@ -1199,7 +1252,7 @@ export function SeatMap({
           zones={zones}
           queuedRequest={askPlannerQueuedRequest}
           highlightedSeatIds={plannerHighlightedSeatIds}
-          onClose={() => setAskPlannerOpen(false)}
+          onClose={closeAskPlannerDrawer}
           onHighlightSeats={setPlannerHighlightedSeatIds}
           onClearHighlights={() => setPlannerHighlightedSeatIds([])}
           onSelectSeat={selectPlannerHighlightedSeat}

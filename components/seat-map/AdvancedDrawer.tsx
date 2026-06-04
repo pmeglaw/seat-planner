@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
@@ -73,6 +73,7 @@ type CommandButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 function CommandButton({ label, description, tone = "default", className = "", ...props }: CommandButtonProps) {
+  const { "aria-label": ariaLabel, title, ...buttonProps } = props;
   const toneClassName = tone === "active"
     ? "border-orange-100 bg-orange-50/80 text-brand-dark hover:border-orange-200 hover:bg-orange-100/80"
     : tone === "danger"
@@ -83,12 +84,14 @@ function CommandButton({ label, description, tone = "default", className = "", .
   return (
     <button
       type="button"
+      aria-label={ariaLabel ?? `${label}. ${description}`}
+      title={title ?? description}
       className={[
         "flex min-h-[50px] w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50",
         toneClassName,
         className
       ].join(" ")}
-      {...props}
+      {...buttonProps}
     >
       <span className="min-w-0">
         <span className="block truncate text-sm font-extrabold">{label}</span>
@@ -102,7 +105,7 @@ function CommandButton({ label, description, tone = "default", className = "", .
 function ToolGroup({ title, description, children, defaultOpen = false }: { title: string; description: string; children: ReactNode; defaultOpen?: boolean }) {
   return (
     <details {...(defaultOpen ? { open: true } : {})} className="group rounded-xl border border-transparent bg-slate-50/70">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-left transition active:scale-[0.99] marker:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 marker:hidden">
         <span className="min-w-0">
           <span className="block text-sm font-extrabold text-slate-900">{title}</span>
           <span className="mt-0.5 block truncate text-xs font-medium text-slate-500">{description}</span>
@@ -147,11 +150,18 @@ export function AdvancedDrawer({
 }: AdvancedDrawerProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const jsonInputRef = useRef<HTMLInputElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [localPending, startTransition] = useTransition();
 
   const busy = pending || localPending;
   const selectedSeatIsCustom = Boolean(selectedSeat?.is_custom);
+
+  useEffect(() => {
+    if (!open) return;
+    const handle = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+    return () => window.clearTimeout(handle);
+  }, [open]);
 
   if (!open) return null;
 
@@ -259,22 +269,26 @@ export function AdvancedDrawer({
       <button
         type="button"
         aria-label="Close advanced drawer"
+        aria-hidden="true"
+        tabIndex={-1}
         className="fixed inset-0 z-40 cursor-default bg-slate-950/22 backdrop-blur-[1px]"
         onClick={onClose}
       />
 
       <aside
+        id="advanced-drawer"
         role="dialog"
         aria-modal="true"
         aria-labelledby="advanced-drawer-title"
+        aria-describedby="advanced-drawer-description"
         className="fixed inset-x-3 bottom-3 z-50 flex max-h-[82vh] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 p-3 shadow-[0_24px_70px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[66px] sm:max-h-[calc(100vh-80px)] sm:w-[360px] sm:max-w-[calc(100vw-2rem)]"
       >
         <div className="mb-3 flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
             <h2 id="advanced-drawer-title" className="text-base font-black text-slate-950">Map tools</h2>
-            <p className="mt-1 text-xs leading-5 text-slate-500">Map actions, seat tools, and publishing.</p>
+            <p id="advanced-drawer-description" className="mt-1 text-xs leading-5 text-slate-500">Map actions, seat tools, and publishing.</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full px-3 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 active:scale-95">
+          <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Map tools" className="rounded-full px-3 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
             Close
           </button>
         </div>

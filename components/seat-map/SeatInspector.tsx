@@ -428,6 +428,11 @@ export function SeatInspector({
 
   const fieldClassName = "mt-1 w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand focus:ring-4 focus:ring-orange-100 disabled:bg-slate-50 disabled:text-slate-500";
   const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100";
+  const saveDisabledReason = pending
+    ? "Save is unavailable while the current draft change is finishing."
+    : !isDirty
+      ? "No draft changes to save."
+      : null;
 
   if (collapsed && swapMode) return null;
 
@@ -439,7 +444,7 @@ export function SeatInspector({
           onClick={onToggleCollapse}
           aria-label={`View details for ${selectedSeat.label}`}
           title={`View details for ${selectedSeat.label}`}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-2 text-slate-700 shadow-[0_14px_40px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner sm:min-h-[168px] sm:w-[46px] sm:flex-col sm:px-2 sm:py-4"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-2 text-slate-700 shadow-[0_14px_40px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:min-h-[168px] sm:w-[46px] sm:flex-col sm:px-2 sm:py-4"
         >
           <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] sm:rotate-180 sm:[writing-mode:vertical-rl]">View details</span>
           <span className="rounded-full bg-orange-50 px-2 py-1 text-[10px] font-black text-brand-dark ring-1 ring-orange-100 sm:mt-2 sm:rotate-180 sm:bg-transparent sm:px-0 sm:py-0 sm:text-slate-400 sm:ring-0 sm:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
@@ -451,12 +456,13 @@ export function SeatInspector({
   return (
     <aside
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
+      aria-labelledby="seat-inspector-title"
       className="fixed inset-x-3 bottom-3 z-40 flex max-h-[62vh] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-[0_26px_80px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-white/90 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[70px] sm:max-h-[calc(100vh-84px)] sm:w-[350px] sm:max-w-[calc(100vw-2rem)]"
     >
       <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-slate-100 bg-white/95 px-4 py-4 backdrop-blur-xl supports-[backdrop-filter]:bg-white/90">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black leading-none text-slate-950">{selectedSeat.label}</h2>
+            <h2 id="seat-inspector-title" className="text-xl font-black leading-none text-slate-950">{selectedSeat.label}</h2>
             {isDirty && <span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-amber-700 ring-1 ring-amber-200">Unsaved</span>}
             {swapMode && <span className="rounded-full bg-sky-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">Swap</span>}
           </div>
@@ -518,6 +524,8 @@ export function SeatInspector({
               <button
                 type="button"
                 onClick={() => onExplainSeat(selectedSeat)}
+                aria-label={`Ask Planner about ${selectedSeat.label}`}
+                title={`Ask Planner about ${selectedSeat.label}`}
                 className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-cyan-200 bg-cyan-50/70 px-3 py-2 text-left text-xs font-black text-cyan-900 transition hover:bg-cyan-100/80 active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100"
               >
                 <span>Ask Planner about this seat</span>
@@ -552,7 +560,7 @@ export function SeatInspector({
                     setEmployeeComboboxOpen(current => !current);
                     employeeInputRef.current?.focus();
                   }}
-                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90"
+                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
                 >
                   v
                 </button>
@@ -573,7 +581,7 @@ export function SeatInspector({
                         onMouseEnter={() => setActiveEmployeeIndex(index)}
                         onClick={() => selectEmployee(option.employee)}
                         className={[
-                          "flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition active:scale-[0.99]",
+                          "flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
                           index === activeEmployeeIndex ? "bg-orange-50 text-slate-950" : "text-slate-800 hover:bg-slate-50"
                         ].join(" ")}
                       >
@@ -648,6 +656,11 @@ export function SeatInspector({
               </div>
             )}
             <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+              {saveDisabledReason && (
+                <span id="seat-inspector-save-help" className="sr-only">
+                  {saveDisabledReason}
+                </span>
+              )}
               <Button type="button" onClick={onClose} aria-label={`Cancel editing ${selectedSeat.label}`} className="rounded-xl px-4">
                 Cancel
               </Button>
@@ -656,6 +669,8 @@ export function SeatInspector({
                 variant="primary"
                 disabled={pending || !isDirty}
                 aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
+                aria-describedby={saveDisabledReason ? "seat-inspector-save-help" : undefined}
+                title={saveDisabledReason ?? `${primaryActionLabel} for ${selectedSeat.label}`}
                 className="w-full rounded-xl disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:hover:border-slate-200 disabled:hover:bg-slate-100"
               >
                 {primaryActionLabel}

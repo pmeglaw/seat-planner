@@ -102,6 +102,7 @@ export function AskPlannerDrawer({
   const [error, setError] = useState<DrawerError | null>(null);
   const [pending, startTransition] = useTransition();
   const questionRef = useRef<HTMLTextAreaElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const processedQueuedRequestIdRef = useRef<number | null>(null);
 
   const suggestedPrompts = useMemo(() => {
@@ -160,6 +161,20 @@ export function AskPlannerDrawer({
     askPlanner(queuedRequest.question, queuedRequest.seatId ?? null);
   }, [askPlanner, open, pending, queuedRequest]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handle = window.setTimeout(() => {
+      if (questionRef.current && !questionRef.current.disabled) {
+        questionRef.current.focus();
+        return;
+      }
+
+      closeButtonRef.current?.focus();
+    }, 0);
+
+    return () => window.clearTimeout(handle);
+  }, [open]);
+
   if (!open) return null;
 
   return (
@@ -167,23 +182,27 @@ export function AskPlannerDrawer({
       <button
         type="button"
         aria-label="Close Ask Planner"
+        aria-hidden="true"
+        tabIndex={-1}
         className="fixed inset-0 z-40 cursor-default bg-slate-950/22 backdrop-blur-[1px]"
         onClick={onClose}
       />
 
       <aside
+        id="ask-planner-drawer"
         role="dialog"
         aria-modal="true"
         aria-labelledby="ask-planner-title"
+        aria-describedby="ask-planner-description"
         className="fixed inset-x-3 bottom-3 z-50 flex max-h-[84vh] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 text-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.2),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[66px] sm:max-h-[calc(100vh-80px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
       >
         <div className="shrink-0 border-b border-slate-200/80 px-4 py-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 id="ask-planner-title" className="text-base font-black">Ask Planner</h2>
-              <p className="mt-1 text-xs leading-5 text-slate-500">Read-only answers from saved draft map data.</p>
+              <p id="ask-planner-description" className="mt-1 text-xs leading-5 text-slate-500">Read-only answers from saved draft map data.</p>
             </div>
-            <button type="button" onClick={onClose} className="rounded-full px-3 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200">
+            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="rounded-full px-3 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200">
               Close
             </button>
           </div>
@@ -207,6 +226,7 @@ export function AskPlannerDrawer({
                 type="button"
                 onClick={() => choosePrompt(promptOption.prompt)}
                 disabled={pending}
+                title={pending ? "Wait for Ask Planner to finish" : promptOption.prompt}
                 className="max-w-full rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left text-[11px] font-bold leading-none text-slate-700 transition hover:border-orange-200 hover:bg-orange-50 hover:text-brand-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {promptOption.label}
@@ -241,7 +261,7 @@ export function AskPlannerDrawer({
             </label>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
               <div className="truncate text-[11px] font-semibold text-slate-400">{question.trim().length}/800 · Ctrl+Enter to ask</div>
-              <Button type="submit" variant="primary" disabled={pending || !question.trim()} className="rounded-full px-4">
+              <Button type="submit" variant="primary" disabled={pending || !question.trim()} title={!question.trim() ? "Enter a question before asking" : undefined} className="rounded-full px-4">
                 {pending ? "Asking..." : "Ask"}
               </Button>
             </div>
@@ -314,6 +334,7 @@ export function AskPlannerDrawer({
                     type="button"
                     onClick={onClearHighlights}
                     disabled={highlightedSeatIds.length === 0}
+                    title={highlightedSeatIds.length === 0 ? "No highlighted seats to clear" : "Clear highlighted seats"}
                     className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-[11px] font-black text-cyan-800 transition hover:bg-cyan-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
                   >
                     Clear highlights

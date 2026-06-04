@@ -71,7 +71,11 @@ export function FilterPanel({
         <button
           type="button"
           onClick={onToggle}
-          className="relative flex min-h-11 w-full items-center justify-center rounded-full border border-white/70 bg-white/70 px-4 py-2 text-slate-700 shadow-[0_12px_32px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white lg:min-h-[164px] lg:w-[48px] lg:flex-col lg:px-2 lg:py-4"
+          aria-controls="seat-map-filter-panel"
+          aria-expanded={false}
+          aria-label={filtersActive ? `Open filters, ${activeFilters.length} active` : "Open filters"}
+          title={filtersActive ? `${activeFilters.length} active filters` : "Open filters"}
+          className="relative flex min-h-11 w-full items-center justify-center rounded-full border border-white/70 bg-white/70 px-4 py-2 text-slate-700 shadow-[0_12px_32px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 lg:min-h-[164px] lg:w-[48px] lg:flex-col lg:px-2 lg:py-4"
         >
           {filtersActive && (
             <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-black text-white ring-2 ring-white lg:right-auto lg:top-3">
@@ -88,16 +92,16 @@ export function FilterPanel({
   }
 
   return (
-    <aside className="max-h-[55vh] w-full self-start overflow-auto overscroll-contain rounded-2xl border border-white/70 bg-white/80 p-3 shadow-[0_14px_38px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl sm:max-h-[62vh] lg:sticky lg:top-[62px] lg:max-h-[calc(100vh-78px)] lg:w-[288px]">
+    <aside id="seat-map-filter-panel" aria-labelledby="seat-map-filter-title" className="max-h-[55vh] w-full self-start overflow-auto overscroll-contain rounded-2xl border border-white/70 bg-white/80 p-3 shadow-[0_14px_38px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl sm:max-h-[62vh] lg:sticky lg:top-[62px] lg:max-h-[calc(100vh-78px)] lg:w-[288px]">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-black text-slate-900">Filters</h2>
+        <h2 id="seat-map-filter-title" className="text-sm font-black text-slate-900">Filters</h2>
         <div className="flex items-center gap-1">
           {filtersActive && (
-            <button type="button" onClick={onClearFilters} className="rounded-md px-2 py-1 text-[11px] font-bold text-brand hover:bg-orange-50">
+            <button type="button" onClick={onClearFilters} aria-label="Clear all filters" className="rounded-md px-2 py-1 text-[11px] font-bold text-brand hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
               Clear
             </button>
           )}
-          <button type="button" onClick={onToggle} className="rounded-md px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100">
+          <button type="button" onClick={onToggle} aria-controls="seat-map-filter-panel" aria-expanded={true} aria-label="Collapse filters" className="rounded-md px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
             Collapse
           </button>
         </div>
@@ -163,19 +167,26 @@ export function FilterPanel({
           <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">People · {employeeResults.length}</div>
           {filtersActive && <div className="text-[11px] font-semibold text-brand-dark">Filtered</div>}
         </div>
-        <div className="max-h-[180px] space-y-2 overflow-auto overscroll-contain pr-1 sm:max-h-[260px]">
+        <div aria-label="People results" className="max-h-[180px] space-y-2 overflow-auto overscroll-contain pr-1 sm:max-h-[260px]">
           {employeeResults.length ? employeeResults.map(result => {
             const selected = Boolean(result.seatId && result.seatId === selectedSeatId);
+            const resultActionLabel = result.seatId
+              ? selected
+                ? `${result.name}. ${result.meta}. ${result.seatLabel} selected.`
+                : `${result.name}. ${result.meta}. Open ${result.seatLabel}.`
+              : `${result.name}. ${result.meta}. Unassigned.`;
 
             return (
               <button
                 key={result.id}
                 type="button"
                 disabled={!result.seatId}
+                aria-label={resultActionLabel}
                 aria-current={selected ? "true" : undefined}
+                title={result.seatId ? `Open ${result.seatLabel}` : "No assigned seat to open"}
                 onClick={() => result.seatId && onEmployeeSelect(result.seatId)}
                 className={[
-                  "flex w-full items-center gap-3 rounded-lg border bg-white p-2 text-left shadow-sm transition hover:border-orange-200 hover:bg-orange-50/40 disabled:cursor-default disabled:opacity-60",
+                  "flex w-full items-center gap-3 rounded-lg border bg-white p-2 text-left shadow-sm transition hover:border-orange-200 hover:bg-orange-50/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-60",
                   selected ? "border-orange-300 bg-orange-50/80 ring-2 ring-orange-100" : "border-slate-200"
                 ].join(" ")}
               >
@@ -196,7 +207,7 @@ export function FilterPanel({
               <div className="font-semibold text-slate-700">No employees match the current filters.</div>
               <div className="mt-1">Clear filters or search by seat label, employee name, position, department, or zone.</div>
               {filtersActive && (
-                <button type="button" onClick={onClearFilters} className="mt-2 text-xs font-bold text-brand hover:text-brand-dark">
+                <button type="button" onClick={onClearFilters} className="mt-2 text-xs font-bold text-brand hover:text-brand-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
                   Clear filters
                 </button>
               )}
