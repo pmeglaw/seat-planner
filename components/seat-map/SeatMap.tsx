@@ -487,7 +487,9 @@ export function SeatMap({
 
   function selectSeat(seatId: string) {
     if (canEdit && swapSourceSeatId) {
-      if (seatId !== swapSourceSeatId) return requestSwapTarget(seatId);
+      if (seatId !== swapSourceSeatId) {
+        return requestSwapTarget(seatId);
+      }
       setSelectedSeatId(seatId);
       setInspectorCollapsed(true);
       setActionNotice(null);
@@ -838,21 +840,18 @@ export function SeatMap({
       : "This selected seat does not match the current filters."
     : null;
   const clearSearchContextLabel = search.trim() ? "Clear search" : "Clear filters";
-  const desktopMapGridClass = filterCollapsed
-    ? canEdit
-      ? "lg:grid-cols-[minmax(0,1fr)]"
-      : "lg:grid-cols-[52px_minmax(0,1fr)]"
-    : "lg:grid-cols-[288px_minmax(0,1fr)]";
+  const desktopMapGridClass = filterCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]";
+  const showFilterPanel = !filterCollapsed || canEdit;
   const filterPanelShellClass = [
     filterCollapsed ? "order-2" : "order-1",
     "lg:order-1",
     canEdit && filterCollapsed ? "lg:hidden" : "",
-    canEdit && !filterCollapsed ? "lg:min-h-0 lg:self-stretch lg:[&>aside]:h-full lg:[&>aside]:max-h-full lg:[&>aside]:top-0" : ""
+    !filterCollapsed ? "lg:min-h-0 lg:self-stretch lg:[&>aside]:h-full lg:[&>aside]:max-h-full lg:[&>aside]:top-0" : ""
   ].join(" ");
 
   return (
-    <div className={["min-h-screen overflow-x-hidden bg-[#eef2f7]", canEdit ? "lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden" : ""].join(" ")}>
-      <header className={["sticky top-0 z-30 border-b border-white/70 bg-white/80 px-3 py-2 text-slate-950 shadow-[0_10px_34px_rgba(15,23,42,0.07)] backdrop-blur-2xl sm:px-4", canEdit ? "lg:shrink-0" : ""].join(" ")}>
+    <div className="min-h-screen overflow-x-hidden bg-[#eef2f7] lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden">
+      <header className="sticky top-0 z-30 border-b border-white/70 bg-white/80 px-3 py-2 text-slate-950 shadow-[0_10px_34px_rgba(15,23,42,0.07)] backdrop-blur-2xl sm:px-4 lg:shrink-0">
         <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(190px,260px)_minmax(260px,1fr)_auto]">
           <div className="min-w-0">
             <div className="min-w-0">
@@ -882,7 +881,7 @@ export function SeatMap({
                 <button
                   type="button"
                   aria-label="Clear search"
-                  className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90"
                   onClick={clearSearch}
                 >
                   x
@@ -892,7 +891,7 @@ export function SeatMap({
             <button
               type="button"
               onClick={() => setFilterCollapsed(current => !current)}
-              className={["inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 text-xs font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100", activeFilterCount ? "border-orange-200 bg-orange-50/80 text-brand-dark" : "border-white/70 bg-white/70 text-slate-700"].join(" ")}
+              className={["inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 text-xs font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100", activeFilterCount ? "border-orange-200 bg-orange-50/80 text-brand-dark" : "border-white/70 bg-white/70 text-slate-700"].join(" ")}
             >
               Filters
               {activeFilterCount > 0 && (
@@ -907,7 +906,7 @@ export function SeatMap({
               aria-label={namesToggleLabel}
               title={namesToggleLabel}
               className={[
-                "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border px-2.5 text-xs font-black shadow-sm backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
+                "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border px-2.5 text-xs font-black shadow-sm backdrop-blur-xl transition active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
                 showNames ? "border-slate-300 bg-slate-900/90 text-white hover:bg-slate-800" : "border-white/70 bg-white/70 text-slate-700 hover:bg-white"
               ].join(" ")}
             >
@@ -935,7 +934,7 @@ export function SeatMap({
               <>
                 <button
                   type="button"
-                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
+                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !undoAvailable}
                   aria-label="Undo last map change"
                   title="Undo last map change"
@@ -946,7 +945,7 @@ export function SeatMap({
                 </button>
                 <button
                   type="button"
-                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
+                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !redoAvailable}
                   aria-label="Redo last undone change"
                   title="Redo last undone change"
@@ -957,7 +956,7 @@ export function SeatMap({
                 </button>
                 <Link
                   href="/admin/management"
-                  className="hidden min-h-8 items-center justify-center rounded-full border border-white/70 bg-white/70 px-3 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:inline-flex"
+                  className="hidden min-h-8 items-center justify-center rounded-full border border-white/70 bg-white/70 px-3 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:inline-flex"
                 >
                   Management
                 </Link>
@@ -973,7 +972,8 @@ export function SeatMap({
                     setAskPlannerOpen(true);
                   }}
                 >
-                  Ask Planner
+                  <span className="min-[1360px]:hidden">Ask</span>
+                  <span className="hidden min-[1360px]:inline">Ask Planner</span>
                   {plannerHighlightedSeatIds.length > 0 && (
                     <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-600 px-1.5 text-[10px] font-black text-white">
                       {plannerHighlightedSeatIds.length}
@@ -986,29 +986,31 @@ export function SeatMap({
         </div>
       </header>
 
-      <main className={["grid grid-cols-1 gap-3 p-2 sm:p-4", desktopMapGridClass, canEdit ? "lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden" : ""].join(" ")}>
-        <div className={filterPanelShellClass}>
-          <FilterPanel
-            search={search}
-            department={department}
-            status={status}
-            departments={departments}
-            zone={zone}
-            zones={zones}
-            collapsed={filterCollapsed}
-            stats={stats}
-            employeeResults={employeeResults}
-            selectedSeatId={selectedSeatId}
-            onToggle={() => setFilterCollapsed(current => !current)}
-            onEmployeeSelect={selectEmployeeSeat}
-            onDepartmentChange={setDepartment}
-            onZoneChange={setZone}
-            onStatusChange={setStatus}
-            onClearFilters={clearFilters}
-          />
-        </div>
+      <main className={["grid grid-cols-1 gap-3 p-2 sm:p-4 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
+        {showFilterPanel && (
+          <div className={filterPanelShellClass}>
+            <FilterPanel
+              search={search}
+              department={department}
+              status={status}
+              departments={departments}
+              zone={zone}
+              zones={zones}
+              collapsed={filterCollapsed}
+              stats={stats}
+              employeeResults={employeeResults}
+              selectedSeatId={selectedSeatId}
+              onToggle={() => setFilterCollapsed(current => !current)}
+              onEmployeeSelect={selectEmployeeSeat}
+              onDepartmentChange={setDepartment}
+              onZoneChange={setZone}
+              onStatusChange={setStatus}
+              onClearFilters={clearFilters}
+            />
+          </div>
+        )}
 
-        <section className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 space-y-2 lg:order-2", canEdit ? "lg:flex lg:min-h-0 lg:flex-col lg:space-y-0 lg:gap-2" : ""].join(" ")}>
+        <section className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 space-y-2 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:space-y-0 lg:gap-2"].join(" ")}>
           {(filtersActive || searchSelectionNotice) && (
             <div className="flex flex-col gap-2 rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-600 shadow-[0_12px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
@@ -1028,7 +1030,7 @@ export function SeatMap({
                     onClick={() => fitSeatsInMap(matchingSeats)}
                     disabled={!matchingSeats.length}
                     aria-label={matchingSeats.length === 1 ? "Fit one result on the map" : `Fit ${matchingSeats.length} results on the map`}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 transition hover:border-orange-200 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 transition hover:border-orange-200 hover:bg-orange-50 active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Fit results
                   </button>
@@ -1036,7 +1038,7 @@ export function SeatMap({
                     <button
                       type="button"
                       onClick={clearSearch}
-                      className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] font-black text-brand-dark transition hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                      className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] font-black text-brand-dark transition hover:bg-orange-100 active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
                     >
                       Clear search
                     </button>
@@ -1069,10 +1071,10 @@ export function SeatMap({
             </div>
           )}
 
-          <div className={["min-w-0 rounded-[18px] border border-white/70 bg-white/75 p-1.5 shadow-[0_26px_80px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl", canEdit ? "lg:flex lg:min-h-0 lg:flex-1" : ""].join(" ")}>
+          <div className="min-w-0 rounded-[18px] border border-white/70 bg-white/75 p-1.5 shadow-[0_26px_80px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl lg:flex lg:min-h-0 lg:flex-1">
             <div
               ref={mapViewportRef}
-              className={["relative mx-auto max-h-[72vh] w-full max-w-full overflow-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-[#f6f4f1] sm:max-h-[calc(100vh-92px)]", canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200 lg:min-h-0 lg:flex-1 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden" : ""].join(" ")}
+              className={["relative mx-auto max-h-[72vh] w-full max-w-full overflow-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-[#f6f4f1] sm:max-h-[calc(100vh-92px)] lg:min-h-0 lg:flex-1 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden", canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200" : ""].join(" ")}
               tabIndex={canEdit ? 0 : undefined}
               aria-label={canEdit ? "Admin seat map viewport. Use wheel, trackpad, touch, or arrow keys to pan the map." : undefined}
             >

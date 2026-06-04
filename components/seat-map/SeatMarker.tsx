@@ -98,7 +98,9 @@ export function SeatMarker({
           : "bg-white ring-slate-300";
 
   const markerSizeClass = showChip
-    ? labelMode === "prominent"
+    ? selected
+      ? "min-h-[48px] w-[124px] max-w-[124px] rounded-[18px] px-3 py-2 text-left sm:w-[132px] sm:max-w-[132px]"
+      : labelMode === "prominent"
       ? "min-h-[42px] w-[148px] max-w-[148px] rounded-xl px-3 py-1.5 text-left sm:w-[156px] sm:max-w-[156px]"
       : labelMode === "compact"
         ? "min-h-[32px] w-[88px] max-w-[88px] rounded-lg px-2 py-1.5 text-left hover:w-[124px] hover:max-w-[124px] focus-visible:w-[124px] focus-visible:max-w-[124px] lg:min-h-[34px] lg:hover:w-[128px] lg:hover:max-w-[128px] lg:focus-visible:w-[128px] lg:focus-visible:max-w-[128px]"
@@ -114,11 +116,13 @@ export function SeatMarker({
         ? "border-slate-200/80 bg-white/75 text-slate-800 shadow-[0_9px_20px_rgba(15,23,42,0.13),inset_0_1px_0_rgba(255,255,255,0.94)]"
         : "";
 
-  const dotSizeClass = labelMode === "prominent" ? "h-2.5 w-2.5 ring-4" : "h-2 w-2 ring-2";
-  const codeTextClass = labelMode === "prominent" ? "text-[10px]" : "text-[9px] lg:text-[10px]";
-  const chipGapClass = labelMode === "prominent" ? "gap-2" : "gap-1.5";
+  const dotSizeClass = selected ? "h-3 w-3 ring-4" : labelMode === "prominent" ? "h-2.5 w-2.5 ring-4" : "h-2 w-2 ring-2";
+  const codeTextClass = selected ? "text-[11px]" : labelMode === "prominent" ? "text-[10px]" : "text-[9px] lg:text-[10px]";
+  const chipGapClass = selected ? "gap-2.5" : labelMode === "prominent" ? "gap-2" : "gap-1.5";
   const nameTextClass =
-    labelMode === "prominent"
+    selected
+      ? "max-w-[80px] text-[10px] sm:max-w-[88px]"
+      : labelMode === "prominent"
       ? "max-w-[106px] text-[10px] sm:max-w-[114px] sm:text-[11px]"
       : labelMode === "compact"
         ? "max-w-[58px] text-[9px] group-hover:max-w-[94px] group-hover:text-[10px] group-focus-visible:max-w-[94px] group-focus-visible:text-[10px] lg:text-[10px] lg:group-hover:max-w-[96px] lg:group-focus-visible:max-w-[96px]"
@@ -144,13 +148,13 @@ export function SeatMarker({
         "group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-manipulation select-none items-center justify-center overflow-visible border",
         "bg-white/70 text-slate-900 backdrop-blur-md supports-[backdrop-filter]:bg-white/60",
         "font-black leading-none shadow-[0_10px_24px_rgba(15,23,42,0.18),0_2px_6px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.96),inset_0_-1px_0_rgba(255,255,255,0.35)]",
-        "transition-[width,min-width,transform,box-shadow,border-color,background-color,opacity,filter] duration-150 ease-out hover:z-30 hover:scale-[1.04] hover:border-orange-200 hover:bg-white/80 hover:shadow-[0_16px_34px_rgba(15,23,42,0.24),inset_0_1px_0_rgba(255,255,255,0.98)] motion-reduce:transition-none",
+        "transition-[width,min-width,transform,box-shadow,border-color,background-color,opacity,filter] duration-150 ease-out hover:z-30 hover:scale-[1.04] hover:border-orange-200 hover:bg-white/80 hover:shadow-[0_16px_34px_rgba(15,23,42,0.24),inset_0_1px_0_rgba(255,255,255,0.98)] active:scale-[0.96] active:duration-75 active:shadow-[0_8px_18px_rgba(15,23,42,0.22),inset_0_2px_4px_rgba(15,23,42,0.12)] motion-reduce:transition-none",
         "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/70",
         statusAccentClass,
         markerSizeClass,
         passiveLabelClass,
         prominentName || searchProminent ? "z-30" : "",
-        selected ? "border-orange-300 bg-white/90 text-orange-950 ring-4 ring-orange-200/70 shadow-[0_18px_38px_rgba(194,65,12,0.25),inset_0_1px_0_rgba(255,255,255,0.98)]" : "",
+        selected ? "z-40 border-orange-500 bg-orange-50/95 text-orange-950 outline outline-4 outline-orange-300/25 shadow-[0_22px_44px_rgba(31,35,39,0.22),inset_0_1px_0_rgba(255,255,255,0.98)] hover:z-40 hover:scale-100 focus-visible:z-40" : "",
         searchProminent && !selected ? "border-orange-300 bg-orange-50/90 text-orange-950 ring-2 ring-orange-200/80 shadow-[0_14px_30px_rgba(194,65,12,0.18),inset_0_1px_0_rgba(255,255,255,0.98)]" : "",
         highlighted && selected ? "outline outline-2 outline-offset-2 outline-cyan-300/90" : "",
         swapSource ? "border-sky-300 bg-sky-50/85 text-sky-950 ring-4 ring-sky-200/70" : "",

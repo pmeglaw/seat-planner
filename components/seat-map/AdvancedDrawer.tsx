@@ -74,17 +74,17 @@ type CommandButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 function CommandButton({ label, description, tone = "default", className = "", ...props }: CommandButtonProps) {
   const toneClassName = tone === "active"
-    ? "border-orange-200 bg-orange-50/80 text-brand-dark hover:bg-orange-100/80"
+    ? "border-orange-100 bg-orange-50/80 text-brand-dark hover:border-orange-200 hover:bg-orange-100/80"
     : tone === "danger"
-      ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
-      : "border-slate-200 bg-white/85 text-slate-900 hover:border-orange-200 hover:bg-orange-50/50";
+      ? "border-transparent bg-rose-50/70 text-rose-700 hover:border-rose-100 hover:bg-rose-100/70"
+      : "border-transparent bg-slate-50/80 text-slate-900 hover:border-orange-100 hover:bg-white";
   const descriptionClassName = tone === "danger" ? "text-rose-600" : tone === "active" ? "text-brand-dark/70" : "text-slate-500";
 
   return (
     <button
       type="button"
       className={[
-        "flex min-h-[58px] w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left shadow-sm transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex min-h-[50px] w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50",
         toneClassName,
         className
       ].join(" ")}
@@ -101,15 +101,15 @@ function CommandButton({ label, description, tone = "default", className = "", .
 
 function ToolGroup({ title, description, children, defaultOpen = false }: { title: string; description: string; children: ReactNode; defaultOpen?: boolean }) {
   return (
-    <details {...(defaultOpen ? { open: true } : {})} className="group rounded-xl border border-slate-200 bg-white/75 shadow-sm">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-left marker:hidden">
+    <details {...(defaultOpen ? { open: true } : {})} className="group rounded-xl border border-transparent bg-slate-50/70">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-left transition active:scale-[0.99] marker:hidden">
         <span className="min-w-0">
           <span className="block text-sm font-extrabold text-slate-900">{title}</span>
           <span className="mt-0.5 block truncate text-xs font-medium text-slate-500">{description}</span>
         </span>
         <span className="shrink-0 text-xs font-black text-slate-400 transition group-open:rotate-90">&gt;</span>
       </summary>
-      <div className="space-y-2 border-t border-slate-100 p-3">
+      <div className="space-y-2 border-t border-white/80 px-3 pb-3 pt-2">
         {children}
       </div>
     </details>
@@ -267,14 +267,14 @@ export function AdvancedDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="advanced-drawer-title"
-        className="fixed inset-x-3 bottom-3 z-50 max-h-[82vh] overflow-auto rounded-2xl border border-white/70 bg-white/95 p-3 shadow-[0_24px_70px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[66px] sm:max-h-[calc(100vh-80px)] sm:w-[360px] sm:max-w-[calc(100vw-2rem)]"
+        className="fixed inset-x-3 bottom-3 z-50 flex max-h-[82vh] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 p-3 shadow-[0_24px_70px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[66px] sm:max-h-[calc(100vh-80px)] sm:w-[360px] sm:max-w-[calc(100vw-2rem)]"
       >
-        <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="mb-3 flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
-            <h2 id="advanced-drawer-title" className="text-base font-black text-slate-950">Tools</h2>
-            <p className="mt-1 text-xs leading-5 text-slate-500">{selectedSeat ? `Selected: ${selectedSeat.label}` : "Select a seat for seat-specific tools."}</p>
+            <h2 id="advanced-drawer-title" className="text-base font-black text-slate-950">Map tools</h2>
+            <p className="mt-1 text-xs leading-5 text-slate-500">Map actions, seat tools, and publishing.</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full px-3 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100">
+          <button type="button" onClick={onClose} className="rounded-full px-3 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 active:scale-95">
             Close
           </button>
         </div>
@@ -285,17 +285,17 @@ export function AdvancedDrawer({
           </div>
         )}
 
-        <div className="space-y-3">
+        <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain pr-1">
           <section className="space-y-2">
             <div>
               <div className="text-sm font-extrabold text-slate-900">Quick actions</div>
-              <p className="mt-0.5 text-xs font-medium text-slate-500">Daily draft map commands</p>
+              <p className="mt-0.5 text-xs font-medium text-slate-500">Common draft map commands</p>
             </div>
             <div className="space-y-2">
               <CommandButton
                 label={addSeatMode ? "Cancel Add Seat" : "Add Seat"}
                 description={addSeatMode ? "Return to normal map selection" : "Place a new custom draft marker"}
-                tone={addSeatMode ? "active" : "default"}
+                tone="active"
                 onClick={addSeatMode ? onCancelAddSeat : onStartAddSeat}
                 disabled={busy}
               />
@@ -346,7 +346,7 @@ export function AdvancedDrawer({
             <Link
               href="/admin/management"
               onClick={onClose}
-              className="flex min-h-[58px] w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/85 px-3 py-2 text-left text-slate-900 shadow-sm transition hover:border-orange-200 hover:bg-orange-50/50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+              className="flex min-h-[58px] w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/85 px-3 py-2 text-left text-slate-900 shadow-sm transition hover:border-orange-200 hover:bg-orange-50/50 active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
             >
               <span className="min-w-0">
                 <span className="block truncate text-sm font-extrabold">Open Management</span>
@@ -379,18 +379,16 @@ export function AdvancedDrawer({
             </div>
           </ToolGroup>
 
-          <section className="rounded-xl border border-rose-200 bg-rose-50 p-3">
-            <div className="text-[11px] font-black uppercase tracking-wide text-rose-600">Destructive actions</div>
-            <p className="mt-1 text-xs leading-5 text-rose-700">Only custom draft seats can be deleted. Original seeded seats are protected.</p>
+          <ToolGroup title="Destructive actions" description="Custom seat deletion only">
+            <p className="text-xs leading-5 text-slate-500">Only custom draft seats can be deleted. Original seeded seats are protected.</p>
             <CommandButton
               label="Delete Selected Custom Seat"
               description={selectedSeatIsCustom ? `Remove ${selectedSeat?.label} from draft` : "Select a custom seat first"}
               tone="danger"
-              className="mt-3"
               onClick={deleteSelectedCustomSeat}
               disabled={busy || !selectedSeatIsCustom}
             />
-          </section>
+          </ToolGroup>
         </div>
       </aside>
     </>

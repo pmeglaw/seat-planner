@@ -88,7 +88,7 @@ export function FilterPanel({
   }
 
   return (
-    <aside className="max-h-[55vh] self-start overflow-auto overscroll-contain rounded-2xl border border-white/70 bg-white/80 p-3 shadow-[0_14px_38px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl sm:max-h-[62vh] lg:sticky lg:top-[62px] lg:max-h-[calc(100vh-78px)]">
+    <aside className="max-h-[55vh] w-full self-start overflow-auto overscroll-contain rounded-2xl border border-white/70 bg-white/80 p-3 shadow-[0_14px_38px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl sm:max-h-[62vh] lg:sticky lg:top-[62px] lg:max-h-[calc(100vh-78px)] lg:w-[288px]">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-sm font-black text-slate-900">Filters</h2>
         <div className="flex items-center gap-1">

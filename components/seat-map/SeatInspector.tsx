@@ -195,8 +195,8 @@ export function SeatInspector({
   if (!seat) return null;
 
   const selectedSeat = seat;
-  const selectedSeatZone = selectedSeat.zone ?? selectedSeat.department ?? "No zone";
   const selectedSeatEmployeeName = selectedSeat.employee?.full_name ?? "this employee";
+  const inspectorSubtitle = selectedSeat.employee?.full_name ? `Assigned to ${selectedSeat.employee.full_name}` : "Open seat";
   const hasCurrentAssignment = Boolean(selectedSeat.employee_id);
   const employeeNameValue = form.employeeName.trim();
   const assignmentStateText = employeeNameValue
@@ -427,7 +427,7 @@ export function SeatInspector({
   }
 
   const fieldClassName = "mt-1 w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand focus:ring-4 focus:ring-orange-100 disabled:bg-slate-50 disabled:text-slate-500";
-  const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100";
+  const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100";
 
   if (collapsed && swapMode) return null;
 
@@ -439,7 +439,7 @@ export function SeatInspector({
           onClick={onToggleCollapse}
           aria-label={`View details for ${selectedSeat.label}`}
           title={`View details for ${selectedSeat.label}`}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-2 text-slate-700 shadow-[0_14px_40px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white sm:min-h-[168px] sm:w-[46px] sm:flex-col sm:px-2 sm:py-4"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-2 text-slate-700 shadow-[0_14px_40px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner sm:min-h-[168px] sm:w-[46px] sm:flex-col sm:px-2 sm:py-4"
         >
           <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] sm:rotate-180 sm:[writing-mode:vertical-rl]">View details</span>
           <span className="rounded-full bg-orange-50 px-2 py-1 text-[10px] font-black text-brand-dark ring-1 ring-orange-100 sm:mt-2 sm:rotate-180 sm:bg-transparent sm:px-0 sm:py-0 sm:text-slate-400 sm:ring-0 sm:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
@@ -460,21 +460,7 @@ export function SeatInspector({
             {isDirty && <span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-amber-700 ring-1 ring-amber-200">Unsaved</span>}
             {swapMode && <span className="rounded-full bg-sky-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">Swap</span>}
           </div>
-          <p className="mt-1 text-xs font-semibold text-slate-500">{canEdit ? "Draft task panel" : "Published read-only"}</p>
-          <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-bold">
-            <span className="rounded-full bg-white/80 px-2 py-1 text-slate-600 ring-1 ring-slate-200">{selectedSeat.status}</span>
-            <span className="rounded-full bg-orange-50/90 px-2 py-1 text-orange-800 ring-1 ring-orange-100">{selectedSeatZone}</span>
-            <span className="rounded-full bg-white/80 px-2 py-1 text-slate-600 ring-1 ring-slate-200">{selectedSeat.is_custom ? "Custom" : "Original"}</span>
-          </div>
-          {canEdit && onExplainSeat && (
-            <button
-              type="button"
-              onClick={() => onExplainSeat(selectedSeat)}
-              className="mt-3 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-[11px] font-black text-cyan-800 transition hover:bg-cyan-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100"
-            >
-              Explain this seat
-            </button>
-          )}
+          <p className="mt-1 truncate text-xs font-semibold text-slate-500">{inspectorSubtitle}</p>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -482,11 +468,11 @@ export function SeatInspector({
             onClick={onToggleCollapse}
             aria-label={`Back to map from ${selectedSeat.label} details`}
             title="Back to map"
-            className="inline-flex h-8 items-center justify-center rounded-full border border-orange-100 bg-orange-50 px-3 text-[11px] font-black text-brand-dark shadow-sm transition hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:hidden"
+            className="inline-flex h-8 items-center justify-center rounded-full border border-orange-100 bg-orange-50 px-3 text-[11px] font-black text-brand-dark shadow-sm transition hover:bg-orange-100 active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:hidden"
           >
             Back to map
           </button>
-          <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:inline-flex">-</button>
+          <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:inline-flex">-</button>
           <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className={iconButtonClassName}>x</button>
         </div>
       </div>
@@ -501,7 +487,7 @@ export function SeatInspector({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-full bg-white/80 px-3 py-1.5 font-black text-amber-950 ring-1 ring-amber-200 transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100"
+                    className="rounded-full bg-white/80 px-3 py-1.5 font-black text-amber-950 ring-1 ring-amber-200 transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100"
                   >
                     Clear selection
                   </button>
@@ -509,7 +495,7 @@ export function SeatInspector({
                     <button
                       type="button"
                       onClick={onClearSearchContext}
-                      className="rounded-full bg-white/80 px-3 py-1.5 font-black text-amber-950 ring-1 ring-amber-200 transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100"
+                      className="rounded-full bg-white/80 px-3 py-1.5 font-black text-amber-950 ring-1 ring-amber-200 transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100"
                     >
                       {searchMismatchClearLabel}
                     </button>
@@ -527,6 +513,17 @@ export function SeatInspector({
                 {hasCurrentAssignment ? "Draft assignment" : "Ready to assign"}
               </div>
             </section>
+
+            {onExplainSeat && (
+              <button
+                type="button"
+                onClick={() => onExplainSeat(selectedSeat)}
+                className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-cyan-200 bg-cyan-50/70 px-3 py-2 text-left text-xs font-black text-cyan-900 transition hover:bg-cyan-100/80 active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100"
+              >
+                <span>Ask Planner about this seat</span>
+                <span aria-hidden="true" className="shrink-0 text-sm leading-none">&gt;</span>
+              </button>
+            )}
 
             <label className="block">
               <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee name</span>
@@ -555,7 +552,7 @@ export function SeatInspector({
                     setEmployeeComboboxOpen(current => !current);
                     employeeInputRef.current?.focus();
                   }}
-                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90"
                 >
                   v
                 </button>
@@ -576,7 +573,7 @@ export function SeatInspector({
                         onMouseEnter={() => setActiveEmployeeIndex(index)}
                         onClick={() => selectEmployee(option.employee)}
                         className={[
-                          "flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition",
+                          "flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition active:scale-[0.99]",
                           index === activeEmployeeIndex ? "bg-orange-50 text-slate-950" : "text-slate-800 hover:bg-slate-50"
                         ].join(" ")}
                       >

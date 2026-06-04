@@ -19,7 +19,7 @@ export function Button({ className = "", variant = "secondary", ...props }: Butt
   return (
     <button
       className={[
-        "inline-flex min-h-9 items-center justify-center whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-semibold leading-none transition",
+        "inline-flex min-h-9 items-center justify-center whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-semibold leading-none transition active:scale-[0.98] active:duration-75 active:shadow-inner",
         "focus-visible:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-50",
         variants[variant],
         className
