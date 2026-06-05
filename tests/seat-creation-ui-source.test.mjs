@@ -7,7 +7,7 @@ test("normal add-seat UI does not pass manual labels or zones", async () => {
   const createCall = source.match(/createSeatAction\(\{[\s\S]*?\}\)/);
 
   assert.ok(createCall, "SeatMap should call createSeatAction from add-seat mode.");
-  assert.match(source, /inferSeatZoneFromPoint/);
+  assert.match(source, /detectSeatZoneForPoint/);
   assert.doesNotMatch(source, /addSeatZone|onAddSeatZoneChange|buildNextSeatLabel/);
   assert.doesNotMatch(createCall[0], /\blabel\s*:/);
   assert.doesNotMatch(createCall[0], /\bzone\s*:/);

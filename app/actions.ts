@@ -8,7 +8,7 @@ import { answerMapOperationsQuestion } from "@/lib/mapOperationsAgent";
 import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/publishHistory";
 import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { buildSeatSwapPlan } from "@/lib/seatSwap";
-import { inferSeatZoneFromPoint } from "@/lib/seatZones";
+import { detectSeatZoneForPoint } from "@/lib/seatZones";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import { SEAT_STATUSES, type AskPlannerRequest, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
 
@@ -25,6 +25,11 @@ type CsvEmployeeRecord = {
 
 type DraftSeatRestoreRecord = Omit<SeatWithEmployee, "employee">;
 type DraftEmployeeRestoreRecord = Employee;
+type DraftSeatZoneSource = Pick<SeatWithEmployee, "label" | "zone" | "department" | "x" | "y">;
+type SupabaseMutationError = {
+  code?: string | null;
+  message?: string | null;
+};
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -131,6 +136,21 @@ function normalizeEmployeeNameKey(value: string) {
   return value.trim().toLowerCase();
 }
 
+function isUniqueLabelViolation(error: SupabaseMutationError | null) {
+  const message = error?.message ?? "";
+  return error?.code === "23505" || /seats_unique_label_per_layer|duplicate key/i.test(message);
+}
+
+async function getDraftSeatZoneSources(supabase: Awaited<ReturnType<typeof requireAdmin>>) {
+  const { data, error } = await supabase
+    .from("seats")
+    .select("label,zone,department,x,y")
+    .eq("layer", "draft");
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as DraftSeatZoneSource[];
+}
+
 function normalizeRestoreSeat(seat: SeatWithEmployee): DraftSeatRestoreRecord {
   if (seat.layer !== "draft") {
     throw new Error("Undo/redo can only restore draft seats.");
@@ -201,44 +221,49 @@ export async function createSeatAction(input: {
 }) {
   const supabase = await requireAdmin();
   const point = validateSeatCoordinates(input.x, input.y);
-  const zone = inferSeatZoneFromPoint(point);
+  let draftSeats = await getDraftSeatZoneSources(supabase);
+  const zone = detectSeatZoneForPoint(point, draftSeats);
 
   if (!zone) {
-    throw new Error("Click inside a known seating zone to add a custom seat.");
+    throw new Error("Could not detect a zone for this location.");
   }
-
-  const { data: draftSeats, error: draftSeatsError } = await supabase
-    .from("seats")
-    .select("label,zone,department")
-    .eq("layer", "draft");
-
-  if (draftSeatsError) throw new Error(draftSeatsError.message);
-
-  const label = buildNextSeatLabel((draftSeats ?? []) as Array<Pick<SeatWithEmployee, "label" | "zone" | "department">>, zone);
-  const baseKey = buildSeatKey(label);
-  const seatKey = `${baseKey}-${Date.now().toString(36)}`;
 
   await upsertZoneOption(supabase, zone);
 
-  const { data, error } = await supabase
-    .from("seats")
-    .insert({
-      seat_key: seatKey,
-      label,
-      x: point.x,
-      y: point.y,
-      layer: "draft",
-      status: "available",
-      zone,
-      department: null,
-      is_custom: true
-    })
-    .select("*, employee:employees(*)")
-    .single();
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const label = buildNextSeatLabel(draftSeats, zone);
+    const baseKey = buildSeatKey(label);
+    const seatKey = `${baseKey}-${Date.now().toString(36)}-${attempt}`;
 
-  if (error) throw new Error(error.message);
-  revalidatePath("/admin");
-  return data as SeatWithEmployee;
+    const { data, error } = await supabase
+      .from("seats")
+      .insert({
+        seat_key: seatKey,
+        label,
+        x: point.x,
+        y: point.y,
+        layer: "draft",
+        status: "available",
+        zone,
+        department: null,
+        is_custom: true
+      })
+      .select("*, employee:employees(*)")
+      .single();
+
+    if (!error) {
+      revalidatePath("/admin");
+      return data as SeatWithEmployee;
+    }
+
+    if (!isUniqueLabelViolation(error) || attempt === 2) {
+      throw new Error(error.message);
+    }
+
+    draftSeats = await getDraftSeatZoneSources(supabase);
+  }
+
+  throw new Error("Could not create a unique seat label for this zone.");
 }
 
 export async function moveSeatAction(input: { seatId: string; x: number; y: number }) {

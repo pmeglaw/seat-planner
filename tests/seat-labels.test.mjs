@@ -34,9 +34,17 @@ test("center desks continue from C01 through C08", () => {
   assert.equal(buildNextSeatLabel(seats, "Center Desks"), "C09");
 });
 
-test("seat labels use the smallest available positive number in the zone", () => {
+test("seeded pod labels continue with the next zone number", () => {
+  const westSeats = Array.from({ length: 12 }, (_, index) => seat(`W${String(index + 1).padStart(2, "0")}`, "West Pod"));
+  const northeastSeats = Array.from({ length: 8 }, (_, index) => seat(`NE${String(index + 1).padStart(2, "0")}`, "Northeast Pod"));
+
+  assert.equal(buildNextSeatLabel(westSeats, "West Pod"), "W13");
+  assert.equal(buildNextSeatLabel(northeastSeats, "Northeast Pod"), "NE09");
+});
+
+test("seat labels use the next number after the highest existing zone label", () => {
   const seats = [1, 2, 3, 4, 6, 7, 8].map(number => seat(`C${String(number).padStart(2, "0")}`, "Center Desks"));
-  assert.equal(buildNextSeatLabel(seats, "Center Desks"), "C05");
+  assert.equal(buildNextSeatLabel(seats, "Center Desks"), "C09");
 });
 
 test("generated labels avoid collisions with all draft labels", () => {
@@ -50,8 +58,8 @@ test("generated labels avoid collisions with all draft labels", () => {
 });
 
 test("existing zone prefix and padding are preserved", () => {
-  const seats = [seat("LAB001", "Lab Area")];
-  assert.equal(buildNextSeatLabel(seats, "Lab Area"), "LAB002");
+  const seats = [seat("LAB001", "Lab Area"), seat("LAB010", "Lab Area")];
+  assert.equal(buildNextSeatLabel(seats, "Lab Area"), "LAB011");
 });
 
 test("unknown helper-level zones derive a safe prefix", () => {

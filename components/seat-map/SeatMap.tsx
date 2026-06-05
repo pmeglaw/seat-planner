@@ -18,7 +18,7 @@ import {
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
 import { normalizePoint } from "@/lib/seatMath";
-import { inferSeatZoneFromPoint } from "@/lib/seatZones";
+import { detectSeatZoneForPoint } from "@/lib/seatZones";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import { FilterPanel } from "@/components/seat-map/FilterPanel";
@@ -47,6 +47,7 @@ type SwapConfirmState = {
 
 const NAME_LABEL_COLLISION_X_THRESHOLD = 0.07;
 const NAME_LABEL_COLLISION_Y_THRESHOLD = 0.07;
+const DIRECT_SEAT_CLICK_RADIUS = 0.018;
 
 function normalizeSeat(seat: SeatWithEmployee): SeatWithEmployee {
   return {
@@ -322,6 +323,12 @@ export function SeatMap({
       x: (event.clientX - rect.left) / rect.width,
       y: (event.clientY - rect.top) / rect.height
     });
+  }
+
+  function isDirectSeatMarkerClick(point: { x: number; y: number }, seatId: string) {
+    const seat = localSeats.find(item => item.id === seatId);
+    if (!seat) return false;
+    return ((point.x - seat.x) ** 2) + ((point.y - seat.y) ** 2) <= DIRECT_SEAT_CLICK_RADIUS ** 2;
   }
 
   function matchesFilters(seat: SeatWithEmployee) {
@@ -677,15 +684,19 @@ export function SeatMap({
 
   function handleMapPointerDown(event: PointerEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement;
-    if (target.closest("[data-seat-id]")) return;
+    const seatTarget = target.closest<HTMLElement>("[data-seat-id]");
 
     if (canEdit && addSeatMode) {
       const point = eventToPoint(event);
       if (!point) return;
-      const targetZone = inferSeatZoneFromPoint(point);
+
+      const targetSeatId = seatTarget?.dataset.seatId;
+      if (targetSeatId && isDirectSeatMarkerClick(point, targetSeatId)) return;
+
+      const targetZone = detectSeatZoneForPoint(point, localSeats);
       if (!targetZone) {
         setActionNotice(null);
-        setActionError("Click inside a known seating zone to add a custom seat.");
+        setActionError("Could not detect a zone for this location.");
         return;
       }
 
@@ -706,7 +717,8 @@ export function SeatMap({
           setInspectorDirty(false);
           setAddSeatMode(false);
           setMoveSeatMode(false);
-          setActionNotice(`Added custom seat ${created.label}.`);
+          setInspectorCollapsed(false);
+          setActionNotice(`Added ${created.label} to ${created.zone ?? created.department ?? targetZone}.`);
         } catch (error) {
           setActionNotice(null);
           setActionError(error instanceof Error ? error.message : "Could not create seat.");
@@ -714,6 +726,8 @@ export function SeatMap({
       });
       return;
     }
+
+    if (seatTarget) return;
 
     if (swapSourceSeatId) {
       setActionNotice(null);
@@ -1172,6 +1186,7 @@ export function SeatMap({
                         swapTarget={seat.id === swapConfirm?.targetSeatId}
                         highlighted={plannerHighlightedSeatIdSet.has(seat.id)}
                         dragging={dragState?.seatId === seat.id}
+                        addSeatMode={addSeatMode}
                         onSelect={selectSeat}
                         onMovePointerDown={handleMovePointerDown}
                       />

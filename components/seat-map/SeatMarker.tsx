@@ -18,6 +18,7 @@ type SeatMarkerProps = {
   swapTarget: boolean;
   highlighted: boolean;
   dragging: boolean;
+  addSeatMode: boolean;
   onSelect: (seatId: string) => void;
   onMovePointerDown: (event: PointerEvent<HTMLButtonElement>, seatId: string) => void;
 };
@@ -56,6 +57,7 @@ export function SeatMarker({
   swapTarget,
   highlighted,
   dragging,
+  addSeatMode,
   onSelect,
   onMovePointerDown
 }: SeatMarkerProps) {
@@ -135,7 +137,13 @@ export function SeatMarker({
   return (
     <button
       type="button"
-      onClick={() => onSelect(seat.id)}
+      onClick={event => {
+        if (addSeatMode) {
+          event.preventDefault();
+          return;
+        }
+        onSelect(seat.id);
+      }}
       onPointerDown={event => {
         if (!isMovable) return;
         onMovePointerDown(event, seat.id);

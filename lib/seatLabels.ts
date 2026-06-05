@@ -104,8 +104,10 @@ export function buildNextSeatLabel(
     zoneNumbers.add(Number(match[1]));
   }
 
-  for (let nextNumber = 1; nextNumber < 1000; nextNumber += 1) {
-    if (zoneNumbers.has(nextNumber)) continue;
+  const maxZoneNumber = zoneNumbers.size > 0 ? Math.max(...zoneNumbers) : 0;
+
+  for (let offset = 0; offset < 1000; offset += 1) {
+    const nextNumber = maxZoneNumber + 1 + offset;
     const label = `${prefix}${String(nextNumber).padStart(digitWidth, "0")}`;
     if (!existingLabels.has(normalizeLabel(label))) return label;
   }
