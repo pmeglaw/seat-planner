@@ -55,6 +55,30 @@ function snapshot(label, employeeName = null) {
   );
 }
 
+function seatRecord(label, isCustom = false) {
+  return {
+    id: `seat-${label}`,
+    seat_key: label.toLowerCase(),
+    label,
+    x: 0.1,
+    y: 0.2,
+    status: "available",
+    layer: "draft",
+    employee_id: null,
+    employee: null,
+    zone: "West Pod",
+    department: null,
+    notes: null,
+    is_custom: isCustom,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z"
+  };
+}
+
+function snapshotFromSeats(seats) {
+  return draftHistory.createDraftSnapshot(seats, []);
+}
+
 test("draft history undo and redo restore before and after snapshots", () => {
   const before = snapshot("W01");
   const after = snapshot("W01", "Alex Admin");
@@ -121,4 +145,46 @@ test("draft history clears after publish checkpoints", () => {
 
   assert.equal(draftHistory.canUndoDraftHistory(cleared), false);
   assert.equal(draftHistory.canRedoDraftHistory(cleared), false);
+});
+
+test("draft history undo removes an added custom seat and redo restores it", () => {
+  const originalSeat = seatRecord("W01");
+  const customSeat = seatRecord("W13", true);
+  const before = snapshotFromSeats([originalSeat]);
+  const after = snapshotFromSeats([originalSeat, customSeat]);
+
+  const pushed = draftHistory.pushDraftHistory(draftHistory.createDraftHistory(), {
+    label: "Add W13",
+    before,
+    after
+  });
+
+  const undone = draftHistory.undoDraftHistory(pushed);
+  assert.equal(undone.entry.label, "Add W13");
+  assert.deepEqual(undone.snapshot.seats.map(seat => seat.label), ["W01"]);
+  assert.equal(draftHistory.canRedoDraftHistory(undone.history), true);
+
+  const redone = draftHistory.redoDraftHistory(undone.history);
+  assert.deepEqual(redone.snapshot.seats.map(seat => seat.label), ["W01", "W13"]);
+  assert.equal(redone.snapshot.seats.find(seat => seat.label === "W13")?.is_custom, true);
+});
+
+test("draft history undo restores a deleted custom seat and redo removes it again", () => {
+  const originalSeat = seatRecord("W01");
+  const customSeat = seatRecord("W13", true);
+  const before = snapshotFromSeats([originalSeat, customSeat]);
+  const after = snapshotFromSeats([originalSeat]);
+
+  const pushed = draftHistory.pushDraftHistory(draftHistory.createDraftHistory(), {
+    label: "Delete W13",
+    before,
+    after
+  });
+
+  const undone = draftHistory.undoDraftHistory(pushed);
+  assert.deepEqual(undone.snapshot.seats.map(seat => seat.label), ["W01", "W13"]);
+  assert.equal(undone.snapshot.seats.find(seat => seat.label === "W13")?.is_custom, true);
+
+  const redone = draftHistory.redoDraftHistory(undone.history);
+  assert.deepEqual(redone.snapshot.seats.map(seat => seat.label), ["W01"]);
 });

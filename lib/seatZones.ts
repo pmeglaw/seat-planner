@@ -12,6 +12,12 @@ export type SeatZoneRect = {
 type SeatZoneSource = Pick<SeatWithEmployee, "x" | "y"> & Partial<Pick<SeatWithEmployee, "zone" | "department">>;
 
 const NEARBY_SEAT_ZONE_RADIUS = 0.085;
+const AMBIGUOUS_ZONE_DISTANCE_DELTA = 0.0001;
+
+export type SeatZoneDetectionResult =
+  | { status: "detected"; zone: string }
+  | { status: "ambiguous"; zone: null }
+  | { status: "none"; zone: null };
 
 export const SEAT_ZONE_RECTS: SeatZoneRect[] = [
   { zone: "North Pod", xMin: 0.02, xMax: 0.25, yMin: 0.03, yMax: 0.1 },
@@ -46,9 +52,16 @@ export function pointIsInsideSeatZone(point: NormalizedPoint, rect: SeatZoneRect
 }
 
 export function inferSeatZoneFromPoint(point: NormalizedPoint) {
+  const result = inferSeatZoneFromPointResult(point);
+  return result.status === "detected" ? result.zone : null;
+}
+
+export function inferSeatZoneFromPointResult(point: NormalizedPoint): SeatZoneDetectionResult {
   const matches = SEAT_ZONE_RECTS.filter(rect => pointIsInsideSeatZone(point, rect));
   const zones = new Set(matches.map(rect => rect.zone));
-  return zones.size === 1 ? matches[0].zone : null;
+  if (zones.size === 1) return { status: "detected", zone: matches[0].zone };
+  if (zones.size > 1) return { status: "ambiguous", zone: null };
+  return { status: "none", zone: null };
 }
 
 function getSeatZone(seat: SeatZoneSource) {
@@ -60,8 +73,13 @@ function squaredDistance(left: NormalizedPoint, right: NormalizedPoint) {
 }
 
 export function detectSeatZoneForPoint(point: NormalizedPoint, seats: SeatZoneSource[]) {
-  const rectZone = inferSeatZoneFromPoint(point);
-  if (rectZone) return rectZone;
+  const result = detectSeatZoneForPointResult(point, seats);
+  return result.status === "detected" ? result.zone : null;
+}
+
+export function detectSeatZoneForPointResult(point: NormalizedPoint, seats: SeatZoneSource[]): SeatZoneDetectionResult {
+  const rectResult = inferSeatZoneFromPointResult(point);
+  if (rectResult.status !== "none") return rectResult;
 
   const closestByZone = new Map<string, number>();
 
@@ -83,8 +101,22 @@ export function detectSeatZoneForPoint(point: NormalizedPoint, seats: SeatZoneSo
     .filter(([, distance]) => distance <= NEARBY_SEAT_ZONE_RADIUS ** 2)
     .sort((left, right) => left[1] - right[1] || left[0].localeCompare(right[0]));
 
-  if (nearbyZones.length === 0) return null;
-  if (nearbyZones.length > 1 && Math.abs(nearbyZones[0][1] - nearbyZones[1][1]) < 0.0001) return null;
+  if (nearbyZones.length === 0) return { status: "none", zone: null };
+  if (nearbyZones.length > 1 && Math.abs(nearbyZones[0][1] - nearbyZones[1][1]) < AMBIGUOUS_ZONE_DISTANCE_DELTA) {
+    return { status: "ambiguous", zone: null };
+  }
 
-  return nearbyZones[0][0];
+  return { status: "detected", zone: nearbyZones[0][0] };
+}
+
+export function getSeatZoneDetectionFailureMessage(result: SeatZoneDetectionResult) {
+  if (result.status === "ambiguous") {
+    return "This location is between zones. Try again closer to the intended seating area.";
+  }
+
+  if (result.status === "none") {
+    return "Could not detect a zone for this location. Try clicking closer to an existing seating area.";
+  }
+
+  return null;
 }

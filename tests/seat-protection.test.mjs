@@ -1,35 +1,78 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
+import ts from "typescript";
 
-function isCustomSeat(seat) {
-  return Boolean(seat?.is_custom);
+async function importTsModule(relativePath) {
+  const source = await readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
+  const transpiled = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.ESNext,
+      target: ts.ScriptTarget.ES2022
+    }
+  });
+  const moduleUrl = `data:text/javascript;base64,${Buffer.from(transpiled.outputText).toString("base64")}`;
+  return import(moduleUrl);
 }
 
-function canDeleteSeat(seat) {
-  return Boolean(seat && seat.layer === "draft" && isCustomSeat(seat));
-}
+const { canDeleteDraftSeat, canDeleteSeat, getSeatDeleteBlockReason, isProtectedOriginalSeatLabel } = await importTsModule("lib/seatProtection.ts");
 
-function getSeatDeleteBlockReason(seat) {
-  if (!seat) return "Select a custom seat first.";
-  if (seat.layer !== "draft") return "Only draft seats can be deleted.";
-  if (!isCustomSeat(seat)) return `${seat.label} is an original seat and cannot be deleted.`;
-  return null;
+function seat(overrides) {
+  return {
+    label: "W13",
+    layer: "draft",
+    is_custom: true,
+    employee_id: null,
+    status: "available",
+    ...overrides
+  };
 }
 
 test("original draft seats are protected from deletion", () => {
-  const seat = { label: "N01", layer: "draft", is_custom: false };
-  assert.equal(canDeleteSeat(seat), false);
-  assert.equal(getSeatDeleteBlockReason(seat), "N01 is an original seat and cannot be deleted.");
+  const originalSeat = seat({ label: "N01", is_custom: false });
+  assert.equal(canDeleteSeat(originalSeat), false);
+  assert.equal(getSeatDeleteBlockReason(originalSeat), "Original seats are protected. Only custom draft seats can be deleted.");
+});
+
+test("baseline labels are protected even when is_custom is wrong", () => {
+  const originalSeat = seat({ label: "W08", is_custom: true });
+  assert.equal(isProtectedOriginalSeatLabel("W08"), true);
+  assert.equal(canDeleteDraftSeat(originalSeat), false);
+  assert.equal(getSeatDeleteBlockReason(originalSeat), "Original seats are protected. Only custom draft seats can be deleted.");
+});
+
+test("assigned custom-flagged seats are protected from deletion", () => {
+  const assignedSeat = seat({
+    label: "W08",
+    is_custom: true,
+    employee_id: "employee-1",
+    status: "assigned"
+  });
+
+  assert.equal(canDeleteSeat(assignedSeat), false);
+  assert.equal(getSeatDeleteBlockReason(assignedSeat), "Assigned seats cannot be deleted. Vacate the seat before removing a custom draft seat.");
 });
 
 test("custom draft seats can be deleted", () => {
-  const seat = { label: "W13", layer: "draft", is_custom: true };
-  assert.equal(canDeleteSeat(seat), true);
-  assert.equal(getSeatDeleteBlockReason(seat), null);
+  const customSeat = seat({ label: "W13" });
+  assert.equal(isProtectedOriginalSeatLabel("W13"), false);
+  assert.equal(canDeleteDraftSeat(customSeat), true);
+  assert.equal(canDeleteSeat(customSeat), true);
+  assert.equal(getSeatDeleteBlockReason(customSeat), null);
+});
+
+test("custom draft seats must be available and unassigned", () => {
+  const reservedSeat = seat({ label: "SE05", status: "reserved" });
+  const unavailableSeat = seat({ label: "SE05", status: "unavailable" });
+
+  assert.equal(canDeleteSeat(reservedSeat), false);
+  assert.equal(getSeatDeleteBlockReason(reservedSeat), "Only available custom draft seats can be deleted.");
+  assert.equal(canDeleteSeat(unavailableSeat), false);
+  assert.equal(getSeatDeleteBlockReason(unavailableSeat), "Only available custom draft seats can be deleted.");
 });
 
 test("published seats are not deleted directly", () => {
-  const seat = { label: "W13", layer: "published", is_custom: true };
-  assert.equal(canDeleteSeat(seat), false);
-  assert.equal(getSeatDeleteBlockReason(seat), "Only draft seats can be deleted.");
+  const publishedSeat = seat({ label: "W13", layer: "published" });
+  assert.equal(canDeleteSeat(publishedSeat), false);
+  assert.equal(getSeatDeleteBlockReason(publishedSeat), "Only draft seats can be deleted.");
 });

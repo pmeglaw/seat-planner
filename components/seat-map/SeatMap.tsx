@@ -18,7 +18,8 @@ import {
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
 import { normalizePoint } from "@/lib/seatMath";
-import { detectSeatZoneForPoint } from "@/lib/seatZones";
+import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
+import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import { FilterPanel } from "@/components/seat-map/FilterPanel";
@@ -393,7 +394,7 @@ export function SeatMap({
     return `Update ${updated.label}`;
   }
 
-  function restoreHistorySnapshot(snapshot: DraftSnapshot, nextHistory: typeof draftHistory, actionLabel: string, notice: string) {
+  function restoreHistorySnapshot(snapshot: DraftSnapshot, nextHistory: typeof draftHistory, actionLabel: string, notice: string, selectRestoredSeatLabel?: string) {
     if (inspectorDirty && !canDiscardInspectorChanges()) return;
 
     startTransition(async () => {
@@ -402,6 +403,13 @@ export function SeatMap({
         setActionNotice(null);
         const restored = await restoreDraftSnapshotAction(snapshot);
         applyRestoredDraftPayload(restored);
+        if (selectRestoredSeatLabel) {
+          const restoredSeat = restored.seats.find(seat => seat.label === selectRestoredSeatLabel);
+          if (restoredSeat) {
+            setSelectedSeatId(restoredSeat.id);
+            setInspectorCollapsed(false);
+          }
+        }
         setDraftHistory(nextHistory);
         setActionNotice(notice);
         setAdvancedOpen(false);
@@ -421,7 +429,8 @@ export function SeatMap({
   function redoDraftEdit() {
     const result = redoDraftHistory(draftHistory);
     if (!result) return;
-    restoreHistorySnapshot(result.snapshot, result.history, "Redo", `Redid ${result.entry.label}.`);
+    const addSeatLabel = result.entry.label.match(/^Add (.+)$/)?.[1];
+    restoreHistorySnapshot(result.snapshot, result.history, "Redo", `Redid ${result.entry.label}.`, addSeatLabel);
   }
 
   function clearFilters() {
@@ -693,12 +702,13 @@ export function SeatMap({
       const targetSeatId = seatTarget?.dataset.seatId;
       if (targetSeatId && isDirectSeatMarkerClick(point, targetSeatId)) return;
 
-      const targetZone = detectSeatZoneForPoint(point, localSeats);
-      if (!targetZone) {
+      const targetZoneResult = detectSeatZoneForPointResult(point, localSeats);
+      if (targetZoneResult.status !== "detected") {
         setActionNotice(null);
-        setActionError("Could not detect a zone for this location.");
+        setActionError(getSeatZoneDetectionFailureMessage(targetZoneResult) ?? "Could not detect a zone for this location.");
         return;
       }
+      const targetZone = targetZoneResult.zone;
 
       const beforeSnapshot = captureDraftSnapshot();
 
@@ -789,16 +799,22 @@ export function SeatMap({
 
   function deleteSelectedSeat() {
     if (!selectedSeat) {
-      setActionError("Select a custom seat first.");
+      setActionError(getSeatDeleteBlockReason(selectedSeat));
       return;
     }
 
-    if (!selectedSeat.is_custom) {
-      setActionError(`${selectedSeat.label} is an original seat and cannot be deleted.`);
+    const deleteBlockReason = getSeatDeleteBlockReason(selectedSeat);
+    if (!canDeleteSeat(selectedSeat)) {
+      setActionError(deleteBlockReason ?? "Select a custom seat first.");
       return;
     }
 
-    const confirmed = window.confirm(`Delete custom seat ${selectedSeat.label}? This removes it from the draft map. Publish the draft to update the viewer map.`);
+    const confirmed = window.confirm([
+      `Delete custom seat ${selectedSeat.label}?`,
+      "",
+      "Only available custom draft seats can be deleted. Original seats are protected.",
+      "This removes custom draft seats only. Published maps are unchanged until you publish."
+    ].join("\n"));
     if (!confirmed) return;
     const beforeSnapshot = captureDraftSnapshot();
     const deletedSeatLabel = selectedSeat.label;

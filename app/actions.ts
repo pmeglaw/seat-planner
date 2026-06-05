@@ -7,8 +7,9 @@ import type { DraftSnapshot } from "@/lib/draftHistory";
 import { answerMapOperationsQuestion } from "@/lib/mapOperationsAgent";
 import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/publishHistory";
 import { buildNextSeatLabel } from "@/lib/seatLabels";
+import { canDeleteDraftSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { buildSeatSwapPlan } from "@/lib/seatSwap";
-import { detectSeatZoneForPoint } from "@/lib/seatZones";
+import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import { SEAT_STATUSES, type AskPlannerRequest, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
 
@@ -222,12 +223,13 @@ export async function createSeatAction(input: {
   const supabase = await requireAdmin();
   const point = validateSeatCoordinates(input.x, input.y);
   let draftSeats = await getDraftSeatZoneSources(supabase);
-  const zone = detectSeatZoneForPoint(point, draftSeats);
+  const zoneResult = detectSeatZoneForPointResult(point, draftSeats);
 
-  if (!zone) {
-    throw new Error("Could not detect a zone for this location.");
+  if (zoneResult.status !== "detected") {
+    throw new Error(getSeatZoneDetectionFailureMessage(zoneResult) ?? "Could not detect a zone for this location.");
   }
 
+  const zone = zoneResult.zone;
   await upsertZoneOption(supabase, zone);
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -681,25 +683,31 @@ export async function deleteSeatAction(seatId: string) {
 
   const { data: seat, error: seatError } = await supabase
     .from("seats")
-    .select("id,label,layer,is_custom")
+    .select("id,label,layer,is_custom,employee_id,status")
     .eq("id", seatId)
-    .eq("layer", "draft")
     .single();
 
   if (seatError) throw new Error(seatError.message);
 
-  if (!seat?.is_custom) {
-    throw new Error(`${seat?.label ?? "This seat"} is an original seat and cannot be deleted.`);
+  if (!canDeleteDraftSeat(seat)) {
+    throw new Error(getSeatDeleteBlockReason(seat) ?? "Only available custom draft seats can be deleted.");
   }
 
-  const { error } = await supabase
+  const { data: deletedRows, error } = await supabase
     .from("seats")
     .delete()
     .eq("id", seatId)
     .eq("layer", "draft")
-    .eq("is_custom", true);
+    .eq("is_custom", true)
+    .is("employee_id", null)
+    .eq("status", "available")
+    .select("id");
 
   if (error) throw new Error(error.message);
+  if ((deletedRows ?? []).length !== 1) {
+    throw new Error("Seat is no longer eligible for deletion.");
+  }
+
   revalidatePath("/admin");
   return { seatId };
 }
@@ -930,19 +938,20 @@ export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
 
   const { data: currentSeats, error: currentSeatsError } = await supabase
     .from("seats")
-    .select("id,label,is_custom")
+    .select("id,label,layer,is_custom,employee_id,status")
     .eq("layer", "draft");
 
   if (currentSeatsError) throw new Error(currentSeatsError.message);
 
   const currentById = new Map((currentSeats ?? []).map(seat => [seat.id as string, seat]));
   const snapshotIds = new Set(seatsToRestore.map(seat => seat.id));
-  const missingProtectedSeats = (currentSeats ?? [])
-    .filter(seat => !seat.is_custom && !snapshotIds.has(seat.id as string))
+  const seatsMissingFromSnapshot = (currentSeats ?? []).filter(seat => !snapshotIds.has(seat.id as string));
+  const missingProtectedSeats = seatsMissingFromSnapshot
+    .filter(seat => !canDeleteDraftSeat(seat))
     .map(seat => seat.label as string);
 
   if (missingProtectedSeats.length > 0) {
-    throw new Error(`Cannot restore draft history because protected original seats are missing from the snapshot: ${missingProtectedSeats.join(", ")}.`);
+    throw new Error(`Cannot restore draft history because protected or occupied seats are missing from the snapshot: ${missingProtectedSeats.join(", ")}.`);
   }
 
   const { error: clearAssignmentsError } = await supabase
@@ -953,8 +962,8 @@ export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
 
   if (clearAssignmentsError) throw new Error(clearAssignmentsError.message);
 
-  const customSeatIdsToDelete = (currentSeats ?? [])
-    .filter(seat => seat.is_custom && !snapshotIds.has(seat.id as string))
+  const customSeatIdsToDelete = seatsMissingFromSnapshot
+    .filter(seat => canDeleteDraftSeat(seat))
     .map(seat => seat.id as string);
 
   if (customSeatIdsToDelete.length > 0) {
@@ -963,6 +972,8 @@ export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
       .delete()
       .eq("layer", "draft")
       .eq("is_custom", true)
+      .is("employee_id", null)
+      .eq("status", "available")
       .in("id", customSeatIdsToDelete);
 
     if (deleteError) throw new Error(deleteError.message);

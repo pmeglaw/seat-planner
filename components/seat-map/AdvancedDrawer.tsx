@@ -7,6 +7,7 @@ import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
 import { importAssignmentsCsvAction } from "@/app/actions";
+import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 
 type AdvancedDrawerProps = {
   open: boolean;
@@ -155,7 +156,8 @@ export function AdvancedDrawer({
   const [localPending, startTransition] = useTransition();
 
   const busy = pending || localPending;
-  const selectedSeatIsCustom = Boolean(selectedSeat?.is_custom);
+  const selectedSeatCanDelete = canDeleteSeat(selectedSeat);
+  const selectedSeatDeleteBlockReason = getSeatDeleteBlockReason(selectedSeat);
 
   useEffect(() => {
     if (!open) return;
@@ -177,13 +179,8 @@ export function AdvancedDrawer({
   }
 
   function deleteSelectedCustomSeat() {
-    if (!selectedSeat) {
-      reportError(new Error("Select a custom seat first."), "Select a custom seat first.");
-      return;
-    }
-
-    if (!selectedSeat.is_custom) {
-      reportError(new Error(`${selectedSeat.label} is an original seat and cannot be deleted.`), "Original seats are protected.");
+    if (!selectedSeatCanDelete) {
+      reportError(new Error(selectedSeatDeleteBlockReason ?? "Select a custom seat first."), "Select a custom seat first.");
       return;
     }
 
@@ -339,7 +336,7 @@ export function AdvancedDrawer({
           <ToolGroup title="Layout tools" description="Custom seat placement">
             <p className="text-xs leading-5 text-slate-500">
               {selectedSeat
-                ? selectedSeatIsCustom
+                ? selectedSeatCanDelete
                   ? `Custom seat ${selectedSeat.label} can be moved or deleted.`
                   : `Original seat ${selectedSeat.label} is deletion protected.`
                 : "Add Seat assigns the zone and next label automatically when you click inside a seating zone."}
@@ -394,13 +391,13 @@ export function AdvancedDrawer({
           </ToolGroup>
 
           <ToolGroup title="Destructive actions" description="Custom seat deletion only">
-            <p className="text-xs leading-5 text-slate-500">Only custom draft seats can be deleted. Original seeded seats are protected.</p>
+            <p className="text-xs leading-5 text-slate-500">Only available custom draft seats can be deleted. Original seats are protected. This removes custom draft seats only. Published maps are unchanged until you publish.</p>
             <CommandButton
-              label="Delete Selected Custom Seat"
-              description={selectedSeatIsCustom ? `Remove ${selectedSeat?.label} from draft` : "Select a custom seat first"}
+              label="Delete custom seat"
+              description={selectedSeatCanDelete ? `Remove ${selectedSeat?.label} from draft only` : selectedSeatDeleteBlockReason ?? "Select a custom seat first"}
               tone="danger"
               onClick={deleteSelectedCustomSeat}
-              disabled={busy || !selectedSeatIsCustom}
+              disabled={busy || !selectedSeatCanDelete}
             />
           </ToolGroup>
         </div>

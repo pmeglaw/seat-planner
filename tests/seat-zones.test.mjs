@@ -15,7 +15,14 @@ async function importTsModule(relativePath) {
   return import(moduleUrl);
 }
 
-const { SEAT_ZONE_RECTS, detectSeatZoneForPoint, inferSeatZoneFromPoint } = await importTsModule("lib/seatZones.ts");
+const {
+  SEAT_ZONE_RECTS,
+  detectSeatZoneForPoint,
+  detectSeatZoneForPointResult,
+  getSeatZoneDetectionFailureMessage,
+  inferSeatZoneFromPoint,
+  inferSeatZoneFromPointResult
+} = await importTsModule("lib/seatZones.ts");
 
 function seat(label, x, y, zone) {
   return { label, x, y, zone, department: null };
@@ -54,6 +61,13 @@ test("zone detection uses approved office rectangles without requiring nearby se
   assert.equal(detectSeatZoneForPoint({ x: 0.91, y: 0.78 }, []), "Southeast Office");
 });
 
+test("zone detection reports exact rectangle matches as deterministic", () => {
+  assert.deepEqual(inferSeatZoneFromPointResult({ x: 0.588085, y: 0.382937 }), {
+    status: "detected",
+    zone: "East Pod"
+  });
+});
+
 test("zone detection falls back to nearby same-zone seat clusters", () => {
   const seats = [
     seat("W10", 0.067905, 0.722222, "West Pod"),
@@ -64,17 +78,50 @@ test("zone detection falls back to nearby same-zone seat clusters", () => {
   const point = { x: 0.12, y: 0.8 };
   assert.equal(inferSeatZoneFromPoint(point), null);
   assert.equal(detectSeatZoneForPoint(point, seats), "West Pod");
+  assert.deepEqual(detectSeatZoneForPointResult(point, seats), {
+    status: "detected",
+    zone: "West Pod"
+  });
 });
 
 test("zone detection avoids clear hallway guesses and ambiguous clusters", () => {
+  const farResult = detectSeatZoneForPointResult({ x: 0.12, y: 0.3 }, [
+    seat("W01", 0.080077, 0.382937, "West Pod")
+  ]);
   assert.equal(detectSeatZoneForPoint({ x: 0.12, y: 0.3 }, [
     seat("W01", 0.080077, 0.382937, "West Pod")
   ]), null);
+  assert.deepEqual(farResult, { status: "none", zone: null });
+  assert.equal(
+    getSeatZoneDetectionFailureMessage(farResult),
+    "Could not detect a zone for this location. Try clicking closer to an existing seating area."
+  );
 
+  const ambiguousResult = detectSeatZoneForPointResult({ x: 0.5, y: 0.95 }, [
+    seat("A01", 0.46, 0.95, "Alpha Zone"),
+    seat("B01", 0.54, 0.95, "Beta Zone")
+  ]);
   assert.equal(detectSeatZoneForPoint({ x: 0.5, y: 0.95 }, [
     seat("A01", 0.46, 0.95, "Alpha Zone"),
     seat("B01", 0.54, 0.95, "Beta Zone")
   ]), null);
+  assert.deepEqual(ambiguousResult, { status: "ambiguous", zone: null });
+  assert.equal(
+    getSeatZoneDetectionFailureMessage(ambiguousResult),
+    "This location is between zones. Try again closer to the intended seating area."
+  );
+});
+
+test("zone detection stays conservative between nearby zones", () => {
+  const seats = [
+    seat("W12", 0.35, 0.8, "West Pod"),
+    seat("C08", 0.45, 0.8, "Center Desks")
+  ];
+
+  assert.deepEqual(detectSeatZoneForPointResult({ x: 0.4, y: 0.8 }, seats), {
+    status: "ambiguous",
+    zone: null
+  });
 });
 
 test("zone rectangles are explicit normalized bounds", () => {

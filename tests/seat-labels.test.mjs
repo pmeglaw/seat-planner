@@ -47,6 +47,11 @@ test("seat labels use the next number after the highest existing zone label", ()
   assert.equal(buildNextSeatLabel(seats, "Center Desks"), "C09");
 });
 
+test("seat labels do not reuse gaps when higher zone numbers exist", () => {
+  const seats = [seat("W01", "West Pod"), seat("W03", "West Pod"), seat("W09", "West Pod")];
+  assert.equal(buildNextSeatLabel(seats, "West Pod"), "W10");
+});
+
 test("generated labels avoid collisions with all draft labels", () => {
   const seats = [
     seat("C01", "Center Desks"),
@@ -57,9 +62,35 @@ test("generated labels avoid collisions with all draft labels", () => {
   assert.equal(buildNextSeatLabel(seats, "Center Desks"), "C05");
 });
 
+test("existing draft labels outside the target zone are considered collisions", () => {
+  const seats = [
+    seat("W01", "West Pod"),
+    seat("W02", "West Pod"),
+    seat("W03", "Overflow Training")
+  ];
+  assert.equal(buildNextSeatLabel(seats, "West Pod"), "W04");
+});
+
 test("existing zone prefix and padding are preserved", () => {
   const seats = [seat("LAB001", "Lab Area"), seat("LAB010", "Lab Area")];
   assert.equal(buildNextSeatLabel(seats, "Lab Area"), "LAB011");
+});
+
+test("multi-letter prefixes preserve padding across rollover", () => {
+  const seats = [seat("NE01", "Northeast Pod"), seat("NE08", "Northeast Pod")];
+  assert.equal(buildNextSeatLabel(seats, "Northeast Pod"), "NE09");
+});
+
+test("generated labels remain unique within the target zone", () => {
+  const seats = [
+    seat("SE01", "Southeast Office"),
+    seat("SE02", "Southeast Office"),
+    seat("SE03", "Southeast Office")
+  ];
+  const nextLabel = buildNextSeatLabel(seats, "Southeast Office");
+
+  assert.equal(nextLabel, "SE04");
+  assert.equal(seats.some(existing => existing.zone === "Southeast Office" && existing.label === nextLabel), false);
 });
 
 test("unknown helper-level zones derive a safe prefix", () => {
