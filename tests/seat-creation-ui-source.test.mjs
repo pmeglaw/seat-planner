@@ -71,6 +71,39 @@ test("redo of an added seat reselects the restored seat", async () => {
   assert.match(restoreFunction[0], /setInspectorCollapsed\(false\)/);
 });
 
+test("admin names visibility preference persists locally without server storage", async () => {
+  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+
+  assert.match(seatMapSource, /ADMIN_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:names-visible"/);
+  assert.match(seatMapSource, /window\.localStorage\.getItem\(ADMIN_NAMES_VISIBLE_STORAGE_KEY\)/);
+  assert.match(seatMapSource, /window\.localStorage\.setItem\(ADMIN_NAMES_VISIBLE_STORAGE_KEY, showNames \? "true" : "false"\)/);
+  assert.match(seatMapSource, /if \(!canEdit\) \{[\s\S]*?setNamesPreferenceHydrated\(true\);[\s\S]*?return;/);
+  assert.doesNotMatch(seatMapSource, /supabase[\s\S]*seat-planner:names-visible|seat-planner:names-visible[\s\S]*supabase/);
+});
+
+test("map tools add seat row is neutral until add-seat mode is active", async () => {
+  const drawerSource = await readFile(new URL("../components/seat-map/AdvancedDrawer.tsx", import.meta.url), "utf8");
+  const addSeatCommand = drawerSource.match(/<CommandButton\s+label=\{addSeatMode \? "Cancel Add Seat" : "Add Seat"\}[\s\S]*?disabled=\{busy\}\s+\/>/);
+
+  assert.ok(addSeatCommand, "Add Seat command should remain source-visible.");
+  assert.match(addSeatCommand[0], /tone=\{addSeatMode \? "active" : "default"\}/);
+  assert.match(addSeatCommand[0], /Active\. Click a seating zone or cancel/);
+  assert.doesNotMatch(addSeatCommand[0], /tone="active"/);
+  assert.match(drawerSource, /border-slate-200\/70 bg-white\/75 text-slate-900 hover:border-slate-300 hover:bg-white/);
+});
+
+test("seat labels stay readable and expand on hover or keyboard focus", async () => {
+  const markerSource = await readFile(new URL("../components/seat-map/SeatMarker.tsx", import.meta.url), "utf8");
+
+  assert.match(markerSource, /getPassiveEmployeeLabel/);
+  assert.match(markerSource, /hover:w-\[154px\]/);
+  assert.match(markerSource, /focus-visible:w-\[154px\]/);
+  assert.match(markerSource, /group-hover:block group-focus-visible:block/);
+  assert.match(markerSource, /text-\[11px\]/);
+  assert.match(markerSource, /selected[\s\S]*w-\[152px\]/);
+  assert.match(markerSource, /searchProminent[\s\S]*border-orange-300 bg-orange-50\/90/);
+});
+
 test("inspector copy uses Job Title instead of Team", async () => {
   const source = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
 

@@ -49,6 +49,7 @@ type SwapConfirmState = {
 const NAME_LABEL_COLLISION_X_THRESHOLD = 0.07;
 const NAME_LABEL_COLLISION_Y_THRESHOLD = 0.07;
 const DIRECT_SEAT_CLICK_RADIUS = 0.018;
+const ADMIN_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:names-visible";
 
 function normalizeSeat(seat: SeatWithEmployee): SeatWithEmployee {
   return {
@@ -146,6 +147,7 @@ export function SeatMap({
   const [inspectorDirty, setInspectorDirty] = useState(false);
   const [searchSelectionNotice, setSearchSelectionNotice] = useState<string | null>(null);
   const [showNames, setShowNames] = useState(false);
+  const [namesPreferenceHydrated, setNamesPreferenceHydrated] = useState(false);
   const [swapSourceSeatId, setSwapSourceSeatId] = useState<string | null>(null);
   const [swapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
   const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
@@ -177,6 +179,29 @@ export function SeatMap({
   useEffect(() => setLocalEmployees(employees), [employees]);
   useEffect(() => setLocalDepartmentOptions(departmentOptions), [departmentOptions]);
   useEffect(() => setLocalZoneOptions(zoneOptions), [zoneOptions]);
+  useEffect(() => {
+    if (!canEdit) {
+      setNamesPreferenceHydrated(true);
+      return;
+    }
+
+    try {
+      setShowNames(window.localStorage.getItem(ADMIN_NAMES_VISIBLE_STORAGE_KEY) === "true");
+    } catch {
+      // Ignore unavailable storage; the toggle still works for the current page.
+    }
+
+    setNamesPreferenceHydrated(true);
+  }, [canEdit]);
+  useEffect(() => {
+    if (!canEdit || !namesPreferenceHydrated) return;
+
+    try {
+      window.localStorage.setItem(ADMIN_NAMES_VISIBLE_STORAGE_KEY, showNames ? "true" : "false");
+    } catch {
+      // Ignore unavailable storage; this is a local UI preference only.
+    }
+  }, [canEdit, namesPreferenceHydrated, showNames]);
   useEffect(() => {
     if (!selectedSeatId) setInspectorCollapsed(false);
   }, [selectedSeatId]);

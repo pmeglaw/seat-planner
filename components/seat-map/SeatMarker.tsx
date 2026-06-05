@@ -101,15 +101,15 @@ export function SeatMarker({
 
   const markerSizeClass = showChip
     ? selected
-      ? "min-h-[48px] w-[124px] max-w-[124px] rounded-[18px] px-3 py-2 text-left sm:w-[132px] sm:max-w-[132px]"
+      ? "min-h-[52px] w-[152px] max-w-[152px] rounded-[18px] px-3 py-2 text-left sm:w-[166px] sm:max-w-[166px]"
       : labelMode === "prominent"
-      ? "min-h-[42px] w-[148px] max-w-[148px] rounded-xl px-3 py-1.5 text-left sm:w-[156px] sm:max-w-[156px]"
+      ? "min-h-[44px] w-[158px] max-w-[158px] rounded-xl px-3 py-1.5 text-left sm:w-[170px] sm:max-w-[170px]"
       : labelMode === "compact"
-        ? "min-h-[32px] w-[88px] max-w-[88px] rounded-lg px-2 py-1.5 text-left hover:w-[124px] hover:max-w-[124px] focus-visible:w-[124px] focus-visible:max-w-[124px] lg:min-h-[34px] lg:hover:w-[128px] lg:hover:max-w-[128px] lg:focus-visible:w-[128px] lg:focus-visible:max-w-[128px]"
+        ? "min-h-[36px] w-[106px] max-w-[106px] rounded-lg px-2.5 py-1.5 text-left hover:w-[154px] hover:max-w-[154px] focus-visible:w-[154px] focus-visible:max-w-[154px] lg:min-h-[38px] lg:hover:w-[160px] lg:hover:max-w-[160px] lg:focus-visible:w-[160px] lg:focus-visible:max-w-[160px]"
         : labelMode === "passive"
-          ? "min-h-[34px] w-[96px] max-w-[96px] rounded-xl px-2.5 py-1.5 text-left hover:w-[136px] hover:max-w-[136px] focus-visible:w-[136px] focus-visible:max-w-[136px] lg:hover:w-[136px] lg:hover:max-w-[136px] lg:focus-visible:w-[136px] lg:focus-visible:max-w-[136px]"
+          ? "min-h-[38px] w-[120px] max-w-[120px] rounded-xl px-2.5 py-1.5 text-left hover:w-[164px] hover:max-w-[164px] focus-visible:w-[164px] focus-visible:max-w-[164px] lg:hover:w-[170px] lg:hover:max-w-[170px] lg:focus-visible:w-[170px] lg:focus-visible:max-w-[170px]"
           : "h-[30px] min-h-[30px] min-w-[38px] rounded-full px-2 py-0 text-center"
-    : "h-[28px] min-h-[28px] min-w-[36px] rounded-full px-2 py-0 text-center text-[10px] hover:min-w-[102px] hover:rounded-xl hover:px-2.5 hover:text-left focus-visible:min-w-[102px] focus-visible:rounded-xl focus-visible:px-2.5 focus-visible:text-left";
+    : "h-[28px] min-h-[28px] min-w-[36px] rounded-full px-2 py-0 text-center text-[10px] hover:min-w-[112px] hover:rounded-xl hover:px-2.5 hover:text-left focus-visible:min-w-[112px] focus-visible:rounded-xl focus-visible:px-2.5 focus-visible:text-left";
 
   const passiveLabelClass =
     labelMode === "compact"
@@ -118,21 +118,21 @@ export function SeatMarker({
         ? "border-slate-200/80 bg-white/75 text-slate-800 shadow-[0_9px_20px_rgba(15,23,42,0.13),inset_0_1px_0_rgba(255,255,255,0.94)]"
         : "";
 
-  const dotSizeClass = selected ? "h-3 w-3 ring-4" : labelMode === "prominent" ? "h-2.5 w-2.5 ring-4" : "h-2 w-2 ring-2";
-  const codeTextClass = selected ? "text-[11px]" : labelMode === "prominent" ? "text-[10px]" : "text-[9px] lg:text-[10px]";
-  const chipGapClass = selected ? "gap-2.5" : labelMode === "prominent" ? "gap-2" : "gap-1.5";
+  const dotSizeClass = selected ? "h-3 w-3 ring-4" : labelMode === "prominent" ? "h-2.5 w-2.5 ring-4" : "h-2.5 w-2.5 ring-2";
+  const codeTextClass = selected ? "text-[11px]" : labelMode === "prominent" ? "text-[10px] sm:text-[11px]" : "text-[10px] lg:text-[11px]";
+  const chipGapClass = selected ? "gap-2.5" : labelMode === "prominent" ? "gap-2" : "gap-2";
   const nameTextClass =
     selected
-      ? "max-w-[80px] text-[10px] sm:max-w-[88px]"
+      ? "max-w-[104px] text-[11px] sm:max-w-[116px]"
       : labelMode === "prominent"
-      ? "max-w-[106px] text-[10px] sm:max-w-[114px] sm:text-[11px]"
+      ? "max-w-[116px] text-[11px] sm:max-w-[128px]"
       : labelMode === "compact"
-        ? "max-w-[58px] text-[9px] group-hover:max-w-[94px] group-hover:text-[10px] group-focus-visible:max-w-[94px] group-focus-visible:text-[10px] lg:text-[10px] lg:group-hover:max-w-[96px] lg:group-focus-visible:max-w-[96px]"
-        : "max-w-[62px] text-[10px] group-hover:max-w-[102px] group-focus-visible:max-w-[102px] lg:group-hover:max-w-[102px] lg:group-focus-visible:max-w-[102px]";
+        ? "max-w-[72px] text-[10px] group-hover:max-w-[116px] group-hover:text-[11px] group-focus-visible:max-w-[116px] group-focus-visible:text-[11px] lg:text-[11px] lg:group-hover:max-w-[122px] lg:group-focus-visible:max-w-[122px]"
+        : "max-w-[86px] text-[11px] group-hover:max-w-[128px] group-focus-visible:max-w-[128px] lg:group-hover:max-w-[134px] lg:group-focus-visible:max-w-[134px]";
   const fullNameRevealClass =
     labelMode === "compact"
-      ? "hidden max-w-[94px] truncate text-[10px] font-bold leading-tight opacity-95 group-hover:block group-focus-visible:block lg:max-w-[96px]"
-      : "hidden max-w-[102px] truncate text-[10px] font-bold leading-tight opacity-95 group-hover:block group-focus-visible:block";
+      ? "hidden max-w-[116px] truncate text-[11px] font-bold leading-tight opacity-95 group-hover:block group-focus-visible:block lg:max-w-[122px]"
+      : "hidden max-w-[128px] truncate text-[11px] font-bold leading-tight opacity-95 group-hover:block group-focus-visible:block lg:max-w-[134px]";
 
   return (
     <button
@@ -156,7 +156,7 @@ export function SeatMarker({
         "group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-manipulation select-none items-center justify-center overflow-visible border",
         "bg-white/70 text-slate-900 backdrop-blur-md supports-[backdrop-filter]:bg-white/60",
         "font-black leading-none shadow-[0_10px_24px_rgba(15,23,42,0.18),0_2px_6px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.96),inset_0_-1px_0_rgba(255,255,255,0.35)]",
-        "transition-[width,min-width,transform,box-shadow,border-color,background-color,opacity,filter] duration-150 ease-out hover:z-30 hover:scale-[1.04] hover:border-orange-200 hover:bg-white/80 hover:shadow-[0_16px_34px_rgba(15,23,42,0.24),inset_0_1px_0_rgba(255,255,255,0.98)] active:scale-[0.96] active:duration-75 active:shadow-[0_8px_18px_rgba(15,23,42,0.22),inset_0_2px_4px_rgba(15,23,42,0.12)] motion-reduce:transition-none",
+        "transition-[width,min-width,transform,box-shadow,border-color,background-color,opacity,filter] duration-150 ease-out hover:z-30 hover:scale-[1.04] hover:border-orange-200 hover:bg-white/90 hover:shadow-[0_18px_38px_rgba(15,23,42,0.26),inset_0_1px_0_rgba(255,255,255,0.98)] active:scale-[0.96] active:duration-75 active:shadow-[0_8px_18px_rgba(15,23,42,0.22),inset_0_2px_4px_rgba(15,23,42,0.12)] motion-reduce:transition-none",
         "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/70",
         statusAccentClass,
         markerSizeClass,

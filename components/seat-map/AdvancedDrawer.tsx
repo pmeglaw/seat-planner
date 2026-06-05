@@ -76,11 +76,11 @@ type CommandButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 function CommandButton({ label, description, tone = "default", className = "", ...props }: CommandButtonProps) {
   const { "aria-label": ariaLabel, title, ...buttonProps } = props;
   const toneClassName = tone === "active"
-    ? "border-orange-100 bg-orange-50/80 text-brand-dark hover:border-orange-200 hover:bg-orange-100/80"
+    ? "border-cyan-200/80 bg-cyan-50/70 text-cyan-950 hover:border-cyan-300/80 hover:bg-cyan-50"
     : tone === "danger"
-      ? "border-transparent bg-rose-50/70 text-rose-700 hover:border-rose-100 hover:bg-rose-100/70"
-      : "border-transparent bg-slate-50/80 text-slate-900 hover:border-orange-100 hover:bg-white";
-  const descriptionClassName = tone === "danger" ? "text-rose-600" : tone === "active" ? "text-brand-dark/70" : "text-slate-500";
+      ? "border-rose-100 bg-rose-50/60 text-rose-700 hover:border-rose-200 hover:bg-rose-50"
+      : "border-slate-200/70 bg-white/75 text-slate-900 hover:border-slate-300 hover:bg-white";
+  const descriptionClassName = tone === "danger" ? "text-rose-600" : tone === "active" ? "text-cyan-700" : "text-slate-500";
 
   return (
     <button
@@ -105,15 +105,15 @@ function CommandButton({ label, description, tone = "default", className = "", .
 
 function ToolGroup({ title, description, children, defaultOpen = false }: { title: string; description: string; children: ReactNode; defaultOpen?: boolean }) {
   return (
-    <details {...(defaultOpen ? { open: true } : {})} className="group rounded-xl border border-transparent bg-slate-50/70">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 marker:hidden">
+    <details {...(defaultOpen ? { open: true } : {})} className="group rounded-xl border border-slate-200/70 bg-white/70">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-left transition hover:bg-slate-50/80 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 marker:hidden">
         <span className="min-w-0">
           <span className="block text-sm font-extrabold text-slate-900">{title}</span>
           <span className="mt-0.5 block truncate text-xs font-medium text-slate-500">{description}</span>
         </span>
         <span className="shrink-0 text-xs font-black text-slate-400 transition group-open:rotate-90">&gt;</span>
       </summary>
-      <div className="space-y-2 border-t border-white/80 px-3 pb-3 pt-2">
+      <div className="space-y-2 border-t border-slate-100 px-3 pb-3 pt-2">
         {children}
       </div>
     </details>
@@ -305,8 +305,8 @@ export function AdvancedDrawer({
             <div className="space-y-2">
               <CommandButton
                 label={addSeatMode ? "Cancel Add Seat" : "Add Seat"}
-                description={addSeatMode ? "Return to normal map selection" : "Place a new custom draft marker"}
-                tone="active"
+                description={addSeatMode ? "Active. Click a seating zone or cancel" : "Place a new custom draft marker"}
+                tone={addSeatMode ? "active" : "default"}
                 onClick={addSeatMode ? onCancelAddSeat : onStartAddSeat}
                 disabled={busy}
               />
@@ -357,7 +357,7 @@ export function AdvancedDrawer({
             <Link
               href="/admin/management"
               onClick={onClose}
-              className="flex min-h-[58px] w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/85 px-3 py-2 text-left text-slate-900 shadow-sm transition hover:border-orange-200 hover:bg-orange-50/50 active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+              className="flex min-h-[58px] w-full items-center justify-between gap-3 rounded-lg border border-slate-200/70 bg-white/75 px-3 py-2 text-left text-slate-900 transition hover:border-slate-300 hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
             >
               <span className="min-w-0">
                 <span className="block truncate text-sm font-extrabold">Open Management</span>
