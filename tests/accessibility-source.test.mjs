@@ -13,6 +13,8 @@ test("viewer route renders the published map as read-only", async () => {
   assert.match(viewerSource, /\.eq\("layer", "published"\)/);
   assert.match(viewerSource, /canEdit=\{false\}/);
   assert.match(adminSource, /\.eq\("layer", "draft"\)/);
+  assert.match(adminSource, /\.eq\("layer", "published"\)/);
+  assert.match(adminSource, /publishedSeats=\{\(publishedSeats \?\? \[\]\) as SeatWithEmployee\[\]\}/);
   assert.match(adminSource, /canEdit\s*\/>/);
 });
 
@@ -41,6 +43,26 @@ test("map tools and ask planner drawers keep dialog semantics and focus targets"
   assert.match(askPlannerSource, /aria-labelledby="ask-planner-title"/);
   assert.match(askPlannerSource, /aria-describedby="ask-planner-description"/);
   assert.match(askPlannerSource, /questionRef\.current\.focus/);
+});
+
+test("publish review summarizes draft changes before publish", async () => {
+  const source = await readSource("../components/seat-map/SeatMap.tsx");
+
+  assert.match(source, /buildPublishChangeSummary\(localSeats, localPublishedSeats\)/);
+  assert.match(source, /aria-labelledby="publish-review-title"/);
+  assert.match(source, /Review draft before publishing/);
+  assert.match(source, /You are about to publish draft changes/);
+  assert.match(source, /No draft changes to publish/);
+  assert.match(source, /disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
+  assert.match(source, /Added seats/);
+  assert.match(source, /Removed custom draft seats/);
+  assert.match(source, /Assignment changes/);
+  assert.match(source, /Vacated seats/);
+  assert.match(source, /Seat moves\/layout changes/);
+  assert.match(source, /Status changes/);
+  assert.match(source, /Other draft changes/);
+  assert.match(source, /Save or discard the selected seat edits before publishing/);
+  assert.doesNotMatch(source, /Publish draft map to the viewer-facing seat map\?/);
 });
 
 test("seat markers remain keyboard buttons with contextual accessible labels", async () => {

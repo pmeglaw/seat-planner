@@ -20,6 +20,7 @@ import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapActio
 import { normalizePoint } from "@/lib/seatMath";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
+import { buildPublishChangeSummary, type PublishChangeItem } from "@/lib/publishSummary";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import { FilterPanel } from "@/components/seat-map/FilterPanel";
@@ -29,6 +30,7 @@ import { Button } from "@/components/ui/Button";
 
 type SeatMapProps = {
   seats: SeatWithEmployee[];
+  publishedSeats?: SeatWithEmployee[];
   employees: Employee[];
   departmentOptions?: DepartmentOption[];
   zoneOptions?: ZoneOption[];
@@ -50,6 +52,7 @@ const NAME_LABEL_COLLISION_X_THRESHOLD = 0.07;
 const NAME_LABEL_COLLISION_Y_THRESHOLD = 0.07;
 const DIRECT_SEAT_CLICK_RADIUS = 0.018;
 const ADMIN_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:names-visible";
+const DEFAULT_PUBLISHED_SEATS: SeatWithEmployee[] = [];
 
 function normalizeSeat(seat: SeatWithEmployee): SeatWithEmployee {
   return {
@@ -116,15 +119,55 @@ function NamesIcon() {
   );
 }
 
+function PublishCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
+  return (
+    <div className={["rounded-xl border p-3", tone === "warn" ? "border-orange-200 bg-orange-50/80" : "border-slate-200 bg-slate-50/80"].join(" ")}>
+      <div className={["text-[11px] font-black uppercase tracking-wide", tone === "warn" ? "text-orange-700" : "text-slate-500"].join(" ")}>{label}</div>
+      <div className="mt-1 text-2xl font-black text-slate-950">{value}</div>
+    </div>
+  );
+}
+
+function PublishChangeList({ title, items, emptyLabel }: { title: string; items: PublishChangeItem[]; emptyLabel: string }) {
+  const visibleItems = items.slice(0, 5);
+  const remainingCount = Math.max(items.length - visibleItems.length, 0);
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white/80 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-black text-slate-950">{title}</h3>
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-black text-slate-600">{items.length}</span>
+      </div>
+      {items.length > 0 ? (
+        <ul className="mt-2 space-y-1.5 text-xs leading-5 text-slate-600">
+          {visibleItems.map(item => (
+            <li key={`${title}-${item.label}-${item.detail}`}>
+              <span className="font-black text-slate-900">{item.label}</span>
+              {item.detail && <span> · {item.detail}</span>}
+            </li>
+          ))}
+          {remainingCount > 0 && (
+            <li className="font-bold text-slate-500">+ {remainingCount} more</li>
+          )}
+        </ul>
+      ) : (
+        <p className="mt-2 text-xs font-semibold text-slate-500">{emptyLabel}</p>
+      )}
+    </div>
+  );
+}
+
 
 export function SeatMap({
   seats,
+  publishedSeats = DEFAULT_PUBLISHED_SEATS,
   employees,
   departmentOptions = [],
   zoneOptions = [],
   canEdit
 }: SeatMapProps) {
   const [localSeats, setLocalSeats] = useState(() => normalizeSeats(seats));
+  const [localPublishedSeats, setLocalPublishedSeats] = useState(() => normalizeSeats(publishedSeats));
   const [localEmployees, setLocalEmployees] = useState(employees);
   const [localDepartmentOptions, setLocalDepartmentOptions] = useState(departmentOptions);
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
@@ -134,6 +177,7 @@ export function SeatMap({
   const [moveSeatMode, setMoveSeatMode] = useState(false);
   const [addSeatMode, setAddSeatMode] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [publishReviewOpen, setPublishReviewOpen] = useState(false);
   const [askPlannerOpen, setAskPlannerOpen] = useState(false);
   const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
   const [plannerHighlightedSeatIds, setPlannerHighlightedSeatIds] = useState<string[]>([]);
@@ -176,6 +220,7 @@ export function SeatMap({
   }, [focusAskPlannerButton]);
 
   useEffect(() => setLocalSeats(normalizeSeats(seats)), [seats]);
+  useEffect(() => setLocalPublishedSeats(normalizeSeats(publishedSeats)), [publishedSeats]);
   useEffect(() => setLocalEmployees(employees), [employees]);
   useEffect(() => setLocalDepartmentOptions(departmentOptions), [departmentOptions]);
   useEffect(() => setLocalZoneOptions(zoneOptions), [zoneOptions]);
@@ -222,6 +267,11 @@ export function SeatMap({
     function handleEscape(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
 
+      if (publishReviewOpen) {
+        setPublishReviewOpen(false);
+        return;
+      }
+
       if (swapConfirm) {
         setSwapConfirm(null);
         return;
@@ -259,7 +309,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, advancedOpen, askPlannerOpen, closeAdvancedDrawer, closeAskPlannerDrawer, filterCollapsed, inspectorDirty, moveSeatMode, selectedSeatId, swapConfirm, swapSourceSeatId]);
+  }, [addSeatMode, advancedOpen, askPlannerOpen, closeAdvancedDrawer, closeAskPlannerDrawer, filterCollapsed, inspectorDirty, moveSeatMode, publishReviewOpen, selectedSeatId, swapConfirm, swapSourceSeatId]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -286,6 +336,7 @@ export function SeatMap({
     available: localSeats.filter(seat => seat.status === "available").length,
     reserved: localSeats.filter(seat => seat.status === "reserved").length
   }), [localSeats]);
+  const publishSummary = useMemo(() => buildPublishChangeSummary(localSeats, localPublishedSeats), [localSeats, localPublishedSeats]);
 
   const employeeResults = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -866,33 +917,31 @@ export function SeatMap({
     });
   }
 
-  function publishDraftMap() {
-    const unavailable = localSeats.filter(seat => seat.status === "unavailable").length;
-    const confirmed = window.confirm(
-      [
-        "Publish draft map to the viewer-facing seat map?",
-        "",
-        "Viewers will see the current draft after this completes.",
-        "Undo/Redo history will be cleared after publish.",
-        "",
-        `Total seats: ${stats.total}`,
-        `Assigned seats: ${stats.assigned}`,
-        `Available seats: ${stats.available}`,
-        `Reserved seats: ${stats.reserved}`,
-        `Unavailable seats: ${unavailable}`,
-        "",
-        "Use Cancel if you need to review or undo more draft changes first."
-      ].join("\n")
-    );
-    if (!confirmed) return;
+  function openPublishReview() {
+    if (inspectorDirty) {
+      setActionNotice(null);
+      setActionError("Save or discard the selected seat edits before publishing. The publish review only includes saved draft changes.");
+      setAdvancedOpen(false);
+      return;
+    }
 
+    setActionError(null);
+    setActionNotice(null);
+    setAdvancedOpen(false);
+    setPublishReviewOpen(true);
+  }
+
+  function confirmPublishDraftMap() {
+    const nextPublishedSeats = normalizeSeats(localSeats);
     startTransition(async () => {
       try {
         setActionError(null);
         setActionNotice(null);
         await publishSeatMapAction();
+        setLocalPublishedSeats(nextPublishedSeats);
         setDraftHistory(clearDraftHistory());
         setAdvancedOpen(false);
+        setPublishReviewOpen(false);
         setActionNotice("Draft map published. Undo/Redo history was cleared.");
       } catch (error) {
         setActionNotice(null);
@@ -1254,7 +1303,7 @@ export function SeatMap({
         onCancelAddSeat={cancelAddSeatMode}
         onStartSwapSeat={() => startSwapSeatMode()}
         onCancelSwapSeat={cancelSwapSeatMode}
-        onPublish={publishDraftMap}
+        onPublish={openPublishReview}
         onToggleMoveSeat={() => {
           if (!selectedSeatId) return;
           setAddSeatMode(false);
@@ -1313,6 +1362,89 @@ export function SeatMap({
           onClearHighlights={() => setPlannerHighlightedSeatIds([])}
           onSelectSeat={selectPlannerHighlightedSeat}
         />
+      )}
+
+      {publishReviewOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:items-center">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="publish-review-title"
+            aria-describedby="publish-review-description"
+            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h2 id="publish-review-title" className="text-base font-black">Review draft before publishing</h2>
+                <p id="publish-review-description" className="mt-1 text-sm leading-5 text-slate-500">
+                  You are about to publish draft changes. Viewers will see the current draft map after this completes.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPublishReviewOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Close publish review"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="min-h-0 overflow-y-auto py-4">
+              <div className="grid grid-cols-3 gap-2">
+                <PublishCountCard label="Added" value={publishSummary.addedSeats.length} tone={publishSummary.addedSeats.length > 0 ? "warn" : "default"} />
+                <PublishCountCard label="Updated" value={publishSummary.updatedSeatCount} tone={publishSummary.updatedSeatCount > 0 ? "warn" : "default"} />
+                <PublishCountCard label="Removed" value={publishSummary.removedSeats.length} tone={publishSummary.removedSeats.length > 0 ? "warn" : "default"} />
+              </div>
+
+              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-xs font-semibold leading-5 text-slate-600">
+                <span className="font-black text-slate-900">Draft:</span> {publishSummary.draftSeatCount} seats
+                <span className="mx-2 text-slate-300">|</span>
+                <span className="font-black text-slate-900">Currently published:</span> {publishSummary.publishedSeatCount} seats
+                <span className="mx-2 text-slate-300">|</span>
+                <span className="font-black text-slate-900">Total publish changes:</span> {publishSummary.totalChangeCount}
+              </div>
+
+              {!publishSummary.hasChanges && (
+                <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">
+                  No draft changes to publish. The saved draft already matches the currently published viewer map.
+                </div>
+              )}
+
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                <PublishChangeList title="Added seats" items={publishSummary.addedSeats} emptyLabel="No added seats detected." />
+                <PublishChangeList title="Removed custom draft seats" items={publishSummary.removedSeats} emptyLabel="No removed seats detected." />
+                <PublishChangeList title="Assignment changes" items={publishSummary.assignmentChanges} emptyLabel="No assignment changes detected." />
+                <PublishChangeList title="Vacated seats" items={publishSummary.vacatedSeats} emptyLabel="No vacated seats detected." />
+                <PublishChangeList title="Seat moves/layout changes" items={publishSummary.seatMoves} emptyLabel="No seat moves detected." />
+                <PublishChangeList title="Status changes" items={publishSummary.statusChanges} emptyLabel="No status-only changes detected." />
+                <div className="md:col-span-2">
+                  <PublishChangeList title="Other draft changes" items={publishSummary.otherChanges} emptyLabel="No other draft changes detected." />
+                </div>
+              </div>
+
+              <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50/70 p-3 text-sm font-semibold leading-5 text-brand-dark">
+                Publishing updates the viewer map and clears Undo/Redo history. Use Cancel if you need to review, undo, or save more draft changes first.
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+              <Button type="button" onClick={() => setPublishReviewOpen(false)} disabled={pending} className="w-full">
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={confirmPublishDraftMap}
+                disabled={pending || !publishSummary.hasChanges}
+                title={publishSummary.hasChanges ? "Publish reviewed draft changes" : "No draft changes to publish"}
+                className="w-full"
+              >
+                {publishSummary.hasChanges ? "Publish changes" : "No changes to publish"}
+              </Button>
+            </div>
+          </section>
+        </div>
       )}
 
       <SeatInspector
