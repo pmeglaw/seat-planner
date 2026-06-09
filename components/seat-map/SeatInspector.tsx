@@ -5,6 +5,7 @@ import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
 import { updateSeatAction } from "@/app/actions";
+import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { Button } from "@/components/ui/Button";
 
 type SeatInspectorProps = {
@@ -21,6 +22,7 @@ type SeatInspectorProps = {
   onClearSearchContext?: () => void;
   onToggleCollapse: () => void;
   onStartSwapSeat: () => void;
+  onDeleteSeat: () => void;
   onExplainSeat?: (seat: SeatWithEmployee) => void;
   onBeforeSeatUpdate: () => DraftSnapshot;
   onSeatUpdated: (seat: SeatWithEmployee, beforeSnapshot: DraftSnapshot) => void;
@@ -91,6 +93,7 @@ export function SeatInspector({
   onClearSearchContext,
   onToggleCollapse,
   onStartSwapSeat,
+  onDeleteSeat,
   onExplainSeat,
   onBeforeSeatUpdate,
   onSeatUpdated,
@@ -198,6 +201,8 @@ export function SeatInspector({
   const selectedSeatEmployeeName = selectedSeat.employee?.full_name ?? "this employee";
   const inspectorSubtitle = selectedSeat.employee?.full_name ? `Assigned to ${selectedSeat.employee.full_name}` : "Open seat";
   const hasCurrentAssignment = Boolean(selectedSeat.employee_id);
+  const selectedSeatCanDelete = canDeleteSeat(selectedSeat);
+  const selectedSeatDeleteBlockReason = getSeatDeleteBlockReason(selectedSeat);
   const employeeNameValue = form.employeeName.trim();
   const assignmentStateText = employeeNameValue
     ? matchedEmployee
@@ -426,6 +431,11 @@ export function SeatInspector({
     });
   }
 
+  function handleDeleteSeat() {
+    if (!selectedSeatCanDelete || pending) return;
+    onDeleteSeat();
+  }
+
   const fieldClassName = "mt-1 w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand focus:ring-4 focus:ring-orange-100 disabled:bg-slate-50 disabled:text-slate-500";
   const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100";
   const saveDisabledReason = pending
@@ -433,6 +443,9 @@ export function SeatInspector({
     : !isDirty
       ? "No draft changes to save."
       : null;
+  const deleteHelpText = selectedSeatCanDelete ? "Available custom draft seat can be deleted." : selectedSeatDeleteBlockReason ?? "Delete is unavailable for this seat.";
+  const vacateHelpText = hasCurrentAssignment ? "Assigned seat can be vacated without deleting the marker." : "No employee is assigned, so Vacate is not needed.";
+  const capabilityRowClassName = "flex items-start justify-between gap-3 rounded-lg bg-white/70 px-2.5 py-2 ring-1 ring-slate-100";
 
   if (collapsed && swapMode) return null;
 
@@ -650,6 +663,29 @@ export function SeatInspector({
           </div>
 
           <div className="sticky bottom-0 z-20 border-t border-slate-100 bg-white/95 px-4 py-3 shadow-[0_-16px_36px_rgba(15,23,42,0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/90">
+            <section aria-label={`Available actions for ${selectedSeat.label}`} className="mb-2 rounded-xl border border-slate-200 bg-slate-50/80 p-2 text-xs text-slate-600">
+              <div className="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-500">Seat action rules</div>
+              <div className="grid gap-1.5">
+                <div className={capabilityRowClassName}>
+                  <div className="min-w-0">
+                    <div className="font-black text-slate-900">Delete</div>
+                    <div id="seat-inspector-delete-help" className="mt-0.5 leading-4">{deleteHelpText}</div>
+                  </div>
+                  <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", selectedSeatCanDelete ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-100 text-slate-500 ring-slate-200"].join(" ")}>
+                    {selectedSeatCanDelete ? "Allowed" : "Blocked"}
+                  </span>
+                </div>
+                <div className={capabilityRowClassName}>
+                  <div className="min-w-0">
+                    <div className="font-black text-slate-900">Vacate</div>
+                    <div className="mt-0.5 leading-4">{vacateHelpText}</div>
+                  </div>
+                  <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", hasCurrentAssignment ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-100 text-slate-500 ring-slate-200"].join(" ")}>
+                    {hasCurrentAssignment ? "Allowed" : "Not needed"}
+                  </span>
+                </div>
+              </div>
+            </section>
             {localError && (
               <div className="mb-2 rounded-xl border border-rose-200 bg-rose-50 p-2 text-xs font-semibold text-rose-700">
                 {localError}
@@ -679,6 +715,18 @@ export function SeatInspector({
             <div className={["mt-2 grid gap-2", hasCurrentAssignment || isDirty ? "grid-cols-2" : "grid-cols-1"].join(" ")}>
               <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Start seat swap for ${selectedSeat.label}`} className="w-full rounded-xl">
                 Swap seat
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                onClick={handleDeleteSeat}
+                disabled={pending || !selectedSeatCanDelete}
+                aria-label={`Delete custom seat ${selectedSeat.label}`}
+                aria-describedby="seat-inspector-delete-help"
+                title={deleteHelpText}
+                className="w-full whitespace-normal rounded-xl leading-tight disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:hover:bg-slate-100"
+              >
+                Delete seat
               </Button>
               {hasCurrentAssignment && (
                 <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="w-full rounded-xl">
