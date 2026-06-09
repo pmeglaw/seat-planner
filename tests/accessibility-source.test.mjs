@@ -57,7 +57,7 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   assert.match(viewerSource, /canEdit=\{false\}/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*draftStatusLabel/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AdvancedDrawer/);
-  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Seat action rules/);
+  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Actions \/ Rules/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Vacate/);
 });
@@ -110,16 +110,28 @@ test("seat markers remain keyboard buttons with contextual accessible labels", a
   assert.match(source, /focus-visible:ring-4/);
 });
 
-test("inspector and filter actions retain accessible names and disabled save help", async () => {
+test("inspector sections, validation, and actions retain accessible confidence cues", async () => {
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
   const filterSource = await readSource("../components/seat-map/FilterPanel.tsx");
 
   assert.match(inspectorSource, /aria-label=\{`View details for \$\{selectedSeat\.label\}`\}/);
   assert.match(inspectorSource, /aria-label=\{`Back to map from \$\{selectedSeat\.label\} details`\}/);
   assert.match(inspectorSource, /aria-label=\{`Ask Planner about \$\{selectedSeat\.label\}`\}/);
-  assert.match(inspectorSource, /No draft changes to save\./);
+  assert.match(inspectorSource, /Seat Summary/);
+  assert.match(inspectorSource, /Assignment/);
+  assert.match(inspectorSource, /Seat Metadata/);
+  assert.match(inspectorSource, /Actions \/ Rules/);
+  assert.match(inspectorSource, /No unsaved changes\./);
+  assert.match(inspectorSource, /Saved to draft/);
+  assert.match(inspectorSource, /isProtectedOriginalSeatLabel/);
+  assert.match(inspectorSource, /Protected original/);
+  assert.match(inspectorSource, /Fix the highlighted inspector fields before saving/);
+  assert.match(inspectorSource, /Review inspector fields/);
+  assert.match(inspectorSource, /errorSummaryRef\.current\?\.focus\(\)/);
+  assert.match(inspectorSource, /focusInspectorField\(error\.field\)/);
+  assert.match(inspectorSource, /aria-invalid=\{Boolean\(fieldErrorMap\.employeeName\)\}/);
+  assert.match(inspectorSource, /Add an employee name before saving assignment details\./);
   assert.match(inspectorSource, /aria-describedby=\{saveDisabledReason \? "seat-inspector-save-help" : undefined\}/);
-  assert.match(inspectorSource, /Seat action rules/);
   assert.match(inspectorSource, /getSeatDeleteBlockReason/);
   assert.match(inspectorSource, /Delete seat/);
   assert.match(inspectorSource, /aria-describedby="seat-inspector-delete-help"/);
@@ -129,6 +141,36 @@ test("inspector and filter actions retain accessible names and disabled save hel
   assert.match(filterSource, /aria-label="People results"/);
   assert.match(filterSource, /aria-label=\{resultActionLabel\}/);
   assert.match(filterSource, /No assigned seat to open/);
+});
+
+test("unsaved inspector changes use an explicit save discard keep-editing guard", async () => {
+  const source = await readSource("../components/seat-map/SeatMap.tsx");
+  const drawerSource = await readSource("../components/seat-map/AdvancedDrawer.tsx");
+
+  assert.match(source, /type InspectorGuardAction/);
+  assert.match(source, /function requestInspectorGuard/);
+  assert.match(source, /requestInspectorGuard\(\{ kind: "select-seat", seatId \}\)/);
+  assert.match(source, /requestInspectorGuard\(\{ kind: "select-seat", seatId, center: true, sourceLabel \}\)/);
+  assert.match(source, /requestInspectorGuard\(\{ kind: "close-inspector" \}\)/);
+  assert.match(source, /requestInspectorGuard\(\{ kind: "start-add-seat" \}\)/);
+  assert.match(source, /requestInspectorGuard\(\{ kind: "start-move-seat" \}\)/);
+  assert.match(source, /requestInspectorGuard\(\{ kind: "start-swap-seat" \}\)/);
+  assert.match(source, /requestInspectorGuard\(\{ kind: "navigate-management" \}\)/);
+  assert.match(source, /queueCenterSeatInMap\(action\.seatId\)/);
+  assert.match(source, /Opened \$\{seat\.label\} from \$\{action\.sourceLabel\}\./);
+  assert.match(source, /Save or discard the selected seat edits before publishing/);
+  assert.match(source, /window\.location\.assign\("\/admin\/management"\)/);
+  assert.match(source, /id="inspector-unsaved-title"/);
+  assert.match(source, /Unsaved seat edits/);
+  assert.match(source, /Save changes/);
+  assert.match(source, /Discard/);
+  assert.match(source, /Keep editing/);
+  assert.match(source, /form\.requestSubmit\(\)/);
+  assert.match(source, /onSubmitBlocked=\{cancelPendingInspectorGuardAction\}/);
+  assert.match(source, /setPendingInspectorSaveAction\(null\)/);
+  assert.match(drawerSource, /onBeforeManagementNavigation/);
+  assert.match(drawerSource, /event\.preventDefault\(\)/);
+  assert.doesNotMatch(source, /You have unsaved seat edits\. Discard them\?/);
 });
 
 test("admin search and filter confidence controls stay accessible and admin-scoped", async () => {
@@ -171,7 +213,7 @@ test("custom seat deletion remains guarded by the parent map action", async () =
   const deleteFunction = source.match(/function deleteSelectedSeat\(\) \{[\s\S]*?function openPublishReview/);
 
   assert.ok(deleteFunction, "deleteSelectedSeat should remain source-visible.");
-  assert.match(deleteFunction[0], /if \(inspectorDirty && !canDiscardInspectorChanges\(\)\) return;/);
+  assert.match(deleteFunction[0], /Save or discard the selected seat edits before deleting a custom seat\./);
   assert.match(deleteFunction[0], /getSeatDeleteBlockReason\(selectedSeat\)/);
   assert.match(deleteFunction[0], /if \(!canDeleteSeat\(selectedSeat\)\)/);
   assert.match(deleteFunction[0], /deleteSeatAction\(selectedSeat\.id\)/);

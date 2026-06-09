@@ -25,6 +25,7 @@ type AdvancedDrawerProps = {
   onCancelSwapSeat: () => void;
   onPublish: () => void;
   onToggleMoveSeat: () => void;
+  onBeforeManagementNavigation: () => boolean;
   onClearSelection: () => void;
   onDeleteSelectedSeat: () => void;
   onBeforeCsvImport: () => DraftSnapshot;
@@ -142,6 +143,7 @@ export function AdvancedDrawer({
   onCancelSwapSeat,
   onPublish,
   onToggleMoveSeat,
+  onBeforeManagementNavigation,
   onClearSelection,
   onDeleteSelectedSeat,
   onBeforeCsvImport,
@@ -356,7 +358,13 @@ export function AdvancedDrawer({
           <ToolGroup title="Management" description="Directory, departments, and zones">
             <Link
               href="/admin/management"
-              onClick={onClose}
+              onClick={event => {
+                if (!onBeforeManagementNavigation()) {
+                  event.preventDefault();
+                  return;
+                }
+                onClose();
+              }}
               className="flex min-h-[58px] w-full items-center justify-between gap-3 rounded-lg border border-slate-200/70 bg-white/75 px-3 py-2 text-left text-slate-900 transition hover:border-slate-300 hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
             >
               <span className="min-w-0">

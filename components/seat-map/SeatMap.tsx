@@ -55,11 +55,21 @@ type SwapConfirmState = {
   targetSeatId: string;
 } | null;
 
+type InspectorGuardAction =
+  | { kind: "select-seat"; seatId: string; center?: boolean; sourceLabel?: string }
+  | { kind: "close-inspector" }
+  | { kind: "clear-selection" }
+  | { kind: "start-add-seat" }
+  | { kind: "start-move-seat" }
+  | { kind: "start-swap-seat" }
+  | { kind: "navigate-management" };
+
 const NAME_LABEL_COLLISION_X_THRESHOLD = 0.07;
 const NAME_LABEL_COLLISION_Y_THRESHOLD = 0.07;
 const DIRECT_SEAT_CLICK_RADIUS = 0.018;
 const ADMIN_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:names-visible";
 const DEFAULT_PUBLISHED_SEATS: SeatWithEmployee[] = [];
+const INSPECTOR_FORM_ID = "seat-inspector-form";
 const STATUS_LABELS: Record<SeatStatus, string> = {
   available: "Available",
   assigned: "Assigned",
@@ -203,6 +213,8 @@ export function SeatMap({
   const [resultRailCollapsed, setResultRailCollapsed] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [inspectorDirty, setInspectorDirty] = useState(false);
+  const [inspectorGuardAction, setInspectorGuardAction] = useState<InspectorGuardAction | null>(null);
+  const [pendingInspectorSaveAction, setPendingInspectorSaveAction] = useState<InspectorGuardAction | null>(null);
   const [searchSelectionNotice, setSearchSelectionNotice] = useState<string | null>(null);
   const [showNames, setShowNames] = useState(false);
   const [namesPreferenceHydrated, setNamesPreferenceHydrated] = useState(false);
@@ -281,6 +293,11 @@ export function SeatMap({
     function handleEscape(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
 
+      if (inspectorGuardAction) {
+        keepEditingInspector();
+        return;
+      }
+
       if (publishReviewOpen) {
         setPublishReviewOpen(false);
         return;
@@ -315,7 +332,15 @@ export function SeatMap({
         return;
       }
 
-      if (!isEditableTarget(event.target) && selectedSeatId && !inspectorDirty) {
+      if (!isEditableTarget(event.target) && selectedSeatId) {
+        if (inspectorDirty) {
+          setInspectorGuardAction({ kind: "close-inspector" });
+          setPendingInspectorSaveAction(null);
+          setInspectorCollapsed(false);
+          setActionNotice(null);
+          setActionError(null);
+          return;
+        }
         setSelectedSeatId(null);
         setInspectorCollapsed(false);
       }
@@ -323,7 +348,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, advancedOpen, askPlannerOpen, closeAdvancedDrawer, closeAskPlannerDrawer, filterCollapsed, inspectorDirty, moveSeatMode, publishReviewOpen, selectedSeatId, swapConfirm, swapSourceSeatId]);
+  }, [addSeatMode, advancedOpen, askPlannerOpen, closeAdvancedDrawer, closeAskPlannerDrawer, filterCollapsed, inspectorDirty, inspectorGuardAction, moveSeatMode, publishReviewOpen, selectedSeatId, swapConfirm, swapSourceSeatId]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -468,9 +493,162 @@ export function SeatMap({
     return searchOk && departmentOk && zoneOk && statusOk;
   }
 
-  function canDiscardInspectorChanges() {
-    if (!inspectorDirty) return true;
-    return window.confirm("You have unsaved seat edits. Discard them?");
+  function applyCloseInspectorAction() {
+    setSelectedSeatId(null);
+    setInspectorDirty(false);
+    setMoveSeatMode(false);
+    setSwapSourceSeatId(null);
+    setSwapConfirm(null);
+    setInspectorCollapsed(false);
+    setSearchSelectionNotice(null);
+  }
+
+  function applyClearSelectionAction() {
+    setSelectedSeatId(null);
+    setInspectorDirty(false);
+    setMoveSeatMode(false);
+    setAddSeatMode(false);
+    setSwapSourceSeatId(null);
+    setSwapConfirm(null);
+    setInspectorCollapsed(false);
+    setSearchSelectionNotice(null);
+  }
+
+  function applyStartAddSeatAction() {
+    setSelectedSeatId(null);
+    setInspectorDirty(false);
+    setMoveSeatMode(false);
+    setSwapSourceSeatId(null);
+    setSwapConfirm(null);
+    setAddSeatMode(true);
+    setAdvancedOpen(false);
+    setInspectorCollapsed(false);
+    setSearchSelectionNotice(null);
+  }
+
+  function applyStartMoveSeatAction() {
+    if (!selectedSeatId) return;
+    setAddSeatMode(false);
+    setSwapSourceSeatId(null);
+    setSwapConfirm(null);
+    setMoveSeatMode(current => !current);
+    setAdvancedOpen(false);
+  }
+
+  function applyStartSwapSeatAction() {
+    if (!selectedSeat) {
+      setActionError("Select the source seat first, then choose Swap seat.");
+      setActionNotice(null);
+      setAdvancedOpen(false);
+      return;
+    }
+
+    setActionError(null);
+    setActionNotice(null);
+    setInspectorDirty(false);
+    setMoveSeatMode(false);
+    setAddSeatMode(false);
+    setDragState(null);
+    setSwapConfirm(null);
+    setSwapSourceSeatId(selectedSeat.id);
+    setAdvancedOpen(false);
+    setInspectorCollapsed(true);
+  }
+
+  function applyInspectorGuardAction(action: InspectorGuardAction) {
+    if (action.kind === "select-seat") {
+      commitSeatSelection(action.seatId);
+      if (action.center) {
+        setFilterCollapsed(true);
+        queueCenterSeatInMap(action.seatId);
+      }
+      if (action.sourceLabel) {
+        const seat = localSeats.find(item => item.id === action.seatId);
+        if (seat) setSearchSelectionNotice(`Opened ${seat.label} from ${action.sourceLabel}.`);
+      }
+      return;
+    }
+
+    if (action.kind === "close-inspector") {
+      applyCloseInspectorAction();
+      return;
+    }
+
+    if (action.kind === "clear-selection") {
+      applyClearSelectionAction();
+      return;
+    }
+
+    if (action.kind === "start-add-seat") {
+      applyStartAddSeatAction();
+      return;
+    }
+
+    if (action.kind === "start-move-seat") {
+      applyStartMoveSeatAction();
+      return;
+    }
+
+    if (action.kind === "start-swap-seat") {
+      applyStartSwapSeatAction();
+      return;
+    }
+
+    window.location.assign("/admin/management");
+  }
+
+  function requestInspectorGuard(action: InspectorGuardAction) {
+    if (!inspectorDirty) {
+      applyInspectorGuardAction(action);
+      return true;
+    }
+
+    setInspectorGuardAction(action);
+    setPendingInspectorSaveAction(null);
+    setInspectorCollapsed(false);
+    setActionNotice(null);
+    setActionError(null);
+    return false;
+  }
+
+  function requestInspectorGuardSave() {
+    if (!inspectorGuardAction) return;
+    setPendingInspectorSaveAction(inspectorGuardAction);
+    setInspectorGuardAction(null);
+    window.requestAnimationFrame(() => {
+      const form = document.getElementById(INSPECTOR_FORM_ID);
+      if (form instanceof HTMLFormElement) form.requestSubmit();
+    });
+  }
+
+  function discardInspectorGuardEdits() {
+    if (!inspectorGuardAction) return;
+    const action = inspectorGuardAction;
+    setInspectorGuardAction(null);
+    setPendingInspectorSaveAction(null);
+    setInspectorDirty(false);
+    applyInspectorGuardAction(action);
+  }
+
+  function keepEditingInspector() {
+    setInspectorGuardAction(null);
+    setPendingInspectorSaveAction(null);
+    setInspectorCollapsed(false);
+  }
+
+  function cancelPendingInspectorGuardAction() {
+    setPendingInspectorSaveAction(null);
+  }
+
+  function describeInspectorGuardAction(action: InspectorGuardAction | null) {
+    if (!action) return "continuing.";
+    if (action.kind === "select-seat") return "opening another seat.";
+    if (action.kind === "close-inspector") return "closing the inspector.";
+    if (action.kind === "clear-selection") return "clearing the selection.";
+    if (action.kind === "start-add-seat") return "starting Add Seat mode.";
+    if (action.kind === "start-move-seat") return "starting Move Seat mode.";
+    if (action.kind === "start-swap-seat") return "starting Swap Seats mode.";
+    return "opening Management.";
   }
 
   function captureDraftSnapshot() {
@@ -506,7 +684,11 @@ export function SeatMap({
   }
 
   function restoreHistorySnapshot(snapshot: DraftSnapshot, nextHistory: typeof draftHistory, actionLabel: string, notice: string, selectRestoredSeatLabel?: string) {
-    if (inspectorDirty && !canDiscardInspectorChanges()) return;
+    if (inspectorDirty) {
+      setActionNotice(null);
+      setActionError("Save or discard the selected seat edits before using Undo or Redo.");
+      return;
+    }
 
     startTransition(async () => {
       try {
@@ -665,7 +847,7 @@ export function SeatMap({
     return true;
   }
 
-  function selectSeat(seatId: string) {
+  function commitSeatSelection(seatId: string) {
     if (canEdit && swapSourceSeatId) {
       if (seatId !== swapSourceSeatId) {
         return requestSwapTarget(seatId);
@@ -687,7 +869,6 @@ export function SeatMap({
       return true;
     }
 
-    if (selectedSeatId && !canDiscardInspectorChanges()) return false;
     setSelectedSeatId(seatId);
     setInspectorDirty(false);
     setMoveSeatMode(false);
@@ -699,7 +880,20 @@ export function SeatMap({
     return true;
   }
 
+  function selectSeat(seatId: string) {
+    if (selectedSeatId && selectedSeatId !== seatId && inspectorDirty) {
+      return requestInspectorGuard({ kind: "select-seat", seatId });
+    }
+
+    return commitSeatSelection(seatId);
+  }
+
   function openSeatFromResults(seatId: string, sourceLabel: string) {
+    if (selectedSeatId && selectedSeatId !== seatId && inspectorDirty) {
+      requestInspectorGuard({ kind: "select-seat", seatId, center: true, sourceLabel });
+      return;
+    }
+
     if (!selectSeat(seatId)) return;
 
     setFilterCollapsed(true);
@@ -718,16 +912,11 @@ export function SeatMap({
   }
 
   function startAddSeatMode() {
-    if (selectedSeatId && !canDiscardInspectorChanges()) return;
-    setSelectedSeatId(null);
-    setInspectorDirty(false);
-    setMoveSeatMode(false);
-    setSwapSourceSeatId(null);
-    setSwapConfirm(null);
-    setAddSeatMode(true);
-    setAdvancedOpen(false);
-    setInspectorCollapsed(false);
-    setSearchSelectionNotice(null);
+    if (selectedSeatId && inspectorDirty) {
+      requestInspectorGuard({ kind: "start-add-seat" });
+      return;
+    }
+    applyStartAddSeatAction();
   }
 
   function cancelAddSeatMode() {
@@ -735,15 +924,17 @@ export function SeatMap({
   }
 
   function clearSelection() {
-    if (selectedSeatId && !canDiscardInspectorChanges()) return;
-    setSelectedSeatId(null);
-    setInspectorDirty(false);
-    setMoveSeatMode(false);
-    setAddSeatMode(false);
-    setSwapSourceSeatId(null);
-    setSwapConfirm(null);
-    setInspectorCollapsed(false);
-    setSearchSelectionNotice(null);
+    if (selectedSeatId && inspectorDirty) {
+      requestInspectorGuard({ kind: "clear-selection" });
+      return;
+    }
+    applyClearSelectionAction();
+  }
+
+  function beforeManagementNavigation() {
+    if (!inspectorDirty) return true;
+    requestInspectorGuard({ kind: "navigate-management" });
+    return false;
   }
 
   function selectPlannerHighlightedSeat(seatId: string) {
@@ -775,18 +966,12 @@ export function SeatMap({
       return;
     }
 
-    if (!skipDirtyCheck && inspectorDirty && !canDiscardInspectorChanges()) return;
+    if (!skipDirtyCheck && inspectorDirty) {
+      requestInspectorGuard({ kind: "start-swap-seat" });
+      return;
+    }
 
-    setActionError(null);
-    setActionNotice(null);
-    setInspectorDirty(false);
-    setMoveSeatMode(false);
-    setAddSeatMode(false);
-    setDragState(null);
-    setSwapConfirm(null);
-    setSwapSourceSeatId(selectedSeat.id);
-    setAdvancedOpen(false);
-    setInspectorCollapsed(true);
+    applyStartSwapSeatAction();
   }
 
   function cancelSwapSeatMode() {
@@ -892,7 +1077,10 @@ export function SeatMap({
     }
 
     if (!dragState) {
-      if (selectedSeatId && !canDiscardInspectorChanges()) return;
+      if (selectedSeatId && inspectorDirty) {
+        requestInspectorGuard({ kind: "clear-selection" });
+        return;
+      }
       setSelectedSeatId(null);
       setInspectorDirty(false);
       setMoveSeatMode(false);
@@ -950,7 +1138,11 @@ export function SeatMap({
       return;
     }
 
-    if (inspectorDirty && !canDiscardInspectorChanges()) return;
+    if (inspectorDirty) {
+      setActionNotice(null);
+      setActionError("Save or discard the selected seat edits before deleting a custom seat.");
+      return;
+    }
 
     const deleteBlockReason = getSeatDeleteBlockReason(selectedSeat);
     if (!canDeleteSeat(selectedSeat)) {
@@ -1239,6 +1431,9 @@ export function SeatMap({
                 </button>
                 <Link
                   href="/admin/management"
+                  onClick={event => {
+                    if (!beforeManagementNavigation()) event.preventDefault();
+                  }}
                   className="hidden min-h-8 items-center justify-center rounded-full border border-white/70 bg-white/70 px-3 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:inline-flex"
                 >
                   Management
@@ -1490,12 +1685,13 @@ export function SeatMap({
         onPublish={openPublishReview}
         onToggleMoveSeat={() => {
           if (!selectedSeatId) return;
-          setAddSeatMode(false);
-          setSwapSourceSeatId(null);
-          setSwapConfirm(null);
-          setMoveSeatMode(current => !current);
-          setAdvancedOpen(false);
+          if (inspectorDirty) {
+            requestInspectorGuard({ kind: "start-move-seat" });
+            return;
+          }
+          applyStartMoveSeatAction();
         }}
+        onBeforeManagementNavigation={beforeManagementNavigation}
         onClearSelection={clearSelection}
         onDeleteSelectedSeat={deleteSelectedSeat}
         onBeforeCsvImport={captureDraftSnapshot}
@@ -1642,18 +1838,15 @@ export function SeatMap({
         searchMismatchNotice={selectedSeatMismatchNotice}
         searchMismatchClearLabel={clearSearchContextLabel}
         onClose={() => {
-          if (selectedSeatId && !canDiscardInspectorChanges()) return;
-          setSelectedSeatId(null);
-          setInspectorDirty(false);
-          setMoveSeatMode(false);
-          setSwapSourceSeatId(null);
-          setSwapConfirm(null);
-          setInspectorCollapsed(false);
-          setSearchSelectionNotice(null);
+          if (selectedSeatId && inspectorDirty) {
+            requestInspectorGuard({ kind: "close-inspector" });
+            return;
+          }
+          applyCloseInspectorAction();
         }}
         onClearSearchContext={searchActive ? clearSearch : clearStructuredFilters}
         onToggleCollapse={() => setInspectorCollapsed(current => !current)}
-        onStartSwapSeat={() => startSwapSeatMode(true)}
+        onStartSwapSeat={() => startSwapSeatMode()}
         onDeleteSeat={deleteSelectedSeat}
         onExplainSeat={explainSeatWithPlanner}
         onBeforeSeatUpdate={captureDraftSnapshot}
@@ -1667,13 +1860,49 @@ export function SeatMap({
           setLocalSeats(afterSeats);
           setLocalEmployees(afterEmployees);
           setActionNotice(`Saved changes to ${seat.label}.`);
+          if (pendingInspectorSaveAction) {
+            const action = pendingInspectorSaveAction;
+            setPendingInspectorSaveAction(null);
+            window.requestAnimationFrame(() => applyInspectorGuardAction(action));
+          }
         }}
         onError={message => {
           setActionError(message);
           if (message) setActionNotice(null);
         }}
         onDirtyChange={setInspectorDirty}
+        onSubmitBlocked={cancelPendingInspectorGuardAction}
       />
+
+      {inspectorGuardAction && selectedSeat && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:items-center">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="inspector-unsaved-title"
+            aria-describedby="inspector-unsaved-description"
+            className="w-full max-w-md rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+          >
+            <div>
+              <h2 id="inspector-unsaved-title" className="text-base font-black">Unsaved seat edits</h2>
+              <p id="inspector-unsaved-description" className="mt-1 text-sm leading-5 text-slate-500">
+                Save or discard changes to {selectedSeat.label} before {describeInspectorGuardAction(inspectorGuardAction)}
+              </p>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <Button type="button" onClick={keepEditingInspector} disabled={pending} className="w-full">
+                Keep editing
+              </Button>
+              <Button type="button" variant="danger" onClick={discardInspectorGuardEdits} disabled={pending} className="w-full">
+                Discard
+              </Button>
+              <Button type="button" variant="primary" onClick={requestInspectorGuardSave} disabled={pending} className="w-full">
+                Save changes
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {swapConfirm && swapSourceSeat && swapTargetSeat && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 p-3 backdrop-blur-[2px] sm:items-center">
