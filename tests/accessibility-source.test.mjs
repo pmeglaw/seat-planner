@@ -131,6 +131,41 @@ test("inspector and filter actions retain accessible names and disabled save hel
   assert.match(filterSource, /No assigned seat to open/);
 });
 
+test("admin search and filter confidence controls stay accessible and admin-scoped", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const filterSource = await readSource("../components/seat-map/FilterPanel.tsx");
+
+  assert.match(filterSource, /export function ActiveFilterChips/);
+  assert.match(filterSource, /aria-label="Active search and filters"/);
+  assert.match(filterSource, /aria-label=\{chip\.removeLabel\}/);
+  assert.match(filterSource, /Clear all/);
+  assert.match(filterSource, /export function SeatResultsList/);
+  assert.match(filterSource, /titleId = "seat-results-title"/);
+  assert.match(filterSource, /aria-label="Seat results"/);
+  assert.match(filterSource, /Select and center on map/);
+  assert.match(filterSource, /onKeyDown=\{event =>/);
+  assert.match(filterSource, /event\.key === "Enter"/);
+  assert.match(filterSource, /id="mobile-seat-results"/);
+  assert.match(filterSource, /titleId="mobile-seat-results-title"/);
+
+  assert.match(seatMapSource, /function removeActiveFilterChip/);
+  assert.match(seatMapSource, /setDepartment\("all"\)/);
+  assert.match(seatMapSource, /setZone\("all"\)/);
+  assert.match(seatMapSource, /setStatus\("all"\)/);
+  assert.match(seatMapSource, /function openSeatFromResults/);
+  assert.match(seatMapSource, /queueCenterSeatInMap\(seatId\)/);
+  assert.match(seatMapSource, /No search results/);
+  assert.match(seatMapSource, /No filter results/);
+  assert.match(seatMapSource, /No combined results/);
+  assert.match(seatMapSource, /Fit results unavailable because there are no matching seats/);
+  assert.match(seatMapSource, /showSeatResults=\{canEdit && filtersActive\}/);
+  assert.match(seatMapSource, /\{canEdit && filtersActive && !resultRailCollapsed && \(/);
+  assert.match(seatMapSource, /aria-controls="seat-results-rail"/);
+  assert.match(seatMapSource, /id="seat-results-rail"/);
+  assert.match(seatMapSource, /titleId="seat-results-rail-title"/);
+  assert.match(seatMapSource, /onSeatResultSelect=\{selectSeatResult\}/);
+});
+
 test("custom seat deletion remains guarded by the parent map action", async () => {
   const source = await readSource("../components/seat-map/SeatMap.tsx");
   const deleteFunction = source.match(/function deleteSelectedSeat\(\) \{[\s\S]*?function openPublishReview/);

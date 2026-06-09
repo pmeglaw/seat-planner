@@ -1,5 +1,7 @@
 "use client";
 
+import type { SeatStatus } from "@/lib/types";
+
 type EmployeeResult = {
   id: string;
   name: string;
@@ -8,6 +10,25 @@ type EmployeeResult = {
   seatId: string | null;
   seatLabel: string | null;
 };
+
+export type ActiveFilterChip = {
+  id: string;
+  label: string;
+  value: string;
+  removeLabel: string;
+};
+
+export type SeatResultItem = {
+  id: string;
+  label: string;
+  person: string;
+  department: string;
+  status: SeatStatus;
+  zone: string;
+  selected: boolean;
+};
+
+export type ResultStatusBreakdown = Record<SeatStatus, number>;
 
 type FilterPanelProps = {
   search: string;
@@ -25,13 +46,185 @@ type FilterPanelProps = {
   };
   employeeResults: EmployeeResult[];
   selectedSeatId: string | null;
+  activeChips: ActiveFilterChip[];
+  seatResults: SeatResultItem[];
+  resultStatusBreakdown: ResultStatusBreakdown;
+  resultEmptyTitle: string;
+  resultEmptyDescription: string;
+  showSeatResults: boolean;
   onToggle: () => void;
   onEmployeeSelect: (seatId: string) => void;
+  onSeatResultSelect: (seatId: string) => void;
   onDepartmentChange: (value: string) => void;
   onZoneChange: (value: string) => void;
   onStatusChange: (value: string) => void;
+  onRemoveActiveChip: (chipId: string) => void;
+  onClearSearch: () => void;
   onClearFilters: () => void;
+  onClearAll: () => void;
 };
+
+const STATUS_LABELS: Record<SeatStatus, string> = {
+  available: "Available",
+  assigned: "Assigned",
+  reserved: "Reserved",
+  unavailable: "Unavailable"
+};
+
+function statusPillClass(status: SeatStatus) {
+  if (status === "assigned") return "bg-emerald-50 text-emerald-700 ring-emerald-200";
+  if (status === "reserved") return "bg-amber-50 text-amber-800 ring-amber-200";
+  if (status === "unavailable") return "bg-slate-100 text-slate-700 ring-slate-200";
+  return "bg-white text-slate-700 ring-slate-200";
+}
+
+export function ActiveFilterChips({
+  chips,
+  onRemove,
+  onClearAll,
+  className = ""
+}: {
+  chips: ActiveFilterChip[];
+  onRemove: (chipId: string) => void;
+  onClearAll: () => void;
+  className?: string;
+}) {
+  if (!chips.length) return null;
+
+  return (
+    <div aria-label="Active search and filters" className={["flex flex-wrap items-center gap-1.5", className].filter(Boolean).join(" ")}>
+      {chips.map(chip => (
+        <span key={chip.id} className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-bold text-slate-700 ring-1 ring-slate-200">
+          <span className="shrink-0 text-slate-500">{chip.label}</span>
+          <span className="min-w-0 truncate text-slate-950">{chip.value}</span>
+          <button
+            type="button"
+            onClick={() => onRemove(chip.id)}
+            aria-label={chip.removeLabel}
+            title={chip.removeLabel}
+            className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+          >
+            x
+          </button>
+        </span>
+      ))}
+      {chips.length > 1 && (
+        <button
+          type="button"
+          onClick={onClearAll}
+          className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] font-black text-brand-dark transition hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+        >
+          Clear all
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function SeatResultsList({
+  id,
+  titleId = "seat-results-title",
+  results,
+  statusBreakdown,
+  emptyTitle,
+  emptyDescription,
+  searchActive,
+  filtersActive,
+  onSelect,
+  onClearSearch,
+  onClearFilters,
+  onClearAll,
+  className = ""
+}: {
+  id?: string;
+  titleId?: string;
+  results: SeatResultItem[];
+  statusBreakdown: ResultStatusBreakdown;
+  emptyTitle: string;
+  emptyDescription: string;
+  searchActive: boolean;
+  filtersActive: boolean;
+  onSelect: (seatId: string) => void;
+  onClearSearch: () => void;
+  onClearFilters: () => void;
+  onClearAll: () => void;
+  className?: string;
+}) {
+  const statusParts = (["assigned", "available", "reserved", "unavailable"] as SeatStatus[])
+    .map(item => `${statusBreakdown[item]} ${STATUS_LABELS[item].toLowerCase()}`)
+    .join(" · ");
+
+  return (
+    <section id={id} aria-labelledby={titleId} className={["rounded-xl border border-slate-200 bg-white/85 p-3", className].filter(Boolean).join(" ")}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 id={titleId} className="text-sm font-black text-slate-900">Seat results</h2>
+          <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500">{results.length} matching seats · {statusParts}</p>
+        </div>
+      </div>
+
+      {results.length > 0 ? (
+        <div role="list" aria-label="Seat results" className="mt-3 max-h-[260px] space-y-1.5 overflow-auto overscroll-contain pr-1">
+          {results.map(result => {
+            const resultActionLabel = `${result.label}. ${result.person}. ${result.department}. ${STATUS_LABELS[result.status]}. ${result.zone}. Select and center on map.`;
+
+            return (
+              <button
+                key={result.id}
+                type="button"
+                role="listitem"
+                aria-label={resultActionLabel}
+                aria-current={result.selected ? "true" : undefined}
+                onClick={() => onSelect(result.id)}
+                onKeyDown={event => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    onSelect(result.id);
+                  }
+                }}
+                className={[
+                  "grid w-full grid-cols-[minmax(3.2rem,auto)_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border p-2 text-left transition hover:border-orange-200 hover:bg-orange-50/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
+                  result.selected ? "border-orange-300 bg-orange-50/80 ring-2 ring-orange-100" : "border-slate-200 bg-white"
+                ].join(" ")}
+              >
+                <span className="text-sm font-black text-slate-950">{result.label}</span>
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-bold text-slate-800">{result.person}</span>
+                  <span className="block truncate text-[11px] text-slate-500">{result.department} · {result.zone}</span>
+                </span>
+                <span className={["rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ring-1", statusPillClass(result.status)].join(" ")}>
+                  {STATUS_LABELS[result.status]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+          <div className="font-black text-slate-800">{emptyTitle}</div>
+          <div className="mt-1 leading-5">{emptyDescription}</div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {searchActive && (
+              <button type="button" onClick={onClearSearch} className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+                Clear search
+              </button>
+            )}
+            {filtersActive && (
+              <button type="button" onClick={onClearFilters} className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+                Clear filters
+              </button>
+            )}
+            {searchActive && filtersActive && (
+              <button type="button" onClick={onClearAll} className="rounded-full bg-orange-50 px-3 py-1.5 text-[11px] font-black text-brand-dark ring-1 ring-orange-200 hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+                Clear all
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
 
 export function FilterPanel({
   search,
@@ -44,20 +237,26 @@ export function FilterPanel({
   stats,
   employeeResults,
   selectedSeatId,
+  activeChips,
+  seatResults,
+  resultStatusBreakdown,
+  resultEmptyTitle,
+  resultEmptyDescription,
+  showSeatResults,
   onToggle,
   onEmployeeSelect,
+  onSeatResultSelect,
   onDepartmentChange,
   onZoneChange,
   onStatusChange,
-  onClearFilters
+  onRemoveActiveChip,
+  onClearSearch,
+  onClearFilters,
+  onClearAll
 }: FilterPanelProps) {
-  const filtersActive = Boolean(search.trim()) || department !== "all" || zone !== "all" || status !== "all";
-  const activeFilters = [
-    search.trim() ? `Search: ${search.trim()}` : null,
-    department !== "all" ? `Department: ${department}` : null,
-    zone !== "all" ? `Zone: ${zone}` : null,
-    status !== "all" ? `Status: ${status}` : null
-  ].filter(Boolean) as string[];
+  const filtersActive = activeChips.length > 0;
+  const searchActive = Boolean(search.trim());
+  const structuredFiltersActive = department !== "all" || zone !== "all" || status !== "all";
   const statItems = [
     { label: "Total", value: stats.total },
     { label: "Assigned", value: stats.assigned },
@@ -73,13 +272,13 @@ export function FilterPanel({
           onClick={onToggle}
           aria-controls="seat-map-filter-panel"
           aria-expanded={false}
-          aria-label={filtersActive ? `Open filters, ${activeFilters.length} active` : "Open filters"}
-          title={filtersActive ? `${activeFilters.length} active filters` : "Open filters"}
+          aria-label={filtersActive ? `Open filters, ${activeChips.length} active` : "Open filters"}
+          title={filtersActive ? `${activeChips.length} active filters` : "Open filters"}
           className="relative flex min-h-11 w-full items-center justify-center rounded-full border border-white/70 bg-white/70 px-4 py-2 text-slate-700 shadow-[0_12px_32px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 lg:min-h-[164px] lg:w-[48px] lg:flex-col lg:px-2 lg:py-4"
         >
           {filtersActive && (
             <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-black text-white ring-2 ring-white lg:right-auto lg:top-3">
-              {activeFilters.length}
+              {activeChips.length}
             </span>
           )}
           <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] lg:rotate-180 lg:[writing-mode:vertical-rl]">Filters</span>
@@ -97,8 +296,8 @@ export function FilterPanel({
         <h2 id="seat-map-filter-title" className="text-sm font-black text-slate-900">Filters</h2>
         <div className="flex items-center gap-1">
           {filtersActive && (
-            <button type="button" onClick={onClearFilters} aria-label="Clear all filters" className="rounded-md px-2 py-1 text-[11px] font-bold text-brand hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
-              Clear
+            <button type="button" onClick={onClearAll} aria-label="Clear all active search and filters" className="rounded-md px-2 py-1 text-[11px] font-bold text-brand hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+              Clear all
             </button>
           )}
           <button type="button" onClick={onToggle} aria-controls="seat-map-filter-panel" aria-expanded={true} aria-label="Collapse filters" className="rounded-md px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
@@ -107,15 +306,7 @@ export function FilterPanel({
         </div>
       </div>
 
-      {activeFilters.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {activeFilters.map(filter => (
-            <span key={filter} className="max-w-full truncate rounded-full bg-white/80 px-2 py-1 text-[10px] font-bold text-brand-dark ring-1 ring-orange-100">
-              {filter}
-            </span>
-          ))}
-        </div>
-      )}
+      <ActiveFilterChips chips={activeChips} onRemove={onRemoveActiveChip} onClearAll={onClearAll} className="mb-3" />
 
       <div className="grid grid-cols-1 gap-2">
         <label className="block">
@@ -162,6 +353,25 @@ export function FilterPanel({
         </label>
       </div>
 
+      {showSeatResults && (
+        <div className="mt-4 border-t border-slate-100 pt-3 lg:hidden">
+          <SeatResultsList
+            id="mobile-seat-results"
+            titleId="mobile-seat-results-title"
+            results={seatResults}
+            statusBreakdown={resultStatusBreakdown}
+            emptyTitle={resultEmptyTitle}
+            emptyDescription={resultEmptyDescription}
+            searchActive={searchActive}
+            filtersActive={structuredFiltersActive}
+            onSelect={onSeatResultSelect}
+            onClearSearch={onClearSearch}
+            onClearFilters={onClearFilters}
+            onClearAll={onClearAll}
+          />
+        </div>
+      )}
+
       <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
         <div className="flex items-center justify-between">
           <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">People · {employeeResults.length}</div>
@@ -198,7 +408,7 @@ export function FilterPanel({
                   <span className="block truncate text-xs text-slate-500">{result.meta}</span>
                 </span>
                 <span className={["shrink-0 text-[11px] font-black", selected ? "text-brand-dark" : "text-slate-400"].join(" ")}>
-                  {selected ? "Selected" : result.seatLabel ?? "—"}
+                  {selected ? "Selected" : result.seatLabel ?? "-"}
                 </span>
               </button>
             );
@@ -207,8 +417,8 @@ export function FilterPanel({
               <div className="font-semibold text-slate-700">No employees match the current filters.</div>
               <div className="mt-1">Clear filters or search by seat label, employee name, position, department, or zone.</div>
               {filtersActive && (
-                <button type="button" onClick={onClearFilters} className="mt-2 text-xs font-bold text-brand hover:text-brand-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
-                  Clear filters
+                <button type="button" onClick={onClearAll} className="mt-2 text-xs font-bold text-brand hover:text-brand-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+                  Clear all
                 </button>
               )}
             </div>
