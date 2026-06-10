@@ -10,6 +10,7 @@ import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { canDeleteDraftSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { buildSeatSwapPlan } from "@/lib/seatSwap";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
+import { savedPointToVisualPoint, seatsToVisualSeats } from "@/lib/mapLayoutTransform";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import { SEAT_STATUSES, type AskPlannerRequest, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
 
@@ -219,11 +220,16 @@ async function upsertZoneOption(supabase: Awaited<ReturnType<typeof requireAdmin
 export async function createSeatAction(input: {
   x: number;
   y: number;
+  visualX?: number;
+  visualY?: number;
 }) {
   const supabase = await requireAdmin();
   const point = validateSeatCoordinates(input.x, input.y);
+  const visualPoint = input.visualX === undefined || input.visualY === undefined
+    ? savedPointToVisualPoint(point)
+    : validateSeatCoordinates(input.visualX, input.visualY);
   let draftSeats = await getDraftSeatZoneSources(supabase);
-  const zoneResult = detectSeatZoneForPointResult(point, draftSeats);
+  const zoneResult = detectSeatZoneForPointResult(visualPoint, seatsToVisualSeats(draftSeats));
 
   if (zoneResult.status !== "detected") {
     throw new Error(getSeatZoneDetectionFailureMessage(zoneResult) ?? "Could not detect a zone for this location.");

@@ -1,0 +1,240 @@
+import { normalizePoint, type NormalizedPoint } from "@/lib/seatMath";
+import type { SeatWithEmployee } from "@/lib/types";
+
+export const MAP_IMAGE_WIDTH = 1911;
+export const MAP_IMAGE_HEIGHT = 867;
+export const MAP_ASPECT_RATIO = MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT;
+export const MAP_IMAGE_SRC = "/images/office-floor-plan.png?v=map-v2-1911x867";
+
+type SeatCalibrationSource = Pick<SeatWithEmployee, "x" | "y"> &
+  Partial<Pick<SeatWithEmployee, "label" | "zone" | "department">>;
+
+type Bounds = {
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+};
+
+type LinearTransform = {
+  xScale: number;
+  xOffset: number;
+  yScale: number;
+  yOffset: number;
+};
+
+type CalibrationArea = {
+  id: string;
+  zones: string[];
+  labelPrefixes: string[];
+  savedBounds: Bounds;
+  visualBounds: Bounds;
+  transform: LinearTransform;
+};
+
+const DEFAULT_PREVIEW_TRANSFORM: LinearTransform = {
+  xScale: 0.92,
+  xOffset: 0.05,
+  yScale: 1.04,
+  yOffset: 0.016
+};
+
+const CALIBRATION_AREAS: CalibrationArea[] = [
+  {
+    id: "north-pod",
+    zones: ["north pod"],
+    labelPrefixes: ["N"],
+    savedBounds: { xMin: 0.25, xMax: 0.5, yMin: 0.03, yMax: 0.26 },
+    visualBounds: { xMin: 0.3, xMax: 0.51, yMin: 0.05, yMax: 0.25 },
+    transform: { xScale: 0.815189, xOffset: 0.101478, yScale: 0.994098, yOffset: 0.014924 }
+  },
+  {
+    id: "northeast-pod",
+    zones: ["northeast pod"],
+    labelPrefixes: ["NE"],
+    savedBounds: { xMin: 0.72, xMax: 0.97, yMin: 0.03, yMax: 0.2 },
+    visualBounds: { xMin: 0.69, xMax: 0.9, yMin: 0.04, yMax: 0.19 },
+    transform: { xScale: 0.993361, xOffset: -0.053816, yScale: 0.994908, yOffset: 0.013884 }
+  },
+  {
+    id: "west-pod",
+    zones: ["west pod"],
+    labelPrefixes: ["W"],
+    savedBounds: { xMin: 0.04, xMax: 0.23, yMin: 0.34, yMax: 0.78 },
+    visualBounds: { xMin: 0.11, xMax: 0.26, yMin: 0.38, yMax: 0.82 },
+    transform: { xScale: 0.879674, xOffset: 0.076266, yScale: 1.040423, yOffset: 0.016583 }
+  },
+  {
+    id: "center-west-upper",
+    zones: ["center west"],
+    labelPrefixes: ["CW"],
+    savedBounds: { xMin: 0.27, xMax: 0.37, yMin: 0.33, yMax: 0.5 },
+    visualBounds: { xMin: 0.31, xMax: 0.39, yMin: 0.37, yMax: 0.49 },
+    transform: { xScale: 1.105715, xOffset: -0.005793, yScale: 1.088, yOffset: -0.012079 }
+  },
+  {
+    id: "center-west-lower",
+    zones: ["center west"],
+    labelPrefixes: ["CW"],
+    savedBounds: { xMin: 0.28, xMax: 0.36, yMin: 0.5, yMax: 0.76 },
+    visualBounds: { xMin: 0.32, xMax: 0.39, yMin: 0.55, yMax: 0.81 },
+    transform: { xScale: 0.7805, xOffset: 0.1035, yScale: 1.125499, yOffset: -0.031461 }
+  },
+  {
+    id: "center-desks",
+    zones: ["center desks"],
+    labelPrefixes: ["C"],
+    savedBounds: { xMin: 0.39, xMax: 0.62, yMin: 0.49, yMax: 0.73 },
+    visualBounds: { xMin: 0.42, xMax: 0.61, yMin: 0.55, yMax: 0.78 },
+    transform: { xScale: 0.876898, xOffset: 0.068871, yScale: 1.069709, yOffset: 0.013881 }
+  },
+  {
+    id: "east-pod",
+    zones: ["east pod"],
+    labelPrefixes: ["E"],
+    savedBounds: { xMin: 0.55, xMax: 0.8, yMin: 0.34, yMax: 0.5 },
+    visualBounds: { xMin: 0.56, xMax: 0.77, yMin: 0.38, yMax: 0.52 },
+    transform: { xScale: 0.867223, xOffset: 0.075999, yScale: 1.108807, yOffset: -0.010603 }
+  },
+  {
+    id: "southeast-office-upper",
+    zones: ["southeast office"],
+    labelPrefixes: ["SE"],
+    savedBounds: { xMin: 0.86, xMax: 0.95, yMin: 0.52, yMax: 0.59 },
+    visualBounds: { xMin: 0.79, xMax: 0.88, yMin: 0.56, yMax: 0.62 },
+    transform: { xScale: 0.972807, xOffset: -0.046255, yScale: 1.04, yOffset: 0.015514 }
+  },
+  {
+    id: "southeast-office-lower",
+    zones: ["southeast office"],
+    labelPrefixes: ["SE"],
+    savedBounds: { xMin: 0.88, xMax: 0.96, yMin: 0.59, yMax: 0.66 },
+    visualBounds: { xMin: 0.82, xMax: 0.9, yMin: 0.64, yMax: 0.69 },
+    transform: { xScale: 1.122826, xOffset: -0.176212, yScale: 0.896007, yOffset: 0.108551 }
+  }
+];
+
+function normalizeText(value: string | null | undefined) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function getZoneName(source?: Partial<Pick<SeatWithEmployee, "zone" | "department">>) {
+  return normalizeText(source?.zone ?? source?.department);
+}
+
+function getLabelPrefix(source?: { label?: string | null }) {
+  return source?.label?.trim().toUpperCase().match(/^[A-Z]+/)?.[0] ?? "";
+}
+
+function pointInsideBounds(point: NormalizedPoint, bounds: Bounds, pad = 0) {
+  return (
+    point.x >= bounds.xMin - pad &&
+    point.x <= bounds.xMax + pad &&
+    point.y >= bounds.yMin - pad &&
+    point.y <= bounds.yMax + pad
+  );
+}
+
+function areaMatchesSource(area: CalibrationArea, source?: SeatCalibrationSource) {
+  if (!source) return false;
+
+  const zone = getZoneName(source);
+  const labelPrefix = getLabelPrefix(source);
+  const zoneMatches = zone ? area.zones.includes(zone) : false;
+  const labelMatches = labelPrefix ? area.labelPrefixes.includes(labelPrefix) : false;
+
+  return (zoneMatches || labelMatches) && pointInsideBounds(source, area.savedBounds, 0.015);
+}
+
+function squaredDistanceToBounds(point: NormalizedPoint, bounds: Bounds) {
+  const dx = point.x < bounds.xMin ? bounds.xMin - point.x : point.x > bounds.xMax ? point.x - bounds.xMax : 0;
+  const dy = point.y < bounds.yMin ? bounds.yMin - point.y : point.y > bounds.yMax ? point.y - bounds.yMax : 0;
+  return dx * dx + dy * dy;
+}
+
+function areaAffinity(area: CalibrationArea, source?: SeatCalibrationSource | { zone?: string | null; label?: string | null }) {
+  const zone = getZoneName(source);
+  const labelPrefix = getLabelPrefix(source);
+  if (zone && area.zones.includes(zone)) return 2;
+  if (labelPrefix && area.labelPrefixes.includes(labelPrefix)) return 1;
+  return 0;
+}
+
+function getSavedCalibrationArea(source?: SeatCalibrationSource) {
+  if (!source) return null;
+
+  const exactArea = CALIBRATION_AREAS.find(area => areaMatchesSource(area, source));
+  if (exactArea) return exactArea;
+
+  const point = source ? normalizePoint({ x: source.x, y: source.y }) : { x: 0.5, y: 0.5 };
+  return [...CALIBRATION_AREAS].sort((left, right) => {
+    const affinityDelta = areaAffinity(right, source) - areaAffinity(left, source);
+    if (affinityDelta !== 0) return affinityDelta;
+    return squaredDistanceToBounds(point, left.savedBounds) - squaredDistanceToBounds(point, right.savedBounds);
+  })[0] ?? null;
+}
+
+function getVisualCalibrationArea(
+  point: NormalizedPoint,
+  context?: { zone?: string | null; label?: string | null; source?: SeatCalibrationSource }
+) {
+  if (context?.source) return getSavedCalibrationArea(context.source);
+  if (!context?.zone && !context?.label) return null;
+
+  const matchingAreas = CALIBRATION_AREAS.filter(area => {
+    const affinity = areaAffinity(area, context);
+    return affinity > 0 && pointInsideBounds(point, area.visualBounds, 0.015);
+  });
+
+  if (matchingAreas.length > 0) {
+    return matchingAreas.sort((left, right) => {
+      return squaredDistanceToBounds(point, left.visualBounds) - squaredDistanceToBounds(point, right.visualBounds);
+    })[0];
+  }
+
+  return [...CALIBRATION_AREAS].sort((left, right) => {
+    const affinityDelta = areaAffinity(right, context) - areaAffinity(left, context);
+    if (affinityDelta !== 0) return affinityDelta;
+    return squaredDistanceToBounds(point, left.visualBounds) - squaredDistanceToBounds(point, right.visualBounds);
+  })[0] ?? null;
+}
+
+function applyTransform(point: NormalizedPoint, transform: LinearTransform) {
+  return normalizePoint({
+    x: point.x * transform.xScale + transform.xOffset,
+    y: point.y * transform.yScale + transform.yOffset
+  });
+}
+
+function applyInverseTransform(point: NormalizedPoint, transform: LinearTransform) {
+  return normalizePoint({
+    x: (point.x - transform.xOffset) / transform.xScale,
+    y: (point.y - transform.yOffset) / transform.yScale
+  });
+}
+
+export function savedPointToVisualPoint(point: NormalizedPoint, source?: SeatCalibrationSource) {
+  const area = getSavedCalibrationArea(source);
+  return applyTransform(point, area?.transform ?? DEFAULT_PREVIEW_TRANSFORM);
+}
+
+export function visualPointToSavedPoint(
+  point: NormalizedPoint,
+  context?: { zone?: string | null; label?: string | null; source?: SeatCalibrationSource }
+) {
+  const area = getVisualCalibrationArea(point, context);
+  return applyInverseTransform(point, area?.transform ?? DEFAULT_PREVIEW_TRANSFORM);
+}
+
+export function seatToVisualSeat<T extends SeatCalibrationSource>(seat: T): T {
+  const visualPoint = savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat);
+  return {
+    ...seat,
+    x: visualPoint.x,
+    y: visualPoint.y
+  };
+}
+
+export function seatsToVisualSeats<T extends SeatCalibrationSource>(seats: T[]): T[] {
+  return seats.map(seatToVisualSeat);
+}

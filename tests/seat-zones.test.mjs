@@ -28,41 +28,40 @@ function seat(label, x, y, zone) {
   return { label, x, y, zone, department: null };
 }
 
-test("known seeded coordinates infer their seating zones", () => {
-  assert.equal(inferSeatZoneFromPoint({ x: 0.288917, y: 0.066468 }), "North Pod");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.771941, y: 0.06746 }), "Northeast Pod");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.080077, y: 0.382937 }), "West Pod");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.299167, y: 0.375992 }), "Center West");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.42665, y: 0.536706 }), "Center Desks");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.588085, y: 0.382937 }), "East Pod");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.88533, y: 0.548611 }), "Southeast Office");
+test("known preview coordinates infer their seating zones", () => {
+  assert.equal(inferSeatZoneFromPoint({ x: 0.337, y: 0.081 }), "North Pod");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.713, y: 0.081 }), "Northeast Pod");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.147, y: 0.415 }), "West Pod");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.325, y: 0.397 }), "Center West");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.443, y: 0.588 }), "Center Desks");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.586, y: 0.414 }), "East Pod");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.815, y: 0.586 }), "Southeast Office");
 });
 
 test("points outside approved zone rectangles do not infer a zone", () => {
-  assert.equal(inferSeatZoneFromPoint({ x: 0.66, y: 0.6 }), null);
+  assert.equal(inferSeatZoneFromPoint({ x: 0.48, y: 0.35 }), null);
   assert.equal(inferSeatZoneFromPoint({ x: 0.12, y: 0.3 }), null);
 });
 
 test("private office coordinates infer their nearest approved zones", () => {
-  assert.equal(inferSeatZoneFromPoint({ x: 0.12, y: 0.07 }), "North Pod");
   assert.equal(inferSeatZoneFromPoint({ x: 0.08, y: 0.16 }), "North Pod");
   assert.equal(inferSeatZoneFromPoint({ x: 0.55, y: 0.16 }), "Northeast Pod");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.04, y: 0.84 }), "West Pod");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.32, y: 0.9 }), "Center West");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.52, y: 0.8 }), "Center Desks");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.73, y: 0.68 }), "Southeast Office");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.91, y: 0.38 }), "Southeast Office");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.91, y: 0.78 }), "Southeast Office");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.13, y: 0.77 }), "West Pod");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.34, y: 0.58 }), "Center West");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.52, y: 0.74 }), "Center Desks");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.72, y: 0.68 }), "Southeast Office");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.85, y: 0.38 }), "Southeast Office");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.85, y: 0.78 }), "Southeast Office");
 });
 
 test("zone detection uses approved office rectangles without requiring nearby seats", () => {
-  assert.equal(detectSeatZoneForPoint({ x: 0.12, y: 0.07 }, []), "North Pod");
+  assert.equal(detectSeatZoneForPoint({ x: 0.12, y: 0.16 }, []), "North Pod");
   assert.equal(detectSeatZoneForPoint({ x: 0.55, y: 0.16 }, []), "Northeast Pod");
-  assert.equal(detectSeatZoneForPoint({ x: 0.91, y: 0.78 }, []), "Southeast Office");
+  assert.equal(detectSeatZoneForPoint({ x: 0.85, y: 0.78 }, []), "Southeast Office");
 });
 
 test("zone detection reports exact rectangle matches as deterministic", () => {
-  assert.deepEqual(inferSeatZoneFromPointResult({ x: 0.588085, y: 0.382937 }), {
+  assert.deepEqual(inferSeatZoneFromPointResult({ x: 0.586, y: 0.414 }), {
     status: "detected",
     zone: "East Pod"
   });
@@ -70,12 +69,12 @@ test("zone detection reports exact rectangle matches as deterministic", () => {
 
 test("zone detection falls back to nearby same-zone seat clusters", () => {
   const seats = [
-    seat("W10", 0.067905, 0.722222, "West Pod"),
-    seat("W11", 0.122357, 0.722222, "West Pod"),
-    seat("W12", 0.183857, 0.722222, "West Pod")
+    seat("W07", 0.136, 0.588, "West Pod"),
+    seat("W08", 0.187, 0.588, "West Pod"),
+    seat("W10", 0.136, 0.768, "West Pod")
   ];
 
-  const point = { x: 0.12, y: 0.8 };
+  const point = { x: 0.12, y: 0.66 };
   assert.equal(inferSeatZoneFromPoint(point), null);
   assert.equal(detectSeatZoneForPoint(point, seats), "West Pod");
   assert.deepEqual(detectSeatZoneForPointResult(point, seats), {
@@ -85,11 +84,11 @@ test("zone detection falls back to nearby same-zone seat clusters", () => {
 });
 
 test("zone detection avoids clear hallway guesses and ambiguous clusters", () => {
-  const farResult = detectSeatZoneForPointResult({ x: 0.12, y: 0.3 }, [
-    seat("W01", 0.080077, 0.382937, "West Pod")
+  const farResult = detectSeatZoneForPointResult({ x: 0.16, y: 0.31 }, [
+    seat("W01", 0.147, 0.415, "West Pod")
   ]);
-  assert.equal(detectSeatZoneForPoint({ x: 0.12, y: 0.3 }, [
-    seat("W01", 0.080077, 0.382937, "West Pod")
+  assert.equal(detectSeatZoneForPoint({ x: 0.16, y: 0.31 }, [
+    seat("W01", 0.147, 0.415, "West Pod")
   ]), null);
   assert.deepEqual(farResult, { status: "none", zone: null });
   assert.equal(
@@ -114,11 +113,11 @@ test("zone detection avoids clear hallway guesses and ambiguous clusters", () =>
 
 test("zone detection stays conservative between nearby zones", () => {
   const seats = [
-    seat("W12", 0.35, 0.8, "West Pod"),
-    seat("C08", 0.45, 0.8, "Center Desks")
+    seat("A01", 0.46, 0.66, "Alpha Zone"),
+    seat("B01", 0.54, 0.66, "Beta Zone")
   ];
 
-  assert.deepEqual(detectSeatZoneForPointResult({ x: 0.4, y: 0.8 }, seats), {
+  assert.deepEqual(detectSeatZoneForPointResult({ x: 0.5, y: 0.66 }, seats), {
     status: "ambiguous",
     zone: null
   });
@@ -131,9 +130,9 @@ test("zone rectangles are explicit normalized bounds", () => {
   }, {});
 
   assert.deepEqual(counts, {
-    "North Pod": 4,
+    "North Pod": 2,
     "Northeast Pod": 3,
-    "West Pod": 3,
+    "West Pod": 2,
     "Center West": 2,
     "Center Desks": 2,
     "East Pod": 1,

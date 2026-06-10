@@ -20,6 +20,14 @@ import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapActio
 import { normalizePoint } from "@/lib/seatMath";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
+import {
+  MAP_IMAGE_HEIGHT,
+  MAP_IMAGE_SRC,
+  MAP_IMAGE_WIDTH,
+  savedPointToVisualPoint,
+  seatsToVisualSeats,
+  visualPointToSavedPoint
+} from "@/lib/mapLayoutTransform";
 import { buildPublishChangeSummary, type PublishChangeItem } from "@/lib/publishSummary";
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
@@ -400,6 +408,8 @@ export function SeatMap({
   const selectedSeat = localSeats.find(seat => seat.id === selectedSeatId) ?? null;
   const swapSourceSeat = swapSourceSeatId ? localSeats.find(seat => seat.id === swapSourceSeatId) ?? null : null;
   const swapTargetSeat = swapConfirm ? localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null : null;
+  const visualLocalSeats = useMemo(() => seatsToVisualSeats(localSeats), [localSeats]);
+  const visualSeatById = useMemo(() => new Map(visualLocalSeats.map(seat => [seat.id, seat])), [visualLocalSeats]);
   const plannerHighlightedSeatIdSet = useMemo(() => new Set(plannerHighlightedSeatIds), [plannerHighlightedSeatIds]);
   const searchQuery = search.trim();
   const searchActive = Boolean(searchQuery);
@@ -431,10 +441,10 @@ export function SeatMap({
   const selectedSeatMatchesFilters = selectedSeat ? matchesFilters(selectedSeat) : true;
   const crowdedNameSeatIdSet = useMemo(() => {
     const crowded = new Set<string>();
-    const assignedSeats = localSeats.filter(seat => seat.employee);
+    const assignedSeats = visualLocalSeats.filter(seat => seat.employee);
 
     assignedSeats.forEach(seat => {
-      const hasNearbySeat = localSeats.some(otherSeat => {
+      const hasNearbySeat = visualLocalSeats.some(otherSeat => {
         if (otherSeat.id === seat.id) return false;
         return (
           Math.abs(otherSeat.x - seat.x) <= NAME_LABEL_COLLISION_X_THRESHOLD &&
@@ -446,7 +456,7 @@ export function SeatMap({
     });
 
     return crowded;
-  }, [localSeats]);
+  }, [visualLocalSeats]);
   const undoAvailable = canUndoDraftHistory(draftHistory);
   const redoAvailable = canRedoDraftHistory(draftHistory);
   const lastUndoLabel = draftHistory.undoStack.at(-1)?.label ?? null;
@@ -777,22 +787,25 @@ export function SeatMap({
   function centerSeatInMap(seatId: string) {
     const seat = localSeats.find(item => item.id === seatId);
     if (!seat) return;
-    scrollMapToPoint(seat.x, seat.y);
+    const point = savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat);
+    scrollMapToPoint(point.x, point.y);
   }
 
   function fitSeatsInMap(seatsToFit: SeatWithEmployee[]) {
     if (!seatsToFit.length) return;
     if (seatsToFit.length === 1) {
-      scrollMapToPoint(seatsToFit[0].x, seatsToFit[0].y);
+      const point = savedPointToVisualPoint({ x: seatsToFit[0].x, y: seatsToFit[0].y }, seatsToFit[0]);
+      scrollMapToPoint(point.x, point.y);
       return;
     }
 
-    const bounds = seatsToFit.reduce(
-      (current, seat) => ({
-        minX: Math.min(current.minX, seat.x),
-        maxX: Math.max(current.maxX, seat.x),
-        minY: Math.min(current.minY, seat.y),
-        maxY: Math.max(current.maxY, seat.y)
+    const visualSeatsToFit = seatsToFit.map(seat => savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat));
+    const bounds = visualSeatsToFit.reduce(
+      (current, point) => ({
+        minX: Math.min(current.minX, point.x),
+        maxX: Math.max(current.maxX, point.x),
+        minY: Math.min(current.minY, point.y),
+        maxY: Math.max(current.maxY, point.y)
       }),
       { minX: 1, maxX: 0, minY: 1, maxY: 0 }
     );
@@ -1021,12 +1034,12 @@ export function SeatMap({
     const seatTarget = target.closest<HTMLElement>("[data-seat-id]");
 
     if (canEdit && addSeatMode) {
-      const point = eventToPoint(event);
-      if (!point) return;
+      const visualPoint = eventToPoint(event);
+      if (!visualPoint) return;
 
       if (seatTarget?.dataset.seatId) return;
 
-      const targetZoneResult = detectSeatZoneForPointResult(point, localSeats);
+      const targetZoneResult = detectSeatZoneForPointResult(visualPoint, visualLocalSeats);
       if (targetZoneResult.status !== "detected") {
         setActionNotice(null);
         setActionError(getSeatZoneDetectionFailureMessage(targetZoneResult) ?? "Could not detect a zone for this location.");
@@ -1038,11 +1051,14 @@ export function SeatMap({
 
       startTransition(async () => {
         try {
+          const savedPoint = visualPointToSavedPoint(visualPoint, { zone: targetZone });
           setActionError(null);
           setActionNotice(null);
           const created = await createSeatAction({
-            x: point.x,
-            y: point.y
+            x: savedPoint.x,
+            y: savedPoint.y,
+            visualX: visualPoint.x,
+            visualY: visualPoint.y
           });
           const afterSeats = replaceSeat(beforeSnapshot.seats, created);
           recordDraftHistory(`Add ${created.label}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
@@ -1089,29 +1105,38 @@ export function SeatMap({
 
   function handleMapPointerMove(event: PointerEvent<HTMLDivElement>) {
     if (!dragState) return;
-    const point = eventToPoint(event);
-    if (!point) return;
+    const visualPoint = eventToPoint(event);
+    if (!visualPoint) return;
 
-    setLocalSeats(current => current.map(seat => (seat.id === dragState.seatId ? { ...seat, x: point.x, y: point.y } : seat)));
+    setLocalSeats(current => current.map(seat => {
+      if (seat.id !== dragState.seatId) return seat;
+      const savedPoint = visualPointToSavedPoint(visualPoint, { source: seat });
+      return { ...seat, x: savedPoint.x, y: savedPoint.y };
+    }));
   }
 
   function handleMapPointerUp(event: PointerEvent<HTMLDivElement>) {
     if (!dragState) return;
-    const point = eventToPoint(event);
+    const visualPoint = eventToPoint(event);
     const seatId = dragState.seatId;
     const beforeSnapshot = dragState.beforeSnapshot;
     setDragState(null);
     setMoveSeatMode(false);
-    if (!point) {
+    if (!visualPoint) {
       applyRestoredDraftPayload(beforeSnapshot);
       return;
     }
+
+    const movedSeat = localSeats.find(seat => seat.id === seatId);
+    const savedPoint = movedSeat
+      ? visualPointToSavedPoint(visualPoint, { source: movedSeat })
+      : visualPointToSavedPoint(visualPoint);
 
     startTransition(async () => {
       try {
         setActionError(null);
         setActionNotice(null);
-        const updated = await moveSeatAction({ seatId, x: point.x, y: point.y });
+        const updated = await moveSeatAction({ seatId, x: savedPoint.x, y: savedPoint.y });
         const afterSeats = replaceSeat(beforeSnapshot.seats, updated);
         recordDraftHistory(`Move ${updated.label}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
         setLocalSeats(afterSeats);
@@ -1608,7 +1633,7 @@ export function SeatMap({
             >
               <div
                 ref={mapRef}
-                className={["relative mx-auto w-[960px] max-w-none lg:w-full lg:max-w-[1561px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
+                className={["relative mx-auto w-[1040px] max-w-none sm:w-[1180px] lg:w-full lg:max-w-[1911px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
                 onPointerDown={handleMapPointerDown}
                 onPointerMove={handleMapPointerMove}
                 onPointerUp={handleMapPointerUp}
@@ -1618,10 +1643,10 @@ export function SeatMap({
                 }}
               >
                 <Image
-                  src="/images/office-floor-plan.png"
+                  src={MAP_IMAGE_SRC}
                   alt="Office floor plan"
-                  width={1561}
-                  height={1008}
+                  width={MAP_IMAGE_WIDTH}
+                  height={MAP_IMAGE_HEIGHT}
                   priority
                   className="block h-auto w-full select-none"
                   draggable={false}
@@ -1630,11 +1655,12 @@ export function SeatMap({
                 <div className="absolute inset-0">
                   {localSeats.map(seat => {
                     const seatMatchesFilters = matchesFilters(seat);
+                    const visualSeat = visualSeatById.get(seat.id) ?? seat;
 
                     return (
                       <SeatMarker
                         key={seat.id}
-                        seat={seat}
+                        seat={visualSeat}
                         selected={seat.id === selectedSeatId}
                         dimmed={!seatMatchesFilters}
                         canEdit={canEdit}
