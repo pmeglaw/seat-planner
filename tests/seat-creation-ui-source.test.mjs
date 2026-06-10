@@ -96,11 +96,11 @@ test("seat labels stay readable and expand on hover or keyboard focus", async ()
   const markerSource = await readFile(new URL("../components/seat-map/SeatMarker.tsx", import.meta.url), "utf8");
 
   assert.match(markerSource, /getPassiveEmployeeLabel/);
-  assert.match(markerSource, /hover:w-\[154px\]/);
-  assert.match(markerSource, /focus-visible:w-\[154px\]/);
+  assert.match(markerSource, /group-hover:w-\[126px\]/);
+  assert.match(markerSource, /group-focus-visible:w-\[126px\]/);
   assert.match(markerSource, /group-hover:block group-focus-visible:block/);
-  assert.match(markerSource, /text-\[11px\]/);
-  assert.match(markerSource, /selected[\s\S]*w-\[152px\]/);
+  assert.match(markerSource, /text-\[10px\]/);
+  assert.match(markerSource, /selected[\s\S]*w-\[140px\]/);
   assert.match(markerSource, /searchProminent[\s\S]*border-orange-300 bg-orange-50\/90/);
 });
 

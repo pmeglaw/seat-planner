@@ -27,28 +27,28 @@ type LabelPlacement = "above" | "aboveCompact" | "right" | "aboveRight" | "left"
 
 const LABEL_PLACEMENT_CLASSES: Record<LabelPlacement, { chip: string; connector: string }> = {
   above: {
-    chip: "bottom-[18px] left-1/2 -translate-x-1/2",
-    connector: "bottom-[9px] left-0 h-[9px] w-px -translate-x-1/2"
+    chip: "bottom-[14px] left-1/2 -translate-x-1/2",
+    connector: "bottom-[7px] left-0 h-[7px] w-px -translate-x-1/2"
   },
   aboveCompact: {
-    chip: "bottom-[16px] left-1/2 -translate-x-1/2",
-    connector: "bottom-[8px] left-0 h-[8px] w-px -translate-x-1/2"
+    chip: "bottom-[12px] left-1/2 -translate-x-1/2",
+    connector: "bottom-[6px] left-0 h-[6px] w-px -translate-x-1/2"
   },
   right: {
-    chip: "left-[18px] top-1/2 -translate-y-1/2",
-    connector: "left-[9px] top-0 h-px w-[9px] -translate-y-1/2"
+    chip: "left-[14px] top-1/2 -translate-y-1/2",
+    connector: "left-[7px] top-0 h-px w-[7px] -translate-y-1/2"
   },
   aboveRight: {
-    chip: "bottom-[13px] left-[14px]",
-    connector: "bottom-[7px] left-[7px] h-[8px] w-px -rotate-45"
+    chip: "bottom-[10px] left-[10px]",
+    connector: "bottom-[5px] left-[5px] h-[6px] w-px -rotate-45"
   },
   left: {
-    chip: "right-[18px] top-1/2 -translate-y-1/2",
-    connector: "right-[9px] top-0 h-px w-[9px] -translate-y-1/2"
+    chip: "right-[14px] top-1/2 -translate-y-1/2",
+    connector: "right-[7px] top-0 h-px w-[7px] -translate-y-1/2"
   },
   aboveLeft: {
-    chip: "bottom-[13px] right-[14px]",
-    connector: "bottom-[7px] right-[7px] h-[8px] w-px rotate-45"
+    chip: "bottom-[10px] right-[10px]",
+    connector: "bottom-[5px] right-[5px] h-[6px] w-px rotate-45"
   }
 };
 
@@ -63,8 +63,11 @@ export function getSeatLabelPlacement(seat: Pick<SeatWithEmployee, "label" | "x"
   const southeastOffice = prefix === "SE" || zone === "southeast office";
   const denseAboveDot = compactNameLabel || prefix === "N" || prefix === "NE" || prefix === "CW" || prefix === "C";
 
-  if (westPod) return seat.y >= 0.62 || seat.x <= 0.11 ? "aboveRight" : "right";
-  if (southeastOffice) return seat.y >= 0.61 || seat.x >= 0.88 ? "aboveLeft" : "left";
+  if (westPod) return seat.y >= 0.56 || seat.x <= 0.11 ? "aboveRight" : "right";
+  if (southeastOffice) {
+    if (seat.label.trim().toUpperCase() === "SE01") return "left";
+    return seat.y >= 0.6 || seat.x >= 0.85 ? "aboveLeft" : "left";
+  }
   if (denseAboveDot) return "aboveCompact";
 
   return "above";
@@ -133,12 +136,12 @@ export function SeatMarker({
 
   const statusAccentClass =
     seat.status === "assigned"
-      ? "border-emerald-300/70"
+      ? "border-emerald-300/55"
       : seat.status === "reserved"
-        ? "border-amber-300/80"
+        ? "border-amber-300/65"
         : seat.status === "unavailable"
-          ? "border-slate-300/90"
-          : "border-slate-300/80";
+          ? "border-slate-300/70"
+          : "border-slate-300/60";
 
   const statusDotClass =
     seat.status === "assigned"
@@ -151,21 +154,21 @@ export function SeatMarker({
 
   const chipSizeClass = expandedChip
     ? selected
-      ? "min-h-[52px] w-[152px] max-w-[152px] rounded-[18px] px-3 py-2 text-left sm:w-[166px] sm:max-w-[166px]"
+      ? "min-h-[46px] w-[140px] max-w-[140px] rounded-2xl px-2.5 py-1.5 text-left"
       : labelMode === "prominent"
-      ? "min-h-[44px] w-[158px] max-w-[158px] rounded-xl px-3 py-1.5 text-left sm:w-[170px] sm:max-w-[170px]"
+      ? "min-h-[38px] w-[142px] max-w-[142px] rounded-xl px-2.5 py-1.5 text-left"
       : labelMode === "compact"
-        ? "min-h-[36px] w-[106px] max-w-[106px] rounded-lg px-2.5 py-1.5 text-left group-hover:w-[154px] group-hover:max-w-[154px] group-focus-visible:w-[154px] group-focus-visible:max-w-[154px] lg:min-h-[38px] lg:group-hover:w-[160px] lg:group-hover:max-w-[160px] lg:group-focus-visible:w-[160px] lg:group-focus-visible:max-w-[160px]"
+        ? "min-h-[28px] w-[64px] max-w-[64px] rounded-md px-2 py-1 text-left group-hover:w-[126px] group-hover:max-w-[126px] group-focus-visible:w-[126px] group-focus-visible:max-w-[126px]"
         : labelMode === "passive"
-          ? "min-h-[38px] w-[120px] max-w-[120px] rounded-xl px-2.5 py-1.5 text-left group-hover:w-[164px] group-hover:max-w-[164px] group-focus-visible:w-[164px] group-focus-visible:max-w-[164px] lg:group-hover:w-[170px] lg:group-hover:max-w-[170px] lg:group-focus-visible:w-[170px] lg:group-focus-visible:max-w-[170px]"
-          : "h-[30px] min-h-[30px] min-w-[38px] rounded-full px-2 py-0 text-center"
-    : "h-[28px] min-h-[28px] min-w-[36px] rounded-full px-2 py-0 text-center text-[10px] group-hover:min-w-[112px] group-hover:rounded-xl group-hover:px-2.5 group-hover:text-left group-focus-visible:min-w-[112px] group-focus-visible:rounded-xl group-focus-visible:px-2.5 group-focus-visible:text-left";
+          ? "min-h-[28px] w-[86px] max-w-[86px] rounded-lg px-2 py-1 text-left group-hover:w-[124px] group-hover:max-w-[124px] group-focus-visible:w-[124px] group-focus-visible:max-w-[124px]"
+          : "h-[24px] min-h-[24px] min-w-[32px] rounded-md px-1.5 py-0 text-center"
+    : "h-[22px] min-h-[22px] min-w-[30px] rounded-md px-1.5 py-0 text-center text-[9px] group-hover:min-w-[86px] group-hover:rounded-lg group-hover:px-2 group-hover:text-left group-focus-visible:min-w-[86px] group-focus-visible:rounded-lg group-focus-visible:px-2 group-focus-visible:text-left";
 
   const passiveLabelClass =
     labelMode === "compact"
-      ? "border-slate-200/75 bg-white/70 text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.92)]"
+      ? "border-slate-200/55 bg-white/55 text-slate-700 shadow-[0_3px_8px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.78)]"
       : labelMode === "passive"
-        ? "border-slate-200/80 bg-white/75 text-slate-800 shadow-[0_9px_20px_rgba(15,23,42,0.13),inset_0_1px_0_rgba(255,255,255,0.94)]"
+        ? "border-slate-200/60 bg-white/60 text-slate-800 shadow-[0_4px_10px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.82)]"
         : "";
 
   const stateChipClass = [
@@ -187,19 +190,19 @@ export function SeatMarker({
   const hoverScaleClass = selected ? "hover:scale-100" : "hover:scale-[1.04]";
   const dotSizeClass = selected ? "h-3 w-3 ring-4" : labelMode === "prominent" ? "h-2.5 w-2.5 ring-4" : "h-2.5 w-2.5 ring-2";
   const dotTargetSizeClass = selected ? "h-7 w-7" : labelMode === "hidden" ? "h-5 w-5" : "h-6 w-6";
-  const codeTextClass = selected ? "text-[11px]" : labelMode === "prominent" ? "text-[10px] sm:text-[11px]" : "text-[10px] lg:text-[11px]";
+  const codeTextClass = selected ? "text-[10px]" : labelMode === "prominent" ? "text-[10px]" : "text-[9px]";
   const nameTextClass =
     selected
-      ? "max-w-[104px] text-[11px] sm:max-w-[116px]"
+      ? "max-w-[98px] text-[10px]"
       : labelMode === "prominent"
-      ? "max-w-[116px] text-[11px] sm:max-w-[128px]"
+      ? "max-w-[106px] text-[10px]"
       : labelMode === "compact"
-        ? "max-w-[72px] text-[10px] group-hover:max-w-[116px] group-hover:text-[11px] group-focus-visible:max-w-[116px] group-focus-visible:text-[11px] lg:text-[11px] lg:group-hover:max-w-[122px] lg:group-focus-visible:max-w-[122px]"
-        : "max-w-[86px] text-[11px] group-hover:max-w-[128px] group-focus-visible:max-w-[128px] lg:group-hover:max-w-[134px] lg:group-focus-visible:max-w-[134px]";
+        ? "max-w-[48px] text-[9px] group-hover:max-w-[94px] group-hover:text-[10px] group-focus-visible:max-w-[94px] group-focus-visible:text-[10px]"
+        : "max-w-[62px] text-[9px] group-hover:max-w-[96px] group-hover:text-[10px] group-focus-visible:max-w-[96px] group-focus-visible:text-[10px]";
   const fullNameRevealClass =
     labelMode === "compact"
-      ? "hidden max-w-[116px] truncate text-[11px] font-bold leading-tight opacity-95 group-hover:block group-focus-visible:block lg:max-w-[122px]"
-      : "hidden max-w-[128px] truncate text-[11px] font-bold leading-tight opacity-95 group-hover:block group-focus-visible:block lg:max-w-[134px]";
+      ? "hidden max-w-[94px] truncate text-[10px] font-bold leading-tight opacity-95 group-hover:block group-focus-visible:block"
+      : "hidden max-w-[96px] truncate text-[10px] font-bold leading-tight opacity-95 group-hover:block group-focus-visible:block";
 
   return (
     <button
@@ -237,7 +240,7 @@ export function SeatMarker({
       <span className="absolute left-1/2 top-1/2 h-0 w-0 overflow-visible">
         <span
           className={[
-            "absolute left-0 top-0 z-20 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/90 bg-white/85 shadow-[0_8px_18px_rgba(15,23,42,0.22)] backdrop-blur-sm transition-[height,width,box-shadow,border-color,background-color] duration-150 group-hover:shadow-[0_12px_24px_rgba(15,23,42,0.28)] group-focus-visible:ring-4 group-focus-visible:ring-orange-300/70",
+            "absolute left-0 top-0 z-20 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/80 bg-white/70 shadow-[0_4px_10px_rgba(15,23,42,0.16)] backdrop-blur-sm transition-[height,width,box-shadow,border-color,background-color] duration-150 group-hover:shadow-[0_8px_18px_rgba(15,23,42,0.22)] group-focus-visible:ring-4 group-focus-visible:ring-orange-300/70",
             dotTargetSizeClass,
             stateDotClass
           ].join(" ")}
@@ -248,18 +251,17 @@ export function SeatMarker({
 
         <span
           className={[
-            "pointer-events-none absolute z-10 bg-slate-300/80",
+            "pointer-events-none absolute z-10 bg-slate-300/65",
             placementClasses.connector,
-            selected || searchProminent || swapSource || swapTarget || plannerHighlighted ? "opacity-90" : "opacity-55"
+            selected || searchProminent || swapSource || swapTarget || plannerHighlighted ? "opacity-85" : "opacity-35"
           ].join(" ")}
           aria-hidden="true"
         />
 
         <span
           className={[
-            "absolute z-10 flex min-w-0 items-center overflow-hidden border bg-white/70 text-slate-900 backdrop-blur-md supports-[backdrop-filter]:bg-white/60",
-            "shadow-[0_10px_24px_rgba(15,23,42,0.18),0_2px_6px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.96),inset_0_-1px_0_rgba(255,255,255,0.35)]",
-            "transition-[width,min-width,transform,box-shadow,border-color,background-color,opacity,filter] duration-150 ease-out group-hover:border-orange-200 group-hover:bg-white/90 group-hover:shadow-[0_18px_38px_rgba(15,23,42,0.26),inset_0_1px_0_rgba(255,255,255,0.98)] group-active:shadow-[0_8px_18px_rgba(15,23,42,0.22),inset_0_2px_4px_rgba(15,23,42,0.12)] group-focus-visible:ring-4 group-focus-visible:ring-orange-300/70 motion-reduce:transition-none",
+            "absolute z-10 flex min-w-0 items-center overflow-hidden border bg-white/55 text-slate-900 shadow-[0_4px_10px_rgba(15,23,42,0.09),0_1px_3px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.82)] backdrop-blur-sm supports-[backdrop-filter]:bg-white/45",
+            "transition-[width,min-width,transform,box-shadow,border-color,background-color,opacity,filter] duration-150 ease-out group-hover:border-orange-200 group-hover:bg-white/80 group-hover:shadow-[0_8px_18px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.92)] group-active:shadow-[0_4px_10px_rgba(15,23,42,0.18),inset_0_2px_4px_rgba(15,23,42,0.10)] group-focus-visible:ring-4 group-focus-visible:ring-orange-300/70 motion-reduce:transition-none",
             placementClasses.chip,
             statusAccentClass,
             chipSizeClass,
@@ -289,9 +291,9 @@ export function SeatMarker({
             </span>
           ) : (
             <span className="flex min-w-0 items-center justify-center gap-2 group-hover:justify-start group-focus-visible:justify-start">
-              <span className="whitespace-nowrap text-[10px] font-black">{seat.label}</span>
+              <span className="whitespace-nowrap text-[9px] font-black">{seat.label}</span>
               {employeeName && (
-                <span className="hidden max-w-[64px] truncate text-[9px] font-bold opacity-90 group-hover:block group-focus-visible:block">
+                <span className="hidden max-w-[54px] truncate text-[9px] font-bold opacity-90 group-hover:block group-focus-visible:block">
                   {employeeName}
                 </span>
               )}

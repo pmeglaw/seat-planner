@@ -1633,7 +1633,7 @@ export function SeatMap({
             >
               <div
                 ref={mapRef}
-                className={["relative mx-auto w-[1040px] max-w-none sm:w-[1180px] lg:w-full lg:max-w-[1911px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
+                className={["relative mx-auto w-[1040px] max-w-none sm:w-[1180px] lg:w-[96%] lg:max-w-[1840px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
                 onPointerDown={handleMapPointerDown}
                 onPointerMove={handleMapPointerMove}
                 onPointerUp={handleMapPointerUp}
