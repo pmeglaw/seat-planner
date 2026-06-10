@@ -104,6 +104,23 @@ test("seat labels stay readable and expand on hover or keyboard focus", async ()
   assert.match(markerSource, /searchProminent[\s\S]*border-orange-300 bg-orange-50\/90/);
 });
 
+test("seat marker coordinates anchor the dot instead of the label chip", async () => {
+  const markerSource = await readFile(new URL("../components/seat-map/SeatMarker.tsx", import.meta.url), "utf8");
+  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+
+  assert.match(markerSource, /function getSeatLabelPlacement/);
+  assert.match(markerSource, /westPod[\s\S]*"aboveRight"[\s\S]*"right"/);
+  assert.match(markerSource, /southeastOffice[\s\S]*"aboveLeft"[\s\S]*"left"/);
+  assert.match(markerSource, /denseAboveDot[\s\S]*"aboveCompact"/);
+  assert.match(markerSource, /group absolute z-10 flex -translate-x-1\/2 -translate-y-1\/2/);
+  assert.match(markerSource, /absolute left-1\/2 top-1\/2 h-0 w-0 overflow-visible/);
+  assert.match(markerSource, /absolute left-0 top-0 z-20 flex -translate-x-1\/2 -translate-y-1\/2/);
+  assert.match(markerSource, /dotTargetSizeClass/);
+  assert.match(markerSource, /placementClasses\.chip/);
+  assert.match(markerSource, /compactCallout = compactNameLabel \|\| labelPlacement === "aboveCompact"/);
+  assert.match(seatMapSource, /if \(seatTarget\?\.dataset\.seatId\) return;/);
+});
+
 test("inspector copy uses Job Title instead of Team", async () => {
   const source = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
 

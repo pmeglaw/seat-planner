@@ -66,7 +66,6 @@ type InspectorGuardAction =
 
 const NAME_LABEL_COLLISION_X_THRESHOLD = 0.07;
 const NAME_LABEL_COLLISION_Y_THRESHOLD = 0.07;
-const DIRECT_SEAT_CLICK_RADIUS = 0.018;
 const ADMIN_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:names-visible";
 const DEFAULT_PUBLISHED_SEATS: SeatWithEmployee[] = [];
 const INSPECTOR_FORM_ID = "seat-inspector-form";
@@ -460,12 +459,6 @@ export function SeatMap({
       x: (event.clientX - rect.left) / rect.width,
       y: (event.clientY - rect.top) / rect.height
     });
-  }
-
-  function isDirectSeatMarkerClick(point: { x: number; y: number }, seatId: string) {
-    const seat = localSeats.find(item => item.id === seatId);
-    if (!seat) return false;
-    return ((point.x - seat.x) ** 2) + ((point.y - seat.y) ** 2) <= DIRECT_SEAT_CLICK_RADIUS ** 2;
   }
 
   function matchesFilters(seat: SeatWithEmployee) {
@@ -1031,8 +1024,7 @@ export function SeatMap({
       const point = eventToPoint(event);
       if (!point) return;
 
-      const targetSeatId = seatTarget?.dataset.seatId;
-      if (targetSeatId && isDirectSeatMarkerClick(point, targetSeatId)) return;
+      if (seatTarget?.dataset.seatId) return;
 
       const targetZoneResult = detectSeatZoneForPointResult(point, localSeats);
       if (targetZoneResult.status !== "detected") {
