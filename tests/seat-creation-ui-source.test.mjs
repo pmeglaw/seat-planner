@@ -176,8 +176,9 @@ test("seat marker coordinates anchor one compact token instead of detached callo
   assert.match(markerSource, /viewportEdgeOffsetPx/);
   assert.match(markerSource, /tokenPositionStyle/);
   assert.match(markerSource, /markerUsesTrueCoordinate = addSeatMode \|\| moveSeatMode \|\| swapMode/);
-  assert.match(markerSource, /resolvedViewportEdge = markerUsesTrueCoordinate \? "none" : viewportEdge/);
-  assert.match(markerSource, /resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate \? 0 : Math\.max\(0, Math\.round\(viewportEdgeOffsetPx\)\)/);
+  assert.match(markerSource, /tokenCanHugViewportEdge = showInlineName \|\| prominentToken/);
+  assert.match(markerSource, /resolvedViewportEdge = markerUsesTrueCoordinate \|\| !tokenCanHugViewportEdge \? "none" : viewportEdge/);
+  assert.match(markerSource, /resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate \|\| !tokenCanHugViewportEdge \? 0 : Math\.max\(0, Math\.round\(viewportEdgeOffsetPx\)\)/);
   assert.match(markerSource, /resolvedViewportEdge === "left"/);
   assert.match(markerSource, /resolvedViewportEdge === "right"/);
   assert.match(markerSource, /left: `calc\(50% \+ \$\{resolvedViewportEdgeOffsetPx\}px\)`/);
@@ -188,6 +189,7 @@ test("seat marker coordinates anchor one compact token instead of detached callo
   assert.doesNotMatch(markerSource, /function getSeatLabelPlacement|dotTargetSizeClass|placementClasses|connector|h-1\.5 w-1\.5/);
   assert.match(seatMapSource, /if \(seatTarget\?\.dataset\.seatId\) return;/);
   assert.match(seatMapSource, /mapVisibleRange/);
+  assert.match(seatMapSource, /markerEdgeBaseOffsetPx = 0/);
   assert.match(seatMapSource, /getMarkerViewportPlacement\(visualSeat\.x\)/);
   assert.match(seatMapSource, /viewportEdgeOffsetPx=\{viewportPlacement\.offsetPx\}/);
 });

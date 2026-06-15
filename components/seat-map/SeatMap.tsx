@@ -1576,7 +1576,7 @@ export function SeatMap({
   const mapPixelsPerNormalizedUnit = visibleMapSpan > 0 && mapVisibleRange.viewportWidth > 0
     ? mapVisibleRange.viewportWidth / visibleMapSpan
     : 0;
-  const markerEdgeBaseOffsetPx = 48;
+  const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;
   const markerEdgeThreshold = mapViewMode === "detail"
     ? Math.min(0.16, Math.max(0.06, visibleMapSpan * 0.24))

@@ -174,8 +174,9 @@ export function SeatMarker({
   const hitTargetSizeClass = tokenMode === "selected" ? "h-9 w-9" : tokenMode === "prominent" ? "h-8 w-8" : "h-7 w-7";
   const codeTextClass = tokenMode === "selected" || tokenMode === "prominent" ? "text-[10px]" : "text-[9px]";
   const markerUsesTrueCoordinate = addSeatMode || moveSeatMode || swapMode;
-  const resolvedViewportEdge = markerUsesTrueCoordinate ? "none" : viewportEdge;
-  const resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate ? 0 : Math.max(0, Math.round(viewportEdgeOffsetPx));
+  const tokenCanHugViewportEdge = showInlineName || prominentToken;
+  const resolvedViewportEdge = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? "none" : viewportEdge;
+  const resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? 0 : Math.max(0, Math.round(viewportEdgeOffsetPx));
   const tokenPositionClass =
     resolvedViewportEdge === "left"
       ? "absolute top-1/2 translate-x-0 -translate-y-1/2"
