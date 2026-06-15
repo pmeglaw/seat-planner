@@ -92,9 +92,9 @@ export function ActiveFilterChips({
   if (!chips.length) return null;
 
   return (
-    <div aria-label="Active search and filters" className={["flex flex-wrap items-center gap-1.5", className].filter(Boolean).join(" ")}>
+    <div aria-label="Active filters" className={["flex flex-wrap items-center gap-1.5", className].filter(Boolean).join(" ")}>
       {chips.map(chip => (
-        <span key={chip.id} className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-bold text-slate-700 ring-1 ring-slate-200">
+        <span key={chip.id} className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/90 py-0.5 pl-2 pr-1 text-[11px] font-bold text-slate-700 ring-1 ring-slate-200">
           <span className="shrink-0 text-slate-500">{chip.label}</span>
           <span className="min-w-0 truncate text-slate-950">{chip.value}</span>
           <button
@@ -102,7 +102,7 @@ export function ActiveFilterChips({
             onClick={() => onRemove(chip.id)}
             aria-label={chip.removeLabel}
             title={chip.removeLabel}
-            className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+            className="ml-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
           >
             x
           </button>
@@ -112,7 +112,7 @@ export function ActiveFilterChips({
         <button
           type="button"
           onClick={onClearAll}
-          className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] font-black text-brand-dark transition hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+          className="inline-flex min-h-6 items-center rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] font-black text-brand-dark transition hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
         >
           Clear all
         </button>
@@ -134,6 +134,7 @@ export function SeatResultsList({
   onClearSearch,
   onClearFilters,
   onClearAll,
+  density = "panel",
   className = ""
 }: {
   id?: string;
@@ -148,23 +149,25 @@ export function SeatResultsList({
   onClearSearch: () => void;
   onClearFilters: () => void;
   onClearAll: () => void;
+  density?: "panel" | "rail";
   className?: string;
 }) {
   const statusParts = (["assigned", "available", "reserved", "unavailable"] as SeatStatus[])
     .map(item => `${statusBreakdown[item]} ${STATUS_LABELS[item].toLowerCase()}`)
     .join(" · ");
+  const compact = density === "rail";
 
   return (
-    <section id={id} aria-labelledby={titleId} className={["rounded-xl border border-slate-200 bg-white/85 p-3", className].filter(Boolean).join(" ")}>
-      <div className="flex items-start justify-between gap-3">
+    <section id={id} aria-labelledby={titleId} className={[compact ? "rounded-xl border border-slate-200/80 bg-slate-50/65 p-1 shadow-none" : "rounded-xl border border-slate-200/80 bg-slate-50/70 p-2 shadow-none", className].filter(Boolean).join(" ")}>
+      <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h2 id={titleId} className="text-sm font-black text-slate-900">Seat results</h2>
-          <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500">{results.length} matching seats · {statusParts}</p>
+          <h2 id={titleId} className="text-xs font-black text-slate-900">Seat results</h2>
+          <p className={["mt-0.5 truncate font-semibold text-slate-500", compact ? "text-[10px]" : "text-[10px]"].join(" ")}>{results.length} matching seats{compact ? "" : ` · ${statusParts}`}</p>
         </div>
       </div>
 
       {results.length > 0 ? (
-        <div role="list" aria-label="Seat results" className="mt-3 max-h-[260px] space-y-1.5 overflow-auto overscroll-contain pr-1">
+        <div role="list" aria-label="Seat results" className={[compact ? "mt-1 max-h-[96px] space-y-0.5" : "mt-2 max-h-[196px] space-y-1", "overflow-auto overscroll-contain pr-1"].join(" ")}>
           {results.map(result => {
             const resultActionLabel = `${result.label}. ${result.person}. ${result.department}. ${STATUS_LABELS[result.status]}. ${result.zone}. Select and center on map.`;
 
@@ -183,16 +186,19 @@ export function SeatResultsList({
                   }
                 }}
                 className={[
-                  "grid w-full grid-cols-[minmax(3.2rem,auto)_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border p-2 text-left transition hover:border-orange-200 hover:bg-orange-50/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
-                  result.selected ? "border-orange-300 bg-orange-50/80 ring-2 ring-orange-100" : "border-slate-200 bg-white"
+                  "grid w-full grid-cols-[minmax(3rem,auto)_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border px-2 text-left transition hover:border-orange-200 hover:bg-orange-50/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
+                  compact ? "min-h-7 py-0.5" : "py-1.5",
+                  result.selected ? "border-orange-300 bg-white ring-1 ring-orange-100" : "border-slate-200/80 bg-white/80"
                 ].join(" ")}
               >
-                <span className="text-sm font-black text-slate-950">{result.label}</span>
+                <span className={compact ? "text-xs font-black text-slate-950" : "text-[13px] font-black text-slate-950"}>{result.label}</span>
                 <span className="min-w-0">
-                  <span className="block truncate text-xs font-bold text-slate-800">{result.person}</span>
-                  <span className="block truncate text-[11px] text-slate-500">{result.department} · {result.zone}</span>
+                  <span className={compact ? "block truncate text-[11px] font-bold text-slate-800" : "block truncate text-xs font-bold text-slate-800"}>{compact ? `${result.person} · ${result.zone}` : result.person}</span>
+                  {!compact && (
+                    <span className="block truncate text-[11px] text-slate-500">{result.department} · {result.zone}</span>
+                  )}
                 </span>
-                <span className={["rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ring-1", statusPillClass(result.status)].join(" ")}>
+                <span className={["rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide ring-1", statusPillClass(result.status)].join(" ")}>
                   {STATUS_LABELS[result.status]}
                 </span>
               </button>
@@ -200,22 +206,22 @@ export function SeatResultsList({
           })}
         </div>
       ) : (
-        <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+        <div className="mt-2 rounded-lg border border-dashed border-slate-200 bg-white/70 p-2.5 text-xs text-slate-500">
           <div className="font-black text-slate-800">{emptyTitle}</div>
           <div className="mt-1 leading-5">{emptyDescription}</div>
           <div className="mt-3 flex flex-wrap gap-2">
             {searchActive && (
-              <button type="button" onClick={onClearSearch} className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+              <button type="button" onClick={onClearSearch} className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
                 Clear search
               </button>
             )}
             {filtersActive && (
-              <button type="button" onClick={onClearFilters} className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+              <button type="button" onClick={onClearFilters} className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
                 Clear filters
               </button>
             )}
             {searchActive && filtersActive && (
-              <button type="button" onClick={onClearAll} className="rounded-full bg-orange-50 px-3 py-1.5 text-[11px] font-black text-brand-dark ring-1 ring-orange-200 hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+              <button type="button" onClick={onClearAll} className="rounded-lg bg-orange-50 px-3 py-1.5 text-[11px] font-black text-brand-dark ring-1 ring-orange-200 hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
                 Clear all
               </button>
             )}
@@ -254,9 +260,11 @@ export function FilterPanel({
   onClearFilters,
   onClearAll
 }: FilterPanelProps) {
-  const filtersActive = activeChips.length > 0;
+  const activeStructuredChips = activeChips.filter(chip => chip.id !== "search");
+  const constraintsActive = activeChips.length > 0;
   const searchActive = Boolean(search.trim());
   const structuredFiltersActive = department !== "all" || zone !== "all" || status !== "all";
+  const structuredFilterCount = [department !== "all", zone !== "all", status !== "all"].filter(Boolean).length;
   const statItems = [
     { label: "Total", value: stats.total },
     { label: "Assigned", value: stats.assigned },
@@ -272,18 +280,18 @@ export function FilterPanel({
           onClick={onToggle}
           aria-controls="seat-map-filter-panel"
           aria-expanded={false}
-          aria-label={filtersActive ? `Open filters, ${activeChips.length} active` : "Open filters"}
-          title={filtersActive ? `${activeChips.length} active filters` : "Open filters"}
+          aria-label={structuredFilterCount ? `Open filters, ${structuredFilterCount} active` : "Open filters"}
+          title={structuredFilterCount ? `${structuredFilterCount} active filters` : "Open filters"}
           className="relative flex min-h-11 w-full items-center justify-center rounded-full border border-white/70 bg-white/70 px-4 py-2 text-slate-700 shadow-[0_12px_32px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 lg:min-h-[164px] lg:w-[48px] lg:flex-col lg:px-2 lg:py-4"
         >
-          {filtersActive && (
+          {structuredFilterCount > 0 && (
             <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-black text-white ring-2 ring-white lg:right-auto lg:top-3">
-              {activeChips.length}
+              {structuredFilterCount}
             </span>
           )}
           <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] lg:rotate-180 lg:[writing-mode:vertical-rl]">Filters</span>
           <span className="ml-2 text-[10px] text-slate-400 lg:ml-0 lg:mt-2 lg:rotate-180 lg:[writing-mode:vertical-rl]">
-            {filtersActive ? "Active" : "Refine"}
+            {structuredFilterCount ? "Active" : "Refine"}
           </span>
         </button>
       </aside>
@@ -295,18 +303,18 @@ export function FilterPanel({
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 id="seat-map-filter-title" className="text-sm font-black text-slate-900">Filters</h2>
         <div className="flex items-center gap-1">
-          {filtersActive && (
-            <button type="button" onClick={onClearAll} aria-label="Clear all active search and filters" className="rounded-md px-2 py-1 text-[11px] font-bold text-brand hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+          {constraintsActive && (
+            <button type="button" onClick={onClearAll} aria-label="Clear all active search and filters" className="inline-flex min-h-6 items-center rounded-md px-2 py-1 text-[11px] font-bold text-brand hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
               Clear all
             </button>
           )}
-          <button type="button" onClick={onToggle} aria-controls="seat-map-filter-panel" aria-expanded={true} aria-label="Collapse filters" className="rounded-md px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+          <button type="button" onClick={onToggle} aria-controls="seat-map-filter-panel" aria-expanded={true} aria-label="Collapse filters" className="inline-flex min-h-6 items-center rounded-md px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
             Collapse
           </button>
         </div>
       </div>
 
-      <ActiveFilterChips chips={activeChips} onRemove={onRemoveActiveChip} onClearAll={onClearAll} className="mb-3" />
+      <ActiveFilterChips chips={activeStructuredChips} onRemove={onRemoveActiveChip} onClearAll={onClearFilters} className="mb-3" />
 
       <div className="grid grid-cols-1 gap-2">
         <label className="block">
@@ -375,7 +383,7 @@ export function FilterPanel({
       <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
         <div className="flex items-center justify-between">
           <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">People · {employeeResults.length}</div>
-          {filtersActive && <div className="text-[11px] font-semibold text-brand-dark">Filtered</div>}
+          {structuredFiltersActive && <div className="text-[11px] font-semibold text-brand-dark">Filtered</div>}
         </div>
         <div aria-label="People results" className="max-h-[180px] space-y-2 overflow-auto overscroll-contain pr-1 sm:max-h-[260px]">
           {employeeResults.length ? employeeResults.map(result => {
@@ -416,7 +424,7 @@ export function FilterPanel({
             <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
               <div className="font-semibold text-slate-700">No employees match the current filters.</div>
               <div className="mt-1">Clear filters or search by seat label, employee name, position, department, or zone.</div>
-              {filtersActive && (
+              {constraintsActive && (
                 <button type="button" onClick={onClearAll} className="mt-2 text-xs font-bold text-brand hover:text-brand-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
                   Clear all
                 </button>
@@ -426,7 +434,7 @@ export function FilterPanel({
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+      <div className="mt-4 hidden grid-cols-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 sm:grid">
         {statItems.map((item, index) => (
           <div key={item.label} className={["border-slate-200 px-2 py-2 text-center", index % 2 === 0 ? "border-r" : "", index < statItems.length - 2 ? "border-b" : ""].join(" ")}>
             <div className="text-sm font-black text-slate-900">{item.value}</div>
@@ -435,7 +443,7 @@ export function FilterPanel({
         ))}
       </div>
 
-      <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
+      <div className="mt-4 hidden space-y-2 border-t border-slate-100 pt-3 sm:block">
         <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Legend</div>
         <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
           <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-white ring-1 ring-slate-300" />Available</div>

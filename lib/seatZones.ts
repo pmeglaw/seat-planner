@@ -20,26 +20,23 @@ export type SeatZoneDetectionResult =
   | { status: "none"; zone: null };
 
 export const SEAT_ZONE_RECTS: SeatZoneRect[] = [
-  { zone: "North Pod", xMin: 0.02, xMax: 0.25, yMin: 0.03, yMax: 0.1 },
-  { zone: "North Pod", xMin: 0.02, xMax: 0.12, yMin: 0.11, yMax: 0.24 },
-  { zone: "North Pod", xMin: 0.13, xMax: 0.25, yMin: 0.11, yMax: 0.24 },
-  { zone: "North Pod", xMin: 0.25, xMax: 0.5, yMin: 0.04, yMax: 0.25 },
-  { zone: "Northeast Pod", xMin: 0.5, xMax: 0.61, yMin: 0.11, yMax: 0.24 },
-  { zone: "Northeast Pod", xMin: 0.62, xMax: 0.735, yMin: 0.11, yMax: 0.24 },
-  { zone: "Northeast Pod", xMin: 0.74, xMax: 0.96, yMin: 0.04, yMax: 0.18 },
-  { zone: "West Pod", xMin: 0.04, xMax: 0.22, yMin: 0.34, yMax: 0.76 },
-  { zone: "West Pod", xMin: 0.02, xMax: 0.07, yMin: 0.5, yMax: 0.93 },
-  { zone: "West Pod", xMin: 0.1, xMax: 0.25, yMin: 0.86, yMax: 0.94 },
-  { zone: "Center West", xMin: 0.27, xMax: 0.37, yMin: 0.34, yMax: 0.75 },
-  { zone: "Center West", xMin: 0.26, xMax: 0.4, yMin: 0.86, yMax: 0.94 },
-  { zone: "Center Desks", xMin: 0.4, xMax: 0.61, yMin: 0.5, yMax: 0.72 },
-  { zone: "Center Desks", xMin: 0.45, xMax: 0.62, yMin: 0.73, yMax: 0.88 },
-  { zone: "East Pod", xMin: 0.56, xMax: 0.8, yMin: 0.34, yMax: 0.49 },
-  { zone: "Southeast Office", xMin: 0.68, xMax: 0.78, yMin: 0.6, yMax: 0.77 },
-  { zone: "Southeast Office", xMin: 0.68, xMax: 0.78, yMin: 0.79, yMax: 0.88 },
-  { zone: "Southeast Office", xMin: 0.84, xMax: 0.98, yMin: 0.27, yMax: 0.49 },
-  { zone: "Southeast Office", xMin: 0.86, xMax: 0.96, yMin: 0.51, yMax: 0.66 },
-  { zone: "Southeast Office", xMin: 0.84, xMax: 0.98, yMin: 0.68, yMax: 0.88 }
+  { zone: "North Pod", xMin: 0.07, xMax: 0.3, yMin: 0.08, yMax: 0.27 },
+  { zone: "North Pod", xMin: 0.3, xMax: 0.51, yMin: 0.04, yMax: 0.26 },
+  { zone: "Northeast Pod", xMin: 0.5, xMax: 0.6, yMin: 0.1, yMax: 0.25 },
+  { zone: "Northeast Pod", xMin: 0.6, xMax: 0.69, yMin: 0.1, yMax: 0.25 },
+  { zone: "Northeast Pod", xMin: 0.7, xMax: 0.91, yMin: 0.04, yMax: 0.2 },
+  { zone: "West Pod", xMin: 0.08, xMax: 0.28, yMin: 0.36, yMax: 0.64 },
+  { zone: "West Pod", xMin: 0.08, xMax: 0.28, yMin: 0.7, yMax: 0.83 },
+  { zone: "Center West", xMin: 0.3, xMax: 0.4, yMin: 0.36, yMax: 0.5 },
+  { zone: "Center West", xMin: 0.31, xMax: 0.4, yMin: 0.54, yMax: 0.83 },
+  { zone: "Center Desks", xMin: 0.42, xMax: 0.61, yMin: 0.54, yMax: 0.63 },
+  { zone: "Center Desks", xMin: 0.42, xMax: 0.61, yMin: 0.7, yMax: 0.79 },
+  { zone: "East Pod", xMin: 0.57, xMax: 0.76, yMin: 0.39, yMax: 0.52 },
+  { zone: "Southeast Office", xMin: 0.65, xMax: 0.76, yMin: 0.63, yMax: 0.84 },
+  { zone: "Southeast Office", xMin: 0.66, xMax: 0.76, yMin: 0.84, yMax: 0.92 },
+  { zone: "Southeast Office", xMin: 0.79, xMax: 0.91, yMin: 0.27, yMax: 0.53 },
+  { zone: "Southeast Office", xMin: 0.79, xMax: 0.91, yMin: 0.56, yMax: 0.7 },
+  { zone: "Southeast Office", xMin: 0.79, xMax: 0.91, yMin: 0.7, yMax: 0.9 }
 ];
 
 export function pointIsInsideSeatZone(point: NormalizedPoint, rect: SeatZoneRect) {

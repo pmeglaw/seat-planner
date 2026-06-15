@@ -117,6 +117,7 @@ export function SeatInspector({
   const [initialForm, setInitialForm] = useState<SeatInspectorForm>(emptyForm);
   const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
   const [activeEmployeeIndex, setActiveEmployeeIndex] = useState(0);
+  const [vacateConfirmOpen, setVacateConfirmOpen] = useState(false);
   const activeSeatIdRef = useRef<string | null>(null);
   const activeSeatSnapshotRef = useRef(formSnapshot(emptyForm));
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
@@ -193,6 +194,7 @@ export function SeatInspector({
       setSaveFeedback(null);
       setEmployeeComboboxOpen(false);
       setActiveEmployeeIndex(0);
+      setVacateConfirmOpen(false);
       onDirtyChange(false);
       return;
     }
@@ -211,6 +213,7 @@ export function SeatInspector({
       setSaveFeedback(null);
       setEmployeeComboboxOpen(false);
       setActiveEmployeeIndex(0);
+      setVacateConfirmOpen(false);
       onError(null);
       onDirtyChange(false);
     }
@@ -263,6 +266,7 @@ export function SeatInspector({
         : saveFeedback
           ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
           : "bg-slate-100 text-slate-600 ring-slate-200";
+  const showFooterState = pending || Boolean(localError) || isDirty || Boolean(saveFeedback);
 
   function fieldErrorId(field: SeatInspectorField) {
     return `seat-inspector-${field}-error`;
@@ -517,20 +521,14 @@ export function SeatInspector({
 
   function handleVacateSeat() {
     if (!hasCurrentAssignment || pending) return;
+    setVacateConfirmOpen(true);
+  }
 
-    const confirmed = window.confirm(
-      [
-        `Vacate ${selectedSeat.label}?`,
-        "",
-        `This clears ${selectedSeatEmployeeName} from this draft seat.`,
-        ...(isDirty ? ["Any unsaved inspector edits will be discarded."] : []),
-        "The published viewer map will not change until the draft is published."
-      ].join("\n")
-    );
-
-    if (!confirmed) return;
+  function confirmVacateSeat() {
+    if (!hasCurrentAssignment || pending) return;
 
     const beforeSnapshot = onBeforeSeatUpdate();
+    setVacateConfirmOpen(false);
 
     startTransition(async () => {
       try {
@@ -572,7 +570,7 @@ export function SeatInspector({
   }
 
   const fieldClassName = "mt-1 w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand focus:ring-4 focus:ring-orange-100 disabled:bg-slate-50 disabled:text-slate-500";
-  const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100";
+  const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/80 bg-white/85 text-sm font-black text-slate-600 transition hover:bg-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100";
   const saveDisabledReason = pending
     ? "Save is unavailable while the current draft change is finishing."
     : !isDirty
@@ -580,19 +578,21 @@ export function SeatInspector({
       : null;
   const deleteHelpText = selectedSeatCanDelete ? "Available custom draft seat can be deleted." : selectedSeatDeleteBlockReason ?? "Delete is unavailable for this seat.";
   const vacateHelpText = hasCurrentAssignment ? "Assigned seat can be vacated without deleting the marker." : "No employee is assigned, so Vacate is not needed.";
-  const capabilityRowClassName = "flex items-start justify-between gap-3 rounded-lg bg-white/70 px-2.5 py-2 ring-1 ring-slate-100";
+  const capabilityRowClassName = "flex items-start justify-between gap-3 rounded-xl bg-white/75 px-2.5 py-2 ring-1 ring-slate-200/70";
+  const secondaryActionGridClassName = hasCurrentAssignment && !isDirty ? "grid-cols-3" : "grid-cols-2";
+  const actionStatePillClassName = "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1";
 
   if (collapsed && swapMode) return null;
 
   if (collapsed) {
     return (
-      <aside className="fixed inset-x-3 bottom-3 z-40 sm:inset-x-auto sm:bottom-auto sm:right-3 sm:top-[70px]">
+      <aside className="fixed inset-x-3 bottom-3 z-40 sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[76px]">
         <button
           type="button"
           onClick={onToggleCollapse}
           aria-label={`View details for ${selectedSeat.label}`}
           title={`View details for ${selectedSeat.label}`}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-2 text-slate-700 shadow-[0_14px_40px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:min-h-[168px] sm:w-[46px] sm:flex-col sm:px-2 sm:py-4"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-slate-50/95 px-4 py-2 text-slate-700 shadow-[0_12px_32px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:min-h-full sm:w-11 sm:flex-col sm:rounded-l-2xl sm:rounded-r-xl sm:px-2 sm:py-4 sm:shadow-[-8px_0_22px_rgba(15,23,42,0.14),inset_1px_0_0_rgba(255,255,255,0.86)]"
         >
           <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] sm:rotate-180 sm:[writing-mode:vertical-rl]">View details</span>
           <span className="rounded-full bg-orange-50 px-2 py-1 text-[10px] font-black text-brand-dark ring-1 ring-orange-100 sm:mt-2 sm:rotate-180 sm:bg-transparent sm:px-0 sm:py-0 sm:text-slate-400 sm:ring-0 sm:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
@@ -602,17 +602,18 @@ export function SeatInspector({
   }
 
   return (
+    <>
     <aside
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-40 flex max-h-[62vh] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-[0_26px_80px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-white/90 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[70px] sm:max-h-[calc(100vh-84px)] sm:w-[350px] sm:max-w-[calc(100vw-2rem)]"
+      className="fixed inset-x-3 bottom-3 z-40 flex max-h-[54vh] flex-col overflow-hidden rounded-[22px] border border-slate-200/80 bg-slate-50/95 shadow-[0_16px_44px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-slate-50/90 sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[76px] sm:max-h-none sm:w-[352px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-l-[22px] sm:rounded-r-[18px] sm:shadow-[-10px_0_30px_rgba(15,23,42,0.16),inset_1px_0_0_rgba(255,255,255,0.86)]"
     >
-      <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-slate-100 bg-white/95 px-4 py-4 backdrop-blur-xl supports-[backdrop-filter]:bg-white/90">
+      <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-slate-200/70 bg-slate-50/95 px-3.5 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-slate-50/90">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h2 id="seat-inspector-title" className="text-xl font-black leading-none text-slate-950">{selectedSeat.label}</h2>
             {canEdit && (
-              <span aria-live="polite" className={["rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ring-1", inspectorStateClassName].join(" ")}>
+              <span role="status" aria-live="polite" className={["rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ring-1", inspectorStateClassName].join(" ")}>
                 {inspectorStateLabel}
               </span>
             )}
@@ -630,14 +631,14 @@ export function SeatInspector({
           >
             Back to map
           </button>
-          <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-black text-slate-600 shadow-sm transition hover:bg-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:inline-flex">-</button>
+          <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-8 w-8 items-center justify-center rounded-full border border-slate-200/80 bg-white/85 text-sm font-black text-slate-600 transition hover:bg-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:inline-flex">-</button>
           <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className={iconButtonClassName}>x</button>
         </div>
       </div>
 
       {canEdit ? (
         <form id="seat-inspector-form" onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-3">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3.5 py-3">
             {searchMismatchNotice && (
               <section className="rounded-2xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900">
                 <div className="font-black">{searchMismatchNotice}</div>
@@ -901,18 +902,19 @@ export function SeatInspector({
                 {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-rose-700">{fieldErrorMap.notes}</p>}
               </label>
             </section>
-          </div>
 
-          <div className="sticky bottom-0 z-20 border-t border-slate-100 bg-white/95 px-4 py-3 shadow-[0_-16px_36px_rgba(15,23,42,0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/90">
-            <section aria-label={`Available actions for ${selectedSeat.label}`} className="mb-2 rounded-xl border border-slate-200 bg-slate-50/80 p-2 text-xs text-slate-600">
-              <h3 className="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-500">Actions / Rules</h3>
-              <div className="grid gap-1.5">
+            <section aria-label={`Available actions for ${selectedSeat.label}`} className="rounded-2xl border border-slate-200 bg-white/60 p-3 text-xs text-slate-600">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-[11px] font-black uppercase tracking-wide text-slate-500">Actions / Rules</h3>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">Draft only</span>
+              </div>
+              <div className="mt-2 grid gap-2">
                 <div className={capabilityRowClassName}>
                   <div className="min-w-0">
                     <div className="font-black text-slate-900">Delete</div>
                     <div id="seat-inspector-delete-help" className="mt-0.5 leading-4">{deleteHelpText}</div>
                   </div>
-                  <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", selectedSeatCanDelete ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-100 text-slate-500 ring-slate-200"].join(" ")}>
+                  <span className={[actionStatePillClassName, selectedSeatCanDelete ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-100 text-slate-500 ring-slate-200"].join(" ")}>
                     {selectedSeatCanDelete ? "Allowed" : "Blocked"}
                   </span>
                 </div>
@@ -921,15 +923,24 @@ export function SeatInspector({
                     <div className="font-black text-slate-900">Vacate</div>
                     <div className="mt-0.5 leading-4">{vacateHelpText}</div>
                   </div>
-                  <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", hasCurrentAssignment ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-100 text-slate-500 ring-slate-200"].join(" ")}>
+                  <span className={[actionStatePillClassName, hasCurrentAssignment ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-100 text-slate-500 ring-slate-200"].join(" ")}>
                     {hasCurrentAssignment ? "Allowed" : "Not needed"}
                   </span>
                 </div>
               </div>
             </section>
-            <div role="status" aria-live="polite" className={["mb-2 rounded-xl px-3 py-2 text-xs font-black ring-1", inspectorStateClassName].join(" ")}>
-              {inspectorStateLabel}
-            </div>
+          </div>
+
+          <div className="sticky bottom-0 z-20 border-t border-slate-200/70 bg-slate-50/95 px-3.5 py-2.5 shadow-[0_-10px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl supports-[backdrop-filter]:bg-slate-50/90">
+            {showFooterState ? (
+              <div role="status" aria-live="polite" className={["mb-2 flex min-h-7 items-center rounded-xl px-3 py-1.5 text-xs font-black ring-1", inspectorStateClassName].join(" ")}>
+                {inspectorStateLabel}
+              </div>
+            ) : (
+              <div role="status" aria-live="polite" className="sr-only">
+                {inspectorStateLabel}
+              </div>
+            )}
             <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
               {saveDisabledReason && (
                 <span id="seat-inspector-save-help" className="sr-only">
@@ -951,10 +962,15 @@ export function SeatInspector({
                 {primaryActionLabel}
               </Button>
             </div>
-            <div className={["mt-2 grid gap-2", hasCurrentAssignment || isDirty ? "grid-cols-2" : "grid-cols-1"].join(" ")}>
+            <div className={["mt-2 grid gap-2", secondaryActionGridClassName].join(" ")}>
               <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Start seat swap for ${selectedSeat.label}`} className="w-full rounded-xl">
                 Swap seat
               </Button>
+              {hasCurrentAssignment && (
+                <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="w-full rounded-xl">
+                  Vacate
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="danger"
@@ -967,11 +983,6 @@ export function SeatInspector({
               >
                 Delete seat
               </Button>
-              {hasCurrentAssignment && (
-                <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="w-full rounded-xl">
-                  Vacate
-                </Button>
-              )}
               {isDirty && (
                 <Button type="button" onClick={handleResetEdits} disabled={pending} aria-label={`Discard edits for ${selectedSeat.label}`} className="w-full rounded-xl">
                   Discard edits
@@ -981,9 +992,23 @@ export function SeatInspector({
           </div>
         </form>
       ) : (
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-3 text-sm">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3.5 py-3 text-sm">
+          <section aria-labelledby="published-seat-summary-heading" className="rounded-2xl border border-slate-200 bg-white/60 p-3">
+            <h3 id="published-seat-summary-heading" className="text-[11px] font-black uppercase tracking-wide text-slate-500">Seat Summary</h3>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+              <div className="rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-100">
+                <div className="font-black uppercase tracking-wide text-slate-400">Zone</div>
+                <div className="mt-0.5 truncate font-bold text-slate-800">{currentZone}</div>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-100">
+                <div className="font-black uppercase tracking-wide text-slate-400">Status</div>
+                <div className="mt-0.5 truncate font-bold text-slate-800">{currentStatusLabel}</div>
+              </div>
+            </div>
+          </section>
+
           <section className="rounded-2xl border border-slate-200 bg-white/60 p-3">
-            <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Assignment</div>
+            <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Published Assignment</div>
             <div className="mt-1 text-lg font-black leading-tight text-slate-950">{selectedSeat.employee?.full_name ?? "Open seat"}</div>
             {(selectedSeat.employee?.position || selectedSeat.employee?.department) && (
               <div className="mt-1 text-sm text-slate-500">
@@ -1005,5 +1030,61 @@ export function SeatInspector({
         </div>
       )}
     </aside>
+
+    {vacateConfirmOpen && (
+      <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:items-center">
+        <section
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="vacate-seat-confirm-title"
+          aria-describedby="vacate-seat-confirm-description"
+          onKeyDown={event => {
+            if (event.key === "Escape") {
+              event.stopPropagation();
+              setVacateConfirmOpen(false);
+            }
+          }}
+          className="w-full max-w-md rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 id="vacate-seat-confirm-title" className="text-base font-black">Vacate {selectedSeat.label}?</h2>
+              <p id="vacate-seat-confirm-description" className="mt-1 text-sm leading-5 text-slate-500">
+                This clears {selectedSeatEmployeeName} from this draft seat.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setVacateConfirmOpen(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+              aria-label="Cancel vacating seat"
+            >
+              x
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-2">
+            {isDirty && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-sm font-semibold leading-5 text-amber-900">
+                Any unsaved inspector edits will be discarded.
+              </div>
+            )}
+            <div className="rounded-xl border border-orange-200 bg-orange-50/70 p-3 text-sm font-semibold leading-5 text-brand-dark">
+              The published viewer map will not change until the draft is published.
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <Button type="button" onClick={() => setVacateConfirmOpen(false)} disabled={pending} className="w-full">
+              Cancel
+            </Button>
+            <Button type="button" variant="danger" onClick={confirmVacateSeat} disabled={pending} className="w-full">
+              Vacate seat
+            </Button>
+          </div>
+        </section>
+      </div>
+    )}
+    </>
   );
 }
