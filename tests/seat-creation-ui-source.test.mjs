@@ -92,33 +92,104 @@ test("map tools add seat row is neutral until add-seat mode is active", async ()
   assert.match(drawerSource, /border-slate-200\/70 bg-white\/75 text-slate-900 hover:border-slate-300 hover:bg-white/);
 });
 
-test("seat labels stay readable and expand on hover or keyboard focus", async () => {
-  const markerSource = await readFile(new URL("../components/seat-map/SeatMarker.tsx", import.meta.url), "utf8");
+test("seat map uses the management-style dark workspace shell", async () => {
+  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
 
-  assert.match(markerSource, /getPassiveEmployeeLabel/);
-  assert.match(markerSource, /group-hover:w-\[126px\]/);
-  assert.match(markerSource, /group-focus-visible:w-\[126px\]/);
-  assert.match(markerSource, /group-hover:block group-focus-visible:block/);
-  assert.match(markerSource, /text-\[10px\]/);
-  assert.match(markerSource, /selected[\s\S]*w-\[140px\]/);
-  assert.match(markerSource, /searchProminent[\s\S]*border-orange-300 bg-orange-50\/90/);
+  assert.match(seatMapSource, /bg-slate-950 px-1\.5 py-2/);
+  assert.match(seatMapSource, /max-w-\[1920px\][\s\S]*rounded-\[28px\][\s\S]*border border-white\/10 bg-white/);
+  assert.match(seatMapSource, /border-b border-slate-200\/80 bg-slate-50\/95/);
+  assert.match(seatMapSource, /rounded-\[18px\] border border-slate-200\/80 bg-white\/75 p-1/);
+  assert.match(seatMapSource, /bg-white p-1 lg:min-h-0/);
+  assert.match(seatMapSource, /MAP_VIEW_MODE_OPTIONS[\s\S]*Overview[\s\S]*Detail/);
+  assert.match(seatMapSource, /useState<MapViewMode>\("detail"\)/);
+  assert.match(seatMapSource, /aria-label="Map view mode"/);
+  assert.match(seatMapSource, /rounded-\[18px\] bg-\[#f6f4f1\] shadow-\[0_10px_28px_rgba\(15,23,42,0\.08\),inset_0_0_0_1px_rgba\(71,85,105,0\.24\)/);
+  assert.match(seatMapSource, /mapViewMode === "overview"[\s\S]*overflow-hidden p-1\.5[\s\S]*min-h-\[360px\] max-h-\[82svh\] overflow-auto/);
+  assert.match(seatMapSource, /w-\[1120px\][\s\S]*sm:w-\[1460px\][\s\S]*lg:w-\[1911px\]/);
+  assert.doesNotMatch(seatMapSource, /fitMapOverview|Fit map overview|>\s*Fit map\s*</);
+  assert.doesNotMatch(seatMapSource, /lg:w-\[96%\]|max-w-\[1840px\]|max-w-\[1760px\]/);
+  assert.doesNotMatch(seatMapSource, /bg-\[#eef2f7\]/);
 });
 
-test("seat marker coordinates anchor the dot instead of the label chip", async () => {
+test("seat badges use compact map-native labels with strong active states", async () => {
+  const markerSource = await readFile(new URL("../components/seat-map/SeatMarker.tsx", import.meta.url), "utf8");
+
+  assert.match(markerSource, /function SeatToken/);
+  assert.match(markerSource, /getPassiveEmployeeLabel/);
+  assert.match(markerSource, /border-emerald-700\/25 bg-emerald-50\/95/);
+  assert.match(markerSource, /border-slate-500\/20 bg-white\/70/);
+  assert.match(markerSource, /min-h-\[34px\] rounded-\[11px\]/);
+  assert.match(markerSource, /w-\[82px\] max-w-\[82px\] sm:w-\[94px\]/);
+  assert.match(markerSource, /overflow-visible border ring-1 ring-white\/35/);
+  assert.match(markerSource, /group-hover:w-\[112px\]/);
+  assert.match(markerSource, /group-focus-visible:w-\[112px\]/);
+  assert.match(markerSource, /leading-\[1\.05\]/);
+  assert.match(markerSource, /leading-\[1\.08\]/);
+  assert.match(markerSource, /text-\[10px\]/);
+  assert.match(markerSource, /tokenMode === "selected"[\s\S]*w-\[112px\]/);
+  assert.match(markerSource, /searchProminent[\s\S]*border-orange-300 bg-orange-100/);
+  assert.match(markerSource, /inlineNameLabel = expandedNameBadge \? employeeName : compactEmployeeName/);
+  assert.match(markerSource, /\{inlineNameLabel\}/);
+});
+
+test("selected inspector and search results stay attached to the map workspace", async () => {
+  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  const inspectorSource = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
+  const filterSource = await readFile(new URL("../components/seat-map/FilterPanel.tsx", import.meta.url), "utf8");
+
+  assert.match(seatMapSource, /selectedResultIsVisible/);
+  assert.match(seatMapSource, /resultSummaryShellClass/);
+  assert.match(seatMapSource, /selectedResultIsVisible[\s\S]*rounded-xl border-slate-200\/80 bg-slate-50\/80 text-slate-500 shadow-none/);
+  assert.match(seatMapSource, /singleResultSeat[\s\S]*rounded-xl border-slate-200\/90 bg-white\/90/);
+  assert.match(seatMapSource, /resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-slate-200 bg-white\/90/);
+  assert.match(seatMapSource, /onClick=\{\(\) => fitSeatsInMap\(matchingSeats\)\}/);
+  assert.match(seatMapSource, /onClick=\{\(\) => fitSeatsInMap\(\[singleResultSeat\]\)\}/);
+  assert.match(seatMapSource, /detailFocusSeatId = selectedSeatId \?\? \(filtersActive && matchingSeats\.length === 1 \? matchingSeats\[0\]\.id : null\)/);
+  assert.match(seatMapSource, /if \(detailFocusSeatId\) \{[\s\S]*queueCenterSeatInMap\(detailFocusSeatId\)/);
+  assert.match(inspectorSource, /sm:bottom-3 sm:right-3 sm:top-\[76px\]/);
+  assert.match(inspectorSource, /sm:max-h-none[\s\S]*sm:rounded-l-\[22px\][\s\S]*sm:rounded-r-\[18px\]/);
+  assert.match(inspectorSource, /sm:shadow-\[-10px_0_30px_rgba\(15,23,42,0\.16\)/);
+  assert.match(filterSource, /rounded-xl border border-slate-200\/80 bg-slate-50\/70 p-2 shadow-none/);
+  assert.match(filterSource, /density = "panel"/);
+  assert.match(filterSource, /max-h-\[196px\] space-y-1/);
+  assert.match(filterSource, /max-h-\[96px\] space-y-0\.5/);
+  assert.match(filterSource, /overflow-auto overscroll-contain pr-1/);
+  assert.match(filterSource, /grid-cols-\[minmax\(3rem,auto\)_minmax\(0,1fr\)_auto\]/);
+  assert.match(seatMapSource, /density="rail"/);
+});
+
+test("seat marker coordinates anchor one compact token instead of detached callouts", async () => {
   const markerSource = await readFile(new URL("../components/seat-map/SeatMarker.tsx", import.meta.url), "utf8");
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
 
-  assert.match(markerSource, /function getSeatLabelPlacement/);
-  assert.match(markerSource, /westPod[\s\S]*"aboveRight"[\s\S]*"right"/);
-  assert.match(markerSource, /southeastOffice[\s\S]*"aboveLeft"[\s\S]*"left"/);
-  assert.match(markerSource, /denseAboveDot[\s\S]*"aboveCompact"/);
+  assert.match(markerSource, /function SeatToken/);
+  assert.match(markerSource, /function getSeatTokenDensity/);
+  assert.match(markerSource, /prefix === "N"/);
+  assert.match(markerSource, /prefix === "NE"/);
+  assert.match(markerSource, /prefix === "W"/);
+  assert.match(markerSource, /prefix === "CW"/);
+  assert.match(markerSource, /prefix === "C"/);
+  assert.match(markerSource, /prefix === "E"/);
+  assert.match(markerSource, /prefix === "SE"/);
   assert.match(markerSource, /group absolute z-10 flex -translate-x-1\/2 -translate-y-1\/2/);
-  assert.match(markerSource, /absolute left-1\/2 top-1\/2 h-0 w-0 overflow-visible/);
-  assert.match(markerSource, /absolute left-0 top-0 z-20 flex -translate-x-1\/2 -translate-y-1\/2/);
-  assert.match(markerSource, /dotTargetSizeClass/);
-  assert.match(markerSource, /placementClasses\.chip/);
-  assert.match(markerSource, /compactCallout = compactNameLabel \|\| labelPlacement === "aboveCompact"/);
+  assert.match(markerSource, /tokenPositionClass/);
+  assert.match(markerSource, /viewportEdgeOffsetPx/);
+  assert.match(markerSource, /tokenPositionStyle/);
+  assert.match(markerSource, /markerUsesTrueCoordinate = addSeatMode \|\| moveSeatMode \|\| swapMode/);
+  assert.match(markerSource, /resolvedViewportEdge = markerUsesTrueCoordinate \? "none" : viewportEdge/);
+  assert.match(markerSource, /resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate \? 0 : Math\.max\(0, Math\.round\(viewportEdgeOffsetPx\)\)/);
+  assert.match(markerSource, /resolvedViewportEdge === "left"/);
+  assert.match(markerSource, /resolvedViewportEdge === "right"/);
+  assert.match(markerSource, /left: `calc\(50% \+ \$\{resolvedViewportEdgeOffsetPx\}px\)`/);
+  assert.match(markerSource, /right: `calc\(50% \+ \$\{resolvedViewportEdgeOffsetPx\}px\)`/);
+  assert.match(markerSource, /<SeatToken[\s\S]*z-10 isolate flex items-center justify-center/);
+  assert.match(markerSource, /absolute bottom-1\.5 left-1 top-1\.5 w-0\.5 rounded-full/);
+  assert.match(markerSource, /prominentToken = activeMarker \|\| searchProminent \|\| plannerHighlighted/);
+  assert.doesNotMatch(markerSource, /function getSeatLabelPlacement|dotTargetSizeClass|placementClasses|connector|h-1\.5 w-1\.5/);
   assert.match(seatMapSource, /if \(seatTarget\?\.dataset\.seatId\) return;/);
+  assert.match(seatMapSource, /mapVisibleRange/);
+  assert.match(seatMapSource, /getMarkerViewportPlacement\(visualSeat\.x\)/);
+  assert.match(seatMapSource, /viewportEdgeOffsetPx=\{viewportPlacement\.offsetPx\}/);
 });
 
 test("inspector copy uses Job Title instead of Team", async () => {

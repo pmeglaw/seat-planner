@@ -452,7 +452,13 @@ export function AdminManagementPanel({
         </header>
 
         {(message || error) && (
-          <div className={["rounded-2xl border px-4 py-3 text-sm font-semibold", error ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"].join(" ")}>{error ?? message}</div>
+          <div
+            role={error ? "alert" : "status"}
+            aria-live={error ? "assertive" : "polite"}
+            className={["rounded-2xl border px-4 py-3 text-sm font-semibold", error ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"].join(" ")}
+          >
+            {error ?? message}
+          </div>
         )}
 
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">

@@ -119,6 +119,7 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /aria-label=\{`Ask Planner about \$\{selectedSeat\.label\}`\}/);
   assert.match(inspectorSource, /Seat Summary/);
   assert.match(inspectorSource, /Assignment/);
+  assert.match(inspectorSource, /Published Assignment/);
   assert.match(inspectorSource, /Seat Metadata/);
   assert.match(inspectorSource, /Actions \/ Rules/);
   assert.match(inspectorSource, /No unsaved changes\./);
@@ -148,6 +149,9 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   const drawerSource = await readSource("../components/seat-map/AdvancedDrawer.tsx");
 
   assert.match(source, /type InspectorGuardAction/);
+  assert.match(source, /function focusSeatMarker/);
+  assert.match(source, /document\.querySelector<HTMLButtonElement>\(`\[data-seat-id="\$\{seatId\}"\]`\)\?\.focus\(\)/);
+  assert.match(source, /focusSeatMarker\(seatIdToFocus\)/);
   assert.match(source, /function requestInspectorGuard/);
   assert.match(source, /requestInspectorGuard\(\{ kind: "select-seat", seatId \}\)/);
   assert.match(source, /requestInspectorGuard\(\{ kind: "select-seat", seatId, center: true, sourceLabel \}\)/);
@@ -178,7 +182,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   const filterSource = await readSource("../components/seat-map/FilterPanel.tsx");
 
   assert.match(filterSource, /export function ActiveFilterChips/);
-  assert.match(filterSource, /aria-label="Active search and filters"/);
+  assert.match(filterSource, /aria-label="Active filters"/);
   assert.match(filterSource, /aria-label=\{chip\.removeLabel\}/);
   assert.match(filterSource, /Clear all/);
   assert.match(filterSource, /export function SeatResultsList/);
@@ -200,8 +204,11 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /No filter results/);
   assert.match(seatMapSource, /No combined results/);
   assert.match(seatMapSource, /Fit results unavailable because there are no matching seats/);
-  assert.match(seatMapSource, /showSeatResults=\{canEdit && filtersActive\}/);
-  assert.match(seatMapSource, /\{canEdit && filtersActive && !resultRailCollapsed && \(/);
+  assert.match(seatMapSource, /singleResultSeat = filtersActive && matchingSeats\.length === 1 \? matchingSeats\[0\] : null/);
+  assert.match(seatMapSource, /showSeatResults=\{canEdit && filtersActive && !singleResultSeat\}/);
+  assert.match(seatMapSource, /\{canEdit && filtersActive && !singleResultSeat && !resultRailCollapsed && \(/);
+  assert.match(seatMapSource, /Fit result/);
+  assert.match(seatMapSource, /onClick=\{\(\) => selectSeatResult\(singleResultSeat\.id\)\}/);
   assert.match(seatMapSource, /aria-controls="seat-results-rail"/);
   assert.match(seatMapSource, /id="seat-results-rail"/);
   assert.match(seatMapSource, /titleId="seat-results-rail-title"/);
@@ -216,6 +223,10 @@ test("custom seat deletion remains guarded by the parent map action", async () =
   assert.match(deleteFunction[0], /Save or discard the selected seat edits before deleting a custom seat\./);
   assert.match(deleteFunction[0], /getSeatDeleteBlockReason\(selectedSeat\)/);
   assert.match(deleteFunction[0], /if \(!canDeleteSeat\(selectedSeat\)\)/);
-  assert.match(deleteFunction[0], /deleteSeatAction\(selectedSeat\.id\)/);
+  assert.match(deleteFunction[0], /setDeleteSeatConfirm\(\{ seatId: selectedSeat\.id, label: selectedSeat\.label \}\)/);
+  assert.match(deleteFunction[0], /function confirmDeleteSelectedSeat\(\)/);
+  assert.match(deleteFunction[0], /deleteSeatAction\(seatToDelete\.id\)/);
   assert.match(deleteFunction[0], /setActionNotice\(`Deleted custom seat \$\{deletedSeatLabel\}\. Undo is available until publish\.`\)/);
+  assert.match(source, /aria-labelledby="delete-seat-confirm-title"/);
+  assert.match(source, /Cancel custom seat deletion/);
 });

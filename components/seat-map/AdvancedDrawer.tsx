@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, MouseEvent, ReactNode } from "react";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
@@ -18,7 +18,15 @@ type AdvancedDrawerProps = {
   moveSeatMode: boolean;
   swapSeatMode: boolean;
   pending: boolean;
+  undoAvailable: boolean;
+  redoAvailable: boolean;
+  undoTitle: string;
+  redoTitle: string;
+  askPlannerHighlightCount: number;
   onClose: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  onOpenAskPlanner: () => void;
   onStartAddSeat: () => void;
   onCancelAddSeat: () => void;
   onStartSwapSeat: () => void;
@@ -72,39 +80,72 @@ type CommandButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   label: string;
   description: string;
   tone?: "default" | "active" | "danger";
+  density?: "default" | "compact";
 };
 
-function CommandButton({ label, description, tone = "default", className = "", ...props }: CommandButtonProps) {
-  const { "aria-label": ariaLabel, title, ...buttonProps } = props;
+function getCommandClassName(tone: NonNullable<CommandButtonProps["tone"]>, density: NonNullable<CommandButtonProps["density"]>, className = "") {
+  const sizeClassName = density === "compact"
+    ? "min-h-[44px] gap-2 px-2.5 py-2"
+    : "min-h-[50px] gap-3 px-3 py-2";
   const toneClassName = tone === "active"
     ? "border-cyan-200/80 bg-cyan-50/70 text-cyan-950 hover:border-cyan-300/80 hover:bg-cyan-50"
     : tone === "danger"
       ? "border-rose-100 bg-rose-50/60 text-rose-700 hover:border-rose-200 hover:bg-rose-50"
       : "border-slate-200/70 bg-white/75 text-slate-900 hover:border-slate-300 hover:bg-white";
+
+  return [
+    "flex w-full items-center justify-between rounded-lg border text-left transition active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50",
+    sizeClassName,
+    toneClassName,
+    className
+  ].join(" ");
+}
+
+function CommandContent({ label, description, tone = "default", density = "default" }: Pick<CommandButtonProps, "label" | "description" | "tone" | "density">) {
   const descriptionClassName = tone === "danger" ? "text-rose-600" : tone === "active" ? "text-cyan-700" : "text-slate-500";
+  const labelClassName = density === "compact" ? "text-[13px]" : "text-sm";
+  const descriptionSizeClassName = density === "compact" ? "text-[11px]" : "text-xs";
+
+  return (
+    <>
+      <span className="min-w-0">
+        <span className={["block truncate font-extrabold", labelClassName].join(" ")}>{label}</span>
+        <span className={["mt-0.5 block truncate font-medium", descriptionSizeClassName, descriptionClassName].join(" ")}>{description}</span>
+      </span>
+      <span aria-hidden="true" className="shrink-0 text-sm font-black opacity-40">&gt;</span>
+    </>
+  );
+}
+
+function CommandButton({ label, description, tone = "default", density = "default", className = "", ...props }: CommandButtonProps) {
+  const { "aria-label": ariaLabel, title, ...buttonProps } = props;
 
   return (
     <button
       type="button"
       aria-label={ariaLabel ?? `${label}. ${description}`}
       title={title ?? description}
-      className={[
-        "flex min-h-[50px] w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50",
-        toneClassName,
-        className
-      ].join(" ")}
+      className={getCommandClassName(tone, density, className)}
       {...buttonProps}
     >
-      <span className="min-w-0">
-        <span className="block truncate text-sm font-extrabold">{label}</span>
-        <span className={["mt-0.5 block truncate text-xs font-medium", descriptionClassName].join(" ")}>{description}</span>
-      </span>
-      <span aria-hidden="true" className="shrink-0 text-sm font-black opacity-40">&gt;</span>
+      <CommandContent label={label} description={description} tone={tone} density={density} />
     </button>
   );
 }
 
-function ToolGroup({ title, description, children, defaultOpen = false }: { title: string; description: string; children: ReactNode; defaultOpen?: boolean }) {
+function CommandLink({ href, label, description, onClick }: { href: string; label: string; description: string; onClick: (event: MouseEvent<HTMLAnchorElement>) => void }) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={getCommandClassName("default", "compact")}
+    >
+      <CommandContent label={label} description={description} tone="default" density="compact" />
+    </Link>
+  );
+}
+
+function ToolGroup({ title, description, children, defaultOpen = false, contentClassName = "space-y-2" }: { title: string; description: string; children: ReactNode; defaultOpen?: boolean; contentClassName?: string }) {
   return (
     <details {...(defaultOpen ? { open: true } : {})} className="group rounded-xl border border-slate-200/70 bg-white/70">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-left transition hover:bg-slate-50/80 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 marker:hidden">
@@ -114,7 +155,7 @@ function ToolGroup({ title, description, children, defaultOpen = false }: { titl
         </span>
         <span className="shrink-0 text-xs font-black text-slate-400 transition group-open:rotate-90">&gt;</span>
       </summary>
-      <div className="space-y-2 border-t border-slate-100 px-3 pb-3 pt-2">
+      <div className={[contentClassName, "border-t border-slate-100 px-3 pb-3 pt-2"].join(" ")}>
         {children}
       </div>
     </details>
@@ -136,7 +177,15 @@ export function AdvancedDrawer({
   moveSeatMode,
   swapSeatMode,
   pending,
+  undoAvailable,
+  redoAvailable,
+  undoTitle,
+  redoTitle,
+  askPlannerHighlightCount,
   onClose,
+  onUndo,
+  onRedo,
+  onOpenAskPlanner,
   onStartAddSeat,
   onCancelAddSeat,
   onStartSwapSeat,
@@ -298,42 +347,85 @@ export function AdvancedDrawer({
           </div>
         )}
 
-        <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain pr-1">
-          <section className="space-y-2">
-            <div>
-              <div className="text-sm font-extrabold text-slate-900">Quick actions</div>
-              <p className="mt-0.5 text-xs font-medium text-slate-500">Common draft map commands</p>
+        <div className="min-h-0 space-y-2 overflow-y-auto overscroll-contain pr-1">
+          <section className="rounded-xl border border-slate-200/80 bg-slate-50/75 p-2">
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm font-extrabold text-slate-900">Admin actions</div>
+                <p className="mt-0.5 truncate text-xs font-medium text-slate-500">Frequent mobile commands</p>
+              </div>
             </div>
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
               <CommandButton
-                label={addSeatMode ? "Cancel Add Seat" : "Add Seat"}
-                description={addSeatMode ? "Active. Click a seating zone or cancel" : "Place a new custom draft marker"}
-                tone={addSeatMode ? "active" : "default"}
-                onClick={addSeatMode ? onCancelAddSeat : onStartAddSeat}
+                label="Undo"
+                description={undoTitle}
+                onClick={onUndo}
+                density="compact"
+                disabled={busy || !undoAvailable}
+              />
+              <CommandButton
+                label="Redo"
+                description={redoTitle}
+                onClick={onRedo}
+                density="compact"
+                disabled={busy || !redoAvailable}
+              />
+              <CommandButton
+                label="Ask Planner"
+                description={askPlannerHighlightCount > 0 ? `${askPlannerHighlightCount} highlighted` : "Map assistant"}
+                tone={askPlannerHighlightCount > 0 ? "active" : "default"}
+                onClick={onOpenAskPlanner}
+                density="compact"
                 disabled={busy}
               />
-              <CommandButton
-                label={swapSeatMode ? "Cancel Swap" : "Swap Seats"}
-                description={swapSeatMode ? "Leave swap mode without changes" : "Select source, target, then confirm"}
-                tone={swapSeatMode ? "active" : "default"}
-                onClick={swapSeatMode ? onCancelSwapSeat : onStartSwapSeat}
-                disabled={busy}
-              />
-              <CommandButton
-                label={moveSeatMode ? "Lock Seat" : "Move Seat"}
-                description={selectedSeat ? `Drag ${selectedSeat.label} on the map` : "Select a seat first"}
-                tone={moveSeatMode ? "active" : "default"}
-                onClick={onToggleMoveSeat}
-                disabled={busy || !selectedSeat}
-              />
-              <CommandButton
-                label="Clear Selection"
-                description={selectedSeat ? `Deselect ${selectedSeat.label}` : "Select a seat first"}
-                onClick={onClearSelection}
-                disabled={busy || !selectedSeat}
+              <CommandLink
+                href="/admin/management"
+                label="Management"
+                description="People and zones"
+                onClick={event => {
+                  if (!onBeforeManagementNavigation()) {
+                    event.preventDefault();
+                    return;
+                  }
+                  onClose();
+                }}
               />
             </div>
           </section>
+
+          <ToolGroup title="Seat editing" description="Add, move, swap, and clear selection" defaultOpen contentClassName="grid grid-cols-2 gap-2">
+            <CommandButton
+              label={addSeatMode ? "Cancel Add Seat" : "Add Seat"}
+              description={addSeatMode ? "Active. Click a seating zone or cancel" : "Place a new custom draft marker"}
+              tone={addSeatMode ? "active" : "default"}
+              onClick={addSeatMode ? onCancelAddSeat : onStartAddSeat}
+              density="compact"
+              disabled={busy}
+            />
+            <CommandButton
+              label={swapSeatMode ? "Cancel Swap" : "Swap Seats"}
+              description={swapSeatMode ? "Leave swap mode without changes" : "Select source, target, then confirm"}
+              tone={swapSeatMode ? "active" : "default"}
+              onClick={swapSeatMode ? onCancelSwapSeat : onStartSwapSeat}
+              density="compact"
+              disabled={busy}
+            />
+            <CommandButton
+              label={moveSeatMode ? "Lock Seat" : "Move Seat"}
+              description={selectedSeat ? `Drag ${selectedSeat.label} on the map` : "Select a seat first"}
+              tone={moveSeatMode ? "active" : "default"}
+              onClick={onToggleMoveSeat}
+              density="compact"
+              disabled={busy || !selectedSeat}
+            />
+            <CommandButton
+              label="Clear Selection"
+              description={selectedSeat ? `Deselect ${selectedSeat.label}` : "Select a seat first"}
+              onClick={onClearSelection}
+              density="compact"
+              disabled={busy || !selectedSeat}
+            />
+          </ToolGroup>
 
           <ToolGroup title="Layout tools" description="Custom seat placement">
             <p className="text-xs leading-5 text-slate-500">
@@ -353,26 +445,6 @@ export function AdvancedDrawer({
               <CommandButton label="Import CSV" description="Apply assignment updates with undo" onClick={() => fileInputRef.current?.click()} disabled={busy} />
             </div>
             <p className="text-xs leading-5 text-slate-500">CSV imports update draft assignments only. Marker positions stay fixed.</p>
-          </ToolGroup>
-
-          <ToolGroup title="Management" description="Directory, departments, and zones">
-            <Link
-              href="/admin/management"
-              onClick={event => {
-                if (!onBeforeManagementNavigation()) {
-                  event.preventDefault();
-                  return;
-                }
-                onClose();
-              }}
-              className="flex min-h-[58px] w-full items-center justify-between gap-3 rounded-lg border border-slate-200/70 bg-white/75 px-3 py-2 text-left text-slate-900 transition hover:border-slate-300 hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
-            >
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-extrabold">Open Management</span>
-                <span className="mt-0.5 block truncate text-xs font-medium text-slate-500">Edit people, departments, and zones</span>
-              </span>
-              <span aria-hidden="true" className="shrink-0 text-sm font-black opacity-40">&gt;</span>
-            </Link>
           </ToolGroup>
 
           <ToolGroup title="Publishing" description="Send draft map to viewers">

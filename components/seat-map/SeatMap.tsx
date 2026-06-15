@@ -63,6 +63,11 @@ type SwapConfirmState = {
   targetSeatId: string;
 } | null;
 
+type DeleteSeatConfirmState = {
+  seatId: string;
+  label: string;
+} | null;
+
 type InspectorGuardAction =
   | { kind: "select-seat"; seatId: string; center?: boolean; sourceLabel?: string }
   | { kind: "close-inspector" }
@@ -72,11 +77,17 @@ type InspectorGuardAction =
   | { kind: "start-swap-seat" }
   | { kind: "navigate-management" };
 
+type MapViewMode = "overview" | "detail";
+
 const NAME_LABEL_COLLISION_X_THRESHOLD = 0.07;
 const NAME_LABEL_COLLISION_Y_THRESHOLD = 0.07;
 const ADMIN_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:names-visible";
 const DEFAULT_PUBLISHED_SEATS: SeatWithEmployee[] = [];
 const INSPECTOR_FORM_ID = "seat-inspector-form";
+const MAP_VIEW_MODE_OPTIONS: { value: MapViewMode; label: string }[] = [
+  { value: "overview", label: "Overview" },
+  { value: "detail", label: "Detail" }
+];
 const STATUS_LABELS: Record<SeatStatus, string> = {
   available: "Available",
   assigned: "Assigned",
@@ -225,17 +236,44 @@ export function SeatMap({
   const [searchSelectionNotice, setSearchSelectionNotice] = useState<string | null>(null);
   const [showNames, setShowNames] = useState(false);
   const [namesPreferenceHydrated, setNamesPreferenceHydrated] = useState(false);
+  const [mapViewMode, setMapViewMode] = useState<MapViewMode>("detail");
+  const [overviewMapWidth, setOverviewMapWidth] = useState<number | null>(null);
+  const [mapVisibleRange, setMapVisibleRange] = useState({ left: 0, right: 1, viewportWidth: 0 });
   const [swapSourceSeatId, setSwapSourceSeatId] = useState<string | null>(null);
   const [swapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
+  const [deleteSeatConfirm, setDeleteSeatConfirm] = useState<DeleteSeatConfirmState>(null);
   const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
   const [pending, startTransition] = useTransition();
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapToolsButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mapToolsMobileButtonRef = useRef<HTMLButtonElement | null>(null);
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
 
+  const updateMapVisibleRange = useCallback(() => {
+    const viewport = mapViewportRef.current;
+    const map = mapRef.current;
+    if (!viewport || !map || map.offsetWidth <= 0) return;
+
+    const mapLeftInScrollContent = map.offsetLeft;
+    const left = Math.max(0, (viewport.scrollLeft - mapLeftInScrollContent) / map.offsetWidth);
+    const right = Math.min(1, (viewport.scrollLeft - mapLeftInScrollContent + viewport.clientWidth) / map.offsetWidth);
+
+    const viewportWidth = viewport.clientWidth;
+
+    setMapVisibleRange(current => (
+      Math.abs(current.left - left) < 0.002 && Math.abs(current.right - right) < 0.002 && Math.abs(current.viewportWidth - viewportWidth) < 1
+        ? current
+        : { left, right, viewportWidth }
+    ));
+  }, []);
+
   const focusMapToolsButton = useCallback(() => {
-    window.setTimeout(() => mapToolsButtonRef.current?.focus(), 0);
+    window.setTimeout(() => {
+      const visibleTrigger = [mapToolsButtonRef.current, mapToolsMobileButtonRef.current]
+        .find(button => button && button.offsetParent !== null);
+      (visibleTrigger ?? mapToolsButtonRef.current ?? mapToolsMobileButtonRef.current)?.focus();
+    }, 0);
   }, []);
 
   const focusAskPlannerButton = useCallback(() => {
@@ -285,6 +323,81 @@ export function SeatMap({
   }, [selectedSeatId]);
 
   useEffect(() => {
+    const viewport = mapViewportRef.current;
+    if (!viewport) return;
+    const viewportElement = viewport;
+
+    function updateOverviewMapWidth() {
+      const availableWidth = Math.max(1, viewportElement.clientWidth - 12);
+      const availableHeight = Math.max(1, viewportElement.clientHeight - 12);
+      const desktopOverview = window.matchMedia("(min-width: 1024px)").matches;
+      const nextWidth = desktopOverview
+        ? Math.min(MAP_IMAGE_WIDTH, availableWidth, availableHeight * (MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT))
+        : Math.min(MAP_IMAGE_WIDTH, availableWidth);
+      setOverviewMapWidth(Math.floor(nextWidth));
+    }
+
+    updateOverviewMapWidth();
+
+    const observer = new ResizeObserver(updateOverviewMapWidth);
+    observer.observe(viewportElement);
+    window.addEventListener("resize", updateOverviewMapWidth);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateOverviewMapWidth);
+    };
+  }, []);
+
+  useEffect(() => {
+    const viewport = mapViewportRef.current;
+    if (!viewport) return;
+
+    updateMapVisibleRange();
+
+    const observer = new ResizeObserver(updateMapVisibleRange);
+    observer.observe(viewport);
+    if (mapRef.current) observer.observe(mapRef.current);
+    viewport.addEventListener("scroll", updateMapVisibleRange, { passive: true });
+    window.addEventListener("resize", updateMapVisibleRange);
+
+    return () => {
+      observer.disconnect();
+      viewport.removeEventListener("scroll", updateMapVisibleRange);
+      window.removeEventListener("resize", updateMapVisibleRange);
+    };
+  }, [mapViewMode, overviewMapWidth, updateMapVisibleRange]);
+
+  useEffect(() => {
+    if (mapViewMode !== "detail") return;
+
+    const frame = window.requestAnimationFrame(() => {
+      const viewport = mapViewportRef.current;
+      if (!viewport) return;
+
+      const maxLeft = Math.max(viewport.scrollWidth - viewport.clientWidth, 0);
+      const maxTop = Math.max(viewport.scrollHeight - viewport.clientHeight, 0);
+      viewport.scrollTo({
+        left: Math.min(Math.max(maxLeft / 2, 0), maxLeft),
+        top: Math.min(Math.max(maxTop / 2, 0), maxTop),
+        behavior: "auto"
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [mapViewMode]);
+
+  useEffect(() => {
+    if (mapViewMode !== "overview") return;
+
+    const frame = window.requestAnimationFrame(() => {
+      mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [mapViewMode, overviewMapWidth]);
+
+  useEffect(() => {
     setPlannerHighlightedSeatIds(current => {
       const seatIds = new Set(localSeats.map(seat => seat.id));
       const next = current.filter(seatId => seatIds.has(seatId));
@@ -302,6 +415,11 @@ export function SeatMap({
 
       if (inspectorGuardAction) {
         keepEditingInspector();
+        return;
+      }
+
+      if (deleteSeatConfirm) {
+        setDeleteSeatConfirm(null);
         return;
       }
 
@@ -355,7 +473,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, advancedOpen, askPlannerOpen, closeAdvancedDrawer, closeAskPlannerDrawer, filterCollapsed, inspectorDirty, inspectorGuardAction, moveSeatMode, publishReviewOpen, selectedSeatId, swapConfirm, swapSourceSeatId]);
+  }, [addSeatMode, advancedOpen, askPlannerOpen, closeAdvancedDrawer, closeAskPlannerDrawer, deleteSeatConfirm, filterCollapsed, inspectorDirty, inspectorGuardAction, moveSeatMode, publishReviewOpen, selectedSeatId, swapConfirm, swapSourceSeatId]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -420,9 +538,16 @@ export function SeatMap({
     zone !== "all" ? { id: "zone", label: "Zone", value: zone, removeLabel: `Remove zone filter ${zone}` } : null,
     status !== "all" ? { id: "status", label: "Status", value: STATUS_LABELS[status as SeatStatus] ?? status, removeLabel: `Remove status filter ${STATUS_LABELS[status as SeatStatus] ?? status}` } : null
   ].filter(Boolean) as ActiveFilterChip[];
+  const structuredFilterCount = [
+    department !== "all",
+    zone !== "all",
+    status !== "all"
+  ].filter(Boolean).length;
   const activeFilterCount = activeFilterChips.length;
+  const activeStructuredFilterChips = activeFilterChips.filter(chip => chip.id !== "search");
   const filtersActive = activeFilterCount > 0;
   const matchingSeats = filtersActive ? localSeats.filter(seat => matchesFilters(seat)) : localSeats;
+  const singleResultSeat = filtersActive && matchingSeats.length === 1 ? matchingSeats[0] : null;
   const resultStatusBreakdown = useMemo<ResultStatusBreakdown>(() => ({
     available: matchingSeats.filter(seat => seat.status === "available").length,
     assigned: matchingSeats.filter(seat => seat.status === "assigned").length,
@@ -496,25 +621,38 @@ export function SeatMap({
     return searchOk && departmentOk && zoneOk && statusOk;
   }
 
+  function focusSeatMarker(seatId: string | null) {
+    if (!seatId) return;
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>(`[data-seat-id="${seatId}"]`)?.focus();
+    });
+  }
+
   function applyCloseInspectorAction() {
+    const seatIdToFocus = selectedSeatId;
     setSelectedSeatId(null);
     setInspectorDirty(false);
     setMoveSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
+    setDeleteSeatConfirm(null);
     setInspectorCollapsed(false);
     setSearchSelectionNotice(null);
+    focusSeatMarker(seatIdToFocus);
   }
 
   function applyClearSelectionAction() {
+    const seatIdToFocus = selectedSeatId;
     setSelectedSeatId(null);
     setInspectorDirty(false);
     setMoveSeatMode(false);
     setAddSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
+    setDeleteSeatConfirm(null);
     setInspectorCollapsed(false);
     setSearchSelectionNotice(null);
+    focusSeatMarker(seatIdToFocus);
   }
 
   function applyStartAddSeatAction() {
@@ -782,6 +920,36 @@ export function SeatMap({
     const left = clampScrollPosition((x * map.offsetWidth) - (viewport.clientWidth / 2), viewport.scrollWidth - viewport.clientWidth);
     const top = clampScrollPosition((y * map.offsetHeight) - (viewport.clientHeight / 2), viewport.scrollHeight - viewport.clientHeight);
     viewport.scrollTo({ left, top, behavior: "smooth" });
+  }
+
+  function centerMapViewport(behavior: ScrollBehavior = "smooth") {
+    const viewport = mapViewportRef.current;
+    if (!viewport) return;
+
+    const left = clampScrollPosition((viewport.scrollWidth - viewport.clientWidth) / 2, viewport.scrollWidth - viewport.clientWidth);
+    const top = clampScrollPosition((viewport.scrollHeight - viewport.clientHeight) / 2, viewport.scrollHeight - viewport.clientHeight);
+    viewport.scrollTo({ left, top, behavior });
+  }
+
+  function changeMapViewMode(nextMode: MapViewMode) {
+    setMapViewMode(nextMode);
+
+    if (nextMode === "detail") {
+      const detailFocusSeatId = selectedSeatId ?? (filtersActive && matchingSeats.length === 1 ? matchingSeats[0].id : null);
+      if (detailFocusSeatId) {
+        queueCenterSeatInMap(detailFocusSeatId);
+        return;
+      }
+
+      window.requestAnimationFrame(() => centerMapViewport());
+      return;
+    }
+
+    if (nextMode === "overview") {
+      window.requestAnimationFrame(() => {
+        mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
+      });
+    }
   }
 
   function centerSeatInMap(seatId: string) {
@@ -1167,21 +1335,38 @@ export function SeatMap({
       return;
     }
 
-    const confirmed = window.confirm([
-      `Delete custom seat ${selectedSeat.label}?`,
-      "",
-      "Only available custom draft seats can be deleted. Original seats are protected.",
-      "This removes custom draft seats only. Published maps are unchanged until you publish."
-    ].join("\n"));
-    if (!confirmed) return;
+    setActionNotice(null);
+    setActionError(null);
+    setDeleteSeatConfirm({ seatId: selectedSeat.id, label: selectedSeat.label });
+  }
+
+  function confirmDeleteSelectedSeat() {
+    if (!deleteSeatConfirm) return;
+
+    const seatToDelete = localSeats.find(seat => seat.id === deleteSeatConfirm.seatId) ?? null;
+    const deleteBlockReason = getSeatDeleteBlockReason(seatToDelete);
+    if (!seatToDelete || !canDeleteSeat(seatToDelete)) {
+      setDeleteSeatConfirm(null);
+      setActionError(deleteBlockReason ?? "Select a custom seat first.");
+      return;
+    }
+
+    if (inspectorDirty) {
+      setDeleteSeatConfirm(null);
+      setActionNotice(null);
+      setActionError("Save or discard the selected seat edits before deleting a custom seat.");
+      return;
+    }
+
     const beforeSnapshot = captureDraftSnapshot();
-    const deletedSeatLabel = selectedSeat.label;
+    const deletedSeatLabel = seatToDelete.label;
+    setDeleteSeatConfirm(null);
 
     startTransition(async () => {
       try {
         setActionError(null);
         setActionNotice(null);
-        const result = await deleteSeatAction(selectedSeat.id);
+        const result = await deleteSeatAction(seatToDelete.id);
         const afterSeats = beforeSnapshot.seats.filter(seat => seat.id !== result.seatId);
         recordDraftHistory(`Delete ${deletedSeatLabel}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
         setLocalSeats(afterSeats);
@@ -1241,6 +1426,10 @@ export function SeatMap({
       ? "the current search"
       : "the current filters";
   const resultStatusSummary = `${resultStatusBreakdown.assigned} assigned · ${resultStatusBreakdown.available} open · ${resultStatusBreakdown.reserved} reserved · ${resultStatusBreakdown.unavailable} unavailable`;
+  const singleResultPerson = singleResultSeat?.employee?.full_name ?? "Open seat";
+  const singleResultMeta = singleResultSeat
+    ? `${STATUS_LABELS[singleResultSeat.status]} · ${getSeatZone(singleResultSeat) || "No zone"}`
+    : "";
   const resultEmptyTitle = searchActive && structuredFiltersActive
     ? "No combined results"
     : searchActive
@@ -1256,6 +1445,7 @@ export function SeatMap({
       ? "This selected seat does not match the current search."
       : "This selected seat does not match the current filters."
     : null;
+  const selectedResultIsVisible = Boolean(selectedSeat && filtersActive && selectedSeatMatchesFilters);
   const clearSearchContextLabel = searchActive ? "Clear search" : "Clear filters";
   const undoTitle = pending
     ? "Wait for the current map change to finish"
@@ -1310,45 +1500,148 @@ export function SeatMap({
         }
         : null;
   const desktopMapGridClass = filterCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]";
-  const showFilterPanel = !filterCollapsed || canEdit;
+  const showFilterPanel = !filterCollapsed;
   const filterPanelShellClass = [
     filterCollapsed ? "order-2" : "order-1",
     "lg:order-1",
     canEdit && filterCollapsed ? "lg:hidden" : "",
     !filterCollapsed ? "lg:min-h-0 lg:self-stretch lg:[&>aside]:h-full lg:[&>aside]:max-h-full lg:[&>aside]:top-0" : ""
   ].join(" ");
+  const mapViewportClassName = [
+    "relative mx-auto w-full max-w-full overscroll-contain rounded-[18px] bg-[#f6f4f1] shadow-[0_10px_28px_rgba(15,23,42,0.08),inset_0_0_0_1px_rgba(71,85,105,0.24),inset_0_1px_0_rgba(255,255,255,0.92)] sm:rounded-[22px] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
+    mapViewMode === "overview"
+      ? "min-h-[300px] overflow-hidden p-1.5 sm:min-h-[480px] sm:p-2 lg:flex lg:min-h-0 lg:items-center lg:justify-center"
+      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+    canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200" : ""
+  ].join(" ");
+  const mapFrameClassName = [
+    "relative mx-auto max-w-none",
+    mapViewMode === "overview" ? "w-full max-w-[1911px]" : "w-[1120px] sm:w-[1460px] lg:w-[1911px]",
+    addSeatMode ? "cursor-crosshair" : ""
+  ].join(" ");
+  const mapFrameStyle = mapViewMode === "overview" && overviewMapWidth ? { width: `${overviewMapWidth}px` } : undefined;
+  const resultSummaryShellClass = [
+    "flex flex-col gap-2 border px-3 text-xs font-semibold transition lg:flex-row lg:items-center lg:justify-between",
+    singleResultSeat
+      ? "rounded-xl border-slate-200/90 bg-white/90 py-1.5 text-slate-600 shadow-[0_8px_22px_rgba(15,23,42,0.06)]"
+      : selectedResultIsVisible
+      ? "rounded-xl border-slate-200/80 bg-slate-50/80 text-slate-500 shadow-none"
+      : "rounded-2xl border-white/70 bg-white/80 py-2 text-slate-600 shadow-[0_12px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl"
+  ].join(" ");
+  const singleResultOverlayClassName = "pointer-events-auto flex w-[min(100%,22rem)] flex-col gap-2 rounded-xl border border-slate-200/90 bg-white/95 px-2.5 py-2 text-xs font-semibold text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.14)] backdrop-blur-md sm:w-auto sm:min-w-[28rem] sm:max-w-[min(46rem,calc(100vw-11rem))] sm:flex-row sm:items-center sm:justify-between";
+  const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-slate-200 bg-white/90 px-3 py-1.5 text-[11px] font-black text-slate-700 transition hover:border-orange-200 hover:bg-orange-50 active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50";
+  const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] font-black text-brand-dark transition hover:bg-orange-100 active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100";
+  const singleResultSummary = singleResultSeat ? (
+    <>
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <span className="shrink-0 rounded-lg bg-slate-950 px-2 py-1 text-[11px] font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]">
+          {singleResultSeat.label}
+        </span>
+        <span className="min-w-0 flex-1 truncate font-black text-slate-900" aria-live="polite">
+          {searchSelectionNotice ?? `${singleResultPerson} matches ${mapResultContextLabel}.`}
+        </span>
+        <span className="hidden shrink-0 truncate text-[11px] font-bold text-slate-500 sm:inline">
+          {singleResultMeta}
+        </span>
+      </div>
+      <div className="flex shrink-0 flex-wrap gap-1.5">
+        <button
+          type="button"
+          onClick={() => selectSeatResult(singleResultSeat.id)}
+          className={resultActionButtonClassName}
+        >
+          Select
+        </button>
+        <button
+          type="button"
+          onClick={() => fitSeatsInMap([singleResultSeat])}
+          aria-label="Fit one result on the map"
+          title="Center the matching seat on the map"
+          className={resultActionButtonClassName}
+        >
+          Fit result
+        </button>
+        <button
+          type="button"
+          onClick={searchActive && structuredFiltersActive ? clearAllConstraints : searchActive ? clearSearch : clearStructuredFilters}
+          aria-label={searchActive && structuredFiltersActive ? "Clear all active search and filters" : searchActive ? "Clear search" : "Clear filters"}
+          className={resultClearButtonClassName}
+        >
+          {searchActive && structuredFiltersActive ? "Clear all" : searchActive ? "Clear search" : "Clear filters"}
+        </button>
+      </div>
+    </>
+  ) : null;
+  const visibleMapSpan = Math.max(0, mapVisibleRange.right - mapVisibleRange.left);
+  const mapPixelsPerNormalizedUnit = visibleMapSpan > 0 && mapVisibleRange.viewportWidth > 0
+    ? mapVisibleRange.viewportWidth / visibleMapSpan
+    : 0;
+  const markerEdgeBaseOffsetPx = 48;
+  const markerEdgeMaxOffsetPx = 144;
+  const markerEdgeThreshold = mapViewMode === "detail"
+    ? Math.min(0.16, Math.max(0.06, visibleMapSpan * 0.24))
+    : 0;
+  const markerOutsideEdgeThreshold = mapViewMode === "detail"
+    ? Math.min(0.08, Math.max(0.035, visibleMapSpan * 0.12))
+    : 0;
+
+  function getMarkerViewportPlacement(x: number): { edge: "left" | "right" | "none"; offsetPx: number } {
+    if (mapViewMode !== "detail") return { edge: "none", offsetPx: 0 };
+
+    const resolveOffset = (distancePastVisibleRange: number) => {
+      if (distancePastVisibleRange <= 0 || mapPixelsPerNormalizedUnit <= 0) return markerEdgeBaseOffsetPx;
+      return Math.min(markerEdgeMaxOffsetPx, Math.round(markerEdgeBaseOffsetPx + (distancePastVisibleRange * mapPixelsPerNormalizedUnit)));
+    };
+
+    if (x < mapVisibleRange.left) {
+      const distancePastVisibleRange = mapVisibleRange.left - x;
+      return distancePastVisibleRange <= markerOutsideEdgeThreshold
+        ? { edge: "left", offsetPx: resolveOffset(distancePastVisibleRange) }
+        : { edge: "none", offsetPx: 0 };
+    }
+    if (x - mapVisibleRange.left <= markerEdgeThreshold) return { edge: "left", offsetPx: markerEdgeBaseOffsetPx };
+    if (x > mapVisibleRange.right) {
+      const distancePastVisibleRange = x - mapVisibleRange.right;
+      return distancePastVisibleRange <= markerOutsideEdgeThreshold
+        ? { edge: "right", offsetPx: resolveOffset(distancePastVisibleRange) }
+        : { edge: "none", offsetPx: 0 };
+    }
+    if (mapVisibleRange.right - x <= markerEdgeThreshold) return { edge: "right", offsetPx: markerEdgeBaseOffsetPx };
+    return { edge: "none", offsetPx: 0 };
+  }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#eef2f7] lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden">
-      <header className="sticky top-0 z-30 border-b border-white/70 bg-white/80 px-3 py-2 text-slate-950 shadow-[0_10px_34px_rgba(15,23,42,0.07)] backdrop-blur-2xl sm:px-4 lg:shrink-0">
-        <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(190px,260px)_minmax(260px,1fr)_auto]">
-          <div className="min-w-0">
+    <div className="min-h-screen overflow-x-hidden bg-slate-950 px-1.5 py-2 text-slate-950 sm:px-3 sm:py-3 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden">
+      <div className="mx-auto flex w-full max-w-[1920px] flex-1 flex-col overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_32px_100px_rgba(0,0,0,0.38)] lg:min-h-0">
+        <header className="z-30 border-b border-slate-200/80 bg-slate-50/95 px-3 py-2.5 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:px-4 lg:shrink-0">
+          <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(200px,270px)_minmax(300px,1fr)_auto]">
             <div className="min-w-0">
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                <h1 className="truncate text-[15px] font-black leading-tight">Office Seat Planner</h1>
-                <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", canEdit ? "bg-orange-50/80 text-brand-dark ring-orange-200" : "bg-emerald-50/80 text-emerald-700 ring-emerald-200"].join(" ")}>
-                  {canEdit ? "Draft" : "Published"}
-                </span>
-                {canEdit && (
-                  <button
-                    type="button"
-                    onClick={openPublishReview}
-                    aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
-                    title={draftStatusTitle}
-                    className={["inline-flex min-w-0 max-w-[min(100%,13rem)] items-center overflow-hidden rounded-full px-2 py-0.5 text-[10px] font-black ring-1 transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:max-w-[18rem]", publishSummary.hasChanges ? "bg-amber-50/90 text-amber-800 ring-amber-200" : "bg-emerald-50/80 text-emerald-700 ring-emerald-200"].join(" ")}
-                  >
-                    <span className="min-w-0 truncate">{draftStatusLabel}</span>
-                    {publishSummary.hasChanges && draftChangeBreakdown && (
-                      <span className="hidden shrink-0 min-[1280px]:inline"> · {draftChangeBreakdown}</span>
-                    )}
-                  </button>
-                )}
+              <div className="min-w-0">
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                  <h1 className="truncate text-base font-black leading-tight tracking-normal">Office Seat Planner</h1>
+                  <span className={["shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", canEdit ? "bg-orange-50 text-brand-dark ring-orange-200" : "bg-emerald-50 text-emerald-700 ring-emerald-200"].join(" ")}>
+                    {canEdit ? "Draft" : "Published"}
+                  </span>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={openPublishReview}
+                      aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
+                      title={draftStatusTitle}
+                      className={["inline-flex min-w-0 max-w-[min(100%,13rem)] items-center overflow-hidden rounded-lg px-2 py-0.5 text-[10px] font-black ring-1 transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:max-w-[18rem]", publishSummary.hasChanges ? "bg-amber-50 text-amber-800 ring-amber-200" : "bg-emerald-50 text-emerald-700 ring-emerald-200"].join(" ")}
+                    >
+                      <span className="min-w-0 truncate">{draftStatusLabel}</span>
+                      {publishSummary.hasChanges && draftChangeBreakdown && (
+                        <span className="hidden shrink-0 min-[1280px]:inline"> · {draftChangeBreakdown}</span>
+                      )}
+                    </button>
+                  )}
+                </div>
+                <p className="truncate text-[9px] font-bold uppercase tracking-[0.14em] leading-tight text-slate-400">{canEdit ? "Admin workspace" : "Viewer workspace"}</p>
               </div>
-              <p className="truncate text-[11px] leading-tight text-slate-500">{canEdit ? "Admin map" : "Viewer map"}</p>
             </div>
-          </div>
 
-          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-1 lg:flex-nowrap">
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5 rounded-[18px] border border-slate-200/80 bg-white/75 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] sm:col-span-2 lg:col-span-1 lg:flex-nowrap">
             <label className="relative min-w-0 flex-[1_1_100%] sm:flex-1">
               <span className="sr-only">Search employee, seat, job title, department, or zone</span>
               <input
@@ -1358,7 +1651,7 @@ export function SeatMap({
                   setSearchSelectionNotice(null);
                 }}
                 placeholder="Search employee, seat, job title, department, or zone"
-                className="h-9 w-full rounded-full border border-white/70 bg-white/75 px-4 pr-10 text-sm text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.06)] outline-none backdrop-blur-xl transition placeholder:text-slate-400 focus:border-orange-200 focus:bg-white focus:ring-4 focus:ring-orange-100"
+                className="h-9 w-full rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.92)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:bg-white focus:ring-4 focus:ring-orange-100"
               />
               {search.trim() && (
                 <button
@@ -1379,12 +1672,12 @@ export function SeatMap({
               aria-expanded={!filterCollapsed}
               aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
               title={filterCollapsed ? "Open filters" : "Collapse filters"}
-              className={["inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 text-xs font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100", activeFilterCount ? "border-orange-200 bg-orange-50/80 text-brand-dark" : "border-white/70 bg-white/70 text-slate-700"].join(" ")}
+              className={["inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border px-3 text-xs font-black shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100", structuredFilterCount ? "border-orange-200 bg-orange-50 text-brand-dark" : "border-slate-200 bg-slate-50/80 text-slate-700"].join(" ")}
             >
               Filters
-              {activeFilterCount > 0 && (
+              {structuredFilterCount > 0 && (
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-black text-white">
-                  {activeFilterCount}
+                  {structuredFilterCount}
                 </span>
               )}
             </button>
@@ -1394,8 +1687,8 @@ export function SeatMap({
               aria-label={namesToggleLabel}
               title={namesToggleLabel}
               className={[
-                "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border px-2.5 text-xs font-black shadow-sm backdrop-blur-xl transition active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
-                showNames ? "border-slate-300 bg-slate-900/90 text-white hover:bg-slate-800" : "border-white/70 bg-white/70 text-slate-700 hover:bg-white"
+                "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border px-2.5 text-xs font-black shadow-sm transition active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
+                showNames ? "border-slate-300 bg-slate-900 text-white hover:bg-slate-800" : "border-slate-200 bg-slate-50/80 text-slate-700 hover:bg-white"
               ].join(" ")}
             >
               <NamesIcon />
@@ -1403,30 +1696,47 @@ export function SeatMap({
             </button>
             {canEdit && (
               <Button
-                ref={mapToolsButtonRef}
+                ref={mapToolsMobileButtonRef}
                 variant="secondary"
                 aria-label="Map tools"
                 aria-controls="advanced-drawer"
                 aria-expanded={advancedOpen}
                 aria-haspopup="dialog"
                 title="Map tools"
-                className="h-9 min-h-9 rounded-full px-3 py-1 text-xs shadow-sm"
+                className="h-9 min-h-9 rounded-xl px-3 py-1 text-xs shadow-sm sm:hidden"
                 onClick={() => {
                   setAskPlannerOpen(false);
                   setAdvancedOpen(true);
                 }}
               >
-                Map tools
+                Tools
               </Button>
             )}
           </div>
 
-          <div className="hidden min-w-0 flex-wrap items-center justify-end gap-2 sm:col-start-2 sm:row-start-1 sm:flex lg:col-auto lg:row-auto">
+          <div className="hidden min-w-0 flex-wrap items-center justify-end gap-1.5 rounded-[18px] border border-slate-200/80 bg-white/75 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] sm:col-start-2 sm:row-start-1 sm:flex lg:col-auto lg:row-auto">
             {canEdit && (
               <>
+                <Button
+                  ref={mapToolsButtonRef}
+                  variant="secondary"
+                  aria-label="Map tools"
+                  aria-controls="advanced-drawer"
+                  aria-expanded={advancedOpen}
+                  aria-haspopup="dialog"
+                  title="Map tools"
+                  className="h-9 min-h-9 rounded-xl px-3 py-1 text-xs shadow-sm"
+                  onClick={() => {
+                    setAskPlannerOpen(false);
+                    setAdvancedOpen(true);
+                  }}
+                >
+                  <span className="min-[1200px]:hidden">Tools</span>
+                  <span className="hidden min-[1200px]:inline">Map tools</span>
+                </Button>
                 <button
                   type="button"
-                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
+                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-black text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !undoAvailable}
                   aria-label="Undo last map change"
                   title={undoTitle}
@@ -1437,7 +1747,7 @@ export function SeatMap({
                 </button>
                 <button
                   type="button"
-                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 text-xs font-black text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
+                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-black text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
                   disabled={pending || inspectorDirty || !redoAvailable}
                   aria-label="Redo last undone change"
                   title={redoTitle}
@@ -1451,9 +1761,10 @@ export function SeatMap({
                   onClick={event => {
                     if (!beforeManagementNavigation()) event.preventDefault();
                   }}
-                  className="hidden min-h-8 items-center justify-center rounded-full border border-white/70 bg-white/70 px-3 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:inline-flex"
+                  className="hidden min-h-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:inline-flex"
                 >
-                  Management
+                  <span className="min-[1280px]:hidden">Manage</span>
+                  <span className="hidden min-[1280px]:inline">Management</span>
                 </Link>
                 <Button
                   ref={askPlannerButtonRef}
@@ -1463,7 +1774,7 @@ export function SeatMap({
                   aria-expanded={askPlannerOpen}
                   aria-haspopup="dialog"
                   className={[
-                    "min-h-8 rounded-full px-3 py-1 text-xs shadow-sm",
+                    "min-h-9 rounded-xl px-3 py-1 text-xs shadow-sm",
                     plannerHighlightedSeatIds.length > 0 ? "border-cyan-200 bg-cyan-50 text-cyan-900 hover:bg-cyan-100" : ""
                   ].join(" ")}
                   onClick={() => {
@@ -1485,7 +1796,7 @@ export function SeatMap({
         </div>
       </header>
 
-      <main className={["grid grid-cols-1 gap-3 p-2 sm:p-4 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
+      <main className={["grid grid-cols-1 gap-1 bg-white p-1 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
         {showFilterPanel && (
           <div className={filterPanelShellClass}>
             <FilterPanel
@@ -1504,7 +1815,7 @@ export function SeatMap({
               resultStatusBreakdown={resultStatusBreakdown}
               resultEmptyTitle={resultEmptyTitle}
               resultEmptyDescription={resultEmptyDescription}
-              showSeatResults={canEdit && filtersActive}
+              showSeatResults={canEdit && filtersActive && !singleResultSeat}
               onToggle={() => setFilterCollapsed(current => !current)}
               onEmployeeSelect={selectEmployeeSeat}
               onSeatResultSelect={selectSeatResult}
@@ -1519,9 +1830,9 @@ export function SeatMap({
           </div>
         )}
 
-        <section className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 space-y-2 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:space-y-0 lg:gap-2"].join(" ")}>
-          {canEdit && (filtersActive || searchSelectionNotice) && (
-            <div className="flex flex-col gap-2 rounded-2xl border border-white/70 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-600 shadow-[0_12px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:flex-row lg:items-start lg:justify-between">
+        <section className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].join(" ")}>
+          {canEdit && (filtersActive || searchSelectionNotice) && !singleResultSeat && (
+            <div className={resultSummaryShellClass}>
               <div className="min-w-0">
                 {searchSelectionNotice && (
                   <div className="truncate font-black text-brand-dark">{searchSelectionNotice}</div>
@@ -1532,19 +1843,21 @@ export function SeatMap({
                       {mapResultSummary} {mapResultVerb} {mapResultContextLabel}.
                     </div>
                     <div className="mt-0.5 truncate text-[11px] text-slate-500">{resultStatusSummary}</div>
-                    <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="mt-2" />
+                    {activeStructuredFilterChips.length > 0 && (
+                      <ActiveFilterChips chips={activeStructuredFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearStructuredFilters} className={selectedResultIsVisible ? "mt-1.5" : "mt-2"} />
+                    )}
                   </>
                 )}
               </div>
               {filtersActive && (
-                <div className="flex shrink-0 flex-wrap gap-2">
+                <div className={["flex shrink-0 flex-wrap", selectedResultIsVisible ? "gap-1.5" : "gap-2"].join(" ")}>
                   <button
                     type="button"
                     onClick={() => fitSeatsInMap(matchingSeats)}
                     disabled={!matchingSeats.length}
-                    aria-label={matchingSeats.length === 0 ? "Fit results unavailable because there are no matching seats" : matchingSeats.length === 1 ? "Fit one result on the map" : `Fit ${matchingSeats.length} results on the map`}
+                    aria-label={matchingSeats.length === 0 ? "Fit results unavailable because there are no matching seats" : `Fit ${matchingSeats.length} results on the map`}
                     title={matchingSeats.length === 0 ? "No matching seats to fit" : "Fit active search and filter results on the map"}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 transition hover:border-orange-200 hover:bg-orange-50 active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    className={resultActionButtonClassName}
                   >
                     Fit results
                   </button>
@@ -1553,7 +1866,7 @@ export function SeatMap({
                     onClick={() => setResultRailCollapsed(current => !current)}
                     aria-expanded={!resultRailCollapsed}
                     aria-controls="seat-results-rail"
-                    className="hidden rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 transition hover:border-orange-200 hover:bg-orange-50 active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 lg:inline-flex"
+                    className={["hidden lg:inline-flex", resultActionButtonClassName].join(" ")}
                   >
                     {resultRailCollapsed ? "Show results" : "Hide results"}
                   </button>
@@ -1561,7 +1874,7 @@ export function SeatMap({
                     type="button"
                     onClick={searchActive && structuredFiltersActive ? clearAllConstraints : searchActive ? clearSearch : clearStructuredFilters}
                     aria-label={searchActive && structuredFiltersActive ? "Clear all active search and filters" : searchActive ? "Clear search" : "Clear filters"}
-                    className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] font-black text-brand-dark transition hover:bg-orange-100 active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                    className={resultClearButtonClassName}
                   >
                     {searchActive && structuredFiltersActive ? "Clear all" : searchActive ? "Clear search" : "Clear filters"}
                   </button>
@@ -1570,7 +1883,7 @@ export function SeatMap({
             </div>
           )}
 
-          {canEdit && filtersActive && !resultRailCollapsed && (
+          {canEdit && filtersActive && !singleResultSeat && !resultRailCollapsed && (
             <SeatResultsList
               id="seat-results-rail"
               titleId="seat-results-rail-title"
@@ -1584,6 +1897,7 @@ export function SeatMap({
               onClearSearch={clearSearch}
               onClearFilters={clearStructuredFilters}
               onClearAll={clearAllConstraints}
+              density="rail"
               className="hidden lg:block"
             />
           )}
@@ -1624,16 +1938,50 @@ export function SeatMap({
             </div>
           )}
 
-          <div className="min-w-0 rounded-[18px] border border-white/70 bg-white/75 p-1.5 shadow-[0_26px_80px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl lg:flex lg:min-h-0 lg:flex-1">
+          <div className="min-w-0 lg:flex lg:min-h-0 lg:flex-1">
             <div
               ref={mapViewportRef}
-              className={["relative mx-auto max-h-[72vh] w-full max-w-full overflow-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-[#f6f4f1] sm:max-h-[calc(100vh-92px)] lg:min-h-0 lg:flex-1 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden", canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200" : ""].join(" ")}
+              className={mapViewportClassName}
               tabIndex={canEdit ? 0 : undefined}
               aria-label={canEdit ? "Admin seat map viewport. Use wheel, trackpad, touch, or arrow keys to pan the map." : undefined}
             >
+              {canEdit && singleResultSummary && (
+                <div className="pointer-events-none sticky left-0 right-0 top-12 z-50 flex h-0 w-full justify-center px-2 sm:top-2 sm:justify-end" aria-label="Single search result">
+                  <div className={singleResultOverlayClassName}>
+                    {singleResultSummary}
+                  </div>
+                </div>
+              )}
+              <div className="pointer-events-none sticky left-0 top-0 z-50 h-0">
+                <div
+                  role="group"
+                  aria-label="Map view mode"
+                  className="pointer-events-auto ml-2 mt-2 inline-flex rounded-xl border border-slate-900/15 bg-white/90 p-0.5 shadow-[0_4px_12px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.86)] backdrop-blur-md"
+                >
+                  {MAP_VIEW_MODE_OPTIONS.map(option => {
+                    const active = mapViewMode === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => changeMapViewMode(option.value)}
+                        className={[
+                          "h-8 rounded-lg px-2.5 text-[11px] font-black transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
+                          active ? "bg-slate-950 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]" : "text-slate-700 hover:bg-white"
+                        ].join(" ")}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <div
                 ref={mapRef}
-                className={["relative mx-auto w-[1040px] max-w-none sm:w-[1180px] lg:w-[96%] lg:max-w-[1840px]", addSeatMode ? "cursor-crosshair" : ""].join(" ")}
+                className={mapFrameClassName}
+                style={mapFrameStyle}
                 onPointerDown={handleMapPointerDown}
                 onPointerMove={handleMapPointerMove}
                 onPointerUp={handleMapPointerUp}
@@ -1656,6 +2004,7 @@ export function SeatMap({
                   {localSeats.map(seat => {
                     const seatMatchesFilters = matchesFilters(seat);
                     const visualSeat = visualSeatById.get(seat.id) ?? seat;
+                    const viewportPlacement = getMarkerViewportPlacement(visualSeat.x);
 
                     return (
                       <SeatMarker
@@ -1674,6 +2023,8 @@ export function SeatMap({
                         highlighted={plannerHighlightedSeatIdSet.has(seat.id)}
                         dragging={dragState?.seatId === seat.id}
                         addSeatMode={addSeatMode}
+                        viewportEdge={viewportPlacement.edge}
+                        viewportEdgeOffsetPx={viewportPlacement.offsetPx}
                         onSelect={selectSeat}
                         onMovePointerDown={handleMovePointerDown}
                       />
@@ -1685,6 +2036,7 @@ export function SeatMap({
           </div>
         </section>
       </main>
+      </div>
 
       <AdvancedDrawer
         open={advancedOpen}
@@ -1695,7 +2047,18 @@ export function SeatMap({
         moveSeatMode={moveSeatMode}
         swapSeatMode={Boolean(swapSourceSeatId)}
         pending={pending}
+        undoAvailable={!pending && !inspectorDirty && undoAvailable}
+        redoAvailable={!pending && !inspectorDirty && redoAvailable}
+        undoTitle={undoTitle}
+        redoTitle={redoTitle}
+        askPlannerHighlightCount={plannerHighlightedSeatIds.length}
         onClose={closeAdvancedDrawer}
+        onUndo={undoDraftEdit}
+        onRedo={redoDraftEdit}
+        onOpenAskPlanner={() => {
+          setAdvancedOpen(false);
+          setAskPlannerOpen(true);
+        }}
         onStartAddSeat={startAddSeatMode}
         onCancelAddSeat={cancelAddSeatMode}
         onStartSwapSeat={() => startSwapSeatMode()}
@@ -1760,6 +2123,48 @@ export function SeatMap({
           onClearHighlights={() => setPlannerHighlightedSeatIds([])}
           onSelectSeat={selectPlannerHighlightedSeat}
         />
+      )}
+
+      {deleteSeatConfirm && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:items-center">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-seat-confirm-title"
+            aria-describedby="delete-seat-confirm-description"
+            className="w-full max-w-md rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 id="delete-seat-confirm-title" className="text-base font-black">Delete custom seat {deleteSeatConfirm.label}?</h2>
+                <p id="delete-seat-confirm-description" className="mt-1 text-sm leading-5 text-slate-500">
+                  Only available custom draft seats can be deleted. Original seats are protected.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeleteSeatConfirm(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                aria-label="Cancel custom seat deletion"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-orange-200 bg-orange-50/70 p-3 text-sm font-semibold leading-5 text-brand-dark">
+              This removes custom draft seats only. Published maps are unchanged until you publish.
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Button type="button" onClick={() => setDeleteSeatConfirm(null)} disabled={pending} className="w-full">
+                Cancel
+              </Button>
+              <Button type="button" variant="danger" onClick={confirmDeleteSelectedSeat} disabled={pending} className="w-full">
+                Delete seat
+              </Button>
+            </div>
+          </section>
+        </div>
       )}
 
       {publishReviewOpen && (
