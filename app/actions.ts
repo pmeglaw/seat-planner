@@ -289,115 +289,32 @@ export async function updateSeatAction(input: {
   const supabase = await requireAdmin();
 
   const label = assertNonEmpty(input.label, "Seat label");
-  let employeeId = input.employeeId || null;
+  const employeeId = input.employeeId || null;
   const employeeName = input.employeeName?.trim() ?? "";
   const employeePosition = "employeePosition" in input ? normalizeOptionalText(input.employeePosition) : undefined;
   const phoneExtension = "phoneExtension" in input ? normalizeOptionalText(input.phoneExtension) : undefined;
   const department = normalizeOptionalText(input.department);
   const zone = normalizeOptionalText(input.zone);
+  const notes = normalizeOptionalText(input.notes);
 
   if (!employeeId && input.status === "assigned" && !employeeName) {
     throw new Error("Assigned seats require an employee name or selected employee.");
   }
 
-  const { data: duplicateLabel, error: duplicateLabelError } = await supabase
-    .from("seats")
-    .select("id,label")
-    .eq("layer", "draft")
-    .ilike("label", label)
-    .neq("id", input.seatId)
-    .maybeSingle();
-
-  if (duplicateLabelError) throw new Error(duplicateLabelError.message);
-  if (duplicateLabel) throw new Error(`Seat label ${label} already exists.`);
-
-  if (employeeId) {
-    const { data: duplicate, error: duplicateError } = await supabase
-      .from("seats")
-      .select("id,label")
-      .eq("layer", "draft")
-      .eq("employee_id", employeeId)
-      .neq("id", input.seatId)
-      .maybeSingle();
-
-    if (duplicateError) throw new Error(duplicateError.message);
-    if (duplicate) throw new Error(`That employee is already assigned to ${duplicate.label}.`);
-  }
-
-  if (!employeeId && employeeName) {
-    const { data: existingEmployee, error: findError } = await supabase
-      .from("employees")
-      .select("id")
-      .ilike("full_name", employeeName)
-      .maybeSingle();
-
-    if (findError) throw new Error(findError.message);
-
-    if (existingEmployee?.id) {
-      employeeId = existingEmployee.id;
-    } else {
-      await upsertDepartmentOption(supabase, department);
-      const { data: employee, error: employeeError } = await supabase
-        .from("employees")
-        .insert({
-          full_name: employeeName,
-          position: employeePosition ?? null,
-          phone_extension: phoneExtension ?? null,
-          department,
-          avatar_url: null,
-          active: true
-        })
-        .select("id")
-        .single();
-
-      if (employeeError) throw new Error(employeeError.message);
-      employeeId = employee.id;
-    }
-  }
-
-  if (employeeId) {
-    const { data: duplicate, error: duplicateError } = await supabase
-      .from("seats")
-      .select("id,label")
-      .eq("layer", "draft")
-      .eq("employee_id", employeeId)
-      .neq("id", input.seatId)
-      .maybeSingle();
-
-    if (duplicateError) throw new Error(duplicateError.message);
-    if (duplicate) throw new Error(`That employee is already assigned to ${duplicate.label}.`);
-  }
-
-  if (employeeId) {
-    await upsertDepartmentOption(supabase, department);
-    const patch: Record<string, string | null | boolean> = { active: true };
-    if (employeeName) patch.full_name = employeeName;
-    if (employeePosition !== undefined) patch.position = employeePosition;
-    if (phoneExtension !== undefined) patch.phone_extension = phoneExtension;
-    patch.department = department;
-
-    const { error: employeeError } = await supabase
-      .from("employees")
-      .update(patch)
-      .eq("id", employeeId);
-
-    if (employeeError) throw new Error(employeeError.message);
-  }
-
-  await upsertZoneOption(supabase, zone);
-  const status = normalizeSeatStatus(input.status, Boolean(employeeId));
-
-  const { error } = await supabase
-    .from("seats")
-    .update({
-      label,
-      status,
-      employee_id: employeeId,
-      zone,
-      notes: input.notes?.trim() || null
-    })
-    .eq("id", input.seatId)
-    .eq("layer", "draft");
+  const { error } = await supabase.rpc("update_draft_seat", {
+    draft_seat_id: input.seatId,
+    seat_label: label,
+    requested_status: input.status,
+    selected_employee_id: employeeId,
+    employee_name: employeeName || null,
+    employee_position: employeePosition ?? null,
+    employee_position_provided: employeePosition !== undefined,
+    employee_phone_extension: phoneExtension ?? null,
+    employee_phone_extension_provided: phoneExtension !== undefined,
+    employee_department: department,
+    seat_zone: zone,
+    seat_notes: notes
+  });
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
