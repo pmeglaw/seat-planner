@@ -428,30 +428,9 @@ export async function updateEmployeeAction(input: {
 export async function deleteEmployeeAction(employeeId: string) {
   const supabase = await requireAdmin();
 
-  const { data: publishedSeat, error: publishedError } = await supabase
-    .from("seats")
-    .select("label")
-    .eq("layer", "published")
-    .eq("employee_id", employeeId)
-    .maybeSingle();
-
-  if (publishedError) throw new Error(publishedError.message);
-  if (publishedSeat) {
-    throw new Error(`This employee is still on the published map at ${publishedSeat.label}. Remove them from draft and publish before deleting.`);
-  }
-
-  const { error: unassignError } = await supabase
-    .from("seats")
-    .update({ employee_id: null, status: "available" })
-    .eq("layer", "draft")
-    .eq("employee_id", employeeId);
-
-  if (unassignError) throw new Error(unassignError.message);
-
-  const { error } = await supabase
-    .from("employees")
-    .update({ active: false })
-    .eq("id", employeeId);
+  const { error } = await supabase.rpc("deactivate_employee", {
+    employee_to_deactivate: employeeId
+  });
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
@@ -478,24 +457,12 @@ export async function renameDepartmentAction(input: { from: string; to: string }
   const from = assertNonEmpty(input.from, "Department to rename");
   const to = assertNonEmpty(input.to, "New department name");
 
-  const { error: optionError } = await supabase
-    .from("department_options")
-    .upsert({ name: to, active: true }, { onConflict: "name" });
-
-  if (optionError) throw new Error(optionError.message);
-
-  const { error } = await supabase
-    .from("employees")
-    .update({ department: to })
-    .eq("department", from);
+  const { error } = await supabase.rpc("rename_department", {
+    department_from: from,
+    department_to: to
+  });
 
   if (error) throw new Error(error.message);
-
-  await supabase
-    .from("department_options")
-    .update({ active: false })
-    .eq("name", from);
-
   revalidatePath("/");
   revalidatePath("/admin");
   return { from, to };
@@ -505,18 +472,11 @@ export async function deleteDepartmentAction(department: string) {
   const supabase = await requireAdmin();
   const target = assertNonEmpty(department, "Department");
 
-  const { error } = await supabase
-    .from("employees")
-    .update({ department: null })
-    .eq("department", target);
+  const { error } = await supabase.rpc("delete_department", {
+    department_name: target
+  });
 
   if (error) throw new Error(error.message);
-
-  await supabase
-    .from("department_options")
-    .update({ active: false })
-    .eq("name", target);
-
   revalidatePath("/");
   revalidatePath("/admin");
   return { department: target };
@@ -542,25 +502,12 @@ export async function renameZoneAction(input: { from: string; to: string }) {
   const from = assertNonEmpty(input.from, "Zone to rename");
   const to = assertNonEmpty(input.to, "New zone name");
 
-  const { error: optionError } = await supabase
-    .from("zone_options")
-    .upsert({ name: to, active: true }, { onConflict: "name" });
-
-  if (optionError) throw new Error(optionError.message);
-
-  const { error } = await supabase
-    .from("seats")
-    .update({ zone: to })
-    .eq("layer", "draft")
-    .eq("zone", from);
+  const { error } = await supabase.rpc("rename_zone", {
+    zone_from: from,
+    zone_to: to
+  });
 
   if (error) throw new Error(error.message);
-
-  await supabase
-    .from("zone_options")
-    .update({ active: false })
-    .eq("name", from);
-
   revalidatePath("/admin");
   return { from, to };
 }
@@ -569,19 +516,11 @@ export async function deleteZoneAction(zone: string) {
   const supabase = await requireAdmin();
   const target = assertNonEmpty(zone, "Zone");
 
-  const { error } = await supabase
-    .from("seats")
-    .update({ zone: null })
-    .eq("layer", "draft")
-    .eq("zone", target);
+  const { error } = await supabase.rpc("delete_zone", {
+    zone_name: target
+  });
 
   if (error) throw new Error(error.message);
-
-  await supabase
-    .from("zone_options")
-    .update({ active: false })
-    .eq("name", target);
-
   revalidatePath("/admin");
   return { zone: target };
 }
