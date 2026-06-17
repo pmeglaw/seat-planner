@@ -14,17 +14,6 @@ import { savedPointToVisualPoint, seatsToVisualSeats } from "@/lib/mapLayoutTran
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import { SEAT_STATUSES, type AskPlannerRequest, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
 
-type CsvDraftSeat = {
-  id: string;
-  label: string;
-  employee_id: string | null;
-};
-
-type CsvEmployeeRecord = {
-  id: string;
-  full_name: string;
-};
-
 type DraftSeatRestoreRecord = Omit<SeatWithEmployee, "employee">;
 type DraftEmployeeRestoreRecord = Employee;
 type DraftSeatZoneSource = Pick<SeatWithEmployee, "label" | "zone" | "department" | "x" | "y">;
@@ -132,10 +121,6 @@ function buildSeatKey(label: string) {
 
 function normalizeOptionalText(value?: string | null) {
   return value?.trim() || null;
-}
-
-function normalizeEmployeeNameKey(value: string) {
-  return value.trim().toLowerCase();
 }
 
 function isUniqueLabelViolation(error: SupabaseMutationError | null) {
@@ -721,143 +706,18 @@ export async function deleteSeatAction(seatId: string) {
 export async function importAssignmentsCsvAction(csvText: string) {
   const supabase = await requireAdmin();
   const parsed = parseAssignmentCsv(csvText);
-  const issues = [...parsed.issues];
-
-  const { data: seats, error: seatsError } = await supabase
-    .from("seats")
-    .select("id,label,employee_id")
-    .eq("layer", "draft");
-
-  if (seatsError) throw new Error(seatsError.message);
-
-  const { data: employees, error: employeesError } = await supabase
-    .from("employees")
-    .select("id,full_name");
-
-  if (employeesError) throw new Error(employeesError.message);
-
-  const seatByLabel = new Map((seats ?? []).map(seat => [String(seat.label).trim().toLowerCase(), seat as CsvDraftSeat]));
-  const employeesByName = new Map<string, CsvEmployeeRecord[]>();
-
-  (employees ?? []).forEach(employee => {
-    const key = normalizeEmployeeNameKey(String(employee.full_name ?? ""));
-    if (!key) return;
-    const matches = employeesByName.get(key) ?? [];
-    matches.push(employee as CsvEmployeeRecord);
-    employeesByName.set(key, matches);
-  });
-
-  parsed.rows.forEach((row, index) => {
-    if (row.seat_label && !seatByLabel.has(row.seat_label.trim().toLowerCase())) {
-      issues.push({ row: index + 2, message: `Unknown seat label '${row.seat_label}'.` });
-    }
-
-    const employeeName = row.employee_name.trim();
-    if (employeeName && (employeesByName.get(normalizeEmployeeNameKey(employeeName))?.length ?? 0) > 1) {
-      issues.push({ row: index + 2, message: `Employee name '${employeeName}' matches multiple records. Rename or clean up duplicates before importing.` });
-    }
-  });
-
-  if (issues.length > 0) {
-    throw new Error(issues.map(issue => `Row ${issue.row}: ${issue.message}`).join("\n"));
+  if (parsed.issues.length > 0) {
+    throw new Error(parsed.issues.map(issue => `Row ${issue.row}: ${issue.message}`).join("\n"));
   }
 
-  const employeeByName = new Map<string, CsvEmployeeRecord>();
-  employeesByName.forEach((matches, key) => {
-    if (matches.length === 1) employeeByName.set(key, matches[0]);
+  const { error: importError } = await supabase.rpc("import_assignments_csv", {
+    assignment_rows: parsed.rows.map((row, index) => ({
+      ...row,
+      row_number: index + 2
+    }))
   });
 
-  const seatUpdates: Array<{
-    seatId: string;
-    employeeId: string | null;
-    status: SeatStatus;
-    zone: string | null;
-    notes: string | null;
-  }> = [];
-
-  for (const row of parsed.rows) {
-    const seat = seatByLabel.get(row.seat_label.trim().toLowerCase());
-    if (!seat) continue;
-
-    const department = normalizeOptionalText(row.department);
-    const zone = normalizeOptionalText(row.zone);
-    const notes = normalizeOptionalText(row.notes);
-    let employeeId: string | null = null;
-
-    if (row.employee_name.trim()) {
-      const employeeName = row.employee_name.trim();
-      const employeeKey = normalizeEmployeeNameKey(employeeName);
-      const existingEmployee = employeeByName.get(employeeKey);
-
-      await upsertDepartmentOption(supabase, department);
-      if (existingEmployee?.id) {
-        employeeId = existingEmployee.id;
-        const { error: employeeUpdateError } = await supabase
-          .from("employees")
-          .update({
-            full_name: employeeName,
-            position: normalizeOptionalText(row.position),
-            department,
-            active: true
-          })
-          .eq("id", employeeId);
-
-        if (employeeUpdateError) throw new Error(employeeUpdateError.message);
-      } else {
-        const { data: newEmployee, error: employeeCreateError } = await supabase
-          .from("employees")
-          .insert({
-            full_name: employeeName,
-            position: normalizeOptionalText(row.position),
-            department,
-            active: true
-          })
-          .select("id")
-          .single();
-
-        if (employeeCreateError) throw new Error(employeeCreateError.message);
-        employeeId = newEmployee.id;
-        employeeByName.set(employeeKey, { id: newEmployee.id, full_name: employeeName });
-      }
-    }
-
-    await upsertZoneOption(supabase, zone);
-    const status = normalizeSeatStatus(row.status || (employeeId ? "assigned" : "available"), Boolean(employeeId));
-
-    seatUpdates.push({
-      seatId: seat.id,
-      employeeId,
-      status,
-      zone,
-      notes
-    });
-  }
-
-  for (const update of seatUpdates) {
-    if (update.employeeId) {
-      const { error: clearOldAssignmentError } = await supabase
-        .from("seats")
-        .update({ employee_id: null, status: "available" })
-        .eq("layer", "draft")
-        .eq("employee_id", update.employeeId)
-        .neq("id", update.seatId);
-
-      if (clearOldAssignmentError) throw new Error(clearOldAssignmentError.message);
-    }
-
-    const { error: seatUpdateError } = await supabase
-      .from("seats")
-      .update({
-        employee_id: update.employeeId,
-        status: update.status,
-        zone: update.zone,
-        notes: update.notes
-      })
-      .eq("id", update.seatId)
-      .eq("layer", "draft");
-
-    if (seatUpdateError) throw new Error(seatUpdateError.message);
-  }
+  if (importError) throw new Error(importError.message);
 
   const { data: updatedSeats, error: updatedSeatsError } = await supabase
     .from("seats")
