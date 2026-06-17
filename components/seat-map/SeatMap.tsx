@@ -1564,7 +1564,7 @@ export function SeatMap({
         <button
           type="button"
           onClick={searchActive && structuredFiltersActive ? clearAllConstraints : searchActive ? clearSearch : clearStructuredFilters}
-          aria-label={searchActive && structuredFiltersActive ? "Clear all active search and filters" : searchActive ? "Clear search" : "Clear filters"}
+          aria-label={searchActive && structuredFiltersActive ? "Clear all active search and filters" : searchActive ? "Clear search results" : "Clear filters"}
           className={resultClearButtonClassName}
         >
           {searchActive && structuredFiltersActive ? "Clear all" : searchActive ? "Clear search" : "Clear filters"}
@@ -1656,8 +1656,8 @@ export function SeatMap({
               {search.trim() && (
                 <button
                   type="button"
-                  aria-label="Clear search"
-                  title="Clear search"
+                  aria-label="Clear top search"
+                  title="Clear top search"
                   className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
                   onClick={clearSearch}
                 >
@@ -1873,7 +1873,7 @@ export function SeatMap({
                   <button
                     type="button"
                     onClick={searchActive && structuredFiltersActive ? clearAllConstraints : searchActive ? clearSearch : clearStructuredFilters}
-                    aria-label={searchActive && structuredFiltersActive ? "Clear all active search and filters" : searchActive ? "Clear search" : "Clear filters"}
+                    aria-label={searchActive && structuredFiltersActive ? "Clear all active search and filters" : searchActive ? "Clear search results" : "Clear filters"}
                     className={resultClearButtonClassName}
                   >
                     {searchActive && structuredFiltersActive ? "Clear all" : searchActive ? "Clear search" : "Clear filters"}

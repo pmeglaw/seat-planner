@@ -98,6 +98,33 @@ test("publish review summarizes draft changes before publish", async () => {
   assert.doesNotMatch(source, /Publish draft map to the viewer-facing seat map\?/);
 });
 
+test("publish workflow stays server-action gated and clears review history state", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const actionSource = await readSource("../app/actions.ts");
+  const openPublishFunction = seatMapSource.match(/function openPublishReview\(\) \{[\s\S]*?function confirmPublishDraftMap/);
+  const confirmPublishFunction = seatMapSource.match(/function confirmPublishDraftMap\(\) \{[\s\S]*?\n  \}/);
+  const publishAction = actionSource.match(/export async function publishSeatMapAction\(\) \{[\s\S]*?\n\}/);
+
+  assert.ok(openPublishFunction, "openPublishReview should remain source-visible.");
+  assert.ok(confirmPublishFunction, "confirmPublishDraftMap should remain source-visible.");
+  assert.ok(publishAction, "publishSeatMapAction should remain source-visible.");
+
+  assert.match(openPublishFunction[0], /if \(inspectorDirty\) \{[\s\S]*Save or discard the selected seat edits before publishing/);
+  assert.match(seatMapSource, /onClick=\{confirmPublishDraftMap\}[\s\S]*disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
+  assert.match(confirmPublishFunction[0], /await publishSeatMapAction\(\)/);
+  assert.match(confirmPublishFunction[0], /setLocalPublishedSeats\(nextPublishedSeats\)/);
+  assert.match(confirmPublishFunction[0], /setDraftHistory\(clearDraftHistory\(\)\)/);
+  assert.match(confirmPublishFunction[0], /setPublishReviewOpen\(false\)/);
+  assert.match(confirmPublishFunction[0], /Draft map published\. Undo\/Redo history was cleared\./);
+  assert.doesNotMatch(confirmPublishFunction[0], /supabase|\.from\("seats"\)|publish_seat_map/);
+
+  assert.match(publishAction[0], /const supabase = await requireAdmin\(\)/);
+  assert.match(publishAction[0], /\.rpc\("publish_seat_map"\)/);
+  assert.match(publishAction[0], /revalidatePath\("\/"\)/);
+  assert.match(publishAction[0], /revalidatePath\("\/admin"\)/);
+  assert.doesNotMatch(publishAction[0], /\.from\("seats"\)|\.insert\(|\.update\(|\.delete\(|\.upsert\(/);
+});
+
 test("seat markers remain keyboard buttons with contextual accessible labels", async () => {
   const source = await readSource("../components/seat-map/SeatMarker.tsx");
 
@@ -213,6 +240,21 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /id="seat-results-rail"/);
   assert.match(seatMapSource, /titleId="seat-results-rail-title"/);
   assert.match(seatMapSource, /onSeatResultSelect=\{selectSeatResult\}/);
+});
+
+test("admin search clear controls use one clear path with distinct accessible names", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const filterSource = await readSource("../components/seat-map/FilterPanel.tsx");
+  const clearSearchFunction = seatMapSource.match(/function clearSearch\(\) \{[\s\S]*?\n  \}/);
+
+  assert.ok(clearSearchFunction, "clearSearch should remain source-visible.");
+  assert.match(clearSearchFunction[0], /setSearch\(""\)/);
+  assert.match(clearSearchFunction[0], /setSearchSelectionNotice\(null\)/);
+  assert.match(seatMapSource, /aria-label="Clear top search"[\s\S]*onClick=\{clearSearch\}/);
+  assert.equal((seatMapSource.match(/searchActive \? "Clear search results"/g) ?? []).length, 2);
+  assert.equal((seatMapSource.match(/onClearSearch=\{clearSearch\}/g) ?? []).length, 2);
+  assert.match(seatMapSource, /onClearSearchContext=\{searchActive \? clearSearch : clearStructuredFilters\}/);
+  assert.match(filterSource, /onClick=\{onClearSearch\} aria-label="Clear search in empty results"/);
 });
 
 test("custom seat deletion remains guarded by the parent map action", async () => {
