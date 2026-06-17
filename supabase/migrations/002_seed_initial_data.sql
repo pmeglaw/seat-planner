@@ -1,5 +1,8 @@
 -- Seed data generated from the approved v15 HTML prototype.
 
+do $$
+begin
+  if not exists (select 1 from public.employees) then
 insert into public.employees (id, full_name, position, department, avatar_url, active)
 values
   ('00000000-0000-0000-0000-000000000001', 'Alex Shabazian', null, 'Intake', null, true),
@@ -15,7 +18,13 @@ values
   ('00000000-0000-0000-0000-000000000011', 'Lauren Smith', null, 'Pre-Litigation', null, true),
   ('00000000-0000-0000-0000-000000000012', 'Robert Allen', null, 'Records', null, true)
 on conflict (id) do nothing;
+  end if;
+end
+$$;
 
+do $$
+begin
+  if not exists (select 1 from public.seats) then
 insert into public.seats (seat_key, label, x, y, status, layer, employee_id, department, notes)
 values
   ('N01', 'N01', 0.288917, 0.066468, 'available'::public.seat_status, 'draft'::public.seat_layer, null, 'North Pod', ''),
@@ -105,3 +114,6 @@ select
 from public.seats
 where layer = 'draft'
 on conflict (layer, seat_key) do nothing;
+  end if;
+end
+$$;
