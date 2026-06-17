@@ -14,17 +14,6 @@ import { savedPointToVisualPoint, seatsToVisualSeats } from "@/lib/mapLayoutTran
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import { SEAT_STATUSES, type AskPlannerRequest, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
 
-type CsvDraftSeat = {
-  id: string;
-  label: string;
-  employee_id: string | null;
-};
-
-type CsvEmployeeRecord = {
-  id: string;
-  full_name: string;
-};
-
 type DraftSeatRestoreRecord = Omit<SeatWithEmployee, "employee">;
 type DraftEmployeeRestoreRecord = Employee;
 type DraftSeatZoneSource = Pick<SeatWithEmployee, "label" | "zone" | "department" | "x" | "y">;
@@ -132,10 +121,6 @@ function buildSeatKey(label: string) {
 
 function normalizeOptionalText(value?: string | null) {
   return value?.trim() || null;
-}
-
-function normalizeEmployeeNameKey(value: string) {
-  return value.trim().toLowerCase();
 }
 
 function isUniqueLabelViolation(error: SupabaseMutationError | null) {
@@ -304,115 +289,32 @@ export async function updateSeatAction(input: {
   const supabase = await requireAdmin();
 
   const label = assertNonEmpty(input.label, "Seat label");
-  let employeeId = input.employeeId || null;
+  const employeeId = input.employeeId || null;
   const employeeName = input.employeeName?.trim() ?? "";
   const employeePosition = "employeePosition" in input ? normalizeOptionalText(input.employeePosition) : undefined;
   const phoneExtension = "phoneExtension" in input ? normalizeOptionalText(input.phoneExtension) : undefined;
   const department = normalizeOptionalText(input.department);
   const zone = normalizeOptionalText(input.zone);
+  const notes = normalizeOptionalText(input.notes);
 
   if (!employeeId && input.status === "assigned" && !employeeName) {
     throw new Error("Assigned seats require an employee name or selected employee.");
   }
 
-  const { data: duplicateLabel, error: duplicateLabelError } = await supabase
-    .from("seats")
-    .select("id,label")
-    .eq("layer", "draft")
-    .ilike("label", label)
-    .neq("id", input.seatId)
-    .maybeSingle();
-
-  if (duplicateLabelError) throw new Error(duplicateLabelError.message);
-  if (duplicateLabel) throw new Error(`Seat label ${label} already exists.`);
-
-  if (employeeId) {
-    const { data: duplicate, error: duplicateError } = await supabase
-      .from("seats")
-      .select("id,label")
-      .eq("layer", "draft")
-      .eq("employee_id", employeeId)
-      .neq("id", input.seatId)
-      .maybeSingle();
-
-    if (duplicateError) throw new Error(duplicateError.message);
-    if (duplicate) throw new Error(`That employee is already assigned to ${duplicate.label}.`);
-  }
-
-  if (!employeeId && employeeName) {
-    const { data: existingEmployee, error: findError } = await supabase
-      .from("employees")
-      .select("id")
-      .ilike("full_name", employeeName)
-      .maybeSingle();
-
-    if (findError) throw new Error(findError.message);
-
-    if (existingEmployee?.id) {
-      employeeId = existingEmployee.id;
-    } else {
-      await upsertDepartmentOption(supabase, department);
-      const { data: employee, error: employeeError } = await supabase
-        .from("employees")
-        .insert({
-          full_name: employeeName,
-          position: employeePosition ?? null,
-          phone_extension: phoneExtension ?? null,
-          department,
-          avatar_url: null,
-          active: true
-        })
-        .select("id")
-        .single();
-
-      if (employeeError) throw new Error(employeeError.message);
-      employeeId = employee.id;
-    }
-  }
-
-  if (employeeId) {
-    const { data: duplicate, error: duplicateError } = await supabase
-      .from("seats")
-      .select("id,label")
-      .eq("layer", "draft")
-      .eq("employee_id", employeeId)
-      .neq("id", input.seatId)
-      .maybeSingle();
-
-    if (duplicateError) throw new Error(duplicateError.message);
-    if (duplicate) throw new Error(`That employee is already assigned to ${duplicate.label}.`);
-  }
-
-  if (employeeId) {
-    await upsertDepartmentOption(supabase, department);
-    const patch: Record<string, string | null | boolean> = { active: true };
-    if (employeeName) patch.full_name = employeeName;
-    if (employeePosition !== undefined) patch.position = employeePosition;
-    if (phoneExtension !== undefined) patch.phone_extension = phoneExtension;
-    patch.department = department;
-
-    const { error: employeeError } = await supabase
-      .from("employees")
-      .update(patch)
-      .eq("id", employeeId);
-
-    if (employeeError) throw new Error(employeeError.message);
-  }
-
-  await upsertZoneOption(supabase, zone);
-  const status = normalizeSeatStatus(input.status, Boolean(employeeId));
-
-  const { error } = await supabase
-    .from("seats")
-    .update({
-      label,
-      status,
-      employee_id: employeeId,
-      zone,
-      notes: input.notes?.trim() || null
-    })
-    .eq("id", input.seatId)
-    .eq("layer", "draft");
+  const { error } = await supabase.rpc("update_draft_seat", {
+    draft_seat_id: input.seatId,
+    seat_label: label,
+    requested_status: input.status,
+    selected_employee_id: employeeId,
+    employee_name: employeeName || null,
+    employee_position: employeePosition ?? null,
+    employee_position_provided: employeePosition !== undefined,
+    employee_phone_extension: phoneExtension ?? null,
+    employee_phone_extension_provided: phoneExtension !== undefined,
+    employee_department: department,
+    seat_zone: zone,
+    seat_notes: notes
+  });
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
@@ -526,30 +428,9 @@ export async function updateEmployeeAction(input: {
 export async function deleteEmployeeAction(employeeId: string) {
   const supabase = await requireAdmin();
 
-  const { data: publishedSeat, error: publishedError } = await supabase
-    .from("seats")
-    .select("label")
-    .eq("layer", "published")
-    .eq("employee_id", employeeId)
-    .maybeSingle();
-
-  if (publishedError) throw new Error(publishedError.message);
-  if (publishedSeat) {
-    throw new Error(`This employee is still on the published map at ${publishedSeat.label}. Remove them from draft and publish before deleting.`);
-  }
-
-  const { error: unassignError } = await supabase
-    .from("seats")
-    .update({ employee_id: null, status: "available" })
-    .eq("layer", "draft")
-    .eq("employee_id", employeeId);
-
-  if (unassignError) throw new Error(unassignError.message);
-
-  const { error } = await supabase
-    .from("employees")
-    .update({ active: false })
-    .eq("id", employeeId);
+  const { error } = await supabase.rpc("deactivate_employee", {
+    employee_to_deactivate: employeeId
+  });
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
@@ -576,24 +457,12 @@ export async function renameDepartmentAction(input: { from: string; to: string }
   const from = assertNonEmpty(input.from, "Department to rename");
   const to = assertNonEmpty(input.to, "New department name");
 
-  const { error: optionError } = await supabase
-    .from("department_options")
-    .upsert({ name: to, active: true }, { onConflict: "name" });
-
-  if (optionError) throw new Error(optionError.message);
-
-  const { error } = await supabase
-    .from("employees")
-    .update({ department: to })
-    .eq("department", from);
+  const { error } = await supabase.rpc("rename_department", {
+    department_from: from,
+    department_to: to
+  });
 
   if (error) throw new Error(error.message);
-
-  await supabase
-    .from("department_options")
-    .update({ active: false })
-    .eq("name", from);
-
   revalidatePath("/");
   revalidatePath("/admin");
   return { from, to };
@@ -603,18 +472,11 @@ export async function deleteDepartmentAction(department: string) {
   const supabase = await requireAdmin();
   const target = assertNonEmpty(department, "Department");
 
-  const { error } = await supabase
-    .from("employees")
-    .update({ department: null })
-    .eq("department", target);
+  const { error } = await supabase.rpc("delete_department", {
+    department_name: target
+  });
 
   if (error) throw new Error(error.message);
-
-  await supabase
-    .from("department_options")
-    .update({ active: false })
-    .eq("name", target);
-
   revalidatePath("/");
   revalidatePath("/admin");
   return { department: target };
@@ -640,25 +502,12 @@ export async function renameZoneAction(input: { from: string; to: string }) {
   const from = assertNonEmpty(input.from, "Zone to rename");
   const to = assertNonEmpty(input.to, "New zone name");
 
-  const { error: optionError } = await supabase
-    .from("zone_options")
-    .upsert({ name: to, active: true }, { onConflict: "name" });
-
-  if (optionError) throw new Error(optionError.message);
-
-  const { error } = await supabase
-    .from("seats")
-    .update({ zone: to })
-    .eq("layer", "draft")
-    .eq("zone", from);
+  const { error } = await supabase.rpc("rename_zone", {
+    zone_from: from,
+    zone_to: to
+  });
 
   if (error) throw new Error(error.message);
-
-  await supabase
-    .from("zone_options")
-    .update({ active: false })
-    .eq("name", from);
-
   revalidatePath("/admin");
   return { from, to };
 }
@@ -667,19 +516,11 @@ export async function deleteZoneAction(zone: string) {
   const supabase = await requireAdmin();
   const target = assertNonEmpty(zone, "Zone");
 
-  const { error } = await supabase
-    .from("seats")
-    .update({ zone: null })
-    .eq("layer", "draft")
-    .eq("zone", target);
+  const { error } = await supabase.rpc("delete_zone", {
+    zone_name: target
+  });
 
   if (error) throw new Error(error.message);
-
-  await supabase
-    .from("zone_options")
-    .update({ active: false })
-    .eq("name", target);
-
   revalidatePath("/admin");
   return { zone: target };
 }
@@ -721,143 +562,18 @@ export async function deleteSeatAction(seatId: string) {
 export async function importAssignmentsCsvAction(csvText: string) {
   const supabase = await requireAdmin();
   const parsed = parseAssignmentCsv(csvText);
-  const issues = [...parsed.issues];
-
-  const { data: seats, error: seatsError } = await supabase
-    .from("seats")
-    .select("id,label,employee_id")
-    .eq("layer", "draft");
-
-  if (seatsError) throw new Error(seatsError.message);
-
-  const { data: employees, error: employeesError } = await supabase
-    .from("employees")
-    .select("id,full_name");
-
-  if (employeesError) throw new Error(employeesError.message);
-
-  const seatByLabel = new Map((seats ?? []).map(seat => [String(seat.label).trim().toLowerCase(), seat as CsvDraftSeat]));
-  const employeesByName = new Map<string, CsvEmployeeRecord[]>();
-
-  (employees ?? []).forEach(employee => {
-    const key = normalizeEmployeeNameKey(String(employee.full_name ?? ""));
-    if (!key) return;
-    const matches = employeesByName.get(key) ?? [];
-    matches.push(employee as CsvEmployeeRecord);
-    employeesByName.set(key, matches);
-  });
-
-  parsed.rows.forEach((row, index) => {
-    if (row.seat_label && !seatByLabel.has(row.seat_label.trim().toLowerCase())) {
-      issues.push({ row: index + 2, message: `Unknown seat label '${row.seat_label}'.` });
-    }
-
-    const employeeName = row.employee_name.trim();
-    if (employeeName && (employeesByName.get(normalizeEmployeeNameKey(employeeName))?.length ?? 0) > 1) {
-      issues.push({ row: index + 2, message: `Employee name '${employeeName}' matches multiple records. Rename or clean up duplicates before importing.` });
-    }
-  });
-
-  if (issues.length > 0) {
-    throw new Error(issues.map(issue => `Row ${issue.row}: ${issue.message}`).join("\n"));
+  if (parsed.issues.length > 0) {
+    throw new Error(parsed.issues.map(issue => `Row ${issue.row}: ${issue.message}`).join("\n"));
   }
 
-  const employeeByName = new Map<string, CsvEmployeeRecord>();
-  employeesByName.forEach((matches, key) => {
-    if (matches.length === 1) employeeByName.set(key, matches[0]);
+  const { error: importError } = await supabase.rpc("import_assignments_csv", {
+    assignment_rows: parsed.rows.map((row, index) => ({
+      ...row,
+      row_number: index + 2
+    }))
   });
 
-  const seatUpdates: Array<{
-    seatId: string;
-    employeeId: string | null;
-    status: SeatStatus;
-    zone: string | null;
-    notes: string | null;
-  }> = [];
-
-  for (const row of parsed.rows) {
-    const seat = seatByLabel.get(row.seat_label.trim().toLowerCase());
-    if (!seat) continue;
-
-    const department = normalizeOptionalText(row.department);
-    const zone = normalizeOptionalText(row.zone);
-    const notes = normalizeOptionalText(row.notes);
-    let employeeId: string | null = null;
-
-    if (row.employee_name.trim()) {
-      const employeeName = row.employee_name.trim();
-      const employeeKey = normalizeEmployeeNameKey(employeeName);
-      const existingEmployee = employeeByName.get(employeeKey);
-
-      await upsertDepartmentOption(supabase, department);
-      if (existingEmployee?.id) {
-        employeeId = existingEmployee.id;
-        const { error: employeeUpdateError } = await supabase
-          .from("employees")
-          .update({
-            full_name: employeeName,
-            position: normalizeOptionalText(row.position),
-            department,
-            active: true
-          })
-          .eq("id", employeeId);
-
-        if (employeeUpdateError) throw new Error(employeeUpdateError.message);
-      } else {
-        const { data: newEmployee, error: employeeCreateError } = await supabase
-          .from("employees")
-          .insert({
-            full_name: employeeName,
-            position: normalizeOptionalText(row.position),
-            department,
-            active: true
-          })
-          .select("id")
-          .single();
-
-        if (employeeCreateError) throw new Error(employeeCreateError.message);
-        employeeId = newEmployee.id;
-        employeeByName.set(employeeKey, { id: newEmployee.id, full_name: employeeName });
-      }
-    }
-
-    await upsertZoneOption(supabase, zone);
-    const status = normalizeSeatStatus(row.status || (employeeId ? "assigned" : "available"), Boolean(employeeId));
-
-    seatUpdates.push({
-      seatId: seat.id,
-      employeeId,
-      status,
-      zone,
-      notes
-    });
-  }
-
-  for (const update of seatUpdates) {
-    if (update.employeeId) {
-      const { error: clearOldAssignmentError } = await supabase
-        .from("seats")
-        .update({ employee_id: null, status: "available" })
-        .eq("layer", "draft")
-        .eq("employee_id", update.employeeId)
-        .neq("id", update.seatId);
-
-      if (clearOldAssignmentError) throw new Error(clearOldAssignmentError.message);
-    }
-
-    const { error: seatUpdateError } = await supabase
-      .from("seats")
-      .update({
-        employee_id: update.employeeId,
-        status: update.status,
-        zone: update.zone,
-        notes: update.notes
-      })
-      .eq("id", update.seatId)
-      .eq("layer", "draft");
-
-    if (seatUpdateError) throw new Error(seatUpdateError.message);
-  }
+  if (importError) throw new Error(importError.message);
 
   const { data: updatedSeats, error: updatedSeatsError } = await supabase
     .from("seats")
@@ -885,8 +601,12 @@ export async function importAssignmentsCsvAction(csvText: string) {
 
 export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
   const supabase = await requireAdmin();
-  const seatsToRestore = (snapshot.seats ?? []).map(normalizeRestoreSeat);
-  const employeesToRestore = (snapshot.employees ?? []).map(normalizeRestoreEmployee);
+  if (!snapshot || !Array.isArray(snapshot.seats) || !Array.isArray(snapshot.employees)) {
+    throw new Error("JSON backup must include seats and employees arrays.");
+  }
+
+  const seatsToRestore = snapshot.seats.map(normalizeRestoreSeat);
+  const employeesToRestore = snapshot.employees.map(normalizeRestoreEmployee);
 
   if (seatsToRestore.length === 0) {
     throw new Error("Cannot restore an empty draft map snapshot.");
@@ -901,129 +621,12 @@ export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
     labelKeys.add(labelKey);
   }
 
-  const employeeIds = new Set(seatsToRestore.map(seat => seat.employee_id).filter((id): id is string => Boolean(id)));
-  const employeeSnapshotById = new Map(employeesToRestore.map(employee => [employee.id, employee]));
+  const { error } = await supabase.rpc("restore_draft_snapshot", {
+    snapshot_seats: seatsToRestore,
+    snapshot_employees: employeesToRestore
+  });
 
-  for (const employee of employeesToRestore) {
-    await upsertDepartmentOption(supabase, employee.department);
-    const { error } = await supabase
-      .from("employees")
-      .upsert({
-        id: employee.id,
-        full_name: employee.full_name,
-        position: employee.position,
-        department: employee.department,
-        phone_extension: employee.phone_extension,
-        avatar_url: employee.avatar_url,
-        active: employee.active
-      }, { onConflict: "id" });
-
-    if (error) throw new Error(error.message);
-  }
-
-  const zoneNames = new Set(seatsToRestore.map(seat => seat.zone ?? seat.department ?? null).filter((name): name is string => Boolean(name)));
-  for (const zoneName of zoneNames) {
-    await upsertZoneOption(supabase, zoneName);
-  }
-
-  if (employeeIds.size > 0) {
-    const ids = Array.from(employeeIds);
-    const { data: existingEmployees, error } = await supabase
-      .from("employees")
-      .select("id")
-      .in("id", ids);
-
-    if (error) throw new Error(error.message);
-
-    const existingIds = new Set((existingEmployees ?? []).map(employee => employee.id as string));
-    const missingIds = ids.filter(id => !existingIds.has(id) && !employeeSnapshotById.has(id));
-    if (missingIds.length > 0) {
-      throw new Error("Cannot restore draft history because an assigned employee record is missing.");
-    }
-  }
-
-  const { data: currentSeats, error: currentSeatsError } = await supabase
-    .from("seats")
-    .select("id,label,layer,is_custom,employee_id,status")
-    .eq("layer", "draft");
-
-  if (currentSeatsError) throw new Error(currentSeatsError.message);
-
-  const currentById = new Map((currentSeats ?? []).map(seat => [seat.id as string, seat]));
-  const snapshotIds = new Set(seatsToRestore.map(seat => seat.id));
-  const seatsMissingFromSnapshot = (currentSeats ?? []).filter(seat => !snapshotIds.has(seat.id as string));
-  const missingProtectedSeats = seatsMissingFromSnapshot
-    .filter(seat => !canDeleteDraftSeat(seat))
-    .map(seat => seat.label as string);
-
-  if (missingProtectedSeats.length > 0) {
-    throw new Error(`Cannot restore draft history because protected or occupied seats are missing from the snapshot: ${missingProtectedSeats.join(", ")}.`);
-  }
-
-  const { error: clearAssignmentsError } = await supabase
-    .from("seats")
-    .update({ employee_id: null, status: "available" })
-    .eq("layer", "draft")
-    .eq("status", "assigned");
-
-  if (clearAssignmentsError) throw new Error(clearAssignmentsError.message);
-
-  const customSeatIdsToDelete = seatsMissingFromSnapshot
-    .filter(seat => canDeleteDraftSeat(seat))
-    .map(seat => seat.id as string);
-
-  if (customSeatIdsToDelete.length > 0) {
-    const { error: deleteError } = await supabase
-      .from("seats")
-      .delete()
-      .eq("layer", "draft")
-      .eq("is_custom", true)
-      .is("employee_id", null)
-      .eq("status", "available")
-      .in("id", customSeatIdsToDelete);
-
-    if (deleteError) throw new Error(deleteError.message);
-  }
-
-  for (const seat of seatsToRestore) {
-    const patch = {
-      seat_key: seat.seat_key,
-      label: seat.label,
-      x: seat.x,
-      y: seat.y,
-      status: seat.status,
-      employee_id: seat.employee_id,
-      zone: seat.zone,
-      department: seat.department,
-      notes: seat.notes,
-      is_custom: seat.is_custom
-    };
-
-    if (currentById.has(seat.id)) {
-      const { error } = await supabase
-        .from("seats")
-        .update(patch)
-        .eq("id", seat.id)
-        .eq("layer", "draft");
-
-      if (error) throw new Error(error.message);
-      continue;
-    }
-
-    if (!seat.is_custom) {
-      throw new Error(`Cannot restore protected original seat ${seat.label} because it no longer exists.`);
-    }
-
-    const { error } = await supabase
-      .from("seats")
-      .insert({
-        id: seat.id,
-        ...patch,
-        layer: "draft"
-      });
-
-    if (error) throw new Error(error.message);
-  }
+  if (error) throw new Error(error.message);
 
   revalidatePath("/admin");
   return getDraftMapPayload(supabase);

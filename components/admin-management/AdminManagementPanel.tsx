@@ -42,6 +42,11 @@ type PublishHistoryState = {
   error: string | null;
 };
 
+type ManagementConfirmState =
+  | { kind: "employee"; employee: Employee; assignedSeatLabel: string }
+  | { kind: "department"; name: string; affectedCount: number }
+  | { kind: "zone"; name: string; affectedCount: number };
+
 const managementTabs: Array<{ id: ManagementTab; label: string }> = [
   { id: "employees", label: "Employees" },
   { id: "departments", label: "Departments" },
@@ -113,6 +118,10 @@ function countSeatsByZone(seats: SeatWithEmployee[]) {
   return counts;
 }
 
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return `${count.toLocaleString()} ${count === 1 ? singular : plural}`;
+}
+
 export function AdminManagementPanel({
   employees,
   seats,
@@ -142,6 +151,7 @@ export function AdminManagementPanel({
   });
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [managementConfirm, setManagementConfirm] = useState<ManagementConfirmState | null>(null);
   const [pending, startTransition] = useTransition();
 
   const activeEmployees = useMemo(
@@ -277,24 +287,10 @@ export function AdminManagementPanel({
 
   function deleteEmployee() {
     if (!selectedEmployee) return;
-    const assignedSeat = getAssignedSeatLabel(selectedEmployee.id, localSeats);
-    const confirmed = window.confirm(`Deactivate ${selectedEmployee.full_name}?${assignedSeat !== "Unassigned" ? ` Draft assignment at ${assignedSeat} will be cleared.` : ""}`);
-    if (!confirmed) return;
 
-    startTransition(async () => {
-      try {
-        setError(null);
-        await deleteEmployeeAction(selectedEmployee.id);
-        setLocalEmployees(current => current.filter(employee => employee.id !== selectedEmployee.id));
-        setLocalSeats(current => current.map(seat => (
-          seat.employee_id === selectedEmployee.id ? { ...seat, employee_id: null, employee: null, status: "available" } : seat
-        )));
-        startNewEmployee();
-        showSuccess(`${selectedEmployee.full_name} deactivated.`);
-      } catch (errorValue) {
-        showError(errorValue, "Could not deactivate employee.");
-      }
-    });
+    setMessage(null);
+    setError(null);
+    setManagementConfirm({ kind: "employee", employee: selectedEmployee, assignedSeatLabel: selectedEmployeeSeatLabel });
   }
 
   function createDepartment() {
@@ -346,22 +342,9 @@ export function AdminManagementPanel({
 
   function deleteDepartment(name: string) {
     const count = departmentCounts.get(name) ?? 0;
-    const confirmed = window.confirm(`Delete department "${name}"? This clears it from ${count} employee${count === 1 ? "" : "s"}.`);
-    if (!confirmed) return;
-
-    startTransition(async () => {
-      try {
-        setError(null);
-        await deleteDepartmentAction(name);
-        setLocalDepartmentOptions(current => current.map(option => (option.name === name ? { ...option, active: false } : option)));
-        setLocalEmployees(current => current.map(employee => (
-          employee.department === name ? { ...employee, department: null } : employee
-        )));
-        showSuccess(`Department ${name} deleted.`);
-      } catch (errorValue) {
-        showError(errorValue, "Could not delete department.");
-      }
-    });
+    setMessage(null);
+    setError(null);
+    setManagementConfirm({ kind: "department", name, affectedCount: count });
   }
 
   function createZone() {
@@ -413,20 +396,61 @@ export function AdminManagementPanel({
 
   function deleteZone(name: string) {
     const count = zoneCounts.get(name) ?? 0;
-    const confirmed = window.confirm(`Delete zone "${name}"? This clears it from ${count} draft seat${count === 1 ? "" : "s"}.`);
-    if (!confirmed) return;
+    setMessage(null);
+    setError(null);
+    setManagementConfirm({ kind: "zone", name, affectedCount: count });
+  }
+
+  function closeManagementConfirm() {
+    setManagementConfirm(null);
+  }
+
+  function confirmManagementDestructiveAction() {
+    if (!managementConfirm) return;
+    const action = managementConfirm;
+    setManagementConfirm(null);
 
     startTransition(async () => {
       try {
         setError(null);
-        await deleteZoneAction(name);
-        setLocalZoneOptions(current => current.map(option => (option.name === name ? { ...option, active: false } : option)));
+
+        if (action.kind === "employee") {
+          await deleteEmployeeAction(action.employee.id);
+          setLocalEmployees(current => current.filter(employee => employee.id !== action.employee.id));
+          setLocalSeats(current => current.map(seat => (
+            seat.employee_id === action.employee.id ? { ...seat, employee_id: null, employee: null, status: "available" } : seat
+          )));
+          setSelectedEmployeeId("");
+          setEmployeeForm(emptyEmployeeForm);
+          showSuccess(`${action.employee.full_name} deactivated.`);
+          return;
+        }
+
+        if (action.kind === "department") {
+          await deleteDepartmentAction(action.name);
+          setLocalDepartmentOptions(current => current.map(option => (option.name === action.name ? { ...option, active: false } : option)));
+          setLocalEmployees(current => current.map(employee => (
+            employee.department === action.name ? { ...employee, department: null } : employee
+          )));
+          showSuccess(`Department ${action.name} deleted.`);
+          return;
+        }
+
+        await deleteZoneAction(action.name);
+        setLocalZoneOptions(current => current.map(option => (option.name === action.name ? { ...option, active: false } : option)));
         setLocalSeats(current => current.map(seat => (
-          getSeatZone(seat) === name ? { ...seat, zone: null } : seat
+          getSeatZone(seat) === action.name ? { ...seat, zone: null } : seat
         )));
-        showSuccess(`Zone ${name} deleted.`);
+        showSuccess(`Zone ${action.name} deleted.`);
       } catch (errorValue) {
-        showError(errorValue, "Could not delete zone.");
+        showError(
+          errorValue,
+          action.kind === "employee"
+            ? "Could not deactivate employee."
+            : action.kind === "department"
+              ? "Could not delete department."
+              : "Could not delete zone."
+        );
       }
     });
   }
@@ -798,6 +822,101 @@ export function AdminManagementPanel({
           {departmentNames.map(name => <option key={name} value={name} />)}
         </datalist>
       </div>
+
+      {managementConfirm && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:items-center">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="management-confirm-title"
+            aria-describedby="management-confirm-description"
+            onKeyDown={event => {
+              if (event.key === "Escape" && !pending) {
+                event.stopPropagation();
+                closeManagementConfirm();
+              }
+            }}
+            className="w-full max-w-lg rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 id="management-confirm-title" className="text-base font-black">
+                  {managementConfirm.kind === "employee"
+                    ? `Deactivate ${managementConfirm.employee.full_name}?`
+                    : managementConfirm.kind === "department"
+                      ? `Delete department "${managementConfirm.name}"?`
+                      : `Delete zone "${managementConfirm.name}"?`}
+                </h2>
+                <p id="management-confirm-description" className="mt-1 text-sm leading-5 text-slate-500">
+                  Review the exact management impact before applying this cleanup.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeManagementConfirm}
+                disabled={pending}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                aria-label="Cancel management confirmation"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2">
+              {managementConfirm.kind === "employee" && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-sm leading-5 text-amber-900">
+                  <div className="font-black uppercase tracking-wide">Deactivation impact</div>
+                  <div className="mt-1">
+                    Current draft seat: <span className="font-bold">{managementConfirm.assignedSeatLabel}</span>.
+                    {managementConfirm.assignedSeatLabel === "Unassigned"
+                      ? " This removes the employee from the active directory."
+                      : " This clears that draft assignment and keeps the employee inactive."}
+                  </div>
+                </div>
+              )}
+
+              {managementConfirm.kind === "department" && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-sm leading-5 text-amber-900">
+                  <div className="font-black uppercase tracking-wide">Department delete impact</div>
+                  <div className="mt-1">
+                    Clears this department from <span className="font-bold">{pluralize(managementConfirm.affectedCount, "active employee")}</span>. Employee records remain active and physical seat zones are unchanged.
+                  </div>
+                </div>
+              )}
+
+              {managementConfirm.kind === "zone" && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-sm leading-5 text-amber-900">
+                  <div className="font-black uppercase tracking-wide">Zone delete impact</div>
+                  <div className="mt-1">
+                    Clears this physical zone from <span className="font-bold">{pluralize(managementConfirm.affectedCount, "draft seat")}</span>. Seat markers and employees remain in place.
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-xl border border-orange-200 bg-orange-50/70 p-3 text-sm font-semibold leading-5 text-brand-dark">
+                {managementConfirm.kind === "employee"
+                  ? "Published assignments are protected server-side. Publish draft changes when ready."
+                  : managementConfirm.kind === "department"
+                    ? "This changes employee metadata and can affect viewer employee detail text immediately. Seat assignments are unchanged."
+                    : "This updates draft zone metadata only. The published viewer map is unchanged until publish."}
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Button type="button" onClick={closeManagementConfirm} disabled={pending} className="w-full">
+                Cancel
+              </Button>
+              <Button type="button" variant="danger" onClick={confirmManagementDestructiveAction} disabled={pending} className="w-full">
+                {managementConfirm.kind === "employee"
+                  ? "Deactivate employee"
+                  : managementConfirm.kind === "department"
+                    ? "Delete department"
+                    : "Delete zone"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

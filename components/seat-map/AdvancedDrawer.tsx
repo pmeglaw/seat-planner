@@ -8,6 +8,7 @@ import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
 import { importAssignmentsCsvAction } from "@/app/actions";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
+import { Button } from "@/components/ui/Button";
 
 type AdvancedDrawerProps = {
   open: boolean;
@@ -56,24 +57,31 @@ function downloadJson(filename: string, payload: unknown) {
   downloadFile(filename, JSON.stringify(payload, null, 2), "application/json");
 }
 
-function formatCsvIssues(issues: Array<{ row: number; message: string }>) {
-  return issues.map(issue => `Row ${issue.row}: ${issue.message}`).join("\n");
-}
+type CsvImportReview = {
+  text: string;
+  rowCount: number;
+  assignedCount: number;
+  clearCount: number;
+  reservedCount: number;
+  unavailableCount: number;
+  issues: Array<{ row: number; message: string }>;
+};
 
-function buildCsvPreviewMessage(rowCount: number, assignedCount: number, clearCount: number, reservedCount: number, unavailableCount: number) {
-  return [
-    "Review CSV import before applying?",
-    "",
-    `Rows: ${rowCount}`,
-    `Assignments: ${assignedCount}`,
-    `Rows clearing assignments: ${clearCount}`,
-    `Reserved seats: ${reservedCount}`,
-    `Unavailable seats: ${unavailableCount}`,
-    "",
-    "This updates draft assignments only.",
-    "Marker positions and the published viewer map will not change.",
-    "Undo is available after import until the next publish."
-  ].join("\n");
+type JsonRestoreReview = {
+  snapshot: DraftSnapshot;
+  seatCount: number;
+  employeeCount: number;
+};
+
+function ReviewCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
+  return (
+    <div className={["rounded-xl border p-3", tone === "warn" ? "border-orange-200 bg-orange-50/80" : "border-slate-200 bg-slate-50/80"].join(" ")}>
+      <div className={["text-[10px] font-black uppercase tracking-wide", tone === "warn" ? "text-orange-700" : "text-slate-500"].join(" ")}>
+        {label}
+      </div>
+      <div className="mt-1 text-xl font-black text-slate-950">{value.toLocaleString()}</div>
+    </div>
+  );
 }
 
 type CommandButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -205,6 +213,8 @@ export function AdvancedDrawer({
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [localPending, startTransition] = useTransition();
+  const [csvReview, setCsvReview] = useState<CsvImportReview | null>(null);
+  const [jsonReview, setJsonReview] = useState<JsonRestoreReview | null>(null);
 
   const busy = pending || localPending;
   const selectedSeatCanDelete = canDeleteSeat(selectedSeat);
@@ -214,6 +224,14 @@ export function AdvancedDrawer({
     if (!open) return;
     const handle = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
     return () => window.clearTimeout(handle);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) return;
+
+    setCsvReview(null);
+    setJsonReview(null);
+    setLocalError(null);
   }, [open]);
 
   if (!open) return null;
@@ -227,6 +245,16 @@ export function AdvancedDrawer({
   function resetError() {
     setLocalError(null);
     onError(null);
+  }
+
+  function closeCsvReview() {
+    setCsvReview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function closeJsonReview() {
+    setJsonReview(null);
+    if (jsonInputRef.current) jsonInputRef.current.value = "";
   }
 
   function deleteSelectedCustomSeat() {
@@ -255,22 +283,41 @@ export function AdvancedDrawer({
         const text = await file.text();
         const parsed = parseAssignmentCsv(text);
 
-        if (parsed.issues.length > 0) {
-          throw new Error(formatCsvIssues(parsed.issues));
-        }
-
         const assignedCount = parsed.rows.filter(row => row.employee_name.trim()).length;
         const reservedCount = parsed.rows.filter(row => row.status === "reserved").length;
         const unavailableCount = parsed.rows.filter(row => row.status === "unavailable").length;
         const clearCount = parsed.rows.length - assignedCount;
-        const confirmed = window.confirm(buildCsvPreviewMessage(parsed.rows.length, assignedCount, clearCount, reservedCount, unavailableCount));
-        if (!confirmed) return;
 
-        const beforeSnapshot = onBeforeCsvImport();
-        const payload = await importAssignmentsCsvAction(text);
-        onCsvImported({ seats: payload.seats, employees: payload.employees, count: payload.count }, beforeSnapshot);
+        setCsvReview({
+          text,
+          rowCount: parsed.rows.length,
+          assignedCount,
+          clearCount,
+          reservedCount,
+          unavailableCount,
+          issues: parsed.issues
+        });
+
         if (fileInputRef.current) fileInputRef.current.value = "";
       } catch (error) {
+        reportError(error, "Could not import CSV.");
+      }
+    });
+  }
+
+  function confirmCsvImport() {
+    if (!csvReview || csvReview.issues.length > 0) return;
+    const review = csvReview;
+
+    startTransition(async () => {
+      try {
+        resetError();
+        const beforeSnapshot = onBeforeCsvImport();
+        const payload = await importAssignmentsCsvAction(review.text);
+        setCsvReview(null);
+        onCsvImported({ seats: payload.seats, employees: payload.employees, count: payload.count }, beforeSnapshot);
+      } catch (error) {
+        setCsvReview(null);
         reportError(error, "Could not import CSV.");
       }
     });
@@ -289,24 +336,31 @@ export function AdvancedDrawer({
           throw new Error("JSON backup must include seats and employees arrays.");
         }
 
-        const confirmed = window.confirm(
-          [
-            "Import this JSON backup into the draft map?",
-            "",
-            `Seats: ${parsed.seats.length}`,
-            `Employees: ${parsed.employees.length}`,
-            "",
-            "This restores draft data only.",
-            "The published viewer map will not change until publish.",
-            "Undo is available after import until the next publish."
-          ].join("\n")
-        );
-        if (!confirmed) return;
+        setJsonReview({
+          snapshot: parsed,
+          seatCount: parsed.seats.length,
+          employeeCount: parsed.employees.length
+        });
 
-        const beforeSnapshot = onBeforeCsvImport();
-        await onJsonImported(parsed, beforeSnapshot);
         if (jsonInputRef.current) jsonInputRef.current.value = "";
       } catch (error) {
+        reportError(error, "Could not import JSON backup.");
+      }
+    });
+  }
+
+  function confirmJsonRestore() {
+    if (!jsonReview) return;
+    const review = jsonReview;
+
+    startTransition(async () => {
+      try {
+        resetError();
+        const beforeSnapshot = onBeforeCsvImport();
+        await onJsonImported(review.snapshot, beforeSnapshot);
+        setJsonReview(null);
+      } catch (error) {
+        setJsonReview(null);
         reportError(error, "Could not import JSON backup.");
       }
     });
@@ -482,6 +536,146 @@ export function AdvancedDrawer({
           </ToolGroup>
         </div>
       </aside>
+
+      {csvReview && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:items-center">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="csv-import-review-title"
+            aria-describedby="csv-import-review-description"
+            onKeyDown={event => {
+              if (event.key === "Escape" && !busy) {
+                event.stopPropagation();
+                closeCsvReview();
+              }
+            }}
+            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h2 id="csv-import-review-title" className="text-base font-black">
+                  {csvReview.issues.length > 0 ? "CSV import has blocking errors" : "Review CSV import"}
+                </h2>
+                <p id="csv-import-review-description" className="mt-1 text-sm leading-5 text-slate-500">
+                  CSV imports update saved draft assignments only. Marker positions and the published viewer map will not change until you publish.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeCsvReview}
+                disabled={busy}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                aria-label="Close CSV import review"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="min-h-0 overflow-y-auto py-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <ReviewCountCard label="Rows" value={csvReview.rowCount} tone={csvReview.rowCount > 0 ? "warn" : "default"} />
+                <ReviewCountCard label="Assignments" value={csvReview.assignedCount} tone={csvReview.assignedCount > 0 ? "warn" : "default"} />
+                <ReviewCountCard label="Cleared" value={csvReview.clearCount} tone={csvReview.clearCount > 0 ? "warn" : "default"} />
+                <ReviewCountCard label="Reserved" value={csvReview.reservedCount} tone={csvReview.reservedCount > 0 ? "warn" : "default"} />
+                <ReviewCountCard label="Unavailable" value={csvReview.unavailableCount} tone={csvReview.unavailableCount > 0 ? "warn" : "default"} />
+              </div>
+
+              {csvReview.issues.length > 0 ? (
+                <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                  <div className="font-black">Blocking validation errors</div>
+                  <p className="mt-1 leading-5">
+                    Fix these rows in the CSV, then import the file again. No draft data has changed.
+                  </p>
+                  <ul className="mt-2 max-h-56 space-y-1 overflow-y-auto text-xs font-semibold leading-5">
+                    {csvReview.issues.map((issue, index) => (
+                      <li key={`${issue.row}-${issue.message}-${index}`}>
+                        Row {issue.row}: {issue.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50/70 p-3 text-sm font-semibold leading-5 text-brand-dark">
+                  This applies the CSV to the draft map only. Viewers will not see these changes until you publish. Undo is available after import until the next publish.
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+              <Button type="button" onClick={closeCsvReview} disabled={busy} className="w-full">
+                {csvReview.issues.length > 0 ? "Close" : "Cancel"}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={confirmCsvImport}
+                disabled={busy || csvReview.issues.length > 0}
+                title={csvReview.issues.length > 0 ? "Fix blocking validation errors before importing" : "Apply CSV updates to the draft map"}
+                className="w-full"
+              >
+                {csvReview.issues.length > 0 ? "Fix CSV first" : "Apply import"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {jsonReview && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:items-center">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="json-restore-review-title"
+            aria-describedby="json-restore-review-description"
+            onKeyDown={event => {
+              if (event.key === "Escape" && !busy) {
+                event.stopPropagation();
+                closeJsonReview();
+              }
+            }}
+            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h2 id="json-restore-review-title" className="text-base font-black">Review JSON restore</h2>
+                <p id="json-restore-review-description" className="mt-1 text-sm leading-5 text-slate-500">
+                  JSON restore imports a full draft backup. The published viewer map will not change until you publish.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeJsonReview}
+                disabled={busy}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                aria-label="Close JSON restore review"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="min-h-0 overflow-y-auto py-4">
+              <div className="grid grid-cols-2 gap-2">
+                <ReviewCountCard label="Draft seats" value={jsonReview.seatCount} tone="warn" />
+                <ReviewCountCard label="Employees" value={jsonReview.employeeCount} tone="warn" />
+              </div>
+
+              <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50/70 p-3 text-sm font-semibold leading-5 text-brand-dark">
+                This can replace draft assignments, custom seats, notes, and employee details in the draft. Viewers will not see restored data until publish. Undo is available after import until the next publish.
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+              <Button type="button" onClick={closeJsonReview} disabled={busy} className="w-full">
+                Cancel
+              </Button>
+              <Button type="button" variant="danger" onClick={confirmJsonRestore} disabled={busy} className="w-full">
+                Restore draft backup
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
     </>
   );
 }
