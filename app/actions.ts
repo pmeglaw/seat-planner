@@ -662,8 +662,12 @@ export async function importAssignmentsCsvAction(csvText: string) {
 
 export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
   const supabase = await requireAdmin();
-  const seatsToRestore = (snapshot.seats ?? []).map(normalizeRestoreSeat);
-  const employeesToRestore = (snapshot.employees ?? []).map(normalizeRestoreEmployee);
+  if (!snapshot || !Array.isArray(snapshot.seats) || !Array.isArray(snapshot.employees)) {
+    throw new Error("JSON backup must include seats and employees arrays.");
+  }
+
+  const seatsToRestore = snapshot.seats.map(normalizeRestoreSeat);
+  const employeesToRestore = snapshot.employees.map(normalizeRestoreEmployee);
 
   if (seatsToRestore.length === 0) {
     throw new Error("Cannot restore an empty draft map snapshot.");
@@ -678,129 +682,12 @@ export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
     labelKeys.add(labelKey);
   }
 
-  const employeeIds = new Set(seatsToRestore.map(seat => seat.employee_id).filter((id): id is string => Boolean(id)));
-  const employeeSnapshotById = new Map(employeesToRestore.map(employee => [employee.id, employee]));
+  const { error } = await supabase.rpc("restore_draft_snapshot", {
+    snapshot_seats: seatsToRestore,
+    snapshot_employees: employeesToRestore
+  });
 
-  for (const employee of employeesToRestore) {
-    await upsertDepartmentOption(supabase, employee.department);
-    const { error } = await supabase
-      .from("employees")
-      .upsert({
-        id: employee.id,
-        full_name: employee.full_name,
-        position: employee.position,
-        department: employee.department,
-        phone_extension: employee.phone_extension,
-        avatar_url: employee.avatar_url,
-        active: employee.active
-      }, { onConflict: "id" });
-
-    if (error) throw new Error(error.message);
-  }
-
-  const zoneNames = new Set(seatsToRestore.map(seat => seat.zone ?? seat.department ?? null).filter((name): name is string => Boolean(name)));
-  for (const zoneName of zoneNames) {
-    await upsertZoneOption(supabase, zoneName);
-  }
-
-  if (employeeIds.size > 0) {
-    const ids = Array.from(employeeIds);
-    const { data: existingEmployees, error } = await supabase
-      .from("employees")
-      .select("id")
-      .in("id", ids);
-
-    if (error) throw new Error(error.message);
-
-    const existingIds = new Set((existingEmployees ?? []).map(employee => employee.id as string));
-    const missingIds = ids.filter(id => !existingIds.has(id) && !employeeSnapshotById.has(id));
-    if (missingIds.length > 0) {
-      throw new Error("Cannot restore draft history because an assigned employee record is missing.");
-    }
-  }
-
-  const { data: currentSeats, error: currentSeatsError } = await supabase
-    .from("seats")
-    .select("id,label,layer,is_custom,employee_id,status")
-    .eq("layer", "draft");
-
-  if (currentSeatsError) throw new Error(currentSeatsError.message);
-
-  const currentById = new Map((currentSeats ?? []).map(seat => [seat.id as string, seat]));
-  const snapshotIds = new Set(seatsToRestore.map(seat => seat.id));
-  const seatsMissingFromSnapshot = (currentSeats ?? []).filter(seat => !snapshotIds.has(seat.id as string));
-  const missingProtectedSeats = seatsMissingFromSnapshot
-    .filter(seat => !canDeleteDraftSeat(seat))
-    .map(seat => seat.label as string);
-
-  if (missingProtectedSeats.length > 0) {
-    throw new Error(`Cannot restore draft history because protected or occupied seats are missing from the snapshot: ${missingProtectedSeats.join(", ")}.`);
-  }
-
-  const { error: clearAssignmentsError } = await supabase
-    .from("seats")
-    .update({ employee_id: null, status: "available" })
-    .eq("layer", "draft")
-    .eq("status", "assigned");
-
-  if (clearAssignmentsError) throw new Error(clearAssignmentsError.message);
-
-  const customSeatIdsToDelete = seatsMissingFromSnapshot
-    .filter(seat => canDeleteDraftSeat(seat))
-    .map(seat => seat.id as string);
-
-  if (customSeatIdsToDelete.length > 0) {
-    const { error: deleteError } = await supabase
-      .from("seats")
-      .delete()
-      .eq("layer", "draft")
-      .eq("is_custom", true)
-      .is("employee_id", null)
-      .eq("status", "available")
-      .in("id", customSeatIdsToDelete);
-
-    if (deleteError) throw new Error(deleteError.message);
-  }
-
-  for (const seat of seatsToRestore) {
-    const patch = {
-      seat_key: seat.seat_key,
-      label: seat.label,
-      x: seat.x,
-      y: seat.y,
-      status: seat.status,
-      employee_id: seat.employee_id,
-      zone: seat.zone,
-      department: seat.department,
-      notes: seat.notes,
-      is_custom: seat.is_custom
-    };
-
-    if (currentById.has(seat.id)) {
-      const { error } = await supabase
-        .from("seats")
-        .update(patch)
-        .eq("id", seat.id)
-        .eq("layer", "draft");
-
-      if (error) throw new Error(error.message);
-      continue;
-    }
-
-    if (!seat.is_custom) {
-      throw new Error(`Cannot restore protected original seat ${seat.label} because it no longer exists.`);
-    }
-
-    const { error } = await supabase
-      .from("seats")
-      .insert({
-        id: seat.id,
-        ...patch,
-        layer: "draft"
-      });
-
-    if (error) throw new Error(error.message);
-  }
+  if (error) throw new Error(error.message);
 
   revalidatePath("/admin");
   return getDraftMapPayload(supabase);

@@ -49,13 +49,16 @@ test("custom-seat delete flow is draft-only and clearly guarded", async () => {
 
 test("undo-redo restore deletes only eligible custom draft seats", async () => {
   const actionSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
+  const restoreMigration = await readFile(new URL("../supabase/migrations/20260616000300_restore_draft_snapshot_rpc.sql", import.meta.url), "utf8");
   const restoreAction = actionSource.match(/export async function restoreDraftSnapshotAction[\s\S]*?export async function getPublishHistoryAction/);
+  const restoreFunction = restoreMigration.match(/create or replace function public\.restore_draft_snapshot[\s\S]+?\$\$;\s*/);
 
   assert.ok(restoreAction, "restoreDraftSnapshotAction should remain source-visible.");
-  assert.match(restoreAction[0], /canDeleteDraftSeat/);
-  assert.match(restoreAction[0], /protected or occupied seats are missing from the snapshot/);
-  assert.match(restoreAction[0], /\.select\("id,label,layer,is_custom,employee_id,status"\)/);
-  assert.match(restoreAction[0], /\.eq\("layer", "draft"\)[\s\S]*\.eq\("is_custom", true\)[\s\S]*\.is\("employee_id", null\)[\s\S]*\.eq\("status", "available"\)/);
+  assert.ok(restoreFunction, "restore_draft_snapshot RPC should remain source-visible.");
+  assert.match(restoreAction[0], /\.rpc\("restore_draft_snapshot"/);
+  assert.match(restoreFunction[0], /protected or occupied seats are missing from the snapshot/);
+  assert.match(restoreFunction[0], /protected_original_label/);
+  assert.match(restoreFunction[0], /delete from public\.seats as seat[\s\S]*seat\.layer = 'draft'::public\.seat_layer[\s\S]*seat\.is_custom is true[\s\S]*seat\.employee_id is null[\s\S]*seat\.status = 'available'::public\.seat_status/);
 });
 
 test("redo of an added seat reselects the restored seat", async () => {
