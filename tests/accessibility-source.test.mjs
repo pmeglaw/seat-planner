@@ -254,7 +254,7 @@ test("admin search clear controls use one clear path with distinct accessible na
   assert.equal((seatMapSource.match(/searchActive \? "Clear search results"/g) ?? []).length, 2);
   assert.equal((seatMapSource.match(/onClearSearch=\{clearSearch\}/g) ?? []).length, 2);
   assert.match(seatMapSource, /onClearSearchContext=\{searchActive \? clearSearch : clearStructuredFilters\}/);
-  assert.match(filterSource, /onClick=\{onClearSearch\} aria-label="Clear empty search"/);
+  assert.match(filterSource, /onClick=\{onClearSearch\} aria-label="Clear search in empty results"/);
 });
 
 test("custom seat deletion remains guarded by the parent map action", async () => {
