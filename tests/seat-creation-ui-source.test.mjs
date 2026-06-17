@@ -26,6 +26,18 @@ test("add-seat action creates custom draft seats without publishing", async () =
   assert.doesNotMatch(createAction[0], /publishSeatMapAction|publish_seat_map|\.eq\("layer", "published"\)/);
 });
 
+test("move-seat action updates one draft seat without publishing", async () => {
+  const source = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
+  const moveAction = source.match(/export async function moveSeatAction[\s\S]*?export async function updateSeatAction/);
+
+  assert.ok(moveAction, "moveSeatAction should remain source-visible.");
+  assert.match(moveAction[0], /const supabase = await requireAdmin\(\)/);
+  assert.match(moveAction[0], /validateSeatCoordinates\(input\.x, input\.y\)/);
+  assert.match(moveAction[0], /\.from\("seats"\)[\s\S]*\.update\(\{ x: point\.x, y: point\.y \}\)[\s\S]*\.eq\("id", input\.seatId\)[\s\S]*\.eq\("layer", "draft"\)/);
+  assert.match(moveAction[0], /return getDraftSeatById\(supabase, input\.seatId\)/);
+  assert.doesNotMatch(moveAction[0], /\.eq\("layer", "published"\)|publishSeatMapAction|publish_seat_map|revalidatePath\("\/"\)/);
+});
+
 test("custom-seat delete flow is draft-only and clearly guarded", async () => {
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
   const drawerSource = await readFile(new URL("../components/seat-map/AdvancedDrawer.tsx", import.meta.url), "utf8");

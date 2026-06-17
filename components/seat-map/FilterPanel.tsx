@@ -211,7 +211,7 @@ export function SeatResultsList({
           <div className="mt-1 leading-5">{emptyDescription}</div>
           <div className="mt-3 flex flex-wrap gap-2">
             {searchActive && (
-              <button type="button" onClick={onClearSearch} className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+              <button type="button" onClick={onClearSearch} aria-label="Clear empty search" className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
                 Clear search
               </button>
             )}
