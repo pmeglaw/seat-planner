@@ -32,7 +32,6 @@ type AdvancedDrawerProps = {
   onCancelAddSeat: () => void;
   onStartSwapSeat: () => void;
   onCancelSwapSeat: () => void;
-  onPublish: () => void;
   onToggleMoveSeat: () => void;
   onBeforeManagementNavigation: () => boolean;
   onClearSelection: () => void;
@@ -198,7 +197,6 @@ export function AdvancedDrawer({
   onCancelAddSeat,
   onStartSwapSeat,
   onCancelSwapSeat,
-  onPublish,
   onToggleMoveSeat,
   onBeforeManagementNavigation,
   onClearSelection,
@@ -388,7 +386,7 @@ export function AdvancedDrawer({
         <div className="mb-3 flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
             <h2 id="advanced-drawer-title" className="text-base font-black text-slate-950">Map tools</h2>
-            <p id="advanced-drawer-description" className="mt-1 text-xs leading-5 text-slate-500">Map actions, seat tools, and publishing.</p>
+            <p id="advanced-drawer-description" className="mt-1 text-xs leading-5 text-slate-500">Common seat tools first. Advanced import, recovery, and destructive utilities stay separated.</p>
           </div>
           <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Map tools" className="rounded-full px-3 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
             Close
@@ -402,11 +400,45 @@ export function AdvancedDrawer({
         )}
 
         <div className="min-h-0 space-y-2 overflow-y-auto overscroll-contain pr-1">
+          <ToolGroup title="Common map tools" description="Add, move, swap, and clear selection" defaultOpen contentClassName="grid grid-cols-2 gap-2">
+            <CommandButton
+              label={addSeatMode ? "Cancel Add Seat" : "Add Seat"}
+              description={addSeatMode ? "Active. Click a seating zone or cancel" : "Place a new custom draft marker"}
+              tone={addSeatMode ? "active" : "default"}
+              onClick={addSeatMode ? onCancelAddSeat : onStartAddSeat}
+              density="compact"
+              disabled={busy}
+            />
+            <CommandButton
+              label={swapSeatMode ? "Cancel Swap" : "Swap Seats"}
+              description={swapSeatMode ? "Leave swap mode without changes" : "Select source, target, then confirm"}
+              tone={swapSeatMode ? "active" : "default"}
+              onClick={swapSeatMode ? onCancelSwapSeat : onStartSwapSeat}
+              density="compact"
+              disabled={busy}
+            />
+            <CommandButton
+              label={moveSeatMode ? "Lock Seat" : "Move Seat"}
+              description={selectedSeat ? `Drag ${selectedSeat.label} on the map` : "Select a seat first"}
+              tone={moveSeatMode ? "active" : "default"}
+              onClick={onToggleMoveSeat}
+              density="compact"
+              disabled={busy || !selectedSeat}
+            />
+            <CommandButton
+              label="Clear Selection"
+              description={selectedSeat ? `Deselect ${selectedSeat.label}` : "Select a seat first"}
+              onClick={onClearSelection}
+              density="compact"
+              disabled={busy || !selectedSeat}
+            />
+          </ToolGroup>
+
           <section className="rounded-xl border border-slate-200/80 bg-slate-50/75 p-2">
             <div className="mb-2 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-sm font-extrabold text-slate-900">Admin actions</div>
-                <p className="mt-0.5 truncate text-xs font-medium text-slate-500">Frequent mobile commands</p>
+                <div className="text-sm font-extrabold text-slate-900">Secondary shortcuts</div>
+                <p className="mt-0.5 truncate text-xs font-medium text-slate-500">History, assistant, and management</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -447,41 +479,12 @@ export function AdvancedDrawer({
             </div>
           </section>
 
-          <ToolGroup title="Seat editing" description="Add, move, swap, and clear selection" defaultOpen contentClassName="grid grid-cols-2 gap-2">
-            <CommandButton
-              label={addSeatMode ? "Cancel Add Seat" : "Add Seat"}
-              description={addSeatMode ? "Active. Click a seating zone or cancel" : "Place a new custom draft marker"}
-              tone={addSeatMode ? "active" : "default"}
-              onClick={addSeatMode ? onCancelAddSeat : onStartAddSeat}
-              density="compact"
-              disabled={busy}
-            />
-            <CommandButton
-              label={swapSeatMode ? "Cancel Swap" : "Swap Seats"}
-              description={swapSeatMode ? "Leave swap mode without changes" : "Select source, target, then confirm"}
-              tone={swapSeatMode ? "active" : "default"}
-              onClick={swapSeatMode ? onCancelSwapSeat : onStartSwapSeat}
-              density="compact"
-              disabled={busy}
-            />
-            <CommandButton
-              label={moveSeatMode ? "Lock Seat" : "Move Seat"}
-              description={selectedSeat ? `Drag ${selectedSeat.label} on the map` : "Select a seat first"}
-              tone={moveSeatMode ? "active" : "default"}
-              onClick={onToggleMoveSeat}
-              density="compact"
-              disabled={busy || !selectedSeat}
-            />
-            <CommandButton
-              label="Clear Selection"
-              description={selectedSeat ? `Deselect ${selectedSeat.label}` : "Select a seat first"}
-              onClick={onClearSelection}
-              density="compact"
-              disabled={busy || !selectedSeat}
-            />
-          </ToolGroup>
+          <section className="rounded-xl border border-emerald-200/80 bg-emerald-50/70 p-3 text-xs leading-5 text-emerald-900">
+            <div className="text-[10px] font-black uppercase tracking-wide text-emerald-700">Publish review</div>
+            <p className="mt-1 font-semibold">Use the draft status button in the main command bar to review or publish draft changes. Publishing stays out of advanced utilities.</p>
+          </section>
 
-          <ToolGroup title="Layout tools" description="Custom seat placement">
+          <ToolGroup title="Seat rules" description="Custom seat placement">
             <p className="text-xs leading-5 text-slate-500">
               {selectedSeat
                 ? selectedSeatCanDelete
@@ -499,11 +502,6 @@ export function AdvancedDrawer({
               <CommandButton label="Import CSV" description="Apply assignment updates with undo" onClick={() => fileInputRef.current?.click()} disabled={busy} />
             </div>
             <p className="text-xs leading-5 text-slate-500">CSV imports update draft assignments only. Marker positions stay fixed.</p>
-          </ToolGroup>
-
-          <ToolGroup title="Publishing" description="Send draft map to viewers">
-            <p className="text-xs leading-5 text-slate-500">Publishing copies the current draft map to the viewer-facing map after a confirmation summary.</p>
-            <CommandButton label="Publish Draft Map" description="Copy draft seating to the viewer map" tone="active" onClick={onPublish} disabled={busy} />
           </ToolGroup>
 
           <ToolGroup title="Advanced recovery" description="Developer backup restore">

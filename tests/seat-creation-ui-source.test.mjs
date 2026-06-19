@@ -143,6 +143,7 @@ test("seat badges use compact map-native labels with strong active states", asyn
   assert.match(markerSource, /text-\[10px\]/);
   assert.match(markerSource, /tokenMode === "selected"[\s\S]*w-\[112px\]/);
   assert.match(markerSource, /searchProminent[\s\S]*border-orange-300 bg-orange-100/);
+  assert.match(markerSource, /namesVisible = showNames && hasEmployee && !dimmed && !compactNameLabel/);
   assert.match(markerSource, /inlineNameLabel = expandedNameBadge \? employeeName : compactEmployeeName/);
   assert.match(markerSource, /\{inlineNameLabel\}/);
 });
