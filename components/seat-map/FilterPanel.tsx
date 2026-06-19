@@ -134,6 +134,7 @@ export function SeatResultsList({
   onClearSearch,
   onClearFilters,
   onClearAll,
+  onClose,
   density = "panel",
   className = ""
 }: {
@@ -149,6 +150,7 @@ export function SeatResultsList({
   onClearSearch: () => void;
   onClearFilters: () => void;
   onClearAll: () => void;
+  onClose?: () => void;
   density?: "panel" | "rail";
   className?: string;
 }) {
@@ -164,6 +166,11 @@ export function SeatResultsList({
           <h2 id={titleId} className="text-xs font-black text-slate-900">Seat results</h2>
           <p className={["mt-0.5 truncate font-semibold text-slate-500", compact ? "text-[10px]" : "text-[10px]"].join(" ")}>{results.length} matching seats{compact ? "" : ` · ${statusParts}`}</p>
         </div>
+        {onClose && (
+          <button type="button" onClick={onClose} aria-label="Back to map from seat results" className="shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-black text-brand-dark ring-1 ring-orange-100 transition hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+            Back to map
+          </button>
+        )}
       </div>
 
       {results.length > 0 ? (

@@ -69,7 +69,17 @@ test("map tools and ask planner drawers keep dialog semantics and focus targets"
   assert.match(advancedDrawerSource, /id="advanced-drawer"/);
   assert.match(advancedDrawerSource, /aria-labelledby="advanced-drawer-title"/);
   assert.match(advancedDrawerSource, /aria-describedby="advanced-drawer-description"/);
-  assert.match(advancedDrawerSource, /Map actions, seat tools, and publishing\./);
+  assert.match(advancedDrawerSource, /Common seat tools first\. Advanced import, recovery, and destructive utilities stay separated\./);
+  assert.ok(
+    advancedDrawerSource.indexOf("Common map tools") < advancedDrawerSource.indexOf("Secondary shortcuts"),
+    "Common map tools should appear before secondary shortcuts."
+  );
+  assert.ok(
+    advancedDrawerSource.indexOf("Secondary shortcuts") < advancedDrawerSource.indexOf("CSV and backups"),
+    "Secondary shortcuts should stay above advanced utilities."
+  );
+  assert.match(advancedDrawerSource, /Publishing stays out of advanced utilities/);
+  assert.doesNotMatch(advancedDrawerSource, /Publish Draft Map/);
   assert.match(advancedDrawerSource, /closeButtonRef\.current\?\.focus/);
 
   assert.match(askPlannerSource, /id="ask-planner-drawer"/);
@@ -222,11 +232,17 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(filterSource, /titleId="mobile-seat-results-title"/);
 
   assert.match(seatMapSource, /function removeActiveFilterChip/);
+  assert.match(seatMapSource, /aria-label="Primary workspace controls"/);
+  assert.match(seatMapSource, /aria-label="Secondary admin actions"/);
   assert.match(seatMapSource, /setDepartment\("all"\)/);
   assert.match(seatMapSource, /setZone\("all"\)/);
   assert.match(seatMapSource, /setStatus\("all"\)/);
+  assert.match(seatMapSource, /showSearchNoQueryHint/);
+  assert.match(seatMapSource, /showSearchNoQueryHint = canEdit && searchFocused && !searchActive && !selectedSeatId/);
+  assert.match(seatMapSource, /Search the draft map/);
   assert.match(seatMapSource, /function openSeatFromResults/);
   assert.match(seatMapSource, /queueCenterSeatInMap\(seatId\)/);
+  assert.match(seatMapSource, /setResultRailCollapsed\(true\)/);
   assert.match(seatMapSource, /No search results/);
   assert.match(seatMapSource, /No filter results/);
   assert.match(seatMapSource, /No combined results/);
@@ -236,9 +252,15 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /\{canEdit && filtersActive && !singleResultSeat && !resultRailCollapsed && \(/);
   assert.match(seatMapSource, /Fit result/);
   assert.match(seatMapSource, /onClick=\{\(\) => selectSeatResult\(singleResultSeat\.id\)\}/);
+  assert.match(seatMapSource, /autoSelectedSearchKeyRef/);
+  assert.match(seatMapSource, /Auto-selected \$\{singleResultSeat\.label\} for/);
+  assert.match(seatMapSource, /selectedSeatId && selectedSeatId !== singleResultSeat\.id && inspectorDirty/);
+  assert.match(seatMapSource, /matchingSeats\.length <= 1/);
   assert.match(seatMapSource, /aria-controls="seat-results-rail"/);
   assert.match(seatMapSource, /id="seat-results-rail"/);
   assert.match(seatMapSource, /titleId="seat-results-rail-title"/);
+  assert.match(seatMapSource, /id="mobile-seat-results-tray"/);
+  assert.match(filterSource, /aria-label="Back to map from seat results"/);
   assert.match(seatMapSource, /onSeatResultSelect=\{selectSeatResult\}/);
 });
 
@@ -252,7 +274,7 @@ test("admin search clear controls use one clear path with distinct accessible na
   assert.match(clearSearchFunction[0], /setSearchSelectionNotice\(null\)/);
   assert.match(seatMapSource, /aria-label="Clear top search"[\s\S]*onClick=\{clearSearch\}/);
   assert.equal((seatMapSource.match(/searchActive \? "Clear search results"/g) ?? []).length, 2);
-  assert.equal((seatMapSource.match(/onClearSearch=\{clearSearch\}/g) ?? []).length, 2);
+  assert.equal((seatMapSource.match(/onClearSearch=\{clearSearch\}/g) ?? []).length, 3);
   assert.match(seatMapSource, /onClearSearchContext=\{searchActive \? clearSearch : clearStructuredFilters\}/);
   assert.match(filterSource, /onClick=\{onClearSearch\} aria-label="Clear search in empty results"/);
 });

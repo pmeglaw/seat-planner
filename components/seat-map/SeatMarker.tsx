@@ -102,7 +102,7 @@ export function SeatMarker({
   const employeeName = seat.employee?.full_name ?? "";
   const hasEmployee = Boolean(seat.employee);
   const displayName = employeeName || "Open seat";
-  const namesVisible = showNames && hasEmployee && !dimmed;
+  const namesVisible = showNames && hasEmployee && !dimmed && !compactNameLabel;
   const isMovable = canEdit && selected && moveSeatMode;
   const activeMarker = selected || dragging || swapSource || swapTarget;
   const searchProminent = searchResult && !dimmed;
