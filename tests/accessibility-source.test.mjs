@@ -9,9 +9,14 @@ async function readSource(path) {
 test("viewer route renders the published map as read-only", async () => {
   const viewerSource = await readSource("../app/page.tsx");
   const adminSource = await readSource("../app/admin/page.tsx");
+  const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
   assert.match(viewerSource, /\.eq\("layer", "published"\)/);
-  assert.match(viewerSource, /canEdit=\{false\}/);
+  assert.match(viewerSource, /<ViewerSeatFinder/);
+  assert.doesNotMatch(viewerSource, /<SeatMap/);
+  assert.match(viewerFinderSource, /Read-only/);
+  assert.match(viewerFinderSource, /Published/);
+  assert.doesNotMatch(viewerFinderSource, /createSeatAction|deleteSeatAction|moveSeatAction|publishSeatMapAction|restoreDraftSnapshotAction|swapSeatAssignmentsAction/);
   assert.match(adminSource, /\.eq\("layer", "draft"\)/);
   assert.match(adminSource, /\.eq\("layer", "published"\)/);
   assert.match(adminSource, /publishedSeats=\{\(publishedSeats \?\? \[\]\) as SeatWithEmployee\[\]\}/);
@@ -51,10 +56,16 @@ test("active modes exit after dialogs and keep visible exit controls", async () 
 
 test("viewer rendering path stays isolated from admin-only draft and delete controls", async () => {
   const viewerSource = await readSource("../app/page.tsx");
+  const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
 
-  assert.match(viewerSource, /canEdit=\{false\}/);
+  assert.match(viewerSource, /ViewerSeatFinder/);
+  assert.match(viewerFinderSource, /Search published seating/);
+  assert.match(viewerFinderSource, /aria-label="Viewer search results"/);
+  assert.match(viewerFinderSource, /aria-live="polite"/);
+  assert.match(viewerFinderSource, /highlightedDescription="Highlighted search result"/);
+  assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*draftStatusLabel/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AdvancedDrawer/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Actions \/ Rules/);
@@ -142,7 +153,8 @@ test("seat markers remain keyboard buttons with contextual accessible labels", a
   assert.match(source, /aria-pressed=\{selected\}/);
   assert.match(source, /aria-label=\{`\$\{seat\.label\}: \$\{displayName\}\. \$\{seat\.status\} seat\./);
   assert.match(source, /Search result\./);
-  assert.match(source, /Highlighted by Ask Planner\./);
+  assert.match(source, /highlightedDescription = "Highlighted by Ask Planner"/);
+  assert.match(source, /\$\{highlightedDescription\}\./);
   assert.match(source, /Selected\./);
   assert.match(source, /focus-visible:ring-4/);
 });

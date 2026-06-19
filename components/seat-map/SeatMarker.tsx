@@ -17,6 +17,7 @@ type SeatMarkerProps = {
   swapSource: boolean;
   swapTarget: boolean;
   highlighted: boolean;
+  highlightedDescription?: string;
   dragging: boolean;
   addSeatMode: boolean;
   viewportEdge: "left" | "right" | "none";
@@ -92,6 +93,7 @@ export function SeatMarker({
   swapSource,
   swapTarget,
   highlighted,
+  highlightedDescription = "Highlighted by Ask Planner",
   dragging,
   addSeatMode,
   viewportEdge,
@@ -228,7 +230,7 @@ export function SeatMarker({
         dragging ? "z-40 scale-[1.06] shadow-[0_18px_36px_rgba(31,35,39,0.24)]" : ""
       ].join(" ")}
       style={pointToStyle({ x: seat.x, y: seat.y })}
-      aria-label={`${seat.label}: ${displayName}. ${seat.status} seat.${searchProminent ? " Search result." : ""}${highlighted ? " Highlighted by Ask Planner." : ""}${selected ? " Selected." : " Open details."}`}
+      aria-label={`${seat.label}: ${displayName}. ${seat.status} seat.${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${selected ? " Selected." : " Open details."}`}
     >
       <SeatToken
         style={tokenPositionStyle}
