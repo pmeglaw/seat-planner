@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { SeatMap } from "@/components/seat-map/SeatMap";
+import { ViewerSeatFinder } from "@/components/seat-map/ViewerSeatFinder";
 import { createClient } from "@/lib/supabase/server";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
@@ -46,12 +46,11 @@ export default async function HomePage() {
   }
 
   return (
-    <SeatMap
+    <ViewerSeatFinder
       seats={(seats ?? []) as SeatWithEmployee[]}
       employees={(employees ?? []) as Employee[]}
       departmentOptions={(departments ?? []) as DepartmentOption[]}
       zoneOptions={(zones ?? []) as ZoneOption[]}
-      canEdit={false}
     />
   );
 }
