@@ -254,7 +254,9 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /onClick=\{\(\) => selectSeatResult\(singleResultSeat\.id\)\}/);
   assert.match(seatMapSource, /autoSelectedSearchKeyRef/);
   assert.match(seatMapSource, /Auto-selected \$\{singleResultSeat\.label\} for/);
-  assert.match(seatMapSource, /selectedSeatId && selectedSeatId !== singleResultSeat\.id && inspectorDirty/);
+  assert.match(seatMapSource, /const changingSelectedSeat = selectedSeatId !== singleResultSeat\.id/);
+  assert.match(seatMapSource, /selectedSeatId && changingSelectedSeat && inspectorDirty/);
+  assert.match(seatMapSource, /if \(changingSelectedSeat\) setInspectorDirty\(false\)/);
   assert.match(seatMapSource, /matchingSeats\.length <= 1/);
   assert.match(seatMapSource, /aria-controls="seat-results-rail"/);
   assert.match(seatMapSource, /id="seat-results-rail"/);

@@ -1119,11 +1119,12 @@ export function SeatMap({
 
     const autoSelectKey = `${searchQuery}::${singleResultSeat.id}`;
     if (autoSelectedSearchKeyRef.current === autoSelectKey) return;
-    if (selectedSeatId && selectedSeatId !== singleResultSeat.id && inspectorDirty) return;
+    const changingSelectedSeat = selectedSeatId !== singleResultSeat.id;
+    if (selectedSeatId && changingSelectedSeat && inspectorDirty) return;
 
     autoSelectedSearchKeyRef.current = autoSelectKey;
     setSelectedSeatId(singleResultSeat.id);
-    setInspectorDirty(false);
+    if (changingSelectedSeat) setInspectorDirty(false);
     setMoveSeatMode(false);
     setAddSeatMode(false);
     setSwapSourceSeatId(null);
