@@ -586,7 +586,7 @@ export function SeatInspector({
 
   if (collapsed) {
     return (
-      <aside className="fixed inset-x-3 bottom-3 z-40 sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[76px]">
+      <aside className="fixed inset-x-3 bottom-3 z-[80] sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[76px] sm:z-40 lg:top-[132px]">
         <button
           type="button"
           onClick={onToggleCollapse}
@@ -606,10 +606,11 @@ export function SeatInspector({
     <aside
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-40 flex max-h-[54vh] flex-col overflow-hidden rounded-[22px] border border-slate-200/80 bg-slate-50/95 shadow-[0_16px_44px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-slate-50/90 sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[76px] sm:max-h-none sm:w-[352px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-l-[22px] sm:rounded-r-[18px] sm:shadow-[-10px_0_30px_rgba(15,23,42,0.16),inset_1px_0_0_rgba(255,255,255,0.86)]"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[54vh] flex-col overflow-hidden rounded-[22px] border border-slate-200/80 bg-slate-50/95 shadow-[0_16px_44px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-slate-50/90 sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[76px] sm:z-40 sm:max-h-none sm:w-[352px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-l-[22px] sm:rounded-r-[18px] sm:shadow-[-10px_0_30px_rgba(15,23,42,0.16),inset_1px_0_0_rgba(255,255,255,0.86)] lg:top-[132px]"
     >
       <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-slate-200/70 bg-slate-50/95 px-3.5 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-slate-50/90">
         <div className="min-w-0">
+          {canEdit && <div className="mb-1 text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">Planning inspector</div>}
           <div className="flex items-center gap-2">
             <h2 id="seat-inspector-title" className="text-xl font-black leading-none text-slate-950">{selectedSeat.label}</h2>
             {canEdit && (
@@ -690,6 +691,11 @@ export function SeatInspector({
                 )}
               </section>
             )}
+
+            <section aria-label="Draft-only seat impact" className="rounded-2xl border border-orange-200 bg-orange-50/70 p-3 text-xs leading-5 text-brand-dark">
+              <div className="text-[10px] font-black uppercase tracking-wide text-orange-700">Draft-only impact</div>
+              <p className="mt-1 font-semibold">Changes here update the admin draft. Viewers see them only after the draft is reviewed and published.</p>
+            </section>
 
             <section aria-labelledby="seat-summary-heading" className="rounded-2xl border border-slate-200 bg-white/60 p-3">
               <h3 id="seat-summary-heading" className="text-[11px] font-black uppercase tracking-wide text-slate-500">Seat Summary</h3>
@@ -1032,7 +1038,7 @@ export function SeatInspector({
     </aside>
 
     {vacateConfirmOpen && (
-      <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:items-center">
+      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
         <section
           role="dialog"
           aria-modal="true"
