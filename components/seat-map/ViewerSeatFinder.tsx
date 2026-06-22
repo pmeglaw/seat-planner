@@ -325,6 +325,7 @@ export function ViewerSeatFinder({
                   width={MAP_IMAGE_WIDTH}
                   height={MAP_IMAGE_HEIGHT}
                   priority
+                  unoptimized
                   className="block h-auto w-full select-none"
                   draggable={false}
                 />

@@ -54,7 +54,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["NE"],
     savedBounds: { xMin: 0.72, xMax: 0.97, yMin: 0.03, yMax: 0.2 },
     visualBounds: { xMin: 0.69, xMax: 0.9, yMin: 0.04, yMax: 0.19 },
-    transform: { xScale: 0.993361, xOffset: -0.053816, yScale: 0.994908, yOffset: 0.013884 }
+    transform: { xScale: 0.993361, xOffset: -0.035816, yScale: 0.994908, yOffset: 0.013884 }
   },
   {
     id: "west-pod",
@@ -70,7 +70,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["CW"],
     savedBounds: { xMin: 0.27, xMax: 0.37, yMin: 0.33, yMax: 0.5 },
     visualBounds: { xMin: 0.31, xMax: 0.39, yMin: 0.37, yMax: 0.49 },
-    transform: { xScale: 1.105715, xOffset: -0.005793, yScale: 1.088, yOffset: -0.012079 }
+    transform: { xScale: 1.105715, xOffset: 0.001207, yScale: 1.088, yOffset: -0.012079 }
   },
   {
     id: "center-west-lower",
@@ -102,7 +102,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["SE"],
     savedBounds: { xMin: 0.86, xMax: 0.95, yMin: 0.52, yMax: 0.59 },
     visualBounds: { xMin: 0.79, xMax: 0.88, yMin: 0.56, yMax: 0.62 },
-    transform: { xScale: 0.972807, xOffset: -0.046255, yScale: 1.04, yOffset: 0.015514 }
+    transform: { xScale: 0.972807, xOffset: -0.033255, yScale: 1.04, yOffset: 0.015514 }
   },
   {
     id: "southeast-office-lower",
@@ -110,7 +110,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["SE"],
     savedBounds: { xMin: 0.88, xMax: 0.96, yMin: 0.59, yMax: 0.66 },
     visualBounds: { xMin: 0.82, xMax: 0.9, yMin: 0.64, yMax: 0.69 },
-    transform: { xScale: 1.122826, xOffset: -0.176212, yScale: 0.896007, yOffset: 0.108551 }
+    transform: { xScale: 1.012899, xOffset: -0.065111, yScale: 0.896007, yOffset: 0.108551 }
   }
 ];
 
