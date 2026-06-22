@@ -184,7 +184,7 @@ export function AskPlannerDrawer({
         aria-label="Close Ask Planner"
         aria-hidden="true"
         tabIndex={-1}
-        className="fixed inset-0 z-40 cursor-default bg-slate-950/22 backdrop-blur-[1px]"
+        className="fixed inset-0 z-[70] cursor-default bg-slate-950/22 backdrop-blur-[1px] sm:z-40"
         onClick={onClose}
       />
 
@@ -194,7 +194,7 @@ export function AskPlannerDrawer({
         aria-modal="true"
         aria-labelledby="ask-planner-title"
         aria-describedby="ask-planner-description"
-        className="fixed inset-x-3 bottom-3 z-50 flex max-h-[84vh] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 text-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.2),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[66px] sm:max-h-[calc(100vh-80px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
+        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 text-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.2),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[66px] sm:z-50 sm:max-h-[calc(100vh-80px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
       >
         <div className="shrink-0 border-b border-slate-200/80 px-4 py-3">
           <div className="flex items-start justify-between gap-3">

@@ -1530,6 +1530,11 @@ export function SeatMap({
   const draftStatusTitle = publishSummary.hasChanges
     ? `Review draft changes: ${draftChangeBreakdown || `${publishSummary.totalChangeCount} total`}`
     : "Draft and published maps currently match";
+  const draftStatusHeadline = publishSummary.hasChanges ? "Draft has unpublished changes" : "Draft matches published";
+  const draftStatusDescription = publishSummary.hasChanges
+    ? `${draftChangeBreakdown || `${publishSummary.totalChangeCount} total changes`}. Review before publishing to viewers.`
+    : "Viewer map already matches this saved draft.";
+  const draftStatusActionLabel = publishSummary.hasChanges ? "Review publish" : "Review status";
   const activeMode = addSeatMode
     ? {
       label: "Add Seat",
@@ -1555,8 +1560,26 @@ export function SeatMap({
           onExit: cancelSwapSeatMode
         }
         : null;
+  const planningStateLabel = activeMode
+    ? `${activeMode.label} mode active`
+    : filtersActive
+      ? `${matchingSeats.length} draft seat${matchingSeats.length === 1 ? "" : "s"} match current search and filters`
+      : selectedSeat
+        ? `${selectedSeat.label} selected for planning`
+        : "Ready to search, select, or adjust the draft map";
   const desktopMapGridClass = filterCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]";
   const showFilterPanel = !filterCollapsed;
+  const desktopInspectorOpen = canEdit && Boolean(selectedSeat && !inspectorCollapsed);
+  const mobileMapInteractionSurfaceOpen = canEdit && (
+    Boolean(selectedSeat && !inspectorCollapsed) ||
+    showFilterPanel ||
+    advancedOpen ||
+    askPlannerOpen ||
+    publishReviewOpen ||
+    Boolean(deleteSeatConfirm) ||
+    Boolean(inspectorGuardAction) ||
+    Boolean(swapConfirm)
+  );
   const showSearchNoQueryHint = canEdit && searchFocused && !searchActive && !selectedSeatId && filterCollapsed && !advancedOpen && !askPlannerOpen;
   const filterPanelShellClass = [
     filterCollapsed ? "order-2" : "order-1",
@@ -1583,9 +1606,30 @@ export function SeatMap({
       ? "rounded-xl border-slate-200/90 bg-white/90 py-1.5 text-slate-600 shadow-[0_8px_22px_rgba(15,23,42,0.06)]"
       : selectedResultIsVisible
       ? "rounded-xl border-slate-200/80 bg-slate-50/80 text-slate-500 shadow-none"
-      : "rounded-2xl border-white/70 bg-white/80 py-2 text-slate-600 shadow-[0_12px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl"
-  ].join(" ");
-  const singleResultOverlayClassName = "pointer-events-auto flex w-[min(100%,22rem)] flex-col gap-2 rounded-xl border border-slate-200/90 bg-white/95 px-2.5 py-2 text-xs font-semibold text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.14)] backdrop-blur-md sm:w-auto sm:min-w-[28rem] sm:max-w-[min(46rem,calc(100vw-11rem))] sm:flex-row sm:items-center sm:justify-between";
+      : "rounded-2xl border-white/70 bg-white/80 py-2 text-slate-600 shadow-[0_12px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl",
+    desktopInspectorOpen ? "lg:mr-[23.5rem]" : ""
+  ].filter(Boolean).join(" ");
+  const singleResultOverlayShellClassName = [
+    "pointer-events-none sticky left-0 right-0 top-12 z-30 flex h-0 w-full justify-center px-2 sm:top-2 sm:justify-end",
+    mobileMapInteractionSurfaceOpen ? "hidden sm:flex" : "",
+    desktopInspectorOpen ? "lg:pr-[23.5rem]" : ""
+  ].filter(Boolean).join(" ");
+  const singleResultOverlayClassName = [
+    "pointer-events-auto flex w-[min(100%,22rem)] flex-col gap-2 rounded-xl border border-slate-200/90 bg-white/95 px-2.5 py-2 text-xs font-semibold text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.14)] backdrop-blur-md sm:w-auto sm:min-w-[28rem] sm:max-w-[min(46rem,calc(100vw-11rem))] sm:flex-row sm:items-center sm:justify-between",
+    desktopInspectorOpen ? "lg:min-w-0 lg:max-w-[min(36rem,calc(100vw-29rem))]" : ""
+  ].filter(Boolean).join(" ");
+  const mapModeOverlayShellClassName = [
+    "pointer-events-none sticky left-0 top-0 z-30 h-0",
+    mobileMapInteractionSurfaceOpen ? "hidden sm:block" : ""
+  ].filter(Boolean).join(" ");
+  const mapMarkerLayerClassName = [
+    "absolute inset-0",
+    mobileMapInteractionSurfaceOpen ? "hidden sm:block" : ""
+  ].filter(Boolean).join(" ");
+  const desktopResultRailClassName = [
+    "hidden lg:block",
+    desktopInspectorOpen ? "lg:mr-[23.5rem]" : ""
+  ].filter(Boolean).join(" ");
   const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-slate-200 bg-white/90 px-3 py-1.5 text-[11px] font-black text-slate-700 transition hover:border-orange-200 hover:bg-orange-50 active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50";
   const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] font-black text-brand-dark transition hover:bg-orange-100 active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100";
   const singleResultSummary = singleResultSeat ? (
@@ -1671,181 +1715,211 @@ export function SeatMap({
     <div className="min-h-screen overflow-x-hidden bg-slate-950 px-1.5 py-2 text-slate-950 sm:px-3 sm:py-3 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden">
       <div className="mx-auto flex w-full max-w-[1920px] flex-1 flex-col overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_32px_100px_rgba(0,0,0,0.38)] lg:min-h-0">
         <header className="z-30 border-b border-slate-200/80 bg-slate-50/95 px-3 py-2.5 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:px-4 lg:shrink-0">
-          <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(200px,270px)_minmax(300px,1fr)_auto]">
-            <div className="min-w-0">
-              <div className="min-w-0">
+          <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(210px,0.72fr)_minmax(260px,0.9fr)_minmax(340px,1.35fr)] lg:items-stretch">
+              <section aria-label="Admin planning workspace" className="min-w-0 rounded-[20px] border border-slate-200/70 bg-white/70 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
                 <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                   <h1 className="truncate text-base font-black leading-tight tracking-normal">Office Seat Planner</h1>
                   <span className={["shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", canEdit ? "bg-orange-50 text-brand-dark ring-orange-200" : "bg-emerald-50 text-emerald-700 ring-emerald-200"].join(" ")}>
                     {canEdit ? "Draft" : "Published"}
                   </span>
-                  {canEdit && (
+                </div>
+                <p className="mt-1 truncate text-[9px] font-bold uppercase leading-tight tracking-[0.14em] text-slate-400">{canEdit ? "Admin planning workspace" : "Viewer workspace"}</p>
+                <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-black text-slate-600">
+                  <span className="rounded-full bg-slate-100 px-2 py-1 ring-1 ring-slate-200">{stats.total} seats</span>
+                  <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700 ring-1 ring-emerald-100">{stats.assigned} assigned</span>
+                  <span className="rounded-full bg-white px-2 py-1 ring-1 ring-slate-200">{stats.available} open</span>
+                </div>
+              </section>
+
+              {canEdit ? (
+                <button
+                  type="button"
+                  onClick={openPublishReview}
+                  aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
+                  title={draftStatusTitle}
+                  className={["group flex min-w-0 flex-col items-start rounded-[20px] border px-3 py-2 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] transition hover:bg-white active:scale-[0.99] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100", publishSummary.hasChanges ? "border-amber-200 bg-amber-50/80 text-amber-950" : "border-emerald-200 bg-emerald-50/75 text-emerald-950"].join(" ")}
+                >
+                  <span className="text-[9px] font-black uppercase tracking-[0.14em] opacity-70">Draft publication status</span>
+                  <span className="mt-1 flex max-w-full items-center gap-2 text-sm font-black leading-tight">
+                    <span className="min-w-0 truncate">{draftStatusHeadline}</span>
+                    <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", publishSummary.hasChanges ? "bg-white/75 text-amber-800 ring-amber-200" : "bg-white/75 text-emerald-700 ring-emerald-200"].join(" ")}>
+                      {draftStatusActionLabel}
+                    </span>
+                  </span>
+                  <span className="mt-1 max-w-full truncate text-xs font-semibold opacity-75">{draftStatusDescription}</span>
+                  <span className="sr-only">{draftStatusLabel}</span>
+                </button>
+              ) : (
+                <section aria-label="Published status" className="rounded-[20px] border border-emerald-200 bg-emerald-50/75 px-3 py-2 text-emerald-950">
+                  <div className="text-[9px] font-black uppercase tracking-[0.14em] opacity-70">Published status</div>
+                  <div className="mt-1 text-sm font-black">Published map</div>
+                  <p className="mt-1 truncate text-xs font-semibold opacity-75">Read-only seating shown to viewers.</p>
+                </section>
+              )}
+
+              <div role="group" aria-label="Primary workspace controls" className="flex min-w-0 flex-wrap items-center gap-1.5 rounded-[18px] border border-slate-200/80 bg-white/75 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] lg:content-start">
+                <div className="flex min-w-0 flex-[1_1_100%] items-center justify-between gap-3 px-2 pt-1">
+                  <span className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Find and focus</span>
+                  <span className="truncate text-[11px] font-bold text-slate-500">{planningStateLabel}</span>
+                </div>
+                <label className="relative min-w-0 flex-[1_1_100%] sm:flex-1">
+                  <span className="sr-only">Search employee, seat, job title, department, or zone</span>
+                  <input
+                    value={search}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setSearchFocused(false)}
+                    onChange={event => {
+                      setSearch(event.target.value);
+                      setSearchSelectionNotice(null);
+                      setResultRailCollapsed(false);
+                    }}
+                    placeholder="Search employee, seat, job title, department, or zone"
+                    className="h-9 w-full rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.92)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:bg-white focus:ring-4 focus:ring-orange-100"
+                  />
+                  {search.trim() && (
                     <button
                       type="button"
-                      onClick={openPublishReview}
-                      aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
-                      title={draftStatusTitle}
-                      className={["inline-flex min-w-0 max-w-[min(100%,13rem)] items-center overflow-hidden rounded-lg px-2 py-0.5 text-[10px] font-black ring-1 transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:max-w-[18rem]", publishSummary.hasChanges ? "bg-amber-50 text-amber-800 ring-amber-200" : "bg-emerald-50 text-emerald-700 ring-emerald-200"].join(" ")}
+                      aria-label="Clear top search"
+                      title="Clear top search"
+                      className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                      onClick={clearSearch}
                     >
-                      <span className="min-w-0 truncate">{draftStatusLabel}</span>
-                      {publishSummary.hasChanges && draftChangeBreakdown && (
-                        <span className="hidden shrink-0 min-[1280px]:inline"> · {draftChangeBreakdown}</span>
-                      )}
+                      x
                     </button>
                   )}
-                </div>
-                <p className="truncate text-[9px] font-bold uppercase tracking-[0.14em] leading-tight text-slate-400">{canEdit ? "Admin workspace" : "Viewer workspace"}</p>
+                </label>
+                <button
+                  type="button"
+                  onClick={toggleFilterPanel}
+                  aria-controls="seat-map-filter-panel"
+                  aria-expanded={!filterCollapsed}
+                  aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
+                  title={filterCollapsed ? "Open filters" : "Collapse filters"}
+                  className={["inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border px-3 text-xs font-black shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100", structuredFilterCount ? "border-orange-200 bg-orange-50 text-brand-dark" : "border-slate-200 bg-slate-50/80 text-slate-700"].join(" ")}
+                >
+                  Filters
+                  {structuredFilterCount > 0 && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-black text-white">
+                      {structuredFilterCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowNames(current => !current)}
+                  aria-label={namesToggleLabel}
+                  title={namesToggleLabel}
+                  className={[
+                    "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border px-2.5 text-xs font-black shadow-sm transition active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
+                    showNames ? "border-slate-300 bg-slate-900 text-white hover:bg-slate-800" : "border-slate-200 bg-slate-50/80 text-slate-700 hover:bg-white"
+                  ].join(" ")}
+                >
+                  <NamesIcon />
+                  <span className="hidden sm:inline">{namesToggleLabel}</span>
+                </button>
+                {canEdit && (
+                  <Button
+                    ref={mapToolsMobileButtonRef}
+                    variant="secondary"
+                    aria-label="Map tools"
+                    aria-controls="advanced-drawer"
+                    aria-expanded={advancedOpen}
+                    aria-haspopup="dialog"
+                    title="Map tools"
+                    className="h-9 min-h-9 rounded-xl px-3 py-1 text-xs shadow-sm sm:hidden"
+                    onClick={openAdvancedDrawer}
+                  >
+                    Tools
+                  </Button>
+                )}
               </div>
             </div>
 
-          <div role="group" aria-label="Primary workspace controls" className="flex min-w-0 flex-wrap items-center gap-1.5 rounded-[18px] border border-slate-200/80 bg-white/75 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] sm:col-span-2 lg:col-span-1 lg:flex-nowrap">
-            <label className="relative min-w-0 flex-[1_1_100%] sm:flex-1">
-              <span className="sr-only">Search employee, seat, job title, department, or zone</span>
-              <input
-                value={search}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                onChange={event => {
-                  setSearch(event.target.value);
-                  setSearchSelectionNotice(null);
-                  setResultRailCollapsed(false);
-                }}
-                placeholder="Search employee, seat, job title, department, or zone"
-                className="h-9 w-full rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.92)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:bg-white focus:ring-4 focus:ring-orange-100"
-              />
-              {search.trim() && (
-                <button
-                  type="button"
-                  aria-label="Clear top search"
-                  title="Clear top search"
-                  className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
-                  onClick={clearSearch}
-                >
-                  x
-                </button>
-              )}
-            </label>
-            <button
-              type="button"
-              onClick={toggleFilterPanel}
-              aria-controls="seat-map-filter-panel"
-              aria-expanded={!filterCollapsed}
-              aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
-              title={filterCollapsed ? "Open filters" : "Collapse filters"}
-              className={["inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border px-3 text-xs font-black shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100", structuredFilterCount ? "border-orange-200 bg-orange-50 text-brand-dark" : "border-slate-200 bg-slate-50/80 text-slate-700"].join(" ")}
-            >
-              Filters
-              {structuredFilterCount > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-black text-white">
-                  {structuredFilterCount}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowNames(current => !current)}
-              aria-label={namesToggleLabel}
-              title={namesToggleLabel}
-              className={[
-                "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border px-2.5 text-xs font-black shadow-sm transition active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
-                showNames ? "border-slate-300 bg-slate-900 text-white hover:bg-slate-800" : "border-slate-200 bg-slate-50/80 text-slate-700 hover:bg-white"
-              ].join(" ")}
-            >
-              <NamesIcon />
-              <span className="hidden sm:inline">{namesToggleLabel}</span>
-            </button>
             {canEdit && (
-              <Button
-                ref={mapToolsMobileButtonRef}
-                variant="secondary"
-                aria-label="Map tools"
-                aria-controls="advanced-drawer"
-                aria-expanded={advancedOpen}
-                aria-haspopup="dialog"
-                title="Map tools"
-                className="h-9 min-h-9 rounded-xl px-3 py-1 text-xs shadow-sm sm:hidden"
-                onClick={openAdvancedDrawer}
-              >
-                Tools
-              </Button>
-            )}
-          </div>
+              <div role="group" aria-label="Secondary admin actions" className="hidden min-w-0 flex-wrap items-center justify-between gap-2 rounded-[18px] border border-slate-200/70 bg-slate-50/60 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)] sm:flex">
+                <div role="group" aria-label="Planning map actions" className="flex min-w-0 items-center gap-1.5 rounded-xl bg-white/65 px-1.5 py-1">
+                  <span className="hidden shrink-0 px-1 text-[9px] font-black uppercase tracking-[0.14em] text-slate-400 md:inline">Plan</span>
+                  <Button
+                    ref={mapToolsButtonRef}
+                    variant="secondary"
+                    aria-label="Map tools"
+                    aria-controls="advanced-drawer"
+                    aria-expanded={advancedOpen}
+                    aria-haspopup="dialog"
+                    title="Map tools"
+                    className="h-9 min-h-9 rounded-xl px-3 py-1 text-xs shadow-sm"
+                    onClick={openAdvancedDrawer}
+                  >
+                    <span className="min-[1200px]:hidden">Tools</span>
+                    <span className="hidden min-[1200px]:inline">Map tools</span>
+                  </Button>
+                </div>
 
-          <div role="group" aria-label="Secondary admin actions" className="hidden min-w-0 flex-wrap items-center justify-end gap-1.5 rounded-[18px] border border-slate-200/70 bg-slate-50/60 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)] sm:col-start-2 sm:row-start-1 sm:flex lg:col-auto lg:row-auto">
-            {canEdit && (
-              <>
-                <Button
-                  ref={mapToolsButtonRef}
-                  variant="secondary"
-                  aria-label="Map tools"
-                  aria-controls="advanced-drawer"
-                  aria-expanded={advancedOpen}
-                  aria-haspopup="dialog"
-                  title="Map tools"
-                  className="h-9 min-h-9 rounded-xl px-3 py-1 text-xs shadow-sm"
-                  onClick={openAdvancedDrawer}
-                >
-                  <span className="min-[1200px]:hidden">Tools</span>
-                  <span className="hidden min-[1200px]:inline">Map tools</span>
-                </Button>
-                <button
-                  type="button"
-                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-black text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
-                  disabled={pending || inspectorDirty || !undoAvailable}
-                  aria-label="Undo last map change"
-                  title={undoTitle}
-                  onClick={undoDraftEdit}
-                >
-                  <UndoIcon />
-                  <span className="hidden xl:inline">Undo</span>
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-black text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
-                  disabled={pending || inspectorDirty || !redoAvailable}
-                  aria-label="Redo last undone change"
-                  title={redoTitle}
-                  onClick={redoDraftEdit}
-                >
-                  <RedoIcon />
-                  <span className="hidden xl:inline">Redo</span>
-                </button>
-                <Link
-                  href="/admin/management"
-                  onClick={event => {
-                    if (!beforeManagementNavigation()) event.preventDefault();
-                  }}
-                  className="hidden min-h-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:inline-flex"
-                >
-                  <span className="min-[1280px]:hidden">Manage</span>
-                  <span className="hidden min-[1280px]:inline">Management</span>
-                </Link>
-                <Button
-                  ref={askPlannerButtonRef}
-                  variant="secondary"
-                  aria-label={plannerHighlightedSeatIds.length > 0 ? `Open Ask Planner, ${plannerHighlightedSeatIds.length} seats highlighted` : "Open Ask Planner"}
-                  aria-controls="ask-planner-drawer"
-                  aria-expanded={askPlannerOpen}
-                  aria-haspopup="dialog"
-                  className={[
-                    "min-h-9 rounded-xl px-3 py-1 text-xs shadow-sm",
-                    plannerHighlightedSeatIds.length > 0 ? "border-cyan-200 bg-cyan-50 text-cyan-900 hover:bg-cyan-100" : ""
-                  ].join(" ")}
-                  onClick={openAskPlannerDrawer}
-                >
-                  <span className="min-[1360px]:hidden">Ask</span>
-                  <span className="hidden min-[1360px]:inline">Ask Planner</span>
-                  {plannerHighlightedSeatIds.length > 0 && (
-                    <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-600 px-1.5 text-[10px] font-black text-white">
-                      {plannerHighlightedSeatIds.length}
-                    </span>
-                  )}
-                </Button>
-              </>
+                <div role="group" aria-label="Draft history controls" className="flex min-w-0 items-center gap-1.5 rounded-xl bg-white/65 px-1.5 py-1">
+                  <span className="hidden shrink-0 px-1 text-[9px] font-black uppercase tracking-[0.14em] text-slate-400 md:inline">History</span>
+                  <button
+                    type="button"
+                    className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-black text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
+                    disabled={pending || inspectorDirty || !undoAvailable}
+                    aria-label="Undo last map change"
+                    title={undoTitle}
+                    onClick={undoDraftEdit}
+                  >
+                    <UndoIcon />
+                    <span className="hidden xl:inline">Undo</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-black text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100/70 disabled:text-slate-400 disabled:shadow-none"
+                    disabled={pending || inspectorDirty || !redoAvailable}
+                    aria-label="Redo last undone change"
+                    title={redoTitle}
+                    onClick={redoDraftEdit}
+                  >
+                    <RedoIcon />
+                    <span className="hidden xl:inline">Redo</span>
+                  </button>
+                </div>
+
+                <div role="group" aria-label="Admin support actions" className="flex min-w-0 items-center gap-1.5 rounded-xl bg-white/65 px-1.5 py-1">
+                  <span className="hidden shrink-0 px-1 text-[9px] font-black uppercase tracking-[0.14em] text-slate-400 md:inline">Support</span>
+                  <Link
+                    href="/admin/management"
+                    onClick={event => {
+                      if (!beforeManagementNavigation()) event.preventDefault();
+                    }}
+                    className="hidden min-h-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:inline-flex"
+                  >
+                    <span className="min-[1280px]:hidden">Manage</span>
+                    <span className="hidden min-[1280px]:inline">Management</span>
+                  </Link>
+                  <Button
+                    ref={askPlannerButtonRef}
+                    variant="secondary"
+                    aria-label={plannerHighlightedSeatIds.length > 0 ? `Open Ask Planner, ${plannerHighlightedSeatIds.length} seats highlighted` : "Open Ask Planner"}
+                    aria-controls="ask-planner-drawer"
+                    aria-expanded={askPlannerOpen}
+                    aria-haspopup="dialog"
+                    className={[
+                      "min-h-9 rounded-xl px-3 py-1 text-xs shadow-sm",
+                      plannerHighlightedSeatIds.length > 0 ? "border-cyan-200 bg-cyan-50 text-cyan-900 hover:bg-cyan-100" : ""
+                    ].join(" ")}
+                    onClick={openAskPlannerDrawer}
+                  >
+                    <span className="min-[1360px]:hidden">Ask</span>
+                    <span className="hidden min-[1360px]:inline">Ask Planner</span>
+                    {plannerHighlightedSeatIds.length > 0 && (
+                      <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-600 px-1.5 text-[10px] font-black text-white">
+                        {plannerHighlightedSeatIds.length}
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
-        </div>
-      </header>
+        </header>
 
       <main className={["grid grid-cols-1 gap-1 bg-white p-1 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
         {showFilterPanel && (
@@ -1881,7 +1955,20 @@ export function SeatMap({
           </div>
         )}
 
-        <section className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].join(" ")}>
+        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].join(" ")}>
+          {canEdit && (
+            <div className="flex flex-col gap-2 rounded-2xl border border-slate-200/75 bg-slate-50/80 px-3 py-2 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <h2 id="admin-planning-canvas-title" className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Planning canvas</h2>
+                <p className="mt-0.5 truncate text-sm font-black text-slate-950">{planningStateLabel}</p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-1.5 text-[10px] font-black uppercase tracking-wide">
+                <span className="rounded-full bg-white px-2 py-1 text-slate-500 ring-1 ring-slate-200">Draft map</span>
+                <span className="rounded-full bg-orange-50 px-2 py-1 text-brand-dark ring-1 ring-orange-100">Spatial confirmation</span>
+              </div>
+            </div>
+          )}
+
           {showSearchNoQueryHint && (
             <div className="rounded-2xl border border-slate-200/80 bg-slate-50/85 px-3 py-2 text-xs font-semibold text-slate-600 shadow-none" role="status" aria-live="polite">
               <div className="font-black text-slate-900">Search the draft map</div>
@@ -1976,7 +2063,7 @@ export function SeatMap({
               onClearFilters={clearStructuredFilters}
               onClearAll={clearAllConstraints}
               density="rail"
-              className="hidden lg:block"
+              className={desktopResultRailClassName}
             />
           )}
 
@@ -2024,13 +2111,13 @@ export function SeatMap({
               aria-label={canEdit ? "Admin seat map viewport. Use wheel, trackpad, touch, or arrow keys to pan the map." : undefined}
             >
               {canEdit && singleResultSummary && (
-                <div className="pointer-events-none sticky left-0 right-0 top-12 z-50 flex h-0 w-full justify-center px-2 sm:top-2 sm:justify-end" aria-label="Single search result">
+                <div className={singleResultOverlayShellClassName} aria-label="Single search result">
                   <div className={singleResultOverlayClassName}>
                     {singleResultSummary}
                   </div>
                 </div>
               )}
-              <div className="pointer-events-none sticky left-0 top-0 z-50 h-0">
+              <div className={mapModeOverlayShellClassName}>
                 <div
                   role="group"
                   aria-label="Map view mode"
@@ -2078,7 +2165,7 @@ export function SeatMap({
                   draggable={false}
                 />
 
-                <div className="absolute inset-0">
+                <div className={mapMarkerLayerClassName}>
                   {localSeats.map(seat => {
                     const seatMatchesFilters = matchesFilters(seat);
                     const visualSeat = visualSeatById.get(seat.id) ?? seat;
@@ -2200,7 +2287,7 @@ export function SeatMap({
       )}
 
       {deleteSeatConfirm && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
           <section
             role="dialog"
             aria-modal="true"
@@ -2242,7 +2329,7 @@ export function SeatMap({
       )}
 
       {publishReviewOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
           <section
             role="dialog"
             aria-modal="true"
@@ -2372,7 +2459,7 @@ export function SeatMap({
       />
 
       {inspectorGuardAction && selectedSeat && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:z-[60] sm:items-center">
           <section
             role="dialog"
             aria-modal="true"
@@ -2402,7 +2489,7 @@ export function SeatMap({
       )}
 
       {swapConfirm && swapSourceSeat && swapTargetSeat && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/30 p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
           <section
             role="dialog"
             aria-modal="true"

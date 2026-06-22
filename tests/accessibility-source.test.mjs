@@ -23,9 +23,18 @@ test("viewer route renders the published map as read-only", async () => {
   assert.match(adminSource, /canEdit\s*\/>/);
 });
 
-test("toolbar exposes panel relationships and disabled undo redo explanations", async () => {
+test("admin planning shell exposes status, panel relationships, and undo redo explanations", async () => {
   const source = await readSource("../components/seat-map/SeatMap.tsx");
 
+  assert.match(source, /aria-label="Admin planning workspace"/);
+  assert.match(source, /Draft publication status/);
+  assert.match(source, /Draft has unpublished changes/);
+  assert.match(source, /Viewer map already matches this saved draft/);
+  assert.match(source, /Planning map actions/);
+  assert.match(source, /Draft history controls/);
+  assert.match(source, /Admin support actions/);
+  assert.match(source, /Planning canvas/);
+  assert.match(source, /Spatial confirmation/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
   assert.match(source, /aria-controls="advanced-drawer"/);
   assert.match(source, /aria-controls="ask-planner-drawer"/);
@@ -36,7 +45,7 @@ test("toolbar exposes panel relationships and disabled undo redo explanations", 
   assert.match(source, /Draft changes:/);
   assert.match(source, /Esc exits/);
   assert.match(source, /Exit Add Seat/);
-  assert.match(source, /\{canEdit && \([\s\S]*aria-label=\{`Review \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);
+  assert.match(source, /\{canEdit \? \([\s\S]*aria-label=\{`Review \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);
   assert.match(source, /Undo \{lastUndoLabel\}/);
   assert.match(source, /onClick=\{undoDraftEdit\}/);
 });
@@ -66,7 +75,7 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   assert.match(viewerFinderSource, /aria-live="polite"/);
   assert.match(viewerFinderSource, /highlightedDescription="Highlighted search result"/);
   assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
-  assert.match(seatMapSource, /\{canEdit && \([\s\S]*draftStatusLabel/);
+  assert.match(seatMapSource, /\{canEdit \? \([\s\S]*draftStatusLabel/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AdvancedDrawer/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Actions \/ Rules/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
@@ -92,11 +101,13 @@ test("map tools and ask planner drawers keep dialog semantics and focus targets"
   assert.match(advancedDrawerSource, /Publishing stays out of advanced utilities/);
   assert.doesNotMatch(advancedDrawerSource, /Publish Draft Map/);
   assert.match(advancedDrawerSource, /closeButtonRef\.current\?\.focus/);
+  assert.match(advancedDrawerSource, /z-\[80\][\s\S]*sm:z-50/);
 
   assert.match(askPlannerSource, /id="ask-planner-drawer"/);
   assert.match(askPlannerSource, /aria-labelledby="ask-planner-title"/);
   assert.match(askPlannerSource, /aria-describedby="ask-planner-description"/);
   assert.match(askPlannerSource, /questionRef\.current\.focus/);
+  assert.match(askPlannerSource, /z-\[80\][\s\S]*sm:z-50/);
 });
 
 test("publish review summarizes draft changes before publish", async () => {
@@ -166,7 +177,12 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /aria-label=\{`View details for \$\{selectedSeat\.label\}`\}/);
   assert.match(inspectorSource, /aria-label=\{`Back to map from \$\{selectedSeat\.label\} details`\}/);
   assert.match(inspectorSource, /aria-label=\{`Ask Planner about \$\{selectedSeat\.label\}`\}/);
+  assert.match(inspectorSource, /z-\[80\][\s\S]*sm:z-40/);
+  assert.match(inspectorSource, /z-\[90\][\s\S]*sm:z-\[70\]/);
   assert.match(inspectorSource, /Seat Summary/);
+  assert.match(inspectorSource, /Planning inspector/);
+  assert.match(inspectorSource, /Draft-only impact/);
+  assert.match(inspectorSource, /Viewers see them only after the draft is reviewed and published/);
   assert.match(inspectorSource, /Assignment/);
   assert.match(inspectorSource, /Published Assignment/);
   assert.match(inspectorSource, /Seat Metadata/);
@@ -260,6 +276,16 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /No combined results/);
   assert.match(seatMapSource, /Fit results unavailable because there are no matching seats/);
   assert.match(seatMapSource, /singleResultSeat = filtersActive && matchingSeats\.length === 1 \? matchingSeats\[0\] : null/);
+  assert.match(seatMapSource, /const desktopInspectorOpen = canEdit && Boolean\(selectedSeat && !inspectorCollapsed\)/);
+  assert.match(seatMapSource, /const mobileMapInteractionSurfaceOpen = canEdit && \(/);
+  assert.match(seatMapSource, /mobileMapInteractionSurfaceOpen \? "hidden sm:flex" : ""/);
+  assert.match(seatMapSource, /mobileMapInteractionSurfaceOpen \? "hidden sm:block" : ""/);
+  assert.match(seatMapSource, /desktopInspectorOpen \? "lg:pr-\[23\.5rem\]" : ""/);
+  assert.match(seatMapSource, /const resultSummaryShellClass = \[[\s\S]*desktopInspectorOpen \? "lg:mr-\[23\.5rem\]" : ""[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
+  assert.match(seatMapSource, /desktopInspectorOpen \? "lg:mr-\[23\.5rem\]" : ""/);
+  assert.match(seatMapSource, /className=\{singleResultOverlayShellClassName\}/);
+  assert.match(seatMapSource, /className=\{desktopResultRailClassName\}/);
+  assert.match(seatMapSource, /className=\{mapMarkerLayerClassName\}/);
   assert.match(seatMapSource, /showSeatResults=\{canEdit && filtersActive && !singleResultSeat\}/);
   assert.match(seatMapSource, /\{canEdit && filtersActive && !singleResultSeat && !resultRailCollapsed && \(/);
   assert.match(seatMapSource, /Fit result/);
@@ -275,6 +301,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /titleId="seat-results-rail-title"/);
   assert.match(seatMapSource, /id="mobile-seat-results-tray"/);
   assert.match(filterSource, /aria-label="Back to map from seat results"/);
+  assert.match(filterSource, /relative z-\[70\][\s\S]*lg:z-auto/);
   assert.match(seatMapSource, /onSeatResultSelect=\{selectSeatResult\}/);
 });
 
