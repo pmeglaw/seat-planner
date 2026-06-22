@@ -169,6 +169,23 @@ function PublishCountCard({ label, value, tone = "default" }: { label: string; v
   );
 }
 
+function formatPublishChangeUnit(value: number) {
+  return value === 1 ? "change" : "changes";
+}
+
+function PublishImpactCard({ label, value, description, tone = "default" }: { label: string; value: number; description: string; tone?: "default" | "warn" }) {
+  return (
+    <div className={["rounded-xl border p-3", tone === "warn" ? "border-amber-200 bg-amber-50/80" : "border-slate-200 bg-white/80"].join(" ")}>
+      <div className={["text-[11px] font-black uppercase tracking-wide", tone === "warn" ? "text-amber-700" : "text-slate-500"].join(" ")}>{label}</div>
+      <div className="mt-1 flex items-end gap-2">
+        <span className="text-2xl font-black text-slate-950">{value}</span>
+        <span className="pb-1 text-xs font-bold text-slate-500">{formatPublishChangeUnit(value)}</span>
+      </div>
+      <p className="mt-1 text-xs font-semibold leading-4 text-slate-500">{description}</p>
+    </div>
+  );
+}
+
 function PublishChangeList({ title, items, emptyLabel }: { title: string; items: PublishChangeItem[]; emptyLabel: string }) {
   const visibleItems = items.slice(0, 5);
   const remainingCount = Math.max(items.length - visibleItems.length, 0);
@@ -1443,7 +1460,7 @@ export function SeatMap({
   function openPublishReview() {
     if (inspectorDirty) {
       setActionNotice(null);
-      setActionError("Save or discard the selected seat edits before publishing. The publish review only includes saved draft changes.");
+      setActionError("Publish review blocked: Save or discard the selected seat edits before publishing. The publish review only includes saved draft changes.");
       setAdvancedOpen(false);
       return;
     }
@@ -1456,10 +1473,10 @@ export function SeatMap({
 
   function confirmPublishDraftMap() {
     const nextPublishedSeats = normalizeSeats(localSeats);
+    setActionError(null);
+    setActionNotice(null);
     startTransition(async () => {
       try {
-        setActionError(null);
-        setActionNotice(null);
         await publishSeatMapAction();
         setLocalPublishedSeats(nextPublishedSeats);
         setDraftHistory(clearDraftHistory());
@@ -1535,6 +1552,14 @@ export function SeatMap({
     ? `${draftChangeBreakdown || `${publishSummary.totalChangeCount} total changes`}. Review before publishing to viewers.`
     : "Viewer map already matches this saved draft.";
   const draftStatusActionLabel = publishSummary.hasChanges ? "Review publish" : "Review status";
+  const publishPeopleChangeCount = publishSummary.assignmentChanges.length + publishSummary.vacatedSeats.length;
+  const publishSeatInventoryChangeCount = publishSummary.addedSeats.length + publishSummary.removedSeats.length;
+  const publishLayoutChangeCount = publishSummary.seatMoves.length;
+  const publishMetadataChangeCount = publishSummary.statusChanges.length + publishSummary.otherChanges.length;
+  const publishReadinessTitle = publishSummary.hasChanges ? "Ready to publish reviewed changes" : "Draft and viewer map are in sync";
+  const publishReadinessDescription = publishSummary.hasChanges
+    ? "This review includes saved draft changes only. Unsaved inspector edits must be saved or discarded before this review opens."
+    : "No saved draft changes are waiting. The viewer map already matches this draft.";
   const activeMode = addSeatMode
     ? {
       label: "Add Seat",
@@ -2336,19 +2361,23 @@ export function SeatMap({
             aria-modal="true"
             aria-labelledby="publish-review-title"
             aria-describedby="publish-review-description"
-            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
           >
             <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
                 <h2 id="publish-review-title" className="text-base font-black">Review draft before publishing</h2>
                 <p id="publish-review-description" className="mt-1 text-sm leading-5 text-slate-500">
-                  You are about to publish draft changes. Viewers will see the current draft map after this completes.
+                  Confirm the saved draft changes before they become visible in the read-only viewer.
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => setPublishReviewOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                onClick={() => {
+                  setActionError(null);
+                  setPublishReviewOpen(false);
+                }}
+                disabled={pending}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Close publish review"
               >
                 x
@@ -2356,7 +2385,45 @@ export function SeatMap({
             </div>
 
             <div className="min-h-0 overflow-y-auto py-4">
-              <div className="grid grid-cols-3 gap-2">
+              <div className={["rounded-xl border p-3", publishSummary.hasChanges ? "border-amber-200 bg-amber-50/80" : "border-emerald-200 bg-emerald-50/80"].join(" ")}>
+                <div className={["inline-flex rounded-full px-2 py-0.5 text-[11px] font-black uppercase tracking-wide ring-1", publishSummary.hasChanges ? "bg-white/80 text-amber-800 ring-amber-200" : "bg-white/80 text-emerald-700 ring-emerald-200"].join(" ")}>
+                  {publishSummary.hasChanges ? "Ready" : "No changes"}
+                </div>
+                <h3 className="mt-2 text-sm font-black text-slate-950">{publishReadinessTitle}</h3>
+                <p className="mt-1 text-sm font-semibold leading-5 text-slate-600">{publishReadinessDescription}</p>
+              </div>
+
+              <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50/80 p-3">
+                <div className="text-[11px] font-black uppercase tracking-wide text-sky-700">Viewer impact</div>
+                <p className="mt-1 text-sm font-semibold leading-5 text-slate-700">
+                  Publishing copies the saved draft map to the read-only viewer. Until you publish, viewers keep seeing the currently published map.
+                </p>
+              </div>
+
+              {actionError && !pending && (
+                <div role="alert" className="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold leading-5 text-rose-800">
+                  <span className="font-black">Publish did not complete.</span> {actionError}
+                </div>
+              )}
+
+              {pending && (
+                <div role="status" aria-live="polite" className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm font-semibold leading-5 text-blue-800">
+                  Publishing reviewed draft changes. Viewer map stays unchanged until publish finishes.
+                </div>
+              )}
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <PublishImpactCard label="People affected" value={publishPeopleChangeCount} description="Assignments and vacated seats." tone={publishPeopleChangeCount > 0 ? "warn" : "default"} />
+                <PublishImpactCard label="Seat inventory" value={publishSeatInventoryChangeCount} description="Added and removed seats." tone={publishSeatInventoryChangeCount > 0 ? "warn" : "default"} />
+                <PublishImpactCard label="Layout" value={publishLayoutChangeCount} description="Moved seat positions." tone={publishLayoutChangeCount > 0 ? "warn" : "default"} />
+                <PublishImpactCard label="Metadata" value={publishMetadataChangeCount} description="Status, zone, label, notes, or custom flags." tone={publishMetadataChangeCount > 0 ? "warn" : "default"} />
+              </div>
+
+              <div className="mt-2 rounded-xl border border-slate-200 bg-white/70 p-3 text-xs font-semibold leading-5 text-slate-600">
+                <span className="font-black text-slate-900">Count note:</span> Impact groups can overlap. Use Total publish changes below as the unique publish-summary total.
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2">
                 <PublishCountCard label="Added" value={publishSummary.addedSeats.length} tone={publishSummary.addedSeats.length > 0 ? "warn" : "default"} />
                 <PublishCountCard label="Updated" value={publishSummary.updatedSeatCount} tone={publishSummary.updatedSeatCount > 0 ? "warn" : "default"} />
                 <PublishCountCard label="Removed" value={publishSummary.removedSeats.length} tone={publishSummary.removedSeats.length > 0 ? "warn" : "default"} />
@@ -2378,7 +2445,7 @@ export function SeatMap({
 
               <div className="mt-3 grid gap-2 md:grid-cols-2">
                 <PublishChangeList title="Added seats" items={publishSummary.addedSeats} emptyLabel="No added seats detected." />
-                <PublishChangeList title="Removed custom draft seats" items={publishSummary.removedSeats} emptyLabel="No removed seats detected." />
+                <PublishChangeList title="Removed seats" items={publishSummary.removedSeats} emptyLabel="No removed seats detected." />
                 <PublishChangeList title="Assignment changes" items={publishSummary.assignmentChanges} emptyLabel="No assignment changes detected." />
                 <PublishChangeList title="Vacated seats" items={publishSummary.vacatedSeats} emptyLabel="No vacated seats detected." />
                 <PublishChangeList title="Seat moves/layout changes" items={publishSummary.seatMoves} emptyLabel="No seat moves detected." />
@@ -2389,12 +2456,15 @@ export function SeatMap({
               </div>
 
               <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50/70 p-3 text-sm font-semibold leading-5 text-brand-dark">
-                Publishing updates the viewer map and clears Undo/Redo history. Use Cancel if you need to review, undo, or save more draft changes first.
+                Publishing updates the viewer map and clears Undo/Redo history after success. Use Cancel if you need to review, undo, or save more draft changes first.
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
-              <Button type="button" onClick={() => setPublishReviewOpen(false)} disabled={pending} className="w-full">
+              <Button type="button" onClick={() => {
+                setActionError(null);
+                setPublishReviewOpen(false);
+              }} disabled={pending} className="w-full">
                 Cancel
               </Button>
               <Button
@@ -2405,7 +2475,12 @@ export function SeatMap({
                 title={publishSummary.hasChanges ? "Publish reviewed draft changes" : "No draft changes to publish"}
                 className="w-full"
               >
-                {publishSummary.hasChanges ? "Publish changes" : "No changes to publish"}
+                {pending ? "Publishing..." : actionError && publishSummary.hasChanges ? "Retry publish" : publishSummary.hasChanges ? (
+                  <>
+                    <span className="sm:hidden">Publish changes</span>
+                    <span className="hidden sm:inline">Publish reviewed changes</span>
+                  </>
+                ) : "No changes to publish"}
               </Button>
             </div>
           </section>
