@@ -1606,8 +1606,9 @@ export function SeatMap({
       ? "rounded-xl border-slate-200/90 bg-white/90 py-1.5 text-slate-600 shadow-[0_8px_22px_rgba(15,23,42,0.06)]"
       : selectedResultIsVisible
       ? "rounded-xl border-slate-200/80 bg-slate-50/80 text-slate-500 shadow-none"
-      : "rounded-2xl border-white/70 bg-white/80 py-2 text-slate-600 shadow-[0_12px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl"
-  ].join(" ");
+      : "rounded-2xl border-white/70 bg-white/80 py-2 text-slate-600 shadow-[0_12px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl",
+    desktopInspectorOpen ? "lg:mr-[23.5rem]" : ""
+  ].filter(Boolean).join(" ");
   const singleResultOverlayShellClassName = [
     "pointer-events-none sticky left-0 right-0 top-12 z-30 flex h-0 w-full justify-center px-2 sm:top-2 sm:justify-end",
     mobileMapInteractionSurfaceOpen ? "hidden sm:flex" : "",

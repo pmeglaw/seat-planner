@@ -281,6 +281,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /mobileMapInteractionSurfaceOpen \? "hidden sm:flex" : ""/);
   assert.match(seatMapSource, /mobileMapInteractionSurfaceOpen \? "hidden sm:block" : ""/);
   assert.match(seatMapSource, /desktopInspectorOpen \? "lg:pr-\[23\.5rem\]" : ""/);
+  assert.match(seatMapSource, /const resultSummaryShellClass = \[[\s\S]*desktopInspectorOpen \? "lg:mr-\[23\.5rem\]" : ""[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /desktopInspectorOpen \? "lg:mr-\[23\.5rem\]" : ""/);
   assert.match(seatMapSource, /className=\{singleResultOverlayShellClassName\}/);
   assert.match(seatMapSource, /className=\{desktopResultRailClassName\}/);
