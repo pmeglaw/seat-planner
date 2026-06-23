@@ -4,6 +4,126 @@
 
 :root {
   color-scheme: light;
+
+  --sp-color-brand-ivory: #FFF7ED;
+  --sp-color-brand-paper: #F6E7D8;
+  --sp-color-brand-copper: #D46A24;
+  --sp-color-brand-accent: #F97316;
+  --sp-color-action-primary: #C2410C;
+  --sp-color-action-primary-hover: #A93A0B;
+  --sp-color-action-primary-pressed: #9A3412;
+  --sp-color-brand-clay: #6F2C13;
+
+  --sp-color-brand-ivory-rgb: 255 247 237;
+  --sp-color-brand-paper-rgb: 246 231 216;
+  --sp-color-brand-copper-rgb: 212 106 36;
+  --sp-color-brand-accent-rgb: 249 115 22;
+  --sp-color-action-primary-rgb: 194 65 12;
+  --sp-color-action-primary-hover-rgb: 169 58 11;
+  --sp-color-action-primary-pressed-rgb: 154 52 18;
+  --sp-color-brand-clay-rgb: 111 44 19;
+
+  --sp-color-text-primary: #070A0D;
+  --sp-color-text-secondary: #353532;
+  --sp-color-text-muted: #696159;
+  --sp-color-text-disabled: #8E8276;
+  --sp-color-workspace: #171A1D;
+  --sp-color-workspace-deep: #070A0D;
+  --sp-color-graphite-soft: #F7F6F2;
+  --sp-color-stone: #E7E1D8;
+  --sp-color-stone-muted: #B8AEA2;
+
+  --sp-color-text-primary-rgb: 7 10 13;
+  --sp-color-text-secondary-rgb: 53 53 50;
+  --sp-color-text-muted-rgb: 105 97 89;
+  --sp-color-text-disabled-rgb: 142 130 118;
+  --sp-color-workspace-rgb: 23 26 29;
+  --sp-color-workspace-deep-rgb: 7 10 13;
+  --sp-color-graphite-soft-rgb: 247 246 242;
+  --sp-color-stone-rgb: 231 225 216;
+  --sp-color-stone-muted-rgb: 184 174 162;
+
+  --sp-color-canvas: #F8F3EA;
+  --sp-color-surface: #FFFDF8;
+  --sp-color-surface-raised: #FFFFFF;
+  --sp-color-map-workspace: #ECE7DE;
+  --sp-color-border-subtle: #DED6CA;
+  --sp-color-border-strong: #BEB4A8;
+
+  --sp-color-canvas-rgb: 248 243 234;
+  --sp-color-surface-rgb: 255 253 248;
+  --sp-color-surface-raised-rgb: 255 255 255;
+  --sp-color-map-workspace-rgb: 236 231 222;
+  --sp-color-border-subtle-rgb: 222 214 202;
+  --sp-color-border-strong-rgb: 190 180 168;
+
+  --sp-color-state-selected: #C2410C;
+  --sp-color-state-selected-surface: #F6E7D8;
+  --sp-color-state-selected-border: #E2BDA0;
+  --sp-color-state-published: #3F6F59;
+  --sp-color-state-published-surface: #DDE9DF;
+  --sp-color-state-published-border: #BFD4C4;
+  --sp-color-state-draft: #9A6418;
+  --sp-color-state-draft-surface: #F1E2C4;
+  --sp-color-state-draft-border: #D7B26C;
+  --sp-color-state-success: #3F6F59;
+  --sp-color-state-success-surface: #DDE9DF;
+  --sp-color-state-success-border: #BFD4C4;
+  --sp-color-state-warning: #9A6418;
+  --sp-color-state-warning-surface: #F1E2C4;
+  --sp-color-state-warning-border: #D7B26C;
+  --sp-color-state-danger: #963D2F;
+  --sp-color-state-danger-surface: #F3DAD2;
+  --sp-color-state-danger-border: #D9A296;
+  --sp-color-state-info: #3E6F72;
+  --sp-color-state-info-surface: #DCEDEA;
+  --sp-color-state-info-border: #A9CFCC;
+  --sp-color-state-search: #2F6668;
+  --sp-color-state-search-surface: #DCEDEA;
+  --sp-color-state-search-border: #A9CFCC;
+  --sp-color-state-planner: #6E655A;
+  --sp-color-state-planner-surface: #EFE9DF;
+  --sp-color-state-planner-border: #D8D0C5;
+  --sp-color-state-disabled: #C9C0B4;
+
+  --sp-color-state-selected-rgb: 194 65 12;
+  --sp-color-state-published-rgb: 63 111 89;
+  --sp-color-state-draft-rgb: 154 100 24;
+  --sp-color-state-success-rgb: 63 111 89;
+  --sp-color-state-warning-rgb: 154 100 24;
+  --sp-color-state-danger-rgb: 150 61 47;
+  --sp-color-state-info-rgb: 62 111 114;
+  --sp-color-state-search-rgb: 47 102 104;
+  --sp-color-state-disabled-rgb: 201 192 180;
+
+  --sp-space-1: 4px;
+  --sp-space-2: 8px;
+  --sp-space-3: 12px;
+  --sp-space-4: 16px;
+  --sp-space-5: 24px;
+  --sp-space-6: 32px;
+  --sp-space-7: 48px;
+
+  --sp-radius-sm: 6px;
+  --sp-radius-md: 8px;
+  --sp-radius-lg: 10px;
+  --sp-radius-xl: 12px;
+  --sp-radius-sheet: 16px;
+  --sp-radius-full: 999px;
+
+  --sp-shadow-raised: 0 10px 32px rgba(15, 23, 42, 0.08);
+  --sp-shadow-floating: 0 8px 20px rgba(15, 23, 42, 0.12);
+  --sp-shadow-sheet: 0 -18px 44px rgba(15, 23, 42, 0.18);
+  --sp-shadow-modal: 0 26px 80px rgba(15, 23, 42, 0.28);
+
+  --sp-duration-fast: 150ms;
+  --sp-duration-standard: 200ms;
+  --sp-duration-deliberate: 280ms;
+
+  --sp-focus-ring-color: rgb(212 106 36 / 0.4);
+  --sp-focus-ring-width: 4px;
+  --sp-focus-ring-offset: 2px;
+  --sp-focus-ring-offset-color: var(--sp-color-surface-raised);
 }
 
 * {
