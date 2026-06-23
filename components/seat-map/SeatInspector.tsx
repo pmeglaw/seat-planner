@@ -606,7 +606,7 @@ export function SeatInspector({
     <aside
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[54vh] flex-col overflow-hidden rounded-[22px] border border-slate-200/80 bg-slate-50/95 shadow-[0_16px_44px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-slate-50/90 sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[76px] sm:z-40 sm:max-h-none sm:w-[352px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-l-[22px] sm:rounded-r-[18px] sm:shadow-[-10px_0_30px_rgba(15,23,42,0.16),inset_1px_0_0_rgba(255,255,255,0.86)] lg:top-[132px]"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[54vh] flex-col overflow-hidden rounded-[22px] border border-slate-200/80 bg-slate-50 shadow-[0_16px_44px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-slate-50 sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[76px] sm:z-40 sm:max-h-none sm:w-[352px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-l-[22px] sm:rounded-r-[18px] sm:bg-slate-50/95 sm:shadow-[-10px_0_30px_rgba(15,23,42,0.16),inset_1px_0_0_rgba(255,255,255,0.86)] sm:supports-[backdrop-filter]:bg-slate-50/90 lg:top-[132px]"
     >
       <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-slate-200/70 bg-slate-50/95 px-3.5 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-slate-50/90">
         <div className="min-w-0">
@@ -937,7 +937,7 @@ export function SeatInspector({
             </section>
           </div>
 
-          <div className="sticky bottom-0 z-20 border-t border-slate-200/70 bg-slate-50/95 px-3.5 py-2.5 shadow-[0_-10px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl supports-[backdrop-filter]:bg-slate-50/90">
+          <div className="sticky bottom-0 z-20 border-t border-slate-200/70 bg-slate-50 px-3.5 py-2.5 shadow-[0_-10px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl supports-[backdrop-filter]:bg-slate-50 sm:bg-slate-50/95 sm:supports-[backdrop-filter]:bg-slate-50/90">
             {showFooterState ? (
               <div role="status" aria-live="polite" className={["mb-2 flex min-h-7 items-center rounded-xl px-3 py-1.5 text-xs font-black ring-1", inspectorStateClassName].join(" ")}>
                 {inspectorStateLabel}
