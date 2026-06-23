@@ -6,7 +6,7 @@ async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
 }
 
-test("admin planning canvas status row adopts only StatusBadge", async () => {
+test("admin planning canvas status row keeps the StatusBadge pilot scoped", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../app/page.tsx");
   const adminRouteSource = await readSource("../app/admin/page.tsx");
@@ -15,7 +15,7 @@ test("admin planning canvas status row adopts only StatusBadge", async () => {
   const designSystemImport = seatMapSource.match(/^import \{\s*([^}]*)\s*\} from "@\/components\/ui\/design-system";/m);
   assert.ok(designSystemImport, "SeatMap should import the design-system primitive for the pilot.");
   assert.match(designSystemImport[1], /\bStatusBadge\b/);
-  assert.doesNotMatch(designSystemImport[1], /\bButton\b|\bIconButton\b|\bfocusRingClass\b|\bmarkerStateClassRecipes\b/);
+  assert.doesNotMatch(designSystemImport[1], /\bButton\b|\bIconButton\b|\bmarkerStateClassRecipes\b/);
 
   const planningCanvasSource = seatMapSource.match(/aria-labelledby="admin-planning-canvas-title"[\s\S]*?<div className="flex shrink-0 flex-wrap gap-1\.5[\s\S]*?<\/div>\s*<\/div>\s*\)\}/)?.[0] ?? "";
   assert.ok(planningCanvasSource, "Planning Canvas status row should remain discoverable.");

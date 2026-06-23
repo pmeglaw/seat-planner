@@ -42,7 +42,7 @@ import {
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { Button } from "@/components/ui/Button";
-import { StatusBadge } from "@/components/ui/design-system";
+import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
 
 type SeatMapProps = {
   seats: SeatWithEmployee[];
@@ -1809,7 +1809,10 @@ export function SeatMap({
                       type="button"
                       aria-label="Clear top search"
                       title="Clear top search"
-                      className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                      className={[
+                        "absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90",
+                        focusRingClass
+                      ].join(" ")}
                       onClick={clearSearch}
                     >
                       x
@@ -1823,7 +1826,7 @@ export function SeatMap({
                   aria-expanded={!filterCollapsed}
                   aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
                   title={filterCollapsed ? "Open filters" : "Collapse filters"}
-                  className={["inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border px-3 text-xs font-black shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100", structuredFilterCount ? "border-orange-200 bg-orange-50 text-brand-dark" : "border-slate-200 bg-slate-50/80 text-slate-700"].join(" ")}
+                  className={["inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border px-3 text-xs font-black shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner", focusRingClass, structuredFilterCount ? "border-orange-200 bg-orange-50 text-brand-dark" : "border-slate-200 bg-slate-50/80 text-slate-700"].join(" ")}
                 >
                   Filters
                   {structuredFilterCount > 0 && (
@@ -1838,7 +1841,8 @@ export function SeatMap({
                   aria-label={namesToggleLabel}
                   title={namesToggleLabel}
                   className={[
-                    "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border px-2.5 text-xs font-black shadow-sm transition active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
+                    "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border px-2.5 text-xs font-black shadow-sm transition active:scale-[0.97] active:duration-75 active:shadow-inner",
+                    focusRingClass,
                     showNames ? "border-slate-300 bg-slate-900 text-white hover:bg-slate-800" : "border-slate-200 bg-slate-50/80 text-slate-700 hover:bg-white"
                   ].join(" ")}
                 >
@@ -2160,7 +2164,8 @@ export function SeatMap({
                         aria-pressed={active}
                         onClick={() => changeMapViewMode(option.value)}
                         className={[
-                          "h-8 rounded-lg px-2.5 text-[11px] font-black transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
+                          "h-8 rounded-lg px-2.5 text-[11px] font-black transition active:scale-[0.97] active:duration-75",
+                          focusRingClass,
                           active ? "bg-slate-950 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]" : "text-slate-700 hover:bg-white"
                         ].join(" ")}
                       >
