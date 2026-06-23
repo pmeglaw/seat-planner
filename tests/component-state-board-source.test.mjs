@@ -53,6 +53,7 @@ test("component state board documents the approved hybrid product model", async 
 test("component state board locks screenshot-review correction contracts", async () => {
   const componentSource = await readSource("../app/concepts/component-state-board/ComponentStateBoard.tsx");
   const dataSource = await readSource("../app/concepts/component-state-board/componentStateBoardData.ts");
+  const designSystemSource = await readSource("../components/ui/design-system.tsx");
   const combinedSource = `${componentSource}\n${dataSource}`;
 
   for (const heading of [
@@ -73,14 +74,17 @@ test("component state board locks screenshot-review correction contracts", async
 
   assert.match(dataSource, /orange 500 accent/);
   assert.match(dataSource, /not the default normal-size white-text button fill/);
-  assert.match(componentSource, /defaultClass: "bg-\[#C2410C\] text-white"/);
+  assert.match(componentSource, /variant: "primary"/);
+  assert.match(componentSource, /DesignSystemButton/);
+  assert.match(designSystemSource, /--sp-color-action-primary/);
   assert.doesNotMatch(componentSource, /bg-\[#F97316\][^"`]*text-white/);
 
   for (const state of ["Default", "Hover", "Pressed", "Keyboard focus", "Disabled", "Loading"]) {
     assert.match(componentSource, new RegExp(state));
   }
   assert.match(componentSource, /buttonStateExamples/);
-  assert.match(componentSource, /aria-busy/);
+  assert.match(componentSource, /buttonStatePreviewClasses/);
+  assert.match(designSystemSource, /aria-busy/);
   assert.match(componentSource, /Icon button example: search seat map/);
   assert.doesNotMatch(componentSource, /action: "\?"/);
 
@@ -92,6 +96,8 @@ test("component state board locks screenshot-review correction contracts", async
 
 test("component state board locks final approval corrections", async () => {
   const componentSource = await readSource("../app/concepts/component-state-board/ComponentStateBoard.tsx");
+  const dataSource = await readSource("../app/concepts/component-state-board/componentStateBoardData.ts");
+  const combinedSource = `${componentSource}\n${dataSource}`;
 
   for (const description of [
     "The saved draft already matches the published viewer map. No publish action is needed.",
@@ -123,4 +129,50 @@ test("component state board locks final approval corrections", async () => {
   assert.match(componentSource, /--font-component-board-ui/);
   assert.match(componentSource, /--font-component-board-display/);
   assert.doesNotMatch(componentSource, /Arial/);
+
+  assert.match(componentSource, /focusSurfaceExamples/);
+  for (const surface of ["Raised paper", "Warm paper", "Dark graphite"]) {
+    assert.match(componentSource, new RegExp(surface));
+  }
+  assert.match(componentSource, /ring-4 ring-\[color:var\(--sp-focus-ring-color\)\] ring-offset-2/);
+  assert.doesNotMatch(componentSource, /ring-\[var\(--sp-focus-ring-width\)\]/);
+  assert.doesNotMatch(componentSource, /ring-\[var\(--sp-focus-ring-color\)\]/);
+  assert.doesNotMatch(componentSource, /ring-offset-\[var\(--sp-focus-ring-offset\)\]/);
+  assert.match(componentSource, /--sp-focus-ring-offset-color/);
+  assert.match(componentSource, /--sp-focus-ring-color/);
+  assert.match(componentSource, /rgb\(var\(--sp-color-brand-copper-rgb\) \/ 0\.72\)/);
+  assert.match(componentSource, /var\(--sp-color-workspace\)/);
+  assert.match(componentSource, /var\(--sp-color-brand-paper\)/);
+
+  const iconKindSource = componentSource.match(/function getStatusIconKind[\s\S]*?function StatusStateIcon/)?.[0] ?? "";
+  assert.match(componentSource, /StatusStateIcon/);
+  assert.match(iconKindSource, /normalizedLabel === "published"/);
+  assert.match(iconKindSource, /normalizedLabel === "draft matches published"/);
+  assert.match(iconKindSource, /normalizedLabel === "saved"/);
+  assert.match(iconKindSource, /normalizedLabel === "success"/);
+  assert.match(iconKindSource, /normalizedLabel === "draft has unpublished changes" \|\|\s*normalizedLabel === "warning"[\s\S]*return "alert"/);
+  assert.doesNotMatch(iconKindSource, /includes\("published"\)/);
+  assert.doesNotMatch(iconKindSource, /draft has unpublished changes[\s\S]{0,120}return "check"/);
+  assert.match(iconKindSource, /normalizedLabel === "saving"/);
+  assert.match(iconKindSource, /normalizedLabel === "error"/);
+  assert.match(iconKindSource, /normalizedLabel === "read-only"/);
+  assert.doesNotMatch(componentSource, /h-3 w-3 rounded-full border-2/);
+  assert.match(componentSource, /<StatusBadge tone=\{statusToneMap\[status\.tone\]\} icon=\{<StatusGlyph \/>}/);
+  assert.match(componentSource, /statusStates\.map/);
+  assert.match(componentSource, /\{status\.label\}/);
+  for (const stateLabel of [
+    "Published",
+    "Draft matches published",
+    "Draft has unpublished changes",
+    "Saving",
+    "Saved",
+    "Error",
+    "Warning",
+    "Success",
+    "Read-only",
+    "Blocked",
+    "Pending"
+  ]) {
+    assert.match(combinedSource, new RegExp(stateLabel));
+  }
 });

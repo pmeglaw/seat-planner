@@ -1,6 +1,16 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Inter, Manrope } from "next/font/google";
 import {
+  Button as DesignSystemButton,
+  IconButton,
+  StatusBadge,
+  focusRingClass,
+  markerStateClassRecipes,
+  type ButtonVariant,
+  type IconButtonVariant,
+  type StatusBadgeTone
+} from "@/components/ui/design-system";
+import {
   avoidItems,
   colorGroups,
   elevationTokens,
@@ -92,6 +102,38 @@ const toneClasses: Record<string, { chip: string; card: string; text: string; bo
     border: "border-[#9A6418]"
   }
 };
+
+const focusSurfaceExamples: {
+  label: string;
+  description: string;
+  containerClass: string;
+  buttonClass: string;
+  style?: CSSProperties;
+}[] = [
+  {
+    label: "Raised paper",
+    description: "Default offset color follows the raised paper surface.",
+    containerClass: "border-[#DED6CA] bg-white text-[#171A1D]",
+    buttonClass: "border-[#BEB4A8] bg-white text-[#171A1D]"
+  },
+  {
+    label: "Warm paper",
+    description: "Tinted containers override the semantic offset locally.",
+    containerClass: "border-[#E2BDA0] bg-[#F6E7D8] text-[#6F2C13]",
+    buttonClass: "border-[#D46A24] bg-[#FFFDF8] text-[#6F2C13]",
+    style: { "--sp-focus-ring-offset-color": "var(--sp-color-brand-paper)" } as CSSProperties
+  },
+  {
+    label: "Dark graphite",
+    description: "Dark surfaces keep the copper ring without a white outline.",
+    containerClass: "border-[#353532] bg-[#171A1D] text-white",
+    buttonClass: "border-white/20 bg-white/10 text-white",
+    style: {
+      "--sp-focus-ring-color": "rgb(var(--sp-color-brand-copper-rgb) / 0.72)",
+      "--sp-focus-ring-offset-color": "var(--sp-color-workspace)"
+    } as CSSProperties
+  }
+];
 
 export function ComponentStateBoard() {
   return (
@@ -340,60 +382,35 @@ function ControlsSection() {
   const buttonRows: ButtonKind[] = [
     {
       label: "Primary",
+      variant: "primary",
       action: "Review & publish",
-      loadingLabel: "Publishing...",
-      defaultClass: "bg-[#C2410C] text-white",
-      hoverClass: "bg-[#A93A0B] text-white",
-      pressedClass: "bg-[#9A3412] text-white translate-y-px",
-      focusClass: "bg-[#C2410C] text-white ring-4 ring-[#D46A24]/45",
-      disabledClass: "bg-[#C9C0B4] text-[#696159]",
-      loadingClass: "bg-[#C2410C] text-white"
+      loadingLabel: "Publishing..."
     },
     {
       label: "Secondary",
+      variant: "secondary",
       action: "Assign to W12",
-      loadingLabel: "Assigning...",
-      defaultClass: "border border-[#BEB4A8] bg-white text-[#171A1D]",
-      hoverClass: "border-[#D46A24] bg-[#F6E7D8] text-[#6F2C13]",
-      pressedClass: "border-[#C2410C] bg-[#F3D1B9] text-[#6F2C13] translate-y-px",
-      focusClass: "border-[#BEB4A8] bg-white text-[#171A1D] ring-4 ring-[#D46A24]/35",
-      disabledClass: "border border-[#DED6CA] bg-[#F7F6F2] text-[#8E8276]",
-      loadingClass: "border border-[#BEB4A8] bg-white text-[#171A1D]"
+      loadingLabel: "Assigning..."
     },
     {
       label: "Quiet",
+      variant: "quiet",
       action: "Clear filters",
-      loadingLabel: "Clearing...",
-      defaultClass: "bg-transparent text-[#696159]",
-      hoverClass: "bg-[#F7F6F2] text-[#353532]",
-      pressedClass: "bg-[#E7E1D8] text-[#353532] translate-y-px",
-      focusClass: "bg-transparent text-[#353532] ring-4 ring-[#D46A24]/35",
-      disabledClass: "bg-transparent text-[#B8AEA2]",
-      loadingClass: "bg-transparent text-[#696159]"
+      loadingLabel: "Clearing..."
     },
     {
       label: "Destructive",
+      variant: "destructive",
       action: "Delete custom seat",
-      loadingLabel: "Deleting...",
-      defaultClass: "bg-[#963D2F] text-white",
-      hoverClass: "bg-[#7E2F24] text-white",
-      pressedClass: "bg-[#6B271F] text-white translate-y-px",
-      focusClass: "bg-[#963D2F] text-white ring-4 ring-[#D9A296]",
-      disabledClass: "bg-[#D9A296] text-[#7E2F24]",
-      loadingClass: "bg-[#963D2F] text-white"
+      loadingLabel: "Deleting..."
     },
     {
       label: "Icon button",
+      iconVariant: "neutral",
       action: "Search",
       loadingLabel: "Searching...",
       iconName: "search",
-      iconOnly: true,
-      defaultClass: "border border-[#BEB4A8] bg-white text-[#171A1D]",
-      hoverClass: "border-[#D46A24] bg-[#F6E7D8] text-[#6F2C13]",
-      pressedClass: "border-[#C2410C] bg-[#F3D1B9] text-[#6F2C13] translate-y-px",
-      focusClass: "border-[#BEB4A8] bg-white text-[#171A1D] ring-4 ring-[#D46A24]/35",
-      disabledClass: "border border-[#DED6CA] bg-[#F7F6F2] text-[#8E8276]",
-      loadingClass: "border border-[#BEB4A8] bg-white text-[#171A1D]"
+      iconOnly: true
     }
   ];
 
@@ -413,9 +430,36 @@ function ControlsSection() {
           <div className="mt-4 rounded-2xl border border-[#DED6CA] bg-[#171A1D] p-4 text-white">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#F6E7D8]">Mobile action pair</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button type="button" className="min-h-11 rounded-xl border border-white/20 bg-white/10 px-3 text-sm font-semibold">Cancel</button>
-              <button type="button" className="min-h-11 rounded-xl bg-[#C2410C] px-3 text-sm font-semibold text-white">Publish draft</button>
+              <DesignSystemButton variant="secondary" className="border-white/20 bg-white/10 text-white hover:bg-white/15">Cancel</DesignSystemButton>
+              <DesignSystemButton variant="primary">Publish draft</DesignSystemButton>
             </div>
+          </div>
+          <div id="focus-treatment" className="mt-4 rounded-2xl border border-[#DED6CA] bg-white p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#C2410C]">Focus treatment</p>
+            <p className="mt-1 text-sm font-normal leading-6 text-[#696159]">
+              Shared focus uses the approved warm copper halo, a 4px ring, a 2px offset, and a surface-aware offset color.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              {focusSurfaceExamples.map((surface) => (
+                <div
+                  key={surface.label}
+                  className={`rounded-xl border p-3 ${surface.containerClass}`}
+                  style={surface.style}
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em]">{surface.label}</p>
+                  <button
+                    type="button"
+                    className={`mt-3 min-h-11 rounded-xl border px-4 text-sm font-semibold ${focusRingClass} ${surface.buttonClass}`}
+                  >
+                    Focus preview
+                  </button>
+                  <p className="mt-3 text-xs font-medium leading-5 opacity-80">{surface.description}</p>
+                </div>
+              ))}
+            </div>
+            <code className="mt-3 block rounded-xl bg-[#F7F6F2] p-3 text-xs font-semibold leading-5 text-[#353532]">
+              {focusRingClass}
+            </code>
           </div>
         </div>
 
@@ -454,14 +498,10 @@ type ButtonKind = {
   label: string;
   action: string;
   loadingLabel: string;
+  variant?: ButtonVariant;
+  iconVariant?: IconButtonVariant;
   iconName?: IconName;
   iconOnly?: boolean;
-  defaultClass: string;
-  hoverClass: string;
-  pressedClass: string;
-  focusClass: string;
-  disabledClass: string;
-  loadingClass: string;
 };
 
 const buttonStateExamples = [
@@ -472,6 +512,50 @@ const buttonStateExamples = [
   { label: "Disabled", key: "disabledClass", disabled: true, busy: false },
   { label: "Loading", key: "loadingClass", disabled: true, busy: true }
 ] as const;
+
+const buttonStatePreviewClasses: Record<ButtonVariant, Record<(typeof buttonStateExamples)[number]["key"], string>> = {
+  primary: {
+    defaultClass: "",
+    hoverClass: "border-[var(--sp-color-action-primary-hover)] bg-[var(--sp-color-action-primary-hover)]",
+    pressedClass: "border-[var(--sp-color-action-primary-pressed)] bg-[var(--sp-color-action-primary-pressed)] translate-y-px",
+    focusClass: "ring-4 ring-[color:var(--sp-focus-ring-color)] ring-offset-2 ring-offset-[color:var(--sp-focus-ring-offset-color)]",
+    disabledClass: "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-state-disabled)] text-[var(--sp-color-text-muted)]",
+    loadingClass: ""
+  },
+  secondary: {
+    defaultClass: "",
+    hoverClass: "border-[var(--sp-color-brand-copper)] bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)]",
+    pressedClass: "border-[var(--sp-color-action-primary)] bg-[#F3D1B9] text-[var(--sp-color-brand-clay)] translate-y-px",
+    focusClass: "ring-4 ring-[color:var(--sp-focus-ring-color)] ring-offset-2 ring-offset-[color:var(--sp-focus-ring-offset-color)]",
+    disabledClass: "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-disabled)]",
+    loadingClass: ""
+  },
+  quiet: {
+    defaultClass: "",
+    hoverClass: "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-secondary)]",
+    pressedClass: "bg-[var(--sp-color-stone)] text-[var(--sp-color-text-secondary)] translate-y-px",
+    focusClass: "ring-4 ring-[color:var(--sp-focus-ring-color)] ring-offset-2 ring-offset-[color:var(--sp-focus-ring-offset-color)]",
+    disabledClass: "bg-transparent text-[var(--sp-color-stone-muted)]",
+    loadingClass: ""
+  },
+  destructive: {
+    defaultClass: "",
+    hoverClass: "border-[#7E2F24] bg-[#7E2F24]",
+    pressedClass: "border-[#6B271F] bg-[#6B271F] translate-y-px",
+    focusClass: "ring-4 ring-[color:var(--sp-color-state-danger-border)] ring-offset-2 ring-offset-[color:var(--sp-focus-ring-offset-color)]",
+    disabledClass: "border-[var(--sp-color-state-danger-border)] bg-[var(--sp-color-state-danger-border)] text-[#7E2F24]",
+    loadingClass: ""
+  }
+};
+
+const iconButtonStatePreviewClasses: Record<(typeof buttonStateExamples)[number]["key"], string> = {
+  defaultClass: "",
+  hoverClass: "border-[var(--sp-color-brand-copper)] bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)]",
+  pressedClass: "border-[var(--sp-color-action-primary)] bg-[#F3D1B9] text-[var(--sp-color-brand-clay)] translate-y-px",
+  focusClass: "ring-4 ring-[color:var(--sp-focus-ring-color)] ring-offset-2 ring-offset-[color:var(--sp-focus-ring-offset-color)]",
+  disabledClass: "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-disabled)]",
+  loadingClass: ""
+};
 
 function ButtonStateDemo({ button }: { button: ButtonKind }) {
   return (
@@ -491,22 +575,25 @@ function ButtonStateDemo({ button }: { button: ButtonKind }) {
         {buttonStateExamples.map((state) => (
           <div key={state.label} className="rounded-xl border border-white/80 bg-white/80 p-2">
             <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-[#8E8276]">{state.label}</p>
-            <button
-              type="button"
-              disabled={state.disabled}
-              aria-busy={state.busy ? "true" : undefined}
-              aria-label={button.iconOnly ? `Icon button example: ${button.action.toLowerCase()} seat map` : undefined}
-              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold outline-none transition disabled:cursor-not-allowed ${
-                button.iconOnly ? "min-w-11" : ""
-              } ${button[state.key]}`}
-            >
-              {state.busy ? (
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
-              ) : button.iconOnly && button.iconName ? (
-                <IconGlyph name={button.iconName} />
-              ) : null}
-              <span className={button.iconOnly ? "sr-only" : ""}>{state.busy ? button.loadingLabel : button.action}</span>
-            </button>
+            {button.iconOnly && button.iconName ? (
+              <IconButton
+                icon={<IconGlyph name={button.iconName} />}
+                label={`Icon button example: ${button.action.toLowerCase()} seat map`}
+                variant={button.iconVariant ?? "neutral"}
+                loading={state.busy}
+                disabled={state.disabled}
+                className={iconButtonStatePreviewClasses[state.key]}
+              />
+            ) : (
+              <DesignSystemButton
+                variant={button.variant ?? "secondary"}
+                loading={state.busy}
+                disabled={state.disabled}
+                className={buttonStatePreviewClasses[button.variant ?? "secondary"][state.key]}
+              >
+                {state.busy ? button.loadingLabel : button.action}
+              </DesignSystemButton>
+            )}
           </div>
         ))}
       </div>
@@ -529,14 +616,11 @@ function IconButtonSamples() {
     <div className="grid gap-1.5" aria-label="Icon button examples">
       <div className="flex flex-wrap gap-1.5">
         {iconButtonExamples.map((example) => (
-          <button
+          <IconButton
             key={example.label}
-            type="button"
-            aria-label={`Icon button example: ${example.ariaLabel}`}
-            className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-[#BEB4A8] bg-white text-[#353532] outline-none transition hover:border-[#D46A24] hover:bg-[#F6E7D8] focus-visible:ring-4 focus-visible:ring-[#D46A24]/35"
-          >
-            <IconGlyph name={example.icon} />
-          </button>
+            label={`Icon button example: ${example.ariaLabel}`}
+            icon={<IconGlyph name={example.icon} />}
+          />
         ))}
       </div>
       <div className="grid gap-1 text-[10px] font-medium leading-4 text-[#696159]">
@@ -606,6 +690,131 @@ function IconGlyph({ name }: { name: IconName }) {
   );
 }
 
+const statusToneMap: Record<string, StatusBadgeTone> = {
+  danger: "danger",
+  info: "info",
+  neutral: "neutral",
+  planner: "readonly",
+  selected: "draft",
+  success: "success",
+  warning: "warning"
+};
+
+const statusBadgeToneExamples: { label: string; tone: StatusBadgeTone; detail: string }[] = [
+  { label: "Neutral", tone: "neutral", detail: "Default informational state." },
+  { label: "Published", tone: "published", detail: "Viewer-visible data is live." },
+  { label: "Draft", tone: "draft", detail: "Saved admin work is not yet published." },
+  { label: "Success", tone: "success", detail: "Action completed safely." },
+  { label: "Warning", tone: "warning", detail: "Review before continuing." },
+  { label: "Danger", tone: "danger", detail: "Destructive or failed state." },
+  { label: "Info", tone: "info", detail: "Guidance, search, and viewer impact." },
+  { label: "Read-only", tone: "readonly", detail: "No editing controls available." },
+  { label: "Blocked", tone: "blocked", detail: "Resolve the guard first." },
+  { label: "Pending", tone: "pending", detail: "Action is in progress." }
+];
+
+function StatusGlyph() {
+  return (
+    <span className="block h-2 w-2 rounded-full bg-current" aria-hidden="true" />
+  );
+}
+
+type StatusIconKind = "alert" | "check" | "error" | "lock" | "progress";
+
+function getStatusIconKind(label: string): StatusIconKind {
+  const normalizedLabel = label.toLowerCase();
+
+  if (
+    normalizedLabel === "published" ||
+    normalizedLabel === "draft matches published" ||
+    normalizedLabel === "saved" ||
+    normalizedLabel === "success"
+  ) {
+    return "check";
+  }
+
+  if (normalizedLabel === "saving" || normalizedLabel === "pending") {
+    return "progress";
+  }
+
+  if (normalizedLabel === "error" || normalizedLabel === "blocked") {
+    return "error";
+  }
+
+  if (normalizedLabel === "read-only") {
+    return "lock";
+  }
+
+  if (normalizedLabel === "draft has unpublished changes" || normalizedLabel === "warning") {
+    return "alert";
+  }
+
+  return "alert";
+}
+
+function StatusStateIcon({ label, tone }: { label: string; tone: string }) {
+  const iconKind = getStatusIconKind(label);
+  const common = {
+    className: "h-5 w-5",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": "true" as const
+  };
+
+  let icon = (
+    <svg {...common}>
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+      <path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+    </svg>
+  );
+
+  if (iconKind === "check") {
+    icon = (
+      <svg {...common}>
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+    );
+  } else if (iconKind === "progress") {
+    icon = (
+      <svg {...common}>
+        <path d="M21 12a9 9 0 0 1-9 9" />
+        <path d="M3 12a9 9 0 0 1 9-9" />
+        <path d="m18 15 3-3 3 3" />
+        <path d="m6 9-3 3-3-3" />
+      </svg>
+    );
+  } else if (iconKind === "error") {
+    icon = (
+      <svg {...common}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M15 9 9 15" />
+        <path d="m9 9 6 6" />
+      </svg>
+    );
+  } else if (iconKind === "lock") {
+    icon = (
+      <svg {...common}>
+        <rect x="5" y="10" width="14" height="10" rx="2" />
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+      </svg>
+    );
+  }
+
+  return (
+    <span
+      className={`grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/70 bg-white/65 ${toneClasses[tone].text}`}
+      aria-hidden="true"
+    >
+      {icon}
+    </span>
+  );
+}
+
 function FeedbackSection() {
   return (
     <Section id="feedback" eyebrow="06 feedback" title="Status and Feedback">
@@ -613,12 +822,30 @@ function FeedbackSection() {
         {statusStates.map((status) => (
           <article key={status.label} className={`rounded-2xl border p-4 ${toneClasses[status.tone].card}`}>
             <div className="flex items-center justify-between gap-3">
-              <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ring-1 ${toneClasses[status.tone].chip}`}>{status.label}</span>
-              <span className={`h-3 w-3 rounded-full border-2 ${toneClasses[status.tone].border}`} aria-hidden="true" />
+              <StatusBadge tone={statusToneMap[status.tone]} icon={<StatusGlyph />}>
+                {status.label}
+              </StatusBadge>
+              <StatusStateIcon label={status.label} tone={status.tone} />
             </div>
             <p className={`mt-3 text-sm font-bold leading-6 ${toneClasses[status.tone].text}`}>{status.detail}</p>
           </article>
         ))}
+      </div>
+      <div className="mt-4 rounded-2xl border border-[#DED6CA] bg-white p-4">
+        <h3 className="text-lg font-semibold">Shared StatusBadge tones</h3>
+        <p className="mt-1 text-sm font-normal leading-6 text-[#696159]">
+          Every tone pairs color with a visible label and optional icon; state meaning never depends on color alone.
+        </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+          {statusBadgeToneExamples.map((status) => (
+            <div key={status.tone} className="rounded-xl border border-[#DED6CA] bg-[#FFFDF8] p-3">
+              <StatusBadge tone={status.tone} icon={<StatusGlyph />}>
+                {status.label}
+              </StatusBadge>
+              <p className="mt-2 text-xs font-medium leading-5 text-[#696159]">{status.detail}</p>
+            </div>
+          ))}
+        </div>
       </div>
       <div className="mt-4 grid gap-3 lg:grid-cols-4">
         <MessageBlock title="Inline message" body="W09 selected on the published map." tone="info" />
@@ -642,7 +869,7 @@ function MarkerSection() {
                 Markers anchor to spatial truth while selected and search states visually win. Long names ellipsize inside the chip.
               </p>
             </div>
-            <span className="rounded-full bg-[#F6E7D8] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6F2C13] ring-1 ring-[#E2BDA0]">High priority</span>
+            <StatusBadge tone="draft" icon={<StatusGlyph />}>High priority</StatusBadge>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {markerStates.map((marker) => (
@@ -662,6 +889,19 @@ function MarkerSection() {
           </div>
           <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-xs font-bold leading-5 text-slate-600">
             Accessible label example: &quot;Selected published seat W09, PAM, West Pod. Press Enter for read-only details.&quot;
+          </div>
+          <div className="mt-4 rounded-2xl border border-[#DED6CA] bg-white p-4">
+            <h3 className="text-base font-semibold">Marker semantic recipes</h3>
+            <p className="mt-1 text-sm font-normal leading-6 text-[#696159]">
+              Reusable vocabulary for a later marker-adoption PR. These recipes are not wired into production SeatMarker yet.
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {Object.keys(markerStateClassRecipes).map((state) => (
+                <code key={state} className="rounded-lg border border-[#DED6CA] bg-[#F7F6F2] px-3 py-2 text-xs font-semibold text-[#353532]">
+                  {state}
+                </code>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -1065,11 +1305,12 @@ function pluralizeChange(count: number) {
 
 function PublishDialog({ example }: { example: PublishExample }) {
   const impactGroups = ["People impact", "Seat inventory", "Layout", "Metadata"] as const;
+  const badgeTone = statusToneMap[example.tone];
 
   return (
     <article className="rounded-2xl border border-[#DED6CA] bg-white p-4 shadow-[0_16px_46px_rgba(23,26,29,0.1)]">
       <div className={`rounded-xl border p-3 ${toneClasses[example.tone].card}`}>
-        <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ring-1 ${toneClasses[example.tone].chip}`}>{example.state}</span>
+        <StatusBadge tone={badgeTone} icon={<StatusGlyph />}>{example.state}</StatusBadge>
         <h3 className="mt-3 text-base font-semibold">{example.heading}</h3>
         <p className="mt-2 text-sm font-normal leading-6 text-[#353532]">
           {example.description}
@@ -1091,22 +1332,14 @@ function PublishDialog({ example }: { example: PublishExample }) {
         </>
       ) : null}
       <div className="sticky bottom-0 mt-4 grid grid-cols-2 gap-2 border-t border-[#DED6CA] bg-white pt-3">
-        <button type="button" className="min-h-11 rounded-xl border border-[#BEB4A8] bg-white text-sm font-semibold">{example.secondaryAction ?? "Cancel"}</button>
-        <button
-          type="button"
+        <DesignSystemButton variant="secondary">{example.secondaryAction ?? "Cancel"}</DesignSystemButton>
+        <DesignSystemButton
+          variant={example.tone === "danger" ? "destructive" : "primary"}
           disabled={example.busy || example.action.includes("No changes")}
-          aria-busy={example.busy ? "true" : undefined}
-          className={`min-h-11 rounded-xl px-3 text-sm font-semibold disabled:cursor-not-allowed ${
-            example.tone === "danger"
-              ? "bg-[#963D2F] text-white"
-              : example.action.includes("No changes")
-                ? "bg-[#C9C0B4] text-[#696159]"
-                : "bg-[#C2410C] text-white"
-          }`}
+          loading={example.busy}
         >
-          {example.busy ? <span className="mr-2 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent align-[-1px]" aria-hidden="true" /> : null}
           {example.action}
-        </button>
+        </DesignSystemButton>
       </div>
     </article>
   );
