@@ -42,6 +42,7 @@ import {
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { Button } from "@/components/ui/Button";
+import { StatusBadge } from "@/components/ui/design-system";
 
 type SeatMapProps = {
   seats: SeatWithEmployee[];
@@ -1988,8 +1989,8 @@ export function SeatMap({
                 <p className="mt-0.5 truncate text-sm font-black text-slate-950">{planningStateLabel}</p>
               </div>
               <div className="flex shrink-0 flex-wrap gap-1.5 text-[10px] font-black uppercase tracking-wide">
-                <span className="rounded-full bg-white px-2 py-1 text-slate-500 ring-1 ring-slate-200">Draft map</span>
-                <span className="rounded-full bg-orange-50 px-2 py-1 text-brand-dark ring-1 ring-orange-100">Spatial confirmation</span>
+                <StatusBadge tone="draft" className="!min-h-0 !px-2 !py-1 !text-[10px] !font-black !tracking-wide">Draft map</StatusBadge>
+                <StatusBadge tone="info" className="!min-h-0 !px-2 !py-1 !text-[10px] !font-black !tracking-wide">Spatial confirmation</StatusBadge>
               </div>
             </div>
           )}
