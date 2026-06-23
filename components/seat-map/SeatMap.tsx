@@ -1606,6 +1606,7 @@ export function SeatMap({
     Boolean(inspectorGuardAction) ||
     Boolean(swapConfirm)
   );
+  const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;
   const showSearchNoQueryHint = canEdit && searchFocused && !searchActive && !selectedSeatId && filterCollapsed && !advancedOpen && !askPlannerOpen;
   const filterPanelShellClass = [
     filterCollapsed ? "order-2" : "order-1",
@@ -1637,7 +1638,7 @@ export function SeatMap({
   ].filter(Boolean).join(" ");
   const singleResultOverlayShellClassName = [
     "pointer-events-none sticky left-0 right-0 top-12 z-30 flex h-0 w-full justify-center px-2 sm:top-2 sm:justify-end",
-    mobileMapInteractionSurfaceOpen ? "hidden sm:flex" : "",
+    mobileMapControlsHidden ? "hidden sm:flex" : "",
     desktopInspectorOpen ? "lg:pr-[23.5rem]" : ""
   ].filter(Boolean).join(" ");
   const singleResultOverlayClassName = [
@@ -1646,11 +1647,11 @@ export function SeatMap({
   ].filter(Boolean).join(" ");
   const mapModeOverlayShellClassName = [
     "pointer-events-none sticky left-0 top-0 z-30 h-0",
-    mobileMapInteractionSurfaceOpen ? "hidden sm:block" : ""
+    mobileMapControlsHidden ? "hidden sm:block" : ""
   ].filter(Boolean).join(" ");
   const mapMarkerLayerClassName = [
     "absolute inset-0",
-    mobileMapInteractionSurfaceOpen ? "hidden sm:block" : ""
+    mobileMapControlsHidden ? "hidden sm:block" : ""
   ].filter(Boolean).join(" ");
   const desktopResultRailClassName = [
     "hidden lg:block",
