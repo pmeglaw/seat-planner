@@ -141,25 +141,32 @@ test("seat badges use compact map-native labels with strong active states", asyn
 
   assert.match(markerSource, /function SeatToken/);
   assert.match(markerSource, /getPassiveEmployeeLabel/);
-  assert.match(markerSource, /border-\[#8E8276\]\/45 bg-\[#FFFDF8\]\/95/);
-  assert.match(markerSource, /border-\[#BEB4A8\]\/70 bg-white\/80/);
-  assert.match(markerSource, /min-h-\[34px\] rounded-\[11px\]/);
-  assert.match(markerSource, /w-\[82px\] max-w-\[82px\] sm:w-\[94px\]/);
-  assert.match(markerSource, /overflow-visible border ring-1 ring-white\/35/);
+  assert.match(markerSource, /type MarkerIntent =/);
+  assert.match(markerSource, /draftChanged\?: boolean/);
+  assert.match(markerSource, /data-marker-intent=\{markerIntent\}/);
+  assert.match(markerSource, /data-draft-changed=\{draftChanged \|\| undefined\}/);
+  assert.match(markerSource, /border-\[#B7AB9E\]\/85 bg-\[#FFFDF8\]\/95/);
+  assert.match(markerSource, /border-\[#D4CABF\]\/90 bg-\[#F9F5ED\]\/86/);
+  assert.match(markerSource, /min-h-\[34px\] rounded-\[12px\]/);
+  assert.match(markerSource, /w-\[92px\] max-w-\[92px\] sm:w-\[104px\]/);
+  assert.match(markerSource, /overflow-visible border ring-1 ring-white\/45 backdrop-blur-\[1px\]/);
   assert.match(markerSource, /const baseStatusToneClass =/);
   assert.match(markerSource, /const statusToneClass = \(tokenMode === "selected" \|\| tokenMode === "prominent"\) \? "" : baseStatusToneClass/);
   assert.match(markerSource, /border-\[#D46A24\] bg-\[#171A1D\] text-white/);
+  assert.match(markerSource, /searchSelected[\s\S]*outline-\[#2F6668\]/);
+  assert.match(markerSource, /draftChanged && !selected && !searchProminent[\s\S]*bg-\[#F4E7CF\]/);
   assert.match(markerSource, /group-hover:border-\[#D46A24\]/);
-  assert.match(markerSource, /group-hover:w-\[112px\]/);
-  assert.match(markerSource, /group-focus-visible:w-\[112px\]/);
+  assert.match(markerSource, /group-hover:w-\[124px\]/);
+  assert.match(markerSource, /group-focus-visible:w-\[124px\]/);
   assert.match(markerSource, /leading-\[1\.05\]/);
   assert.match(markerSource, /leading-\[1\.08\]/);
   assert.match(markerSource, /text-\[10px\]/);
-  assert.match(markerSource, /tokenMode === "selected"[\s\S]*w-\[112px\]/);
+  assert.match(markerSource, /tokenMode === "selected"[\s\S]*w-\[126px\]/);
   assert.match(markerSource, /searchProminent[\s\S]*border-\[#2F6668\] bg-\[#DCEDEA\]/);
-  assert.match(markerSource, /namesVisible = showNames && hasEmployee && !dimmed && !compactNameLabel/);
-  assert.match(markerSource, /inlineNameLabel = expandedNameBadge \? employeeName : compactEmployeeName/);
+  assert.match(markerSource, /namesVisible = showNames && hasEmployee && !dimmed/);
+  assert.match(markerSource, /inlineNameLabel = expandedNameBadge \|\| \(namesVisible && tokenDensity === "standard" && !compactNameLabel\) \? employeeName : compactEmployeeName/);
   assert.match(markerSource, /\{inlineNameLabel\}/);
+  assert.match(markerSource, /block min-w-0 truncate font-bold/);
 });
 
 test("selected inspector and search results stay attached to the map workspace", async () => {
@@ -218,7 +225,7 @@ test("seat marker coordinates anchor one compact token instead of detached callo
   assert.match(markerSource, /left: `calc\(50% \+ \$\{resolvedViewportEdgeOffsetPx\}px\)`/);
   assert.match(markerSource, /right: `calc\(50% \+ \$\{resolvedViewportEdgeOffsetPx\}px\)`/);
   assert.match(markerSource, /<SeatToken[\s\S]*z-10 isolate flex items-center justify-center/);
-  assert.match(markerSource, /absolute bottom-1\.5 left-1 top-1\.5 w-0\.5 rounded-full/);
+  assert.match(markerSource, /absolute bottom-1\.5 left-1\.5 top-1\.5 w-0\.5 rounded-full/);
   assert.match(markerSource, /prominentToken = activeMarker \|\| searchProminent \|\| plannerHighlighted/);
   assert.doesNotMatch(markerSource, /function getSeatLabelPlacement|dotTargetSizeClass|placementClasses|connector|h-1\.5 w-1\.5/);
   assert.match(seatMapSource, /if \(seatTarget\?\.dataset\.seatId\) return;/);
@@ -226,6 +233,7 @@ test("seat marker coordinates anchor one compact token instead of detached callo
   assert.match(seatMapSource, /markerEdgeBaseOffsetPx = 0/);
   assert.match(seatMapSource, /getMarkerViewportPlacement\(visualSeat\.x\)/);
   assert.match(seatMapSource, /viewportEdgeOffsetPx=\{viewportPlacement\.offsetPx\}/);
+  assert.match(seatMapSource, /draftChanged=\{draftChangedSeatLabelSet\.has\(seat\.label\)\}/);
 });
 
 test("inspector copy uses Job Title instead of Team", async () => {
