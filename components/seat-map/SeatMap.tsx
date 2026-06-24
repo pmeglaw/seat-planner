@@ -266,7 +266,6 @@ export function SeatMap({
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapToolsButtonRef = useRef<HTMLButtonElement | null>(null);
-  const mapToolsMobileButtonRef = useRef<HTMLButtonElement | null>(null);
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
   const autoSelectedSearchKeyRef = useRef<string | null>(null);
 
@@ -290,9 +289,7 @@ export function SeatMap({
 
   const focusMapToolsButton = useCallback(() => {
     window.setTimeout(() => {
-      const visibleTrigger = [mapToolsButtonRef.current, mapToolsMobileButtonRef.current]
-        .find(button => button && button.offsetParent !== null);
-      (visibleTrigger ?? mapToolsButtonRef.current ?? mapToolsMobileButtonRef.current)?.focus();
+      mapToolsButtonRef.current?.focus();
     }, 0);
   }, []);
 
@@ -1742,57 +1739,69 @@ export function SeatMap({
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[var(--sp-color-workspace-deep)] px-2 py-2 text-[var(--sp-color-text-primary)] sm:px-3 sm:py-3 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden">
-      <div className="mx-auto flex w-full max-w-[1920px] flex-1 flex-col overflow-hidden rounded-[30px] border border-white/10 bg-[var(--sp-color-canvas)] shadow-[0_34px_110px_rgba(0,0,0,0.42)] lg:min-h-0">
-        <header className="z-30 border-b border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 px-3 py-3 text-[var(--sp-color-text-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] sm:px-4 lg:shrink-0">
-          <div className="flex flex-col gap-2.5">
-            <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[minmax(240px,0.78fr)_minmax(300px,0.9fr)_minmax(460px,1.55fr)] lg:items-stretch">
-              <section aria-label="Admin planning workspace" className="min-w-0 overflow-hidden rounded-[22px] border border-white/10 bg-[var(--sp-color-workspace)] px-3.5 py-3 text-white shadow-[0_18px_42px_rgba(23,26,29,0.18),inset_0_1px_0_rgba(255,255,255,0.12)]">
-                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                  <h1 className="truncate text-lg font-black leading-tight tracking-normal">Office Seat Planner</h1>
-                  <span className={["shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", canEdit ? "bg-[var(--sp-color-brand-ivory)] text-[var(--sp-color-brand-clay)] ring-white/20" : "bg-[var(--sp-color-state-published-surface)] text-[#284C3B] ring-white/20"].join(" ")}>
-                    {canEdit ? "Draft" : "Published"}
-                  </span>
-                </div>
-                <p className="mt-1 truncate text-[10px] font-bold uppercase leading-tight tracking-[0.18em] text-[var(--sp-color-brand-paper)]">{canEdit ? "Admin planning workspace" : "Viewer workspace"}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5 text-[11px] font-black text-white/85">
-                  <span className="rounded-full bg-white/10 px-2 py-1 ring-1 ring-white/15">{stats.total} seats</span>
-                  <span className="rounded-full bg-[var(--sp-color-state-published-surface)] px-2 py-1 text-[#284C3B] ring-1 ring-white/20">{stats.assigned} assigned</span>
-                  <span className="rounded-full bg-[var(--sp-color-surface)] px-2 py-1 text-[var(--sp-color-text-secondary)] ring-1 ring-white/20">{stats.available} open</span>
-                </div>
-              </section>
+      <div className="mx-auto grid w-full max-w-[1920px] flex-1 grid-cols-1 overflow-hidden rounded-[30px] border border-white/10 bg-[var(--sp-color-canvas)] shadow-[0_34px_110px_rgba(0,0,0,0.42)] lg:min-h-0 lg:grid-cols-[286px_minmax(0,1fr)]">
+        <aside aria-label="Admin workspace rail" className="z-30 flex min-w-0 flex-col gap-3 border-b border-white/10 bg-[var(--sp-color-workspace)] p-3 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:p-4 lg:min-h-0 lg:overflow-auto lg:border-b-0 lg:border-r">
+          <section aria-label="Admin planning workspace" className="min-w-0 overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.045] px-3.5 py-3 shadow-[0_18px_42px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.10)]">
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+              <h1 className="truncate text-lg font-black leading-tight tracking-normal">Office Seat Planner</h1>
+              <span className={["shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", canEdit ? "bg-[var(--sp-color-brand-ivory)] text-[var(--sp-color-brand-clay)] ring-white/20" : "bg-[var(--sp-color-state-published-surface)] text-[#284C3B] ring-white/20"].join(" ")}>
+                {canEdit ? "Draft" : "Published"}
+              </span>
+            </div>
+            <p className="mt-1 truncate text-[10px] font-bold uppercase leading-tight tracking-[0.18em] text-[var(--sp-color-brand-paper)]">{canEdit ? "Admin planning workspace" : "Viewer workspace"}</p>
+          </section>
 
-              {canEdit ? (
-                <button
-                  type="button"
-                  onClick={openPublishReview}
-                  aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
-                  title={draftStatusTitle}
-                  className={["group flex min-w-0 flex-col items-start rounded-[22px] border px-3.5 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition hover:bg-[var(--sp-color-surface-raised)] active:scale-[0.99] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]", publishSummary.hasChanges ? "border-[var(--sp-color-state-draft-border)] bg-[var(--sp-color-state-draft-surface)] text-[#6D4712]" : "border-[var(--sp-color-state-published-border)] bg-[var(--sp-color-state-published-surface)] text-[#284C3B]"].join(" ")}
-                >
-                  <span className="text-[10px] font-black uppercase tracking-[0.16em] opacity-70">Draft publication status</span>
-                  <span className="mt-1 flex max-w-full items-center gap-2 text-sm font-black leading-tight">
-                    <span className="min-w-0 truncate">{draftStatusHeadline}</span>
-                    <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", publishSummary.hasChanges ? "bg-white/75 text-[#6D4712] ring-[var(--sp-color-state-draft-border)]" : "bg-white/75 text-[#284C3B] ring-[var(--sp-color-state-published-border)]"].join(" ")}>
-                      {draftStatusActionLabel}
-                    </span>
-                  </span>
-                  <span className="mt-1 max-w-full truncate text-xs font-semibold opacity-75">{draftStatusDescription}</span>
-                  <span className="sr-only">{draftStatusLabel}</span>
-                </button>
-              ) : (
-                <section aria-label="Published status" className="rounded-[22px] border border-[var(--sp-color-state-published-border)] bg-[var(--sp-color-state-published-surface)] px-3.5 py-3 text-[#284C3B]">
-                  <div className="text-[10px] font-black uppercase tracking-[0.16em] opacity-70">Published status</div>
-                  <div className="mt-1 text-sm font-black">Published map</div>
-                  <p className="mt-1 truncate text-xs font-semibold opacity-75">Read-only seating shown to viewers.</p>
-                </section>
-              )}
+          <section aria-label="Seat inventory summary" className="grid grid-cols-3 gap-1.5 text-center text-[11px] font-black">
+            <div className="rounded-2xl bg-white/10 px-2 py-2 ring-1 ring-white/15">
+              <div className="text-base leading-none">{stats.total}</div>
+              <div className="mt-1 text-[9px] uppercase tracking-wide text-white/62">Seats</div>
+            </div>
+            <div className="rounded-2xl bg-[var(--sp-color-state-published-surface)] px-2 py-2 text-[#284C3B] ring-1 ring-white/20">
+              <div className="text-base leading-none">{stats.assigned}</div>
+              <div className="mt-1 text-[9px] uppercase tracking-wide opacity-70">Assigned</div>
+            </div>
+            <div className="rounded-2xl bg-[var(--sp-color-surface)] px-2 py-2 text-[var(--sp-color-text-secondary)] ring-1 ring-white/20">
+              <div className="text-base leading-none">{stats.available}</div>
+              <div className="mt-1 text-[9px] uppercase tracking-wide text-[var(--sp-color-text-muted)]">Open</div>
+            </div>
+          </section>
 
-              <div role="group" aria-label="Primary workspace controls" className="flex min-w-0 flex-wrap items-center gap-2 rounded-[22px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)]/90 p-2 shadow-[0_12px_34px_rgba(23,26,29,0.08),inset_0_1px_0_rgba(255,255,255,0.92)] lg:content-start">
-                <div className="flex min-w-0 flex-[1_1_100%] items-center justify-between gap-3 px-1">
+          {canEdit ? (
+            <button
+              type="button"
+              onClick={openPublishReview}
+              aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
+              title={draftStatusTitle}
+              className={["group flex min-w-0 flex-col items-start rounded-[22px] border px-3.5 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition hover:bg-[var(--sp-color-surface-raised)] active:scale-[0.99] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]", publishSummary.hasChanges ? "border-[var(--sp-color-state-draft-border)] bg-[var(--sp-color-state-draft-surface)] text-[#6D4712]" : "border-[var(--sp-color-state-published-border)] bg-[var(--sp-color-state-published-surface)] text-[#284C3B]"].join(" ")}
+            >
+              <span className="text-[10px] font-black uppercase tracking-[0.16em] opacity-70">Draft publication status</span>
+              <span className="mt-1 flex max-w-full items-center gap-2 text-sm font-black leading-tight">
+                <span className="min-w-0 truncate">{draftStatusHeadline}</span>
+                <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", publishSummary.hasChanges ? "bg-white/75 text-[#6D4712] ring-[var(--sp-color-state-draft-border)]" : "bg-white/75 text-[#284C3B] ring-[var(--sp-color-state-published-border)]"].join(" ")}>
+                  {draftStatusActionLabel}
+                </span>
+              </span>
+              <span className="mt-1 max-w-full text-xs font-semibold leading-5 opacity-75">{draftStatusDescription}</span>
+              <span className="sr-only">{draftStatusLabel}</span>
+            </button>
+          ) : (
+            <section aria-label="Published status" className="rounded-[22px] border border-[var(--sp-color-state-published-border)] bg-[var(--sp-color-state-published-surface)] px-3.5 py-3 text-[#284C3B]">
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] opacity-70">Published status</div>
+              <div className="mt-1 text-sm font-black">Published map</div>
+              <p className="mt-1 text-xs font-semibold leading-5 opacity-75">Read-only seating shown to viewers.</p>
+            </section>
+          )}
+        </aside>
+
+        <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
+          <header className="z-30 border-b border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 px-3 py-2 text-[var(--sp-color-text-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] sm:px-4 lg:shrink-0">
+            <div role="group" aria-label="Admin command row" className="flex min-w-0 flex-col gap-2 rounded-[22px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)]/90 p-2 shadow-[0_12px_34px_rgba(23,26,29,0.08),inset_0_1px_0_rgba(255,255,255,0.92)] xl:flex-row xl:items-center">
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-center justify-between gap-3 px-1 pb-1.5">
                   <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--sp-color-brand-clay)]">Command search</span>
                   <span className="truncate text-[11px] font-bold text-[var(--sp-color-text-muted)]">{planningStateLabel}</span>
                 </div>
-                <label className="relative min-w-0 flex-[1_1_100%] sm:flex-1">
+                <label className="relative block min-w-0">
                   <span className="sr-only">Search employee, seat, job title, department, or zone</span>
                   <input
                     value={search}
@@ -1821,138 +1830,120 @@ export function SeatMap({
                     </button>
                   )}
                 </label>
-                <button
-                  type="button"
-                  onClick={toggleFilterPanel}
-                  aria-controls="seat-map-filter-panel"
-                  aria-expanded={!filterCollapsed}
-                  aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
-                  title={filterCollapsed ? "Open filters" : "Collapse filters"}
-                  className={["inline-flex h-11 shrink-0 items-center gap-2 rounded-[16px] border px-3 text-xs font-black shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner", focusRingClass, structuredFilterCount ? "border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)]" : "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-secondary)]"].join(" ")}
-                >
-                  Filters
-                  {structuredFilterCount > 0 && (
-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--sp-color-action-primary)] px-1.5 text-[10px] font-black text-white">
-                      {structuredFilterCount}
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowNames(current => !current)}
-                  aria-label={namesToggleLabel}
-                  title={namesToggleLabel}
-                  className={[
-                    "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-[16px] border px-3 text-xs font-black shadow-sm transition active:scale-[0.97] active:duration-75 active:shadow-inner",
-                    focusRingClass,
-                    showNames ? "border-[var(--sp-color-workspace)] bg-[var(--sp-color-workspace)] text-white hover:bg-[var(--sp-color-workspace-deep)]" : "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-secondary)] hover:bg-white"
-                  ].join(" ")}
-                >
-                  <NamesIcon />
-                  <span className="hidden sm:inline">{namesToggleLabel}</span>
-                </button>
-                {canEdit && (
-                  <Button
-                    ref={mapToolsMobileButtonRef}
-                    variant="secondary"
-                    aria-label="Map tools"
-                    aria-controls="advanced-drawer"
-                    aria-expanded={advancedOpen}
-                    aria-haspopup="dialog"
-                    title="Map tools"
-                    className="h-11 min-h-11 rounded-[16px] px-3 py-1 text-xs shadow-sm sm:hidden"
-                    onClick={openAdvancedDrawer}
-                  >
-                    Tools
-                  </Button>
-                )}
               </div>
-            </div>
 
-            {canEdit && (
-              <div role="group" aria-label="Secondary admin actions" className="hidden min-w-0 flex-wrap items-center justify-between gap-2 rounded-[22px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)]/80 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)] sm:flex">
-                <div role="group" aria-label="Planning map actions" className="flex min-w-0 items-center gap-1.5 rounded-[16px] bg-[var(--sp-color-surface-raised)]/80 px-1.5 py-1">
-                  <span className="hidden shrink-0 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--sp-color-text-muted)] md:inline">Plan</span>
-                  <Button
-                    ref={mapToolsButtonRef}
-                    variant="secondary"
-                    aria-label="Map tools"
-                    aria-controls="advanced-drawer"
-                    aria-expanded={advancedOpen}
-                    aria-haspopup="dialog"
-                    title="Map tools"
-                    className="h-9 min-h-9 rounded-xl border-[var(--sp-color-border-strong)] px-3 py-1 text-xs shadow-sm"
-                    onClick={openAdvancedDrawer}
-                  >
-                    <span className="min-[1200px]:hidden">Tools</span>
-                    <span className="hidden min-[1200px]:inline">Map tools</span>
-                  </Button>
-                </div>
-
-                <div role="group" aria-label="Draft history controls" className="flex min-w-0 items-center gap-1.5 rounded-[16px] bg-[var(--sp-color-surface-raised)]/80 px-1.5 py-1">
-                  <span className="hidden shrink-0 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--sp-color-text-muted)] md:inline">History</span>
+              {canEdit && (
+                <div role="group" aria-label="Map command actions" className="flex min-w-0 flex-wrap items-center gap-1.5 rounded-[16px] bg-[var(--sp-color-graphite-soft)]/72 p-1.5 xl:max-w-[33rem] xl:justify-end">
                   <button
                     type="button"
-                    className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] px-2.5 text-xs font-black text-[var(--sp-color-text-secondary)] shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-stone)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none"
-                    disabled={pending || inspectorDirty || !undoAvailable}
-                    aria-label="Undo last map change"
-                    title={undoTitle}
-                    onClick={undoDraftEdit}
+                    onClick={toggleFilterPanel}
+                    aria-controls="seat-map-filter-panel"
+                    aria-expanded={!filterCollapsed}
+                    aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
+                    title={filterCollapsed ? "Open filters" : "Collapse filters"}
+                    className={["inline-flex h-10 shrink-0 items-center gap-2 rounded-[14px] border px-3 text-xs font-black shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner", focusRingClass, structuredFilterCount ? "border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)]" : "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] text-[var(--sp-color-text-secondary)]"].join(" ")}
                   >
-                    <UndoIcon />
-                    <span className="hidden xl:inline">Undo</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] px-2.5 text-xs font-black text-[var(--sp-color-text-secondary)] shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-stone)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none"
-                    disabled={pending || inspectorDirty || !redoAvailable}
-                    aria-label="Redo last undone change"
-                    title={redoTitle}
-                    onClick={redoDraftEdit}
-                  >
-                    <RedoIcon />
-                    <span className="hidden xl:inline">Redo</span>
-                  </button>
-                </div>
-
-                <div role="group" aria-label="Admin support actions" className="flex min-w-0 items-center gap-1.5 rounded-[16px] bg-[var(--sp-color-surface-raised)]/80 px-1.5 py-1">
-                  <span className="hidden shrink-0 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--sp-color-text-muted)] md:inline">Support</span>
-                  <Link
-                    href="/admin/management"
-                    onClick={event => {
-                      if (!beforeManagementNavigation()) event.preventDefault();
-                    }}
-                    className="hidden min-h-9 items-center justify-center rounded-xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] px-3 text-xs font-semibold text-[var(--sp-color-text-secondary)] shadow-sm transition hover:border-[var(--sp-color-brand-copper)] hover:bg-[var(--sp-color-brand-paper)] hover:text-[var(--sp-color-brand-clay)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--sp-color-brand-copper)] sm:inline-flex"
-                  >
-                    <span className="min-[1280px]:hidden">Manage</span>
-                    <span className="hidden min-[1280px]:inline">Management</span>
-                  </Link>
-                  <Button
-                    ref={askPlannerButtonRef}
-                    variant="secondary"
-                    aria-label={plannerHighlightedSeatIds.length > 0 ? `Open Ask Planner, ${plannerHighlightedSeatIds.length} seats highlighted` : "Open Ask Planner"}
-                    aria-controls="ask-planner-drawer"
-                    aria-expanded={askPlannerOpen}
-                    aria-haspopup="dialog"
-                    className={[
-                      "min-h-9 rounded-xl border-[var(--sp-color-border-strong)] px-3 py-1 text-xs shadow-sm",
-                      plannerHighlightedSeatIds.length > 0 ? "border-[var(--sp-color-state-planner-border)] bg-[var(--sp-color-state-planner-surface)] text-[var(--sp-color-state-planner)] hover:bg-[#E5DDD2]" : ""
-                    ].join(" ")}
-                    onClick={openAskPlannerDrawer}
-                  >
-                    <span className="min-[1360px]:hidden">Ask</span>
-                    <span className="hidden min-[1360px]:inline">Ask Planner</span>
-                    {plannerHighlightedSeatIds.length > 0 && (
-                      <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--sp-color-state-planner)] px-1.5 text-[10px] font-black text-white">
-                        {plannerHighlightedSeatIds.length}
+                    Filters
+                    {structuredFilterCount > 0 && (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--sp-color-action-primary)] px-1.5 text-[10px] font-black text-white">
+                        {structuredFilterCount}
                       </span>
                     )}
-                  </Button>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowNames(current => !current)}
+                    aria-label={namesToggleLabel}
+                    title={namesToggleLabel}
+                    className={[
+                      "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border px-3 text-xs font-black shadow-sm transition active:scale-[0.97] active:duration-75 active:shadow-inner",
+                      focusRingClass,
+                      showNames ? "border-[var(--sp-color-workspace)] bg-[var(--sp-color-workspace)] text-white hover:bg-[var(--sp-color-workspace-deep)]" : "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] text-[var(--sp-color-text-secondary)] hover:bg-white"
+                    ].join(" ")}
+                  >
+                    <NamesIcon />
+                    <span className="hidden sm:inline">{namesToggleLabel}</span>
+                  </button>
+
+                  <div role="group" aria-label="Planning map actions" className="flex min-w-0 items-center gap-1.5">
+                    <Button
+                      ref={mapToolsButtonRef}
+                      variant="secondary"
+                      aria-label="Map tools"
+                      aria-controls="advanced-drawer"
+                      aria-expanded={advancedOpen}
+                      aria-haspopup="dialog"
+                      title="Map tools"
+                      className="h-10 min-h-10 rounded-[14px] border-[var(--sp-color-border-strong)] px-3 py-1 text-xs shadow-sm"
+                      onClick={openAdvancedDrawer}
+                    >
+                      <span className="min-[1280px]:hidden">Tools</span>
+                      <span className="hidden min-[1280px]:inline">Map tools</span>
+                    </Button>
+                  </div>
+
+                  <div role="group" aria-label="Draft history controls" className="flex min-w-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] px-2.5 text-xs font-black text-[var(--sp-color-text-secondary)] shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-stone)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none"
+                      disabled={pending || inspectorDirty || !undoAvailable}
+                      aria-label="Undo last map change"
+                      title={undoTitle}
+                      onClick={undoDraftEdit}
+                    >
+                      <UndoIcon />
+                      <span className="hidden min-[1360px]:inline">Undo</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] px-2.5 text-xs font-black text-[var(--sp-color-text-secondary)] shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-stone)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none"
+                      disabled={pending || inspectorDirty || !redoAvailable}
+                      aria-label="Redo last undone change"
+                      title={redoTitle}
+                      onClick={redoDraftEdit}
+                    >
+                      <RedoIcon />
+                      <span className="hidden min-[1360px]:inline">Redo</span>
+                    </button>
+                  </div>
+
+                  <div role="group" aria-label="Admin support actions" className="flex min-w-0 items-center gap-1.5">
+                    <Link
+                      href="/admin/management"
+                      onClick={event => {
+                        if (!beforeManagementNavigation()) event.preventDefault();
+                      }}
+                      className="inline-flex min-h-10 items-center justify-center rounded-[14px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] px-3 text-xs font-semibold text-[var(--sp-color-text-secondary)] shadow-sm transition hover:border-[var(--sp-color-brand-copper)] hover:bg-[var(--sp-color-brand-paper)] hover:text-[var(--sp-color-brand-clay)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--sp-color-brand-copper)]"
+                    >
+                      <span className="min-[1400px]:hidden">Manage</span>
+                      <span className="hidden min-[1400px]:inline">Management</span>
+                    </Link>
+                    <Button
+                      ref={askPlannerButtonRef}
+                      variant="secondary"
+                      aria-label={plannerHighlightedSeatIds.length > 0 ? `Open Ask Planner, ${plannerHighlightedSeatIds.length} seats highlighted` : "Open Ask Planner"}
+                      aria-controls="ask-planner-drawer"
+                      aria-expanded={askPlannerOpen}
+                      aria-haspopup="dialog"
+                      className={[
+                        "min-h-10 rounded-[14px] border-[var(--sp-color-border-strong)] px-3 py-1 text-xs shadow-sm",
+                        plannerHighlightedSeatIds.length > 0 ? "border-[var(--sp-color-state-planner-border)] bg-[var(--sp-color-state-planner-surface)] text-[var(--sp-color-state-planner)] hover:bg-[#E5DDD2]" : ""
+                      ].join(" ")}
+                      onClick={openAskPlannerDrawer}
+                    >
+                      <span className="min-[1480px]:hidden">Ask</span>
+                      <span className="hidden min-[1480px]:inline">Ask Planner</span>
+                      {plannerHighlightedSeatIds.length > 0 && (
+                        <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--sp-color-state-planner)] px-1.5 text-[10px] font-black text-white">
+                          {plannerHighlightedSeatIds.length}
+                        </span>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </header>
+              )}
+            </div>
+          </header>
 
       <main className={["grid grid-cols-1 gap-2 bg-[var(--sp-color-map-workspace)] p-2 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
         {showFilterPanel && (
@@ -2236,6 +2227,7 @@ export function SeatMap({
           </div>
         </section>
       </main>
+      </div>
       </div>
 
       <AdvancedDrawer

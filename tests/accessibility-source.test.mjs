@@ -278,8 +278,13 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(filterSource, /titleId="mobile-seat-results-title"/);
 
   assert.match(seatMapSource, /function removeActiveFilterChip/);
-  assert.match(seatMapSource, /aria-label="Primary workspace controls"/);
-  assert.match(seatMapSource, /aria-label="Secondary admin actions"/);
+  assert.match(seatMapSource, /aria-label="Admin workspace rail"/);
+  assert.match(seatMapSource, /aria-label="Admin command row"/);
+  assert.match(seatMapSource, /aria-label="Map command actions"/);
+  assert.match(seatMapSource, /aria-label="Planning map actions"/);
+  assert.match(seatMapSource, /aria-label="Draft history controls"/);
+  assert.match(seatMapSource, /aria-label="Admin support actions"/);
+  assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
   assert.match(seatMapSource, /setDepartment\("all"\)/);
   assert.match(seatMapSource, /setZone\("all"\)/);
   assert.match(seatMapSource, /setStatus\("all"\)/);
