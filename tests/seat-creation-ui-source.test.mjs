@@ -140,6 +140,8 @@ test("seat badges use compact map-native labels with strong active states", asyn
   assert.match(markerSource, /min-h-\[34px\] rounded-\[11px\]/);
   assert.match(markerSource, /w-\[82px\] max-w-\[82px\] sm:w-\[94px\]/);
   assert.match(markerSource, /overflow-visible border ring-1 ring-white\/35/);
+  assert.match(markerSource, /const baseStatusToneClass =/);
+  assert.match(markerSource, /const statusToneClass = \(tokenMode === "selected" \|\| tokenMode === "prominent"\) \? "" : baseStatusToneClass/);
   assert.match(markerSource, /border-\[#D46A24\] bg-\[#171A1D\] text-white/);
   assert.match(markerSource, /group-hover:border-\[#D46A24\]/);
   assert.match(markerSource, /group-hover:w-\[112px\]/);

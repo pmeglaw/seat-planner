@@ -118,7 +118,7 @@ export function SeatMarker({
   const expandedNameBadge = hasEmployee && (tokenMode === "selected" || tokenMode === "prominent");
   const inlineNameLabel = expandedNameBadge ? employeeName : compactEmployeeName;
 
-  const statusToneClass =
+  const baseStatusToneClass =
     seat.status === "assigned"
       ? "border-[#8E8276]/45 bg-[#FFFDF8]/95 text-[#070A0D]"
       : seat.status === "reserved"
@@ -126,6 +126,7 @@ export function SeatMarker({
         : seat.status === "unavailable"
           ? "border-[#C9C0B4] bg-[#E7E1D8]/90 text-[#696159]"
           : "border-[#BEB4A8]/70 bg-white/80 text-[#353532]";
+  const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent") ? "" : baseStatusToneClass;
 
   const statusAccentClass =
     seat.status === "assigned"
