@@ -57,11 +57,11 @@ test("selected mobile inspector sheet owns its visual layer", async () => {
 
   assert.match(
     inspectorSource,
-    /className="fixed inset-x-3 bottom-3 z-\[80\][\s\S]*bg-slate-50[\s\S]*sm:bg-slate-50\/95/
+    /className="fixed inset-x-3 bottom-3 z-\[80\][\s\S]*bg-\[var\(--sp-color-surface\)\][\s\S]*sm:bg-\[var\(--sp-color-surface\)\]\/95/
   );
   assert.match(
     inspectorSource,
-    /className="sticky bottom-0 z-20[\s\S]*bg-slate-50[\s\S]*sm:bg-slate-50\/95/
+    /className="sticky bottom-0 z-20[\s\S]*bg-\[var\(--sp-color-surface\)\][\s\S]*sm:bg-\[var\(--sp-color-surface\)\]\/95/
   );
   assert.match(inspectorSource, /aria-label=\{canEdit \? "Selected draft seat inspector" : "Selected published seat details"\}/);
   assert.match(inspectorSource, /Back to map/);

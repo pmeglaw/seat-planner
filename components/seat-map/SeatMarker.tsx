@@ -118,23 +118,24 @@ export function SeatMarker({
   const expandedNameBadge = hasEmployee && (tokenMode === "selected" || tokenMode === "prominent");
   const inlineNameLabel = expandedNameBadge ? employeeName : compactEmployeeName;
 
-  const statusToneClass =
+  const baseStatusToneClass =
     seat.status === "assigned"
-      ? "border-emerald-700/25 bg-emerald-50/95 text-emerald-950"
+      ? "border-[#8E8276]/45 bg-[#FFFDF8]/95 text-[#070A0D]"
       : seat.status === "reserved"
-        ? "border-amber-600/25 bg-amber-50/90 text-amber-950"
+        ? "border-[#9A6418]/45 bg-[#F1E2C4]/95 text-[#6D4712]"
         : seat.status === "unavailable"
-          ? "border-slate-500/25 bg-slate-100/80 text-slate-700"
-          : "border-slate-500/20 bg-white/70 text-slate-700";
+          ? "border-[#C9C0B4] bg-[#E7E1D8]/90 text-[#696159]"
+          : "border-[#BEB4A8]/70 bg-white/80 text-[#353532]";
+  const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent") ? "" : baseStatusToneClass;
 
   const statusAccentClass =
     seat.status === "assigned"
-      ? "bg-emerald-500/85"
+      ? "bg-[#3F6F59]/85"
       : seat.status === "reserved"
-        ? "bg-amber-500/80"
+        ? "bg-[#9A6418]/80"
         : seat.status === "unavailable"
-          ? "bg-slate-500/70"
-          : "bg-slate-400/45";
+          ? "bg-[#8E8276]/70"
+          : "bg-[#B8AEA2]/60";
 
   const tokenSizeClass =
     tokenMode === "selected"
@@ -161,16 +162,16 @@ export function SeatMarker({
       ? "shadow-[0_1px_3px_rgba(15,23,42,0.11),inset_0_1px_0_rgba(255,255,255,0.72)]"
       : "",
     tokenMode === "selected"
-      ? "border-orange-300 bg-slate-950 text-white ring-2 ring-orange-300/90 shadow-[0_8px_20px_rgba(31,35,39,0.26),inset_0_1px_0_rgba(255,255,255,0.16)]"
+      ? "border-[#D46A24] bg-[#171A1D] text-white ring-2 ring-[#D46A24]/90 shadow-[0_8px_20px_rgba(31,35,39,0.28),inset_0_1px_0_rgba(255,255,255,0.16)]"
       : "",
     searchProminent && !selected
-      ? "border-orange-300 bg-orange-100 text-orange-950 ring-2 ring-orange-300/85 shadow-[0_6px_16px_rgba(194,65,12,0.2),inset_0_1px_0_rgba(255,255,255,0.76)]"
+      ? "border-[#2F6668] bg-[#DCEDEA] text-[#1F4749] ring-2 ring-[#A9CFCC] shadow-[0_6px_16px_rgba(47,102,104,0.20),inset_0_1px_0_rgba(255,255,255,0.76)]"
       : "",
-    highlighted && selected ? "outline outline-2 outline-offset-2 outline-cyan-300/90" : "",
-    swapSource ? "border-sky-300 bg-sky-50 text-sky-950 ring-4 ring-sky-200/70" : "",
-    swapTarget ? "border-emerald-300 bg-emerald-50 text-emerald-950 ring-4 ring-emerald-200/70" : "",
-    plannerHighlighted ? "border-cyan-300 bg-cyan-50 text-cyan-950 ring-2 ring-cyan-300/80 shadow-[0_4px_12px_rgba(8,145,178,0.2),inset_0_1px_0_rgba(255,255,255,0.7)]" : "",
-    swapMode && !swapSource ? "group-hover:ring-4 group-hover:ring-sky-200/70" : ""
+    highlighted && selected ? "outline outline-2 outline-offset-2 outline-[#A9CFCC]" : "",
+    swapSource ? "border-[#3E6F72] bg-[#DCEDEA] text-[#244E50] ring-4 ring-[#A9CFCC]/80" : "",
+    swapTarget ? "border-[#6E655A] bg-[#F1ECE4] text-[#353532] ring-4 ring-[#D8D0C5]/85" : "",
+    plannerHighlighted ? "border-[#6E655A] bg-[#EFE9DF] text-[#353532] ring-2 ring-[#D8D0C5] shadow-[0_4px_12px_rgba(110,101,90,0.22),inset_0_1px_0_rgba(255,255,255,0.7)]" : "",
+    swapMode && !swapSource ? "group-hover:ring-4 group-hover:ring-[#A9CFCC]/80" : ""
   ].join(" ");
 
   const hitTargetSizeClass = tokenMode === "selected" ? "h-9 w-9" : tokenMode === "prominent" ? "h-8 w-8" : "h-7 w-7";
@@ -221,7 +222,7 @@ export function SeatMarker({
       className={[
         "group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-manipulation select-none items-center justify-center overflow-visible rounded-full border-0 bg-transparent p-0 font-black leading-none text-slate-900",
         "transition-[transform,opacity,filter] duration-150 ease-out hover:z-30 active:scale-[0.96] active:duration-75 motion-reduce:transition-none",
-        "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/70",
+        "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#D46A24]/70",
         hitTargetSizeClass,
         selected ? "z-40 focus-visible:z-40" : "",
         prominentToken ? "z-30" : "",
@@ -236,7 +237,7 @@ export function SeatMarker({
         style={tokenPositionStyle}
         className={[
           "z-10 isolate flex items-center justify-center overflow-visible border ring-1 ring-white/35",
-          "transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out group-hover:border-orange-200 group-hover:brightness-105 group-hover:shadow-[0_4px_10px_rgba(15,23,42,0.17),inset_0_1px_0_rgba(255,255,255,0.8)] group-active:shadow-[0_2px_6px_rgba(15,23,42,0.16),inset_0_2px_4px_rgba(15,23,42,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-orange-300/75 motion-reduce:transition-none",
+          "transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out group-hover:border-[#D46A24] group-hover:brightness-105 group-hover:shadow-[0_4px_10px_rgba(23,26,29,0.18),inset_0_1px_0_rgba(255,255,255,0.8)] group-active:shadow-[0_2px_6px_rgba(23,26,29,0.16),inset_0_2px_4px_rgba(23,26,29,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[#D46A24]/75 motion-reduce:transition-none",
           tokenPositionClass,
           statusToneClass,
           tokenSizeClass,

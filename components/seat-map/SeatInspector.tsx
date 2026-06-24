@@ -258,14 +258,14 @@ export function SeatInspector({
         ? "Unsaved changes"
         : saveFeedback ?? "No unsaved changes";
   const inspectorStateClassName = localError
-    ? "bg-rose-50 text-rose-700 ring-rose-200"
+    ? "bg-[var(--sp-color-state-danger-surface)] text-[#7E2F24] ring-[var(--sp-color-state-danger-border)]"
     : pending
-      ? "bg-sky-50 text-sky-700 ring-sky-200"
+      ? "bg-[var(--sp-color-state-info-surface)] text-[#244E50] ring-[var(--sp-color-state-info-border)]"
       : isDirty
-        ? "bg-amber-50 text-amber-700 ring-amber-200"
+        ? "bg-[var(--sp-color-state-draft-surface)] text-[#6D4712] ring-[var(--sp-color-state-draft-border)]"
         : saveFeedback
-          ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-          : "bg-slate-100 text-slate-600 ring-slate-200";
+          ? "bg-[var(--sp-color-state-success-surface)] text-[#284C3B] ring-[var(--sp-color-state-success-border)]"
+          : "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] ring-[var(--sp-color-border-subtle)]";
   const showFooterState = pending || Boolean(localError) || isDirty || Boolean(saveFeedback);
 
   function fieldErrorId(field: SeatInspectorField) {
@@ -569,8 +569,8 @@ export function SeatInspector({
     onDeleteSeat();
   }
 
-  const fieldClassName = "mt-1 w-full rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand focus:ring-4 focus:ring-orange-100 disabled:bg-slate-50 disabled:text-slate-500";
-  const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/80 bg-white/85 text-sm font-black text-slate-600 transition hover:bg-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100";
+  const fieldClassName = "mt-1 w-full rounded-xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] px-3 py-2 text-sm font-semibold text-[var(--sp-color-text-primary)] outline-none transition placeholder:text-[var(--sp-color-stone-muted)] focus:border-[var(--sp-color-brand-copper)] focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-muted)]";
+  const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)]/90 text-sm font-black text-[var(--sp-color-text-muted)] transition hover:bg-white hover:text-[var(--sp-color-text-secondary)] active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]";
   const saveDisabledReason = pending
     ? "Save is unavailable while the current draft change is finishing."
     : !isDirty
@@ -578,7 +578,7 @@ export function SeatInspector({
       : null;
   const deleteHelpText = selectedSeatCanDelete ? "Available custom draft seat can be deleted." : selectedSeatDeleteBlockReason ?? "Delete is unavailable for this seat.";
   const vacateHelpText = hasCurrentAssignment ? "Assigned seat can be vacated without deleting the marker." : "No employee is assigned, so Vacate is not needed.";
-  const capabilityRowClassName = "flex items-start justify-between gap-3 rounded-xl bg-white/75 px-2.5 py-2 ring-1 ring-slate-200/70";
+  const capabilityRowClassName = "flex items-start justify-between gap-3 rounded-xl bg-[var(--sp-color-surface-raised)]/80 px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]";
   const secondaryActionGridClassName = hasCurrentAssignment && !isDirty ? "grid-cols-3" : "grid-cols-2";
   const actionStatePillClassName = "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1";
 
@@ -586,16 +586,16 @@ export function SeatInspector({
 
   if (collapsed) {
     return (
-      <aside className="fixed inset-x-3 bottom-3 z-[80] sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[76px] sm:z-40 lg:top-[132px]">
+      <aside className="fixed inset-x-3 bottom-3 z-[80] sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[84px] sm:z-40 lg:top-[148px]">
         <button
           type="button"
           onClick={onToggleCollapse}
           aria-label={`View details for ${selectedSeat.label}`}
           title={`View details for ${selectedSeat.label}`}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-slate-50/95 px-4 py-2 text-slate-700 shadow-[0_12px_32px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:min-h-full sm:w-11 sm:flex-col sm:rounded-l-2xl sm:rounded-r-xl sm:px-2 sm:py-4 sm:shadow-[-8px_0_22px_rgba(15,23,42,0.14),inset_1px_0_0_rgba(255,255,255,0.86)]"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface)]/95 px-4 py-2 text-[var(--sp-color-text-secondary)] shadow-[0_14px_34px_rgba(23,26,29,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] sm:min-h-full sm:w-11 sm:flex-col sm:rounded-l-2xl sm:rounded-r-xl sm:px-2 sm:py-4 sm:shadow-[-8px_0_24px_rgba(23,26,29,0.16),inset_1px_0_0_rgba(255,255,255,0.86)]"
         >
           <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] sm:rotate-180 sm:[writing-mode:vertical-rl]">View details</span>
-          <span className="rounded-full bg-orange-50 px-2 py-1 text-[10px] font-black text-brand-dark ring-1 ring-orange-100 sm:mt-2 sm:rotate-180 sm:bg-transparent sm:px-0 sm:py-0 sm:text-slate-400 sm:ring-0 sm:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
+          <span className="rounded-full bg-[var(--sp-color-brand-paper)] px-2 py-1 text-[10px] font-black text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)] sm:mt-2 sm:rotate-180 sm:bg-transparent sm:px-0 sm:py-0 sm:text-[var(--sp-color-text-muted)] sm:ring-0 sm:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
         </button>
       </aside>
     );
@@ -606,21 +606,21 @@ export function SeatInspector({
     <aside
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[54vh] flex-col overflow-hidden rounded-[22px] border border-slate-200/80 bg-slate-50 shadow-[0_16px_44px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-slate-50 sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[76px] sm:z-40 sm:max-h-none sm:w-[352px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-l-[22px] sm:rounded-r-[18px] sm:bg-slate-50/95 sm:shadow-[-10px_0_30px_rgba(15,23,42,0.16),inset_1px_0_0_rgba(255,255,255,0.86)] sm:supports-[backdrop-filter]:bg-slate-50/90 lg:top-[132px]"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[54vh] flex-col overflow-hidden rounded-[24px] border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface)] shadow-[0_18px_50px_rgba(23,26,29,0.24),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[var(--sp-color-surface)] sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[84px] sm:z-40 sm:max-h-none sm:w-[376px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-l-[24px] sm:rounded-r-[18px] sm:bg-[var(--sp-color-surface)]/95 sm:shadow-[-12px_0_34px_rgba(23,26,29,0.18),inset_1px_0_0_rgba(255,255,255,0.86)] sm:supports-[backdrop-filter]:bg-[var(--sp-color-surface)]/90 lg:top-[148px]"
     >
-      <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-slate-200/70 bg-slate-50/95 px-3.5 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-slate-50/90">
+      <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-white/10 bg-[var(--sp-color-workspace)] px-3.5 py-3 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--sp-color-workspace)]/95">
         <div className="min-w-0">
-          {canEdit && <div className="mb-1 text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">Planning inspector</div>}
+          {canEdit && <div className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--sp-color-brand-paper)]">Planning inspector</div>}
           <div className="flex items-center gap-2">
-            <h2 id="seat-inspector-title" className="text-xl font-black leading-none text-slate-950">{selectedSeat.label}</h2>
+            <h2 id="seat-inspector-title" className="text-2xl font-black leading-none text-white">{selectedSeat.label}</h2>
             {canEdit && (
               <span role="status" aria-live="polite" className={["rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ring-1", inspectorStateClassName].join(" ")}>
                 {inspectorStateLabel}
               </span>
             )}
-            {swapMode && <span className="rounded-full bg-sky-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-sky-700 ring-1 ring-sky-200">Swap</span>}
+            {swapMode && <span className="rounded-full bg-[var(--sp-color-state-info-surface)] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[#244E50] ring-1 ring-[var(--sp-color-state-info-border)]">Swap</span>}
           </div>
-          <p className="mt-1 truncate text-xs font-semibold text-slate-500">{inspectorSubtitle}</p>
+          <p className="mt-1 truncate text-xs font-semibold text-white/70">{inspectorSubtitle}</p>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -628,26 +628,26 @@ export function SeatInspector({
             onClick={onToggleCollapse}
             aria-label={`Back to map from ${selectedSeat.label} details`}
             title="Back to map"
-            className="inline-flex h-8 items-center justify-center rounded-full border border-orange-100 bg-orange-50 px-3 text-[11px] font-black text-brand-dark shadow-sm transition hover:bg-orange-100 active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:hidden"
+            className="inline-flex h-8 items-center justify-center rounded-full border border-white/15 bg-white/10 px-3 text-[11px] font-black text-white shadow-sm transition hover:bg-white/15 active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] sm:hidden"
           >
             Back to map
           </button>
-          <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-8 w-8 items-center justify-center rounded-full border border-slate-200/80 bg-white/85 text-sm font-black text-slate-600 transition hover:bg-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 sm:inline-flex">-</button>
+          <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-black text-white/75 transition hover:bg-white/15 hover:text-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] sm:inline-flex">-</button>
           <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className={iconButtonClassName}>x</button>
         </div>
       </div>
 
       {canEdit ? (
         <form id="seat-inspector-form" onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3.5 py-3">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[var(--sp-color-surface)] px-3.5 py-3">
             {searchMismatchNotice && (
-              <section className="rounded-2xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900">
+              <section className="rounded-2xl border border-[var(--sp-color-state-draft-border)] bg-[var(--sp-color-state-draft-surface)] p-3 text-xs text-[#6D4712]">
                 <div className="font-black">{searchMismatchNotice}</div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-full bg-white/80 px-3 py-1.5 font-black text-amber-950 ring-1 ring-amber-200 transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100"
+                    className="rounded-full bg-white/80 px-3 py-1.5 font-black text-[#6D4712] ring-1 ring-[var(--sp-color-state-draft-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-color-state-draft-border)]"
                   >
                     Clear selection
                   </button>
@@ -655,7 +655,7 @@ export function SeatInspector({
                     <button
                       type="button"
                       onClick={onClearSearchContext}
-                      className="rounded-full bg-white/80 px-3 py-1.5 font-black text-amber-950 ring-1 ring-amber-200 transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100"
+                      className="rounded-full bg-white/80 px-3 py-1.5 font-black text-[#6D4712] ring-1 ring-[var(--sp-color-state-draft-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-color-state-draft-border)]"
                     >
                       {searchMismatchClearLabel}
                     </button>
@@ -670,9 +670,9 @@ export function SeatInspector({
                 tabIndex={-1}
                 role="alert"
                 aria-labelledby="seat-inspector-error-title"
-                className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800 outline-none focus-visible:ring-4 focus-visible:ring-rose-100"
+                className="rounded-2xl border border-[var(--sp-color-state-danger-border)] bg-[var(--sp-color-state-danger-surface)] p-3 text-xs text-[#7E2F24] outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-color-state-danger-border)]"
               >
-                <h3 id="seat-inspector-error-title" className="font-black text-rose-900">Review inspector fields</h3>
+                <h3 id="seat-inspector-error-title" className="font-black text-[#7E2F24]">Review inspector fields</h3>
                 <p className="mt-1 font-semibold leading-5">{localError}</p>
                 {fieldErrors.length > 0 && (
                   <ul className="mt-2 space-y-1">
@@ -681,7 +681,7 @@ export function SeatInspector({
                         <button
                           type="button"
                           onClick={() => focusInspectorField(error.field)}
-                          className="text-left font-black underline decoration-rose-300 underline-offset-2 transition hover:text-rose-950 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100"
+                          className="text-left font-black underline decoration-[#D9A296] underline-offset-2 transition hover:text-[#6B271F] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-color-state-danger-border)]"
                         >
                           {error.message}
                         </button>
@@ -692,29 +692,29 @@ export function SeatInspector({
               </section>
             )}
 
-            <section aria-label="Draft-only seat impact" className="rounded-2xl border border-orange-200 bg-orange-50/70 p-3 text-xs leading-5 text-brand-dark">
-              <div className="text-[10px] font-black uppercase tracking-wide text-orange-700">Draft-only impact</div>
+            <section aria-label="Draft-only seat impact" className="rounded-2xl border border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)] p-3 text-xs leading-5 text-[var(--sp-color-brand-clay)]">
+              <div className="text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-action-primary)]">Draft-only impact</div>
               <p className="mt-1 font-semibold">Changes here update the admin draft. Viewers see them only after the draft is reviewed and published.</p>
             </section>
 
-            <section aria-labelledby="seat-summary-heading" className="rounded-2xl border border-slate-200 bg-white/60 p-3">
-              <h3 id="seat-summary-heading" className="text-[11px] font-black uppercase tracking-wide text-slate-500">Seat Summary</h3>
+            <section aria-labelledby="seat-summary-heading" className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
+              <h3 id="seat-summary-heading" className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Seat Summary</h3>
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-100">
-                  <div className="font-black uppercase tracking-wide text-slate-400">Zone</div>
-                  <div className="mt-0.5 truncate font-bold text-slate-800">{currentZone}</div>
+                <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
+                  <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Zone</div>
+                  <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{currentZone}</div>
                 </div>
-                <div className="rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-100">
-                  <div className="font-black uppercase tracking-wide text-slate-400">Status</div>
-                  <div className="mt-0.5 truncate font-bold text-slate-800">{currentStatusLabel}</div>
+                <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
+                  <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Status</div>
+                  <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{currentStatusLabel}</div>
                 </div>
-                <div className="rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-100">
-                  <div className="font-black uppercase tracking-wide text-slate-400">Seat Type</div>
-                  <div className="mt-0.5 truncate font-bold text-slate-800">{seatTypeLabel}</div>
+                <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
+                  <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Seat Type</div>
+                  <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{seatTypeLabel}</div>
                 </div>
-                <div className="rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-100">
-                  <div className="font-black uppercase tracking-wide text-slate-400">Assignment</div>
-                  <div className="mt-0.5 truncate font-bold text-slate-800">{employeeNameValue || (hasCurrentAssignment ? selectedSeatEmployeeName : "Open seat")}</div>
+                <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
+                  <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Assignment</div>
+                  <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{employeeNameValue || (hasCurrentAssignment ? selectedSeatEmployeeName : "Open seat")}</div>
                 </div>
               </div>
             </section>
@@ -725,19 +725,19 @@ export function SeatInspector({
                 onClick={() => onExplainSeat(selectedSeat)}
                 aria-label={`Ask Planner about ${selectedSeat.label}`}
                 title={`Ask Planner about ${selectedSeat.label}`}
-                className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-cyan-200 bg-cyan-50/70 px-3 py-2 text-left text-xs font-black text-cyan-900 transition hover:bg-cyan-100/80 active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100"
+                className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-[var(--sp-color-state-planner-border)] bg-[var(--sp-color-state-planner-surface)] px-3 py-2 text-left text-xs font-black text-[var(--sp-color-state-planner)] transition hover:bg-[#E5DDD2] active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-color-state-planner-border)]"
               >
                 <span>Ask Planner about this seat</span>
                 <span aria-hidden="true" className="shrink-0 text-sm leading-none">&gt;</span>
               </button>
             )}
 
-            <section aria-labelledby="seat-assignment-heading" className="rounded-2xl border border-slate-200 bg-white/60 p-3">
-              <h3 id="seat-assignment-heading" className="text-[11px] font-black uppercase tracking-wide text-slate-500">Assignment</h3>
-              <p className="mt-1 text-xs font-semibold text-slate-500">{hasCurrentAssignment ? "Draft assignment" : "Ready to assign"}</p>
+            <section aria-labelledby="seat-assignment-heading" className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
+              <h3 id="seat-assignment-heading" className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Assignment</h3>
+              <p className="mt-1 text-xs font-semibold text-[var(--sp-color-text-muted)]">{hasCurrentAssignment ? "Draft assignment" : "Ready to assign"}</p>
 
               <label className="mt-3 block">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Employee name</span>
+                <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Employee name</span>
                 <div className="relative">
                   <input
                     ref={employeeInputRef}
@@ -754,7 +754,7 @@ export function SeatInspector({
                     aria-activedescendant={employeeComboboxOpen && filteredEmployeeOptions[activeEmployeeIndex] ? `seat-inspector-employee-option-${filteredEmployeeOptions[activeEmployeeIndex].employee.id}` : undefined}
                     aria-invalid={Boolean(fieldErrorMap.employeeName)}
                     aria-describedby={fieldDescribedBy("employeeName")}
-                    className={`${fieldClassName} pr-10 ${fieldErrorMap.employeeName ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100" : ""}`}
+                    className={`${fieldClassName} pr-10 ${fieldErrorMap.employeeName ? "border-[var(--sp-color-state-danger-border)] focus:border-[var(--sp-color-state-danger)] focus:ring-[var(--sp-color-state-danger-border)]" : ""}`}
                   />
                   <button
                     type="button"
@@ -765,7 +765,7 @@ export function SeatInspector({
                       setEmployeeComboboxOpen(current => !current);
                       employeeInputRef.current?.focus();
                     }}
-                    className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                    className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                   >
                     v
                   </button>
@@ -773,7 +773,7 @@ export function SeatInspector({
                     <div
                       id="seat-inspector-employee-listbox"
                       role="listbox"
-                      className="absolute z-50 mt-2 max-h-64 w-full overflow-auto rounded-2xl border border-white/70 bg-white/95 p-1.5 shadow-[0_18px_48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl"
+                      className="absolute z-50 mt-2 max-h-64 w-full overflow-auto rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/95 p-1.5 shadow-[0_18px_48px_rgba(23,26,29,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl"
                     >
                       {filteredEmployeeOptions.length > 0 ? filteredEmployeeOptions.map((option, index) => (
                         <button
@@ -786,24 +786,24 @@ export function SeatInspector({
                           onMouseEnter={() => setActiveEmployeeIndex(index)}
                           onClick={() => selectEmployee(option.employee)}
                           className={[
-                            "flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
-                            index === activeEmployeeIndex ? "bg-orange-50 text-slate-950" : "text-slate-800 hover:bg-slate-50"
+                            "flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]",
+                            index === activeEmployeeIndex ? "bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-text-primary)]" : "text-[var(--sp-color-text-secondary)] hover:bg-[var(--sp-color-graphite-soft)]"
                           ].join(" ")}
                         >
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-black text-brand-dark ring-1 ring-orange-100">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-black text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)]">
                             {option.employee.full_name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?"}
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-black">{option.employee.full_name}</span>
-                            <span className="block truncate text-xs text-slate-500">{option.meta}</span>
+                            <span className="block truncate text-xs text-[var(--sp-color-text-muted)]">{option.meta}</span>
                           </span>
-                          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
+                          <span className="shrink-0 rounded-full bg-[var(--sp-color-graphite-soft)] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]">
                             {option.assignedSeatLabel}
                           </span>
                         </button>
                       )) : (
-                        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-                          <div className="font-black text-slate-700">No existing employee match</div>
+                        <div className="rounded-xl border border-dashed border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] p-3 text-xs leading-5 text-[var(--sp-color-text-muted)]">
+                          <div className="font-black text-[var(--sp-color-text-secondary)]">No existing employee match</div>
                           <div>Create new employee on save.</div>
                         </div>
                       )}
@@ -811,16 +811,16 @@ export function SeatInspector({
                   )}
                 </div>
                 {fieldErrorMap.employeeName && (
-                  <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-rose-700">{fieldErrorMap.employeeName}</p>
+                  <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.employeeName}</p>
                 )}
-                <span className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide", employeeNameValue ? "bg-orange-50 text-brand-dark ring-1 ring-orange-100" : "bg-slate-100 text-slate-500"].join(" ")}>
+                <span className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide", employeeNameValue ? "bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)]" : "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]"].join(" ")}>
                   {assignmentStateText}
                 </span>
               </label>
 
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Job Title</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Job Title</span>
                   <input
                     ref={employeePositionRef}
                     value={form.employeePosition}
@@ -830,11 +830,11 @@ export function SeatInspector({
                     aria-describedby={fieldDescribedBy("employeePosition")}
                     className={fieldClassName}
                   />
-                  {fieldErrorMap.employeePosition && <p id={fieldErrorId("employeePosition")} className="mt-1 text-xs font-semibold text-rose-700">{fieldErrorMap.employeePosition}</p>}
+                  {fieldErrorMap.employeePosition && <p id={fieldErrorId("employeePosition")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.employeePosition}</p>}
                 </label>
 
                 <label className="block">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Phone Ext.</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Phone Ext.</span>
                   <input
                     ref={phoneExtensionRef}
                     value={form.phoneExtension}
@@ -845,12 +845,12 @@ export function SeatInspector({
                     aria-invalid={Boolean(fieldErrorMap.phoneExtension)}
                     aria-describedby={fieldDescribedBy("phoneExtension")}
                   />
-                  {fieldErrorMap.phoneExtension && <p id={fieldErrorId("phoneExtension")} className="mt-1 text-xs font-semibold text-rose-700">{fieldErrorMap.phoneExtension}</p>}
+                  {fieldErrorMap.phoneExtension && <p id={fieldErrorId("phoneExtension")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.phoneExtension}</p>}
                 </label>
               </div>
 
               <label className="mt-3 block">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Department</span>
+                <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Department</span>
                 <select
                   ref={departmentRef}
                   value={form.department}
@@ -864,20 +864,20 @@ export function SeatInspector({
                     <option key={department} value={department}>{department}</option>
                   ))}
                 </select>
-                {fieldErrorMap.department && <p id={fieldErrorId("department")} className="mt-1 text-xs font-semibold text-rose-700">{fieldErrorMap.department}</p>}
+                {fieldErrorMap.department && <p id={fieldErrorId("department")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.department}</p>}
               </label>
             </section>
 
-            <section aria-labelledby="seat-metadata-heading" className="rounded-2xl border border-slate-200 bg-white/60 p-3">
-              <h3 id="seat-metadata-heading" className="text-[11px] font-black uppercase tracking-wide text-slate-500">Seat Metadata</h3>
-              <div className="mt-2 rounded-xl bg-slate-50 px-2.5 py-2 text-xs ring-1 ring-slate-100">
-                <div className="font-black uppercase tracking-wide text-slate-400">Detected zone</div>
-                <div className="mt-0.5 font-bold text-slate-800">{currentZone}</div>
+            <section aria-labelledby="seat-metadata-heading" className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
+              <h3 id="seat-metadata-heading" className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Seat Metadata</h3>
+              <div className="mt-2 rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 text-xs ring-1 ring-[var(--sp-color-border-subtle)]">
+                <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Detected zone</div>
+                <div className="mt-0.5 font-bold text-[var(--sp-color-text-secondary)]">{currentZone}</div>
               </div>
 
               {!hasAssignedPerson && (
                 <label className="mt-3 block">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Seat status</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Seat status</span>
                   <select
                     ref={statusRef}
                     value={effectiveStatus}
@@ -890,12 +890,12 @@ export function SeatInspector({
                     <option value="reserved">Reserved</option>
                     <option value="unavailable">Unavailable</option>
                   </select>
-                  {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-rose-700">{fieldErrorMap.status}</p>}
+                  {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.status}</p>}
                 </label>
               )}
 
               <label className="mt-3 block">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Notes</span>
+                <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Notes</span>
                 <textarea
                   ref={notesRef}
                   value={form.notes}
@@ -905,31 +905,31 @@ export function SeatInspector({
                   aria-describedby={fieldDescribedBy("notes")}
                   className={`${fieldClassName} min-h-20`}
                 />
-                {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-rose-700">{fieldErrorMap.notes}</p>}
+                {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.notes}</p>}
               </label>
             </section>
 
-            <section aria-label={`Available actions for ${selectedSeat.label}`} className="rounded-2xl border border-slate-200 bg-white/60 p-3 text-xs text-slate-600">
+            <section aria-label={`Available actions for ${selectedSeat.label}`} className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 text-xs text-[var(--sp-color-text-muted)] shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-[11px] font-black uppercase tracking-wide text-slate-500">Actions / Rules</h3>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">Draft only</span>
+                <h3 className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Actions / Rules</h3>
+                <span className="rounded-full bg-[var(--sp-color-brand-paper)] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)]">Draft only</span>
               </div>
               <div className="mt-2 grid gap-2">
                 <div className={capabilityRowClassName}>
                   <div className="min-w-0">
-                    <div className="font-black text-slate-900">Delete</div>
+                    <div className="font-black text-[var(--sp-color-text-primary)]">Delete</div>
                     <div id="seat-inspector-delete-help" className="mt-0.5 leading-4">{deleteHelpText}</div>
                   </div>
-                  <span className={[actionStatePillClassName, selectedSeatCanDelete ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-100 text-slate-500 ring-slate-200"].join(" ")}>
+                  <span className={[actionStatePillClassName, selectedSeatCanDelete ? "bg-[var(--sp-color-state-success-surface)] text-[#284C3B] ring-[var(--sp-color-state-success-border)]" : "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] ring-[var(--sp-color-border-subtle)]"].join(" ")}>
                     {selectedSeatCanDelete ? "Allowed" : "Blocked"}
                   </span>
                 </div>
                 <div className={capabilityRowClassName}>
                   <div className="min-w-0">
-                    <div className="font-black text-slate-900">Vacate</div>
+                    <div className="font-black text-[var(--sp-color-text-primary)]">Vacate</div>
                     <div className="mt-0.5 leading-4">{vacateHelpText}</div>
                   </div>
-                  <span className={[actionStatePillClassName, hasCurrentAssignment ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-100 text-slate-500 ring-slate-200"].join(" ")}>
+                  <span className={[actionStatePillClassName, hasCurrentAssignment ? "bg-[var(--sp-color-state-success-surface)] text-[#284C3B] ring-[var(--sp-color-state-success-border)]" : "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] ring-[var(--sp-color-border-subtle)]"].join(" ")}>
                     {hasCurrentAssignment ? "Allowed" : "Not needed"}
                   </span>
                 </div>
@@ -937,7 +937,7 @@ export function SeatInspector({
             </section>
           </div>
 
-          <div className="sticky bottom-0 z-20 border-t border-slate-200/70 bg-slate-50 px-3.5 py-2.5 shadow-[0_-10px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl supports-[backdrop-filter]:bg-slate-50 sm:bg-slate-50/95 sm:supports-[backdrop-filter]:bg-slate-50/90">
+          <div className="sticky bottom-0 z-20 border-t border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] px-3.5 py-2.5 shadow-[0_-12px_26px_rgba(23,26,29,0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--sp-color-surface)] sm:bg-[var(--sp-color-surface)]/95 sm:supports-[backdrop-filter]:bg-[var(--sp-color-surface)]/90">
             {showFooterState ? (
               <div role="status" aria-live="polite" className={["mb-2 flex min-h-7 items-center rounded-xl px-3 py-1.5 text-xs font-black ring-1", inspectorStateClassName].join(" ")}>
                 {inspectorStateLabel}
@@ -963,7 +963,7 @@ export function SeatInspector({
                 aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
                 aria-describedby={saveDisabledReason ? "seat-inspector-save-help" : undefined}
                 title={saveDisabledReason ?? `${primaryActionLabel} for ${selectedSeat.label}`}
-                className="w-full rounded-xl disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:hover:border-slate-200 disabled:hover:bg-slate-100"
+                className="w-full rounded-xl disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none disabled:hover:border-[var(--sp-color-border-subtle)] disabled:hover:bg-[var(--sp-color-graphite-soft)]"
               >
                 {primaryActionLabel}
               </Button>
@@ -985,7 +985,7 @@ export function SeatInspector({
                 aria-label={`Delete custom seat ${selectedSeat.label}`}
                 aria-describedby="seat-inspector-delete-help"
                 title={deleteHelpText}
-                className="w-full whitespace-normal rounded-xl leading-tight disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:hover:bg-slate-100"
+                className="w-full whitespace-normal rounded-xl leading-tight disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none disabled:hover:bg-[var(--sp-color-graphite-soft)]"
               >
                 Delete seat
               </Button>
@@ -998,39 +998,39 @@ export function SeatInspector({
           </div>
         </form>
       ) : (
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3.5 py-3 text-sm">
-          <section aria-labelledby="published-seat-summary-heading" className="rounded-2xl border border-slate-200 bg-white/60 p-3">
-            <h3 id="published-seat-summary-heading" className="text-[11px] font-black uppercase tracking-wide text-slate-500">Seat Summary</h3>
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[var(--sp-color-surface)] px-3.5 py-3 text-sm">
+          <section aria-labelledby="published-seat-summary-heading" className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
+            <h3 id="published-seat-summary-heading" className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Seat Summary</h3>
             <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-              <div className="rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-100">
-                <div className="font-black uppercase tracking-wide text-slate-400">Zone</div>
-                <div className="mt-0.5 truncate font-bold text-slate-800">{currentZone}</div>
+              <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
+                <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Zone</div>
+                <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{currentZone}</div>
               </div>
-              <div className="rounded-xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-100">
-                <div className="font-black uppercase tracking-wide text-slate-400">Status</div>
-                <div className="mt-0.5 truncate font-bold text-slate-800">{currentStatusLabel}</div>
+              <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
+                <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Status</div>
+                <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{currentStatusLabel}</div>
               </div>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white/60 p-3">
-            <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Published Assignment</div>
-            <div className="mt-1 text-lg font-black leading-tight text-slate-950">{selectedSeat.employee?.full_name ?? "Open seat"}</div>
+          <section className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
+            <div className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Published Assignment</div>
+            <div className="mt-1 text-lg font-black leading-tight text-[var(--sp-color-text-primary)]">{selectedSeat.employee?.full_name ?? "Open seat"}</div>
             {(selectedSeat.employee?.position || selectedSeat.employee?.department) && (
-              <div className="mt-1 text-sm text-slate-500">
+              <div className="mt-1 text-sm text-[var(--sp-color-text-muted)]">
                 {[selectedSeat.employee?.position, selectedSeat.employee?.department].filter(Boolean).join(" · ")}
               </div>
             )}
             {selectedSeat.employee?.phone_extension && (
-              <div className="mt-2 inline-flex rounded-full bg-white/80 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
+              <div className="mt-2 inline-flex rounded-full bg-[var(--sp-color-graphite-soft)] px-2 py-1 text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]">
                 Ext. {selectedSeat.employee.phone_extension}
               </div>
             )}
           </section>
           {selectedSeat.notes && (
-            <section className="rounded-2xl border border-slate-200 bg-white/60 p-3">
-              <div className="text-[11px] font-black uppercase tracking-wide text-slate-500">Notes</div>
-              <p className="mt-1 text-sm leading-5 text-slate-600">{selectedSeat.notes}</p>
+            <section className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
+              <div className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Notes</div>
+              <p className="mt-1 text-sm leading-5 text-[var(--sp-color-text-secondary)]">{selectedSeat.notes}</p>
             </section>
           )}
         </div>
@@ -1038,7 +1038,7 @@ export function SeatInspector({
     </aside>
 
     {vacateConfirmOpen && (
-      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
         <section
           role="dialog"
           aria-modal="true"
@@ -1050,19 +1050,19 @@ export function SeatInspector({
               setVacateConfirmOpen(false);
             }
           }}
-          className="w-full max-w-md rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+          className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 id="vacate-seat-confirm-title" className="text-base font-black">Vacate {selectedSeat.label}?</h2>
-              <p id="vacate-seat-confirm-description" className="mt-1 text-sm leading-5 text-slate-500">
+              <p id="vacate-seat-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
                 This clears {selectedSeatEmployeeName} from this draft seat.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setVacateConfirmOpen(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
               aria-label="Cancel vacating seat"
             >
               x
@@ -1071,11 +1071,11 @@ export function SeatInspector({
 
           <div className="mt-4 grid gap-2">
             {isDirty && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-sm font-semibold leading-5 text-amber-900">
+              <div className="rounded-xl border border-[var(--sp-color-state-draft-border)] bg-[var(--sp-color-state-draft-surface)] p-3 text-sm font-semibold leading-5 text-[#6D4712]">
                 Any unsaved inspector edits will be discarded.
               </div>
             )}
-            <div className="rounded-xl border border-orange-200 bg-orange-50/70 p-3 text-sm font-semibold leading-5 text-brand-dark">
+            <div className="rounded-xl border border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)] p-3 text-sm font-semibold leading-5 text-[var(--sp-color-brand-clay)]">
               The published viewer map will not change until the draft is published.
             </div>
           </div>

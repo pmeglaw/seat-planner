@@ -107,18 +107,22 @@ test("map tools add seat row is neutral until add-seat mode is active", async ()
   assert.match(drawerSource, /border-slate-200\/70 bg-white\/75 text-slate-900 hover:border-slate-300 hover:bg-white/);
 });
 
-test("seat map uses the management-style dark workspace shell", async () => {
+test("seat map uses the component-board desktop workspace shell", async () => {
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
 
-  assert.match(seatMapSource, /bg-slate-950 px-1\.5 py-2/);
-  assert.match(seatMapSource, /max-w-\[1920px\][\s\S]*rounded-\[28px\][\s\S]*border border-white\/10 bg-white/);
-  assert.match(seatMapSource, /border-b border-slate-200\/80 bg-slate-50\/95/);
-  assert.match(seatMapSource, /rounded-\[18px\] border border-slate-200\/80 bg-white\/75 p-1/);
-  assert.match(seatMapSource, /bg-white p-1 lg:min-h-0/);
+  assert.match(seatMapSource, /bg-\[var\(--sp-color-workspace-deep\)\] px-2 py-2/);
+  assert.match(seatMapSource, /max-w-\[1920px\][\s\S]*rounded-\[30px\][\s\S]*border border-white\/10 bg-\[var\(--sp-color-canvas\)\]/);
+  assert.match(seatMapSource, /border-b border-\[var\(--sp-color-border-subtle\)\] bg-\[var\(--sp-color-surface\)\]\/95/);
+  assert.match(seatMapSource, /aria-label="Admin planning workspace"[\s\S]*bg-\[var\(--sp-color-workspace\)\]/);
+  assert.match(seatMapSource, /Command search/);
+  assert.match(seatMapSource, /aria-label="Primary workspace controls"[\s\S]*bg-\[var\(--sp-color-surface-raised\)\]\/90/);
+  assert.match(seatMapSource, /bg-\[var\(--sp-color-map-workspace\)\] p-2 lg:min-h-0/);
+  assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*rounded-\[24px\][\s\S]*bg-\[var\(--sp-color-surface\)\]\/55/);
   assert.match(seatMapSource, /MAP_VIEW_MODE_OPTIONS[\s\S]*Overview[\s\S]*Detail/);
   assert.match(seatMapSource, /useState<MapViewMode>\("detail"\)/);
   assert.match(seatMapSource, /aria-label="Map view mode"/);
-  assert.match(seatMapSource, /rounded-\[18px\] bg-\[#f6f4f1\] shadow-\[0_10px_28px_rgba\(15,23,42,0\.08\),inset_0_0_0_1px_rgba\(71,85,105,0\.24\)/);
+  assert.match(seatMapSource, /rounded-\[22px\] border border-\[var\(--sp-color-border-strong\)\] bg-\[var\(--sp-color-map-workspace\)\]/);
+  assert.match(seatMapSource, /bg-\[var\(--sp-color-workspace\)\]\/90 p-0\.5 text-white/);
   assert.match(seatMapSource, /mapViewMode === "overview"[\s\S]*overflow-hidden p-1\.5[\s\S]*min-h-\[360px\] max-h-\[82svh\] overflow-auto/);
   assert.match(seatMapSource, /w-\[1120px\][\s\S]*sm:w-\[1460px\][\s\S]*lg:w-\[1911px\]/);
   assert.doesNotMatch(seatMapSource, /fitMapOverview|Fit map overview|>\s*Fit map\s*</);
@@ -131,18 +135,22 @@ test("seat badges use compact map-native labels with strong active states", asyn
 
   assert.match(markerSource, /function SeatToken/);
   assert.match(markerSource, /getPassiveEmployeeLabel/);
-  assert.match(markerSource, /border-emerald-700\/25 bg-emerald-50\/95/);
-  assert.match(markerSource, /border-slate-500\/20 bg-white\/70/);
+  assert.match(markerSource, /border-\[#8E8276\]\/45 bg-\[#FFFDF8\]\/95/);
+  assert.match(markerSource, /border-\[#BEB4A8\]\/70 bg-white\/80/);
   assert.match(markerSource, /min-h-\[34px\] rounded-\[11px\]/);
   assert.match(markerSource, /w-\[82px\] max-w-\[82px\] sm:w-\[94px\]/);
   assert.match(markerSource, /overflow-visible border ring-1 ring-white\/35/);
+  assert.match(markerSource, /const baseStatusToneClass =/);
+  assert.match(markerSource, /const statusToneClass = \(tokenMode === "selected" \|\| tokenMode === "prominent"\) \? "" : baseStatusToneClass/);
+  assert.match(markerSource, /border-\[#D46A24\] bg-\[#171A1D\] text-white/);
+  assert.match(markerSource, /group-hover:border-\[#D46A24\]/);
   assert.match(markerSource, /group-hover:w-\[112px\]/);
   assert.match(markerSource, /group-focus-visible:w-\[112px\]/);
   assert.match(markerSource, /leading-\[1\.05\]/);
   assert.match(markerSource, /leading-\[1\.08\]/);
   assert.match(markerSource, /text-\[10px\]/);
   assert.match(markerSource, /tokenMode === "selected"[\s\S]*w-\[112px\]/);
-  assert.match(markerSource, /searchProminent[\s\S]*border-orange-300 bg-orange-100/);
+  assert.match(markerSource, /searchProminent[\s\S]*border-\[#2F6668\] bg-\[#DCEDEA\]/);
   assert.match(markerSource, /namesVisible = showNames && hasEmployee && !dimmed && !compactNameLabel/);
   assert.match(markerSource, /inlineNameLabel = expandedNameBadge \? employeeName : compactEmployeeName/);
   assert.match(markerSource, /\{inlineNameLabel\}/);
@@ -155,16 +163,20 @@ test("selected inspector and search results stay attached to the map workspace",
 
   assert.match(seatMapSource, /selectedResultIsVisible/);
   assert.match(seatMapSource, /resultSummaryShellClass/);
-  assert.match(seatMapSource, /selectedResultIsVisible[\s\S]*rounded-xl border-slate-200\/80 bg-slate-50\/80 text-slate-500 shadow-none/);
-  assert.match(seatMapSource, /singleResultSeat[\s\S]*rounded-xl border-slate-200\/90 bg-white\/90/);
-  assert.match(seatMapSource, /resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-slate-200 bg-white\/90/);
+  assert.match(seatMapSource, /selectedResultIsVisible[\s\S]*rounded-xl border-\[var\(--sp-color-border-subtle\)\] bg-\[var\(--sp-color-graphite-soft\)\] text-\[var\(--sp-color-text-muted\)\] shadow-none/);
+  assert.match(seatMapSource, /singleResultSeat[\s\S]*rounded-xl border-\[var\(--sp-color-state-search-border\)\] bg-\[var\(--sp-color-state-search-surface\)\]/);
+  assert.match(seatMapSource, /singleResultOverlayClassName[\s\S]*border-\[var\(--sp-color-state-search-border\)\] bg-\[var\(--sp-color-state-search-surface\)\]\/95/);
+  assert.match(seatMapSource, /resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-\[var\(--sp-color-border-strong\)\] bg-\[var\(--sp-color-surface-raised\)\]/);
+  assert.match(seatMapSource, /resultClearButtonClassName = "inline-flex min-h-8[\s\S]*bg-\[var\(--sp-color-brand-paper\)\]/);
   assert.match(seatMapSource, /onClick=\{\(\) => fitSeatsInMap\(matchingSeats\)\}/);
   assert.match(seatMapSource, /onClick=\{\(\) => fitSeatsInMap\(\[singleResultSeat\]\)\}/);
   assert.match(seatMapSource, /detailFocusSeatId = selectedSeatId \?\? \(filtersActive && matchingSeats\.length === 1 \? matchingSeats\[0\]\.id : null\)/);
   assert.match(seatMapSource, /if \(detailFocusSeatId\) \{[\s\S]*queueCenterSeatInMap\(detailFocusSeatId\)/);
-  assert.match(inspectorSource, /sm:bottom-3 sm:right-3 sm:top-\[76px\]/);
-  assert.match(inspectorSource, /sm:max-h-none[\s\S]*sm:rounded-l-\[22px\][\s\S]*sm:rounded-r-\[18px\]/);
-  assert.match(inspectorSource, /sm:shadow-\[-10px_0_30px_rgba\(15,23,42,0\.16\)/);
+  assert.match(inspectorSource, /sm:bottom-3 sm:right-3 sm:top-\[84px\]/);
+  assert.match(inspectorSource, /sm:max-h-none[\s\S]*sm:w-\[376px\][\s\S]*sm:rounded-l-\[24px\][\s\S]*sm:rounded-r-\[18px\]/);
+  assert.match(inspectorSource, /sm:shadow-\[-12px_0_34px_rgba\(23,26,29,0\.18\)/);
+  assert.match(inspectorSource, /bg-\[var\(--sp-color-workspace\)\][\s\S]*Planning inspector/);
+  assert.match(inspectorSource, /bg-\[var\(--sp-color-brand-paper\)\][\s\S]*Draft-only impact/);
   assert.match(filterSource, /rounded-xl border border-slate-200\/80 bg-slate-50\/70 p-2 shadow-none/);
   assert.match(filterSource, /density = "panel"/);
   assert.match(filterSource, /max-h-\[196px\] space-y-1/);
