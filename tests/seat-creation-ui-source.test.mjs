@@ -112,10 +112,16 @@ test("seat map uses the component-board desktop workspace shell", async () => {
 
   assert.match(seatMapSource, /bg-\[var\(--sp-color-workspace-deep\)\] px-2 py-2/);
   assert.match(seatMapSource, /max-w-\[1920px\][\s\S]*rounded-\[30px\][\s\S]*border border-white\/10 bg-\[var\(--sp-color-canvas\)\]/);
+  assert.match(seatMapSource, /lg:grid-cols-\[286px_minmax\(0,1fr\)\]/);
+  assert.match(seatMapSource, /aria-label="Admin workspace rail"[\s\S]*bg-\[var\(--sp-color-workspace\)\]/);
   assert.match(seatMapSource, /border-b border-\[var\(--sp-color-border-subtle\)\] bg-\[var\(--sp-color-surface\)\]\/95/);
-  assert.match(seatMapSource, /aria-label="Admin planning workspace"[\s\S]*bg-\[var\(--sp-color-workspace\)\]/);
+  assert.match(seatMapSource, /aria-label="Admin planning workspace"[\s\S]*Office Seat Planner/);
+  assert.match(seatMapSource, /aria-label="Seat inventory summary"[\s\S]*stats\.total[\s\S]*stats\.assigned[\s\S]*stats\.available/);
+  assert.match(seatMapSource, /Draft publication status[\s\S]*draftStatusHeadline[\s\S]*draftStatusActionLabel[\s\S]*draftStatusDescription/);
   assert.match(seatMapSource, /Command search/);
-  assert.match(seatMapSource, /aria-label="Primary workspace controls"[\s\S]*bg-\[var\(--sp-color-surface-raised\)\]\/90/);
+  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*bg-\[var\(--sp-color-surface-raised\)\]\/90/);
+  assert.match(seatMapSource, /aria-label="Map command actions"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
+  assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
   assert.match(seatMapSource, /bg-\[var\(--sp-color-map-workspace\)\] p-2 lg:min-h-0/);
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*rounded-\[24px\][\s\S]*bg-\[var\(--sp-color-surface\)\]\/55/);
   assert.match(seatMapSource, /MAP_VIEW_MODE_OPTIONS[\s\S]*Overview[\s\S]*Detail/);
