@@ -539,6 +539,14 @@ export function SeatMap({
     reserved: localSeats.filter(seat => seat.status === "reserved").length
   }), [localSeats]);
   const publishSummary = useMemo(() => buildPublishChangeSummary(localSeats, localPublishedSeats), [localSeats, localPublishedSeats]);
+  const draftChangedSeatLabelSet = useMemo(() => new Set([
+    ...publishSummary.addedSeats,
+    ...publishSummary.assignmentChanges,
+    ...publishSummary.vacatedSeats,
+    ...publishSummary.seatMoves,
+    ...publishSummary.statusChanges,
+    ...publishSummary.otherChanges
+  ].map(item => item.label)), [publishSummary]);
 
   const employeeResults = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -2206,6 +2214,7 @@ export function SeatMap({
                         canEdit={canEdit}
                         showNames={showNames}
                         searchResult={Boolean(search.trim()) && seatMatchesFilters}
+                        draftChanged={draftChangedSeatLabelSet.has(seat.label)}
                         compactNameLabel={crowdedNameSeatIdSet.has(seat.id)}
                         moveSeatMode={moveSeatMode}
                         swapMode={Boolean(swapSourceSeatId)}
