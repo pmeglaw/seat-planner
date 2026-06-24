@@ -1561,6 +1561,8 @@ export function SeatMap({
   const publishReadinessDescription = publishSummary.hasChanges
     ? "This review includes saved draft changes only. Unsaved inspector edits must be saved or discarded before this review opens."
     : "No saved draft changes are waiting. The viewer map already matches this draft.";
+  const publishReadinessBadgeTone = publishSummary.hasChanges ? "draft" : "published";
+  const publishReadinessBadgeLabel = publishSummary.hasChanges ? "Ready" : "No changes";
   const activeMode = addSeatMode
     ? {
       label: "Add Seat",
@@ -2384,7 +2386,7 @@ export function SeatMap({
                   setPublishReviewOpen(false);
                 }}
                 disabled={pending}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                className={["flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40", focusRingClass].join(" ")}
                 aria-label="Close publish review"
               >
                 x
@@ -2393,9 +2395,9 @@ export function SeatMap({
 
             <div className="min-h-0 overflow-y-auto py-4">
               <div className={["rounded-xl border p-3", publishSummary.hasChanges ? "border-amber-200 bg-amber-50/80" : "border-emerald-200 bg-emerald-50/80"].join(" ")}>
-                <div className={["inline-flex rounded-full px-2 py-0.5 text-[11px] font-black uppercase tracking-wide ring-1", publishSummary.hasChanges ? "bg-white/80 text-amber-800 ring-amber-200" : "bg-white/80 text-emerald-700 ring-emerald-200"].join(" ")}>
-                  {publishSummary.hasChanges ? "Ready" : "No changes"}
-                </div>
+                <StatusBadge tone={publishReadinessBadgeTone} className="!min-h-0 !px-2 !py-0.5 !text-[11px] !font-black !tracking-wide">
+                  {publishReadinessBadgeLabel}
+                </StatusBadge>
                 <h3 className="mt-2 text-sm font-black text-slate-950">{publishReadinessTitle}</h3>
                 <p className="mt-1 text-sm font-semibold leading-5 text-slate-600">{publishReadinessDescription}</p>
               </div>
@@ -2409,13 +2411,17 @@ export function SeatMap({
 
               {actionError && !pending && (
                 <div role="alert" className="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold leading-5 text-rose-800">
-                  <span className="font-black">Publish did not complete.</span> {actionError}
+                  <StatusBadge tone="danger" className="!min-h-0 !px-2 !py-0.5 !text-[11px] !font-black !tracking-wide">Error</StatusBadge>
+                  <p className="mt-2">
+                    <span className="font-black">Publish did not complete.</span> {actionError}
+                  </p>
                 </div>
               )}
 
               {pending && (
                 <div role="status" aria-live="polite" className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm font-semibold leading-5 text-blue-800">
-                  Publishing reviewed draft changes. Viewer map stays unchanged until publish finishes.
+                  <StatusBadge tone="pending" className="!min-h-0 !px-2 !py-0.5 !text-[11px] !font-black !tracking-wide">Publishing</StatusBadge>
+                  <p className="mt-2">Publishing reviewed draft changes. Viewer map stays unchanged until publish finishes.</p>
                 </div>
               )}
 
@@ -2471,7 +2477,7 @@ export function SeatMap({
               <Button type="button" onClick={() => {
                 setActionError(null);
                 setPublishReviewOpen(false);
-              }} disabled={pending} className="w-full">
+              }} disabled={pending} className={["w-full", focusRingClass].join(" ")}>
                 Cancel
               </Button>
               <Button
@@ -2480,7 +2486,7 @@ export function SeatMap({
                 onClick={confirmPublishDraftMap}
                 disabled={pending || !publishSummary.hasChanges}
                 title={publishSummary.hasChanges ? "Publish reviewed draft changes" : "No draft changes to publish"}
-                className="w-full"
+                className={["w-full", focusRingClass].join(" ")}
               >
                 {pending ? "Publishing..." : actionError && publishSummary.hasChanges ? "Retry publish" : publishSummary.hasChanges ? (
                   <>
