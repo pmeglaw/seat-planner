@@ -137,8 +137,8 @@ export function SeatMarker({
       : seat.status === "reserved"
         ? "border-[#A26E23]/60 bg-[#F2E4C8]/95 text-[#67430F]"
         : seat.status === "unavailable"
-          ? "border-[#C8BFB3]/90 bg-[#E8E2DA]/92 text-[#655E56]"
-          : "border-[#D4CABF]/90 bg-[#F9F5ED]/86 text-[#575048]";
+          ? "border-[#C8BFB3]/90 bg-[#E8E2DA]/[0.92] text-[#655E56]"
+          : "border-[#D4CABF]/90 bg-[#F9F5ED]/[0.86] text-[#575048]";
   const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent") ? "" : baseStatusToneClass;
 
   const statusAccentClass =

@@ -36,6 +36,9 @@ test("desktop marker system exposes assigned available selected search and draft
   assert.match(markerSource, /searchSelected = selected && searchProminent/);
   assert.match(markerSource, /data-marker-intent=\{markerIntent\}/);
   assert.match(markerSource, /data-draft-changed=\{draftChanged \|\| undefined\}/);
+  assert.match(markerSource, /bg-\[#E8E2DA\]\/\[0\.92\]/);
+  assert.match(markerSource, /bg-\[#F9F5ED\]\/\[0\.86\]/);
+  assert.doesNotMatch(markerSource, /bg-\[#(?:E8E2DA|F9F5ED)\]\/(?:92|86)/);
   assert.match(markerSource, /aria-pressed=\{selected\}/);
   assert.match(markerSource, /Draft changed\./);
   assert.match(markerSource, /Search result\./);
