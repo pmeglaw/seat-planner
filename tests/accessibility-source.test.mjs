@@ -201,7 +201,12 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /Planning inspector/);
   assert.match(inspectorSource, /Draft-only impact/);
   assert.match(inspectorSource, /Viewers see changes after review and publish/);
-  assert.match(inspectorSource, /Assignment/);
+  assert.match(inspectorSource, /Assignment workflow/);
+  assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"/);
+  assert.match(inspectorSource, /id=\{employeeHelpId\}/);
+  assert.match(inspectorSource, /id=\{employeeStateId\}/);
+  assert.match(inspectorSource, /aria-describedby=\{employeeNameDescribedBy\}/);
+  assert.match(inspectorSource, /id="seat-inspector-new-employee-notice" role="note"/);
   assert.match(inspectorSource, /Published Assignment/);
   assert.match(inspectorSource, /Seat Metadata/);
   assert.match(inspectorSource, /Actions \/ Rules/);
