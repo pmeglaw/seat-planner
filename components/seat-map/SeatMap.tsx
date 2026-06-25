@@ -251,6 +251,7 @@ export function SeatMap({
   const [inspectorDirty, setInspectorDirty] = useState(false);
   const [inspectorGuardAction, setInspectorGuardAction] = useState<InspectorGuardAction | null>(null);
   const [pendingInspectorSaveAction, setPendingInspectorSaveAction] = useState<InspectorGuardAction | null>(null);
+  const [inspectorResetSignal, setInspectorResetSignal] = useState(0);
   const [searchSelectionNotice, setSearchSelectionNotice] = useState<string | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [showNames, setShowNames] = useState(false);
@@ -814,6 +815,7 @@ export function SeatMap({
     setInspectorGuardAction(null);
     setPendingInspectorSaveAction(null);
     setInspectorDirty(false);
+    setInspectorResetSignal(current => current + 1);
     applyInspectorGuardAction(action);
   }
 
@@ -2552,6 +2554,7 @@ export function SeatMap({
         }}
         onDirtyChange={setInspectorDirty}
         onSubmitBlocked={cancelPendingInspectorGuardAction}
+        resetSignal={inspectorResetSignal}
       />
 
       {inspectorGuardAction && selectedSeat && (

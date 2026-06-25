@@ -88,3 +88,27 @@ test("desktop inspector workflow labels and draft-only boundaries stay wired", a
   assert.match(viewerFinderSource, /Read-only/);
   assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Vacate|Delete seat/);
 });
+
+test("desktop assignment cancel and discard reset unsaved no-match editor state", async () => {
+  const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+
+  assert.match(inspectorSource, /resetSignal: number/);
+  assert.match(inspectorSource, /const resetInspectorDraftForm = useCallback/);
+  assert.match(inspectorSource, /setEmployeeComboboxOpen\(false\)/);
+  assert.match(inspectorSource, /setActiveEmployeeIndex\(0\)/);
+  assert.match(inspectorSource, /setVacateConfirmOpen\(false\)/);
+  assert.match(inspectorSource, /function handleResetEdits\(\) \{[\s\S]*resetInspectorDraftForm\(initialForm\);[\s\S]*\}/);
+  assert.match(inspectorSource, /function handleCancelEditing\(\) \{[\s\S]*if \(isDirty\) \{[\s\S]*resetInspectorDraftForm\(initialForm\);[\s\S]*return;[\s\S]*\}[\s\S]*onClose\(\);[\s\S]*\}/);
+  assert.match(inspectorSource, /onClick=\{handleCancelEditing\} aria-label=\{`Cancel editing \$\{selectedSeat\.label\}`\}/);
+  assert.match(inspectorSource, /onClick=\{handleResetEdits\} disabled=\{pending\} aria-label=\{`Discard edits for \$\{selectedSeat\.label\}`\}/);
+  assert.match(inspectorSource, /const showNewEmployeeNotice = Boolean\(employeeNameValue && !matchedEmployee\)/);
+  assert.match(inspectorSource, /Saving will create a new employee record named/);
+  assert.match(inspectorSource, /Save draft changes/);
+  assert.match(inspectorSource, /Discard edits to restore the saved assignment/);
+  assert.match(inspectorSource, /Viewers see it only after publish/);
+
+  assert.match(seatMapSource, /const \[inspectorResetSignal, setInspectorResetSignal\] = useState\(0\)/);
+  assert.match(seatMapSource, /setInspectorResetSignal\(current => current \+ 1\)/);
+  assert.match(seatMapSource, /resetSignal=\{inspectorResetSignal\}/);
+});

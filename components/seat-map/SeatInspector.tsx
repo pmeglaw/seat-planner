@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
@@ -29,6 +29,7 @@ type SeatInspectorProps = {
   onError: (message: string | null) => void;
   onDirtyChange: (dirty: boolean) => void;
   onSubmitBlocked?: () => void;
+  resetSignal: number;
 };
 
 type SeatInspectorForm = {
@@ -107,7 +108,8 @@ export function SeatInspector({
   onSeatUpdated,
   onError,
   onDirtyChange,
-  onSubmitBlocked
+  onSubmitBlocked,
+  resetSignal
 }: SeatInspectorProps) {
   const [pending, startTransition] = useTransition();
   const [localError, setLocalError] = useState<string | null>(null);
@@ -120,6 +122,7 @@ export function SeatInspector({
   const [vacateConfirmOpen, setVacateConfirmOpen] = useState(false);
   const activeSeatIdRef = useRef<string | null>(null);
   const activeSeatSnapshotRef = useRef(formSnapshot(emptyForm));
+  const resetSignalRef = useRef(resetSignal);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const employeeInputRef = useRef<HTMLInputElement | null>(null);
   const employeePositionRef = useRef<HTMLInputElement | null>(null);
@@ -183,6 +186,20 @@ export function SeatInspector({
     onDirtyChange(isDirty);
   }, [isDirty, onDirtyChange]);
 
+  const resetInspectorDraftForm = useCallback((nextForm: SeatInspectorForm) => {
+    activeSeatSnapshotRef.current = formSnapshot(nextForm);
+    setForm(nextForm);
+    setInitialForm(nextForm);
+    setLocalError(null);
+    setFieldErrors([]);
+    setSaveFeedback(null);
+    setEmployeeComboboxOpen(false);
+    setActiveEmployeeIndex(0);
+    setVacateConfirmOpen(false);
+    onError(null);
+    onDirtyChange(false);
+  }, [onDirtyChange, onError]);
+
   useEffect(() => {
     if (!seat) {
       activeSeatIdRef.current = null;
@@ -205,19 +222,18 @@ export function SeatInspector({
 
     if (isNewSeat || (!isDirty && activeSeatSnapshotRef.current !== nextSnapshot)) {
       activeSeatIdRef.current = seat.id;
-      activeSeatSnapshotRef.current = nextSnapshot;
-      setForm(nextForm);
-      setInitialForm(nextForm);
-      setLocalError(null);
-      setFieldErrors([]);
-      setSaveFeedback(null);
-      setEmployeeComboboxOpen(false);
-      setActiveEmployeeIndex(0);
-      setVacateConfirmOpen(false);
-      onError(null);
-      onDirtyChange(false);
+      resetInspectorDraftForm(nextForm);
     }
-  }, [seat, isDirty, onDirtyChange, onError]);
+  }, [seat, isDirty, onDirtyChange, resetInspectorDraftForm]);
+
+  useEffect(() => {
+    if (resetSignalRef.current === resetSignal) return;
+    resetSignalRef.current = resetSignal;
+    if (!seat) return;
+
+    activeSeatIdRef.current = seat.id;
+    resetInspectorDraftForm(formFromSeat(seat));
+  }, [resetSignal, seat, resetInspectorDraftForm]);
 
   if (!seat) return null;
 
@@ -548,12 +564,16 @@ export function SeatInspector({
   }
 
   function handleResetEdits() {
-    setForm(initialForm);
-    setLocalError(null);
-    setFieldErrors([]);
-    setSaveFeedback(null);
-    onError(null);
-    onDirtyChange(false);
+    resetInspectorDraftForm(initialForm);
+  }
+
+  function handleCancelEditing() {
+    if (isDirty) {
+      resetInspectorDraftForm(initialForm);
+      return;
+    }
+
+    onClose();
   }
 
   function handleStartSwapSeat() {
@@ -1040,7 +1060,7 @@ export function SeatInspector({
                   {saveDisabledReason}
                 </span>
               )}
-              <Button type="button" onClick={onClose} aria-label={`Cancel editing ${selectedSeat.label}`} className="min-w-0 rounded-xl px-4">
+              <Button type="button" onClick={handleCancelEditing} aria-label={`Cancel editing ${selectedSeat.label}`} className="min-w-0 rounded-xl px-4">
                 Cancel
               </Button>
               <Button
