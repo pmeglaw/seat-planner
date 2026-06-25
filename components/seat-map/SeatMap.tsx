@@ -1603,8 +1603,8 @@ export function SeatMap({
   const desktopMapGridClass = filterCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]";
   const showFilterPanel = !filterCollapsed;
   const desktopInspectorOpen = canEdit && Boolean(selectedSeat && !inspectorCollapsed);
-  const desktopInspectorReserveMarginClassName = desktopInspectorOpen ? "lg:mr-[26.5rem] xl:mr-[27.75rem]" : "";
-  const desktopInspectorReservePaddingClassName = desktopInspectorOpen ? "lg:pr-[26.5rem] xl:pr-[27.75rem]" : "";
+  const desktopInspectorReserveMarginClassName = desktopInspectorOpen ? "sm:mr-[28rem] xl:mr-[29.5rem]" : "";
+  const desktopInspectorReservePaddingClassName = desktopInspectorOpen ? "sm:pr-[28rem] xl:pr-[29.5rem]" : "";
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
     showFilterPanel ||

@@ -305,8 +305,8 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /Fit results unavailable because there are no matching seats/);
   assert.match(seatMapSource, /singleResultSeat = filtersActive && matchingSeats\.length === 1 \? matchingSeats\[0\] : null/);
   assert.match(seatMapSource, /const desktopInspectorOpen = canEdit && Boolean\(selectedSeat && !inspectorCollapsed\)/);
-  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = desktopInspectorOpen \? "lg:mr-\[26\.5rem\] xl:mr-\[27\.75rem\]" : ""/);
-  assert.match(seatMapSource, /const desktopInspectorReservePaddingClassName = desktopInspectorOpen \? "lg:pr-\[26\.5rem\] xl:pr-\[27\.75rem\]" : ""/);
+  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = desktopInspectorOpen \? "sm:mr-\[28rem\] xl:mr-\[29\.5rem\]" : ""/);
+  assert.match(seatMapSource, /const desktopInspectorReservePaddingClassName = desktopInspectorOpen \? "sm:pr-\[28rem\] xl:pr-\[29\.5rem\]" : ""/);
   assert.match(seatMapSource, /const mobileMapInteractionSurfaceOpen = canEdit && \(/);
   assert.match(seatMapSource, /const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;/);
   assert.match(seatMapSource, /mobileMapControlsHidden \? "hidden sm:flex" : ""/);

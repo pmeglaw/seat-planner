@@ -21,8 +21,8 @@ test("desktop inspector shell exposes the selected-seat identity model", async (
   assert.match(inspectorSource, /Protected original/);
   assert.match(inspectorSource, /Custom draft/);
   assert.match(inspectorSource, /Original/);
-  assert.match(seatMapSource, /const desktopInspectorReservePaddingClassName = desktopInspectorOpen \? "lg:pr-\[26\.5rem\] xl:pr-\[27\.75rem\]" : ""/);
-  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = desktopInspectorOpen \? "lg:mr-\[26\.5rem\] xl:mr-\[27\.75rem\]" : ""/);
+  assert.match(seatMapSource, /const desktopInspectorReservePaddingClassName = desktopInspectorOpen \? "sm:pr-\[28rem\] xl:pr-\[29\.5rem\]" : ""/);
+  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = desktopInspectorOpen \? "sm:mr-\[28rem\] xl:mr-\[29\.5rem\]" : ""/);
   assert.match(seatMapSource, /const activeModeBannerClassName = \[[\s\S]*desktopInspectorReserveMarginClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /className=\{activeModeBannerClassName\}/);
 });
