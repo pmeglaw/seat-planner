@@ -200,7 +200,7 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /Seat Summary/);
   assert.match(inspectorSource, /Planning inspector/);
   assert.match(inspectorSource, /Draft-only impact/);
-  assert.match(inspectorSource, /Viewers see them only after the draft is reviewed and published/);
+  assert.match(inspectorSource, /Viewers see changes after review and publish/);
   assert.match(inspectorSource, /Assignment/);
   assert.match(inspectorSource, /Published Assignment/);
   assert.match(inspectorSource, /Seat Metadata/);
@@ -304,9 +304,9 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;/);
   assert.match(seatMapSource, /mobileMapControlsHidden \? "hidden sm:flex" : ""/);
   assert.match(seatMapSource, /mobileMapControlsHidden \? "hidden sm:block" : ""/);
-  assert.match(seatMapSource, /desktopInspectorOpen \? "lg:pr-\[23\.5rem\]" : ""/);
-  assert.match(seatMapSource, /const resultSummaryShellClass = \[[\s\S]*desktopInspectorOpen \? "lg:mr-\[23\.5rem\]" : ""[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
-  assert.match(seatMapSource, /desktopInspectorOpen \? "lg:mr-\[23\.5rem\]" : ""/);
+  assert.match(seatMapSource, /desktopInspectorOpen \? "lg:pr-\[26\.5rem\] xl:pr-\[27\.75rem\]" : ""/);
+  assert.match(seatMapSource, /const resultSummaryShellClass = \[[\s\S]*desktopInspectorOpen \? "lg:mr-\[26\.5rem\] xl:mr-\[27\.75rem\]" : ""[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
+  assert.match(seatMapSource, /desktopInspectorOpen \? "lg:mr-\[26\.5rem\] xl:mr-\[27\.75rem\]" : ""/);
   assert.match(seatMapSource, /className=\{singleResultOverlayShellClassName\}/);
   assert.match(seatMapSource, /className=\{desktopResultRailClassName\}/);
   assert.match(seatMapSource, /className=\{mapMarkerLayerClassName\}/);

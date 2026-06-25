@@ -188,8 +188,8 @@ test("selected inspector and search results stay attached to the map workspace",
   assert.match(seatMapSource, /detailFocusSeatId = selectedSeatId \?\? \(filtersActive && matchingSeats\.length === 1 \? matchingSeats\[0\]\.id : null\)/);
   assert.match(seatMapSource, /if \(detailFocusSeatId\) \{[\s\S]*queueCenterSeatInMap\(detailFocusSeatId\)/);
   assert.match(inspectorSource, /sm:bottom-3 sm:right-3 sm:top-\[84px\]/);
-  assert.match(inspectorSource, /sm:max-h-none[\s\S]*sm:w-\[376px\][\s\S]*sm:rounded-l-\[24px\][\s\S]*sm:rounded-r-\[18px\]/);
-  assert.match(inspectorSource, /sm:shadow-\[-12px_0_34px_rgba\(23,26,29,0\.18\)/);
+  assert.match(inspectorSource, /sm:max-h-none[\s\S]*sm:w-\[420px\][\s\S]*sm:rounded-l-\[28px\][\s\S]*sm:rounded-r-\[20px\]/);
+  assert.match(inspectorSource, /sm:shadow-\[-16px_0_42px_rgba\(23,26,29,0\.20\)/);
   assert.match(inspectorSource, /bg-\[var\(--sp-color-workspace\)\][\s\S]*Planning inspector/);
   assert.match(inspectorSource, /bg-\[var\(--sp-color-brand-paper\)\][\s\S]*Draft-only impact/);
   assert.match(filterSource, /rounded-xl border border-slate-200\/80 bg-slate-50\/70 p-2 shadow-none/);
