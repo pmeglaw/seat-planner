@@ -238,6 +238,20 @@ export function SeatInspector({
     : hasAssignedPerson
       ? "Assign employee"
       : "Save draft changes";
+  const showNewEmployeeNotice = Boolean(employeeNameValue && !matchedEmployee);
+  const assignmentWorkflowTitle = hasCurrentAssignment ? "Review or change assignment" : "Assign this seat";
+  const assignmentWorkflowDescription = hasCurrentAssignment
+    ? "Use the employee field to keep, replace, or clear this draft assignment. Save only when the update is intentional."
+    : "Start with the employee name field. Search existing employees or type a new name to assign this draft seat.";
+  const assignmentWorkflowBadge = hasCurrentAssignment ? "Current assignment" : "Open seat";
+  const currentAssigneeDetails = [
+    selectedSeat.employee?.position,
+    selectedSeat.employee?.department,
+    selectedSeat.employee?.phone_extension ? `Ext. ${selectedSeat.employee.phone_extension}` : null
+  ].filter(Boolean).join(" · ");
+  const employeeHelpId = "seat-inspector-employee-help";
+  const employeeStateId = "seat-inspector-employee-state";
+  const newEmployeeNoticeId = showNewEmployeeNotice ? "seat-inspector-new-employee-notice" : null;
 
   const currentZone = selectedSeat.zone ?? selectedSeat.department ?? "Unzoned";
   const currentStatusLabel = effectiveStatus[0].toUpperCase() + effectiveStatus.slice(1);
@@ -301,6 +315,8 @@ export function SeatInspector({
   function fieldDescribedBy(field: SeatInspectorField, extraId?: string) {
     return [extraId, fieldErrorMap[field] ? fieldErrorId(field) : null].filter(Boolean).join(" ") || undefined;
   }
+
+  const employeeNameDescribedBy = fieldDescribedBy("employeeName", [employeeHelpId, employeeStateId, newEmployeeNoticeId].filter(Boolean).join(" "));
 
   function clearFieldError(field: SeatInspectorField) {
     setFieldErrors(current => current.filter(error => error.field !== field));
@@ -769,8 +785,29 @@ export function SeatInspector({
             )}
 
             <section aria-labelledby="seat-assignment-heading" className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
-              <h3 id="seat-assignment-heading" className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Assignment</h3>
-              <p className="mt-1 text-xs font-semibold text-[var(--sp-color-text-muted)]">{hasCurrentAssignment ? "Draft assignment" : "Ready to assign"}</p>
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-action-primary)]">Assignment workflow</div>
+                  <h3 id="seat-assignment-heading" className="mt-1 text-base font-black leading-tight text-[var(--sp-color-text-primary)]">{assignmentWorkflowTitle}</h3>
+                  <p id={employeeHelpId} className="mt-1 text-xs font-semibold leading-5 text-[var(--sp-color-text-muted)]">{assignmentWorkflowDescription}</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-[var(--sp-color-brand-paper)] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)]">
+                  {assignmentWorkflowBadge}
+                </span>
+              </div>
+
+              {hasCurrentAssignment ? (
+                <div aria-label="Current draft assignee" className="mt-3 border-l-4 border-[var(--sp-color-brand-copper)] bg-[var(--sp-color-brand-paper)] px-3 py-2 text-xs text-[var(--sp-color-brand-clay)]">
+                  <div className="font-black uppercase tracking-wide">Current draft assignee</div>
+                  <div className="mt-1 truncate text-sm font-black text-[var(--sp-color-text-primary)]">{selectedSeatEmployeeName}</div>
+                  <div className="mt-0.5 min-w-0 break-words font-semibold leading-4">{currentAssigneeDetails || "No title, department, or extension saved."}</div>
+                </div>
+              ) : (
+                <div aria-label="Open draft seat assignment guidance" className="mt-3 border-l-4 border-[var(--sp-color-state-info-border)] bg-[var(--sp-color-state-info-surface)] px-3 py-2 text-xs text-[#244E50]">
+                  <div className="font-black uppercase tracking-wide">Open draft seat</div>
+                  <div className="mt-1 font-semibold leading-4">Assign this seat by choosing an existing employee or entering a new employee name below.</div>
+                </div>
+              )}
 
               <label className="mt-3 block">
                 <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Employee name</span>
@@ -789,7 +826,7 @@ export function SeatInspector({
                     aria-autocomplete="list"
                     aria-activedescendant={employeeComboboxOpen && filteredEmployeeOptions[activeEmployeeIndex] ? `seat-inspector-employee-option-${filteredEmployeeOptions[activeEmployeeIndex].employee.id}` : undefined}
                     aria-invalid={Boolean(fieldErrorMap.employeeName)}
-                    aria-describedby={fieldDescribedBy("employeeName")}
+                    aria-describedby={employeeNameDescribedBy}
                     className={`${fieldClassName} pr-10 ${fieldErrorMap.employeeName ? "border-[var(--sp-color-state-danger-border)] focus:border-[var(--sp-color-state-danger)] focus:ring-[var(--sp-color-state-danger-border)]" : ""}`}
                   />
                   <button
@@ -840,7 +877,7 @@ export function SeatInspector({
                       )) : (
                         <div className="rounded-xl border border-dashed border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] p-3 text-xs leading-5 text-[var(--sp-color-text-muted)]">
                           <div className="font-black text-[var(--sp-color-text-secondary)]">No existing employee match</div>
-                          <div>Create new employee on save.</div>
+                          <div>Saving will create a new employee record if you keep this name.</div>
                         </div>
                       )}
                     </div>
@@ -849,10 +886,19 @@ export function SeatInspector({
                 {fieldErrorMap.employeeName && (
                   <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.employeeName}</p>
                 )}
-                <span className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide", employeeNameValue ? "bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)]" : "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]"].join(" ")}>
+                <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide", employeeNameValue ? "bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)]" : "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]"].join(" ")}>
                   {assignmentStateText}
                 </span>
               </label>
+
+              {showNewEmployeeNotice && (
+                <div id="seat-inspector-new-employee-notice" role="note" className="mt-2 rounded-xl border border-[var(--sp-color-state-draft-border)] bg-[var(--sp-color-state-draft-surface)] p-3 text-xs leading-5 text-[#6D4712]">
+                  <div className="font-black text-[#6D4712]">No existing employee match</div>
+                  <p className="mt-1 font-semibold">
+                    Saving will create a new employee record named <span className="font-black">{employeeNameValue}</span> and assign this draft seat. Viewers see it only after publish.
+                  </p>
+                </div>
+              )}
 
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
@@ -982,6 +1028,11 @@ export function SeatInspector({
               <div role="status" aria-live="polite" className="sr-only">
                 {inspectorStateLabel}
               </div>
+            )}
+            {isDirty && (
+              <p className="mb-2 text-xs font-semibold leading-5 text-[var(--sp-color-text-muted)]">
+                Unsaved assignment edits are not saved yet. Use Save draft changes to update the draft, or Discard edits to restore the saved assignment.
+              </p>
             )}
             <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(6.5rem,0.8fr)_minmax(0,1.5fr)]">
               {saveDisabledReason && (
