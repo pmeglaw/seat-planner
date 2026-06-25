@@ -1603,6 +1603,8 @@ export function SeatMap({
   const desktopMapGridClass = filterCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]";
   const showFilterPanel = !filterCollapsed;
   const desktopInspectorOpen = canEdit && Boolean(selectedSeat && !inspectorCollapsed);
+  const desktopInspectorReserveMarginClassName = desktopInspectorOpen ? "lg:mr-[26.5rem] xl:mr-[27.75rem]" : "";
+  const desktopInspectorReservePaddingClassName = desktopInspectorOpen ? "lg:pr-[26.5rem] xl:pr-[27.75rem]" : "";
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
     showFilterPanel ||
@@ -1641,16 +1643,20 @@ export function SeatMap({
       : selectedResultIsVisible
       ? "rounded-xl border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] shadow-none"
       : "rounded-2xl border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)]/90 py-2 text-[var(--sp-color-text-muted)] shadow-[0_12px_34px_rgba(23,26,29,0.10)] backdrop-blur-xl",
-    desktopInspectorOpen ? "lg:mr-[23.5rem]" : ""
+    desktopInspectorReserveMarginClassName
   ].filter(Boolean).join(" ");
   const singleResultOverlayShellClassName = [
     "pointer-events-none sticky left-0 right-0 top-12 z-30 flex h-0 w-full justify-center px-2 sm:top-2 sm:justify-end",
     mobileMapControlsHidden ? "hidden sm:flex" : "",
-    desktopInspectorOpen ? "lg:pr-[23.5rem]" : ""
+    desktopInspectorReservePaddingClassName
   ].filter(Boolean).join(" ");
   const singleResultOverlayClassName = [
     "pointer-events-auto flex w-[min(100%,22rem)] flex-col gap-2 rounded-xl border border-[var(--sp-color-state-search-border)] bg-[var(--sp-color-state-search-surface)]/95 px-2.5 py-2 text-xs font-semibold text-[#244E50] shadow-[0_14px_34px_rgba(23,26,29,0.18)] backdrop-blur-md sm:w-auto sm:min-w-[28rem] sm:max-w-[min(46rem,calc(100vw-11rem))] sm:flex-row sm:items-center sm:justify-between",
-    desktopInspectorOpen ? "lg:min-w-0 lg:max-w-[min(36rem,calc(100vw-29rem))]" : ""
+    desktopInspectorOpen ? "lg:min-w-0 lg:max-w-[min(36rem,calc(100vw-32rem))] xl:max-w-[min(36rem,calc(100vw-33.5rem))]" : ""
+  ].filter(Boolean).join(" ");
+  const activeModeBannerClassName = [
+    "flex flex-col gap-2 rounded-2xl border border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)]/90 px-3 py-2 text-xs font-semibold text-[var(--sp-color-brand-clay)] shadow-[0_12px_34px_rgba(194,65,12,0.14)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between",
+    desktopInspectorReserveMarginClassName
   ].filter(Boolean).join(" ");
   const mapModeOverlayShellClassName = [
     "pointer-events-none sticky left-0 top-0 z-30 h-0",
@@ -1662,7 +1668,7 @@ export function SeatMap({
   ].filter(Boolean).join(" ");
   const desktopResultRailClassName = [
     "hidden lg:block",
-    desktopInspectorOpen ? "lg:mr-[23.5rem]" : ""
+    desktopInspectorReserveMarginClassName
   ].filter(Boolean).join(" ");
   const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface-raised)] px-3 py-1.5 text-[11px] font-black text-[var(--sp-color-text-secondary)] transition hover:border-[var(--sp-color-brand-copper)] hover:bg-[var(--sp-color-brand-paper)] hover:text-[var(--sp-color-brand-clay)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50";
   const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)] px-3 py-1.5 text-[11px] font-black text-[var(--sp-color-brand-clay)] transition hover:bg-[#F3D1B9] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]";
@@ -2100,7 +2106,7 @@ export function SeatMap({
           )}
 
           {activeMode && (
-            <div role="status" aria-live="polite" className="flex flex-col gap-2 rounded-2xl border border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)]/90 px-3 py-2 text-xs font-semibold text-[var(--sp-color-brand-clay)] shadow-[0_12px_34px_rgba(194,65,12,0.14)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+            <div role="status" aria-live="polite" className={activeModeBannerClassName}>
               <div className="min-w-0">
                 <div className="text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-action-primary)]">{activeMode.label} mode</div>
                 <div className="mt-0.5 truncate text-sm font-bold text-[var(--sp-color-text-primary)]">{activeMode.message}</div>

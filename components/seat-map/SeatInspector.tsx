@@ -251,12 +251,38 @@ export function SeatInspector({
     return current;
   }, {});
   const inspectorStateLabel = pending
-    ? "Saving"
+    ? "Saving draft..."
     : localError
       ? "Error"
       : isDirty
         ? "Unsaved changes"
         : saveFeedback ?? "No unsaved changes";
+  const assignmentIdentityLabel = employeeNameValue || (hasCurrentAssignment ? selectedSeatEmployeeName : "");
+  const selectedSeatStatusLabel = hasAssignedPerson ? "Assigned seat" : "Open seat";
+  const draftStateTitle = localError
+    ? "Review before saving"
+    : pending
+      ? "Saving draft..."
+      : isDirty
+        ? "Unsaved changes"
+        : saveFeedback
+          ? "Saved to draft"
+          : "No unsaved changes";
+  const draftStateDescription = localError
+    ? "Fix the highlighted inspector fields before saving. Viewers continue seeing the published map."
+    : pending
+      ? "Saving this seat to the admin draft. Viewers continue seeing the published map until publish."
+      : isDirty
+        ? "Save or cancel these seat edits before changing workflows. Viewers continue seeing the published map until publish."
+    : saveFeedback
+      ? "This seat is saved to the admin draft. Viewers see the update only after publish."
+      : "This seat matches the saved draft. Viewers see changes after review and publish.";
+  const identityBadgeClassName = "rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ring-1";
+  const seatTypeBadgeClassName = selectedSeat.is_custom
+    ? "bg-[var(--sp-color-state-info-surface)] text-[#244E50] ring-[var(--sp-color-state-info-border)]"
+    : isProtectedOriginalSeatLabel(selectedSeat.label)
+      ? "bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)] ring-[var(--sp-color-state-selected-border)]"
+      : "bg-white/10 text-white/75 ring-white/15";
   const inspectorStateClassName = localError
     ? "bg-[var(--sp-color-state-danger-surface)] text-[#7E2F24] ring-[var(--sp-color-state-danger-border)]"
     : pending
@@ -579,7 +605,7 @@ export function SeatInspector({
   const deleteHelpText = selectedSeatCanDelete ? "Available custom draft seat can be deleted." : selectedSeatDeleteBlockReason ?? "Delete is unavailable for this seat.";
   const vacateHelpText = hasCurrentAssignment ? "Assigned seat can be vacated without deleting the marker." : "No employee is assigned, so Vacate is not needed.";
   const capabilityRowClassName = "flex items-start justify-between gap-3 rounded-xl bg-[var(--sp-color-surface-raised)]/80 px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]";
-  const secondaryActionGridClassName = hasCurrentAssignment && !isDirty ? "grid-cols-3" : "grid-cols-2";
+  const secondaryActionGridClassName = "grid-cols-1 sm:grid-cols-2";
   const actionStatePillClassName = "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1";
 
   if (collapsed && swapMode) return null;
@@ -606,21 +632,28 @@ export function SeatInspector({
     <aside
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[54vh] flex-col overflow-hidden rounded-[24px] border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface)] shadow-[0_18px_50px_rgba(23,26,29,0.24),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[var(--sp-color-surface)] sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[84px] sm:z-40 sm:max-h-none sm:w-[376px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-l-[24px] sm:rounded-r-[18px] sm:bg-[var(--sp-color-surface)]/95 sm:shadow-[-12px_0_34px_rgba(23,26,29,0.18),inset_1px_0_0_rgba(255,255,255,0.86)] sm:supports-[backdrop-filter]:bg-[var(--sp-color-surface)]/90 lg:top-[148px]"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[54vh] flex-col overflow-hidden rounded-[24px] border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface)] shadow-[0_18px_50px_rgba(23,26,29,0.24),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[var(--sp-color-surface)] sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[84px] sm:z-40 sm:max-h-none sm:w-[420px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-l-[28px] sm:rounded-r-[20px] sm:bg-[var(--sp-color-surface)]/95 sm:shadow-[-16px_0_42px_rgba(23,26,29,0.20),inset_1px_0_0_rgba(255,255,255,0.86)] sm:supports-[backdrop-filter]:bg-[var(--sp-color-surface)]/90 xl:w-[440px] lg:top-[148px]"
     >
-      <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-white/10 bg-[var(--sp-color-workspace)] px-3.5 py-3 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--sp-color-workspace)]/95">
-        <div className="min-w-0">
-          {canEdit && <div className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--sp-color-brand-paper)]">Planning inspector</div>}
-          <div className="flex items-center gap-2">
-            <h2 id="seat-inspector-title" className="text-2xl font-black leading-none text-white">{selectedSeat.label}</h2>
+      <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-white/10 bg-[var(--sp-color-workspace)] px-4 py-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--sp-color-workspace)]/95">
+        <div className="min-w-0 flex-1">
+          {canEdit && <div className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--sp-color-brand-paper)]">Planning inspector</div>}
+          <div className="flex min-w-0 items-end gap-3">
+            <h2 id="seat-inspector-title" className="text-[2rem] font-black leading-none text-white">{selectedSeat.label}</h2>
+            <div className="min-w-0 pb-0.5">
+              <p className="truncate text-sm font-black leading-4 text-white">{assignmentIdentityLabel ? `Assigned to ${assignmentIdentityLabel}` : "Ready to assign"}</p>
+              <p className="mt-0.5 truncate text-[11px] font-semibold text-white/65">{inspectorSubtitle}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className={[identityBadgeClassName, "bg-white/10 text-white/80 ring-white/15"].join(" ")}>{selectedSeatStatusLabel}</span>
+            <span className={[identityBadgeClassName, seatTypeBadgeClassName].join(" ")}>{seatTypeLabel}</span>
             {canEdit && (
-              <span role="status" aria-live="polite" className={["rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ring-1", inspectorStateClassName].join(" ")}>
+              <span role="status" aria-live="polite" className={[identityBadgeClassName, inspectorStateClassName].join(" ")}>
                 {inspectorStateLabel}
               </span>
             )}
-            {swapMode && <span className="rounded-full bg-[var(--sp-color-state-info-surface)] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[#244E50] ring-1 ring-[var(--sp-color-state-info-border)]">Swap</span>}
+            {swapMode && <span className={[identityBadgeClassName, "bg-[var(--sp-color-state-info-surface)] text-[#244E50] ring-[var(--sp-color-state-info-border)]"].join(" ")}>Swap</span>}
           </div>
-          <p className="mt-1 truncate text-xs font-semibold text-white/70">{inspectorSubtitle}</p>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -639,7 +672,15 @@ export function SeatInspector({
 
       {canEdit ? (
         <form id="seat-inspector-form" onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[var(--sp-color-surface)] px-3.5 py-3">
+          <section aria-label="Draft state and viewer impact" className="min-w-0 border-b border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-brand-paper)] px-4 py-3 text-xs text-[var(--sp-color-brand-clay)] shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]">
+            <div className="min-w-0">
+              <div className="text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-action-primary)]">Draft-only impact</div>
+              <div className="mt-1 text-sm font-black leading-5 text-[var(--sp-color-text-primary)]">{draftStateTitle}</div>
+            </div>
+            <p className="mt-2 min-w-0 max-w-[34ch] whitespace-normal break-words font-semibold leading-relaxed">{draftStateDescription}</p>
+          </section>
+
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[var(--sp-color-surface)] px-4 py-4">
             {searchMismatchNotice && (
               <section className="rounded-2xl border border-[var(--sp-color-state-draft-border)] bg-[var(--sp-color-state-draft-surface)] p-3 text-xs text-[#6D4712]">
                 <div className="font-black">{searchMismatchNotice}</div>
@@ -691,11 +732,6 @@ export function SeatInspector({
                 )}
               </section>
             )}
-
-            <section aria-label="Draft-only seat impact" className="rounded-2xl border border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)] p-3 text-xs leading-5 text-[var(--sp-color-brand-clay)]">
-              <div className="text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-action-primary)]">Draft-only impact</div>
-              <p className="mt-1 font-semibold">Changes here update the admin draft. Viewers see them only after the draft is reviewed and published.</p>
-            </section>
 
             <section aria-labelledby="seat-summary-heading" className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
               <h3 id="seat-summary-heading" className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Seat Summary</h3>
@@ -937,7 +973,7 @@ export function SeatInspector({
             </section>
           </div>
 
-          <div className="sticky bottom-0 z-20 border-t border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] px-3.5 py-2.5 shadow-[0_-12px_26px_rgba(23,26,29,0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--sp-color-surface)] sm:bg-[var(--sp-color-surface)]/95 sm:supports-[backdrop-filter]:bg-[var(--sp-color-surface)]/90">
+          <div className="sticky bottom-0 z-20 border-t border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] px-4 py-3 shadow-[0_-12px_26px_rgba(23,26,29,0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--sp-color-surface)] sm:bg-[var(--sp-color-surface)]/95 sm:supports-[backdrop-filter]:bg-[var(--sp-color-surface)]/90">
             {showFooterState ? (
               <div role="status" aria-live="polite" className={["mb-2 flex min-h-7 items-center rounded-xl px-3 py-1.5 text-xs font-black ring-1", inspectorStateClassName].join(" ")}>
                 {inspectorStateLabel}
@@ -947,13 +983,13 @@ export function SeatInspector({
                 {inspectorStateLabel}
               </div>
             )}
-            <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+            <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(6.5rem,0.8fr)_minmax(0,1.5fr)]">
               {saveDisabledReason && (
                 <span id="seat-inspector-save-help" className="sr-only">
                   {saveDisabledReason}
                 </span>
               )}
-              <Button type="button" onClick={onClose} aria-label={`Cancel editing ${selectedSeat.label}`} className="rounded-xl px-4">
+              <Button type="button" onClick={onClose} aria-label={`Cancel editing ${selectedSeat.label}`} className="min-w-0 rounded-xl px-4">
                 Cancel
               </Button>
               <Button
@@ -963,17 +999,17 @@ export function SeatInspector({
                 aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
                 aria-describedby={saveDisabledReason ? "seat-inspector-save-help" : undefined}
                 title={saveDisabledReason ?? `${primaryActionLabel} for ${selectedSeat.label}`}
-                className="w-full rounded-xl disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none disabled:hover:border-[var(--sp-color-border-subtle)] disabled:hover:bg-[var(--sp-color-graphite-soft)]"
+                className="min-w-0 w-full whitespace-normal rounded-xl disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none disabled:hover:border-[var(--sp-color-border-subtle)] disabled:hover:bg-[var(--sp-color-graphite-soft)]"
               >
                 {primaryActionLabel}
               </Button>
             </div>
             <div className={["mt-2 grid gap-2", secondaryActionGridClassName].join(" ")}>
-              <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Start seat swap for ${selectedSeat.label}`} className="w-full rounded-xl">
+              <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Start seat swap for ${selectedSeat.label}`} className="min-w-0 w-full rounded-xl">
                 Swap seat
               </Button>
               {hasCurrentAssignment && (
-                <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="w-full rounded-xl">
+                <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="min-w-0 w-full rounded-xl">
                   Vacate
                 </Button>
               )}
@@ -985,12 +1021,12 @@ export function SeatInspector({
                 aria-label={`Delete custom seat ${selectedSeat.label}`}
                 aria-describedby="seat-inspector-delete-help"
                 title={deleteHelpText}
-                className="w-full whitespace-normal rounded-xl leading-tight disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none disabled:hover:bg-[var(--sp-color-graphite-soft)]"
+                className="min-w-0 w-full whitespace-normal rounded-xl leading-tight disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none disabled:hover:bg-[var(--sp-color-graphite-soft)]"
               >
                 Delete seat
               </Button>
               {isDirty && (
-                <Button type="button" onClick={handleResetEdits} disabled={pending} aria-label={`Discard edits for ${selectedSeat.label}`} className="w-full rounded-xl">
+                <Button type="button" onClick={handleResetEdits} disabled={pending} aria-label={`Discard edits for ${selectedSeat.label}`} className="min-w-0 w-full whitespace-normal rounded-xl">
                   Discard edits
                 </Button>
               )}
