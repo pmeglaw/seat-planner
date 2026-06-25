@@ -104,10 +104,10 @@ function broadOpenPayload(question = "Which seats are open?") {
   });
 }
 
-function openAIResponse(payload) {
+function openAIResponse(payload, headers = {}) {
   return new Response(JSON.stringify(payload), {
     status: 200,
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json", ...headers }
   });
 }
 
@@ -166,24 +166,66 @@ function fencedFinalResponse(overrides = {}) {
   });
 }
 
+function incompleteResponse(reason = "max_output_tokens") {
+  return openAIResponse({
+    id: "resp-incomplete",
+    status: "incomplete",
+    incomplete_details: { reason },
+    output: [],
+    usage: {
+      input_tokens: 20,
+      input_tokens_details: { cached_tokens: 5 },
+      output_tokens: 30,
+      output_tokens_details: { reasoning_tokens: 24 },
+      total_tokens: 50
+    }
+  }, { "x-request-id": "req_incomplete_safe" });
+}
+
+function structuredRefusalResponse(refusal = "I cannot help with that request.") {
+  return openAIResponse({
+    id: "resp-refusal",
+    status: "completed",
+    output: [{
+      type: "message",
+      content: [{
+        type: "refusal",
+        refusal
+      }]
+    }],
+    usage: {
+      input_tokens: 12,
+      output_tokens: 8,
+      output_tokens_details: { reasoning_tokens: 3 },
+      total_tokens: 20
+    }
+  }, { "x-request-id": "req_refusal_safe" });
+}
+
 async function withMockedOpenAI(responses, callback) {
   const originalFetch = globalThis.fetch;
+  const originalConsoleInfo = console.info;
   const originalApiKey = process.env.OPENAI_API_KEY;
   const originalModel = process.env.OPENAI_MODEL;
   const requests = [];
+  const completionLogs = [];
 
   globalThis.fetch = async (_url, init) => {
     requests.push(JSON.parse(init.body));
     const response = responses[Math.min(requests.length - 1, responses.length - 1)];
     return typeof response === "function" ? response(requests[requests.length - 1]) : response;
   };
+  console.info = (...args) => {
+    completionLogs.push(args);
+  };
   process.env.OPENAI_API_KEY = "test-openai-key";
   process.env.OPENAI_MODEL = "gpt-test";
 
   try {
-    return await callback(requests);
+    return await callback(requests, completionLogs);
   } finally {
     globalThis.fetch = originalFetch;
+    console.info = originalConsoleInfo;
     if (originalApiKey === undefined) {
       delete process.env.OPENAI_API_KEY;
     } else {
@@ -676,6 +718,107 @@ test("OpenAI failure diagnostics keep only safe server-side fields", () => {
   assert.doesNotMatch(diagnostic.errorMessage, /sk-testSECRET12345/);
   assert.doesNotMatch(diagnostic.errorMessage, /jane@example\.com/);
   assert.doesNotMatch(diagnostic.errorMessage, /555-123-4567/);
+});
+
+test("OpenAI completion diagnostics keep safe usage and timing fields only", () => {
+  const diagnostic = agent.buildOpenAICompletionDiagnostic({
+    model: "gpt-private",
+    requestId: "req_safe_456",
+    durationMs: 42.9,
+    response: {
+      id: "resp_safe_123",
+      status: "completed",
+      output: [
+        { type: "function_call", name: "search_seats", call_id: "call_safe", arguments: "{\"query\":\"Alice\"}" },
+        { type: "message", content: [{ type: "output_text", text: "Seat N01 belongs to Alice." }] }
+      ],
+      usage: {
+        input_tokens: 100,
+        input_tokens_details: { cached_tokens: 20 },
+        output_tokens: 80,
+        output_tokens_details: { reasoning_tokens: 35 },
+        total_tokens: 180
+      }
+    }
+  });
+
+  assert.deepEqual(diagnostic, {
+    responseId: "resp_safe_123",
+    model: "gpt-private",
+    responseStatus: "completed",
+    incompleteReason: undefined,
+    requestId: "req_safe_456",
+    durationMs: 42,
+    inputTokens: 100,
+    cachedInputTokens: 20,
+    outputTokens: 80,
+    reasoningTokens: 35,
+    totalTokens: 180,
+    outputItemCount: 2,
+    toolCallCount: 1
+  });
+  const serialized = JSON.stringify(diagnostic);
+  assert.doesNotMatch(serialized, /Alice|Seat N01|call_safe|search_seats/);
+});
+
+test("Responses incomplete status returns a friendly sanitized error", async () => {
+  await withMockedOpenAI([
+    incompleteResponse()
+  ], async (requests, completionLogs) => {
+    await assert.rejects(
+      () => agent.answerMapOperationsQuestion(askPlannerPayload({ question: "Which seats are open in North Pod?" })),
+      error => {
+        assert.match(error.message, /ran out of response tokens/i);
+        assert.match(error.message, /narrower question/i);
+        assert.doesNotMatch(error.message, /test-openai-key|Authorization|Bearer|Alice Adams|seat-n01/);
+        return true;
+      }
+    );
+
+    assert.equal(requests.length, 1);
+    assert.equal(completionLogs.length, 1);
+    assert.equal(completionLogs[0][0], "[AskPlanner/OpenAI] request completed");
+    assert.deepEqual({
+      responseId: completionLogs[0][1].responseId,
+      responseStatus: completionLogs[0][1].responseStatus,
+      incompleteReason: completionLogs[0][1].incompleteReason,
+      requestId: completionLogs[0][1].requestId,
+      inputTokens: completionLogs[0][1].inputTokens,
+      cachedInputTokens: completionLogs[0][1].cachedInputTokens,
+      outputTokens: completionLogs[0][1].outputTokens,
+      reasoningTokens: completionLogs[0][1].reasoningTokens,
+      totalTokens: completionLogs[0][1].totalTokens
+    }, {
+      responseId: "resp-incomplete",
+      responseStatus: "incomplete",
+      incompleteReason: "max_output_tokens",
+      requestId: "req_incomplete_safe",
+      inputTokens: 20,
+      cachedInputTokens: 5,
+      outputTokens: 30,
+      reasoningTokens: 24,
+      totalTokens: 50
+    });
+    assert.doesNotMatch(JSON.stringify(completionLogs), /test-openai-key|Authorization|Bearer|Alice Adams|seat-n01/);
+  });
+});
+
+test("Structured Outputs refusal becomes the existing Ask Planner refused shape", async () => {
+  await withMockedOpenAI([
+    structuredRefusalResponse("I cannot help with that request for jane@example.com or 555-123-4567.")
+  ], async (requests, completionLogs) => {
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({ question: "What security badge does Alice have?" }));
+
+    assert.equal(requests.length, 1);
+    assert.equal(completionLogs.length, 1);
+    assert.equal(result.status, "refused");
+    assert.equal(result.confidence, "high");
+    assert.equal(result.highlights.length, 0);
+    assert.match(result.answer, /read-only findings/i);
+    assert.match(result.warnings[0], /structured refusal/i);
+    assert.ok(result.followUps.includes("Which seats are open?"));
+    assert.doesNotMatch(JSON.stringify(result), /jane@example\.com|555-123-4567/);
+  });
 });
 
 test("Responses loop returns a matching function_call_output for a single function call", async () => {

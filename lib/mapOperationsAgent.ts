@@ -22,6 +22,8 @@ const BROAD_OPEN_NO_HIGHLIGHT_WARNING =
   "No seats highlighted for this broad answer. Ask for a specific zone, department, or smaller group to highlight seats.";
 const MISSING_EXPLAIN_SEAT_MESSAGE =
   "Ask Planner could not find that seat in saved draft data. Select a current draft seat or ask about another seat.";
+const STRUCTURED_REFUSAL_WARNING =
+  "The model returned a structured refusal instead of the Ask Planner response schema.";
 
 const WRITE_ACTION_PATTERN = /\b(publish|move|assign|vacate|delete|remove|clear|import|restore|swap|update|edit|create|add)\b/i;
 const BROAD_OPEN_QUESTION_PATTERNS = [
@@ -67,16 +69,35 @@ type OpenAIOutputItem = {
   name?: string;
   call_id?: string;
   arguments?: string;
+  refusal?: string;
   content?: Array<{
     type?: string;
     text?: string;
+    refusal?: string;
   }>;
+};
+
+type OpenAIUsagePayload = {
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+  input_tokens_details?: {
+    cached_tokens?: number;
+  };
+  output_tokens_details?: {
+    reasoning_tokens?: number;
+  };
 };
 
 type OpenAIResponsePayload = {
   id?: string;
+  status?: string;
+  incomplete_details?: {
+    reason?: string | null;
+  } | null;
   output?: OpenAIOutputItem[];
   output_text?: string;
+  usage?: OpenAIUsagePayload | null;
 };
 
 type OpenAIErrorPayload = {
@@ -112,6 +133,22 @@ type OpenAIFailureDiagnostic = {
   requestId?: string;
 };
 
+type OpenAICompletionDiagnostic = {
+  responseId?: string;
+  model: string;
+  responseStatus?: string;
+  incompleteReason?: string;
+  requestId?: string;
+  durationMs: number;
+  inputTokens?: number;
+  cachedInputTokens?: number;
+  outputTokens?: number;
+  reasoningTokens?: number;
+  totalTokens?: number;
+  outputItemCount?: number;
+  toolCallCount?: number;
+};
+
 function clamp(value: number, min: number, max: number) {
   if (!Number.isFinite(value)) return min;
   return Math.min(Math.max(Math.trunc(value), min), max);
@@ -125,6 +162,10 @@ function cleanDiagnosticField(value: unknown, maxLength = 180) {
   if (typeof value !== "string") return undefined;
   const cleaned = value.replace(/\s+/g, " ").trim();
   return cleaned ? cleaned.slice(0, maxLength) : undefined;
+}
+
+function cleanDiagnosticNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : undefined;
 }
 
 export function sanitizeOpenAIDiagnosticMessage(value: unknown) {
@@ -944,8 +985,38 @@ export function buildOpenAIFailureDiagnostic(input: {
   };
 }
 
+export function buildOpenAICompletionDiagnostic(input: {
+  model: string;
+  response: OpenAIResponsePayload;
+  requestId?: string | null;
+  durationMs: number;
+}): OpenAICompletionDiagnostic {
+  const usage: OpenAIUsagePayload = input.response.usage ?? {};
+  const outputItems = input.response.output ?? [];
+
+  return {
+    responseId: cleanDiagnosticField(input.response.id, 160),
+    model: cleanDiagnosticField(input.model, 120) ?? "[unknown]",
+    responseStatus: cleanDiagnosticField(input.response.status, 80),
+    incompleteReason: cleanDiagnosticField(input.response.incomplete_details?.reason, 120),
+    requestId: cleanDiagnosticField(input.requestId, 160),
+    durationMs: cleanDiagnosticNumber(input.durationMs) ?? 0,
+    inputTokens: cleanDiagnosticNumber(usage.input_tokens),
+    cachedInputTokens: cleanDiagnosticNumber(usage.input_tokens_details?.cached_tokens),
+    outputTokens: cleanDiagnosticNumber(usage.output_tokens),
+    reasoningTokens: cleanDiagnosticNumber(usage.output_tokens_details?.reasoning_tokens),
+    totalTokens: cleanDiagnosticNumber(usage.total_tokens),
+    outputItemCount: outputItems.length,
+    toolCallCount: outputItems.filter(item => item.type === "function_call").length
+  };
+}
+
 function logOpenAIRequestFailure(input: Parameters<typeof buildOpenAIFailureDiagnostic>[0]) {
   console.warn("[AskPlanner/OpenAI] request failed", buildOpenAIFailureDiagnostic(input));
+}
+
+function logOpenAIRequestSuccess(input: Parameters<typeof buildOpenAICompletionDiagnostic>[0]) {
+  console.info("[AskPlanner/OpenAI] request completed", buildOpenAICompletionDiagnostic(input));
 }
 
 function isModelUnavailableOrUnauthorized(status: number, payload: OpenAIErrorPayload) {
@@ -978,9 +1049,16 @@ export function formatOpenAIAdminError(status: number, payload: unknown, model: 
   return "Ask Planner could not reach OpenAI. Try again shortly.";
 }
 
+function openAIRequestId(response: Response) {
+  return response.headers.get("x-request-id") ??
+    response.headers.get("openai-request-id") ??
+    response.headers.get("request-id");
+}
+
 async function createOpenAIResponse(apiKey: string, body: OpenAIResponseBody): Promise<OpenAIResponsePayload> {
   const controller = new AbortController();
   const timeout = windowlessSetTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+  const startedAt = Date.now();
 
   try {
     const response = await fetch(OPENAI_RESPONSES_URL, {
@@ -1000,10 +1078,7 @@ async function createOpenAIResponse(apiKey: string, body: OpenAIResponseBody): P
       } catch {
         errorPayload = null;
       }
-      const requestId =
-        response.headers.get("x-request-id") ??
-        response.headers.get("openai-request-id") ??
-        response.headers.get("request-id");
+      const requestId = openAIRequestId(response);
       logOpenAIRequestFailure({
         status: response.status,
         statusText: response.statusText,
@@ -1014,7 +1089,14 @@ async function createOpenAIResponse(apiKey: string, body: OpenAIResponseBody): P
       throw new Error(formatOpenAIAdminError(response.status, errorPayload, body.model));
     }
 
-    return await response.json() as OpenAIResponsePayload;
+    const responsePayload = await response.json() as OpenAIResponsePayload;
+    logOpenAIRequestSuccess({
+      model: body.model,
+      response: responsePayload,
+      requestId: openAIRequestId(response),
+      durationMs: Date.now() - startedAt
+    });
+    return responsePayload;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       logOpenAIRequestFailure({ model: body.model, thrown: error });
@@ -1103,6 +1185,47 @@ function extractOutputText(response: OpenAIResponsePayload) {
   return "";
 }
 
+function extractStructuredRefusal(response: OpenAIResponsePayload) {
+  for (const item of response.output ?? []) {
+    if (typeof item.refusal === "string" && item.refusal.trim()) return item.refusal.trim();
+
+    for (const content of item.content ?? []) {
+      if (content.type === "refusal" && typeof content.refusal === "string" && content.refusal.trim()) {
+        return content.refusal.trim();
+      }
+    }
+  }
+
+  return "";
+}
+
+function buildStructuredRefusalResponse(): AskPlannerResponse {
+  return {
+    status: "refused",
+    answer: "Ask Planner cannot answer that request. It can only provide read-only findings from saved draft map data.",
+    summary: "Request refused.",
+    confidence: "high",
+    highlights: [],
+    warnings: [STRUCTURED_REFUSAL_WARNING],
+    followUps: ["Which seats are open?", "What looks unhealthy?"]
+  };
+}
+
+function assertOpenAIResponseComplete(response: OpenAIResponsePayload) {
+  if (!response.status || response.status === "completed") return;
+
+  const reason = response.incomplete_details?.reason ?? "";
+  if (response.status === "incomplete" && reason === "max_output_tokens") {
+    throw new Error("Ask Planner ran out of response tokens before finishing. Try a narrower question.");
+  }
+
+  if (response.status === "incomplete") {
+    throw new Error("Ask Planner did not finish the response. Try a narrower question.");
+  }
+
+  throw new Error("Ask Planner could not complete the OpenAI response. Try again shortly.");
+}
+
 function parsePlannerJson(text: string) {
   const candidates = [
     text,
@@ -1171,6 +1294,11 @@ export async function answerMapOperationsQuestion(input: MapOperationsData & { q
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration += 1) {
     const response = await createOpenAIResponse(apiKey, request);
+    assertOpenAIResponseComplete(response);
+    if (extractStructuredRefusal(response)) {
+      return buildStructuredRefusalResponse();
+    }
+
     const toolCalls = extractToolCalls(response);
 
     if (toolCalls.length === 0) {
