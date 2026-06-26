@@ -194,7 +194,7 @@ test("selected inspector and search results stay attached to the map workspace",
   assert.match(inspectorSource, /sm:max-h-none[\s\S]*sm:w-\[420px\][\s\S]*sm:rounded-l-\[28px\][\s\S]*sm:rounded-r-\[20px\]/);
   assert.match(inspectorSource, /sm:shadow-\[-16px_0_42px_rgba\(23,26,29,0\.20\)/);
   assert.match(inspectorSource, /bg-\[var\(--sp-color-workspace\)\][\s\S]*Planning inspector/);
-  assert.match(inspectorSource, /bg-\[var\(--sp-color-brand-paper\)\][\s\S]*Draft-only impact/);
+  assert.match(inspectorSource, /draftStateBandClassName[\s\S]*Draft-only impact/);
   assert.match(filterSource, /rounded-xl border border-slate-200\/80 bg-slate-50\/70 p-2 shadow-none/);
   assert.match(filterSource, /density = "panel"/);
   assert.match(filterSource, /max-h-\[196px\] space-y-1/);

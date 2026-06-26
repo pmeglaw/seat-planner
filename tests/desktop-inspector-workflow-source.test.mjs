@@ -48,6 +48,26 @@ test("desktop inspector keeps a persistent draft-state and viewer-impact band", 
   assert.match(inspectorSource, /Create new employee on save/);
 });
 
+test("desktop inspector semantic states use admin theme meaning tokens", async () => {
+  const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
+
+  assert.match(inspectorSource, /draftStateBandClassName/);
+  assert.match(inspectorSource, /--admin-state-clean-bg/);
+  assert.match(inspectorSource, /--admin-state-dirty-bg/);
+  assert.match(inspectorSource, /--admin-state-saving-bg/);
+  assert.match(inspectorSource, /--admin-state-saved-bg/);
+  assert.match(inspectorSource, /--admin-state-error-bg/);
+  assert.match(inspectorSource, /warningSurfaceClassName/);
+  assert.match(inspectorSource, /infoSurfaceClassName/);
+  assert.match(inspectorSource, /dangerPillClassName/);
+  assert.match(inspectorSource, /No existing employee match/);
+  assert.match(inspectorSource, /Saving will create a new employee record named/);
+  assert.match(inspectorSource, /role="note"/);
+  assert.match(inspectorSource, /!border-\[var\(--admin-danger\)\] !bg-\[var\(--admin-danger\)\]/);
+  assert.doesNotMatch(inspectorSource, /#7E2F24|#6D4712|#244E50|#284C3B/);
+  assert.doesNotMatch(inspectorSource, /sp-color-state-danger|sp-color-state-draft|sp-color-state-info|sp-color-state-success/);
+});
+
 test("desktop assignment workflow section explains assigned open and new-employee paths", async () => {
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
 
