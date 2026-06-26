@@ -31,7 +31,7 @@ test("publish review polish uses shared status and focus primitives without migr
 
   assert.match(publishReviewSource, /aria-label="Close publish review"[\s\S]*focusRingClass/);
   assert.match(publishReviewSource, /Cancel[\s\S]*className=\{\["w-full", focusRingClass\]\.join\(" "\)\}/);
-  assert.match(publishReviewSource, /onClick=\{confirmPublishDraftMap\}[\s\S]*className=\{\["w-full", focusRingClass\]\.join\(" "\)\}/);
+  assert.match(publishReviewSource, /onClick=\{confirmPublishDraftMap\}[\s\S]*!border-\[var\(--admin-primary-cta\)\] !bg-\[var\(--admin-primary-cta\)\] !text-white[\s\S]*focusRingClass/);
   assert.doesNotMatch(publishReviewSource, /components\/ui\/design-system";[\s\S]*\bButton\b|\bIconButton\b/);
 });
 
@@ -66,4 +66,32 @@ test("publish review polish preserves trust copy and publish action boundaries",
   assert.match(publishAction, /\.rpc\("publish_seat_map"\)/);
   assert.doesNotMatch(viewerRouteSource, /components\/ui\/design-system|StatusBadge|focusRingClass|Map tools|Draft map/);
   assert.doesNotMatch(managementRouteSource, /components\/ui\/design-system|StatusBadge|focusRingClass|markerStateClassRecipes/);
+});
+
+test("publish review semantic colors use admin-scoped meaning tokens", async () => {
+  const globalsSource = await readSource("../app/globals.css");
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const publishReviewSource = publishReviewSourceFrom(seatMapSource);
+
+  for (const token of [
+    "--admin-publish-ready-bg",
+    "--admin-publish-no-change-bg",
+    "--admin-publish-viewer-impact-bg",
+    "--admin-state-dirty-bg",
+    "--admin-state-error-bg",
+    "--admin-state-saving-bg",
+    "--admin-state-danger-bg"
+  ]) {
+    assert.match(globalsSource, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(seatMapSource, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+
+  assert.match(publishReviewSource, /!bg-\[var\(--admin-surface\)\]\/80 !text-\[var\(--admin-publish-ready-text\)\]/);
+  assert.match(publishReviewSource, /!bg-\[var\(--admin-surface\)\]\/80 !text-\[var\(--admin-publish-no-change-text\)\]/);
+  assert.match(publishReviewSource, /border-\[var\(--admin-publish-viewer-impact-border\)\] bg-\[var\(--admin-publish-viewer-impact-bg\)\]/);
+  assert.match(publishReviewSource, /border-\[var\(--admin-state-error-border\)\] bg-\[var\(--admin-state-error-bg\)\]/);
+  assert.match(publishReviewSource, /border-\[var\(--admin-state-saving-border\)\] bg-\[var\(--admin-state-saving-bg\)\]/);
+  assert.match(publishReviewSource, /!border-\[var\(--admin-primary-cta\)\] !bg-\[var\(--admin-primary-cta\)\] !text-white/);
+  assert.doesNotMatch(publishReviewSource, /#7E2F24|#6D4712|#244E50|#284C3B/);
+  assert.doesNotMatch(publishReviewSource, /sp-color-state-danger|sp-color-state-draft|sp-color-state-info|sp-color-state-success/);
 });

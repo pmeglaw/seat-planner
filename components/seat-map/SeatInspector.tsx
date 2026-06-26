@@ -309,19 +309,34 @@ export function SeatInspector({
       : "This seat matches the saved draft. Viewers see changes after review and publish.";
   const identityBadgeClassName = "rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ring-1";
   const seatTypeBadgeClassName = selectedSeat.is_custom
-    ? "bg-[var(--sp-color-state-info-surface)] text-[#244E50] ring-[var(--sp-color-state-info-border)]"
+    ? "bg-[var(--admin-publish-viewer-impact-bg)] text-[var(--admin-publish-viewer-impact-text)] ring-[var(--admin-publish-viewer-impact-border)]"
     : isProtectedOriginalSeatLabel(selectedSeat.label)
-      ? "bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)] ring-[var(--sp-color-state-selected-border)]"
+      ? "bg-[var(--admin-primary-soft)] text-[var(--admin-primary-cta)] ring-[var(--admin-primary-border)]"
       : "bg-white/10 text-white/75 ring-white/15";
   const inspectorStateClassName = localError
-    ? "bg-[var(--sp-color-state-danger-surface)] text-[#7E2F24] ring-[var(--sp-color-state-danger-border)]"
+    ? "bg-[var(--admin-state-error-bg)] text-[var(--admin-state-error-text)] ring-[var(--admin-state-error-border)]"
     : pending
-      ? "bg-[var(--sp-color-state-info-surface)] text-[#244E50] ring-[var(--sp-color-state-info-border)]"
+      ? "bg-[var(--admin-state-saving-bg)] text-[var(--admin-state-saving-text)] ring-[var(--admin-state-saving-border)]"
       : isDirty
-        ? "bg-[var(--sp-color-state-draft-surface)] text-[#6D4712] ring-[var(--sp-color-state-draft-border)]"
+        ? "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]"
         : saveFeedback
-          ? "bg-[var(--sp-color-state-success-surface)] text-[#284C3B] ring-[var(--sp-color-state-success-border)]"
-          : "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] ring-[var(--sp-color-border-subtle)]";
+          ? "bg-[var(--admin-state-saved-bg)] text-[var(--admin-state-saved-text)] ring-[var(--admin-state-saved-border)]"
+          : "bg-[var(--admin-state-neutral-bg)] text-[var(--admin-state-neutral-text)] ring-[var(--admin-state-neutral-border)]";
+  const draftStateBandClassName = localError
+    ? "border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] text-[var(--admin-state-error-text)]"
+    : pending
+      ? "border-[var(--admin-state-saving-border)] bg-[var(--admin-state-saving-bg)] text-[var(--admin-state-saving-text)]"
+      : isDirty
+        ? "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)]"
+        : saveFeedback
+          ? "border-[var(--admin-state-saved-border)] bg-[var(--admin-state-saved-bg)] text-[var(--admin-state-saved-text)]"
+          : "border-[var(--admin-state-clean-border)] bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)]";
+  const fieldErrorClassName = "border-[var(--admin-state-error-border)] focus:border-[var(--admin-error)] focus:ring-[var(--admin-state-error-border)]";
+  const warningSurfaceClassName = "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)]";
+  const infoSurfaceClassName = "border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] text-[var(--admin-publish-viewer-impact-text)]";
+  const neutralPillClassName = "bg-[var(--admin-state-neutral-bg)] text-[var(--admin-state-neutral-text)] ring-[var(--admin-state-neutral-border)]";
+  const dangerPillClassName = "bg-[var(--admin-state-danger-bg)] text-[var(--admin-state-danger-text)] ring-[var(--admin-state-danger-border)]";
+  const successPillClassName = "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)] ring-[var(--admin-state-clean-border)]";
   const showFooterState = pending || Boolean(localError) || isDirty || Boolean(saveFeedback);
 
   function fieldErrorId(field: SeatInspectorField) {
@@ -631,7 +646,7 @@ export function SeatInspector({
     onDeleteSeat();
   }
 
-  const fieldClassName = "mt-1 w-full rounded-xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] px-3 py-2 text-sm font-semibold text-[var(--sp-color-text-primary)] outline-none transition placeholder:text-[var(--sp-color-stone-muted)] focus:border-[var(--sp-color-brand-copper)] focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-muted)]";
+  const fieldClassName = "mt-1 w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm font-semibold text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)] disabled:bg-[var(--admin-state-neutral-bg)] disabled:text-[var(--admin-text-muted)]";
   const iconButtonClassName = "inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)]/90 text-sm font-black text-[var(--sp-color-text-muted)] transition hover:bg-white hover:text-[var(--sp-color-text-secondary)] active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]";
   const saveDisabledReason = pending
     ? "Save is unavailable while the current draft change is finishing."
@@ -657,7 +672,7 @@ export function SeatInspector({
           className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface)]/95 px-4 py-2 text-[var(--sp-color-text-secondary)] shadow-[0_14px_34px_rgba(23,26,29,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] sm:min-h-full sm:w-11 sm:flex-col sm:rounded-l-2xl sm:rounded-r-xl sm:px-2 sm:py-4 sm:shadow-[-8px_0_24px_rgba(23,26,29,0.16),inset_1px_0_0_rgba(255,255,255,0.86)]"
         >
           <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] sm:rotate-180 sm:[writing-mode:vertical-rl]">View details</span>
-          <span className="rounded-full bg-[var(--sp-color-brand-paper)] px-2 py-1 text-[10px] font-black text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)] sm:mt-2 sm:rotate-180 sm:bg-transparent sm:px-0 sm:py-0 sm:text-[var(--sp-color-text-muted)] sm:ring-0 sm:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
+          <span className="rounded-full bg-[var(--admin-primary-soft)] px-2 py-1 text-[10px] font-black text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)] sm:mt-2 sm:rotate-180 sm:bg-transparent sm:px-0 sm:py-0 sm:text-white/55 sm:ring-0 sm:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
         </button>
       </aside>
     );
@@ -672,7 +687,7 @@ export function SeatInspector({
     >
       <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-white/10 bg-[var(--sp-color-workspace)] px-4 py-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--sp-color-workspace)]/95">
         <div className="min-w-0 flex-1">
-          {canEdit && <div className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--sp-color-brand-paper)]">Planning inspector</div>}
+          {canEdit && <div className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--admin-primary-soft)]">Planning inspector</div>}
           <div className="flex min-w-0 items-end gap-3">
             <h2 id="seat-inspector-title" className="text-[2rem] font-black leading-none text-white">{selectedSeat.label}</h2>
             <div className="min-w-0 pb-0.5">
@@ -688,7 +703,7 @@ export function SeatInspector({
                 {inspectorStateLabel}
               </span>
             )}
-            {swapMode && <span className={[identityBadgeClassName, "bg-[var(--sp-color-state-info-surface)] text-[#244E50] ring-[var(--sp-color-state-info-border)]"].join(" ")}>Swap</span>}
+            {swapMode && <span className={[identityBadgeClassName, "bg-[var(--admin-publish-viewer-impact-bg)] text-[var(--admin-publish-viewer-impact-text)] ring-[var(--admin-publish-viewer-impact-border)]"].join(" ")}>Swap</span>}
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -708,23 +723,23 @@ export function SeatInspector({
 
       {canEdit ? (
         <form id="seat-inspector-form" onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
-          <section aria-label="Draft state and viewer impact" className="min-w-0 border-b border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-brand-paper)] px-4 py-3 text-xs text-[var(--sp-color-brand-clay)] shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]">
+          <section aria-label="Draft state and viewer impact" className={["min-w-0 border-b px-4 py-3 text-xs shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]", draftStateBandClassName].join(" ")}>
             <div className="min-w-0">
-              <div className="text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-action-primary)]">Draft-only impact</div>
-              <div className="mt-1 text-sm font-black leading-5 text-[var(--sp-color-text-primary)]">{draftStateTitle}</div>
+              <div className="text-[10px] font-black uppercase tracking-wide opacity-80">Draft-only impact</div>
+              <div className="mt-1 text-sm font-black leading-5 text-[var(--admin-text-primary)]">{draftStateTitle}</div>
             </div>
             <p className="mt-2 min-w-0 max-w-[34ch] whitespace-normal break-words font-semibold leading-relaxed">{draftStateDescription}</p>
           </section>
 
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[var(--sp-color-surface)] px-4 py-4">
             {searchMismatchNotice && (
-              <section className="rounded-2xl border border-[var(--sp-color-state-draft-border)] bg-[var(--sp-color-state-draft-surface)] p-3 text-xs text-[#6D4712]">
+              <section className={["rounded-2xl border p-3 text-xs", warningSurfaceClassName].join(" ")}>
                 <div className="font-black">{searchMismatchNotice}</div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-full bg-white/80 px-3 py-1.5 font-black text-[#6D4712] ring-1 ring-[var(--sp-color-state-draft-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-color-state-draft-border)]"
+                    className="rounded-full bg-white/80 px-3 py-1.5 font-black text-[var(--admin-state-dirty-text)] ring-1 ring-[var(--admin-state-dirty-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-state-dirty-border)]"
                   >
                     Clear selection
                   </button>
@@ -732,7 +747,7 @@ export function SeatInspector({
                     <button
                       type="button"
                       onClick={onClearSearchContext}
-                      className="rounded-full bg-white/80 px-3 py-1.5 font-black text-[#6D4712] ring-1 ring-[var(--sp-color-state-draft-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-color-state-draft-border)]"
+                      className="rounded-full bg-white/80 px-3 py-1.5 font-black text-[var(--admin-state-dirty-text)] ring-1 ring-[var(--admin-state-dirty-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-state-dirty-border)]"
                     >
                       {searchMismatchClearLabel}
                     </button>
@@ -747,9 +762,9 @@ export function SeatInspector({
                 tabIndex={-1}
                 role="alert"
                 aria-labelledby="seat-inspector-error-title"
-                className="rounded-2xl border border-[var(--sp-color-state-danger-border)] bg-[var(--sp-color-state-danger-surface)] p-3 text-xs text-[#7E2F24] outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-color-state-danger-border)]"
+                className="rounded-2xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-xs text-[var(--admin-state-error-text)] outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-state-error-border)]"
               >
-                <h3 id="seat-inspector-error-title" className="font-black text-[#7E2F24]">Review inspector fields</h3>
+                <h3 id="seat-inspector-error-title" className="font-black text-[var(--admin-state-error-text)]">Review inspector fields</h3>
                 <p className="mt-1 font-semibold leading-5">{localError}</p>
                 {fieldErrors.length > 0 && (
                   <ul className="mt-2 space-y-1">
@@ -758,7 +773,7 @@ export function SeatInspector({
                         <button
                           type="button"
                           onClick={() => focusInspectorField(error.field)}
-                          className="text-left font-black underline decoration-[#D9A296] underline-offset-2 transition hover:text-[#6B271F] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-color-state-danger-border)]"
+                          className="text-left font-black underline decoration-[var(--admin-state-error-border)] underline-offset-2 transition hover:text-[var(--admin-danger)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-state-error-border)]"
                         >
                           {error.message}
                         </button>
@@ -807,23 +822,23 @@ export function SeatInspector({
             <section aria-labelledby="seat-assignment-heading" className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-action-primary)]">Assignment workflow</div>
+                  <div className="text-[10px] font-black uppercase tracking-wide text-[var(--admin-primary-cta)]">Assignment workflow</div>
                   <h3 id="seat-assignment-heading" className="mt-1 text-base font-black leading-tight text-[var(--sp-color-text-primary)]">{assignmentWorkflowTitle}</h3>
                   <p id={employeeHelpId} className="mt-1 text-xs font-semibold leading-5 text-[var(--sp-color-text-muted)]">{assignmentWorkflowDescription}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-[var(--sp-color-brand-paper)] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)]">
+                <span className="shrink-0 rounded-full bg-[var(--admin-primary-soft)] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)]">
                   {assignmentWorkflowBadge}
                 </span>
               </div>
 
               {hasCurrentAssignment ? (
-                <div aria-label="Current draft assignee" className="mt-3 border-l-4 border-[var(--sp-color-brand-copper)] bg-[var(--sp-color-brand-paper)] px-3 py-2 text-xs text-[var(--sp-color-brand-clay)]">
+                <div aria-label="Current draft assignee" className="mt-3 border-l-4 border-[var(--admin-secondary)] bg-[var(--admin-secondary-soft)] px-3 py-2 text-xs text-[var(--admin-secondary-hover)]">
                   <div className="font-black uppercase tracking-wide">Current draft assignee</div>
-                  <div className="mt-1 truncate text-sm font-black text-[var(--sp-color-text-primary)]">{selectedSeatEmployeeName}</div>
+                  <div className="mt-1 truncate text-sm font-black text-[var(--admin-text-primary)]">{selectedSeatEmployeeName}</div>
                   <div className="mt-0.5 min-w-0 break-words font-semibold leading-4">{currentAssigneeDetails || "No title, department, or extension saved."}</div>
                 </div>
               ) : (
-                <div aria-label="Open draft seat assignment guidance" className="mt-3 border-l-4 border-[var(--sp-color-state-info-border)] bg-[var(--sp-color-state-info-surface)] px-3 py-2 text-xs text-[#244E50]">
+                <div aria-label="Open draft seat assignment guidance" className={["mt-3 border-l-4 px-3 py-2 text-xs", infoSurfaceClassName].join(" ")}>
                   <div className="font-black uppercase tracking-wide">Open draft seat</div>
                   <div className="mt-1 font-semibold leading-4">Assign this seat by choosing an existing employee or entering a new employee name below.</div>
                 </div>
@@ -847,7 +862,7 @@ export function SeatInspector({
                     aria-activedescendant={employeeComboboxOpen && filteredEmployeeOptions[activeEmployeeIndex] ? `seat-inspector-employee-option-${filteredEmployeeOptions[activeEmployeeIndex].employee.id}` : undefined}
                     aria-invalid={Boolean(fieldErrorMap.employeeName)}
                     aria-describedby={employeeNameDescribedBy}
-                    className={`${fieldClassName} pr-10 ${fieldErrorMap.employeeName ? "border-[var(--sp-color-state-danger-border)] focus:border-[var(--sp-color-state-danger)] focus:ring-[var(--sp-color-state-danger-border)]" : ""}`}
+                    className={`${fieldClassName} pr-10 ${fieldErrorMap.employeeName ? fieldErrorClassName : ""}`}
                   />
                   <button
                     type="button"
@@ -880,10 +895,10 @@ export function SeatInspector({
                           onClick={() => selectEmployee(option.employee)}
                           className={[
                             "flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]",
-                            index === activeEmployeeIndex ? "bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-text-primary)]" : "text-[var(--sp-color-text-secondary)] hover:bg-[var(--sp-color-graphite-soft)]"
+                            index === activeEmployeeIndex ? "bg-[var(--admin-primary-soft)] text-[var(--admin-text-primary)]" : "text-[var(--admin-text-secondary)] hover:bg-[var(--admin-state-neutral-bg)]"
                           ].join(" ")}
                         >
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-black text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)]">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-black text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)]">
                             {option.employee.full_name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?"}
                           </span>
                           <span className="min-w-0 flex-1">
@@ -895,8 +910,8 @@ export function SeatInspector({
                           </span>
                         </button>
                       )) : (
-                        <div className="rounded-xl border border-dashed border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] p-3 text-xs leading-5 text-[var(--sp-color-text-muted)]">
-                          <div className="font-black text-[var(--sp-color-text-secondary)]">No existing employee match</div>
+                        <div className={["rounded-xl border border-dashed p-3 text-xs leading-5", warningSurfaceClassName].join(" ")}>
+                          <div className="font-black text-[var(--admin-state-dirty-text)]">No existing employee match</div>
                           <div>Saving will create a new employee record if you keep this name.</div>
                         </div>
                       )}
@@ -904,16 +919,16 @@ export function SeatInspector({
                   )}
                 </div>
                 {fieldErrorMap.employeeName && (
-                  <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.employeeName}</p>
+                  <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.employeeName}</p>
                 )}
-                <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide", employeeNameValue ? "bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)]" : "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]"].join(" ")}>
+                <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ring-1", employeeNameValue ? matchedEmployee ? successPillClassName : "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]" : neutralPillClassName].join(" ")}>
                   {assignmentStateText}
                 </span>
               </label>
 
               {showNewEmployeeNotice && (
-                <div id="seat-inspector-new-employee-notice" role="note" className="mt-2 rounded-xl border border-[var(--sp-color-state-draft-border)] bg-[var(--sp-color-state-draft-surface)] p-3 text-xs leading-5 text-[#6D4712]">
-                  <div className="font-black text-[#6D4712]">No existing employee match</div>
+                <div id="seat-inspector-new-employee-notice" role="note" className={["mt-2 rounded-xl border p-3 text-xs leading-5", warningSurfaceClassName].join(" ")}>
+                  <div className="font-black text-[var(--admin-state-dirty-text)]">No existing employee match</div>
                   <p className="mt-1 font-semibold">
                     Saving will create a new employee record named <span className="font-black">{employeeNameValue}</span> and assign this draft seat. Viewers see it only after publish.
                   </p>
@@ -932,7 +947,7 @@ export function SeatInspector({
                     aria-describedby={fieldDescribedBy("employeePosition")}
                     className={fieldClassName}
                   />
-                  {fieldErrorMap.employeePosition && <p id={fieldErrorId("employeePosition")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.employeePosition}</p>}
+                  {fieldErrorMap.employeePosition && <p id={fieldErrorId("employeePosition")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.employeePosition}</p>}
                 </label>
 
                 <label className="block">
@@ -947,7 +962,7 @@ export function SeatInspector({
                     aria-invalid={Boolean(fieldErrorMap.phoneExtension)}
                     aria-describedby={fieldDescribedBy("phoneExtension")}
                   />
-                  {fieldErrorMap.phoneExtension && <p id={fieldErrorId("phoneExtension")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.phoneExtension}</p>}
+                  {fieldErrorMap.phoneExtension && <p id={fieldErrorId("phoneExtension")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.phoneExtension}</p>}
                 </label>
               </div>
 
@@ -966,7 +981,7 @@ export function SeatInspector({
                     <option key={department} value={department}>{department}</option>
                   ))}
                 </select>
-                {fieldErrorMap.department && <p id={fieldErrorId("department")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.department}</p>}
+                {fieldErrorMap.department && <p id={fieldErrorId("department")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.department}</p>}
               </label>
             </section>
 
@@ -992,7 +1007,7 @@ export function SeatInspector({
                     <option value="reserved">Reserved</option>
                     <option value="unavailable">Unavailable</option>
                   </select>
-                  {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.status}</p>}
+                  {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.status}</p>}
                 </label>
               )}
 
@@ -1007,14 +1022,14 @@ export function SeatInspector({
                   aria-describedby={fieldDescribedBy("notes")}
                   className={`${fieldClassName} min-h-20`}
                 />
-                {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-[#7E2F24]">{fieldErrorMap.notes}</p>}
+                {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.notes}</p>}
               </label>
             </section>
 
             <section aria-label={`Available actions for ${selectedSeat.label}`} className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 text-xs text-[var(--sp-color-text-muted)] shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Actions / Rules</h3>
-                <span className="rounded-full bg-[var(--sp-color-brand-paper)] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)]">Draft only</span>
+                <span className="rounded-full bg-[var(--admin-primary-soft)] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)]">Draft only</span>
               </div>
               <div className="mt-2 grid gap-2">
                 <div className={capabilityRowClassName}>
@@ -1022,7 +1037,7 @@ export function SeatInspector({
                     <div className="font-black text-[var(--sp-color-text-primary)]">Delete</div>
                     <div id="seat-inspector-delete-help" className="mt-0.5 leading-4">{deleteHelpText}</div>
                   </div>
-                  <span className={[actionStatePillClassName, selectedSeatCanDelete ? "bg-[var(--sp-color-state-success-surface)] text-[#284C3B] ring-[var(--sp-color-state-success-border)]" : "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] ring-[var(--sp-color-border-subtle)]"].join(" ")}>
+                  <span className={[actionStatePillClassName, selectedSeatCanDelete ? dangerPillClassName : neutralPillClassName].join(" ")}>
                     {selectedSeatCanDelete ? "Allowed" : "Blocked"}
                   </span>
                 </div>
@@ -1031,7 +1046,7 @@ export function SeatInspector({
                     <div className="font-black text-[var(--sp-color-text-primary)]">Vacate</div>
                     <div className="mt-0.5 leading-4">{vacateHelpText}</div>
                   </div>
-                  <span className={[actionStatePillClassName, hasCurrentAssignment ? "bg-[var(--sp-color-state-success-surface)] text-[#284C3B] ring-[var(--sp-color-state-success-border)]" : "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] ring-[var(--sp-color-border-subtle)]"].join(" ")}>
+                  <span className={[actionStatePillClassName, hasCurrentAssignment ? dangerPillClassName : neutralPillClassName].join(" ")}>
                     {hasCurrentAssignment ? "Allowed" : "Not needed"}
                   </span>
                 </div>
@@ -1070,7 +1085,7 @@ export function SeatInspector({
                 aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
                 aria-describedby={saveDisabledReason ? "seat-inspector-save-help" : undefined}
                 title={saveDisabledReason ?? `${primaryActionLabel} for ${selectedSeat.label}`}
-                className="min-w-0 w-full whitespace-normal rounded-xl disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none disabled:hover:border-[var(--sp-color-border-subtle)] disabled:hover:bg-[var(--sp-color-graphite-soft)]"
+                className="min-w-0 w-full whitespace-normal rounded-xl !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-hover)] hover:!bg-[var(--admin-primary-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:shadow-none disabled:hover:!border-[var(--admin-state-neutral-border)] disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
               >
                 {primaryActionLabel}
               </Button>
@@ -1080,7 +1095,7 @@ export function SeatInspector({
                 Swap seat
               </Button>
               {hasCurrentAssignment && (
-                <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="min-w-0 w-full rounded-xl">
+                <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="min-w-0 w-full rounded-xl !border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)]">
                   Vacate
                 </Button>
               )}
@@ -1092,7 +1107,7 @@ export function SeatInspector({
                 aria-label={`Delete custom seat ${selectedSeat.label}`}
                 aria-describedby="seat-inspector-delete-help"
                 title={deleteHelpText}
-                className="min-w-0 w-full whitespace-normal rounded-xl leading-tight disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none disabled:hover:bg-[var(--sp-color-graphite-soft)]"
+                className="min-w-0 w-full whitespace-normal rounded-xl leading-tight !border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:shadow-none disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
               >
                 Delete seat
               </Button>
@@ -1178,11 +1193,11 @@ export function SeatInspector({
 
           <div className="mt-4 grid gap-2">
             {isDirty && (
-              <div className="rounded-xl border border-[var(--sp-color-state-draft-border)] bg-[var(--sp-color-state-draft-surface)] p-3 text-sm font-semibold leading-5 text-[#6D4712]">
+              <div className="rounded-xl border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-dirty-text)]">
                 Any unsaved inspector edits will be discarded.
               </div>
             )}
-            <div className="rounded-xl border border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)] p-3 text-sm font-semibold leading-5 text-[var(--sp-color-brand-clay)]">
+            <div className="rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-viewer-impact-text)]">
               The published viewer map will not change until the draft is published.
             </div>
           </div>
@@ -1191,7 +1206,7 @@ export function SeatInspector({
             <Button type="button" onClick={() => setVacateConfirmOpen(false)} disabled={pending} className="w-full">
               Cancel
             </Button>
-            <Button type="button" variant="danger" onClick={confirmVacateSeat} disabled={pending} className="w-full">
+            <Button type="button" variant="danger" onClick={confirmVacateSeat} disabled={pending} className="w-full !border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)]">
               Vacate seat
             </Button>
           </div>

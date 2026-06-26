@@ -186,6 +186,38 @@
   --admin-analytics: #705FD9;
   --admin-focus: #1B25F2;
 
+  --admin-state-clean-bg: #EDF5EF;
+  --admin-state-clean-border: rgba(47, 122, 86, 0.30);
+  --admin-state-clean-text: #235C40;
+  --admin-state-dirty-bg: var(--admin-warning-soft);
+  --admin-state-dirty-border: rgba(212, 154, 6, 0.46);
+  --admin-state-dirty-text: var(--admin-warning-text);
+  --admin-state-saving-bg: var(--admin-info-soft);
+  --admin-state-saving-border: rgba(22, 83, 89, 0.36);
+  --admin-state-saving-text: var(--admin-info);
+  --admin-state-saved-bg: var(--admin-success-soft);
+  --admin-state-saved-border: rgba(47, 122, 86, 0.36);
+  --admin-state-saved-text: var(--admin-success);
+  --admin-state-error-bg: #F5DEDA;
+  --admin-state-error-border: rgba(214, 69, 69, 0.38);
+  --admin-state-error-text: #8A2424;
+  --admin-state-danger-bg: var(--admin-danger-soft);
+  --admin-state-danger-border: rgba(115, 45, 45, 0.34);
+  --admin-state-danger-text: var(--admin-danger);
+  --admin-state-neutral-bg: var(--admin-surface-alt);
+  --admin-state-neutral-border: var(--admin-border);
+  --admin-state-neutral-text: var(--admin-text-secondary);
+
+  --admin-publish-ready-bg: var(--admin-primary-soft);
+  --admin-publish-ready-border: var(--admin-primary-border);
+  --admin-publish-ready-text: var(--admin-primary-cta);
+  --admin-publish-no-change-bg: var(--admin-state-clean-bg);
+  --admin-publish-no-change-border: var(--admin-state-clean-border);
+  --admin-publish-no-change-text: var(--admin-state-clean-text);
+  --admin-publish-viewer-impact-bg: var(--admin-info-soft);
+  --admin-publish-viewer-impact-border: rgba(22, 83, 89, 0.34);
+  --admin-publish-viewer-impact-text: var(--admin-info);
+
   --admin-marker-assigned-surface: rgba(255, 253, 248, 0.95);
   --admin-marker-assigned-border: rgba(140, 102, 69, 0.42);
   --admin-marker-assigned-text: var(--admin-text-primary);

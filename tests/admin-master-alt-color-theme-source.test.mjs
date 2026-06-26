@@ -48,6 +48,13 @@ test("master alternative palette exposes inert brand primitives and scoped admin
     "--admin-warning-text: #7A4E00",
     "--admin-info: #165359",
     "--admin-focus: #1B25F2",
+    "--admin-state-clean-bg: #EDF5EF",
+    "--admin-state-dirty-bg: var(--admin-warning-soft)",
+    "--admin-state-error-text: #8A2424",
+    "--admin-state-danger-bg: var(--admin-danger-soft)",
+    "--admin-publish-ready-bg: var(--admin-primary-soft)",
+    "--admin-publish-no-change-bg: var(--admin-state-clean-bg)",
+    "--admin-publish-viewer-impact-bg: var(--admin-info-soft)",
     "--admin-marker-assigned-surface: rgba(255, 253, 248, 0.95)",
     "--admin-marker-selected-border: var(--admin-primary)",
     "--admin-marker-search-surface: var(--admin-info-soft)",
@@ -72,7 +79,7 @@ test("admin theme wrapper is scoped to the admin route only", async () => {
   assert.doesNotMatch(managementRouteSource, /admin-theme|--admin-/);
 });
 
-test("admin color slices scope shell and marker aliases without redesigning viewer or inspector internals", async () => {
+test("admin color slices scope shell marker and semantic aliases without redesigning viewer", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const seatMarkerSource = await readSource("../components/seat-map/SeatMarker.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
@@ -99,7 +106,10 @@ test("admin color slices scope shell and marker aliases without redesigning view
   assert.match(seatMarkerSource, /border-\[#D4CABF\]\/90 bg-\[#F9F5ED\]\/\[0\.86\]/);
   assert.doesNotMatch(viewerSource, /--admin-/);
   assert.doesNotMatch(viewerSource, /variant="admin"/);
-  assert.doesNotMatch(inspectorSource, /--admin-/);
+  assert.match(inspectorSource, /--admin-state-clean-bg/);
+  assert.match(inspectorSource, /--admin-state-dirty-bg/);
+  assert.match(inspectorSource, /--admin-state-error-bg/);
+  assert.match(inspectorSource, /--admin-state-danger-bg/);
 });
 
 test("admin color slice preserves shell controls and behavior boundaries", async () => {
