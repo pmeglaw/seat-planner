@@ -47,7 +47,11 @@ test("master alternative palette exposes inert brand primitives and scoped admin
     "--admin-primary-soft: rgba(242, 110, 34, 0.10)",
     "--admin-warning-text: #7A4E00",
     "--admin-info: #165359",
-    "--admin-focus: #1B25F2"
+    "--admin-focus: #1B25F2",
+    "--admin-marker-assigned-surface: rgba(255, 253, 248, 0.95)",
+    "--admin-marker-selected-border: var(--admin-primary)",
+    "--admin-marker-search-surface: var(--admin-info-soft)",
+    "--admin-marker-draft-surface: var(--admin-warning-soft)"
   ]) {
     assert.match(adminThemeBlock, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
@@ -68,7 +72,7 @@ test("admin theme wrapper is scoped to the admin route only", async () => {
   assert.doesNotMatch(managementRouteSource, /admin-theme|--admin-/);
 });
 
-test("admin color slice touches shell surfaces without redesigning markers viewer or inspector internals", async () => {
+test("admin color slices scope shell and marker aliases without redesigning viewer or inspector internals", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const seatMarkerSource = await readSource("../components/seat-map/SeatMarker.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
@@ -82,9 +86,19 @@ test("admin color slice touches shell surfaces without redesigning markers viewe
   assert.match(seatMapSource, /border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-surface-muted\)\]/);
   assert.match(seatMapSource, /showNames \? "border-\[var\(--admin-primary-cta\)\] bg-\[var\(--admin-primary-cta\)\] text-white/);
   assert.match(seatMapSource, /hover:!border-\[var\(--admin-primary-border\)\] hover:!bg-\[var\(--admin-primary-soft\)\]/);
+  assert.match(seatMapSource, /variant="admin"/);
 
-  assert.doesNotMatch(seatMarkerSource, /--admin-/);
+  assert.match(seatMarkerSource, /variant\?: "admin" \| "viewer"/);
+  assert.match(seatMarkerSource, /variant = "viewer"/);
+  assert.match(seatMarkerSource, /--admin-marker-assigned-surface/);
+  assert.match(seatMarkerSource, /--admin-marker-available-surface/);
+  assert.match(seatMarkerSource, /--admin-marker-selected-border/);
+  assert.match(seatMarkerSource, /--admin-marker-search-border/);
+  assert.match(seatMarkerSource, /--admin-marker-draft-surface/);
+  assert.match(seatMarkerSource, /border-\[#B7AB9E\]\/85 bg-\[#FFFDF8\]\/95/);
+  assert.match(seatMarkerSource, /border-\[#D4CABF\]\/90 bg-\[#F9F5ED\]\/\[0\.86\]/);
   assert.doesNotMatch(viewerSource, /--admin-/);
+  assert.doesNotMatch(viewerSource, /variant="admin"/);
   assert.doesNotMatch(inspectorSource, /--admin-/);
 });
 
