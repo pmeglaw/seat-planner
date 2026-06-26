@@ -1607,6 +1607,7 @@ export function SeatMap({
   const desktopInspectorOpen = canEdit && Boolean(selectedSeat && !inspectorCollapsed);
   const desktopInspectorReserveMarginClassName = desktopInspectorOpen ? "sm:mr-[28rem] xl:mr-[29.5rem]" : "";
   const desktopInspectorReservePaddingClassName = desktopInspectorOpen ? "sm:pr-[28rem] xl:pr-[29.5rem]" : "";
+  const canvasBannerSafeAreaClassName = desktopInspectorReserveMarginClassName;
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
     showFilterPanel ||
@@ -1645,7 +1646,7 @@ export function SeatMap({
       : selectedResultIsVisible
       ? "rounded-xl border-[var(--admin-border)] bg-[var(--admin-surface-muted)] text-[var(--admin-text-muted)] shadow-none"
       : "rounded-2xl border-[var(--admin-border)] bg-[var(--admin-surface)]/92 py-2 text-[var(--admin-text-muted)] shadow-[var(--admin-shadow-command)] backdrop-blur-xl",
-    desktopInspectorReserveMarginClassName
+    canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
   const singleResultOverlayShellClassName = [
     "pointer-events-none sticky left-0 right-0 top-12 z-30 flex h-0 w-full justify-center px-2 sm:top-2 sm:justify-end",
@@ -1658,7 +1659,7 @@ export function SeatMap({
   ].filter(Boolean).join(" ");
   const activeModeBannerClassName = [
     "flex flex-col gap-2 rounded-2xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-2 text-xs font-semibold text-[var(--admin-primary-cta)] shadow-[0_12px_34px_rgba(166,58,18,0.14)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between",
-    desktopInspectorReserveMarginClassName
+    canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
   const mapModeOverlayShellClassName = [
     "pointer-events-none sticky left-0 top-0 z-30 h-0",
@@ -1670,7 +1671,15 @@ export function SeatMap({
   ].filter(Boolean).join(" ");
   const desktopResultRailClassName = [
     "hidden lg:block",
-    desktopInspectorReserveMarginClassName
+    canvasBannerSafeAreaClassName
+  ].filter(Boolean).join(" ");
+  const actionErrorBannerClassName = [
+    "min-w-0 whitespace-pre-wrap break-words rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-error-text)]",
+    canvasBannerSafeAreaClassName
+  ].filter(Boolean).join(" ");
+  const actionNoticeBannerClassName = [
+    "flex min-w-0 flex-col gap-2 rounded-xl border border-[var(--admin-state-saved-border)] bg-[var(--admin-state-saved-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-saved-text)] sm:flex-row sm:items-center sm:justify-between",
+    canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
   const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-black text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-cta)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50";
   const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-black text-[var(--admin-primary-cta)] transition hover:border-[var(--admin-primary)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]";
@@ -2123,14 +2132,14 @@ export function SeatMap({
           )}
 
           {actionError && (
-            <div role="alert" className="whitespace-pre-wrap rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-error-text)]">
+            <div role="alert" className={actionErrorBannerClassName}>
               {actionError}
             </div>
           )}
 
           {actionNotice && !swapSourceSeatId && (
-            <div role="status" aria-live="polite" className="flex flex-col gap-2 rounded-xl border border-[var(--admin-state-saved-border)] bg-[var(--admin-state-saved-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-saved-text)] sm:flex-row sm:items-center sm:justify-between">
-              <span>{actionNotice}</span>
+            <div role="status" aria-live="polite" className={actionNoticeBannerClassName}>
+              <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{actionNotice}</span>
               {canEdit && undoAvailable && lastUndoLabel && !pending && !inspectorDirty && (
                 <button
                   type="button"

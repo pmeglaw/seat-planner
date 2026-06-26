@@ -23,8 +23,14 @@ test("desktop inspector shell exposes the selected-seat identity model", async (
   assert.match(inspectorSource, /Original/);
   assert.match(seatMapSource, /const desktopInspectorReservePaddingClassName = desktopInspectorOpen \? "sm:pr-\[28rem\] xl:pr-\[29\.5rem\]" : ""/);
   assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = desktopInspectorOpen \? "sm:mr-\[28rem\] xl:mr-\[29\.5rem\]" : ""/);
-  assert.match(seatMapSource, /const activeModeBannerClassName = \[[\s\S]*desktopInspectorReserveMarginClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
+  assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = desktopInspectorReserveMarginClassName/);
+  assert.match(seatMapSource, /const activeModeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /className=\{activeModeBannerClassName\}/);
+  assert.match(seatMapSource, /const actionErrorBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
+  assert.match(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
+  assert.match(seatMapSource, /className=\{actionErrorBannerClassName\}/);
+  assert.match(seatMapSource, /className=\{actionNoticeBannerClassName\}/);
+  assert.match(seatMapSource, /className="min-w-0 flex-1 whitespace-pre-wrap break-words"/);
 });
 
 test("desktop inspector keeps a persistent draft-state and viewer-impact band", async () => {
