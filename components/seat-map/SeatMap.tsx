@@ -2233,6 +2233,7 @@ export function SeatMap({
                         addSeatMode={addSeatMode}
                         viewportEdge={viewportPlacement.edge}
                         viewportEdgeOffsetPx={viewportPlacement.offsetPx}
+                        variant="admin"
                         onSelect={selectSeat}
                         onMovePointerDown={handleMovePointerDown}
                       />
