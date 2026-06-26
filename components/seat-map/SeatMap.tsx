@@ -1626,11 +1626,11 @@ export function SeatMap({
     !filterCollapsed ? "lg:min-h-0 lg:self-stretch lg:[&>aside]:h-full lg:[&>aside]:max-h-full lg:[&>aside]:top-0" : ""
   ].join(" ");
   const mapViewportClassName = [
-    "relative mx-auto w-full max-w-full overscroll-contain rounded-[22px] border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-map-workspace)] shadow-[0_18px_46px_rgba(23,26,29,0.16),inset_0_1px_0_rgba(255,255,255,0.78)] sm:rounded-[26px] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
+    "relative mx-auto w-full max-w-full overscroll-contain rounded-[22px] border border-[var(--admin-border-strong)] bg-[var(--admin-surface-muted)] shadow-[var(--admin-shadow-map),inset_0_1px_0_rgba(255,255,255,0.78)] sm:rounded-[26px] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
     mapViewMode === "overview"
       ? "min-h-[300px] overflow-hidden p-1.5 sm:min-h-[480px] sm:p-2 lg:flex lg:min-h-0 lg:items-center lg:justify-center"
       : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
-    canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-map-workspace)]" : ""
+    canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-surface-muted)]" : ""
   ].join(" ");
   const mapFrameClassName = [
     "relative mx-auto max-w-none",
@@ -1641,10 +1641,10 @@ export function SeatMap({
   const resultSummaryShellClass = [
     "flex flex-col gap-2 border px-3 text-xs font-semibold transition lg:flex-row lg:items-center lg:justify-between",
     singleResultSeat
-      ? "rounded-xl border-[var(--sp-color-state-search-border)] bg-[var(--sp-color-state-search-surface)] py-1.5 text-[#244E50] shadow-[0_8px_22px_rgba(23,26,29,0.08)]"
+      ? "rounded-xl border-[var(--admin-primary-border)] bg-[var(--admin-info-soft)] py-1.5 text-[var(--admin-info)] shadow-[0_8px_22px_rgba(16,17,20,0.08)]"
       : selectedResultIsVisible
-      ? "rounded-xl border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-muted)] shadow-none"
-      : "rounded-2xl border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)]/90 py-2 text-[var(--sp-color-text-muted)] shadow-[0_12px_34px_rgba(23,26,29,0.10)] backdrop-blur-xl",
+      ? "rounded-xl border-[var(--admin-border)] bg-[var(--admin-surface-muted)] text-[var(--admin-text-muted)] shadow-none"
+      : "rounded-2xl border-[var(--admin-border)] bg-[var(--admin-surface)]/92 py-2 text-[var(--admin-text-muted)] shadow-[var(--admin-shadow-command)] backdrop-blur-xl",
     desktopInspectorReserveMarginClassName
   ].filter(Boolean).join(" ");
   const singleResultOverlayShellClassName = [
@@ -1653,11 +1653,11 @@ export function SeatMap({
     desktopInspectorReservePaddingClassName
   ].filter(Boolean).join(" ");
   const singleResultOverlayClassName = [
-    "pointer-events-auto flex w-[min(100%,22rem)] flex-col gap-2 rounded-xl border border-[var(--sp-color-state-search-border)] bg-[var(--sp-color-state-search-surface)]/95 px-2.5 py-2 text-xs font-semibold text-[#244E50] shadow-[0_14px_34px_rgba(23,26,29,0.18)] backdrop-blur-md sm:w-auto sm:min-w-[28rem] sm:max-w-[min(46rem,calc(100vw-11rem))] sm:flex-row sm:items-center sm:justify-between",
+    "pointer-events-auto flex w-[min(100%,22rem)] flex-col gap-2 rounded-xl border border-[var(--admin-primary-border)] bg-[var(--admin-info-soft)]/95 px-2.5 py-2 text-xs font-semibold text-[var(--admin-info)] shadow-[0_14px_34px_rgba(16,17,20,0.18)] backdrop-blur-md sm:w-auto sm:min-w-[28rem] sm:max-w-[min(46rem,calc(100vw-11rem))] sm:flex-row sm:items-center sm:justify-between",
     desktopInspectorOpen ? "lg:min-w-0 lg:max-w-[min(36rem,calc(100vw-32rem))] xl:max-w-[min(36rem,calc(100vw-33.5rem))]" : ""
   ].filter(Boolean).join(" ");
   const activeModeBannerClassName = [
-    "flex flex-col gap-2 rounded-2xl border border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)]/90 px-3 py-2 text-xs font-semibold text-[var(--sp-color-brand-clay)] shadow-[0_12px_34px_rgba(194,65,12,0.14)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between",
+    "flex flex-col gap-2 rounded-2xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-2 text-xs font-semibold text-[var(--admin-primary-cta)] shadow-[0_12px_34px_rgba(166,58,18,0.14)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between",
     desktopInspectorReserveMarginClassName
   ].filter(Boolean).join(" ");
   const mapModeOverlayShellClassName = [
@@ -1672,8 +1672,8 @@ export function SeatMap({
     "hidden lg:block",
     desktopInspectorReserveMarginClassName
   ].filter(Boolean).join(" ");
-  const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface-raised)] px-3 py-1.5 text-[11px] font-black text-[var(--sp-color-text-secondary)] transition hover:border-[var(--sp-color-brand-copper)] hover:bg-[var(--sp-color-brand-paper)] hover:text-[var(--sp-color-brand-clay)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50";
-  const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)] px-3 py-1.5 text-[11px] font-black text-[var(--sp-color-brand-clay)] transition hover:bg-[#F3D1B9] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]";
+  const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-black text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-cta)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50";
+  const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-black text-[var(--admin-primary-cta)] transition hover:border-[var(--admin-primary)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]";
   const singleResultSummary = singleResultSeat ? (
     <>
       <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -1754,31 +1754,31 @@ export function SeatMap({
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[var(--sp-color-workspace-deep)] px-2 py-2 text-[var(--sp-color-text-primary)] sm:px-3 sm:py-3 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden">
-      <div className="mx-auto grid w-full max-w-[1920px] flex-1 grid-cols-1 overflow-hidden rounded-[30px] border border-white/10 bg-[var(--sp-color-canvas)] shadow-[0_34px_110px_rgba(0,0,0,0.42)] lg:min-h-0 lg:grid-cols-[286px_minmax(0,1fr)]">
-        <aside aria-label="Admin workspace rail" className="z-30 flex min-w-0 flex-col gap-3 border-b border-white/10 bg-[var(--sp-color-workspace)] p-3 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:p-4 lg:min-h-0 lg:overflow-auto lg:border-b-0 lg:border-r">
-          <section aria-label="Admin planning workspace" className="min-w-0 overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.045] px-3.5 py-3 shadow-[0_18px_42px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.10)]">
+    <div className="min-h-screen overflow-x-hidden bg-[var(--admin-bg)] px-2 py-2 text-[var(--admin-text-primary)] sm:px-3 sm:py-3 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden">
+      <div className="mx-auto grid w-full max-w-[1920px] flex-1 grid-cols-1 overflow-hidden rounded-[30px] border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-[var(--admin-shadow-shell)] lg:min-h-0 lg:grid-cols-[286px_minmax(0,1fr)]">
+        <aside aria-label="Admin workspace rail" className="z-30 flex min-w-0 flex-col gap-3 border-b border-[var(--admin-rail-border)] bg-[var(--admin-rail-bg)] p-3 text-[var(--admin-text-inverse)] shadow-[inset_0_1px_0_rgba(255,255,255,0.10)] sm:p-4 lg:min-h-0 lg:overflow-auto lg:border-b-0 lg:border-r">
+          <section aria-label="Admin planning workspace" className="min-w-0 overflow-hidden rounded-[22px] border border-[var(--admin-rail-border)] bg-[var(--admin-rail-surface)] px-3.5 py-3 shadow-[0_18px_42px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]">
             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
               <h1 className="truncate text-lg font-black leading-tight tracking-normal">Office Seat Planner</h1>
-              <span className={["shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", canEdit ? "bg-[var(--sp-color-brand-ivory)] text-[var(--sp-color-brand-clay)] ring-white/20" : "bg-[var(--sp-color-state-published-surface)] text-[#284C3B] ring-white/20"].join(" ")}>
+              <span className={["shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", canEdit ? "bg-[var(--admin-primary)] text-[var(--admin-rail-bg)] ring-white/20" : "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-white/20"].join(" ")}>
                 {canEdit ? "Draft" : "Published"}
               </span>
             </div>
-            <p className="mt-1 truncate text-[10px] font-bold uppercase leading-tight tracking-[0.18em] text-[var(--sp-color-brand-paper)]">{canEdit ? "Admin planning workspace" : "Viewer workspace"}</p>
+            <p className="mt-1 truncate text-[10px] font-bold uppercase leading-tight tracking-[0.18em] text-[var(--admin-primary)]">{canEdit ? "Admin planning workspace" : "Viewer workspace"}</p>
           </section>
 
           <section aria-label="Seat inventory summary" className="grid grid-cols-3 gap-1.5 text-center text-[11px] font-black">
             <div className="rounded-2xl bg-white/10 px-2 py-2 ring-1 ring-white/15">
               <div className="text-base leading-none">{stats.total}</div>
-              <div className="mt-1 text-[9px] uppercase tracking-wide text-white/62">Seats</div>
+              <div className="mt-1 text-[9px] uppercase tracking-wide text-[var(--admin-rail-muted)]">Seats</div>
             </div>
-            <div className="rounded-2xl bg-[var(--sp-color-state-published-surface)] px-2 py-2 text-[#284C3B] ring-1 ring-white/20">
+            <div className="rounded-2xl bg-[var(--admin-success-soft)] px-2 py-2 text-[var(--admin-success)] ring-1 ring-white/20">
               <div className="text-base leading-none">{stats.assigned}</div>
               <div className="mt-1 text-[9px] uppercase tracking-wide opacity-70">Assigned</div>
             </div>
-            <div className="rounded-2xl bg-[var(--sp-color-surface)] px-2 py-2 text-[var(--sp-color-text-secondary)] ring-1 ring-white/20">
+            <div className="rounded-2xl bg-[var(--admin-surface)] px-2 py-2 text-[var(--admin-text-secondary)] ring-1 ring-white/20">
               <div className="text-base leading-none">{stats.available}</div>
-              <div className="mt-1 text-[9px] uppercase tracking-wide text-[var(--sp-color-text-muted)]">Open</div>
+              <div className="mt-1 text-[9px] uppercase tracking-wide text-[var(--admin-text-muted)]">Open</div>
             </div>
           </section>
 
@@ -1788,12 +1788,12 @@ export function SeatMap({
               onClick={openPublishReview}
               aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
               title={draftStatusTitle}
-              className={["group flex min-w-0 flex-col items-start rounded-[22px] border px-3.5 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition hover:bg-[var(--sp-color-surface-raised)] active:scale-[0.99] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]", publishSummary.hasChanges ? "border-[var(--sp-color-state-draft-border)] bg-[var(--sp-color-state-draft-surface)] text-[#6D4712]" : "border-[var(--sp-color-state-published-border)] bg-[var(--sp-color-state-published-surface)] text-[#284C3B]"].join(" ")}
+              className={["group flex min-w-0 flex-col items-start rounded-[22px] border px-3.5 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition hover:bg-[var(--admin-surface)] active:scale-[0.99] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]", publishSummary.hasChanges ? "border-[var(--admin-primary-border)] bg-[var(--admin-warning-soft)] text-[var(--admin-warning-text)]" : "border-[rgba(47,122,86,0.30)] bg-[var(--admin-success-soft)] text-[var(--admin-success)]"].join(" ")}
             >
               <span className="text-[10px] font-black uppercase tracking-[0.16em] opacity-70">Draft publication status</span>
               <span className="mt-1 flex max-w-full items-center gap-2 text-sm font-black leading-tight">
                 <span className="min-w-0 truncate">{draftStatusHeadline}</span>
-                <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", publishSummary.hasChanges ? "bg-white/75 text-[#6D4712] ring-[var(--sp-color-state-draft-border)]" : "bg-white/75 text-[#284C3B] ring-[var(--sp-color-state-published-border)]"].join(" ")}>
+                <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", publishSummary.hasChanges ? "bg-white/75 text-[var(--admin-warning-text)] ring-[var(--admin-primary-border)]" : "bg-white/75 text-[var(--admin-success)] ring-[rgba(47,122,86,0.30)]"].join(" ")}>
                   {draftStatusActionLabel}
                 </span>
               </span>
@@ -1801,7 +1801,7 @@ export function SeatMap({
               <span className="sr-only">{draftStatusLabel}</span>
             </button>
           ) : (
-            <section aria-label="Published status" className="rounded-[22px] border border-[var(--sp-color-state-published-border)] bg-[var(--sp-color-state-published-surface)] px-3.5 py-3 text-[#284C3B]">
+            <section aria-label="Published status" className="rounded-[22px] border border-[rgba(47,122,86,0.30)] bg-[var(--admin-success-soft)] px-3.5 py-3 text-[var(--admin-success)]">
               <div className="text-[10px] font-black uppercase tracking-[0.16em] opacity-70">Published status</div>
               <div className="mt-1 text-sm font-black">Published map</div>
               <p className="mt-1 text-xs font-semibold leading-5 opacity-75">Read-only seating shown to viewers.</p>
@@ -1810,12 +1810,12 @@ export function SeatMap({
         </aside>
 
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
-          <header className="z-30 border-b border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 px-3 py-2 text-[var(--sp-color-text-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] sm:px-4 lg:shrink-0">
-            <div role="group" aria-label="Admin command row" className="flex min-w-0 flex-col gap-2 rounded-[22px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)]/90 p-2 shadow-[0_12px_34px_rgba(23,26,29,0.08),inset_0_1px_0_rgba(255,255,255,0.92)] xl:flex-row xl:items-center">
+          <header className="z-30 border-b border-[var(--admin-border)] bg-[var(--admin-surface)]/96 px-3 py-2 text-[var(--admin-text-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] sm:px-4 lg:shrink-0">
+            <div role="group" aria-label="Admin command row" className="flex min-w-0 flex-col gap-2 rounded-[22px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/94 p-2 shadow-[var(--admin-shadow-command),inset_0_1px_0_rgba(255,255,255,0.92)] xl:flex-row xl:items-center">
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 items-center justify-between gap-3 px-1 pb-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--sp-color-brand-clay)]">Command search</span>
-                  <span className="truncate text-[11px] font-bold text-[var(--sp-color-text-muted)]">{planningStateLabel}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--admin-primary-cta)]">Command search</span>
+                  <span className="truncate text-[11px] font-bold text-[var(--admin-text-muted)]">{planningStateLabel}</span>
                 </div>
                 <label className="relative block min-w-0">
                   <span className="sr-only">Search employee, seat, job title, department, or zone</span>
@@ -1829,7 +1829,7 @@ export function SeatMap({
                       setResultRailCollapsed(false);
                     }}
                     placeholder="Search employee, seat, job title, department, or zone"
-                    className="h-11 w-full rounded-[16px] border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface)] px-4 pr-10 text-sm font-semibold text-[var(--sp-color-text-primary)] shadow-[0_8px_18px_rgba(23,26,29,0.07),inset_0_1px_0_rgba(255,255,255,0.92)] outline-none transition placeholder:text-[var(--sp-color-stone-muted)] focus:border-[var(--sp-color-brand-copper)] focus:bg-white focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)]"
+                    className="h-11 w-full rounded-[16px] border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-4 pr-10 text-sm font-semibold text-[var(--admin-text-primary)] shadow-[0_8px_18px_rgba(16,17,20,0.07),inset_0_1px_0_rgba(255,255,255,0.92)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:bg-white focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)]"
                   />
                   {search.trim() && (
                     <button
@@ -1837,7 +1837,7 @@ export function SeatMap({
                       aria-label="Clear top search"
                       title="Clear top search"
                       className={[
-                        "absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] active:scale-90",
+                        "absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-secondary)] active:scale-90",
                         focusRingClass
                       ].join(" ")}
                       onClick={clearSearch}
@@ -1849,7 +1849,7 @@ export function SeatMap({
               </div>
 
               {canEdit && (
-                <div role="group" aria-label="Map command actions" className="flex min-w-0 flex-wrap items-center gap-1.5 rounded-[16px] bg-[var(--sp-color-graphite-soft)]/72 p-1.5 xl:max-w-[33rem] xl:justify-end">
+                <div role="group" aria-label="Map command actions" className="flex min-w-0 flex-wrap items-center gap-1.5 rounded-[16px] bg-[var(--admin-surface-muted)]/78 p-1.5 xl:max-w-[33rem] xl:justify-end">
                   <button
                     type="button"
                     onClick={toggleFilterPanel}
@@ -1857,11 +1857,11 @@ export function SeatMap({
                     aria-expanded={!filterCollapsed}
                     aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
                     title={filterCollapsed ? "Open filters" : "Collapse filters"}
-                    className={["inline-flex h-10 shrink-0 items-center gap-2 rounded-[14px] border px-3 text-xs font-black shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner", focusRingClass, structuredFilterCount ? "border-[var(--sp-color-state-selected-border)] bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)]" : "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] text-[var(--sp-color-text-secondary)]"].join(" ")}
+                    className={["inline-flex h-10 shrink-0 items-center gap-2 rounded-[14px] border px-3 text-xs font-black shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner", focusRingClass, structuredFilterCount ? "border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-cta)]" : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)]"].join(" ")}
                   >
                     Filters
                     {structuredFilterCount > 0 && (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--sp-color-action-primary)] px-1.5 text-[10px] font-black text-white">
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1.5 text-[10px] font-black text-white">
                         {structuredFilterCount}
                       </span>
                     )}
@@ -1874,7 +1874,7 @@ export function SeatMap({
                     className={[
                       "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border px-3 text-xs font-black shadow-sm transition active:scale-[0.97] active:duration-75 active:shadow-inner",
                       focusRingClass,
-                      showNames ? "border-[var(--sp-color-workspace)] bg-[var(--sp-color-workspace)] text-white hover:bg-[var(--sp-color-workspace-deep)]" : "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] text-[var(--sp-color-text-secondary)] hover:bg-white"
+                      showNames ? "border-[var(--admin-primary-cta)] bg-[var(--admin-primary-cta)] text-white hover:bg-[var(--admin-primary-hover)]" : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:bg-white"
                     ].join(" ")}
                   >
                     <NamesIcon />
@@ -1890,7 +1890,7 @@ export function SeatMap({
                       aria-expanded={advancedOpen}
                       aria-haspopup="dialog"
                       title="Map tools"
-                      className="h-10 min-h-10 rounded-[14px] border-[var(--sp-color-border-strong)] px-3 py-1 text-xs shadow-sm"
+                      className="h-10 min-h-10 rounded-[14px] !border-[var(--admin-border-strong)] !bg-[var(--admin-surface)] px-3 py-1 text-xs !text-[var(--admin-text-secondary)] shadow-sm hover:!border-[var(--admin-primary-border)] hover:!bg-[var(--admin-primary-soft)] hover:!text-[var(--admin-primary-cta)]"
                       onClick={openAdvancedDrawer}
                     >
                       <span className="min-[1280px]:hidden">Tools</span>
@@ -1901,7 +1901,7 @@ export function SeatMap({
                   <div role="group" aria-label="Draft history controls" className="flex min-w-0 items-center gap-1.5">
                     <button
                       type="button"
-                      className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] px-2.5 text-xs font-black text-[var(--sp-color-text-secondary)] shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-stone)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none"
+                      className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 text-xs font-black text-[var(--admin-text-secondary)] shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--admin-border)] disabled:bg-[var(--admin-surface-muted)] disabled:text-[var(--admin-text-subtle)] disabled:shadow-none"
                       disabled={pending || inspectorDirty || !undoAvailable}
                       aria-label="Undo last map change"
                       title={undoTitle}
@@ -1912,7 +1912,7 @@ export function SeatMap({
                     </button>
                     <button
                       type="button"
-                      className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] px-2.5 text-xs font-black text-[var(--sp-color-text-secondary)] shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-stone)] disabled:text-[var(--sp-color-text-disabled)] disabled:shadow-none"
+                      className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 text-xs font-black text-[var(--admin-text-secondary)] shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--admin-border)] disabled:bg-[var(--admin-surface-muted)] disabled:text-[var(--admin-text-subtle)] disabled:shadow-none"
                       disabled={pending || inspectorDirty || !redoAvailable}
                       aria-label="Redo last undone change"
                       title={redoTitle}
@@ -1929,7 +1929,7 @@ export function SeatMap({
                       onClick={event => {
                         if (!beforeManagementNavigation()) event.preventDefault();
                       }}
-                      className="inline-flex min-h-10 items-center justify-center rounded-[14px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] px-3 text-xs font-semibold text-[var(--sp-color-text-secondary)] shadow-sm transition hover:border-[var(--sp-color-brand-copper)] hover:bg-[var(--sp-color-brand-paper)] hover:text-[var(--sp-color-brand-clay)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--sp-color-brand-copper)]"
+                      className="inline-flex min-h-10 items-center justify-center rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 text-xs font-semibold text-[var(--admin-text-secondary)] shadow-sm transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-cta)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-primary)]"
                     >
                       <span className="min-[1400px]:hidden">Manage</span>
                       <span className="hidden min-[1400px]:inline">Management</span>
@@ -1942,15 +1942,15 @@ export function SeatMap({
                       aria-expanded={askPlannerOpen}
                       aria-haspopup="dialog"
                       className={[
-                        "min-h-10 rounded-[14px] border-[var(--sp-color-border-strong)] px-3 py-1 text-xs shadow-sm",
-                        plannerHighlightedSeatIds.length > 0 ? "border-[var(--sp-color-state-planner-border)] bg-[var(--sp-color-state-planner-surface)] text-[var(--sp-color-state-planner)] hover:bg-[#E5DDD2]" : ""
+                        "min-h-10 rounded-[14px] !border-[var(--admin-border-strong)] !bg-[var(--admin-surface)] px-3 py-1 text-xs !text-[var(--admin-text-secondary)] shadow-sm hover:!border-[var(--admin-primary-border)] hover:!bg-[var(--admin-primary-soft)] hover:!text-[var(--admin-primary-cta)]",
+                        plannerHighlightedSeatIds.length > 0 ? "!border-[var(--admin-info)] !bg-[var(--admin-info-soft)] !text-[var(--admin-info)] hover:!bg-[var(--admin-info-soft)]" : ""
                       ].join(" ")}
                       onClick={openAskPlannerDrawer}
                     >
                       <span className="min-[1480px]:hidden">Ask</span>
                       <span className="hidden min-[1480px]:inline">Ask Planner</span>
                       {plannerHighlightedSeatIds.length > 0 && (
-                        <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--sp-color-state-planner)] px-1.5 text-[10px] font-black text-white">
+                        <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--admin-info)] px-1.5 text-[10px] font-black text-white">
                           {plannerHighlightedSeatIds.length}
                         </span>
                       )}
@@ -1961,7 +1961,7 @@ export function SeatMap({
             </div>
           </header>
 
-      <main className={["grid grid-cols-1 gap-2 bg-[var(--sp-color-map-workspace)] p-2 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
+      <main className={["grid grid-cols-1 gap-2 bg-[var(--admin-surface-muted)] p-2 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
         {showFilterPanel && (
           <div className={filterPanelShellClass}>
             <FilterPanel
@@ -1995,12 +1995,12 @@ export function SeatMap({
           </div>
         )}
 
-        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden rounded-[24px] border border-white/45 bg-[var(--sp-color-surface)]/55 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].join(" ")}>
+        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden rounded-[24px] border border-white/60 bg-[var(--admin-surface)]/68 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].join(" ")}>
           {canEdit && (
-            <div className="flex flex-col gap-2 rounded-[20px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)]/80 px-3 py-2 text-[var(--sp-color-text-secondary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2 rounded-[20px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/86 px-3 py-2 text-[var(--admin-text-secondary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <h2 id="admin-planning-canvas-title" className="text-xs font-black uppercase tracking-[0.16em] text-[var(--sp-color-brand-clay)]">Planning canvas</h2>
-                <p className="mt-0.5 truncate text-sm font-black text-[var(--sp-color-text-primary)]">{planningStateLabel}</p>
+                <h2 id="admin-planning-canvas-title" className="text-xs font-black uppercase tracking-[0.16em] text-[var(--admin-primary-cta)]">Planning canvas</h2>
+                <p className="mt-0.5 truncate text-sm font-black text-[var(--admin-text-primary)]">{planningStateLabel}</p>
               </div>
               <div className="flex shrink-0 flex-wrap gap-1.5 text-[10px] font-black uppercase tracking-wide">
                 <StatusBadge tone="draft" className="!min-h-0 !px-2 !py-1 !text-[10px] !font-black !tracking-wide">Draft map</StatusBadge>
@@ -2010,8 +2010,8 @@ export function SeatMap({
           )}
 
           {showSearchNoQueryHint && (
-            <div className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)]/80 px-3 py-2 text-xs font-semibold text-[var(--sp-color-text-muted)] shadow-none" role="status" aria-live="polite">
-              <div className="font-black text-[var(--sp-color-text-primary)]">Search the draft map</div>
+            <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)]/86 px-3 py-2 text-xs font-semibold text-[var(--admin-text-muted)] shadow-none" role="status" aria-live="polite">
+              <div className="font-black text-[var(--admin-text-primary)]">Search the draft map</div>
               <div className="mt-0.5 leading-5">Try a person, seat ID, job title, department, status, or zone. Search results stay draft-only in this admin workspace.</div>
             </div>
           )}
@@ -2020,14 +2020,14 @@ export function SeatMap({
             <div className={resultSummaryShellClass}>
               <div className="min-w-0">
                 {searchSelectionNotice && (
-                  <div className="truncate font-black text-[var(--sp-color-brand-clay)]">{searchSelectionNotice}</div>
+                  <div className="truncate font-black text-[var(--admin-primary-cta)]">{searchSelectionNotice}</div>
                 )}
                 {filtersActive && (
                   <>
-                    <div className={searchSelectionNotice ? "mt-0.5 truncate text-[11px] text-[var(--sp-color-text-muted)]" : "truncate font-black text-[var(--sp-color-text-secondary)]"}>
+                    <div className={searchSelectionNotice ? "mt-0.5 truncate text-[11px] text-[var(--admin-text-muted)]" : "truncate font-black text-[var(--admin-text-secondary)]"}>
                       {mapResultSummary} {mapResultVerb} {mapResultContextLabel}.
                     </div>
-                    <div className="mt-0.5 truncate text-[11px] text-[var(--sp-color-text-muted)]">{resultStatusSummary}</div>
+                    <div className="mt-0.5 truncate text-[11px] text-[var(--admin-text-muted)]">{resultStatusSummary}</div>
                     {activeStructuredFilterChips.length > 0 && (
                       <ActiveFilterChips chips={activeStructuredFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearStructuredFilters} className={selectedResultIsVisible ? "mt-1.5" : "mt-2"} />
                     )}
@@ -2110,12 +2110,12 @@ export function SeatMap({
           {activeMode && (
             <div role="status" aria-live="polite" className={activeModeBannerClassName}>
               <div className="min-w-0">
-                <div className="text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-action-primary)]">{activeMode.label} mode</div>
-                <div className="mt-0.5 truncate text-sm font-bold text-[var(--sp-color-text-primary)]">{activeMode.message}</div>
+                <div className="text-[10px] font-black uppercase tracking-wide text-[var(--admin-primary-cta)]">{activeMode.label} mode</div>
+                <div className="mt-0.5 truncate text-sm font-bold text-[var(--admin-text-primary)]">{activeMode.message}</div>
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <span className="rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)]">Esc exits</span>
-                <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-white/75 px-3 py-1.5 text-[11px] font-black text-[var(--sp-color-brand-clay)] ring-1 ring-[var(--sp-color-state-selected-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
+                <span className="rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)]">Esc exits</span>
+                <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-white/75 px-3 py-1.5 text-[11px] font-black text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
                   {activeMode.exitLabel}
                 </button>
               </div>
@@ -2161,7 +2161,7 @@ export function SeatMap({
                 <div
                   role="group"
                   aria-label="Map view mode"
-                  className="pointer-events-auto ml-2 mt-2 inline-flex rounded-xl border border-white/15 bg-[var(--sp-color-workspace)]/90 p-0.5 text-white shadow-[0_8px_18px_rgba(23,26,29,0.24),inset_0_1px_0_rgba(255,255,255,0.16)] backdrop-blur-md"
+                  className="pointer-events-auto ml-2 mt-2 inline-flex rounded-xl border border-white/15 bg-[var(--admin-rail-bg)]/90 p-0.5 text-white shadow-[0_8px_18px_rgba(16,17,20,0.24),inset_0_1px_0_rgba(255,255,255,0.16)] backdrop-blur-md"
                 >
                   {MAP_VIEW_MODE_OPTIONS.map(option => {
                     const active = mapViewMode === option.value;
@@ -2175,7 +2175,7 @@ export function SeatMap({
                         className={[
                           "h-8 rounded-lg px-2.5 text-[11px] font-black transition active:scale-[0.97] active:duration-75",
                           focusRingClass,
-                          active ? "bg-[var(--sp-color-brand-ivory)] text-[var(--sp-color-brand-clay)] shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]" : "text-white/75 hover:bg-white/10 hover:text-white"
+                          active ? "bg-[var(--admin-primary-soft)] text-[var(--admin-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]" : "text-white/75 hover:bg-white/10 hover:text-white"
                         ].join(" ")}
                       >
                         {option.label}

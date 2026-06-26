@@ -5,6 +5,25 @@
 :root {
   color-scheme: light;
 
+  --ml-orange-signature: #F26E22;
+  --ml-orange-hover: #C95A14;
+  --ml-orange-cta: #A63A12;
+  --ml-cognac: #8C6645;
+  --ml-espresso: #594225;
+  --ml-graphite: #282F36;
+  --ml-ink: #101114;
+  --ml-porcelain: #EAEDF0;
+  --ml-ivory: #F7F3EE;
+  --ml-neutral-gray: #D8DADF;
+  --ml-violet: #705FD9;
+  --ml-electric-blue: #1B25F2;
+  --ml-deep-navy: #020659;
+  --ml-lavender: #8C82FE;
+  --ml-teal: #165359;
+  --ml-aqua: #4B95A6;
+  --ml-oxblood: #732D2D;
+  --ml-coral: #F9414E;
+
   --sp-color-brand-ivory: #FFF7ED;
   --sp-color-brand-paper: #F6E7D8;
   --sp-color-brand-copper: #D46A24;
@@ -124,6 +143,52 @@
   --sp-focus-ring-width: 4px;
   --sp-focus-ring-offset: 2px;
   --sp-focus-ring-offset-color: var(--sp-color-surface-raised);
+}
+
+.admin-theme {
+  --admin-bg: #F7F3EE;
+  --admin-rail-bg: #101114;
+  --admin-rail-surface: #282F36;
+  --admin-rail-border: rgba(255, 255, 255, 0.12);
+  --admin-rail-muted: rgba(255, 255, 255, 0.64);
+  --admin-surface: #FFFFFF;
+  --admin-surface-alt: #F7F7F9;
+  --admin-surface-muted: #EAEDF0;
+  --admin-border: #D6DADF;
+  --admin-border-strong: #B9BEC5;
+
+  --admin-text-primary: #111216;
+  --admin-text-secondary: #4C5158;
+  --admin-text-muted: #6F7680;
+  --admin-text-subtle: #8E949C;
+  --admin-text-inverse: #FFFFFF;
+
+  --admin-primary: #F26E22;
+  --admin-primary-hover: #C95A14;
+  --admin-primary-cta: #A63A12;
+  --admin-primary-soft: rgba(242, 110, 34, 0.10);
+  --admin-primary-border: rgba(242, 110, 34, 0.32);
+
+  --admin-secondary: #8C6645;
+  --admin-secondary-hover: #594225;
+  --admin-secondary-soft: rgba(140, 102, 69, 0.12);
+
+  --admin-success: #2F7A56;
+  --admin-success-soft: #DDE9DF;
+  --admin-warning: #D49A06;
+  --admin-warning-text: #7A4E00;
+  --admin-warning-soft: #F3E4BF;
+  --admin-error: #D64545;
+  --admin-danger: #732D2D;
+  --admin-danger-soft: #F3DAD2;
+  --admin-info: #165359;
+  --admin-info-soft: #DCEDEA;
+  --admin-analytics: #705FD9;
+  --admin-focus: #1B25F2;
+
+  --admin-shadow-shell: 0 34px 110px rgba(16, 17, 20, 0.22);
+  --admin-shadow-command: 0 14px 34px rgba(16, 17, 20, 0.08);
+  --admin-shadow-map: 0 18px 46px rgba(16, 17, 20, 0.14);
 }
 
 * {
