@@ -110,25 +110,25 @@ test("map tools add seat row is neutral until add-seat mode is active", async ()
 test("seat map uses the component-board desktop workspace shell", async () => {
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
 
-  assert.match(seatMapSource, /bg-\[var\(--sp-color-workspace-deep\)\] px-2 py-2/);
-  assert.match(seatMapSource, /max-w-\[1920px\][\s\S]*rounded-\[30px\][\s\S]*border border-white\/10 bg-\[var\(--sp-color-canvas\)\]/);
+  assert.match(seatMapSource, /bg-\[var\(--admin-bg\)\] px-2 py-2/);
+  assert.match(seatMapSource, /max-w-\[1920px\][\s\S]*rounded-\[30px\][\s\S]*border border-\[var\(--admin-border\)\] bg-\[var\(--admin-surface\)\]/);
   assert.match(seatMapSource, /lg:grid-cols-\[286px_minmax\(0,1fr\)\]/);
-  assert.match(seatMapSource, /aria-label="Admin workspace rail"[\s\S]*bg-\[var\(--sp-color-workspace\)\]/);
-  assert.match(seatMapSource, /border-b border-\[var\(--sp-color-border-subtle\)\] bg-\[var\(--sp-color-surface\)\]\/95/);
+  assert.match(seatMapSource, /aria-label="Admin workspace rail"[\s\S]*bg-\[var\(--admin-rail-bg\)\]/);
+  assert.match(seatMapSource, /border-b border-\[var\(--admin-border\)\] bg-\[var\(--admin-surface\)\]\/96/);
   assert.match(seatMapSource, /aria-label="Admin planning workspace"[\s\S]*Office Seat Planner/);
   assert.match(seatMapSource, /aria-label="Seat inventory summary"[\s\S]*stats\.total[\s\S]*stats\.assigned[\s\S]*stats\.available/);
   assert.match(seatMapSource, /Draft publication status[\s\S]*draftStatusHeadline[\s\S]*draftStatusActionLabel[\s\S]*draftStatusDescription/);
   assert.match(seatMapSource, /Command search/);
-  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*bg-\[var\(--sp-color-surface-raised\)\]\/90/);
+  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*bg-\[var\(--admin-surface\)\]\/94/);
   assert.match(seatMapSource, /aria-label="Map command actions"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
   assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
-  assert.match(seatMapSource, /bg-\[var\(--sp-color-map-workspace\)\] p-2 lg:min-h-0/);
-  assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*rounded-\[24px\][\s\S]*bg-\[var\(--sp-color-surface\)\]\/55/);
+  assert.match(seatMapSource, /bg-\[var\(--admin-surface-muted\)\] p-2 lg:min-h-0/);
+  assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*rounded-\[24px\][\s\S]*bg-\[var\(--admin-surface\)\]\/68/);
   assert.match(seatMapSource, /MAP_VIEW_MODE_OPTIONS[\s\S]*Overview[\s\S]*Detail/);
   assert.match(seatMapSource, /useState<MapViewMode>\("detail"\)/);
   assert.match(seatMapSource, /aria-label="Map view mode"/);
-  assert.match(seatMapSource, /rounded-\[22px\] border border-\[var\(--sp-color-border-strong\)\] bg-\[var\(--sp-color-map-workspace\)\]/);
-  assert.match(seatMapSource, /bg-\[var\(--sp-color-workspace\)\]\/90 p-0\.5 text-white/);
+  assert.match(seatMapSource, /rounded-\[22px\] border border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-surface-muted\)\]/);
+  assert.match(seatMapSource, /bg-\[var\(--admin-rail-bg\)\]\/90 p-0\.5 text-white/);
   assert.match(seatMapSource, /mapViewMode === "overview"[\s\S]*overflow-hidden p-1\.5[\s\S]*min-h-\[360px\] max-h-\[82svh\] overflow-auto/);
   assert.match(seatMapSource, /w-\[1120px\][\s\S]*sm:w-\[1460px\][\s\S]*lg:w-\[1911px\]/);
   assert.doesNotMatch(seatMapSource, /fitMapOverview|Fit map overview|>\s*Fit map\s*</);
@@ -178,11 +178,11 @@ test("selected inspector and search results stay attached to the map workspace",
 
   assert.match(seatMapSource, /selectedResultIsVisible/);
   assert.match(seatMapSource, /resultSummaryShellClass/);
-  assert.match(seatMapSource, /selectedResultIsVisible[\s\S]*rounded-xl border-\[var\(--sp-color-border-subtle\)\] bg-\[var\(--sp-color-graphite-soft\)\] text-\[var\(--sp-color-text-muted\)\] shadow-none/);
-  assert.match(seatMapSource, /singleResultSeat[\s\S]*rounded-xl border-\[var\(--sp-color-state-search-border\)\] bg-\[var\(--sp-color-state-search-surface\)\]/);
-  assert.match(seatMapSource, /singleResultOverlayClassName[\s\S]*border-\[var\(--sp-color-state-search-border\)\] bg-\[var\(--sp-color-state-search-surface\)\]\/95/);
-  assert.match(seatMapSource, /resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-\[var\(--sp-color-border-strong\)\] bg-\[var\(--sp-color-surface-raised\)\]/);
-  assert.match(seatMapSource, /resultClearButtonClassName = "inline-flex min-h-8[\s\S]*bg-\[var\(--sp-color-brand-paper\)\]/);
+  assert.match(seatMapSource, /selectedResultIsVisible[\s\S]*rounded-xl border-\[var\(--admin-border\)\] bg-\[var\(--admin-surface-muted\)\] text-\[var\(--admin-text-muted\)\] shadow-none/);
+  assert.match(seatMapSource, /singleResultSeat[\s\S]*rounded-xl border-\[var\(--admin-primary-border\)\] bg-\[var\(--admin-info-soft\)\]/);
+  assert.match(seatMapSource, /singleResultOverlayClassName[\s\S]*border border-\[var\(--admin-primary-border\)\] bg-\[var\(--admin-info-soft\)\]\/95/);
+  assert.match(seatMapSource, /resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-surface\)\]/);
+  assert.match(seatMapSource, /resultClearButtonClassName = "inline-flex min-h-8[\s\S]*bg-\[var\(--admin-primary-soft\)\]/);
   assert.match(seatMapSource, /onClick=\{\(\) => fitSeatsInMap\(matchingSeats\)\}/);
   assert.match(seatMapSource, /onClick=\{\(\) => fitSeatsInMap\(\[singleResultSeat\]\)\}/);
   assert.match(seatMapSource, /detailFocusSeatId = selectedSeatId \?\? \(filtersActive && matchingSeats\.length === 1 \? matchingSeats\[0\]\.id : null\)/);
