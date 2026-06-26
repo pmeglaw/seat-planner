@@ -216,6 +216,49 @@ function PublishChangeList({ title, items, emptyLabel }: { title: string; items:
   );
 }
 
+type SeatStatusLegendItem = {
+  key: string;
+  label: string;
+  chipClass: string;
+  accentClass: string;
+  draftOnly?: boolean;
+  badge?: boolean;
+};
+
+const SEAT_STATUS_LEGEND: SeatStatusLegendItem[] = [
+  {
+    key: "assigned",
+    label: "Assigned",
+    chipClass: "border-[var(--admin-marker-assigned-border)] bg-[var(--admin-marker-assigned-surface)]",
+    accentClass: "bg-[var(--admin-marker-assigned-accent)]"
+  },
+  {
+    key: "available",
+    label: "Open",
+    chipClass: "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)]",
+    accentClass: "bg-[var(--admin-marker-available-accent)]"
+  },
+  {
+    key: "reserved",
+    label: "Reserved",
+    chipClass: "border-[var(--admin-marker-reserved-border)] bg-[var(--admin-marker-reserved-surface)]",
+    accentClass: "bg-[var(--admin-marker-reserved-accent)]"
+  },
+  {
+    key: "unavailable",
+    label: "Unavailable",
+    chipClass: "border-[var(--admin-marker-unavailable-border)] bg-[var(--admin-marker-unavailable-surface)]",
+    accentClass: "bg-[var(--admin-marker-unavailable-accent)]"
+  },
+  {
+    key: "draft-changed",
+    label: "Draft change",
+    chipClass: "border-[var(--admin-marker-draft-border)] bg-[var(--admin-marker-draft-surface)]",
+    accentClass: "bg-[var(--admin-marker-draft-accent)]",
+    draftOnly: true,
+    badge: true
+  }
+];
 
 export function SeatMap({
   seats,
@@ -1607,6 +1650,7 @@ export function SeatMap({
   const desktopInspectorOpen = canEdit && Boolean(selectedSeat && !inspectorCollapsed);
   const desktopInspectorReserveMarginClassName = desktopInspectorOpen ? "sm:mr-[28rem] xl:mr-[29.5rem]" : "";
   const desktopInspectorReservePaddingClassName = desktopInspectorOpen ? "sm:pr-[28rem] xl:pr-[29.5rem]" : "";
+  const canvasBannerSafeAreaClassName = desktopInspectorReserveMarginClassName;
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
     showFilterPanel ||
@@ -1645,7 +1689,7 @@ export function SeatMap({
       : selectedResultIsVisible
       ? "rounded-xl border-[var(--admin-border)] bg-[var(--admin-surface-muted)] text-[var(--admin-text-muted)] shadow-none"
       : "rounded-2xl border-[var(--admin-border)] bg-[var(--admin-surface)]/92 py-2 text-[var(--admin-text-muted)] shadow-[var(--admin-shadow-command)] backdrop-blur-xl",
-    desktopInspectorReserveMarginClassName
+    canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
   const singleResultOverlayShellClassName = [
     "pointer-events-none sticky left-0 right-0 top-12 z-30 flex h-0 w-full justify-center px-2 sm:top-2 sm:justify-end",
@@ -1658,7 +1702,7 @@ export function SeatMap({
   ].filter(Boolean).join(" ");
   const activeModeBannerClassName = [
     "flex flex-col gap-2 rounded-2xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-2 text-xs font-semibold text-[var(--admin-primary-cta)] shadow-[0_12px_34px_rgba(166,58,18,0.14)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between",
-    desktopInspectorReserveMarginClassName
+    canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
   const mapModeOverlayShellClassName = [
     "pointer-events-none sticky left-0 top-0 z-30 h-0",
@@ -1670,7 +1714,15 @@ export function SeatMap({
   ].filter(Boolean).join(" ");
   const desktopResultRailClassName = [
     "hidden lg:block",
-    desktopInspectorReserveMarginClassName
+    canvasBannerSafeAreaClassName
+  ].filter(Boolean).join(" ");
+  const actionErrorBannerClassName = [
+    "min-w-0 whitespace-pre-wrap break-words rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-error-text)]",
+    canvasBannerSafeAreaClassName
+  ].filter(Boolean).join(" ");
+  const actionNoticeBannerClassName = [
+    "flex min-w-0 flex-col gap-2 rounded-xl border border-[var(--admin-state-saved-border)] bg-[var(--admin-state-saved-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-saved-text)] sm:flex-row sm:items-center sm:justify-between",
+    canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
   const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-black text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-cta)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50";
   const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-black text-[var(--admin-primary-cta)] transition hover:border-[var(--admin-primary)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]";
@@ -1807,6 +1859,28 @@ export function SeatMap({
               <p className="mt-1 text-xs font-semibold leading-5 opacity-75">Read-only seating shown to viewers.</p>
             </section>
           )}
+
+          <section
+            aria-label="Seat status legend"
+            className="rounded-[22px] border border-[var(--admin-rail-border)] bg-[var(--admin-rail-surface)] px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] lg:mt-auto"
+          >
+            <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--admin-rail-muted)]">Seat status</div>
+            <ul className="mt-2.5 grid grid-cols-1 gap-x-3 gap-y-2 sm:grid-cols-2 lg:grid-cols-1">
+              {SEAT_STATUS_LEGEND.filter(item => canEdit || !item.draftOnly).map(item => (
+                <li key={item.key} className="flex min-w-0 items-center gap-2.5">
+                  <span className={["relative flex h-6 w-10 shrink-0 items-center justify-center overflow-visible rounded-[10px] border ring-1 ring-white/45", item.chipClass].join(" ")} aria-hidden="true">
+                    <span className={["pointer-events-none absolute bottom-1.5 left-1.5 top-1.5 w-0.5 rounded-full", item.accentClass].join(" ")} />
+                    {item.badge && (
+                      <span className="pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 bg-[var(--admin-marker-draft-accent)] text-[8px] font-black leading-none text-white shadow-[0_2px_5px_rgba(16,17,20,0.24)]">
+                        D
+                      </span>
+                    )}
+                  </span>
+                  <span className="min-w-0 truncate text-[11px] font-bold text-[var(--admin-text-inverse)]">{item.label}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
         </aside>
 
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
@@ -2123,14 +2197,14 @@ export function SeatMap({
           )}
 
           {actionError && (
-            <div role="alert" className="whitespace-pre-wrap rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-error-text)]">
+            <div role="alert" className={actionErrorBannerClassName}>
               {actionError}
             </div>
           )}
 
           {actionNotice && !swapSourceSeatId && (
-            <div role="status" aria-live="polite" className="flex flex-col gap-2 rounded-xl border border-[var(--admin-state-saved-border)] bg-[var(--admin-state-saved-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-saved-text)] sm:flex-row sm:items-center sm:justify-between">
-              <span>{actionNotice}</span>
+            <div role="status" aria-live="polite" className={actionNoticeBannerClassName}>
+              <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{actionNotice}</span>
               {canEdit && undoAvailable && lastUndoLabel && !pending && !inspectorDirty && (
                 <button
                   type="button"

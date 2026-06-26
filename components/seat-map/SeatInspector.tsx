@@ -88,6 +88,38 @@ function formsEqual(left: SeatInspectorForm, right: SeatInspectorForm) {
   });
 }
 
+function CloseIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+      <path d="m5.5 5.5 9 9m0-9-9 9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CollapseIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+      <path d="M5 10h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+      <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+      <path d="m8 5.5 4.5 4.5L8 14.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function SeatInspector({
   seat,
   seats,
@@ -716,8 +748,8 @@ export function SeatInspector({
           >
             Back to map
           </button>
-          <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-black text-white/75 transition hover:bg-white/15 hover:text-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] sm:inline-flex">-</button>
-          <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className={iconButtonClassName}>x</button>
+          <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-black text-white/75 transition hover:bg-white/15 hover:text-white active:scale-95 active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] sm:inline-flex"><CollapseIcon /></button>
+          <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className={iconButtonClassName}><CloseIcon /></button>
         </div>
       </div>
 
@@ -815,7 +847,7 @@ export function SeatInspector({
                 className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-[var(--sp-color-state-planner-border)] bg-[var(--sp-color-state-planner-surface)] px-3 py-2 text-left text-xs font-black text-[var(--sp-color-state-planner)] transition hover:bg-[#E5DDD2] active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-color-state-planner-border)]"
               >
                 <span>Ask Planner about this seat</span>
-                <span aria-hidden="true" className="shrink-0 text-sm leading-none">&gt;</span>
+                <span aria-hidden="true" className="shrink-0 leading-none"><ChevronRightIcon /></span>
               </button>
             )}
 
@@ -875,7 +907,7 @@ export function SeatInspector({
                     }}
                     className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                   >
-                    v
+                    <ChevronDownIcon />
                   </button>
                   {employeeComboboxOpen && (
                     <div
@@ -1187,7 +1219,7 @@ export function SeatInspector({
               className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
               aria-label="Cancel vacating seat"
             >
-              x
+              <CloseIcon />
             </button>
           </div>
 
