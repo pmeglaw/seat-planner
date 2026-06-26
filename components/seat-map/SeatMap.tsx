@@ -216,6 +216,49 @@ function PublishChangeList({ title, items, emptyLabel }: { title: string; items:
   );
 }
 
+type SeatStatusLegendItem = {
+  key: string;
+  label: string;
+  chipClass: string;
+  accentClass: string;
+  draftOnly?: boolean;
+  badge?: boolean;
+};
+
+const SEAT_STATUS_LEGEND: SeatStatusLegendItem[] = [
+  {
+    key: "assigned",
+    label: "Assigned",
+    chipClass: "border-[var(--admin-marker-assigned-border)] bg-[var(--admin-marker-assigned-surface)]",
+    accentClass: "bg-[var(--admin-marker-assigned-accent)]"
+  },
+  {
+    key: "available",
+    label: "Open",
+    chipClass: "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)]",
+    accentClass: "bg-[var(--admin-marker-available-accent)]"
+  },
+  {
+    key: "reserved",
+    label: "Reserved",
+    chipClass: "border-[var(--admin-marker-reserved-border)] bg-[var(--admin-marker-reserved-surface)]",
+    accentClass: "bg-[var(--admin-marker-reserved-accent)]"
+  },
+  {
+    key: "unavailable",
+    label: "Unavailable",
+    chipClass: "border-[var(--admin-marker-unavailable-border)] bg-[var(--admin-marker-unavailable-surface)]",
+    accentClass: "bg-[var(--admin-marker-unavailable-accent)]"
+  },
+  {
+    key: "draft-changed",
+    label: "Draft change",
+    chipClass: "border-[var(--admin-marker-draft-border)] bg-[var(--admin-marker-draft-surface)]",
+    accentClass: "bg-[var(--admin-marker-draft-accent)]",
+    draftOnly: true,
+    badge: true
+  }
+];
 
 export function SeatMap({
   seats,
@@ -1816,6 +1859,28 @@ export function SeatMap({
               <p className="mt-1 text-xs font-semibold leading-5 opacity-75">Read-only seating shown to viewers.</p>
             </section>
           )}
+
+          <section
+            aria-label="Seat status legend"
+            className="rounded-[22px] border border-[var(--admin-rail-border)] bg-[var(--admin-rail-surface)] px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] lg:mt-auto"
+          >
+            <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--admin-rail-muted)]">Seat status</div>
+            <ul className="mt-2.5 grid grid-cols-1 gap-x-3 gap-y-2 sm:grid-cols-2 lg:grid-cols-1">
+              {SEAT_STATUS_LEGEND.filter(item => canEdit || !item.draftOnly).map(item => (
+                <li key={item.key} className="flex min-w-0 items-center gap-2.5">
+                  <span className={["relative flex h-6 w-10 shrink-0 items-center justify-center overflow-visible rounded-[10px] border ring-1 ring-white/45", item.chipClass].join(" ")} aria-hidden="true">
+                    <span className={["pointer-events-none absolute bottom-1.5 left-1.5 top-1.5 w-0.5 rounded-full", item.accentClass].join(" ")} />
+                    {item.badge && (
+                      <span className="pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 bg-[var(--admin-marker-draft-accent)] text-[8px] font-black leading-none text-white shadow-[0_2px_5px_rgba(16,17,20,0.24)]">
+                        D
+                      </span>
+                    )}
+                  </span>
+                  <span className="min-w-0 truncate text-[11px] font-bold text-[var(--admin-text-inverse)]">{item.label}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
         </aside>
 
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
