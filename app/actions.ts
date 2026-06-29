@@ -12,7 +12,7 @@ import { buildSeatSwapPlan } from "@/lib/seatSwap";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { savedPointToVisualPoint, seatsToVisualSeats } from "@/lib/mapLayoutTransform";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
-import { SEAT_STATUSES, type AskPlannerRequest, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type ZoneOption } from "@/lib/types";
+import { SEAT_STATUSES, type AskPlannerRequest, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type UpdateSeatResult, type ZoneOption } from "@/lib/types";
 
 type DraftSeatRestoreRecord = Omit<SeatWithEmployee, "employee">;
 type DraftEmployeeRestoreRecord = Employee;
@@ -274,6 +274,11 @@ export async function moveSeatAction(input: { seatId: string; x: number; y: numb
   return getDraftSeatById(supabase, input.seatId);
 }
 
+// Expected/validation failures are RETURNED (not thrown). A thrown error inside a
+// production Server Action is replaced by Next.js with a generic "Server Components
+// render … digest" message, which hid the real, user-friendly text the
+// update_draft_seat RPC already produces (e.g. "That employee is already assigned
+// to W11."). Returning the message preserves it for the inspector to display.
 export async function updateSeatAction(input: {
   seatId: string;
   label: string;
@@ -285,7 +290,8 @@ export async function updateSeatAction(input: {
   department?: string | null;
   zone?: string | null;
   notes?: string | null;
-}) {
+  forceMove?: boolean;
+}): Promise<UpdateSeatResult> {
   const supabase = await requireAdmin();
 
   const label = assertNonEmpty(input.label, "Seat label");
@@ -298,7 +304,7 @@ export async function updateSeatAction(input: {
   const notes = normalizeOptionalText(input.notes);
 
   if (!employeeId && input.status === "assigned" && !employeeName) {
-    throw new Error("Assigned seats require an employee name or selected employee.");
+    return { ok: false, code: "VALIDATION", message: "Assigned seats require an employee name or selected employee." };
   }
 
   const { error } = await supabase.rpc("update_draft_seat", {
@@ -313,12 +319,30 @@ export async function updateSeatAction(input: {
     employee_phone_extension_provided: phoneExtension !== undefined,
     employee_department: department,
     seat_zone: zone,
-    seat_notes: notes
+    seat_notes: notes,
+    force_move: input.forceMove ?? false
   });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    return mapUpdateSeatError(error);
+  }
+
   revalidatePath("/admin");
-  return getDraftSeatById(supabase, input.seatId);
+  const seat = await getDraftSeatById(supabase, input.seatId);
+  return { ok: true, seat };
+}
+
+function mapUpdateSeatError(error: SupabaseMutationError): UpdateSeatResult {
+  const message = error.message?.trim() || "Could not update the seat.";
+  // The RPC guards double-booking with a friendly message and (once the Phase 2
+  // migration lands) the custom SQLSTATE 'MLS01'. Match either so the conflict is
+  // recognised whether or not that migration has been applied yet.
+  const isAlreadyAssigned = error.code === "MLS01" || /already assigned to/i.test(message);
+  if (isAlreadyAssigned) {
+    const currentSeatLabel = message.match(/already assigned to\s+(.+?)\.?\s*$/i)?.[1] ?? "another seat";
+    return { ok: false, code: "EMPLOYEE_ALREADY_ASSIGNED", message, currentSeatLabel };
+  }
+  return { ok: false, code: "VALIDATION", message };
 }
 
 export async function swapSeatAssignmentsAction(input: {

@@ -152,6 +152,12 @@ export function SeatInspector({
   const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
   const [activeEmployeeIndex, setActiveEmployeeIndex] = useState(0);
   const [vacateConfirmOpen, setVacateConfirmOpen] = useState(false);
+  const [moveConflict, setMoveConflict] = useState<{
+    employeeName: string;
+    currentSeatLabel: string;
+    input: Parameters<typeof updateSeatAction>[0];
+    beforeSnapshot: DraftSnapshot;
+  } | null>(null);
   const activeSeatIdRef = useRef<string | null>(null);
   const activeSeatSnapshotRef = useRef(formSnapshot(emptyForm));
   const resetSignalRef = useRef(resetSignal);
@@ -228,6 +234,7 @@ export function SeatInspector({
     setEmployeeComboboxOpen(false);
     setActiveEmployeeIndex(0);
     setVacateConfirmOpen(false);
+    setMoveConflict(null);
     onError(null);
     onDirtyChange(false);
   }, [onDirtyChange, onError]);
@@ -244,6 +251,7 @@ export function SeatInspector({
       setEmployeeComboboxOpen(false);
       setActiveEmployeeIndex(0);
       setVacateConfirmOpen(false);
+      setMoveConflict(null);
       onDirtyChange(false);
       return;
     }
@@ -572,32 +580,63 @@ export function SeatInspector({
 
     const beforeSnapshot = onBeforeSeatUpdate();
 
+    runSeatAssignment(
+      {
+        seatId: selectedSeat.id,
+        label: form.label,
+        status: nextStatus,
+        employeeId,
+        employeeName: employeeName || null,
+        employeePosition: form.employeePosition.trim() || null,
+        phoneExtension: form.phoneExtension.trim() || null,
+        department: form.department.trim() || null,
+        zone: selectedSeat.zone ?? selectedSeat.department ?? null,
+        notes: form.notes.trim() || null
+      },
+      beforeSnapshot
+    );
+  }
+
+  // Shared assignment runner so the initial save and the "Move them?" confirm reuse
+  // one success/failure path. Expected failures arrive as data (not a thrown digest);
+  // a double-booking conflict becomes an offer to move rather than an error banner.
+  function runSeatAssignment(input: Parameters<typeof updateSeatAction>[0], beforeSnapshot: DraftSnapshot) {
     startTransition(async () => {
       try {
         setLocalError(null);
         setFieldErrors([]);
         setSaveFeedback(null);
         onError(null);
-        const updated = await updateSeatAction({
-          seatId: selectedSeat.id,
-          label: form.label,
-          status: nextStatus,
-          employeeId,
-          employeeName: employeeName || null,
-          employeePosition: form.employeePosition.trim() || null,
-          phoneExtension: form.phoneExtension.trim() || null,
-          department: form.department.trim() || null,
-          zone: selectedSeat.zone ?? selectedSeat.department ?? null,
-          notes: form.notes.trim() || null
-        });
+        const result = await updateSeatAction(input);
+        if (!result.ok) {
+          if (result.code === "EMPLOYEE_ALREADY_ASSIGNED") {
+            // Not a field problem and not yet an error — offer to move the person.
+            setMoveConflict({
+              employeeName: input.employeeName?.trim() || "this employee",
+              currentSeatLabel: result.currentSeatLabel,
+              input,
+              beforeSnapshot
+            });
+            return;
+          }
+          setLocalError(result.message);
+          setFieldErrors(fieldErrorFromServerMessage(result.message));
+          setSaveFeedback(null);
+          onError(result.message);
+          onSubmitBlocked?.();
+          focusErrorSummary();
+          return;
+        }
+        const updated = result.seat;
         const nextForm = formFromSeat(updated);
         activeSeatSnapshotRef.current = formSnapshot(nextForm);
         setForm(nextForm);
         setInitialForm(nextForm);
         onDirtyChange(false);
-        setSaveFeedback("Saved to draft");
+        setSaveFeedback(input.forceMove ? `Moved to ${updated.label}` : "Saved to draft");
         onSeatUpdated(updated, beforeSnapshot);
       } catch (error) {
+        // Only genuinely unexpected failures (network/auth) reach here now.
         const message = error instanceof Error ? error.message : "Could not update assignment.";
         const serverFieldErrors = fieldErrorFromServerMessage(message);
         setLocalError(message);
@@ -608,6 +647,14 @@ export function SeatInspector({
         focusErrorSummary();
       }
     });
+  }
+
+  function confirmMoveEmployee() {
+    if (!moveConflict || pending) return;
+    const { input, beforeSnapshot } = moveConflict;
+    setMoveConflict(null);
+    // Re-run the exact same assignment; force_move vacates the old seat atomically.
+    runSeatAssignment({ ...input, forceMove: true }, beforeSnapshot);
   }
 
   function handleResetEdits() {
@@ -645,7 +692,7 @@ export function SeatInspector({
         setFieldErrors([]);
         setSaveFeedback(null);
         onError(null);
-        const updated = await updateSeatAction({
+        const result = await updateSeatAction({
           seatId: selectedSeat.id,
           label: selectedSeat.label,
           status: "available",
@@ -656,6 +703,14 @@ export function SeatInspector({
           zone: selectedSeat.zone ?? selectedSeat.department ?? null,
           notes: selectedSeat.notes?.trim() || null
         });
+        if (!result.ok) {
+          setLocalError(result.message);
+          setSaveFeedback(null);
+          onError(result.message);
+          focusErrorSummary();
+          return;
+        }
+        const updated = result.seat;
         const nextForm = formFromSeat(updated);
         activeSeatSnapshotRef.current = formSnapshot(nextForm);
         setForm(nextForm);
@@ -1240,6 +1295,56 @@ export function SeatInspector({
             </Button>
             <Button type="button" variant="danger" onClick={confirmVacateSeat} disabled={pending} className="w-full !border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)]">
               Vacate seat
+            </Button>
+          </div>
+        </section>
+      </div>
+    )}
+
+    {moveConflict && (
+      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+        <section
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="move-employee-confirm-title"
+          aria-describedby="move-employee-confirm-description"
+          onKeyDown={event => {
+            if (event.key === "Escape") {
+              event.stopPropagation();
+              setMoveConflict(null);
+            }
+          }}
+          className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 id="move-employee-confirm-title" className="text-base font-black">Move {moveConflict.employeeName} to {selectedSeat.label}?</h2>
+              <p id="move-employee-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
+                They currently sit at {moveConflict.currentSeatLabel}. Moving frees {moveConflict.currentSeatLabel} (it becomes Open).
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMoveConflict(null)}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+              aria-label="Cancel moving employee"
+            >
+              <CloseIcon />
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-2">
+            <div className="rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-viewer-impact-text)]">
+              Viewers won&apos;t see this until you publish the draft.
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <Button type="button" onClick={() => setMoveConflict(null)} disabled={pending} className="w-full">
+              Cancel
+            </Button>
+            <Button type="button" variant="primary" onClick={confirmMoveEmployee} disabled={pending} className="w-full">
+              Move them
             </Button>
           </div>
         </section>

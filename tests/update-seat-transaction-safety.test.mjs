@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+// The force_move migration drops the original 12-arg overload and recreates the
+// RPC with the trailing force_move parameter, so it holds the live definition.
 const migrationSql = await readFile(
-  new URL("../supabase/migrations/20260616000200_update_draft_seat_rpc.sql", import.meta.url),
+  new URL("../supabase/migrations/20260629000100_update_draft_seat_force_move.sql", import.meta.url),
   "utf8"
 );
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
@@ -15,14 +17,31 @@ function extractFunctionSql(sql) {
 }
 
 function extractUpdateSeatAction(source) {
-  const match = source.match(/export async function updateSeatAction[\s\S]+?\r?\n}\r?\n\r?\nexport async function swapSeatAssignmentsAction/);
+  // Capture only updateSeatAction itself (it now ends before the mapUpdateSeatError
+  // helper, which is extracted separately below) so the delegation guards apply to
+  // the action body alone.
+  const match = source.match(/export async function updateSeatAction[\s\S]+?\r?\n}\r?\n/);
   assert.ok(match, "updateSeatAction should be present");
   return match[0];
 }
 
+// updateSeatAction RETURNS expected failures (instead of throwing, which Next.js
+// strips to a generic digest in production). The conflict classification lives in
+// the mapUpdateSeatError helper; load it as a runnable function so we can assert the
+// actual returned result shape, not just the source text.
+function loadMapUpdateSeatError(source) {
+  const match = source.match(/function mapUpdateSeatError\(error[\s\S]+?\r?\n}\r?\n/);
+  assert.ok(match, "mapUpdateSeatError helper should be present");
+  const js = match[0].replace(
+    /function mapUpdateSeatError\(error:[^)]*\)\s*:\s*UpdateSeatResult/,
+    "function mapUpdateSeatError(error)"
+  );
+  return new Function(`${js}\nreturn mapUpdateSeatError;`)();
+}
+
 const functionSql = extractFunctionSql(migrationSql);
 const updateSeatActionSource = extractUpdateSeatAction(actionsSource);
-const updateSeatFunctionSignature = /public\.update_draft_seat\(uuid, text, public\.seat_status, uuid, text, text, boolean, text, boolean, text, text, text\)/;
+const updateSeatFunctionSignature = /public\.update_draft_seat\(uuid, text, public\.seat_status, uuid, text, text, boolean, text, boolean, text, text, text, boolean\)/;
 
 test("draft seat update migration creates an authenticated admin-only RPC", () => {
   assert.match(functionSql, /create or replace function public\.update_draft_seat\(/);
@@ -50,13 +69,15 @@ test("draft seat update RPC validates conflicting edits before mutating", () => 
     assert.match(functionSql, check);
   }
 
+  // The persistent employee/option/main-seat writes only run after all pre-flight
+  // validation. The conditional force_move vacate is intentionally excluded: it lives
+  // inside the double-booking branch, which is itself the conflict check.
   const firstMutation = Math.min(
     ...[
       "insert into public.department_options",
       "insert into public.employees",
       "update public.employees",
-      "insert into public.zone_options",
-      "update public.seats"
+      "insert into public.zone_options"
     ].map(fragment => {
       const index = functionSql.indexOf(fragment);
       assert.notEqual(index, -1, `${fragment} should be present`);
@@ -75,12 +96,42 @@ test("draft seat update RPC locks and mutates only draft seats", () => {
   assert.doesNotMatch(functionSql, /insert into public\.seats/i);
   assert.doesNotMatch(functionSql, /delete from public\.seats/i);
 
+  // Two seat updates now: the conditional force_move vacate and the main assignment.
+  // Both must stay scoped to the draft layer.
   const seatUpdates = functionSql.match(/update public\.seats[\s\S]+?;/g) ?? [];
-  assert.equal(seatUpdates.length, 1);
-  assert.match(seatUpdates[0], /seat\.layer = 'draft'::public\.seat_layer/);
+  assert.equal(seatUpdates.length, 2);
+  for (const seatUpdate of seatUpdates) {
+    assert.match(seatUpdate, /seat\.layer = 'draft'::public\.seat_layer/);
+  }
   assert.match(functionSql, /get diagnostics updated_count = row_count/);
   assert.match(functionSql, /raise exception 'Could not update draft seat\.'/);
   assert.doesNotMatch(functionSql, /exception\s+when/i);
+});
+
+test("draft seat update RPC supports an atomic force_move with a coded conflict", () => {
+  // New trailing parameter, defaulting false so existing callers keep raising.
+  assert.match(functionSql, /force_move boolean default false/);
+
+  // Without force_move the conflict carries a stable custom SQLSTATE and the occupied
+  // seat label in DETAIL, so the action can classify it without string-parsing.
+  assert.match(
+    functionSql,
+    /raise exception 'That employee is already assigned to %\.', duplicate_assignment_label\s*\r?\n\s*using errcode = 'MLS01', detail = duplicate_assignment_label/
+  );
+
+  // With force_move set, the employee's other draft seat is freed to Open in the same
+  // transaction instead of raising.
+  assert.match(functionSql, /if coalesce\(force_move, false\) then/);
+  assert.match(
+    functionSql,
+    /update public\.seats as seat\s+set\s+employee_id = null,\s+status = 'available'::public\.seat_status\s+where seat\.layer = 'draft'::public\.seat_layer\s+and seat\.employee_id = resolved_employee_id\s+and seat\.id <> draft_seat_id;/
+  );
+
+  // The original 12-arg overload is dropped so the signature change leaves one version.
+  assert.match(
+    migrationSql,
+    /drop function if exists public\.update_draft_seat\(uuid, text, public\.seat_status, uuid, text, text, boolean, text, boolean, text, text, text\);/
+  );
 });
 
 test("draft seat update RPC preserves inspector employee and option behavior", () => {
@@ -109,7 +160,13 @@ test("server draft seat update action delegates dependent writes to the transact
   assert.match(updateSeatActionSource, /employee_department: department/);
   assert.match(updateSeatActionSource, /seat_zone: zone/);
   assert.match(updateSeatActionSource, /seat_notes: notes/);
-  assert.match(updateSeatActionSource, /return getDraftSeatById\(supabase, input\.seatId\)/);
+  assert.match(updateSeatActionSource, /force_move: input\.forceMove \?\? false/);
+  // Success path now wraps the seat in a discriminated result; failures are returned
+  // (via mapUpdateSeatError) rather than thrown so the friendly RPC message survives.
+  assert.match(updateSeatActionSource, /const seat = await getDraftSeatById\(supabase, input\.seatId\)/);
+  assert.match(updateSeatActionSource, /return \{ ok: true, seat \}/);
+  assert.match(updateSeatActionSource, /return mapUpdateSeatError\(error\)/);
+  assert.doesNotMatch(updateSeatActionSource, /throw new Error\(error\.message\)/);
 
   assert.doesNotMatch(updateSeatActionSource, /\.from\("seats"\)/);
   assert.doesNotMatch(updateSeatActionSource, /\.from\("employees"\)/);
@@ -119,4 +176,35 @@ test("server draft seat update action delegates dependent writes to the transact
   assert.doesNotMatch(updateSeatActionSource, /\.upsert\(/);
   assert.doesNotMatch(updateSeatActionSource, /\.maybeSingle\(/);
   assert.doesNotMatch(updateSeatActionSource, /service[_-]?role/i);
+});
+
+test("updateSeatAction returns the double-booking conflict as data instead of throwing", () => {
+  const mapUpdateSeatError = loadMapUpdateSeatError(actionsSource);
+
+  // Today the RPC raises a friendly message with no custom code; the helper must
+  // still recognise the conflict and name the occupied seat.
+  const messageOnly = mapUpdateSeatError({ message: "That employee is already assigned to W11." });
+  assert.deepEqual(messageOnly, {
+    ok: false,
+    code: "EMPLOYEE_ALREADY_ASSIGNED",
+    message: "That employee is already assigned to W11.",
+    currentSeatLabel: "W11"
+  });
+
+  // Once the Phase 2 migration lands, the same conflict carries SQLSTATE MLS01.
+  const withCode = mapUpdateSeatError({ code: "MLS01", message: "That employee is already assigned to W11." });
+  assert.equal(withCode.ok, false);
+  assert.equal(withCode.code, "EMPLOYEE_ALREADY_ASSIGNED");
+  assert.equal(withCode.currentSeatLabel, "W11");
+
+  // Other RPC validation messages surface verbatim as a plain validation result.
+  assert.deepEqual(mapUpdateSeatError({ message: "Seat label C01 already exists." }), {
+    ok: false,
+    code: "VALIDATION",
+    message: "Seat label C01 already exists."
+  });
+
+  // The action wires the RPC error straight through the mapper and never throws it.
+  assert.match(updateSeatActionSource, /return mapUpdateSeatError\(error\)/);
+  assert.doesNotMatch(updateSeatActionSource, /throw new Error\(error\.message\)/);
 });
