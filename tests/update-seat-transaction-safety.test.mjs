@@ -15,9 +15,26 @@ function extractFunctionSql(sql) {
 }
 
 function extractUpdateSeatAction(source) {
-  const match = source.match(/export async function updateSeatAction[\s\S]+?\r?\n}\r?\n\r?\nexport async function swapSeatAssignmentsAction/);
+  // Capture only updateSeatAction itself (it now ends before the mapUpdateSeatError
+  // helper, which is extracted separately below) so the delegation guards apply to
+  // the action body alone.
+  const match = source.match(/export async function updateSeatAction[\s\S]+?\r?\n}\r?\n/);
   assert.ok(match, "updateSeatAction should be present");
   return match[0];
+}
+
+// updateSeatAction RETURNS expected failures (instead of throwing, which Next.js
+// strips to a generic digest in production). The conflict classification lives in
+// the mapUpdateSeatError helper; load it as a runnable function so we can assert the
+// actual returned result shape, not just the source text.
+function loadMapUpdateSeatError(source) {
+  const match = source.match(/function mapUpdateSeatError\(error[\s\S]+?\r?\n}\r?\n/);
+  assert.ok(match, "mapUpdateSeatError helper should be present");
+  const js = match[0].replace(
+    /function mapUpdateSeatError\(error:[^)]*\)\s*:\s*UpdateSeatResult/,
+    "function mapUpdateSeatError(error)"
+  );
+  return new Function(`${js}\nreturn mapUpdateSeatError;`)();
 }
 
 const functionSql = extractFunctionSql(migrationSql);
@@ -109,7 +126,12 @@ test("server draft seat update action delegates dependent writes to the transact
   assert.match(updateSeatActionSource, /employee_department: department/);
   assert.match(updateSeatActionSource, /seat_zone: zone/);
   assert.match(updateSeatActionSource, /seat_notes: notes/);
-  assert.match(updateSeatActionSource, /return getDraftSeatById\(supabase, input\.seatId\)/);
+  // Success path now wraps the seat in a discriminated result; failures are returned
+  // (via mapUpdateSeatError) rather than thrown so the friendly RPC message survives.
+  assert.match(updateSeatActionSource, /const seat = await getDraftSeatById\(supabase, input\.seatId\)/);
+  assert.match(updateSeatActionSource, /return \{ ok: true, seat \}/);
+  assert.match(updateSeatActionSource, /return mapUpdateSeatError\(error\)/);
+  assert.doesNotMatch(updateSeatActionSource, /throw new Error\(error\.message\)/);
 
   assert.doesNotMatch(updateSeatActionSource, /\.from\("seats"\)/);
   assert.doesNotMatch(updateSeatActionSource, /\.from\("employees"\)/);
@@ -119,4 +141,35 @@ test("server draft seat update action delegates dependent writes to the transact
   assert.doesNotMatch(updateSeatActionSource, /\.upsert\(/);
   assert.doesNotMatch(updateSeatActionSource, /\.maybeSingle\(/);
   assert.doesNotMatch(updateSeatActionSource, /service[_-]?role/i);
+});
+
+test("updateSeatAction returns the double-booking conflict as data instead of throwing", () => {
+  const mapUpdateSeatError = loadMapUpdateSeatError(actionsSource);
+
+  // Today the RPC raises a friendly message with no custom code; the helper must
+  // still recognise the conflict and name the occupied seat.
+  const messageOnly = mapUpdateSeatError({ message: "That employee is already assigned to W11." });
+  assert.deepEqual(messageOnly, {
+    ok: false,
+    code: "EMPLOYEE_ALREADY_ASSIGNED",
+    message: "That employee is already assigned to W11.",
+    currentSeatLabel: "W11"
+  });
+
+  // Once the Phase 2 migration lands, the same conflict carries SQLSTATE MLS01.
+  const withCode = mapUpdateSeatError({ code: "MLS01", message: "That employee is already assigned to W11." });
+  assert.equal(withCode.ok, false);
+  assert.equal(withCode.code, "EMPLOYEE_ALREADY_ASSIGNED");
+  assert.equal(withCode.currentSeatLabel, "W11");
+
+  // Other RPC validation messages surface verbatim as a plain validation result.
+  assert.deepEqual(mapUpdateSeatError({ message: "Seat label C01 already exists." }), {
+    ok: false,
+    code: "VALIDATION",
+    message: "Seat label C01 already exists."
+  });
+
+  // The action wires the RPC error straight through the mapper and never throws it.
+  assert.match(updateSeatActionSource, /return mapUpdateSeatError\(error\)/);
+  assert.doesNotMatch(updateSeatActionSource, /throw new Error\(error\.message\)/);
 });
