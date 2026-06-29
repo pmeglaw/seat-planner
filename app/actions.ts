@@ -290,6 +290,7 @@ export async function updateSeatAction(input: {
   department?: string | null;
   zone?: string | null;
   notes?: string | null;
+  forceMove?: boolean;
 }): Promise<UpdateSeatResult> {
   const supabase = await requireAdmin();
 
@@ -318,7 +319,8 @@ export async function updateSeatAction(input: {
     employee_phone_extension_provided: phoneExtension !== undefined,
     employee_department: department,
     seat_zone: zone,
-    seat_notes: notes
+    seat_notes: notes,
+    force_move: input.forceMove ?? false
   });
 
   if (error) {
