@@ -578,7 +578,7 @@ export function SeatInspector({
         setFieldErrors([]);
         setSaveFeedback(null);
         onError(null);
-        const updated = await updateSeatAction({
+        const result = await updateSeatAction({
           seatId: selectedSeat.id,
           label: form.label,
           status: nextStatus,
@@ -590,6 +590,20 @@ export function SeatInspector({
           zone: selectedSeat.zone ?? selectedSeat.department ?? null,
           notes: form.notes.trim() || null
         });
+        if (!result.ok) {
+          // Expected/validation failure now arrives as data, not a thrown digest.
+          // A double-booking conflict is not a field problem, so don't route it
+          // into the "Review inspector fields" summary.
+          const isConflict = result.code === "EMPLOYEE_ALREADY_ASSIGNED";
+          setLocalError(result.message);
+          setFieldErrors(isConflict ? [] : fieldErrorFromServerMessage(result.message));
+          setSaveFeedback(null);
+          onError(result.message);
+          onSubmitBlocked?.();
+          focusErrorSummary();
+          return;
+        }
+        const updated = result.seat;
         const nextForm = formFromSeat(updated);
         activeSeatSnapshotRef.current = formSnapshot(nextForm);
         setForm(nextForm);
@@ -598,6 +612,7 @@ export function SeatInspector({
         setSaveFeedback("Saved to draft");
         onSeatUpdated(updated, beforeSnapshot);
       } catch (error) {
+        // Only genuinely unexpected failures (network/auth) reach here now.
         const message = error instanceof Error ? error.message : "Could not update assignment.";
         const serverFieldErrors = fieldErrorFromServerMessage(message);
         setLocalError(message);
@@ -645,7 +660,7 @@ export function SeatInspector({
         setFieldErrors([]);
         setSaveFeedback(null);
         onError(null);
-        const updated = await updateSeatAction({
+        const result = await updateSeatAction({
           seatId: selectedSeat.id,
           label: selectedSeat.label,
           status: "available",
@@ -656,6 +671,14 @@ export function SeatInspector({
           zone: selectedSeat.zone ?? selectedSeat.department ?? null,
           notes: selectedSeat.notes?.trim() || null
         });
+        if (!result.ok) {
+          setLocalError(result.message);
+          setSaveFeedback(null);
+          onError(result.message);
+          focusErrorSummary();
+          return;
+        }
+        const updated = result.seat;
         const nextForm = formFromSeat(updated);
         activeSeatSnapshotRef.current = formSnapshot(nextForm);
         setForm(nextForm);

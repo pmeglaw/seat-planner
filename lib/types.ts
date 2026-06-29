@@ -122,3 +122,8 @@ export const SEAT_STATUSES: SeatStatus[] = [
   "reserved",
   "unavailable"
 ];
+
+export type UpdateSeatResult =
+  | { ok: true; seat: SeatWithEmployee }
+  | { ok: false; code: "EMPLOYEE_ALREADY_ASSIGNED"; message: string; currentSeatLabel: string }
+  | { ok: false; code: "VALIDATION"; message: string };
