@@ -146,22 +146,34 @@
 }
 
 .admin-theme {
-  --admin-bg: #F7F3EE;
-  --admin-rail-bg: #101114;
-  --admin-rail-surface: #282F36;
-  --admin-rail-border: rgba(255, 255, 255, 0.12);
-  --admin-rail-muted: rgba(255, 255, 255, 0.64);
-  --admin-surface: #FFFFFF;
-  --admin-surface-alt: #F7F7F9;
-  --admin-surface-muted: #EAEDF0;
-  --admin-border: #D6DADF;
-  --admin-border-strong: #B9BEC5;
+  /* Claude Design palette: warm near-black charcoal chrome (top bar + rail) framing a
+     warm parchment canvas, with clean warm-white content panels. Flat and refined —
+     minimal blur/shadow, one orange accent. */
+  --admin-bg: #EAE5D9;
 
-  --admin-text-primary: #111216;
-  --admin-text-secondary: #4C5158;
-  --admin-text-muted: #6F7680;
-  --admin-text-subtle: #8E949C;
-  --admin-text-inverse: #FFFFFF;
+  /* Warm charcoal chrome (top bar + rail): light off-white text, hairline dividers. */
+  --admin-chrome-bg: #1B1A17;
+  --admin-chrome-elevated: #211F1B;
+  --admin-chrome-text: #F0ECE4;
+  --admin-chrome-muted: #9C968B;
+  --admin-chrome-border: #2C2A25;
+  --admin-chrome-hover: rgba(255, 255, 255, 0.06);
+
+  --admin-rail-bg: var(--admin-chrome-bg);
+  --admin-rail-surface: rgba(255, 255, 255, 0.05);
+  --admin-rail-border: var(--admin-chrome-border);
+  --admin-rail-muted: var(--admin-chrome-muted);
+  --admin-surface: #FAF7F1;
+  --admin-surface-alt: #F3EEE5;
+  --admin-surface-muted: #EAE5D9;
+  --admin-border: #E6E0D4;
+  --admin-border-strong: #D8D0C2;
+
+  --admin-text-primary: #1B1A17;
+  --admin-text-secondary: #4A463F;
+  --admin-text-muted: #6B665D;
+  --admin-text-subtle: #938D82;
+  --admin-text-inverse: #F0ECE4;
 
   --admin-primary: #F26E22;
   --admin-primary-hover: #C95A14;
@@ -252,9 +264,11 @@
   --admin-marker-focus-ring: rgba(242, 110, 34, 0.75);
   --admin-marker-focus-offset: rgba(255, 255, 255, 0.70);
 
-  --admin-shadow-shell: 0 34px 110px rgba(16, 17, 20, 0.22);
-  --admin-shadow-command: 0 14px 34px rgba(16, 17, 20, 0.08);
-  --admin-shadow-map: 0 18px 46px rgba(16, 17, 20, 0.14);
+  /* Flat refined chrome — no shell/command shadows; one soft shadow for floating panels. */
+  --admin-shadow-shell: none;
+  --admin-shadow-command: none;
+  --admin-shadow-map: none;
+  --admin-shadow-panel: 0 18px 44px rgba(27, 26, 23, 0.18);
 }
 
 * {

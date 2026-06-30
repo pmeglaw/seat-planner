@@ -38,10 +38,12 @@ test("master alternative palette exposes inert brand primitives and scoped admin
   }
 
   for (const token of [
-    "--admin-bg: #F7F3EE",
-    "--admin-rail-bg: #101114",
-    "--admin-rail-surface: #282F36",
-    "--admin-surface: #FFFFFF",
+    "--admin-bg: #EAE5D9",
+    "--admin-chrome-bg: #1B1A17",
+    "--admin-chrome-text: #F0ECE4",
+    "--admin-rail-bg: var(--admin-chrome-bg)",
+    "--admin-rail-surface: rgba(255, 255, 255, 0.05)",
+    "--admin-surface: #FAF7F1",
     "--admin-primary: #F26E22",
     "--admin-primary-cta: #A63A12",
     "--admin-primary-soft: rgba(242, 110, 34, 0.10)",
@@ -87,12 +89,13 @@ test("admin color slices scope shell marker and semantic aliases without redesig
 
   assert.match(seatMapSource, /bg-\[var\(--admin-bg\)\]/);
   assert.match(seatMapSource, /aria-label="Admin workspace rail"[\s\S]*bg-\[var\(--admin-rail-bg\)\]/);
-  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*bg-\[var\(--admin-surface\)\]\/94/);
-  assert.match(seatMapSource, /aria-label="Map command actions"[\s\S]*bg-\[var\(--admin-surface-muted\)\]\/78/);
+  // Claude Design top bar: dark warm-charcoal chrome holds the flat "Admin command row" text toolbar.
+  assert.match(seatMapSource, /bg-\[var\(--admin-chrome-bg\)\][\s\S]*aria-label="Admin command row"/);
+  assert.match(seatMapSource, /const chromeToolbarBtn = "[\s\S]*text-\[var\(--admin-chrome-muted\)\]/);
+  assert.match(seatMapSource, /const chromeToolbarBtnActive = "[\s\S]*text-\[var\(--admin-primary\)\]/);
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*bg-\[var\(--admin-surface\)\]\/68/);
   assert.match(seatMapSource, /border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-surface-muted\)\]/);
-  assert.match(seatMapSource, /showNames \? "border-\[var\(--admin-primary-cta\)\] bg-\[var\(--admin-primary-cta\)\] text-white/);
-  assert.match(seatMapSource, /hover:!border-\[var\(--admin-primary-border\)\] hover:!bg-\[var\(--admin-primary-soft\)\]/);
+  assert.match(seatMapSource, /showNames \? chromeToolbarBtnActive : chromeToolbarBtn/);
   assert.match(seatMapSource, /variant="admin"/);
 
   assert.match(seatMarkerSource, /variant\?: "admin" \| "viewer"/);
@@ -117,7 +120,7 @@ test("admin color slice preserves shell controls and behavior boundaries", async
   const viewerRouteSource = await readSource("../app/page.tsx");
   const actionSource = await readSource("../app/actions.ts");
 
-  assert.match(seatMapSource, /aria-label="Map command actions"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
+  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
   assert.match(seatMapSource, /onClick=\{activeMode\.onExit\}/);
   assert.match(seatMapSource, /await publishSeatMapAction\(\)/);
   assert.match(actionSource, /export async function publishSeatMapAction\(\) \{/);

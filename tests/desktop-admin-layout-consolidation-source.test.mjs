@@ -34,17 +34,25 @@ test("admin layout consolidation moves identity and status into the rail", async
 
 test("admin layout consolidation keeps planning actions in one command row", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
-  const commandSource = sliceFrom(seatMapSource, 'aria-label="Admin command row"', "</header>");
+  // Claude Design top bar: one flat text-only toolbar (no nested bordered groups). The
+  // command search moves to its own slim row below the bar.
+  const topBar = sliceFrom(seatMapSource, 'bg-[var(--admin-chrome-bg)]', "</header>");
+  const searchRow = sliceFrom(seatMapSource, 'role="search" aria-label="Command search"', "</div>");
 
-  assert.match(commandSource, /Command search/);
-  assert.match(commandSource, /Search employee, seat, job title, department, or zone/);
-  assert.match(commandSource, /onClick=\{toggleFilterPanel\}/);
-  assert.match(commandSource, /aria-label=\{filterCollapsed \? "Open filters" : "Collapse filters"\}/);
-  assert.match(commandSource, /const namesToggleLabel = showNames \? "Hide names" : "Show names"|aria-label=\{namesToggleLabel\}/);
-  assert.match(commandSource, /aria-label="Map command actions"/);
-  assert.match(commandSource, /aria-label="Planning map actions"[\s\S]*aria-label="Map tools"/);
-  assert.match(commandSource, /aria-label="Draft history controls"[\s\S]*disabled=\{pending \|\| inspectorDirty \|\| !undoAvailable\}[\s\S]*disabled=\{pending \|\| inspectorDirty \|\| !redoAvailable\}/);
-  assert.match(commandSource, /aria-label="Admin support actions"[\s\S]*href="\/admin\/management"[\s\S]*aria-label=\{plannerHighlightedSeatIds\.length > 0 \? `Open Ask Planner/);
+  assert.match(topBar, /Megeredchian Law Seats/);
+  assert.match(topBar, /Draft · Admin/);
+  assert.match(topBar, /aria-label="Admin command row"/);
+  assert.match(topBar, /onClick=\{toggleFilterPanel\}/);
+  assert.match(topBar, /aria-label=\{filterCollapsed \? "Open filters" : "Collapse filters"\}/);
+  assert.match(topBar, /aria-label=\{namesToggleLabel\}/);
+  assert.match(topBar, /aria-label="Map tools"/);
+  assert.match(topBar, /disabled=\{pending \|\| inspectorDirty \|\| !undoAvailable\}[\s\S]*aria-label="Undo last map change"/);
+  assert.match(topBar, /disabled=\{pending \|\| inspectorDirty \|\| !redoAvailable\}[\s\S]*aria-label="Redo last undone change"/);
+  assert.match(topBar, /href="\/admin\/management"/);
+  assert.match(topBar, /aria-label=\{plannerHighlightedSeatIds\.length > 0 \? `Open Ask Planner/);
+
+  assert.match(searchRow, /Search employee, seat, job title, department, or zone/);
+  assert.match(seatMapSource, /const namesToggleLabel = showNames \? "Hide names" : "Show names"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
 });
 

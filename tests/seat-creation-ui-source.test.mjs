@@ -110,17 +110,18 @@ test("map tools add seat row is neutral until add-seat mode is active", async ()
 test("seat map uses the component-board desktop workspace shell", async () => {
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
 
-  assert.match(seatMapSource, /bg-\[var\(--admin-bg\)\] px-2 py-2/);
-  assert.match(seatMapSource, /max-w-\[1920px\][\s\S]*rounded-\[30px\][\s\S]*border border-\[var\(--admin-border\)\] bg-\[var\(--admin-surface\)\]/);
+  // Claude Design: flush full-width dark top bar over a transparent, gapped content grid
+  // (no opaque white shell card); the warm parchment shows through.
+  assert.match(seatMapSource, /flex min-h-screen flex-col overflow-x-hidden bg-\[var\(--admin-bg\)\]/);
+  assert.match(seatMapSource, /max-w-\[1920px\] flex-1 grid-cols-1 gap-2 px-2 py-2[\s\S]*lg:grid-cols-\[286px_minmax\(0,1fr\)\]/);
   assert.match(seatMapSource, /lg:grid-cols-\[286px_minmax\(0,1fr\)\]/);
   assert.match(seatMapSource, /aria-label="Admin workspace rail"[\s\S]*bg-\[var\(--admin-rail-bg\)\]/);
-  assert.match(seatMapSource, /border-b border-\[var\(--admin-border\)\] bg-\[var\(--admin-surface\)\]\/96/);
+  assert.match(seatMapSource, /h-\[54px\] shrink-0 items-center[\s\S]*bg-\[var\(--admin-chrome-bg\)\]/);
   assert.match(seatMapSource, /aria-label="Admin planning workspace"[\s\S]*Office Seat Planner/);
   assert.match(seatMapSource, /aria-label="Seat inventory summary"[\s\S]*stats\.total[\s\S]*stats\.assigned[\s\S]*stats\.available/);
   assert.match(seatMapSource, /Draft publication status[\s\S]*draftStatusHeadline[\s\S]*draftStatusActionLabel[\s\S]*draftStatusDescription/);
-  assert.match(seatMapSource, /Command search/);
-  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*bg-\[var\(--admin-surface\)\]\/94/);
-  assert.match(seatMapSource, /aria-label="Map command actions"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
+  assert.match(seatMapSource, /role="search" aria-label="Command search"/);
+  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
   assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
   assert.match(seatMapSource, /bg-\[var\(--admin-surface-muted\)\] p-2 lg:min-h-0/);
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*rounded-\[24px\][\s\S]*bg-\[var\(--admin-surface\)\]\/68/);

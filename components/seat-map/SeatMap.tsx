@@ -134,33 +134,6 @@ function getInitials(name: string) {
   return parts.slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?";
 }
 
-function UndoIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
-      <path d="M7.2 5.2 4 8.4l3.2 3.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M4.6 8.4h7.1a4.2 4.2 0 1 1-2.9 7.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function RedoIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
-      <path d="m12.8 5.2 3.2 3.2-3.2 3.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M15.4 8.4H8.3a4.2 4.2 0 1 0 2.9 7.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function NamesIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
-      <path d="M2.7 10s2.6-4.4 7.3-4.4S17.3 10 17.3 10s-2.6 4.4-7.3 4.4S2.7 10 2.7 10Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="10" cy="10" r="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  );
-}
-
 function PublishCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
   return (
     <div className={["rounded-xl border p-3", tone === "warn" ? "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)]" : "border-[var(--admin-state-neutral-border)] bg-[var(--admin-state-neutral-bg)]"].join(" ")}>
@@ -1805,9 +1778,126 @@ export function SeatMap({
     return { edge: "none", offsetPx: 0 };
   }
 
+  // Claude Design top bar: quiet text-only toolbar buttons — no borders/boxes, warm-grey,
+  // subtle hover bg; active picks up the brand orange.
+  const chromeToolbarBtn = "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5 text-[13px] font-medium leading-none text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
+  const chromeToolbarBtnActive = "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5 text-[13px] font-medium leading-none text-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]";
+
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[var(--admin-bg)] px-2 py-2 text-[var(--admin-text-primary)] sm:px-3 sm:py-3 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden">
-      <div className="mx-auto grid w-full max-w-[1920px] flex-1 grid-cols-1 overflow-hidden rounded-[30px] border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-[var(--admin-shadow-shell)] lg:min-h-0 lg:grid-cols-[286px_minmax(0,1fr)]">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
+      <header className="z-40 flex h-[54px] shrink-0 items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] px-3 text-[var(--admin-chrome-text)] sm:gap-3 sm:px-4">
+        <div className="flex min-w-0 shrink-0 items-center gap-2.5">
+          <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[var(--admin-primary)] text-white">
+            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="3.5" width="5" height="5" rx="1.4" /><rect x="11.5" y="3.5" width="5" height="5" rx="1.4" /><rect x="3.5" y="11.5" width="5" height="5" rx="1.4" /><rect x="11.5" y="11.5" width="5" height="5" rx="1.4" /></svg>
+          </span>
+          <div className="hidden min-w-0 leading-tight sm:block">
+            <div className="truncate text-[13px] font-semibold text-[var(--admin-chrome-text)]">Megeredchian Law Seats</div>
+            <div className="truncate text-[11px] text-[var(--admin-chrome-muted)]">{canEdit ? "Draft · Admin" : "Published · Viewer"}</div>
+          </div>
+        </div>
+
+        {canEdit && (
+          <nav role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <button
+              type="button"
+              onClick={toggleFilterPanel}
+              aria-controls="seat-map-filter-panel"
+              aria-expanded={!filterCollapsed}
+              aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
+              className={structuredFilterCount > 0 ? chromeToolbarBtnActive : chromeToolbarBtn}
+            >
+              Filters
+              {structuredFilterCount > 0 && (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{structuredFilterCount}</span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowNames(current => !current)}
+              aria-label={namesToggleLabel}
+              title={namesToggleLabel}
+              className={showNames ? chromeToolbarBtnActive : chromeToolbarBtn}
+            >
+              {namesToggleLabel}
+            </button>
+            <button
+              ref={mapToolsButtonRef}
+              type="button"
+              aria-label="Map tools"
+              aria-controls="advanced-drawer"
+              aria-expanded={advancedOpen}
+              aria-haspopup="dialog"
+              onClick={openAdvancedDrawer}
+              className={advancedOpen ? chromeToolbarBtnActive : chromeToolbarBtn}
+            >
+              Map tools
+            </button>
+            <button
+              type="button"
+              onClick={undoDraftEdit}
+              disabled={pending || inspectorDirty || !undoAvailable}
+              aria-label="Undo last map change"
+              title={undoTitle}
+              className={chromeToolbarBtn}
+            >
+              Undo
+            </button>
+            <button
+              type="button"
+              onClick={redoDraftEdit}
+              disabled={pending || inspectorDirty || !redoAvailable}
+              aria-label="Redo last undone change"
+              title={redoTitle}
+              className={chromeToolbarBtn}
+            >
+              Redo
+            </button>
+            <Link
+              href="/admin/management"
+              onClick={event => {
+                if (!beforeManagementNavigation()) event.preventDefault();
+              }}
+              className={chromeToolbarBtn}
+            >
+              Management
+            </Link>
+            <button
+              ref={askPlannerButtonRef}
+              type="button"
+              aria-label={plannerHighlightedSeatIds.length > 0 ? `Open Ask Planner, ${plannerHighlightedSeatIds.length} seats highlighted` : "Open Ask Planner"}
+              aria-controls="ask-planner-drawer"
+              aria-expanded={askPlannerOpen}
+              aria-haspopup="dialog"
+              onClick={openAskPlannerDrawer}
+              className={askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? chromeToolbarBtnActive : chromeToolbarBtn}
+            >
+              Ask Planner
+              {plannerHighlightedSeatIds.length > 0 && (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
+              )}
+            </button>
+          </nav>
+        )}
+
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <span className="hidden text-[12px] font-medium tabular-nums text-[var(--admin-chrome-muted)] sm:inline" aria-hidden="true">100%</span>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={openPublishReview}
+              aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
+              title={draftStatusTitle}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] bg-[var(--admin-surface)] px-3 text-[13px] font-semibold leading-none text-[var(--admin-text-primary)] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+            >
+              {publishSummary.hasChanges ? "Review changes" : "Published"}
+              {publishSummary.hasChanges && <span className="h-1.5 w-1.5 rounded-full bg-[var(--admin-primary)]" aria-hidden="true" />}
+            </button>
+          )}
+          <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[12px] font-semibold text-white">A</span>
+        </div>
+      </header>
+
+      <div className="mx-auto grid w-full max-w-[1920px] flex-1 grid-cols-1 gap-2 px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:grid-cols-[286px_minmax(0,1fr)] lg:gap-3 lg:overflow-hidden">
         <aside aria-label="Admin workspace rail" className="z-30 flex min-w-0 flex-col gap-3 border-b border-[var(--admin-rail-border)] bg-[var(--admin-rail-bg)] p-3 text-[var(--admin-text-inverse)] shadow-[inset_0_1px_0_rgba(255,255,255,0.10)] sm:p-4 lg:min-h-0 lg:overflow-auto lg:border-b-0 lg:border-r">
           <section aria-label="Admin planning workspace" className="min-w-0 overflow-hidden rounded-[22px] border border-[var(--admin-rail-border)] bg-[var(--admin-rail-surface)] px-3.5 py-3 shadow-[0_18px_42px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]">
             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
@@ -1884,156 +1974,34 @@ export function SeatMap({
         </aside>
 
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
-          <header className="z-30 border-b border-[var(--admin-border)] bg-[var(--admin-surface)]/96 px-3 py-2 text-[var(--admin-text-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] sm:px-4 lg:shrink-0">
-            <div role="group" aria-label="Admin command row" className="flex min-w-0 flex-col gap-2 rounded-[22px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/94 p-2 shadow-[var(--admin-shadow-command),inset_0_1px_0_rgba(255,255,255,0.92)] xl:flex-row xl:items-center">
-              <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 items-center justify-between gap-3 px-1 pb-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--admin-primary-cta)]">Command search</span>
-                  <span className="truncate text-[11px] font-bold text-[var(--admin-text-muted)]">{planningStateLabel}</span>
-                </div>
-                <label className="relative block min-w-0">
-                  <span className="sr-only">Search employee, seat, job title, department, or zone</span>
-                  <input
-                    value={search}
-                    onFocus={() => setSearchFocused(true)}
-                    onBlur={() => setSearchFocused(false)}
-                    onChange={event => {
-                      setSearch(event.target.value);
-                      setSearchSelectionNotice(null);
-                      setResultRailCollapsed(false);
-                    }}
-                    placeholder="Search employee, seat, job title, department, or zone"
-                    className="h-11 w-full rounded-[16px] border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-4 pr-10 text-sm font-semibold text-[var(--admin-text-primary)] shadow-[0_8px_18px_rgba(16,17,20,0.07),inset_0_1px_0_rgba(255,255,255,0.92)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:bg-white focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)]"
-                  />
-                  {search.trim() && (
-                    <button
-                      type="button"
-                      aria-label="Clear top search"
-                      title="Clear top search"
-                      className={[
-                        "absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-secondary)] active:scale-90",
-                        focusRingClass
-                      ].join(" ")}
-                      onClick={clearSearch}
-                    >
-                      x
-                    </button>
-                  )}
-                </label>
-              </div>
-
-              {canEdit && (
-                <div role="group" aria-label="Map command actions" className="flex min-w-0 flex-wrap items-center gap-1.5 rounded-[16px] bg-[var(--admin-surface-muted)]/78 p-1.5 xl:max-w-[33rem] xl:justify-end">
-                  <button
-                    type="button"
-                    onClick={toggleFilterPanel}
-                    aria-controls="seat-map-filter-panel"
-                    aria-expanded={!filterCollapsed}
-                    aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
-                    title={filterCollapsed ? "Open filters" : "Collapse filters"}
-                    className={["inline-flex h-10 shrink-0 items-center gap-2 rounded-[14px] border px-3 text-xs font-black shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner", focusRingClass, structuredFilterCount ? "border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-cta)]" : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)]"].join(" ")}
-                  >
-                    Filters
-                    {structuredFilterCount > 0 && (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1.5 text-[10px] font-black text-white">
-                        {structuredFilterCount}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowNames(current => !current)}
-                    aria-label={namesToggleLabel}
-                    title={namesToggleLabel}
-                    className={[
-                      "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border px-3 text-xs font-black shadow-sm transition active:scale-[0.97] active:duration-75 active:shadow-inner",
-                      focusRingClass,
-                      showNames ? "border-[var(--admin-primary-cta)] bg-[var(--admin-primary-cta)] text-white hover:bg-[var(--admin-primary-hover)]" : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:bg-white"
-                    ].join(" ")}
-                  >
-                    <NamesIcon />
-                    <span className="hidden sm:inline">{namesToggleLabel}</span>
-                  </button>
-
-                  <div role="group" aria-label="Planning map actions" className="flex min-w-0 items-center gap-1.5">
-                    <Button
-                      ref={mapToolsButtonRef}
-                      variant="secondary"
-                      aria-label="Map tools"
-                      aria-controls="advanced-drawer"
-                      aria-expanded={advancedOpen}
-                      aria-haspopup="dialog"
-                      title="Map tools"
-                      className="h-10 min-h-10 rounded-[14px] !border-[var(--admin-border-strong)] !bg-[var(--admin-surface)] px-3 py-1 text-xs !text-[var(--admin-text-secondary)] shadow-sm hover:!border-[var(--admin-primary-border)] hover:!bg-[var(--admin-primary-soft)] hover:!text-[var(--admin-primary-cta)]"
-                      onClick={openAdvancedDrawer}
-                    >
-                      <span className="min-[1280px]:hidden">Tools</span>
-                      <span className="hidden min-[1280px]:inline">Map tools</span>
-                    </Button>
-                  </div>
-
-                  <div role="group" aria-label="Draft history controls" className="flex min-w-0 items-center gap-1.5">
-                    <button
-                      type="button"
-                      className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 text-xs font-black text-[var(--admin-text-secondary)] shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--admin-border)] disabled:bg-[var(--admin-surface-muted)] disabled:text-[var(--admin-text-subtle)] disabled:shadow-none"
-                      disabled={pending || inspectorDirty || !undoAvailable}
-                      aria-label="Undo last map change"
-                      title={undoTitle}
-                      onClick={undoDraftEdit}
-                    >
-                      <UndoIcon />
-                      <span className="hidden min-[1360px]:inline">Undo</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 text-xs font-black text-[var(--admin-text-secondary)] shadow-sm transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--admin-border)] disabled:bg-[var(--admin-surface-muted)] disabled:text-[var(--admin-text-subtle)] disabled:shadow-none"
-                      disabled={pending || inspectorDirty || !redoAvailable}
-                      aria-label="Redo last undone change"
-                      title={redoTitle}
-                      onClick={redoDraftEdit}
-                    >
-                      <RedoIcon />
-                      <span className="hidden min-[1360px]:inline">Redo</span>
-                    </button>
-                  </div>
-
-                  <div role="group" aria-label="Admin support actions" className="flex min-w-0 items-center gap-1.5">
-                    <Link
-                      href="/admin/management"
-                      onClick={event => {
-                        if (!beforeManagementNavigation()) event.preventDefault();
-                      }}
-                      className="inline-flex min-h-10 items-center justify-center rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 text-xs font-semibold text-[var(--admin-text-secondary)] shadow-sm transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-cta)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-primary)]"
-                    >
-                      <span className="min-[1400px]:hidden">Manage</span>
-                      <span className="hidden min-[1400px]:inline">Management</span>
-                    </Link>
-                    <Button
-                      ref={askPlannerButtonRef}
-                      variant="secondary"
-                      aria-label={plannerHighlightedSeatIds.length > 0 ? `Open Ask Planner, ${plannerHighlightedSeatIds.length} seats highlighted` : "Open Ask Planner"}
-                      aria-controls="ask-planner-drawer"
-                      aria-expanded={askPlannerOpen}
-                      aria-haspopup="dialog"
-                      className={[
-                        "min-h-10 rounded-[14px] !border-[var(--admin-border-strong)] !bg-[var(--admin-surface)] px-3 py-1 text-xs !text-[var(--admin-text-secondary)] shadow-sm hover:!border-[var(--admin-primary-border)] hover:!bg-[var(--admin-primary-soft)] hover:!text-[var(--admin-primary-cta)]",
-                        plannerHighlightedSeatIds.length > 0 ? "!border-[var(--admin-info)] !bg-[var(--admin-info-soft)] !text-[var(--admin-info)] hover:!bg-[var(--admin-info-soft)]" : ""
-                      ].join(" ")}
-                      onClick={openAskPlannerDrawer}
-                    >
-                      <span className="min-[1480px]:hidden">Ask</span>
-                      <span className="hidden min-[1480px]:inline">Ask Planner</span>
-                      {plannerHighlightedSeatIds.length > 0 && (
-                        <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--admin-info)] px-1.5 text-[10px] font-black text-white">
-                          {plannerHighlightedSeatIds.length}
-                        </span>
-                      )}
-                    </Button>
-                  </div>
-                </div>
+          <div role="search" aria-label="Command search" className="z-30 px-0.5 pb-2 lg:shrink-0">
+            <label className="relative block min-w-0">
+              <span className="sr-only">Search employee, seat, job title, department, or zone</span>
+              <input
+                value={search}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                onChange={event => {
+                  setSearch(event.target.value);
+                  setSearchSelectionNotice(null);
+                  setResultRailCollapsed(false);
+                }}
+                placeholder="Search people, seats, departments, or zones"
+                className="h-10 w-full rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3.5 pr-9 text-sm font-medium text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]"
+              />
+              {search.trim() && (
+                <button
+                  type="button"
+                  aria-label="Clear top search"
+                  title="Clear top search"
+                  className={["absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-medium text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-secondary)] active:scale-90", focusRingClass].join(" ")}
+                  onClick={clearSearch}
+                >
+                  x
+                </button>
               )}
-            </div>
-          </header>
+            </label>
+          </div>
 
       <main className={["grid grid-cols-1 gap-2 bg-[var(--admin-surface-muted)] p-2 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
         {showFilterPanel && (

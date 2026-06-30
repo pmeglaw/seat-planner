@@ -30,9 +30,11 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /Draft publication status/);
   assert.match(source, /Draft has unpublished changes/);
   assert.match(source, /Viewer map already matches this saved draft/);
-  assert.match(source, /Planning map actions/);
-  assert.match(source, /Draft history controls/);
-  assert.match(source, /Admin support actions/);
+  // Claude Design: the bordered nested groups collapse into one flat text toolbar
+  // (aria-label="Admin command row") with discrete, still-labelled undo/redo controls.
+  assert.match(source, /aria-label="Admin command row"/);
+  assert.match(source, /aria-label="Undo last map change"/);
+  assert.match(source, /aria-label="Redo last undone change"/);
   assert.match(source, /Planning canvas/);
   assert.match(source, /Spatial confirmation/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
@@ -285,11 +287,10 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /function removeActiveFilterChip/);
   assert.match(seatMapSource, /aria-label="Admin workspace rail"/);
   assert.match(seatMapSource, /aria-label="Admin command row"/);
-  assert.match(seatMapSource, /aria-label="Map command actions"/);
-  assert.match(seatMapSource, /aria-label="Planning map actions"/);
-  assert.match(seatMapSource, /aria-label="Draft history controls"/);
-  assert.match(seatMapSource, /aria-label="Admin support actions"/);
+  assert.match(seatMapSource, /role="search" aria-label="Command search"/);
+  assert.match(seatMapSource, /aria-label="Map tools"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
+  assert.doesNotMatch(seatMapSource, /aria-label="Map command actions"|aria-label="Planning map actions"/);
   assert.match(seatMapSource, /setDepartment\("all"\)/);
   assert.match(seatMapSource, /setZone\("all"\)/);
   assert.match(seatMapSource, /setStatus\("all"\)/);
