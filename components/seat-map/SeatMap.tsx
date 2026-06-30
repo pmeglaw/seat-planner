@@ -1780,8 +1780,12 @@ export function SeatMap({
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
       <header className="z-40 flex h-[54px] shrink-0 items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] px-3 text-[var(--admin-chrome-text)] sm:gap-3 sm:px-4">
         <div className="flex min-w-0 shrink-0 items-center gap-2.5">
-          <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[var(--admin-primary)] text-white">
-            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="3.5" width="5" height="5" rx="1.4" /><rect x="11.5" y="3.5" width="5" height="5" rx="1.4" /><rect x="3.5" y="11.5" width="5" height="5" rx="1.4" /><rect x="11.5" y="11.5" width="5" height="5" rx="1.4" /></svg>
+          <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center">
+            {/* Megeredchian Law "AM" monogram: orange A apex interlocking a light M. */}
+            <svg viewBox="0 0 24 24" className="h-[26px] w-[26px]" fill="none" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 18.5 V8 L12 14.5 L21 8 V18.5" className="stroke-[var(--admin-chrome-text)]" strokeWidth="2.1" />
+              <path d="M12 4 L7.7 13.4 M12 4 L16.3 13.4" className="stroke-[var(--admin-primary)]" strokeWidth="2.4" />
+            </svg>
           </span>
           <div className="hidden min-w-0 leading-tight sm:block">
             <div className="truncate text-[13px] font-semibold text-[var(--admin-chrome-text)]">Megeredchian Law Seats</div>
