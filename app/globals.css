@@ -232,26 +232,28 @@
   --admin-publish-viewer-impact-border: rgba(22, 83, 89, 0.34);
   --admin-publish-viewer-impact-text: var(--admin-info);
 
-  --admin-marker-assigned-surface: rgba(255, 253, 248, 0.95);
-  --admin-marker-assigned-border: rgba(140, 102, 69, 0.42);
-  --admin-marker-assigned-text: var(--admin-text-primary);
-  --admin-marker-assigned-accent: rgba(47, 122, 86, 0.88);
-  --admin-marker-available-surface: rgba(247, 247, 249, 0.90);
-  --admin-marker-available-border: rgba(140, 102, 69, 0.30);
-  --admin-marker-available-text: var(--admin-text-secondary);
-  --admin-marker-available-accent: rgba(140, 102, 69, 0.42);
-  --admin-marker-reserved-surface: var(--admin-warning-soft);
-  --admin-marker-reserved-border: rgba(212, 154, 6, 0.48);
-  --admin-marker-reserved-text: var(--admin-warning-text);
-  --admin-marker-reserved-accent: var(--admin-warning);
-  --admin-marker-unavailable-surface: rgba(234, 237, 240, 0.92);
-  --admin-marker-unavailable-border: rgba(111, 118, 128, 0.38);
-  --admin-marker-unavailable-text: var(--admin-text-muted);
-  --admin-marker-unavailable-accent: rgba(111, 118, 128, 0.60);
-  --admin-marker-selected-surface: var(--ml-ink);
+  /* Cool neutral-slate pill markers to match the chrome; orange ring on the selected
+     pill (no dark fill). Refined pill craft per docs/design-reference-v15.html. */
+  --admin-marker-assigned-surface: rgba(232, 243, 236, 0.96);
+  --admin-marker-assigned-border: rgba(31, 122, 85, 0.26);
+  --admin-marker-assigned-text: #156045;
+  --admin-marker-assigned-accent: rgba(31, 122, 85, 0.85);
+  --admin-marker-available-surface: rgba(252, 252, 253, 0.96);
+  --admin-marker-available-border: rgba(31, 34, 37, 0.16);
+  --admin-marker-available-text: #475059;
+  --admin-marker-available-accent: rgba(107, 113, 119, 0.5);
+  --admin-marker-reserved-surface: rgba(252, 240, 217, 0.96);
+  --admin-marker-reserved-border: rgba(180, 123, 8, 0.3);
+  --admin-marker-reserved-text: #8a5a06;
+  --admin-marker-reserved-accent: rgba(180, 123, 8, 0.8);
+  --admin-marker-unavailable-surface: rgba(236, 238, 240, 0.96);
+  --admin-marker-unavailable-border: rgba(107, 113, 119, 0.26);
+  --admin-marker-unavailable-text: #6b7177;
+  --admin-marker-unavailable-accent: rgba(107, 113, 119, 0.6);
+  --admin-marker-selected-surface: rgba(255, 255, 255, 0.97);
   --admin-marker-selected-border: var(--admin-primary);
-  --admin-marker-selected-text: var(--admin-text-inverse);
-  --admin-marker-selected-shadow: 0 10px 24px rgba(166, 58, 18, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  --admin-marker-selected-text: #1f2225;
+  --admin-marker-selected-shadow: 0 0 0 2px rgba(242, 110, 34, 0.22), 0 10px 22px rgba(31, 34, 37, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
   --admin-marker-search-surface: var(--admin-info-soft);
   --admin-marker-search-border: rgba(22, 83, 89, 0.78);
   --admin-marker-search-text: var(--admin-info);
@@ -262,7 +264,7 @@
   --admin-marker-draft-text: var(--admin-warning-text);
   --admin-marker-draft-accent: var(--admin-warning);
   --admin-marker-hover-border: var(--admin-primary);
-  --admin-marker-hover-shadow: 0 6px 14px rgba(166, 58, 18, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  --admin-marker-hover-shadow: 0 6px 14px rgba(31, 34, 37, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
   --admin-marker-focus-ring: rgba(242, 110, 34, 0.75);
   --admin-marker-focus-offset: rgba(255, 255, 255, 0.70);
 

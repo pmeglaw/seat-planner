@@ -57,7 +57,7 @@ test("master alternative palette exposes inert brand primitives and scoped admin
     "--admin-publish-ready-bg: var(--admin-primary-soft)",
     "--admin-publish-no-change-bg: var(--admin-state-clean-bg)",
     "--admin-publish-viewer-impact-bg: var(--admin-info-soft)",
-    "--admin-marker-assigned-surface: rgba(255, 253, 248, 0.95)",
+    "--admin-marker-assigned-surface: rgba(232, 243, 236, 0.96)",
     "--admin-marker-selected-border: var(--admin-primary)",
     "--admin-marker-search-surface: var(--admin-info-soft)",
     "--admin-marker-draft-surface: var(--admin-warning-soft)"

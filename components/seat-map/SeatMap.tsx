@@ -1877,7 +1877,16 @@ export function SeatMap({
         )}
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <span className="hidden text-[12px] font-medium tabular-nums text-[var(--admin-chrome-muted)] sm:inline" aria-hidden="true">100%</span>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setMapViewMode(current => (current === "detail" ? "overview" : "detail"))}
+              aria-label={mapViewMode === "detail" ? "Fit map to view" : "Zoom map to actual size"}
+              title={mapViewMode === "detail" ? "Fit map to view" : "Zoom map to actual size"}
+              className="hidden h-8 items-center rounded-[9px] px-2 text-[12px] font-medium tabular-nums text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] sm:inline-flex">
+              {mapViewMode === "detail" ? "100%" : "Fit"}
+            </button>
+          )}
           {canEdit && (
             <button
               type="button"
@@ -1959,7 +1968,7 @@ export function SeatMap({
           </div>
         )}
 
-        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden rounded-[24px] border border-white/60 bg-[var(--admin-surface)]/68 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].join(" ")}>
+        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/68 p-2 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].join(" ")}>
           {canEdit && (
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2">
               <div className="min-w-0">

@@ -125,7 +125,7 @@ test("seat map uses the component-board desktop workspace shell", async () => {
   assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
   assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
   assert.match(seatMapSource, /bg-\[var\(--admin-surface-muted\)\] p-2 lg:min-h-0/);
-  assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*rounded-\[24px\][\s\S]*bg-\[var\(--admin-surface\)\]\/68/);
+  assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*rounded-\[14px\][\s\S]*bg-\[var\(--admin-surface\)\]\/68/);
   assert.match(seatMapSource, /MAP_VIEW_MODE_OPTIONS[\s\S]*Overview[\s\S]*Detail/);
   assert.match(seatMapSource, /useState<MapViewMode>\("detail"\)/);
   assert.match(seatMapSource, /aria-label="Map view mode"/);
