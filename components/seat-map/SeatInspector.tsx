@@ -347,7 +347,7 @@ export function SeatInspector({
     : saveFeedback
       ? "This seat is saved to the admin draft. Viewers see the update only after publish."
       : "This seat matches the saved draft. Viewers see changes after review and publish.";
-  const identityBadgeClassName = "rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ring-1";
+  const identityBadgeClassName = "rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-normal ring-1";
   const seatTypeBadgeClassName = selectedSeat.is_custom
     ? "bg-[var(--admin-publish-viewer-impact-bg)] text-[var(--admin-publish-viewer-impact-text)] ring-[var(--admin-publish-viewer-impact-border)]"
     : isProtectedOriginalSeatLabel(selectedSeat.label)
@@ -744,7 +744,7 @@ export function SeatInspector({
   const vacateHelpText = hasCurrentAssignment ? "Assigned seat can be vacated without deleting the marker." : "No employee is assigned, so Vacate is not needed.";
   const capabilityRowClassName = "flex items-start justify-between gap-3 rounded-xl bg-[var(--sp-color-surface-raised)]/80 px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]";
   const secondaryActionGridClassName = "grid-cols-1 sm:grid-cols-2";
-  const actionStatePillClassName = "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1";
+  const actionStatePillClassName = "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-normal ring-1";
 
   if (collapsed && swapMode) return null;
 
@@ -758,7 +758,7 @@ export function SeatInspector({
           title={`View details for ${selectedSeat.label}`}
           className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface)]/95 px-4 py-2 text-[var(--sp-color-text-secondary)] shadow-[0_14px_34px_rgba(23,26,29,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] sm:min-h-full sm:w-11 sm:flex-col sm:rounded-l-2xl sm:rounded-r-xl sm:px-2 sm:py-4 sm:shadow-[-8px_0_24px_rgba(23,26,29,0.16),inset_1px_0_0_rgba(255,255,255,0.86)]"
         >
-          <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] sm:rotate-180 sm:[writing-mode:vertical-rl]">View details</span>
+          <span className="text-[11px] font-semibold tracking-[0.04em] sm:rotate-180 sm:[writing-mode:vertical-rl]">View details</span>
           <span className="rounded-full bg-[var(--admin-primary-soft)] px-2 py-1 text-[10px] font-black text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)] sm:mt-2 sm:rotate-180 sm:bg-transparent sm:px-0 sm:py-0 sm:text-white/55 sm:ring-0 sm:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
         </button>
       </aside>
@@ -774,7 +774,7 @@ export function SeatInspector({
     >
       <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-white/10 bg-[var(--sp-color-workspace)] px-4 py-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--sp-color-workspace)]/95">
         <div className="min-w-0 flex-1">
-          {canEdit && <div className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--admin-primary-soft)]">Planning inspector</div>}
+          {canEdit && <div className="mb-2 text-[10px] font-medium tracking-[0.04em] text-[var(--admin-primary-soft)]">Planning inspector</div>}
           <div className="flex min-w-0 items-end gap-3">
             <h2 id="seat-inspector-title" className="text-[2rem] font-black leading-none text-white">{selectedSeat.label}</h2>
             <div className="min-w-0 pb-0.5">
@@ -812,7 +812,7 @@ export function SeatInspector({
         <form id="seat-inspector-form" onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
           <section aria-label="Draft state and viewer impact" className={["min-w-0 border-b px-4 py-3 text-xs shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]", draftStateBandClassName].join(" ")}>
             <div className="min-w-0">
-              <div className="text-[10px] font-black uppercase tracking-wide opacity-80">Draft-only impact</div>
+              <div className="text-[10px] font-semibold tracking-normal opacity-80">Draft-only impact</div>
               <div className="mt-1 text-sm font-black leading-5 text-[var(--admin-text-primary)]">{draftStateTitle}</div>
             </div>
             <p className="mt-2 min-w-0 max-w-[34ch] whitespace-normal break-words font-semibold leading-relaxed">{draftStateDescription}</p>
@@ -872,22 +872,22 @@ export function SeatInspector({
             )}
 
             <section aria-labelledby="seat-summary-heading" className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
-              <h3 id="seat-summary-heading" className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Seat Summary</h3>
+              <h3 id="seat-summary-heading" className="text-[11px] font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Seat Summary</h3>
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
-                  <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Zone</div>
+                  <div className="font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Zone</div>
                   <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{currentZone}</div>
                 </div>
                 <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
-                  <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Status</div>
+                  <div className="font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Status</div>
                   <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{currentStatusLabel}</div>
                 </div>
                 <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
-                  <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Seat Type</div>
+                  <div className="font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Seat Type</div>
                   <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{seatTypeLabel}</div>
                 </div>
                 <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
-                  <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Assignment</div>
+                  <div className="font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Assignment</div>
                   <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{employeeNameValue || (hasCurrentAssignment ? selectedSeatEmployeeName : "Open seat")}</div>
                 </div>
               </div>
@@ -909,30 +909,30 @@ export function SeatInspector({
             <section aria-labelledby="seat-assignment-heading" className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-[10px] font-black uppercase tracking-wide text-[var(--admin-primary-cta)]">Assignment workflow</div>
+                  <div className="text-[10px] font-semibold tracking-normal text-[var(--admin-primary-cta)]">Assignment workflow</div>
                   <h3 id="seat-assignment-heading" className="mt-1 text-base font-black leading-tight text-[var(--sp-color-text-primary)]">{assignmentWorkflowTitle}</h3>
                   <p id={employeeHelpId} className="mt-1 text-xs font-semibold leading-5 text-[var(--sp-color-text-muted)]">{assignmentWorkflowDescription}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-[var(--admin-primary-soft)] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)]">
+                <span className="shrink-0 rounded-full bg-[var(--admin-primary-soft)] px-2 py-1 text-[10px] font-semibold tracking-normal text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)]">
                   {assignmentWorkflowBadge}
                 </span>
               </div>
 
               {hasCurrentAssignment ? (
                 <div aria-label="Current draft assignee" className="mt-3 border-l-4 border-[var(--admin-secondary)] bg-[var(--admin-secondary-soft)] px-3 py-2 text-xs text-[var(--admin-secondary-hover)]">
-                  <div className="font-black uppercase tracking-wide">Current draft assignee</div>
+                  <div className="font-semibold tracking-normal">Current draft assignee</div>
                   <div className="mt-1 truncate text-sm font-black text-[var(--admin-text-primary)]">{selectedSeatEmployeeName}</div>
                   <div className="mt-0.5 min-w-0 break-words font-semibold leading-4">{currentAssigneeDetails || "No title, department, or extension saved."}</div>
                 </div>
               ) : (
                 <div aria-label="Open draft seat assignment guidance" className={["mt-3 border-l-4 px-3 py-2 text-xs", infoSurfaceClassName].join(" ")}>
-                  <div className="font-black uppercase tracking-wide">Open draft seat</div>
+                  <div className="font-semibold tracking-normal">Open draft seat</div>
                   <div className="mt-1 font-semibold leading-4">Assign this seat by choosing an existing employee or entering a new employee name below.</div>
                 </div>
               )}
 
               <label className="mt-3 block">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Employee name</span>
+                <span className="text-[11px] font-medium tracking-normal text-[var(--sp-color-text-muted)]">Employee name</span>
                 <div className="relative">
                   <input
                     ref={employeeInputRef}
@@ -992,7 +992,7 @@ export function SeatInspector({
                             <span className="block truncate text-sm font-black">{option.employee.full_name}</span>
                             <span className="block truncate text-xs text-[var(--sp-color-text-muted)]">{option.meta}</span>
                           </span>
-                          <span className="shrink-0 rounded-full bg-[var(--sp-color-graphite-soft)] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]">
+                          <span className="shrink-0 rounded-full bg-[var(--sp-color-graphite-soft)] px-2 py-1 text-[10px] font-semibold tracking-normal text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]">
                             {option.assignedSeatLabel}
                           </span>
                         </button>
@@ -1008,7 +1008,7 @@ export function SeatInspector({
                 {fieldErrorMap.employeeName && (
                   <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.employeeName}</p>
                 )}
-                <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ring-1", employeeNameValue ? matchedEmployee ? successPillClassName : "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]" : neutralPillClassName].join(" ")}>
+                <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold tracking-normal ring-1", employeeNameValue ? matchedEmployee ? successPillClassName : "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]" : neutralPillClassName].join(" ")}>
                   {assignmentStateText}
                 </span>
               </label>
@@ -1024,7 +1024,7 @@ export function SeatInspector({
 
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Job Title</span>
+                  <span className="text-[11px] font-medium tracking-normal text-[var(--sp-color-text-muted)]">Job Title</span>
                   <input
                     ref={employeePositionRef}
                     value={form.employeePosition}
@@ -1038,7 +1038,7 @@ export function SeatInspector({
                 </label>
 
                 <label className="block">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Phone Ext.</span>
+                  <span className="text-[11px] font-medium tracking-normal text-[var(--sp-color-text-muted)]">Phone Ext.</span>
                   <input
                     ref={phoneExtensionRef}
                     value={form.phoneExtension}
@@ -1054,7 +1054,7 @@ export function SeatInspector({
               </div>
 
               <label className="mt-3 block">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Department</span>
+                <span className="text-[11px] font-medium tracking-normal text-[var(--sp-color-text-muted)]">Department</span>
                 <select
                   ref={departmentRef}
                   value={form.department}
@@ -1073,15 +1073,15 @@ export function SeatInspector({
             </section>
 
             <section aria-labelledby="seat-metadata-heading" className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
-              <h3 id="seat-metadata-heading" className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Seat Metadata</h3>
+              <h3 id="seat-metadata-heading" className="text-[11px] font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Seat Metadata</h3>
               <div className="mt-2 rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 text-xs ring-1 ring-[var(--sp-color-border-subtle)]">
-                <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Detected zone</div>
+                <div className="font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Detected zone</div>
                 <div className="mt-0.5 font-bold text-[var(--sp-color-text-secondary)]">{currentZone}</div>
               </div>
 
               {!hasAssignedPerson && (
                 <label className="mt-3 block">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Seat status</span>
+                  <span className="text-[11px] font-medium tracking-normal text-[var(--sp-color-text-muted)]">Seat status</span>
                   <select
                     ref={statusRef}
                     value={effectiveStatus}
@@ -1099,7 +1099,7 @@ export function SeatInspector({
               )}
 
               <label className="mt-3 block">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--sp-color-text-muted)]">Notes</span>
+                <span className="text-[11px] font-medium tracking-normal text-[var(--sp-color-text-muted)]">Notes</span>
                 <textarea
                   ref={notesRef}
                   value={form.notes}
@@ -1115,8 +1115,8 @@ export function SeatInspector({
 
             <section aria-label={`Available actions for ${selectedSeat.label}`} className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 text-xs text-[var(--sp-color-text-muted)] shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Actions / Rules</h3>
-                <span className="rounded-full bg-[var(--admin-primary-soft)] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)]">Draft only</span>
+                <h3 className="text-[11px] font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Actions / Rules</h3>
+                <span className="rounded-full bg-[var(--admin-primary-soft)] px-2 py-0.5 text-[10px] font-semibold tracking-normal text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)]">Draft only</span>
               </div>
               <div className="mt-2 grid gap-2">
                 <div className={capabilityRowClassName}>
@@ -1209,21 +1209,21 @@ export function SeatInspector({
       ) : (
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[var(--sp-color-surface)] px-3.5 py-3 text-sm">
           <section aria-labelledby="published-seat-summary-heading" className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
-            <h3 id="published-seat-summary-heading" className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Seat Summary</h3>
+            <h3 id="published-seat-summary-heading" className="text-[11px] font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Seat Summary</h3>
             <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
               <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
-                <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Zone</div>
+                <div className="font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Zone</div>
                 <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{currentZone}</div>
               </div>
               <div className="rounded-xl bg-[var(--sp-color-graphite-soft)] px-2.5 py-2 ring-1 ring-[var(--sp-color-border-subtle)]">
-                <div className="font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Status</div>
+                <div className="font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Status</div>
                 <div className="mt-0.5 truncate font-bold text-[var(--sp-color-text-secondary)]">{currentStatusLabel}</div>
               </div>
             </div>
           </section>
 
           <section className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
-            <div className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Published Assignment</div>
+            <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Published Assignment</div>
             <div className="mt-1 text-lg font-black leading-tight text-[var(--sp-color-text-primary)]">{selectedSeat.employee?.full_name ?? "Open seat"}</div>
             {(selectedSeat.employee?.position || selectedSeat.employee?.department) && (
               <div className="mt-1 text-sm text-[var(--sp-color-text-muted)]">
@@ -1231,14 +1231,14 @@ export function SeatInspector({
               </div>
             )}
             {selectedSeat.employee?.phone_extension && (
-              <div className="mt-2 inline-flex rounded-full bg-[var(--sp-color-graphite-soft)] px-2 py-1 text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]">
+              <div className="mt-2 inline-flex rounded-full bg-[var(--sp-color-graphite-soft)] px-2 py-1 text-[11px] font-semibold tracking-normal text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]">
                 Ext. {selectedSeat.employee.phone_extension}
               </div>
             )}
           </section>
           {selectedSeat.notes && (
             <section className="rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
-              <div className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Notes</div>
+              <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-color-text-muted)]">Notes</div>
               <p className="mt-1 text-sm leading-5 text-[var(--sp-color-text-secondary)]">{selectedSeat.notes}</p>
             </section>
           )}
