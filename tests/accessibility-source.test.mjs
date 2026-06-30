@@ -26,17 +26,15 @@ test("viewer route renders the published map as read-only", async () => {
 test("admin planning shell exposes status, panel relationships, and undo redo explanations", async () => {
   const source = await readSource("../components/seat-map/SeatMap.tsx");
 
-  assert.match(source, /aria-label="Admin planning workspace"/);
-  assert.match(source, /Draft publication status/);
-  assert.match(source, /Draft has unpublished changes/);
-  assert.match(source, /Viewer map already matches this saved draft/);
-  // Claude Design: the bordered nested groups collapse into one flat text toolbar
-  // (aria-label="Admin command row") with discrete, still-labelled undo/redo controls.
+  // Claude Design: identity moves into the top bar; the publish status is the top-bar
+  // Review/Published pill; the bordered nested groups collapse into one flat text toolbar.
+  assert.match(source, /Megeredchian Law Seats/);
+  assert.match(source, /Review changes/);
   assert.match(source, /aria-label="Admin command row"/);
   assert.match(source, /aria-label="Undo last map change"/);
   assert.match(source, /aria-label="Redo last undone change"/);
   assert.match(source, /Planning canvas/);
-  assert.match(source, /Spatial confirmation/);
+  assert.match(source, /aria-label="Seat status legend"/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
   assert.match(source, /aria-controls="advanced-drawer"/);
   assert.match(source, /aria-controls="ask-planner-drawer"/);
@@ -47,7 +45,7 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /Draft changes:/);
   assert.match(source, /Esc exits/);
   assert.match(source, /Exit Add Seat/);
-  assert.match(source, /\{canEdit \? \([\s\S]*aria-label=\{`Review \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);
+  assert.match(source, /\{canEdit && \([\s\S]*aria-label=\{`Review \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);
   assert.match(source, /Undo \{lastUndoLabel\}/);
   assert.match(source, /onClick=\{undoDraftEdit\}/);
 });
@@ -77,7 +75,7 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   assert.match(viewerFinderSource, /aria-live="polite"/);
   assert.match(viewerFinderSource, /highlightedDescription="Highlighted search result"/);
   assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
-  assert.match(seatMapSource, /\{canEdit \? \([\s\S]*draftStatusLabel/);
+  assert.match(seatMapSource, /\{canEdit && \([\s\S]*draftStatusLabel/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AdvancedDrawer/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Actions \/ Rules/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
@@ -285,18 +283,18 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(filterSource, /titleId="mobile-seat-results-title"/);
 
   assert.match(seatMapSource, /function removeActiveFilterChip/);
-  assert.match(seatMapSource, /aria-label="Admin workspace rail"/);
   assert.match(seatMapSource, /aria-label="Admin command row"/);
   assert.match(seatMapSource, /role="search" aria-label="Command search"/);
   assert.match(seatMapSource, /aria-label="Map tools"/);
+  assert.doesNotMatch(seatMapSource, /aria-label="Admin workspace rail"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Map command actions"|aria-label="Planning map actions"/);
   assert.match(seatMapSource, /setDepartment\("all"\)/);
   assert.match(seatMapSource, /setZone\("all"\)/);
   assert.match(seatMapSource, /setStatus\("all"\)/);
-  assert.match(seatMapSource, /showSearchNoQueryHint/);
-  assert.match(seatMapSource, /showSearchNoQueryHint = canEdit && searchFocused && !searchActive && !selectedSeatId/);
-  assert.match(seatMapSource, /Search the draft map/);
+  // The map-pushing search hint card is removed; the input placeholder carries the guidance.
+  assert.doesNotMatch(seatMapSource, /Search the draft map/);
+  assert.match(seatMapSource, /placeholder="Search people, seats, departments, or zones"/);
   assert.match(seatMapSource, /function openSeatFromResults/);
   assert.match(seatMapSource, /queueCenterSeatInMap\(seatId\)/);
   assert.match(seatMapSource, /setResultRailCollapsed\(true\)/);

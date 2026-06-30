@@ -770,7 +770,7 @@ export function SeatInspector({
     <aside
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[54vh] flex-col overflow-hidden rounded-[24px] border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface)] shadow-[0_18px_50px_rgba(23,26,29,0.24),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[var(--sp-color-surface)] sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[84px] sm:z-40 sm:max-h-none sm:w-[420px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-l-[28px] sm:rounded-r-[20px] sm:bg-[var(--sp-color-surface)]/95 sm:shadow-[-16px_0_42px_rgba(23,26,29,0.20),inset_1px_0_0_rgba(255,255,255,0.86)] sm:supports-[backdrop-filter]:bg-[var(--sp-color-surface)]/90 xl:w-[440px] lg:top-[148px]"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[54vh] flex-col overflow-hidden rounded-[14px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] shadow-[0_18px_44px_rgba(31,34,37,0.16)] sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[84px] sm:z-40 sm:max-h-none sm:w-[360px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-[14px] xl:w-[384px] lg:top-[148px]"
     >
       <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-white/10 bg-[var(--sp-color-workspace)] px-4 py-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--sp-color-workspace)]/95">
         <div className="min-w-0 flex-1">

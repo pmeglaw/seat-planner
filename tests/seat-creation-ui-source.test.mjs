@@ -110,16 +110,17 @@ test("map tools add seat row is neutral until add-seat mode is active", async ()
 test("seat map uses the component-board desktop workspace shell", async () => {
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
 
-  // Claude Design: flush full-width dark top bar over a transparent, gapped content grid
-  // (no opaque white shell card); the warm parchment shows through.
+  // Claude Design: flush full-width dark top bar over a single, full-width content column
+  // (the low-utility left rail is removed — map-first). Identity lives in the top bar;
+  // stats + legend move into the compact canvas header.
   assert.match(seatMapSource, /flex min-h-screen flex-col overflow-x-hidden bg-\[var\(--admin-bg\)\]/);
-  assert.match(seatMapSource, /max-w-\[1920px\] flex-1 grid-cols-1 gap-2 px-2 py-2[\s\S]*lg:grid-cols-\[286px_minmax\(0,1fr\)\]/);
-  assert.match(seatMapSource, /lg:grid-cols-\[286px_minmax\(0,1fr\)\]/);
-  assert.match(seatMapSource, /aria-label="Admin workspace rail"[\s\S]*bg-\[var\(--admin-rail-bg\)\]/);
+  assert.match(seatMapSource, /mx-auto flex w-full max-w-\[1920px\] flex-1 flex-col px-2 py-2/);
+  assert.doesNotMatch(seatMapSource, /lg:grid-cols-\[286px_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(seatMapSource, /aria-label="Admin workspace rail"/);
   assert.match(seatMapSource, /h-\[54px\] shrink-0 items-center[\s\S]*bg-\[var\(--admin-chrome-bg\)\]/);
-  assert.match(seatMapSource, /aria-label="Admin planning workspace"[\s\S]*Office Seat Planner/);
+  assert.match(seatMapSource, /Megeredchian Law Seats/);
   assert.match(seatMapSource, /aria-label="Seat inventory summary"[\s\S]*stats\.total[\s\S]*stats\.assigned[\s\S]*stats\.available/);
-  assert.match(seatMapSource, /Draft publication status[\s\S]*draftStatusHeadline[\s\S]*draftStatusActionLabel[\s\S]*draftStatusDescription/);
+  assert.match(seatMapSource, /aria-label="Seat status legend"/);
   assert.match(seatMapSource, /role="search" aria-label="Command search"/);
   assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
   assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
@@ -192,8 +193,9 @@ test("selected inspector and search results stay attached to the map workspace",
   assert.match(seatMapSource, /detailFocusSeatId = selectedSeatId \?\? \(filtersActive && matchingSeats\.length === 1 \? matchingSeats\[0\]\.id : null\)/);
   assert.match(seatMapSource, /if \(detailFocusSeatId\) \{[\s\S]*queueCenterSeatInMap\(detailFocusSeatId\)/);
   assert.match(inspectorSource, /sm:bottom-3 sm:right-3 sm:top-\[84px\]/);
-  assert.match(inspectorSource, /sm:max-h-none[\s\S]*sm:w-\[420px\][\s\S]*sm:rounded-l-\[28px\][\s\S]*sm:rounded-r-\[20px\]/);
-  assert.match(inspectorSource, /sm:shadow-\[-16px_0_42px_rgba\(23,26,29,0\.20\)/);
+  // Claude Design: narrower (360/384), flat (one soft shadow, no -16px blur slab), 14px radius.
+  assert.match(inspectorSource, /sm:max-h-none[\s\S]*sm:w-\[360px\][\s\S]*sm:rounded-\[14px\]/);
+  assert.match(inspectorSource, /shadow-\[0_18px_44px_rgba\(31,34,37,0\.16\)\]/);
   assert.match(inspectorSource, /bg-\[var\(--sp-color-workspace\)\][\s\S]*Planning inspector/);
   assert.match(inspectorSource, /draftStateBandClassName[\s\S]*Draft-only impact/);
   assert.match(filterSource, /rounded-xl border border-slate-200\/80 bg-slate-50\/70 p-2 shadow-none/);

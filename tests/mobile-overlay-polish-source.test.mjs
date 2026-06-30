@@ -19,7 +19,7 @@ test("mobile active interaction surfaces hide map-only controls", async () => {
   const surfaceSource = sliceBetween(
     source,
     "const mobileMapInteractionSurfaceOpen",
-    "const showSearchNoQueryHint"
+    "const mobileMapControlsHidden"
   );
   const mapModeShellSource = sliceBetween(
     source,

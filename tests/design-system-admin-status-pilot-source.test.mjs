@@ -17,14 +17,16 @@ test("admin planning canvas status row keeps the StatusBadge pilot scoped", asyn
   assert.match(designSystemImport[1], /\bStatusBadge\b/);
   assert.doesNotMatch(designSystemImport[1], /\bButton\b|\bIconButton\b|\bmarkerStateClassRecipes\b/);
 
-  const planningCanvasSource = seatMapSource.match(/aria-labelledby="admin-planning-canvas-title"[\s\S]*?<div className="flex shrink-0 flex-wrap gap-1\.5[\s\S]*?<\/div>\s*<\/div>\s*\)\}/)?.[0] ?? "";
-  assert.ok(planningCanvasSource, "Planning Canvas status row should remain discoverable.");
-  assert.match(planningCanvasSource, /<StatusBadge tone="draft"[\s\S]*>Draft map<\/StatusBadge>/);
-  assert.match(planningCanvasSource, /<StatusBadge tone="info"[\s\S]*>Spatial confirmation<\/StatusBadge>/);
-  assert.match(planningCanvasSource, /Draft map/);
-  assert.match(planningCanvasSource, /Spatial confirmation/);
-  assert.doesNotMatch(planningCanvasSource, /<span className="rounded-full bg-white px-2 py-1 text-slate-500 ring-1 ring-slate-200">Draft map<\/span>/);
-  assert.doesNotMatch(planningCanvasSource, /<span className="rounded-full bg-orange-50 px-2 py-1 text-brand-dark ring-1 ring-orange-100">Spatial confirmation<\/span>/);
+  // Claude Design: the noisy "Draft map / Spatial confirmation" StatusBadges leave the
+  // compact canvas header (now a clean stats + legend row). StatusBadge stays scoped to
+  // the publish-review dialog so the pilot primitive is still exercised, not removed.
+  const publishReviewSource = seatMapSource.match(/\{publishReviewOpen && \([\s\S]*?\{inspectorGuardAction/)?.[0] ?? "";
+  assert.ok(publishReviewSource, "Publish review dialog should remain discoverable.");
+  assert.match(publishReviewSource, /<StatusBadge tone=/);
+  const planningCanvasSource = seatMapSource.match(/aria-labelledby="admin-planning-canvas-title"[\s\S]*?<\/ul>/)?.[0] ?? "";
+  assert.ok(planningCanvasSource, "Planning Canvas header should remain discoverable.");
+  assert.doesNotMatch(planningCanvasSource, /StatusBadge|Spatial confirmation/);
+  assert.match(planningCanvasSource, /aria-label="Seat status legend"/);
 
   assert.doesNotMatch(seatMapSource, /markerStateClassRecipes/);
 

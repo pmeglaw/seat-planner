@@ -42,15 +42,17 @@
   --sp-color-action-primary-pressed-rgb: 154 52 18;
   --sp-color-brand-clay-rgb: 111 44 19;
 
-  --sp-color-text-primary: #070A0D;
-  --sp-color-text-secondary: #353532;
-  --sp-color-text-muted: #696159;
-  --sp-color-text-disabled: #8E8276;
-  --sp-color-workspace: #171A1D;
-  --sp-color-workspace-deep: #070A0D;
-  --sp-color-graphite-soft: #F7F6F2;
-  --sp-color-stone: #E7E1D8;
-  --sp-color-stone-muted: #B8AEA2;
+  /* Cooled to the Claude Design / brand neutrals (orange + cool charcoal on near-white)
+     so the inspector and drawers read clean, not warm-cream. */
+  --sp-color-text-primary: #1F2225;
+  --sp-color-text-secondary: #44494C;
+  --sp-color-text-muted: #6B7177;
+  --sp-color-text-disabled: #969BA1;
+  --sp-color-workspace: #1F2225;
+  --sp-color-workspace-deep: #15171A;
+  --sp-color-graphite-soft: #F3F4F6;
+  --sp-color-stone: #E4E6E8;
+  --sp-color-stone-muted: #B6BBC0;
 
   --sp-color-text-primary-rgb: 7 10 13;
   --sp-color-text-secondary-rgb: 53 53 50;
@@ -62,12 +64,12 @@
   --sp-color-stone-rgb: 231 225 216;
   --sp-color-stone-muted-rgb: 184 174 162;
 
-  --sp-color-canvas: #F8F3EA;
-  --sp-color-surface: #FFFDF8;
+  --sp-color-canvas: #EAEBEC;
+  --sp-color-surface: #FCFCFD;
   --sp-color-surface-raised: #FFFFFF;
-  --sp-color-map-workspace: #ECE7DE;
-  --sp-color-border-subtle: #DED6CA;
-  --sp-color-border-strong: #BEB4A8;
+  --sp-color-map-workspace: #EAEBEC;
+  --sp-color-border-subtle: #E4E6E8;
+  --sp-color-border-strong: #D2D6DA;
 
   --sp-color-canvas-rgb: 248 243 234;
   --sp-color-surface-rgb: 255 253 248;
@@ -146,34 +148,34 @@
 }
 
 .admin-theme {
-  /* Claude Design palette: warm near-black charcoal chrome (top bar + rail) framing a
-     warm parchment canvas, with clean warm-white content panels. Flat and refined —
-     minimal blur/shadow, one orange accent. */
-  --admin-bg: #EAE5D9;
+  /* Claude Design palette, brand-aligned (Megeredchian Law: orange + cool neutral
+     charcoal on near-white). Cool, clean and calm — no warm ivory; orange is a sparing
+     accent only (glyph, avatar, primary action, focus ring, selected seat). */
+  --admin-bg: #EAEBEC;
 
-  /* Warm charcoal chrome (top bar + rail): light off-white text, hairline dividers. */
-  --admin-chrome-bg: #1B1A17;
-  --admin-chrome-elevated: #211F1B;
-  --admin-chrome-text: #F0ECE4;
-  --admin-chrome-muted: #9C968B;
-  --admin-chrome-border: #2C2A25;
-  --admin-chrome-hover: rgba(255, 255, 255, 0.06);
+  /* Cool charcoal chrome (top bar): light off-white text, hairline dividers. */
+  --admin-chrome-bg: #1F2225;
+  --admin-chrome-elevated: #262A2D;
+  --admin-chrome-text: #EDEEF0;
+  --admin-chrome-muted: #9AA0A6;
+  --admin-chrome-border: #303437;
+  --admin-chrome-hover: rgba(255, 255, 255, 0.08);
 
   --admin-rail-bg: var(--admin-chrome-bg);
   --admin-rail-surface: rgba(255, 255, 255, 0.05);
   --admin-rail-border: var(--admin-chrome-border);
   --admin-rail-muted: var(--admin-chrome-muted);
-  --admin-surface: #FAF7F1;
-  --admin-surface-alt: #F3EEE5;
-  --admin-surface-muted: #EAE5D9;
-  --admin-border: #E6E0D4;
-  --admin-border-strong: #D8D0C2;
+  --admin-surface: #FCFCFD;
+  --admin-surface-alt: #F3F4F6;
+  --admin-surface-muted: #EAEBEC;
+  --admin-border: #E4E6E8;
+  --admin-border-strong: #D2D6DA;
 
-  --admin-text-primary: #1B1A17;
-  --admin-text-secondary: #4A463F;
-  --admin-text-muted: #6B665D;
-  --admin-text-subtle: #938D82;
-  --admin-text-inverse: #F0ECE4;
+  --admin-text-primary: #1F2225;
+  --admin-text-secondary: #44494C;
+  --admin-text-muted: #6B7177;
+  --admin-text-subtle: #969BA1;
+  --admin-text-inverse: #EDEEF0;
 
   --admin-primary: #F26E22;
   --admin-primary-hover: #C95A14;

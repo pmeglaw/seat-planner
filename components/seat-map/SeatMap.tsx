@@ -269,7 +269,6 @@ export function SeatMap({
   const [pendingInspectorSaveAction, setPendingInspectorSaveAction] = useState<InspectorGuardAction | null>(null);
   const [inspectorResetSignal, setInspectorResetSignal] = useState(0);
   const [searchSelectionNotice, setSearchSelectionNotice] = useState<string | null>(null);
-  const [searchFocused, setSearchFocused] = useState(false);
   const [showNames, setShowNames] = useState(false);
   const [namesPreferenceHydrated, setNamesPreferenceHydrated] = useState(false);
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>("detail");
@@ -1571,11 +1570,6 @@ export function SeatMap({
   const draftStatusTitle = publishSummary.hasChanges
     ? `Review draft changes: ${draftChangeBreakdown || `${publishSummary.totalChangeCount} total`}`
     : "Draft and published maps currently match";
-  const draftStatusHeadline = publishSummary.hasChanges ? "Draft has unpublished changes" : "Draft matches published";
-  const draftStatusDescription = publishSummary.hasChanges
-    ? `${draftChangeBreakdown || `${publishSummary.totalChangeCount} total changes`}. Review before publishing to viewers.`
-    : "Viewer map already matches this saved draft.";
-  const draftStatusActionLabel = publishSummary.hasChanges ? "Review publish" : "Review status";
   const publishPeopleChangeCount = publishSummary.assignmentChanges.length + publishSummary.vacatedSeats.length;
   const publishSeatInventoryChangeCount = publishSummary.addedSeats.length + publishSummary.removedSeats.length;
   const publishLayoutChangeCount = publishSummary.seatMoves.length;
@@ -1635,7 +1629,6 @@ export function SeatMap({
     Boolean(swapConfirm)
   );
   const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;
-  const showSearchNoQueryHint = canEdit && searchFocused && !searchActive && !selectedSeatId && filterCollapsed && !advancedOpen && !askPlannerOpen;
   const filterPanelShellClass = [
     filterCollapsed ? "order-2" : "order-1",
     "lg:order-1",
@@ -1781,7 +1774,7 @@ export function SeatMap({
   // Claude Design top bar: quiet text-only toolbar buttons — no borders/boxes, warm-grey,
   // subtle hover bg; active picks up the brand orange.
   const chromeToolbarBtn = "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5 text-[13px] font-medium leading-none text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
-  const chromeToolbarBtnActive = "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5 text-[13px] font-medium leading-none text-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]";
+  const chromeToolbarBtnActive = "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5 text-[13px] font-medium leading-none text-[var(--admin-chrome-text)] bg-[var(--admin-chrome-hover)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]";
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
@@ -1897,81 +1890,8 @@ export function SeatMap({
         </div>
       </header>
 
-      <div className="mx-auto grid w-full max-w-[1920px] flex-1 grid-cols-1 gap-2 px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:grid-cols-[286px_minmax(0,1fr)] lg:gap-3 lg:overflow-hidden">
-        <aside aria-label="Admin workspace rail" className="z-30 flex min-w-0 flex-col gap-3 border-b border-[var(--admin-rail-border)] bg-[var(--admin-rail-bg)] p-3 text-[var(--admin-text-inverse)] shadow-[inset_0_1px_0_rgba(255,255,255,0.10)] sm:p-4 lg:min-h-0 lg:overflow-auto lg:border-b-0 lg:border-r">
-          <section aria-label="Admin planning workspace" className="min-w-0 overflow-hidden rounded-[22px] border border-[var(--admin-rail-border)] bg-[var(--admin-rail-surface)] px-3.5 py-3 shadow-[0_18px_42px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]">
-            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-              <h1 className="truncate text-lg font-black leading-tight tracking-normal">Office Seat Planner</h1>
-              <span className={["shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", canEdit ? "bg-[var(--admin-primary)] text-[var(--admin-rail-bg)] ring-white/20" : "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-white/20"].join(" ")}>
-                {canEdit ? "Draft" : "Published"}
-              </span>
-            </div>
-            <p className="mt-1 truncate text-[10px] font-bold uppercase leading-tight tracking-[0.18em] text-[var(--admin-primary)]">{canEdit ? "Admin planning workspace" : "Viewer workspace"}</p>
-          </section>
-
-          <section aria-label="Seat inventory summary" className="grid grid-cols-3 gap-1.5 text-center text-[11px] font-black">
-            <div className="rounded-2xl bg-white/10 px-2 py-2 ring-1 ring-white/15">
-              <div className="text-base leading-none">{stats.total}</div>
-              <div className="mt-1 text-[9px] uppercase tracking-wide text-[var(--admin-rail-muted)]">Seats</div>
-            </div>
-            <div className="rounded-2xl bg-[var(--admin-success-soft)] px-2 py-2 text-[var(--admin-success)] ring-1 ring-white/20">
-              <div className="text-base leading-none">{stats.assigned}</div>
-              <div className="mt-1 text-[9px] uppercase tracking-wide opacity-70">Assigned</div>
-            </div>
-            <div className="rounded-2xl bg-[var(--admin-surface)] px-2 py-2 text-[var(--admin-text-secondary)] ring-1 ring-white/20">
-              <div className="text-base leading-none">{stats.available}</div>
-              <div className="mt-1 text-[9px] uppercase tracking-wide text-[var(--admin-text-muted)]">Open</div>
-            </div>
-          </section>
-
-          {canEdit ? (
-            <button
-              type="button"
-              onClick={openPublishReview}
-              aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
-              title={draftStatusTitle}
-              className={["group flex min-w-0 flex-col items-start rounded-[22px] border px-3.5 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition hover:bg-[var(--admin-surface)] active:scale-[0.99] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]", publishSummary.hasChanges ? "border-[var(--admin-primary-border)] bg-[var(--admin-warning-soft)] text-[var(--admin-warning-text)]" : "border-[rgba(47,122,86,0.30)] bg-[var(--admin-success-soft)] text-[var(--admin-success)]"].join(" ")}
-            >
-              <span className="text-[10px] font-black uppercase tracking-[0.16em] opacity-70">Draft publication status</span>
-              <span className="mt-1 flex max-w-full items-center gap-2 text-sm font-black leading-tight">
-                <span className="min-w-0 truncate">{draftStatusHeadline}</span>
-                <span className={["shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ring-1", publishSummary.hasChanges ? "bg-white/75 text-[var(--admin-warning-text)] ring-[var(--admin-primary-border)]" : "bg-white/75 text-[var(--admin-success)] ring-[rgba(47,122,86,0.30)]"].join(" ")}>
-                  {draftStatusActionLabel}
-                </span>
-              </span>
-              <span className="mt-1 max-w-full text-xs font-semibold leading-5 opacity-75">{draftStatusDescription}</span>
-              <span className="sr-only">{draftStatusLabel}</span>
-            </button>
-          ) : (
-            <section aria-label="Published status" className="rounded-[22px] border border-[rgba(47,122,86,0.30)] bg-[var(--admin-success-soft)] px-3.5 py-3 text-[var(--admin-success)]">
-              <div className="text-[10px] font-black uppercase tracking-[0.16em] opacity-70">Published status</div>
-              <div className="mt-1 text-sm font-black">Published map</div>
-              <p className="mt-1 text-xs font-semibold leading-5 opacity-75">Read-only seating shown to viewers.</p>
-            </section>
-          )}
-
-          <section
-            aria-label="Seat status legend"
-            className="rounded-[22px] border border-[var(--admin-rail-border)] bg-[var(--admin-rail-surface)] px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] lg:mt-auto"
-          >
-            <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--admin-rail-muted)]">Seat status</div>
-            <ul className="mt-2.5 grid grid-cols-1 gap-x-3 gap-y-2 sm:grid-cols-2 lg:grid-cols-1">
-              {SEAT_STATUS_LEGEND.filter(item => canEdit || !item.draftOnly).map(item => (
-                <li key={item.key} className="flex min-w-0 items-center gap-2.5">
-                  <span className={["relative flex h-6 w-10 shrink-0 items-center justify-center overflow-visible rounded-[10px] border ring-1 ring-white/45", item.chipClass].join(" ")} aria-hidden="true">
-                    <span className={["pointer-events-none absolute bottom-1.5 left-1.5 top-1.5 w-0.5 rounded-full", item.accentClass].join(" ")} />
-                    {item.badge && (
-                      <span className="pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 bg-[var(--admin-marker-draft-accent)] text-[8px] font-black leading-none text-white shadow-[0_2px_5px_rgba(16,17,20,0.24)]">
-                        D
-                      </span>
-                    )}
-                  </span>
-                  <span className="min-w-0 truncate text-[11px] font-bold text-[var(--admin-text-inverse)]">{item.label}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </aside>
+      <div className="mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden">
+        
 
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
           <div role="search" aria-label="Command search" className="z-30 px-0.5 pb-2 lg:shrink-0">
@@ -1979,8 +1899,6 @@ export function SeatMap({
               <span className="sr-only">Search employee, seat, job title, department, or zone</span>
               <input
                 value={search}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
                 onChange={event => {
                   setSearch(event.target.value);
                   setSearchSelectionNotice(null);
@@ -2039,22 +1957,29 @@ export function SeatMap({
 
         <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden rounded-[24px] border border-white/60 bg-[var(--admin-surface)]/68 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].join(" ")}>
           {canEdit && (
-            <div className="flex flex-col gap-2 rounded-[20px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/86 px-3 py-2 text-[var(--admin-text-secondary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2">
               <div className="min-w-0">
-                <h2 id="admin-planning-canvas-title" className="text-xs font-black uppercase tracking-[0.16em] text-[var(--admin-primary-cta)]">Planning canvas</h2>
-                <p className="mt-0.5 truncate text-sm font-black text-[var(--admin-text-primary)]">{planningStateLabel}</p>
+                <div className="text-[11px] font-medium text-[var(--admin-text-muted)]">Planning canvas</div>
+                <h2 id="admin-planning-canvas-title" className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">{planningStateLabel}</h2>
               </div>
-              <div className="flex shrink-0 flex-wrap gap-1.5 text-[10px] font-black uppercase tracking-wide">
-                <StatusBadge tone="draft" className="!min-h-0 !px-2 !py-1 !text-[10px] !font-black !tracking-wide">Draft map</StatusBadge>
-                <StatusBadge tone="info" className="!min-h-0 !px-2 !py-1 !text-[10px] !font-black !tracking-wide">Spatial confirmation</StatusBadge>
+              <div className="flex shrink-0 items-center gap-3 text-xs font-medium text-[var(--admin-text-muted)]">
+                <span aria-label="Seat inventory summary" className="whitespace-nowrap">
+                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.total}</span> seats
+                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.assigned}</span> assigned
+                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.available}</span> open
+                </span>
+                <span className="hidden h-3.5 w-px bg-[var(--admin-border-strong)] md:inline-block" aria-hidden="true" />
+                <ul aria-label="Seat status legend" className="hidden items-center gap-2.5 md:flex">
+                  {SEAT_STATUS_LEGEND.filter(item => canEdit || !item.draftOnly).map(item => (
+                    <li key={item.key} className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className={["h-2.5 w-2.5 shrink-0 rounded-full", item.accentClass].join(" ")} aria-hidden="true" />
+                      {item.label}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </div>
-          )}
-
-          {showSearchNoQueryHint && (
-            <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)]/86 px-3 py-2 text-xs font-semibold text-[var(--admin-text-muted)] shadow-none" role="status" aria-live="polite">
-              <div className="font-black text-[var(--admin-text-primary)]">Search the draft map</div>
-              <div className="mt-0.5 leading-5">Try a person, seat ID, job title, department, status, or zone. Search results stay draft-only in this admin workspace.</div>
             </div>
           )}
 

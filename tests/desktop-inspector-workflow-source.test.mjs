@@ -10,8 +10,9 @@ test("desktop inspector shell exposes the selected-seat identity model", async (
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
 
-  assert.match(inspectorSource, /sm:w-\[420px\]/);
-  assert.match(inspectorSource, /xl:w-\[440px\]/);
+  // Narrowed for less cognitive load (Claude Design); flat (no heavy shadow/blur).
+  assert.match(inspectorSource, /sm:w-\[360px\]/);
+  assert.match(inspectorSource, /xl:w-\[384px\]/);
   assert.match(inspectorSource, /Planning inspector/);
   assert.match(inspectorSource, /assignmentIdentityLabel/);
   assert.match(inspectorSource, /selectedSeatStatusLabel/);

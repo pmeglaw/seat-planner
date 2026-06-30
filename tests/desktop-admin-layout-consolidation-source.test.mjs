@@ -14,22 +14,24 @@ function sliceFrom(source, startNeedle, endNeedle) {
   return source.slice(startIndex, endIndex + endNeedle.length);
 }
 
-test("admin layout consolidation moves identity and status into the rail", async () => {
+test("admin layout consolidation moves identity and status into the top bar (rail removed)", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
-  const railSource = sliceFrom(seatMapSource, 'aria-label="Admin workspace rail"', "</aside>");
+  // The low-utility left rail is gone (map-first). Identity + publish status live in the
+  // top bar; the seat stats + status legend move into the compact canvas header.
+  const topBar = sliceFrom(seatMapSource, 'bg-[var(--admin-chrome-bg)]', "</header>");
+  const canvasHeader = sliceFrom(seatMapSource, 'id="admin-planning-canvas-title"', "</ul>");
 
-  assert.match(railSource, /Office Seat Planner/);
-  assert.match(railSource, /\{canEdit \? "Draft" : "Published"\}/);
-  assert.match(railSource, /aria-label="Seat inventory summary"/);
-  assert.match(railSource, /\{stats\.total\}[\s\S]*Seats/);
-  assert.match(railSource, /\{stats\.assigned\}[\s\S]*Assigned/);
-  assert.match(railSource, /\{stats\.available\}[\s\S]*Open/);
-  assert.match(railSource, /onClick=\{openPublishReview\}/);
-  assert.match(railSource, /Draft publication status/);
-  assert.match(railSource, /\{draftStatusHeadline\}/);
-  assert.match(railSource, /\{draftStatusActionLabel\}/);
-  assert.match(railSource, /\{draftStatusDescription\}/);
-  assert.match(railSource, /\{draftStatusLabel\}/);
+  assert.doesNotMatch(seatMapSource, /aria-label="Admin workspace rail"/);
+  assert.match(topBar, /Megeredchian Law Seats/);
+  assert.match(topBar, /\{canEdit \? "Draft · Admin" : "Published · Viewer"\}/);
+  assert.match(topBar, /onClick=\{openPublishReview\}/);
+  assert.match(topBar, /\{publishSummary\.hasChanges \? "Review changes" : "Published"\}/);
+
+  assert.match(canvasHeader, /aria-label="Seat inventory summary"/);
+  assert.match(canvasHeader, /\{stats\.total\}[\s\S]*seats/);
+  assert.match(canvasHeader, /\{stats\.assigned\}[\s\S]*assigned/);
+  assert.match(canvasHeader, /\{stats\.available\}[\s\S]*open/);
+  assert.match(canvasHeader, /aria-label="Seat status legend"/);
 });
 
 test("admin layout consolidation keeps planning actions in one command row", async () => {

@@ -38,12 +38,12 @@ test("master alternative palette exposes inert brand primitives and scoped admin
   }
 
   for (const token of [
-    "--admin-bg: #EAE5D9",
-    "--admin-chrome-bg: #1B1A17",
-    "--admin-chrome-text: #F0ECE4",
+    "--admin-bg: #EAEBEC",
+    "--admin-chrome-bg: #1F2225",
+    "--admin-chrome-text: #EDEEF0",
     "--admin-rail-bg: var(--admin-chrome-bg)",
     "--admin-rail-surface: rgba(255, 255, 255, 0.05)",
-    "--admin-surface: #FAF7F1",
+    "--admin-surface: #FCFCFD",
     "--admin-primary: #F26E22",
     "--admin-primary-cta: #A63A12",
     "--admin-primary-soft: rgba(242, 110, 34, 0.10)",
@@ -88,11 +88,13 @@ test("admin color slices scope shell marker and semantic aliases without redesig
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
 
   assert.match(seatMapSource, /bg-\[var\(--admin-bg\)\]/);
-  assert.match(seatMapSource, /aria-label="Admin workspace rail"[\s\S]*bg-\[var\(--admin-rail-bg\)\]/);
-  // Claude Design top bar: dark warm-charcoal chrome holds the flat "Admin command row" text toolbar.
+  // Claude Design: dark cool-charcoal chrome top bar holds the flat "Admin command row"
+  // text toolbar; the low-utility left rail is gone (identity in the bar, stats/legend in
+  // the canvas header). Orange is accent-only — the active toolbar item is neutral.
   assert.match(seatMapSource, /bg-\[var\(--admin-chrome-bg\)\][\s\S]*aria-label="Admin command row"/);
+  assert.doesNotMatch(seatMapSource, /aria-label="Admin workspace rail"/);
   assert.match(seatMapSource, /const chromeToolbarBtn = "[\s\S]*text-\[var\(--admin-chrome-muted\)\]/);
-  assert.match(seatMapSource, /const chromeToolbarBtnActive = "[\s\S]*text-\[var\(--admin-primary\)\]/);
+  assert.match(seatMapSource, /const chromeToolbarBtnActive = "[\s\S]*text-\[var\(--admin-chrome-text\)\]/);
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*bg-\[var\(--admin-surface\)\]\/68/);
   assert.match(seatMapSource, /border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-surface-muted\)\]/);
   assert.match(seatMapSource, /showNames \? chromeToolbarBtnActive : chromeToolbarBtn/);
