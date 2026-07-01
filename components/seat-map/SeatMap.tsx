@@ -1908,9 +1908,9 @@ export function SeatMap({
 
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
           <div role="search" aria-label="Command search" className="z-30 px-0.5 pb-2 lg:shrink-0">
-            <label className="relative block w-full min-w-0 max-w-2xl">
+            <label className="relative block w-full min-w-0">
               <span className="sr-only">Search employee, seat, job title, department, or zone</span>
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--admin-text-muted)]">
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--admin-text-muted)]">
                 <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
                 <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
               </svg>
@@ -1922,7 +1922,7 @@ export function SeatMap({
                   setResultRailCollapsed(false);
                 }}
                 placeholder="Search people, seats, departments, or zones"
-                className="h-10 w-full rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-surface)] pl-10 pr-9 text-sm font-medium text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]"
+                className="h-11 w-full rounded-[12px] border border-[var(--admin-border)] bg-[var(--admin-surface)] pl-11 pr-10 text-sm font-medium text-[var(--admin-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--admin-text-subtle)] hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]"
               />
               {search.trim() && (
                 <button
