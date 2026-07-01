@@ -141,7 +141,7 @@
   --sp-duration-standard: 200ms;
   --sp-duration-deliberate: 280ms;
 
-  --sp-focus-ring-color: rgb(212 106 36 / 0.4);
+  --sp-focus-ring-color: rgb(194 65 12 / 0.9);
   --sp-focus-ring-width: 4px;
   --sp-focus-ring-offset: 2px;
   --sp-focus-ring-offset-color: var(--sp-color-surface-raised);
