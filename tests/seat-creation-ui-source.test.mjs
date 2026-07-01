@@ -196,8 +196,9 @@ test("selected inspector and search results stay attached to the map workspace",
   // Claude Design: narrower (360/384), flat (one soft shadow, no -16px blur slab), 14px radius.
   assert.match(inspectorSource, /sm:max-h-none[\s\S]*sm:w-\[360px\][\s\S]*sm:rounded-\[14px\]/);
   assert.match(inspectorSource, /shadow-\[0_18px_44px_rgba\(31,34,37,0\.16\)\]/);
-  assert.match(inspectorSource, /bg-\[var\(--sp-color-workspace\)\][\s\S]*Planning inspector/);
-  assert.match(inspectorSource, /draftStateBandClassName[\s\S]*Draft-only impact/);
+  // Claude Design: the shared header is light (surface bg, not the old dark workspace slab).
+  assert.match(inspectorSource, /sticky top-0 z-20[\s\S]*bg-\[var\(--sp-color-surface\)\][\s\S]*Seat details/);
+  assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"[\s\S]*Assign this seat/);
   assert.match(filterSource, /rounded-xl border border-slate-200\/80 bg-slate-50\/70 p-2 shadow-none/);
   assert.match(filterSource, /density = "panel"/);
   assert.match(filterSource, /max-h-\[196px\] space-y-1/);

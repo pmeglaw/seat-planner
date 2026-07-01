@@ -114,7 +114,7 @@ test("admin color slices scope shell marker and semantic aliases without redesig
   assert.match(inspectorSource, /--admin-state-clean-bg/);
   assert.match(inspectorSource, /--admin-state-dirty-bg/);
   assert.match(inspectorSource, /--admin-state-error-bg/);
-  assert.match(inspectorSource, /--admin-state-danger-bg/);
+  assert.match(inspectorSource, /!bg-\[var\(--admin-danger\)\]/);
 });
 
 test("admin color slice preserves shell controls and behavior boundaries", async () => {

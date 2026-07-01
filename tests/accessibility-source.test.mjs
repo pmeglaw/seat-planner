@@ -77,7 +77,7 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*draftStatusLabel/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AdvancedDrawer/);
-  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Actions \/ Rules/);
+  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Swap seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Vacate/);
 });
@@ -197,21 +197,17 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /aria-label=\{`Ask Planner about \$\{selectedSeat\.label\}`\}/);
   assert.match(inspectorSource, /z-\[80\][\s\S]*sm:z-40/);
   assert.match(inspectorSource, /z-\[90\][\s\S]*sm:z-\[70\]/);
-  assert.match(inspectorSource, /Seat Summary/);
-  assert.match(inspectorSource, /Planning inspector/);
-  assert.match(inspectorSource, /Draft-only impact/);
-  assert.match(inspectorSource, /Viewers see changes after review and publish/);
-  assert.match(inspectorSource, /Assignment workflow/);
+  assert.match(inspectorSource, /hasCurrentAssignment \? "Assignment" : "Assign this seat"/);
   assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"/);
   assert.match(inspectorSource, /id=\{employeeHelpId\}/);
   assert.match(inspectorSource, /id=\{employeeStateId\}/);
   assert.match(inspectorSource, /aria-describedby=\{employeeNameDescribedBy\}/);
   assert.match(inspectorSource, /id="seat-inspector-new-employee-notice" role="note"/);
-  assert.match(inspectorSource, /Published Assignment/);
-  assert.match(inspectorSource, /Seat Metadata/);
-  assert.match(inspectorSource, /Actions \/ Rules/);
+  assert.match(inspectorSource, /Published assignment/);
+  assert.match(inspectorSource, /Status &amp; notes/);
   assert.match(inspectorSource, /No unsaved changes\./);
-  assert.match(inspectorSource, /Saved to draft/);
+  // The verbose repeated panels are gone (Claude Design cleanup).
+  assert.doesNotMatch(inspectorSource, /Seat Summary|Planning inspector|Draft-only impact|Assignment workflow|Actions \/ Rules/);
   assert.match(inspectorSource, /isProtectedOriginalSeatLabel/);
   assert.match(inspectorSource, /Protected original/);
   assert.match(inspectorSource, /Fix the highlighted inspector fields before saving/);
