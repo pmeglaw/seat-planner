@@ -734,7 +734,7 @@ export function SeatInspector({
           </div>
         </div>
         <div className="flex min-w-0 items-center gap-3">
-          <span aria-hidden="true" className="inline-flex h-10 min-w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--admin-primary)] px-2 text-[13px] font-bold text-white">{selectedSeat.label}</span>
+          <span aria-hidden="true" className="inline-flex h-10 min-w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--admin-primary-cta)] px-2 text-[13px] font-bold text-white">{selectedSeat.label}</span>
           <div className="min-w-0 flex-1">
             <h2 id="seat-inspector-title" className="truncate text-[15px] font-semibold leading-tight text-[var(--sp-color-text-primary)]">{assignmentIdentityLabel || "Open seat"}</h2>
             <p className="truncate text-xs text-[var(--sp-color-text-muted)]">{currentZone} · {seatTypeLabel}</p>

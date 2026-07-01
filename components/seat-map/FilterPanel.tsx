@@ -292,7 +292,7 @@ export function FilterPanel({
           className="relative flex min-h-11 w-full items-center justify-center rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-4 py-2 text-[var(--admin-text-secondary)] shadow-[var(--admin-shadow-panel)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] lg:min-h-[164px] lg:w-[48px] lg:flex-col lg:px-2 lg:py-4"
         >
           {structuredFilterCount > 0 && (
-            <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--admin-primary)] px-1.5 text-[10px] font-semibold text-white ring-2 ring-[var(--admin-surface)] lg:right-auto lg:top-3">
+            <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1.5 text-[10px] font-semibold text-white ring-2 ring-[var(--admin-surface)] lg:right-auto lg:top-3">
               {structuredFilterCount}
             </span>
           )}

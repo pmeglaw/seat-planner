@@ -15,7 +15,7 @@ test("desktop inspector shell exposes the selected-seat identity model", async (
   assert.match(inspectorSource, /xl:w-\[384px\]/);
   // Shared light identity header: label chip + assignee/open + zone · type + status badge.
   assert.match(inspectorSource, /canEdit \? "Seat details" : "Published seat"/);
-  assert.match(inspectorSource, /rounded-\[10px\] bg-\[var\(--admin-primary\)\]/);
+  assert.match(inspectorSource, /rounded-\[10px\] bg-\[var\(--admin-primary-cta\)\]/);
   assert.match(inspectorSource, /assignmentIdentityLabel \|\| "Open seat"/);
   assert.match(inspectorSource, /\{currentZone\} · \{seatTypeLabel\}/);
   assert.match(inspectorSource, /headerStatusBadgeClass/);
