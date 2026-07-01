@@ -72,10 +72,10 @@ const STATUS_LABELS: Record<SeatStatus, string> = {
 };
 
 function statusPillClass(status: SeatStatus) {
-  if (status === "assigned") return "bg-emerald-50 text-emerald-700 ring-emerald-200";
-  if (status === "reserved") return "bg-amber-50 text-amber-800 ring-amber-200";
-  if (status === "unavailable") return "bg-slate-100 text-slate-700 ring-slate-200";
-  return "bg-white text-slate-700 ring-slate-200";
+  if (status === "assigned") return "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)] ring-[var(--admin-state-clean-border)]";
+  if (status === "reserved") return "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]";
+  if (status === "unavailable") return "bg-[var(--admin-state-neutral-bg)] text-[var(--admin-state-neutral-text)] ring-[var(--admin-state-neutral-border)]";
+  return "bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] ring-[var(--admin-border)]";
 }
 
 export function ActiveFilterChips({
@@ -94,15 +94,15 @@ export function ActiveFilterChips({
   return (
     <div aria-label="Active filters" className={["flex flex-wrap items-center gap-1.5", className].filter(Boolean).join(" ")}>
       {chips.map(chip => (
-        <span key={chip.id} className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/90 py-0.5 pl-2 pr-1 text-[11px] font-bold text-slate-700 ring-1 ring-slate-200">
-          <span className="shrink-0 text-slate-500">{chip.label}</span>
-          <span className="min-w-0 truncate text-slate-950">{chip.value}</span>
+        <span key={chip.id} className="inline-flex max-w-full items-center gap-1 rounded-full bg-[var(--admin-surface)] py-0.5 pl-2 pr-1 text-[11px] font-semibold text-[var(--admin-text-secondary)] ring-1 ring-[var(--admin-border)]">
+          <span className="shrink-0 text-[var(--admin-text-muted)]">{chip.label}</span>
+          <span className="min-w-0 truncate text-[var(--admin-text-primary)]">{chip.value}</span>
           <button
             type="button"
             onClick={() => onRemove(chip.id)}
             aria-label={chip.removeLabel}
             title={chip.removeLabel}
-            className="ml-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+            className="ml-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-[var(--admin-text-subtle)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
           >
             x
           </button>
@@ -112,7 +112,7 @@ export function ActiveFilterChips({
         <button
           type="button"
           onClick={onClearAll}
-          className="inline-flex min-h-6 items-center rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] font-black text-brand-dark transition hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+          className="inline-flex min-h-6 items-center rounded-full border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--admin-primary-cta)] transition hover:bg-[rgba(242,110,34,0.16)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
         >
           Clear all
         </button>
@@ -160,14 +160,14 @@ export function SeatResultsList({
   const compact = density === "rail";
 
   return (
-    <section id={id} aria-labelledby={titleId} className={[compact ? "rounded-xl border border-slate-200/80 bg-slate-50/65 p-1 shadow-none" : "rounded-xl border border-slate-200/80 bg-slate-50/70 p-2 shadow-none", className].filter(Boolean).join(" ")}>
+    <section id={id} aria-labelledby={titleId} className={[compact ? "rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] p-1 shadow-none" : "rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] p-2 shadow-none", className].filter(Boolean).join(" ")}>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h2 id={titleId} className="text-xs font-black text-slate-900">Seat results</h2>
-          <p className={["mt-0.5 truncate font-semibold text-slate-500", compact ? "text-[10px]" : "text-[10px]"].join(" ")}>{results.length} matching seats{compact ? "" : ` · ${statusParts}`}</p>
+          <h2 id={titleId} className="text-xs font-semibold text-[var(--admin-text-primary)]">Seat results</h2>
+          <p className={["mt-0.5 truncate font-medium text-[var(--admin-text-muted)]", compact ? "text-[10px]" : "text-[10px]"].join(" ")}>{results.length} matching seats{compact ? "" : ` · ${statusParts}`}</p>
         </div>
         {onClose && (
-          <button type="button" onClick={onClose} aria-label="Back to map from seat results" className="shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-black text-brand-dark ring-1 ring-orange-100 transition hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+          <button type="button" onClick={onClose} aria-label="Back to map from seat results" className="shrink-0 rounded-lg bg-[var(--admin-surface)] px-2.5 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)] transition hover:bg-[var(--admin-primary-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
             Back to map
           </button>
         )}
@@ -193,19 +193,19 @@ export function SeatResultsList({
                   }
                 }}
                 className={[
-                  "grid w-full grid-cols-[minmax(3rem,auto)_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border px-2 text-left transition hover:border-orange-200 hover:bg-orange-50/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100",
+                  "grid w-full grid-cols-[minmax(3rem,auto)_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border px-2 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]",
                   compact ? "min-h-7 py-0.5" : "py-1.5",
-                  result.selected ? "border-orange-300 bg-white ring-1 ring-orange-100" : "border-slate-200/80 bg-white/80"
+                  result.selected ? "border-[var(--admin-primary)] bg-[var(--admin-surface)] ring-1 ring-[var(--admin-primary-border)]" : "border-[var(--admin-border)] bg-[var(--admin-surface)]"
                 ].join(" ")}
               >
-                <span className={compact ? "text-xs font-black text-slate-950" : "text-[13px] font-black text-slate-950"}>{result.label}</span>
+                <span className={compact ? "text-xs font-semibold text-[var(--admin-text-primary)]" : "text-[13px] font-semibold text-[var(--admin-text-primary)]"}>{result.label}</span>
                 <span className="min-w-0">
-                  <span className={compact ? "block truncate text-[11px] font-bold text-slate-800" : "block truncate text-xs font-bold text-slate-800"}>{compact ? `${result.person} · ${result.zone}` : result.person}</span>
+                  <span className={compact ? "block truncate text-[11px] font-semibold text-[var(--admin-text-secondary)]" : "block truncate text-xs font-semibold text-[var(--admin-text-secondary)]"}>{compact ? `${result.person} · ${result.zone}` : result.person}</span>
                   {!compact && (
-                    <span className="block truncate text-[11px] text-slate-500">{result.department} · {result.zone}</span>
+                    <span className="block truncate text-[11px] text-[var(--admin-text-muted)]">{result.department} · {result.zone}</span>
                   )}
                 </span>
-                <span className={["rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide ring-1", statusPillClass(result.status)].join(" ")}>
+                <span className={["rounded-md px-1.5 py-0.5 text-[9px] font-semibold ring-1", statusPillClass(result.status)].join(" ")}>
                   {STATUS_LABELS[result.status]}
                 </span>
               </button>
@@ -213,22 +213,22 @@ export function SeatResultsList({
           })}
         </div>
       ) : (
-        <div className="mt-2 rounded-lg border border-dashed border-slate-200 bg-white/70 p-2.5 text-xs text-slate-500">
-          <div className="font-black text-slate-800">{emptyTitle}</div>
+        <div className="mt-2 rounded-lg border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface)] p-2.5 text-xs text-[var(--admin-text-muted)]">
+          <div className="font-semibold text-[var(--admin-text-secondary)]">{emptyTitle}</div>
           <div className="mt-1 leading-5">{emptyDescription}</div>
           <div className="mt-3 flex flex-wrap gap-2">
             {searchActive && (
-              <button type="button" onClick={onClearSearch} aria-label="Clear search in empty results" className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+              <button type="button" onClick={onClearSearch} aria-label="Clear search in empty results" className="rounded-lg bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] ring-1 ring-[var(--admin-border)] hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
                 Clear search
               </button>
             )}
             {filtersActive && (
-              <button type="button" onClick={onClearFilters} className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+              <button type="button" onClick={onClearFilters} className="rounded-lg bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] ring-1 ring-[var(--admin-border)] hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
                 Clear filters
               </button>
             )}
             {searchActive && filtersActive && (
-              <button type="button" onClick={onClearAll} className="rounded-lg bg-orange-50 px-3 py-1.5 text-[11px] font-black text-brand-dark ring-1 ring-orange-200 hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+              <button type="button" onClick={onClearAll} className="rounded-lg bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)] hover:bg-[rgba(242,110,34,0.16)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
                 Clear all
               </button>
             )}
@@ -289,15 +289,15 @@ export function FilterPanel({
           aria-expanded={false}
           aria-label={structuredFilterCount ? `Open filters, ${structuredFilterCount} active` : "Open filters"}
           title={structuredFilterCount ? `${structuredFilterCount} active filters` : "Open filters"}
-          className="relative flex min-h-11 w-full items-center justify-center rounded-full border border-white/70 bg-white/70 px-4 py-2 text-slate-700 shadow-[0_12px_32px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 lg:min-h-[164px] lg:w-[48px] lg:flex-col lg:px-2 lg:py-4"
+          className="relative flex min-h-11 w-full items-center justify-center rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-4 py-2 text-[var(--admin-text-secondary)] shadow-[var(--admin-shadow-panel)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] lg:min-h-[164px] lg:w-[48px] lg:flex-col lg:px-2 lg:py-4"
         >
           {structuredFilterCount > 0 && (
-            <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-black text-white ring-2 ring-white lg:right-auto lg:top-3">
+            <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--admin-primary)] px-1.5 text-[10px] font-semibold text-white ring-2 ring-[var(--admin-surface)] lg:right-auto lg:top-3">
               {structuredFilterCount}
             </span>
           )}
-          <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] lg:rotate-180 lg:[writing-mode:vertical-rl]">Filters</span>
-          <span className="ml-2 text-[10px] text-slate-400 lg:ml-0 lg:mt-2 lg:rotate-180 lg:[writing-mode:vertical-rl]">
+          <span className="text-[11px] font-semibold tracking-wide lg:rotate-180 lg:[writing-mode:vertical-rl]">Filters</span>
+          <span className="ml-2 text-[10px] text-[var(--admin-text-subtle)] lg:ml-0 lg:mt-2 lg:rotate-180 lg:[writing-mode:vertical-rl]">
             {structuredFilterCount ? "Active" : "Refine"}
           </span>
         </button>
@@ -306,16 +306,16 @@ export function FilterPanel({
   }
 
   return (
-    <aside id="seat-map-filter-panel" aria-labelledby="seat-map-filter-title" className="relative z-[70] max-h-[55vh] w-full self-start overflow-auto overscroll-contain rounded-2xl border border-white/70 bg-white/80 p-3 shadow-[0_14px_38px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl sm:max-h-[62vh] lg:sticky lg:top-[62px] lg:z-auto lg:max-h-[calc(100vh-78px)] lg:w-[288px]">
+    <aside id="seat-map-filter-panel" aria-labelledby="seat-map-filter-title" className="relative z-[70] max-h-[55vh] w-full self-start overflow-auto overscroll-contain rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 shadow-[var(--admin-shadow-panel)] sm:max-h-[62vh] lg:sticky lg:top-[62px] lg:z-auto lg:max-h-[calc(100vh-78px)] lg:w-[288px]">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 id="seat-map-filter-title" className="text-sm font-black text-slate-900">Filters</h2>
+        <h2 id="seat-map-filter-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Filters</h2>
         <div className="flex items-center gap-1">
           {constraintsActive && (
-            <button type="button" onClick={onClearAll} aria-label="Clear all active search and filters" className="inline-flex min-h-6 items-center rounded-md px-2 py-1 text-[11px] font-bold text-brand hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+            <button type="button" onClick={onClearAll} aria-label="Clear all active search and filters" className="inline-flex min-h-6 items-center rounded-md px-2 py-1 text-[11px] font-medium text-[var(--admin-primary-cta)] hover:bg-[var(--admin-primary-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
               Clear all
             </button>
           )}
-          <button type="button" onClick={onToggle} aria-controls="seat-map-filter-panel" aria-expanded={true} aria-label="Collapse filters" className="inline-flex min-h-6 items-center rounded-md px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+          <button type="button" onClick={onToggle} aria-controls="seat-map-filter-panel" aria-expanded={true} aria-label="Collapse filters" className="inline-flex min-h-6 items-center rounded-md px-2 py-1 text-[11px] font-medium text-[var(--admin-text-muted)] hover:bg-[var(--admin-state-neutral-bg)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
             Collapse
           </button>
         </div>
@@ -325,11 +325,11 @@ export function FilterPanel({
 
       <div className="grid grid-cols-1 gap-2">
         <label className="block">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Department</span>
+          <span className="text-[11px] font-medium text-[var(--admin-text-muted)]">Department</span>
           <select
             value={department}
             onChange={event => onDepartmentChange(event.target.value)}
-            className="mt-1 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)]"
           >
             <option value="all">All departments</option>
             {departments.map(dep => (
@@ -339,11 +339,11 @@ export function FilterPanel({
         </label>
 
         <label className="block">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Zone</span>
+          <span className="text-[11px] font-medium text-[var(--admin-text-muted)]">Zone</span>
           <select
             value={zone}
             onChange={event => onZoneChange(event.target.value)}
-            className="mt-1 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)]"
           >
             <option value="all">All zones</option>
             {zones.map(value => (
@@ -353,11 +353,11 @@ export function FilterPanel({
         </label>
 
         <label className="block">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Status</span>
+          <span className="text-[11px] font-medium text-[var(--admin-text-muted)]">Status</span>
           <select
             value={status}
             onChange={event => onStatusChange(event.target.value)}
-            className="mt-1 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)]"
           >
             <option value="all">All statuses</option>
             <option value="available">Available</option>
@@ -369,7 +369,7 @@ export function FilterPanel({
       </div>
 
       {showSeatResults && (
-        <div className="mt-4 border-t border-slate-100 pt-3 lg:hidden">
+        <div className="mt-4 border-t border-[var(--admin-border)] pt-3 lg:hidden">
           <SeatResultsList
             id="mobile-seat-results"
             titleId="mobile-seat-results-title"
@@ -387,10 +387,10 @@ export function FilterPanel({
         </div>
       )}
 
-      <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
+      <div className="mt-4 space-y-2 border-t border-[var(--admin-border)] pt-3">
         <div className="flex items-center justify-between">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">People · {employeeResults.length}</div>
-          {structuredFiltersActive && <div className="text-[11px] font-semibold text-brand-dark">Filtered</div>}
+          <div className="text-[11px] font-medium text-[var(--admin-text-muted)]">People · {employeeResults.length}</div>
+          {structuredFiltersActive && <div className="text-[11px] font-medium text-[var(--admin-primary-cta)]">Filtered</div>}
         </div>
         <div aria-label="People results" className="max-h-[180px] space-y-2 overflow-auto overscroll-contain pr-1 sm:max-h-[260px]">
           {employeeResults.length ? employeeResults.map(result => {
@@ -411,28 +411,28 @@ export function FilterPanel({
                 title={result.seatId ? `Open ${result.seatLabel}` : "No assigned seat to open"}
                 onClick={() => result.seatId && onEmployeeSelect(result.seatId)}
                 className={[
-                  "flex w-full items-center gap-3 rounded-lg border bg-white p-2 text-left shadow-sm transition hover:border-orange-200 hover:bg-orange-50/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-60",
-                  selected ? "border-orange-300 bg-orange-50/80 ring-2 ring-orange-100" : "border-slate-200"
+                  "flex w-full items-center gap-3 rounded-lg border bg-[var(--admin-surface)] p-2 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-60",
+                  selected ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] ring-2 ring-[var(--admin-primary-border)]" : "border-[var(--admin-border)]"
                 ].join(" ")}
               >
-                <span className={["flex h-8 w-8 flex-none items-center justify-center rounded-full text-xs font-black ring-1", selected ? "bg-white text-brand-dark ring-orange-200" : "bg-slate-100 text-slate-700 ring-slate-200"].join(" ")}>
+                <span className={["flex h-8 w-8 flex-none items-center justify-center rounded-full text-xs font-semibold ring-1", selected ? "bg-[var(--admin-surface)] text-[var(--admin-primary-cta)] ring-[var(--admin-primary-border)]" : "bg-[var(--admin-state-neutral-bg)] text-[var(--admin-text-secondary)] ring-[var(--admin-border)]"].join(" ")}>
                   {result.initials}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold text-slate-900">{result.name}</span>
-                  <span className="block truncate text-xs text-slate-500">{result.meta}</span>
+                  <span className="block truncate text-sm font-semibold text-[var(--admin-text-primary)]">{result.name}</span>
+                  <span className="block truncate text-xs text-[var(--admin-text-muted)]">{result.meta}</span>
                 </span>
-                <span className={["shrink-0 text-[11px] font-black", selected ? "text-brand-dark" : "text-slate-400"].join(" ")}>
+                <span className={["shrink-0 text-[11px] font-semibold", selected ? "text-[var(--admin-primary-cta)]" : "text-[var(--admin-text-subtle)]"].join(" ")}>
                   {selected ? "Selected" : result.seatLabel ?? "-"}
                 </span>
               </button>
             );
           }) : (
-            <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-              <div className="font-semibold text-slate-700">No employees match the current filters.</div>
+            <div className="rounded-lg border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface-muted)] p-3 text-xs text-[var(--admin-text-muted)]">
+              <div className="font-medium text-[var(--admin-text-secondary)]">No employees match the current filters.</div>
               <div className="mt-1">Clear filters or search by seat label, employee name, position, department, or zone.</div>
               {constraintsActive && (
-                <button type="button" onClick={onClearAll} className="mt-2 text-xs font-bold text-brand hover:text-brand-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+                <button type="button" onClick={onClearAll} className="mt-2 text-xs font-medium text-[var(--admin-primary-cta)] hover:text-[var(--admin-primary-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
                   Clear all
                 </button>
               )}
@@ -441,22 +441,22 @@ export function FilterPanel({
         </div>
       </div>
 
-      <div className="mt-4 hidden grid-cols-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 sm:grid">
+      <div className="mt-4 hidden grid-cols-2 overflow-hidden rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] sm:grid">
         {statItems.map((item, index) => (
-          <div key={item.label} className={["border-slate-200 px-2 py-2 text-center", index % 2 === 0 ? "border-r" : "", index < statItems.length - 2 ? "border-b" : ""].join(" ")}>
-            <div className="text-sm font-black text-slate-900">{item.value}</div>
-            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{item.label}</div>
+          <div key={item.label} className={["border-[var(--admin-border)] px-2 py-2 text-center", index % 2 === 0 ? "border-r" : "", index < statItems.length - 2 ? "border-b" : ""].join(" ")}>
+            <div className="text-sm font-semibold text-[var(--admin-text-primary)]">{item.value}</div>
+            <div className="text-[10px] font-medium text-[var(--admin-text-muted)]">{item.label}</div>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 hidden space-y-2 border-t border-slate-100 pt-3 sm:block">
-        <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Legend</div>
-        <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
-          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-white ring-1 ring-slate-300" />Available</div>
-          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />Assigned</div>
-          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" />Reserved</div>
-          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-slate-400" />Unavailable</div>
+      <div className="mt-4 hidden space-y-2 border-t border-[var(--admin-border)] pt-3 sm:block">
+        <div className="text-[11px] font-medium text-[var(--admin-text-muted)]">Legend</div>
+        <div className="grid grid-cols-2 gap-2 text-xs text-[var(--admin-text-secondary)]">
+          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--admin-surface)] ring-1 ring-[var(--admin-border-strong)]" />Available</div>
+          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--admin-marker-assigned-accent)]" />Assigned</div>
+          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--admin-marker-reserved-accent)]" />Reserved</div>
+          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--admin-marker-unavailable-accent)]" />Unavailable</div>
         </div>
       </div>
     </aside>

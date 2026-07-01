@@ -199,7 +199,7 @@ test("selected inspector and search results stay attached to the map workspace",
   // Claude Design: the shared header is light (surface bg, not the old dark workspace slab).
   assert.match(inspectorSource, /sticky top-0 z-20[\s\S]*bg-\[var\(--sp-color-surface\)\][\s\S]*Seat details/);
   assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"[\s\S]*Assign this seat/);
-  assert.match(filterSource, /rounded-xl border border-slate-200\/80 bg-slate-50\/70 p-2 shadow-none/);
+  assert.match(filterSource, /rounded-xl border border-\[var\(--admin-border\)\] bg-\[var\(--admin-surface-muted\)\] p-2 shadow-none/);
   assert.match(filterSource, /density = "panel"/);
   assert.match(filterSource, /max-h-\[196px\] space-y-1/);
   assert.match(filterSource, /max-h-\[96px\] space-y-0\.5/);
