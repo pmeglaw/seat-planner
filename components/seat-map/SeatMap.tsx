@@ -137,8 +137,8 @@ function getInitials(name: string) {
 function PublishCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
   return (
     <div className={["rounded-xl border p-3", tone === "warn" ? "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)]" : "border-[var(--admin-state-neutral-border)] bg-[var(--admin-state-neutral-bg)]"].join(" ")}>
-      <div className={["text-[11px] font-black uppercase tracking-wide", tone === "warn" ? "text-[var(--admin-state-dirty-text)]" : "text-[var(--admin-text-muted)]"].join(" ")}>{label}</div>
-      <div className="mt-1 text-2xl font-black text-[var(--admin-text-primary)]">{value}</div>
+      <div className={["text-[11px] font-semibold", tone === "warn" ? "text-[var(--admin-state-dirty-text)]" : "text-[var(--admin-text-muted)]"].join(" ")}>{label}</div>
+      <div className="mt-1 text-2xl font-semibold text-[var(--admin-text-primary)]">{value}</div>
     </div>
   );
 }
@@ -150,9 +150,9 @@ function formatPublishChangeUnit(value: number) {
 function PublishImpactCard({ label, value, description, tone = "default" }: { label: string; value: number; description: string; tone?: "default" | "warn" }) {
   return (
     <div className={["rounded-xl border p-3", tone === "warn" ? "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)]" : "border-[var(--admin-state-neutral-border)] bg-[var(--admin-surface)]/80"].join(" ")}>
-      <div className={["text-[11px] font-black uppercase tracking-wide", tone === "warn" ? "text-[var(--admin-state-dirty-text)]" : "text-[var(--admin-text-muted)]"].join(" ")}>{label}</div>
+      <div className={["text-[11px] font-semibold", tone === "warn" ? "text-[var(--admin-state-dirty-text)]" : "text-[var(--admin-text-muted)]"].join(" ")}>{label}</div>
       <div className="mt-1 flex items-end gap-2">
-        <span className="text-2xl font-black text-[var(--admin-text-primary)]">{value}</span>
+        <span className="text-2xl font-semibold text-[var(--admin-text-primary)]">{value}</span>
         <span className="pb-1 text-xs font-bold text-[var(--admin-text-muted)]">{formatPublishChangeUnit(value)}</span>
       </div>
       <p className="mt-1 text-xs font-semibold leading-4 text-[var(--admin-text-muted)]">{description}</p>
@@ -167,14 +167,14 @@ function PublishChangeList({ title, items, emptyLabel }: { title: string; items:
   return (
     <div className="rounded-xl border border-[var(--admin-state-neutral-border)] bg-[var(--admin-surface)]/80 p-3">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-black text-[var(--admin-text-primary)]">{title}</h3>
-        <span className="rounded-full bg-[var(--admin-state-neutral-bg)] px-2 py-0.5 text-[11px] font-black text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-state-neutral-border)]">{items.length}</span>
+        <h3 className="text-sm font-semibold text-[var(--admin-text-primary)]">{title}</h3>
+        <span className="rounded-full bg-[var(--admin-state-neutral-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-state-neutral-border)]">{items.length}</span>
       </div>
       {items.length > 0 ? (
         <ul className="mt-2 space-y-1.5 text-xs leading-5 text-[var(--admin-text-muted)]">
           {visibleItems.map(item => (
             <li key={`${title}-${item.label}-${item.detail}`}>
-              <span className="font-black text-[var(--admin-text-primary)]">{item.label}</span>
+              <span className="font-semibold text-[var(--admin-text-primary)]">{item.label}</span>
               {item.detail && <span> · {item.detail}</span>}
             </li>
           ))}
@@ -1690,15 +1690,15 @@ export function SeatMap({
     "flex min-w-0 flex-col gap-2 rounded-xl border border-[var(--admin-state-saved-border)] bg-[var(--admin-state-saved-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-saved-text)] sm:flex-row sm:items-center sm:justify-between",
     canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
-  const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-black text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-cta)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50";
-  const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-black text-[var(--admin-primary-cta)] transition hover:border-[var(--admin-primary)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]";
+  const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-cta)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50";
+  const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-cta)] transition hover:border-[var(--admin-primary)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]";
   const singleResultSummary = singleResultSeat ? (
     <>
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <span className="shrink-0 rounded-lg bg-[var(--sp-color-workspace)] px-2 py-1 text-[11px] font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]">
+        <span className="shrink-0 rounded-lg bg-[var(--sp-color-workspace)] px-2 py-1 text-[11px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]">
           {singleResultSeat.label}
         </span>
-        <span className="min-w-0 flex-1 truncate font-black text-[var(--sp-color-text-primary)]" aria-live="polite">
+        <span className="min-w-0 flex-1 truncate font-semibold text-[var(--sp-color-text-primary)]" aria-live="polite">
           {searchSelectionNotice ?? `${singleResultPerson} matches ${mapResultContextLabel}.`}
         </span>
         <span className="hidden shrink-0 truncate text-[11px] font-bold text-[#3E6F72] sm:inline">
@@ -1973,11 +1973,11 @@ export function SeatMap({
             <div className={resultSummaryShellClass}>
               <div className="min-w-0">
                 {searchSelectionNotice && (
-                  <div className="truncate font-black text-[var(--admin-primary-cta)]">{searchSelectionNotice}</div>
+                  <div className="truncate font-semibold text-[var(--admin-primary-cta)]">{searchSelectionNotice}</div>
                 )}
                 {filtersActive && (
                   <>
-                    <div className={searchSelectionNotice ? "mt-0.5 truncate text-[11px] text-[var(--admin-text-muted)]" : "truncate font-black text-[var(--admin-text-secondary)]"}>
+                    <div className={searchSelectionNotice ? "mt-0.5 truncate text-[11px] text-[var(--admin-text-muted)]" : "truncate font-semibold text-[var(--admin-text-secondary)]"}>
                       {mapResultSummary} {mapResultVerb} {mapResultContextLabel}.
                     </div>
                     <div className="mt-0.5 truncate text-[11px] text-[var(--admin-text-muted)]">{resultStatusSummary}</div>
@@ -2063,12 +2063,12 @@ export function SeatMap({
           {activeMode && (
             <div role="status" aria-live="polite" className={activeModeBannerClassName}>
               <div className="min-w-0">
-                <div className="text-[10px] font-black uppercase tracking-wide text-[var(--admin-primary-cta)]">{activeMode.label} mode</div>
+                <div className="text-[10px] font-semibold text-[var(--admin-primary-cta)]">{activeMode.label} mode</div>
                 <div className="mt-0.5 truncate text-sm font-bold text-[var(--admin-text-primary)]">{activeMode.message}</div>
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <span className="rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)]">Esc exits</span>
-                <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-white/75 px-3 py-1.5 text-[11px] font-black text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
+                <span className="rounded-full bg-white/75 px-2 py-1 text-[10px] font-semibold text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)]">Esc exits</span>
+                <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-white/75 px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
                   {activeMode.exitLabel}
                 </button>
               </div>
@@ -2088,7 +2088,7 @@ export function SeatMap({
                 <button
                   type="button"
                   onClick={undoDraftEdit}
-                  className="shrink-0 self-start rounded-full border border-[var(--admin-state-saved-border)] bg-white/80 px-3 py-1 text-[11px] font-black text-[var(--admin-state-saved-text)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-state-saved-border)] sm:self-auto"
+                  className="shrink-0 self-start rounded-full border border-[var(--admin-state-saved-border)] bg-white/80 px-3 py-1 text-[11px] font-semibold text-[var(--admin-state-saved-text)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-state-saved-border)] sm:self-auto"
                 >
                   Undo {lastUndoLabel}
                 </button>
@@ -2126,7 +2126,7 @@ export function SeatMap({
                         aria-pressed={active}
                         onClick={() => changeMapViewMode(option.value)}
                         className={[
-                          "h-8 rounded-lg px-2.5 text-[11px] font-black transition active:scale-[0.97] active:duration-75",
+                          "h-8 rounded-lg px-2.5 text-[11px] font-semibold transition active:scale-[0.97] active:duration-75",
                           focusRingClass,
                           active ? "bg-[var(--admin-primary-soft)] text-[var(--admin-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]" : "text-white/75 hover:bg-white/10 hover:text-white"
                         ].join(" ")}
@@ -2322,7 +2322,7 @@ export function SeatMap({
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 id="delete-seat-confirm-title" className="text-base font-black">Delete custom seat {deleteSeatConfirm.label}?</h2>
+                <h2 id="delete-seat-confirm-title" className="text-base font-semibold">Delete custom seat {deleteSeatConfirm.label}?</h2>
                 <p id="delete-seat-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
                   Only available custom draft seats can be deleted. Original seats are protected.
                 </p>
@@ -2330,7 +2330,7 @@ export function SeatMap({
               <button
                 type="button"
                 onClick={() => setDeleteSeatConfirm(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 aria-label="Cancel custom seat deletion"
               >
                 x
@@ -2364,7 +2364,7 @@ export function SeatMap({
           >
             <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
               <div>
-                <h2 id="publish-review-title" className="text-base font-black">Review draft before publishing</h2>
+                <h2 id="publish-review-title" className="text-base font-semibold">Review draft before publishing</h2>
                 <p id="publish-review-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-muted)]">
                   Confirm the saved draft changes before they become visible in the read-only viewer.
                 </p>
@@ -2376,7 +2376,7 @@ export function SeatMap({
                   setPublishReviewOpen(false);
                 }}
                 disabled={pending}
-                className={["flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40", focusRingClass].join(" ")}
+                className={["flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40", focusRingClass].join(" ")}
                 aria-label="Close publish review"
               >
                 x
@@ -2385,15 +2385,15 @@ export function SeatMap({
 
             <div className="min-h-0 overflow-y-auto py-4">
               <div className={["rounded-xl border p-3", publishSummary.hasChanges ? "border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] text-[var(--admin-publish-ready-text)]" : "border-[var(--admin-publish-no-change-border)] bg-[var(--admin-publish-no-change-bg)] text-[var(--admin-publish-no-change-text)]"].join(" ")}>
-                <StatusBadge tone={publishReadinessBadgeTone} className={["!min-h-0 !px-2 !py-0.5 !text-[11px] !font-black !tracking-wide", publishSummary.hasChanges ? "!bg-[var(--admin-surface)]/80 !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]" : "!bg-[var(--admin-surface)]/80 !text-[var(--admin-publish-no-change-text)] !ring-[var(--admin-publish-no-change-border)]"].join(" ")}>
+                <StatusBadge tone={publishReadinessBadgeTone} className={["!min-h-0 !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide", publishSummary.hasChanges ? "!bg-[var(--admin-surface)]/80 !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]" : "!bg-[var(--admin-surface)]/80 !text-[var(--admin-publish-no-change-text)] !ring-[var(--admin-publish-no-change-border)]"].join(" ")}>
                   {publishReadinessBadgeLabel}
                 </StatusBadge>
-                <h3 className="mt-2 text-sm font-black text-[var(--admin-text-primary)]">{publishReadinessTitle}</h3>
+                <h3 className="mt-2 text-sm font-semibold text-[var(--admin-text-primary)]">{publishReadinessTitle}</h3>
                 <p className="mt-1 text-sm font-semibold leading-5">{publishReadinessDescription}</p>
               </div>
 
               <div className="mt-3 rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-[var(--admin-publish-viewer-impact-text)]">
-                <div className="text-[11px] font-black uppercase tracking-wide">Viewer impact</div>
+                <div className="text-[11px] font-semibold">Viewer impact</div>
                 <p className="mt-1 text-sm font-semibold leading-5 text-[var(--admin-text-secondary)]">
                   Publishing copies the saved draft map to the read-only viewer. Until you publish, viewers keep seeing the currently published map.
                 </p>
@@ -2401,16 +2401,16 @@ export function SeatMap({
 
               {actionError && !pending && (
                 <div role="alert" className="mt-3 rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-error-text)]">
-                  <StatusBadge tone="danger" className="!min-h-0 !bg-[var(--admin-surface)]/80 !px-2 !py-0.5 !text-[11px] !font-black !tracking-wide !text-[var(--admin-state-error-text)] !ring-[var(--admin-state-error-border)]">Error</StatusBadge>
+                  <StatusBadge tone="danger" className="!min-h-0 !bg-[var(--admin-surface)]/80 !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--admin-state-error-text)] !ring-[var(--admin-state-error-border)]">Error</StatusBadge>
                   <p className="mt-2">
-                    <span className="font-black">Publish did not complete.</span> {actionError}
+                    <span className="font-semibold">Publish did not complete.</span> {actionError}
                   </p>
                 </div>
               )}
 
               {pending && (
                 <div role="status" aria-live="polite" className="mt-3 rounded-xl border border-[var(--admin-state-saving-border)] bg-[var(--admin-state-saving-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-saving-text)]">
-                  <StatusBadge tone="pending" className="!min-h-0 !bg-[var(--admin-surface)]/80 !px-2 !py-0.5 !text-[11px] !font-black !tracking-wide !text-[var(--admin-state-saving-text)] !ring-[var(--admin-state-saving-border)]">Publishing</StatusBadge>
+                  <StatusBadge tone="pending" className="!min-h-0 !bg-[var(--admin-surface)]/80 !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--admin-state-saving-text)] !ring-[var(--admin-state-saving-border)]">Publishing</StatusBadge>
                   <p className="mt-2">Publishing reviewed draft changes. Viewer map stays unchanged until publish finishes.</p>
                 </div>
               )}
@@ -2423,7 +2423,7 @@ export function SeatMap({
               </div>
 
               <div className="mt-2 rounded-xl border border-[var(--admin-state-neutral-border)] bg-[var(--admin-surface)]/75 p-3 text-xs font-semibold leading-5 text-[var(--admin-text-muted)]">
-                <span className="font-black text-[var(--admin-text-primary)]">Count note:</span> Impact groups can overlap. Use Total publish changes below as the unique publish-summary total.
+                <span className="font-semibold text-[var(--admin-text-primary)]">Count note:</span> Impact groups can overlap. Use Total publish changes below as the unique publish-summary total.
               </div>
 
               <div className="mt-3 grid grid-cols-3 gap-2">
@@ -2433,11 +2433,11 @@ export function SeatMap({
               </div>
 
               <div className="mt-3 rounded-xl border border-[var(--admin-state-neutral-border)] bg-[var(--admin-state-neutral-bg)] p-3 text-xs font-semibold leading-5 text-[var(--admin-text-muted)]">
-                <span className="font-black text-[var(--admin-text-primary)]">Draft:</span> {publishSummary.draftSeatCount} seats
+                <span className="font-semibold text-[var(--admin-text-primary)]">Draft:</span> {publishSummary.draftSeatCount} seats
                 <span className="mx-2 text-[var(--admin-text-subtle)]">|</span>
-                <span className="font-black text-[var(--admin-text-primary)]">Currently published:</span> {publishSummary.publishedSeatCount} seats
+                <span className="font-semibold text-[var(--admin-text-primary)]">Currently published:</span> {publishSummary.publishedSeatCount} seats
                 <span className="mx-2 text-[var(--admin-text-subtle)]">|</span>
-                <span className="font-black text-[var(--admin-text-primary)]">Total publish changes:</span> {publishSummary.totalChangeCount}
+                <span className="font-semibold text-[var(--admin-text-primary)]">Total publish changes:</span> {publishSummary.totalChangeCount}
               </div>
 
               {!publishSummary.hasChanges && (
@@ -2548,7 +2548,7 @@ export function SeatMap({
             className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
           >
             <div>
-              <h2 id="inspector-unsaved-title" className="text-base font-black">Unsaved seat edits</h2>
+              <h2 id="inspector-unsaved-title" className="text-base font-semibold">Unsaved seat edits</h2>
               <p id="inspector-unsaved-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
                 Save or discard changes to {selectedSeat.label} before {describeInspectorGuardAction(inspectorGuardAction)}
               </p>
@@ -2578,13 +2578,13 @@ export function SeatMap({
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 id="swap-confirm-title" className="text-base font-black">Confirm seat swap</h2>
+                <h2 id="swap-confirm-title" className="text-base font-semibold">Confirm seat swap</h2>
                 <p className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">This updates draft seats only. Viewers will not see it until publish.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setSwapConfirm(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)]"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)]"
                 aria-label="Cancel swap confirmation"
               >
                 x
@@ -2593,13 +2593,13 @@ export function SeatMap({
 
             <div className="mt-4 grid gap-2">
               <div className="rounded-xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] p-3">
-                <div className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Source</div>
-                <div className="mt-1 text-sm font-black text-[var(--sp-color-text-primary)]">{swapSourceSeat.label}</div>
+                <div className="text-[11px] font-semibold text-[var(--sp-color-text-muted)]">Source</div>
+                <div className="mt-1 text-sm font-semibold text-[var(--sp-color-text-primary)]">{swapSourceSeat.label}</div>
                 <div className="text-sm text-[var(--sp-color-text-muted)]">{seatPersonLabel(swapSourceSeat)}</div>
               </div>
               <div className="rounded-xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] p-3">
-                <div className="text-[11px] font-black uppercase tracking-wide text-[var(--sp-color-text-muted)]">Target</div>
-                <div className="mt-1 text-sm font-black text-[var(--sp-color-text-primary)]">{swapTargetSeat.label}</div>
+                <div className="text-[11px] font-semibold text-[var(--sp-color-text-muted)]">Target</div>
+                <div className="mt-1 text-sm font-semibold text-[var(--sp-color-text-primary)]">{swapTargetSeat.label}</div>
                 <div className="text-sm text-[var(--sp-color-text-muted)]">{seatPersonLabel(swapTargetSeat)}</div>
               </div>
             </div>
