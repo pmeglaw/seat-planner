@@ -1908,8 +1908,12 @@ export function SeatMap({
 
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
           <div role="search" aria-label="Command search" className="z-30 px-0.5 pb-2 lg:shrink-0">
-            <label className="relative block min-w-0">
+            <label className="relative block w-full min-w-0 max-w-2xl">
               <span className="sr-only">Search employee, seat, job title, department, or zone</span>
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--admin-text-muted)]">
+                <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
+                <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
               <input
                 value={search}
                 onChange={event => {
@@ -1918,17 +1922,17 @@ export function SeatMap({
                   setResultRailCollapsed(false);
                 }}
                 placeholder="Search people, seats, departments, or zones"
-                className="h-10 w-full rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3.5 pr-9 text-sm font-medium text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]"
+                className="h-10 w-full rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-surface)] pl-10 pr-9 text-sm font-medium text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]"
               />
               {search.trim() && (
                 <button
                   type="button"
                   aria-label="Clear top search"
                   title="Clear top search"
-                  className={["absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-xs font-medium text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-secondary)] active:scale-90", focusRingClass].join(" ")}
+                  className={["absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-secondary)] active:scale-90", focusRingClass].join(" ")}
                   onClick={clearSearch}
                 >
-                  x
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
               )}
             </label>
