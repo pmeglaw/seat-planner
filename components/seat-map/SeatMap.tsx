@@ -1969,33 +1969,6 @@ export function SeatMap({
         )}
 
         <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/68 p-2 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].join(" ")}>
-          {canEdit && (
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2">
-              <div className="min-w-0">
-                <div className="text-[11px] font-medium text-[var(--admin-text-muted)]">Planning canvas</div>
-                <h2 id="admin-planning-canvas-title" className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">{planningStateLabel}</h2>
-              </div>
-              <div className="flex shrink-0 items-center gap-3 text-xs font-medium text-[var(--admin-text-muted)]">
-                <span aria-label="Seat inventory summary" className="whitespace-nowrap">
-                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.total}</span> seats
-                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.assigned}</span> assigned
-                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.available}</span> open
-                </span>
-                <span className="hidden h-3.5 w-px bg-[var(--admin-border-strong)] md:inline-block" aria-hidden="true" />
-                <ul aria-label="Seat status legend" className="hidden items-center gap-2.5 md:flex">
-                  {SEAT_STATUS_LEGEND.filter(item => canEdit || !item.draftOnly).map(item => (
-                    <li key={item.key} className="flex items-center gap-1.5 whitespace-nowrap">
-                      <span className={["h-2.5 w-2.5 shrink-0 rounded-full", item.accentClass].join(" ")} aria-hidden="true" />
-                      {item.label}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
           {canEdit && (filtersActive || searchSelectionNotice) && !singleResultSeat && (
             <div className={resultSummaryShellClass}>
               <div className="min-w-0">
@@ -2223,6 +2196,33 @@ export function SeatMap({
               </div>
             </div>
           </div>
+
+          {canEdit && (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 lg:mt-0">
+              <div className="min-w-0">
+                <div className="text-[11px] font-medium text-[var(--admin-text-muted)]">Planning canvas</div>
+                <h2 id="admin-planning-canvas-title" className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">{planningStateLabel}</h2>
+              </div>
+              <div className="flex shrink-0 items-center gap-3 text-xs font-medium text-[var(--admin-text-muted)]">
+                <span aria-label="Seat inventory summary" className="whitespace-nowrap">
+                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.total}</span> seats
+                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.assigned}</span> assigned
+                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.available}</span> open
+                </span>
+                <span className="hidden h-3.5 w-px bg-[var(--admin-border-strong)] md:inline-block" aria-hidden="true" />
+                <ul aria-label="Seat status legend" className="hidden items-center gap-2.5 md:flex">
+                  {SEAT_STATUS_LEGEND.filter(item => canEdit || !item.draftOnly).map(item => (
+                    <li key={item.key} className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className={["h-2.5 w-2.5 shrink-0 rounded-full", item.accentClass].join(" ")} aria-hidden="true" />
+                      {item.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
         </section>
       </main>
       </div>
