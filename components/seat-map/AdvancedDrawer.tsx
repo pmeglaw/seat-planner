@@ -74,11 +74,11 @@ type JsonRestoreReview = {
 
 function ReviewCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
   return (
-    <div className={["rounded-xl border p-3", tone === "warn" ? "border-orange-200 bg-orange-50/80" : "border-slate-200 bg-slate-50/80"].join(" ")}>
-      <div className={["text-[10px] font-black uppercase tracking-wide", tone === "warn" ? "text-orange-700" : "text-slate-500"].join(" ")}>
+    <div className={["rounded-xl border p-3", tone === "warn" ? "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)]" : "border-[var(--admin-border)] bg-[var(--admin-surface-muted)]"].join(" ")}>
+      <div className={["text-[10px] font-medium", tone === "warn" ? "text-[var(--admin-state-dirty-text)]" : "text-[var(--admin-text-muted)]"].join(" ")}>
         {label}
       </div>
-      <div className="mt-1 text-xl font-black text-slate-950">{value.toLocaleString()}</div>
+      <div className="mt-1 text-xl font-semibold text-[var(--admin-text-primary)]">{value.toLocaleString()}</div>
     </div>
   );
 }
@@ -95,13 +95,13 @@ function getCommandClassName(tone: NonNullable<CommandButtonProps["tone"]>, dens
     ? "min-h-[44px] gap-2 px-2.5 py-2"
     : "min-h-[50px] gap-3 px-3 py-2";
   const toneClassName = tone === "active"
-    ? "border-cyan-200/80 bg-cyan-50/70 text-cyan-950 hover:border-cyan-300/80 hover:bg-cyan-50"
+    ? "border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-cta)] hover:border-[var(--admin-primary)] hover:bg-[rgba(242,110,34,0.16)]"
     : tone === "danger"
-      ? "border-rose-100 bg-rose-50/60 text-rose-700 hover:border-rose-200 hover:bg-rose-50"
-      : "border-slate-200/70 bg-white/75 text-slate-900 hover:border-slate-300 hover:bg-white";
+      ? "border-[var(--admin-state-danger-border)] bg-[var(--admin-state-danger-bg)] text-[var(--admin-state-danger-text)] hover:border-[var(--admin-danger)] hover:bg-[var(--admin-danger-soft)]"
+      : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-surface-alt)]";
 
   return [
-    "flex w-full items-center justify-between rounded-lg border text-left transition active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50",
+    "flex w-full items-center justify-between rounded-lg border text-left transition active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50",
     sizeClassName,
     toneClassName,
     className
@@ -109,17 +109,17 @@ function getCommandClassName(tone: NonNullable<CommandButtonProps["tone"]>, dens
 }
 
 function CommandContent({ label, description, tone = "default", density = "default" }: Pick<CommandButtonProps, "label" | "description" | "tone" | "density">) {
-  const descriptionClassName = tone === "danger" ? "text-rose-600" : tone === "active" ? "text-cyan-700" : "text-slate-500";
+  const descriptionClassName = tone === "danger" ? "text-[var(--admin-state-danger-text)]" : tone === "active" ? "text-[var(--admin-primary-cta)]" : "text-[var(--admin-text-muted)]";
   const labelClassName = density === "compact" ? "text-[13px]" : "text-sm";
   const descriptionSizeClassName = density === "compact" ? "text-[11px]" : "text-xs";
 
   return (
     <>
       <span className="min-w-0">
-        <span className={["block truncate font-extrabold", labelClassName].join(" ")}>{label}</span>
+        <span className={["block truncate font-semibold", labelClassName].join(" ")}>{label}</span>
         <span className={["mt-0.5 block truncate font-medium", descriptionSizeClassName, descriptionClassName].join(" ")}>{description}</span>
       </span>
-      <span aria-hidden="true" className="shrink-0 text-sm font-black opacity-40">&gt;</span>
+      <span aria-hidden="true" className="shrink-0 text-sm font-semibold opacity-40">&gt;</span>
     </>
   );
 }
@@ -154,15 +154,15 @@ function CommandLink({ href, label, description, onClick }: { href: string; labe
 
 function ToolGroup({ title, description, children, defaultOpen = false, contentClassName = "space-y-2" }: { title: string; description: string; children: ReactNode; defaultOpen?: boolean; contentClassName?: string }) {
   return (
-    <details {...(defaultOpen ? { open: true } : {})} className="group rounded-xl border border-slate-200/70 bg-white/70">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-left transition hover:bg-slate-50/80 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 marker:hidden">
+    <details {...(defaultOpen ? { open: true } : {})} className="group rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)]">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-left transition hover:bg-[var(--admin-surface-alt)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] marker:hidden">
         <span className="min-w-0">
-          <span className="block text-sm font-extrabold text-slate-900">{title}</span>
-          <span className="mt-0.5 block truncate text-xs font-medium text-slate-500">{description}</span>
+          <span className="block text-sm font-semibold text-[var(--admin-text-primary)]">{title}</span>
+          <span className="mt-0.5 block truncate text-xs font-medium text-[var(--admin-text-muted)]">{description}</span>
         </span>
-        <span className="shrink-0 text-xs font-black text-slate-400 transition group-open:rotate-90">&gt;</span>
+        <span className="shrink-0 text-xs font-semibold text-[var(--admin-text-subtle)] transition group-open:rotate-90">&gt;</span>
       </summary>
-      <div className={[contentClassName, "border-t border-slate-100 px-3 pb-3 pt-2"].join(" ")}>
+      <div className={[contentClassName, "border-t border-[var(--admin-border)] px-3 pb-3 pt-2"].join(" ")}>
         {children}
       </div>
     </details>
@@ -371,7 +371,7 @@ export function AdvancedDrawer({
         aria-label="Close advanced drawer"
         aria-hidden="true"
         tabIndex={-1}
-        className="fixed inset-0 z-[70] cursor-default bg-slate-950/22 backdrop-blur-[1px] sm:z-40"
+        className="fixed inset-0 z-[70] cursor-default bg-[var(--admin-chrome-bg)]/30 backdrop-blur-[1px] sm:z-40"
         onClick={onClose}
       />
 
@@ -381,20 +381,20 @@ export function AdvancedDrawer({
         aria-modal="true"
         aria-labelledby="advanced-drawer-title"
         aria-describedby="advanced-drawer-description"
-        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[82vh] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 p-3 shadow-[0_24px_70px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.94)] backdrop-blur-2xl sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[66px] sm:z-50 sm:max-h-[calc(100vh-80px)] sm:w-[360px] sm:max-w-[calc(100vw-2rem)] lg:top-[132px] lg:max-h-[calc(100vh-146px)]"
+        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[82vh] flex-col overflow-hidden rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 shadow-[var(--admin-shadow-panel)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[66px] sm:z-50 sm:max-h-[calc(100vh-80px)] sm:w-[360px] sm:max-w-[calc(100vw-2rem)] lg:top-[132px] lg:max-h-[calc(100vh-146px)]"
       >
-        <div className="mb-3 flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+        <div className="mb-3 flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
           <div>
-            <h2 id="advanced-drawer-title" className="text-base font-black text-slate-950">Map tools</h2>
-            <p id="advanced-drawer-description" className="mt-1 text-xs leading-5 text-slate-500">Common seat tools first. Advanced import, recovery, and destructive utilities stay separated.</p>
+            <h2 id="advanced-drawer-title" className="text-base font-semibold text-[var(--admin-text-primary)]">Map tools</h2>
+            <p id="advanced-drawer-description" className="mt-1 text-xs leading-5 text-[var(--admin-text-muted)]">Common seat tools first. Advanced import, recovery, and destructive utilities stay separated.</p>
           </div>
-          <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Map tools" className="rounded-full px-3 py-1 text-[11px] font-bold text-slate-500 transition hover:bg-slate-100 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
+          <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Map tools" className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
             Close
           </button>
         </div>
 
         {localError && (
-          <div className="mb-3 whitespace-pre-wrap rounded-lg border border-rose-200 bg-rose-50 p-2 text-xs font-semibold text-rose-700">
+          <div className="mb-3 whitespace-pre-wrap rounded-lg border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-2 text-xs font-medium text-[var(--admin-state-error-text)]">
             {localError}
           </div>
         )}
@@ -434,11 +434,11 @@ export function AdvancedDrawer({
             />
           </ToolGroup>
 
-          <section className="rounded-xl border border-slate-200/80 bg-slate-50/75 p-2">
+          <section className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] p-2">
             <div className="mb-2 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-sm font-extrabold text-slate-900">Secondary shortcuts</div>
-                <p className="mt-0.5 truncate text-xs font-medium text-slate-500">History, assistant, and management</p>
+                <div className="text-sm font-semibold text-[var(--admin-text-primary)]">Secondary shortcuts</div>
+                <p className="mt-0.5 truncate text-xs font-medium text-[var(--admin-text-muted)]">History, assistant, and management</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -479,13 +479,13 @@ export function AdvancedDrawer({
             </div>
           </section>
 
-          <section className="rounded-xl border border-emerald-200/80 bg-emerald-50/70 p-3 text-xs leading-5 text-emerald-900">
-            <div className="text-[10px] font-black uppercase tracking-wide text-emerald-700">Publish review</div>
+          <section className="rounded-xl border border-[var(--admin-state-clean-border)] bg-[var(--admin-state-clean-bg)] p-3 text-xs leading-5 text-[var(--admin-state-clean-text)]">
+            <div className="text-[10px] font-medium text-[var(--admin-state-clean-text)]">Publish review</div>
             <p className="mt-1 font-semibold">Use the draft status button in the main command bar to review or publish draft changes. Publishing stays out of advanced utilities.</p>
           </section>
 
           <ToolGroup title="Seat rules" description="Custom seat placement">
-            <p className="text-xs leading-5 text-slate-500">
+            <p className="text-xs leading-5 text-[var(--admin-text-muted)]">
               {selectedSeat
                 ? selectedSeatCanDelete
                   ? `Custom seat ${selectedSeat.label} can be moved or deleted.`
@@ -501,7 +501,7 @@ export function AdvancedDrawer({
               <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={event => importCsv(event.target.files?.[0])} />
               <CommandButton label="Import CSV" description="Apply assignment updates with undo" onClick={() => fileInputRef.current?.click()} disabled={busy} />
             </div>
-            <p className="text-xs leading-5 text-slate-500">CSV imports update draft assignments only. Marker positions stay fixed.</p>
+            <p className="text-xs leading-5 text-[var(--admin-text-muted)]">CSV imports update draft assignments only. Marker positions stay fixed.</p>
           </ToolGroup>
 
           <ToolGroup title="Advanced recovery" description="Developer backup restore">
@@ -523,7 +523,7 @@ export function AdvancedDrawer({
           </ToolGroup>
 
           <ToolGroup title="Destructive actions" description="Custom seat deletion only">
-            <p className="text-xs leading-5 text-slate-500">Only available custom draft seats can be deleted. Original seats are protected. This removes custom draft seats only. Published maps are unchanged until you publish.</p>
+            <p className="text-xs leading-5 text-[var(--admin-text-muted)]">Only available custom draft seats can be deleted. Original seats are protected. This removes custom draft seats only. Published maps are unchanged until you publish.</p>
             <CommandButton
               label="Delete custom seat"
               description={selectedSeatCanDelete ? `Remove ${selectedSeat?.label} from draft only` : selectedSeatDeleteBlockReason ?? "Select a custom seat first"}
@@ -536,7 +536,7 @@ export function AdvancedDrawer({
       </aside>
 
       {csvReview && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
           <section
             role="dialog"
             aria-modal="true"
@@ -548,14 +548,14 @@ export function AdvancedDrawer({
                 closeCsvReview();
               }
             }}
-            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-panel)]"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
               <div>
-                <h2 id="csv-import-review-title" className="text-base font-black">
+                <h2 id="csv-import-review-title" className="text-base font-semibold">
                   {csvReview.issues.length > 0 ? "CSV import has blocking errors" : "Review CSV import"}
                 </h2>
-                <p id="csv-import-review-description" className="mt-1 text-sm leading-5 text-slate-500">
+                <p id="csv-import-review-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-muted)]">
                   CSV imports update saved draft assignments only. Marker positions and the published viewer map will not change until you publish.
                 </p>
               </div>
@@ -563,7 +563,7 @@ export function AdvancedDrawer({
                 type="button"
                 onClick={closeCsvReview}
                 disabled={busy}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 aria-label="Close CSV import review"
               >
                 x
@@ -580,8 +580,8 @@ export function AdvancedDrawer({
               </div>
 
               {csvReview.issues.length > 0 ? (
-                <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-                  <div className="font-black">Blocking validation errors</div>
+                <div className="mt-3 rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm text-[var(--admin-state-error-text)]">
+                  <div className="font-semibold">Blocking validation errors</div>
                   <p className="mt-1 leading-5">
                     Fix these rows in the CSV, then import the file again. No draft data has changed.
                   </p>
@@ -594,13 +594,13 @@ export function AdvancedDrawer({
                   </ul>
                 </div>
               ) : (
-                <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50/70 p-3 text-sm font-semibold leading-5 text-brand-dark">
+                <div className="mt-3 rounded-xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] p-3 text-sm font-semibold leading-5 text-[var(--admin-primary-cta)]">
                   This applies the CSV to the draft map only. Viewers will not see these changes until you publish. Undo is available after import until the next publish.
                 </div>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+            <div className="grid grid-cols-2 gap-2 border-t border-[var(--admin-border)] pt-3">
               <Button type="button" onClick={closeCsvReview} disabled={busy} className="w-full">
                 {csvReview.issues.length > 0 ? "Close" : "Cancel"}
               </Button>
@@ -620,7 +620,7 @@ export function AdvancedDrawer({
       )}
 
       {jsonReview && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
           <section
             role="dialog"
             aria-modal="true"
@@ -632,12 +632,12 @@ export function AdvancedDrawer({
                 closeJsonReview();
               }
             }}
-            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-panel)]"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
               <div>
-                <h2 id="json-restore-review-title" className="text-base font-black">Review JSON restore</h2>
-                <p id="json-restore-review-description" className="mt-1 text-sm leading-5 text-slate-500">
+                <h2 id="json-restore-review-title" className="text-base font-semibold">Review JSON restore</h2>
+                <p id="json-restore-review-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-muted)]">
                   JSON restore imports a full draft backup. The published viewer map will not change until you publish.
                 </p>
               </div>
@@ -645,7 +645,7 @@ export function AdvancedDrawer({
                 type="button"
                 onClick={closeJsonReview}
                 disabled={busy}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 aria-label="Close JSON restore review"
               >
                 x
@@ -658,12 +658,12 @@ export function AdvancedDrawer({
                 <ReviewCountCard label="Employees" value={jsonReview.employeeCount} tone="warn" />
               </div>
 
-              <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50/70 p-3 text-sm font-semibold leading-5 text-brand-dark">
+              <div className="mt-3 rounded-xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] p-3 text-sm font-semibold leading-5 text-[var(--admin-primary-cta)]">
                 This can replace draft assignments, custom seats, notes, and employee details in the draft. Viewers will not see restored data until publish. Undo is available after import until the next publish.
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+            <div className="grid grid-cols-2 gap-2 border-t border-[var(--admin-border)] pt-3">
               <Button type="button" onClick={closeJsonReview} disabled={busy} className="w-full">
                 Cancel
               </Button>

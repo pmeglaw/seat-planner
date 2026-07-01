@@ -104,7 +104,7 @@ test("map tools add seat row is neutral until add-seat mode is active", async ()
   assert.match(addSeatCommand[0], /tone=\{addSeatMode \? "active" : "default"\}/);
   assert.match(addSeatCommand[0], /Active\. Click a seating zone or cancel/);
   assert.doesNotMatch(addSeatCommand[0], /tone="active"/);
-  assert.match(drawerSource, /border-slate-200\/70 bg-white\/75 text-slate-900 hover:border-slate-300 hover:bg-white/);
+  assert.match(drawerSource, /border-\[var\(--admin-border\)\] bg-\[var\(--admin-surface\)\] text-\[var\(--admin-text-primary\)\] hover:border-\[var\(--admin-border-strong\)\] hover:bg-\[var\(--admin-surface-alt\)\]/);
 });
 
 test("seat map uses the component-board desktop workspace shell", async () => {
