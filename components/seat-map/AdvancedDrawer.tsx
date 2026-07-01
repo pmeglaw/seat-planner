@@ -381,7 +381,7 @@ export function AdvancedDrawer({
         aria-modal="true"
         aria-labelledby="advanced-drawer-title"
         aria-describedby="advanced-drawer-description"
-        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[82vh] flex-col overflow-hidden rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 shadow-[var(--admin-shadow-panel)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[66px] sm:z-50 sm:max-h-[calc(100vh-80px)] sm:w-[360px] sm:max-w-[calc(100vw-2rem)] lg:top-[132px] lg:max-h-[calc(100vh-146px)]"
+        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[82vh] flex-col overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 shadow-[var(--admin-shadow-panel)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[66px] sm:z-50 sm:max-h-[calc(100vh-80px)] sm:w-[360px] sm:max-w-[calc(100vw-2rem)] lg:top-[132px] lg:max-h-[calc(100vh-146px)]"
       >
         <div className="mb-3 flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
           <div>
@@ -566,7 +566,7 @@ export function AdvancedDrawer({
                 className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 aria-label="Close CSV import review"
               >
-                x
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4"><path d="m5.5 5.5 9 9m0-9-9 9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             </div>
 
@@ -648,7 +648,7 @@ export function AdvancedDrawer({
                 className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 aria-label="Close JSON restore review"
               >
-                x
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4"><path d="m5.5 5.5 9 9m0-9-9 9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             </div>
 

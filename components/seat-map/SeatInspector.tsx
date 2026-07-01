@@ -1025,7 +1025,7 @@ export function SeatInspector({
                 Swap seat
               </Button>
               {hasCurrentAssignment && (
-                <Button type="button" variant="danger" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="min-w-0 w-full rounded-xl !border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)]">
+                <Button type="button" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="min-w-0 w-full rounded-xl">
                   Vacate
                 </Button>
               )}
