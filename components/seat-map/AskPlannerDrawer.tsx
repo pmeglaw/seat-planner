@@ -256,7 +256,7 @@ export function AskPlannerDrawer({
                 placeholder="Ask about seats, zones, departments, or map health"
                 maxLength={800}
                 disabled={pending}
-                className="min-h-24 w-full resize-none rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)] disabled:bg-[var(--admin-state-neutral-bg)] disabled:text-[var(--admin-text-muted)]"
+                className="min-h-24 w-full resize-none rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] disabled:bg-[var(--admin-state-neutral-bg)] disabled:text-[var(--admin-text-muted)]"
               />
             </label>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">

@@ -1922,7 +1922,7 @@ export function SeatMap({
                   setResultRailCollapsed(false);
                 }}
                 placeholder="Search people, seats, departments, or zones"
-                className="h-11 w-full rounded-[12px] border border-[var(--admin-border)] bg-[var(--admin-surface)] pl-11 pr-10 text-sm font-medium text-[var(--admin-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--admin-text-subtle)] hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]"
+                className="h-11 w-full rounded-[12px] border border-[var(--admin-border)] bg-[var(--admin-surface)] pl-11 pr-10 text-sm font-medium text-[var(--admin-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--admin-text-subtle)] hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
               />
               {search.trim() && (
                 <button

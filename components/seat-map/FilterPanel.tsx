@@ -329,7 +329,7 @@ export function FilterPanel({
           <select
             value={department}
             onChange={event => onDepartmentChange(event.target.value)}
-            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)]"
+            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
           >
             <option value="all">All departments</option>
             {departments.map(dep => (
@@ -343,7 +343,7 @@ export function FilterPanel({
           <select
             value={zone}
             onChange={event => onZoneChange(event.target.value)}
-            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)]"
+            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
           >
             <option value="all">All zones</option>
             {zones.map(value => (
@@ -357,7 +357,7 @@ export function FilterPanel({
           <select
             value={status}
             onChange={event => onStatusChange(event.target.value)}
-            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)]"
+            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
           >
             <option value="all">All statuses</option>
             <option value="available">Available</option>

@@ -681,7 +681,7 @@ export function SeatInspector({
     onDeleteSeat();
   }
 
-  const fieldClassName = "mt-1 w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm font-semibold text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-4 focus:ring-[color:var(--sp-focus-ring-color)] disabled:bg-[var(--admin-state-neutral-bg)] disabled:text-[var(--admin-text-muted)]";
+  const fieldClassName = "mt-1 w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm font-semibold text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] disabled:bg-[var(--admin-state-neutral-bg)] disabled:text-[var(--admin-text-muted)]";
   const saveDisabledReason = pending
     ? "Save is unavailable while the current draft change is finishing."
     : !isDirty
