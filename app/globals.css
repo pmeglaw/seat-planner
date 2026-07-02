@@ -168,13 +168,16 @@
   --admin-surface: #FCFCFD;
   --admin-surface-alt: #F3F4F6;
   --admin-surface-muted: #EAEBEC;
-  --admin-border: #E4E6E8;
-  --admin-border-strong: #D2D6DA;
+  /* Border discipline per docs/design-direction-verdict.md: default 1.43:1 on surface,
+     strong 2.04:1 — old default (1.05:1 on canvas) was near-invisible. */
+  --admin-border: #D2D6DA;
+  --admin-border-strong: #AEB4BA;
 
   --admin-text-primary: #1F2225;
   --admin-text-secondary: #44494C;
-  --admin-text-muted: #6B7177;
-  --admin-text-subtle: #6E747A;
+  /* Muted 5.02:1 / subtle 4.45:1 on canvas (#EAEBEC) — old muted failed AA at 4.14:1. */
+  --admin-text-muted: #5E646A;
+  --admin-text-subtle: #666C72;
   --admin-text-inverse: #EDEEF0;
 
   --admin-primary: #F26E22;
@@ -182,6 +185,11 @@
   --admin-primary-cta: #A63A12;
   --admin-primary-soft: rgba(242, 110, 34, 0.10);
   --admin-primary-border: rgba(242, 110, 34, 0.32);
+  /* Transplants from the warm prototype (docs/design-direction-verdict.md): copper is the
+     mid-tier brand accent for hairlines/halos where #F26E22 is sub-3:1 on light surfaces;
+     paper is the warm hover/selected tint for panel-side rows and empty states. */
+  --admin-copper: #D46A24;
+  --admin-paper: #F6E7D8;
 
   --admin-secondary: #8C6645;
   --admin-secondary-hover: #594225;
@@ -242,10 +250,13 @@
   --admin-marker-available-border: rgba(31, 34, 37, 0.16);
   --admin-marker-available-text: #475059;
   --admin-marker-available-accent: rgba(107, 113, 119, 0.5);
+  /* Reserved = the one ochre (aligned with the shared state-warning ochre #9A6418,
+     4.86:1 on surface, 3.77:1 vs the beige floor) so reserved and draft-change no longer
+     share an amber band (deutan-safe separation; draft-change is copper). */
   --admin-marker-reserved-surface: rgba(252, 240, 217, 0.96);
-  --admin-marker-reserved-border: rgba(180, 123, 8, 0.3);
-  --admin-marker-reserved-text: #8a5a06;
-  --admin-marker-reserved-accent: rgba(180, 123, 8, 0.8);
+  --admin-marker-reserved-border: rgba(154, 100, 24, 0.4);
+  --admin-marker-reserved-text: #6D4712;
+  --admin-marker-reserved-accent: rgba(154, 100, 24, 0.85);
   --admin-marker-unavailable-surface: rgba(236, 238, 240, 0.96);
   --admin-marker-unavailable-border: rgba(107, 113, 119, 0.26);
   --admin-marker-unavailable-text: #6b7177;
@@ -253,16 +264,20 @@
   --admin-marker-selected-surface: rgba(255, 255, 255, 0.97);
   --admin-marker-selected-border: var(--admin-primary);
   --admin-marker-selected-text: #1f2225;
-  --admin-marker-selected-shadow: 0 0 0 2px rgba(242, 110, 34, 0.22), 0 10px 22px rgba(31, 34, 37, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  /* +1px dark outer hairline beyond the orange ring: the #F26E22 ring alone is 2.26:1
+     against the pale floor render (verdict mitigation). */
+  --admin-marker-selected-shadow: 0 0 0 2px rgba(242, 110, 34, 0.22), 0 0 0 3px rgba(31, 34, 37, 0.30), 0 10px 22px rgba(31, 34, 37, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
   --admin-marker-search-surface: var(--admin-info-soft);
   --admin-marker-search-border: rgba(22, 83, 89, 0.78);
   --admin-marker-search-text: var(--admin-info);
   --admin-marker-search-ring: rgba(75, 149, 166, 0.44);
   --admin-marker-search-halo: rgba(75, 149, 166, 0.32);
-  --admin-marker-draft-surface: var(--admin-warning-soft);
-  --admin-marker-draft-border: rgba(212, 154, 6, 0.66);
-  --admin-marker-draft-text: var(--admin-warning-text);
-  --admin-marker-draft-accent: var(--admin-warning);
+  /* Draft-change = copper family: distinct from the #F26E22 selection ring AND from
+     reserved ochre (was amber-on-amber with reserved; two meanings, one channel). */
+  --admin-marker-draft-surface: rgba(212, 106, 36, 0.10);
+  --admin-marker-draft-border: rgba(212, 106, 36, 0.60);
+  --admin-marker-draft-text: #6F2C13;
+  --admin-marker-draft-accent: var(--admin-copper);
   --admin-marker-hover-border: var(--admin-primary);
   --admin-marker-hover-shadow: 0 6px 14px rgba(31, 34, 37, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
   --admin-marker-focus-ring: rgba(242, 110, 34, 0.75);

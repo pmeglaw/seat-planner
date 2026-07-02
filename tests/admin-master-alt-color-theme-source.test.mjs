@@ -60,7 +60,12 @@ test("master alternative palette exposes inert brand primitives and scoped admin
     "--admin-marker-assigned-surface: rgba(232, 243, 236, 0.96)",
     "--admin-marker-selected-border: var(--admin-primary)",
     "--admin-marker-search-surface: var(--admin-info-soft)",
-    "--admin-marker-draft-surface: var(--admin-warning-soft)"
+    "--admin-marker-draft-surface: rgba(212, 106, 36, 0.10)",
+    "--admin-marker-draft-accent: var(--admin-copper)",
+    "--admin-copper: #D46A24",
+    "--admin-paper: #F6E7D8",
+    "--admin-text-muted: #5E646A",
+    "--admin-border: #D2D6DA"
   ]) {
     assert.match(adminThemeBlock, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
