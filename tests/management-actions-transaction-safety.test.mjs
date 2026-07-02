@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+// 20260702100000 re-issues all five management RPCs (department matchers became
+// case-insensitive for audit finding E1) and therefore holds the live definitions.
 const migrationSql = await readFile(
-  new URL("../supabase/migrations/20260616000400_management_actions_rpc.sql", import.meta.url),
+  new URL("../supabase/migrations/20260702100000_department_integrity_normalization.sql", import.meta.url),
   "utf8"
 );
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
@@ -72,13 +74,13 @@ test("employee deactivation keeps published assignments protected before mutatio
 
 test("department management RPCs preserve option-state and employee behavior atomically", () => {
   assert.match(renameDepartmentSql, /insert into public\.department_options \(name, active\)[\s\S]+values \(normalized_to, true\)[\s\S]+on conflict \(name\) do update\s+set active = true/);
-  assert.match(renameDepartmentSql, /update public\.employees as employee\s+set department = normalized_to\s+where employee\.department = normalized_from/);
-  assert.match(renameDepartmentSql, /update public\.department_options as department_option\s+set active = false\s+where department_option\.name = normalized_from/);
+  assert.match(renameDepartmentSql, /update public\.employees as employee\s+set department = normalized_to\s+where lower\(trim\(employee\.department\)\) = lower\(normalized_from\)/);
+  assert.match(renameDepartmentSql, /update public\.department_options as department_option\s+set active = false\s+where lower\(department_option\.name\) = lower\(normalized_from\)\s+and department_option\.name <> normalized_to/);
   assert.doesNotMatch(renameDepartmentSql, /public\.seats/);
   assert.doesNotMatch(renameDepartmentSql, /published/i);
 
-  assert.match(deleteDepartmentSql, /update public\.employees as employee\s+set department = null\s+where employee\.department = normalized_name/);
-  assert.match(deleteDepartmentSql, /update public\.department_options as department_option\s+set active = false\s+where department_option\.name = normalized_name/);
+  assert.match(deleteDepartmentSql, /update public\.employees as employee\s+set department = null\s+where lower\(trim\(employee\.department\)\) = lower\(normalized_name\)/);
+  assert.match(deleteDepartmentSql, /update public\.department_options as department_option\s+set active = false\s+where lower\(department_option\.name\) = lower\(normalized_name\)/);
   assert.doesNotMatch(deleteDepartmentSql, /public\.seats/);
   assert.doesNotMatch(deleteDepartmentSql, /published/i);
 });

@@ -17,6 +17,7 @@ import {
 } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
+import { departmentKey } from "@/lib/departments";
 import { normalizePoint } from "@/lib/seatMath";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
@@ -648,7 +649,7 @@ export function SeatMap({
     id: seat.id,
     label: seat.label,
     person: seat.employee?.full_name ?? "Open seat",
-    department: seat.employee?.department ?? seat.department ?? "No department",
+    department: seat.employee?.department ?? "No department",
     status: seat.status,
     zone: getSeatZone(seat) || "No zone",
     selected: seat.id === selectedSeatId
@@ -704,7 +705,7 @@ export function SeatMap({
     const seatDepartment = seat.employee?.department ?? "";
     const seatZone = getSeatZone(seat);
     const searchOk = !needle || haystack.includes(needle);
-    const departmentOk = department === "all" || seatDepartment === department;
+    const departmentOk = department === "all" || departmentKey(seatDepartment) === departmentKey(department);
     const zoneOk = zone === "all" || seatZone === zone;
     const statusOk = status === "all" || seat.status === (status as SeatStatus);
 
