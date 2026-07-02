@@ -75,7 +75,7 @@ test("master alternative palette exposes inert brand primitives and scoped admin
     assert.match(adminThemeBlock, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.match(rootBlock, /--sp-color-action-primary: #C2410C/);
+  assert.match(rootBlock, /--sp-color-action-primary: #B2430F/);
   assert.match(rootBlock, /--sp-color-brand-accent: #F97316/);
   assert.doesNotMatch(adminThemeBlock, /--sp-color-|--sp-focus-ring-color/);
 });

@@ -28,18 +28,20 @@
   --sp-color-brand-paper: #F6E7D8;
   --sp-color-brand-copper: #D46A24;
   --sp-color-brand-accent: #F97316;
-  --sp-color-action-primary: #C2410C;
-  --sp-color-action-primary-hover: #A93A0B;
-  --sp-color-action-primary-pressed: #9A3412;
+  /* One action ladder app-wide, matching the Figma brand/primary ladder and the
+     admin --admin-primary-cta values (5.67 / 6.49 / 7.72:1 with white). */
+  --sp-color-action-primary: #B2430F;
+  --sp-color-action-primary-hover: #A63A12;
+  --sp-color-action-primary-pressed: #93330F;
   --sp-color-brand-clay: #6F2C13;
 
   --sp-color-brand-ivory-rgb: 255 247 237;
   --sp-color-brand-paper-rgb: 246 231 216;
   --sp-color-brand-copper-rgb: 212 106 36;
   --sp-color-brand-accent-rgb: 249 115 22;
-  --sp-color-action-primary-rgb: 194 65 12;
-  --sp-color-action-primary-hover-rgb: 169 58 11;
-  --sp-color-action-primary-pressed-rgb: 154 52 18;
+  --sp-color-action-primary-rgb: 178 67 15;
+  --sp-color-action-primary-hover-rgb: 166 58 18;
+  --sp-color-action-primary-pressed-rgb: 147 51 15;
   --sp-color-brand-clay-rgb: 111 44 19;
 
   /* Cooled to the Claude Design / brand neutrals (orange + cool charcoal on near-white)
