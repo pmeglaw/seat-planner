@@ -51,4 +51,18 @@ Keep the charcoal system as the shell. Transplant B's genuinely superior parts:
 - The warm prototype's all-caps tracked labels violate the sentence-case mandate (RC5) — diagnostic
   that it wasn't built against the system model.
 - The "Warm" Figma variable mode is retained in the file for future comparison; the SxS page shows
-  both renders. A verdict board for the SxS page is pending (Figma tool outage at write time).
+  both renders plus the judge-panel verdict board.
+
+## Applied (2026-07-02)
+
+All transplants + fixes landed in both systems:
+- **Figma** (Light mode + 5 new variables w/ code syntax): muted/subtle text, border steps,
+  reserved→ochre, draft-change→copper, `accent/copper`, `accent/paper`, `status/search-*` teal
+  family; seat-marker set expanded to the 17-state taxonomy (charcoal-valued); Highlighted/swap
+  states re-skinned teal; panel hovers → paper tint; DS foundations board synced.
+- **Code** (`app/globals.css`, commit `4a30e88`): same token values; draft markers → copper family,
+  reserved → ochre family, selected marker gains the 1px dark outer hairline; guard test updated;
+  192/192 green; values verified via live computed styles.
+- Not yet applied in code (component work, not tokens): the new marker *states* (hover/move/swap
+  targets exist partially via `--admin-marker-*`; the full taxonomy port is Phase-2 implementation)
+  and paper-tint hovers on panel rows.
