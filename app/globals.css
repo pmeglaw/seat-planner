@@ -180,9 +180,14 @@
   --admin-text-subtle: #666C72;
   --admin-text-inverse: #EDEEF0;
 
+  /* Brand ladder (semantic group: brand/). accent = identity + selection (never behind
+     white text, 2.91:1); primary = action fill, brightened toward the brand per the
+     direction verdict while keeping 5.67:1 with white; hover/active darken. */
   --admin-primary: #F26E22;
   --admin-primary-hover: #C95A14;
-  --admin-primary-cta: #A63A12;
+  --admin-primary-cta: #B2430F;
+  --admin-primary-cta-hover: #A63A12;
+  --admin-primary-cta-active: #93330F;
   --admin-primary-soft: rgba(242, 110, 34, 0.10);
   --admin-primary-border: rgba(242, 110, 34, 0.32);
   /* Transplants from the warm prototype (docs/design-direction-verdict.md): copper is the
@@ -278,16 +283,31 @@
   --admin-marker-draft-border: rgba(212, 106, 36, 0.60);
   --admin-marker-draft-text: #6F2C13;
   --admin-marker-draft-accent: var(--admin-copper);
-  --admin-marker-hover-border: var(--admin-primary);
+  /* Teal owns transient map interactions (hover/search/swap); orange stays committed
+     (selection, primary actions). Focus aligns with the app-wide focus hue. */
+  --admin-marker-hover-border: #2F6668;
   --admin-marker-hover-shadow: 0 6px 14px rgba(31, 34, 37, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
-  --admin-marker-focus-ring: rgba(242, 110, 34, 0.75);
+  --admin-marker-focus-ring: rgba(194, 65, 12, 0.75);
   --admin-marker-focus-offset: rgba(255, 255, 255, 0.70);
 
-  /* Flat refined chrome — no shell/command shadows; one soft shadow for floating panels. */
+  /* Elevation system 0-5 (background + border + shadow triplets; see the Figma
+     Elevation styles for the same spec):
+       0 canvas  — bg canvas,  no border,        no shadow (page + map workspace)
+       1 panel   — bg surface, border default,   no shadow (docked panels, cards)
+       2 raised  — bg surface, border default,   shadow-2  (inputs, tool cluster, sticky headers)
+       3 overlay — bg surface, border strong,    shadow-3  (drawers, menus, popovers; no scrim)
+       4 modal   — bg surface, no border,        shadow-4  (dialogs + sheets; scrim on dialogs only)
+       5 toast   — bg chrome,  no border,        shadow-5  (toasts; topmost) */
+  --admin-elevation-2-shadow: 0 1px 2px rgba(15, 18, 20, 0.06);
+  --admin-elevation-3-shadow: 0 4px 12px -2px rgba(15, 18, 20, 0.10);
+  --admin-elevation-4-shadow: 0 12px 32px -4px rgba(15, 18, 20, 0.16);
+  --admin-elevation-5-shadow: 0 8px 24px rgba(15, 18, 20, 0.24);
+
+  /* Flat refined chrome — no shell/command shadows; floating panels ride elevation 3. */
   --admin-shadow-shell: none;
   --admin-shadow-command: none;
   --admin-shadow-map: none;
-  --admin-shadow-panel: 0 18px 44px rgba(27, 26, 23, 0.18);
+  --admin-shadow-panel: var(--admin-elevation-3-shadow);
 }
 
 * {
