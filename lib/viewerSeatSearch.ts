@@ -73,8 +73,11 @@ function getSeatEmployee(seat: SeatWithEmployee, employeeById: Map<string, Emplo
 }
 
 function getSeatDepartment(seat: SeatWithEmployee, employeeById: Map<string, Employee>) {
+  // Departments belong to people. seats.department is legacy zone data
+  // (pre-007 pod names resurrected by snapshot restores) and must never be
+  // displayed or aggregated as a department (audit finding E1).
   const employee = getSeatEmployee(seat, employeeById);
-  return normalizeDisplayText(employee?.department ?? seat.department) ?? "No department";
+  return normalizeDisplayText(employee?.department) ?? "No department";
 }
 
 function getSeatPerson(seat: SeatWithEmployee, employeeById: Map<string, Employee>) {
@@ -149,7 +152,7 @@ export function buildViewerSeatSearch({
   seats.forEach(seat => {
     const employee = getSeatPerson(seat, employeeById);
     const zone = getSeatZone(seat);
-    const department = employee?.department ?? seat.department;
+    const department = employee?.department ?? null;
     if (!matchesQuery(query, [seat.label, seat.status, zone, department, employee?.full_name, employee?.position, employee?.phone_extension])) return;
 
     results.push({
@@ -166,8 +169,7 @@ export function buildViewerSeatSearch({
 
   const departmentNames = uniqueValues([
     ...departmentOptions.filter(option => option.active).map(option => option.name),
-    ...activeEmployees.map(employee => employee.department),
-    ...seats.map(seat => getSeatDepartment(seat, employeeById))
+    ...activeEmployees.map(employee => employee.department)
   ]);
 
   departmentNames.forEach(name => {

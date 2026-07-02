@@ -197,7 +197,8 @@ function getSeatZoneLabel(seat: SeatWithEmployee) {
 }
 
 function getSeatDepartment(seat: SeatWithEmployee) {
-  return seat.employee?.department ?? seat.department ?? null;
+  // seats.department is legacy zone data — never a person's department (E1).
+  return seat.employee?.department ?? null;
 }
 
 function hasEmployee(seat: SeatWithEmployee) {
@@ -331,9 +332,21 @@ export function getMapSummary(context: MapOperationsContext) {
   context.zoneOptions.filter(zone => zone.active).forEach(zone => zoneNames.add(zone.name));
   context.seats.forEach(seat => zoneNames.add(getSeatZoneLabel(seat)));
 
-  const departmentNames = new Set<string>();
-  context.departmentOptions.filter(department => department.active).forEach(department => departmentNames.add(department.name));
-  context.employees.forEach(employee => departmentNames.add(employee.department || "No department"));
+  // Case-insensitive department rows: managed options first (their spelling
+  // wins), then employee variants fold into the same row instead of forking
+  // into duplicates (E1 — counts must match the employee list).
+  const departmentRows = new Map<string, string>();
+  function departmentRowName(value: string | null | undefined) {
+    const display = (value ?? "").trim() || "No department";
+    const key = normalizeKey(display);
+    const existing = departmentRows.get(key);
+    if (existing) return existing;
+    departmentRows.set(key, display);
+    return display;
+  }
+  context.departmentOptions.filter(department => department.active).forEach(department => departmentRowName(department.name));
+  context.employees.forEach(employee => departmentRowName(employee.department));
+  const departmentNames = new Set<string>(departmentRows.values());
 
   return {
     generatedAt: context.generatedAt,
@@ -348,7 +361,7 @@ export function getMapSummary(context: MapOperationsContext) {
       ...statusCounts(context.seats.filter(seat => getSeatZoneLabel(seat) === name))
     }))),
     byDepartment: sortByName(Array.from(departmentNames).map(name => {
-      const employees = context.employees.filter(employee => (employee.department || "No department") === name);
+      const employees = context.employees.filter(employee => normalizeKey(employee.department || "No department") === normalizeKey(name));
       const employeeIds = new Set(employees.map(employee => employee.id));
       const assignedSeats = context.seats.filter(seat => seat.employee_id && employeeIds.has(seat.employee_id));
       return {
@@ -442,11 +455,15 @@ export function getZoneDepartmentBreakdown(context: MapOperationsContext) {
   return {
     zones: sortByName(Array.from(zones.entries()).map(([name, seats]) => {
       const departments = new Map<string, SeatWithEmployee[]>();
+      const departmentLabels = new Map<string, string>();
       seats.forEach(seat => {
-        const department = seat.employee?.department ?? "Open or no department";
-        const departmentSeats = departments.get(department) ?? [];
+        const department = seat.employee?.department?.trim() || "Open or no department";
+        const key = normalizeKey(department);
+        const label = departmentLabels.get(key) ?? department;
+        departmentLabels.set(key, label);
+        const departmentSeats = departments.get(label) ?? [];
         departmentSeats.push(seat);
-        departments.set(department, departmentSeats);
+        departments.set(label, departmentSeats);
       });
 
       return {

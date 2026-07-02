@@ -16,6 +16,7 @@ import {
   renameZoneAction,
   updateEmployeeAction
 } from "@/app/actions";
+import { buildDepartmentRoster, departmentKey } from "@/lib/departments";
 import { Button } from "@/components/ui/Button";
 
 type EmployeeForm = {
@@ -98,16 +99,6 @@ function formatPublishDate(value: string) {
   }).format(date);
 }
 
-function countEmployeesByDepartment(employees: Employee[]) {
-  const counts = new Map<string, number>();
-  employees.forEach(employee => {
-    const department = employee.department?.trim();
-    if (!department) return;
-    counts.set(department, (counts.get(department) ?? 0) + 1);
-  });
-  return counts;
-}
-
 function countSeatsByZone(seats: SeatWithEmployee[]) {
   const counts = new Map<string, number>();
   seats.forEach(seat => {
@@ -159,14 +150,13 @@ export function AdminManagementPanel({
     [localEmployees]
   );
 
-  const departmentNames = useMemo(() => {
-    const values = new Set<string>();
-    localDepartmentOptions.filter(option => option.active).forEach(option => values.add(option.name));
-    activeEmployees.forEach(employee => {
-      if (employee.department) values.add(employee.department);
-    });
-    return Array.from(values).sort();
-  }, [activeEmployees, localDepartmentOptions]);
+  // One roster for both tabs (E1): options ∪ employee departments, keyed
+  // case-insensitively so counts can never disagree with the employee list.
+  const departmentRoster = useMemo(
+    () => buildDepartmentRoster(activeEmployees, localDepartmentOptions),
+    [activeEmployees, localDepartmentOptions]
+  );
+  const departmentNames = useMemo(() => departmentRoster.map(row => row.name), [departmentRoster]);
 
   const zoneNames = useMemo(() => {
     const values = new Set<string>();
@@ -178,7 +168,6 @@ export function AdminManagementPanel({
     return Array.from(values).sort();
   }, [localSeats, localZoneOptions]);
 
-  const departmentCounts = useMemo(() => countEmployeesByDepartment(activeEmployees), [activeEmployees]);
   const zoneCounts = useMemo(() => countSeatsByZone(localSeats), [localSeats]);
 
   const filteredEmployees = useMemo(() => {
@@ -311,6 +300,23 @@ export function AdminManagementPanel({
     });
   }
 
+  function adoptDepartment(name: string) {
+    startTransition(async () => {
+      try {
+        setError(null);
+        const department = await createDepartmentAction(name);
+        setLocalDepartmentOptions(current => {
+          const exists = current.some(option => option.id === department.id || option.name === department.name);
+          if (!exists) return [...current, department].sort((a, b) => a.name.localeCompare(b.name));
+          return current.map(option => (option.id === department.id || option.name === department.name ? department : option));
+        });
+        showSuccess(`Department ${department.name} added to the managed list.`);
+      } catch (errorValue) {
+        showError(errorValue, "Could not add department to the managed list.");
+      }
+    });
+  }
+
   function beginDepartmentRename(name: string) {
     setEditingDepartment(name);
     setDepartmentDraft(name);
@@ -329,7 +335,7 @@ export function AdminManagementPanel({
           { id: result.to, name: result.to, active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
         ]);
         setLocalEmployees(current => current.map(employee => (
-          employee.department === result.from ? { ...employee, department: result.to } : employee
+          departmentKey(employee.department) === departmentKey(result.from) ? { ...employee, department: result.to } : employee
         )));
         setEditingDepartment("");
         setDepartmentDraft("");
@@ -341,7 +347,7 @@ export function AdminManagementPanel({
   }
 
   function deleteDepartment(name: string) {
-    const count = departmentCounts.get(name) ?? 0;
+    const count = departmentRoster.find(row => row.key === departmentKey(name))?.employeeCount ?? 0;
     setMessage(null);
     setError(null);
     setManagementConfirm({ kind: "department", name, affectedCount: count });
@@ -619,13 +625,18 @@ export function AdminManagementPanel({
               </div>
             </div>
             <div className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200">
-              {departmentNames.map(name => (
-                <div key={name} className="flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between">
+              {departmentRoster.map(row => (
+                <div key={row.key} className="flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="text-sm font-black text-slate-950">{name}</div>
-                    <div className="text-xs text-slate-500">{departmentCounts.get(name) ?? 0} employee{(departmentCounts.get(name) ?? 0) === 1 ? "" : "s"}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black text-slate-950">{row.name}</span>
+                      {!row.managed && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">Not in managed list</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-500">{row.employeeCount} employee{row.employeeCount === 1 ? "" : "s"}</div>
                   </div>
-                  {editingDepartment === name ? (
+                  {editingDepartment === row.name ? (
                     <div className="flex flex-1 flex-col gap-2 md:max-w-md md:flex-row">
                       <input value={departmentDraft} onChange={event => setDepartmentDraft(event.target.value)} className={fieldClassName} />
                       <Button type="button" onClick={renameDepartment} disabled={pending || !departmentDraft.trim()}>Save</Button>
@@ -633,8 +644,11 @@ export function AdminManagementPanel({
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-2">
-                      <Button type="button" onClick={() => beginDepartmentRename(name)} disabled={pending}>Rename</Button>
-                      <Button type="button" variant="danger" onClick={() => deleteDepartment(name)} disabled={pending}>Delete</Button>
+                      {!row.managed && (
+                        <Button type="button" onClick={() => adoptDepartment(row.name)} disabled={pending}>Add to list</Button>
+                      )}
+                      <Button type="button" onClick={() => beginDepartmentRename(row.name)} disabled={pending}>Rename</Button>
+                      <Button type="button" variant="danger" onClick={() => deleteDepartment(row.name)} disabled={pending}>Delete</Button>
                     </div>
                   )}
                 </div>
