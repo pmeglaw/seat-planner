@@ -38,12 +38,19 @@ test("master alternative palette exposes inert brand primitives and scoped admin
   }
 
   for (const token of [
-    "--admin-bg: #F7F3EE",
-    "--admin-rail-bg: #101114",
-    "--admin-rail-surface: #282F36",
-    "--admin-surface: #FFFFFF",
+    "--admin-bg: #EAEBEC",
+    "--admin-chrome-bg: #1F2225",
+    "--admin-chrome-text: #EDEEF0",
+    "--admin-rail-bg: var(--admin-chrome-bg)",
+    "--admin-rail-surface: rgba(255, 255, 255, 0.05)",
+    "--admin-surface: #FCFCFD",
     "--admin-primary: #F26E22",
-    "--admin-primary-cta: #A63A12",
+    "--admin-primary-cta: #B2430F",
+    "--admin-primary-cta-hover: #A63A12",
+    "--admin-primary-cta-active: #93330F",
+    "--admin-marker-hover-border: #2F6668",
+    "--admin-elevation-3-shadow: 0 4px 12px -2px rgba(15, 18, 20, 0.10)",
+    "--admin-shadow-panel: var(--admin-elevation-3-shadow)",
     "--admin-primary-soft: rgba(242, 110, 34, 0.10)",
     "--admin-warning-text: #7A4E00",
     "--admin-info: #165359",
@@ -55,15 +62,20 @@ test("master alternative palette exposes inert brand primitives and scoped admin
     "--admin-publish-ready-bg: var(--admin-primary-soft)",
     "--admin-publish-no-change-bg: var(--admin-state-clean-bg)",
     "--admin-publish-viewer-impact-bg: var(--admin-info-soft)",
-    "--admin-marker-assigned-surface: rgba(255, 253, 248, 0.95)",
+    "--admin-marker-assigned-surface: rgba(232, 243, 236, 0.96)",
     "--admin-marker-selected-border: var(--admin-primary)",
     "--admin-marker-search-surface: var(--admin-info-soft)",
-    "--admin-marker-draft-surface: var(--admin-warning-soft)"
+    "--admin-marker-draft-surface: rgba(212, 106, 36, 0.10)",
+    "--admin-marker-draft-accent: var(--admin-copper)",
+    "--admin-copper: #D46A24",
+    "--admin-paper: #F6E7D8",
+    "--admin-text-muted: #5E646A",
+    "--admin-border: #D2D6DA"
   ]) {
     assert.match(adminThemeBlock, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.match(rootBlock, /--sp-color-action-primary: #C2410C/);
+  assert.match(rootBlock, /--sp-color-action-primary: #B2430F/);
   assert.match(rootBlock, /--sp-color-brand-accent: #F97316/);
   assert.doesNotMatch(adminThemeBlock, /--sp-color-|--sp-focus-ring-color/);
 });
@@ -86,13 +98,16 @@ test("admin color slices scope shell marker and semantic aliases without redesig
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
 
   assert.match(seatMapSource, /bg-\[var\(--admin-bg\)\]/);
-  assert.match(seatMapSource, /aria-label="Admin workspace rail"[\s\S]*bg-\[var\(--admin-rail-bg\)\]/);
-  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*bg-\[var\(--admin-surface\)\]\/94/);
-  assert.match(seatMapSource, /aria-label="Map command actions"[\s\S]*bg-\[var\(--admin-surface-muted\)\]\/78/);
+  // Claude Design: dark cool-charcoal chrome top bar holds the flat "Admin command row"
+  // text toolbar; the low-utility left rail is gone (identity in the bar, stats/legend in
+  // the canvas header). Orange is accent-only — the active toolbar item is neutral.
+  assert.match(seatMapSource, /bg-\[var\(--admin-chrome-bg\)\][\s\S]*aria-label="Admin command row"/);
+  assert.doesNotMatch(seatMapSource, /aria-label="Admin workspace rail"/);
+  assert.match(seatMapSource, /const chromeToolbarBtn = "[\s\S]*text-\[var\(--admin-chrome-muted\)\]/);
+  assert.match(seatMapSource, /const chromeToolbarBtnActive = "[\s\S]*text-\[var\(--admin-chrome-text\)\]/);
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*bg-\[var\(--admin-surface\)\]\/68/);
   assert.match(seatMapSource, /border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-surface-muted\)\]/);
-  assert.match(seatMapSource, /showNames \? "border-\[var\(--admin-primary-cta\)\] bg-\[var\(--admin-primary-cta\)\] text-white/);
-  assert.match(seatMapSource, /hover:!border-\[var\(--admin-primary-border\)\] hover:!bg-\[var\(--admin-primary-soft\)\]/);
+  assert.match(seatMapSource, /showNames \? chromeToolbarBtnActive : chromeToolbarBtn/);
   assert.match(seatMapSource, /variant="admin"/);
 
   assert.match(seatMarkerSource, /variant\?: "admin" \| "viewer"/);
@@ -109,7 +124,7 @@ test("admin color slices scope shell marker and semantic aliases without redesig
   assert.match(inspectorSource, /--admin-state-clean-bg/);
   assert.match(inspectorSource, /--admin-state-dirty-bg/);
   assert.match(inspectorSource, /--admin-state-error-bg/);
-  assert.match(inspectorSource, /--admin-state-danger-bg/);
+  assert.match(inspectorSource, /!bg-\[var\(--admin-danger\)\]/);
 });
 
 test("admin color slice preserves shell controls and behavior boundaries", async () => {
@@ -117,7 +132,7 @@ test("admin color slice preserves shell controls and behavior boundaries", async
   const viewerRouteSource = await readSource("../app/page.tsx");
   const actionSource = await readSource("../app/actions.ts");
 
-  assert.match(seatMapSource, /aria-label="Map command actions"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
+  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
   assert.match(seatMapSource, /onClick=\{activeMode\.onExit\}/);
   assert.match(seatMapSource, /await publishSeatMapAction\(\)/);
   assert.match(actionSource, /export async function publishSeatMapAction\(\) \{/);

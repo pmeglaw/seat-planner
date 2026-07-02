@@ -61,7 +61,7 @@ test("design system foundation exposes approved semantic token names", async () 
 
   assert.match(globalsSource, /--sp-focus-ring-offset-color: var\(--sp-color-surface-raised\)/);
   assert.match(globalsSource, /--sp-color-brand-accent: #F97316/);
-  assert.match(globalsSource, /--sp-color-action-primary: #C2410C/);
+  assert.match(globalsSource, /--sp-color-action-primary: #B2430F/);
   assert.match(tailwindSource, /brand:\s*\{\s*DEFAULT: "#f97316",\s*dark: "#c2410c"/);
   assert.match(tailwindSource, /sp:\s*\{/);
   assert.match(tailwindSource, /"action-primary": "rgb\(var\(--sp-color-action-primary-rgb\) \/ <alpha-value>\)"/);

@@ -228,8 +228,10 @@ export function SeatMarker({
   const markerFocusClass = adminMarker
     ? "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-marker-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-marker-focus-offset)]"
     : "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#D46A24]/75 focus-visible:ring-offset-2 focus-visible:ring-offset-white/70";
+  // Teal hover is a transient cue: it must never repaint a committed (selected) seat's
+  // orange ring, so the hover border applies only to unselected markers.
   const tokenInteractionClass = adminMarker
-    ? "transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out group-hover:border-[var(--admin-marker-hover-border)] group-hover:brightness-105 group-hover:shadow-[var(--admin-marker-hover-shadow)] group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--admin-marker-focus-ring)] motion-reduce:transition-none"
+    ? `transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out ${selected ? "" : "group-hover:border-[var(--admin-marker-hover-border)] "}group-hover:brightness-105 group-hover:shadow-[var(--admin-marker-hover-shadow)] group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--admin-marker-focus-ring)] motion-reduce:transition-none`
     : "transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out group-hover:border-[#D46A24] group-hover:brightness-105 group-hover:shadow-[0_6px_14px_rgba(23,26,29,0.20),inset_0_1px_0_rgba(255,255,255,0.82)] group-active:shadow-[0_2px_6px_rgba(23,26,29,0.16),inset_0_2px_4px_rgba(23,26,29,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[#D46A24]/75 motion-reduce:transition-none";
   const draftBadgeClass = adminMarker
     ? "bg-[var(--admin-marker-draft-accent)] shadow-[0_2px_5px_rgba(16,17,20,0.24)]"

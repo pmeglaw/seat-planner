@@ -35,16 +35,21 @@ test("admin focus adoption uses the shared focus helper on narrow planning contr
   assert.match(clearSearchButton, /focusRingClass/);
   assert.doesNotMatch(clearSearchButton, /focus-visible:ring-orange-100/);
 
+  // Top-bar text toolbar buttons carry the orange chrome focus ring via the shared
+  // chromeToolbarBtn / chromeToolbarBtnActive class constants.
+  assert.match(seatMapSource, /const chromeToolbarBtn = "[\s\S]*focus-visible:ring-\[var\(--admin-primary\)\]/);
+  assert.match(seatMapSource, /const chromeToolbarBtnActive = "[\s\S]*focus-visible:ring-\[var\(--admin-primary\)\]/);
+
   const filterButton = sliceFrom(seatMapSource, "onClick={toggleFilterPanel}", "</button>");
   assert.match(filterButton, /aria-label=\{filterCollapsed \? "Open filters" : "Collapse filters"\}/);
-  assert.match(filterButton, /focusRingClass/);
+  assert.match(filterButton, /chromeToolbarBtnActive : chromeToolbarBtn/);
   assert.doesNotMatch(filterButton, /focus-visible:ring-orange-100/);
 
   const namesButton = sliceFrom(seatMapSource, "onClick={() => setShowNames(current => !current)}", "</button>");
   assert.match(namesButton, /aria-label=\{namesToggleLabel\}/);
   assert.match(namesButton, /title=\{namesToggleLabel\}/);
   assert.match(seatMapSource, /const namesToggleLabel = showNames \? "Hide names" : "Show names"/);
-  assert.match(namesButton, /focusRingClass/);
+  assert.match(namesButton, /chromeToolbarBtnActive : chromeToolbarBtn/);
   assert.doesNotMatch(namesButton, /focus-visible:ring-orange-100/);
 
   const mapViewModeGroup = sliceAround(seatMapSource, 'aria-label="Map view mode"', 1400);
