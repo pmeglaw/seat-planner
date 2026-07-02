@@ -2389,6 +2389,14 @@ export function SeatMap({
             </div>
 
             <div className="min-h-0 overflow-y-auto py-4">
+              {!publishSummary.hasChanges && (
+                <p className="rounded-xl border border-[var(--admin-publish-no-change-border)] bg-[var(--admin-publish-no-change-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-no-change-text)]">
+                  No draft changes to publish. The saved draft already matches the currently published viewer map.
+                </p>
+              )}
+
+              {publishSummary.hasChanges && (
+              <>
               <div className={["rounded-xl border p-3", publishSummary.hasChanges ? "border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] text-[var(--admin-publish-ready-text)]" : "border-[var(--admin-publish-no-change-border)] bg-[var(--admin-publish-no-change-bg)] text-[var(--admin-publish-no-change-text)]"].join(" ")}>
                 <StatusBadge tone={publishReadinessBadgeTone} className={["!min-h-0 !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide", publishSummary.hasChanges ? "!bg-[var(--admin-surface)]/80 !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]" : "!bg-[var(--admin-surface)]/80 !text-[var(--admin-publish-no-change-text)] !ring-[var(--admin-publish-no-change-border)]"].join(" ")}>
                   {publishReadinessBadgeLabel}
@@ -2445,12 +2453,6 @@ export function SeatMap({
                 <span className="font-semibold text-[var(--admin-text-primary)]">Total publish changes:</span> {publishSummary.totalChangeCount}
               </div>
 
-              {!publishSummary.hasChanges && (
-                <div className="mt-3 rounded-xl border border-[var(--admin-publish-no-change-border)] bg-[var(--admin-publish-no-change-bg)] p-3 text-sm font-semibold text-[var(--admin-publish-no-change-text)]">
-                  No draft changes to publish. The saved draft already matches the currently published viewer map.
-                </div>
-              )}
-
               <div className="mt-3 grid gap-2 md:grid-cols-2">
                 <PublishChangeList title="Added seats" items={publishSummary.addedSeats} emptyLabel="No added seats detected." />
                 <PublishChangeList title="Removed seats" items={publishSummary.removedSeats} emptyLabel="No removed seats detected." />
@@ -2466,6 +2468,8 @@ export function SeatMap({
               <div className="mt-3 rounded-xl border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-dirty-text)]">
                 Publishing updates the viewer map and clears Undo/Redo history after success. Use Cancel if you need to review, undo, or save more draft changes first.
               </div>
+              </>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-2 border-t border-[var(--admin-border)] pt-3">
