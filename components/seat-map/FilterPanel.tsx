@@ -2,15 +2,6 @@
 
 import type { SeatStatus } from "@/lib/types";
 
-type EmployeeResult = {
-  id: string;
-  name: string;
-  meta: string;
-  initials: string;
-  seatId: string | null;
-  seatLabel: string | null;
-};
-
 export type ActiveFilterChip = {
   id: string;
   label: string;
@@ -18,59 +9,24 @@ export type ActiveFilterChip = {
   removeLabel: string;
 };
 
-export type SeatResultItem = {
-  id: string;
-  label: string;
-  person: string;
-  department: string;
-  status: SeatStatus;
-  zone: string;
-  selected: boolean;
-};
-
 export type ResultStatusBreakdown = Record<SeatStatus, number>;
 
 type FilterPanelProps = {
-  search: string;
   department: string;
   zone: string;
   status: string;
   departments: string[];
   zones: string[];
   collapsed: boolean;
-  employeeResults: EmployeeResult[];
-  selectedSeatId: string | null;
   activeChips: ActiveFilterChip[];
-  seatResults: SeatResultItem[];
-  resultStatusBreakdown: ResultStatusBreakdown;
-  resultEmptyTitle: string;
-  resultEmptyDescription: string;
-  showSeatResults: boolean;
   onToggle: () => void;
-  onEmployeeSelect: (seatId: string) => void;
-  onSeatResultSelect: (seatId: string) => void;
   onDepartmentChange: (value: string) => void;
   onZoneChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onRemoveActiveChip: (chipId: string) => void;
-  onClearSearch: () => void;
   onClearFilters: () => void;
   onClearAll: () => void;
 };
-
-const STATUS_LABELS: Record<SeatStatus, string> = {
-  available: "Available",
-  assigned: "Assigned",
-  reserved: "Reserved",
-  unavailable: "Unavailable"
-};
-
-function statusPillClass(status: SeatStatus) {
-  if (status === "assigned") return "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)] ring-[var(--admin-state-clean-border)]";
-  if (status === "reserved") return "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]";
-  if (status === "unavailable") return "bg-[var(--admin-state-neutral-bg)] text-[var(--admin-state-neutral-text)] ring-[var(--admin-state-neutral-border)]";
-  return "bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] ring-[var(--admin-border)]";
-}
 
 export function ActiveFilterChips({
   chips,
@@ -115,155 +71,24 @@ export function ActiveFilterChips({
   );
 }
 
-export function SeatResultsList({
-  id,
-  titleId = "seat-results-title",
-  results,
-  statusBreakdown,
-  emptyTitle,
-  emptyDescription,
-  searchActive,
-  filtersActive,
-  onSelect,
-  onClearSearch,
-  onClearFilters,
-  onClearAll,
-  onClose,
-  density = "panel",
-  className = ""
-}: {
-  id?: string;
-  titleId?: string;
-  results: SeatResultItem[];
-  statusBreakdown: ResultStatusBreakdown;
-  emptyTitle: string;
-  emptyDescription: string;
-  searchActive: boolean;
-  filtersActive: boolean;
-  onSelect: (seatId: string) => void;
-  onClearSearch: () => void;
-  onClearFilters: () => void;
-  onClearAll: () => void;
-  onClose?: () => void;
-  density?: "panel" | "rail";
-  className?: string;
-}) {
-  const statusParts = (["assigned", "available", "reserved", "unavailable"] as SeatStatus[])
-    .map(item => `${statusBreakdown[item]} ${STATUS_LABELS[item].toLowerCase()}`)
-    .join(" · ");
-  const compact = density === "rail";
-
-  return (
-    <section id={id} aria-labelledby={titleId} className={[compact ? "rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] p-1 shadow-none" : "rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] p-2 shadow-none", className].filter(Boolean).join(" ")}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h2 id={titleId} className="text-xs font-semibold text-[var(--admin-text-primary)]">Seat results</h2>
-          <p className={["mt-0.5 truncate font-medium text-[var(--admin-text-muted)]", compact ? "text-[10px]" : "text-[10px]"].join(" ")}>{results.length} matching seats{compact ? "" : ` · ${statusParts}`}</p>
-        </div>
-        {onClose && (
-          <button type="button" onClick={onClose} aria-label="Back to map from seat results" className="shrink-0 rounded-lg bg-[var(--admin-surface)] px-2.5 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)] transition hover:bg-[var(--admin-primary-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
-            Back to map
-          </button>
-        )}
-      </div>
-
-      {results.length > 0 ? (
-        <div role="list" aria-label="Seat results" className={[compact ? "mt-1 max-h-[96px] space-y-0.5" : "mt-2 max-h-[196px] space-y-1", "overflow-auto overscroll-contain pr-1"].join(" ")}>
-          {results.map(result => {
-            const resultActionLabel = `${result.label}. ${result.person}. ${result.department}. ${STATUS_LABELS[result.status]}. ${result.zone}. Select and center on map.`;
-
-            return (
-              <button
-                key={result.id}
-                type="button"
-                role="listitem"
-                aria-label={resultActionLabel}
-                aria-current={result.selected ? "true" : undefined}
-                onClick={() => onSelect(result.id)}
-                onKeyDown={event => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    onSelect(result.id);
-                  }
-                }}
-                className={[
-                  "grid w-full grid-cols-[minmax(3rem,auto)_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border px-2 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]",
-                  compact ? "min-h-7 py-0.5" : "py-1.5",
-                  result.selected ? "border-[var(--admin-primary)] bg-[var(--admin-surface)] ring-1 ring-[var(--admin-primary-border)]" : "border-[var(--admin-border)] bg-[var(--admin-surface)]"
-                ].join(" ")}
-              >
-                <span className={compact ? "text-xs font-semibold text-[var(--admin-text-primary)]" : "text-[13px] font-semibold text-[var(--admin-text-primary)]"}>{result.label}</span>
-                <span className="min-w-0">
-                  <span className={compact ? "block truncate text-[11px] font-semibold text-[var(--admin-text-secondary)]" : "block truncate text-xs font-semibold text-[var(--admin-text-secondary)]"}>{compact ? `${result.person} · ${result.zone}` : result.person}</span>
-                  {!compact && (
-                    <span className="block truncate text-[11px] text-[var(--admin-text-muted)]">{result.department} · {result.zone}</span>
-                  )}
-                </span>
-                <span className={["rounded-md px-1.5 py-0.5 text-[10px] font-semibold ring-1", statusPillClass(result.status)].join(" ")}>
-                  {STATUS_LABELS[result.status]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="mt-2 rounded-lg border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface)] p-2.5 text-xs text-[var(--admin-text-muted)]">
-          <div className="font-semibold text-[var(--admin-text-secondary)]">{emptyTitle}</div>
-          <div className="mt-1 leading-5">{emptyDescription}</div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {searchActive && (
-              <button type="button" onClick={onClearSearch} aria-label="Clear search in empty results" className="rounded-lg bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] ring-1 ring-[var(--admin-border)] hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
-                Clear search
-              </button>
-            )}
-            {filtersActive && (
-              <button type="button" onClick={onClearFilters} className="rounded-lg bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] ring-1 ring-[var(--admin-border)] hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
-                Clear filters
-              </button>
-            )}
-            {searchActive && filtersActive && (
-              <button type="button" onClick={onClearAll} className="rounded-lg bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)] hover:bg-[rgba(242,110,34,0.16)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
-                Clear all
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
 export function FilterPanel({
-  search,
   department,
   zone,
   status,
   departments,
   zones,
   collapsed,
-  employeeResults,
-  selectedSeatId,
   activeChips,
-  seatResults,
-  resultStatusBreakdown,
-  resultEmptyTitle,
-  resultEmptyDescription,
-  showSeatResults,
   onToggle,
-  onEmployeeSelect,
-  onSeatResultSelect,
   onDepartmentChange,
   onZoneChange,
   onStatusChange,
   onRemoveActiveChip,
-  onClearSearch,
   onClearFilters,
   onClearAll
 }: FilterPanelProps) {
   const activeStructuredChips = activeChips.filter(chip => chip.id !== "search");
   const constraintsActive = activeChips.length > 0;
-  const searchActive = Boolean(search.trim());
-  const structuredFiltersActive = department !== "all" || zone !== "all" || status !== "all";
   const structuredFilterCount = [department !== "all", zone !== "all", status !== "all"].filter(Boolean).length;
 
   if (collapsed) {
@@ -353,79 +178,6 @@ export function FilterPanel({
             <option value="unavailable">Unavailable</option>
           </select>
         </label>
-      </div>
-
-      {showSeatResults && (
-        <div className="mt-4 border-t border-[var(--admin-border)] pt-3 lg:hidden">
-          <SeatResultsList
-            id="mobile-seat-results"
-            titleId="mobile-seat-results-title"
-            results={seatResults}
-            statusBreakdown={resultStatusBreakdown}
-            emptyTitle={resultEmptyTitle}
-            emptyDescription={resultEmptyDescription}
-            searchActive={searchActive}
-            filtersActive={structuredFiltersActive}
-            onSelect={onSeatResultSelect}
-            onClearSearch={onClearSearch}
-            onClearFilters={onClearFilters}
-            onClearAll={onClearAll}
-          />
-        </div>
-      )}
-
-      <div className="mt-4 space-y-2 border-t border-[var(--admin-border)] pt-3">
-        <div className="flex items-center justify-between">
-          <div className="text-[11px] font-medium text-[var(--admin-text-muted)]">People · {employeeResults.length}</div>
-          {structuredFiltersActive && <div className="text-[11px] font-medium text-[var(--admin-primary-cta)]">Filtered</div>}
-        </div>
-        <div aria-label="People results" className="max-h-[180px] space-y-2 overflow-auto overscroll-contain pr-1 sm:max-h-[260px]">
-          {employeeResults.length ? employeeResults.map(result => {
-            const selected = Boolean(result.seatId && result.seatId === selectedSeatId);
-            const resultActionLabel = result.seatId
-              ? selected
-                ? `${result.name}. ${result.meta}. ${result.seatLabel} selected.`
-                : `${result.name}. ${result.meta}. Open ${result.seatLabel}.`
-              : `${result.name}. ${result.meta}. Unassigned.`;
-
-            return (
-              <button
-                key={result.id}
-                type="button"
-                disabled={!result.seatId}
-                aria-label={resultActionLabel}
-                aria-current={selected ? "true" : undefined}
-                title={result.seatId ? `Open ${result.seatLabel}` : "No assigned seat to open"}
-                onClick={() => result.seatId && onEmployeeSelect(result.seatId)}
-                className={[
-                  "flex w-full items-center gap-3 rounded-lg border bg-[var(--admin-surface)] p-2 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-60",
-                  selected ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] ring-2 ring-[var(--admin-primary-border)]" : "border-[var(--admin-border)]"
-                ].join(" ")}
-              >
-                <span className={["flex h-8 w-8 flex-none items-center justify-center rounded-full text-xs font-semibold ring-1", selected ? "bg-[var(--admin-surface)] text-[var(--admin-primary-cta)] ring-[var(--admin-primary-border)]" : "bg-[var(--admin-state-neutral-bg)] text-[var(--admin-text-secondary)] ring-[var(--admin-border)]"].join(" ")}>
-                  {result.initials}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold text-[var(--admin-text-primary)]">{result.name}</span>
-                  <span className="block truncate text-xs text-[var(--admin-text-muted)]">{result.meta}</span>
-                </span>
-                <span className={["shrink-0 text-[11px] font-semibold", selected ? "text-[var(--admin-primary-cta)]" : "text-[var(--admin-text-subtle)]"].join(" ")}>
-                  {selected ? "Selected" : result.seatLabel ?? "-"}
-                </span>
-              </button>
-            );
-          }) : (
-            <div className="rounded-lg border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface-muted)] p-3 text-xs text-[var(--admin-text-muted)]">
-              <div className="font-medium text-[var(--admin-text-secondary)]">No employees match the current filters.</div>
-              <div className="mt-1">Clear filters or search by seat label, employee name, position, department, or zone.</div>
-              {constraintsActive && (
-                <button type="button" onClick={onClearAll} className="mt-2 text-xs font-medium text-[var(--admin-primary-cta)] hover:text-[var(--admin-primary-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
-                  Clear all
-                </button>
-              )}
-            </div>
-          )}
-        </div>
       </div>
 
     </aside>

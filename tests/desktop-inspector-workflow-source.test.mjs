@@ -26,8 +26,7 @@ test("desktop inspector shell exposes the selected-seat identity model", async (
   // The verbose dark eyebrow/subtitle model is gone.
   assert.doesNotMatch(inspectorSource, /Planning inspector/);
   assert.doesNotMatch(inspectorSource, /selectedSeatStatusLabel/);
-  assert.match(seatMapSource, /const desktopInspectorReservePaddingClassName = desktopInspectorOpen \? "sm:pr-\[28rem\] xl:pr-\[29\.5rem\]" : ""/);
-  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = desktopInspectorOpen \? "sm:mr-\[28rem\] xl:mr-\[29\.5rem\]" : ""/);
+  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = desktopPanelSlotOpen \? "sm:mr-\[28rem\] xl:mr-\[29\.5rem\]" : ""/);
   assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = desktopInspectorReserveMarginClassName/);
   assert.match(seatMapSource, /const activeModeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /className=\{activeModeBannerClassName\}/);

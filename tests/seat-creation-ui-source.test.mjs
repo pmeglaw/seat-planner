@@ -180,16 +180,13 @@ test("selected inspector and search results stay attached to the map workspace",
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
   const inspectorSource = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
   const filterSource = await readFile(new URL("../components/seat-map/FilterPanel.tsx", import.meta.url), "utf8");
+  const resultsPanelSource = await readFile(new URL("../components/seat-map/ResultsPanel.tsx", import.meta.url), "utf8");
 
-  assert.match(seatMapSource, /selectedResultIsVisible/);
-  assert.match(seatMapSource, /resultSummaryShellClass/);
-  assert.match(seatMapSource, /selectedResultIsVisible[\s\S]*rounded-xl border-\[var\(--admin-border\)\] bg-\[var\(--admin-surface-muted\)\] text-\[var\(--admin-text-muted\)\] shadow-none/);
-  assert.match(seatMapSource, /singleResultSeat[\s\S]*rounded-xl border-\[var\(--admin-primary-border\)\] bg-\[var\(--admin-info-soft\)\]/);
-  assert.match(seatMapSource, /singleResultOverlayClassName[\s\S]*border border-\[var\(--admin-primary-border\)\] bg-\[var\(--admin-info-soft\)\]\/95/);
+  // Results live in the right panel slot; the searching status bar carries Fit/Clear.
+  assert.match(seatMapSource, /const resultsPanelOpen = canEdit && filtersActive && !selectedSeat/);
   assert.match(seatMapSource, /resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-surface\)\]/);
   assert.match(seatMapSource, /resultClearButtonClassName = "inline-flex min-h-8[\s\S]*bg-\[var\(--admin-primary-soft\)\]/);
   assert.match(seatMapSource, /onClick=\{\(\) => fitSeatsInMap\(matchingSeats\)\}/);
-  assert.match(seatMapSource, /onClick=\{\(\) => fitSeatsInMap\(\[singleResultSeat\]\)\}/);
   assert.match(seatMapSource, /detailFocusSeatId = selectedSeatId \?\? \(filtersActive && matchingSeats\.length === 1 \? matchingSeats\[0\]\.id : null\)/);
   assert.match(seatMapSource, /if \(detailFocusSeatId\) \{[\s\S]*queueCenterSeatInMap\(detailFocusSeatId\)/);
   assert.match(inspectorSource, /sm:bottom-3 sm:right-3 sm:top-\[84px\]/);
@@ -199,13 +196,11 @@ test("selected inspector and search results stay attached to the map workspace",
   // Claude Design: the shared header is light (surface bg, not the old dark workspace slab).
   assert.match(inspectorSource, /sticky top-0 z-20[\s\S]*bg-\[var\(--sp-color-surface\)\][\s\S]*Seat details/);
   assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"[\s\S]*Assign this seat/);
-  assert.match(filterSource, /rounded-xl border border-\[var\(--admin-border\)\] bg-\[var\(--admin-surface-muted\)\] p-2 shadow-none/);
-  assert.match(filterSource, /density = "panel"/);
-  assert.match(filterSource, /max-h-\[196px\] space-y-1/);
-  assert.match(filterSource, /max-h-\[96px\] space-y-0\.5/);
-  assert.match(filterSource, /overflow-auto overscroll-contain pr-1/);
-  assert.match(filterSource, /grid-cols-\[minmax\(3rem,auto\)_minmax\(0,1fr\)_auto\]/);
-  assert.match(seatMapSource, /density="rail"/);
+  // Results share the inspector's right-dock geometry (panel slot) instead of a rail.
+  assert.match(resultsPanelSource, /sm:bottom-3 sm:right-3 sm:top-\[84px\]/);
+  assert.match(resultsPanelSource, /sm:w-\[360px\][\s\S]*xl:w-\[384px\]/);
+  assert.match(resultsPanelSource, /overflow-y-auto overscroll-contain p-2/);
+  assert.match(filterSource, /id="seat-map-filter-panel"/);
 });
 
 test("seat marker coordinates anchor one compact token instead of detached callouts", async () => {
