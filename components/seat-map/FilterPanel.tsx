@@ -38,12 +38,6 @@ type FilterPanelProps = {
   departments: string[];
   zones: string[];
   collapsed: boolean;
-  stats: {
-    total: number;
-    assigned: number;
-    available: number;
-    reserved: number;
-  };
   employeeResults: EmployeeResult[];
   selectedSeatId: string | null;
   activeChips: ActiveFilterChip[];
@@ -247,7 +241,6 @@ export function FilterPanel({
   departments,
   zones,
   collapsed,
-  stats,
   employeeResults,
   selectedSeatId,
   activeChips,
@@ -272,12 +265,6 @@ export function FilterPanel({
   const searchActive = Boolean(search.trim());
   const structuredFiltersActive = department !== "all" || zone !== "all" || status !== "all";
   const structuredFilterCount = [department !== "all", zone !== "all", status !== "all"].filter(Boolean).length;
-  const statItems = [
-    { label: "Total", value: stats.total },
-    { label: "Assigned", value: stats.assigned },
-    { label: "Open", value: stats.available },
-    { label: "Reserved", value: stats.reserved }
-  ];
 
   if (collapsed) {
     return (
@@ -441,24 +428,6 @@ export function FilterPanel({
         </div>
       </div>
 
-      <div className="mt-4 hidden grid-cols-2 overflow-hidden rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] sm:grid">
-        {statItems.map((item, index) => (
-          <div key={item.label} className={["border-[var(--admin-border)] px-2 py-2 text-center", index % 2 === 0 ? "border-r" : "", index < statItems.length - 2 ? "border-b" : ""].join(" ")}>
-            <div className="text-sm font-semibold text-[var(--admin-text-primary)]">{item.value}</div>
-            <div className="text-[10px] font-medium text-[var(--admin-text-muted)]">{item.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4 hidden space-y-2 border-t border-[var(--admin-border)] pt-3 sm:block">
-        <div className="text-[11px] font-medium text-[var(--admin-text-muted)]">Legend</div>
-        <div className="grid grid-cols-2 gap-2 text-xs text-[var(--admin-text-secondary)]">
-          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--admin-surface)] ring-1 ring-[var(--admin-border-strong)]" />Available</div>
-          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--admin-marker-assigned-accent)]" />Assigned</div>
-          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--admin-marker-reserved-accent)]" />Reserved</div>
-          <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--admin-marker-unavailable-accent)]" />Unavailable</div>
-        </div>
-      </div>
     </aside>
   );
 }

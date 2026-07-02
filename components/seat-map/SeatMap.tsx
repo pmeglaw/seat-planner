@@ -553,7 +553,8 @@ export function SeatMap({
     total: localSeats.length,
     assigned: localSeats.filter(seat => seat.status === "assigned").length,
     available: localSeats.filter(seat => seat.status === "available").length,
-    reserved: localSeats.filter(seat => seat.status === "reserved").length
+    reserved: localSeats.filter(seat => seat.status === "reserved").length,
+    unavailable: localSeats.filter(seat => seat.status === "unavailable").length
   }), [localSeats]);
   const publishSummary = useMemo(() => buildPublishChangeSummary(localSeats, localPublishedSeats), [localSeats, localPublishedSeats]);
   const draftChangedSeatLabelSet = useMemo(() => new Set([
@@ -564,6 +565,13 @@ export function SeatMap({
     ...publishSummary.statusChanges,
     ...publishSummary.otherChanges
   ].map(item => item.label)), [publishSummary]);
+  const legendCounts: Record<string, number> = {
+    assigned: stats.assigned,
+    available: stats.available,
+    reserved: stats.reserved,
+    unavailable: stats.unavailable,
+    "draft-changed": draftChangedSeatLabelSet.size
+  };
 
   const employeeResults = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -1606,13 +1614,6 @@ export function SeatMap({
           onExit: cancelSwapSeatMode
         }
         : null;
-  const planningStateLabel = activeMode
-    ? `${activeMode.label} mode active`
-    : filtersActive
-      ? `${matchingSeats.length} draft seat${matchingSeats.length === 1 ? "" : "s"} match current search and filters`
-      : selectedSeat
-        ? `${selectedSeat.label} selected for planning`
-        : "Ready to search, select, or adjust the draft map";
   const desktopMapGridClass = filterCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]";
   const showFilterPanel = !filterCollapsed;
   const desktopInspectorOpen = canEdit && Boolean(selectedSeat && !inspectorCollapsed);
@@ -1950,7 +1951,6 @@ export function SeatMap({
               zone={zone}
               zones={zones}
               collapsed={filterCollapsed}
-              stats={stats}
               employeeResults={employeeResults}
               selectedSeatId={selectedSeatId}
               activeChips={activeFilterChips}
@@ -2205,27 +2205,29 @@ export function SeatMap({
           {canEdit && (
             <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 lg:mt-0">
               <div className="min-w-0">
-                <div className="text-[11px] font-medium text-[var(--admin-text-muted)]">Planning canvas</div>
-                <h2 id="admin-planning-canvas-title" className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">{planningStateLabel}</h2>
-              </div>
-              <div className="flex shrink-0 items-center gap-3 text-xs font-medium text-[var(--admin-text-muted)]">
-                <span aria-label="Seat inventory summary" className="whitespace-nowrap">
-                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.total}</span> seats
+                <h2 id="admin-planning-canvas-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Planning canvas</h2>
+                <p aria-label="Seat inventory summary" className="truncate text-xs font-medium text-[var(--admin-text-muted)]">
+                  {stats.total} seats
                   <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.assigned}</span> assigned
+                  {stats.assigned} assigned
                   <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                  <span className="font-semibold text-[var(--admin-text-primary)]">{stats.available}</span> open
-                </span>
-                <span className="hidden h-3.5 w-px bg-[var(--admin-border-strong)] md:inline-block" aria-hidden="true" />
-                <ul aria-label="Seat status legend" className="hidden items-center gap-2.5 md:flex">
-                  {SEAT_STATUS_LEGEND.filter(item => canEdit || !item.draftOnly).map(item => (
-                    <li key={item.key} className="flex items-center gap-1.5 whitespace-nowrap">
-                      <span className={["h-2.5 w-2.5 shrink-0 rounded-full", item.accentClass].join(" ")} aria-hidden="true" />
-                      {item.label}
-                    </li>
-                  ))}
-                </ul>
+                  {stats.available} open
+                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+                  {stats.reserved} reserved
+                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+                  {stats.unavailable} unavailable
+                </p>
               </div>
+              <ul aria-label="Seat status legend" className="hidden flex-wrap items-center gap-2 text-xs font-medium text-[var(--admin-text-secondary)] md:flex">
+                {SEAT_STATUS_LEGEND.filter(item => !item.draftOnly || legendCounts[item.key] > 0).map(item => (
+                  <li key={item.key} className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-2.5 py-1">
+                    <span className={["h-2 w-2 shrink-0 rounded-full", item.accentClass].join(" ")} aria-hidden="true" />
+                    {item.label}
+                    <span className="text-[var(--admin-text-subtle)]" aria-hidden="true">·</span>
+                    <span className="font-semibold text-[var(--admin-text-primary)]">{legendCounts[item.key]}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </section>
@@ -2389,6 +2391,14 @@ export function SeatMap({
             </div>
 
             <div className="min-h-0 overflow-y-auto py-4">
+              {!publishSummary.hasChanges && (
+                <p className="rounded-xl border border-[var(--admin-publish-no-change-border)] bg-[var(--admin-publish-no-change-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-no-change-text)]">
+                  No draft changes to publish. The saved draft already matches the currently published viewer map.
+                </p>
+              )}
+
+              {publishSummary.hasChanges && (
+              <>
               <div className={["rounded-xl border p-3", publishSummary.hasChanges ? "border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] text-[var(--admin-publish-ready-text)]" : "border-[var(--admin-publish-no-change-border)] bg-[var(--admin-publish-no-change-bg)] text-[var(--admin-publish-no-change-text)]"].join(" ")}>
                 <StatusBadge tone={publishReadinessBadgeTone} className={["!min-h-0 !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide", publishSummary.hasChanges ? "!bg-[var(--admin-surface)]/80 !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]" : "!bg-[var(--admin-surface)]/80 !text-[var(--admin-publish-no-change-text)] !ring-[var(--admin-publish-no-change-border)]"].join(" ")}>
                   {publishReadinessBadgeLabel}
@@ -2445,12 +2455,6 @@ export function SeatMap({
                 <span className="font-semibold text-[var(--admin-text-primary)]">Total publish changes:</span> {publishSummary.totalChangeCount}
               </div>
 
-              {!publishSummary.hasChanges && (
-                <div className="mt-3 rounded-xl border border-[var(--admin-publish-no-change-border)] bg-[var(--admin-publish-no-change-bg)] p-3 text-sm font-semibold text-[var(--admin-publish-no-change-text)]">
-                  No draft changes to publish. The saved draft already matches the currently published viewer map.
-                </div>
-              )}
-
               <div className="mt-3 grid gap-2 md:grid-cols-2">
                 <PublishChangeList title="Added seats" items={publishSummary.addedSeats} emptyLabel="No added seats detected." />
                 <PublishChangeList title="Removed seats" items={publishSummary.removedSeats} emptyLabel="No removed seats detected." />
@@ -2466,6 +2470,8 @@ export function SeatMap({
               <div className="mt-3 rounded-xl border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-dirty-text)]">
                 Publishing updates the viewer map and clears Undo/Redo history after success. Use Cancel if you need to review, undo, or save more draft changes first.
               </div>
+              </>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-2 border-t border-[var(--admin-border)] pt-3">
