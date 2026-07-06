@@ -132,7 +132,7 @@ test("admin color slice preserves shell controls and behavior boundaries", async
   const viewerRouteSource = await readSource("../app/page.tsx");
   const actionSource = await readSource("../app/actions.ts");
 
-  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
+  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
   assert.match(seatMapSource, /onClick=\{activeMode\.onExit\}/);
   assert.match(seatMapSource, /await publishSeatMapAction\(\)/);
   assert.match(actionSource, /export async function publishSeatMapAction\(\) \{/);

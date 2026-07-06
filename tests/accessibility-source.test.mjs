@@ -36,7 +36,7 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /Planning canvas/);
   assert.match(source, /aria-label="Seat status legend"/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
-  assert.match(source, /aria-controls="advanced-drawer"/);
+  assert.match(source, /aria-label="Open settings"/);
   assert.match(source, /aria-controls="ask-planner-drawer"/);
   assert.match(source, /aria-haspopup="dialog"/);
   assert.match(source, /No map changes to undo/);
@@ -76,38 +76,28 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   assert.match(viewerFinderSource, /highlightedDescription="Highlighted search result"/);
   assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*draftStatusLabel/);
-  assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AdvancedDrawer/);
+  assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AskPlannerDrawer/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Swap seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Vacate/);
 });
 
-test("map tools and ask planner drawers keep dialog semantics and focus targets", async () => {
-  const advancedDrawerSource = await readSource("../components/seat-map/AdvancedDrawer.tsx");
+test("ask planner drawer and settings review dialogs keep dialog semantics and focus targets", async () => {
   const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
-
-  assert.match(advancedDrawerSource, /id="advanced-drawer"/);
-  assert.match(advancedDrawerSource, /aria-labelledby="advanced-drawer-title"/);
-  assert.match(advancedDrawerSource, /aria-describedby="advanced-drawer-description"/);
-  assert.match(advancedDrawerSource, /Common seat tools first\. Advanced import, recovery, and destructive utilities stay separated\./);
-  assert.ok(
-    advancedDrawerSource.indexOf("Common map tools") < advancedDrawerSource.indexOf("Secondary shortcuts"),
-    "Common map tools should appear before secondary shortcuts."
-  );
-  assert.ok(
-    advancedDrawerSource.indexOf("Secondary shortcuts") < advancedDrawerSource.indexOf("CSV and backups"),
-    "Secondary shortcuts should stay above advanced utilities."
-  );
-  assert.match(advancedDrawerSource, /Publishing stays out of advanced utilities/);
-  assert.doesNotMatch(advancedDrawerSource, /Publish Draft Map/);
-  assert.match(advancedDrawerSource, /closeButtonRef\.current\?\.focus/);
-  assert.match(advancedDrawerSource, /z-\[80\][\s\S]*sm:z-50/);
+  const settingsPanelSource = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
 
   assert.match(askPlannerSource, /id="ask-planner-drawer"/);
   assert.match(askPlannerSource, /aria-labelledby="ask-planner-title"/);
   assert.match(askPlannerSource, /aria-describedby="ask-planner-description"/);
   assert.match(askPlannerSource, /questionRef\.current\.focus/);
   assert.match(askPlannerSource, /z-\[80\][\s\S]*sm:z-50/);
+
+  // Map tools is retired (B1/B2): the gated Settings route hosts the data
+  // utilities, and both review flows keep proper dialog semantics.
+  assert.match(settingsPanelSource, /aria-labelledby="csv-import-review-title"/);
+  assert.match(settingsPanelSource, /aria-describedby="csv-import-review-description"/);
+  assert.match(settingsPanelSource, /aria-labelledby="json-restore-review-title"/);
+  assert.match(settingsPanelSource, /aria-describedby="json-restore-review-description"/);
 });
 
 test("publish review summarizes draft changes before publish", async () => {
@@ -229,7 +219,6 @@ test("inspector sections, validation, and actions retain accessible confidence c
 
 test("unsaved inspector changes use an explicit save discard keep-editing guard", async () => {
   const source = await readSource("../components/seat-map/SeatMap.tsx");
-  const drawerSource = await readSource("../components/seat-map/AdvancedDrawer.tsx");
 
   assert.match(source, /type InspectorGuardAction/);
   assert.match(source, /function focusSeatMarker/);
@@ -254,8 +243,8 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /form\.requestSubmit\(\)/);
   assert.match(source, /onSubmitBlocked=\{cancelPendingInspectorGuardAction\}/);
   assert.match(source, /setPendingInspectorSaveAction\(null\)/);
-  assert.match(drawerSource, /onBeforeManagementNavigation/);
-  assert.match(drawerSource, /event\.preventDefault\(\)/);
+  assert.match(source, /href="\/admin\/management"[\s\S]{0,220}beforeManagementNavigation\(\)\) event\.preventDefault\(\)/);
+  assert.match(source, /href="\/admin\/settings"[\s\S]{0,320}beforeManagementNavigation\(\)\) event\.preventDefault\(\)/);
   assert.doesNotMatch(source, /You have unsaved seat edits\. Discard them\?/);
 });
 
@@ -280,7 +269,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /function removeActiveFilterChip/);
   assert.match(seatMapSource, /aria-label="Admin command row"/);
   assert.match(seatMapSource, /role="search" aria-label="Command search"/);
-  assert.match(seatMapSource, /aria-label="Map tools"/);
+  assert.doesNotMatch(seatMapSource, /aria-label="Map tools"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Admin workspace rail"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Map command actions"|aria-label="Planning map actions"/);
