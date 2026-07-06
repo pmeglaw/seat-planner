@@ -185,7 +185,7 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /aria-label=\{`View details for \$\{selectedSeat\.label\}`\}/);
   assert.match(inspectorSource, /aria-label=\{`Back to map from \$\{selectedSeat\.label\} details`\}/);
   assert.match(inspectorSource, /aria-label=\{`Ask Planner about \$\{selectedSeat\.label\}`\}/);
-  assert.match(inspectorSource, /z-\[80\][\s\S]*sm:z-40/);
+  assert.match(inspectorSource, /z-\[80\][\s\S]*panel:z-40/);
   assert.match(inspectorSource, /z-\[90\][\s\S]*sm:z-\[70\]/);
   assert.match(inspectorSource, /hasCurrentAssignment \? "Assignment" : "Assign this seat"/);
   assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"/);
@@ -287,10 +287,14 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /Fit matches unavailable because there are no matching seats/);
   // Panel slot: one occupant at a time - results (search/filters, no selection) or the inspector.
   assert.match(seatMapSource, /const resultsPanelOpen = canEdit && filtersActive && !selectedSeat/);
-  assert.match(seatMapSource, /const desktopPanelSlotOpen = desktopInspectorOpen \|\| resultsPanelOpen/);
-  assert.match(seatMapSource, /const desktopInspectorOpen = canEdit && Boolean\(selectedSeat && !inspectorCollapsed\)/);
-  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = desktopPanelSlotOpen \? "sm:mr-\[28rem\] xl:mr-\[29\.5rem\]" : ""/);
-  assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = desktopInspectorReserveMarginClassName/);
+  assert.match(seatMapSource, /const mapKeyPanelOpen = canEdit && !resultsPanelOpen && !selectedSeat/);
+  // Dock tier reserves the gutter permanently (INV-6): the canvas never resizes when
+  // the slot occupant changes; below the dock tier the panel overlays or sheets.
+  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = canEdit \? "dock:mr-\[376px\]" : ""/);
+  assert.match(seatMapSource, /aria-labelledby="admin-map-key-title"/);
+  assert.match(seatMapSource, /aria-label="Seat status map key"/);
+  assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = ""/);
+  assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title" className=\{\[filterCollapsed \? "order-1" : "order-2", desktopInspectorReserveMarginClassName/);
   assert.match(seatMapSource, /const mobileMapInteractionSurfaceOpen = canEdit && \(/);
   assert.match(seatMapSource, /const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;/);
   assert.match(seatMapSource, /mobileMapControlsHidden \? "hidden sm:block" : ""/);

@@ -703,7 +703,7 @@ export function SeatInspector({
 
   if (collapsed) {
     return (
-      <aside className="fixed inset-x-3 bottom-3 z-[80] sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[84px] sm:z-40 lg:top-[148px]">
+      <aside className="fixed inset-x-3 bottom-3 z-[80] panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[84px] panel:z-40 lg:top-[148px]">
         <button
           type="button"
           onClick={onToggleCollapse}
@@ -723,7 +723,7 @@ export function SeatInspector({
     <aside
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[54vh] flex-col overflow-hidden rounded-[14px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] shadow-[0_18px_44px_rgba(31,34,37,0.16)] sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[84px] sm:z-40 sm:max-h-none sm:w-[360px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-[14px] xl:w-[384px] lg:top-[148px]"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden rounded-[14px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] shadow-[0_18px_44px_rgba(31,34,37,0.16)] panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[84px] panel:z-40 panel:max-h-none panel:w-[360px] panel:max-w-[calc(100vw-1.5rem)] panel:rounded-[14px] lg:top-[148px]"
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] px-4 py-3">
         <div className="flex items-center justify-between gap-2">

@@ -8,6 +8,13 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Panel-slot tiers from the redesign architecture: sheet ≤899 (bottom sheet,
+      // non-modal), overlay 900–1139 (floats over the canvas), dock ≥1140 (reserved
+      // column — canvas pixel dimensions stay constant, INV-6).
+      screens: {
+        panel: "900px",
+        dock: "1140px"
+      },
       colors: {
         brand: {
           DEFAULT: "#f97316",

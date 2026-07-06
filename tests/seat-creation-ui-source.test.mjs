@@ -187,16 +187,16 @@ test("selected inspector and search results stay attached to the map workspace",
   assert.match(seatMapSource, /onClick=\{\(\) => fitSeatsInMap\(matchingSeats\)\}/);
   assert.match(seatMapSource, /detailFocusSeatId = selectedSeatId \?\? \(filtersActive && matchingSeats\.length === 1 \? matchingSeats\[0\]\.id : null\)/);
   assert.match(seatMapSource, /if \(detailFocusSeatId\) \{[\s\S]*queueCenterSeatInMap\(detailFocusSeatId\)/);
-  assert.match(inspectorSource, /sm:bottom-3 sm:right-3 sm:top-\[84px\]/);
+  assert.match(inspectorSource, /panel:bottom-3 panel:right-3 panel:top-\[84px\]/);
   // Claude Design: narrower (360/384), flat (one soft shadow, no -16px blur slab), 14px radius.
-  assert.match(inspectorSource, /sm:max-h-none[\s\S]*sm:w-\[360px\][\s\S]*sm:rounded-\[14px\]/);
+  assert.match(inspectorSource, /panel:max-h-none[\s\S]*panel:w-\[360px\][\s\S]*panel:rounded-\[14px\]/);
   assert.match(inspectorSource, /shadow-\[0_18px_44px_rgba\(31,34,37,0\.16\)\]/);
   // Claude Design: the shared header is light (surface bg, not the old dark workspace slab).
   assert.match(inspectorSource, /sticky top-0 z-20[\s\S]*bg-\[var\(--sp-color-surface\)\][\s\S]*Seat details/);
   assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"[\s\S]*Assign this seat/);
   // Results share the inspector's right-dock geometry (panel slot) instead of a rail.
-  assert.match(resultsPanelSource, /sm:bottom-3 sm:right-3 sm:top-\[84px\]/);
-  assert.match(resultsPanelSource, /sm:w-\[360px\][\s\S]*xl:w-\[384px\]/);
+  assert.match(resultsPanelSource, /panel:bottom-3 panel:right-3 panel:top-\[84px\]/);
+  assert.match(resultsPanelSource, /panel:w-\[320px\]/);
   assert.match(resultsPanelSource, /overflow-y-auto overscroll-contain p-2/);
   assert.match(filterSource, /id="seat-map-filter-panel"/);
 });

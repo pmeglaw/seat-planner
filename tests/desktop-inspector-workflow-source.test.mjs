@@ -11,8 +11,8 @@ test("desktop inspector shell exposes the selected-seat identity model", async (
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
 
   // Narrowed for less cognitive load (Claude Design); flat (no heavy shadow/blur).
-  assert.match(inspectorSource, /sm:w-\[360px\]/);
-  assert.match(inspectorSource, /xl:w-\[384px\]/);
+  assert.match(inspectorSource, /panel:w-\[360px\]/);
+  assert.doesNotMatch(inspectorSource, /xl:w-\[384px\]/);
   // Shared light identity header: label chip + assignee/open + zone · type + status badge.
   assert.match(inspectorSource, /canEdit \? "Seat details" : "Published seat"/);
   assert.match(inspectorSource, /rounded-\[10px\] bg-\[var\(--admin-primary-cta\)\]/);
@@ -26,8 +26,8 @@ test("desktop inspector shell exposes the selected-seat identity model", async (
   // The verbose dark eyebrow/subtitle model is gone.
   assert.doesNotMatch(inspectorSource, /Planning inspector/);
   assert.doesNotMatch(inspectorSource, /selectedSeatStatusLabel/);
-  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = desktopPanelSlotOpen \? "sm:mr-\[28rem\] xl:mr-\[29\.5rem\]" : ""/);
-  assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = desktopInspectorReserveMarginClassName/);
+  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = canEdit \? "dock:mr-\[376px\]" : ""/);
+  assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = ""/);
   assert.match(seatMapSource, /const activeModeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /className=\{activeModeBannerClassName\}/);
   assert.match(seatMapSource, /const actionErrorBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);

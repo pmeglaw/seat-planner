@@ -1512,13 +1512,16 @@ export function SeatMap({
         : null;
   const desktopMapGridClass = filterCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]";
   const showFilterPanel = !filterCollapsed;
-  const desktopInspectorOpen = canEdit && Boolean(selectedSeat && !inspectorCollapsed);
-  // Panel slot (right dock): one occupant at a time — DETAIL (inspector) when a seat is
-  // selected, RESULTS when search/filters are active with no selection.
+  // Panel slot (right): one occupant at a time — DETAIL (inspector) when a seat is
+  // selected, RESULTS when search/filters are active with no selection, MAP KEY when
+  // idle at the dock tier. Tiers: sheet ≤899, overlay 900–1139 (floats, no reflow),
+  // dock ≥1140 with a permanently reserved gutter so the canvas never resizes (INV-6).
   const resultsPanelOpen = canEdit && filtersActive && !selectedSeat;
-  const desktopPanelSlotOpen = desktopInspectorOpen || resultsPanelOpen;
-  const desktopInspectorReserveMarginClassName = desktopPanelSlotOpen ? "sm:mr-[28rem] xl:mr-[29.5rem]" : "";
-  const canvasBannerSafeAreaClassName = desktopInspectorReserveMarginClassName;
+  const mapKeyPanelOpen = canEdit && !resultsPanelOpen && !selectedSeat;
+  const desktopInspectorReserveMarginClassName = canEdit ? "dock:mr-[376px]" : "";
+  // The gutter narrows the whole canvas section at the dock tier, so banners inside it
+  // need no extra safe area; at the overlay tier panels intentionally float over content.
+  const canvasBannerSafeAreaClassName = "";
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
     showFilterPanel ||
@@ -1810,7 +1813,7 @@ export function SeatMap({
           </div>
         )}
 
-        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/68 p-2 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].join(" ")}>
+        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", desktopInspectorReserveMarginClassName, "min-w-0 overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/68 p-2 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
           {activeMode && (
             <div role="status" aria-live="polite" className={activeModeBannerClassName}>
               <div className="min-w-0">
@@ -1980,7 +1983,7 @@ export function SeatMap({
                 </p>
               </div>
               <div className="flex min-w-0 shrink-0 items-center gap-3">
-                <ul aria-label="Seat status legend" className="hidden flex-wrap items-center gap-2 text-xs font-medium text-[var(--admin-text-secondary)] md:flex">
+                <ul aria-label="Seat status legend" className="hidden flex-wrap items-center gap-2 text-xs font-medium text-[var(--admin-text-secondary)] md:flex dock:hidden">
                   {SEAT_STATUS_LEGEND.filter(item => !item.draftOnly || legendCounts[item.key] > 0).map(item => (
                     <li key={item.key} className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-2.5 py-1">
                       <span className={["h-2 w-2 shrink-0 rounded-full", item.accentClass].join(" ")} aria-hidden="true" />
@@ -2215,6 +2218,36 @@ export function SeatMap({
             </div>
           </section>
         </div>
+      )}
+
+      {mapKeyPanelOpen && (
+        <aside
+          aria-labelledby="admin-map-key-title"
+          className="fixed bottom-3 right-3 top-[84px] z-30 hidden w-[360px] flex-col overflow-y-auto rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[0_18px_44px_rgba(31,34,37,0.16)] dock:flex lg:top-[148px]"
+        >
+          <h2 id="admin-map-key-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Map key</h2>
+          <p className="mt-1 text-xs font-medium text-[var(--admin-text-muted)]">
+            {stats.total} seats
+            <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+            {stats.assigned} assigned
+            <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+            {stats.available} open
+          </p>
+          <ul aria-label="Seat status map key" className="mt-3 space-y-2 text-xs font-medium text-[var(--admin-text-secondary)]">
+            {SEAT_STATUS_LEGEND.filter(item => !item.draftOnly || legendCounts[item.key] > 0).map(item => (
+              <li key={item.key} className="flex items-center justify-between gap-2 rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-3 py-1.5">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className={["h-2 w-2 shrink-0 rounded-full", item.accentClass].join(" ")} aria-hidden="true" />
+                  <span className="truncate">{item.label}</span>
+                </span>
+                <span className="shrink-0 font-semibold text-[var(--admin-text-primary)]">{legendCounts[item.key]}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-auto pt-3 text-[11px] font-medium leading-5 text-[var(--admin-text-subtle)]">
+            Search, or select a seat, to fill this panel with results or details.
+          </p>
+        </aside>
       )}
 
       {resultsPanelOpen && (
