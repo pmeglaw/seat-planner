@@ -181,7 +181,7 @@ test("selected inspector and search results stay attached to the map workspace",
   const resultsPanelSource = await readFile(new URL("../components/seat-map/ResultsPanel.tsx", import.meta.url), "utf8");
 
   // Results live in the right panel slot; the searching status bar carries Fit/Clear.
-  assert.match(seatMapSource, /const resultsPanelOpen = canEdit && filtersActive && !selectedSeat/);
+  assert.match(seatMapSource, /const resultsPanelOpen = canEdit && filtersActive && \(!selectedSeat \|\| inspectorCollapsed\)/);
   assert.match(seatMapSource, /resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-surface\)\]/);
   assert.match(seatMapSource, /resultClearButtonClassName = "inline-flex min-h-8[\s\S]*bg-\[var\(--admin-primary-soft\)\]/);
   assert.match(seatMapSource, /onClick=\{\(\) => fitSeatsInMap\(matchingSeats\)\}/);
@@ -189,10 +189,10 @@ test("selected inspector and search results stay attached to the map workspace",
   assert.match(seatMapSource, /if \(detailFocusSeatId\) \{[\s\S]*queueCenterSeatInMap\(detailFocusSeatId\)/);
   assert.match(inspectorSource, /panel:bottom-3 panel:right-3 panel:top-\[84px\]/);
   // Claude Design: narrower (360/384), flat (one soft shadow, no -16px blur slab), 14px radius.
-  assert.match(inspectorSource, /panel:max-h-none[\s\S]*panel:w-\[360px\][\s\S]*panel:rounded-\[14px\]/);
+  assert.match(inspectorSource, /panel:max-h-none[\s\S]*panel:w-\[320px\][\s\S]*panel:rounded-\[14px\]/);
   assert.match(inspectorSource, /shadow-\[0_18px_44px_rgba\(31,34,37,0\.16\)\]/);
   // Claude Design: the shared header is light (surface bg, not the old dark workspace slab).
-  assert.match(inspectorSource, /sticky top-0 z-20[\s\S]*bg-\[var\(--sp-color-surface\)\][\s\S]*Seat details/);
+  assert.match(inspectorSource, /sticky top-0 z-20[\s\S]*bg-\[var\(--sp-color-surface\)\][\s\S]*id="seat-inspector-title"/);
   assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"[\s\S]*Assign this seat/);
   // Results share the inspector's right-dock geometry (panel slot) instead of a rail.
   assert.match(resultsPanelSource, /panel:bottom-3 panel:right-3 panel:top-\[84px\]/);

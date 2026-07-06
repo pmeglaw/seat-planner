@@ -31,6 +31,10 @@ type ResultsPanelProps = {
   onClearSearch: () => void;
   onClearFilters: () => void;
   onClearAll: () => void;
+  // Set while the inspector is auto-collapsed to its pill behind this panel: the
+  // selected seat stays reachable from a row here instead of an overlapping pill.
+  collapsedSeatLabel?: string | null;
+  onExpandCollapsedSeat?: () => void;
 };
 
 export function ResultsPanel({
@@ -44,7 +48,9 @@ export function ResultsPanel({
   onShowOnMap,
   onClearSearch,
   onClearFilters,
-  onClearAll
+  onClearAll,
+  collapsedSeatLabel = null,
+  onExpandCollapsedSeat
 }: ResultsPanelProps) {
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -79,6 +85,19 @@ export function ResultsPanel({
         <h2 id="admin-results-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Results</h2>
         <span aria-live="polite" className="text-xs font-medium text-[var(--admin-text-muted)]">{matchSummary}</span>
       </div>
+
+      {collapsedSeatLabel && onExpandCollapsedSeat && (
+        <button
+          type="button"
+          onClick={onExpandCollapsedSeat}
+          aria-label={`View details for ${collapsedSeatLabel}`}
+          title={`View details for ${collapsedSeatLabel}`}
+          className="mx-2 mt-2 flex shrink-0 items-center justify-between gap-2 rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-paper)] px-2.5 py-2 text-left transition hover:border-[var(--admin-border-strong)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+        >
+          <span className="min-w-0 truncate text-xs font-semibold text-[var(--admin-text-primary)]">{collapsedSeatLabel} selected</span>
+          <span className="shrink-0 text-[11px] font-semibold text-[var(--admin-primary-cta)]">View details</span>
+        </button>
+      )}
 
       {results.length > 0 ? (
         <div
