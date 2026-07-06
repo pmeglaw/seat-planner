@@ -73,7 +73,7 @@ export function ResultsPanel({
   return (
     <aside
       aria-labelledby="admin-results-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[45svh] flex-col overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-[0_18px_44px_rgba(31,34,37,0.16)] sm:inset-x-auto sm:bottom-3 sm:right-3 sm:top-[84px] sm:z-40 sm:max-h-none sm:w-[360px] sm:max-w-[calc(100vw-1.5rem)] xl:w-[384px] lg:top-[148px]"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-[0_18px_44px_rgba(31,34,37,0.16)] panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[84px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] lg:top-[148px]"
     >
       <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
         <h2 id="admin-results-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Results</h2>
