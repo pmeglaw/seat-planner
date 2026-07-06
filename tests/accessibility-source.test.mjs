@@ -298,10 +298,15 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /const mobileMapInteractionSurfaceOpen = canEdit && \(/);
   assert.match(seatMapSource, /const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;/);
   assert.match(seatMapSource, /mobileMapControlsHidden \? "hidden sm:block" : ""/);
-  assert.match(seatMapSource, /const activeModeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
+  // 3b MODE CARD: modes own the panel slot (no canvas banner); move-mode copy
+  // lives inside the inspector occupant.
+  assert.match(seatMapSource, /const modeCardOpen = canEdit && Boolean\(activeMode\) && \(!selectedSeat \|\| inspectorCollapsed\)/);
+  assert.match(seatMapSource, /\{modeCardOpen && activeMode && \(/);
+  assert.match(seatMapSource, /\{resultsPanelOpen && !modeCardOpen && \(/);
+  assert.doesNotMatch(seatMapSource, /activeModeBannerClassName/);
   assert.match(seatMapSource, /const actionErrorBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
-  assert.match(seatMapSource, /className=\{activeModeBannerClassName\}/);
+  assert.match(seatMapSource, /aria-label=\{`\$\{activeMode\.label\} mode`\}/);
   assert.match(seatMapSource, /className=\{actionErrorBannerClassName\}/);
   assert.match(seatMapSource, /className=\{actionNoticeBannerClassName\}/);
   assert.match(seatMapSource, /className=\{mapMarkerLayerClassName\}/);
@@ -309,7 +314,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.doesNotMatch(seatMapSource, /singleResultSeat|autoSelectedSearchKeyRef|Auto-selected/);
   // INV-1: typing a search evicts the open inspector (unsaved edits keep the guard).
   assert.match(seatMapSource, /if \(value\.trim\(\) && selectedSeatId && !inspectorDirty\) \{/);
-  assert.match(seatMapSource, /\{resultsPanelOpen && \(/);
+  assert.match(seatMapSource, /\{resultsPanelOpen && !modeCardOpen && \(/);
   assert.match(seatMapSource, /onOpen=\{selectSeatResult\}/);
   assert.match(seatMapSource, /onShowOnMap=\{queueCenterSeatInMap\}/);
 });

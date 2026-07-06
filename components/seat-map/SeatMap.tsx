@@ -1563,7 +1563,9 @@ export function SeatMap({
           onExit: cancelSwapSeatMode
         }
         : null;
-  const desktopMapGridClass = filterCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]";
+  // 3b OVERLAY + INV-6: Filters floats over the full-bleed canvas at lg — the
+  // canvas never reflows when the drawer opens.
+  const desktopMapGridClass = "lg:grid-cols-[minmax(0,1fr)]";
   const showFilterPanel = !filterCollapsed;
   // Panel slot (right): floating panels over a full-bleed map (owner preference — no
   // reserved gutter, no idle Map key rail; the legend lives in the bottom status bar).
@@ -1571,6 +1573,10 @@ export function SeatMap({
   // expanded, RESULTS when search/filters are active while the inspector is closed or
   // auto-collapsed to its pill. Tiers: bottom sheet ≤899, floating panel ≥900.
   const resultsPanelOpen = canEdit && filtersActive && (!selectedSeat || inspectorCollapsed);
+  // 3b MODE CARD: while a mode runs without an expanded inspector, the mode
+  // owns the panel slot (its microcopy lives in the occupant, INV-4). Move mode
+  // keeps the inspector as the occupant — the drag hint renders inside it.
+  const modeCardOpen = canEdit && Boolean(activeMode) && (!selectedSeat || inspectorCollapsed);
   // Floating panels intentionally overlay the canvas, so banners need no safe area.
   const canvasBannerSafeAreaClassName = "";
   // Scale readiness (Figma page 10): overview zoom clusters markers into zone pills;
@@ -1588,9 +1594,10 @@ export function SeatMap({
   const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;
   const filterPanelShellClass = [
     filterCollapsed ? "order-2" : "order-1",
-    "lg:order-1",
     canEdit && filterCollapsed ? "lg:hidden" : "",
-    !filterCollapsed ? "lg:min-h-0 lg:self-stretch lg:[&>aside]:h-full lg:[&>aside]:max-h-full lg:[&>aside]:top-0" : ""
+    !filterCollapsed
+      ? "lg:fixed lg:bottom-3 lg:left-3 lg:top-[84px] lg:z-40 lg:w-[288px] lg:[&>aside]:h-full lg:[&>aside]:max-h-full lg:[&>aside]:top-0 lg:[&>aside]:shadow-[0_18px_44px_rgba(31,34,37,0.16)]"
+      : ""
   ].join(" ");
   const mapViewportClassName = [
     "relative mx-auto w-full max-w-full overscroll-contain rounded-[22px] border border-[var(--admin-border-strong)] bg-[var(--admin-surface-muted)] shadow-[var(--admin-shadow-map),inset_0_1px_0_rgba(255,255,255,0.78)] sm:rounded-[26px] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
@@ -1605,10 +1612,6 @@ export function SeatMap({
     addSeatMode ? "cursor-crosshair" : ""
   ].join(" ");
   const mapFrameStyle = mapViewMode === "overview" && overviewMapWidth ? { width: `${overviewMapWidth}px` } : undefined;
-  const activeModeBannerClassName = [
-    "flex flex-col gap-2 rounded-2xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-2 text-xs font-semibold text-[var(--admin-primary-cta)] shadow-[0_12px_34px_rgba(166,58,18,0.14)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between",
-    canvasBannerSafeAreaClassName
-  ].filter(Boolean).join(" ");
   const mapModeOverlayShellClassName = [
     "pointer-events-none sticky left-0 top-0 z-30 h-0",
     mobileMapControlsHidden ? "hidden sm:block" : ""
@@ -1901,21 +1904,6 @@ export function SeatMap({
         )}
 
         <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/68 p-2 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
-          {activeMode && (
-            <div role="status" aria-live="polite" className={activeModeBannerClassName}>
-              <div className="min-w-0">
-                <div className="text-[10px] font-semibold text-[var(--admin-primary-cta)]">{activeMode.label} mode</div>
-                <div className="mt-0.5 truncate text-sm font-bold text-[var(--admin-text-primary)]">{activeMode.message}</div>
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <span className="rounded-full bg-white/75 px-2 py-1 text-[10px] font-semibold text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)]">Esc exits</span>
-                <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-white/75 px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
-                  {activeMode.exitLabel}
-                </button>
-              </div>
-            </div>
-          )}
-
           {actionError && (
             <div role="alert" className={actionErrorBannerClassName}>
               {actionError}
@@ -2320,7 +2308,25 @@ export function SeatMap({
         </div>
       )}
 
-      {resultsPanelOpen && (
+      {modeCardOpen && activeMode && (
+        <aside
+          role="status"
+          aria-live="polite"
+          aria-label={`${activeMode.label} mode`}
+          className="fixed inset-x-3 bottom-3 z-[80] rounded-[14px] border border-[var(--admin-primary-border)] bg-[var(--admin-surface)] p-4 shadow-[0_18px_44px_rgba(31,34,37,0.16)] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[84px] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+        >
+          <div className="text-[10px] font-semibold text-[var(--admin-primary-cta)]">{activeMode.label} mode</div>
+          <p className="mt-1 text-sm font-bold leading-5 text-[var(--admin-text-primary)]">{activeMode.message}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-cta)] ring-1 ring-[var(--admin-primary-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
+              {activeMode.exitLabel}
+            </button>
+            <span className="rounded-full bg-[var(--admin-surface-muted)] px-2 py-1 text-[10px] font-semibold text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-border)]">Esc exits</span>
+          </div>
+        </aside>
+      )}
+
+      {resultsPanelOpen && !modeCardOpen && (
         <ResultsPanel
           results={panelResults}
           matchCount={matchingSeats.length}
@@ -2345,7 +2351,7 @@ export function SeatMap({
         departmentOptions={localDepartmentOptions}
         canEdit={canEdit}
         collapsed={inspectorCollapsed}
-        pillSuppressed={resultsPanelOpen}
+        pillSuppressed={resultsPanelOpen || modeCardOpen}
         swapMode={Boolean(swapSourceSeatId)}
         searchMismatchNotice={selectedSeatMismatchNotice}
         searchMismatchClearLabel={clearSearchContextLabel}
