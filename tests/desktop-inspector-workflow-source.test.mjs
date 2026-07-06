@@ -99,7 +99,6 @@ test("desktop assignment section stays clean while preserving the employee combo
 
 test("desktop inspector workflow labels and draft-only boundaries stay wired", async () => {
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
-  const drawerSource = await readSource("../components/seat-map/AdvancedDrawer.tsx");
   const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
   assert.match(inspectorSource, /Save draft changes/);
@@ -112,7 +111,8 @@ test("desktop inspector workflow labels and draft-only boundaries stay wired", a
   assert.match(inspectorSource, /The published viewer map will not change until the draft is published/);
   assert.match(inspectorSource, /getSeatDeleteBlockReason/);
   assert.match(inspectorSource, /deleteHelpText/);
-  assert.match(drawerSource, /Move Seat/);
+  assert.match(inspectorSource, /Move seat/);
+  assert.match(inspectorSource, /Exit move/);
   assert.match(viewerFinderSource, /Published/);
   assert.match(viewerFinderSource, /Read-only/);
   assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Vacate|Delete seat/);

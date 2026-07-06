@@ -6,8 +6,8 @@ async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
 }
 
-test("advanced drawer reviews CSV imports in-app before calling the mutation", async () => {
-  const source = await readSource("../components/seat-map/AdvancedDrawer.tsx");
+test("settings data utilities review CSV imports in-app before calling the mutation", async () => {
+  const source = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
   const importCsvFunction = source.match(/function importCsv\(file: File \| undefined\) \{[\s\S]*?function confirmCsvImport\(\)/);
   const confirmCsvFunction = source.match(/function confirmCsvImport\(\) \{[\s\S]*?function importJson/);
   const closeCsvFunction = source.match(/function closeCsvReview\(\) \{[\s\S]*?\n  \}/);
@@ -31,8 +31,8 @@ test("advanced drawer reviews CSV imports in-app before calling the mutation", a
   assert.match(source, /Fix CSV first/);
 });
 
-test("advanced drawer reviews JSON restores in-app before calling the restore callback", async () => {
-  const source = await readSource("../components/seat-map/AdvancedDrawer.tsx");
+test("settings data utilities review JSON restores in-app before calling the restore action", async () => {
+  const source = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
   const importJsonFunction = source.match(/function importJson\(file: File \| undefined\) \{[\s\S]*?function confirmJsonRestore\(\)/);
   const confirmJsonFunction = source.match(/function confirmJsonRestore\(\) \{[\s\S]*?return \(/);
   const closeJsonFunction = source.match(/function closeJsonReview\(\) \{[\s\S]*?\n  \}/);
@@ -40,8 +40,8 @@ test("advanced drawer reviews JSON restores in-app before calling the restore ca
   assert.ok(importJsonFunction, "JSON import file-read flow should be source-visible.");
   assert.ok(confirmJsonFunction, "JSON confirm flow should be source-visible.");
   assert.ok(closeJsonFunction, "JSON cancel flow should be source-visible.");
-  assert.doesNotMatch(importJsonFunction[0], /onJsonImported/);
-  assert.match(confirmJsonFunction[0], /onJsonImported\(review\.snapshot, beforeSnapshot\)/);
+  assert.doesNotMatch(importJsonFunction[0], /restoreDraftSnapshotAction/);
+  assert.match(confirmJsonFunction[0], /restoreDraftSnapshotAction\(review\.snapshot\)/);
   assert.match(closeJsonFunction[0], /setJsonReview\(null\)/);
   assert.match(source, /Review JSON restore/);
   assert.match(source, /JSON restore imports a full draft backup/);

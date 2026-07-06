@@ -47,7 +47,8 @@ test("admin layout consolidation keeps planning actions in one command row", asy
   assert.match(topBar, /onClick=\{toggleFilterPanel\}/);
   assert.match(topBar, /aria-label=\{filterCollapsed \? "Open filters" : "Collapse filters"\}/);
   assert.match(topBar, /aria-label=\{namesToggleLabel\}/);
-  assert.match(topBar, /aria-label="Map tools"/);
+  assert.doesNotMatch(topBar, /aria-label="Map tools"/);
+  assert.match(topBar, /href="\/admin\/settings"/);
   assert.match(topBar, /disabled=\{pending \|\| inspectorDirty \|\| !undoAvailable\}[\s\S]*aria-label="Undo last map change"/);
   assert.match(topBar, /disabled=\{pending \|\| inspectorDirty \|\| !redoAvailable\}[\s\S]*aria-label="Redo last undone change"/);
   assert.match(topBar, /href="\/admin\/management"/);

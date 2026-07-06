@@ -30,7 +30,6 @@ import {
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
 import { buildPublishChangeSummary, type PublishChangeItem } from "@/lib/publishSummary";
-import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import {
   FilterPanel,
@@ -245,7 +244,6 @@ export function SeatMap({
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [moveSeatMode, setMoveSeatMode] = useState(false);
   const [addSeatMode, setAddSeatMode] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [publishReviewOpen, setPublishReviewOpen] = useState(false);
   const [askPlannerOpen, setAskPlannerOpen] = useState(false);
   const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
@@ -273,7 +271,6 @@ export function SeatMap({
   const [pending, startTransition] = useTransition();
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const mapToolsButtonRef = useRef<HTMLButtonElement | null>(null);
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const updateMapVisibleRange = useCallback(() => {
@@ -294,20 +291,9 @@ export function SeatMap({
     ));
   }, []);
 
-  const focusMapToolsButton = useCallback(() => {
-    window.setTimeout(() => {
-      mapToolsButtonRef.current?.focus();
-    }, 0);
-  }, []);
-
   const focusAskPlannerButton = useCallback(() => {
     window.setTimeout(() => askPlannerButtonRef.current?.focus(), 0);
   }, []);
-
-  const closeAdvancedDrawer = useCallback(() => {
-    setAdvancedOpen(false);
-    focusMapToolsButton();
-  }, [focusMapToolsButton]);
 
   const closeAskPlannerDrawer = useCallback(() => {
     setAskPlannerOpen(false);
@@ -315,20 +301,12 @@ export function SeatMap({
   }, [focusAskPlannerButton]);
 
   const toggleFilterPanel = useCallback(() => {
-    setAdvancedOpen(false);
     setAskPlannerOpen(false);
     setFilterCollapsed(current => !current);
   }, []);
 
-  const openAdvancedDrawer = useCallback(() => {
-    setFilterCollapsed(true);
-    setAskPlannerOpen(false);
-    setAdvancedOpen(true);
-  }, []);
-
   const openAskPlannerDrawer = useCallback(() => {
     setFilterCollapsed(true);
-    setAdvancedOpen(false);
     setAskPlannerOpen(true);
   }, []);
 
@@ -480,11 +458,6 @@ export function SeatMap({
         return;
       }
 
-      if (advancedOpen) {
-        closeAdvancedDrawer();
-        return;
-      }
-
       if (addSeatMode || moveSeatMode || swapSourceSeatId) {
         setAddSeatMode(false);
         setMoveSeatMode(false);
@@ -529,7 +502,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, advancedOpen, askPlannerOpen, closeAdvancedDrawer, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, moveSeatMode, publishReviewOpen, search, selectedSeatId, status, swapConfirm, swapSourceSeatId, zone]);
+  }, [addSeatMode, askPlannerOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, moveSeatMode, publishReviewOpen, search, selectedSeatId, status, swapConfirm, swapSourceSeatId, zone]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -742,7 +715,6 @@ export function SeatMap({
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
     setAddSeatMode(true);
-    setAdvancedOpen(false);
     setInspectorCollapsed(false);
   }
 
@@ -752,14 +724,12 @@ export function SeatMap({
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
     setMoveSeatMode(current => !current);
-    setAdvancedOpen(false);
   }
 
   function applyStartSwapSeatAction() {
     if (!selectedSeat) {
       setActionError("Select the source seat first, then choose Swap seat.");
       setActionNotice(null);
-      setAdvancedOpen(false);
       return;
     }
 
@@ -771,7 +741,6 @@ export function SeatMap({
     setDragState(null);
     setSwapConfirm(null);
     setSwapSourceSeatId(selectedSeat.id);
-    setAdvancedOpen(false);
     setInspectorCollapsed(true);
   }
 
@@ -922,7 +891,6 @@ export function SeatMap({
         }
         setDraftHistory(nextHistory);
         setActionNotice(notice);
-        setAdvancedOpen(false);
       } catch (error) {
         setActionNotice(null);
         setActionError(error instanceof Error ? error.message : `Could not ${actionLabel.toLowerCase()} draft edit.`);
@@ -1156,14 +1124,6 @@ export function SeatMap({
     setAddSeatMode(false);
   }
 
-  function clearSelection() {
-    if (selectedSeatId && inspectorDirty) {
-      requestInspectorGuard({ kind: "clear-selection" });
-      return;
-    }
-    applyClearSelectionAction();
-  }
-
   function beforeManagementNavigation() {
     if (!inspectorDirty) return true;
     requestInspectorGuard({ kind: "navigate-management" });
@@ -1180,7 +1140,6 @@ export function SeatMap({
   function explainSeatWithPlanner(seat: SeatWithEmployee) {
     if (!canEdit) return;
 
-    setAdvancedOpen(false);
     setAskPlannerOpen(true);
     setAskPlannerQueuedRequest(current => ({
       id: (current?.id ?? 0) + 1,
@@ -1195,7 +1154,6 @@ export function SeatMap({
     if (!selectedSeat) {
       setActionError("Select the source seat first, then choose Swap seat.");
       setActionNotice(null);
-      setAdvancedOpen(false);
       return;
     }
 
@@ -1247,7 +1205,6 @@ export function SeatMap({
         setSwapSourceSeatId(null);
         setSwapConfirm(null);
         setInspectorCollapsed(false);
-        setAdvancedOpen(false);
         setActionNotice(`Swapped ${buildSwapSummary(sourceSeat, targetSeat)}.`);
       } catch (error) {
         setActionNotice(null);
@@ -1434,7 +1391,6 @@ export function SeatMap({
         setMoveSeatMode(false);
         setSwapSourceSeatId(null);
         setSwapConfirm(null);
-        setAdvancedOpen(false);
         setActionNotice(`Deleted custom seat ${deletedSeatLabel}. Undo is available until publish.`);
       } catch (error) {
         setActionNotice(null);
@@ -1447,13 +1403,11 @@ export function SeatMap({
     if (inspectorDirty) {
       setActionNotice(null);
       setActionError("Publish review blocked: Save or discard the selected seat edits before publishing. The publish review only includes saved draft changes.");
-      setAdvancedOpen(false);
       return;
     }
 
     setActionError(null);
     setActionNotice(null);
-    setAdvancedOpen(false);
     setPublishReviewOpen(true);
   }
 
@@ -1466,7 +1420,6 @@ export function SeatMap({
         await publishSeatMapAction();
         setLocalPublishedSeats(nextPublishedSeats);
         setDraftHistory(clearDraftHistory());
-        setAdvancedOpen(false);
         setPublishReviewOpen(false);
         setActionNotice("Draft map published. Undo/Redo history was cleared.");
       } catch (error) {
@@ -1569,7 +1522,6 @@ export function SeatMap({
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
     showFilterPanel ||
-    advancedOpen ||
     askPlannerOpen ||
     publishReviewOpen ||
     Boolean(deleteSeatConfirm) ||
@@ -1703,18 +1655,6 @@ export function SeatMap({
               {namesToggleLabel}
             </button>
             <button
-              ref={mapToolsButtonRef}
-              type="button"
-              aria-label="Map tools"
-              aria-controls="advanced-drawer"
-              aria-expanded={advancedOpen}
-              aria-haspopup="dialog"
-              onClick={openAdvancedDrawer}
-              className={advancedOpen ? chromeToolbarBtnActive : chromeToolbarBtn}
-            >
-              Map tools
-            </button>
-            <button
               type="button"
               onClick={undoDraftEdit}
               disabled={pending || inspectorDirty || !undoAvailable}
@@ -1784,7 +1724,21 @@ export function SeatMap({
               {publishSummary.hasChanges && <span className="h-1.5 w-1.5 rounded-full bg-[var(--admin-primary)]" aria-hidden="true" />}
             </button>
           )}
-          <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[12px] font-semibold text-white">A</span>
+          {canEdit ? (
+            <Link
+              href="/admin/settings"
+              aria-label="Open settings"
+              title="Settings — data utilities and recovery"
+              onClick={event => {
+                if (!beforeManagementNavigation()) event.preventDefault();
+              }}
+              className={["flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[12px] font-semibold text-white transition hover:brightness-110", focusRingClass].join(" ")}
+            >
+              A
+            </Link>
+          ) : (
+            <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[12px] font-semibold text-white">A</span>
+          )}
         </div>
       </header>
 
@@ -1926,6 +1880,22 @@ export function SeatMap({
                     );
                   })}
                 </div>
+                {canEdit && (
+                  <button
+                    type="button"
+                    aria-pressed={addSeatMode}
+                    onClick={addSeatMode ? cancelAddSeatMode : startAddSeatMode}
+                    className={[
+                      "pointer-events-auto ml-2 mt-2 inline-flex h-9 items-center rounded-xl border border-white/15 px-3 text-[11px] font-semibold shadow-[0_8px_18px_rgba(16,17,20,0.24),inset_0_1px_0_rgba(255,255,255,0.16)] backdrop-blur-md transition active:scale-[0.97] active:duration-75",
+                      focusRingClass,
+                      addSeatMode
+                        ? "bg-[var(--admin-primary-soft)] text-[var(--admin-primary)]"
+                        : "bg-[var(--admin-rail-bg)]/90 text-white/85 hover:bg-[var(--admin-rail-bg)] hover:text-white"
+                    ].join(" ")}
+                  >
+                    {addSeatMode ? "Exit Add Seat" : "Add seat"}
+                  </button>
+                )}
               </div>
               <div
                 ref={mapRef}
@@ -2049,75 +2019,6 @@ export function SeatMap({
       </main>
       </div>
       </div>
-
-      <AdvancedDrawer
-        open={advancedOpen}
-        seats={localSeats}
-        employees={localEmployees}
-        selectedSeat={selectedSeat}
-        addSeatMode={addSeatMode}
-        moveSeatMode={moveSeatMode}
-        swapSeatMode={Boolean(swapSourceSeatId)}
-        pending={pending}
-        undoAvailable={!pending && !inspectorDirty && undoAvailable}
-        redoAvailable={!pending && !inspectorDirty && redoAvailable}
-        undoTitle={undoTitle}
-        redoTitle={redoTitle}
-        askPlannerHighlightCount={plannerHighlightedSeatIds.length}
-        onClose={closeAdvancedDrawer}
-        onUndo={undoDraftEdit}
-        onRedo={redoDraftEdit}
-        onOpenAskPlanner={openAskPlannerDrawer}
-        onStartAddSeat={startAddSeatMode}
-        onCancelAddSeat={cancelAddSeatMode}
-        onStartSwapSeat={() => startSwapSeatMode()}
-        onCancelSwapSeat={cancelSwapSeatMode}
-        onToggleMoveSeat={() => {
-          if (!selectedSeatId) return;
-          if (inspectorDirty) {
-            requestInspectorGuard({ kind: "start-move-seat" });
-            return;
-          }
-          applyStartMoveSeatAction();
-        }}
-        onBeforeManagementNavigation={beforeManagementNavigation}
-        onClearSelection={clearSelection}
-        onDeleteSelectedSeat={deleteSelectedSeat}
-        onBeforeCsvImport={captureDraftSnapshot}
-        onCsvImported={(payload, beforeSnapshot) => {
-          setActionError(null);
-          setActionNotice(null);
-          const afterSeats = normalizeSeats(payload.seats);
-          recordDraftHistory(`Import ${payload.count} CSV row${payload.count === 1 ? "" : "s"}`, beforeSnapshot, afterSeats, payload.employees);
-          setLocalSeats(afterSeats);
-          setLocalEmployees(payload.employees);
-          setSelectedSeatId(null);
-          setInspectorDirty(false);
-          setMoveSeatMode(false);
-          setActionNotice(`Imported ${payload.count} CSV row${payload.count === 1 ? "" : "s"} into the draft map.`);
-        }}
-        onJsonImported={async (snapshot, beforeSnapshot) => {
-          setActionError(null);
-          setActionNotice(null);
-          const restored = await restoreDraftSnapshotAction(snapshot);
-          const afterSeats = normalizeSeats(restored.seats);
-          recordDraftHistory("Import JSON backup", beforeSnapshot, afterSeats, restored.employees);
-          setLocalSeats(afterSeats);
-          setLocalEmployees(restored.employees);
-          setSelectedSeatId(null);
-          setInspectorDirty(false);
-          setMoveSeatMode(false);
-          setAddSeatMode(false);
-          setSwapSourceSeatId(null);
-          setSwapConfirm(null);
-          closeAdvancedDrawer();
-          setActionNotice("Imported JSON backup into the draft map.");
-        }}
-        onError={message => {
-          setActionError(message);
-          if (message) setActionNotice(null);
-        }}
-      />
 
       {canEdit && (
         <AskPlannerDrawer
@@ -2352,6 +2253,15 @@ export function SeatMap({
         onClearSearchContext={searchActive ? clearSearch : clearStructuredFilters}
         onToggleCollapse={() => setInspectorCollapsed(current => !current)}
         onStartSwapSeat={() => startSwapSeatMode()}
+        onStartMoveSeat={() => {
+          if (!selectedSeatId) return;
+          if (inspectorDirty) {
+            requestInspectorGuard({ kind: "start-move-seat" });
+            return;
+          }
+          applyStartMoveSeatAction();
+        }}
+        moveMode={moveSeatMode}
         onDeleteSeat={deleteSelectedSeat}
         onExplainSeat={explainSeatWithPlanner}
         onBeforeSeatUpdate={captureDraftSnapshot}

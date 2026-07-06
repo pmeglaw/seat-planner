@@ -22,6 +22,8 @@ type SeatInspectorProps = {
   onClearSearchContext?: () => void;
   onToggleCollapse: () => void;
   onStartSwapSeat: () => void;
+  onStartMoveSeat: () => void;
+  moveMode: boolean;
   onDeleteSeat: () => void;
   onExplainSeat?: (seat: SeatWithEmployee) => void;
   onBeforeSeatUpdate: () => DraftSnapshot;
@@ -134,6 +136,8 @@ export function SeatInspector({
   onClearSearchContext,
   onToggleCollapse,
   onStartSwapSeat,
+  onStartMoveSeat,
+  moveMode,
   onDeleteSeat,
   onExplainSeat,
   onBeforeSeatUpdate,
@@ -623,6 +627,11 @@ export function SeatInspector({
     onStartSwapSeat();
   }
 
+  function handleStartMoveSeat() {
+    if (pending) return;
+    onStartMoveSeat();
+  }
+
   function handleVacateSeat() {
     if (!hasCurrentAssignment || pending) return;
     setVacateConfirmOpen(true);
@@ -1021,6 +1030,9 @@ export function SeatInspector({
               </Button>
             </div>
             <div className={["mt-2 grid gap-2", secondaryActionGridClassName].join(" ")}>
+              <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move ${selectedSeat.label} on the map`} className="min-w-0 w-full rounded-xl">
+                {moveMode ? "Exit move" : "Move seat"}
+              </Button>
               <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Start seat swap for ${selectedSeat.label}`} className="min-w-0 w-full rounded-xl">
                 Swap seat
               </Button>

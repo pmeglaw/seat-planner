@@ -40,7 +40,7 @@ test("move-seat action updates one draft seat without publishing", async () => {
 
 test("custom-seat delete flow is draft-only and clearly guarded", async () => {
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
-  const drawerSource = await readFile(new URL("../components/seat-map/AdvancedDrawer.tsx", import.meta.url), "utf8");
+  const inspectorDeleteSource = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
   const actionSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
   const deleteAction = actionSource.match(/export async function deleteSeatAction[\s\S]*?export async function importAssignmentsCsvAction/);
 
@@ -49,9 +49,8 @@ test("custom-seat delete flow is draft-only and clearly guarded", async () => {
   assert.match(seatMapSource, /getSeatDeleteBlockReason/);
   assert.match(seatMapSource, /Only available custom draft seats can be deleted\. Original seats are protected\./);
   assert.match(seatMapSource, /This removes custom draft seats only\. Published maps are unchanged until you publish\./);
-  assert.match(drawerSource, /label="Delete custom seat"/);
-  assert.match(drawerSource, /selectedSeatDeleteBlockReason/);
-  assert.match(drawerSource, /Only available custom draft seats can be deleted\. Original seats are protected\./);
+  assert.match(inspectorDeleteSource, /Delete custom seat/);
+  assert.match(inspectorDeleteSource, /deleteHelpText/);
   assert.match(deleteAction[0], /canDeleteDraftSeat/);
   assert.match(deleteAction[0], /getSeatDeleteBlockReason/);
   assert.match(deleteAction[0], /\.select\("id,label,layer,is_custom,employee_id,status"\)/);
@@ -96,15 +95,14 @@ test("admin names visibility preference persists locally without server storage"
   assert.doesNotMatch(seatMapSource, /supabase[\s\S]*seat-planner:names-visible|seat-planner:names-visible[\s\S]*supabase/);
 });
 
-test("map tools add seat row is neutral until add-seat mode is active", async () => {
-  const drawerSource = await readFile(new URL("../components/seat-map/AdvancedDrawer.tsx", import.meta.url), "utf8");
-  const addSeatCommand = drawerSource.match(/<CommandButton\s+label=\{addSeatMode \? "Cancel Add Seat" : "Add Seat"\}[\s\S]*?disabled=\{busy\}\s+\/>/);
+test("canvas add seat toggle is neutral until add-seat mode is active", async () => {
+  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  const addSeatToggle = seatMapSource.match(/aria-pressed=\{addSeatMode\}[\s\S]*?\{addSeatMode \? "Exit Add Seat" : "Add seat"\}/);
 
-  assert.ok(addSeatCommand, "Add Seat command should remain source-visible.");
-  assert.match(addSeatCommand[0], /tone=\{addSeatMode \? "active" : "default"\}/);
-  assert.match(addSeatCommand[0], /Active\. Click a seating zone or cancel/);
-  assert.doesNotMatch(addSeatCommand[0], /tone="active"/);
-  assert.match(drawerSource, /border-\[var\(--admin-border\)\] bg-\[var\(--admin-surface\)\] text-\[var\(--admin-text-primary\)\] hover:border-\[var\(--admin-border-strong\)\] hover:bg-\[var\(--admin-surface-alt\)\]/);
+  assert.ok(addSeatToggle, "Canvas Add seat toggle should be source-visible.");
+  assert.match(addSeatToggle[0], /onClick=\{addSeatMode \? cancelAddSeatMode : startAddSeatMode\}/);
+  assert.match(addSeatToggle[0], /"bg-\[var\(--admin-primary-soft\)\] text-\[var\(--admin-primary\)\]"/);
+  assert.match(addSeatToggle[0], /bg-\[var\(--admin-rail-bg\)\]\/90/);
 });
 
 test("seat map uses the component-board desktop workspace shell", async () => {
@@ -122,7 +120,7 @@ test("seat map uses the component-board desktop workspace shell", async () => {
   assert.match(seatMapSource, /aria-label="Seat inventory summary"[\s\S]*stats\.total[\s\S]*stats\.assigned[\s\S]*stats\.available/);
   assert.match(seatMapSource, /aria-label="Seat status legend"/);
   assert.match(seatMapSource, /role="search" aria-label="Command search"/);
-  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*aria-label="Map tools"[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
+  assert.match(seatMapSource, /aria-label="Admin command row"[\s\S]*Open filters[\s\S]*namesToggleLabel[\s\S]*Undo last map change[\s\S]*Redo last undone change[\s\S]*\/admin\/management[\s\S]*Open Ask Planner/);
   assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
   assert.match(seatMapSource, /bg-\[var\(--admin-surface-muted\)\] p-2 lg:min-h-0/);
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*rounded-\[14px\][\s\S]*bg-\[var\(--admin-surface\)\]\/68/);

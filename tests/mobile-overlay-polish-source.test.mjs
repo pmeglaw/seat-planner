@@ -34,7 +34,6 @@ test("mobile active interaction surfaces hide map-only controls", async () => {
 
   assert.match(surfaceSource, /Boolean\(selectedSeat && !inspectorCollapsed\)/);
   assert.match(surfaceSource, /showFilterPanel/);
-  assert.match(surfaceSource, /advancedOpen/);
   assert.match(surfaceSource, /askPlannerOpen/);
   assert.match(surfaceSource, /publishReviewOpen/);
   assert.match(surfaceSource, /Boolean\(deleteSeatConfirm\)/);
