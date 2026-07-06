@@ -29,7 +29,7 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   // Claude Design: identity moves into the top bar; the publish status is the top-bar
   // Review/Published pill; the bordered nested groups collapse into one flat text toolbar.
   assert.match(source, /Megeredchian Law Seats/);
-  assert.match(source, /Review changes/);
+  assert.match(source, /aria-label="Command search"/);
   assert.match(source, /aria-label="Admin command row"/);
   assert.match(source, /aria-label="Undo last map change"/);
   assert.match(source, /aria-label="Redo last undone change"/);
@@ -42,7 +42,7 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /No map changes to undo/);
   assert.match(source, /No undone map changes to redo/);
   assert.match(source, /Draft matches published/);
-  assert.match(source, /Draft changes:/);
+  assert.match(source, /unpublished \$\{publishSummary\.totalChangeCount === 1 \? "change" : "changes"\}/);
   assert.match(source, /Esc exits/);
   assert.match(source, /Exit Add Seat/);
   assert.match(source, /\{canEdit && \([\s\S]*aria-label=\{`Review \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);

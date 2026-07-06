@@ -256,6 +256,9 @@ export function SeatMap({
   const [status, setStatus] = useState("all");
   const [filterCollapsed, setFilterCollapsed] = useState(true);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
+  const [searchShortcutHint, setSearchShortcutHint] = useState("");
+  const chromeSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const canvasSearchInputRef = useRef<HTMLInputElement | null>(null);
   const [inspectorDirty, setInspectorDirty] = useState(false);
   const [inspectorGuardAction, setInspectorGuardAction] = useState<InspectorGuardAction | null>(null);
   const [pendingInspectorSaveAction, setPendingInspectorSaveAction] = useState<InspectorGuardAction | null>(null);
@@ -342,6 +345,23 @@ export function SeatMap({
   useEffect(() => {
     if (!selectedSeatId) setInspectorCollapsed(false);
   }, [selectedSeatId]);
+
+  // Global command (3b): ⌘K / Ctrl+K focuses the command search — the chrome
+  // input at lg+, the slim canvas row below that tier.
+  useEffect(() => {
+    setSearchShortcutHint(/mac/i.test(window.navigator.platform) ? "⌘K" : "Ctrl K");
+    const handleSearchShortcut = (event: globalThis.KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        const chromeInput = chromeSearchInputRef.current;
+        const target = chromeInput && chromeInput.offsetParent !== null ? chromeInput : canvasSearchInputRef.current;
+        target?.focus();
+        target?.select();
+      }
+    };
+    window.addEventListener("keydown", handleSearchShortcut);
+    return () => window.removeEventListener("keydown", handleSearchShortcut);
+  }, []);
 
   useEffect(() => {
     const viewport = mapViewportRef.current;
@@ -935,6 +955,17 @@ export function SeatMap({
     setSearch("");
   }
 
+  // Shared by the chrome search input (lg+) and the canvas search row below it.
+  function handleSearchInputChange(value: string) {
+    setSearch(value);
+    // INV-1 (owner-revised): search hands the panel slot to results — the
+    // inspector auto-collapses to its pill (selection retained; expand to
+    // return). Unsaved inspector edits stay put: no collapse until save/discard.
+    if (value.trim() && selectedSeatId && !inspectorDirty) {
+      setInspectorCollapsed(true);
+    }
+  }
+
   function removeActiveFilterChip(chipId: string) {
     if (chipId === "search") {
       clearSearch();
@@ -1489,7 +1520,11 @@ export function SeatMap({
     publishSummary.updatedSeatCount ? `${publishSummary.updatedSeatCount} updated` : null,
     publishSummary.removedSeats.length ? `${publishSummary.removedSeats.length} removed` : null
   ].filter(Boolean).join(", ");
-  const draftStatusLabel = publishSummary.hasChanges ? `Draft changes: ${publishSummary.totalChangeCount}` : "Draft matches published";
+  // 3b fact ownership: draft-sync has ONE owner — the chrome chip (sole draft
+  // display and the publish-review entry point).
+  const draftStatusLabel = publishSummary.hasChanges
+    ? `${publishSummary.totalChangeCount} unpublished ${publishSummary.totalChangeCount === 1 ? "change" : "changes"}`
+    : "Draft matches published";
   const draftStatusTitle = publishSummary.hasChanges
     ? `Review draft changes: ${draftChangeBreakdown || `${publishSummary.totalChangeCount} total`}`
     : "Draft and published maps currently match";
@@ -1648,12 +1683,65 @@ export function SeatMap({
           </span>
           <div className="hidden min-w-0 leading-tight sm:block">
             <div className="truncate text-[13px] font-semibold text-[var(--admin-chrome-text)]">Megeredchian Law Seats</div>
-            <div className="truncate text-[11px] text-[var(--admin-chrome-muted)]">{canEdit ? "Draft · Admin" : "Published · Viewer"}</div>
+            <div className="truncate text-[11px] text-[var(--admin-chrome-muted)]">{canEdit ? "Admin" : "Published · Viewer"}</div>
           </div>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={openPublishReview}
+              aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
+              title={draftStatusTitle}
+              className={[
+                "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium leading-none ring-1 transition hover:brightness-[1.04] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]",
+                publishSummary.hasChanges
+                  ? "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]"
+                  : "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)] ring-[var(--admin-state-clean-border)]"
+              ].join(" ")}
+            >
+              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="max-w-[40vw] truncate">{draftStatusLabel}</span>
+            </button>
+          )}
+        </div>
+
+        <div role="search" aria-label="Command search" className="hidden min-w-0 lg:block lg:max-w-[448px] lg:flex-1">
+          <label className="relative block w-full min-w-0">
+            <span className="sr-only">Search employee, seat, job title, department, or zone</span>
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
+              <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
+              <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            </svg>
+            <input
+              ref={chromeSearchInputRef}
+              value={search}
+              onChange={event => handleSearchInputChange(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === "Escape" && search.trim()) {
+                  event.stopPropagation();
+                  clearSearch();
+                }
+              }}
+              placeholder="Search people, seats, or zones"
+              className="h-9 w-full rounded-[10px] border border-[var(--admin-chrome-border)] bg-white/[0.07] pl-9 pr-16 text-[13px] font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.1] focus:border-[var(--admin-primary)] focus:bg-white/[0.12] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
+            />
+            {search.trim() ? (
+              <button
+                type="button"
+                aria-label="Clear search"
+                title="Clear search"
+                className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+                onClick={clearSearch}
+              >
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </button>
+            ) : searchShortcutHint ? (
+              <kbd aria-hidden="true" className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-[6px] border border-[var(--admin-chrome-border)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)]">{searchShortcutHint}</kbd>
+            ) : null}
+          </label>
         </div>
 
         {canEdit && (
-          <nav role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <nav role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:ml-0 lg:flex-none lg:overflow-visible">
             <button
               type="button"
               onClick={toggleFilterPanel}
@@ -1734,18 +1822,6 @@ export function SeatMap({
               {mapViewMode === "detail" ? "100%" : "Fit"}
             </button>
           )}
-          {canEdit && (
-            <button
-              type="button"
-              onClick={openPublishReview}
-              aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
-              title={draftStatusTitle}
-              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] bg-[var(--admin-surface)] px-3 text-[13px] font-semibold leading-none text-[var(--admin-text-primary)] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
-            >
-              {publishSummary.hasChanges ? "Review changes" : "Published"}
-              {publishSummary.hasChanges && <span className="h-1.5 w-1.5 rounded-full bg-[var(--admin-primary)]" aria-hidden="true" />}
-            </button>
-          )}
           {canEdit ? (
             <Link
               href="/admin/settings"
@@ -1768,7 +1844,7 @@ export function SeatMap({
         
 
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
-          <div role="search" aria-label="Command search" className="z-30 px-0.5 pb-2 lg:shrink-0">
+          <div role="search" aria-label="Canvas search" className="z-30 px-0.5 pb-2 lg:hidden">
             <label className="relative block w-full min-w-0">
               <span className="sr-only">Search employee, seat, job title, department, or zone</span>
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--admin-text-muted)]">
@@ -1776,17 +1852,9 @@ export function SeatMap({
                 <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
               </svg>
               <input
+                ref={canvasSearchInputRef}
                 value={search}
-                onChange={event => {
-                  const value = event.target.value;
-                  setSearch(value);
-                  // INV-1 (owner-revised): search hands the panel slot to results — the
-                  // inspector auto-collapses to its pill (selection retained; expand to
-                  // return). Unsaved inspector edits stay put: no collapse until save/discard.
-                  if (value.trim() && selectedSeatId && !inspectorDirty) {
-                    setInspectorCollapsed(true);
-                  }
-                }}
+                onChange={event => handleSearchInputChange(event.target.value)}
                 onKeyDown={event => {
                   if (event.key === "Escape" && search.trim()) {
                     event.stopPropagation();

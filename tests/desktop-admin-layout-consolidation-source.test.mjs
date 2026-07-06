@@ -23,9 +23,14 @@ test("admin layout consolidation moves identity and status into the top bar (rai
 
   assert.doesNotMatch(seatMapSource, /aria-label="Admin workspace rail"/);
   assert.match(topBar, /Megeredchian Law Seats/);
-  assert.match(topBar, /\{canEdit \? "Draft · Admin" : "Published · Viewer"\}/);
+  // 3b: the chrome chip is the SOLE draft-sync display and the publish entry —
+  // the brand subtitle no longer duplicates draft state, and the old
+  // Review/Published surface button is gone.
+  assert.match(topBar, /\{canEdit \? "Admin" : "Published · Viewer"\}/);
   assert.match(topBar, /onClick=\{openPublishReview\}/);
-  assert.match(topBar, /\{publishSummary\.hasChanges \? "Review changes" : "Published"\}/);
+  assert.match(topBar, /\{draftStatusLabel\}/);
+  assert.doesNotMatch(topBar, /"Review changes"/);
+  assert.doesNotMatch(topBar, /Draft · Admin/);
 
   assert.match(canvasHeader, /aria-label="Seat inventory summary"/);
   assert.match(canvasHeader, /\{stats\.total\}[\s\S]*seats/);
@@ -36,13 +41,21 @@ test("admin layout consolidation moves identity and status into the top bar (rai
 
 test("admin layout consolidation keeps planning actions in one command row", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
-  // Claude Design top bar: one flat text-only toolbar (no nested bordered groups). The
-  // command search moves to its own slim row below the bar.
+  // 3b chrome: the command search lives IN the 56px bar at lg+ (⌘K focuses it);
+  // below that tier it stays as the slim canvas row.
   const topBar = sliceFrom(seatMapSource, 'bg-[var(--admin-chrome-bg)]', "</header>");
   const searchRow = sliceFrom(seatMapSource, 'role="search" aria-label="Command search"', "</div>");
+  const canvasSearchRow = sliceFrom(seatMapSource, 'role="search" aria-label="Canvas search"', "</div>");
 
   assert.match(topBar, /Megeredchian Law Seats/);
-  assert.match(topBar, /Draft · Admin/);
+  assert.match(topBar, /role="search" aria-label="Command search"/);
+  assert.match(topBar, /hidden min-w-0 lg:block lg:max-w-\[448px\] lg:flex-1/);
+  assert.match(topBar, /handleSearchInputChange/);
+  assert.match(topBar, /\{searchShortcutHint\}/);
+  assert.match(canvasSearchRow, /lg:hidden/);
+  assert.match(canvasSearchRow, /handleSearchInputChange/);
+  assert.match(seatMapSource, /const handleSearchShortcut = \(event: globalThis\.KeyboardEvent\) => \{/);
+  assert.match(seatMapSource, /event\.key\.toLowerCase\(\) === "k"/);
   assert.match(topBar, /aria-label="Admin command row"/);
   assert.match(topBar, /onClick=\{toggleFilterPanel\}/);
   assert.match(topBar, /aria-label=\{filterCollapsed \? "Open filters" : "Collapse filters"\}/);
