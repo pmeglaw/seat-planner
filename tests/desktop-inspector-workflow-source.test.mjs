@@ -31,8 +31,8 @@ test("desktop inspector shell exposes the selected-seat identity model", async (
   assert.doesNotMatch(inspectorSource, /selectedSeatStatusLabel/);
   assert.doesNotMatch(seatMapSource, /desktopInspectorReserveMarginClassName|dock:/);
   assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = ""/);
-  assert.match(seatMapSource, /const activeModeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
-  assert.match(seatMapSource, /className=\{activeModeBannerClassName\}/);
+  assert.match(seatMapSource, /const modeCardOpen = canEdit && Boolean\(activeMode\)/);
+  assert.match(inspectorSource, /Drag the seat marker to its new spot\. Esc exits move\./);
   assert.match(seatMapSource, /const actionErrorBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /className=\{actionErrorBannerClassName\}/);
