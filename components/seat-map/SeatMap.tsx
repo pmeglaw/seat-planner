@@ -21,6 +21,7 @@ import { departmentKey } from "@/lib/departments";
 import { normalizePoint } from "@/lib/seatMath";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
+import { buildZoneClusters, formatZoneClusterSummary, type ZoneCluster } from "@/lib/seatClusters";
 import {
   MAP_IMAGE_HEIGHT,
   MAP_IMAGE_SRC,
@@ -552,6 +553,14 @@ export function SeatMap({
   const swapTargetSeat = swapConfirm ? localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null : null;
   const visualLocalSeats = useMemo(() => seatsToVisualSeats(localSeats), [localSeats]);
   const visualSeatById = useMemo(() => new Map(visualLocalSeats.map(seat => [seat.id, seat])), [visualLocalSeats]);
+  // Overview-zoom clusters anchor at the calibrated (visual) centroid of each zone.
+  const zoneClusters = useMemo(
+    () => buildZoneClusters(localSeats.map(seat => {
+      const visualSeat = visualSeatById.get(seat.id) ?? seat;
+      return { status: seat.status, zone: seat.zone, department: seat.department, x: visualSeat.x, y: visualSeat.y };
+    })),
+    [localSeats, visualSeatById]
+  );
   const plannerHighlightedSeatIdSet = useMemo(() => new Set(plannerHighlightedSeatIds), [plannerHighlightedSeatIds]);
   const searchQuery = search.trim();
   const searchActive = Boolean(searchQuery);
@@ -987,6 +996,15 @@ export function SeatMap({
         mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
       });
     }
+  }
+
+  function zoomToZoneCluster(cluster: ZoneCluster) {
+    // Scale readiness (Figma page 10): a pill click zooms to detail centered on
+    // the zone. Zooming is the only commitment — no seat auto-selects (INV-2).
+    setMapViewMode("detail");
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => scrollMapToPoint(cluster.x, cluster.y));
+    });
   }
 
   const centerSeatInMap = useCallback((seatId: string) => {
@@ -1520,6 +1538,9 @@ export function SeatMap({
   const resultsPanelOpen = canEdit && filtersActive && (!selectedSeat || inspectorCollapsed);
   // Floating panels intentionally overlay the canvas, so banners need no safe area.
   const canvasBannerSafeAreaClassName = "";
+  // Scale readiness (Figma page 10): overview zoom clusters markers into zone pills;
+  // search, a selection, or an active mode dissolves clusters back into markers.
+  const overviewClusterMode = mapViewMode === "overview" && !filtersActive && !selectedSeatId && !addSeatMode && !moveSeatMode && !swapSourceSeatId;
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
     showFilterPanel ||
@@ -1922,7 +1943,20 @@ export function SeatMap({
                 />
 
                 <div className={mapMarkerLayerClassName}>
-                  {localSeats.map(seat => {
+                  {overviewClusterMode ? zoneClusters.map(cluster => (
+                    <button
+                      key={cluster.zone}
+                      type="button"
+                      onClick={() => zoomToZoneCluster(cluster)}
+                      aria-label={`Zoom to ${cluster.zone}: ${formatZoneClusterSummary(cluster)}`}
+                      title={`Zoom to ${cluster.zone}`}
+                      style={{ left: `${cluster.x * 100}%`, top: `${cluster.y * 100}%` }}
+                      className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--admin-border-strong)] bg-[var(--admin-surface)]/95 py-1.5 pl-3 pr-2.5 text-xs font-semibold text-[var(--admin-text-primary)] shadow-[0_10px_24px_rgba(31,34,37,0.14)] backdrop-blur transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-paper)] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                    >
+                      <span>{cluster.zone}</span>
+                      <span className="font-medium text-[var(--admin-text-muted)]">{formatZoneClusterSummary(cluster)}</span>
+                    </button>
+                  )) : localSeats.map(seat => {
                     const seatMatchesFilters = matchesFilters(seat);
                     const visualSeat = visualSeatById.get(seat.id) ?? seat;
                     const viewportPlacement = getMarkerViewportPlacement(visualSeat.x);
