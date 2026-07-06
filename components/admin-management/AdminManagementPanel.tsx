@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { getLatestPublishEvent, getPublishHistoryActor, type PublishHistoryEvent } from "@/lib/publishHistory";
 import {
@@ -17,6 +17,7 @@ import {
   updateEmployeeAction
 } from "@/app/actions";
 import { buildDepartmentRoster, departmentKey } from "@/lib/departments";
+import { computeVirtualWindow } from "@/lib/virtualizedList";
 import { Button } from "@/components/ui/Button";
 
 type EmployeeForm = {
@@ -73,10 +74,6 @@ function formFromEmployee(employee: Employee): EmployeeForm {
 
 function getSeatZone(seat: SeatWithEmployee) {
   return seat.zone ?? seat.department ?? "";
-}
-
-function getAssignedSeatLabel(employeeId: string, seats: SeatWithEmployee[]) {
-  return seats.find(seat => seat.employee_id === employeeId)?.label ?? "Unassigned";
 }
 
 function getInitials(name: string) {
@@ -170,18 +167,28 @@ export function AdminManagementPanel({
 
   const zoneCounts = useMemo(() => countSeatsByZone(localSeats), [localSeats]);
 
+  // Scale readiness: one seat-label index instead of scanning every seat per
+  // employee (the directory must survive 500/1,000/5,000 employees).
+  const seatLabelByEmployeeId = useMemo(() => {
+    const labels = new Map<string, string>();
+    localSeats.forEach(seat => {
+      if (seat.employee_id) labels.set(seat.employee_id, seat.label);
+    });
+    return labels;
+  }, [localSeats]);
+
   const filteredEmployees = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return activeEmployees.filter(employee => {
-      const assignment = getAssignedSeatLabel(employee.id, localSeats);
+      const assignment = seatLabelByEmployeeId.get(employee.id) ?? "Unassigned";
       const haystack = [employee.full_name, employee.position, employee.department, employee.phone_extension, assignment].filter(Boolean).join(" ").toLowerCase();
       return !needle || haystack.includes(needle);
     });
-  }, [activeEmployees, localSeats, search]);
+  }, [activeEmployees, seatLabelByEmployeeId, search]);
 
   const selectedEmployee = activeEmployees.find(employee => employee.id === selectedEmployeeId) ?? null;
-  const selectedEmployeeSeatLabel = selectedEmployee ? getAssignedSeatLabel(selectedEmployee.id, localSeats) : "Unassigned";
-  const assignedEmployees = activeEmployees.filter(employee => localSeats.some(seat => seat.employee_id === employee.id)).length;
+  const selectedEmployeeSeatLabel = selectedEmployee ? seatLabelByEmployeeId.get(selectedEmployee.id) ?? "Unassigned" : "Unassigned";
+  const assignedEmployees = activeEmployees.filter(employee => seatLabelByEmployeeId.has(employee.id)).length;
   const unassignedEmployees = activeEmployees.length - assignedEmployees;
   const latestPublish = getLatestPublishEvent(publishHistoryState.events);
   const managementSummaryCards = [
@@ -192,6 +199,70 @@ export function AdminManagementPanel({
     { label: "Active zones", value: zoneNames.length, detail: "Filters" }
   ];
   const fieldClassName = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100";
+
+  // Virtualized directory (Figma page 10, Scalability): only the employee cards
+  // near the viewport render; padding preserves the page scroll height. Geometry
+  // is measured from the live grid so the cards keep their exact current look.
+  const employeeGridRef = useRef<HTMLDivElement | null>(null);
+  const [employeeGridGeometry, setEmployeeGridGeometry] = useState({
+    scrollOffset: 0,
+    viewportHeight: 1080,
+    columns: 1,
+    rowHeight: 104
+  });
+
+  useEffect(() => {
+    if (activeTab !== "employees") return;
+
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const grid = employeeGridRef.current;
+      if (!grid) return;
+      // grid-cols-1 lg:grid-cols-2 — matches the existing card grid breakpoints.
+      const columns = window.innerWidth >= 1024 ? 2 : 1;
+      const firstCard = grid.querySelector<HTMLElement>("[data-directory-card]");
+      // gap-2 row gap; fall back to the default before the first card renders.
+      const rowHeight = firstCard ? firstCard.offsetHeight + 8 : 104;
+      // Quantize to row steps so scrolling only re-renders when the window moves.
+      const rawOffset = Math.max(0, -grid.getBoundingClientRect().top);
+      const scrollOffset = Math.floor(rawOffset / rowHeight) * rowHeight;
+      const viewportHeight = window.innerHeight;
+      setEmployeeGridGeometry(current => (
+        current.scrollOffset === scrollOffset
+          && current.viewportHeight === viewportHeight
+          && current.columns === columns
+          && current.rowHeight === rowHeight
+          ? current
+          : { scrollOffset, viewportHeight, columns, rowHeight }
+      ));
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(measure);
+    };
+
+    measure();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [activeTab, filteredEmployees.length]);
+
+  const employeeWindow = useMemo(() => computeVirtualWindow({
+    itemCount: filteredEmployees.length,
+    columns: employeeGridGeometry.columns,
+    rowHeight: employeeGridGeometry.rowHeight,
+    viewportHeight: employeeGridGeometry.viewportHeight,
+    scrollOffset: employeeGridGeometry.scrollOffset,
+    overscanRows: 4
+  }), [filteredEmployees.length, employeeGridGeometry]);
+  const visibleEmployees = useMemo(
+    () => filteredEmployees.slice(employeeWindow.startIndex, employeeWindow.endIndex),
+    [filteredEmployees, employeeWindow]
+  );
 
   const loadPublishHistory = useCallback(async () => {
     setPublishHistoryState(current => ({
@@ -532,35 +603,45 @@ export function AdminManagementPanel({
                   className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100 md:w-80"
                 />
               </div>
-              <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-2">
-                {filteredEmployees.map(employee => {
-                  const seatLabel = getAssignedSeatLabel(employee.id, localSeats);
-                  return (
-                    <button
-                      key={employee.id}
-                      type="button"
-                      onClick={() => editEmployee(employee)}
-                      className={["rounded-2xl border p-3 text-left transition", selectedEmployeeId === employee.id ? "border-brand bg-orange-50" : "border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/40"].join(" ")}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-black text-brand-dark">{getInitials(employee.full_name)}</div>
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-black text-slate-950">{employee.full_name}</div>
-                          <div className="mt-1 truncate text-xs text-slate-500">
-                            {[employee.position, employee.department, employee.phone_extension ? `Ext. ${employee.phone_extension}` : null].filter(Boolean).join(" · ") || "No position or department"}
+              <p aria-live="polite" className="mt-3 text-xs font-medium text-slate-500">
+                {pluralize(filteredEmployees.length, "employee")} of {activeEmployees.length.toLocaleString()} shown
+              </p>
+              <div
+                ref={employeeGridRef}
+                style={{ paddingTop: employeeWindow.topPadding, paddingBottom: employeeWindow.bottomPadding }}
+                className="mt-2"
+              >
+                <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                  {visibleEmployees.map(employee => {
+                    const seatLabel = seatLabelByEmployeeId.get(employee.id) ?? "Unassigned";
+                    return (
+                      <button
+                        key={employee.id}
+                        type="button"
+                        data-directory-card
+                        onClick={() => editEmployee(employee)}
+                        className={["rounded-2xl border p-3 text-left transition", selectedEmployeeId === employee.id ? "border-brand bg-orange-50" : "border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/40"].join(" ")}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-black text-brand-dark">{getInitials(employee.full_name)}</div>
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-black text-slate-950">{employee.full_name}</div>
+                            <div className="mt-1 truncate text-xs text-slate-500">
+                              {[employee.position, employee.department, employee.phone_extension ? `Ext. ${employee.phone_extension}` : null].filter(Boolean).join(" · ") || "No position or department"}
+                            </div>
+                            <div className="mt-2 text-xs font-bold text-slate-600">{seatLabel}</div>
                           </div>
-                          <div className="mt-2 text-xs font-bold text-slate-600">{seatLabel}</div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
-                {filteredEmployees.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500 lg:col-span-2">
-                    <div className="font-black text-slate-950">No employees match this search</div>
-                    <p className="mt-1">Try a different name, department, position, or seat label.</p>
-                  </div>
-                )}
+                      </button>
+                    );
+                  })}
+                  {filteredEmployees.length === 0 && (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500 lg:col-span-2">
+                      <div className="font-black text-slate-950">No employees match this search</div>
+                      <p className="mt-1">Try a different name, department, position, or seat label.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
