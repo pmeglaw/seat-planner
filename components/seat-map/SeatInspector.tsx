@@ -685,7 +685,14 @@ export function SeatInspector({
 
   function handleVacateSeat() {
     if (!hasCurrentAssignment || pending) return;
-    setVacateConfirmOpen(true);
+    // 3b T1: vacate is a draft-only seat op — it runs immediately with the
+    // toast + Undo as the safety net (the publish review is the real gate).
+    // The dialog only guards unsaved inspector edits, which Undo can't restore.
+    if (isDirty) {
+      setVacateConfirmOpen(true);
+      return;
+    }
+    confirmVacateSeat();
   }
 
   function confirmVacateSeat() {
