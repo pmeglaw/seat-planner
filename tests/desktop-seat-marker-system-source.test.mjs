@@ -31,8 +31,8 @@ test("desktop marker system exposes assigned available selected search and draft
   const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
 
-  assert.match(markerSource, /type MarkerIntent = "assigned" \| "available" \| "reserved" \| "unavailable" \| "draft-changed" \| "search-result" \| "search-selected" \| "selected"/);
-  assert.match(markerSource, /markerIntent: MarkerIntent = searchSelected/);
+  assert.match(markerSource, /type MarkerIntent = "assigned" \| "available" \| "reserved" \| "unavailable" \| "draft-changed" \| "search-result" \| "search-selected" \| "selected" \| "move-origin" \| "swap-source" \| "swap-target" \| "target-valid" \| "target-invalid"/);
+  assert.match(markerSource, /markerIntent: MarkerIntent = swapSource/);
   assert.match(markerSource, /searchSelected = selected && searchProminent/);
   assert.match(markerSource, /variant\?: "admin" \| "viewer"/);
   assert.match(markerSource, /variant = "viewer"/);
@@ -48,6 +48,21 @@ test("desktop marker system exposes assigned available selected search and draft
   assert.match(markerSource, /Draft changed\./);
   assert.match(markerSource, /Search result\./);
   assert.match(markerSource, /Selected\./);
+
+  // 17-state taxonomy port (SxS verdict): mode-target states are token-driven with
+  // per-state aria strings; the swap target is teal, never neutral.
+  assert.match(markerSource, /const moveOrigin = isMovable && !dragging/);
+  assert.match(markerSource, /const swapCandidate = canEdit && swapMode && !swapSource && !swapTarget && !invalidTarget/);
+  assert.match(markerSource, /--admin-marker-move-origin-surface/);
+  assert.match(markerSource, /--admin-marker-target-valid-surface/);
+  assert.match(markerSource, /--admin-marker-target-invalid-surface/);
+  assert.match(markerSource, /--admin-marker-target-invalid-accent/);
+  assert.match(markerSource, /swapTarget \? adminMarker \? "border-\[var\(--admin-marker-search-border\)\]/);
+  assert.match(markerSource, /Move origin\. Drag to reposition\./);
+  assert.match(markerSource, /Swap source\./);
+  assert.match(markerSource, /Swap target\./);
+  assert.match(markerSource, /Valid swap target\./);
+  assert.match(markerSource, /Not a valid target\./);
 
   assert.match(seatMapSource, /const draftChangedSeatLabelSet = useMemo\(\(\) => new Set\(/);
   assert.match(seatMapSource, /\.\.\.publishSummary\.addedSeats/);

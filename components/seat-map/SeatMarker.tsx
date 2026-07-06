@@ -17,6 +17,7 @@ type SeatMarkerProps = {
   swapMode: boolean;
   swapSource: boolean;
   swapTarget: boolean;
+  invalidTarget?: boolean;
   highlighted: boolean;
   highlightedDescription?: string;
   dragging: boolean;
@@ -30,7 +31,7 @@ type SeatMarkerProps = {
 
 type TokenDensity = "compact" | "standard";
 type TokenMode = "code" | "name" | "prominent" | "selected";
-type MarkerIntent = "assigned" | "available" | "reserved" | "unavailable" | "draft-changed" | "search-result" | "search-selected" | "selected";
+type MarkerIntent = "assigned" | "available" | "reserved" | "unavailable" | "draft-changed" | "search-result" | "search-selected" | "selected" | "move-origin" | "swap-source" | "swap-target" | "target-valid" | "target-invalid";
 
 function SeatToken({ className, style, children }: { className: string; style?: CSSProperties; children: ReactNode }) {
   return <span className={className} style={style}>{children}</span>;
@@ -96,6 +97,7 @@ export function SeatMarker({
   swapMode,
   swapSource,
   swapTarget,
+  invalidTarget = false,
   highlighted,
   highlightedDescription = "Highlighted by Ask Planner",
   dragging,
@@ -112,6 +114,8 @@ export function SeatMarker({
   const displayName = employeeName || "Open seat";
   const namesVisible = showNames && hasEmployee && !dimmed;
   const isMovable = canEdit && selected && moveSeatMode;
+  const moveOrigin = isMovable && !dragging;
+  const swapCandidate = canEdit && swapMode && !swapSource && !swapTarget && !invalidTarget;
   const activeMarker = selected || dragging || swapSource || swapTarget;
   const searchProminent = searchResult && !dimmed;
   const searchSelected = selected && searchProminent;
@@ -124,15 +128,25 @@ export function SeatMarker({
   const hasHoverDisclosure = hasEmployee && !showInlineName;
   const expandedNameBadge = hasEmployee && (tokenMode === "selected" || tokenMode === "prominent");
   const inlineNameLabel = expandedNameBadge || (namesVisible && tokenDensity === "standard" && !compactNameLabel) ? employeeName : compactEmployeeName;
-  const markerIntent: MarkerIntent = searchSelected
-    ? "search-selected"
-    : selected
-      ? "selected"
-      : searchProminent || plannerHighlighted
-        ? "search-result"
-        : draftChanged
-          ? "draft-changed"
-          : seat.status;
+  const markerIntent: MarkerIntent = swapSource
+    ? "swap-source"
+    : swapTarget
+      ? "swap-target"
+      : moveOrigin
+        ? "move-origin"
+        : invalidTarget
+          ? "target-invalid"
+          : swapCandidate
+            ? "target-valid"
+            : searchSelected
+              ? "search-selected"
+              : selected
+                ? "selected"
+                : searchProminent || plannerHighlighted
+                  ? "search-result"
+                  : draftChanged
+                    ? "draft-changed"
+                    : seat.status;
 
   const baseStatusToneClass =
     adminMarker
@@ -150,11 +164,15 @@ export function SeatMarker({
           : seat.status === "unavailable"
             ? "border-[#C8BFB3]/90 bg-[#E8E2DA]/[0.92] text-[#655E56]"
             : "border-[#D4CABF]/90 bg-[#F9F5ED]/[0.86] text-[#575048]";
-  const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent") ? "" : baseStatusToneClass;
+  // Search/planner emphasis keeps visual priority over the passive valid-target tint.
+  const validTargetTone = swapCandidate && !searchProminent && !plannerHighlighted;
+  const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent" || moveOrigin || validTargetTone || invalidTarget) ? "" : baseStatusToneClass;
 
   const statusAccentClass =
     adminMarker
-      ? draftChanged && !selected && !searchProminent
+      ? invalidTarget
+        ? "bg-[var(--admin-marker-target-invalid-accent)]"
+        : draftChanged && !selected && !searchProminent
         ? "bg-[var(--admin-marker-draft-accent)]"
         : seat.status === "assigned"
         ? "bg-[var(--admin-marker-assigned-accent)]"
@@ -208,11 +226,26 @@ export function SeatMarker({
         : "border-[#D46A24] bg-[#15181B] text-white ring-2 ring-[#D46A24]/90 outline outline-2 outline-offset-2 outline-[#2F6668]/75 shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_rgba(169,207,204,0.32),inset_0_1px_0_rgba(255,255,255,0.14)]"
       : "",
     tokenMode === "selected"
-      ? searchSelected
+      ? searchSelected || moveOrigin
         ? ""
         : adminMarker
           ? "border-[var(--admin-marker-selected-border)] bg-[var(--admin-marker-selected-surface)] text-[var(--admin-marker-selected-text)] ring-2 ring-[var(--admin-marker-selected-border)] shadow-[var(--admin-marker-selected-shadow)]"
           : "border-[#D46A24] bg-[#171A1D] text-white ring-2 ring-[#D46A24]/90 shadow-[0_10px_24px_rgba(31,35,39,0.30),inset_0_1px_0_rgba(255,255,255,0.16)]"
+      : "",
+    moveOrigin
+      ? adminMarker
+        ? "border-[var(--admin-marker-move-origin-border)] bg-[var(--admin-marker-move-origin-surface)] text-[var(--admin-marker-move-origin-text)] ring-2 ring-[var(--admin-border-strong)] shadow-[0_10px_24px_rgba(31,34,37,0.18)]"
+        : "border-[#6E655A] bg-[#EFE9DF] text-[#353532] ring-4 ring-[#D8D0C5]"
+      : "",
+    validTargetTone
+      ? adminMarker
+        ? "border-[var(--admin-marker-target-valid-border)] bg-[var(--admin-marker-target-valid-surface)] text-[var(--admin-marker-target-valid-text)]"
+        : "border-[#3F6F59] bg-[#DDE9DF] text-[#284C3B]"
+      : "",
+    invalidTarget
+      ? adminMarker
+        ? "border-[var(--admin-marker-target-invalid-border)] bg-[var(--admin-marker-target-invalid-surface)] text-[var(--admin-marker-target-invalid-text)]"
+        : "border-[#963D2F] bg-[#F3DAD2] text-[#7E2F24]"
       : "",
     searchProminent && !selected
       ? adminMarker
@@ -221,7 +254,7 @@ export function SeatMarker({
       : "",
     highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-ring)]" : "outline outline-2 outline-offset-2 outline-[#A9CFCC]" : "",
     swapSource ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#3E6F72] bg-[#DCEDEA] text-[#244E50] ring-4 ring-[#A9CFCC]/80" : "",
-    swapTarget ? adminMarker ? "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)] ring-4 ring-[var(--admin-border)]" : "border-[#6E655A] bg-[#F1ECE4] text-[#353532] ring-4 ring-[#D8D0C5]/85" : "",
+    swapTarget ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#6E655A] bg-[#F1ECE4] text-[#353532] ring-4 ring-[#D8D0C5]/85" : "",
     plannerHighlighted ? adminMarker ? "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)] ring-2 ring-[var(--admin-border)] shadow-[0_6px_14px_rgba(140,102,69,0.18),inset_0_1px_0_rgba(255,255,255,0.72)]" : "border-[#6E655A] bg-[#EFE9DF] text-[#353532] ring-2 ring-[#D8D0C5] shadow-[0_6px_14px_rgba(110,101,90,0.23),inset_0_1px_0_rgba(255,255,255,0.72)]" : "",
     swapMode && !swapSource ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--admin-marker-search-ring)]" : "group-hover:ring-4 group-hover:ring-[#A9CFCC]/80" : ""
   ].join(" ");
@@ -296,7 +329,7 @@ export function SeatMarker({
         dragging ? "z-40 scale-[1.06] shadow-[0_18px_36px_rgba(31,35,39,0.24)]" : ""
       ].join(" ")}
       style={pointToStyle({ x: seat.x, y: seat.y })}
-      aria-label={`${seat.label}: ${displayName}. ${seat.status} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${selected ? " Selected." : " Open details."}`}
+      aria-label={`${seat.label}: ${displayName}. ${seat.status} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${moveOrigin ? " Move origin. Drag to reposition." : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
     >
       <SeatToken
         style={tokenPositionStyle}
