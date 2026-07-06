@@ -177,6 +177,9 @@ export function SeatInspector({
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
   const [form, setForm] = useState<SeatInspectorForm>(emptyForm);
   const [initialForm, setInitialForm] = useState<SeatInspectorForm>(emptyForm);
+  // Figma resting inspector is compact facts + notes + actions; the full
+  // assignment editor reveals progressively behind Assign/Change assignment.
+  const [editingAssignment, setEditingAssignment] = useState(false);
   const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
   const [activeEmployeeIndex, setActiveEmployeeIndex] = useState(0);
   const [vacateConfirmOpen, setVacateConfirmOpen] = useState(false);
@@ -259,6 +262,7 @@ export function SeatInspector({
     setLocalError(null);
     setFieldErrors([]);
     setSaveFeedback(null);
+    setEditingAssignment(false);
     setEmployeeComboboxOpen(false);
     setActiveEmployeeIndex(0);
     setVacateConfirmOpen(false);
@@ -276,6 +280,7 @@ export function SeatInspector({
       setLocalError(null);
       setFieldErrors([]);
       setSaveFeedback(null);
+      setEditingAssignment(false);
       setEmployeeComboboxOpen(false);
       setActiveEmployeeIndex(0);
       setVacateConfirmOpen(false);
@@ -618,6 +623,7 @@ export function SeatInspector({
         activeSeatSnapshotRef.current = formSnapshot(nextForm);
         setForm(nextForm);
         setInitialForm(nextForm);
+        setEditingAssignment(false);
         onDirtyChange(false);
         setSaveFeedback(input.forceMove ? `Moved to ${updated.label}` : "Saved to draft");
         onSeatUpdated(updated, beforeSnapshot);
@@ -653,7 +659,18 @@ export function SeatInspector({
       return;
     }
 
+    if (editingAssignment) {
+      setEditingAssignment(false);
+      return;
+    }
+
     onClose();
+  }
+
+  function startAssignmentEditing() {
+    if (pending) return;
+    setEditingAssignment(true);
+    window.requestAnimationFrame(() => employeeInputRef.current?.focus());
   }
 
   function handleStartSwapSeat() {
@@ -861,9 +878,13 @@ export function SeatInspector({
               <dl className="mt-2.5 space-y-2">
                 <FactRow label="Zone" value={currentZone} />
                 <FactRow label="Seat type" value={seatTypeLabel} />
+                {hasCurrentAssignment && form.phoneExtension.trim() && (
+                  <FactRow label="Extension" value={form.phoneExtension} />
+                )}
               </dl>
             </section>
 
+            {editingAssignment && (
             <section aria-labelledby="seat-assignment-heading">
               <SectionHeading id="seat-assignment-heading" title={hasCurrentAssignment ? "Assignment" : "Assign this seat"} />
               <p id={employeeHelpId} className="mt-1.5 text-xs leading-5 text-[var(--sp-color-text-muted)]">{hasCurrentAssignment ? "Change or clear the draft assignment below." : "Search an existing employee or type a new name."}</p>
@@ -1008,10 +1029,11 @@ export function SeatInspector({
                 {fieldErrorMap.department && <p id={fieldErrorId("department")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.department}</p>}
               </label>
             </section>
+            )}
 
             <section aria-labelledby="seat-metadata-heading">
               <div className="flex items-center gap-2">
-                <h3 id="seat-metadata-heading" className="shrink-0 text-[13px] font-semibold text-[var(--sp-color-text-primary)]">Status &amp; notes</h3>
+                <h3 id="seat-metadata-heading" className="shrink-0 text-[13px] font-semibold text-[var(--sp-color-text-primary)]">{hasAssignedPerson ? <>Notes</> : <>Status &amp; notes</>}</h3>
                 <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-[var(--sp-color-border-strong)]" />
               </div>
 
@@ -1040,7 +1062,7 @@ export function SeatInspector({
                   ref={notesRef}
                   value={form.notes}
                   onChange={event => handleTextChange("notes", event)}
-                  placeholder="Optional seat note"
+                  placeholder="Add a seat note"
                   aria-invalid={Boolean(fieldErrorMap.notes)}
                   aria-describedby={fieldDescribedBy("notes")}
                   className={`${fieldClassName} min-h-20`}
@@ -1068,6 +1090,25 @@ export function SeatInspector({
                 </Button>
               )}
             </div>
+            {/* The assignment editor reveals progressively so the resting inspector
+                stays as compact as the Figma frame. */}
+            {!editingAssignment && (
+              <Button
+                type="button"
+                variant={hasCurrentAssignment ? undefined : "primary"}
+                onClick={startAssignmentEditing}
+                disabled={pending}
+                aria-expanded={editingAssignment}
+                aria-controls="seat-inspector-form"
+                aria-label={hasCurrentAssignment ? `Change assignment for ${selectedSeat.label}` : `Assign an employee to ${selectedSeat.label}`}
+                className={[
+                  "mt-2 min-w-0 w-full rounded-[10px]",
+                  hasCurrentAssignment ? "" : "!border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-hover)] hover:!bg-[var(--admin-primary-hover)]"
+                ].join(" ")}
+              >
+                {hasCurrentAssignment ? "Change assignment" : "Assign employee"}
+              </Button>
+            )}
             {/* Figma delete treatment: full-width low-emphasis button + visible helper line. */}
             <Button
               type="button"
@@ -1091,6 +1132,7 @@ export function SeatInspector({
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
               <span className="min-w-0 truncate">{inspectorStateLabel}</span>
             </div>
+            {(isDirty || editingAssignment) && (
             <div className="mt-2 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(6.5rem,0.8fr)_minmax(0,1.5fr)]">
               {saveDisabledReason && (
                 <span id="seat-inspector-save-help" className="sr-only">
@@ -1112,6 +1154,7 @@ export function SeatInspector({
                 {primaryActionLabel}
               </Button>
             </div>
+            )}
           </div>
         </form>
       ) : (
