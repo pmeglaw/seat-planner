@@ -291,6 +291,20 @@
   --admin-marker-hover-shadow: 0 6px 14px rgba(31, 34, 37, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
   --admin-marker-focus-ring: rgba(194, 65, 12, 0.75);
   --admin-marker-focus-offset: rgba(255, 255, 255, 0.70);
+  /* Mode-target states from the 17-state taxonomy (Figma "Seat marker" set, charcoal
+     values): move origin stays muted while a destination is chosen; valid targets read
+     green without color-only reliance (border + surface); invalid targets pair a grey
+     border with a brick accent dot. */
+  --admin-marker-move-origin-surface: #F4F5F6;
+  --admin-marker-move-origin-border: #AEBAC0;
+  --admin-marker-move-origin-text: #475059;
+  --admin-marker-target-valid-surface: #EDF5EF;
+  --admin-marker-target-valid-border: #2E7D57;
+  --admin-marker-target-valid-text: #1D5C3F;
+  --admin-marker-target-invalid-surface: #FCFCFD;
+  --admin-marker-target-invalid-border: #808080;
+  --admin-marker-target-invalid-text: #6B7177;
+  --admin-marker-target-invalid-accent: #B32F2F;
 
   /* Elevation system 0-5 (background + border + shadow triplets; see the Figma
      Elevation styles for the same spec):

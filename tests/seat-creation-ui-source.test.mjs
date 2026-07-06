@@ -158,7 +158,7 @@ test("seat badges use compact map-native labels with strong active states", asyn
   assert.match(markerSource, /w-\[92px\] max-w-\[92px\] sm:w-\[104px\]/);
   assert.match(markerSource, /overflow-visible border ring-1 ring-white\/45 backdrop-blur-\[1px\]/);
   assert.match(markerSource, /const baseStatusToneClass =/);
-  assert.match(markerSource, /const statusToneClass = \(tokenMode === "selected" \|\| tokenMode === "prominent"\) \? "" : baseStatusToneClass/);
+  assert.match(markerSource, /const statusToneClass = \(tokenMode === "selected" \|\| tokenMode === "prominent" \|\| moveOrigin \|\| validTargetTone \|\| invalidTarget\) \? "" : baseStatusToneClass/);
   assert.match(markerSource, /border-\[var\(--admin-marker-selected-border\)\] bg-\[var\(--admin-marker-selected-surface\)\] text-\[var\(--admin-marker-selected-text\)\]/);
   assert.match(markerSource, /searchSelected[\s\S]*outline-\[var\(--admin-marker-search-border\)\]/);
   assert.match(markerSource, /draftChanged && !selected && !searchProminent[\s\S]*bg-\[var\(--admin-marker-draft-surface\)\]/);

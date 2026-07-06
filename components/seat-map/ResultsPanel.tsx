@@ -96,7 +96,7 @@ export function ResultsPanel({
                 disabled={result.disabled}
                 onClick={() => result.seatId && onOpen(result.seatId)}
                 title={result.disabled ? "No assigned seat to open" : `Open ${result.title}`}
-                className="flex w-full items-start gap-2.5 rounded-[11px] border border-transparent px-2.5 py-2 pr-[6.5rem] text-left transition hover:border-[var(--admin-border)] hover:bg-[var(--admin-state-selected-surface,var(--admin-surface-muted))] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-55"
+                className="flex w-full items-start gap-2.5 rounded-[11px] border border-transparent px-2.5 py-2 pr-[6.5rem] text-left transition hover:border-[var(--admin-border)] hover:bg-[var(--admin-paper)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <span
                   className={[
