@@ -15,6 +15,9 @@ type SeatInspectorProps = {
   departmentOptions: DepartmentOption[];
   canEdit: boolean;
   collapsed: boolean;
+  // While the results panel occupies the slot it hosts the collapsed-seat row,
+  // so the standalone pill stays hidden instead of overlapping the panel.
+  pillSuppressed?: boolean;
   swapMode: boolean;
   searchMismatchNotice?: string | null;
   searchMismatchClearLabel?: string;
@@ -122,6 +125,26 @@ function ChevronRightIcon() {
   );
 }
 
+// Figma final design (page 10): flat inspector sections split by a 13px semibold
+// title with a trailing hairline rule, and 90px-label fact rows — no nested cards.
+function SectionHeading({ id, title }: { id?: string; title: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <h3 id={id} className="shrink-0 text-[13px] font-semibold text-[var(--sp-color-text-primary)]">{title}</h3>
+      <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-[var(--sp-color-border-strong)]" />
+    </div>
+  );
+}
+
+function FactRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <dt className="w-[90px] shrink-0 text-[12.5px] text-[var(--sp-color-text-muted)]">{label}</dt>
+      <dd className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-[var(--sp-color-text-primary)]">{value}</dd>
+    </div>
+  );
+}
+
 export function SeatInspector({
   seat,
   seats,
@@ -129,6 +152,7 @@ export function SeatInspector({
   departmentOptions,
   canEdit,
   collapsed,
+  pillSuppressed = false,
   swapMode,
   searchMismatchNotice = null,
   searchMismatchClearLabel = "Clear search",
@@ -304,11 +328,14 @@ export function SeatInspector({
 
   const currentZone = selectedSeat.zone ?? selectedSeat.department ?? "Unzoned";
   const currentStatusLabel = effectiveStatus[0].toUpperCase() + effectiveStatus.slice(1);
-  const headerStatusBadgeClass = effectiveStatus === "assigned"
-    ? "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)] ring-[var(--admin-state-clean-border)]"
+  // Figma header status chip: neutral pill, the status carries only the dot color.
+  const headerStatusDotClass = effectiveStatus === "assigned"
+    ? "bg-[var(--admin-state-clean-text)]"
     : effectiveStatus === "reserved"
-      ? "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]"
-      : "bg-[var(--admin-state-neutral-bg)] text-[var(--admin-state-neutral-text)] ring-[var(--admin-state-neutral-border)]";
+      ? "bg-[var(--admin-state-dirty-text)]"
+      : effectiveStatus === "unavailable"
+        ? "bg-[var(--admin-state-error-text)]"
+        : "bg-[var(--sp-color-text-muted)]";
   const seatTypeLabel = isProtectedOriginalSeatLabel(selectedSeat.label)
     ? "Protected original"
     : selectedSeat.is_custom
@@ -325,6 +352,13 @@ export function SeatInspector({
       : isDirty
         ? "Unsaved changes"
         : saveFeedback ?? "No unsaved changes";
+  // Figma draft-impact pill: green when the seat matches the saved draft,
+  // amber while edits are unsaved or saving, red when the last save failed.
+  const inspectorStatePillClassName = localError
+    ? "bg-[var(--admin-state-error-bg)] text-[var(--admin-state-error-text)]"
+    : pending || isDirty
+      ? "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)]"
+      : "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)]";
   const assignmentIdentityLabel = employeeNameValue || (hasCurrentAssignment ? selectedSeatEmployeeName : "");
   const fieldErrorClassName = "border-[var(--admin-state-error-border)] focus:border-[var(--admin-error)] focus:ring-[var(--admin-state-error-border)]";
   const warningSurfaceClassName = "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)]";
@@ -690,16 +724,15 @@ export function SeatInspector({
     onDeleteSeat();
   }
 
-  const fieldClassName = "mt-1 w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm font-semibold text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] disabled:bg-[var(--admin-state-neutral-bg)] disabled:text-[var(--admin-text-muted)]";
+  const fieldClassName = "mt-1 w-full rounded-[10px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm font-semibold text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] disabled:bg-[var(--admin-state-neutral-bg)] disabled:text-[var(--admin-text-muted)]";
   const saveDisabledReason = pending
     ? "Save is unavailable while the current draft change is finishing."
     : !isDirty
       ? "No unsaved changes."
       : null;
   const deleteHelpText = selectedSeatCanDelete ? "Available custom draft seat can be deleted." : selectedSeatDeleteBlockReason ?? "Delete is unavailable for this seat.";
-  const secondaryActionGridClassName = "grid-cols-1 sm:grid-cols-2";
 
-  if (collapsed && swapMode) return null;
+  if (collapsed && (swapMode || pillSuppressed)) return null;
 
   if (collapsed) {
     return (
@@ -723,12 +756,14 @@ export function SeatInspector({
     <aside
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden rounded-[14px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] shadow-[0_18px_44px_rgba(31,34,37,0.16)] panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[84px] panel:z-40 panel:max-h-none panel:w-[360px] panel:max-w-[calc(100vw-1.5rem)] panel:rounded-[14px] lg:top-[148px]"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden rounded-[14px] border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface)] shadow-[0_18px_44px_rgba(31,34,37,0.16)] panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[84px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] panel:rounded-[14px] lg:top-[148px]"
     >
-      <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] px-4 py-3">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-medium text-[var(--sp-color-text-muted)]">{canEdit ? "Seat details" : "Published seat"}</span>
-          <div className="flex items-center gap-1">
+      <div className="sticky top-0 z-20 flex flex-col gap-2 border-b border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] px-4 py-3">
+        <div className="flex items-start justify-between gap-2">
+          <h2 id="seat-inspector-title" className="min-w-0 flex-1 truncate pt-0.5 text-[17px] font-semibold leading-6 text-[var(--sp-color-text-primary)]">
+            {selectedSeat.label} — {assignmentIdentityLabel || "Open seat"}
+          </h2>
+          <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
               onClick={onToggleCollapse}
@@ -742,13 +777,14 @@ export function SeatInspector({
             <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"><CloseIcon /></button>
           </div>
         </div>
-        <div className="flex min-w-0 items-center gap-3">
-          <span aria-hidden="true" className="inline-flex h-10 min-w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--admin-primary-cta)] px-2 text-[13px] font-bold text-white">{selectedSeat.label}</span>
-          <div className="min-w-0 flex-1">
-            <h2 id="seat-inspector-title" className="truncate text-[15px] font-semibold leading-tight text-[var(--sp-color-text-primary)]">{assignmentIdentityLabel || "Open seat"}</h2>
-            <p className="truncate text-xs text-[var(--sp-color-text-muted)]">{currentZone} · {seatTypeLabel}</p>
-          </div>
-          <span className={["shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1", headerStatusBadgeClass].join(" ")}>{currentStatusLabel}</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--sp-color-border-strong)] bg-[var(--sp-color-graphite-soft)] px-2.5 py-1 text-[11px] font-medium text-[var(--sp-color-text-primary)]">
+            <span aria-hidden="true" className={["h-2 w-2 rounded-full", headerStatusDotClass].join(" ")} />
+            {currentStatusLabel}
+          </span>
+          {!canEdit && (
+            <span className="shrink-0 rounded-full bg-[var(--sp-color-graphite-soft)] px-2.5 py-1 text-[11px] font-medium text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]">Published seat</span>
+          )}
         </div>
       </div>
 
@@ -820,9 +856,17 @@ export function SeatInspector({
               </button>
             )}
 
-            <section aria-labelledby="seat-assignment-heading" className="rounded-[12px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] p-3">
-              <h3 id="seat-assignment-heading" className="text-sm font-semibold text-[var(--sp-color-text-primary)]">{hasCurrentAssignment ? "Assignment" : "Assign this seat"}</h3>
-              <p id={employeeHelpId} className="mt-0.5 text-xs leading-5 text-[var(--sp-color-text-muted)]">{hasCurrentAssignment ? "Change or clear the draft assignment below." : "Search an existing employee or type a new name."}</p>
+            <section aria-labelledby="seat-details-heading">
+              <SectionHeading id="seat-details-heading" title="Details" />
+              <dl className="mt-2.5 space-y-2">
+                <FactRow label="Zone" value={currentZone} />
+                <FactRow label="Seat type" value={seatTypeLabel} />
+              </dl>
+            </section>
+
+            <section aria-labelledby="seat-assignment-heading">
+              <SectionHeading id="seat-assignment-heading" title={hasCurrentAssignment ? "Assignment" : "Assign this seat"} />
+              <p id={employeeHelpId} className="mt-1.5 text-xs leading-5 text-[var(--sp-color-text-muted)]">{hasCurrentAssignment ? "Change or clear the draft assignment below." : "Search an existing employee or type a new name."}</p>
 
               <label className="mt-3 block">
                 <span className="text-[11px] font-medium tracking-normal text-[var(--sp-color-text-muted)]">Employee name</span>
@@ -965,8 +1009,11 @@ export function SeatInspector({
               </label>
             </section>
 
-            <section aria-labelledby="seat-metadata-heading" className="rounded-[12px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] p-3">
-              <h3 id="seat-metadata-heading" className="text-[11px] font-medium tracking-normal text-[var(--sp-color-text-muted)]">Status &amp; notes</h3>
+            <section aria-labelledby="seat-metadata-heading">
+              <div className="flex items-center gap-2">
+                <h3 id="seat-metadata-heading" className="shrink-0 text-[13px] font-semibold text-[var(--sp-color-text-primary)]">Status &amp; notes</h3>
+                <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-[var(--sp-color-border-strong)]" />
+              </div>
 
               {!hasAssignedPerson && (
                 <label className="mt-2 block">
@@ -1007,14 +1054,50 @@ export function SeatInspector({
             <div role="status" aria-live="polite" className="sr-only">
               {inspectorStateLabel}
             </div>
-            <span id="seat-inspector-delete-help" className="sr-only">{deleteHelpText}</span>
-            <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(6.5rem,0.8fr)_minmax(0,1.5fr)]">
+            {/* Figma actions row: Move / Swap / Vacate as one compact 32px outline row. */}
+            <div className="flex min-w-0 gap-2">
+              <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move seat ${selectedSeat.label} on the map`} className="min-w-0 flex-1 rounded-[10px]">
+                {moveMode ? "Exit move" : "Move"}
+              </Button>
+              <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Swap seat ${selectedSeat.label} with another draft seat`} className="min-w-0 flex-1 rounded-[10px]">
+                Swap
+              </Button>
+              {hasCurrentAssignment && (
+                <Button type="button" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="min-w-0 flex-1 rounded-[10px]">
+                  Vacate
+                </Button>
+              )}
+            </div>
+            {/* Figma delete treatment: full-width low-emphasis button + visible helper line. */}
+            <Button
+              type="button"
+              onClick={handleDeleteSeat}
+              disabled={pending || !selectedSeatCanDelete}
+              aria-label={`Delete custom seat ${selectedSeat.label}`}
+              aria-describedby="seat-inspector-delete-help"
+              title={deleteHelpText}
+              className="mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight !border-transparent !bg-[var(--admin-state-neutral-bg)] !text-[var(--admin-danger)] !shadow-none hover:!border-transparent hover:!bg-[var(--admin-state-error-bg)] disabled:!border-transparent disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
+            >
+              Delete seat
+            </Button>
+            <p id="seat-inspector-delete-help" className="mt-1.5 text-[11.5px] leading-4 text-[var(--sp-color-text-muted)]">{deleteHelpText}</p>
+            {isDirty && (
+              <Button type="button" onClick={handleResetEdits} disabled={pending} aria-label={`Discard edits for ${selectedSeat.label}`} className="mt-2 min-w-0 w-full whitespace-normal rounded-[10px]">
+                Discard edits
+              </Button>
+            )}
+            {/* Figma draft-impact pill (announced via the sr-only live region above). */}
+            <div aria-hidden="true" className={["mt-2 flex items-center gap-2 rounded-[10px] px-3 py-2 text-xs font-medium", inspectorStatePillClassName].join(" ")}>
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+              <span className="min-w-0 truncate">{inspectorStateLabel}</span>
+            </div>
+            <div className="mt-2 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(6.5rem,0.8fr)_minmax(0,1.5fr)]">
               {saveDisabledReason && (
                 <span id="seat-inspector-save-help" className="sr-only">
                   {saveDisabledReason}
                 </span>
               )}
-              <Button type="button" onClick={handleCancelEditing} aria-label={`Cancel editing ${selectedSeat.label}`} className="min-w-0 rounded-xl px-4">
+              <Button type="button" onClick={handleCancelEditing} aria-label={`Cancel editing ${selectedSeat.label}`} className="min-w-0 rounded-[10px] px-4">
                 Cancel
               </Button>
               <Button
@@ -1024,63 +1107,38 @@ export function SeatInspector({
                 aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
                 aria-describedby={saveDisabledReason ? "seat-inspector-save-help" : undefined}
                 title={saveDisabledReason ?? `${primaryActionLabel} for ${selectedSeat.label}`}
-                className="min-w-0 w-full whitespace-normal rounded-xl !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-hover)] hover:!bg-[var(--admin-primary-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:shadow-none disabled:hover:!border-[var(--admin-state-neutral-border)] disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
+                className="min-w-0 w-full whitespace-normal rounded-[10px] !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-hover)] hover:!bg-[var(--admin-primary-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:shadow-none disabled:hover:!border-[var(--admin-state-neutral-border)] disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
               >
                 {primaryActionLabel}
               </Button>
-            </div>
-            <div className={["mt-2 grid gap-2", secondaryActionGridClassName].join(" ")}>
-              <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move ${selectedSeat.label} on the map`} className="min-w-0 w-full rounded-xl">
-                {moveMode ? "Exit move" : "Move seat"}
-              </Button>
-              <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Start seat swap for ${selectedSeat.label}`} className="min-w-0 w-full rounded-xl">
-                Swap seat
-              </Button>
-              {hasCurrentAssignment && (
-                <Button type="button" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="min-w-0 w-full rounded-xl">
-                  Vacate
-                </Button>
-              )}
-              <Button
-                type="button"
-                variant="danger"
-                onClick={handleDeleteSeat}
-                disabled={pending || !selectedSeatCanDelete}
-                aria-label={`Delete custom seat ${selectedSeat.label}`}
-                aria-describedby="seat-inspector-delete-help"
-                title={deleteHelpText}
-                className="min-w-0 w-full whitespace-normal rounded-xl leading-tight !border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:shadow-none disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
-              >
-                Delete seat
-              </Button>
-              {isDirty && (
-                <Button type="button" onClick={handleResetEdits} disabled={pending} aria-label={`Discard edits for ${selectedSeat.label}`} className="min-w-0 w-full whitespace-normal rounded-xl">
-                  Discard edits
-                </Button>
-              )}
             </div>
           </div>
         </form>
       ) : (
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[var(--sp-color-surface)] px-4 py-4 text-sm">
-          <section className="rounded-[12px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] p-3">
-            <div className="text-[11px] font-medium tracking-normal text-[var(--sp-color-text-muted)]">Published assignment</div>
-            <div className="mt-1 text-base font-semibold leading-tight text-[var(--sp-color-text-primary)]">{selectedSeat.employee?.full_name ?? "Open seat"}</div>
+          <section aria-labelledby="published-assignment-heading">
+            <SectionHeading id="published-assignment-heading" title="Published assignment" />
+            <div className="mt-2 text-base font-semibold leading-tight text-[var(--sp-color-text-primary)]">{selectedSeat.employee?.full_name ?? "Open seat"}</div>
             {(selectedSeat.employee?.position || selectedSeat.employee?.department) && (
               <div className="mt-1 text-sm text-[var(--sp-color-text-muted)]">
                 {[selectedSeat.employee?.position, selectedSeat.employee?.department].filter(Boolean).join(" · ")}
               </div>
             )}
-            {selectedSeat.employee?.phone_extension && (
-              <div className="mt-2 inline-flex rounded-full bg-[var(--sp-color-graphite-soft)] px-2 py-1 text-[11px] font-medium tracking-normal text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]">
-                Ext. {selectedSeat.employee.phone_extension}
-              </div>
-            )}
+          </section>
+          <section aria-labelledby="published-details-heading">
+            <SectionHeading id="published-details-heading" title="Details" />
+            <dl className="mt-2.5 space-y-2">
+              <FactRow label="Zone" value={currentZone} />
+              <FactRow label="Seat type" value={seatTypeLabel} />
+              {selectedSeat.employee?.phone_extension && (
+                <FactRow label="Extension" value={selectedSeat.employee.phone_extension} />
+              )}
+            </dl>
           </section>
           {selectedSeat.notes && (
-            <section className="rounded-[12px] border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface-raised)] p-3">
-              <div className="text-[11px] font-medium tracking-normal text-[var(--sp-color-text-muted)]">Notes</div>
-              <p className="mt-1 text-sm leading-5 text-[var(--sp-color-text-secondary)]">{selectedSeat.notes}</p>
+            <section aria-labelledby="published-notes-heading">
+              <SectionHeading id="published-notes-heading" title="Notes" />
+              <p className="mt-2 text-sm leading-5 text-[var(--sp-color-text-secondary)]">{selectedSeat.notes}</p>
             </section>
           )}
         </div>

@@ -10,23 +10,26 @@ test("desktop inspector shell exposes the selected-seat identity model", async (
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
 
-  // Narrowed for less cognitive load (Claude Design); flat (no heavy shadow/blur).
-  assert.match(inspectorSource, /panel:w-\[360px\]/);
-  assert.doesNotMatch(inspectorSource, /xl:w-\[384px\]/);
-  // Shared light identity header: label chip + assignee/open + zone · type + status badge.
-  assert.match(inspectorSource, /canEdit \? "Seat details" : "Published seat"/);
-  assert.match(inspectorSource, /rounded-\[10px\] bg-\[var\(--admin-primary-cta\)\]/);
-  assert.match(inspectorSource, /assignmentIdentityLabel \|\| "Open seat"/);
-  assert.match(inspectorSource, /\{currentZone\} · \{seatTypeLabel\}/);
-  assert.match(inspectorSource, /headerStatusBadgeClass/);
-  assert.match(inspectorSource, /seatTypeLabel/);
+  // Figma final design: panel-slot width matches the results panel (320), flat.
+  assert.match(inspectorSource, /panel:w-\[320px\]/);
+  assert.doesNotMatch(inspectorSource, /panel:w-\[360px\]|xl:w-\[384px\]/);
+  // Figma header: "LABEL — Name" 17px title + neutral status chip with a status dot.
+  assert.match(inspectorSource, /\{selectedSeat\.label\} — \{assignmentIdentityLabel \|\| "Open seat"\}/);
+  assert.match(inspectorSource, /text-\[17px\] font-semibold/);
+  assert.match(inspectorSource, /headerStatusDotClass/);
+  // The orange label tile and the "Seat details" eyebrow are gone.
+  assert.doesNotMatch(inspectorSource, /bg-\[var\(--admin-primary-cta\)\] px-2 text-\[13px\] font-bold text-white/);
+  assert.doesNotMatch(inspectorSource, /"Seat details"/);
+  // Zone and seat type moved from the header subtitle into Details fact rows.
+  assert.match(inspectorSource, /<FactRow label="Zone" value=\{currentZone\} \/>/);
+  assert.match(inspectorSource, /<FactRow label="Seat type" value=\{seatTypeLabel\} \/>/);
   assert.match(inspectorSource, /Protected original/);
   assert.match(inspectorSource, /Custom draft/);
   assert.match(inspectorSource, /Original/);
   // The verbose dark eyebrow/subtitle model is gone.
   assert.doesNotMatch(inspectorSource, /Planning inspector/);
   assert.doesNotMatch(inspectorSource, /selectedSeatStatusLabel/);
-  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = canEdit \? "dock:mr-\[376px\]" : ""/);
+  assert.doesNotMatch(seatMapSource, /desktopInspectorReserveMarginClassName|dock:/);
   assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = ""/);
   assert.match(seatMapSource, /const activeModeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /className=\{activeModeBannerClassName\}/);
@@ -49,10 +52,14 @@ test("desktop inspector drops the verbose draft-state band for a quiet sr-only s
   assert.match(inspectorSource, /No unsaved changes/);
   assert.match(inspectorSource, /Unsaved changes/);
   assert.match(inspectorSource, /Saving draft\.\.\./);
-  // Footer action grid stays intact.
-  assert.match(inspectorSource, /const secondaryActionGridClassName = "grid-cols-1 sm:grid-cols-2"/);
+  // Figma footer: 3-up Move/Swap/Vacate row, low-emphasis full-width delete with a
+  // visible helper line, a visible draft-impact pill, then Cancel/Save.
+  assert.match(inspectorSource, /\{moveMode \? "Exit move" : "Move"\}[\s\S]*Swap[\s\S]*Vacate[\s\S]*Delete seat/);
+  assert.match(inspectorSource, /min-w-0 flex-1 rounded-\[10px\]/);
+  assert.match(inspectorSource, /inspectorStatePillClassName/);
+  assert.doesNotMatch(inspectorSource, /secondaryActionGridClassName/);
   assert.match(inspectorSource, /grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-\[minmax\(6\.5rem,0\.8fr\)_minmax\(0,1\.5fr\)\]/);
-  assert.match(inspectorSource, /min-w-0 w-full whitespace-normal rounded-xl/);
+  assert.match(inspectorSource, /min-w-0 w-full whitespace-normal rounded-\[10px\]/);
   assert.match(inspectorSource, /Create new employee on save/);
 });
 

@@ -210,7 +210,9 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /getSeatDeleteBlockReason/);
   assert.match(inspectorSource, /Delete seat/);
   assert.match(inspectorSource, /aria-describedby="seat-inspector-delete-help"/);
-  assert.match(inspectorSource, /whitespace-normal rounded-xl leading-tight/);
+  assert.match(inspectorSource, /whitespace-normal rounded-\[10px\] leading-tight/);
+  // Figma delete treatment: the block reason is a visible helper line, not sr-only.
+  assert.match(inspectorSource, /<p id="seat-inspector-delete-help" className="mt-1\.5 text-\[11\.5px\][^"]*">\{deleteHelpText\}<\/p>/);
   assert.doesNotMatch(inspectorSource, /Discard unsaved inspector edits before deleting this custom seat/);
 
   assert.match(resultsPanelSource, /aria-label="Admin search results"/);
@@ -285,16 +287,14 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /No filter results/);
   assert.match(seatMapSource, /No combined results/);
   assert.match(seatMapSource, /Fit matches unavailable because there are no matching seats/);
-  // Panel slot: one occupant at a time - results (search/filters, no selection) or the inspector.
-  assert.match(seatMapSource, /const resultsPanelOpen = canEdit && filtersActive && !selectedSeat/);
-  assert.match(seatMapSource, /const mapKeyPanelOpen = canEdit && !resultsPanelOpen && !selectedSeat/);
-  // Dock tier reserves the gutter permanently (INV-6): the canvas never resizes when
-  // the slot occupant changes; below the dock tier the panel overlays or sheets.
-  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = canEdit \? "dock:mr-\[376px\]" : ""/);
-  assert.match(seatMapSource, /aria-labelledby="admin-map-key-title"/);
-  assert.match(seatMapSource, /aria-label="Seat status map key"/);
+  // Panel slot (owner-revised): results open while search/filters are active and the
+  // inspector is closed or auto-collapsed to its pill; searching collapses (never
+  // clears) an open clean selection. No reserved gutter, no idle Map key rail.
+  assert.match(seatMapSource, /const resultsPanelOpen = canEdit && filtersActive && \(!selectedSeat \|\| inspectorCollapsed\)/);
+  assert.match(seatMapSource, /if \(value\.trim\(\) && selectedSeatId && !inspectorDirty\) \{\s*setInspectorCollapsed\(true\);/);
+  assert.doesNotMatch(seatMapSource, /mapKeyPanelOpen|desktopInspectorReserveMarginClassName|dock:/);
   assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = ""/);
-  assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title" className=\{\[filterCollapsed \? "order-1" : "order-2", desktopInspectorReserveMarginClassName/);
+  assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title" className=\{\[filterCollapsed \? "order-1" : "order-2", "min-w-0 overflow-hidden/);
   assert.match(seatMapSource, /const mobileMapInteractionSurfaceOpen = canEdit && \(/);
   assert.match(seatMapSource, /const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;/);
   assert.match(seatMapSource, /mobileMapControlsHidden \? "hidden sm:block" : ""/);
