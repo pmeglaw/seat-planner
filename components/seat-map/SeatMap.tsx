@@ -33,13 +33,11 @@ import { buildPublishChangeSummary, type PublishChangeItem } from "@/lib/publish
 import { AdvancedDrawer } from "@/components/seat-map/AdvancedDrawer";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import {
-  ActiveFilterChips,
   FilterPanel,
-  SeatResultsList,
   type ActiveFilterChip,
-  type ResultStatusBreakdown,
-  type SeatResultItem
+  type ResultStatusBreakdown
 } from "@/components/seat-map/FilterPanel";
+import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { Button } from "@/components/ui/Button";
@@ -128,11 +126,6 @@ function replaceEmployee(employees: Employee[], seat: SeatWithEmployee) {
 
 function getSeatZone(seat: SeatWithEmployee) {
   return seat.zone ?? seat.department ?? "";
-}
-
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  return parts.slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?";
 }
 
 function PublishCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
@@ -263,13 +256,11 @@ export function SeatMap({
   const [zone, setZone] = useState("all");
   const [status, setStatus] = useState("all");
   const [filterCollapsed, setFilterCollapsed] = useState(true);
-  const [resultRailCollapsed, setResultRailCollapsed] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [inspectorDirty, setInspectorDirty] = useState(false);
   const [inspectorGuardAction, setInspectorGuardAction] = useState<InspectorGuardAction | null>(null);
   const [pendingInspectorSaveAction, setPendingInspectorSaveAction] = useState<InspectorGuardAction | null>(null);
   const [inspectorResetSignal, setInspectorResetSignal] = useState(0);
-  const [searchSelectionNotice, setSearchSelectionNotice] = useState<string | null>(null);
   const [showNames, setShowNames] = useState(false);
   const [namesPreferenceHydrated, setNamesPreferenceHydrated] = useState(false);
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>("detail");
@@ -284,7 +275,6 @@ export function SeatMap({
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapToolsButtonRef = useRef<HTMLButtonElement | null>(null);
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
-  const autoSelectedSearchKeyRef = useRef<string | null>(null);
 
   const updateMapVisibleRange = useCallback(() => {
     const viewport = mapViewportRef.current;
@@ -327,20 +317,17 @@ export function SeatMap({
   const toggleFilterPanel = useCallback(() => {
     setAdvancedOpen(false);
     setAskPlannerOpen(false);
-    setResultRailCollapsed(false);
     setFilterCollapsed(current => !current);
   }, []);
 
   const openAdvancedDrawer = useCallback(() => {
     setFilterCollapsed(true);
-    setResultRailCollapsed(true);
     setAskPlannerOpen(false);
     setAdvancedOpen(true);
   }, []);
 
   const openAskPlannerDrawer = useCallback(() => {
     setFilterCollapsed(true);
-    setResultRailCollapsed(true);
     setAdvancedOpen(false);
     setAskPlannerOpen(true);
   }, []);
@@ -521,14 +508,28 @@ export function SeatMap({
           setActionError(null);
           return;
         }
+        // Esc ladder: selected with a retained query returns to RESULTS (the panel
+        // slot re-renders results); selected without a query returns to idle.
         setSelectedSeatId(null);
         setInspectorCollapsed(false);
+        return;
+      }
+
+      if (!isEditableTarget(event.target) && search.trim()) {
+        setSearch("");
+        return;
+      }
+
+      if (!isEditableTarget(event.target) && (department !== "all" || zone !== "all" || status !== "all")) {
+        setDepartment("all");
+        setZone("all");
+        setStatus("all");
       }
     }
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, advancedOpen, askPlannerOpen, closeAdvancedDrawer, closeAskPlannerDrawer, deleteSeatConfirm, filterCollapsed, inspectorDirty, inspectorGuardAction, moveSeatMode, publishReviewOpen, selectedSeatId, swapConfirm, swapSourceSeatId]);
+  }, [addSeatMode, advancedOpen, askPlannerOpen, closeAdvancedDrawer, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, moveSeatMode, publishReviewOpen, search, selectedSeatId, status, swapConfirm, swapSourceSeatId, zone]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -573,27 +574,6 @@ export function SeatMap({
     "draft-changed": draftChangedSeatLabelSet.size
   };
 
-  const employeeResults = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    return localEmployees
-      .map(employee => {
-        const assignedSeat = localSeats.find(seat => seat.employee_id === employee.id) ?? null;
-        const phoneExtension = employee.phone_extension ? `Ext. ${employee.phone_extension}` : null;
-        const metaParts = [employee.position, employee.department, phoneExtension, assignedSeat ? assignedSeat.label : "Unassigned"].filter(Boolean);
-        return {
-          id: employee.id,
-          name: employee.full_name,
-          meta: metaParts.join(" · ") || "No details",
-          initials: getInitials(employee.full_name),
-          seatId: assignedSeat?.id ?? null,
-          seatLabel: assignedSeat?.label ?? null,
-          searchable: [employee.full_name, employee.position, employee.department, employee.phone_extension, assignedSeat?.label, assignedSeat ? getSeatZone(assignedSeat) : ""].filter(Boolean).join(" ").toLowerCase()
-        };
-      })
-      .filter(result => !needle || result.searchable.includes(needle))
-      .slice(0, 30);
-  }, [localEmployees, localSeats, search]);
-
   const selectedSeat = localSeats.find(seat => seat.id === selectedSeatId) ?? null;
   const swapSourceSeat = swapSourceSeatId ? localSeats.find(seat => seat.id === swapSourceSeatId) ?? null : null;
   const swapTargetSeat = swapConfirm ? localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null : null;
@@ -615,25 +595,56 @@ export function SeatMap({
     status !== "all"
   ].filter(Boolean).length;
   const activeFilterCount = activeFilterChips.length;
-  const activeStructuredFilterChips = activeFilterChips.filter(chip => chip.id !== "search");
   const filtersActive = activeFilterCount > 0;
   const matchingSeats = filtersActive ? localSeats.filter(seat => matchesFilters(seat)) : localSeats;
-  const singleResultSeat = filtersActive && matchingSeats.length === 1 ? matchingSeats[0] : null;
   const resultStatusBreakdown = useMemo<ResultStatusBreakdown>(() => ({
     available: matchingSeats.filter(seat => seat.status === "available").length,
     assigned: matchingSeats.filter(seat => seat.status === "assigned").length,
     reserved: matchingSeats.filter(seat => seat.status === "reserved").length,
     unavailable: matchingSeats.filter(seat => seat.status === "unavailable").length
   }), [matchingSeats]);
-  const seatResults = useMemo<SeatResultItem[]>(() => matchingSeats.map(seat => ({
-    id: seat.id,
-    label: seat.label,
-    person: seat.employee?.full_name ?? "Open seat",
-    department: seat.employee?.department ?? "No department",
-    status: seat.status,
-    zone: getSeatZone(seat) || "No zone",
-    selected: seat.id === selectedSeatId
-  })), [matchingSeats, selectedSeatId]);
+  // Merged result cards: one card per entity (F1) — an assigned seat and its occupant
+  // are one card, never two rows. Unassigned people matching a text search appear as
+  // disabled cards so the person is findable without fabricating a seat.
+  const panelResults = useMemo<AdminResultCard[]>(() => {
+    const statusRank: Record<SeatStatus, number> = { assigned: 0, available: 1, reserved: 2, unavailable: 3 };
+    const seatCards = [...matchingSeats]
+      .sort((a, b) => statusRank[a.status] - statusRank[b.status] || a.label.localeCompare(b.label))
+      .map(seat => {
+        const zoneLabel = getSeatZone(seat) || "No zone";
+        if (seat.employee) {
+          return {
+            key: `seat-${seat.id}`,
+            seatId: seat.id,
+            title: `${seat.employee.full_name} — ${seat.label}`,
+            subtitle: [seat.employee.department, zoneLabel, STATUS_LABELS[seat.status]].filter(Boolean).join(" · "),
+            status: seat.status
+          };
+        }
+        return {
+          key: `seat-${seat.id}`,
+          seatId: seat.id,
+          title: seat.label,
+          subtitle: [seat.status === "available" ? "Open seat" : STATUS_LABELS[seat.status], zoneLabel].join(" · "),
+          status: seat.status
+        };
+      });
+    if (!searchQuery) return seatCards.slice(0, 60);
+    const needle = searchQuery.toLowerCase();
+    const assignedEmployeeIds = new Set(localSeats.map(seat => seat.employee_id).filter(Boolean));
+    const unassignedPeople = localEmployees
+      .filter(employee => !assignedEmployeeIds.has(employee.id))
+      .filter(employee => [employee.full_name, employee.position, employee.department, employee.phone_extension].filter(Boolean).join(" ").toLowerCase().includes(needle))
+      .map(employee => ({
+        key: `person-${employee.id}`,
+        seatId: null,
+        title: employee.full_name,
+        subtitle: [employee.position, employee.department, "Unassigned"].filter(Boolean).join(" · "),
+        status: null,
+        disabled: true
+      }));
+    return [...seatCards, ...unassignedPeople].slice(0, 60);
+  }, [localEmployees, localSeats, matchingSeats, searchQuery]);
   const selectedSeatMatchesFilters = selectedSeat ? matchesFilters(selectedSeat) : true;
   const crowdedNameSeatIdSet = useMemo(() => {
     const crowded = new Set<string>();
@@ -708,7 +719,6 @@ export function SeatMap({
     setSwapConfirm(null);
     setDeleteSeatConfirm(null);
     setInspectorCollapsed(false);
-    setSearchSelectionNotice(null);
     focusSeatMarker(seatIdToFocus);
   }
 
@@ -722,7 +732,6 @@ export function SeatMap({
     setSwapConfirm(null);
     setDeleteSeatConfirm(null);
     setInspectorCollapsed(false);
-    setSearchSelectionNotice(null);
     focusSeatMarker(seatIdToFocus);
   }
 
@@ -735,7 +744,6 @@ export function SeatMap({
     setAddSeatMode(true);
     setAdvancedOpen(false);
     setInspectorCollapsed(false);
-    setSearchSelectionNotice(null);
   }
 
   function applyStartMoveSeatAction() {
@@ -773,10 +781,6 @@ export function SeatMap({
       if (action.center) {
         setFilterCollapsed(true);
         queueCenterSeatInMap(action.seatId);
-      }
-      if (action.sourceLabel) {
-        const seat = localSeats.find(item => item.id === action.seatId);
-        if (seat) setSearchSelectionNotice(`Opened ${seat.label} from ${action.sourceLabel}.`);
       }
       return;
     }
@@ -943,21 +947,15 @@ export function SeatMap({
     setDepartment("all");
     setZone("all");
     setStatus("all");
-    setSearchSelectionNotice(null);
-    setResultRailCollapsed(false);
   }
 
   function clearAllConstraints() {
     setSearch("");
-    autoSelectedSearchKeyRef.current = null;
     clearStructuredFilters();
   }
 
   function clearSearch() {
     setSearch("");
-    autoSelectedSearchKeyRef.current = null;
-    setSearchSelectionNotice(null);
-    setResultRailCollapsed(false);
   }
 
   function removeActiveFilterChip(chipId: string) {
@@ -968,19 +966,16 @@ export function SeatMap({
 
     if (chipId === "department") {
       setDepartment("all");
-      setSearchSelectionNotice(null);
       return;
     }
 
     if (chipId === "zone") {
       setZone("all");
-      setSearchSelectionNotice(null);
       return;
     }
 
     if (chipId === "status") {
       setStatus("all");
-      setSearchSelectionNotice(null);
     }
   }
 
@@ -1103,7 +1098,6 @@ export function SeatMap({
       setSelectedSeatId(seatId);
       setInspectorCollapsed(true);
       setActionNotice(null);
-      setSearchSelectionNotice(null);
       return true;
     }
 
@@ -1113,7 +1107,6 @@ export function SeatMap({
       setSwapSourceSeatId(null);
       setSwapConfirm(null);
       setInspectorCollapsed(false);
-      setSearchSelectionNotice(null);
       return true;
     }
 
@@ -1124,7 +1117,6 @@ export function SeatMap({
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
     setInspectorCollapsed(false);
-    setSearchSelectionNotice(null);
     return true;
   }
 
@@ -1145,50 +1137,12 @@ export function SeatMap({
     if (!selectSeat(seatId)) return;
 
     setFilterCollapsed(true);
-    setResultRailCollapsed(true);
     queueCenterSeatInMap(seatId);
-
-    const seat = localSeats.find(item => item.id === seatId);
-    if (seat) setSearchSelectionNotice(`Opened ${seat.label} from ${sourceLabel}.`);
-  }
-
-  function selectEmployeeSeat(seatId: string) {
-    openSeatFromResults(seatId, "search result");
   }
 
   function selectSeatResult(seatId: string) {
     openSeatFromResults(seatId, "seat results");
   }
-
-  useEffect(() => {
-    if (!canEdit || !searchActive || !singleResultSeat) {
-      if (!searchActive) autoSelectedSearchKeyRef.current = null;
-      return;
-    }
-
-    const autoSelectKey = `${searchQuery}::${singleResultSeat.id}`;
-    if (autoSelectedSearchKeyRef.current === autoSelectKey) return;
-    const changingSelectedSeat = selectedSeatId !== singleResultSeat.id;
-    if (selectedSeatId && changingSelectedSeat && inspectorDirty) return;
-
-    autoSelectedSearchKeyRef.current = autoSelectKey;
-    setSelectedSeatId(singleResultSeat.id);
-    if (changingSelectedSeat) setInspectorDirty(false);
-    setMoveSeatMode(false);
-    setAddSeatMode(false);
-    setSwapSourceSeatId(null);
-    setSwapConfirm(null);
-    setInspectorCollapsed(false);
-    setFilterCollapsed(true);
-    setResultRailCollapsed(true);
-    setSearchSelectionNotice(`Auto-selected ${singleResultSeat.label} for "${searchQuery}".`);
-    queueCenterSeatInMap(singleResultSeat.id);
-  }, [canEdit, inspectorDirty, queueCenterSeatInMap, searchActive, searchQuery, selectedSeatId, singleResultSeat]);
-
-  useEffect(() => {
-    if (!canEdit || !searchActive || matchingSeats.length <= 1 || !selectedSeatId || selectedSeatMatchesFilters || inspectorDirty) return;
-    setInspectorCollapsed(true);
-  }, [canEdit, inspectorDirty, matchingSeats.length, searchActive, selectedSeatId, selectedSeatMatchesFilters]);
 
   function startAddSeatMode() {
     if (selectedSeatId && inspectorDirty) {
@@ -1523,18 +1477,8 @@ export function SeatMap({
   }
 
   const namesToggleLabel = showNames ? "Hide names" : "Show names";
-  const mapResultSummary = matchingSeats.length === 1 ? "1 map result" : `${matchingSeats.length} map results`;
-  const mapResultVerb = matchingSeats.length === 1 ? "matches" : "match";
-  const mapResultContextLabel = searchActive && structuredFiltersActive
-    ? "the current search and filters"
-    : searchActive
-      ? "the current search"
-      : "the current filters";
-  const resultStatusSummary = `${resultStatusBreakdown.assigned} assigned · ${resultStatusBreakdown.available} open · ${resultStatusBreakdown.reserved} reserved · ${resultStatusBreakdown.unavailable} unavailable`;
-  const singleResultPerson = singleResultSeat?.employee?.full_name ?? "Open seat";
-  const singleResultMeta = singleResultSeat
-    ? `${STATUS_LABELS[singleResultSeat.status]} · ${getSeatZone(singleResultSeat) || "No zone"}`
-    : "";
+  const searchStatusTitle = searchActive ? `Searching “${searchQuery}”` : "Filtered results";
+  const searchStatusSummary = `${matchingSeats.length} ${matchingSeats.length === 1 ? "match" : "matches"} · ${resultStatusBreakdown.assigned} assigned · ${resultStatusBreakdown.available} open`;
   const resultEmptyTitle = searchActive && structuredFiltersActive
     ? "No combined results"
     : searchActive
@@ -1550,7 +1494,6 @@ export function SeatMap({
       ? "This selected seat does not match the current search."
       : "This selected seat does not match the current filters."
     : null;
-  const selectedResultIsVisible = Boolean(selectedSeat && filtersActive && selectedSeatMatchesFilters);
   const clearSearchContextLabel = searchActive ? "Clear search" : "Clear filters";
   const undoTitle = pending
     ? "Wait for the current map change to finish"
@@ -1617,8 +1560,11 @@ export function SeatMap({
   const desktopMapGridClass = filterCollapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[288px_minmax(0,1fr)]";
   const showFilterPanel = !filterCollapsed;
   const desktopInspectorOpen = canEdit && Boolean(selectedSeat && !inspectorCollapsed);
-  const desktopInspectorReserveMarginClassName = desktopInspectorOpen ? "sm:mr-[28rem] xl:mr-[29.5rem]" : "";
-  const desktopInspectorReservePaddingClassName = desktopInspectorOpen ? "sm:pr-[28rem] xl:pr-[29.5rem]" : "";
+  // Panel slot (right dock): one occupant at a time — DETAIL (inspector) when a seat is
+  // selected, RESULTS when search/filters are active with no selection.
+  const resultsPanelOpen = canEdit && filtersActive && !selectedSeat;
+  const desktopPanelSlotOpen = desktopInspectorOpen || resultsPanelOpen;
+  const desktopInspectorReserveMarginClassName = desktopPanelSlotOpen ? "sm:mr-[28rem] xl:mr-[29.5rem]" : "";
   const canvasBannerSafeAreaClassName = desktopInspectorReserveMarginClassName;
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
@@ -1650,24 +1596,6 @@ export function SeatMap({
     addSeatMode ? "cursor-crosshair" : ""
   ].join(" ");
   const mapFrameStyle = mapViewMode === "overview" && overviewMapWidth ? { width: `${overviewMapWidth}px` } : undefined;
-  const resultSummaryShellClass = [
-    "flex flex-col gap-2 border px-3 text-xs font-semibold transition lg:flex-row lg:items-center lg:justify-between",
-    singleResultSeat
-      ? "rounded-xl border-[var(--admin-primary-border)] bg-[var(--admin-info-soft)] py-1.5 text-[var(--admin-info)] shadow-[0_8px_22px_rgba(16,17,20,0.08)]"
-      : selectedResultIsVisible
-      ? "rounded-xl border-[var(--admin-border)] bg-[var(--admin-surface-muted)] text-[var(--admin-text-muted)] shadow-none"
-      : "rounded-2xl border-[var(--admin-border)] bg-[var(--admin-surface)]/92 py-2 text-[var(--admin-text-muted)] shadow-[var(--admin-shadow-command)] backdrop-blur-xl",
-    canvasBannerSafeAreaClassName
-  ].filter(Boolean).join(" ");
-  const singleResultOverlayShellClassName = [
-    "pointer-events-none sticky left-0 right-0 top-12 z-30 flex h-0 w-full justify-center px-2 sm:top-2 sm:justify-end",
-    mobileMapControlsHidden ? "hidden sm:flex" : "",
-    desktopInspectorReservePaddingClassName
-  ].filter(Boolean).join(" ");
-  const singleResultOverlayClassName = [
-    "pointer-events-auto flex w-[min(100%,22rem)] flex-col gap-2 rounded-xl border border-[var(--admin-primary-border)] bg-[var(--admin-info-soft)]/95 px-2.5 py-2 text-xs font-semibold text-[var(--admin-info)] shadow-[0_14px_34px_rgba(16,17,20,0.18)] backdrop-blur-md sm:w-auto sm:min-w-[28rem] sm:max-w-[min(46rem,calc(100vw-11rem))] sm:flex-row sm:items-center sm:justify-between",
-    desktopInspectorOpen ? "lg:min-w-0 lg:max-w-[min(36rem,calc(100vw-32rem))] xl:max-w-[min(36rem,calc(100vw-33.5rem))]" : ""
-  ].filter(Boolean).join(" ");
   const activeModeBannerClassName = [
     "flex flex-col gap-2 rounded-2xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-2 text-xs font-semibold text-[var(--admin-primary-cta)] shadow-[0_12px_34px_rgba(166,58,18,0.14)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between",
     canvasBannerSafeAreaClassName
@@ -1680,10 +1608,6 @@ export function SeatMap({
     "absolute inset-0",
     mobileMapControlsHidden ? "hidden sm:block" : ""
   ].filter(Boolean).join(" ");
-  const desktopResultRailClassName = [
-    "hidden lg:block",
-    canvasBannerSafeAreaClassName
-  ].filter(Boolean).join(" ");
   const actionErrorBannerClassName = [
     "min-w-0 whitespace-pre-wrap break-words rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-error-text)]",
     canvasBannerSafeAreaClassName
@@ -1694,47 +1618,6 @@ export function SeatMap({
   ].filter(Boolean).join(" ");
   const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-cta)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50";
   const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-cta)] transition hover:border-[var(--admin-primary)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]";
-  const singleResultSummary = singleResultSeat ? (
-    <>
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        <span className="shrink-0 rounded-lg bg-[var(--sp-color-workspace)] px-2 py-1 text-[11px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]">
-          {singleResultSeat.label}
-        </span>
-        <span className="min-w-0 flex-1 truncate font-semibold text-[var(--sp-color-text-primary)]" aria-live="polite">
-          {searchSelectionNotice ?? `${singleResultPerson} matches ${mapResultContextLabel}.`}
-        </span>
-        <span className="hidden shrink-0 truncate text-[11px] font-bold text-[#3E6F72] sm:inline">
-          {singleResultMeta}
-        </span>
-      </div>
-      <div className="flex shrink-0 flex-wrap gap-1.5">
-        <button
-          type="button"
-          onClick={() => selectSeatResult(singleResultSeat.id)}
-          className={resultActionButtonClassName}
-        >
-          Select
-        </button>
-        <button
-          type="button"
-          onClick={() => fitSeatsInMap([singleResultSeat])}
-          aria-label="Fit one result on the map"
-          title="Center the matching seat on the map"
-          className={resultActionButtonClassName}
-        >
-          Fit result
-        </button>
-        <button
-          type="button"
-          onClick={searchActive && structuredFiltersActive ? clearAllConstraints : searchActive ? clearSearch : clearStructuredFilters}
-          aria-label={searchActive && structuredFiltersActive ? "Clear all active search and filters" : searchActive ? "Clear search results" : "Clear filters"}
-          className={resultClearButtonClassName}
-        >
-          {searchActive && structuredFiltersActive ? "Clear all" : searchActive ? "Clear search" : "Clear filters"}
-        </button>
-      </div>
-    </>
-  ) : null;
   const visibleMapSpan = Math.max(0, mapVisibleRange.right - mapVisibleRange.left);
   const mapPixelsPerNormalizedUnit = visibleMapSpan > 0 && mapVisibleRange.viewportWidth > 0
     ? mapVisibleRange.viewportWidth / visibleMapSpan
@@ -1919,9 +1802,20 @@ export function SeatMap({
               <input
                 value={search}
                 onChange={event => {
-                  setSearch(event.target.value);
-                  setSearchSelectionNotice(null);
-                  setResultRailCollapsed(false);
+                  const value = event.target.value;
+                  setSearch(value);
+                  // INV-1: search evicts detail — typing hands the panel slot to results.
+                  // Unsaved inspector edits keep the guard: eviction waits for save/discard.
+                  if (value.trim() && selectedSeatId && !inspectorDirty) {
+                    setSelectedSeatId(null);
+                    setInspectorCollapsed(false);
+                  }
+                }}
+                onKeyDown={event => {
+                  if (event.key === "Escape" && search.trim()) {
+                    event.stopPropagation();
+                    clearSearch();
+                  }
                 }}
                 placeholder="Search people, seats, departments, or zones"
                 className="h-11 w-full rounded-[12px] border border-[var(--admin-border)] bg-[var(--admin-surface)] pl-11 pr-10 text-sm font-medium text-[var(--admin-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--admin-text-subtle)] hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
@@ -1944,29 +1838,18 @@ export function SeatMap({
         {showFilterPanel && (
           <div className={filterPanelShellClass}>
             <FilterPanel
-              search={search}
               department={department}
               status={status}
               departments={departments}
               zone={zone}
               zones={zones}
               collapsed={filterCollapsed}
-              employeeResults={employeeResults}
-              selectedSeatId={selectedSeatId}
               activeChips={activeFilterChips}
-              seatResults={seatResults}
-              resultStatusBreakdown={resultStatusBreakdown}
-              resultEmptyTitle={resultEmptyTitle}
-              resultEmptyDescription={resultEmptyDescription}
-              showSeatResults={canEdit && filtersActive && !singleResultSeat}
               onToggle={toggleFilterPanel}
-              onEmployeeSelect={selectEmployeeSeat}
-              onSeatResultSelect={selectSeatResult}
               onDepartmentChange={setDepartment}
               onZoneChange={setZone}
               onStatusChange={setStatus}
               onRemoveActiveChip={removeActiveFilterChip}
-              onClearSearch={clearSearch}
               onClearFilters={clearStructuredFilters}
               onClearAll={clearAllConstraints}
             />
@@ -1974,97 +1857,6 @@ export function SeatMap({
         )}
 
         <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/68 p-2 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].join(" ")}>
-          {canEdit && (filtersActive || searchSelectionNotice) && !singleResultSeat && (
-            <div className={resultSummaryShellClass}>
-              <div className="min-w-0">
-                {searchSelectionNotice && (
-                  <div className="truncate font-semibold text-[var(--admin-primary-cta)]">{searchSelectionNotice}</div>
-                )}
-                {filtersActive && (
-                  <>
-                    <div className={searchSelectionNotice ? "mt-0.5 truncate text-[11px] text-[var(--admin-text-muted)]" : "truncate font-semibold text-[var(--admin-text-secondary)]"}>
-                      {mapResultSummary} {mapResultVerb} {mapResultContextLabel}.
-                    </div>
-                    <div className="mt-0.5 truncate text-[11px] text-[var(--admin-text-muted)]">{resultStatusSummary}</div>
-                    {activeStructuredFilterChips.length > 0 && (
-                      <ActiveFilterChips chips={activeStructuredFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearStructuredFilters} className={selectedResultIsVisible ? "mt-1.5" : "mt-2"} />
-                    )}
-                  </>
-                )}
-              </div>
-              {filtersActive && (
-                <div className={["flex shrink-0 flex-wrap", selectedResultIsVisible ? "gap-1.5" : "gap-2"].join(" ")}>
-                  <button
-                    type="button"
-                    onClick={() => fitSeatsInMap(matchingSeats)}
-                    disabled={!matchingSeats.length}
-                    aria-label={matchingSeats.length === 0 ? "Fit results unavailable because there are no matching seats" : `Fit ${matchingSeats.length} results on the map`}
-                    title={matchingSeats.length === 0 ? "No matching seats to fit" : "Fit active search and filter results on the map"}
-                    className={resultActionButtonClassName}
-                  >
-                    Fit results
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setResultRailCollapsed(current => !current)}
-                    aria-expanded={!resultRailCollapsed}
-                    aria-controls="seat-results-rail"
-                    className={["hidden lg:inline-flex", resultActionButtonClassName].join(" ")}
-                  >
-                    {resultRailCollapsed ? "Show results" : "Hide results"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={searchActive && structuredFiltersActive ? clearAllConstraints : searchActive ? clearSearch : clearStructuredFilters}
-                    aria-label={searchActive && structuredFiltersActive ? "Clear all active search and filters" : searchActive ? "Clear search results" : "Clear filters"}
-                    className={resultClearButtonClassName}
-                  >
-                    {searchActive && structuredFiltersActive ? "Clear all" : searchActive ? "Clear search" : "Clear filters"}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {canEdit && filtersActive && !singleResultSeat && !resultRailCollapsed && (
-            <SeatResultsList
-              id="mobile-seat-results-tray"
-              titleId="mobile-seat-results-tray-title"
-              results={seatResults}
-              statusBreakdown={resultStatusBreakdown}
-              emptyTitle={resultEmptyTitle}
-              emptyDescription={resultEmptyDescription}
-              searchActive={searchActive}
-              filtersActive={structuredFiltersActive}
-              onSelect={selectSeatResult}
-              onClearSearch={clearSearch}
-              onClearFilters={clearStructuredFilters}
-              onClearAll={clearAllConstraints}
-              onClose={() => setResultRailCollapsed(true)}
-              density="rail"
-              className="lg:hidden"
-            />
-          )}
-
-          {canEdit && filtersActive && !singleResultSeat && !resultRailCollapsed && (
-            <SeatResultsList
-              id="seat-results-rail"
-              titleId="seat-results-rail-title"
-              results={seatResults}
-              statusBreakdown={resultStatusBreakdown}
-              emptyTitle={resultEmptyTitle}
-              emptyDescription={resultEmptyDescription}
-              searchActive={searchActive}
-              filtersActive={structuredFiltersActive}
-              onSelect={selectSeatResult}
-              onClearSearch={clearSearch}
-              onClearFilters={clearStructuredFilters}
-              onClearAll={clearAllConstraints}
-              density="rail"
-              className={desktopResultRailClassName}
-            />
-          )}
-
           {activeMode && (
             <div role="status" aria-live="polite" className={activeModeBannerClassName}>
               <div className="min-w-0">
@@ -2108,13 +1900,6 @@ export function SeatMap({
               tabIndex={canEdit ? 0 : undefined}
               aria-label={canEdit ? "Admin seat map viewport. Use wheel, trackpad, touch, or arrow keys to pan the map." : undefined}
             >
-              {canEdit && singleResultSummary && (
-                <div className={singleResultOverlayShellClassName} aria-label="Single search result">
-                  <div className={singleResultOverlayClassName}>
-                    {singleResultSummary}
-                  </div>
-                </div>
-              )}
               <div className={mapModeOverlayShellClassName}>
                 <div
                   role="group"
@@ -2205,29 +1990,59 @@ export function SeatMap({
           {canEdit && (
             <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 lg:mt-0">
               <div className="min-w-0">
-                <h2 id="admin-planning-canvas-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Planning canvas</h2>
+                <h2 id="admin-planning-canvas-title" className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">
+                  {filtersActive ? searchStatusTitle : "Planning canvas"}
+                </h2>
                 <p aria-label="Seat inventory summary" className="truncate text-xs font-medium text-[var(--admin-text-muted)]">
-                  {stats.total} seats
-                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                  {stats.assigned} assigned
-                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                  {stats.available} open
-                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                  {stats.reserved} reserved
-                  <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                  {stats.unavailable} unavailable
+                  {filtersActive ? searchStatusSummary : (
+                    <>
+                      {stats.total} seats
+                      <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+                      {stats.assigned} assigned
+                      <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+                      {stats.available} open
+                      <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+                      {stats.reserved} reserved
+                      <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
+                      {stats.unavailable} unavailable
+                    </>
+                  )}
                 </p>
               </div>
-              <ul aria-label="Seat status legend" className="hidden flex-wrap items-center gap-2 text-xs font-medium text-[var(--admin-text-secondary)] md:flex">
-                {SEAT_STATUS_LEGEND.filter(item => !item.draftOnly || legendCounts[item.key] > 0).map(item => (
-                  <li key={item.key} className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-2.5 py-1">
-                    <span className={["h-2 w-2 shrink-0 rounded-full", item.accentClass].join(" ")} aria-hidden="true" />
-                    {item.label}
-                    <span className="text-[var(--admin-text-subtle)]" aria-hidden="true">·</span>
-                    <span className="font-semibold text-[var(--admin-text-primary)]">{legendCounts[item.key]}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="flex min-w-0 shrink-0 items-center gap-3">
+                <ul aria-label="Seat status legend" className="hidden flex-wrap items-center gap-2 text-xs font-medium text-[var(--admin-text-secondary)] md:flex">
+                  {SEAT_STATUS_LEGEND.filter(item => !item.draftOnly || legendCounts[item.key] > 0).map(item => (
+                    <li key={item.key} className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-2.5 py-1">
+                      <span className={["h-2 w-2 shrink-0 rounded-full", item.accentClass].join(" ")} aria-hidden="true" />
+                      {item.label}
+                      <span className="text-[var(--admin-text-subtle)]" aria-hidden="true">·</span>
+                      <span className="font-semibold text-[var(--admin-text-primary)]">{legendCounts[item.key]}</span>
+                    </li>
+                  ))}
+                </ul>
+                {filtersActive && (
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => fitSeatsInMap(matchingSeats)}
+                      disabled={!matchingSeats.length}
+                      aria-label={matchingSeats.length === 0 ? "Fit matches unavailable because there are no matching seats" : `Fit ${matchingSeats.length} matches on the map`}
+                      title={matchingSeats.length === 0 ? "No matching seats to fit" : "Fit active search and filter results on the map"}
+                      className={resultActionButtonClassName}
+                    >
+                      Fit matches
+                    </button>
+                    <button
+                      type="button"
+                      onClick={searchActive && structuredFiltersActive ? clearAllConstraints : searchActive ? clearSearch : clearStructuredFilters}
+                      aria-label={searchActive && structuredFiltersActive ? "Clear all active search and filters" : searchActive ? "Clear search results" : "Clear filters"}
+                      className={resultClearButtonClassName}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </section>
@@ -2499,6 +2314,22 @@ export function SeatMap({
             </div>
           </section>
         </div>
+      )}
+
+      {resultsPanelOpen && (
+        <ResultsPanel
+          results={panelResults}
+          matchCount={matchingSeats.length}
+          emptyTitle={resultEmptyTitle}
+          emptyDescription={resultEmptyDescription}
+          searchActive={searchActive}
+          structuredFiltersActive={structuredFiltersActive}
+          onOpen={selectSeatResult}
+          onShowOnMap={queueCenterSeatInMap}
+          onClearSearch={clearSearch}
+          onClearFilters={clearStructuredFilters}
+          onClearAll={clearAllConstraints}
+        />
       )}
 
       <SeatInspector

@@ -190,7 +190,7 @@ test("seat markers remain keyboard buttons with contextual accessible labels", a
 
 test("inspector sections, validation, and actions retain accessible confidence cues", async () => {
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
-  const filterSource = await readSource("../components/seat-map/FilterPanel.tsx");
+  const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");
 
   assert.match(inspectorSource, /aria-label=\{`View details for \$\{selectedSeat\.label\}`\}/);
   assert.match(inspectorSource, /aria-label=\{`Back to map from \$\{selectedSeat\.label\} details`\}/);
@@ -223,9 +223,8 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /whitespace-normal rounded-xl leading-tight/);
   assert.doesNotMatch(inspectorSource, /Discard unsaved inspector edits before deleting this custom seat/);
 
-  assert.match(filterSource, /aria-label="People results"/);
-  assert.match(filterSource, /aria-label=\{resultActionLabel\}/);
-  assert.match(filterSource, /No assigned seat to open/);
+  assert.match(resultsPanelSource, /aria-label="Admin search results"/);
+  assert.match(resultsPanelSource, /No assigned seat to open/);
 });
 
 test("unsaved inspector changes use an explicit save discard keep-editing guard", async () => {
@@ -245,7 +244,6 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /requestInspectorGuard\(\{ kind: "start-swap-seat" \}\)/);
   assert.match(source, /requestInspectorGuard\(\{ kind: "navigate-management" \}\)/);
   assert.match(source, /queueCenterSeatInMap\(action\.seatId\)/);
-  assert.match(source, /Opened \$\{seat\.label\} from \$\{action\.sourceLabel\}\./);
   assert.match(source, /Save or discard the selected seat edits before publishing/);
   assert.match(source, /window\.location\.assign\("\/admin\/management"\)/);
   assert.match(source, /id="inspector-unsaved-title"/);
@@ -264,19 +262,20 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
 test("admin search and filter confidence controls stay accessible and admin-scoped", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const filterSource = await readSource("../components/seat-map/FilterPanel.tsx");
+  const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");
 
   assert.match(filterSource, /export function ActiveFilterChips/);
   assert.match(filterSource, /aria-label="Active filters"/);
   assert.match(filterSource, /aria-label=\{chip\.removeLabel\}/);
   assert.match(filterSource, /Clear all/);
-  assert.match(filterSource, /export function SeatResultsList/);
-  assert.match(filterSource, /titleId = "seat-results-title"/);
-  assert.match(filterSource, /aria-label="Seat results"/);
-  assert.match(filterSource, /Select and center on map/);
-  assert.match(filterSource, /onKeyDown=\{event =>/);
-  assert.match(filterSource, /event\.key === "Enter"/);
-  assert.match(filterSource, /id="mobile-seat-results"/);
-  assert.match(filterSource, /titleId="mobile-seat-results-title"/);
+  // Results moved out of the left filter panel into the right panel slot (B3/F1).
+  assert.doesNotMatch(filterSource, /SeatResultsList|People results|employeeResults/);
+  assert.match(resultsPanelSource, /aria-labelledby="admin-results-title"/);
+  assert.match(resultsPanelSource, /role="list"/);
+  assert.match(resultsPanelSource, /aria-label="Admin search results"/);
+  assert.match(resultsPanelSource, /ArrowDown/);
+  assert.match(resultsPanelSource, /ArrowUp/);
+  assert.match(resultsPanelSource, /Show on map/);
 
   assert.match(seatMapSource, /function removeActiveFilterChip/);
   assert.match(seatMapSource, /aria-label="Admin command row"/);
@@ -293,64 +292,47 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /placeholder="Search people, seats, departments, or zones"/);
   assert.match(seatMapSource, /function openSeatFromResults/);
   assert.match(seatMapSource, /queueCenterSeatInMap\(seatId\)/);
-  assert.match(seatMapSource, /setResultRailCollapsed\(true\)/);
   assert.match(seatMapSource, /No search results/);
   assert.match(seatMapSource, /No filter results/);
   assert.match(seatMapSource, /No combined results/);
-  assert.match(seatMapSource, /Fit results unavailable because there are no matching seats/);
-  assert.match(seatMapSource, /singleResultSeat = filtersActive && matchingSeats\.length === 1 \? matchingSeats\[0\] : null/);
+  assert.match(seatMapSource, /Fit matches unavailable because there are no matching seats/);
+  // Panel slot: one occupant at a time - results (search/filters, no selection) or the inspector.
+  assert.match(seatMapSource, /const resultsPanelOpen = canEdit && filtersActive && !selectedSeat/);
+  assert.match(seatMapSource, /const desktopPanelSlotOpen = desktopInspectorOpen \|\| resultsPanelOpen/);
   assert.match(seatMapSource, /const desktopInspectorOpen = canEdit && Boolean\(selectedSeat && !inspectorCollapsed\)/);
-  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = desktopInspectorOpen \? "sm:mr-\[28rem\] xl:mr-\[29\.5rem\]" : ""/);
-  assert.match(seatMapSource, /const desktopInspectorReservePaddingClassName = desktopInspectorOpen \? "sm:pr-\[28rem\] xl:pr-\[29\.5rem\]" : ""/);
+  assert.match(seatMapSource, /const desktopInspectorReserveMarginClassName = desktopPanelSlotOpen \? "sm:mr-\[28rem\] xl:mr-\[29\.5rem\]" : ""/);
   assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = desktopInspectorReserveMarginClassName/);
   assert.match(seatMapSource, /const mobileMapInteractionSurfaceOpen = canEdit && \(/);
   assert.match(seatMapSource, /const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;/);
-  assert.match(seatMapSource, /mobileMapControlsHidden \? "hidden sm:flex" : ""/);
   assert.match(seatMapSource, /mobileMapControlsHidden \? "hidden sm:block" : ""/);
-  assert.match(seatMapSource, /const resultSummaryShellClass = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
-  assert.match(seatMapSource, /const singleResultOverlayShellClassName = \[[\s\S]*desktopInspectorReservePaddingClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /const activeModeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
-  assert.match(seatMapSource, /const desktopResultRailClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /const actionErrorBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
   assert.match(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
-  assert.match(seatMapSource, /className=\{singleResultOverlayShellClassName\}/);
   assert.match(seatMapSource, /className=\{activeModeBannerClassName\}/);
   assert.match(seatMapSource, /className=\{actionErrorBannerClassName\}/);
   assert.match(seatMapSource, /className=\{actionNoticeBannerClassName\}/);
-  assert.match(seatMapSource, /className=\{desktopResultRailClassName\}/);
   assert.match(seatMapSource, /className=\{mapMarkerLayerClassName\}/);
-  assert.match(seatMapSource, /showSeatResults=\{canEdit && filtersActive && !singleResultSeat\}/);
-  assert.match(seatMapSource, /\{canEdit && filtersActive && !singleResultSeat && !resultRailCollapsed && \(/);
-  assert.match(seatMapSource, /Fit result/);
-  assert.match(seatMapSource, /onClick=\{\(\) => selectSeatResult\(singleResultSeat\.id\)\}/);
-  assert.match(seatMapSource, /autoSelectedSearchKeyRef/);
-  assert.match(seatMapSource, /Auto-selected \$\{singleResultSeat\.label\} for/);
-  assert.match(seatMapSource, /const changingSelectedSeat = selectedSeatId !== singleResultSeat\.id/);
-  assert.match(seatMapSource, /selectedSeatId && changingSelectedSeat && inspectorDirty/);
-  assert.match(seatMapSource, /if \(changingSelectedSeat\) setInspectorDirty\(false\)/);
-  assert.match(seatMapSource, /matchingSeats\.length <= 1/);
-  assert.match(seatMapSource, /aria-controls="seat-results-rail"/);
-  assert.match(seatMapSource, /id="seat-results-rail"/);
-  assert.match(seatMapSource, /titleId="seat-results-rail-title"/);
-  assert.match(seatMapSource, /id="mobile-seat-results-tray"/);
-  assert.match(filterSource, /aria-label="Back to map from seat results"/);
-  assert.match(filterSource, /relative z-\[70\][\s\S]*lg:z-auto/);
-  assert.match(seatMapSource, /onSeatResultSelect=\{selectSeatResult\}/);
+  // INV-2: no auto-select - a single match stays in results until an explicit open.
+  assert.doesNotMatch(seatMapSource, /singleResultSeat|autoSelectedSearchKeyRef|Auto-selected/);
+  // INV-1: typing a search evicts the open inspector (unsaved edits keep the guard).
+  assert.match(seatMapSource, /if \(value\.trim\(\) && selectedSeatId && !inspectorDirty\) \{/);
+  assert.match(seatMapSource, /\{resultsPanelOpen && \(/);
+  assert.match(seatMapSource, /onOpen=\{selectSeatResult\}/);
+  assert.match(seatMapSource, /onShowOnMap=\{queueCenterSeatInMap\}/);
 });
 
 test("admin search clear controls use one clear path with distinct accessible names", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
-  const filterSource = await readSource("../components/seat-map/FilterPanel.tsx");
+  const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");
   const clearSearchFunction = seatMapSource.match(/function clearSearch\(\) \{[\s\S]*?\n  \}/);
 
   assert.ok(clearSearchFunction, "clearSearch should remain source-visible.");
   assert.match(clearSearchFunction[0], /setSearch\(""\)/);
-  assert.match(clearSearchFunction[0], /setSearchSelectionNotice\(null\)/);
   assert.match(seatMapSource, /aria-label="Clear top search"[\s\S]*onClick=\{clearSearch\}/);
-  assert.equal((seatMapSource.match(/searchActive \? "Clear search results"/g) ?? []).length, 2);
-  assert.equal((seatMapSource.match(/onClearSearch=\{clearSearch\}/g) ?? []).length, 3);
+  assert.equal((seatMapSource.match(/searchActive \? "Clear search results"/g) ?? []).length, 1);
+  assert.equal((seatMapSource.match(/onClearSearch=\{clearSearch\}/g) ?? []).length, 1);
   assert.match(seatMapSource, /onClearSearchContext=\{searchActive \? clearSearch : clearStructuredFilters\}/);
-  assert.match(filterSource, /onClick=\{onClearSearch\} aria-label="Clear search in empty results"/);
+  assert.match(resultsPanelSource, /onClick=\{onClearSearch\}/);
 });
 
 test("custom seat deletion remains guarded by the parent map action", async () => {

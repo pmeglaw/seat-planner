@@ -29,12 +29,7 @@ test("mobile active interaction surfaces hide map-only controls", async () => {
   const mapMarkerLayerSource = sliceBetween(
     source,
     "const mapMarkerLayerClassName",
-    "const desktopResultRailClassName"
-  );
-  const singleResultOverlaySource = sliceBetween(
-    source,
-    "const singleResultOverlayShellClassName",
-    "const singleResultOverlayClassName"
+    "const actionErrorBannerClassName"
   );
 
   assert.match(surfaceSource, /Boolean\(selectedSeat && !inspectorCollapsed\)/);
@@ -48,7 +43,6 @@ test("mobile active interaction surfaces hide map-only controls", async () => {
   assert.match(source, /const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;/);
   assert.match(mapModeShellSource, /mobileMapControlsHidden \? "hidden sm:block" : ""/);
   assert.match(mapMarkerLayerSource, /mobileMapControlsHidden \? "hidden sm:block" : ""/);
-  assert.match(singleResultOverlaySource, /mobileMapControlsHidden \? "hidden sm:flex" : ""/);
   assert.match(source, /aria-label="Map view mode"/);
 });
 
