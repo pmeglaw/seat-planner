@@ -72,7 +72,8 @@ test("desktop marker system exposes assigned available selected search and draft
   assert.match(seatMapSource, /\.\.\.publishSummary\.statusChanges/);
   assert.match(seatMapSource, /\.\.\.publishSummary\.otherChanges/);
   assert.match(seatMapSource, /draftChanged=\{draftChangedSeatLabelSet\.has\(seat\.label\)\}/);
-  assert.match(seatMapSource, /variant="admin"/);
+  // Owner preference: admin map adopts the viewer marker pills (passes viewer variant).
+  assert.match(seatMapSource, /variant="viewer"/);
 });
 
 test("desktop marker system protects show-names and long-name rendering", async () => {

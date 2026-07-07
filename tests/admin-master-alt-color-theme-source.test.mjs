@@ -111,7 +111,9 @@ test("admin color slices scope shell marker and semantic aliases without redesig
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*bg-\[var\(--admin-surface\)\]\/68/);
   assert.match(seatMapSource, /border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-surface-muted\)\]/);
   assert.match(seatMapSource, /showNames \? chromeToolbarBtnActive : chromeToolbarBtn/);
-  assert.match(seatMapSource, /variant="admin"/);
+  // Owner preference: the admin map renders the published viewer's marker pills,
+  // so it passes the viewer variant (SeatMarker retains its admin-token branches).
+  assert.match(seatMapSource, /variant="viewer"/);
 
   assert.match(seatMarkerSource, /variant\?: "admin" \| "viewer"/);
   assert.match(seatMarkerSource, /variant = "viewer"/);
