@@ -25,10 +25,10 @@ export default async function AdminManagementPage() {
 
   if (profile?.role !== "admin") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6">
-        <section className="max-w-md rounded-2xl bg-white p-6 shadow-soft">
-          <h1 className="text-lg font-bold text-slate-900">Admin access required</h1>
-          <p className="mt-2 text-sm text-slate-600">
+      <main className="admin-theme flex min-h-screen items-center justify-center bg-[var(--admin-chrome-bg)] p-6">
+        <section className="max-w-md rounded-2xl bg-[var(--admin-surface)] p-6 shadow-soft">
+          <h1 className="text-lg font-semibold text-[var(--admin-text-primary)]">Admin access required</h1>
+          <p className="mt-2 text-sm text-[var(--admin-text-secondary)]">
             You are signed in, but your profile does not have admin permissions.
           </p>
         </section>

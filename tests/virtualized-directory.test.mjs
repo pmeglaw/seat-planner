@@ -83,10 +83,20 @@ test("management directory is windowed with an indexed seat lookup, look unchang
   assert.match(source, /computeVirtualWindow\(\{/);
   // Only the windowed slice renders; padding preserves the page scroll height.
   assert.match(source, /visibleEmployees\.map\(employee =>/);
-  assert.match(source, /paddingTop: employeeWindow\.topPadding, paddingBottom: employeeWindow\.bottomPadding/);
-  assert.match(source, /data-directory-card/);
-  // The card grid keeps its exact classes (performance work, not a re-skin).
-  assert.match(source, /className="grid grid-cols-1 gap-2 lg:grid-cols-2"/);
+  // Design change: the 2-column card grid became a sortable table (a11y + scale).
+  // Windowing still holds — but the padding that preserves scroll height now
+  // lives in spacer <tr> rows sized by employeeWindow.top/bottomPadding.
+  assert.match(source, /height: employeeWindow\.topPadding/);
+  assert.match(source, /height: employeeWindow\.bottomPadding/);
+  // Directory rows are now table rows, not cards.
+  assert.match(source, /data-directory-row/);
+  // The directory is a real semantic table with a header and body.
+  assert.match(source, /<table\b/);
+  assert.match(source, /<thead>/);
+  assert.match(source, /<tbody ref=\{employeeGridRef\}>/);
+  // Sortable column headers expose sort state to assistive tech.
+  assert.match(source, /aria-sort=\{isSorted \?/);
+  assert.match(source, /onClick=\{\(\) => toggleSort\(column\.key\)\}/);
   // O(seats) index replaces the per-employee seat scan.
   assert.match(source, /const seatLabelByEmployeeId = useMemo/);
   assert.doesNotMatch(source, /localSeats\.find\(seat => seat\.employee_id/);

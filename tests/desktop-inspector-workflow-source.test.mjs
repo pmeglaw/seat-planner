@@ -14,7 +14,10 @@ test("desktop inspector shell exposes the selected-seat identity model", async (
   assert.match(inspectorSource, /panel:w-\[320px\]/);
   assert.doesNotMatch(inspectorSource, /panel:w-\[360px\]|xl:w-\[384px\]/);
   // Figma header: "LABEL — Name" 17px title + neutral status chip with a status dot.
-  assert.match(inspectorSource, /\{selectedSeat\.label\} — \{assignmentIdentityLabel \|\| "Open seat"\}/);
+  // Design change: the assignee name is now normalized through formatDisplayName(...)
+  // (shared name formatter) while keeping the "Open seat" empty-seat fallback.
+  assert.match(inspectorSource, /\{selectedSeat\.label\} — \{formatDisplayName\(assignmentIdentityLabel\) \|\| "Open seat"\}/);
+  assert.match(inspectorSource, /import \{ formatDisplayName \} from "@\/lib\/formatName"/);
   assert.match(inspectorSource, /text-\[17px\] font-semibold/);
   assert.match(inspectorSource, /headerStatusDotClass/);
   // The orange label tile and the "Seat details" eyebrow are gone.

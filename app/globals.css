@@ -107,7 +107,9 @@
   --sp-color-state-planner: #6E655A;
   --sp-color-state-planner-surface: #EFE9DF;
   --sp-color-state-planner-border: #D8D0C5;
-  --sp-color-state-disabled: #C9C0B4;
+  /* Neutral inert grey so disabled controls read as clearly OFF, not a faded warm
+     primary (the old #C9C0B4 tan looked like a washed-out enabled button). */
+  --sp-color-state-disabled: #DDDFE2;
 
   --sp-color-state-selected-rgb: 194 65 12;
   --sp-color-state-published-rgb: 63 111 89;
@@ -117,7 +119,7 @@
   --sp-color-state-danger-rgb: 150 61 47;
   --sp-color-state-info-rgb: 62 111 114;
   --sp-color-state-search-rgb: 47 102 104;
-  --sp-color-state-disabled-rgb: 201 192 180;
+  --sp-color-state-disabled-rgb: 221 223 226;
 
   --sp-space-1: 4px;
   --sp-space-2: 8px;
@@ -177,9 +179,10 @@
 
   --admin-text-primary: #1F2225;
   --admin-text-secondary: #44494C;
-  /* Muted 5.02:1 / subtle 4.45:1 on canvas (#EAEBEC) — old muted failed AA at 4.14:1. */
+  /* Muted 5.02:1 / subtle ~5.2:1 on canvas (#EAEBEC) — subtle darkened from #666C72
+     (4.45:1, under AA) to clear the 4.5:1 body-text threshold with margin. */
   --admin-text-muted: #5E646A;
-  --admin-text-subtle: #666C72;
+  --admin-text-subtle: #5B6167;
   --admin-text-inverse: #EDEEF0;
 
   /* Brand ladder (semantic group: brand/). accent = identity + selection (never behind
@@ -269,11 +272,12 @@
   --admin-marker-unavailable-text: #6b7177;
   --admin-marker-unavailable-accent: rgba(107, 113, 119, 0.6);
   --admin-marker-selected-surface: rgba(255, 255, 255, 0.97);
-  --admin-marker-selected-border: var(--admin-primary);
+  /* Rust boundary (5.67:1 on white / >=3:1 on the pale floor) so the selected pill meets
+     WCAG 1.4.11 on the solid ring itself, not just via the outer hairline. The brand
+     #F26E22 halo is retained below for identity, plus the dark hairline for extra pop. */
+  --admin-marker-selected-border: var(--admin-primary-cta);
   --admin-marker-selected-text: #1f2225;
-  /* +1px dark outer hairline beyond the orange ring: the #F26E22 ring alone is 2.26:1
-     against the pale floor render (verdict mitigation). */
-  --admin-marker-selected-shadow: 0 0 0 2px rgba(242, 110, 34, 0.22), 0 0 0 3px rgba(31, 34, 37, 0.30), 0 10px 22px rgba(31, 34, 37, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  --admin-marker-selected-shadow: 0 0 0 2px rgba(242, 110, 34, 0.30), 0 0 0 3px rgba(31, 34, 37, 0.30), 0 10px 22px rgba(31, 34, 37, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
   --admin-marker-search-surface: var(--admin-info-soft);
   --admin-marker-search-border: rgba(22, 83, 89, 0.78);
   --admin-marker-search-text: var(--admin-info);

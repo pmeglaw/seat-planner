@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { askPlannerAction } from "@/app/actions";
+import { askPlannerAction, type AskPlannerActionResult } from "@/app/actions";
 import type { AskPlannerResponse } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 
@@ -29,6 +29,10 @@ type DrawerError = {
 };
 
 const emptyResponse: AskPlannerResponse | null = null;
+
+function isAskPlannerError(result: AskPlannerActionResult): result is { error: string } {
+  return "error" in result;
+}
 
 function statusLabel(status: AskPlannerResponse["status"]) {
   if (status === "refused") return "Read-only";
@@ -141,6 +145,12 @@ export function AskPlannerDrawer({
         setResponse(null);
         onHighlightSeats([]);
         const payload = await askPlannerAction({ question: cleanQuestion, seatId: seatId ?? null });
+        if (isAskPlannerError(payload)) {
+          setResponse(null);
+          onHighlightSeats([]);
+          setError(friendlyDrawerError(payload.error));
+          return;
+        }
         setResponse(payload);
         onHighlightSeats(payload.highlights.map(highlight => highlight.seatId));
       } catch (askError) {

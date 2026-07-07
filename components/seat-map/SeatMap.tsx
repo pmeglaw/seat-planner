@@ -310,7 +310,12 @@ export function SeatMap({
   }, []);
 
   const openAskPlannerDrawer = useCallback(() => {
+    // B2: the right edge only ever holds one panel. Opening Ask Planner
+    // collapses the filter panel and the seat inspector so they don't stack /
+    // overlap. Keep the seat selected (selectedSeatId untouched) — collapsing
+    // only pins the inspector to its pill; expanding restores it.
     setFilterCollapsed(true);
+    setInspectorCollapsed(true);
     setAskPlannerOpen(true);
   }, []);
 
@@ -345,6 +350,18 @@ export function SeatMap({
   useEffect(() => {
     if (!selectedSeatId) setInspectorCollapsed(false);
   }, [selectedSeatId]);
+
+  // C3: success/action notices (role="status") auto-dismiss after ~6s so they
+  // don't go stale during a busy editing session. Error notices (role="alert",
+  // driven by actionError) are intentionally excluded — they persist until
+  // dismissed/replaced. The timer resets whenever the message changes and is
+  // cleared on unmount to avoid leaks/races. The inline Undo button stays
+  // available for the whole time the notice is visible.
+  useEffect(() => {
+    if (!actionNotice) return;
+    const timer = window.setTimeout(() => setActionNotice(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [actionNotice]);
 
   // Global command (3b): ⌘K / Ctrl+K focuses the command search — the chrome
   // input at lg+, the slim canvas row below that tier.
@@ -1073,6 +1090,50 @@ export function SeatMap({
     });
   }, [centerSeatInMap]);
 
+  // B1: when the inspector opens for a seat whose on-screen position would fall
+  // under the right-side floating inspector panel (the right ~17% of the map at
+  // >=900px), horizontally nudge the viewport so the seat stays visible. This
+  // only drives the existing viewport scroll container (orthogonal to the
+  // pointer-drag pan/zoom system) and touches scrollLeft only, so a wide seat
+  // never triggers a jarring vertical jump. Panels below 900px are bottom sheets
+  // that don't overlap the seat, so the guard is desktop-only.
+  const nudgeSeatClearOfInspector = useCallback((seatId: string) => {
+    const viewport = mapViewportRef.current;
+    const map = mapRef.current;
+    if (!viewport || !map || map.offsetWidth <= 0) return;
+    if (viewport.clientWidth < 900) return;
+
+    const seat = localSeats.find(item => item.id === seatId);
+    if (!seat) return;
+    const point = savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat);
+
+    const mapLeftInScrollContent = map.offsetLeft;
+    const visibleLeft = (viewport.scrollLeft - mapLeftInScrollContent) / map.offsetWidth;
+    const visibleRight = (viewport.scrollLeft - mapLeftInScrollContent + viewport.clientWidth) / map.offsetWidth;
+    const visibleSpan = visibleRight - visibleLeft;
+    if (visibleSpan <= 0) return;
+
+    // Fraction of the visible viewport the seat currently sits at (0 = left edge).
+    const onScreenFraction = (point.x - visibleLeft) / visibleSpan;
+    // The floating inspector covers roughly the right 17% of the viewport.
+    if (onScreenFraction <= 0.83) return;
+
+    const maxLeft = Math.max(viewport.scrollWidth - viewport.clientWidth, 0);
+    // Re-seat the seat at ~55% of the viewport so it clears the panel without a
+    // full recenter (keeps nearby context on the right).
+    const targetLeft = mapLeftInScrollContent + (point.x * map.offsetWidth) - (viewport.clientWidth * 0.55);
+    const nextLeft = Math.min(Math.max(targetLeft, 0), maxLeft);
+    viewport.scrollTo({ left: nextLeft, behavior: "smooth" });
+  }, [localSeats]);
+
+  useEffect(() => {
+    if (!selectedSeatId || inspectorCollapsed || mapViewMode !== "detail") return;
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => nudgeSeatClearOfInspector(selectedSeatId));
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedSeatId, inspectorCollapsed, mapViewMode, nudgeSeatClearOfInspector]);
+
   function seatPersonLabel(seat: SeatWithEmployee | null) {
     return seat?.employee?.full_name ?? "Open";
   }
@@ -1775,6 +1836,10 @@ export function SeatMap({
               title={undoTitle}
               className={chromeToolbarBtn}
             >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                <path d="M6.5 8.5H12a3.5 3.5 0 0 1 0 7H8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M8.5 5.5 5 8.5l3.5 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               Undo
             </button>
             <button
@@ -1785,6 +1850,10 @@ export function SeatMap({
               title={redoTitle}
               className={chromeToolbarBtn}
             >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                <path d="M13.5 8.5H8a3.5 3.5 0 0 0 0 7h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M11.5 5.5 15 8.5l-3.5 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               Redo
             </button>
             <Link

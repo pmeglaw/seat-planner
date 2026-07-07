@@ -254,7 +254,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
       <section className="rounded-xl border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-4">
         <h2 className="text-sm font-semibold text-[var(--admin-state-dirty-text)]">Advanced recovery</h2>
         <p className="mt-1 text-xs leading-5 text-[var(--admin-state-dirty-text)]">
-          Developer backup and restore. Restoring replaces the whole draft layer, so review carefully before confirming.
+          Full backup and restore. Restoring replaces the entire draft map, so review carefully before confirming.
         </p>
         <div className="mt-3 space-y-2">
           <UtilityButton label="Export JSON backup" description="Download full draft recovery data" onClick={exportJsonBackup} disabled={busy} />

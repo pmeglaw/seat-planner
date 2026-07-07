@@ -6,6 +6,7 @@ import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
 import { updateSeatAction } from "@/app/actions";
 import { canDeleteSeat, getSeatDeleteBlockReason, isProtectedOriginalSeatLabel } from "@/lib/seatProtection";
+import { formatDisplayName } from "@/lib/formatName";
 import { Button } from "@/components/ui/Button";
 
 type SeatInspectorProps = {
@@ -365,6 +366,12 @@ export function SeatInspector({
       ? "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)]"
       : "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)]";
   const assignmentIdentityLabel = employeeNameValue || (hasCurrentAssignment ? selectedSeatEmployeeName : "");
+  // Footer action buttons override the shared Button's raw-slate secondary variant
+  // with the admin design tokens (parity with components/ui/design-system.tsx).
+  const footerNeutralButtonClass =
+    "!border-[var(--admin-border-strong)] !bg-[var(--admin-surface)] !text-[var(--admin-text-primary)] hover:!border-[var(--admin-primary-border)] hover:!bg-[var(--admin-paper)] hover:!text-[var(--admin-primary-cta)] disabled:!border-[var(--admin-border)] disabled:!bg-[var(--admin-surface-muted)] disabled:!text-[var(--admin-text-subtle)]";
+  const footerDangerButtonClass =
+    "!border-[var(--admin-danger-soft)] !bg-[var(--admin-danger-soft)] !text-[var(--admin-danger)] hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)] hover:!text-white disabled:!border-[var(--admin-danger-soft)] disabled:!bg-[var(--admin-danger-soft)] disabled:!text-[var(--admin-text-subtle)]";
   const fieldErrorClassName = "border-[var(--admin-state-error-border)] focus:border-[var(--admin-error)] focus:ring-[var(--admin-state-error-border)]";
   const warningSurfaceClassName = "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)]";
   const neutralPillClassName = "bg-[var(--admin-state-neutral-bg)] text-[var(--admin-state-neutral-text)] ring-[var(--admin-state-neutral-border)]";
@@ -785,7 +792,7 @@ export function SeatInspector({
       <div className="sticky top-0 z-20 flex flex-col gap-2 border-b border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)] px-4 py-3">
         <div className="flex items-start justify-between gap-2">
           <h2 id="seat-inspector-title" className="min-w-0 flex-1 truncate pt-0.5 text-[17px] font-semibold leading-6 text-[var(--sp-color-text-primary)]">
-            {selectedSeat.label} — {assignmentIdentityLabel || "Open seat"}
+            {selectedSeat.label} — {formatDisplayName(assignmentIdentityLabel) || "Open seat"}
           </h2>
           <div className="flex shrink-0 items-center gap-1">
             <button
@@ -933,7 +940,7 @@ export function SeatInspector({
                     <div
                       id="seat-inspector-employee-listbox"
                       role="listbox"
-                      className="absolute z-50 mt-2 max-h-64 w-full overflow-auto rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/95 p-1.5 shadow-[0_18px_48px_rgba(23,26,29,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl"
+                      className="absolute z-50 mt-2 max-h-[min(16rem,40vh)] w-full overflow-auto rounded-2xl border border-[var(--sp-color-border-subtle)] bg-white/95 p-1.5 shadow-[0_18px_48px_rgba(23,26,29,0.18),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl"
                     >
                       {filteredEmployeeOptions.length > 0 ? filteredEmployeeOptions.map((option, index) => (
                         <button
@@ -954,7 +961,7 @@ export function SeatInspector({
                             {option.employee.full_name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?"}
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-black">{option.employee.full_name}</span>
+                            <span className="block truncate text-sm font-black">{formatDisplayName(option.employee.full_name)}</span>
                             <span className="block truncate text-xs text-[var(--sp-color-text-muted)]">{option.meta}</span>
                           </span>
                           <span className="shrink-0 rounded-full bg-[var(--sp-color-graphite-soft)] px-2 py-1 text-[10px] font-semibold tracking-normal text-[var(--sp-color-text-muted)] ring-1 ring-[var(--sp-color-border-subtle)]">
@@ -1085,14 +1092,14 @@ export function SeatInspector({
             </div>
             {/* Figma actions row: Move / Swap / Vacate as one compact 32px outline row. */}
             <div className="flex min-w-0 gap-2">
-              <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move seat ${selectedSeat.label} on the map`} className="min-w-0 flex-1 rounded-[10px]">
+              <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move seat ${selectedSeat.label} on the map`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
                 {moveMode ? "Exit move" : "Move"}
               </Button>
-              <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Swap seat ${selectedSeat.label} with another draft seat`} className="min-w-0 flex-1 rounded-[10px]">
+              <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Swap seat ${selectedSeat.label} with another draft seat`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
                 Swap
               </Button>
               {hasCurrentAssignment && (
-                <Button type="button" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className="min-w-0 flex-1 rounded-[10px]">
+                <Button type="button" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className={`min-w-0 flex-1 rounded-[10px] ${footerDangerButtonClass}`}>
                   Vacate
                 </Button>
               )}
@@ -1116,7 +1123,7 @@ export function SeatInspector({
                 aria-label={hasCurrentAssignment ? `Change assignment for ${selectedSeat.label}` : `Assign an employee to ${selectedSeat.label}`}
                 className={[
                   "mt-2 min-w-0 w-full rounded-[10px]",
-                  hasCurrentAssignment ? "" : "!border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-hover)] hover:!bg-[var(--admin-primary-hover)]"
+                  hasCurrentAssignment ? footerNeutralButtonClass : "!border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-hover)] hover:!bg-[var(--admin-primary-hover)]"
                 ].join(" ")}
               >
                 {hasCurrentAssignment ? "Change assignment" : "Assign employee"}
@@ -1174,7 +1181,7 @@ export function SeatInspector({
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-[var(--sp-color-surface)] px-4 py-4 text-sm">
           <section aria-labelledby="published-assignment-heading">
             <SectionHeading id="published-assignment-heading" title="Published assignment" />
-            <div className="mt-2 text-base font-semibold leading-tight text-[var(--sp-color-text-primary)]">{selectedSeat.employee?.full_name ?? "Open seat"}</div>
+            <div className="mt-2 text-base font-semibold leading-tight text-[var(--sp-color-text-primary)]">{selectedSeat.employee ? formatDisplayName(selectedSeat.employee.full_name) : "Open seat"}</div>
             {(selectedSeat.employee?.position || selectedSeat.employee?.department) && (
               <div className="mt-1 text-sm text-[var(--sp-color-text-muted)]">
                 {[selectedSeat.employee?.position, selectedSeat.employee?.department].filter(Boolean).join(" · ")}
@@ -1220,7 +1227,7 @@ export function SeatInspector({
             <div>
               <h2 id="vacate-seat-confirm-title" className="text-base font-black">Vacate {selectedSeat.label}?</h2>
               <p id="vacate-seat-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
-                This clears {selectedSeatEmployeeName} from this draft seat.
+                This clears {formatDisplayName(selectedSeatEmployeeName)} from this draft seat.
               </p>
             </div>
             <button
@@ -1273,7 +1280,7 @@ export function SeatInspector({
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 id="move-employee-confirm-title" className="text-base font-black">Move {moveConflict.employeeName} to {selectedSeat.label}?</h2>
+              <h2 id="move-employee-confirm-title" className="text-base font-black">Move {formatDisplayName(moveConflict.employeeName)} to {selectedSeat.label}?</h2>
               <p id="move-employee-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
                 They currently sit at {moveConflict.currentSeatLabel}. Moving frees {moveConflict.currentSeatLabel} (it becomes Open).
               </p>
