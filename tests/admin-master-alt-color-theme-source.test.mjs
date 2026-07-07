@@ -123,7 +123,7 @@ test("admin color slices scope shell marker and semantic aliases without redesig
   assert.match(seatMarkerSource, /--admin-marker-search-border/);
   assert.match(seatMarkerSource, /--admin-marker-draft-surface/);
   assert.match(seatMarkerSource, /border-\[#B7AB9E\]\/85 bg-\[#FFFDF8\]\/95/);
-  assert.match(seatMarkerSource, /border-\[#D4CABF\]\/90 bg-\[#F9F5ED\]\/\[0\.86\]/);
+  assert.match(seatMarkerSource, /border-\[#AEB4BA\]\/95 bg-\[#F2F2F3\]\/95/);
   assert.doesNotMatch(viewerSource, /--admin-/);
   assert.doesNotMatch(viewerSource, /variant="admin"/);
   assert.match(inspectorSource, /--admin-state-clean-bg/);
