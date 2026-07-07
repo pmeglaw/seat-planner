@@ -1747,25 +1747,15 @@ export function SeatMap({
           </span>
           <div className="hidden min-w-0 leading-tight sm:block">
             <div className="truncate text-[13px] font-semibold text-[var(--admin-chrome-text)]">Megeredchian Law Seats</div>
-            <div className="truncate text-[11px] text-[var(--admin-chrome-muted)]">{canEdit ? "Admin" : "Published · Viewer"}</div>
+            <div className="flex items-center gap-1.5 truncate text-[11px] text-[var(--admin-chrome-muted)]">
+              {canEdit ? (
+                <>
+                  <span aria-hidden="true" className={["h-1.5 w-1.5 shrink-0 rounded-full", publishSummary.hasChanges ? "bg-[#E0A82E]" : "bg-[#3F9B6B]"].join(" ")} />
+                  <span className="truncate">{publishSummary.hasChanges ? `Admin · ${publishSummary.totalChangeCount} unpublished` : "Admin · in sync"}</span>
+                </>
+              ) : "Published · Viewer"}
+            </div>
           </div>
-          {canEdit && (
-            <button
-              type="button"
-              onClick={openPublishReview}
-              aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
-              title={draftStatusTitle}
-              className={[
-                "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium leading-none ring-1 transition hover:brightness-[1.04] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]",
-                publishSummary.hasChanges
-                  ? "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)] motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
-                  : "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)] ring-[var(--admin-state-clean-border)]"
-              ].join(" ")}
-            >
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
-              <span className="max-w-[40vw] truncate">{draftStatusLabel}</span>
-            </button>
-          )}
         </div>
 
         <div role="search" aria-label="Command search" className="hidden min-w-0 lg:block lg:max-w-[448px] lg:flex-1">
@@ -1786,7 +1776,7 @@ export function SeatMap({
                 }
               }}
               placeholder="Search people, seats, or zones"
-              className="h-9 w-full rounded-[10px] border border-[var(--admin-chrome-border)] bg-white/[0.07] pl-9 pr-16 text-[13px] font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.1] focus:border-[var(--admin-primary)] focus:bg-white/[0.12] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
+              className="h-9 w-full rounded-[10px] border border-[var(--admin-chrome-border)] bg-white/[0.1] pl-9 pr-16 text-[13px] font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.14] focus:border-[var(--admin-primary)] focus:bg-white/[0.12] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
             />
             {search.trim() ? (
               <button
@@ -1828,6 +1818,7 @@ export function SeatMap({
             >
               {namesToggleLabel}
             </button>
+            <span aria-hidden="true" className="mx-1 hidden h-5 w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
             <button
               type="button"
               onClick={undoDraftEdit}
@@ -1840,7 +1831,6 @@ export function SeatMap({
                 <path d="M6.5 8.5H12a3.5 3.5 0 0 1 0 7H8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M8.5 5.5 5 8.5l3.5 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Undo
             </button>
             <button
               type="button"
@@ -1854,8 +1844,8 @@ export function SeatMap({
                 <path d="M13.5 8.5H8a3.5 3.5 0 0 0 0 7h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M11.5 5.5 15 8.5l-3.5 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Redo
             </button>
+            <span aria-hidden="true" className="mx-1 hidden h-5 w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
             <Link
               href="/admin/management"
               onClick={event => {
@@ -1884,6 +1874,37 @@ export function SeatMap({
         )}
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+          {canEdit && (
+            <button
+              type="button"
+              onClick={openPublishReview}
+              aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
+              title={draftStatusTitle}
+              className={[
+                "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] px-3 text-[12.5px] font-semibold leading-none transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]",
+                publishSummary.hasChanges
+                  ? "bg-[var(--admin-primary-cta)] text-white shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_2px_8px_-2px_rgba(178,67,15,0.55)] hover:bg-[var(--admin-primary-cta-hover)] motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
+                  : "border border-[var(--admin-chrome-border)] text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"
+              ].join(" ")}
+            >
+              {publishSummary.hasChanges ? (
+                <>
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+                    <path d="M10 14V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    <path d="M6 8.5 10 4.5l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M4.5 16h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                  <span className="hidden sm:inline">Review changes</span>
+                  <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white/25 px-1 text-[11px] font-bold tabular-nums">{publishSummary.totalChangeCount}</span>
+                </>
+              ) : (
+                <>
+                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#3F9B6B]" />
+                  <span className="hidden sm:inline">Published</span>
+                </>
+              )}
+            </button>
+          )}
           {canEdit && (
             <button
               type="button"
