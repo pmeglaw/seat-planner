@@ -127,7 +127,7 @@ test("seat map uses the component-board desktop workspace shell", async () => {
   assert.match(seatMapSource, /MAP_VIEW_MODE_OPTIONS[\s\S]*Overview[\s\S]*Detail/);
   assert.match(seatMapSource, /useState<MapViewMode>\("detail"\)/);
   assert.match(seatMapSource, /aria-label="Map view mode"/);
-  assert.match(seatMapSource, /rounded-\[22px\] border border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-surface-muted\)\]/);
+  assert.match(seatMapSource, /rounded-\[22px\] border border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-map-floor\)\]/);
   assert.match(seatMapSource, /bg-\[var\(--admin-rail-bg\)\]\/90 p-0\.5 text-white/);
   assert.match(seatMapSource, /mapViewMode === "overview"[\s\S]*overflow-hidden p-1\.5[\s\S]*min-h-\[360px\] max-h-\[82svh\] overflow-auto/);
   assert.match(seatMapSource, /w-\[1120px\][\s\S]*sm:w-\[1460px\][\s\S]*lg:w-\[1911px\]/);

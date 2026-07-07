@@ -38,7 +38,7 @@ test("master alternative palette exposes inert brand primitives and scoped admin
   }
 
   for (const token of [
-    "--admin-bg: #EAEBEC",
+    "--admin-bg: #E7E9EB",
     "--admin-chrome-bg: #1F2225",
     "--admin-chrome-text: #EDEEF0",
     "--admin-rail-bg: var(--admin-chrome-bg)",
@@ -49,7 +49,7 @@ test("master alternative palette exposes inert brand primitives and scoped admin
     "--admin-primary-cta-hover: #A63A12",
     "--admin-primary-cta-active: #93330F",
     "--admin-marker-hover-border: #2F6668",
-    "--admin-elevation-3-shadow: 0 4px 12px -2px rgba(15, 18, 20, 0.10)",
+    "--admin-elevation-3-shadow: 0 1px 2px rgba(15, 18, 20, 0.05), 0 10px 28px -6px rgba(15, 18, 20, 0.16)",
     "--admin-shadow-panel: var(--admin-elevation-3-shadow)",
     "--admin-primary-soft: rgba(242, 110, 34, 0.10)",
     "--admin-warning-text: #7A4E00",
@@ -109,7 +109,7 @@ test("admin color slices scope shell marker and semantic aliases without redesig
   assert.match(seatMapSource, /const chromeToolbarBtn = "[\s\S]*text-\[var\(--admin-chrome-muted\)\]/);
   assert.match(seatMapSource, /const chromeToolbarBtnActive = "[\s\S]*text-\[var\(--admin-chrome-text\)\]/);
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title"[\s\S]*bg-\[var\(--admin-surface\)\]\/68/);
-  assert.match(seatMapSource, /border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-surface-muted\)\]/);
+  assert.match(seatMapSource, /border-\[var\(--admin-border-strong\)\] bg-\[var\(--admin-map-floor\)\]/);
   assert.match(seatMapSource, /showNames \? chromeToolbarBtnActive : chromeToolbarBtn/);
   // Owner preference: the admin map renders the published viewer's marker pills,
   // so it passes the viewer variant (SeatMarker retains its admin-token branches).

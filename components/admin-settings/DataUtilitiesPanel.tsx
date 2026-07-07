@@ -74,7 +74,7 @@ function UtilityButton({ label, description, tone = "default", disabled, onClick
       onClick={onClick}
       disabled={disabled}
       className={[
-        "flex min-h-[50px] w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50",
+        "flex min-h-[50px] w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition hover:-translate-y-px hover:shadow-[var(--admin-elevation-2-shadow)] active:translate-y-0 active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:hover:translate-y-0",
         toneClassName
       ].join(" ")}
     >
@@ -238,7 +238,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
         </div>
       )}
 
-      <section className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4">
+      <section className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
         <h2 className="text-sm font-semibold text-[var(--admin-text-primary)]">CSV assignments</h2>
         <p className="mt-1 text-xs leading-5 text-[var(--admin-text-muted)]">
           CSV imports update draft assignments only. Marker positions stay fixed.
@@ -251,7 +251,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
         </div>
       </section>
 
-      <section className="rounded-xl border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-4">
+      <section className="rounded-xl border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
         <h2 className="text-sm font-semibold text-[var(--admin-state-dirty-text)]">Advanced recovery</h2>
         <p className="mt-1 text-xs leading-5 text-[var(--admin-state-dirty-text)]">
           Full backup and restore. Restoring replaces the entire draft map, so review carefully before confirming.

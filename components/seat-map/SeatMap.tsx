@@ -1657,15 +1657,15 @@ export function SeatMap({
     filterCollapsed ? "order-2" : "order-1",
     canEdit && filterCollapsed ? "lg:hidden" : "",
     !filterCollapsed
-      ? "lg:fixed lg:bottom-3 lg:left-3 lg:top-[84px] lg:z-40 lg:w-[288px] lg:[&>aside]:h-full lg:[&>aside]:max-h-full lg:[&>aside]:top-0 lg:[&>aside]:shadow-[0_18px_44px_rgba(31,34,37,0.16)]"
+      ? "lg:fixed lg:left-3 lg:top-[84px] lg:z-40 lg:w-[288px] lg:[&>aside]:top-0 lg:[&>aside]:max-h-[calc(100vh-96px)]"
       : ""
   ].join(" ");
   const mapViewportClassName = [
-    "relative mx-auto w-full max-w-full overscroll-contain rounded-[22px] border border-[var(--admin-border-strong)] bg-[var(--admin-surface-muted)] shadow-[var(--admin-shadow-map),inset_0_1px_0_rgba(255,255,255,0.78)] sm:rounded-[26px] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
+    "relative mx-auto w-full max-w-full overscroll-contain rounded-[22px] border border-[var(--admin-border-strong)] bg-[var(--admin-map-floor)] shadow-[var(--admin-shadow-map),inset_0_1px_0_rgba(255,255,255,0.6)] sm:rounded-[26px] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
     mapViewMode === "overview"
       ? "min-h-[300px] overflow-hidden p-1.5 sm:min-h-[480px] sm:p-2 lg:flex lg:min-h-0 lg:items-center lg:justify-center"
       : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
-    canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-surface-muted)]" : ""
+    canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-map-floor)]" : ""
   ].join(" ");
   const mapFrameClassName = [
     "relative mx-auto max-w-none",
@@ -1731,12 +1731,12 @@ export function SeatMap({
 
   // Claude Design top bar: quiet text-only toolbar buttons — no borders/boxes, warm-grey,
   // subtle hover bg; active picks up the brand orange.
-  const chromeToolbarBtn = "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5 text-[13px] font-medium leading-none text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
-  const chromeToolbarBtnActive = "relative inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5 text-[13px] font-medium leading-none text-[var(--admin-chrome-text)] bg-[var(--admin-chrome-hover)] transition after:pointer-events-none after:absolute after:inset-x-2.5 after:bottom-1 after:h-0.5 after:rounded-full after:bg-[var(--admin-primary)] after:content-[''] hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]";
+  const chromeToolbarBtn = "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] border border-transparent px-2.5 text-[13px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:border-[var(--admin-chrome-border)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-transparent disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
+  const chromeToolbarBtnActive = "relative inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] border border-[var(--admin-chrome-border)] px-2.5 text-[13px] font-medium leading-none text-[var(--admin-chrome-text)] bg-[var(--admin-chrome-hover)] shadow-[inset_0_1px_0_rgba(255,255,255,0.07)] transition-colors duration-150 after:pointer-events-none after:absolute after:inset-x-2.5 after:bottom-1 after:h-0.5 after:rounded-full after:bg-[var(--admin-primary)] after:content-[''] hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]";
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
-      <header className="z-40 flex h-[54px] shrink-0 items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] px-3 text-[var(--admin-chrome-text)] sm:gap-3 sm:px-4">
+      <header className="z-40 flex h-[54px] shrink-0 items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] bg-gradient-to-b from-[var(--admin-chrome-elevated)] to-[var(--admin-chrome-bg)] px-3 text-[var(--admin-chrome-text)] shadow-[var(--admin-shadow-shell)] sm:gap-3 sm:px-4">
         <div className="flex min-w-0 shrink-0 items-center gap-2.5">
           <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center">
             {/* Megeredchian Law "AM" monogram: orange A apex interlocking a light M. */}
@@ -1758,7 +1758,7 @@ export function SeatMap({
               className={[
                 "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium leading-none ring-1 transition hover:brightness-[1.04] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]",
                 publishSummary.hasChanges
-                  ? "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]"
+                  ? "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)] motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
                   : "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)] ring-[var(--admin-state-clean-border)]"
               ].join(" ")}
             >
@@ -2086,12 +2086,17 @@ export function SeatMap({
                     const visualSeat = visualSeatById.get(seat.id) ?? seat;
                     const viewportPlacement = getMarkerViewportPlacement(visualSeat.x);
 
+                    const dimmedByPlannerFocus =
+                      plannerHighlightedSeatIds.length > 0 &&
+                      !plannerHighlightedSeatIdSet.has(seat.id) &&
+                      seat.id !== selectedSeatId;
+
                     return (
                       <SeatMarker
                         key={seat.id}
                         seat={visualSeat}
                         selected={seat.id === selectedSeatId}
-                        dimmed={!seatMatchesFilters}
+                        dimmed={!seatMatchesFilters || dimmedByPlannerFocus}
                         canEdit={canEdit}
                         showNames={showNames}
                         searchResult={Boolean(search.trim()) && seatMatchesFilters}
@@ -2387,7 +2392,7 @@ export function SeatMap({
           role="status"
           aria-live="polite"
           aria-label={`${activeMode.label} mode`}
-          className="fixed inset-x-3 bottom-3 z-[80] rounded-[14px] border border-[var(--admin-primary-border)] bg-[var(--admin-surface)] p-4 shadow-[0_18px_44px_rgba(31,34,37,0.16)] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[84px] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-3 z-[80] rounded-[14px] border border-[var(--admin-primary-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-4-shadow)] motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[84px] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="text-[10px] font-semibold text-[var(--admin-primary-cta)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--admin-text-primary)]">{activeMode.message}</p>
