@@ -3,6 +3,7 @@
 import type { CSSProperties, PointerEvent, ReactNode } from "react";
 import type { SeatWithEmployee } from "@/lib/types";
 import { pointToStyle } from "@/lib/seatMath";
+import { formatDisplayName } from "@/lib/formatName";
 
 type SeatMarkerProps = {
   seat: SeatWithEmployee;
@@ -78,10 +79,10 @@ function getEmployeeNameParts(name: string) {
 
 function getPassiveEmployeeLabel(name: string) {
   const { firstName, lastInitial } = getEmployeeNameParts(name);
-  if (!firstName) return name.trim().toUpperCase();
+  if (!firstName) return formatDisplayName(name);
 
   const compactName = firstName.length <= 4 && lastInitial ? `${firstName} ${lastInitial}.` : firstName;
-  return compactName.toUpperCase();
+  return formatDisplayName(compactName);
 }
 
 export function SeatMarker({
@@ -127,7 +128,7 @@ export function SeatMarker({
   const tokenMode: TokenMode = selected ? "selected" : prominentToken ? "prominent" : showInlineName ? "name" : "code";
   const hasHoverDisclosure = hasEmployee && !showInlineName;
   const expandedNameBadge = hasEmployee && (tokenMode === "selected" || tokenMode === "prominent");
-  const inlineNameLabel = expandedNameBadge || (namesVisible && tokenDensity === "standard" && !compactNameLabel) ? employeeName : compactEmployeeName;
+  const inlineNameLabel = expandedNameBadge || (namesVisible && tokenDensity === "standard" && !compactNameLabel) ? formatDisplayName(employeeName) : compactEmployeeName;
   const markerIntent: MarkerIntent = swapSource
     ? "swap-source"
     : swapTarget
@@ -190,6 +191,13 @@ export function SeatMarker({
           : seat.status === "unavailable"
             ? "bg-[#8E8276]/70"
             : "bg-[#B8AEA2]/58";
+
+  // A3 non-color status cue: the resting accent reads as a FILLED disc for an
+  // assigned seat and a HOLLOW ring for an open/available seat, so assigned vs
+  // available is legible without relying on the pale hue difference. Additive only:
+  // it is suppressed while a special interaction state owns the marker.
+  const restingStatusShape = !activeMarker && !searchProminent && !plannerHighlighted && !swapCandidate && !invalidTarget && !draftChanged;
+  const statusShapeFilled = seat.status !== "available";
 
   const tokenSizeClass =
     tokenMode === "selected"
@@ -343,6 +351,15 @@ export function SeatMarker({
         ].join(" ")}
       >
         <span className={["pointer-events-none absolute bottom-1.5 left-1.5 top-1.5 w-0.5 rounded-full", statusAccentClass].join(" ")} aria-hidden="true" />
+        {restingStatusShape && (
+          <span
+            className={[
+              "pointer-events-none absolute left-1 top-1 h-[5px] w-[5px] rounded-full",
+              statusShapeFilled ? "bg-current opacity-80" : "border border-current bg-transparent opacity-70"
+            ].join(" ")}
+            aria-hidden="true"
+          />
+        )}
         {draftChanged && !selected && !searchProminent && (
           <span className={["pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 text-[8px] font-black leading-none text-white", draftBadgeClass].join(" ")} aria-hidden="true">
             D

@@ -12,7 +12,7 @@ import { buildSeatSwapPlan } from "@/lib/seatSwap";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { savedPointToVisualPoint, seatsToVisualSeats } from "@/lib/mapLayoutTransform";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
-import { SEAT_STATUSES, type AskPlannerRequest, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type UpdateSeatResult, type ZoneOption } from "@/lib/types";
+import { SEAT_STATUSES, type AskPlannerRequest, type AskPlannerResponse, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type UpdateSeatResult, type ZoneOption } from "@/lib/types";
 
 type DraftSeatRestoreRecord = Omit<SeatWithEmployee, "employee">;
 type DraftEmployeeRestoreRecord = Employee;
@@ -79,36 +79,55 @@ async function getDraftMapPayload(supabase: Awaited<ReturnType<typeof requireAdm
   };
 }
 
-export async function askPlannerAction(input: AskPlannerRequest) {
+export type AskPlannerActionError = {
+  error: string;
+};
+
+export type AskPlannerActionResult = AskPlannerResponse | AskPlannerActionError;
+
+export async function askPlannerAction(input: AskPlannerRequest): Promise<AskPlannerActionResult> {
+  // requireAdmin stays outside the try so auth failures still hard-fail
+  // (the read-only guarantee and admin gate must never degrade to a soft error).
   const supabase = await requireAdmin();
-  const question = typeof input?.question === "string" ? input.question : "";
-  const seatId = typeof input?.seatId === "string" ? input.seatId : null;
-  const { seats, employees } = await getDraftMapPayload(supabase);
 
-  const { data: departments, error: departmentsError } = await supabase
-    .from("department_options")
-    .select("*")
-    .eq("active", true)
-    .order("name");
+  try {
+    const question = typeof input?.question === "string" ? input.question : "";
+    const seatId = typeof input?.seatId === "string" ? input.seatId : null;
+    const { seats, employees } = await getDraftMapPayload(supabase);
 
-  const { data: zones, error: zonesError } = await supabase
-    .from("zone_options")
-    .select("*")
-    .eq("active", true)
-    .order("name");
+    const { data: departments, error: departmentsError } = await supabase
+      .from("department_options")
+      .select("*")
+      .eq("active", true)
+      .order("name");
 
-  if (departmentsError || zonesError) {
-    throw new Error(departmentsError?.message ?? zonesError?.message ?? "Could not load map options for Ask Planner.");
+    const { data: zones, error: zonesError } = await supabase
+      .from("zone_options")
+      .select("*")
+      .eq("active", true)
+      .order("name");
+
+    if (departmentsError || zonesError) {
+      throw new Error(departmentsError?.message ?? zonesError?.message ?? "Could not load map options for Ask Planner.");
+    }
+
+    return await answerMapOperationsQuestion({
+      question,
+      seatId,
+      seats,
+      employees,
+      departmentOptions: (departments ?? []) as DepartmentOption[],
+      zoneOptions: (zones ?? []) as ZoneOption[]
+    });
+  } catch (error) {
+    // Route pre-flight/config problems (missing OPENAI_API_KEY), OpenAI failures
+    // (rate-limit, timeout, auth, model access) and lookup errors through the
+    // normal 200 result channel as a structured error instead of throwing a 500.
+    // The drawer maps the message text to a friendly title via friendlyDrawerError,
+    // so the exact wording is preserved here.
+    const message = error instanceof Error ? error.message : "Ask Planner could not answer.";
+    return { error: message };
   }
-
-  return answerMapOperationsQuestion({
-    question,
-    seatId,
-    seats,
-    employees,
-    departmentOptions: (departments ?? []) as DepartmentOption[],
-    zoneOptions: (zones ?? []) as ZoneOption[]
-  });
 }
 
 function buildSeatKey(label: string) {

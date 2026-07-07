@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import type { SeatStatus } from "@/lib/types";
+import { formatDisplayName } from "@/lib/formatName";
 
 export type AdminResultCard = {
   key: string;
@@ -108,14 +109,14 @@ export function ResultsPanel({
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2"
         >
           {results.map(result => (
-            <div role="listitem" key={result.key} className="group relative">
+            <div role="listitem" key={result.key} className="group flex items-stretch gap-1 rounded-[11px] border border-transparent transition hover:border-[var(--admin-border)] hover:bg-[var(--admin-paper)]">
               <button
                 type="button"
                 data-result-card
                 disabled={result.disabled}
                 onClick={() => result.seatId && onOpen(result.seatId)}
-                title={result.disabled ? "No assigned seat to open" : `Open ${result.title}`}
-                className="flex w-full items-start gap-2.5 rounded-[11px] border border-transparent px-2.5 py-2 pr-[6.5rem] text-left transition hover:border-[var(--admin-border)] hover:bg-[var(--admin-paper)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-55"
+                title={result.disabled ? "No assigned seat to open" : `Open ${formatDisplayName(result.title)}`}
+                className="flex min-w-0 flex-1 items-start gap-2.5 rounded-[11px] px-2.5 py-2 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <span
                   className={[
@@ -125,16 +126,17 @@ export function ResultsPanel({
                   aria-hidden="true"
                 />
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-[var(--admin-text-primary)]">{result.title}</span>
-                  <span className="block truncate text-xs font-medium text-[var(--admin-text-muted)]">{result.subtitle}</span>
+                  <span className="block truncate text-sm font-semibold text-[var(--admin-text-primary)]">{formatDisplayName(result.title)}</span>
+                  <span className="block truncate text-xs font-medium text-[var(--admin-text-muted)]">{formatDisplayName(result.subtitle)}</span>
                 </span>
               </button>
               {result.seatId && (
                 <button
                   type="button"
                   onClick={() => onShowOnMap(result.seatId as string)}
-                  aria-label={`Show ${result.title} on the map`}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-[11px] font-semibold text-[var(--admin-primary-cta)] transition hover:bg-[var(--admin-primary-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                  aria-label={`Show ${formatDisplayName(result.title)} on the map`}
+                  title={`Show ${formatDisplayName(result.title)} on the map`}
+                  className="my-1 mr-1 flex shrink-0 items-center self-center whitespace-nowrap rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--admin-primary-cta)] transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 >
                   Show on map
                 </button>

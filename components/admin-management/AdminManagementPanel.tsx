@@ -18,7 +18,11 @@ import {
 } from "@/app/actions";
 import { buildDepartmentRoster, departmentKey } from "@/lib/departments";
 import { computeVirtualWindow } from "@/lib/virtualizedList";
+import { formatDisplayName } from "@/lib/formatName";
 import { Button } from "@/components/ui/Button";
+
+type EmployeeSortKey = "name" | "department" | "position" | "extension" | "seat" | "status";
+type SortDirection = "asc" | "desc";
 
 type EmployeeForm = {
   fullName: string;
@@ -54,6 +58,15 @@ const managementTabs: Array<{ id: ManagementTab; label: string }> = [
   { id: "departments", label: "Departments" },
   { id: "zones", label: "Zones" },
   { id: "publishHistory", label: "Publish History" }
+];
+
+const employeeColumns: Array<{ key: EmployeeSortKey; label: string }> = [
+  { key: "name", label: "Name" },
+  { key: "department", label: "Department" },
+  { key: "position", label: "Position" },
+  { key: "extension", label: "Extension" },
+  { key: "seat", label: "Seat" },
+  { key: "status", label: "Status" }
 ];
 
 const emptyEmployeeForm: EmployeeForm = {
@@ -124,6 +137,8 @@ export function AdminManagementPanel({
   const [localSeats, setLocalSeats] = useState(seats);
   const [activeTab, setActiveTab] = useState<ManagementTab>(initialTab);
   const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<EmployeeSortKey>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [employeeForm, setEmployeeForm] = useState<EmployeeForm>(emptyEmployeeForm);
   const [newDepartmentName, setNewDepartmentName] = useState("");
@@ -186,29 +201,65 @@ export function AdminManagementPanel({
     });
   }, [activeEmployees, seatLabelByEmployeeId, search]);
 
+  const sortedEmployees = useMemo(() => {
+    const direction = sortDirection === "asc" ? 1 : -1;
+    const valueFor = (employee: Employee): string => {
+      switch (sortKey) {
+        case "department":
+          return employee.department ?? "";
+        case "position":
+          return employee.position ?? "";
+        case "extension":
+          return employee.phone_extension ?? "";
+        case "seat":
+          return seatLabelByEmployeeId.get(employee.id) ?? "";
+        case "status":
+          return seatLabelByEmployeeId.has(employee.id) ? "Assigned" : "Unassigned";
+        case "name":
+        default:
+          return employee.full_name;
+      }
+    };
+    return [...filteredEmployees].sort((a, b) => {
+      const primary = valueFor(a).localeCompare(valueFor(b), undefined, { numeric: true, sensitivity: "base" }) * direction;
+      if (primary !== 0) return primary;
+      // Stable tie-break by name so equal keys keep a deterministic order.
+      return a.full_name.localeCompare(b.full_name);
+    });
+  }, [filteredEmployees, seatLabelByEmployeeId, sortKey, sortDirection]);
+
+  function toggleSort(key: EmployeeSortKey) {
+    if (sortKey === key) {
+      setSortDirection(current => (current === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  }
+
   const selectedEmployee = activeEmployees.find(employee => employee.id === selectedEmployeeId) ?? null;
   const selectedEmployeeSeatLabel = selectedEmployee ? seatLabelByEmployeeId.get(selectedEmployee.id) ?? "Unassigned" : "Unassigned";
   const assignedEmployees = activeEmployees.filter(employee => seatLabelByEmployeeId.has(employee.id)).length;
   const unassignedEmployees = activeEmployees.length - assignedEmployees;
   const latestPublish = getLatestPublishEvent(publishHistoryState.events);
   const managementSummaryCards = [
-    { label: "Draft seats", value: localSeats.length, detail: "Editable map" },
-    { label: "Active employees", value: activeEmployees.length, detail: "Directory" },
-    { label: "Assigned", value: assignedEmployees, detail: "Draft seats" },
-    { label: "Unassigned", value: unassignedEmployees, detail: "Employees" },
-    { label: "Active zones", value: zoneNames.length, detail: "Filters" }
+    { label: "Draft seats", value: localSeats.length },
+    { label: "Active employees", value: activeEmployees.length },
+    { label: "Assigned", value: assignedEmployees },
+    { label: "Unassigned", value: unassignedEmployees },
+    { label: "Active zones", value: zoneNames.length }
   ];
-  const fieldClassName = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100";
+  const fieldClassName = "w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100";
 
-  // Virtualized directory (Figma page 10, Scalability): only the employee cards
+  // Virtualized directory (Figma page 10, Scalability): only the employee rows
   // near the viewport render; padding preserves the page scroll height. Geometry
-  // is measured from the live grid so the cards keep their exact current look.
-  const employeeGridRef = useRef<HTMLDivElement | null>(null);
+  // is measured from the live table so the rows keep their exact current look.
+  const employeeGridRef = useRef<HTMLTableSectionElement | null>(null);
   const [employeeGridGeometry, setEmployeeGridGeometry] = useState({
     scrollOffset: 0,
     viewportHeight: 1080,
     columns: 1,
-    rowHeight: 104
+    rowHeight: 52
   });
 
   useEffect(() => {
@@ -219,11 +270,11 @@ export function AdminManagementPanel({
       frame = 0;
       const grid = employeeGridRef.current;
       if (!grid) return;
-      // grid-cols-1 lg:grid-cols-2 — matches the existing card grid breakpoints.
-      const columns = window.innerWidth >= 1024 ? 2 : 1;
-      const firstCard = grid.querySelector<HTMLElement>("[data-directory-card]");
-      // gap-2 row gap; fall back to the default before the first card renders.
-      const rowHeight = firstCard ? firstCard.offsetHeight + 8 : 104;
+      // Single-column table: one employee per row.
+      const columns = 1;
+      const firstRow = grid.querySelector<HTMLElement>("[data-directory-row]");
+      // Fall back to the default before the first row renders.
+      const rowHeight = firstRow ? firstRow.offsetHeight : 52;
       // Quantize to row steps so scrolling only re-renders when the window moves.
       const rawOffset = Math.max(0, -grid.getBoundingClientRect().top);
       const scrollOffset = Math.floor(rawOffset / rowHeight) * rowHeight;
@@ -249,19 +300,19 @@ export function AdminManagementPanel({
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
     };
-  }, [activeTab, filteredEmployees.length]);
+  }, [activeTab, sortedEmployees.length]);
 
   const employeeWindow = useMemo(() => computeVirtualWindow({
-    itemCount: filteredEmployees.length,
+    itemCount: sortedEmployees.length,
     columns: employeeGridGeometry.columns,
     rowHeight: employeeGridGeometry.rowHeight,
     viewportHeight: employeeGridGeometry.viewportHeight,
     scrollOffset: employeeGridGeometry.scrollOffset,
     overscanRows: 4
-  }), [filteredEmployees.length, employeeGridGeometry]);
+  }), [sortedEmployees.length, employeeGridGeometry]);
   const visibleEmployees = useMemo(
-    () => filteredEmployees.slice(employeeWindow.startIndex, employeeWindow.endIndex),
-    [filteredEmployees, employeeWindow]
+    () => sortedEmployees.slice(employeeWindow.startIndex, employeeWindow.endIndex),
+    [sortedEmployees, employeeWindow]
   );
 
   const loadPublishHistory = useCallback(async () => {
@@ -338,7 +389,7 @@ export function AdminManagementPanel({
         });
         setSelectedEmployeeId(employee.id);
         setEmployeeForm(formFromEmployee(employee));
-        showSuccess(`${employee.full_name} saved.`);
+        showSuccess(`${formatDisplayName(employee.full_name)} saved.`);
       } catch (errorValue) {
         showError(errorValue, "Could not save employee.");
       }
@@ -499,7 +550,7 @@ export function AdminManagementPanel({
           )));
           setSelectedEmployeeId("");
           setEmployeeForm(emptyEmployeeForm);
-          showSuccess(`${action.employee.full_name} deactivated.`);
+          showSuccess(`${formatDisplayName(action.employee.full_name)} deactivated.`);
           return;
         }
 
@@ -533,19 +584,19 @@ export function AdminManagementPanel({
   }
 
   return (
-    <main className="min-h-screen bg-[#EAEBEC] px-3 py-5 text-[#1F2225] sm:px-6 sm:py-6">
+    <main className="admin-theme min-h-screen bg-[var(--admin-bg)] px-3 py-5 text-[var(--admin-text-primary)] sm:px-6 sm:py-6">
       <div className="mx-auto max-w-7xl space-y-4">
         <header className="rounded-3xl border border-[#E4E6E8] bg-[#FCFCFD] p-5 shadow-soft sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-medium tracking-normal text-brand-dark">Admin tools</p>
-              <h1 className="mt-1 text-2xl font-black text-slate-950">Management</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              <h1 className="mt-1 text-2xl font-semibold text-[var(--admin-text-primary)]">Management</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--admin-text-secondary)]">
                 Manage people, departments, zones, and publish audit visibility outside the daily seat-map workflow.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/admin" className="inline-flex min-h-9 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50">
+              <Link href="/admin" className="inline-flex min-h-9 items-center justify-center rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm font-semibold text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-alt)]">
                 Back to seat map
               </Link>
             </div>
@@ -565,11 +616,8 @@ export function AdminManagementPanel({
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           {managementSummaryCards.map(card => (
             <div key={card.label} className="rounded-2xl border border-[#E4E6E8] bg-[#FCFCFD] p-4 shadow-soft">
-              <div className="flex items-baseline justify-between gap-2">
-                <div className="text-2xl font-black">{card.value}</div>
-                <div className="text-[11px] font-medium tracking-normal text-slate-400">{card.detail}</div>
-              </div>
-              <div className="mt-1 text-xs font-medium tracking-normal text-slate-500">{card.label}</div>
+              <div className="text-2xl font-semibold text-[var(--admin-text-primary)]">{card.value}</div>
+              <div className="mt-1 text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">{card.label}</div>
             </div>
           ))}
         </section>
@@ -580,7 +628,7 @@ export function AdminManagementPanel({
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={["rounded-[9px] px-4 py-2 text-sm font-medium transition", activeTab === tab.id ? "bg-[#1F2225] text-white" : "text-[#6B7177] hover:bg-[#F3F4F6] hover:text-[#1F2225]"].join(" ")}
+              className={["rounded-[9px] px-4 py-2 text-sm font-medium transition", activeTab === tab.id ? "bg-[var(--admin-chrome-bg)] text-[var(--admin-text-inverse)]" : "text-[#6B7177] hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)]"].join(" ")}
               aria-current={activeTab === tab.id ? "page" : undefined}
             >
               {tab.label}
@@ -593,84 +641,136 @@ export function AdminManagementPanel({
             <div className="rounded-3xl border border-[#E4E6E8] bg-[#FCFCFD] p-4 shadow-soft">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h2 className="text-lg font-black">Employees</h2>
-                  <p className="text-sm text-slate-500">Search, edit, and deactivate employees without touching marker tools.</p>
+                  <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Employees</h2>
+                  <p className="text-sm text-[var(--admin-text-secondary)]">Search, edit, and deactivate employees without touching marker tools.</p>
                 </div>
                 <input
                   value={search}
                   onChange={event => setSearch(event.target.value)}
                   placeholder="Search employees..."
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100 md:w-80"
+                  className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100 md:w-80"
                 />
               </div>
-              <p aria-live="polite" className="mt-3 text-xs font-medium text-slate-500">
-                {pluralize(filteredEmployees.length, "employee")} of {activeEmployees.length.toLocaleString()} shown
+              <p aria-live="polite" className="mt-3 text-xs font-medium text-[var(--admin-text-secondary)]">
+                {pluralize(sortedEmployees.length, "employee")} of {activeEmployees.length.toLocaleString()} shown
               </p>
-              <div
-                ref={employeeGridRef}
-                style={{ paddingTop: employeeWindow.topPadding, paddingBottom: employeeWindow.bottomPadding }}
-                className="mt-2"
-              >
-                <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-                  {visibleEmployees.map(employee => {
-                    const seatLabel = seatLabelByEmployeeId.get(employee.id) ?? "Unassigned";
-                    return (
-                      <button
-                        key={employee.id}
-                        type="button"
-                        data-directory-card
-                        onClick={() => editEmployee(employee)}
-                        className={["rounded-2xl border p-3 text-left transition", selectedEmployeeId === employee.id ? "border-brand bg-orange-50" : "border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/40"].join(" ")}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-black text-brand-dark">{getInitials(employee.full_name)}</div>
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-black text-slate-950">{employee.full_name}</div>
-                            <div className="mt-1 truncate text-xs text-slate-500">
-                              {[employee.position, employee.department, employee.phone_extension ? `Ext. ${employee.phone_extension}` : null].filter(Boolean).join(" · ") || "No position or department"}
-                            </div>
-                            <div className="mt-2 text-xs font-bold text-slate-600">{seatLabel}</div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                  {filteredEmployees.length === 0 && (
-                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500 lg:col-span-2">
-                      <div className="font-black text-slate-950">No employees match this search</div>
-                      <p className="mt-1">Try a different name, department, position, or seat label.</p>
-                    </div>
-                  )}
+              {sortedEmployees.length === 0 ? (
+                <div className="mt-2 rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface-alt)] p-5 text-sm text-[var(--admin-text-secondary)]">
+                  <div className="font-semibold text-[var(--admin-text-primary)]">No employees match this search</div>
+                  <p className="mt-1">Try a different name, department, position, or seat label.</p>
                 </div>
-              </div>
+              ) : (
+                <div className="mt-2 overflow-x-auto rounded-2xl border border-[var(--admin-border)]">
+                  <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-[var(--admin-border-subtle,var(--admin-border))] bg-[var(--admin-surface-alt)] text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">
+                        {employeeColumns.map(column => {
+                          const isSorted = sortKey === column.key;
+                          return (
+                            <th
+                              key={column.key}
+                              scope="col"
+                              aria-sort={isSorted ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
+                              className="px-3 py-2 font-medium"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => toggleSort(column.key)}
+                                className="inline-flex items-center gap-1 rounded outline-none hover:text-[var(--admin-text-primary)] focus-visible:ring-2 focus-visible:ring-brand"
+                              >
+                                <span>{column.label}</span>
+                                <span aria-hidden="true" className={isSorted ? "text-[var(--admin-text-primary)]" : "text-transparent"}>
+                                  {isSorted ? (sortDirection === "asc" ? "▲" : "▼") : "▲"}
+                                </span>
+                              </button>
+                            </th>
+                          );
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody ref={employeeGridRef}>
+                      {employeeWindow.topPadding > 0 && (
+                        <tr aria-hidden="true">
+                          <td colSpan={employeeColumns.length} style={{ height: employeeWindow.topPadding, padding: 0 }} />
+                        </tr>
+                      )}
+                      {visibleEmployees.map(employee => {
+                        const seatLabel = seatLabelByEmployeeId.get(employee.id) ?? "Unassigned";
+                        const isAssigned = seatLabelByEmployeeId.has(employee.id);
+                        const isSelected = selectedEmployeeId === employee.id;
+                        // Background lives on the cells (not the <tr>) so it paints
+                        // reliably under border-collapse in every browser.
+                        const cellBg = isSelected ? "bg-[var(--admin-primary-soft)]" : "group-hover/row:bg-[var(--admin-surface-alt)]";
+                        return (
+                          <tr
+                            key={employee.id}
+                            data-directory-row
+                            aria-selected={isSelected}
+                            onClick={() => editEmployee(employee)}
+                            tabIndex={0}
+                            onKeyDown={event => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                editEmployee(employee);
+                              }
+                            }}
+                            className="group/row cursor-pointer border-b border-[var(--admin-border-subtle,var(--admin-border))] outline-none transition last:border-b-0 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
+                          >
+                            <td className={["px-3 py-2 transition-colors", cellBg, isSelected ? "border-l-2 border-l-[var(--admin-primary-border)]" : "border-l-2 border-l-transparent"].join(" ")}>
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary-soft)] text-xs font-semibold text-[var(--admin-primary-cta)]">{getInitials(employee.full_name)}</div>
+                                <span className="truncate font-semibold text-[var(--admin-text-primary)]">{formatDisplayName(employee.full_name)}</span>
+                              </div>
+                            </td>
+                            <td className={["px-3 py-2 transition-colors text-[var(--admin-text-secondary)]", cellBg].join(" ")}>{employee.department || "—"}</td>
+                            <td className={["px-3 py-2 transition-colors text-[var(--admin-text-secondary)]", cellBg].join(" ")}>{employee.position || "—"}</td>
+                            <td className={["px-3 py-2 transition-colors text-[var(--admin-text-secondary)]", cellBg].join(" ")}>{employee.phone_extension || "—"}</td>
+                            <td className={["px-3 py-2 transition-colors font-medium text-[var(--admin-text-primary)]", cellBg].join(" ")}>{seatLabel}</td>
+                            <td className={["px-3 py-2 transition-colors", cellBg].join(" ")}>
+                              <span className={["inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium", isAssigned ? "bg-[var(--admin-primary-soft)] text-[var(--admin-primary-cta)]" : "bg-[var(--admin-surface-alt)] text-[var(--admin-text-secondary)]"].join(" ")}>
+                                {isAssigned ? "Assigned" : "Active"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {employeeWindow.bottomPadding > 0 && (
+                        <tr aria-hidden="true">
+                          <td colSpan={employeeColumns.length} style={{ height: employeeWindow.bottomPadding, padding: 0 }} />
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             <aside className="rounded-3xl border border-[#E4E6E8] bg-[#FCFCFD] p-4 shadow-soft">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-black">{selectedEmployee ? "Edit employee" : "Add employee"}</h2>
-                  <p className="text-sm text-slate-500">Changes update the employee directory and draft seat references.</p>
+                  <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">{selectedEmployee ? "Edit employee" : "Add employee"}</h2>
+                  <p className="text-sm text-[var(--admin-text-secondary)]">Changes update the employee directory and draft seat references.</p>
                 </div>
                 <Button type="button" onClick={startNewEmployee} disabled={pending}>New</Button>
               </div>
 
               <div className="mt-4 space-y-3">
                 <label className="block">
-                  <span className="text-xs font-medium tracking-normal text-slate-500">Name</span>
+                  <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Name</span>
                   <input value={employeeForm.fullName} onChange={event => setEmployeeForm(current => ({ ...current, fullName: event.target.value }))} className={fieldClassName} />
                 </label>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="block">
-                    <span className="text-xs font-medium tracking-normal text-slate-500">Position</span>
+                    <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Position</span>
                     <input value={employeeForm.position} onChange={event => setEmployeeForm(current => ({ ...current, position: event.target.value }))} className={fieldClassName} />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium tracking-normal text-slate-500">Phone Ext.</span>
+                    <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Phone Ext.</span>
                     <input value={employeeForm.phoneExtension} onChange={event => setEmployeeForm(current => ({ ...current, phoneExtension: event.target.value }))} className={fieldClassName} inputMode="numeric" />
                   </label>
                 </div>
                 <label className="block">
-                  <span className="text-xs font-medium tracking-normal text-slate-500">Department</span>
+                  <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Department</span>
                   <input list="management-department-options" value={employeeForm.department} onChange={event => setEmployeeForm(current => ({ ...current, department: event.target.value }))} className={fieldClassName} />
                 </label>
               </div>
@@ -697,25 +797,25 @@ export function AdminManagementPanel({
           <section className="rounded-3xl border border-[#E4E6E8] bg-[#FCFCFD] p-4 shadow-soft">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <h2 className="text-lg font-black">Departments</h2>
-                <p className="text-sm text-slate-500">Employee departments are separate from physical seating zones.</p>
+                <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Departments</h2>
+                <p className="text-sm text-[var(--admin-text-secondary)]">Employee departments are separate from physical seating zones.</p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <input value={newDepartmentName} onChange={event => setNewDepartmentName(event.target.value)} placeholder="New department" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100" />
+                <input value={newDepartmentName} onChange={event => setNewDepartmentName(event.target.value)} placeholder="New department" className="min-w-0 rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100" />
                 <Button type="button" variant="primary" onClick={createDepartment} disabled={pending || !newDepartmentName.trim()}>Add</Button>
               </div>
             </div>
-            <div className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200">
+            <div className="mt-4 divide-y divide-[var(--admin-border-subtle,var(--admin-border))] rounded-2xl border border-[var(--admin-border)]">
               {departmentRoster.map(row => (
-                <div key={row.key} className="flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between">
+                <div key={row.key} className="group flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-black text-slate-950">{row.name}</span>
+                      <span className="text-sm font-semibold text-[var(--admin-text-primary)]">{row.name}</span>
                       {!row.managed && (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">Not in managed list</span>
                       )}
                     </div>
-                    <div className="text-xs text-slate-500">{row.employeeCount} employee{row.employeeCount === 1 ? "" : "s"}</div>
+                    <div className="text-xs text-[var(--admin-text-secondary)]">{row.employeeCount} employee{row.employeeCount === 1 ? "" : "s"}</div>
                   </div>
                   {editingDepartment === row.name ? (
                     <div className="flex flex-1 flex-col gap-2 md:max-w-md md:flex-row">
@@ -724,19 +824,33 @@ export function AdminManagementPanel({
                       <Button type="button" onClick={() => setEditingDepartment("")} disabled={pending}>Cancel</Button>
                     </div>
                   ) : (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {!row.managed && (
                         <Button type="button" onClick={() => adoptDepartment(row.name)} disabled={pending}>Add to list</Button>
                       )}
                       <Button type="button" onClick={() => beginDepartmentRename(row.name)} disabled={pending}>Rename</Button>
-                      <Button type="button" variant="danger" onClick={() => deleteDepartment(row.name)} disabled={pending}>Delete</Button>
+                      <button
+                        type="button"
+                        onClick={() => deleteDepartment(row.name)}
+                        disabled={pending}
+                        aria-label={`Delete ${row.name}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--admin-text-muted)] opacity-0 outline-none transition hover:bg-rose-50 hover:text-rose-600 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6" />
+                          <path d="M14 11v6" />
+                        </svg>
+                      </button>
                     </div>
                   )}
                 </div>
               ))}
               {departmentNames.length === 0 && (
-                <div className="p-5 text-sm text-slate-500">
-                  <div className="font-black text-slate-950">No departments yet</div>
+                <div className="p-5 text-sm text-[var(--admin-text-secondary)]">
+                  <div className="font-semibold text-[var(--admin-text-primary)]">No departments yet</div>
                   <p className="mt-1">Add a department to keep employee records easier to scan.</p>
                 </div>
               )}
@@ -748,20 +862,20 @@ export function AdminManagementPanel({
           <section className="rounded-3xl border border-[#E4E6E8] bg-[#FCFCFD] p-4 shadow-soft">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <h2 className="text-lg font-black">Zones</h2>
-                <p className="text-sm text-slate-500">Zones are physical map areas used for filtering and custom-seat label prefixes.</p>
+                <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Zones</h2>
+                <p className="text-sm text-[var(--admin-text-secondary)]">Zones are physical map areas used for filtering and custom-seat label prefixes.</p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <input value={newZoneName} onChange={event => setNewZoneName(event.target.value)} placeholder="New zone" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100" />
+                <input value={newZoneName} onChange={event => setNewZoneName(event.target.value)} placeholder="New zone" className="min-w-0 rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-orange-100" />
                 <Button type="button" variant="primary" onClick={createZone} disabled={pending || !newZoneName.trim()}>Add</Button>
               </div>
             </div>
-            <div className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200">
+            <div className="mt-4 divide-y divide-[var(--admin-border-subtle,var(--admin-border))] rounded-2xl border border-[var(--admin-border)]">
               {zoneNames.map(name => (
-                <div key={name} className="flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between">
+                <div key={name} className="group flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="text-sm font-black text-slate-950">{name}</div>
-                    <div className="text-xs text-slate-500">{zoneCounts.get(name) ?? 0} draft seat{(zoneCounts.get(name) ?? 0) === 1 ? "" : "s"}</div>
+                    <div className="text-sm font-semibold text-[var(--admin-text-primary)]">{name}</div>
+                    <div className="text-xs text-[var(--admin-text-secondary)]">{zoneCounts.get(name) ?? 0} draft seat{(zoneCounts.get(name) ?? 0) === 1 ? "" : "s"}</div>
                   </div>
                   {editingZone === name ? (
                     <div className="flex flex-1 flex-col gap-2 md:max-w-md md:flex-row">
@@ -770,16 +884,30 @@ export function AdminManagementPanel({
                       <Button type="button" onClick={() => setEditingZone("")} disabled={pending}>Cancel</Button>
                     </div>
                   ) : (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Button type="button" onClick={() => beginZoneRename(name)} disabled={pending}>Rename</Button>
-                      <Button type="button" variant="danger" onClick={() => deleteZone(name)} disabled={pending}>Delete</Button>
+                      <button
+                        type="button"
+                        onClick={() => deleteZone(name)}
+                        disabled={pending}
+                        aria-label={`Delete ${name}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--admin-text-muted)] opacity-0 outline-none transition hover:bg-rose-50 hover:text-rose-600 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6" />
+                          <path d="M14 11v6" />
+                        </svg>
+                      </button>
                     </div>
                   )}
                 </div>
               ))}
               {zoneNames.length === 0 && (
-                <div className="p-5 text-sm text-slate-500">
-                  <div className="font-black text-slate-950">No zones yet</div>
+                <div className="p-5 text-sm text-[var(--admin-text-secondary)]">
+                  <div className="font-semibold text-[var(--admin-text-primary)]">No zones yet</div>
                   <p className="mt-1">Add a zone to organize map filters and custom-seat labels.</p>
                 </div>
               )}
@@ -791,8 +919,8 @@ export function AdminManagementPanel({
           <section className="rounded-3xl border border-[#E4E6E8] bg-[#FCFCFD] p-4 shadow-soft sm:p-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="max-w-2xl">
-                <h2 className="text-lg font-black">Publish History</h2>
-                <p className="text-sm leading-6 text-slate-500">
+                <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Publish History</h2>
+                <p className="text-sm leading-6 text-[var(--admin-text-secondary)]">
                   Recent completed publishes from the draft map, including published seat count and admin identity when the profile can be resolved.
                 </p>
               </div>
@@ -803,21 +931,21 @@ export function AdminManagementPanel({
 
             {publishHistoryState.status === "loading" && (
               <>
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
+                <div className="mt-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface-alt)] p-4">
+                  <div className="h-3 w-24 animate-pulse rounded bg-[var(--admin-border)]" />
                   <div className="mt-4 grid gap-3 md:grid-cols-3">
-                    <div className="h-14 animate-pulse rounded-xl bg-white" />
-                    <div className="h-14 animate-pulse rounded-xl bg-white" />
-                    <div className="h-14 animate-pulse rounded-xl bg-white" />
+                    <div className="h-14 animate-pulse rounded-xl bg-[var(--admin-surface)]" />
+                    <div className="h-14 animate-pulse rounded-xl bg-[var(--admin-surface)]" />
+                    <div className="h-14 animate-pulse rounded-xl bg-[var(--admin-surface)]" />
                   </div>
                 </div>
-                <div className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200">
+                <div className="mt-4 divide-y divide-[var(--admin-border-subtle,var(--admin-border))] rounded-2xl border border-[var(--admin-border)]">
                   {[0, 1, 2].map(item => (
                     <div key={item} className="grid gap-3 p-3 md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_80px]">
-                      <div className="h-5 animate-pulse rounded bg-slate-100" />
-                      <div className="h-5 animate-pulse rounded bg-slate-100" />
-                      <div className="h-5 animate-pulse rounded bg-slate-100" />
-                      <div className="h-5 animate-pulse rounded bg-slate-100" />
+                      <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
+                      <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
+                      <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
+                      <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
                     </div>
                   ))}
                 </div>
@@ -827,7 +955,7 @@ export function AdminManagementPanel({
             {publishHistoryState.status === "error" && (
               <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <div className="font-black">Could not load publish history.</div>
+                  <div className="font-semibold">Could not load publish history.</div>
                   <div className="mt-1 whitespace-pre-wrap">{publishHistoryState.error}</div>
                 </div>
                 <Button type="button" variant="danger" onClick={loadPublishHistory}>
@@ -837,9 +965,9 @@ export function AdminManagementPanel({
             )}
 
             {publishHistoryState.status === "loaded" && publishHistoryState.events.length === 0 && (
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6">
-                <h3 className="text-sm font-black text-slate-950">No publish events yet</h3>
-                <p className="mt-1 max-w-xl text-sm leading-6 text-slate-500">
+              <div className="mt-4 rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface-alt)] p-6">
+                <h3 className="text-sm font-semibold text-[var(--admin-text-primary)]">No publish events yet</h3>
+                <p className="mt-1 max-w-xl text-sm leading-6 text-[var(--admin-text-secondary)]">
                   Published maps will appear here after the first successful publish audit event is written.
                 </p>
               </div>
@@ -853,15 +981,15 @@ export function AdminManagementPanel({
                     <div className="mt-3 grid gap-3 md:grid-cols-3">
                       <div>
                         <div className="text-xs font-medium tracking-normal text-orange-700">Created</div>
-                        <div className="mt-1 text-sm font-black text-slate-950">{formatPublishDate(latestPublish.created_at)}</div>
+                        <div className="mt-1 text-sm font-semibold text-[var(--admin-text-primary)]">{formatPublishDate(latestPublish.created_at)}</div>
                       </div>
                       <div>
                         <div className="text-xs font-medium tracking-normal text-orange-700">Seat Count</div>
-                        <div className="mt-1 text-sm font-black text-slate-950">{latestPublish.seat_count.toLocaleString()}</div>
+                        <div className="mt-1 text-sm font-semibold text-[var(--admin-text-primary)]">{latestPublish.seat_count.toLocaleString()}</div>
                       </div>
                       <div className="min-w-0">
                         <div className="text-xs font-medium tracking-normal text-orange-700">Published By</div>
-                        <div className="mt-1 break-all text-sm font-black text-slate-950" title={latestPublish.published_by ?? undefined}>
+                        <div className="mt-1 break-all text-sm font-semibold text-[var(--admin-text-primary)]" title={latestPublish.published_by ?? undefined}>
                           {getPublishHistoryActor(latestPublish)}
                         </div>
                       </div>
@@ -869,39 +997,39 @@ export function AdminManagementPanel({
                   </div>
                 )}
 
-                <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
-                  <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_80px] bg-slate-50 px-3 py-2 text-xs font-semibold tracking-normal text-slate-500 md:grid">
+                <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--admin-border)]">
+                  <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_80px] bg-[var(--admin-surface-alt)] px-3 py-2 text-xs font-semibold tracking-normal text-[var(--admin-text-secondary)] md:grid">
                     <div>Created At</div>
                     <div>Seat Count</div>
                     <div>Published By</div>
                     <div>State</div>
                   </div>
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-[var(--admin-border-subtle,var(--admin-border))]">
                     {publishHistoryState.events.map((event, index) => (
                       <div
                         key={`${event.created_at}-${event.published_by ?? "unknown"}-${index}`}
                         className="grid gap-3 p-3 text-sm md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_80px] md:items-center"
                       >
                         <div>
-                          <div className="text-[11px] font-semibold tracking-normal text-slate-500 md:hidden">Created At</div>
-                          <div className="font-semibold text-slate-950">{formatPublishDate(event.created_at)}</div>
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Created At</div>
+                          <div className="font-semibold text-[var(--admin-text-primary)]">{formatPublishDate(event.created_at)}</div>
                         </div>
                         <div>
-                          <div className="text-[11px] font-semibold tracking-normal text-slate-500 md:hidden">Seat Count</div>
-                          <div className="font-black text-slate-950">{event.seat_count.toLocaleString()}</div>
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Seat Count</div>
+                          <div className="font-semibold text-[var(--admin-text-primary)]">{event.seat_count.toLocaleString()}</div>
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[11px] font-semibold tracking-normal text-slate-500 md:hidden">Published By</div>
-                          <div className="break-all font-semibold text-slate-700" title={event.published_by ?? undefined}>
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Published By</div>
+                          <div className="break-all font-semibold text-[var(--admin-text-secondary)]" title={event.published_by ?? undefined}>
                             {getPublishHistoryActor(event)}
                           </div>
                         </div>
                         <div>
-                          <div className="text-[11px] font-semibold tracking-normal text-slate-500 md:hidden">State</div>
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">State</div>
                           {index === 0 ? (
                             <span className="inline-flex rounded-full bg-orange-100 px-2 py-1 text-[11px] font-semibold tracking-normal text-brand-dark">Latest</span>
                           ) : (
-                            <span className="text-xs font-semibold text-slate-400">Previous</span>
+                            <span className="text-xs font-semibold text-[var(--admin-text-muted)]">Previous</span>
                           )}
                         </div>
                       </div>
@@ -931,18 +1059,18 @@ export function AdminManagementPanel({
                 closeManagementConfirm();
               }
             }}
-            className="w-full max-w-lg rounded-2xl border border-white/70 bg-white/95 p-4 text-slate-950 shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
+            className="w-full max-w-lg rounded-2xl border border-white/70 bg-white/95 p-4 text-[var(--admin-text-primary)] shadow-[0_26px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 id="management-confirm-title" className="text-base font-black">
+                <h2 id="management-confirm-title" className="text-base font-semibold">
                   {managementConfirm.kind === "employee"
-                    ? `Deactivate ${managementConfirm.employee.full_name}?`
+                    ? `Deactivate ${formatDisplayName(managementConfirm.employee.full_name)}?`
                     : managementConfirm.kind === "department"
                       ? `Delete department "${managementConfirm.name}"?`
                       : `Delete zone "${managementConfirm.name}"?`}
                 </h2>
-                <p id="management-confirm-description" className="mt-1 text-sm leading-5 text-slate-500">
+                <p id="management-confirm-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-secondary)]">
                   Review the exact management impact before applying this cleanup.
                 </p>
               </div>
@@ -950,7 +1078,7 @@ export function AdminManagementPanel({
                 type="button"
                 onClick={closeManagementConfirm}
                 disabled={pending}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
                 aria-label="Cancel management confirmation"
               >
                 x

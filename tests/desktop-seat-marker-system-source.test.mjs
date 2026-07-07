@@ -80,7 +80,11 @@ test("desktop marker system protects show-names and long-name rendering", async 
 
   assert.match(markerSource, /namesVisible = showNames && hasEmployee && !dimmed/);
   assert.match(markerSource, /getPassiveEmployeeLabel/);
-  assert.match(markerSource, /inlineNameLabel = expandedNameBadge \|\| \(namesVisible && tokenDensity === "standard" && !compactNameLabel\) \? employeeName : compactEmployeeName/);
+  // Design change: marker names go through formatDisplayName(...) instead of .toUpperCase().
+  // The label-selection logic is unchanged — expanded/standard-density names show the full
+  // (now formatted) name; everything else falls back to the compact passive label.
+  assert.match(markerSource, /inlineNameLabel = expandedNameBadge \|\| \(namesVisible && tokenDensity === "standard" && !compactNameLabel\) \? formatDisplayName\(employeeName\) : compactEmployeeName/);
+  assert.doesNotMatch(markerSource, /employeeName\.toUpperCase\(\)/);
   assert.match(markerSource, /showInlineName = Boolean\(employeeName\) && \(namesVisible \|\| activeMarker \|\| searchProminent \|\| plannerHighlighted\)/);
   assert.match(markerSource, /truncate font-bold/);
   assert.match(markerSource, /max-w-\[94px\]/);

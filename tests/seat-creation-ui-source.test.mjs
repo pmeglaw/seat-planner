@@ -169,7 +169,9 @@ test("seat badges use compact map-native labels with strong active states", asyn
   assert.match(markerSource, /tokenMode === "selected"[\s\S]*w-\[126px\]/);
   assert.match(markerSource, /searchProminent[\s\S]*border-\[var\(--admin-marker-search-border\)\] bg-\[var\(--admin-marker-search-surface\)\]/);
   assert.match(markerSource, /namesVisible = showNames && hasEmployee && !dimmed/);
-  assert.match(markerSource, /inlineNameLabel = expandedNameBadge \|\| \(namesVisible && tokenDensity === "standard" && !compactNameLabel\) \? employeeName : compactEmployeeName/);
+  // Design change: names are formatted via formatDisplayName(...) rather than .toUpperCase();
+  // the compact-vs-full label selection logic is otherwise preserved.
+  assert.match(markerSource, /inlineNameLabel = expandedNameBadge \|\| \(namesVisible && tokenDensity === "standard" && !compactNameLabel\) \? formatDisplayName\(employeeName\) : compactEmployeeName/);
   assert.match(markerSource, /\{inlineNameLabel\}/);
   assert.match(markerSource, /block min-w-0 truncate font-bold/);
 });

@@ -63,7 +63,7 @@ test("master alternative palette exposes inert brand primitives and scoped admin
     "--admin-publish-no-change-bg: var(--admin-state-clean-bg)",
     "--admin-publish-viewer-impact-bg: var(--admin-info-soft)",
     "--admin-marker-assigned-surface: rgba(232, 243, 236, 0.96)",
-    "--admin-marker-selected-border: var(--admin-primary)",
+    "--admin-marker-selected-border: var(--admin-primary-cta)",
     "--admin-marker-search-surface: var(--admin-info-soft)",
     "--admin-marker-draft-surface: rgba(212, 106, 36, 0.10)",
     "--admin-marker-draft-accent: var(--admin-copper)",
@@ -87,8 +87,11 @@ test("admin theme wrapper is scoped to the admin route only", async () => {
 
   assert.match(adminRouteSource, /className="admin-theme min-h-screen bg-\[var\(--admin-bg\)\]/);
   assert.match(adminRouteSource, /<SeatMap[\s\S]*canEdit/);
+  // The viewer must never inherit the admin theme...
   assert.doesNotMatch(viewerRouteSource, /admin-theme|--admin-/);
-  assert.doesNotMatch(managementRouteSource, /admin-theme|--admin-/);
+  // ...but Management IS an admin route, so it now joins the same design system
+  // (admin-theme scope + --admin-* tokens) instead of the off-system slate palette.
+  assert.match(managementRouteSource, /admin-theme/);
 });
 
 test("admin color slices scope shell marker and semantic aliases without redesigning viewer", async () => {
