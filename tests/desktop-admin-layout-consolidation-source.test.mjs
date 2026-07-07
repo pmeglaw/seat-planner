@@ -23,13 +23,16 @@ test("admin layout consolidation moves identity and status into the top bar (rai
 
   assert.doesNotMatch(seatMapSource, /aria-label="Admin workspace rail"/);
   assert.match(topBar, /Megeredchian Law Seats/);
-  // 3b: the chrome chip is the SOLE draft-sync display and the publish entry —
-  // the brand subtitle no longer duplicates draft state, and the old
-  // Review/Published surface button is gone.
-  assert.match(topBar, /\{canEdit \? "Admin" : "Published · Viewer"\}/);
+  // Chrome pass (owner-approved): publish is elevated to a right-side primary button
+  // that carries the review action + change count and goes quiet ("Published") when in
+  // sync; the brand subtitle shows a small draft-status dot next to identity. This
+  // intentionally supersedes the earlier single-left-chip (3b) arrangement.
+  assert.match(topBar, /Published · Viewer/);
   assert.match(topBar, /onClick=\{openPublishReview\}/);
-  assert.match(topBar, /\{draftStatusLabel\}/);
-  assert.doesNotMatch(topBar, /"Review changes"/);
+  assert.match(topBar, /aria-label=\{`Review \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);
+  assert.match(topBar, /\{publishSummary\.hasChanges \? \(/);
+  assert.match(topBar, /Review changes/);
+  assert.match(topBar, /\{publishSummary\.totalChangeCount\}/);
   assert.doesNotMatch(topBar, /Draft · Admin/);
 
   assert.match(canvasHeader, /aria-label="Seat inventory summary"/);

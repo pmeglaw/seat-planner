@@ -164,7 +164,7 @@ export function SeatMarker({
           ? "border-[#A26E23]/60 bg-[#F2E4C8]/95 text-[#67430F]"
           : seat.status === "unavailable"
             ? "border-[#C8BFB3]/90 bg-[#E8E2DA]/[0.92] text-[#655E56]"
-            : "border-[#D4CABF]/90 bg-[#F9F5ED]/[0.86] text-[#575048]";
+            : "border-[#AEB4BA]/95 bg-[#F2F2F3]/95 text-[#44494C]";
   // Search/planner emphasis keeps visual priority over the passive valid-target tint.
   const validTargetTone = swapCandidate && !searchProminent && !plannerHighlighted;
   const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent" || moveOrigin || validTargetTone || invalidTarget) ? "" : baseStatusToneClass;
@@ -190,7 +190,7 @@ export function SeatMarker({
           ? "bg-[#9A6418]/80"
           : seat.status === "unavailable"
             ? "bg-[#8E8276]/70"
-            : "bg-[#B8AEA2]/58";
+            : "bg-[#8B9198]/85";
 
   // A3 non-color status cue: the resting accent reads as a FILLED disc for an
   // assigned seat and a HOLLOW ring for an open/available seat, so assigned vs

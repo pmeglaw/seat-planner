@@ -150,7 +150,7 @@ test("seat badges use compact map-native labels with strong active states", asyn
   assert.match(markerSource, /border-\[#B7AB9E\]\/85 bg-\[#FFFDF8\]\/95/);
   assert.match(markerSource, /border-\[var\(--admin-marker-unavailable-border\)\] bg-\[var\(--admin-marker-unavailable-surface\)\]/);
   assert.match(markerSource, /border-\[var\(--admin-marker-available-border\)\] bg-\[var\(--admin-marker-available-surface\)\]/);
-  assert.match(markerSource, /border-\[#D4CABF\]\/90 bg-\[#F9F5ED\]\/\[0\.86\]/);
+  assert.match(markerSource, /border-\[#AEB4BA\]\/95 bg-\[#F2F2F3\]\/95/);
   assert.doesNotMatch(markerSource, /bg-\[#(?:E8E2DA|F9F5ED)\]\/(?:92|86)/);
   assert.match(markerSource, /min-h-\[34px\] rounded-\[12px\]/);
   assert.match(markerSource, /w-\[92px\] max-w-\[92px\] sm:w-\[104px\]/);
