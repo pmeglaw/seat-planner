@@ -2106,7 +2106,12 @@ export function SeatMap({
                         addSeatMode={addSeatMode}
                         viewportEdge={viewportPlacement.edge}
                         viewportEdgeOffsetPx={viewportPlacement.offsetPx}
-                        variant="admin"
+                        // Owner preference: the admin map wears the published viewer's
+                        // seat-marker pills exactly — soft resting pills with the status
+                        // dot, the dark pill + orange ring when selected, orange hover.
+                        // (SeatMarker keeps its admin-token branches; the admin map just
+                        // no longer opts into them.)
+                        variant="viewer"
                         onSelect={selectSeat}
                         onMovePointerDown={handleMovePointerDown}
                       />
