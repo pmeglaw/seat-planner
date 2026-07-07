@@ -134,6 +134,9 @@ test("desktop assignment cancel and discard reset unsaved no-match editor state"
   assert.match(inspectorSource, /setEmployeeComboboxOpen\(false\)/);
   assert.match(inspectorSource, /setActiveEmployeeIndex\(0\)/);
   assert.match(inspectorSource, /setVacateConfirmOpen\(false\)/);
+  // 3b T1: clean vacate runs immediately (toast + Undo); the dialog only
+  // guards unsaved inspector edits, which draft-history Undo can't restore.
+  assert.match(inspectorSource, /function handleVacateSeat\(\) \{[\s\S]*?if \(isDirty\) \{\s*setVacateConfirmOpen\(true\);\s*return;\s*\}\s*confirmVacateSeat\(\);\s*\}/);
   assert.match(inspectorSource, /function handleResetEdits\(\) \{[\s\S]*resetInspectorDraftForm\(initialForm\);[\s\S]*\}/);
   assert.match(inspectorSource, /function handleCancelEditing\(\) \{[\s\S]*if \(isDirty\) \{[\s\S]*resetInspectorDraftForm\(initialForm\);[\s\S]*return;[\s\S]*\}[\s\S]*onClose\(\);[\s\S]*\}/);
   assert.match(inspectorSource, /onClick=\{handleCancelEditing\} aria-label=\{`Cancel editing \$\{selectedSeat\.label\}`\}/);
