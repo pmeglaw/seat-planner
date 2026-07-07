@@ -118,7 +118,7 @@ export function FilterPanel({
   }
 
   return (
-    <aside id="seat-map-filter-panel" aria-labelledby="seat-map-filter-title" className="relative z-[70] max-h-[55vh] w-full self-start overflow-auto overscroll-contain rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 shadow-[var(--admin-shadow-panel)] sm:max-h-[62vh] lg:sticky lg:top-[62px] lg:z-auto lg:max-h-[calc(100vh-78px)] lg:w-[288px]">
+    <aside id="seat-map-filter-panel" aria-labelledby="seat-map-filter-title" className="relative z-[70] max-h-[55vh] w-full self-start overflow-auto overscroll-contain rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 shadow-[var(--admin-shadow-panel)] motion-safe:animate-[sp-panel-in_200ms_ease-out] sm:max-h-[62vh] lg:sticky lg:top-[62px] lg:z-auto lg:max-h-[calc(100vh-78px)] lg:w-[288px]">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 id="seat-map-filter-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Filters</h2>
         <div className="flex items-center gap-1">
@@ -141,7 +141,7 @@ export function FilterPanel({
           <select
             value={department}
             onChange={event => onDepartmentChange(event.target.value)}
-            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
+            className="mt-1 w-full min-w-0 cursor-pointer rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none transition-colors hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
           >
             <option value="all">All departments</option>
             {departments.map(dep => (
@@ -155,7 +155,7 @@ export function FilterPanel({
           <select
             value={zone}
             onChange={event => onZoneChange(event.target.value)}
-            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
+            className="mt-1 w-full min-w-0 cursor-pointer rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none transition-colors hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
           >
             <option value="all">All zones</option>
             {zones.map(value => (
@@ -169,7 +169,7 @@ export function FilterPanel({
           <select
             value={status}
             onChange={event => onStatusChange(event.target.value)}
-            className="mt-1 w-full min-w-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
+            className="mt-1 w-full min-w-0 cursor-pointer rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none transition-colors hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
           >
             <option value="all">All statuses</option>
             <option value="available">Available</option>

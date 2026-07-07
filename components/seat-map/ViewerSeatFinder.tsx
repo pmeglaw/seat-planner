@@ -238,13 +238,16 @@ export function ViewerSeatFinder({
             </div>
             <dl className="grid grid-cols-3 gap-2 text-center sm:w-[24rem]">
               {[
-                ["Assigned", assignedCount],
-                ["Open", openCount],
-                ["Reserved", reservedCount]
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-2">
-                  <dt className="text-[10px] font-black uppercase tracking-wide text-slate-500">{label}</dt>
-                  <dd className="mt-0.5 text-xl font-black text-slate-950">{value}</dd>
+                { label: "Assigned", value: assignedCount, accent: "border-l-emerald-400", dot: "bg-emerald-500" },
+                { label: "Open", value: openCount, accent: "border-l-sky-400", dot: "bg-sky-500" },
+                { label: "Reserved", value: reservedCount, accent: "border-l-amber-400", dot: "bg-amber-500" }
+              ].map(tile => (
+                <div key={tile.label} className={`rounded-2xl border border-l-4 border-slate-200 ${tile.accent} bg-slate-50/80 px-3 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.05)]`}>
+                  <dt className="flex items-center justify-center gap-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
+                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tile.dot}`} aria-hidden="true" />
+                    {tile.label}
+                  </dt>
+                  <dd className="mt-0.5 text-xl font-black text-slate-950">{tile.value}</dd>
                 </div>
               ))}
             </dl>
@@ -279,7 +282,7 @@ export function ViewerSeatFinder({
                 type="button"
                 onClick={() => searchResults.resultSeatIds.length > 0 && fitSeatIdsInMap(searchResults.resultSeatIds)}
                 disabled={!searchResults.resultSeatIds.length}
-                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-950 px-4 text-sm font-black text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-950 px-4 text-sm font-black text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.98] active:duration-75 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
               >
                 Show on map
               </button>

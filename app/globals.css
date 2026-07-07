@@ -155,7 +155,10 @@
   /* Claude Design palette, brand-aligned (Megeredchian Law: orange + cool neutral
      charcoal on near-white). Cool, clean and calm — no warm ivory; orange is a sparing
      accent only (glyph, avatar, primary action, focus ring, selected seat). */
-  --admin-bg: #EAEBEC;
+  /* Page canvas nudged one cool step darker than the surface-muted content plane
+     (#EAEBEC) so near-white panels/cards read as raised rather than merged. Muted body
+     text (#5E646A) stays ~4.9:1 here — still AA; do not go darker than #E4E6E8. */
+  --admin-bg: #E7E9EB;
 
   /* Cool charcoal chrome (top bar): light off-white text, hairline dividers. */
   --admin-chrome-bg: #1F2225;
@@ -172,6 +175,10 @@
   --admin-surface: #FCFCFD;
   --admin-surface-alt: #F3F4F6;
   --admin-surface-muted: #EAEBEC;
+  /* Dedicated mat behind the floor-plan image — a hair darker/cooler than the content
+     plane so the map viewport reads as a recessed well (paired with --admin-shadow-map).
+     Kept separate from --admin-surface-muted, which is shared by chips and inline surfaces. */
+  --admin-map-floor: #E4E6E9;
   /* Border discipline per docs/design-direction-verdict.md: default 1.43:1 on surface,
      strong 2.04:1 — old default (1.05:1 on canvas) was near-invisible. */
   --admin-border: #D2D6DA;
@@ -318,16 +325,41 @@
        3 overlay — bg surface, border strong,    shadow-3  (drawers, menus, popovers; no scrim)
        4 modal   — bg surface, no border,        shadow-4  (dialogs + sheets; scrim on dialogs only)
        5 toast   — bg chrome,  no border,        shadow-5  (toasts; topmost) */
-  --admin-elevation-2-shadow: 0 1px 2px rgba(15, 18, 20, 0.06);
-  --admin-elevation-3-shadow: 0 4px 12px -2px rgba(15, 18, 20, 0.10);
-  --admin-elevation-4-shadow: 0 12px 32px -4px rgba(15, 18, 20, 0.16);
+  /* Two-layer shadows (a tight contact shadow + a soft ambient one) read as real light
+     rather than a single grey smudge, so panels/drawers separate cleanly from the canvas.
+     Decorative only — no contrast impact. */
+  --admin-elevation-2-shadow: 0 1px 2px rgba(15, 18, 20, 0.05), 0 2px 8px -2px rgba(15, 18, 20, 0.06);
+  --admin-elevation-3-shadow: 0 1px 2px rgba(15, 18, 20, 0.05), 0 10px 28px -6px rgba(15, 18, 20, 0.16);
+  --admin-elevation-4-shadow: 0 1px 2px rgba(15, 18, 20, 0.06), 0 20px 48px -8px rgba(15, 18, 20, 0.22);
   --admin-elevation-5-shadow: 0 8px 24px rgba(15, 18, 20, 0.24);
 
-  /* Flat refined chrome — no shell/command shadows; floating panels ride elevation 3. */
-  --admin-shadow-shell: none;
+  /* Refined chrome depth: the top bar gets a crisp floor line + soft ambient drop so it
+     reads as a physical layer above the canvas; the map viewport gets a gentle inset so
+     the floor plan sits in a recessed well and the seat pills read as raised. Floating
+     panels ride elevation 3. */
+  --admin-shadow-shell: 0 1px 0 rgba(15, 18, 20, 0.42), 0 8px 20px -10px rgba(15, 18, 20, 0.5);
   --admin-shadow-command: none;
-  --admin-shadow-map: none;
+  --admin-shadow-map: inset 0 2px 6px rgba(15, 18, 20, 0.07);
   --admin-shadow-panel: var(--admin-elevation-3-shadow);
+}
+
+/* Chrome motion — quiet, one-shot entrances. Applied only via Tailwind's `motion-safe:`
+   variant, so anyone with prefers-reduced-motion set never sees them (elements just
+   appear). None of these loop. */
+@keyframes sp-panel-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes sp-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sp-chip-pop {
+  0% { transform: scale(0.85); }
+  55% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
 * {
