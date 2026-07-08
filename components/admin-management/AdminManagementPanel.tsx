@@ -1120,7 +1120,7 @@ export function AdminManagementPanel({
                 {managementConfirm.kind === "employee"
                   ? "Published assignments are protected server-side. Publish draft changes when ready."
                   : managementConfirm.kind === "department"
-                    ? "This changes employee metadata and can affect viewer employee detail text immediately. Seat assignments are unchanged."
+                    ? "This changes employee metadata. Viewers keep seeing current people details until you publish. Seat assignments are unchanged."
                     : "This updates draft zone metadata only. The published viewer map is unchanged until publish."}
               </div>
             </div>

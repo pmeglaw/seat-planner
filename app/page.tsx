@@ -17,17 +17,28 @@ export default async function HomePage() {
 
   if (!user) redirect("/login?next=/");
 
-  const { data: seats, error: seatsError } = await supabase
+  // Viewer people data comes ONLY from the published_employees snapshot
+  // (replaced atomically at publish time) — never the live employees table,
+  // which is the admins' draft-side working set. Employee edits therefore
+  // wait for publish, exactly like seat edits. The employee join is stitched
+  // here because seats' FK points at employees, not the snapshot.
+  const { data: seatRows, error: seatsError } = await supabase
     .from("seats")
-    .select("*, employee:employees(*)")
+    .select("*")
     .eq("layer", "published")
     .order("label");
 
   const { data: employees, error: employeesError } = await supabase
-    .from("employees")
+    .from("published_employees")
     .select("*")
     .eq("active", true)
     .order("full_name");
+
+  const employeesById = new Map(((employees ?? []) as Employee[]).map(employee => [employee.id, employee]));
+  const seats = ((seatRows ?? []) as SeatWithEmployee[]).map(seat => ({
+    ...seat,
+    employee: seat.employee_id ? employeesById.get(seat.employee_id) ?? null : null
+  }));
 
   const { data: departments } = await supabase
     .from("department_options")
@@ -47,7 +58,7 @@ export default async function HomePage() {
 
   return (
     <ViewerSeatFinder
-      seats={(seats ?? []) as SeatWithEmployee[]}
+      seats={seats}
       employees={(employees ?? []) as Employee[]}
       departmentOptions={(departments ?? []) as DepartmentOption[]}
       zoneOptions={(zones ?? []) as ZoneOption[]}

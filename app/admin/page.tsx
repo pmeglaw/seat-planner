@@ -54,6 +54,13 @@ export default async function AdminPage() {
     .eq("active", true)
     .order("full_name");
 
+  // Viewer-facing snapshot, loaded so the publish review can diff live
+  // employee details against what viewers currently see.
+  const { data: publishedEmployees, error: publishedEmployeesError } = await supabase
+    .from("published_employees")
+    .select("*")
+    .order("full_name");
+
   const { data: departments, error: departmentsError } = await supabase
     .from("department_options")
     .select("*")
@@ -66,8 +73,8 @@ export default async function AdminPage() {
     .eq("active", true)
     .order("name");
 
-  if (seatsError || publishedSeatsError || employeesError || departmentsError || zonesError) {
-    throw new Error(seatsError?.message ?? publishedSeatsError?.message ?? employeesError?.message ?? departmentsError?.message ?? zonesError?.message);
+  if (seatsError || publishedSeatsError || employeesError || publishedEmployeesError || departmentsError || zonesError) {
+    throw new Error(seatsError?.message ?? publishedSeatsError?.message ?? employeesError?.message ?? publishedEmployeesError?.message ?? departmentsError?.message ?? zonesError?.message);
   }
 
   return (
@@ -76,6 +83,7 @@ export default async function AdminPage() {
         seats={(seats ?? []) as SeatWithEmployee[]}
         publishedSeats={(publishedSeats ?? []) as SeatWithEmployee[]}
         employees={(employees ?? []) as Employee[]}
+        publishedEmployees={(publishedEmployees ?? []) as Employee[]}
         departmentOptions={(departments ?? []) as DepartmentOption[]}
         zoneOptions={(zones ?? []) as ZoneOption[]}
         canEdit

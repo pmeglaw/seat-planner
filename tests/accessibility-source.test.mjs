@@ -103,7 +103,9 @@ test("ask planner drawer and settings review dialogs keep dialog semantics and f
 test("publish review summarizes draft changes before publish", async () => {
   const source = await readSource("../components/seat-map/SeatMap.tsx");
 
-  assert.match(source, /buildPublishChangeSummary\(localSeats, localPublishedSeats\)/);
+  // The summary must also diff live employee details against the viewer
+  // snapshot so pending people edits are reviewable before they publish.
+  assert.match(source, /buildPublishChangeSummary\(localSeats, localPublishedSeats, \{\s+employees: localEmployees,\s+publishedEmployees: localPublishedEmployees\s+\}\)/);
   assert.match(source, /aria-labelledby="publish-review-title"/);
   assert.match(source, /Review draft before publishing/);
   assert.match(source, /Confirm the saved draft changes before they become visible in the read-only viewer/);
