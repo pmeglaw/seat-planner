@@ -2,7 +2,7 @@
 
 ## Current milestone: Step 2
 
-Step 2 ports the first production interaction layer from the v15 HTML prototype into the Next.js/Supabase app.
+Step 2 ports the first production interaction layer into the Next.js/Supabase app.
 
 Implemented:
 
@@ -43,14 +43,14 @@ Recommended next pass:
 
 
 ## Step 3 – UI parity pass
-- Ported V15-inspired marker chips and status coloring.
+- Added marker chips and status coloring.
 - Added collapsible filter panel with stats + legend.
 - Added collapsible inspector shell and improved spacing.
 - Tightened header, map shell, and advanced drawer polish.
 
 - Step 3.1: increased default marker size and expanded selected/hover chip sizing for readability.
 
-## Step 4 – near-v15 marker polish
+## Step 4 – marker polish
 - Increased marker readability again and moved to a more chip-like mini-pill treatment.
 - Added status dot, stronger selected state, and expanded hover chip sizing.
 - Tightened the map shell and toolbar message treatment for closer prototype feel.
