@@ -258,7 +258,7 @@
   --admin-publish-viewer-impact-text: var(--admin-info);
 
   /* Cool neutral-slate pill markers to match the chrome; orange ring on the selected
-     pill (no dark fill). Refined pill craft per docs/design-reference-v15.html. */
+     pill (no dark fill). */
   --admin-marker-assigned-surface: rgba(232, 243, 236, 0.96);
   --admin-marker-assigned-border: rgba(31, 122, 85, 0.26);
   --admin-marker-assigned-text: #156045;

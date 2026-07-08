@@ -6,7 +6,7 @@ An `AGENTS.md` also exists with overlapping guidance (folder map, coding convent
 
 ## Stack
 
-Private office seat-planning app: Next.js App Router (v15) · React 19 · TypeScript (strict) · Tailwind CSS 3 · Supabase (Auth + Postgres + RLS) · Next.js server actions. Deployed on Vercel to `seats.megeredchianlaw.com`.
+Private office seat-planning app: Next.js 15 (App Router) · React 19 · TypeScript (strict) · Tailwind CSS 3 · Supabase (Auth + Postgres + RLS) · Next.js server actions. Deployed on Vercel to `seats.megeredchianlaw.com`.
 
 ## Commands
 
