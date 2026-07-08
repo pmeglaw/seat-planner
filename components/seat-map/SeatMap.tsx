@@ -1738,12 +1738,9 @@ export function SeatMap({
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
       <header className="z-40 flex h-[54px] shrink-0 items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] bg-gradient-to-b from-[var(--admin-chrome-elevated)] to-[var(--admin-chrome-bg)] px-3 text-[var(--admin-chrome-text)] shadow-[var(--admin-shadow-shell)] sm:gap-3 sm:px-4">
         <div className="flex min-w-0 shrink-0 items-center gap-2.5">
-          <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center">
-            {/* Megeredchian Law "AM" monogram: orange A apex interlocking a light M. */}
-            <svg viewBox="0 0 24 24" className="h-[26px] w-[26px]" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 18.5 V8 L12 14.5 L21 8 V18.5" className="stroke-[var(--admin-chrome-text)]" strokeWidth="2.1" />
-              <path d="M12 4 L7.7 13.4 M12 4 L16.3 13.4" className="stroke-[var(--admin-primary)]" strokeWidth="2.4" />
-            </svg>
+          <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-[9px] bg-gradient-to-b from-white to-[#F1EFEA] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.5),0_4px_10px_-3px_rgba(0,0,0,0.4)]">
+            {/* Megeredchian Law brand mark on a warm-white raised chip so its orange + charcoal read on the dark chrome bar. */}
+            <Image src="/images/megeredchian-mark.png?v=tight" alt="" width={26} height={26} unoptimized className="h-[26px] w-[26px] object-contain" />
           </span>
           <div className="hidden min-w-0 leading-tight sm:block">
             <div className="truncate text-[13px] font-semibold text-[var(--admin-chrome-text)]">Megeredchian Law Seats</div>
