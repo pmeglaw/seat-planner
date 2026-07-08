@@ -46,7 +46,7 @@ Package manager: npm. Use the existing `package-lock.json`.
 - Keep mutations that touch Supabase in server actions and enforce admin access with `requireAdmin()`.
 - Treat Supabase RLS, `profiles.role`, and server-side checks as the security boundary.
 - Use strict TypeScript; avoid `any` unless the alternative is worse.
-- Preserve the operational, map-first Tailwind UI. Viewer flows should stay simpler than admin flows.
+- The UI is free to evolve — redesign visuals, layout, spacing, and design tokens as the product needs. Two enduring principles stay: the app is map-first/operational, and viewer flows stay simpler than admin flows. The only hard design guardrails are accessibility and destructive-action safety (see the `*-source.test.mjs` scope note in `CLAUDE.md`); a redesign that trips those has crossed a real line, not just changed the look.
 
 ## Safe Change Rules
 
