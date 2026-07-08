@@ -4,15 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 An `AGENTS.md` also exists with overlapping guidance (folder map, coding conventions, "done means" checklist). Read it too; this file focuses on the architecture that only becomes clear after reading several files together.
 
+## Stack
+
+Private office seat-planning app: Next.js App Router (v15) · React 19 · TypeScript (strict) · Tailwind CSS 3 · Supabase (Auth + Postgres + RLS) · Next.js server actions. Deployed on Vercel to `seats.megeredchianlaw.com`.
+
 ## Commands
 
-- Dev server: `npm run dev` (http://localhost:3000; `/` = viewer, `/admin` = editor, `/admin/management` = data)
+- Dev server: `npm run dev` (http://localhost:3000; `/` = viewer, `/admin` = editor, `/admin/management` = data, `/admin/settings` = data utilities)
 - Build: `npm run build` · Lint: `npm run lint` · Typecheck: `npm run typecheck`
 - Tests: `npm test` (runs `node --test tests/*.test.mjs`; requires `node_modules` because some tests import `typescript` to type-check source)
 - Single test file: `node --test tests/seat-swap.test.mjs`
 - Install (CI-faithful): `npm ci`
+- QA handoff report: `npm run qa:handoff` (regenerates the improvement-loop handoff under `tools/seat-planner-improvement-loop/`)
 
 Restart the dev server after editing `.env.local`, `tailwind.config.ts`, or Supabase Auth settings — Tailwind/CSS and env changes are not always picked up hot.
+
+Env vars: `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` are the only client-safe values. `OPENAI_API_KEY` (+ optional `OPENAI_MODEL`) is **server-only** — it powers Ask Planner and must never be prefixed with `NEXT_PUBLIC_`. The Supabase service-role key must never reach the browser.
 
 ## The draft / published two-layer model (central concept)
 
@@ -30,7 +37,7 @@ Keep this separation absolute: never let a viewer path read draft, never let an 
 2. **Postgres RLS + SECURITY DEFINER RPCs** — the database independently enforces admin. Client-side guards are UX only.
 3. **`middleware.ts`** → `lib/supabase/middleware.ts` refreshes the auth session cookie on every matched request.
 
-Never bypass admin checks with client-only guards, and never expose the service-role key to the browser (only `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` are client-safe). `OPENAI_API_KEY` is server-only (Ask Planner).
+Never bypass admin checks with client-only guards, and never expose the service-role key to the browser (only `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` are client-safe). Auth is email/password-primary with magic-link fallback; the callback routes (`app/auth/confirm`, `app/auth/callback`, `app/auth/update-password`) accept PKCE `code` / `token_hash` links and store the session in server cookies. Auth-facing copy lives in `lib/authMessages.ts`.
 
 ## Mutations go through RPCs for transaction safety
 
@@ -44,7 +51,15 @@ Seats store **normalized `x`/`y` in `[0,1]`** (already normalized in the DB — 
 
 ## `lib/` is the tested business core
 
-Risky/pure logic lives in `lib/*.ts` and is covered by matching `tests/*.test.mjs` (plain Node test runner, no framework). Prefer extending an existing `lib/` helper over inlining logic in a component or action, and add/adjust its test. Notable modules: `seatSwap`, `seatProtection` (original seats can't be deleted — only `is_custom` seats), `draftHistory` (undo/redo snapshots), `csv` (import/export), `seatZones`/`departments`, `viewerSeatSearch`, `mapOperationsAgent` (Ask Planner). Tests named `*-source.test.mjs` assert against source text (design-system/accessibility invariants) rather than runtime behavior.
+Risky/pure logic lives in `lib/*.ts` and is covered by matching `tests/*.test.mjs` (plain Node test runner, no framework). Prefer extending an existing `lib/` helper over inlining logic in a component or action, and add/adjust its test. Notable modules: `seatSwap`, `seatProtection` (original seats can't be deleted — only `is_custom` seats), `draftHistory` (undo/redo snapshots), `csv` (import/export), `seatZones`/`departments`, `seatClusters`, `seatLabels`, `viewerSeatSearch`, `virtualizedList` (directory virtualization), `validators`, `formatName`, `mapOperationsAgent` (Ask Planner).
+
+Two kinds of tests coexist. Behavior tests exercise a helper's runtime logic. **`*-source.test.mjs` tests instead assert against source text** — they read files and check for required tokens/classes/patterns to lock in design-system, accessibility, and destructive-action-safety invariants. Restructuring UI or renaming a token can break a source test even when behavior is correct; update the invariant deliberately rather than silencing it.
+
+## Design system (semantic CSS tokens)
+
+Styling is standardized onto **semantic design tokens**: CSS custom properties named `--sp-color-*` (brand, action, text, surface, border, state) defined in `app/globals.css` and surfaced through `tailwind.config.ts`. Shared primitives live in `components/ui/` — `design-system.tsx` (`Button`, `focusRingClass`, variant/size maps) and `Button.tsx`. Admin surfaces are scoped under `.admin-theme`. Prefer these tokens and primitives over hard-coded hex or raw Tailwind palette classes; the `design-system-*-source.test.mjs` and `accessibility-source.test.mjs` tests pin the approved token names and focus/contrast rules.
+
+`app/concepts/component-state-board` is a **prototype-only** design surface, gated by `prototypesEnabled()` — it returns 404 in production unless `SEAT_PLANNER_ENABLE_PROTOTYPES=true`. It is not part of the shipped viewer/admin flows.
 
 ## Migrations directory has a dual-numbering history
 
