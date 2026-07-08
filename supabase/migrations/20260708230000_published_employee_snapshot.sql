@@ -102,7 +102,10 @@ begin
   -- Snapshot the active employee directory in the same transaction, so the
   -- viewer's people data changes atomically with the viewer's seat map and
   -- employee edits never reach viewers before an explicit publish.
-  delete from public.published_employees;
+  -- `where true` is required: Supabase loads pg-safeupdate on API connections,
+  -- which rejects DELETE without a WHERE clause even inside SECURITY DEFINER
+  -- functions (verified live on the PR #100 preview).
+  delete from public.published_employees where true;
 
   insert into public.published_employees (
     id,

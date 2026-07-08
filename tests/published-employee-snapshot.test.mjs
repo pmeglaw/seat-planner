@@ -39,7 +39,9 @@ test("publish RPC replaces the employee snapshot atomically with the seat copy",
   assert.match(publishSql, /if not app_private\.is_admin\(\) then/);
 
   const seatDelete = publishSql.indexOf("delete from public.seats where layer = 'published'");
-  const employeeDelete = publishSql.indexOf("delete from public.published_employees");
+  // The WHERE clause is load-bearing: Supabase's pg-safeupdate rejects bare
+  // DELETEs on API connections, even inside SECURITY DEFINER functions.
+  const employeeDelete = publishSql.indexOf("delete from public.published_employees where true");
   const employeeInsert = publishSql.indexOf("insert into public.published_employees");
   const auditInsert = publishSql.indexOf("insert into public.publish_events");
 
