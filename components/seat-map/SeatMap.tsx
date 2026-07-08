@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import type { PointerEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   canRedoDraftHistory,
   canUndoDraftHistory,
@@ -17,6 +18,7 @@ import {
 } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
+import { computeDraftFingerprint } from "@/lib/draftConcurrency";
 import { departmentKey } from "@/lib/departments";
 import { normalizePoint } from "@/lib/seatMath";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
@@ -235,6 +237,7 @@ export function SeatMap({
   zoneOptions = [],
   canEdit
 }: SeatMapProps) {
+  const router = useRouter();
   const [localSeats, setLocalSeats] = useState(() => normalizeSeats(seats));
   const [localPublishedSeats, setLocalPublishedSeats] = useState(() => normalizeSeats(publishedSeats));
   const [localEmployees, setLocalEmployees] = useState(employees);
@@ -915,6 +918,24 @@ export function SeatMap({
     return `Update ${updated.label}`;
   }
 
+  // The draft-concurrency fence fired: another admin session changed the draft
+  // after this page loaded it. The local undo/redo baselines (and any pending
+  // mode) predate those edits, so keeping them would re-arm the same stale
+  // write — drop them and re-seed from the server.
+  function handleStaleDraft(message: string) {
+    setActionNotice(null);
+    setActionError(`${message} This page has been refreshed with the latest draft.`);
+    setDraftHistory(clearDraftHistory());
+    setInspectorDirty(false);
+    setInspectorResetSignal(current => current + 1);
+    setMoveSeatMode(false);
+    setAddSeatMode(false);
+    setSwapSourceSeatId(null);
+    setSwapConfirm(null);
+    setDragState(null);
+    router.refresh();
+  }
+
   function restoreHistorySnapshot(snapshot: DraftSnapshot, nextHistory: typeof draftHistory, actionLabel: string, notice: string, selectRestoredSeatLabel?: string) {
     if (inspectorDirty) {
       setActionNotice(null);
@@ -926,10 +947,17 @@ export function SeatMap({
       try {
         setActionError(null);
         setActionNotice(null);
-        const restored = await restoreDraftSnapshotAction(snapshot);
-        applyRestoredDraftPayload(restored);
+        // Fence on the draft this page currently holds (NOT the snapshot being
+        // restored): if another session advanced the draft, restoring would
+        // silently revert their edits, so the server rejects and we reload.
+        const result = await restoreDraftSnapshotAction(snapshot, computeDraftFingerprint(localSeats));
+        if (!result.ok) {
+          handleStaleDraft(result.message);
+          return;
+        }
+        applyRestoredDraftPayload(result);
         if (selectRestoredSeatLabel) {
-          const restoredSeat = restored.seats.find(seat => seat.label === selectRestoredSeatLabel);
+          const restoredSeat = result.seats.find(seat => seat.label === selectRestoredSeatLabel);
           if (restoredSeat) {
             setSelectedSeatId(restoredSeat.id);
             setInspectorCollapsed(false);
@@ -1300,14 +1328,22 @@ export function SeatMap({
       try {
         setActionError(null);
         setActionNotice(null);
-        const payload = await swapSeatAssignmentsAction({
+        const result = await swapSeatAssignmentsAction({
           sourceSeatId: sourceSeat.id,
-          targetSeatId: targetSeat.id
+          targetSeatId: targetSeat.id,
+          // Fence: reject the swap if either seat changed after this review
+          // dialog rendered, so what commits is exactly what was confirmed.
+          sourceExpectedUpdatedAt: sourceSeat.updated_at,
+          targetExpectedUpdatedAt: targetSeat.updated_at
         });
-        const afterSeats = normalizeSeats(payload.seats);
-        recordDraftHistory(swapLabel, beforeSnapshot, afterSeats, payload.employees);
+        if (!result.ok) {
+          handleStaleDraft(result.message);
+          return;
+        }
+        const afterSeats = normalizeSeats(result.seats);
+        recordDraftHistory(swapLabel, beforeSnapshot, afterSeats, result.employees);
         setLocalSeats(afterSeats);
-        setLocalEmployees(payload.employees);
+        setLocalEmployees(result.employees);
         setSelectedSeatId(targetSeat.id);
         setInspectorDirty(false);
         setMoveSeatMode(false);
@@ -2494,6 +2530,7 @@ export function SeatMap({
           setActionError(message);
           if (message) setActionNotice(null);
         }}
+        onStaleDraft={handleStaleDraft}
         onDirtyChange={setInspectorDirty}
         onSubmitBlocked={cancelPendingInspectorGuardAction}
         resetSignal={inspectorResetSignal}

@@ -15,7 +15,9 @@ function extractFunctionSql(sql) {
 }
 
 function extractCsvImportAction(source) {
-  const match = source.match(/export async function importAssignmentsCsvAction[\s\S]+?\r?\n}\r?\n\r?\nexport async function restoreDraftSnapshotAction/);
+  // Anchor on the next export of any kind (a result type now precedes the
+  // restore action) so the extraction stays stable.
+  const match = source.match(/export async function importAssignmentsCsvAction[\s\S]+?\r?\n}\r?\n\r?\nexport/);
   assert.ok(match, "CSV import action should be present");
   return match[0];
 }

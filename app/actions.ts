@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseAssignmentCsv } from "@/lib/csv";
+import { isStaleDraftErrorCode, type DraftFingerprint } from "@/lib/draftConcurrency";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import { answerMapOperationsQuestion } from "@/lib/mapOperationsAgent";
 import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/publishHistory";
 import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { canDeleteDraftSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
-import { buildSeatSwapPlan } from "@/lib/seatSwap";
+import { buildSeatSwapPlan, type SeatSwapPlan } from "@/lib/seatSwap";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { savedPointToVisualPoint, seatsToVisualSeats } from "@/lib/mapLayoutTransform";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
@@ -310,6 +311,8 @@ export async function updateSeatAction(input: {
   zone?: string | null;
   notes?: string | null;
   forceMove?: boolean;
+  /** Concurrency fence: the seat's updated_at as the client rendered it. */
+  expectedUpdatedAt?: string | null;
 }): Promise<UpdateSeatResult> {
   const supabase = await requireAdmin();
 
@@ -339,7 +342,8 @@ export async function updateSeatAction(input: {
     employee_department: department,
     seat_zone: zone,
     seat_notes: notes,
-    force_move: input.forceMove ?? false
+    force_move: input.forceMove ?? false,
+    expected_updated_at: input.expectedUpdatedAt ?? null
   });
 
   if (error) {
@@ -353,6 +357,13 @@ export async function updateSeatAction(input: {
 
 function mapUpdateSeatError(error: SupabaseMutationError): UpdateSeatResult {
   const message = error.message?.trim() || "Could not update the seat.";
+  // SQLSTATE 'MLS02' (STALE_DRAFT_SQLSTATE in lib/draftConcurrency) is the
+  // draft-concurrency fence: the seat changed in another admin session after
+  // this client rendered it. Literal code so tests can eval this helper
+  // standalone, matching the MLS01 handling below.
+  if (error.code === "MLS02") {
+    return { ok: false, code: "STALE_DRAFT", message };
+  }
   // The RPC guards double-booking with a friendly message and (once the Phase 2
   // migration lands) the custom SQLSTATE 'MLS01'. Match either so the conflict is
   // recognised whether or not that migration has been applied yet.
@@ -364,10 +375,17 @@ function mapUpdateSeatError(error: SupabaseMutationError): UpdateSeatResult {
   return { ok: false, code: "VALIDATION", message };
 }
 
+export type SwapSeatAssignmentsResult =
+  | { ok: true; seats: SeatWithEmployee[]; employees: Employee[]; summary: SeatSwapPlan["summary"] }
+  | { ok: false; code: "STALE_DRAFT"; message: string };
+
 export async function swapSeatAssignmentsAction(input: {
   sourceSeatId: string;
   targetSeatId: string;
-}) {
+  /** Concurrency fence: each seat's updated_at as the client rendered the review dialog. */
+  sourceExpectedUpdatedAt?: string | null;
+  targetExpectedUpdatedAt?: string | null;
+}): Promise<SwapSeatAssignmentsResult> {
   const supabase = await requireAdmin();
   const sourceSeatId = assertNonEmpty(input.sourceSeatId, "Source seat");
   const targetSeatId = assertNonEmpty(input.targetSeatId, "Target seat");
@@ -394,13 +412,23 @@ export async function swapSeatAssignmentsAction(input: {
 
   const { error } = await supabase.rpc("swap_draft_seat_assignments", {
     source_draft_seat_id: originalSourceSeat.id,
-    target_draft_seat_id: originalTargetSeat.id
+    target_draft_seat_id: originalTargetSeat.id,
+    source_expected_updated_at: input.sourceExpectedUpdatedAt ?? null,
+    target_expected_updated_at: input.targetExpectedUpdatedAt ?? null
   });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Returned (not thrown) so the fence message survives production's digest
+    // stripping and the client can offer a reload instead of a dead-end error.
+    if (isStaleDraftErrorCode((error as SupabaseMutationError).code)) {
+      return { ok: false, code: "STALE_DRAFT", message: error.message };
+    }
+    throw new Error(error.message);
+  }
 
   revalidatePath("/admin");
   return {
+    ok: true,
     ...(await getDraftMapPayload(supabase)),
     summary: plan.summary
   };
@@ -642,7 +670,20 @@ export async function importAssignmentsCsvAction(csvText: string) {
   };
 }
 
-export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
+export type RestoreDraftSnapshotResult =
+  | { ok: true; seats: SeatWithEmployee[]; employees: Employee[] }
+  | { ok: false; code: "STALE_DRAFT"; message: string };
+
+export async function restoreDraftSnapshotAction(
+  snapshot: DraftSnapshot,
+  /**
+   * Concurrency fence: fingerprint of the draft the client currently holds
+   * (NOT of the snapshot being restored). The RPC rejects with STALE_DRAFT if
+   * the database draft has advanced past it, so a stale undo/restore cannot
+   * silently revert another admin's edits.
+   */
+  expectedDraft?: DraftFingerprint
+): Promise<RestoreDraftSnapshotResult> {
   const supabase = await requireAdmin();
   if (!snapshot || !Array.isArray(snapshot.seats) || !Array.isArray(snapshot.employees)) {
     throw new Error("JSON backup must include seats and employees arrays.");
@@ -666,13 +707,22 @@ export async function restoreDraftSnapshotAction(snapshot: DraftSnapshot) {
 
   const { error } = await supabase.rpc("restore_draft_snapshot", {
     snapshot_seats: seatsToRestore,
-    snapshot_employees: employeesToRestore
+    snapshot_employees: employeesToRestore,
+    expected_draft_seat_count: expectedDraft?.seatCount ?? null,
+    expected_draft_max_updated_at: expectedDraft?.maxUpdatedAt ?? null
   });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Returned (not thrown) so the fence message survives production's digest
+    // stripping and the client can reload instead of showing a dead-end error.
+    if (isStaleDraftErrorCode((error as SupabaseMutationError).code)) {
+      return { ok: false, code: "STALE_DRAFT", message: error.message };
+    }
+    throw new Error(error.message);
+  }
 
   revalidatePath("/admin");
-  return getDraftMapPayload(supabase);
+  return { ok: true, ...(await getDraftMapPayload(supabase)) };
 }
 
 export async function getPublishHistoryAction(limit = 10) {

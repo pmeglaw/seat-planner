@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-// The force_move migration drops the original 12-arg overload and recreates the
-// RPC with the trailing force_move parameter, so it holds the live definition.
+// The draft-concurrency-fence migration drops the 13-arg force_move overload and
+// recreates the RPC with the trailing expected_updated_at fence parameter, so it
+// holds the live definition.
 const migrationSql = await readFile(
-  new URL("../supabase/migrations/20260629000100_update_draft_seat_force_move.sql", import.meta.url),
+  new URL("../supabase/migrations/20260708120000_draft_concurrency_fence.sql", import.meta.url),
   "utf8"
 );
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
@@ -41,7 +42,7 @@ function loadMapUpdateSeatError(source) {
 
 const functionSql = extractFunctionSql(migrationSql);
 const updateSeatActionSource = extractUpdateSeatAction(actionsSource);
-const updateSeatFunctionSignature = /public\.update_draft_seat\(uuid, text, public\.seat_status, uuid, text, text, boolean, text, boolean, text, text, text, boolean\)/;
+const updateSeatFunctionSignature = /public\.update_draft_seat\(uuid, text, public\.seat_status, uuid, text, text, boolean, text, boolean, text, text, text, boolean, timestamptz\)/;
 
 test("draft seat update migration creates an authenticated admin-only RPC", () => {
   assert.match(functionSql, /create or replace function public\.update_draft_seat\(/);
@@ -127,11 +128,27 @@ test("draft seat update RPC supports an atomic force_move with a coded conflict"
     /update public\.seats as seat\s+set\s+employee_id = null,\s+status = 'available'::public\.seat_status\s+where seat\.layer = 'draft'::public\.seat_layer\s+and seat\.employee_id = resolved_employee_id\s+and seat\.id <> draft_seat_id;/
   );
 
-  // The original 12-arg overload is dropped so the signature change leaves one version.
+  // The prior 13-arg overload is dropped so the signature change leaves one version.
   assert.match(
     migrationSql,
-    /drop function if exists public\.update_draft_seat\(uuid, text, public\.seat_status, uuid, text, text, boolean, text, boolean, text, text, text\);/
+    /drop function if exists public\.update_draft_seat\(uuid, text, public\.seat_status, uuid, text, text, boolean, text, boolean, text, text, text, boolean\);/
   );
+});
+
+test("draft seat update RPC fences stale per-seat edits after locking the row", () => {
+  const lockIndex = functionSql.indexOf("for update of seat");
+  const fenceIndex = functionSql.indexOf("target_seat.updated_at is distinct from expected_updated_at");
+  const firstMutation = Math.min(
+    ...["insert into public.department_options", "insert into public.employees", "update public.employees", "insert into public.zone_options", "update public.seats"]
+      .map(fragment => functionSql.indexOf(fragment))
+      .filter(index => index !== -1)
+  );
+
+  assert.match(functionSql, /expected_updated_at timestamptz default null/);
+  assert.notEqual(fenceIndex, -1, "per-seat fence should be present");
+  assert.ok(lockIndex < fenceIndex, "fence must run after the seat row is locked");
+  assert.ok(fenceIndex < firstMutation, "fence must run before any mutation");
+  assert.match(functionSql, /using errcode = 'MLS02'/);
 });
 
 test("draft seat update RPC preserves inspector employee and option behavior", () => {
@@ -161,6 +178,7 @@ test("server draft seat update action delegates dependent writes to the transact
   assert.match(updateSeatActionSource, /seat_zone: zone/);
   assert.match(updateSeatActionSource, /seat_notes: notes/);
   assert.match(updateSeatActionSource, /force_move: input\.forceMove \?\? false/);
+  assert.match(updateSeatActionSource, /expected_updated_at: input\.expectedUpdatedAt \?\? null/);
   // Success path now wraps the seat in a discriminated result; failures are returned
   // (via mapUpdateSeatError) rather than thrown so the friendly RPC message survives.
   assert.match(updateSeatActionSource, /const seat = await getDraftSeatById\(supabase, input\.seatId\)/);
@@ -196,6 +214,13 @@ test("updateSeatAction returns the double-booking conflict as data instead of th
   assert.equal(withCode.ok, false);
   assert.equal(withCode.code, "EMPLOYEE_ALREADY_ASSIGNED");
   assert.equal(withCode.currentSeatLabel, "W11");
+
+  // The draft-concurrency fence (SQLSTATE MLS02) surfaces as STALE_DRAFT so the
+  // client can reload instead of showing a dead-end validation error.
+  const stale = mapUpdateSeatError({ code: "MLS02", message: "Seat W11 changed in another session after it was loaded. Reload to pick up the latest draft, then try again." });
+  assert.equal(stale.ok, false);
+  assert.equal(stale.code, "STALE_DRAFT");
+  assert.match(stale.message, /changed in another session/);
 
   // Other RPC validation messages surface verbatim as a plain validation result.
   assert.deepEqual(mapUpdateSeatError({ message: "Seat label C01 already exists." }), {

@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+// The draft-concurrency-fence migration drops the original 2-arg overload and
+// recreates the RPC with trailing whole-draft fence parameters, so it holds
+// the live definition.
 const migrationSql = await readFile(
-  new URL("../supabase/migrations/20260616000300_restore_draft_snapshot_rpc.sql", import.meta.url),
+  new URL("../supabase/migrations/20260708120000_draft_concurrency_fence.sql", import.meta.url),
   "utf8"
 );
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
@@ -24,13 +27,28 @@ const functionSql = extractFunctionSql(migrationSql);
 const restoreActionSource = extractRestoreAction(actionsSource);
 
 test("draft snapshot restore migration creates an authenticated admin-only RPC", () => {
-  assert.match(functionSql, /create or replace function public\.restore_draft_snapshot\(\s+snapshot_seats jsonb,\s+snapshot_employees jsonb\s+\)/);
+  assert.match(functionSql, /create or replace function public\.restore_draft_snapshot\(\s+snapshot_seats jsonb,\s+snapshot_employees jsonb,\s+expected_draft_seat_count integer default null,\s+expected_draft_max_updated_at timestamptz default null\s+\)/);
   assert.match(functionSql, /returns integer/);
   assert.match(functionSql, /security invoker/);
   assert.doesNotMatch(functionSql, /security definer/i);
   assert.match(functionSql, /if not app_private\.is_admin\(\) then/);
-  assert.match(migrationSql, /revoke all on function public\.restore_draft_snapshot\(jsonb, jsonb\) from public, anon, authenticated;/);
-  assert.match(migrationSql, /grant execute on function public\.restore_draft_snapshot\(jsonb, jsonb\) to authenticated;/);
+  assert.match(migrationSql, /drop function if exists public\.restore_draft_snapshot\(jsonb, jsonb\);/);
+  assert.match(migrationSql, /revoke all on function public\.restore_draft_snapshot\(jsonb, jsonb, integer, timestamptz\) from public, anon, authenticated;/);
+  assert.match(migrationSql, /grant execute on function public\.restore_draft_snapshot\(jsonb, jsonb, integer, timestamptz\) to authenticated;/);
+});
+
+test("draft snapshot restore RPC fences stale whole-draft restores after locking", () => {
+  const lockIndex = functionSql.indexOf("for update of seat");
+  const fenceIndex = functionSql.indexOf("current_draft_seat_count is distinct from expected_draft_seat_count");
+  const maxFenceIndex = functionSql.indexOf("current_draft_max_updated_at is distinct from expected_draft_max_updated_at");
+  const firstMutation = functionSql.indexOf("insert into public.department_options");
+
+  assert.notEqual(lockIndex, -1);
+  assert.notEqual(fenceIndex, -1, "seat-count fence should be present");
+  assert.notEqual(maxFenceIndex, -1, "max-updated_at fence should be present");
+  assert.ok(lockIndex < fenceIndex, "fence must run after the draft rows are locked");
+  assert.ok(maxFenceIndex < firstMutation, "fence must run before any mutation");
+  assert.match(functionSql, /using errcode = 'MLS02'/);
 });
 
 test("draft snapshot restore RPC validates unsafe snapshots before mutating", () => {
@@ -110,8 +128,9 @@ test("server draft snapshot restore action delegates dependent writes to the tra
   assert.match(restoreActionSource, /const employeesToRestore = snapshot\.employees\.map\(normalizeRestoreEmployee\)/);
   assert.match(restoreActionSource, /Cannot restore an empty draft map snapshot/);
   assert.match(restoreActionSource, /Cannot restore duplicate draft seat label/);
-  assert.match(restoreActionSource, /\.rpc\("restore_draft_snapshot", \{\s+snapshot_seats: seatsToRestore,\s+snapshot_employees: employeesToRestore\s+\}\)/);
-  assert.match(restoreActionSource, /return getDraftMapPayload\(supabase\)/);
+  assert.match(restoreActionSource, /\.rpc\("restore_draft_snapshot", \{\s+snapshot_seats: seatsToRestore,\s+snapshot_employees: employeesToRestore,\s+expected_draft_seat_count: expectedDraft\?\.seatCount \?\? null,\s+expected_draft_max_updated_at: expectedDraft\?\.maxUpdatedAt \?\? null\s+\}\)/);
+  assert.match(restoreActionSource, /code: "STALE_DRAFT"/);
+  assert.match(restoreActionSource, /return \{ ok: true, \.\.\.\(await getDraftMapPayload\(supabase\)\) \}/);
 
   assert.doesNotMatch(restoreActionSource, /\.from\("seats"\)/);
   assert.doesNotMatch(restoreActionSource, /\.from\("employees"\)/);
