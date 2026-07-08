@@ -1,8 +1,20 @@
-import type { SeatWithEmployee } from "@/lib/types";
+import type { Employee, SeatWithEmployee } from "@/lib/types";
 
 export type PublishChangeItem = {
   label: string;
   detail: string;
+};
+
+/**
+ * Live vs published employee directory, for the people half of the publish
+ * gate: `employees` is the draft-side working set and `publishedEmployees` is
+ * the viewer-facing snapshot replaced at publish time. Without this diff an
+ * employee rename would never surface in the review (both sides of the seat
+ * diff join the same live employee row) and could never be published.
+ */
+export type PublishEmployeeInputs = {
+  employees: Employee[];
+  publishedEmployees: Employee[];
 };
 
 export type PublishChangeSummary = {
@@ -15,6 +27,7 @@ export type PublishChangeSummary = {
   seatMoves: PublishChangeItem[];
   statusChanges: PublishChangeItem[];
   otherChanges: PublishChangeItem[];
+  employeeDetailChanges: PublishChangeItem[];
   updatedSeatCount: number;
   totalChangeCount: number;
   hasChanges: boolean;
@@ -98,7 +111,50 @@ function buildSeatMap(seats: SeatWithEmployee[]) {
   return seatMap;
 }
 
-export function buildPublishChangeSummary(draftSeats: SeatWithEmployee[], publishedSeats: SeatWithEmployee[]): PublishChangeSummary {
+function describeEmployeeDetailChange(published: Employee, live: Employee) {
+  const changes: string[] = [];
+
+  if (textChanged(published.full_name, live.full_name)) changes.push(`Name ${published.full_name} -> ${live.full_name}`);
+  if (textChanged(published.position, live.position)) changes.push(`Title ${published.position ?? "None"} -> ${live.position ?? "None"}`);
+  if (textChanged(published.department, live.department)) changes.push(`Department ${published.department ?? "None"} -> ${live.department ?? "None"}`);
+  if (textChanged(published.phone_extension, live.phone_extension)) changes.push(`Ext. ${published.phone_extension ?? "None"} -> ${live.phone_extension ?? "None"}`);
+
+  return changes.join("; ");
+}
+
+function buildEmployeeDetailChanges(inputs: PublishEmployeeInputs | undefined): PublishChangeItem[] {
+  if (!inputs) return [];
+
+  const liveActive = inputs.employees.filter(employee => employee.active);
+  const publishedById = new Map(inputs.publishedEmployees.map(employee => [employee.id, employee]));
+  const liveIds = new Set(liveActive.map(employee => employee.id));
+  const items: PublishChangeItem[] = [];
+
+  liveActive.forEach(live => {
+    const published = publishedById.get(live.id);
+    if (!published) {
+      items.push({ label: live.full_name, detail: "New in the viewer directory" });
+      return;
+    }
+
+    const detail = describeEmployeeDetailChange(published, live);
+    if (detail) items.push({ label: live.full_name, detail });
+  });
+
+  inputs.publishedEmployees.forEach(published => {
+    if (!liveIds.has(published.id)) {
+      items.push({ label: published.full_name, detail: "Removed from the viewer directory" });
+    }
+  });
+
+  return items;
+}
+
+export function buildPublishChangeSummary(
+  draftSeats: SeatWithEmployee[],
+  publishedSeats: SeatWithEmployee[],
+  employeeInputs?: PublishEmployeeInputs
+): PublishChangeSummary {
   const draftByKey = buildSeatMap(draftSeats);
   const publishedByKey = buildSeatMap(publishedSeats);
   const addedSeats: PublishChangeItem[] = [];
@@ -150,8 +206,9 @@ export function buildPublishChangeSummary(draftSeats: SeatWithEmployee[], publis
     }
   });
 
+  const employeeDetailChanges = buildEmployeeDetailChanges(employeeInputs);
   const updatedSeatCount = updatedSeatKeys.size;
-  const totalChangeCount = addedSeats.length + updatedSeatCount + removedSeats.length;
+  const totalChangeCount = addedSeats.length + updatedSeatCount + removedSeats.length + employeeDetailChanges.length;
 
   return {
     draftSeatCount: draftSeats.length,
@@ -163,6 +220,7 @@ export function buildPublishChangeSummary(draftSeats: SeatWithEmployee[], publis
     seatMoves: sortItems(seatMoves),
     statusChanges: sortItems(statusChanges),
     otherChanges: sortItems(otherChanges),
+    employeeDetailChanges: sortItems(employeeDetailChanges),
     updatedSeatCount,
     totalChangeCount,
     hasChanges: totalChangeCount > 0

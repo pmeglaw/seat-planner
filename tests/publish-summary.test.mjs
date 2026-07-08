@@ -117,3 +117,73 @@ test("publish summary matches seats by seat key so label edits are not false add
   assert.equal(summary.otherChanges.length, 1);
   assert.match(summary.otherChanges[0].detail, /Label W01 -> W01A/);
 });
+
+// People-detail publish gate: live `employees` is the draft-side working set;
+// `publishedEmployees` is the viewer snapshot replaced at publish. The summary
+// must surface pending people edits — an employee rename never shows in the
+// seat diff (both sides join the same live row), so without this the rename
+// could never be published.
+
+function withDetails(base, overrides) {
+  return { ...base, ...overrides };
+}
+
+test("publish summary reports employee detail changes against the viewer snapshot", () => {
+  const alexLive = withDetails(employee("emp-1", "Alexandra Shabazian"), { position: "Senior Paralegal", phone_extension: "114" });
+  const alexPublished = withDetails(employee("emp-1", "Alex Shabazian"), { position: "Paralegal", phone_extension: "104" });
+  const summary = publishSummary.buildPublishChangeSummary([], [], {
+    employees: [alexLive],
+    publishedEmployees: [alexPublished]
+  });
+
+  assert.equal(summary.employeeDetailChanges.length, 1);
+  assert.equal(summary.employeeDetailChanges[0].label, "Alexandra Shabazian");
+  assert.match(summary.employeeDetailChanges[0].detail, /Name Alex Shabazian -> Alexandra Shabazian/);
+  assert.match(summary.employeeDetailChanges[0].detail, /Title Paralegal -> Senior Paralegal/);
+  assert.match(summary.employeeDetailChanges[0].detail, /Ext\. 104 -> 114/);
+  assert.equal(summary.hasChanges, true);
+  assert.equal(summary.totalChangeCount, 1);
+});
+
+test("publish summary reports directory additions and removals", () => {
+  const kept = employee("emp-1", "Alex Shabazian");
+  const added = employee("emp-2", "Brand New Hire");
+  const removed = employee("emp-3", "Former Employee");
+  const summary = publishSummary.buildPublishChangeSummary([], [], {
+    employees: [kept, added],
+    publishedEmployees: [kept, removed]
+  });
+
+  const details = Object.fromEntries(summary.employeeDetailChanges.map(item => [item.label, item.detail]));
+  assert.equal(details["Brand New Hire"], "New in the viewer directory");
+  assert.equal(details["Former Employee"], "Removed from the viewer directory");
+  assert.equal(summary.employeeDetailChanges.length, 2);
+});
+
+test("publish summary treats inactive live employees as removed from the directory", () => {
+  const deactivated = withDetails(employee("emp-1", "Alex Shabazian"), { active: false });
+  const summary = publishSummary.buildPublishChangeSummary([], [], {
+    employees: [deactivated],
+    publishedEmployees: [employee("emp-1", "Alex Shabazian")]
+  });
+
+  assert.equal(summary.employeeDetailChanges.length, 1);
+  assert.equal(summary.employeeDetailChanges[0].detail, "Removed from the viewer directory");
+});
+
+test("publish summary reports no employee changes when directory matches snapshot", () => {
+  const alex = employee("emp-1", "Alex Shabazian");
+  const summary = publishSummary.buildPublishChangeSummary([], [], {
+    employees: [alex],
+    publishedEmployees: [{ ...alex, updated_at: "2026-07-08T00:00:00Z" }]
+  });
+
+  assert.equal(summary.employeeDetailChanges.length, 0);
+  assert.equal(summary.hasChanges, false);
+});
+
+test("publish summary stays backward compatible without employee inputs", () => {
+  const summary = publishSummary.buildPublishChangeSummary([], []);
+  assert.deepEqual(summary.employeeDetailChanges, []);
+  assert.equal(summary.hasChanges, false);
+});

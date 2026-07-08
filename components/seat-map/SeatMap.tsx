@@ -50,6 +50,9 @@ type SeatMapProps = {
   seats: SeatWithEmployee[];
   publishedSeats?: SeatWithEmployee[];
   employees: Employee[];
+  // Viewer-facing published_employees snapshot, diffed against live employees
+  // so pending people-detail changes surface in the publish review.
+  publishedEmployees?: Employee[];
   departmentOptions?: DepartmentOption[];
   zoneOptions?: ZoneOption[];
   canEdit: boolean;
@@ -86,6 +89,7 @@ const NAME_LABEL_COLLISION_X_THRESHOLD = 0.07;
 const NAME_LABEL_COLLISION_Y_THRESHOLD = 0.07;
 const ADMIN_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:names-visible";
 const DEFAULT_PUBLISHED_SEATS: SeatWithEmployee[] = [];
+const DEFAULT_PUBLISHED_EMPLOYEES: Employee[] = [];
 const INSPECTOR_FORM_ID = "seat-inspector-form";
 const MAP_VIEW_MODE_OPTIONS: { value: MapViewMode; label: string }[] = [
   { value: "overview", label: "Overview" },
@@ -234,6 +238,7 @@ export function SeatMap({
   seats,
   publishedSeats = DEFAULT_PUBLISHED_SEATS,
   employees,
+  publishedEmployees = DEFAULT_PUBLISHED_EMPLOYEES,
   departmentOptions = [],
   zoneOptions = [],
   canEdit
@@ -242,6 +247,7 @@ export function SeatMap({
   const [localSeats, setLocalSeats] = useState(() => normalizeSeats(seats));
   const [localPublishedSeats, setLocalPublishedSeats] = useState(() => normalizeSeats(publishedSeats));
   const [localEmployees, setLocalEmployees] = useState(employees);
+  const [localPublishedEmployees, setLocalPublishedEmployees] = useState(publishedEmployees);
   const [localDepartmentOptions, setLocalDepartmentOptions] = useState(departmentOptions);
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -330,6 +336,7 @@ export function SeatMap({
 
   useEffect(() => setLocalSeats(normalizeSeats(seats)), [seats]);
   useEffect(() => setLocalPublishedSeats(normalizeSeats(publishedSeats)), [publishedSeats]);
+  useEffect(() => setLocalPublishedEmployees(publishedEmployees), [publishedEmployees]);
   useEffect(() => setLocalEmployees(employees), [employees]);
   useEffect(() => setLocalDepartmentOptions(departmentOptions), [departmentOptions]);
   useEffect(() => setLocalZoneOptions(zoneOptions), [zoneOptions]);
@@ -586,7 +593,13 @@ export function SeatMap({
     reserved: localSeats.filter(seat => seat.status === "reserved").length,
     unavailable: localSeats.filter(seat => seat.status === "unavailable").length
   }), [localSeats]);
-  const publishSummary = useMemo(() => buildPublishChangeSummary(localSeats, localPublishedSeats), [localSeats, localPublishedSeats]);
+  const publishSummary = useMemo(
+    () => buildPublishChangeSummary(localSeats, localPublishedSeats, {
+      employees: localEmployees,
+      publishedEmployees: localPublishedEmployees
+    }),
+    [localSeats, localPublishedSeats, localEmployees, localPublishedEmployees]
+  );
   const draftChangedSeatLabelSet = useMemo(() => new Set([
     ...publishSummary.addedSeats,
     ...publishSummary.assignmentChanges,
@@ -1595,12 +1608,16 @@ export function SeatMap({
 
   function confirmPublishDraftMap() {
     const nextPublishedSeats = normalizeSeats(localSeats);
+    // Publish also replaces the viewer's employee snapshot with the active
+    // live directory; mirror that locally so the summary reads "in sync".
+    const nextPublishedEmployees = localEmployees.filter(employee => employee.active);
     setActionError(null);
     setActionNotice(null);
     startTransition(async () => {
       try {
         await publishSeatMapAction();
         setLocalPublishedSeats(nextPublishedSeats);
+        setLocalPublishedEmployees(nextPublishedEmployees);
         setDraftHistory(clearDraftHistory());
         setPublishReviewOpen(false);
         setActionNotice("Draft map published. Undo/Redo history was cleared.");
@@ -1661,7 +1678,7 @@ export function SeatMap({
   const draftStatusTitle = publishSummary.hasChanges
     ? `Review draft changes: ${draftChangeBreakdown || `${publishSummary.totalChangeCount} total`}`
     : "Draft and published maps currently match";
-  const publishPeopleChangeCount = publishSummary.assignmentChanges.length + publishSummary.vacatedSeats.length;
+  const publishPeopleChangeCount = publishSummary.assignmentChanges.length + publishSummary.vacatedSeats.length + publishSummary.employeeDetailChanges.length;
   const publishSeatInventoryChangeCount = publishSummary.addedSeats.length + publishSummary.removedSeats.length;
   const publishLayoutChangeCount = publishSummary.seatMoves.length;
   const publishMetadataChangeCount = publishSummary.statusChanges.length + publishSummary.otherChanges.length;
@@ -2413,7 +2430,7 @@ export function SeatMap({
               )}
 
               <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <PublishImpactCard label="People affected" value={publishPeopleChangeCount} description="Assignments and vacated seats." tone={publishPeopleChangeCount > 0 ? "warn" : "default"} />
+                <PublishImpactCard label="People affected" value={publishPeopleChangeCount} description="Assignments, vacated seats, and people details." tone={publishPeopleChangeCount > 0 ? "warn" : "default"} />
                 <PublishImpactCard label="Seat inventory" value={publishSeatInventoryChangeCount} description="Added and removed seats." tone={publishSeatInventoryChangeCount > 0 ? "warn" : "default"} />
                 <PublishImpactCard label="Layout" value={publishLayoutChangeCount} description="Moved seat positions." tone={publishLayoutChangeCount > 0 ? "warn" : "default"} />
                 <PublishImpactCard label="Metadata" value={publishMetadataChangeCount} description="Status, zone, label, notes, or custom flags." tone={publishMetadataChangeCount > 0 ? "warn" : "default"} />
@@ -2444,6 +2461,9 @@ export function SeatMap({
                 <PublishChangeList title="Vacated seats" items={publishSummary.vacatedSeats} emptyLabel="No vacated seats detected." />
                 <PublishChangeList title="Seat moves/layout changes" items={publishSummary.seatMoves} emptyLabel="No seat moves detected." />
                 <PublishChangeList title="Status changes" items={publishSummary.statusChanges} emptyLabel="No status-only changes detected." />
+                <div className="md:col-span-2">
+                  <PublishChangeList title="People details (names, titles, departments, extensions)" items={publishSummary.employeeDetailChanges} emptyLabel="No people-detail changes detected." />
+                </div>
                 <div className="md:col-span-2">
                   <PublishChangeList title="Other draft changes" items={publishSummary.otherChanges} emptyLabel="No other draft changes detected." />
                 </div>
