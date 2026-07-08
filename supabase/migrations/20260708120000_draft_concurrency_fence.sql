@@ -9,11 +9,14 @@
 -- This migration adds trailing fence parameters (all `default null` = fence
 -- skipped, so already-deployed application code keeps working during rollout):
 --
---   * restore_draft_snapshot(..., expected_draft_seat_count integer,
---     expected_draft_max_updated_at timestamptz) — whole-draft fence. The client
---     sends the (count, max(updated_at)) fingerprint of the draft it holds; the
---     RPC re-computes both AFTER taking its row locks and raises SQLSTATE
---     'MLS02' if the database draft has advanced.
+--   * restore_draft_snapshot(..., expected_draft_seats jsonb) — whole-draft
+--     fence. The client sends the exact (id, updated_at) of every draft seat it
+--     holds; the RPC checks each row AFTER taking its row locks and raises
+--     SQLSTATE 'MLS02' if any row differs or the sets diverge. Deliberately NOT
+--     an aggregate like (count, max(updated_at)): an aggregate is blind to an
+--     older concurrent edit once the stale client makes a newer edit of its own
+--     (per-seat fences allow different-seat edits through, so the client's own
+--     edit becomes the max and the earlier foreign edit hides beneath it).
 --   * update_draft_seat(..., expected_updated_at timestamptz) — per-seat fence
 --     checked after the seat row is locked. Two admins editing DIFFERENT seats
 --     still proceed concurrently; editing the SAME seat is rejected.
@@ -36,14 +39,15 @@
 -- so the old signatures are dropped before recreating and re-granting.
 
 drop function if exists public.restore_draft_snapshot(jsonb, jsonb);
+-- Interim fence signature that only ever existed on preview branches.
+drop function if exists public.restore_draft_snapshot(jsonb, jsonb, integer, timestamptz);
 drop function if exists public.update_draft_seat(uuid, text, public.seat_status, uuid, text, text, boolean, text, boolean, text, text, text, boolean);
 drop function if exists public.swap_draft_seat_assignments(uuid, uuid);
 
 create or replace function public.restore_draft_snapshot(
   snapshot_seats jsonb,
   snapshot_employees jsonb,
-  expected_draft_seat_count integer default null,
-  expected_draft_max_updated_at timestamptz default null
+  expected_draft_seats jsonb default null
 )
 returns integer
 language plpgsql
@@ -60,8 +64,6 @@ declare
   affected_count integer;
   restore_row record;
   next_status public.seat_status;
-  current_draft_seat_count bigint;
-  current_draft_max_updated_at timestamptz;
 begin
   if not app_private.is_admin() then
     raise exception 'Admin permission required.' using errcode = '42501';
@@ -179,19 +181,32 @@ begin
     null;
   end loop;
 
-  -- Concurrency fence: with the draft rows locked, verify the database draft
-  -- still matches the fingerprint the client computed from the data it was
-  -- showing the admin. Any committed draft write since then (another admin,
-  -- another tab) moved count or max(updated_at), and this restore would
-  -- silently revert it — reject instead so the client can reload.
-  if expected_draft_seat_count is not null or expected_draft_max_updated_at is not null then
-    select count(*), max(seat.updated_at)
-    into current_draft_seat_count, current_draft_max_updated_at
-    from public.seats as seat
-    where seat.layer = 'draft'::public.seat_layer;
+  -- Concurrency fence: with the draft rows locked, verify every draft row the
+  -- database holds is exactly the row the client was showing the admin — same
+  -- ids, same updated_at, no extras either way. Any committed draft write
+  -- since the client loaded (another admin, another tab) fails the match, and
+  -- this restore would silently revert it — reject instead so the client can
+  -- reload.
+  if expected_draft_seats is not null then
+    if jsonb_typeof(expected_draft_seats) <> 'array' then
+      raise exception 'Draft concurrency expectations must be a JSON array.';
+    end if;
 
-    if current_draft_seat_count is distinct from expected_draft_seat_count
-      or current_draft_max_updated_at is distinct from expected_draft_max_updated_at
+    if exists (
+      select 1
+      from public.seats as seat
+      where seat.layer = 'draft'::public.seat_layer
+        and not exists (
+          select 1
+          from jsonb_to_recordset(expected_draft_seats) as expected(id uuid, updated_at timestamptz)
+          where expected.id = seat.id
+            and expected.updated_at = seat.updated_at
+        )
+    ) or (
+      select count(*)
+      from public.seats as seat
+      where seat.layer = 'draft'::public.seat_layer
+    ) <> jsonb_array_length(expected_draft_seats)
     then
       raise exception 'The draft map changed in another session after this page loaded it. Reload to pick up the latest draft, then try again.'
         using errcode = 'MLS02';
@@ -457,8 +472,8 @@ begin
 end;
 $$;
 
-revoke all on function public.restore_draft_snapshot(jsonb, jsonb, integer, timestamptz) from public, anon, authenticated;
-grant execute on function public.restore_draft_snapshot(jsonb, jsonb, integer, timestamptz) to authenticated;
+revoke all on function public.restore_draft_snapshot(jsonb, jsonb, jsonb) from public, anon, authenticated;
+grant execute on function public.restore_draft_snapshot(jsonb, jsonb, jsonb) to authenticated;
 
 create or replace function public.update_draft_seat(
   draft_seat_id uuid,

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseAssignmentCsv } from "@/lib/csv";
-import { isStaleDraftErrorCode, type DraftFingerprint } from "@/lib/draftConcurrency";
+import { isStaleDraftErrorCode, type DraftSeatExpectation } from "@/lib/draftConcurrency";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import { answerMapOperationsQuestion } from "@/lib/mapOperationsAgent";
 import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/publishHistory";
@@ -677,12 +677,12 @@ export type RestoreDraftSnapshotResult =
 export async function restoreDraftSnapshotAction(
   snapshot: DraftSnapshot,
   /**
-   * Concurrency fence: fingerprint of the draft the client currently holds
-   * (NOT of the snapshot being restored). The RPC rejects with STALE_DRAFT if
-   * the database draft has advanced past it, so a stale undo/restore cannot
-   * silently revert another admin's edits.
+   * Concurrency fence: exact (id, updated_at) of every draft seat the client
+   * currently holds (NOT of the snapshot being restored). The RPC rejects with
+   * STALE_DRAFT if any row differs, so a stale undo/restore cannot silently
+   * revert another admin's edits.
    */
-  expectedDraft?: DraftFingerprint
+  expectedDraftSeats?: DraftSeatExpectation[]
 ): Promise<RestoreDraftSnapshotResult> {
   const supabase = await requireAdmin();
   if (!snapshot || !Array.isArray(snapshot.seats) || !Array.isArray(snapshot.employees)) {
@@ -708,8 +708,7 @@ export async function restoreDraftSnapshotAction(
   const { error } = await supabase.rpc("restore_draft_snapshot", {
     snapshot_seats: seatsToRestore,
     snapshot_employees: employeesToRestore,
-    expected_draft_seat_count: expectedDraft?.seatCount ?? null,
-    expected_draft_max_updated_at: expectedDraft?.maxUpdatedAt ?? null
+    expected_draft_seats: expectedDraftSeats ?? null
   });
 
   if (error) {

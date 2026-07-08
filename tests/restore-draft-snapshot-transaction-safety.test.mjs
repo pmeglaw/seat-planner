@@ -27,27 +27,31 @@ const functionSql = extractFunctionSql(migrationSql);
 const restoreActionSource = extractRestoreAction(actionsSource);
 
 test("draft snapshot restore migration creates an authenticated admin-only RPC", () => {
-  assert.match(functionSql, /create or replace function public\.restore_draft_snapshot\(\s+snapshot_seats jsonb,\s+snapshot_employees jsonb,\s+expected_draft_seat_count integer default null,\s+expected_draft_max_updated_at timestamptz default null\s+\)/);
+  assert.match(functionSql, /create or replace function public\.restore_draft_snapshot\(\s+snapshot_seats jsonb,\s+snapshot_employees jsonb,\s+expected_draft_seats jsonb default null\s+\)/);
   assert.match(functionSql, /returns integer/);
   assert.match(functionSql, /security invoker/);
   assert.doesNotMatch(functionSql, /security definer/i);
   assert.match(functionSql, /if not app_private\.is_admin\(\) then/);
   assert.match(migrationSql, /drop function if exists public\.restore_draft_snapshot\(jsonb, jsonb\);/);
-  assert.match(migrationSql, /revoke all on function public\.restore_draft_snapshot\(jsonb, jsonb, integer, timestamptz\) from public, anon, authenticated;/);
-  assert.match(migrationSql, /grant execute on function public\.restore_draft_snapshot\(jsonb, jsonb, integer, timestamptz\) to authenticated;/);
+  assert.match(migrationSql, /revoke all on function public\.restore_draft_snapshot\(jsonb, jsonb, jsonb\) from public, anon, authenticated;/);
+  assert.match(migrationSql, /grant execute on function public\.restore_draft_snapshot\(jsonb, jsonb, jsonb\) to authenticated;/);
 });
 
 test("draft snapshot restore RPC fences stale whole-draft restores after locking", () => {
   const lockIndex = functionSql.indexOf("for update of seat");
-  const fenceIndex = functionSql.indexOf("current_draft_seat_count is distinct from expected_draft_seat_count");
-  const maxFenceIndex = functionSql.indexOf("current_draft_max_updated_at is distinct from expected_draft_max_updated_at");
+  const fenceIndex = functionSql.indexOf("from jsonb_to_recordset(expected_draft_seats) as expected(id uuid, updated_at timestamptz)");
+  const countFenceIndex = functionSql.indexOf("<> jsonb_array_length(expected_draft_seats)");
   const firstMutation = functionSql.indexOf("insert into public.department_options");
 
+  // The fence must be an exact per-row (id, updated_at) match — an aggregate
+  // like (count, max) is blind to an older concurrent edit once the stale
+  // client makes a newer edit of its own.
+  assert.notEqual(fenceIndex, -1, "per-row expectation fence should be present");
+  assert.match(functionSql, /expected\.id = seat\.id\s+and expected\.updated_at = seat\.updated_at/);
+  assert.notEqual(countFenceIndex, -1, "set-size fence should be present");
   assert.notEqual(lockIndex, -1);
-  assert.notEqual(fenceIndex, -1, "seat-count fence should be present");
-  assert.notEqual(maxFenceIndex, -1, "max-updated_at fence should be present");
   assert.ok(lockIndex < fenceIndex, "fence must run after the draft rows are locked");
-  assert.ok(maxFenceIndex < firstMutation, "fence must run before any mutation");
+  assert.ok(Math.max(fenceIndex, countFenceIndex) < firstMutation, "fence must run before any mutation");
   assert.match(functionSql, /using errcode = 'MLS02'/);
 });
 
@@ -128,7 +132,7 @@ test("server draft snapshot restore action delegates dependent writes to the tra
   assert.match(restoreActionSource, /const employeesToRestore = snapshot\.employees\.map\(normalizeRestoreEmployee\)/);
   assert.match(restoreActionSource, /Cannot restore an empty draft map snapshot/);
   assert.match(restoreActionSource, /Cannot restore duplicate draft seat label/);
-  assert.match(restoreActionSource, /\.rpc\("restore_draft_snapshot", \{\s+snapshot_seats: seatsToRestore,\s+snapshot_employees: employeesToRestore,\s+expected_draft_seat_count: expectedDraft\?\.seatCount \?\? null,\s+expected_draft_max_updated_at: expectedDraft\?\.maxUpdatedAt \?\? null\s+\}\)/);
+  assert.match(restoreActionSource, /\.rpc\("restore_draft_snapshot", \{\s+snapshot_seats: seatsToRestore,\s+snapshot_employees: employeesToRestore,\s+expected_draft_seats: expectedDraftSeats \?\? null\s+\}\)/);
   assert.match(restoreActionSource, /code: "STALE_DRAFT"/);
   assert.match(restoreActionSource, /return \{ ok: true, \.\.\.\(await getDraftMapPayload\(supabase\)\) \}/);
 

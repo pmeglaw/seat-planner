@@ -18,7 +18,7 @@ import {
 } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
-import { computeDraftFingerprint } from "@/lib/draftConcurrency";
+import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import { departmentKey } from "@/lib/departments";
 import { normalizePoint } from "@/lib/seatMath";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
@@ -966,7 +966,7 @@ export function SeatMap({
         // Fence on the draft this page currently holds (NOT the snapshot being
         // restored): if another session advanced the draft, restoring would
         // silently revert their edits, so the server rejects and we reload.
-        const result = await restoreDraftSnapshotAction(snapshot, computeDraftFingerprint(localSeats));
+        const result = await restoreDraftSnapshotAction(snapshot, listDraftSeatExpectations(localSeats));
         if (!result.ok) {
           handleStaleDraft(result.message);
           return;

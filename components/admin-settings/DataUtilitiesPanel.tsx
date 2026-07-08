@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { computeDraftFingerprint } from "@/lib/draftConcurrency";
+import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
@@ -217,7 +217,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
         // Fence on the draft this page loaded (the `seats` prop), so a restore
         // confirmed against stale data cannot silently revert edits another
         // admin committed since the page rendered.
-        const result = await restoreDraftSnapshotAction(review.snapshot, computeDraftFingerprint(seats));
+        const result = await restoreDraftSnapshotAction(review.snapshot, listDraftSeatExpectations(seats));
         setJsonReview(null);
         if (!result.ok) {
           setNotice(null);
