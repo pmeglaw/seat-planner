@@ -188,3 +188,55 @@ test("draft history undo restores a deleted custom seat and redo removes it agai
   const redone = draftHistory.redoDraftHistory(undone.history);
   assert.deepEqual(redone.snapshot.seats.map(seat => seat.label), ["W01"]);
 });
+
+// draftStatesEquivalent guards undo/redo adjacency: whole-draft restores are
+// only safe while the live draft still equals the state the history entry
+// left it in — value-equivalence, ignoring volatile timestamps (a successful
+// restore rewrites every row's updated_at without changing values).
+
+test("draftStatesEquivalent ignores volatile timestamps and key order", () => {
+  const left = snapshot("W01", "Alex");
+  const right = snapshot("W01", "Alex");
+  right.seats[0].updated_at = "2026-07-08T21:00:00.123456+00:00";
+  right.seats[0].created_at = "2026-07-08T21:00:00.123456+00:00";
+  right.seats[0].employee.updated_at = "2026-07-08T21:00:00.123456+00:00";
+  right.employees[0].updated_at = "2026-07-08T21:00:00.123456+00:00";
+  // Reorder keys on one side; equality must not depend on insertion order.
+  right.seats[0] = Object.fromEntries(Object.entries(right.seats[0]).reverse());
+
+  assert.equal(draftHistory.draftStatesEquivalent(left, right), true);
+});
+
+test("draftStatesEquivalent detects a foreign edit hiding behind fresh timestamps", () => {
+  const left = snapshot("W01", "Alex");
+  const right = snapshot("W01", "Alex");
+  right.seats[0].notes = "edited by another admin";
+
+  assert.equal(draftHistory.draftStatesEquivalent(left, right), false);
+});
+
+test("draftStatesEquivalent detects assignment, employee, and set differences", () => {
+  const base = snapshot("W01", "Alex");
+
+  const vacated = snapshot("W01", "Alex");
+  vacated.seats[0].employee_id = null;
+  vacated.seats[0].employee = null;
+  vacated.seats[0].status = "available";
+  assert.equal(draftHistory.draftStatesEquivalent(base, vacated), false);
+
+  const renamed = snapshot("W01", "Alex");
+  renamed.employees[0].full_name = "Alexandra";
+  assert.equal(draftHistory.draftStatesEquivalent(base, renamed), false);
+
+  const extraSeat = snapshot("W01", "Alex");
+  extraSeat.seats.push({ ...base.seats[0], id: "seat-W02", seat_key: "w02", label: "W02" });
+  assert.equal(draftHistory.draftStatesEquivalent(base, extraSeat), false);
+});
+
+test("draftStatesEquivalent is order-independent for seats and employees", () => {
+  const left = snapshot("W01", "Alex");
+  left.seats.push({ ...left.seats[0], id: "seat-W02", seat_key: "w02", label: "W02", employee_id: null, employee: null, status: "available" });
+
+  const right = draftHistory.createDraftSnapshot([...left.seats].reverse(), [...left.employees]);
+  assert.equal(draftHistory.draftStatesEquivalent(left, right), true);
+});

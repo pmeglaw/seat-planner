@@ -11,6 +11,7 @@ import {
   clearDraftHistory,
   createDraftHistory,
   createDraftSnapshot,
+  draftStatesEquivalent,
   pushDraftHistory,
   redoDraftHistory,
   undoDraftHistory,
@@ -988,15 +989,33 @@ export function SeatMap({
     });
   }
 
+  // Undo/redo restore the WHOLE draft from a history snapshot, so they are
+  // only safe while the live draft still equals the state the entry left it in
+  // (`after` for undo, `before` for redo). A concurrent edit by another admin
+  // can reach this client through a server-action refresh, making the VIEW
+  // fresh (so the server-side fence passes) while the SNAPSHOT is stale —
+  // restoring it would silently revert that admin's edit. Reject here instead.
+  function historyAdjacencyBroken(expectedCurrent: DraftSnapshot) {
+    return !draftStatesEquivalent(createDraftSnapshot(localSeats, localEmployees), expectedCurrent);
+  }
+
   function undoDraftEdit() {
     const result = undoDraftHistory(draftHistory);
     if (!result) return;
+    if (historyAdjacencyBroken(result.entry.after)) {
+      handleStaleDraft("The draft changed in another session after this edit was made, so undoing it is no longer safe.");
+      return;
+    }
     restoreHistorySnapshot(result.snapshot, result.history, "Undo", `Undid ${result.entry.label}.`);
   }
 
   function redoDraftEdit() {
     const result = redoDraftHistory(draftHistory);
     if (!result) return;
+    if (historyAdjacencyBroken(result.entry.before)) {
+      handleStaleDraft("The draft changed in another session after this edit was undone, so redoing it is no longer safe.");
+      return;
+    }
     const addSeatLabel = result.entry.label.match(/^Add (.+)$/)?.[1];
     restoreHistorySnapshot(result.snapshot, result.history, "Redo", `Redid ${result.entry.label}.`, addSeatLabel);
   }

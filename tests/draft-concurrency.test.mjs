@@ -79,6 +79,17 @@ test("SeatMap threads the fence through undo/redo restore and swap", async () =>
   assert.ok(staleHandler, "stale-draft recovery handler should be source-visible");
   assert.match(staleHandler[0], /setDraftHistory\(clearDraftHistory\(\)\)/);
   assert.match(staleHandler[0], /router\.refresh\(\)/);
+
+  // Client-side adjacency guard: the server fence only proves the VIEW is
+  // fresh; a foreign edit that reached this client via a server-action refresh
+  // makes the history SNAPSHOT stale while the view is current. Undo/redo must
+  // value-compare the live draft against the entry state before restoring.
+  const undoHandler = source.match(/function undoDraftEdit\(\) \{[\s\S]*?\n  \}/);
+  const redoHandler = source.match(/function redoDraftEdit\(\) \{[\s\S]*?\n  \}/);
+  assert.ok(undoHandler && redoHandler, "undo/redo handlers should be source-visible");
+  assert.match(undoHandler[0], /historyAdjacencyBroken\(result\.entry\.after\)/);
+  assert.match(redoHandler[0], /historyAdjacencyBroken\(result\.entry\.before\)/);
+  assert.match(source, /draftStatesEquivalent\(createDraftSnapshot\(localSeats, localEmployees\), expectedCurrent\)/);
   // The user-facing explanation must live in dedicated state: the inspector's
   // reset/seat-sync paths call onError(null), which wipes actionError in the
   // same render cycle the fence fires (found live on the PR #99 preview).
