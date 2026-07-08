@@ -97,6 +97,11 @@ test("SeatMap threads the fence through undo/redo restore and swap", async () =>
   assert.ok(staleHandler, "stale-draft recovery handler should be source-visible");
   assert.match(staleHandler[0], /setDraftHistory\(clearDraftHistory\(\)\)/);
   assert.match(staleHandler[0], /router\.refresh\(\)/);
+  // The user-facing explanation must live in dedicated state: the inspector's
+  // reset/seat-sync paths call onError(null), which wipes actionError in the
+  // same render cycle the fence fires (found live on the PR #99 preview).
+  assert.match(staleHandler[0], /setStaleDraftNotice\(/);
+  assert.doesNotMatch(staleHandler[0], /setActionError\(`/);
 });
 
 test("SeatInspector threads the per-seat fence and routes STALE_DRAFT to the parent", async () => {

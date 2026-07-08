@@ -245,6 +245,11 @@ export function SeatMap({
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  // Dedicated state for the draft-concurrency fence: the inspector's reset and
+  // seat-sync paths call onError(null), which would wipe this message out of
+  // actionError in the same render cycle it was set (verified live on the
+  // PR #99 preview). It must survive those resets.
+  const [staleDraftNotice, setStaleDraftNotice] = useState<string | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [moveSeatMode, setMoveSeatMode] = useState(false);
   const [addSeatMode, setAddSeatMode] = useState(false);
@@ -365,6 +370,15 @@ export function SeatMap({
     const timer = window.setTimeout(() => setActionNotice(null), 6000);
     return () => window.clearTimeout(timer);
   }, [actionNotice]);
+
+  // The stale-draft fence warning self-resolves (the page has already been
+  // refreshed with the latest draft), so it auto-dismisses on a longer timer
+  // rather than persisting like actionable errors.
+  useEffect(() => {
+    if (!staleDraftNotice) return;
+    const timer = window.setTimeout(() => setStaleDraftNotice(null), 15000);
+    return () => window.clearTimeout(timer);
+  }, [staleDraftNotice]);
 
   // Global command (3b): ⌘K / Ctrl+K focuses the command search — the chrome
   // input at lg+, the slim canvas row below that tier.
@@ -924,7 +938,8 @@ export function SeatMap({
   // write — drop them and re-seed from the server.
   function handleStaleDraft(message: string) {
     setActionNotice(null);
-    setActionError(`${message} This page has been refreshed with the latest draft.`);
+    setActionError(null);
+    setStaleDraftNotice(`${message} This page has been refreshed with the latest draft.`);
     setDraftHistory(clearDraftHistory());
     setInspectorDirty(false);
     setInspectorResetSignal(current => current + 1);
@@ -947,6 +962,7 @@ export function SeatMap({
       try {
         setActionError(null);
         setActionNotice(null);
+        setStaleDraftNotice(null);
         // Fence on the draft this page currently holds (NOT the snapshot being
         // restored): if another session advanced the draft, restoring would
         // silently revert their edits, so the server rejects and we reload.
@@ -1328,6 +1344,7 @@ export function SeatMap({
       try {
         setActionError(null);
         setActionNotice(null);
+        setStaleDraftNotice(null);
         const result = await swapSeatAssignmentsAction({
           sourceSeatId: sourceSeat.id,
           targetSeatId: targetSeat.id,
@@ -2027,6 +2044,12 @@ export function SeatMap({
         )}
 
         <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/68 p-2 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
+          {staleDraftNotice && (
+            <div role="alert" className={actionErrorBannerClassName}>
+              {staleDraftNotice}
+            </div>
+          )}
+
           {actionError && (
             <div role="alert" className={actionErrorBannerClassName}>
               {actionError}
