@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
@@ -213,8 +214,17 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
     startTransition(async () => {
       try {
         resetMessages();
-        await restoreDraftSnapshotAction(review.snapshot);
+        // Fence on the draft this page loaded (the `seats` prop), so a restore
+        // confirmed against stale data cannot silently revert edits another
+        // admin committed since the page rendered.
+        const result = await restoreDraftSnapshotAction(review.snapshot, listDraftSeatExpectations(seats));
         setJsonReview(null);
+        if (!result.ok) {
+          setNotice(null);
+          setError(`${result.message} This page has been refreshed with the latest draft — review it and try the restore again if it is still what you want.`);
+          router.refresh();
+          return;
+        }
         setNotice("Draft backup restored. The draft layer now matches the imported snapshot.");
         router.refresh();
       } catch (caught) {

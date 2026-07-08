@@ -41,7 +41,9 @@ test("settings data utilities review JSON restores in-app before calling the res
   assert.ok(confirmJsonFunction, "JSON confirm flow should be source-visible.");
   assert.ok(closeJsonFunction, "JSON cancel flow should be source-visible.");
   assert.doesNotMatch(importJsonFunction[0], /restoreDraftSnapshotAction/);
-  assert.match(confirmJsonFunction[0], /restoreDraftSnapshotAction\(review\.snapshot\)/);
+  // The restore must carry the draft-concurrency fence fingerprint so a stale
+  // page cannot silently revert edits another admin committed after it loaded.
+  assert.match(confirmJsonFunction[0], /restoreDraftSnapshotAction\(review\.snapshot, listDraftSeatExpectations\(seats\)\)/);
   assert.match(closeJsonFunction[0], /setJsonReview\(null\)/);
   assert.match(source, /Review JSON restore/);
   assert.match(source, /JSON restore imports a full draft backup/);

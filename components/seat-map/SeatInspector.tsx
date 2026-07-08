@@ -33,6 +33,9 @@ type SeatInspectorProps = {
   onBeforeSeatUpdate: () => DraftSnapshot;
   onSeatUpdated: (seat: SeatWithEmployee, beforeSnapshot: DraftSnapshot) => void;
   onError: (message: string | null) => void;
+  // The draft-concurrency fence fired: the seat changed in another admin
+  // session. The parent owns recovery (reload draft, reset history).
+  onStaleDraft: (message: string) => void;
   onDirtyChange: (dirty: boolean) => void;
   onSubmitBlocked?: () => void;
   resetSignal: number;
@@ -168,6 +171,7 @@ export function SeatInspector({
   onBeforeSeatUpdate,
   onSeatUpdated,
   onError,
+  onStaleDraft,
   onDirtyChange,
   onSubmitBlocked,
   resetSignal
@@ -589,7 +593,8 @@ export function SeatInspector({
         phoneExtension: form.phoneExtension.trim() || null,
         department: form.department.trim() || null,
         zone: selectedSeat.zone ?? selectedSeat.department ?? null,
-        notes: form.notes.trim() || null
+        notes: form.notes.trim() || null,
+        expectedUpdatedAt: selectedSeat.updated_at
       },
       beforeSnapshot
     );
@@ -607,6 +612,14 @@ export function SeatInspector({
         onError(null);
         const result = await updateSeatAction(input);
         if (!result.ok) {
+          if (result.code === "STALE_DRAFT") {
+            // Another admin changed this seat after we rendered it; the parent
+            // reloads the draft and resets undo history.
+            setEditingAssignment(false);
+            onDirtyChange(false);
+            onStaleDraft(result.message);
+            return;
+          }
           if (result.code === "EMPLOYEE_ALREADY_ASSIGNED") {
             // Not a field problem and not yet an error — offer to move the person.
             setMoveConflict({
@@ -723,9 +736,15 @@ export function SeatInspector({
           employeePosition: null,
           department: null,
           zone: selectedSeat.zone ?? selectedSeat.department ?? null,
-          notes: selectedSeat.notes?.trim() || null
+          notes: selectedSeat.notes?.trim() || null,
+          expectedUpdatedAt: selectedSeat.updated_at
         });
         if (!result.ok) {
+          if (result.code === "STALE_DRAFT") {
+            onDirtyChange(false);
+            onStaleDraft(result.message);
+            return;
+          }
           setLocalError(result.message);
           setSaveFeedback(null);
           onError(result.message);

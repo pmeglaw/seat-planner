@@ -126,4 +126,5 @@ export const SEAT_STATUSES: SeatStatus[] = [
 export type UpdateSeatResult =
   | { ok: true; seat: SeatWithEmployee }
   | { ok: false; code: "EMPLOYEE_ALREADY_ASSIGNED"; message: string; currentSeatLabel: string }
+  | { ok: false; code: "STALE_DRAFT"; message: string }
   | { ok: false; code: "VALIDATION"; message: string };

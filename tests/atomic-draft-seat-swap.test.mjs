@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+// The draft-concurrency-fence migration drops the original 2-arg overload and
+// recreates the RPC with trailing expected-updated_at fence parameters, so it
+// holds the live definition.
 const migrationSql = await readFile(
-  new URL("../supabase/migrations/20260527000200_atomic_draft_seat_swap.sql", import.meta.url),
+  new URL("../supabase/migrations/20260708120000_draft_concurrency_fence.sql", import.meta.url),
   "utf8"
 );
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
@@ -24,12 +27,27 @@ const functionSql = extractFunctionSql(migrationSql);
 const swapActionSource = extractSwapAction(actionsSource);
 
 test("atomic draft swap migration creates an authenticated admin-only RPC", () => {
-  assert.match(functionSql, /create or replace function public\.swap_draft_seat_assignments\(\s*source_draft_seat_id uuid,\s*target_draft_seat_id uuid\s*\)/);
+  assert.match(functionSql, /create or replace function public\.swap_draft_seat_assignments\(\s*source_draft_seat_id uuid,\s*target_draft_seat_id uuid,\s*source_expected_updated_at timestamptz default null,\s*target_expected_updated_at timestamptz default null\s*\)/);
   assert.match(functionSql, /returns setof public\.seats/);
   assert.match(functionSql, /security invoker/);
   assert.match(functionSql, /if not app_private\.is_admin\(\) then/);
-  assert.match(migrationSql, /revoke all on function public\.swap_draft_seat_assignments\(uuid, uuid\) from public, anon, authenticated;/);
-  assert.match(migrationSql, /grant execute on function public\.swap_draft_seat_assignments\(uuid, uuid\) to authenticated;/);
+  assert.match(migrationSql, /drop function if exists public\.swap_draft_seat_assignments\(uuid, uuid\);/);
+  assert.match(migrationSql, /revoke all on function public\.swap_draft_seat_assignments\(uuid, uuid, timestamptz, timestamptz\) from public, anon, authenticated;/);
+  assert.match(migrationSql, /grant execute on function public\.swap_draft_seat_assignments\(uuid, uuid, timestamptz, timestamptz\) to authenticated;/);
+});
+
+test("atomic draft swap migration fences stale clients after locking both rows", () => {
+  const lockIndex = functionSql.indexOf("for update");
+  const sourceFenceIndex = functionSql.indexOf("source_seat.updated_at is distinct from source_expected_updated_at");
+  const targetFenceIndex = functionSql.indexOf("target_seat.updated_at is distinct from target_expected_updated_at");
+  const firstMutation = functionSql.indexOf("update public.seats");
+
+  assert.notEqual(lockIndex, -1);
+  assert.notEqual(sourceFenceIndex, -1, "source seat fence should be present");
+  assert.notEqual(targetFenceIndex, -1, "target seat fence should be present");
+  assert.ok(lockIndex < sourceFenceIndex, "fence must run after the rows are locked");
+  assert.ok(targetFenceIndex < firstMutation, "fence must run before any mutation");
+  assert.match(functionSql, /using errcode = 'MLS02'/);
 });
 
 test("atomic draft swap migration rejects same-seat, missing-seat, non-draft, and both-open swaps", () => {
@@ -67,4 +85,10 @@ test("server swap action calls the atomic RPC instead of sequential seat assignm
   assert.doesNotMatch(swapActionSource, /restoreOriginalAssignments/);
   assert.doesNotMatch(swapActionSource, /updateDraftSeatAssignment/);
   assert.doesNotMatch(swapActionSource, /clearError/);
+});
+
+test("server swap action threads the concurrency fence and returns STALE_DRAFT as data", () => {
+  assert.match(swapActionSource, /source_expected_updated_at: input\.sourceExpectedUpdatedAt \?\? null/);
+  assert.match(swapActionSource, /target_expected_updated_at: input\.targetExpectedUpdatedAt \?\? null/);
+  assert.match(swapActionSource, /code: "STALE_DRAFT"/);
 });
