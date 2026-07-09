@@ -743,12 +743,17 @@ const EMBER_PREVIEW_CSS = `
   --ember-info-text: #8CCBCE;
 
   /* Marker system — two-layer marks on the light floor (light casing + dark
-     core so every floor patch, L 0.23–0.81 measured, sees >= 3:1 from one layer). */
+     core so every floor patch, L 0.23–0.81 measured, sees >= 3:1 from one layer).
+     Assigned plates are NEUTRAL DARK with an orange status dot — owner call
+     2026-07-09 after the 60/60 full-occupancy study (full-orange plates drown
+     the map); the dark fill alone clears every measured patch (min 4.02:1). */
   --ember-marker-open-ring: #3E4650;
   --ember-marker-unavailable-ring: #6B7280;
-  --ember-plate-fill: #F45B2A;
-  --ember-plate-border: #A93818;
-  --ember-plate-ink: #140D04;
+  --ember-plate-fill: #22262D;
+  --ember-plate-border: #48515E;
+  --ember-plate-name: #F8FAFC;
+  --ember-plate-code: #A7ADB5;
+  --ember-plate-dot: #F45B2A;
   --ember-reserved-tint: #FBEED3;
   --ember-reserved-accent: #7A4E00;
   --ember-match-tint: #DCEDEA;
@@ -1394,21 +1399,21 @@ const EMBER_PREVIEW_CSS = `
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: var(--ember-plate-ink);
+  background: var(--ember-plate-dot);
   flex: none;
 }
 
 .ember-plate-name {
   font-size: 11px;
   font-weight: 700;
-  color: var(--ember-plate-ink);
+  color: var(--ember-plate-name);
   line-height: 1.2;
 }
 
 .ember-plate-code {
   font-size: 10px;
   font-weight: 400;
-  color: var(--ember-plate-ink);
+  color: var(--ember-plate-code);
   line-height: 1.2;
 }
 
@@ -1452,9 +1457,17 @@ const EMBER_PREVIEW_CSS = `
   background: var(--ember-match-accent);
 }
 
+/* Selected = ember glow + counter-ring: white with a fine ink edge on the dark
+   assigned plate (white vs plate 15.18:1, ink edge vs floor >= 9.11:1); plain
+   ink ring on light marks — see the reserved/match exception below. */
 .ember-marker.is-selected .ember-plate {
-  box-shadow: 0 0 0 2px var(--ember-selected-ring), 0 0 0 7px var(--ember-accent-glow), 0 12px 26px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 3px rgba(20, 13, 4, 0.85), 0 0 0 8px var(--ember-accent-glow), 0 12px 26px rgba(0, 0, 0, 0.45);
   transform: scale(1.06);
+}
+
+.ember-marker.is-selected .ember-plate--reserved,
+.ember-marker.is-match.is-selected .ember-plate {
+  box-shadow: 0 0 0 2px var(--ember-selected-ring), 0 0 0 7px var(--ember-accent-glow), 0 12px 26px rgba(0, 0, 0, 0.45);
 }
 
 /* ---------- Docked inspector ---------- */
