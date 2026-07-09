@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { MapRedesignPreview } from "./MapRedesignPreview";
 
 export const metadata: Metadata = {
-  title: "Seat Planner · Map Redesign Preview (Counsel Ink)",
-  description: "Prototype-only Counsel Ink map redesign preview: seat markers, docked inspector, and filter bar against real published seat data"
+  title: "Seat Planner · Map Redesign Preview (Ember Studio)",
+  description: "Prototype-only Ember Studio map redesign preview: seat markers, docked inspector, and filter bar against real published seat data"
 };
 
 function prototypesEnabled() {
