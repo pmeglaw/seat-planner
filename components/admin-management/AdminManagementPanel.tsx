@@ -29,6 +29,7 @@ type EmployeeForm = {
   position: string;
   department: string;
   phoneExtension: string;
+  email: string;
 };
 
 type AdminManagementPanelProps = {
@@ -73,7 +74,8 @@ const emptyEmployeeForm: EmployeeForm = {
   fullName: "",
   position: "",
   department: "",
-  phoneExtension: ""
+  phoneExtension: "",
+  email: ""
 };
 
 function formFromEmployee(employee: Employee): EmployeeForm {
@@ -81,7 +83,8 @@ function formFromEmployee(employee: Employee): EmployeeForm {
     fullName: employee.full_name,
     position: employee.position ?? "",
     department: employee.department ?? "",
-    phoneExtension: employee.phone_extension ?? ""
+    phoneExtension: employee.phone_extension ?? "",
+    email: employee.email ?? ""
   };
 }
 
@@ -376,7 +379,8 @@ export function AdminManagementPanel({
           fullName: employeeForm.fullName,
           position: employeeForm.position,
           department: employeeForm.department,
-          phoneExtension: employeeForm.phoneExtension
+          phoneExtension: employeeForm.phoneExtension,
+          email: employeeForm.email
         };
         const employee = selectedEmployee
           ? await updateEmployeeAction({ employeeId: selectedEmployee.id, ...payload })
@@ -769,6 +773,10 @@ export function AdminManagementPanel({
                     <input value={employeeForm.phoneExtension} onChange={event => setEmployeeForm(current => ({ ...current, phoneExtension: event.target.value }))} className={fieldClassName} inputMode="numeric" />
                   </label>
                 </div>
+                <label className="block">
+                  <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Email</span>
+                  <input type="email" value={employeeForm.email} onChange={event => setEmployeeForm(current => ({ ...current, email: event.target.value }))} placeholder="Optional" className={fieldClassName} inputMode="email" autoComplete="off" />
+                </label>
                 <label className="block">
                   <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Department</span>
                   <input list="management-department-options" value={employeeForm.department} onChange={event => setEmployeeForm(current => ({ ...current, department: event.target.value }))} className={fieldClassName} />

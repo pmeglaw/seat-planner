@@ -15,6 +15,7 @@ export type Employee = {
   position: string | null;
   department: string | null;
   phone_extension: string | null;
+  email: string | null;
   avatar_url: string | null;
   active: boolean;
   created_at: string;

@@ -986,8 +986,7 @@ export function SeatInspector({
               <InspectorSection title="Occupant" headingId="seat-occupant-heading" defaultOpen>
                 <dl>
                   <FactRow label="Department" value={form.department.trim() || selectedSeat.employee?.department || "—"} mono={false} />
-                  {/* employees.email does not exist yet (spec §9 flagged item) — render "—" until the column ships. */}
-                  <FactRow label="Email" value="—" />
+                  <FactRow label="Email" value={(matchedEmployee ?? selectedSeat.employee)?.email || "—"} />
                   <FactRow label="Extension" value={form.phoneExtension.trim() || "—"} />
                 </dl>
               </InspectorSection>
@@ -1303,8 +1302,7 @@ export function SeatInspector({
               <p className="sr-only">Published assignment</p>
               <dl>
                 <FactRow label="Department" value={selectedSeat.employee?.department || "—"} mono={false} />
-                {/* employees.email does not exist yet (spec §9 flagged item) — render "—" until the column ships. */}
-                <FactRow label="Email" value="—" />
+                <FactRow label="Email" value={selectedSeat.employee?.email || "—"} />
                 <FactRow label="Extension" value={selectedSeat.employee?.phone_extension || "—"} />
               </dl>
             </InspectorSection>
