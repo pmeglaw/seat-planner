@@ -25,7 +25,6 @@ type FilterPanelProps = {
   onStatusChange: (value: string) => void;
   onRemoveActiveChip: (chipId: string) => void;
   onClearFilters: () => void;
-  onClearAll: () => void;
 };
 
 export function ActiveFilterChips({
@@ -90,33 +89,25 @@ export function FilterPanel({
   onZoneChange,
   onStatusChange,
   onRemoveActiveChip,
-  onClearFilters,
-  onClearAll
+  onClearFilters
 }: FilterPanelProps) {
   const activeStructuredChips = activeChips.filter(chip => chip.id !== "search");
-  const constraintsActive = activeChips.length > 0;
 
   return (
+    // The trigger button already says "Filter", so the menu carries no repeated
+    // heading (prototype .fmenu) — just chips + the three facet selects.
     <div
       id={panelId}
       role="group"
-      aria-labelledby="seat-map-filter-title"
+      aria-label="Filter options"
+      onKeyDown={event => {
+        if (event.key === "Escape") {
+          event.stopPropagation();
+          onClose();
+        }
+      }}
       className="w-full border border-white/15 bg-[#1f1f1f] p-3 text-[#f4f4f4] shadow-[var(--admin-elevation-4-shadow)]"
     >
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 id="seat-map-filter-title" className="text-[12.5px] font-semibold">Filter</h2>
-        <div className="flex items-center gap-1">
-          {constraintsActive && (
-            <button type="button" onClick={onClearAll} aria-label="Clear all active search and filters" className="inline-flex min-h-6 items-center px-2 py-1 text-[11px] font-medium text-[var(--admin-primary)] hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]">
-              Clear all
-            </button>
-          )}
-          <button type="button" onClick={onClose} aria-label="Close filters" title="Close filters" className="flex h-6 w-6 items-center justify-center text-[#9a9a9a] transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]">
-            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </button>
-        </div>
-      </div>
-
       <ActiveFilterChips chips={activeStructuredChips} onRemove={onRemoveActiveChip} onClearAll={onClearFilters} className="mb-3" />
 
       <div className="grid grid-cols-1 gap-2">

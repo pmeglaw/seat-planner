@@ -70,19 +70,11 @@ test("cluster labels follow the Figma copy shape with singular handling", () => 
   );
 });
 
-test("overview clustering is wired into the admin map, gated off search/selection/modes", async () => {
+test("the admin map never swaps individual markers for cluster pills", async () => {
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
 
-  assert.match(seatMapSource, /from "@\/lib\/seatClusters"/);
-  // Pills only replace markers in the idle overview state: search, a selection,
-  // or an active mode (add/move/swap) always dissolves clusters into markers.
-  assert.match(seatMapSource, /const overviewClusterMode = mapViewMode === "overview" && !filtersActive && !selectedSeatId && !addSeatMode && !moveSeatMode && !swapSourceSeatId/);
-  assert.match(seatMapSource, /overviewClusterMode \? zoneClusters\.map/);
-  assert.match(seatMapSource, /formatZoneClusterSummary/);
-  // Clicking a pill zooms to detail centered on the zone (explicit commit, no auto-select).
-  const zoomFn = seatMapSource.match(/function zoomToZoneCluster\(cluster: ZoneCluster\) \{[\s\S]*?\n  \}/)?.[0] ?? "";
-  assert.ok(zoomFn, "zoomToZoneCluster should remain source-visible.");
-  assert.match(zoomFn, /setMapViewMode\("detail"\)/);
-  assert.match(zoomFn, /scrollMapToPoint\(cluster\.x, cluster\.y\)/);
-  assert.doesNotMatch(zoomFn, /setSelectedSeatId/);
+  // Owner QA (2026-07-10, Shell round 2): the fit view must always show every
+  // individual seat — the zone-cluster overview was retired from the map UI.
+  // lib/seatClusters stays (tested above) for potential future scale work.
+  assert.doesNotMatch(seatMapSource, /overviewClusterMode|zoneClusters\.map|zoomToZoneCluster/);
 });

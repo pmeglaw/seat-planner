@@ -408,19 +408,9 @@ export function ViewerSeatFinder({
       ? "panel:pr-[56px]"
       : "";
 
-  // Re-fit when the reserved right column opens/closes at the panel tier,
-  // so the whole floor plan stays fully in view in the resized canvas.
-  const rightSlotTierRef = useRef(rightSlotTier);
-  useEffect(() => {
-    if (rightSlotTierRef.current === rightSlotTier) return;
-    rightSlotTierRef.current = rightSlotTier;
-    if (!window.matchMedia("(min-width: 900px)").matches) return;
-
-    setZoomFactor(null);
-    window.requestAnimationFrame(() => {
-      mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
-    });
-  }, [rightSlotTier]);
+  // No zoom change on select/deselect: the fit view (zoomFactor null) sizes the
+  // frame to the container at lg, so the reserved column re-fits it automatically;
+  // a zoomed view keeps its zoom.
 
   const mapViewportClassName = cx(
     "relative mx-auto w-full max-w-full overflow-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)]",
@@ -455,8 +445,10 @@ export function ViewerSeatFinder({
 
         <span aria-hidden="true" className="mx-2.5 hidden h-[22px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
 
-        {/* Filter sits immediately to the LEFT of Search (deliberate pairing). */}
-        <div ref={filterRootRef} className="relative mr-2">
+        {/* Filter + Search: ONE connected control — Filter segment immediately
+            LEFT of the search input, sharing one border; the dropdown anchors
+            inside the group so the open menu butts directly against the button. */}
+        <div ref={filterRootRef} className="relative mr-2 flex h-[26px] min-w-0 flex-1 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[340px]">
           <button
             type="button"
             onClick={() => setFilterOpen(current => !current)}
@@ -464,7 +456,12 @@ export function ViewerSeatFinder({
             aria-controls="viewer-filter-panel"
             aria-haspopup="true"
             aria-label={structuredFilterCount ? `Filter published seating, ${structuredFilterCount} active` : "Filter published seating"}
-            className={structuredFilterCount > 0 || filterOpen ? chromeToolbarBtnActive : chromeToolbarBtn}
+            className={[
+              "flex shrink-0 items-center gap-1.5 border-b-2 border-r border-r-[var(--admin-chrome-border)] px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+              structuredFilterCount > 0 || filterOpen
+                ? "border-b-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)]"
+                : "border-b-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"
+            ].join(" ")}
           >
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
               <path d="M3 4.5h14l-5.4 6.2v4.8l-3.2-1.7v-3.1L3 4.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
@@ -477,8 +474,41 @@ export function ViewerSeatFinder({
               <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
+          <div role="search" aria-label="Viewer search" className="h-full min-w-0 flex-1">
+            <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
+              <span className="sr-only">Search published seating</span>
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
+                <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
+                <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+              <input
+                id="viewer-seat-search"
+                value={search}
+                onChange={event => updateSearch(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === "Escape" && search.trim()) {
+                    event.stopPropagation();
+                    clearSearch();
+                  }
+                }}
+                placeholder="Search people or seats"
+                className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
+              />
+              {search.trim() && (
+                <button
+                  type="button"
+                  aria-label="Clear viewer search"
+                  title="Clear search"
+                  className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+                  onClick={clearSearch}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
+              )}
+            </label>
+          </div>
           {filterOpen && (
-            <div className="absolute left-0 top-[calc(100%+1px)] z-50 w-[288px] max-w-[calc(100vw-16px)]">
+            <div className="absolute -left-px top-full z-50 w-[288px] max-w-[calc(100vw-16px)]">
               <FilterPanel
                 department={department}
                 status={status}
@@ -493,44 +523,9 @@ export function ViewerSeatFinder({
                 onStatusChange={setStatus}
                 onRemoveActiveChip={removeActiveFilterChip}
                 onClearFilters={clearStructuredFilters}
-                onClearAll={clearAllConstraints}
               />
             </div>
           )}
-        </div>
-
-        <div role="search" aria-label="Viewer search" className="min-w-0 flex-1 lg:max-w-[300px]">
-          <label htmlFor="viewer-seat-search" className="relative block w-full min-w-0">
-            <span className="sr-only">Search published seating</span>
-            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
-              <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
-              <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-            </svg>
-            <input
-              id="viewer-seat-search"
-              value={search}
-              onChange={event => updateSearch(event.target.value)}
-              onKeyDown={event => {
-                if (event.key === "Escape" && search.trim()) {
-                  event.stopPropagation();
-                  clearSearch();
-                }
-              }}
-              placeholder="Search people or seats"
-              className="h-[26px] w-full border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] pl-8 pr-8 text-[12px] font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.12] focus:border-[var(--admin-primary)] focus:bg-white/[0.10]"
-            />
-            {search.trim() && (
-              <button
-                type="button"
-                aria-label="Clear viewer search"
-                title="Clear search"
-                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
-                onClick={clearSearch}
-              >
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
-            )}
-          </label>
         </div>
 
         <div className="ml-auto flex h-full shrink-0 items-center">
