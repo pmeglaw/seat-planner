@@ -915,6 +915,11 @@ export function SeatInspector({
       {canEdit ? (
         <form id="seat-inspector-form" onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            {/* Save-state announcements sit outside the collapsible sections:
+                content inside a closed <details> is display:none and never read. */}
+            <div role="status" aria-live="polite" className="sr-only">
+              {inspectorStateLabel}
+            </div>
             {searchMismatchNotice && (
               <section className={["mx-4 mt-3 border p-3 text-xs", warningSurfaceClassName].join(" ")}>
                 <div className="font-semibold">{searchMismatchNotice}</div>
@@ -992,8 +997,94 @@ export function SeatInspector({
               </InspectorSection>
             </div>
 
+            <InspectorSection title="Seat" headingId="seat-details-heading">
+              <dl>
+                <FactRow label="Code" value={selectedSeat.label} />
+                <FactRow label="Zone" value={currentZone} mono={false} />
+                <FactRow label="Seat type" value={seatTypeLabel} mono={false} />
+                {hasAssignedPerson && (
+                  <div className="flex items-center justify-between gap-2.5 py-1.5">
+                    <dt className="shrink-0 text-[11.5px] text-[var(--admin-chrome-muted)]">Status</dt>
+                    <dd><span className={["inline-block px-2 py-0.5 text-[10px] font-semibold", statusTagClass].join(" ")}>{currentStatusLabel}</span></dd>
+                  </div>
+                )}
+              </dl>
+              {/* Status has ONE home (spec §6). Occupied seats derive "assigned"
+                  from the occupant, so the dropdown only offers the open-seat
+                  statuses and yields to a read-only tag while someone sits here. */}
+              {!hasAssignedPerson && (
+                <label className="mt-1 block">
+                  <span className="text-[11px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Status</span>
+                  <select
+                    ref={statusRef}
+                    value={effectiveStatus}
+                    onChange={handleStatusChange}
+                    aria-invalid={Boolean(fieldErrorMap.status)}
+                    aria-describedby={fieldDescribedBy("status")}
+                    className={fieldClassName}
+                  >
+                    <option value="available">Available</option>
+                    <option value="reserved">Reserved</option>
+                    <option value="unavailable">Unavailable</option>
+                  </select>
+                  {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[#ff8389]">{fieldErrorMap.status}</p>}
+                </label>
+              )}
+            </InspectorSection>
+
+            <InspectorSection title="Actions" headingId="seat-actions-heading" defaultOpen>
+              {/* Spec §6: open seat leads with Assign; occupied seat leads with
+                  Move / Swap / Vacate. Move stays for open seats too — it is the
+                  only way to reposition a (custom) seat marker on the map. */}
+              {!hasCurrentAssignment && !editingAssignment && (
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={startAssignmentEditing}
+                  disabled={pending}
+                  aria-expanded={editingAssignment}
+                  aria-controls="seat-inspector-form"
+                  aria-label={`Assign an employee to ${selectedSeat.label}`}
+                  className="mb-2 min-w-0 w-full rounded-[10px] !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-hover)] hover:!bg-[var(--admin-primary-hover)]"
+                >
+                  Assign employee
+                </Button>
+              )}
+              <div className="flex min-w-0 gap-2">
+                <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move seat ${selectedSeat.label} on the map`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
+                  {moveMode ? "Exit move" : "Move"}
+                </Button>
+                <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Swap seat ${selectedSeat.label} with another draft seat`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
+                  Swap
+                </Button>
+                {hasCurrentAssignment && (
+                  <Button type="button" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className={`min-w-0 flex-1 rounded-[10px] ${footerDangerButtonClass}`}>
+                    Vacate
+                  </Button>
+                )}
+              </div>
+              {/* 3b INV-4: move-mode microcopy lives in the occupant (the inspector). */}
+              {moveMode && (
+                <p role="status" className="mt-2 bg-[var(--admin-primary-soft)] px-3 py-2 text-[11.5px] font-semibold leading-4 text-[var(--admin-primary)]">
+                  Drag the seat marker to its new spot. Esc exits move.
+                </p>
+              )}
+              {hasCurrentAssignment && !editingAssignment && (
+                <Button
+                  type="button"
+                  onClick={startAssignmentEditing}
+                  disabled={pending}
+                  aria-expanded={editingAssignment}
+                  aria-controls="seat-inspector-form"
+                  aria-label={`Change assignment for ${selectedSeat.label}`}
+                  className={`mt-2 min-w-0 w-full rounded-[10px] ${footerNeutralButtonClass}`}
+                >
+                  Change assignment
+                </Button>
+              )}
+
             {editingAssignment && (
-            <section aria-labelledby="seat-assignment-heading" className="border-b border-white/10 px-4 py-3">
+            <section aria-labelledby="seat-assignment-heading" className="mt-3 border-t border-white/10 pt-3">
               <SectionHeading id="seat-assignment-heading" title={hasCurrentAssignment ? "Assignment" : "Assign this seat"} />
               <p id={employeeHelpId} className="mt-1.5 text-xs leading-5 text-[var(--admin-chrome-muted)]">{hasCurrentAssignment ? "Change or clear the draft assignment below." : "Search an existing employee or type a new name."}</p>
 
@@ -1139,40 +1230,57 @@ export function SeatInspector({
             </section>
             )}
 
-            <InspectorSection title="Seat" headingId="seat-details-heading">
-              <dl>
-                <FactRow label="Code" value={selectedSeat.label} />
-                <FactRow label="Zone" value={currentZone} mono={false} />
-                <FactRow label="Seat type" value={seatTypeLabel} mono={false} />
-                <div className="flex items-center justify-between gap-2.5 py-1.5">
-                  <dt className="shrink-0 text-[11.5px] text-[var(--admin-chrome-muted)]">Status</dt>
-                  <dd><span className={["inline-block px-2 py-0.5 text-[10px] font-semibold", statusTagClass].join(" ")}>{currentStatusLabel}</span></dd>
-                </div>
-              </dl>
+              {/* Figma delete treatment: full-width low-emphasis button + visible helper line. */}
+              <Button
+                type="button"
+                onClick={handleDeleteSeat}
+                disabled={pending || !selectedSeatCanDelete}
+                aria-label={`Delete custom seat ${selectedSeat.label}`}
+                aria-describedby="seat-inspector-delete-help"
+                title={deleteHelpText}
+                className="mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight !border-transparent !bg-[#262626] !text-[#ff8389] !shadow-none hover:!border-transparent hover:!bg-[#da1e28]/20 disabled:!border-transparent disabled:!bg-[#1f1f1f] disabled:!text-[#8d8d8d] disabled:hover:!bg-[#1f1f1f]"
+              >
+                Delete seat
+              </Button>
+              <p id="seat-inspector-delete-help" className="mt-1.5 text-[11.5px] leading-4 text-[var(--admin-chrome-muted)]">{deleteHelpText}</p>
+              {isDirty && (
+                <Button type="button" onClick={handleResetEdits} disabled={pending} aria-label={`Discard edits for ${selectedSeat.label}`} className={`mt-2 min-w-0 w-full whitespace-normal rounded-[10px] ${footerNeutralButtonClass}`}>
+                  Discard edits
+                </Button>
+              )}
+              {/* Draft-impact pill (announced via the sr-only live region at the top of the form). */}
+              <div aria-hidden="true" className={["mt-2 flex items-center gap-2 px-3 py-2 text-xs font-medium", inspectorStatePillClassName].join(" ")}>
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+                <span className="min-w-0 truncate">{inspectorStateLabel}</span>
+              </div>
+              {(isDirty || editingAssignment) && (
+              <div className="mt-2 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(6.5rem,0.8fr)_minmax(0,1.5fr)]">
+                {saveDisabledReason && (
+                  <span id="seat-inspector-save-help" className="sr-only">
+                    {saveDisabledReason}
+                  </span>
+                )}
+                <Button type="button" onClick={handleCancelEditing} aria-label={`Cancel editing ${selectedSeat.label}`} className={`min-w-0 rounded-[10px] px-4 ${footerNeutralButtonClass}`}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={pending || !isDirty}
+                  aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
+                  aria-describedby={saveDisabledReason ? "seat-inspector-save-help" : undefined}
+                  title={saveDisabledReason ?? `${primaryActionLabel} for ${selectedSeat.label}`}
+                  className="min-w-0 w-full whitespace-normal rounded-[10px] !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-hover)] hover:!bg-[var(--admin-primary-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:shadow-none disabled:hover:!border-[var(--admin-state-neutral-border)] disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
+                >
+                  {primaryActionLabel}
+                </Button>
+              </div>
+              )}
             </InspectorSection>
 
-            <InspectorSection title={hasAssignedPerson ? <>Notes</> : <>Status &amp; notes</>} headingId="seat-metadata-heading">
-              {!hasAssignedPerson && (
-                <label className="block">
-                  <span className="text-[11px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Seat status</span>
-                  <select
-                    ref={statusRef}
-                    value={effectiveStatus}
-                    onChange={handleStatusChange}
-                    aria-invalid={Boolean(fieldErrorMap.status)}
-                    aria-describedby={fieldDescribedBy("status")}
-                    className={fieldClassName}
-                  >
-                    <option value="available">Available</option>
-                    <option value="reserved">Reserved</option>
-                    <option value="unavailable">Unavailable</option>
-                  </select>
-                  {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[#ff8389]">{fieldErrorMap.status}</p>}
-                </label>
-              )}
-
-              <label className="mt-3 block">
-                <span className="text-[11px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Notes</span>
+            <InspectorSection title="Notes" headingId="seat-notes-heading">
+              <label className="block">
+                <span className="sr-only">Seat note</span>
                 <textarea
                   ref={notesRef}
                   value={form.notes}
@@ -1200,97 +1308,6 @@ export function SeatInspector({
                 <p className="text-[11px] leading-4 text-[var(--admin-chrome-muted)]">No draft edits to this seat in this session. Saved changes appear here until publish.</p>
               )}
             </InspectorSection>
-          </div>
-
-          <div className="sticky bottom-0 z-20 border-t border-white/10 bg-[var(--admin-chrome-bg)] px-4 py-3">
-            <div role="status" aria-live="polite" className="sr-only">
-              {inspectorStateLabel}
-            </div>
-            {/* Figma actions row: Move / Swap / Vacate as one compact 32px outline row. */}
-            <div className="flex min-w-0 gap-2">
-              <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move seat ${selectedSeat.label} on the map`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
-                {moveMode ? "Exit move" : "Move"}
-              </Button>
-              <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Swap seat ${selectedSeat.label} with another draft seat`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
-                Swap
-              </Button>
-              {hasCurrentAssignment && (
-                <Button type="button" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className={`min-w-0 flex-1 rounded-[10px] ${footerDangerButtonClass}`}>
-                  Vacate
-                </Button>
-              )}
-            </div>
-            {/* 3b INV-4: move-mode microcopy lives in the occupant (the inspector). */}
-            {moveMode && (
-              <p role="status" className="mt-2 bg-[var(--admin-primary-soft)] px-3 py-2 text-[11.5px] font-semibold leading-4 text-[var(--admin-primary)]">
-                Drag the seat marker to its new spot. Esc exits move.
-              </p>
-            )}
-            {/* The assignment editor reveals progressively so the resting inspector
-                stays as compact as the Figma frame. */}
-            {!editingAssignment && (
-              <Button
-                type="button"
-                variant={hasCurrentAssignment ? undefined : "primary"}
-                onClick={startAssignmentEditing}
-                disabled={pending}
-                aria-expanded={editingAssignment}
-                aria-controls="seat-inspector-form"
-                aria-label={hasCurrentAssignment ? `Change assignment for ${selectedSeat.label}` : `Assign an employee to ${selectedSeat.label}`}
-                className={[
-                  "mt-2 min-w-0 w-full rounded-[10px]",
-                  hasCurrentAssignment ? footerNeutralButtonClass : "!border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-hover)] hover:!bg-[var(--admin-primary-hover)]"
-                ].join(" ")}
-              >
-                {hasCurrentAssignment ? "Change assignment" : "Assign employee"}
-              </Button>
-            )}
-            {/* Figma delete treatment: full-width low-emphasis button + visible helper line. */}
-            <Button
-              type="button"
-              onClick={handleDeleteSeat}
-              disabled={pending || !selectedSeatCanDelete}
-              aria-label={`Delete custom seat ${selectedSeat.label}`}
-              aria-describedby="seat-inspector-delete-help"
-              title={deleteHelpText}
-              className="mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight !border-transparent !bg-[#262626] !text-[#ff8389] !shadow-none hover:!border-transparent hover:!bg-[#da1e28]/20 disabled:!border-transparent disabled:!bg-[#1f1f1f] disabled:!text-[#8d8d8d] disabled:hover:!bg-[#1f1f1f]"
-            >
-              Delete seat
-            </Button>
-            <p id="seat-inspector-delete-help" className="mt-1.5 text-[11.5px] leading-4 text-[var(--admin-chrome-muted)]">{deleteHelpText}</p>
-            {isDirty && (
-              <Button type="button" onClick={handleResetEdits} disabled={pending} aria-label={`Discard edits for ${selectedSeat.label}`} className={`mt-2 min-w-0 w-full whitespace-normal rounded-[10px] ${footerNeutralButtonClass}`}>
-                Discard edits
-              </Button>
-            )}
-            {/* Draft-impact pill (announced via the sr-only live region above). */}
-            <div aria-hidden="true" className={["mt-2 flex items-center gap-2 px-3 py-2 text-xs font-medium", inspectorStatePillClassName].join(" ")}>
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
-              <span className="min-w-0 truncate">{inspectorStateLabel}</span>
-            </div>
-            {(isDirty || editingAssignment) && (
-            <div className="mt-2 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(6.5rem,0.8fr)_minmax(0,1.5fr)]">
-              {saveDisabledReason && (
-                <span id="seat-inspector-save-help" className="sr-only">
-                  {saveDisabledReason}
-                </span>
-              )}
-              <Button type="button" onClick={handleCancelEditing} aria-label={`Cancel editing ${selectedSeat.label}`} className={`min-w-0 rounded-[10px] px-4 ${footerNeutralButtonClass}`}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={pending || !isDirty}
-                aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
-                aria-describedby={saveDisabledReason ? "seat-inspector-save-help" : undefined}
-                title={saveDisabledReason ?? `${primaryActionLabel} for ${selectedSeat.label}`}
-                className="min-w-0 w-full whitespace-normal rounded-[10px] !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-hover)] hover:!bg-[var(--admin-primary-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:shadow-none disabled:hover:!border-[var(--admin-state-neutral-border)] disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
-              >
-                {primaryActionLabel}
-              </Button>
-            </div>
-            )}
           </div>
         </form>
       ) : (

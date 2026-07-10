@@ -196,7 +196,15 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /aria-describedby=\{employeeNameDescribedBy\}/);
   assert.match(inspectorSource, /id="seat-inspector-new-employee-notice" role="note"/);
   assert.match(inspectorSource, /Published assignment/);
-  assert.match(inspectorSource, /Status &amp; notes/);
+  // Owner QA (2026-07-10, Shell round 3): status has exactly ONE home — the
+  // Seat section (editable select for open seats, derived tag for occupied).
+  // The old "Status & notes" combo section is retired; Notes is note-only and
+  // the actions moved from a sticky footer into a collapsible Actions section.
+  assert.doesNotMatch(inspectorSource, /Status &amp; notes/);
+  assert.equal((inspectorSource.match(/ref=\{statusRef\}/g) ?? []).length, 1, "exactly one status control");
+  assert.match(inspectorSource, /title="Actions" headingId="seat-actions-heading" defaultOpen/);
+  assert.match(inspectorSource, /title="Notes" headingId="seat-notes-heading"/);
+  assert.doesNotMatch(inspectorSource, /sticky bottom-0/);
   assert.match(inspectorSource, /No unsaved changes\./);
   // The verbose repeated panels are gone (Claude Design cleanup).
   assert.doesNotMatch(inspectorSource, /Seat Summary|Planning inspector|Draft-only impact|Assignment workflow|Actions \/ Rules/);
