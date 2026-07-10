@@ -65,6 +65,12 @@ type FieldError = {
   message: string;
 };
 
+// Stable defaults for the optional edit callbacks (the viewer omits them).
+// These MUST be module-level constants: inline `= () => {}` defaults mint a
+// new identity per render, which cascades through effect deps into a setState loop.
+const noopCallback = () => undefined;
+const emptyDraftSnapshot = (): DraftSnapshot => ({ seats: [], employees: [] });
+
 const emptyForm: SeatInspectorForm = {
   label: "",
   employeeId: "",
@@ -195,16 +201,16 @@ export function SeatInspector({
   onClose,
   onClearSearchContext,
   onToggleCollapse,
-  onStartSwapSeat = () => undefined,
-  onStartMoveSeat = () => undefined,
+  onStartSwapSeat = noopCallback,
+  onStartMoveSeat = noopCallback,
   moveMode = false,
-  onDeleteSeat = () => undefined,
+  onDeleteSeat = noopCallback,
   onExplainSeat,
-  onBeforeSeatUpdate = () => ({ seats: [], employees: [] }),
-  onSeatUpdated = () => undefined,
-  onError = () => undefined,
-  onStaleDraft = () => undefined,
-  onDirtyChange = () => undefined,
+  onBeforeSeatUpdate = emptyDraftSnapshot,
+  onSeatUpdated = noopCallback,
+  onError = noopCallback,
+  onStaleDraft = noopCallback,
+  onDirtyChange = noopCallback,
   onSubmitBlocked,
   resetSignal = 0,
   activityEntries = []
