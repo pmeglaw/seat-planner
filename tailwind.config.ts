@@ -7,7 +7,32 @@ const config: Config = {
     "./lib/**/*.{ts,tsx}"
   ],
   theme: {
+    // Shell shape language: flat, square corners on chrome/controls. The named
+    // radius scale is zeroed globally; components that must stay rounded (seat
+    // pills, avatars, dots) use arbitrary values or `rounded-full`, which this
+    // scale does not touch.
+    borderRadius: {
+      none: "0px",
+      sm: "0px",
+      DEFAULT: "0px",
+      md: "0px",
+      lg: "0px",
+      xl: "0px",
+      "2xl": "0px",
+      "3xl": "0px",
+      full: "9999px",
+      "sp-sm": "var(--sp-radius-sm)",
+      "sp-md": "var(--sp-radius-md)",
+      "sp-lg": "var(--sp-radius-lg)",
+      "sp-xl": "var(--sp-radius-xl)",
+      "sp-sheet": "var(--sp-radius-sheet)",
+      "sp-full": "var(--sp-radius-full)"
+    },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "IBM Plex Mono", "ui-monospace", "monospace"]
+      },
       // Panel-slot tiers: sheet ≤899 (bottom sheet, non-modal), floating panel ≥900
       // over a full-bleed map (owner preference: no reserved dock gutter).
       screens: {
@@ -55,14 +80,6 @@ const config: Config = {
         "sp-5": "var(--sp-space-5)",
         "sp-6": "var(--sp-space-6)",
         "sp-7": "var(--sp-space-7)"
-      },
-      borderRadius: {
-        "sp-sm": "var(--sp-radius-sm)",
-        "sp-md": "var(--sp-radius-md)",
-        "sp-lg": "var(--sp-radius-lg)",
-        "sp-xl": "var(--sp-radius-xl)",
-        "sp-sheet": "var(--sp-radius-sheet)",
-        "sp-full": "var(--sp-radius-full)"
       },
       boxShadow: {
         soft: "0 18px 50px rgba(15, 23, 42, 0.16)",

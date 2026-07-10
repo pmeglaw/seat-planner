@@ -80,7 +80,7 @@ export function ResultsPanel({
   return (
     <aside
       aria-labelledby="admin-results-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-[0_18px_44px_rgba(31,34,37,0.16)] panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[84px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-[var(--admin-elevation-3-shadow)] panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
     >
       <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
         <h2 id="admin-results-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Results</h2>
@@ -93,7 +93,7 @@ export function ResultsPanel({
           onClick={onExpandCollapsedSeat}
           aria-label={`View details for ${collapsedSeatLabel}`}
           title={`View details for ${collapsedSeatLabel}`}
-          className="mx-2 mt-2 flex shrink-0 items-center justify-between gap-2 rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-paper)] px-2.5 py-2 text-left transition hover:border-[var(--admin-border-strong)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+          className="mx-2 mt-2 flex shrink-0 items-center justify-between gap-2 border border-[var(--admin-border)] bg-[var(--admin-paper)] px-2.5 py-2 text-left transition hover:border-[var(--admin-border-strong)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
         >
           <span className="min-w-0 truncate text-xs font-semibold text-[var(--admin-text-primary)]">{collapsedSeatLabel} selected</span>
           <span className="shrink-0 text-[11px] font-semibold text-[var(--admin-primary-cta)]">View details</span>
@@ -109,14 +109,14 @@ export function ResultsPanel({
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2"
         >
           {results.map(result => (
-            <div role="listitem" key={result.key} className="group flex items-stretch gap-1 rounded-[11px] border border-transparent transition hover:border-[var(--admin-border)] hover:bg-[var(--admin-paper)]">
+            <div role="listitem" key={result.key} className="group flex items-stretch gap-1 border border-transparent transition hover:border-[var(--admin-border)] hover:bg-[var(--admin-paper)]">
               <button
                 type="button"
                 data-result-card
                 disabled={result.disabled}
                 onClick={() => result.seatId && onOpen(result.seatId)}
                 title={result.disabled ? "No assigned seat to open" : `Open ${formatDisplayName(result.title)}`}
-                className="flex min-w-0 flex-1 items-start gap-2.5 rounded-[11px] px-2.5 py-2 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-55"
+                className="flex min-w-0 flex-1 items-start gap-2.5 px-2.5 py-2 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <span
                   className={[

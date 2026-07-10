@@ -204,7 +204,7 @@ export function AskPlannerDrawer({
         aria-modal="true"
         aria-labelledby="ask-planner-title"
         aria-describedby="ask-planner-description"
-        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-panel)] motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[66px] sm:z-50 sm:max-h-[calc(100vh-80px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
+        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-panel)] motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[48px] sm:z-50 sm:max-h-[calc(100vh-56px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
       >
         <div className="shrink-0 border-b border-[var(--admin-border)] px-4 py-3">
           <div className="flex items-start justify-between gap-3">

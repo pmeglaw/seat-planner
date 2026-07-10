@@ -118,7 +118,7 @@ export function FilterPanel({
   }
 
   return (
-    <aside id="seat-map-filter-panel" aria-labelledby="seat-map-filter-title" className="relative z-[70] max-h-[55vh] w-full self-start overflow-auto overscroll-contain rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 shadow-[var(--admin-shadow-panel)] motion-safe:animate-[sp-panel-in_200ms_ease-out] sm:max-h-[62vh] lg:sticky lg:top-[62px] lg:z-auto lg:max-h-[calc(100vh-78px)] lg:w-[288px]">
+    <aside id="seat-map-filter-panel" aria-labelledby="seat-map-filter-title" className="relative z-[70] max-h-[55vh] w-full self-start overflow-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 shadow-[var(--admin-shadow-panel)] motion-safe:animate-[sp-panel-in_200ms_ease-out] sm:max-h-[62vh] lg:sticky lg:top-[62px] lg:z-auto lg:max-h-[calc(100vh-78px)] lg:w-[288px]">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 id="seat-map-filter-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Filters</h2>
         <div className="flex items-center gap-1">

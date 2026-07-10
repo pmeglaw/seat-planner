@@ -5,121 +5,115 @@
 :root {
   color-scheme: light;
 
-  --ml-orange-signature: #F26E22;
-  --ml-orange-hover: #C95A14;
-  --ml-orange-cta: #A63A12;
-  --ml-cognac: #8C6645;
-  --ml-espresso: #594225;
-  --ml-graphite: #282F36;
-  --ml-ink: #101114;
-  --ml-porcelain: #EAEDF0;
-  --ml-ivory: #F7F3EE;
-  --ml-neutral-gray: #D8DADF;
-  --ml-violet: #705FD9;
-  --ml-electric-blue: #1B25F2;
-  --ml-deep-navy: #020659;
-  --ml-lavender: #8C82FE;
-  --ml-teal: #165359;
-  --ml-aqua: #4B95A6;
-  --ml-oxblood: #732D2D;
-  --ml-coral: #F9414E;
+  /* Brand constants (Megeredchian Law). The Shell redesign accent is the
+     signature orange #F15A24 — used sparingly: Publish, active tool underline,
+     selected seat, search/filter highlight, primary actions. */
+  --ml-orange-signature: #F15A24;
+  --ml-orange-hover: #D9501F;
+  --ml-orange-cta: #C94A12;
+  --ml-graphite: #262626;
+  --ml-ink: #161616;
 
-  --sp-color-brand-ivory: #FFF7ED;
-  --sp-color-brand-paper: #F6E7D8;
-  --sp-color-brand-copper: #D46A24;
-  --sp-color-brand-accent: #F97316;
-  /* One action ladder app-wide, matching the Figma brand/primary ladder and the
-     admin --admin-primary-cta values (5.67 / 6.49 / 7.72:1 with white). */
-  --sp-color-action-primary: #B2430F;
-  --sp-color-action-primary-hover: #A63A12;
-  --sp-color-action-primary-pressed: #93330F;
-  --sp-color-brand-clay: #6F2C13;
+  --sp-color-brand-ivory: #FFFFFF;
+  --sp-color-brand-paper: #FBEAE1;
+  --sp-color-brand-copper: #C94A12;
+  --sp-color-brand-accent: #F15A24;
+  /* Action ladder for text-bearing orange fills. The raw brand #F15A24 is only
+     3.37:1 with white (fails AA text), so buttons that keep white labels use the
+     deepened #C94A12 (4.70:1). The hero Publish button instead uses #F15A24 with
+     dark ink text (#161616 on #F15A24 = 5.37:1). Measured 2026-07-10. */
+  --sp-color-action-primary: #C94A12;
+  --sp-color-action-primary-hover: #B54210;
+  --sp-color-action-primary-pressed: #9E3A0E;
+  --sp-color-brand-clay: #7A2E0C;
 
-  --sp-color-brand-ivory-rgb: 255 247 237;
-  --sp-color-brand-paper-rgb: 246 231 216;
-  --sp-color-brand-copper-rgb: 212 106 36;
-  --sp-color-brand-accent-rgb: 249 115 22;
-  --sp-color-action-primary-rgb: 178 67 15;
-  --sp-color-action-primary-hover-rgb: 166 58 18;
-  --sp-color-action-primary-pressed-rgb: 147 51 15;
-  --sp-color-brand-clay-rgb: 111 44 19;
+  --sp-color-brand-ivory-rgb: 255 255 255;
+  --sp-color-brand-paper-rgb: 251 234 225;
+  --sp-color-brand-copper-rgb: 201 74 18;
+  --sp-color-brand-accent-rgb: 241 90 36;
+  --sp-color-action-primary-rgb: 201 74 18;
+  --sp-color-action-primary-hover-rgb: 181 66 16;
+  --sp-color-action-primary-pressed-rgb: 158 58 14;
+  --sp-color-brand-clay-rgb: 122 46 12;
 
-  /* Cooled to the Claude Design / brand neutrals (orange + cool charcoal on near-white)
-     so the inspector and drawers read clean, not warm-cream. */
-  --sp-color-text-primary: #1F2225;
-  --sp-color-text-secondary: #44494C;
-  --sp-color-text-muted: #6B7177;
-  --sp-color-text-disabled: #969BA1;
-  --sp-color-workspace: #1F2225;
-  --sp-color-workspace-deep: #15171A;
-  --sp-color-graphite-soft: #F3F4F6;
-  --sp-color-stone: #E4E6E8;
-  --sp-color-stone-muted: #B6BBC0;
+  /* Shell neutrals (IBM-gray family): #161616 chrome, #f4f4f4 workspace,
+     #ffffff panels, #e0e0e0 hairlines. Text on light: #161616 (16.45:1),
+     #525252 (7.10:1 on #f4f4f4), muted #6f6f6f (4.57:1 on #f4f4f4 — AA). */
+  --sp-color-text-primary: #161616;
+  --sp-color-text-secondary: #525252;
+  --sp-color-text-muted: #6f6f6f;
+  --sp-color-text-disabled: #a8a8a8;
+  --sp-color-workspace: #161616;
+  --sp-color-workspace-deep: #0a0a0a;
+  --sp-color-graphite-soft: #f4f4f4;
+  --sp-color-stone: #e0e0e0;
+  --sp-color-stone-muted: #a8a8a8;
 
-  --sp-color-text-primary-rgb: 7 10 13;
-  --sp-color-text-secondary-rgb: 53 53 50;
-  --sp-color-text-muted-rgb: 105 97 89;
-  --sp-color-text-disabled-rgb: 142 130 118;
-  --sp-color-workspace-rgb: 23 26 29;
-  --sp-color-workspace-deep-rgb: 7 10 13;
-  --sp-color-graphite-soft-rgb: 247 246 242;
-  --sp-color-stone-rgb: 231 225 216;
-  --sp-color-stone-muted-rgb: 184 174 162;
+  --sp-color-text-primary-rgb: 22 22 22;
+  --sp-color-text-secondary-rgb: 82 82 82;
+  --sp-color-text-muted-rgb: 111 111 111;
+  --sp-color-text-disabled-rgb: 168 168 168;
+  --sp-color-workspace-rgb: 22 22 22;
+  --sp-color-workspace-deep-rgb: 10 10 10;
+  --sp-color-graphite-soft-rgb: 244 244 244;
+  --sp-color-stone-rgb: 224 224 224;
+  --sp-color-stone-muted-rgb: 168 168 168;
 
-  --sp-color-canvas: #EAEBEC;
-  --sp-color-surface: #FCFCFD;
-  --sp-color-surface-raised: #FFFFFF;
-  --sp-color-map-workspace: #EAEBEC;
-  --sp-color-border-subtle: #E4E6E8;
-  --sp-color-border-strong: #D2D6DA;
+  --sp-color-canvas: #f4f4f4;
+  --sp-color-surface: #ffffff;
+  --sp-color-surface-raised: #ffffff;
+  --sp-color-map-workspace: #ECE8E1;
+  --sp-color-border-subtle: #e0e0e0;
+  --sp-color-border-strong: #c6c6c6;
 
-  --sp-color-canvas-rgb: 248 243 234;
-  --sp-color-surface-rgb: 255 253 248;
+  --sp-color-canvas-rgb: 244 244 244;
+  --sp-color-surface-rgb: 255 255 255;
   --sp-color-surface-raised-rgb: 255 255 255;
-  --sp-color-map-workspace-rgb: 236 231 222;
-  --sp-color-border-subtle-rgb: 222 214 202;
-  --sp-color-border-strong-rgb: 190 180 168;
+  --sp-color-map-workspace-rgb: 236 232 225;
+  --sp-color-border-subtle-rgb: 224 224 224;
+  --sp-color-border-strong-rgb: 198 198 198;
 
-  --sp-color-state-selected: #C2410C;
-  --sp-color-state-selected-surface: #F6E7D8;
-  --sp-color-state-selected-border: #E2BDA0;
-  --sp-color-state-published: #3F6F59;
-  --sp-color-state-published-surface: #DDE9DF;
-  --sp-color-state-published-border: #BFD4C4;
-  --sp-color-state-draft: #9A6418;
-  --sp-color-state-draft-surface: #F1E2C4;
-  --sp-color-state-draft-border: #D7B26C;
-  --sp-color-state-success: #3F6F59;
-  --sp-color-state-success-surface: #DDE9DF;
-  --sp-color-state-success-border: #BFD4C4;
-  --sp-color-state-warning: #9A6418;
-  --sp-color-state-warning-surface: #F1E2C4;
-  --sp-color-state-warning-border: #D7B26C;
-  --sp-color-state-danger: #963D2F;
-  --sp-color-state-danger-surface: #F3DAD2;
-  --sp-color-state-danger-border: #D9A296;
-  --sp-color-state-info: #3E6F72;
-  --sp-color-state-info-surface: #DCEDEA;
-  --sp-color-state-info-border: #A9CFCC;
+  /* State families. Accent hues follow the shell status colors (assigned
+     #24a148 / reserved #f1c21b / danger #da1e28) for dots and bars; the
+     text-bearing variants stay dark enough for AA on their soft surfaces. */
+  --sp-color-state-selected: #C94A12;
+  --sp-color-state-selected-surface: #FBEAE1;
+  --sp-color-state-selected-border: #F0B49A;
+  --sp-color-state-published: #1D6E41;
+  --sp-color-state-published-surface: #DEF3E4;
+  --sp-color-state-published-border: #A9D7B8;
+  --sp-color-state-draft: #8A6116;
+  --sp-color-state-draft-surface: #FCF4D6;
+  --sp-color-state-draft-border: #E0C46E;
+  --sp-color-state-success: #1D6E41;
+  --sp-color-state-success-surface: #DEF3E4;
+  --sp-color-state-success-border: #A9D7B8;
+  --sp-color-state-warning: #8A6116;
+  --sp-color-state-warning-surface: #FCF4D6;
+  --sp-color-state-warning-border: #E0C46E;
+  --sp-color-state-danger: #B3232C;
+  --sp-color-state-danger-surface: #FBE9EA;
+  --sp-color-state-danger-border: #E8A5A9;
+  --sp-color-state-info: #31626A;
+  --sp-color-state-info-surface: #E0EEF0;
+  --sp-color-state-info-border: #A9CDD2;
   --sp-color-state-search: #2F6668;
   --sp-color-state-search-surface: #DCEDEA;
   --sp-color-state-search-border: #A9CFCC;
-  --sp-color-state-planner: #6E655A;
-  --sp-color-state-planner-surface: #EFE9DF;
-  --sp-color-state-planner-border: #D8D0C5;
-  /* Neutral inert grey so disabled controls read as clearly OFF, not a faded warm
-     primary (the old #C9C0B4 tan looked like a washed-out enabled button). */
-  --sp-color-state-disabled: #DDDFE2;
+  --sp-color-state-planner: #5E5E5E;
+  --sp-color-state-planner-surface: #efefef;
+  --sp-color-state-planner-border: #d4d4d4;
+  --sp-color-state-disabled: #e0e0e0;
 
-  --sp-color-state-selected-rgb: 194 65 12;
-  --sp-color-state-published-rgb: 63 111 89;
-  --sp-color-state-draft-rgb: 154 100 24;
-  --sp-color-state-success-rgb: 63 111 89;
-  --sp-color-state-warning-rgb: 154 100 24;
-  --sp-color-state-danger-rgb: 150 61 47;
-  --sp-color-state-info-rgb: 62 111 114;
+  --sp-color-state-selected-rgb: 201 74 18;
+  --sp-color-state-published-rgb: 29 110 65;
+  --sp-color-state-draft-rgb: 138 97 22;
+  --sp-color-state-success-rgb: 29 110 65;
+  --sp-color-state-warning-rgb: 138 97 22;
+  --sp-color-state-danger-rgb: 179 35 44;
+  --sp-color-state-info-rgb: 49 98 106;
   --sp-color-state-search-rgb: 47 102 104;
-  --sp-color-state-disabled-rgb: 221 223 226;
+  --sp-color-state-disabled-rgb: 224 224 224;
 
   --sp-space-1: 4px;
   --sp-space-2: 8px;
@@ -129,119 +123,123 @@
   --sp-space-6: 32px;
   --sp-space-7: 48px;
 
-  --sp-radius-sm: 6px;
-  --sp-radius-md: 8px;
-  --sp-radius-lg: 10px;
-  --sp-radius-xl: 12px;
-  --sp-radius-sheet: 16px;
+  /* Shell shape language: flat, square corners for chrome and controls
+     (the seat-marker pills keep their own arbitrary-radius classes and stay
+     rounded — protected, see SeatMarker). `full` stays for avatars/dots. */
+  --sp-radius-sm: 0px;
+  --sp-radius-md: 0px;
+  --sp-radius-lg: 0px;
+  --sp-radius-xl: 0px;
+  --sp-radius-sheet: 0px;
   --sp-radius-full: 999px;
 
-  --sp-shadow-raised: 0 10px 32px rgba(15, 23, 42, 0.08);
-  --sp-shadow-floating: 0 8px 20px rgba(15, 23, 42, 0.12);
-  --sp-shadow-sheet: 0 -18px 44px rgba(15, 23, 42, 0.18);
-  --sp-shadow-modal: 0 26px 80px rgba(15, 23, 42, 0.28);
+  --sp-shadow-raised: 0 2px 6px rgba(22, 22, 22, 0.12);
+  --sp-shadow-floating: 0 6px 16px rgba(22, 22, 22, 0.14);
+  --sp-shadow-sheet: 0 -8px 24px rgba(22, 22, 22, 0.18);
+  --sp-shadow-modal: 0 12px 40px rgba(22, 22, 22, 0.26);
 
   --sp-duration-fast: 150ms;
   --sp-duration-standard: 200ms;
   --sp-duration-deliberate: 280ms;
 
-  --sp-focus-ring-color: rgb(194 65 12 / 0.9);
+  --sp-focus-ring-color: rgb(201 74 18 / 0.9);
   --sp-focus-ring-width: 4px;
   --sp-focus-ring-offset: 2px;
   --sp-focus-ring-offset-color: var(--sp-color-surface-raised);
 }
 
-.admin-theme {
-  /* Claude Design palette, brand-aligned (Megeredchian Law: orange + cool neutral
-     charcoal on near-white). Cool, clean and calm — no warm ivory; orange is a sparing
-     accent only (glyph, avatar, primary action, focus ring, selected seat). */
-  /* Page canvas nudged one cool step darker than the surface-muted content plane
-     (#EAEBEC) so near-white panels/cards read as raised rather than merged. Muted body
-     text (#5E646A) stays ~4.9:1 here — still AA; do not go darker than #E4E6E8. */
-  --admin-bg: #E7E9EB;
+/* One shell for both surfaces: the viewer (`.shell-theme`) and the admin
+   (`.admin-theme`) share the same token set — same dark chrome, same light
+   workspace — with admin-only chrome hidden for viewers in markup. */
+.admin-theme,
+.shell-theme {
+  /* Light workspace behind the map (shell spec: #f4f4f4). */
+  --admin-bg: #f4f4f4;
 
-  /* Cool charcoal chrome (top bar): light off-white text, hairline dividers. */
-  --admin-chrome-bg: #1F2225;
-  --admin-chrome-elevated: #262A2D;
-  --admin-chrome-text: #EDEEF0;
-  --admin-chrome-muted: #9AA0A6;
-  --admin-chrome-border: #303437;
-  --admin-chrome-hover: rgba(255, 255, 255, 0.08);
+  /* Dark chrome (#161616): top bar + inspector read as one continuous dark
+     surface. Text #f4f4f4 (16.45:1), muted #9a9a9a (6.43:1) — both AA. */
+  --admin-chrome-bg: #161616;
+  --admin-chrome-elevated: #161616;
+  --admin-chrome-text: #f4f4f4;
+  --admin-chrome-muted: #9a9a9a;
+  --admin-chrome-border: rgba(255, 255, 255, 0.10);
+  --admin-chrome-hover: #262626;
+  --admin-chrome-field: rgba(255, 255, 255, 0.08);
 
   --admin-rail-bg: var(--admin-chrome-bg);
   --admin-rail-surface: rgba(255, 255, 255, 0.05);
   --admin-rail-border: var(--admin-chrome-border);
   --admin-rail-muted: var(--admin-chrome-muted);
-  --admin-surface: #FCFCFD;
-  --admin-surface-alt: #F3F4F6;
-  --admin-surface-muted: #EAEBEC;
-  /* Dedicated mat behind the floor-plan image — a hair darker/cooler than the content
-     plane so the map viewport reads as a recessed well (paired with --admin-shadow-map).
-     Kept separate from --admin-surface-muted, which is shared by chips and inline surfaces. */
-  --admin-map-floor: #E4E6E9;
-  /* Border discipline per docs/design-direction-verdict.md: default 1.43:1 on surface,
-     strong 2.04:1 — old default (1.05:1 on canvas) was near-invisible. */
-  --admin-border: #D2D6DA;
-  --admin-border-strong: #AEB4BA;
+  --admin-surface: #ffffff;
+  --admin-surface-alt: #f4f4f4;
+  --admin-surface-muted: #f4f4f4;
+  /* Warm parchment mat behind the floor-plan raster (prototype `--map`). */
+  --admin-map-floor: #ECE8E1;
+  --admin-border: #e0e0e0;
+  --admin-border-strong: #c6c6c6;
 
-  --admin-text-primary: #1F2225;
-  --admin-text-secondary: #44494C;
-  /* Muted 5.02:1 / subtle ~5.2:1 on canvas (#EAEBEC) — subtle darkened from #666C72
-     (4.45:1, under AA) to clear the 4.5:1 body-text threshold with margin. */
-  --admin-text-muted: #5E646A;
-  --admin-text-subtle: #5B6167;
-  --admin-text-inverse: #EDEEF0;
+  --admin-text-primary: #161616;
+  --admin-text-secondary: #525252;
+  /* Muted 4.57:1 on #f4f4f4, 5.00:1 on white — AA body text. */
+  --admin-text-muted: #6f6f6f;
+  --admin-text-subtle: #6f6f6f;
+  --admin-text-inverse: #f4f4f4;
 
-  /* Brand ladder (semantic group: brand/). accent = identity + selection (never behind
-     white text, 2.91:1); primary = action fill, brightened toward the brand per the
-     direction verdict while keeping 5.67:1 with white; hover/active darken. */
-  --admin-primary: #F26E22;
-  --admin-primary-hover: #C95A14;
-  --admin-primary-cta: #B2430F;
-  --admin-primary-cta-hover: #A63A12;
-  --admin-primary-cta-active: #93330F;
-  --admin-primary-soft: rgba(242, 110, 34, 0.10);
-  --admin-primary-border: rgba(242, 110, 34, 0.32);
-  /* Transplants from the warm prototype (docs/design-direction-verdict.md): copper is the
-     mid-tier brand accent for hairlines/halos where #F26E22 is sub-3:1 on light surfaces;
-     paper is the warm hover/selected tint for panel-side rows and empty states. */
-  --admin-copper: #D46A24;
-  --admin-paper: #F6E7D8;
+  /* Brand ladder. accent = identity + selection (never behind white text,
+     3.37:1); cta = deepened orange for white-label fills (4.70:1); the hero
+     Publish button uses accent + ink text (#161616 on #F15A24 = 5.37:1). */
+  --admin-primary: #F15A24;
+  --admin-primary-hover: #D9501F;
+  --admin-primary-cta: #C94A12;
+  --admin-primary-cta-hover: #B54210;
+  --admin-primary-cta-active: #9E3A0E;
+  --admin-primary-ink: #161616;
+  --admin-primary-soft: rgba(241, 90, 36, 0.10);
+  --admin-primary-border: rgba(241, 90, 36, 0.40);
+  --admin-copper: #C94A12;
+  --admin-paper: #FBEAE1;
 
-  --admin-secondary: #8C6645;
-  --admin-secondary-hover: #594225;
-  --admin-secondary-soft: rgba(140, 102, 69, 0.12);
+  --admin-secondary: #525252;
+  --admin-secondary-hover: #393939;
+  --admin-secondary-soft: rgba(82, 82, 82, 0.12);
 
-  --admin-success: #2F7A56;
-  --admin-success-soft: #DDE9DF;
-  --admin-warning: #D49A06;
-  --admin-warning-text: #7A4E00;
-  --admin-warning-soft: #F3E4BF;
-  --admin-error: #D64545;
-  --admin-danger: #732D2D;
-  --admin-danger-soft: #F3DAD2;
-  --admin-info: #165359;
-  --admin-info-soft: #DCEDEA;
-  --admin-analytics: #705FD9;
-  --admin-focus: #1B25F2;
+  /* Status hues (shell spec): ok #24a148 · warn #f1c21b · bad #da1e28 for
+     dots/bars/graphics (≥3:1 on white for the green/red; the yellow pairs with
+     a dark text partner). Text-bearing variants below are darkened for AA. */
+  --admin-status-ok: #24a148;
+  --admin-status-warn: #f1c21b;
+  --admin-status-bad: #da1e28;
 
-  --admin-state-clean-bg: #EDF5EF;
-  --admin-state-clean-border: rgba(47, 122, 86, 0.30);
-  --admin-state-clean-text: #235C40;
+  --admin-success: #1D6E41;
+  --admin-success-soft: #DEF3E4;
+  --admin-warning: #f1c21b;
+  --admin-warning-text: #684E00;
+  --admin-warning-soft: #FCF4D6;
+  --admin-error: #da1e28;
+  --admin-danger: #A2191F;
+  --admin-danger-soft: #FBE9EA;
+  --admin-info: #31626A;
+  --admin-info-soft: #E0EEF0;
+  --admin-analytics: #525252;
+  --admin-focus: #C94A12;
+
+  --admin-state-clean-bg: #DEF3E4;
+  --admin-state-clean-border: rgba(36, 161, 72, 0.36);
+  --admin-state-clean-text: #1D6E41;
   --admin-state-dirty-bg: var(--admin-warning-soft);
-  --admin-state-dirty-border: rgba(212, 154, 6, 0.46);
-  --admin-state-dirty-text: var(--admin-warning-text);
+  --admin-state-dirty-border: rgba(138, 97, 22, 0.46);
+  --admin-state-dirty-text: #684E00;
   --admin-state-saving-bg: var(--admin-info-soft);
-  --admin-state-saving-border: rgba(22, 83, 89, 0.36);
+  --admin-state-saving-border: rgba(49, 98, 106, 0.36);
   --admin-state-saving-text: var(--admin-info);
   --admin-state-saved-bg: var(--admin-success-soft);
-  --admin-state-saved-border: rgba(47, 122, 86, 0.36);
+  --admin-state-saved-border: rgba(36, 161, 72, 0.36);
   --admin-state-saved-text: var(--admin-success);
-  --admin-state-error-bg: #F5DEDA;
-  --admin-state-error-border: rgba(214, 69, 69, 0.38);
-  --admin-state-error-text: #8A2424;
+  --admin-state-error-bg: #FBE9EA;
+  --admin-state-error-border: rgba(218, 30, 40, 0.38);
+  --admin-state-error-text: #A2191F;
   --admin-state-danger-bg: var(--admin-danger-soft);
-  --admin-state-danger-border: rgba(115, 45, 45, 0.34);
+  --admin-state-danger-border: rgba(162, 25, 31, 0.34);
   --admin-state-danger-text: var(--admin-danger);
   --admin-state-neutral-bg: var(--admin-surface-alt);
   --admin-state-neutral-border: var(--admin-border);
@@ -254,11 +252,13 @@
   --admin-publish-no-change-border: var(--admin-state-clean-border);
   --admin-publish-no-change-text: var(--admin-state-clean-text);
   --admin-publish-viewer-impact-bg: var(--admin-info-soft);
-  --admin-publish-viewer-impact-border: rgba(22, 83, 89, 0.34);
+  --admin-publish-viewer-impact-border: rgba(49, 98, 106, 0.34);
   --admin-publish-viewer-impact-text: var(--admin-info);
 
-  /* Cool neutral-slate pill markers to match the chrome; orange ring on the selected
-     pill (no dark fill). */
+  /* Marker-legend tokens. The map pills themselves render via SeatMarker's
+     protected viewer-variant hex values; these tokens only color the legend
+     chips and result-row dots, so they mirror the marker hues. Do not point
+     the markers at these. */
   --admin-marker-assigned-surface: rgba(232, 243, 236, 0.96);
   --admin-marker-assigned-border: rgba(31, 122, 85, 0.26);
   --admin-marker-assigned-text: #156045;
@@ -267,9 +267,6 @@
   --admin-marker-available-border: rgba(31, 34, 37, 0.16);
   --admin-marker-available-text: #475059;
   --admin-marker-available-accent: rgba(107, 113, 119, 0.5);
-  /* Reserved = the one ochre (aligned with the shared state-warning ochre #9A6418,
-     4.86:1 on surface, 3.77:1 vs the beige floor) so reserved and draft-change no longer
-     share an amber band (deutan-safe separation; draft-change is copper). */
   --admin-marker-reserved-surface: rgba(252, 240, 217, 0.96);
   --admin-marker-reserved-border: rgba(154, 100, 24, 0.4);
   --admin-marker-reserved-text: #6D4712;
@@ -279,67 +276,43 @@
   --admin-marker-unavailable-text: #6b7177;
   --admin-marker-unavailable-accent: rgba(107, 113, 119, 0.6);
   --admin-marker-selected-surface: rgba(255, 255, 255, 0.97);
-  /* Rust boundary (5.67:1 on white / >=3:1 on the pale floor) so the selected pill meets
-     WCAG 1.4.11 on the solid ring itself, not just via the outer hairline. The brand
-     #F26E22 halo is retained below for identity, plus the dark hairline for extra pop. */
   --admin-marker-selected-border: var(--admin-primary-cta);
-  --admin-marker-selected-text: #1f2225;
-  --admin-marker-selected-shadow: 0 0 0 2px rgba(242, 110, 34, 0.30), 0 0 0 3px rgba(31, 34, 37, 0.30), 0 10px 22px rgba(31, 34, 37, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  --admin-marker-selected-text: #161616;
+  --admin-marker-selected-shadow: 0 0 0 2px rgba(241, 90, 36, 0.30), 0 0 0 3px rgba(22, 22, 22, 0.30), 0 10px 22px rgba(22, 22, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
   --admin-marker-search-surface: var(--admin-info-soft);
-  --admin-marker-search-border: rgba(22, 83, 89, 0.78);
-  --admin-marker-search-text: var(--admin-info);
+  --admin-marker-search-border: rgba(47, 102, 104, 0.78);
+  --admin-marker-search-text: #2F6668;
   --admin-marker-search-ring: rgba(75, 149, 166, 0.44);
   --admin-marker-search-halo: rgba(75, 149, 166, 0.32);
-  /* Draft-change = copper family: distinct from the #F26E22 selection ring AND from
-     reserved ochre (was amber-on-amber with reserved; two meanings, one channel). */
-  --admin-marker-draft-surface: rgba(212, 106, 36, 0.10);
-  --admin-marker-draft-border: rgba(212, 106, 36, 0.60);
-  --admin-marker-draft-text: #6F2C13;
+  --admin-marker-draft-surface: rgba(201, 74, 18, 0.10);
+  --admin-marker-draft-border: rgba(201, 74, 18, 0.60);
+  --admin-marker-draft-text: #7A2E0C;
   --admin-marker-draft-accent: var(--admin-copper);
-  /* Teal owns transient map interactions (hover/search/swap); orange stays committed
-     (selection, primary actions). Focus aligns with the app-wide focus hue. */
   --admin-marker-hover-border: #2F6668;
-  --admin-marker-hover-shadow: 0 6px 14px rgba(31, 34, 37, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
-  --admin-marker-focus-ring: rgba(194, 65, 12, 0.75);
+  --admin-marker-hover-shadow: 0 6px 14px rgba(22, 22, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  --admin-marker-focus-ring: rgba(201, 74, 18, 0.75);
   --admin-marker-focus-offset: rgba(255, 255, 255, 0.70);
-  /* Mode-target states from the 17-state taxonomy (Figma "Seat marker" set, charcoal
-     values): move origin stays muted while a destination is chosen; valid targets read
-     green without color-only reliance (border + surface); invalid targets pair a grey
-     border with a brick accent dot. */
-  --admin-marker-move-origin-surface: #F4F5F6;
-  --admin-marker-move-origin-border: #AEBAC0;
-  --admin-marker-move-origin-text: #475059;
-  --admin-marker-target-valid-surface: #EDF5EF;
-  --admin-marker-target-valid-border: #2E7D57;
-  --admin-marker-target-valid-text: #1D5C3F;
-  --admin-marker-target-invalid-surface: #FCFCFD;
-  --admin-marker-target-invalid-border: #808080;
-  --admin-marker-target-invalid-text: #6B7177;
-  --admin-marker-target-invalid-accent: #B32F2F;
+  --admin-marker-move-origin-surface: #f4f4f4;
+  --admin-marker-move-origin-border: #a8a8a8;
+  --admin-marker-move-origin-text: #525252;
+  --admin-marker-target-valid-surface: #DEF3E4;
+  --admin-marker-target-valid-border: #24a148;
+  --admin-marker-target-valid-text: #1D6E41;
+  --admin-marker-target-invalid-surface: #ffffff;
+  --admin-marker-target-invalid-border: #8d8d8d;
+  --admin-marker-target-invalid-text: #6f6f6f;
+  --admin-marker-target-invalid-accent: #da1e28;
 
-  /* Elevation system 0-5 (background + border + shadow triplets; see the Figma
-     Elevation styles for the same spec):
-       0 canvas  — bg canvas,  no border,        no shadow (page + map workspace)
-       1 panel   — bg surface, border default,   no shadow (docked panels, cards)
-       2 raised  — bg surface, border default,   shadow-2  (inputs, tool cluster, sticky headers)
-       3 overlay — bg surface, border strong,    shadow-3  (drawers, menus, popovers; no scrim)
-       4 modal   — bg surface, no border,        shadow-4  (dialogs + sheets; scrim on dialogs only)
-       5 toast   — bg chrome,  no border,        shadow-5  (toasts; topmost) */
-  /* Two-layer shadows (a tight contact shadow + a soft ambient one) read as real light
-     rather than a single grey smudge, so panels/drawers separate cleanly from the canvas.
-     Decorative only — no contrast impact. */
-  --admin-elevation-2-shadow: 0 1px 2px rgba(15, 18, 20, 0.05), 0 2px 8px -2px rgba(15, 18, 20, 0.06);
-  --admin-elevation-3-shadow: 0 1px 2px rgba(15, 18, 20, 0.05), 0 10px 28px -6px rgba(15, 18, 20, 0.16);
-  --admin-elevation-4-shadow: 0 1px 2px rgba(15, 18, 20, 0.06), 0 20px 48px -8px rgba(15, 18, 20, 0.22);
-  --admin-elevation-5-shadow: 0 8px 24px rgba(15, 18, 20, 0.24);
+  /* Elevation flattened to the shell language: hairline borders carry most of
+     the separation; shadows are quiet and reserved for overlays/menus. */
+  --admin-elevation-2-shadow: 0 1px 2px rgba(22, 22, 22, 0.06);
+  --admin-elevation-3-shadow: 0 6px 16px rgba(22, 22, 22, 0.14);
+  --admin-elevation-4-shadow: 0 12px 40px rgba(22, 22, 22, 0.24);
+  --admin-elevation-5-shadow: 0 8px 24px rgba(22, 22, 22, 0.24);
 
-  /* Refined chrome depth: the top bar gets a crisp floor line + soft ambient drop so it
-     reads as a physical layer above the canvas; the map viewport gets a gentle inset so
-     the floor plan sits in a recessed well and the seat pills read as raised. Floating
-     panels ride elevation 3. */
-  --admin-shadow-shell: 0 1px 0 rgba(15, 18, 20, 0.42), 0 8px 20px -10px rgba(15, 18, 20, 0.5);
+  --admin-shadow-shell: none;
   --admin-shadow-command: none;
-  --admin-shadow-map: inset 0 2px 6px rgba(15, 18, 20, 0.07);
+  --admin-shadow-map: none;
   --admin-shadow-panel: var(--admin-elevation-3-shadow);
 }
 
@@ -368,8 +341,9 @@
 
 body {
   margin: 0;
-  background: #eef2f7;
-  color: #0f172a;
+  background: #f4f4f4;
+  color: #161616;
+  font-family: var(--font-sans, "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
 }
 
 button,
