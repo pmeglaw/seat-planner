@@ -73,3 +73,11 @@ npm run dev   # viewer /, admin /admin — both authenticated
 - **One filter, prototype presentation**: `FilterPanel` is now the compact dark dropdown anchored under the chrome Filter button (admin anchors via measured `--filter-anchor` left; viewer wraps it absolutely). Its old `collapsed/onToggle` props are gone (`onClose`/`panelId` instead). `data-filter-ui` marks the button+panel for the outside-click dismiss handler.
 - **Chrome icons**: funnel+caret (Filter), columns (Management), sparkle (Ask Planner) as inline SVGs — no icon package.
 - Guard note: `accessibility-source` still pins `ActiveFilterChips`, `aria-label="Active filters"`, chip `removeLabel`, and "Clear all" — all preserved.
+
+## Addendum 2026-07-10 (commit d53a243) — round-2 QA polish
+
+- **Fit view is the default and final resting state**: `mapViewMode` initializes to `"overview"`, which now always renders individual seat markers — the zone/cluster pills are RETIRED from the map UI (`lib/seatClusters` + its lib tests remain; `tests/seat-clusters.test.mjs` now asserts SeatMap does NOT wire clusters). Select/deselect never changes zoom or mode; the reserved column resizes the viewport and the overview ResizeObserver re-fits the frame. The rightSlotTier re-fit effects, the select-time nudge scroll, and the inspector entrance animation were all removed.
+- **Filter + Search are one connected 26px control** in the chrome bar (both surfaces); the dropdown anchors inside the group (`-left-px top-full`) so it butts the button. FilterPanel lost its heading + `onClearAll` prop and gained internal Escape handling. The mobile filter button + measured-anchor positioning are gone (the group is visible at all widths; search input hides <lg).
+- **Kebab** (`data-map-menu`, right end of the map-header row): Fit map to view · Zoom to 100% · Add seat. The Add seat item keeps the guard-pinned `aria-pressed={addSeatMode}` / `onClick={addSeatMode ? cancelAddSeatMode : startAddSeatMode}` / label patterns; `startAddSeatMode`/`cancelAddSeatMode` also close the menu.
+- Toolbar: Undo/Redo have text labels again; order is Undo · Redo · Show names · Management · Ask Planner; only the brand divider remains.
+- NOT live-verified: the Chrome extension disconnected before the round-2 visual pass (static suite green; recommend one manual eyeball of select/deselect + kebab + filter group).
