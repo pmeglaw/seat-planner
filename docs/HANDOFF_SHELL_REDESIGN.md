@@ -66,3 +66,10 @@
 npm ci && npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e
 npm run dev   # viewer /, admin /admin — both authenticated
 ```
+
+## Addendum 2026-07-10 (commit 35cb4a3) — prototype-match fixes
+
+- **Right slot reserves layout** at the panel tier (expanded inspector / results panel / mode card → `panel:pr-[332px]`, collapsed rail → `panel:pr-[56px]` on the content wrapper); a `rightSlotTier` change effect re-fits the map (overview + scroll reset) so the floor plan is never hidden behind a panel. Bottom sheets <900px unchanged.
+- **One filter, prototype presentation**: `FilterPanel` is now the compact dark dropdown anchored under the chrome Filter button (admin anchors via measured `--filter-anchor` left; viewer wraps it absolutely). Its old `collapsed/onToggle` props are gone (`onClose`/`panelId` instead). `data-filter-ui` marks the button+panel for the outside-click dismiss handler.
+- **Chrome icons**: funnel+caret (Filter), columns (Management), sparkle (Ask Planner) as inline SVGs — no icon package.
+- Guard note: `accessibility-source` still pins `ActiveFilterChips`, `aria-label="Active filters"`, chip `removeLabel`, and "Clear all" — all preserved.
