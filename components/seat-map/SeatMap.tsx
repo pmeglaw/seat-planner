@@ -283,6 +283,8 @@ export function SeatMap({
   const [zone, setZone] = useState("all");
   const [status, setStatus] = useState("all");
   const [filterCollapsed, setFilterCollapsed] = useState(true);
+  const [filterAnchorLeft, setFilterAnchorLeft] = useState<number | null>(null);
+  const filterButtonRef = useRef<HTMLButtonElement | null>(null);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
   const chromeSearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -339,6 +341,8 @@ export function SeatMap({
 
   const toggleFilterPanel = useCallback(() => {
     setAskPlannerOpen(false);
+    // Anchor the dropdown menu to the chrome Filter button (prototype .fmenu).
+    setFilterAnchorLeft(filterButtonRef.current?.getBoundingClientRect().left ?? null);
     setFilterCollapsed(current => !current);
   }, []);
 
@@ -405,6 +409,20 @@ export function SeatMap({
     const timer = window.setTimeout(() => setStaleDraftNotice(null), 15000);
     return () => window.clearTimeout(timer);
   }, [staleDraftNotice]);
+
+  // The filter dropdown behaves like a menu (prototype .fmenu): a pointer press
+  // outside the panel or its trigger buttons dismisses it.
+  useEffect(() => {
+    if (filterCollapsed) return;
+
+    function handleOutsidePointer(event: globalThis.PointerEvent) {
+      if (event.target instanceof Element && event.target.closest("[data-filter-ui]")) return;
+      setFilterCollapsed(true);
+    }
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [filterCollapsed]);
 
   // Global command (3b): ⌘K / Ctrl+K focuses the command search — the chrome
   // input at lg+, the slim canvas row below that tier.
@@ -1874,6 +1892,44 @@ export function SeatMap({
   // owns the panel slot (its microcopy lives in the occupant, INV-4). Move mode
   // keeps the inspector as the occupant — the drag hint renders inside it.
   const modeCardOpen = canEdit && Boolean(activeMode) && (!selectedSeat || inspectorCollapsed);
+  // Prototype "stage": at the panel tier the inspector RESERVES layout width
+  // instead of overlaying the canvas — expanded takes the 320px column, the
+  // collapsed rail takes 44px, and the content wrapper pads right to match.
+  // Mirrors SeatInspector's own render rules (rail hidden while another panel
+  // owns the slot) so the reservation never outlives the panel.
+  const inspectorPillSuppressed = resultsPanelOpen || modeCardOpen || askPlannerOpen;
+  const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
+    ? !inspectorCollapsed
+      ? "expanded"
+      : swapSourceSeatId || inspectorPillSuppressed
+        ? "none"
+        : "rail"
+    : "none";
+  // Whatever occupies the right slot reserves the column — expanded inspector,
+  // results panel, or mode card — so nothing renders hidden behind a panel.
+  const rightSlotTier: "expanded" | "rail" | "none" =
+    inspectorDockTier === "expanded" || resultsPanelOpen || modeCardOpen ? "expanded" : inspectorDockTier;
+  const stageReservedClassName = rightSlotTier === "expanded"
+    ? "panel:pr-[332px]"
+    : rightSlotTier === "rail"
+      ? "panel:pr-[56px]"
+      : "";
+  // Re-fit the map whenever the reserved inspector column opens/closes at the
+  // panel tier: the canvas width changed, so snap back to the fitted view so
+  // the whole floor plan stays fully in view — nothing hidden behind the panel.
+  const rightSlotTierRef = useRef(rightSlotTier);
+  useEffect(() => {
+    if (rightSlotTierRef.current === rightSlotTier) return;
+    rightSlotTierRef.current = rightSlotTier;
+    if (!window.matchMedia("(min-width: 900px)").matches) return;
+
+    setZoomFactor(1);
+    setMapViewMode("overview");
+    window.requestAnimationFrame(() => {
+      mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    });
+  }, [rightSlotTier]);
+
   // Floating panels intentionally overlay the canvas, so banners need no safe area.
   const canvasBannerSafeAreaClassName = "";
   // Scale readiness (Figma page 10): overview zoom clusters markers into zone pills;
@@ -1889,13 +1945,10 @@ export function SeatMap({
     Boolean(swapConfirm)
   );
   const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;
-  const filterPanelShellClass = [
-    filterCollapsed ? "order-2" : "order-1",
-    canEdit && filterCollapsed ? "lg:hidden" : "",
-    !filterCollapsed
-      ? "lg:fixed lg:left-3 lg:top-[44px] lg:z-40 lg:w-[288px] lg:[&>aside]:top-0 lg:[&>aside]:max-h-[calc(100vh-56px)]"
-      : ""
-  ].join(" ");
+  // Filter dropdown wrapper: a fixed sheet under the bar on small screens,
+  // anchored under the chrome Filter button (measured left) at lg+.
+  const filterPanelShellClass =
+    "fixed inset-x-2 top-[44px] z-50 max-h-[72vh] overflow-auto lg:inset-x-auto lg:left-[var(--filter-anchor,176px)] lg:w-[288px]";
   const mapViewportClassName = [
     "relative mx-auto w-full max-w-full overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
     mapViewMode === "overview"
@@ -1998,20 +2051,26 @@ export function SeatMap({
         {/* Filter sits immediately to the LEFT of Search (deliberate pairing). */}
         {canEdit && (
           <button
+            ref={filterButtonRef}
             type="button"
+            data-filter-ui
             onClick={toggleFilterPanel}
             aria-controls="seat-map-filter-panel"
             aria-expanded={!filterCollapsed}
+            aria-haspopup="true"
             aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
-            className={["mr-2 hidden lg:inline-flex", structuredFilterCount > 0 ? chromeToolbarBtnActive : chromeToolbarBtn].join(" ")}
+            className={["mr-2 hidden lg:inline-flex", structuredFilterCount > 0 || !filterCollapsed ? chromeToolbarBtnActive : chromeToolbarBtn].join(" ")}
           >
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-              <path d="M3.5 5h13M6 10h8M8.5 15h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              <path d="M3 4.5h14l-5.4 6.2v4.8l-3.2-1.7v-3.1L3 4.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
             </svg>
             Filter
             {structuredFilterCount > 0 && (
               <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{structuredFilterCount}</span>
             )}
+            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--admin-chrome-muted)]">
+              <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         )}
 
@@ -2055,12 +2114,17 @@ export function SeatMap({
           <nav role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:ml-0 lg:flex-none lg:overflow-visible">
             <button
               type="button"
+              data-filter-ui
               onClick={toggleFilterPanel}
               aria-controls="seat-map-filter-panel"
               aria-expanded={!filterCollapsed}
+              aria-haspopup="true"
               aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
-              className={["lg:hidden", structuredFilterCount > 0 ? chromeToolbarBtnActive : chromeToolbarBtn].join(" ")}
+              className={["lg:hidden", structuredFilterCount > 0 || !filterCollapsed ? chromeToolbarBtnActive : chromeToolbarBtn].join(" ")}
             >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                <path d="M3 4.5h14l-5.4 6.2v4.8l-3.2-1.7v-3.1L3 4.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+              </svg>
               Filter
               {structuredFilterCount > 0 && (
                 <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{structuredFilterCount}</span>
@@ -2101,6 +2165,10 @@ export function SeatMap({
               }}
               className={chromeToolbarBtn}
             >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                <rect x="3" y="4" width="14" height="12" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M3 8h14M8.5 8v8" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
               Management
             </Link>
             <button
@@ -2113,6 +2181,10 @@ export function SeatMap({
               onClick={openAskPlannerDrawer}
               className={askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? chromeToolbarBtnActive : chromeToolbarBtn}
             >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                <path d="M10 3.2 11.7 8 16.5 9.7 11.7 11.4 10 16.2 8.3 11.4 3.5 9.7 8.3 8 10 3.2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+                <path d="M15.6 3.4v3M14.1 4.9h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
               Ask Planner
               {plannerHighlightedSeatIds.length > 0 && (
                 <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
@@ -2202,7 +2274,7 @@ export function SeatMap({
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden">
+      <div className={["mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
         
 
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
@@ -2242,16 +2314,19 @@ export function SeatMap({
 
       <main className={["grid grid-cols-1 gap-2 bg-[var(--admin-surface-muted)] p-2 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
         {showFilterPanel && (
-          <div className={filterPanelShellClass}>
+          <div
+            data-filter-ui
+            className={filterPanelShellClass}
+            style={filterAnchorLeft != null ? ({ "--filter-anchor": `${filterAnchorLeft}px` } as React.CSSProperties) : undefined}
+          >
             <FilterPanel
               department={department}
               status={status}
               departments={departments}
               zone={zone}
               zones={zones}
-              collapsed={filterCollapsed}
               activeChips={activeFilterChips}
-              onToggle={toggleFilterPanel}
+              onClose={toggleFilterPanel}
               onDepartmentChange={setDepartment}
               onZoneChange={setZone}
               onStatusChange={setStatus}
@@ -2738,7 +2813,7 @@ export function SeatMap({
         departmentOptions={localDepartmentOptions}
         canEdit={canEdit}
         collapsed={inspectorCollapsed}
-        pillSuppressed={resultsPanelOpen || modeCardOpen}
+        pillSuppressed={inspectorPillSuppressed}
         swapMode={Boolean(swapSourceSeatId)}
         searchMismatchNotice={selectedSeatMismatchNotice}
         searchMismatchClearLabel={clearSearchContextLabel}

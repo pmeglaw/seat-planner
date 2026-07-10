@@ -12,6 +12,7 @@ import {
   seatsToVisualSeats
 } from "@/lib/mapLayoutTransform";
 import { buildViewerSeatSearch, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
+import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FLOOR_LABELS, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
@@ -354,6 +355,29 @@ export function ViewerSeatFinder({
     fitSeatIdsInMap(result.seatIds);
   }
 
+  const activeFilterChips: ActiveFilterChip[] = [
+    searchActive ? { id: "search", label: "Search", value: searchResults.query, removeLabel: `Remove search filter ${searchResults.query}` } : null,
+    department !== "all" ? { id: "department", label: "Department", value: department, removeLabel: `Remove department filter ${department}` } : null,
+    zone !== "all" ? { id: "zone", label: "Zone", value: zone, removeLabel: `Remove zone filter ${zone}` } : null,
+    status !== "all" ? { id: "status", label: "Status", value: STATUS_LABELS[status as SeatStatus] ?? status, removeLabel: `Remove status filter ${STATUS_LABELS[status as SeatStatus] ?? status}` } : null
+  ].filter(Boolean) as ActiveFilterChip[];
+
+  function removeActiveFilterChip(chipId: string) {
+    if (chipId === "search") {
+      clearSearch();
+      return;
+    }
+    if (chipId === "department") {
+      setDepartment("all");
+      return;
+    }
+    if (chipId === "zone") {
+      setZone("all");
+      return;
+    }
+    if (chipId === "status") setStatus("all");
+  }
+
   const resultCountLabel = searchResults.results.length === 1 ? "1 result" : `${searchResults.results.length} results`;
   const mapAnnouncement = selectedResultTitle
     ? `${selectedResultTitle} selected on the published map.`
@@ -365,6 +389,38 @@ export function ViewerSeatFinder({
     : `Published map · ${publishedSeats.length} ${publishedSeats.length === 1 ? "seat" : "seats"}`;
   const mapZoomLabel = zoomFactor === null ? "Fit" : `${Math.round(zoomFactor * 100)}%`;
   const resultsPanelOpen = searchActive && (!selectedSeat || inspectorCollapsed);
+  // Prototype "stage": at the panel tier the inspector reserves layout width
+  // (320px expanded, 44px rail) instead of overlaying the map.
+  const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
+    ? !inspectorCollapsed
+      ? "expanded"
+      : resultsPanelOpen
+        ? "none"
+        : "rail"
+    : "none";
+  // Whatever occupies the right slot reserves the column — expanded inspector
+  // or results panel — so nothing renders hidden behind a panel.
+  const rightSlotTier: "expanded" | "rail" | "none" =
+    inspectorDockTier === "expanded" || resultsPanelOpen ? "expanded" : inspectorDockTier;
+  const stageReservedClassName = rightSlotTier === "expanded"
+    ? "panel:pr-[332px]"
+    : rightSlotTier === "rail"
+      ? "panel:pr-[56px]"
+      : "";
+
+  // Re-fit when the reserved right column opens/closes at the panel tier,
+  // so the whole floor plan stays fully in view in the resized canvas.
+  const rightSlotTierRef = useRef(rightSlotTier);
+  useEffect(() => {
+    if (rightSlotTierRef.current === rightSlotTier) return;
+    rightSlotTierRef.current = rightSlotTier;
+    if (!window.matchMedia("(min-width: 900px)").matches) return;
+
+    setZoomFactor(null);
+    window.requestAnimationFrame(() => {
+      mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    });
+  }, [rightSlotTier]);
 
   const mapViewportClassName = cx(
     "relative mx-auto w-full max-w-full overflow-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)]",
@@ -406,54 +462,39 @@ export function ViewerSeatFinder({
             onClick={() => setFilterOpen(current => !current)}
             aria-expanded={filterOpen}
             aria-controls="viewer-filter-panel"
+            aria-haspopup="true"
             aria-label={structuredFilterCount ? `Filter published seating, ${structuredFilterCount} active` : "Filter published seating"}
             className={structuredFilterCount > 0 || filterOpen ? chromeToolbarBtnActive : chromeToolbarBtn}
           >
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-              <path d="M3.5 5h13M6 10h8M8.5 15h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              <path d="M3 4.5h14l-5.4 6.2v4.8l-3.2-1.7v-3.1L3 4.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
             </svg>
             Filter
             {structuredFilterCount > 0 && (
               <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{structuredFilterCount}</span>
             )}
+            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--admin-chrome-muted)]">
+              <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
           {filterOpen && (
-            <div
-              id="viewer-filter-panel"
-              className="absolute left-0 top-[calc(100%+1px)] z-40 w-[260px] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 text-[var(--admin-text-primary)] shadow-[var(--admin-elevation-3-shadow)]"
-            >
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <h2 className="text-[12.5px] font-semibold">Filter</h2>
-                {structuredFiltersActive && (
-                  <button type="button" onClick={clearStructuredFilters} className="text-[11px] font-semibold text-[var(--admin-primary-cta)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]">
-                    Clear filters
-                  </button>
-                )}
-              </div>
-              <label className="block">
-                <span className="text-[11px] font-medium text-[var(--admin-text-muted)]">Department</span>
-                <select value={department} onChange={event => setDepartment(event.target.value)} className="mt-1 w-full cursor-pointer border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-sm outline-none transition hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]">
-                  <option value="all">All departments</option>
-                  {departments.map(value => <option key={value} value={value}>{value}</option>)}
-                </select>
-              </label>
-              <label className="mt-2 block">
-                <span className="text-[11px] font-medium text-[var(--admin-text-muted)]">Zone</span>
-                <select value={zone} onChange={event => setZone(event.target.value)} className="mt-1 w-full cursor-pointer border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-sm outline-none transition hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]">
-                  <option value="all">All zones</option>
-                  {zones.map(value => <option key={value} value={value}>{value}</option>)}
-                </select>
-              </label>
-              <label className="mt-2 block">
-                <span className="text-[11px] font-medium text-[var(--admin-text-muted)]">Status</span>
-                <select value={status} onChange={event => setStatus(event.target.value)} className="mt-1 w-full cursor-pointer border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-sm outline-none transition hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]">
-                  <option value="all">All statuses</option>
-                  <option value="available">Available</option>
-                  <option value="assigned">Assigned</option>
-                  <option value="reserved">Reserved</option>
-                  <option value="unavailable">Unavailable</option>
-                </select>
-              </label>
+            <div className="absolute left-0 top-[calc(100%+1px)] z-50 w-[288px] max-w-[calc(100vw-16px)]">
+              <FilterPanel
+                department={department}
+                status={status}
+                departments={departments}
+                zone={zone}
+                zones={zones}
+                activeChips={activeFilterChips}
+                panelId="viewer-filter-panel"
+                onClose={() => setFilterOpen(false)}
+                onDepartmentChange={setDepartment}
+                onZoneChange={setZone}
+                onStatusChange={setStatus}
+                onRemoveActiveChip={removeActiveFilterChip}
+                onClearFilters={clearStructuredFilters}
+                onClearAll={clearAllConstraints}
+              />
             </div>
           )}
         </div>
@@ -523,22 +564,14 @@ export function ViewerSeatFinder({
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden">
+      <div className={["mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
         <main className="flex min-w-0 flex-1 flex-col lg:min-h-0 lg:overflow-hidden">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-0.5 pb-2">
             <FloorSelector floor={floor} onChange={setFloor} />
             <span className="text-[12px] text-[var(--admin-text-secondary)]">{mapCrumbLabel}</span>
             <span className="rounded-full bg-[var(--admin-success-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--admin-success)] ring-1 ring-[var(--admin-success)]/30">Published</span>
             <span className="rounded-full bg-[var(--admin-surface)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-border)]">Read-only</span>
-            {filtersActive && (
-              <button
-                type="button"
-                onClick={clearAllConstraints}
-                className="ml-auto border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:text-[var(--admin-primary-cta)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
-              >
-                Reset
-              </button>
-            )}
+            <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="ml-auto" />
           </div>
 
           <div className="relative min-w-0 lg:flex lg:min-h-0 lg:flex-1">
