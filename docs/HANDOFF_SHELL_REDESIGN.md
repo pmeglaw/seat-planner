@@ -81,3 +81,32 @@ npm run dev   # viewer /, admin /admin — both authenticated
 - **Kebab** (`data-map-menu`, right end of the map-header row): Fit map to view · Zoom to 100% · Add seat. The Add seat item keeps the guard-pinned `aria-pressed={addSeatMode}` / `onClick={addSeatMode ? cancelAddSeatMode : startAddSeatMode}` / label patterns; `startAddSeatMode`/`cancelAddSeatMode` also close the menu.
 - Toolbar: Undo/Redo have text labels again; order is Undo · Redo · Show names · Management · Ask Planner; only the brand divider remains.
 - Live-verified 2026-07-10 (second pass): default fit = all 60 individual markers; select→reserve+re-fit; click-away returns to identical fit view (bug gone); zoomed 100% select/deselect preserves zoom exactly; kebab renders Fit/100%/Add seat; filter menu butts its button (measured gap 0px), no heading; viewer shares the same control; zero console errors. The pass caught + fixed a real bug: the fit view stuck small after deselect (missing lg:flex-1 on the content column — height fed back into the fit-width calc).
+
+## Addendum 2026-07-10 — visual-pass playbook (how round 2 was verified)
+
+What the re-run pass did, so the next session can repeat it without rediscovering the tooling.
+
+### Coverage + evidence
+Two kinds of evidence, deliberately mixed: **screenshots** for look/layout, **DOM measurements via `javascript_tool`** for facts a screenshot can't prove (or when the tab won't paint — see gotchas). Verified on `/admin` and `/`:
+
+| Check | Evidence |
+| --- | --- |
+| Default = fit view, all 60 individual markers, no clusters | screenshot + "Fit" readout |
+| Select → reserved column + re-fit, whole plan visible, no animation | screenshot |
+| Click-away → identical full-width fit view (the round-2 bug) | screenshot before/after |
+| Zoomed select/deselect preserves zoom | frame width 1911px + label "100%" measured before/during/after |
+| Kebab = Fit map to view · Zoom to 100% · Add seat | DOM item list + screenshot |
+| Filter menu butts its button, no heading, 3 selects | measured `gap: 0px` + screenshot; same on viewer |
+| Console | zero errors on both surfaces |
+
+### Bug found by the pass (fixed in `1e015e8`)
+Select→deselect left the fit view stuck at the reserved (smaller) width. The content column div above `<main>` lacked `lg:flex-1`, so the viewport height hugged the shrunken frame and `updateOverviewMapWidth` (min of available-width / available-height×aspect) fed back on itself. **Diagnostic signature:** after deselect, the frame width equals the reserved-period width and the viewport hugs the frame instead of filling. **Rule:** every ancestor between the `lg:h-screen` root and the map viewport needs `lg:flex-1 lg:min-h-0` (or `h-full`) — the fit calculation must never see a content-derived height.
+
+### Browser-tooling gotchas (Claude-in-Chrome on this machine)
+- **CDP screenshots time out ⇢ check `document.visibilityState` first.** Chrome won't paint hidden tabs; "renderer frozen" almost always means the tab/window is backgrounded, not a hang. `javascript_tool`, `find`, and `read_console_messages` keep working — fall back to DOM assertions, or `tabs_create_mcp` a fresh tab (it opens focused/paintable) and re-navigate there.
+- **The extension drops and reconnects** when Chrome closes/reopens; stale tab IDs die with it — re-run `tabs_context_mcp` and expect a new tab-group window that PowerShell sees with no usable `MainWindowTitle`.
+- **Foregrounding Chrome from the shell:** `(New-Object -ComObject wscript.shell).AppActivate(<pid or title>)`; also the fix for the stuck 500% per-origin zoom (`SendKeys('^0')` after activating).
+- **Native `<select>` options don't take synthetic coordinate clicks.** Set the value with the prototype setter + `dispatchEvent(new Event("change", {bubbles:true}))` so React sees it.
+- **After zooming, coordinate clicks miss** (map panned) — click markers via DOM instead: `[...document.querySelectorAll('[data-seat-id]')].find(b => b.textContent.includes('W08')).click()`.
+- **A blank beige map on first load is dev-compile lag** for the 1911×867 raster, not a regression — wait ~2-3s and confirm via the `img` element's `complete`/`naturalWidth`.
+- Dev server: `npm run dev` detaches to a daemon (wrapper "fails" with exit 1 while the server keeps running) — trust `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/login`, and kill by the PID it prints.
