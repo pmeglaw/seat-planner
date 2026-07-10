@@ -2221,7 +2221,10 @@ export function SeatMap({
       <div className={["mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
         
 
-        <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
+        {/* lg:flex-1 keeps the height chain rigid: without it the fit-view
+            width/height calculation feeds back on itself after the reserved
+            inspector column opens and closes, sticking the map small. */}
+        <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0 lg:flex-1">
           <div role="search" aria-label="Canvas search" className="z-30 px-0.5 pb-2 lg:hidden">
             <label className="relative block w-full min-w-0">
               <span className="sr-only">Search employee, seat, job title, department, or zone</span>
