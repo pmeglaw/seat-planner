@@ -86,10 +86,6 @@ function getSeatPerson(seat: SeatWithEmployee, employeeById: Map<string, Employe
   return getSeatEmployee(seat, employeeById);
 }
 
-function getEmployeeSeat(employee: Employee, seats: SeatWithEmployee[]) {
-  return seats.find(seat => seat.employee_id === employee.id || seat.employee?.id === employee.id) ?? null;
-}
-
 function uniqueValues(values: Array<string | null | undefined>) {
   const seen = new Map<string, string>();
   values.forEach(value => {
@@ -133,8 +129,19 @@ export function buildViewerSeatSearch({
     };
   }
 
+  // First seat per employee in seat order, matching on either the FK or the
+  // joined employee row — the Map replaces a per-employee scan of all seats.
+  const assignedSeatByEmployeeId = new Map<string, SeatWithEmployee>();
+  seats.forEach(seat => {
+    for (const employeeId of [seat.employee_id, seat.employee?.id]) {
+      if (employeeId && !assignedSeatByEmployeeId.has(employeeId)) {
+        assignedSeatByEmployeeId.set(employeeId, seat);
+      }
+    }
+  });
+
   activeEmployees.forEach(employee => {
-    const assignedSeat = getEmployeeSeat(employee, seats);
+    const assignedSeat = assignedSeatByEmployeeId.get(employee.id) ?? null;
     const zone = assignedSeat ? getSeatZone(assignedSeat) : null;
     if (!matchesQuery(query, [employee.full_name, employee.position, employee.department, employee.phone_extension, assignedSeat?.label, zone])) return;
 
