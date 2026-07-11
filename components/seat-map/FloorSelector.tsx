@@ -23,6 +23,17 @@ type FloorSelectorProps = {
   onChange: (floor: FloorId) => void;
 };
 
+export function FloorPlaceholder() {
+  return (
+    <div role="status" className="grid min-h-[360px] w-full place-items-center p-6 text-center sm:min-h-[520px] lg:h-full lg:min-h-0">
+      <div>
+        <div className="text-sm font-semibold text-[var(--admin-text-primary)]">{FLOOR_LABELS["2"]}</div>
+        <p className="mt-1 text-xs text-[var(--admin-text-muted)]">Not yet mapped — reserved for a future rollout.</p>
+      </div>
+    </div>
+  );
+}
+
 export function FloorSelector({ floor, onChange }: FloorSelectorProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);

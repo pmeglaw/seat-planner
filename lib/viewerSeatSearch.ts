@@ -37,6 +37,8 @@ const KIND_ORDER: Record<ViewerSearchResultKind, number> = {
   zone: 40
 };
 
+// Kept local (not imported from lib/types): tests/viewer-seat-search.test.mjs
+// transpiles this module standalone, so runtime imports cannot resolve here.
 const STATUS_LABELS: Record<SeatStatus, string> = {
   assigned: "Assigned",
   available: "Available",

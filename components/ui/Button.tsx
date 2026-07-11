@@ -5,6 +5,10 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "danger" | "ghost";
 };
 
+// Admin-theme confirm dialogs force the danger CTA over the variant palette.
+export const adminDangerButtonClassName =
+  "!border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)]";
+
 const variants = {
   primary:
     "border-[var(--sp-color-action-primary)] bg-[var(--sp-color-action-primary)] text-white hover:border-[var(--sp-color-action-primary-hover)] hover:bg-[var(--sp-color-action-primary-hover)] focus-visible:ring-orange-200",

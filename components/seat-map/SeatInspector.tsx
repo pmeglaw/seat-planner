@@ -8,7 +8,7 @@ import { updateSeatAction } from "@/app/actions";
 import { canDeleteSeat, getSeatDeleteBlockReason, isProtectedOriginalSeatLabel } from "@/lib/seatProtection";
 import { formatDisplayName } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
-import { Button } from "@/components/ui/Button";
+import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 
 type SeatInspectorProps = {
   seat: SeatWithEmployee | null;
@@ -1381,7 +1381,7 @@ export function SeatInspector({
             <Button type="button" onClick={() => setVacateConfirmOpen(false)} disabled={pending} className="w-full">
               Cancel
             </Button>
-            <Button type="button" variant="danger" onClick={confirmVacateSeat} disabled={pending} className="w-full !border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)]">
+            <Button type="button" variant="danger" onClick={confirmVacateSeat} disabled={pending} className={`w-full ${adminDangerButtonClassName}`}>
               Vacate seat
             </Button>
           </div>

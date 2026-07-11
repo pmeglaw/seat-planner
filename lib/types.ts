@@ -124,6 +124,13 @@ export const SEAT_STATUSES: SeatStatus[] = [
   "unavailable"
 ];
 
+export const STATUS_LABELS: Record<SeatStatus, string> = {
+  available: "Available",
+  assigned: "Assigned",
+  reserved: "Reserved",
+  unavailable: "Unavailable"
+};
+
 export type UpdateSeatResult =
   | { ok: true; seat: SeatWithEmployee }
   | { ok: false; code: "EMPLOYEE_ALREADY_ASSIGNED"; message: string; currentSeatLabel: string }

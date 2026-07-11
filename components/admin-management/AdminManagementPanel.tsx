@@ -119,6 +119,24 @@ function pluralize(count: number, singular: string, plural = `${singular}s`) {
   return `${count.toLocaleString()} ${count === 1 ? singular : plural}`;
 }
 
+function upsertOptionByIdOrName<T extends { id: string; name: string }>(current: T[], next: T): T[] {
+  const exists = current.some(option => option.id === next.id || option.name === next.name);
+  if (!exists) return [...current, next].sort((a, b) => a.name.localeCompare(b.name));
+  return current.map(option => (option.id === next.id || option.name === next.name ? next : option));
+}
+
+function TrashIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <path d="M3 6h18" />
+      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  );
+}
+
 export function AdminManagementPanel({
   employees,
   seats,
@@ -404,11 +422,7 @@ export function AdminManagementPanel({
       try {
         setError(null);
         const department = await createDepartmentAction(newDepartmentName);
-        setLocalDepartmentOptions(current => {
-          const exists = current.some(option => option.id === department.id || option.name === department.name);
-          if (!exists) return [...current, department].sort((a, b) => a.name.localeCompare(b.name));
-          return current.map(option => (option.id === department.id || option.name === department.name ? department : option));
-        });
+        setLocalDepartmentOptions(current => upsertOptionByIdOrName(current, department));
         setNewDepartmentName("");
         showSuccess(`Department ${department.name} added.`);
       } catch (errorValue) {
@@ -422,11 +436,7 @@ export function AdminManagementPanel({
       try {
         setError(null);
         const department = await createDepartmentAction(name);
-        setLocalDepartmentOptions(current => {
-          const exists = current.some(option => option.id === department.id || option.name === department.name);
-          if (!exists) return [...current, department].sort((a, b) => a.name.localeCompare(b.name));
-          return current.map(option => (option.id === department.id || option.name === department.name ? department : option));
-        });
+        setLocalDepartmentOptions(current => upsertOptionByIdOrName(current, department));
         showSuccess(`Department ${department.name} added to the managed list.`);
       } catch (errorValue) {
         showError(errorValue, "Could not add department to the managed list.");
@@ -475,11 +485,7 @@ export function AdminManagementPanel({
       try {
         setError(null);
         const zone = await createZoneAction(newZoneName);
-        setLocalZoneOptions(current => {
-          const exists = current.some(option => option.id === zone.id || option.name === zone.name);
-          if (!exists) return [...current, zone].sort((a, b) => a.name.localeCompare(b.name));
-          return current.map(option => (option.id === zone.id || option.name === zone.name ? zone : option));
-        });
+        setLocalZoneOptions(current => upsertOptionByIdOrName(current, zone));
         setNewZoneName("");
         showSuccess(`Zone ${zone.name} added.`);
       } catch (errorValue) {
@@ -835,13 +841,7 @@ export function AdminManagementPanel({
                         aria-label={`Delete ${row.name}`}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--admin-text-muted)] opacity-0 outline-none transition hover:bg-rose-50 hover:text-rose-600 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100"
                       >
-                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                          <path d="M3 6h18" />
-                          <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
-                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                          <path d="M10 11v6" />
-                          <path d="M14 11v6" />
-                        </svg>
+                        <TrashIcon />
                       </button>
                     </div>
                   )}
@@ -892,13 +892,7 @@ export function AdminManagementPanel({
                         aria-label={`Delete ${name}`}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--admin-text-muted)] opacity-0 outline-none transition hover:bg-rose-50 hover:text-rose-600 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100"
                       >
-                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                          <path d="M3 6h18" />
-                          <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
-                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                          <path d="M10 11v6" />
-                          <path d="M14 11v6" />
-                        </svg>
+                        <TrashIcon />
                       </button>
                     </div>
                   )}
