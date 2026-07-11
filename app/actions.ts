@@ -57,7 +57,10 @@ async function getDraftSeatById(supabase: Awaited<ReturnType<typeof requireAdmin
   return data as SeatWithEmployee;
 }
 
-async function getDraftMapPayload(supabase: Awaited<ReturnType<typeof requireAdmin>>) {
+async function getDraftMapPayload(
+  supabase: Awaited<ReturnType<typeof requireAdmin>>,
+  fallbackErrorMessage = "Could not reload draft history state."
+) {
   const { data: seats, error: seatsError } = await supabase
     .from("seats")
     .select("*, employee:employees(*)")
@@ -71,7 +74,7 @@ async function getDraftMapPayload(supabase: Awaited<ReturnType<typeof requireAdm
     .order("full_name");
 
   if (seatsError || employeesError) {
-    throw new Error(seatsError?.message ?? employeesError?.message ?? "Could not reload draft history state.");
+    throw new Error(seatsError?.message ?? employeesError?.message ?? fallbackErrorMessage);
   }
 
   return {
@@ -655,28 +658,10 @@ export async function importAssignmentsCsvAction(csvText: string) {
 
   if (importError) throw new Error(importError.message);
 
-  const { data: updatedSeats, error: updatedSeatsError } = await supabase
-    .from("seats")
-    .select("*, employee:employees(*)")
-    .eq("layer", "draft")
-    .order("label");
-
-  const { data: updatedEmployees, error: updatedEmployeesError } = await supabase
-    .from("employees")
-    .select("*")
-    .eq("active", true)
-    .order("full_name");
-
-  if (updatedSeatsError || updatedEmployeesError) {
-    throw new Error(updatedSeatsError?.message ?? updatedEmployeesError?.message ?? "Could not reload imported data.");
-  }
+  const { seats, employees } = await getDraftMapPayload(supabase, "Could not reload imported data.");
 
   revalidatePath("/admin");
-  return {
-    seats: (updatedSeats ?? []) as SeatWithEmployee[],
-    employees: (updatedEmployees ?? []) as Employee[],
-    count: parsed.rows.length
-  };
+  return { seats, employees, count: parsed.rows.length };
 }
 
 export type RestoreDraftSnapshotResult =

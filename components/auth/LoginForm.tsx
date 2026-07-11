@@ -5,12 +5,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyAuthMessage, safeNextPath } from "@/lib/authMessages";
 import { Button } from "@/components/ui/Button";
+import { cx } from "@/components/ui/design-system";
 
 type LoginMode = "password" | "magic";
-
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
 
 export function LoginForm() {
   const router = useRouter();

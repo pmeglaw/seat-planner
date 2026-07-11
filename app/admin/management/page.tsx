@@ -1,29 +1,14 @@
-import { redirect } from "next/navigation";
-import { connection } from "next/server";
 import { AdminManagementPanel } from "@/components/admin-management/AdminManagementPanel";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AdminManagementPage() {
-  await connection();
-  const supabase = await createClient();
+  const { supabase, isAdmin } = await getAdminPageContext("/admin/management");
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login?next=/admin/management");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
+  if (!isAdmin) {
     return (
       <main className="admin-theme flex min-h-screen items-center justify-center bg-[var(--admin-chrome-bg)] p-6">
         <section className="max-w-md rounded-2xl bg-[var(--admin-surface)] p-6 shadow-soft">

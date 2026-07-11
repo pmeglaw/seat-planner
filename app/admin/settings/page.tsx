@@ -1,30 +1,15 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { connection } from "next/server";
 import { DataUtilitiesPanel } from "@/components/admin-settings/DataUtilitiesPanel";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AdminSettingsPage() {
-  await connection();
-  const supabase = await createClient();
+  const { supabase, isAdmin } = await getAdminPageContext("/admin/settings");
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login?next=/admin/settings");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
+  if (!isAdmin) {
     return (
       <main className="admin-theme flex min-h-screen items-center justify-center bg-[var(--admin-bg)] p-6 text-[var(--admin-text-primary)]">
         <section className="max-w-md rounded-2xl bg-white p-6 shadow-soft">

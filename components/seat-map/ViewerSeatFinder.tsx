@@ -5,6 +5,9 @@ import type { PointerEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
+import { STATUS_LABELS } from "@/lib/types";
+import { normalizeSeat } from "@/lib/seatNormalize";
+import { cx } from "@/components/ui/design-system";
 import {
   MAP_IMAGE_HEIGHT,
   MAP_IMAGE_SRC,
@@ -13,7 +16,7 @@ import {
 } from "@/lib/mapLayoutTransform";
 import { buildViewerSeatSearch, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
-import { FLOOR_LABELS, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
+import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
@@ -34,13 +37,6 @@ type ViewerPanState = {
   moved: boolean;
 } | null;
 
-const STATUS_LABELS: Record<SeatStatus, string> = {
-  assigned: "Assigned",
-  available: "Available",
-  reserved: "Reserved",
-  unavailable: "Unavailable"
-};
-
 const KIND_LABELS: Record<ViewerSearchResult["kind"], string> = {
   person: "Person",
   seat: "Seat",
@@ -53,20 +49,6 @@ const KIND_LABELS: Record<ViewerSearchResult["kind"], string> = {
 const MAP_ZOOM_MIN = 0.6;
 const MAP_ZOOM_MAX = 2;
 const MAP_ZOOM_STEP = 0.2;
-
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
-
-function normalizeSeat(seat: SeatWithEmployee): SeatWithEmployee {
-  return {
-    ...seat,
-    x: Number(seat.x),
-    y: Number(seat.y),
-    zone: seat.zone ?? seat.department ?? null,
-    is_custom: Boolean(seat.is_custom)
-  };
-}
 
 function getSeatZone(seat: SeatWithEmployee) {
   return seat.zone ?? seat.department ?? "No zone";
@@ -426,8 +408,6 @@ export function ViewerSeatFinder({
   );
   const mapFrameStyle = zoomFactor === null ? undefined : { width: `calc(var(--map-detail-base) * ${zoomFactor})` };
 
-  const chromeToolbarBtn = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-  const chromeToolbarBtnActive = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
   const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[8.5px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
@@ -580,14 +560,7 @@ export function ViewerSeatFinder({
               onPointerUp={handleViewportPointerEnd}
               onPointerCancel={handleViewportPointerEnd}
             >
-              {floor === "2" && (
-                <div role="status" className="grid min-h-[360px] w-full place-items-center p-6 text-center sm:min-h-[520px] lg:h-full lg:min-h-0">
-                  <div>
-                    <div className="text-sm font-semibold text-[var(--admin-text-primary)]">{FLOOR_LABELS["2"]}</div>
-                    <p className="mt-1 text-xs text-[var(--admin-text-muted)]">Not yet mapped — reserved for a future rollout.</p>
-                  </div>
-                </div>
-              )}
+              {floor === "2" && <FloorPlaceholder />}
               {floor === "3" && (
                 <div ref={mapRef} className={mapFrameClassName} style={mapFrameStyle}>
                   <Image

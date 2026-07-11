@@ -2,7 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 
 type ClassValue = string | false | null | undefined;
 
-function cx(...classes: ClassValue[]) {
+export function cx(...classes: ClassValue[]) {
   return classes.filter(Boolean).join(" ");
 }
 

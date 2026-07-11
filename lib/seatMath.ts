@@ -42,15 +42,3 @@ export function clientPointToNormalized(
     y: (clientY - bounds.top) / bounds.height
   });
 }
-
-export function hasMoved(
-  start: { clientX: number; clientY: number },
-  current: { clientX: number; clientY: number },
-  thresholdPx = 3
-): boolean {
-  return (
-    Math.abs(current.clientX - start.clientX) +
-      Math.abs(current.clientY - start.clientY) >
-    thresholdPx
-  );
-}

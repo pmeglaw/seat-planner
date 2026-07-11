@@ -7,7 +7,8 @@ import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@
 import { updateSeatAction } from "@/app/actions";
 import { canDeleteSeat, getSeatDeleteBlockReason, isProtectedOriginalSeatLabel } from "@/lib/seatProtection";
 import { formatDisplayName } from "@/lib/formatName";
-import { Button } from "@/components/ui/Button";
+import { buildInitials } from "@/lib/validators";
+import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 
 type SeatInspectorProps = {
   seat: SeatWithEmployee | null;
@@ -421,12 +422,7 @@ export function SeatInspector({
       ? "bg-[#f1c21b]/10 text-[#f1c21b]"
       : "bg-[#24a148]/15 text-[#42be65]";
   const assignmentIdentityLabel = employeeNameValue || (hasCurrentAssignment ? selectedSeatEmployeeName : "");
-  const occupantInitials = (formatDisplayName(assignmentIdentityLabel) || "Open seat")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map(part => part[0]?.toUpperCase() ?? "")
-    .join("") || "?";
+  const occupantInitials = buildInitials(formatDisplayName(assignmentIdentityLabel) || "Open seat") || "?";
   const occupantRoleLabel = hasAssignedPerson || hasCurrentAssignment
     ? [form.employeePosition.trim() || selectedSeat.employee?.position, form.department.trim() || selectedSeat.employee?.department].filter(Boolean).join(" · ") || "Employee"
     : "Unassigned";
@@ -1143,7 +1139,7 @@ export function SeatInspector({
                           ].join(" ")}
                         >
                           <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[var(--admin-primary-cta)]">
-                            {option.employee.full_name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "?"}
+                            {buildInitials(option.employee.full_name) || "?"}
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-semibold">{formatDisplayName(option.employee.full_name)}</span>
@@ -1385,7 +1381,7 @@ export function SeatInspector({
             <Button type="button" onClick={() => setVacateConfirmOpen(false)} disabled={pending} className="w-full">
               Cancel
             </Button>
-            <Button type="button" variant="danger" onClick={confirmVacateSeat} disabled={pending} className="w-full !border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)]">
+            <Button type="button" variant="danger" onClick={confirmVacateSeat} disabled={pending} className={`w-full ${adminDangerButtonClassName}`}>
               Vacate seat
             </Button>
           </div>

@@ -54,9 +54,10 @@ function getSeatPersonLabel(seat: SeatWithEmployee) {
 }
 
 function getSeatDetail(seat: SeatWithEmployee) {
+  const person = getSeatPersonLabel(seat);
   const parts = [
     getSeatZone(seat),
-    getSeatPersonLabel(seat) !== "Open" ? getSeatPersonLabel(seat) : null,
+    person !== "Open" ? person : null,
     seat.status !== "available" ? seat.status : null
   ].filter(part => part && part !== "Open");
   return parts.join(" · ") || "Open seat";

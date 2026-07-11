@@ -18,10 +18,12 @@ import {
   type DraftSnapshot
 } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
+import { STATUS_LABELS } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
 import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import { departmentKey } from "@/lib/departments";
-import { normalizePoint } from "@/lib/seatMath";
+import { clientPointToNormalized } from "@/lib/seatMath";
+import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import {
@@ -40,12 +42,12 @@ import {
   type ActiveFilterChip,
   type ResultStatusBreakdown
 } from "@/components/seat-map/FilterPanel";
-import { FLOOR_LABELS, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
+import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
-import { Button } from "@/components/ui/Button";
+import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
 
 type SeatMapProps = {
@@ -107,25 +109,9 @@ const INSPECTOR_FORM_ID = "seat-inspector-form";
 const MAP_ZOOM_MIN = 0.6;
 const MAP_ZOOM_MAX = 2;
 const MAP_ZOOM_STEP = 0.2;
-const STATUS_LABELS: Record<SeatStatus, string> = {
-  available: "Available",
-  assigned: "Assigned",
-  reserved: "Reserved",
-  unavailable: "Unavailable"
-};
 
-function normalizeSeat(seat: SeatWithEmployee): SeatWithEmployee {
-  return {
-    ...seat,
-    x: Number(seat.x),
-    y: Number(seat.y),
-    zone: seat.zone ?? seat.department ?? null,
-    is_custom: Boolean(seat.is_custom)
-  };
-}
-
-function normalizeSeats(seats: SeatWithEmployee[]) {
-  return seats.map(normalizeSeat);
+function clampScrollPosition(value: number, max: number) {
+  return Math.min(Math.max(value, 0), Math.max(max, 0));
 }
 
 function replaceSeat(seats: SeatWithEmployee[], nextSeat: SeatWithEmployee) {
@@ -775,10 +761,7 @@ export function SeatMap({
   function eventToPoint(event: Pick<PointerEvent<HTMLElement>, "clientX" | "clientY">) {
     const rect = mapRef.current?.getBoundingClientRect();
     if (!rect) return null;
-    return normalizePoint({
-      x: (event.clientX - rect.left) / rect.width,
-      y: (event.clientY - rect.top) / rect.height
-    });
+    return clientPointToNormalized(event.clientX, event.clientY, rect);
   }
 
   function matchesFilters(seat: SeatWithEmployee) {
@@ -1138,7 +1121,6 @@ export function SeatMap({
     const map = mapRef.current;
     if (!viewport || !map) return;
 
-    const clampScrollPosition = (value: number, max: number) => Math.min(Math.max(value, 0), Math.max(max, 0));
     const left = clampScrollPosition((x * map.offsetWidth) - (viewport.clientWidth / 2), viewport.scrollWidth - viewport.clientWidth);
     const top = clampScrollPosition((y * map.offsetHeight) - (viewport.clientHeight / 2), viewport.scrollHeight - viewport.clientHeight);
     viewport.scrollTo({ left, top, behavior: "smooth" });
@@ -1148,7 +1130,6 @@ export function SeatMap({
     const viewport = mapViewportRef.current;
     if (!viewport) return;
 
-    const clampScrollPosition = (value: number, max: number) => Math.min(Math.max(value, 0), Math.max(max, 0));
     const left = clampScrollPosition((viewport.scrollWidth - viewport.clientWidth) / 2, viewport.scrollWidth - viewport.clientWidth);
     const top = clampScrollPosition((viewport.scrollHeight - viewport.clientHeight) / 2, viewport.scrollHeight - viewport.clientHeight);
     viewport.scrollTo({ left, top, behavior });
@@ -1209,7 +1190,6 @@ export function SeatMap({
       const viewport = mapViewportRef.current;
       const map = mapRef.current;
       if (!viewport || !map) return;
-      const clampScrollPosition = (value: number, max: number) => Math.min(Math.max(value, 0), Math.max(max, 0));
       viewport.scrollTo({
         left: clampScrollPosition(map.offsetLeft + (center.x * map.offsetWidth) - (viewport.clientWidth / 2), viewport.scrollWidth - viewport.clientWidth),
         top: clampScrollPosition(map.offsetTop + (center.y * map.offsetHeight) - (viewport.clientHeight / 2), viewport.scrollHeight - viewport.clientHeight),
@@ -2378,14 +2358,7 @@ export function SeatMap({
               onPointerUp={handleViewportPointerEnd}
               onPointerCancel={handleViewportPointerEnd}
             >
-              {floor === "2" && (
-                <div role="status" className="grid min-h-[360px] w-full place-items-center p-6 text-center sm:min-h-[520px] lg:h-full lg:min-h-0">
-                  <div>
-                    <div className="text-sm font-semibold text-[var(--admin-text-primary)]">{FLOOR_LABELS["2"]}</div>
-                    <p className="mt-1 text-xs text-[var(--admin-text-muted)]">Not yet mapped — reserved for a future rollout.</p>
-                  </div>
-                </div>
-              )}
+              {floor === "2" && <FloorPlaceholder />}
               {floor === "3" && (
               <div
                 ref={mapRef}
@@ -2583,7 +2556,7 @@ export function SeatMap({
               <Button type="button" onClick={() => setDeleteSeatConfirm(null)} disabled={pending} className="w-full">
                 Cancel
               </Button>
-              <Button type="button" variant="danger" onClick={confirmDeleteSelectedSeat} disabled={pending} className="w-full !border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)]">
+              <Button type="button" variant="danger" onClick={confirmDeleteSelectedSeat} disabled={pending} className={`w-full ${adminDangerButtonClassName}`}>
                 Delete seat
               </Button>
             </div>
