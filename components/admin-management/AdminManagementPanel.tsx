@@ -37,8 +37,6 @@ type AdminManagementPanelProps = {
   seats: SeatWithEmployee[];
   departmentOptions: DepartmentOption[];
   zoneOptions: ZoneOption[];
-  initialTab?: ManagementTab;
-  initialPublishHistoryEvents?: PublishHistoryEvent[];
 };
 
 type ManagementTab = "employees" | "departments" | "zones" | "publishHistory";
@@ -130,15 +128,13 @@ export function AdminManagementPanel({
   employees,
   seats,
   departmentOptions,
-  zoneOptions,
-  initialTab = "employees",
-  initialPublishHistoryEvents
+  zoneOptions
 }: AdminManagementPanelProps) {
   const [localEmployees, setLocalEmployees] = useState(employees);
   const [localDepartmentOptions, setLocalDepartmentOptions] = useState(departmentOptions);
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
   const [localSeats, setLocalSeats] = useState(seats);
-  const [activeTab, setActiveTab] = useState<ManagementTab>(initialTab);
+  const [activeTab, setActiveTab] = useState<ManagementTab>("employees");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<EmployeeSortKey>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -151,8 +147,8 @@ export function AdminManagementPanel({
   const [editingZone, setEditingZone] = useState("");
   const [zoneDraft, setZoneDraft] = useState("");
   const [publishHistoryState, setPublishHistoryState] = useState<PublishHistoryState>({
-    status: initialPublishHistoryEvents ? "loaded" : "idle",
-    events: initialPublishHistoryEvents ?? [],
+    status: "idle",
+    events: [],
     error: null
   });
   const [message, setMessage] = useState<string | null>(null);

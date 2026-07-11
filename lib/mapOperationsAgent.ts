@@ -1074,7 +1074,7 @@ function openAIRequestId(response: Response) {
 
 async function createOpenAIResponse(apiKey: string, body: OpenAIResponseBody): Promise<OpenAIResponsePayload> {
   const controller = new AbortController();
-  const timeout = windowlessSetTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
   const startedAt = Date.now();
 
   try {
@@ -1125,10 +1125,6 @@ async function createOpenAIResponse(apiKey: string, body: OpenAIResponseBody): P
   } finally {
     clearTimeout(timeout);
   }
-}
-
-function windowlessSetTimeout(callback: () => void, ms: number) {
-  return setTimeout(callback, ms);
 }
 
 type PlannerToolCall = {
