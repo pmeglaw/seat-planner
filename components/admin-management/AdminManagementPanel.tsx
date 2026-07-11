@@ -19,6 +19,7 @@ import {
 import { buildDepartmentRoster, departmentKey } from "@/lib/departments";
 import { computeVirtualWindow } from "@/lib/virtualizedList";
 import { formatDisplayName } from "@/lib/formatName";
+import { buildInitials } from "@/lib/validators";
 import { Button } from "@/components/ui/Button";
 
 type EmployeeSortKey = "name" | "department" | "position" | "extension" | "seat" | "status";
@@ -91,13 +92,7 @@ function getSeatZone(seat: SeatWithEmployee) {
 }
 
 function getInitials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(part => part[0]?.toUpperCase())
-    .join("") || "?";
+  return buildInitials(name) || "?";
 }
 
 function formatPublishDate(value: string) {

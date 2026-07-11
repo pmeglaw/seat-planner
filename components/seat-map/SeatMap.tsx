@@ -21,7 +21,7 @@ import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOpti
 import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
 import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import { departmentKey } from "@/lib/departments";
-import { normalizePoint } from "@/lib/seatMath";
+import { clientPointToNormalized } from "@/lib/seatMath";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import {
@@ -775,10 +775,7 @@ export function SeatMap({
   function eventToPoint(event: Pick<PointerEvent<HTMLElement>, "clientX" | "clientY">) {
     const rect = mapRef.current?.getBoundingClientRect();
     if (!rect) return null;
-    return normalizePoint({
-      x: (event.clientX - rect.left) / rect.width,
-      y: (event.clientY - rect.top) / rect.height
-    });
+    return clientPointToNormalized(event.clientX, event.clientY, rect);
   }
 
   function matchesFilters(seat: SeatWithEmployee) {
