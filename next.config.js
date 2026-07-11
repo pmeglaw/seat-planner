@@ -4,8 +4,8 @@ const nextConfig = {
   images: {
     localPatterns: [
       {
-        pathname: "/images/office-floor-plan.png",
-        search: "?v=map-v2-1911x867"
+        pathname: "/images/office-floor-plan.svg",
+        search: "?v=map-v3-vector-1911x867"
       }
     ]
   }

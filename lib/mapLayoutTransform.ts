@@ -4,7 +4,7 @@ import type { SeatWithEmployee } from "@/lib/types";
 export const MAP_IMAGE_WIDTH = 1911;
 export const MAP_IMAGE_HEIGHT = 867;
 export const MAP_ASPECT_RATIO = MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT;
-export const MAP_IMAGE_SRC = "/images/office-floor-plan.png?v=map-v2-1911x867";
+export const MAP_IMAGE_SRC = "/images/office-floor-plan.svg?v=map-v3-vector-1911x867";
 
 type SeatCalibrationSource = Pick<SeatWithEmployee, "x" | "y"> &
   Partial<Pick<SeatWithEmployee, "label" | "zone" | "department">>;

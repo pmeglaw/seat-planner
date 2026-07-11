@@ -24,7 +24,9 @@ test("desktop marker system keeps true coordinates and calibration constants unt
   assert.match(seatMapSource, /viewportEdgeOffsetPx=\{viewportPlacement\.offsetPx\}/);
   assert.match(seatMapSource, /onMovePointerDown=\{handleMovePointerDown\}/);
 
-  assert.match(transformSource, /MAP_IMAGE_SRC = "\/images\/office-floor-plan\.png\?v=map-v2-1911x867"/);
+  // v=map-v3: owner-approved swap of the raster plan for the flat vector SVG.
+  // Same 1911x867 geometry, so every calibration constant below is unchanged.
+  assert.match(transformSource, /MAP_IMAGE_SRC = "\/images\/office-floor-plan\.svg\?v=map-v3-vector-1911x867"/);
   assert.match(transformSource, /MAP_IMAGE_WIDTH = 1911/);
   assert.match(transformSource, /MAP_IMAGE_HEIGHT = 867/);
   assert.match(transformSource, /xScale: 0\.815189/);
