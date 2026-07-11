@@ -197,6 +197,9 @@ function normalizeRestoreEmployee(employee: Employee): DraftEmployeeRestoreRecor
     position: normalizeOptionalText(employee.position ?? null),
     department: normalizeOptionalText(employee.department ?? null),
     phone_extension: normalizeOptionalText(employee.phone_extension ?? null),
+    // Carried for type completeness; the restore RPC only writes the columns
+    // it names, so snapshot restores never touch stored emails.
+    email: normalizeOptionalText(employee.email ?? null),
     avatar_url: normalizeOptionalText(employee.avatar_url ?? null),
     active: employee.active !== false,
     created_at: employee.created_at,
@@ -439,6 +442,7 @@ export async function createEmployeeAction(input: {
   position?: string | null;
   department?: string | null;
   phoneExtension?: string | null;
+  email?: string | null;
 }) {
   const supabase = await requireAdmin();
   const fullName = assertNonEmpty(input.fullName, "Employee name");
@@ -453,6 +457,7 @@ export async function createEmployeeAction(input: {
       position: input.position?.trim() || null,
       department,
       phone_extension: normalizeOptionalText(input.phoneExtension),
+      email: normalizeOptionalText(input.email),
       avatar_url: null,
       active: true
     })
@@ -470,6 +475,7 @@ export async function updateEmployeeAction(input: {
   position?: string | null;
   department?: string | null;
   phoneExtension?: string | null;
+  email?: string | null;
 }) {
   const supabase = await requireAdmin();
   const fullName = assertNonEmpty(input.fullName, "Employee name");
@@ -484,6 +490,9 @@ export async function updateEmployeeAction(input: {
       position: input.position?.trim() || null,
       department,
       phone_extension: normalizeOptionalText(input.phoneExtension),
+      // Only write email when the caller sends the field, so existing callers
+      // that predate the column can never null out a stored address.
+      ...(input.email !== undefined ? { email: normalizeOptionalText(input.email) } : {}),
       active: true
     })
     .eq("id", input.employeeId)

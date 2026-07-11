@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { PointerEvent } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import {
   MAP_IMAGE_HEIGHT,
@@ -10,6 +12,10 @@ import {
   seatsToVisualSeats
 } from "@/lib/mapLayoutTransform";
 import { buildViewerSeatSearch, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
+import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
+import { FLOOR_LABELS, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
+import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
+import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 
 type ViewerSeatFinderProps = {
@@ -18,6 +24,15 @@ type ViewerSeatFinderProps = {
   departmentOptions?: DepartmentOption[];
   zoneOptions?: ZoneOption[];
 };
+
+type ViewerPanState = {
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startScrollLeft: number;
+  startScrollTop: number;
+  moved: boolean;
+} | null;
 
 const STATUS_LABELS: Record<SeatStatus, string> = {
   assigned: "Assigned",
@@ -32,6 +47,12 @@ const KIND_LABELS: Record<ViewerSearchResult["kind"], string> = {
   department: "Department",
   zone: "Zone"
 };
+
+// View-transform zoom (same rule as the admin map): scales the rendered frame
+// width only — never the stored coordinates or the calibration transform.
+const MAP_ZOOM_MIN = 0.6;
+const MAP_ZOOM_MAX = 2;
+const MAP_ZOOM_STEP = 0.2;
 
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -55,22 +76,11 @@ function getSeatDepartment(seat: SeatWithEmployee) {
   return seat.employee?.department ?? seat.department ?? "No department";
 }
 
-function getSeatPerson(seat: SeatWithEmployee) {
-  return seat.employee?.full_name ?? "Open seat";
-}
-
 function resultKindClass(kind: ViewerSearchResult["kind"]) {
-  if (kind === "person") return "bg-blue-50 text-blue-700 ring-blue-200";
-  if (kind === "seat") return "bg-slate-950 text-white ring-slate-950";
-  if (kind === "department") return "bg-emerald-50 text-emerald-700 ring-emerald-200";
-  return "bg-amber-50 text-amber-800 ring-amber-200";
-}
-
-function statusClass(status: SeatStatus) {
-  if (status === "assigned") return "bg-emerald-50 text-emerald-700 ring-emerald-200";
-  if (status === "reserved") return "bg-amber-50 text-amber-800 ring-amber-200";
-  if (status === "unavailable") return "bg-slate-100 text-slate-700 ring-slate-200";
-  return "bg-white text-slate-700 ring-slate-200";
+  if (kind === "person") return "bg-[var(--admin-info-soft)] text-[var(--admin-info)] ring-[var(--admin-info)]/30";
+  if (kind === "seat") return "bg-[#161616] text-white ring-[#161616]";
+  if (kind === "department") return "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-[var(--admin-success)]/30";
+  return "bg-[var(--admin-warning-soft)] text-[var(--admin-warning-text)] ring-[var(--admin-warning-text)]/30";
 }
 
 function uniqueVisibleOptions(values: Array<string | null | undefined>) {
@@ -93,9 +103,19 @@ export function ViewerSeatFinder({
   const [search, setSearch] = useState("");
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
+  const [floor, setFloor] = useState<FloorId>("3");
+  // null = fit-to-view; a number = zoom factor applied to the base frame width.
+  const [zoomFactor, setZoomFactor] = useState<number | null>(null);
+  const [panning, setPanning] = useState(false);
+  const [department, setDepartment] = useState("all");
+  const [zone, setZone] = useState("all");
+  const [status, setStatus] = useState("all");
+  const [filterOpen, setFilterOpen] = useState(false);
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const mapSectionRef = useRef<HTMLElement | null>(null);
+  const panStateRef = useRef<ViewerPanState>(null);
+  const filterRootRef = useRef<HTMLDivElement | null>(null);
 
   const publishedSeats = useMemo(() => seats.map(normalizeSeat), [seats]);
   const visualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
@@ -108,21 +128,42 @@ export function ViewerSeatFinder({
   const activeResult = searchResults.results.find(result => result.id === activeResultId) ?? null;
   const selectedSeat = selectedSeatId ? seatById.get(selectedSeatId) ?? null : null;
   const searchActive = Boolean(searchResults.query);
+  const structuredFiltersActive = department !== "all" || zone !== "all" || status !== "all";
+  const structuredFilterCount = [department !== "all", zone !== "all", status !== "all"].filter(Boolean).length;
+  const filtersActive = searchActive || structuredFiltersActive;
+
+  const seatPassesStructuredFilters = useCallback((seat: SeatWithEmployee) => {
+    const departmentOk = department === "all" || getSeatDepartment(seat).toLowerCase() === department.toLowerCase();
+    const zoneOk = zone === "all" || getSeatZone(seat) === zone;
+    const statusOk = status === "all" || seat.status === (status as SeatStatus);
+    return departmentOk && zoneOk && statusOk;
+  }, [department, status, zone]);
+
   const resultSeatIdSet = useMemo(() => new Set(searchResults.resultSeatIds), [searchResults.resultSeatIds]);
   const activeResultSeatIdSet = useMemo(() => new Set(activeResult?.seatIds ?? []), [activeResult]);
-  const highlightedSeatIdSet = activeResultSeatIdSet.size > 0 ? activeResultSeatIdSet : resultSeatIdSet;
+  // Matches = search hits (narrowed by any structured filters), or filter hits alone.
+  const highlightedSeatIdSet = useMemo(() => {
+    const base = activeResultSeatIdSet.size > 0 ? activeResultSeatIdSet : resultSeatIdSet;
+    const matched = new Set<string>();
+    publishedSeats.forEach(seat => {
+      const searchOk = !searchActive || base.has(seat.id);
+      if (searchOk && seatPassesStructuredFilters(seat)) matched.add(seat.id);
+    });
+    return matched;
+  }, [activeResultSeatIdSet, publishedSeats, resultSeatIdSet, searchActive, seatPassesStructuredFilters]);
+
   const selectedResultTitle = activeResult?.title ?? selectedSeat?.label ?? null;
   const assignedCount = publishedSeats.filter(seat => seat.status === "assigned").length;
   const openCount = publishedSeats.filter(seat => seat.status === "available").length;
   const reservedCount = publishedSeats.filter(seat => seat.status === "reserved").length;
-  const quickDepartments = uniqueVisibleOptions([
+  const departments = uniqueVisibleOptions([
     ...departmentOptions.filter(option => option.active).map(option => option.name),
     ...employees.filter(employee => employee.active).map(employee => employee.department)
-  ]).slice(0, 4);
-  const quickZones = uniqueVisibleOptions([
+  ]);
+  const zones = uniqueVisibleOptions([
     ...zoneOptions.filter(option => option.active).map(option => option.name),
     ...publishedSeats.map(seat => getSeatZone(seat))
-  ]).slice(0, 4);
+  ]);
 
   useEffect(() => {
     if (!activeResultId) return;
@@ -133,6 +174,47 @@ export function ViewerSeatFinder({
     if (!selectedSeatId) return;
     if (!seatById.has(selectedSeatId)) setSelectedSeatId(null);
   }, [seatById, selectedSeatId]);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+
+    function handleOutsidePointer(event: globalThis.PointerEvent) {
+      if (filterRootRef.current?.contains(event.target as Node)) return;
+      setFilterOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [filterOpen]);
+
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      if (filterOpen) {
+        setFilterOpen(false);
+        return;
+      }
+      if (selectedSeatId) {
+        setSelectedSeatId(null);
+        setInspectorCollapsed(false);
+        return;
+      }
+      const target = event.target;
+      const editable = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement;
+      if (!editable && search.trim()) {
+        setSearch("");
+        return;
+      }
+      if (!editable && structuredFiltersActive) {
+        setDepartment("all");
+        setZone("all");
+        setStatus("all");
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [filterOpen, search, selectedSeatId, structuredFiltersActive]);
 
   const scrollMapToPoint = useCallback((x: number, y: number, behavior: ScrollBehavior = "smooth") => {
     const viewport = mapViewportRef.current;
@@ -171,21 +253,92 @@ export function ViewerSeatFinder({
     scrollMapToPoint((bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2);
   }, [centerSeatInMap, scrollMapToPoint, visualSeatById]);
 
+  function applyMapZoom(nextZoom: number) {
+    const clamped = Math.min(MAP_ZOOM_MAX, Math.max(MAP_ZOOM_MIN, Math.round(nextZoom * 100) / 100));
+    setZoomFactor(clamped);
+  }
+
+  function fitMapToView() {
+    setZoomFactor(null);
+    window.requestAnimationFrame(() => {
+      mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    });
+  }
+
+  function isPanBlockedTarget(target: EventTarget | null) {
+    return target instanceof Element && Boolean(target.closest("button, a, input, select, textarea, [data-seat-id]"));
+  }
+
+  function handleViewportPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (floor !== "3" || event.button !== 0) return;
+    if (isPanBlockedTarget(event.target)) return;
+    const viewport = mapViewportRef.current;
+    if (!viewport) return;
+
+    panStateRef.current = {
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startScrollLeft: viewport.scrollLeft,
+      startScrollTop: viewport.scrollTop,
+      moved: false
+    };
+    viewport.setPointerCapture(event.pointerId);
+    setPanning(true);
+  }
+
+  function handleViewportPointerMove(event: PointerEvent<HTMLDivElement>) {
+    const pan = panStateRef.current;
+    if (!pan || pan.pointerId !== event.pointerId) return;
+    const viewport = mapViewportRef.current;
+    if (!viewport) return;
+
+    const deltaX = event.clientX - pan.startClientX;
+    const deltaY = event.clientY - pan.startClientY;
+    if (!pan.moved && Math.abs(deltaX) + Math.abs(deltaY) > 4) pan.moved = true;
+    viewport.scrollLeft = pan.startScrollLeft - deltaX;
+    viewport.scrollTop = pan.startScrollTop - deltaY;
+  }
+
+  function handleViewportPointerEnd(event: PointerEvent<HTMLDivElement>) {
+    const pan = panStateRef.current;
+    if (!pan || pan.pointerId !== event.pointerId) return;
+    panStateRef.current = null;
+    setPanning(false);
+    if (pan.moved || event.type === "pointercancel") return;
+    if (isPanBlockedTarget(event.target)) return;
+    // A stationary press on empty canvas clears the selection.
+    setSelectedSeatId(null);
+    setInspectorCollapsed(false);
+  }
+
   function clearSearch() {
     setSearch("");
     setSelectedSeatId(null);
     setActiveResultId(null);
+    setInspectorCollapsed(false);
+  }
+
+  function clearStructuredFilters() {
+    setDepartment("all");
+    setZone("all");
+    setStatus("all");
+  }
+
+  function clearAllConstraints() {
+    clearSearch();
+    clearStructuredFilters();
   }
 
   function updateSearch(value: string) {
     setSearch(value);
     setActiveResultId(null);
-    setSelectedSeatId(null);
   }
 
   function selectSeat(seatId: string) {
     setSelectedSeatId(seatId);
     setActiveResultId(null);
+    setInspectorCollapsed(false);
     centerSeatInMap(seatId);
   }
 
@@ -193,6 +346,7 @@ export function ViewerSeatFinder({
     setActiveResultId(result.id);
     if (result.seatId) {
       setSelectedSeatId(result.seatId);
+      setInspectorCollapsed(false);
       centerSeatInMap(result.seatId);
       return;
     }
@@ -201,17 +355,27 @@ export function ViewerSeatFinder({
     fitSeatIdsInMap(result.seatIds);
   }
 
-  function openResultAndMap(result: ViewerSearchResult) {
-    openResult(result);
-    window.requestAnimationFrame(() => {
-      mapSectionRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
-    });
-  }
+  const activeFilterChips: ActiveFilterChip[] = [
+    searchActive ? { id: "search", label: "Search", value: searchResults.query, removeLabel: `Remove search filter ${searchResults.query}` } : null,
+    department !== "all" ? { id: "department", label: "Department", value: department, removeLabel: `Remove department filter ${department}` } : null,
+    zone !== "all" ? { id: "zone", label: "Zone", value: zone, removeLabel: `Remove zone filter ${zone}` } : null,
+    status !== "all" ? { id: "status", label: "Status", value: STATUS_LABELS[status as SeatStatus] ?? status, removeLabel: `Remove status filter ${STATUS_LABELS[status as SeatStatus] ?? status}` } : null
+  ].filter(Boolean) as ActiveFilterChip[];
 
-  function backToMap() {
-    mapSectionRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
-    if (selectedSeatId) centerSeatInMap(selectedSeatId);
-    else if (activeResult?.seatIds.length) fitSeatIdsInMap(activeResult.seatIds);
+  function removeActiveFilterChip(chipId: string) {
+    if (chipId === "search") {
+      clearSearch();
+      return;
+    }
+    if (chipId === "department") {
+      setDepartment("all");
+      return;
+    }
+    if (chipId === "zone") {
+      setZone("all");
+      return;
+    }
+    if (chipId === "status") setStatus("all");
   }
 
   const resultCountLabel = searchResults.results.length === 1 ? "1 result" : `${searchResults.results.length} results`;
@@ -220,317 +384,369 @@ export function ViewerSeatFinder({
     : searchActive
       ? `${resultCountLabel} for ${search}.`
       : `${publishedSeats.length} published seats loaded.`;
+  const mapCrumbLabel = floor === "2"
+    ? "Not yet mapped"
+    : `Published map · ${publishedSeats.length} ${publishedSeats.length === 1 ? "seat" : "seats"}`;
+  const mapZoomLabel = zoomFactor === null ? "Fit" : `${Math.round(zoomFactor * 100)}%`;
+  const resultsPanelOpen = searchActive && (!selectedSeat || inspectorCollapsed);
+  // Prototype "stage": at the panel tier the inspector reserves layout width
+  // (320px expanded, 44px rail) instead of overlaying the map.
+  const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
+    ? !inspectorCollapsed
+      ? "expanded"
+      : resultsPanelOpen
+        ? "none"
+        : "rail"
+    : "none";
+  // Whatever occupies the right slot reserves the column — expanded inspector
+  // or results panel — so nothing renders hidden behind a panel.
+  const rightSlotTier: "expanded" | "rail" | "none" =
+    inspectorDockTier === "expanded" || resultsPanelOpen ? "expanded" : inspectorDockTier;
+  const stageReservedClassName = rightSlotTier === "expanded"
+    ? "panel:pr-[332px]"
+    : rightSlotTier === "rail"
+      ? "panel:pr-[56px]"
+      : "";
+
+  // No zoom change on select/deselect: the fit view (zoomFactor null) sizes the
+  // frame to the container at lg, so the reserved column re-fits it automatically;
+  // a zoomed view keeps its zoom.
+
+  const mapViewportClassName = cx(
+    "relative mx-auto w-full max-w-full overflow-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)]",
+    "min-h-[360px] max-h-[82svh] sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:h-full lg:min-h-0 lg:max-h-none lg:flex-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+    floor === "3" ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
+    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-map-floor)]"
+  );
+  const mapFrameClassName = cx(
+    "relative mx-auto max-w-none",
+    zoomFactor === null
+      ? "w-[1040px] sm:w-[1340px] lg:w-full lg:max-w-[1911px]"
+      : "[--map-detail-base:1040px] sm:[--map-detail-base:1340px] lg:[--map-detail-base:1911px]"
+  );
+  const mapFrameStyle = zoomFactor === null ? undefined : { width: `calc(var(--map-detail-base) * ${zoomFactor})` };
+
+  const chromeToolbarBtn = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeToolbarBtnActive = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[8.5px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f5f4f1] text-slate-950">
-      <main className="mx-auto flex min-h-screen w-full max-w-[1760px] flex-col gap-3 px-3 py-3 sm:px-5 lg:px-6">
-        <header className="rounded-[22px] border border-slate-200/80 bg-white/90 px-4 py-4 shadow-[0_18px_50px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] sm:px-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-black leading-tight tracking-normal text-slate-950 sm:text-3xl">Office Seat Finder</h1>
-                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">Published</span>
-                <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-slate-600 ring-1 ring-slate-200">Read-only</span>
-              </div>
-              <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
-                Published seating across people, seats, departments, and zones.
-              </p>
-            </div>
-            <dl className="grid grid-cols-3 gap-2 text-center sm:w-[24rem]">
-              {[
-                { label: "Assigned", value: assignedCount, accent: "border-l-emerald-400", dot: "bg-emerald-500" },
-                { label: "Open", value: openCount, accent: "border-l-sky-400", dot: "bg-sky-500" },
-                { label: "Reserved", value: reservedCount, accent: "border-l-amber-400", dot: "bg-amber-500" }
-              ].map(tile => (
-                <div key={tile.label} className={`rounded-2xl border border-l-4 border-slate-200 ${tile.accent} bg-slate-50/80 px-3 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.05)]`}>
-                  <dt className="flex items-center justify-center gap-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
-                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tile.dot}`} aria-hidden="true" />
-                    {tile.label}
-                  </dt>
-                  <dd className="mt-0.5 text-xl font-black text-slate-950">{tile.value}</dd>
-                </div>
-              ))}
-            </dl>
+    <div className="shell-theme flex min-h-screen flex-col overflow-x-hidden bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
+      <h1 className="sr-only">Office Seat Finder</h1>
+      <header className="z-40 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+        <div className="flex min-w-0 shrink-0 items-center gap-2">
+          <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
+            <Image src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />
+          </span>
+          <div aria-hidden="true" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-none sm:block">
+            Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
           </div>
+        </div>
 
-          <div className="mt-4">
-            <label htmlFor="viewer-seat-search" className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
-              Search published seating
-            </label>
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-              <div className="relative min-w-0 flex-1">
-                <input
-                  id="viewer-seat-search"
-                  value={search}
-                  onChange={event => updateSearch(event.target.value)}
-                  placeholder="Search people, seats, departments, or zones"
-                  className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-base font-semibold text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.05)] outline-none transition placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100"
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={clearSearch}
-                    aria-label="Clear viewer search"
-                    title="Clear search"
-                    className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-sm font-black text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
-                  >
-                    x
-                  </button>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => searchResults.resultSeatIds.length > 0 && fitSeatIdsInMap(searchResults.resultSeatIds)}
-                disabled={!searchResults.resultSeatIds.length}
-                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-950 px-4 text-sm font-black text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.98] active:duration-75 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
-              >
-                Show on map
-              </button>
-            </div>
-            <p className="sr-only" aria-live="polite">{mapAnnouncement}</p>
-          </div>
-        </header>
+        <span aria-hidden="true" className="mx-2.5 hidden h-[22px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
 
-        <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_390px]">
-          <section
-            ref={mapSectionRef}
-            aria-labelledby="published-map-title"
-            className="order-2 min-w-0 overflow-hidden rounded-[22px] border border-slate-200/80 bg-white/90 p-2 shadow-[0_18px_50px_rgba(15,23,42,0.08)] lg:order-1 lg:min-h-0"
+        {/* Filter + Search: ONE connected control — Filter segment immediately
+            LEFT of the search input, sharing one border; the dropdown anchors
+            inside the group so the open menu butts directly against the button. */}
+        <div ref={filterRootRef} className="relative mr-2 flex h-[26px] min-w-0 flex-1 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[340px]">
+          <button
+            type="button"
+            onClick={() => setFilterOpen(current => !current)}
+            aria-expanded={filterOpen}
+            aria-controls="viewer-filter-panel"
+            aria-haspopup="true"
+            aria-label={structuredFilterCount ? `Filter published seating, ${structuredFilterCount} active` : "Filter published seating"}
+            className={[
+              "flex shrink-0 items-center gap-1.5 border-b-2 border-r border-r-[var(--admin-chrome-border)] px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+              structuredFilterCount > 0 || filterOpen
+                ? "border-b-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)]"
+                : "border-b-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"
+            ].join(" ")}
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-2">
-              <div className="min-w-0">
-                <h2 id="published-map-title" className="text-sm font-black text-slate-950">Published map</h2>
-                <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">
-                  {searchActive ? `${resultCountLabel} · ${searchResults.resultSeatIds.length} mapped` : `${publishedSeats.length} seats`}
-                </p>
-              </div>
-              {(searchActive || selectedSeat || activeResult) && (
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+              <path d="M3 4.5h14l-5.4 6.2v4.8l-3.2-1.7v-3.1L3 4.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+            </svg>
+            Filter
+            {structuredFilterCount > 0 && (
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{structuredFilterCount}</span>
+            )}
+            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--admin-chrome-muted)]">
+              <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div role="search" aria-label="Viewer search" className="h-full min-w-0 flex-1">
+            <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
+              <span className="sr-only">Search published seating</span>
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
+                <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
+                <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+              <input
+                id="viewer-seat-search"
+                value={search}
+                onChange={event => updateSearch(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === "Escape" && search.trim()) {
+                    event.stopPropagation();
+                    clearSearch();
+                  }
+                }}
+                placeholder="Search people or seats"
+                className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
+              />
+              {search.trim() && (
                 <button
                   type="button"
+                  aria-label="Clear viewer search"
+                  title="Clear search"
+                  className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
                   onClick={clearSearch}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100"
                 >
-                  Reset
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
               )}
+            </label>
+          </div>
+          {filterOpen && (
+            <div className="absolute -left-px top-full z-50 w-[288px] max-w-[calc(100vw-16px)]">
+              <FilterPanel
+                department={department}
+                status={status}
+                departments={departments}
+                zone={zone}
+                zones={zones}
+                activeChips={activeFilterChips}
+                panelId="viewer-filter-panel"
+                onClose={() => setFilterOpen(false)}
+                onDepartmentChange={setDepartment}
+                onZoneChange={setZone}
+                onStatusChange={setStatus}
+                onRemoveActiveChip={removeActiveFilterChip}
+                onClearFilters={clearStructuredFilters}
+              />
             </div>
+          )}
+        </div>
 
+        <div className="ml-auto flex h-full shrink-0 items-center">
+          <div className="flex h-full items-center">
+            <span
+              aria-current="page"
+              title="Viewer — published map"
+              className={cx(chromeSurfaceShortcut, "border-[var(--admin-primary)] text-white")}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="8.2" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              Viewer
+            </span>
+            <Link
+              href="/admin"
+              aria-label="Open admin surface"
+              title="Admin — requires admin access"
+              className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]")}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="7" r="3.1" />
+                <path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6" />
+                <path d="M14.5 18.4l2 2 4.2-4.6" />
+              </svg>
+              Admin
+            </Link>
+          </div>
+          <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">V</span>
+        </div>
+      </header>
+
+      <div className={["mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
+        <main className="flex min-w-0 flex-1 flex-col lg:min-h-0 lg:overflow-hidden">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-0.5 pb-2">
+            <FloorSelector floor={floor} onChange={setFloor} />
+            <span className="text-[12px] text-[var(--admin-text-secondary)]">{mapCrumbLabel}</span>
+            <span className="rounded-full bg-[var(--admin-success-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--admin-success)] ring-1 ring-[var(--admin-success)]/30">Published</span>
+            <span className="rounded-full bg-[var(--admin-surface)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-border)]">Read-only</span>
+            <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="ml-auto" />
+          </div>
+
+          <div className="relative min-w-0 lg:flex lg:min-h-0 lg:flex-1">
             <div
               ref={mapViewportRef}
               tabIndex={0}
-              aria-label="Published office seat map. Seat markers are read-only buttons."
-              className="relative mx-auto h-[56svh] min-h-[390px] w-full max-w-full overflow-auto overscroll-contain rounded-[18px] bg-[#f6f4f1] shadow-[inset_0_0_0_1px_rgba(71,85,105,0.22),inset_0_1px_0_rgba(255,255,255,0.92)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 lg:h-[calc(100vh-244px)] lg:min-h-[520px]"
+              aria-label="Published office seat map. Drag to pan. Seat markers are read-only buttons."
+              className={mapViewportClassName}
+              onPointerDown={handleViewportPointerDown}
+              onPointerMove={handleViewportPointerMove}
+              onPointerUp={handleViewportPointerEnd}
+              onPointerCancel={handleViewportPointerEnd}
             >
-              <div ref={mapRef} className="relative mx-auto w-[1040px] max-w-none sm:w-[1340px] lg:w-full lg:max-w-[1911px]">
-                <Image
-                  src={MAP_IMAGE_SRC}
-                  alt="Office floor plan"
-                  width={MAP_IMAGE_WIDTH}
-                  height={MAP_IMAGE_HEIGHT}
-                  priority
-                  unoptimized
-                  className="block h-auto w-full select-none"
-                  draggable={false}
-                />
-
-                <div className="absolute inset-0">
-                  {visualSeats.map(seat => {
-                    const inSearchResults = highlightedSeatIdSet.has(seat.id);
-                    const dimmed = searchActive && highlightedSeatIdSet.size > 0 && !inSearchResults && selectedSeatId !== seat.id;
-
-                    return (
-                      <SeatMarker
-                        key={seat.id}
-                        seat={seat}
-                        selected={seat.id === selectedSeatId}
-                        dimmed={dimmed}
-                        canEdit={false}
-                        showNames={false}
-                        searchResult={searchActive && inSearchResults}
-                        compactNameLabel
-                        moveSeatMode={false}
-                        swapMode={false}
-                        swapSource={false}
-                        swapTarget={false}
-                        highlighted={activeResultSeatIdSet.has(seat.id)}
-                        highlightedDescription="Highlighted search result"
-                        dragging={false}
-                        addSeatMode={false}
-                        viewportEdge="none"
-                        viewportEdgeOffsetPx={0}
-                        onSelect={selectSeat}
-                        onMovePointerDown={() => undefined}
-                      />
-                    );
-                  })}
+              {floor === "2" && (
+                <div role="status" className="grid min-h-[360px] w-full place-items-center p-6 text-center sm:min-h-[520px] lg:h-full lg:min-h-0">
+                  <div>
+                    <div className="text-sm font-semibold text-[var(--admin-text-primary)]">{FLOOR_LABELS["2"]}</div>
+                    <p className="mt-1 text-xs text-[var(--admin-text-muted)]">Not yet mapped — reserved for a future rollout.</p>
+                  </div>
                 </div>
-              </div>
+              )}
+              {floor === "3" && (
+                <div ref={mapRef} className={mapFrameClassName} style={mapFrameStyle}>
+                  <Image
+                    src={MAP_IMAGE_SRC}
+                    alt="Office floor plan"
+                    width={MAP_IMAGE_WIDTH}
+                    height={MAP_IMAGE_HEIGHT}
+                    priority
+                    unoptimized
+                    className="block h-auto w-full select-none"
+                    draggable={false}
+                  />
+
+                  <div className="absolute inset-0">
+                    {visualSeats.map(seat => {
+                      const inMatches = highlightedSeatIdSet.has(seat.id);
+                      const dimmed = filtersActive && !inMatches && selectedSeatId !== seat.id;
+
+                      return (
+                        <SeatMarker
+                          key={seat.id}
+                          seat={seat}
+                          selected={seat.id === selectedSeatId}
+                          dimmed={dimmed}
+                          canEdit={false}
+                          showNames={false}
+                          searchResult={filtersActive && inMatches}
+                          compactNameLabel
+                          moveSeatMode={false}
+                          swapMode={false}
+                          swapSource={false}
+                          swapTarget={false}
+                          highlighted={activeResultSeatIdSet.has(seat.id)}
+                          highlightedDescription="Highlighted search result"
+                          dragging={false}
+                          addSeatMode={false}
+                          viewportEdge="none"
+                          viewportEdgeOffsetPx={0}
+                          onSelect={selectSeat}
+                          onMovePointerDown={() => undefined}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          </section>
-
-          <aside className="order-1 flex min-w-0 flex-col gap-3 lg:order-2 lg:min-h-0">
-            <section aria-labelledby="viewer-results-title" className="rounded-[22px] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_50px_rgba(15,23,42,0.08)] lg:min-h-0">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 id="viewer-results-title" className="text-sm font-black text-slate-950">Results</h2>
-                  <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">
-                    {searchActive ? resultCountLabel : "Ready"}
-                  </p>
-                </div>
-                {searchActive && (
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
-                    {searchResults.resultSeatIds.length} mapped
-                  </span>
-                )}
+            {floor === "3" && (
+              <div className="absolute bottom-3 right-3 z-30">
+                <MapZoomControl
+                  label={mapZoomLabel}
+                  onZoomIn={() => applyMapZoom(zoomFactor === null ? 1 : zoomFactor + MAP_ZOOM_STEP)}
+                  onZoomOut={() => applyMapZoom(zoomFactor === null ? 1 - MAP_ZOOM_STEP : zoomFactor - MAP_ZOOM_STEP)}
+                  onFit={fitMapToView}
+                  zoomInDisabled={zoomFactor !== null && zoomFactor >= MAP_ZOOM_MAX}
+                  zoomOutDisabled={zoomFactor !== null && zoomFactor <= MAP_ZOOM_MIN}
+                />
               </div>
+            )}
+          </div>
 
-              {!searchActive ? (
-                <div className="mt-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-3">
-                  <div className="text-sm font-black text-slate-900">Published directory</div>
-                  <div className="mt-3 space-y-3">
-                    {quickDepartments.length > 0 && (
-                      <div>
-                        <div className="text-[10px] font-black uppercase tracking-wide text-slate-500">Departments</div>
-                        <div className="mt-1.5 flex flex-wrap gap-1.5">
-                          {quickDepartments.map(value => (
-                            <button key={value} type="button" onClick={() => updateSearch(value)} className="rounded-full bg-white px-2.5 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 transition hover:bg-orange-50 hover:text-brand-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
-                              {value}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2">
+            <p className="min-w-0 truncate text-xs font-medium text-[var(--admin-text-muted)]">
+              {searchActive ? `${resultCountLabel} · ${searchResults.resultSeatIds.length} mapped` : "Published seating across people, seats, departments, and zones."}
+            </p>
+            <ul aria-label="Seat status summary" className="flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--admin-text-secondary)]">
+              {[
+                { label: "Assigned", value: assignedCount, dotClass: "bg-[var(--admin-status-ok)]" },
+                { label: "Open", value: openCount, dotClass: "bg-[#8d8d8d]" },
+                { label: "Reserved", value: reservedCount, dotClass: "bg-[var(--admin-status-warn)]" }
+              ].map(item => (
+                <li key={item.label} className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-2.5 py-1">
+                  <span className={cx("h-2 w-2 shrink-0 rounded-full", item.dotClass)} aria-hidden="true" />
+                  {item.label}
+                  <span className="font-semibold text-[var(--admin-text-primary)]">{item.value}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="sr-only" aria-live="polite">{mapAnnouncement}</p>
+        </main>
+      </div>
+
+      {resultsPanelOpen && (
+        <aside
+          aria-labelledby="viewer-results-title"
+          className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-[var(--admin-elevation-3-shadow)] panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+        >
+          <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
+            <h2 id="viewer-results-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Results</h2>
+            <span aria-live="polite" className="text-xs font-medium text-[var(--admin-text-muted)]">
+              {resultCountLabel} · {searchResults.resultSeatIds.length} mapped
+            </span>
+          </div>
+
+          {searchResults.results.length > 0 ? (
+            <div role="list" aria-label="Viewer search results" className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2">
+              {searchResults.results.map(result => {
+                const selected = result.id === activeResultId || Boolean(result.seatId && result.seatId === selectedSeatId);
+                return (
+                  <button
+                    key={result.id}
+                    type="button"
+                    role="listitem"
+                    disabled={result.disabled}
+                    aria-current={selected ? "true" : undefined}
+                    aria-label={`${KIND_LABELS[result.kind]} result. ${result.title}. ${result.subtitle}. ${result.meta}.${selected ? " Selected." : ""}`}
+                    onClick={() => openResult(result)}
+                    className={cx(
+                      "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:opacity-60",
+                      selected ? "border-[var(--admin-primary-border)] bg-[var(--admin-paper)]" : "border-transparent"
                     )}
-                    {quickZones.length > 0 && (
-                      <div>
-                        <div className="text-[10px] font-black uppercase tracking-wide text-slate-500">Zones</div>
-                        <div className="mt-1.5 flex flex-wrap gap-1.5">
-                          {quickZones.map(value => (
-                            <button key={value} type="button" onClick={() => updateSearch(value)} className="rounded-full bg-white px-2.5 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-slate-200 transition hover:bg-orange-50 hover:text-brand-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
-                              {value}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : searchResults.results.length > 0 ? (
-                <div role="list" aria-label="Viewer search results" className="mt-3 max-h-[36svh] space-y-2 overflow-auto pr-1 lg:max-h-[32vh]">
-                  {searchResults.results.map(result => {
-                    const selected = result.id === activeResultId || Boolean(result.seatId && result.seatId === selectedSeatId);
-                    return (
-                      <button
-                        key={result.id}
-                        type="button"
-                        role="listitem"
-                        disabled={result.disabled}
-                        aria-current={selected ? "true" : undefined}
-                        aria-label={`${KIND_LABELS[result.kind]} result. ${result.title}. ${result.subtitle}. ${result.meta}.${selected ? " Selected." : ""}`}
-                        onClick={() => openResultAndMap(result)}
-                        className={cx(
-                          "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 rounded-2xl border p-3 text-left transition hover:border-orange-200 hover:bg-orange-50/45 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-60",
-                          selected ? "border-orange-300 bg-orange-50/80 ring-2 ring-orange-100" : "border-slate-200 bg-white"
-                        )}
-                      >
-                        <span className="min-w-0">
-                          <span className="flex min-w-0 items-center gap-2">
-                            <span className="truncate text-sm font-black text-slate-950">{result.title}</span>
-                            <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide ring-1", resultKindClass(result.kind))}>
-                              {KIND_LABELS[result.kind]}
-                            </span>
-                          </span>
-                          <span className="mt-1 block truncate text-xs font-bold text-slate-700">{result.subtitle}</span>
-                          <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">{result.meta}</span>
+                  >
+                    <span className="min-w-0">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">{result.title}</span>
+                        <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1", resultKindClass(result.kind))}>
+                          {KIND_LABELS[result.kind]}
                         </span>
-                        <span className="shrink-0 rounded-full bg-slate-50 px-2 py-1 text-[10px] font-black text-slate-500 ring-1 ring-slate-200">
-                          {result.seatIds.length || "-"}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div role="status" aria-live="polite" className="mt-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4">
-                  <div className="text-sm font-black text-slate-900">No results for {search.trim()}</div>
-                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
-                    No matching published people, seats, departments, or zones.
-                  </p>
-                  <button type="button" onClick={clearSearch} className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
-                    Clear search
-                  </button>
-                </div>
-              )}
-            </section>
-
-            <section aria-labelledby="viewer-detail-title" className="rounded-[22px] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_50px_rgba(15,23,42,0.08)] lg:min-h-0">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">Selected detail</div>
-                  <h2 id="viewer-detail-title" className="mt-1 truncate text-xl font-black text-slate-950">
-                    {selectedSeat ? selectedSeat.label : activeResult ? activeResult.title : "Nothing selected"}
-                  </h2>
-                </div>
-                {(selectedSeat || activeResult) && (
-                  <button type="button" onClick={backToMap} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
-                    Back to map
-                  </button>
-                )}
-              </div>
-
-              {selectedSeat ? (
-                <div className="mt-3 space-y-2">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate text-lg font-black text-slate-950">{getSeatPerson(selectedSeat)}</div>
-                        <div className="mt-1 truncate text-sm font-semibold text-slate-500">{getSeatDepartment(selectedSeat)}</div>
-                      </div>
-                      <span className={cx("shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ring-1", statusClass(selectedSeat.status))}>
-                        {STATUS_LABELS[selectedSeat.status]}
                       </span>
-                    </div>
-                  </div>
-                  <dl className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <dt className="text-[10px] font-black uppercase tracking-wide text-slate-500">Seat</dt>
-                      <dd className="mt-1 truncate font-black text-slate-950">{selectedSeat.label}</dd>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <dt className="text-[10px] font-black uppercase tracking-wide text-slate-500">Zone</dt>
-                      <dd className="mt-1 truncate font-black text-slate-950">{getSeatZone(selectedSeat)}</dd>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <dt className="text-[10px] font-black uppercase tracking-wide text-slate-500">Department</dt>
-                      <dd className="mt-1 truncate font-black text-slate-950">{getSeatDepartment(selectedSeat)}</dd>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <dt className="text-[10px] font-black uppercase tracking-wide text-slate-500">Availability</dt>
-                      <dd className="mt-1 truncate font-black text-slate-950">{STATUS_LABELS[selectedSeat.status]}</dd>
-                    </div>
-                  </dl>
-                </div>
-              ) : activeResult ? (
-                <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
-                  <div className={cx("inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ring-1", resultKindClass(activeResult.kind))}>
-                    {KIND_LABELS[activeResult.kind]}
-                  </div>
-                  <div className="mt-3 text-sm font-black text-slate-950">{activeResult.subtitle}</div>
-                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{activeResult.meta}</p>
-                  {activeResult.seatIds.length > 0 && (
-                    <button type="button" onClick={() => fitSeatIdsInMap(activeResult.seatIds)} className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100">
-                      Fit mapped seats
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="mt-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4 text-sm font-semibold leading-6 text-slate-500">
-                  No published seat is selected.
-                </div>
-              )}
-            </section>
-          </aside>
-        </div>
-      </main>
+                      <span className="mt-1 block truncate text-xs font-medium text-[var(--admin-text-secondary)]">{result.subtitle}</span>
+                      <span className="mt-0.5 block truncate text-[11px] text-[var(--admin-text-muted)]">{result.meta}</span>
+                    </span>
+                    <span className="shrink-0 rounded-full bg-[var(--admin-surface-muted)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-border)]">
+                      {result.seatIds.length || "-"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div role="status" aria-live="polite" className="p-4">
+              <div className="text-sm font-semibold text-[var(--admin-text-primary)]">No results for {search.trim()}</div>
+              <p className="mt-1 text-xs font-medium leading-5 text-[var(--admin-text-muted)]">
+                No matching published people, seats, departments, or zones.
+              </p>
+              <button type="button" onClick={clearSearch} className="mt-3 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:text-[var(--admin-primary-cta)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]">
+                Clear search
+              </button>
+            </div>
+          )}
+        </aside>
+      )}
+
+      <SeatInspector
+        seat={selectedSeat}
+        seats={publishedSeats}
+        employees={employees}
+        departmentOptions={departmentOptions}
+        canEdit={false}
+        collapsed={inspectorCollapsed}
+        pillSuppressed={resultsPanelOpen}
+        swapMode={false}
+        onClose={() => {
+          setSelectedSeatId(null);
+          setInspectorCollapsed(false);
+        }}
+        onToggleCollapse={() => setInspectorCollapsed(current => !current)}
+      />
     </div>
   );
 }

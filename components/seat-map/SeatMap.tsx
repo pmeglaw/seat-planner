@@ -24,7 +24,6 @@ import { departmentKey } from "@/lib/departments";
 import { normalizePoint } from "@/lib/seatMath";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
-import { buildZoneClusters, formatZoneClusterSummary, type ZoneCluster } from "@/lib/seatClusters";
 import {
   MAP_IMAGE_HEIGHT,
   MAP_IMAGE_SRC,
@@ -36,10 +35,13 @@ import {
 import { buildPublishChangeSummary, type PublishChangeItem } from "@/lib/publishSummary";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import {
+  ActiveFilterChips,
   FilterPanel,
   type ActiveFilterChip,
   type ResultStatusBreakdown
 } from "@/components/seat-map/FilterPanel";
+import { FLOOR_LABELS, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
+import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
@@ -85,16 +87,26 @@ type InspectorGuardAction =
 
 type MapViewMode = "overview" | "detail";
 
+type MapPanState = {
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startScrollLeft: number;
+  startScrollTop: number;
+  moved: boolean;
+} | null;
+
 const NAME_LABEL_COLLISION_X_THRESHOLD = 0.07;
 const NAME_LABEL_COLLISION_Y_THRESHOLD = 0.07;
 const ADMIN_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:names-visible";
 const DEFAULT_PUBLISHED_SEATS: SeatWithEmployee[] = [];
 const DEFAULT_PUBLISHED_EMPLOYEES: Employee[] = [];
 const INSPECTOR_FORM_ID = "seat-inspector-form";
-const MAP_VIEW_MODE_OPTIONS: { value: MapViewMode; label: string }[] = [
-  { value: "overview", label: "Overview" },
-  { value: "detail", label: "Detail" }
-];
+// Map zoom is a view transform on the scroll container only (spec §9): it
+// scales the rendered frame width and never touches stored seat coordinates.
+const MAP_ZOOM_MIN = 0.6;
+const MAP_ZOOM_MAX = 2;
+const MAP_ZOOM_STEP = 0.2;
 const STATUS_LABELS: Record<SeatStatus, string> = {
   available: "Available",
   assigned: "Assigned",
@@ -270,6 +282,7 @@ export function SeatMap({
   const [zone, setZone] = useState("all");
   const [status, setStatus] = useState("all");
   const [filterCollapsed, setFilterCollapsed] = useState(true);
+  const [mapMenuOpen, setMapMenuOpen] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
   const chromeSearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -280,7 +293,13 @@ export function SeatMap({
   const [inspectorResetSignal, setInspectorResetSignal] = useState(0);
   const [showNames, setShowNames] = useState(false);
   const [namesPreferenceHydrated, setNamesPreferenceHydrated] = useState(false);
-  const [mapViewMode, setMapViewMode] = useState<MapViewMode>("detail");
+  // Fit (overview) is the resting state: every individual seat visible in view.
+  const [mapViewMode, setMapViewMode] = useState<MapViewMode>("overview");
+  const [floor, setFloor] = useState<FloorId>("3");
+  const [zoomFactor, setZoomFactor] = useState(1);
+  const [panning, setPanning] = useState(false);
+  const panStateRef = useRef<MapPanState>(null);
+  const pendingZoomCenterRef = useRef<{ x: number; y: number } | null>(null);
   const [overviewMapWidth, setOverviewMapWidth] = useState<number | null>(null);
   const [mapVisibleRange, setMapVisibleRange] = useState({ left: 0, right: 1, viewportWidth: 0 });
   const [swapSourceSeatId, setSwapSourceSeatId] = useState<string | null>(null);
@@ -387,6 +406,33 @@ export function SeatMap({
     const timer = window.setTimeout(() => setStaleDraftNotice(null), 15000);
     return () => window.clearTimeout(timer);
   }, [staleDraftNotice]);
+
+  // The filter dropdown behaves like a menu (prototype .fmenu): a pointer press
+  // outside the panel or its trigger buttons dismisses it.
+  useEffect(() => {
+    if (filterCollapsed) return;
+
+    function handleOutsidePointer(event: globalThis.PointerEvent) {
+      if (event.target instanceof Element && event.target.closest("[data-filter-ui]")) return;
+      setFilterCollapsed(true);
+    }
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [filterCollapsed]);
+
+  // Same dismissal rule for the map-corner overflow (kebab) menu.
+  useEffect(() => {
+    if (!mapMenuOpen) return;
+
+    function handleOutsidePointer(event: globalThis.PointerEvent) {
+      if (event.target instanceof Element && event.target.closest("[data-map-menu]")) return;
+      setMapMenuOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [mapMenuOpen]);
 
   // Global command (3b): ⌘K / Ctrl+K focuses the command search — the chrome
   // input at lg+, the slim canvas row below that tier.
@@ -521,6 +567,11 @@ export function SeatMap({
         return;
       }
 
+      if (mapMenuOpen) {
+        setMapMenuOpen(false);
+        return;
+      }
+
       if (addSeatMode || moveSeatMode || swapSourceSeatId) {
         setAddSeatMode(false);
         setMoveSeatMode(false);
@@ -565,7 +616,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, moveSeatMode, publishReviewOpen, search, selectedSeatId, status, swapConfirm, swapSourceSeatId, zone]);
+  }, [addSeatMode, askPlannerOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, publishReviewOpen, search, selectedSeatId, status, swapConfirm, swapSourceSeatId, zone]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -621,14 +672,6 @@ export function SeatMap({
   const swapTargetSeat = swapConfirm ? localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null : null;
   const visualLocalSeats = useMemo(() => seatsToVisualSeats(localSeats), [localSeats]);
   const visualSeatById = useMemo(() => new Map(visualLocalSeats.map(seat => [seat.id, seat])), [visualLocalSeats]);
-  // Overview-zoom clusters anchor at the calibrated (visual) centroid of each zone.
-  const zoneClusters = useMemo(
-    () => buildZoneClusters(localSeats.map(seat => {
-      const visualSeat = visualSeatById.get(seat.id) ?? seat;
-      return { status: seat.status, zone: seat.zone, department: seat.department, x: visualSeat.x, y: visualSeat.y };
-    })),
-    [localSeats, visualSeatById]
-  );
   const plannerHighlightedSeatIdSet = useMemo(() => new Set(plannerHighlightedSeatIds), [plannerHighlightedSeatIds]);
   const searchQuery = search.trim();
   const searchActive = Boolean(searchQuery);
@@ -716,6 +759,16 @@ export function SeatMap({
   }, [visualLocalSeats]);
   const undoAvailable = canUndoDraftHistory(draftHistory);
   const redoAvailable = canRedoDraftHistory(draftHistory);
+  // Session-local activity for the inspector's Activity section: undo-history
+  // labels that name the selected seat (newest first). Client-side only.
+  const selectedSeatActivity = useMemo(() => {
+    if (!selectedSeat) return [];
+    return draftHistory.undoStack
+      .filter(entry => entry.label.split(/\s+/).includes(selectedSeat.label))
+      .slice(-5)
+      .reverse()
+      .map(entry => entry.label);
+  }, [draftHistory, selectedSeat]);
   const lastUndoLabel = draftHistory.undoStack.at(-1)?.label ?? null;
   const nextRedoLabel = draftHistory.redoStack.at(-1)?.label ?? null;
 
@@ -1122,13 +1175,118 @@ export function SeatMap({
     }
   }
 
-  function zoomToZoneCluster(cluster: ZoneCluster) {
-    // Scale readiness (Figma page 10): a pill click zooms to detail centered on
-    // the zone. Zooming is the only commitment — no seat auto-selects (INV-2).
-    setMapViewMode("detail");
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => scrollMapToPoint(cluster.x, cluster.y));
+  // Presentation-only zoom: scales the rendered map frame and re-centers the
+  // viewport on the point that was previously centered. Stored coordinates and
+  // the calibration transform are untouched (spec §9).
+  function applyMapZoom(nextZoom: number) {
+    const clamped = Math.min(MAP_ZOOM_MAX, Math.max(MAP_ZOOM_MIN, Math.round(nextZoom * 100) / 100));
+
+    if (mapViewMode !== "detail") {
+      setMapViewMode("detail");
+      setZoomFactor(clamped);
+      window.requestAnimationFrame(() => centerMapViewport("auto"));
+      return;
+    }
+
+    const viewport = mapViewportRef.current;
+    const map = mapRef.current;
+    if (viewport && map && map.offsetWidth > 0 && map.offsetHeight > 0) {
+      pendingZoomCenterRef.current = {
+        x: Math.min(1, Math.max(0, (viewport.scrollLeft + viewport.clientWidth / 2 - map.offsetLeft) / map.offsetWidth)),
+        y: Math.min(1, Math.max(0, (viewport.scrollTop + viewport.clientHeight / 2 - map.offsetTop) / map.offsetHeight))
+      };
+    }
+
+    setZoomFactor(clamped);
+  }
+
+  useEffect(() => {
+    const center = pendingZoomCenterRef.current;
+    if (!center) return;
+    pendingZoomCenterRef.current = null;
+
+    const frame = window.requestAnimationFrame(() => {
+      const viewport = mapViewportRef.current;
+      const map = mapRef.current;
+      if (!viewport || !map) return;
+      const clampScrollPosition = (value: number, max: number) => Math.min(Math.max(value, 0), Math.max(max, 0));
+      viewport.scrollTo({
+        left: clampScrollPosition(map.offsetLeft + (center.x * map.offsetWidth) - (viewport.clientWidth / 2), viewport.scrollWidth - viewport.clientWidth),
+        top: clampScrollPosition(map.offsetTop + (center.y * map.offsetHeight) - (viewport.clientHeight / 2), viewport.scrollHeight - viewport.clientHeight),
+        behavior: "auto"
+      });
     });
+    return () => window.cancelAnimationFrame(frame);
+  }, [zoomFactor]);
+
+  function fitMapToView() {
+    setZoomFactor(1);
+    if (mapViewMode !== "overview") changeMapViewMode("overview");
+  }
+
+  // Click-and-drag pan on the map viewport (view transform only). Interactive
+  // targets (seat markers, buttons, links, form fields) never start a pan so
+  // their clicks keep working; a press that stays within the drag threshold
+  // falls through to the canvas click-to-deselect behavior on release.
+  function isPanBlockedTarget(target: EventTarget | null) {
+    return target instanceof Element && Boolean(target.closest("button, a, input, select, textarea, [data-seat-id]"));
+  }
+
+  function handleViewportPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (mapViewMode !== "detail" || floor !== "3") return;
+    if (event.button !== 0) return;
+    if ((canEdit && addSeatMode) || dragState) return;
+    if (isPanBlockedTarget(event.target)) return;
+    const viewport = mapViewportRef.current;
+    if (!viewport) return;
+
+    panStateRef.current = {
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startScrollLeft: viewport.scrollLeft,
+      startScrollTop: viewport.scrollTop,
+      moved: false
+    };
+    viewport.setPointerCapture(event.pointerId);
+    setPanning(true);
+  }
+
+  function handleViewportPointerMove(event: PointerEvent<HTMLDivElement>) {
+    const pan = panStateRef.current;
+    if (!pan || pan.pointerId !== event.pointerId) return;
+    const viewport = mapViewportRef.current;
+    if (!viewport) return;
+
+    const deltaX = event.clientX - pan.startClientX;
+    const deltaY = event.clientY - pan.startClientY;
+    if (!pan.moved && Math.abs(deltaX) + Math.abs(deltaY) > 4) pan.moved = true;
+    viewport.scrollLeft = pan.startScrollLeft - deltaX;
+    viewport.scrollTop = pan.startScrollTop - deltaY;
+  }
+
+  function handleViewportPointerEnd(event: PointerEvent<HTMLDivElement>) {
+    const pan = panStateRef.current;
+    if (!pan || pan.pointerId !== event.pointerId) return;
+    panStateRef.current = null;
+    setPanning(false);
+    if (pan.moved || event.type === "pointercancel") return;
+
+    // A stationary press on empty canvas keeps the pre-pan behavior: clear the
+    // selection (guarded while the inspector holds unsaved edits).
+    if (isPanBlockedTarget(event.target)) return;
+    if (canEdit && addSeatMode) return;
+    if (swapSourceSeatId) {
+      setActionNotice(null);
+      return;
+    }
+    if (selectedSeatId && inspectorDirty) {
+      requestInspectorGuard({ kind: "clear-selection" });
+      return;
+    }
+    setSelectedSeatId(null);
+    setInspectorDirty(false);
+    setMoveSeatMode(false);
   }
 
   const centerSeatInMap = useCallback((seatId: string) => {
@@ -1166,50 +1324,9 @@ export function SeatMap({
     });
   }, [centerSeatInMap]);
 
-  // B1: when the inspector opens for a seat whose on-screen position would fall
-  // under the right-side floating inspector panel (the right ~17% of the map at
-  // >=900px), horizontally nudge the viewport so the seat stays visible. This
-  // only drives the existing viewport scroll container (orthogonal to the
-  // pointer-drag pan/zoom system) and touches scrollLeft only, so a wide seat
-  // never triggers a jarring vertical jump. Panels below 900px are bottom sheets
-  // that don't overlap the seat, so the guard is desktop-only.
-  const nudgeSeatClearOfInspector = useCallback((seatId: string) => {
-    const viewport = mapViewportRef.current;
-    const map = mapRef.current;
-    if (!viewport || !map || map.offsetWidth <= 0) return;
-    if (viewport.clientWidth < 900) return;
-
-    const seat = localSeats.find(item => item.id === seatId);
-    if (!seat) return;
-    const point = savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat);
-
-    const mapLeftInScrollContent = map.offsetLeft;
-    const visibleLeft = (viewport.scrollLeft - mapLeftInScrollContent) / map.offsetWidth;
-    const visibleRight = (viewport.scrollLeft - mapLeftInScrollContent + viewport.clientWidth) / map.offsetWidth;
-    const visibleSpan = visibleRight - visibleLeft;
-    if (visibleSpan <= 0) return;
-
-    // Fraction of the visible viewport the seat currently sits at (0 = left edge).
-    const onScreenFraction = (point.x - visibleLeft) / visibleSpan;
-    // The floating inspector covers roughly the right 17% of the viewport.
-    if (onScreenFraction <= 0.83) return;
-
-    const maxLeft = Math.max(viewport.scrollWidth - viewport.clientWidth, 0);
-    // Re-seat the seat at ~55% of the viewport so it clears the panel without a
-    // full recenter (keeps nearby context on the right).
-    const targetLeft = mapLeftInScrollContent + (point.x * map.offsetWidth) - (viewport.clientWidth * 0.55);
-    const nextLeft = Math.min(Math.max(targetLeft, 0), maxLeft);
-    viewport.scrollTo({ left: nextLeft, behavior: "smooth" });
-  }, [localSeats]);
-
-  useEffect(() => {
-    if (!selectedSeatId || inspectorCollapsed || mapViewMode !== "detail") return;
-    const frame = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => nudgeSeatClearOfInspector(selectedSeatId));
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [selectedSeatId, inspectorCollapsed, mapViewMode, nudgeSeatClearOfInspector]);
-
+  // The inspector reserves layout width (no overlay), so a selected seat can
+  // never sit hidden under the panel — no nudge scrolling on select. Explicit
+  // navigation (results "Show on map") still centers via queueCenterSeatInMap.
   function seatPersonLabel(seat: SeatWithEmployee | null) {
     return seat?.employee?.full_name ?? "Open";
   }
@@ -1299,6 +1416,7 @@ export function SeatMap({
   }
 
   function startAddSeatMode() {
+    setMapMenuOpen(false);
     if (selectedSeatId && inspectorDirty) {
       requestInspectorGuard({ kind: "start-add-seat" });
       return;
@@ -1307,6 +1425,7 @@ export function SeatMap({
   }
 
   function cancelAddSeatMode() {
+    setMapMenuOpen(false);
     setAddSeatMode(false);
   }
 
@@ -1457,6 +1576,11 @@ export function SeatMap({
     }
 
     if (seatTarget) return;
+
+    // Detail mode presses may be the start of a drag-to-pan: the viewport's
+    // pointer-end handler performs the canvas deselect only when the press
+    // stayed within the drag threshold. Overview presses deselect immediately.
+    if (mapViewMode === "detail") return;
 
     if (swapSourceSeatId) {
       setActionNotice(null);
@@ -1727,11 +1851,34 @@ export function SeatMap({
   // owns the panel slot (its microcopy lives in the occupant, INV-4). Move mode
   // keeps the inspector as the occupant — the drag hint renders inside it.
   const modeCardOpen = canEdit && Boolean(activeMode) && (!selectedSeat || inspectorCollapsed);
+  // Prototype "stage": at the panel tier the inspector RESERVES layout width
+  // instead of overlaying the canvas — expanded takes the 320px column, the
+  // collapsed rail takes 44px, and the content wrapper pads right to match.
+  // Mirrors SeatInspector's own render rules (rail hidden while another panel
+  // owns the slot) so the reservation never outlives the panel.
+  const inspectorPillSuppressed = resultsPanelOpen || modeCardOpen || askPlannerOpen;
+  const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
+    ? !inspectorCollapsed
+      ? "expanded"
+      : swapSourceSeatId || inspectorPillSuppressed
+        ? "none"
+        : "rail"
+    : "none";
+  // Whatever occupies the right slot reserves the column — expanded inspector,
+  // results panel, or mode card — so nothing renders hidden behind a panel.
+  const rightSlotTier: "expanded" | "rail" | "none" =
+    inspectorDockTier === "expanded" || resultsPanelOpen || modeCardOpen ? "expanded" : inspectorDockTier;
+  const stageReservedClassName = rightSlotTier === "expanded"
+    ? "panel:pr-[332px]"
+    : rightSlotTier === "rail"
+      ? "panel:pr-[56px]"
+      : "";
+  // No mode/zoom change on select or deselect: in the fit view the reserved
+  // column resizes the viewport and the overview ResizeObserver re-fits the
+  // frame width automatically; a zoomed (detail) view keeps its zoom.
+
   // Floating panels intentionally overlay the canvas, so banners need no safe area.
   const canvasBannerSafeAreaClassName = "";
-  // Scale readiness (Figma page 10): overview zoom clusters markers into zone pills;
-  // search, a selection, or an active mode dissolves clusters back into markers.
-  const overviewClusterMode = mapViewMode === "overview" && !filtersActive && !selectedSeatId && !addSeatMode && !moveSeatMode && !swapSourceSeatId;
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
     showFilterPanel ||
@@ -1742,30 +1889,27 @@ export function SeatMap({
     Boolean(swapConfirm)
   );
   const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;
-  const filterPanelShellClass = [
-    filterCollapsed ? "order-2" : "order-1",
-    canEdit && filterCollapsed ? "lg:hidden" : "",
-    !filterCollapsed
-      ? "lg:fixed lg:left-3 lg:top-[84px] lg:z-40 lg:w-[288px] lg:[&>aside]:top-0 lg:[&>aside]:max-h-[calc(100vh-96px)]"
-      : ""
-  ].join(" ");
   const mapViewportClassName = [
-    "relative mx-auto w-full max-w-full overscroll-contain rounded-[22px] border border-[var(--admin-border-strong)] bg-[var(--admin-map-floor)] shadow-[var(--admin-shadow-map),inset_0_1px_0_rgba(255,255,255,0.6)] sm:rounded-[26px] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
+    "relative mx-auto w-full max-w-full overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
     mapViewMode === "overview"
       ? "min-h-[300px] overflow-hidden p-1.5 sm:min-h-[480px] sm:p-2 lg:flex lg:min-h-0 lg:items-center lg:justify-center"
       : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+    mapViewMode === "detail" && floor === "3" && !addSeatMode ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-map-floor)]" : ""
   ].join(" ");
   const mapFrameClassName = [
     "relative mx-auto max-w-none",
-    mapViewMode === "overview" ? "w-full max-w-[1911px]" : "w-[1120px] sm:w-[1460px] lg:w-[1911px]",
+    mapViewMode === "overview"
+      ? "w-full max-w-[1911px]"
+      : "[--map-detail-base:1120px] sm:[--map-detail-base:1460px] lg:[--map-detail-base:1911px]",
     addSeatMode ? "cursor-crosshair" : ""
   ].join(" ");
-  const mapFrameStyle = mapViewMode === "overview" && overviewMapWidth ? { width: `${overviewMapWidth}px` } : undefined;
-  const mapModeOverlayShellClassName = [
-    "pointer-events-none sticky left-0 top-0 z-30 h-0",
-    mobileMapControlsHidden ? "hidden sm:block" : ""
-  ].filter(Boolean).join(" ");
+  // Zoom scales the rendered width only — a pure view transform (§9).
+  const mapFrameStyle = mapViewMode === "overview"
+    ? (overviewMapWidth ? { width: `${overviewMapWidth}px` } : undefined)
+    : { width: `calc(var(--map-detail-base) * ${zoomFactor})` };
+  const mapZoomLabel = mapViewMode === "overview" ? "Fit" : `${Math.round(zoomFactor * 100)}%`;
+  const mapCrumbLabel = floor === "2" ? "Not yet mapped" : `Draft map · ${stats.total} ${stats.total === 1 ? "seat" : "seats"}`;
   const mapMarkerLayerClassName = [
     "absolute inset-0",
     mobileMapControlsHidden ? "hidden sm:block" : ""
@@ -1818,93 +1962,118 @@ export function SeatMap({
     return { edge: "none", offsetPx: 0 };
   }
 
-  // Claude Design top bar: quiet text-only toolbar buttons — no borders/boxes, warm-grey,
-  // subtle hover bg; active picks up the brand orange.
-  const chromeToolbarBtn = "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] border border-transparent px-2.5 text-[13px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:border-[var(--admin-chrome-border)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-transparent disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
-  const chromeToolbarBtnActive = "relative inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] border border-[var(--admin-chrome-border)] px-2.5 text-[13px] font-medium leading-none text-[var(--admin-chrome-text)] bg-[var(--admin-chrome-hover)] shadow-[inset_0_1px_0_rgba(255,255,255,0.07)] transition-colors duration-150 after:pointer-events-none after:absolute after:inset-x-2.5 after:bottom-1 after:h-0.5 after:rounded-full after:bg-[var(--admin-primary)] after:content-[''] hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]";
+  // Shell top bar: full-height quiet tools on the 40px dark bar. Active state
+  // is the Carbon-style 2px brand-orange underline (5.37:1 on #161616).
+  const chromeToolbarBtn = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
+  const chromeToolbarBtnActive = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[8.5px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
-      <header className="z-40 flex h-[54px] shrink-0 items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] bg-gradient-to-b from-[var(--admin-chrome-elevated)] to-[var(--admin-chrome-bg)] px-3 text-[var(--admin-chrome-text)] shadow-[var(--admin-shadow-shell)] sm:gap-3 sm:px-4">
-        <div className="flex min-w-0 shrink-0 items-center gap-2.5">
-          <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-[9px] bg-gradient-to-b from-white to-[#F1EFEA] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.5),0_4px_10px_-3px_rgba(0,0,0,0.4)]">
-            {/* Megeredchian Law brand mark on a warm-white raised chip so its orange + charcoal read on the dark chrome bar. */}
-            <Image src="/images/megeredchian-mark.png?v=tight" alt="" width={26} height={26} unoptimized className="h-[26px] w-[26px] object-contain" />
+      <header className="z-40 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+        <h1 className="sr-only">Megeredchian Law Seats</h1>
+        <div className="flex min-w-0 shrink-0 items-center gap-2">
+          <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
+            {/* Megeredchian Law brand mark on a white chip so its orange + charcoal read on the dark chrome bar. */}
+            <Image src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />
           </span>
-          <div className="hidden min-w-0 leading-tight sm:block">
-            <div className="truncate text-[13px] font-semibold text-[var(--admin-chrome-text)]">Megeredchian Law Seats</div>
-            <div className="flex items-center gap-1.5 truncate text-[11px] text-[var(--admin-chrome-muted)]">
-              {canEdit ? (
-                <>
-                  <span aria-hidden="true" className={["h-1.5 w-1.5 shrink-0 rounded-full", publishSummary.hasChanges ? "bg-[#E0A82E]" : "bg-[#3F9B6B]"].join(" ")} />
-                  <span className="truncate">{publishSummary.hasChanges ? `Admin · ${publishSummary.totalChangeCount} unpublished` : "Admin · in sync"}</span>
-                </>
-              ) : "Published · Viewer"}
-            </div>
+          <div aria-hidden="true" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-none sm:block">
+            Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
           </div>
         </div>
 
-        <div role="search" aria-label="Command search" className="hidden min-w-0 lg:block lg:max-w-[448px] lg:flex-1">
-          <label className="relative block w-full min-w-0">
-            <span className="sr-only">Search employee, seat, job title, department, or zone</span>
-            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
-              <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
-              <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-            </svg>
-            <input
-              ref={chromeSearchInputRef}
-              value={search}
-              onChange={event => handleSearchInputChange(event.target.value)}
-              onKeyDown={event => {
-                if (event.key === "Escape" && search.trim()) {
-                  event.stopPropagation();
-                  clearSearch();
-                }
-              }}
-              placeholder="Search people, seats, or zones"
-              className="h-9 w-full rounded-[10px] border border-[var(--admin-chrome-border)] bg-white/[0.1] pl-9 pr-16 text-[13px] font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.14] focus:border-[var(--admin-primary)] focus:bg-white/[0.12] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
-            />
-            {search.trim() ? (
-              <button
-                type="button"
-                aria-label="Clear search"
-                title="Clear search"
-                className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
-                onClick={clearSearch}
-              >
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
-            ) : searchShortcutHint ? (
-              <kbd aria-hidden="true" className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-[6px] border border-[var(--admin-chrome-border)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)]">{searchShortcutHint}</kbd>
-            ) : null}
-          </label>
-        </div>
+        <span aria-hidden="true" className="mx-2.5 hidden h-[22px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
 
-        {canEdit && (
-          <nav role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:ml-0 lg:flex-none lg:overflow-visible">
+        {/* Filter + Search: ONE connected control — the Filter segment sits
+            immediately LEFT of the search input, sharing one border (prototype
+            pairing). The dropdown anchors inside this group so the open menu
+            butts directly against the button, no gap. */}
+        <div data-filter-ui className="relative mr-1 flex h-[26px] min-w-0 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2 lg:min-w-0 lg:max-w-[340px] lg:flex-1">
+          {canEdit && (
             <button
               type="button"
+              data-filter-ui
               onClick={toggleFilterPanel}
               aria-controls="seat-map-filter-panel"
               aria-expanded={!filterCollapsed}
+              aria-haspopup="true"
               aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
-              className={structuredFilterCount > 0 ? chromeToolbarBtnActive : chromeToolbarBtn}
+              className={[
+                "flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] lg:border-r lg:border-r-[var(--admin-chrome-border)]",
+                structuredFilterCount > 0 || !filterCollapsed
+                  ? "border-b-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)]"
+                  : "border-b-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"
+              ].join(" ")}
             >
-              Filters
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                <path d="M3 4.5h14l-5.4 6.2v4.8l-3.2-1.7v-3.1L3 4.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+              </svg>
+              Filter
               {structuredFilterCount > 0 && (
                 <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{structuredFilterCount}</span>
               )}
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--admin-chrome-muted)]">
+                <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
-            <button
-              type="button"
-              onClick={() => setShowNames(current => !current)}
-              aria-label={namesToggleLabel}
-              title={namesToggleLabel}
-              className={showNames ? chromeToolbarBtnActive : chromeToolbarBtn}
-            >
-              {namesToggleLabel}
-            </button>
-            <span aria-hidden="true" className="mx-1 hidden h-5 w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
+          )}
+          <div role="search" aria-label="Command search" className="hidden h-full min-w-0 flex-1 lg:block">
+            <label className="relative flex h-full w-full min-w-0 items-center">
+              <span className="sr-only">Search employee, seat, job title, department, or zone</span>
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
+                <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
+                <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+              <input
+                ref={chromeSearchInputRef}
+                value={search}
+                onChange={event => handleSearchInputChange(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === "Escape" && search.trim()) {
+                    event.stopPropagation();
+                    clearSearch();
+                  }
+                }}
+                placeholder="Search people or seats"
+                className="h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
+              />
+              {search.trim() ? (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  title="Clear search"
+                  className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+                  onClick={clearSearch}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
+              ) : searchShortcutHint ? (
+                <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[9px] font-semibold text-[var(--admin-chrome-muted)]">{searchShortcutHint}</kbd>
+              ) : null}
+            </label>
+          </div>
+          {showFilterPanel && (
+            <div data-filter-ui className="absolute -left-px top-full z-50 w-[288px] max-w-[calc(100vw-16px)]">
+              <FilterPanel
+                department={department}
+                status={status}
+                departments={departments}
+                zone={zone}
+                zones={zones}
+                activeChips={activeFilterChips}
+                onClose={toggleFilterPanel}
+                onDepartmentChange={setDepartment}
+                onZoneChange={setZone}
+                onStatusChange={setStatus}
+                onRemoveActiveChip={removeActiveFilterChip}
+                onClearFilters={clearStructuredFilters}
+              />
+            </div>
+          )}
+        </div>
+
+        {canEdit && (
+          <nav role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:ml-0 lg:flex-none lg:overflow-visible">
             <button
               type="button"
               onClick={undoDraftEdit}
@@ -1917,6 +2086,7 @@ export function SeatMap({
                 <path d="M6.5 8.5H12a3.5 3.5 0 0 1 0 7H8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M8.5 5.5 5 8.5l3.5 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
+              Undo
             </button>
             <button
               type="button"
@@ -1930,8 +2100,17 @@ export function SeatMap({
                 <path d="M13.5 8.5H8a3.5 3.5 0 0 0 0 7h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M11.5 5.5 15 8.5l-3.5 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
+              Redo
             </button>
-            <span aria-hidden="true" className="mx-1 hidden h-5 w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
+            <button
+              type="button"
+              onClick={() => setShowNames(current => !current)}
+              aria-label={namesToggleLabel}
+              title={namesToggleLabel}
+              className={showNames ? chromeToolbarBtnActive : chromeToolbarBtn}
+            >
+              {namesToggleLabel}
+            </button>
             <Link
               href="/admin/management"
               onClick={event => {
@@ -1939,6 +2118,10 @@ export function SeatMap({
               }}
               className={chromeToolbarBtn}
             >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                <rect x="3" y="4" width="14" height="12" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M3 8h14M8.5 8v8" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
               Management
             </Link>
             <button
@@ -1951,6 +2134,10 @@ export function SeatMap({
               onClick={openAskPlannerDrawer}
               className={askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? chromeToolbarBtnActive : chromeToolbarBtn}
             >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                <path d="M10 3.2 11.7 8 16.5 9.7 11.7 11.4 10 16.2 8.3 11.4 3.5 9.7 8.3 8 10 3.2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+                <path d="M15.6 3.4v3M14.1 4.9h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
               Ask Planner
               {plannerHighlightedSeatIds.length > 0 && (
                 <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
@@ -1959,7 +2146,34 @@ export function SeatMap({
           </nav>
         )}
 
-        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <div className="ml-auto flex h-full shrink-0 items-center">
+          {/* Surface shortcuts: the active surface carries the orange underline. */}
+          <div className="hidden h-full items-center sm:flex">
+            <Link
+              href="/"
+              aria-label="Open viewer surface"
+              title="Viewer — published map"
+              className={[chromeSurfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"].join(" ")}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="8.2" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              Viewer
+            </Link>
+            <span
+              aria-current="page"
+              title="Admin — draft planning"
+              className={[chromeSurfaceShortcut, "border-[var(--admin-primary)] text-white"].join(" ")}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="7" r="3.1" />
+                <path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6" />
+                <path d="M14.5 18.4l2 2 4.2-4.6" />
+              </svg>
+              Admin
+            </span>
+          </div>
           {canEdit && (
             <button
               type="button"
@@ -1967,38 +2181,23 @@ export function SeatMap({
               aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
               title={draftStatusTitle}
               className={[
-                "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] px-3 text-[12.5px] font-semibold leading-none transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]",
+                "inline-flex h-10 shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white",
                 publishSummary.hasChanges
-                  ? "bg-[var(--admin-primary-cta)] text-white shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_2px_8px_-2px_rgba(178,67,15,0.55)] hover:bg-[var(--admin-primary-cta-hover)] motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
-                  : "border border-[var(--admin-chrome-border)] text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"
+                  ? "bg-[var(--admin-primary)] text-[var(--admin-primary-ink)] hover:brightness-105 motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
+                  : "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"
               ].join(" ")}
             >
               {publishSummary.hasChanges ? (
                 <>
-                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-                    <path d="M10 14V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                    <path d="M6 8.5 10 4.5l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M4.5 16h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
-                  <span className="hidden sm:inline">Review changes</span>
-                  <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white/25 px-1 text-[11px] font-bold tabular-nums">{publishSummary.totalChangeCount}</span>
+                  <span>Publish</span>
+                  <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#161616]/15 px-1 text-[11px] font-bold tabular-nums">{publishSummary.totalChangeCount}</span>
                 </>
               ) : (
                 <>
-                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#3F9B6B]" />
+                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--admin-status-ok)]" />
                   <span className="hidden sm:inline">Published</span>
                 </>
               )}
-            </button>
-          )}
-          {canEdit && (
-            <button
-              type="button"
-              onClick={() => setMapViewMode(current => (current === "detail" ? "overview" : "detail"))}
-              aria-label={mapViewMode === "detail" ? "Fit map to view" : "Zoom map to actual size"}
-              title={mapViewMode === "detail" ? "Fit map to view" : "Zoom map to actual size"}
-              className="hidden h-8 items-center rounded-[9px] px-2 text-[12px] font-medium tabular-nums text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] sm:inline-flex">
-              {mapViewMode === "detail" ? "100%" : "Fit"}
             </button>
           )}
           {canEdit ? (
@@ -2009,20 +2208,23 @@ export function SeatMap({
               onClick={event => {
                 if (!beforeManagementNavigation()) event.preventDefault();
               }}
-              className={["flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[12px] font-semibold text-white transition hover:brightness-110", focusRingClass].join(" ")}
+              className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-chrome-bg)]"
             >
               A
             </Link>
           ) : (
-            <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[12px] font-semibold text-white">A</span>
+            <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">A</span>
           )}
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden">
+      <div className={["mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
         
 
-        <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0">
+        {/* lg:flex-1 keeps the height chain rigid: without it the fit-view
+            width/height calculation feeds back on itself after the reserved
+            inspector column opens and closes, sticking the map small. */}
+        <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0 lg:flex-1">
           <div role="search" aria-label="Canvas search" className="z-30 px-0.5 pb-2 lg:hidden">
             <label className="relative block w-full min-w-0">
               <span className="sr-only">Search employee, seat, job title, department, or zone</span>
@@ -2041,7 +2243,7 @@ export function SeatMap({
                   }
                 }}
                 placeholder="Search people, seats, departments, or zones"
-                className="h-11 w-full rounded-[12px] border border-[var(--admin-border)] bg-[var(--admin-surface)] pl-11 pr-10 text-sm font-medium text-[var(--admin-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--admin-text-subtle)] hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
+                className="h-11 w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] pl-11 pr-10 text-sm font-medium text-[var(--admin-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--admin-text-subtle)] hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
               />
               {search.trim() && (
                 <button
@@ -2058,28 +2260,7 @@ export function SeatMap({
           </div>
 
       <main className={["grid grid-cols-1 gap-2 bg-[var(--admin-surface-muted)] p-2 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
-        {showFilterPanel && (
-          <div className={filterPanelShellClass}>
-            <FilterPanel
-              department={department}
-              status={status}
-              departments={departments}
-              zone={zone}
-              zones={zones}
-              collapsed={filterCollapsed}
-              activeChips={activeFilterChips}
-              onToggle={toggleFilterPanel}
-              onDepartmentChange={setDepartment}
-              onZoneChange={setZone}
-              onStatusChange={setStatus}
-              onRemoveActiveChip={removeActiveFilterChip}
-              onClearFilters={clearStructuredFilters}
-              onClearAll={clearAllConstraints}
-            />
-          </div>
-        )}
-
-        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden rounded-[14px] border border-[var(--admin-border)] bg-[var(--admin-surface)]/68 p-2 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
+        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden p-0.5 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
           {staleDraftNotice && (
             <div role="alert" className={actionErrorBannerClassName}>
               {staleDraftNotice}
@@ -2107,56 +2288,105 @@ export function SeatMap({
             </div>
           )}
 
-          <div className="min-w-0 lg:flex lg:min-h-0 lg:flex-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-0.5 pb-2 lg:pb-0">
+            <FloorSelector floor={floor} onChange={setFloor} />
+            <span className="text-[12px] text-[var(--admin-text-secondary)]">{mapCrumbLabel}</span>
+            <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
+              <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} />
+              {canEdit && floor === "3" && (
+                <div data-map-menu className="relative">
+                  <button
+                    type="button"
+                    aria-haspopup="true"
+                    aria-expanded={mapMenuOpen}
+                    aria-controls={mapMenuOpen ? "seat-map-overflow-menu" : undefined}
+                    aria-label="More map actions"
+                    title="More map actions"
+                    onClick={() => setMapMenuOpen(current => !current)}
+                    className={[
+                      "inline-flex h-[30px] w-8 items-center justify-center border transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]",
+                      mapMenuOpen || addSeatMode
+                        ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-cta)]"
+                        : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)]"
+                    ].join(" ")}
+                  >
+                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
+                      <circle cx="10" cy="4.5" r="1.5" />
+                      <circle cx="10" cy="10" r="1.5" />
+                      <circle cx="10" cy="15.5" r="1.5" />
+                    </svg>
+                  </button>
+                  {mapMenuOpen && (
+                    <div
+                      id="seat-map-overflow-menu"
+                      role="group"
+                      aria-label="Map actions"
+                      onKeyDown={event => {
+                        if (event.key === "Escape") {
+                          event.stopPropagation();
+                          setMapMenuOpen(false);
+                        }
+                      }}
+                      className="absolute right-0 top-full z-40 min-w-[176px] border border-[var(--admin-border)] bg-[var(--admin-surface)] py-1 shadow-[var(--admin-elevation-3-shadow)]"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMapMenuOpen(false);
+                          fitMapToView();
+                        }}
+                        className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
+                      >
+                        Fit map to view
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMapMenuOpen(false);
+                          applyMapZoom(1);
+                        }}
+                        className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
+                      >
+                        Zoom to 100%
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={addSeatMode}
+                        onClick={addSeatMode ? cancelAddSeatMode : startAddSeatMode}
+                        className={[
+                          "flex w-full items-center px-3 py-2 text-left text-[12px] font-medium transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]",
+                          addSeatMode ? "text-[var(--admin-primary-cta)]" : "text-[var(--admin-text-primary)]"
+                        ].join(" ")}
+                      >
+                        {addSeatMode ? "Exit Add Seat" : "Add seat"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="relative min-w-0 lg:flex lg:min-h-0 lg:flex-1">
             <div
               ref={mapViewportRef}
               className={mapViewportClassName}
               tabIndex={canEdit ? 0 : undefined}
-              aria-label={canEdit ? "Admin seat map viewport. Use wheel, trackpad, touch, or arrow keys to pan the map." : undefined}
+              aria-label={canEdit ? "Admin seat map viewport. Drag to pan; use wheel, trackpad, touch, or arrow keys to pan the map." : undefined}
+              onPointerDown={handleViewportPointerDown}
+              onPointerMove={handleViewportPointerMove}
+              onPointerUp={handleViewportPointerEnd}
+              onPointerCancel={handleViewportPointerEnd}
             >
-              <div className={mapModeOverlayShellClassName}>
-                <div
-                  role="group"
-                  aria-label="Map view mode"
-                  className="pointer-events-auto ml-2 mt-2 inline-flex rounded-xl border border-white/15 bg-[var(--admin-rail-bg)]/90 p-0.5 text-white shadow-[0_8px_18px_rgba(16,17,20,0.24),inset_0_1px_0_rgba(255,255,255,0.16)] backdrop-blur-md"
-                >
-                  {MAP_VIEW_MODE_OPTIONS.map(option => {
-                    const active = mapViewMode === option.value;
-
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => changeMapViewMode(option.value)}
-                        className={[
-                          "h-8 rounded-lg px-2.5 text-[11px] font-semibold transition active:scale-[0.97] active:duration-75",
-                          focusRingClass,
-                          active ? "bg-[var(--admin-primary-soft)] text-[var(--admin-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]" : "text-white/75 hover:bg-white/10 hover:text-white"
-                        ].join(" ")}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
+              {floor === "2" && (
+                <div role="status" className="grid min-h-[360px] w-full place-items-center p-6 text-center sm:min-h-[520px] lg:h-full lg:min-h-0">
+                  <div>
+                    <div className="text-sm font-semibold text-[var(--admin-text-primary)]">{FLOOR_LABELS["2"]}</div>
+                    <p className="mt-1 text-xs text-[var(--admin-text-muted)]">Not yet mapped — reserved for a future rollout.</p>
+                  </div>
                 </div>
-                {canEdit && (
-                  <button
-                    type="button"
-                    aria-pressed={addSeatMode}
-                    onClick={addSeatMode ? cancelAddSeatMode : startAddSeatMode}
-                    className={[
-                      "pointer-events-auto ml-2 mt-2 inline-flex h-9 items-center rounded-xl border border-white/15 px-3 text-[11px] font-semibold shadow-[0_8px_18px_rgba(16,17,20,0.24),inset_0_1px_0_rgba(255,255,255,0.16)] backdrop-blur-md transition active:scale-[0.97] active:duration-75",
-                      focusRingClass,
-                      addSeatMode
-                        ? "bg-[var(--admin-primary-soft)] text-[var(--admin-primary)]"
-                        : "bg-[var(--admin-rail-bg)]/90 text-white/85 hover:bg-[var(--admin-rail-bg)] hover:text-white"
-                    ].join(" ")}
-                  >
-                    {addSeatMode ? "Exit Add Seat" : "Add seat"}
-                  </button>
-                )}
-              </div>
+              )}
+              {floor === "3" && (
               <div
                 ref={mapRef}
                 className={mapFrameClassName}
@@ -2181,20 +2411,9 @@ export function SeatMap({
                 />
 
                 <div className={mapMarkerLayerClassName}>
-                  {overviewClusterMode ? zoneClusters.map(cluster => (
-                    <button
-                      key={cluster.zone}
-                      type="button"
-                      onClick={() => zoomToZoneCluster(cluster)}
-                      aria-label={`Zoom to ${cluster.zone}: ${formatZoneClusterSummary(cluster)}`}
-                      title={`Zoom to ${cluster.zone}`}
-                      style={{ left: `${cluster.x * 100}%`, top: `${cluster.y * 100}%` }}
-                      className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--admin-border-strong)] bg-[var(--admin-surface)]/95 py-1.5 pl-3 pr-2.5 text-xs font-semibold text-[var(--admin-text-primary)] shadow-[0_10px_24px_rgba(31,34,37,0.14)] backdrop-blur transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-paper)] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
-                    >
-                      <span>{cluster.zone}</span>
-                      <span className="font-medium text-[var(--admin-text-muted)]">{formatZoneClusterSummary(cluster)}</span>
-                    </button>
-                  )) : localSeats.map(seat => {
+                  {/* Every state renders individual seat markers — the fit view
+                      never collapses to zone/cluster pills (owner QA, round 2). */}
+                  {localSeats.map(seat => {
                     const seatMatchesFilters = matchesFilters(seat);
                     const visualSeat = visualSeatById.get(seat.id) ?? seat;
                     const viewportPlacement = getMarkerViewportPlacement(visualSeat.x);
@@ -2237,11 +2456,24 @@ export function SeatMap({
                   })}
                 </div>
               </div>
+              )}
             </div>
+            {floor === "3" && (
+              <div className={["absolute bottom-3 right-3 z-30", mobileMapControlsHidden ? "hidden sm:block" : ""].filter(Boolean).join(" ")}>
+                <MapZoomControl
+                  label={mapZoomLabel}
+                  onZoomIn={() => applyMapZoom(mapViewMode === "detail" ? zoomFactor + MAP_ZOOM_STEP : 1)}
+                  onZoomOut={() => applyMapZoom(mapViewMode === "detail" ? zoomFactor - MAP_ZOOM_STEP : 1 - MAP_ZOOM_STEP)}
+                  onFit={fitMapToView}
+                  zoomInDisabled={mapViewMode === "detail" && zoomFactor >= MAP_ZOOM_MAX}
+                  zoomOutDisabled={mapViewMode === "detail" && zoomFactor <= MAP_ZOOM_MIN}
+                />
+              </div>
+            )}
           </div>
 
           {canEdit && (
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[11px] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 lg:mt-0">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 lg:mt-0">
               <div className="min-w-0">
                 <h2 id="admin-planning-canvas-title" className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">
                   {filtersActive ? searchStatusTitle : "Planning canvas"}
@@ -2366,7 +2598,7 @@ export function SeatMap({
             aria-modal="true"
             aria-labelledby="publish-review-title"
             aria-describedby="publish-review-description"
-            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-[24px] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[0_30px_90px_rgba(23,26,29,0.34)] backdrop-blur-2xl"
+            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[0_30px_90px_rgba(23,26,29,0.34)] backdrop-blur-2xl"
           >
             <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
               <div>
@@ -2508,7 +2740,7 @@ export function SeatMap({
           role="status"
           aria-live="polite"
           aria-label={`${activeMode.label} mode`}
-          className="fixed inset-x-3 bottom-3 z-[80] rounded-[14px] border border-[var(--admin-primary-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-4-shadow)] motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[84px] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-3 z-[80] border border-[var(--admin-primary-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-4-shadow)] motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[48px] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="text-[10px] font-semibold text-[var(--admin-primary-cta)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--admin-text-primary)]">{activeMode.message}</p>
@@ -2546,7 +2778,7 @@ export function SeatMap({
         departmentOptions={localDepartmentOptions}
         canEdit={canEdit}
         collapsed={inspectorCollapsed}
-        pillSuppressed={resultsPanelOpen || modeCardOpen}
+        pillSuppressed={inspectorPillSuppressed}
         swapMode={Boolean(swapSourceSeatId)}
         searchMismatchNotice={selectedSeatMismatchNotice}
         searchMismatchClearLabel={clearSearchContextLabel}
@@ -2596,6 +2828,7 @@ export function SeatMap({
         onDirtyChange={setInspectorDirty}
         onSubmitBlocked={cancelPendingInspectorGuardAction}
         resetSignal={inspectorResetSignal}
+        activityEntries={selectedSeatActivity}
       />
 
       {inspectorGuardAction && selectedSeat && (

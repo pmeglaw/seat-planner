@@ -116,20 +116,30 @@ export function LoginForm() {
   const canSubmitPassword = Boolean(email.trim() && password.trim() && !busy);
   const canSubmitMagicLink = Boolean(email.trim() && !busy);
 
+  const fieldClass = "mt-1 w-full border border-[var(--admin-border)] bg-white px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-muted)] hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]";
+
   return (
-    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-soft">
-      <h1 className="text-xl font-bold text-slate-900">Sign in</h1>
-      <p className="mt-2 text-sm text-slate-600">
+    <div className="w-full max-w-md border border-[var(--admin-border)] bg-white shadow-[var(--admin-elevation-2-shadow)]">
+      <div className="flex items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] px-5 py-2.5 text-[12.5px] font-semibold text-[var(--admin-chrome-text)]">
+        <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static brand mark, unoptimized on purpose */}
+          <img src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} className="h-5 w-5 object-contain" />
+        </span>
+        Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
+      </div>
+      <div className="p-6">
+      <h1 className="text-xl font-semibold text-[var(--admin-text-primary)]">Sign in</h1>
+      <p className="mt-2 text-sm text-[var(--admin-text-secondary)]">
         Use your work email to access the internal seating map.
       </p>
 
-      <div className="mt-5 grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
+      <div className="mt-5 grid grid-cols-2 border border-[var(--admin-border)] bg-[var(--admin-surface-alt)] p-1">
         <button
           type="button"
           onClick={() => setMode("password")}
           className={cx(
-            "rounded-xl px-3 py-2 text-sm font-semibold transition",
-            mode === "password" ? "bg-white text-slate-950 shadow-sm" : "text-slate-600 hover:text-slate-950"
+            "border-b-2 px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]",
+            mode === "password" ? "border-[var(--admin-primary)] bg-white text-[var(--admin-text-primary)]" : "border-transparent text-[var(--admin-text-muted)] hover:text-[var(--admin-text-primary)]"
           )}
         >
           Password
@@ -138,8 +148,8 @@ export function LoginForm() {
           type="button"
           onClick={() => setMode("magic")}
           className={cx(
-            "rounded-xl px-3 py-2 text-sm font-semibold transition",
-            mode === "magic" ? "bg-white text-slate-950 shadow-sm" : "text-slate-600 hover:text-slate-950"
+            "border-b-2 px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]",
+            mode === "magic" ? "border-[var(--admin-primary)] bg-white text-[var(--admin-text-primary)]" : "border-transparent text-[var(--admin-text-muted)] hover:text-[var(--admin-text-primary)]"
           )}
         >
           Magic link
@@ -147,28 +157,28 @@ export function LoginForm() {
       </div>
 
       <label className="mt-5 block">
-        <span className="text-sm font-semibold text-slate-700">Email</span>
+        <span className="text-sm font-semibold text-[var(--admin-text-secondary)]">Email</span>
         <input
           type="email"
           value={email}
           onChange={event => setEmail(event.target.value)}
           placeholder="you@company.com"
           autoComplete="email"
-          className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+          className={fieldClass}
         />
       </label>
 
       {mode === "password" ? (
         <>
           <label className="mt-4 block">
-            <span className="text-sm font-semibold text-slate-700">Password</span>
+            <span className="text-sm font-semibold text-[var(--admin-text-secondary)]">Password</span>
             <input
               type="password"
               value={password}
               onChange={event => setPassword(event.target.value)}
               placeholder="Enter your password"
               autoComplete="current-password"
-              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+              className={fieldClass}
             />
           </label>
 
@@ -180,7 +190,7 @@ export function LoginForm() {
             type="button"
             onClick={sendPasswordReset}
             disabled={resetBusy || !email.trim()}
-            className="mt-3 w-full text-sm font-semibold text-brand hover:text-brand-dark disabled:cursor-not-allowed disabled:text-slate-400"
+            className="mt-3 w-full text-sm font-semibold text-[var(--admin-primary-cta)] transition hover:text-[var(--admin-primary-cta-hover)] disabled:cursor-not-allowed disabled:text-[var(--admin-text-muted)]"
           >
             {resetBusy ? "Sending reset email…" : "Forgot password?"}
           </button>
@@ -191,7 +201,7 @@ export function LoginForm() {
             {busy ? "Sending…" : "Send magic link"}
           </Button>
 
-          <p className="mt-3 text-xs leading-relaxed text-slate-500">
+          <p className="mt-3 text-xs leading-relaxed text-[var(--admin-text-muted)]">
             Magic links are a fallback. Wait at least 60 seconds before requesting another link.
           </p>
         </>
@@ -202,15 +212,16 @@ export function LoginForm() {
           role={messageType === "error" ? "alert" : "status"}
           aria-live={messageType === "error" ? "assertive" : "polite"}
           className={cx(
-            "mt-4 rounded-xl p-3 text-sm",
-            messageType === "error" && "bg-rose-50 text-rose-700",
-            messageType === "success" && "bg-emerald-50 text-emerald-700",
-            messageType === "info" && "bg-slate-50 text-slate-700"
+            "mt-4 border p-3 text-sm font-medium",
+            messageType === "error" && "border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] text-[var(--admin-state-error-text)]",
+            messageType === "success" && "border-[var(--admin-state-saved-border)] bg-[var(--admin-state-saved-bg)] text-[var(--admin-state-saved-text)]",
+            messageType === "info" && "border-[var(--admin-border)] bg-[var(--admin-surface-alt)] text-[var(--admin-text-secondary)]"
           )}
         >
           {message}
         </p>
       )}
+      </div>
     </div>
   );
 }

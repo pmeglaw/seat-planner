@@ -118,6 +118,7 @@ function describeEmployeeDetailChange(published: Employee, live: Employee) {
   if (textChanged(published.position, live.position)) changes.push(`Title ${published.position ?? "None"} -> ${live.position ?? "None"}`);
   if (textChanged(published.department, live.department)) changes.push(`Department ${published.department ?? "None"} -> ${live.department ?? "None"}`);
   if (textChanged(published.phone_extension, live.phone_extension)) changes.push(`Ext. ${published.phone_extension ?? "None"} -> ${live.phone_extension ?? "None"}`);
+  if (textChanged(published.email, live.email)) changes.push(`Email ${published.email ?? "None"} -> ${live.email ?? "None"}`);
 
   return changes.join("; ");
 }
