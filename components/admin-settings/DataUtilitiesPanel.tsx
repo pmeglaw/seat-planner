@@ -332,7 +332,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                   </ul>
                 </div>
               ) : (
-                <div className="mt-3 rounded-xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] p-3 text-sm font-semibold leading-5 text-[var(--admin-primary-cta)]">
+                <div className="mt-3 rounded-xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] p-3 text-sm font-semibold leading-5 text-[var(--admin-primary-on-soft)]">
                   This applies the CSV to the draft map only. Viewers will not see these changes until you publish.
                 </div>
               )}
@@ -396,7 +396,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                 <ReviewCountCard label="Employees" value={jsonReview.employeeCount} tone="warn" />
               </div>
 
-              <div className="mt-3 rounded-xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] p-3 text-sm font-semibold leading-5 text-[var(--admin-primary-cta)]">
+              <div className="mt-3 rounded-xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] p-3 text-sm font-semibold leading-5 text-[var(--admin-primary-on-soft)]">
                 This can replace draft assignments, custom seats, notes, and employee details in the draft. Viewers will not see restored data until publish.
               </div>
             </div>
