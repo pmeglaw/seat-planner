@@ -11,11 +11,25 @@
 
 import { chromium } from "@playwright/test";
 import readline from "node:readline";
-import { mkdirSync, copyFileSync } from "node:fs";
+import { mkdirSync, copyFileSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+const REPO = path.resolve(import.meta.dirname, "../../..");
+
+// Plain node doesn't load .env.local — pull the e2e credentials from it
+// (they are gitignored; seeded viewer-role user, see SKILL.md).
+function envLocal(key) {
+  if (process.env[key]) return process.env[key];
+  try {
+    const match = readFileSync(path.join(REPO, ".env.local"), "utf8").match(new RegExp(`^${key}=(.*)$`, "m"));
+    return match ? match[1].trim() : undefined;
+  } catch { return undefined; }
+}
+
 const BASE = process.env.SEAT_PLANNER_URL || "http://localhost:3000";
-const SHOTS = path.resolve(import.meta.dirname, "../../../output/playwright");
+const E2E_EMAIL = envLocal("SEAT_PLANNER_E2E_EMAIL");
+const E2E_PASSWORD = envLocal("SEAT_PLANNER_E2E_PASSWORD");
+const SHOTS = path.join(REPO, "output/playwright");
 mkdirSync(SHOTS, { recursive: true });
 
 const browser = await chromium.launch();
@@ -33,7 +47,26 @@ async function ss(name) {
   console.log(`screenshot: ${file}`);
 }
 
+// Sign in as the seeded viewer-role e2e user and land on the published map.
+async function login() {
+  if (!E2E_EMAIL || !E2E_PASSWORD) throw new Error("SEAT_PLANNER_E2E_EMAIL/PASSWORD not set (env or .env.local)");
+  await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+  // Not a <form>: the submit is a plain onClick Button (target by text), and it
+  // stays disabled until React state has both fields — filling before hydration
+  // updates the DOM but not React state, so fill-and-poll until it enables.
+  const signIn = page.locator('button:text-is("Sign in")');
+  for (let i = 0; i < 20 && !(await signIn.isEnabled()); i++) {
+    await page.locator("input[type=email]").fill(E2E_EMAIL);
+    await page.locator("input[type=password]").fill(E2E_PASSWORD);
+    await page.waitForTimeout(250);
+  }
+  await signIn.click();
+  await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 20000 });
+  console.log(`logged in as ${E2E_EMAIL} — url: ${page.url()}`);
+}
+
 const commands = {
+  login: async () => login(),
   nav: async (url) => { await page.goto(url.startsWith("http") ? url : BASE + url, { waitUntil: "domcontentloaded" }); console.log(`url: ${page.url()}`); },
   wait: async (sel) => { await page.locator(sel).first().waitFor({ timeout: 15000 }); console.log("ok"); },
   waittext: async (text) => { await page.getByText(text).first().waitFor({ timeout: 15000 }); console.log("ok"); },
@@ -81,7 +114,18 @@ if (process.argv.includes("--smoke")) {
   check("bad credentials show an error alert", (await page.locator("main [role=alert]").innerText()).length > 0);
   await ss("smoke-login-error");
 
-  // 4. Dev-only prototype route renders without auth (NODE_ENV !== production).
+  // 4. Authenticated viewer flow with the seeded e2e user (skipped if creds absent).
+  if (E2E_EMAIL && E2E_PASSWORD) {
+    await login();
+    check("seeded user lands on the viewer map at /", new URL(page.url()).pathname === "/");
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+    check("viewer map shows the floor plan", await page.locator("main img").first().isVisible());
+    await ss("smoke-viewer-map");
+  } else {
+    console.log("SKIP: authenticated viewer flow (no SEAT_PLANNER_E2E_EMAIL/PASSWORD)");
+  }
+
+  // 5. Dev-only prototype route renders without auth (NODE_ENV !== production).
   await page.goto(`${BASE}/concepts/map-redesign`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
   check("/concepts/map-redesign renders (dev prototype)", !(await page.title()).includes("404"));

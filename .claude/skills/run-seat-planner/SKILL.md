@@ -40,7 +40,7 @@ for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3000/login && { 
 Stop it with `kill $(cat /tmp/seat-planner-dev.pid)` (or
 `pkill -f "next dev"`) — leaving it running causes `EADDRINUSE` next time.
 
-**Smoke mode** — one command, four checks, three screenshots, exit code 0/1:
+**Smoke mode** — one command, six checks, four screenshots, exit code 0/1:
 
 ```bash
 node .claude/skills/run-seat-planner/driver.mjs --smoke
@@ -48,8 +48,9 @@ node .claude/skills/run-seat-planner/driver.mjs --smoke
 
 It verifies: `/login` renders the sign-in form; unauthenticated `/`
 redirects to `/login`; bad credentials round-trip to real Supabase Auth and
-surface the error alert; the dev-only `/concepts/map-redesign` prototype
-renders. Expect `PASS` × 4.
+surface the error alert; the seeded e2e user signs in and the published
+viewer map renders; the dev-only `/concepts/map-redesign` prototype
+renders. Expect `PASS` × 6.
 
 **REPL mode** — pipe commands on stdin for ad-hoc driving:
 
@@ -66,6 +67,7 @@ EOF
 
 | command | what it does |
 |---|---|
+| `login` | sign in as the seeded e2e viewer user, land on `/` |
 | `nav <path-or-url>` | goto (relative paths resolve against `SEAT_PLANNER_URL`, default `http://localhost:3000`) |
 | `wait <selector>` / `waittext <text>` | wait for element (15s) |
 | `click <selector>` / `fill <selector> <value>` / `press <key>` | interact |
@@ -77,11 +79,28 @@ EOF
 Screenshots land in `output/playwright/`; the newest is always also copied
 to `output/playwright/latest.png`.
 
-**Auth limit:** agents have no credentials, so `/` and `/admin` can't be
-driven past the redirect. The richest UI reachable without auth is the
-dev-only prototype routes `/concepts/map-redesign` (Counsel Ink map with
-seat markers + docked inspector) and `/concepts/component-state-board`.
-For authenticated flows, a human signs in manually (below).
+**Auth:** a seeded e2e user (`seat-planner-e2e@megeredchianlaw.com`,
+**viewer** role) exists in the Supabase project; its password lives in the
+gitignored `.env.local` as `SEAT_PLANNER_E2E_EMAIL` /
+`SEAT_PLANNER_E2E_PASSWORD`, which the driver reads automatically (env vars
+win over `.env.local`). The `login` command / smoke step signs in and lands
+on the published viewer map at `/`. Missing creds don't fail the smoke —
+that step prints `SKIP`.
+
+- `/admin` is still not drivable: the user is deliberately viewer-role, so
+  it's read-only against production data. To make admin flows drivable, run
+  `update public.profiles set role = 'admin' where email = 'seat-planner-e2e@megeredchianlaw.com';`
+  — a conscious decision, since agents could then mutate the draft layer.
+- If the password is lost or the user is missing, re-seed: insert into
+  `auth.users` (with `extensions.crypt(<new-password>, extensions.gen_salt('bf'))`,
+  `email_confirmed_at = now()`) plus a matching `auth.identities` row
+  (`provider 'email'`, `identity_data` with `sub`/`email`); the
+  `on_auth_user_created` trigger creates the viewer profile automatically.
+  Then update `.env.local`.
+
+The dev-only prototype routes `/concepts/map-redesign` (Counsel Ink map
+with seat markers + docked inspector) and `/concepts/component-state-board`
+need no auth at all.
 
 ## Run (human path)
 
@@ -104,6 +123,11 @@ A Playwright e2e smoke tier (`npm run test:e2e`, needs a prior
   `Button` — there is no `button[type=submit]`, and pressing Enter does not
   submit. Click `button:text-is("Sign in")` (`:text-is`, because the page
   `<h1>` is also "Sign in").
+- **Filling the login form races hydration.** The Sign in button is
+  `disabled` until React state holds both fields; a `fill` right after
+  `domcontentloaded` sets the DOM value before `onChange` handlers attach,
+  so the button never enables. The driver's `login` fills-and-polls until
+  the button is enabled — do the same in any hand-rolled flow.
 - **`[role=alert]` matches Next's route announcer.** Next.js keeps an
   always-present, empty `[role=alert]` on `<body>`, so a bare alert wait
   succeeds instantly with empty text. Scope to `main [role=alert]` for the
