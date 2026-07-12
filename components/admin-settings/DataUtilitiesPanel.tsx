@@ -52,7 +52,7 @@ function isDraftSnapshot(value: unknown): value is DraftSnapshot {
 
 function ReviewCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
   return (
-    <div className={["rounded-xl border p-3", tone === "warn" ? "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)]" : "border-[var(--admin-border)] bg-[var(--admin-surface-muted)]"].join(" ")}>
+    <div className={["border p-3", tone === "warn" ? "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)]" : "border-[var(--admin-border)] bg-[var(--admin-surface-muted)]"].join(" ")}>
       <div className={["text-[10px] font-medium", tone === "warn" ? "text-[var(--admin-state-dirty-text)]" : "text-[var(--admin-text-muted)]"].join(" ")}>
         {label}
       </div>
@@ -75,7 +75,7 @@ function UtilityButton({ label, description, tone = "default", disabled, onClick
       onClick={onClick}
       disabled={disabled}
       className={[
-        "flex min-h-[50px] w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition hover:-translate-y-px hover:shadow-[var(--admin-elevation-2-shadow)] active:translate-y-0 active:scale-[0.985] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:hover:translate-y-0",
+        "flex min-h-[50px] w-full items-center justify-between gap-3 border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50",
         toneClassName
       ].join(" ")}
     >
@@ -237,18 +237,18 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
   return (
     <div className="space-y-4">
       {error && (
-        <div role="alert" className="whitespace-pre-wrap rounded-lg border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm font-medium text-[var(--admin-state-error-text)]">
+        <div role="alert" className="whitespace-pre-wrap border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm font-medium text-[var(--admin-state-error-text)]">
           {error}
         </div>
       )}
 
       {notice && (
-        <div role="status" className="rounded-lg border border-[var(--admin-state-clean-border)] bg-[var(--admin-state-clean-bg)] p-3 text-sm font-semibold text-[var(--admin-state-clean-text)]">
+        <div role="status" className="border border-[var(--admin-state-clean-border)] bg-[var(--admin-state-clean-bg)] p-3 text-sm font-semibold text-[var(--admin-state-clean-text)]">
           {notice}
         </div>
       )}
 
-      <section className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
+      <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
         <h2 className="text-sm font-semibold text-[var(--admin-text-primary)]">CSV assignments</h2>
         <p className="mt-1 text-xs leading-5 text-[var(--admin-text-muted)]">
           CSV imports update draft assignments only. Marker positions stay fixed.
@@ -261,7 +261,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
         </div>
       </section>
 
-      <section className="rounded-xl border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
+      <section className="border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
         <h2 className="text-sm font-semibold text-[var(--admin-state-dirty-text)]">Advanced recovery</h2>
         <p className="mt-1 text-xs leading-5 text-[var(--admin-state-dirty-text)]">
           Full backup and restore. Restoring replaces the entire draft map, so review carefully before confirming.
@@ -286,7 +286,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                 closeCsvReview();
               }
             }}
-            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-panel)]"
+            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-panel)]"
           >
             <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
               <div>
@@ -318,7 +318,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
               </div>
 
               {csvReview.issues.length > 0 ? (
-                <div className="mt-3 rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm text-[var(--admin-state-error-text)]">
+                <div className="mt-3 border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm text-[var(--admin-state-error-text)]">
                   <div className="font-semibold">Blocking validation errors</div>
                   <p className="mt-1 leading-5">
                     Fix these rows in the CSV, then import the file again. No draft data has changed.
@@ -332,7 +332,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                   </ul>
                 </div>
               ) : (
-                <div className="mt-3 rounded-xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] p-3 text-sm font-semibold leading-5 text-[var(--admin-primary-on-soft)]">
+                <div className="mt-3 border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] p-3 text-sm font-semibold leading-5 text-[var(--admin-primary-on-soft)]">
                   This applies the CSV to the draft map only. Viewers will not see these changes until you publish.
                 </div>
               )}
@@ -370,7 +370,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                 closeJsonReview();
               }
             }}
-            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-panel)]"
+            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-panel)]"
           >
             <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
               <div>
@@ -396,7 +396,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                 <ReviewCountCard label="Employees" value={jsonReview.employeeCount} tone="warn" />
               </div>
 
-              <div className="mt-3 rounded-xl border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] p-3 text-sm font-semibold leading-5 text-[var(--admin-primary-on-soft)]">
+              <div className="mt-3 border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] p-3 text-sm font-semibold leading-5 text-[var(--admin-primary-on-soft)]">
                 This can replace draft assignments, custom seats, notes, and employee details in the draft. Viewers will not see restored data until publish.
               </div>
             </div>
