@@ -586,16 +586,11 @@ export function AdminManagementPanel({
   return (
     <main className="admin-theme flex-1 bg-[var(--admin-bg)] px-3 py-5 text-[var(--admin-text-primary)] sm:px-6 sm:py-6">
       <div className="mx-auto max-w-7xl space-y-4">
-        <header className="rounded-3xl border border-[#E4E6E8] bg-[#FCFCFD] p-5 shadow-soft sm:p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-medium tracking-normal text-brand-dark">Admin tools</p>
-              <h1 className="mt-1 text-2xl font-semibold text-[var(--admin-text-primary)]">Management</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--admin-text-secondary)]">
-                Manage people, departments, zones, and publish audit visibility outside the daily seat-map workflow.
-              </p>
-            </div>
-          </div>
+        <header className="border-b border-[var(--admin-border)] pb-4">
+          <h1 className="text-xl font-semibold text-[var(--admin-text-primary)]">Management</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--admin-text-muted)]">
+            Manage people, departments, zones, and publish audit visibility outside the daily seat-map workflow.
+          </p>
         </header>
 
         {(message || error) && (
@@ -617,13 +612,18 @@ export function AdminManagementPanel({
           ))}
         </section>
 
-        <nav className="flex flex-wrap gap-1 rounded-[12px] border border-[#E4E6E8] bg-[#FCFCFD] p-1 text-[#44494C]">
+        <nav aria-label="Management sections" className="flex flex-wrap border-b border-[var(--admin-border)]">
           {managementTabs.map(tab => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={["rounded-[9px] px-4 py-2 text-sm font-medium transition", activeTab === tab.id ? "bg-[var(--admin-chrome-bg)] text-[var(--admin-text-inverse)]" : "text-[#6B7177] hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)]"].join(" ")}
+              className={[
+                "-mb-px border-b-2 px-4 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+                activeTab === tab.id
+                  ? "border-[var(--admin-primary)] font-semibold text-[var(--admin-text-primary)]"
+                  : "border-transparent font-medium text-[var(--admin-text-secondary)] hover:border-[var(--admin-border)] hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)]"
+              ].join(" ")}
               aria-current={activeTab === tab.id ? "page" : undefined}
             >
               {tab.label}
