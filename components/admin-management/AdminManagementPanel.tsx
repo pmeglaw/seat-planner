@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { getLatestPublishEvent, getPublishHistoryActor, type PublishHistoryEvent } from "@/lib/publishHistory";
@@ -585,7 +584,7 @@ export function AdminManagementPanel({
   }
 
   return (
-    <main className="admin-theme min-h-screen bg-[var(--admin-bg)] px-3 py-5 text-[var(--admin-text-primary)] sm:px-6 sm:py-6">
+    <main className="admin-theme flex-1 bg-[var(--admin-bg)] px-3 py-5 text-[var(--admin-text-primary)] sm:px-6 sm:py-6">
       <div className="mx-auto max-w-7xl space-y-4">
         <header className="rounded-3xl border border-[#E4E6E8] bg-[#FCFCFD] p-5 shadow-soft sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -595,11 +594,6 @@ export function AdminManagementPanel({
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--admin-text-secondary)]">
                 Manage people, departments, zones, and publish audit visibility outside the daily seat-map workflow.
               </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Link href="/admin" className="inline-flex min-h-9 items-center justify-center rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm font-semibold text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-alt)]">
-                Back to seat map
-              </Link>
             </div>
           </div>
         </header>

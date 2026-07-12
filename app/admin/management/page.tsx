@@ -1,4 +1,5 @@
 import { AdminManagementPanel } from "@/components/admin-management/AdminManagementPanel";
+import { AdminShellBar } from "@/components/ui/AdminShellBar";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
@@ -50,11 +51,14 @@ export default async function AdminManagementPage() {
   }
 
   return (
-    <AdminManagementPanel
-      seats={(seats ?? []) as SeatWithEmployee[]}
-      employees={(employees ?? []) as Employee[]}
-      departmentOptions={(departments ?? []) as DepartmentOption[]}
-      zoneOptions={(zones ?? []) as ZoneOption[]}
-    />
+    <div className="admin-theme flex min-h-screen flex-col bg-[var(--admin-bg)]">
+      <AdminShellBar page="management" />
+      <AdminManagementPanel
+        seats={(seats ?? []) as SeatWithEmployee[]}
+        employees={(employees ?? []) as Employee[]}
+        departmentOptions={(departments ?? []) as DepartmentOption[]}
+        zoneOptions={(zones ?? []) as ZoneOption[]}
+      />
+    </div>
   );
 }
