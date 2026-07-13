@@ -96,7 +96,7 @@ export function ResultsPanel({
           className="mx-2 mt-2 flex shrink-0 items-center justify-between gap-2 border border-[var(--admin-border)] bg-[var(--admin-paper)] px-2.5 py-2 text-left transition hover:border-[var(--admin-border-strong)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
         >
           <span className="min-w-0 truncate text-xs font-semibold text-[var(--admin-text-primary)]">{collapsedSeatLabel} selected</span>
-          <span className="shrink-0 text-[11px] font-semibold text-[var(--admin-primary-cta)]">View details</span>
+          <span className="shrink-0 text-[11px] font-semibold text-[var(--admin-primary-on-soft)]">View details</span>
         </button>
       )}
 

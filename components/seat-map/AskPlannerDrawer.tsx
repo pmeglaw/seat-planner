@@ -290,7 +290,7 @@ export function AskPlannerDrawer({
               <div className="flex items-center gap-3">
                 <span className="h-3 w-3 shrink-0 animate-pulse rounded-full bg-[var(--admin-primary)]" />
                 <div>
-                  <div className="text-sm font-semibold text-[var(--admin-primary-cta)]">Checking saved draft map data</div>
+                  <div className="text-sm font-semibold text-[var(--admin-primary-on-soft)]">Checking saved draft map data</div>
                   <p className="mt-1 text-xs leading-5 text-[var(--admin-text-secondary)]">Ask Planner is using read-only lookups. No seats or assignments will be changed.</p>
                 </div>
               </div>
