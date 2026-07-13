@@ -30,7 +30,10 @@ test("desktop marker system keeps true coordinates and calibration constants unt
   assert.match(transformSource, /xScale: 0\.815189/);
   assert.match(transformSource, /xOffset: 0\.101478/);
   assert.match(transformSource, /yScale: 1\.125499/);
-  assert.match(transformSource, /xOffset: -0\.065111/);
+  // Chair-center micro-tune, 2026-07 (fix/floor-plan-polish): NE split into
+  // per-quad areas; SE/CW-upper refit. These pin the tuned constants.
+  assert.match(transformSource, /xOffset: -0\.175684/);
+  assert.match(transformSource, /xScale: 0\.835824/);
 });
 
 test("desktop marker redesign stays clear of data auth publish and route boundaries", async () => {
