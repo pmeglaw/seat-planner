@@ -27,6 +27,7 @@ import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import {
+  MAP_IMAGE_BLUR_DATA_URL,
   MAP_IMAGE_HEIGHT,
   MAP_IMAGE_SRC,
   MAP_IMAGE_WIDTH,
@@ -2379,6 +2380,8 @@ export function SeatMap({
                   height={MAP_IMAGE_HEIGHT}
                   priority
                   unoptimized
+                  placeholder="blur"
+                  blurDataURL={MAP_IMAGE_BLUR_DATA_URL}
                   className="block h-auto w-full select-none"
                   draggable={false}
                 />

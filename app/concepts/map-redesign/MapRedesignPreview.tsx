@@ -18,6 +18,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { pointToStyle } from "@/lib/seatMath";
 import {
+  MAP_IMAGE_BLUR_DATA_URL,
   MAP_IMAGE_HEIGHT,
   MAP_IMAGE_SRC,
   MAP_IMAGE_WIDTH,
@@ -665,6 +666,8 @@ export function MapRedesignPreview() {
                 height={MAP_IMAGE_HEIGHT}
                 priority
                 unoptimized
+                placeholder="blur"
+                blurDataURL={MAP_IMAGE_BLUR_DATA_URL}
                 className="ink-mapimage"
                 draggable={false}
               />

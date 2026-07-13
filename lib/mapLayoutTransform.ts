@@ -4,7 +4,11 @@ import type { SeatWithEmployee } from "@/lib/types";
 export const MAP_IMAGE_WIDTH = 1911;
 export const MAP_IMAGE_HEIGHT = 867;
 export const MAP_ASPECT_RATIO = MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT;
-export const MAP_IMAGE_SRC = "/images/office-floor-plan.png?v=map-v2-1911x867";
+export const MAP_IMAGE_SRC = "/images/office-floor-plan.webp?v=map-v2-warm-1911x867";
+// 24px-wide preview of the same render, shown while the full image streams in.
+// Regenerate whenever the shipped asset's pixels change (sharp: resize(24).webp({quality:40})).
+export const MAP_IMAGE_BLUR_DATA_URL =
+  "data:image/webp;base64,UklGRn4AAABXRUJQVlA4IHIAAACQAwCdASoYAAsAPu1iqU2ppaOiMAgBMB2JaQAAWobi1F3mibqAAP7t17tl0oh2LMhZdls8Y8KKQvArfCIx6UyS2UCzY/FzRzuIjANhVXMG20VNLCPzLaplSZz/nYM7kZIsKSLVmG/x4g5luNGIP9CgAAA=";
 
 type SeatCalibrationSource = Pick<SeatWithEmployee, "x" | "y"> &
   Partial<Pick<SeatWithEmployee, "label" | "zone" | "department">>;
@@ -49,12 +53,22 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     transform: { xScale: 0.815189, xOffset: 0.101478, yScale: 0.994098, yOffset: 0.014924 }
   },
   {
-    id: "northeast-pod",
+    // The render's NE desk quads aren't linearly spaced against the saved grid,
+    // so each quad gets its own fit (chair-center measured, residual ≤ 2px).
+    id: "northeast-pod-left",
     zones: ["northeast pod"],
     labelPrefixes: ["NE"],
-    savedBounds: { xMin: 0.72, xMax: 0.97, yMin: 0.03, yMax: 0.2 },
-    visualBounds: { xMin: 0.69, xMax: 0.9, yMin: 0.04, yMax: 0.19 },
-    transform: { xScale: 0.993361, xOffset: -0.035816, yScale: 0.994908, yOffset: 0.013884 }
+    savedBounds: { xMin: 0.72, xMax: 0.849, yMin: 0.03, yMax: 0.2 },
+    visualBounds: { xMin: 0.68, xMax: 0.81, yMin: 0.04, yMax: 0.22 },
+    transform: { xScale: 0.944658, xOffset: 0.002919, yScale: 1.044793, yOffset: 0.010215 }
+  },
+  {
+    id: "northeast-pod-right",
+    zones: ["northeast pod"],
+    labelPrefixes: ["NE"],
+    savedBounds: { xMin: 0.849, xMax: 0.97, yMin: 0.03, yMax: 0.2 },
+    visualBounds: { xMin: 0.8, xMax: 0.94, yMin: 0.04, yMax: 0.22 },
+    transform: { xScale: 1.146341, xOffset: -0.175684, yScale: 1.020304, yOffset: 0.012247 }
   },
   {
     id: "west-pod",
@@ -69,8 +83,8 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     zones: ["center west"],
     labelPrefixes: ["CW"],
     savedBounds: { xMin: 0.27, xMax: 0.37, yMin: 0.33, yMax: 0.5 },
-    visualBounds: { xMin: 0.31, xMax: 0.39, yMin: 0.37, yMax: 0.49 },
-    transform: { xScale: 1.105715, xOffset: 0.001207, yScale: 1.088, yOffset: -0.012079 }
+    visualBounds: { xMin: 0.31, xMax: 0.4, yMin: 0.35, yMax: 0.54 },
+    transform: { xScale: 0.843074, xOffset: 0.086277, yScale: 1.138639, yOffset: -0.026398 }
   },
   {
     id: "center-west-lower",
@@ -101,16 +115,16 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     zones: ["southeast office"],
     labelPrefixes: ["SE"],
     savedBounds: { xMin: 0.86, xMax: 0.95, yMin: 0.52, yMax: 0.59 },
-    visualBounds: { xMin: 0.79, xMax: 0.88, yMin: 0.56, yMax: 0.62 },
-    transform: { xScale: 0.972807, xOffset: -0.033255, yScale: 1.04, yOffset: 0.015514 }
+    visualBounds: { xMin: 0.81, xMax: 0.89, yMin: 0.56, yMax: 0.64 },
+    transform: { xScale: 0.84886, xOffset: 0.080006, yScale: 1.04, yOffset: 0.021498 }
   },
   {
     id: "southeast-office-lower",
     zones: ["southeast office"],
     labelPrefixes: ["SE"],
     savedBounds: { xMin: 0.88, xMax: 0.96, yMin: 0.59, yMax: 0.66 },
-    visualBounds: { xMin: 0.82, xMax: 0.9, yMin: 0.64, yMax: 0.69 },
-    transform: { xScale: 1.012899, xOffset: -0.065111, yScale: 0.896007, yOffset: 0.108551 }
+    visualBounds: { xMin: 0.83, xMax: 0.9, yMin: 0.64, yMax: 0.73 },
+    transform: { xScale: 0.835824, xOffset: 0.094817, yScale: 1.243613, yOffset: -0.093395 }
   }
 ];
 
