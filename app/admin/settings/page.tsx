@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { DataUtilitiesPanel } from "@/components/admin-settings/DataUtilitiesPanel";
+import { AdminShellBar } from "@/components/ui/AdminShellBar";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 
@@ -12,9 +12,9 @@ export default async function AdminSettingsPage() {
   if (!isAdmin) {
     return (
       <main className="admin-theme flex min-h-screen items-center justify-center bg-[var(--admin-bg)] p-6 text-[var(--admin-text-primary)]">
-        <section className="max-w-md rounded-2xl bg-white p-6 shadow-soft">
-          <h1 className="text-lg font-bold text-slate-900">Admin access required</h1>
-          <p className="mt-2 text-sm text-slate-600">
+        <section className="max-w-md border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-[var(--admin-elevation-2-shadow)]">
+          <h1 className="text-lg font-semibold text-[var(--admin-text-primary)]">Admin access required</h1>
+          <p className="mt-2 text-sm text-[var(--admin-text-secondary)]">
             You are signed in, but your profile does not have admin permissions.
           </p>
         </section>
@@ -40,20 +40,13 @@ export default async function AdminSettingsPage() {
 
   return (
     <main className="admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text-primary)]">
+      <AdminShellBar page="settings" />
       <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
-        <header className="mb-6 flex flex-wrap items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-4">
-          <div>
-            <h1 className="text-xl font-semibold text-[var(--admin-text-primary)]">Settings</h1>
-            <p className="mt-1 text-sm leading-5 text-[var(--admin-text-muted)]">
-              Gated utilities — imports, exports, and recovery run against the draft layer
-            </p>
-          </div>
-          <Link
-            href="/admin"
-            className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm font-semibold text-[var(--admin-text-primary)] transition hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-surface-alt)] active:scale-[0.985] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
-          >
-            Back to planning canvas
-          </Link>
+        <header className="mb-6 border-b border-[var(--admin-border)] pb-4">
+          <h1 className="text-xl font-semibold text-[var(--admin-text-primary)]">Settings</h1>
+          <p className="mt-1 text-sm leading-5 text-[var(--admin-text-muted)]">
+            Gated utilities — imports, exports, and recovery run against the draft layer
+          </p>
         </header>
 
         <DataUtilitiesPanel

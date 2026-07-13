@@ -1,4 +1,5 @@
 import { AdminManagementPanel } from "@/components/admin-management/AdminManagementPanel";
+import { AdminShellBar } from "@/components/ui/AdminShellBar";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
@@ -10,8 +11,8 @@ export default async function AdminManagementPage() {
 
   if (!isAdmin) {
     return (
-      <main className="admin-theme flex min-h-screen items-center justify-center bg-[var(--admin-chrome-bg)] p-6">
-        <section className="max-w-md rounded-2xl bg-[var(--admin-surface)] p-6 shadow-soft">
+      <main className="admin-theme flex min-h-screen items-center justify-center bg-[var(--admin-bg)] p-6">
+        <section className="max-w-md border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-[var(--admin-elevation-2-shadow)]">
           <h1 className="text-lg font-semibold text-[var(--admin-text-primary)]">Admin access required</h1>
           <p className="mt-2 text-sm text-[var(--admin-text-secondary)]">
             You are signed in, but your profile does not have admin permissions.
@@ -50,11 +51,14 @@ export default async function AdminManagementPage() {
   }
 
   return (
-    <AdminManagementPanel
-      seats={(seats ?? []) as SeatWithEmployee[]}
-      employees={(employees ?? []) as Employee[]}
-      departmentOptions={(departments ?? []) as DepartmentOption[]}
-      zoneOptions={(zones ?? []) as ZoneOption[]}
-    />
+    <div className="admin-theme flex min-h-screen flex-col bg-[var(--admin-bg)]">
+      <AdminShellBar page="management" />
+      <AdminManagementPanel
+        seats={(seats ?? []) as SeatWithEmployee[]}
+        employees={(employees ?? []) as Employee[]}
+        departmentOptions={(departments ?? []) as DepartmentOption[]}
+        zoneOptions={(zones ?? []) as ZoneOption[]}
+      />
+    </div>
   );
 }
