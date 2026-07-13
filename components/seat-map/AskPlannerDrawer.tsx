@@ -237,7 +237,7 @@ export function AskPlannerDrawer({
                 onClick={() => choosePrompt(promptOption.prompt)}
                 disabled={pending}
                 title={pending ? "Wait for Ask Planner to finish" : promptOption.prompt}
-                className="max-w-full rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-text-secondary)] transition hover:-translate-y-px hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-cta)] hover:shadow-[var(--admin-elevation-2-shadow)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:hover:translate-y-0"
+                className="max-w-full rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-text-secondary)] transition hover:-translate-y-px hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-on-soft)] hover:shadow-[var(--admin-elevation-2-shadow)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:hover:translate-y-0"
               >
                 {promptOption.label}
               </button>
@@ -290,7 +290,7 @@ export function AskPlannerDrawer({
               <div className="flex items-center gap-3">
                 <span className="h-3 w-3 shrink-0 animate-pulse rounded-full bg-[var(--admin-primary)]" />
                 <div>
-                  <div className="text-sm font-semibold text-[var(--admin-primary-cta)]">Checking saved draft map data</div>
+                  <div className="text-sm font-semibold text-[var(--admin-primary-on-soft)]">Checking saved draft map data</div>
                   <p className="mt-1 text-xs leading-5 text-[var(--admin-text-secondary)]">Ask Planner is using read-only lookups. No seats or assignments will be changed.</p>
                 </div>
               </div>
@@ -345,7 +345,7 @@ export function AskPlannerDrawer({
                     onClick={onClearHighlights}
                     disabled={highlightedSeatIds.length === 0}
                     title={highlightedSeatIds.length === 0 ? "No highlighted seats to clear" : "Clear highlighted seats"}
-                    className="rounded-full border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-cta)] transition hover:bg-[rgba(242,110,34,0.16)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--admin-border)] disabled:bg-[var(--admin-state-neutral-bg)] disabled:text-[var(--admin-text-subtle)]"
+                    className="rounded-full border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-on-soft)] transition hover:bg-[rgba(242,110,34,0.16)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--admin-border)] disabled:bg-[var(--admin-state-neutral-bg)] disabled:text-[var(--admin-text-subtle)]"
                   >
                     Clear highlights
                   </button>
