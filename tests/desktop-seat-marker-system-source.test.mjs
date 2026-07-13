@@ -24,7 +24,7 @@ test("desktop marker system keeps true coordinates and calibration constants unt
   assert.match(seatMapSource, /viewportEdgeOffsetPx=\{viewportPlacement\.offsetPx\}/);
   assert.match(seatMapSource, /onMovePointerDown=\{handleMovePointerDown\}/);
 
-  assert.match(transformSource, /MAP_IMAGE_SRC = "\/images\/office-floor-plan\.png\?v=map-v2-1911x867"/);
+  assert.match(transformSource, /MAP_IMAGE_SRC = "\/images\/office-floor-plan\.webp\?v=map-v2-webp-1911x867"/);
   assert.match(transformSource, /MAP_IMAGE_WIDTH = 1911/);
   assert.match(transformSource, /MAP_IMAGE_HEIGHT = 867/);
   assert.match(transformSource, /xScale: 0\.815189/);

@@ -4,7 +4,11 @@ import type { SeatWithEmployee } from "@/lib/types";
 export const MAP_IMAGE_WIDTH = 1911;
 export const MAP_IMAGE_HEIGHT = 867;
 export const MAP_ASPECT_RATIO = MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT;
-export const MAP_IMAGE_SRC = "/images/office-floor-plan.png?v=map-v2-1911x867";
+export const MAP_IMAGE_SRC = "/images/office-floor-plan.webp?v=map-v2-webp-1911x867";
+// 24px-wide preview of the same render, shown while the full image streams in.
+// Regenerate whenever the shipped asset's pixels change (sharp: resize(24).webp({quality:40})).
+export const MAP_IMAGE_BLUR_DATA_URL =
+  "data:image/webp;base64,UklGRnQAAABXRUJQVlA4IGgAAABwAwCdASoYAAsAPu1iqU2ppaOiMAgBMB2JaQAAevFGMkoEkqAA/u5tfHBntzIIM6n5Tc2+9zCafRY9Q1oD/KPywJBYobHWUXcPJ8Rdf103VU/lW+O4mltxa8ZSqk2WZKXJmH5d4l4AAA==";
 
 type SeatCalibrationSource = Pick<SeatWithEmployee, "x" | "y"> &
   Partial<Pick<SeatWithEmployee, "label" | "zone" | "department">>;

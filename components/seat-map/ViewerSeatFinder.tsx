@@ -9,6 +9,7 @@ import { STATUS_LABELS } from "@/lib/types";
 import { normalizeSeat } from "@/lib/seatNormalize";
 import { cx } from "@/components/ui/design-system";
 import {
+  MAP_IMAGE_BLUR_DATA_URL,
   MAP_IMAGE_HEIGHT,
   MAP_IMAGE_SRC,
   MAP_IMAGE_WIDTH,
@@ -570,6 +571,8 @@ export function ViewerSeatFinder({
                     height={MAP_IMAGE_HEIGHT}
                     priority
                     unoptimized
+                    placeholder="blur"
+                    blurDataURL={MAP_IMAGE_BLUR_DATA_URL}
                     className="block h-auto w-full select-none"
                     draggable={false}
                   />
