@@ -6,6 +6,7 @@ import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
 import { updateSeatAction } from "@/app/actions";
 import { canDeleteSeat, getSeatDeleteBlockReason, isProtectedOriginalSeatLabel } from "@/lib/seatProtection";
+import { employeeAssignmentFields } from "@/lib/employeeAssignment";
 import { formatDisplayName } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
@@ -516,12 +517,7 @@ export function SeatInspector({
     clearFieldError("employeeName");
     setForm(current => ({
       ...current,
-      employeeId: employee.id,
-      employeeName: employee.full_name,
-      employeePosition: employee.position ?? "",
-      phoneExtension: employee.phone_extension ?? "",
-      department: employee.department ?? current.department,
-      status: "assigned"
+      ...employeeAssignmentFields(employee)
     }));
     setEmployeeComboboxOpen(false);
     setActiveEmployeeIndex(0);
@@ -554,12 +550,7 @@ export function SeatInspector({
 
       return {
         ...current,
-        employeeId: matchedEmployee.id,
-        employeeName: matchedEmployee.full_name,
-        employeePosition: matchedEmployee.position ?? "",
-        phoneExtension: matchedEmployee.phone_extension ?? "",
-        department: matchedEmployee.department ?? current.department,
-        status: "assigned"
+        ...employeeAssignmentFields(matchedEmployee)
       };
     });
   }
