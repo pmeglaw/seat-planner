@@ -5,7 +5,7 @@ const nextConfig = {
     localPatterns: [
       {
         pathname: "/images/office-floor-plan.webp",
-        search: "?v=map-v2-webp-1911x867"
+        search: "?v=map-v2-warm-1911x867"
       }
     ]
   }
