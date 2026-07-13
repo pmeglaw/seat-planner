@@ -84,6 +84,7 @@ export function AdminShellBar({ page }: { page: AdminShellPage }) {
           </Link>
           <Link
             href="/admin"
+            aria-current="true"
             title="Admin — draft planning"
             className={[surfaceShortcut, "border-[var(--admin-primary)] text-white"].join(" ")}
           >
