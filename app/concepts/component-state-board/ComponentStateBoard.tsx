@@ -1201,7 +1201,7 @@ function MapSurface({ compact = false }: { compact?: boolean }) {
     <div className={`relative overflow-hidden rounded-2xl bg-white ${compact ? "h-72" : "h-full min-h-[360px]"}`}>
       <div
         className="absolute inset-0 bg-cover bg-center opacity-95"
-        style={{ backgroundImage: "url('/images/office-floor-plan.webp?v=map-v2-warm-1911x867')" }}
+        style={{ backgroundImage: "url('/images/office-floor-plan.webp?v=map-v2-cool-1911x867')" }}
         aria-hidden="true"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-slate-950/10" aria-hidden="true" />

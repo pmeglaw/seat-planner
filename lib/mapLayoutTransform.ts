@@ -4,11 +4,14 @@ import type { SeatWithEmployee } from "@/lib/types";
 export const MAP_IMAGE_WIDTH = 1911;
 export const MAP_IMAGE_HEIGHT = 867;
 export const MAP_ASPECT_RATIO = MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT;
-export const MAP_IMAGE_SRC = "/images/office-floor-plan.webp?v=map-v2-warm-1911x867";
+// Cool retreatment (owner, 2026-07-14): the shipped webp is transcoded from
+// the repo's ORIGINAL cool-palette png — the exact pixels the warm version was
+// recolored from — so geometry, framing, and calibration are untouched.
+export const MAP_IMAGE_SRC = "/images/office-floor-plan.webp?v=map-v2-cool-1911x867";
 // 24px-wide preview of the same render, shown while the full image streams in.
-// Regenerate whenever the shipped asset's pixels change (sharp: resize(24).webp({quality:40})).
+// Regenerate whenever the shipped asset's pixels change (output/makecool.mjs pattern).
 export const MAP_IMAGE_BLUR_DATA_URL =
-  "data:image/webp;base64,UklGRn4AAABXRUJQVlA4IHIAAACQAwCdASoYAAsAPu1iqU2ppaOiMAgBMB2JaQAAWobi1F3mibqAAP7t17tl0oh2LMhZdls8Y8KKQvArfCIx6UyS2UCzY/FzRzuIjANhVXMG20VNLCPzLaplSZz/nYM7kZIsKSLVmG/x4g5luNGIP9CgAAA=";
+  "data:image/webp;base64,UklGRlICAABXRUJQVlA4WAoAAAAgAAAAFwAACgAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDggZAAAAJADAJ0BKhgACwA+7WKpTamlpCIwCAEwHYlpO4XgAAHE13c28AAA/u45L79lk1C5BbqgCK7f6P65PlUbrPWtqNhFvz6o4+u7lfGCoh1WDplygf9BtbKZ+MY3o9GBfh5CX7xLwAA=";
 
 type SeatCalibrationSource = Pick<SeatWithEmployee, "x" | "y"> &
   Partial<Pick<SeatWithEmployee, "label" | "zone" | "department">>;
