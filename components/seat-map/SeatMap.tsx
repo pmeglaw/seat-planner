@@ -256,7 +256,16 @@ export function SeatMap({
   const [localDepartmentOptions, setLocalDepartmentOptions] = useState(departmentOptions);
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [actionNotice, setActionNotice] = useState<string | null>(null);
+  // Notices carry a tone: successes stay green, but cancellations and
+  // guidance render neutral so "nothing happened" never reads as a completed
+  // change. The wrapper keeps every existing setActionNotice(text) call
+  // defaulting to success.
+  const [actionNoticeState, setActionNoticeState] = useState<{ text: string; tone: "success" | "neutral" } | null>(null);
+  const setActionNotice = useCallback((text: string | null, tone: "success" | "neutral" = "success") => {
+    setActionNoticeState(text === null ? null : { text, tone });
+  }, []);
+  const actionNotice = actionNoticeState?.text ?? null;
+  const actionNoticeTone = actionNoticeState?.tone ?? "success";
   // Dedicated state for the draft-concurrency fence: the inspector's reset and
   // seat-sync paths call onError(null), which would wipe this message out of
   // actionError in the same render cycle it was set (verified live on the
@@ -460,7 +469,7 @@ export function SeatMap({
     if (!actionNotice) return;
     const timer = window.setTimeout(() => setActionNotice(null), 6000);
     return () => window.clearTimeout(timer);
-  }, [actionNotice]);
+  }, [actionNotice, setActionNotice]);
 
   // The stale-draft fence warning self-resolves (the page has already been
   // refreshed with the latest draft), so it auto-dismisses on a longer timer
@@ -655,11 +664,12 @@ export function SeatMap({
       }
 
       if (addSeatMode || moveSeatMode || swapSourceSeatId) {
+        const canceledMode = swapSourceSeatId ? "Swap" : moveSeatMode ? "Move" : "Add seat";
         setAddSeatMode(false);
         setMoveSeatMode(false);
         setSwapSourceSeatId(null);
         setDragState(null);
-        setActionNotice("Draft map mode canceled.");
+        setActionNotice(`${canceledMode} canceled — no changes made.`, "neutral");
         return;
       }
 
@@ -698,7 +708,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, publishReviewOpen, search, selectedSeatId, status, swapConfirm, swapSourceSeatId, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, publishReviewOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, zone]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -1473,7 +1483,7 @@ export function SeatMap({
     }
 
     if (sourceSeat.id === targetSeat.id) {
-      setActionNotice("Choose a different target seat to complete the swap.");
+      setActionNotice("Choose a different target seat to complete the swap.", "neutral");
       return true;
     }
 
@@ -1601,7 +1611,7 @@ export function SeatMap({
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
     setInspectorCollapsed(false);
-    setActionNotice("Swap mode canceled.");
+    setActionNotice("Swap canceled — no changes made.", "neutral");
   }
 
   function confirmSwapSeats() {
@@ -2096,7 +2106,13 @@ export function SeatMap({
     canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
   const actionNoticeBannerClassName = [
-    "flex min-w-0 flex-col gap-2 rounded-xl border border-[var(--admin-state-saved-border)] bg-[var(--admin-state-saved-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-saved-text)] sm:flex-row sm:items-center sm:justify-between",
+    // Overlay, not layout: the toast floats above the floor-selector row so
+    // its 6s lifetime never shifts the map column height mid-session.
+    "absolute left-0.5 right-0.5 top-0.5 z-40 shadow-[var(--admin-elevation-3-shadow)]",
+    "flex min-w-0 flex-col gap-2 rounded-xl border px-3 py-2 text-sm font-semibold sm:flex-row sm:items-center sm:justify-between",
+    actionNoticeTone === "neutral"
+      ? "border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)]"
+      : "border-[var(--admin-state-saved-border)] bg-[var(--admin-state-saved-bg)] text-[var(--admin-state-saved-text)]",
     canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
   const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-on-soft)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50";
@@ -2533,7 +2549,7 @@ export function SeatMap({
           </div>
 
       <main className={["grid grid-cols-1 gap-2 bg-[var(--admin-surface-muted)] p-2 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
-        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden p-0.5 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
+        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden relative p-0.5 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
           {staleDraftNotice && (
             <div role="alert" className={actionErrorBannerClassName}>
               {staleDraftNotice}
@@ -2553,7 +2569,12 @@ export function SeatMap({
                 <button
                   type="button"
                   onClick={undoDraftEdit}
-                  className="shrink-0 self-start rounded-full border border-[var(--admin-state-saved-border)] bg-white/80 px-3 py-1 text-[11px] font-semibold text-[var(--admin-state-saved-text)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-state-saved-border)] sm:self-auto"
+                  className={[
+                    "shrink-0 self-start rounded-full border bg-white/80 px-3 py-1 text-[11px] font-semibold transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 sm:self-auto",
+                    actionNoticeTone === "neutral"
+                      ? "border-[var(--admin-border-strong)] text-[var(--admin-text-secondary)] focus-visible:ring-[var(--admin-border-strong)]"
+                      : "border-[var(--admin-state-saved-border)] text-[var(--admin-state-saved-text)] focus-visible:ring-[var(--admin-state-saved-border)]"
+                  ].join(" ")}
                 >
                   Undo {lastUndoLabel}
                 </button>
