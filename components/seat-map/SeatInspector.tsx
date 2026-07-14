@@ -162,8 +162,8 @@ function SectionHeading({ id, title }: { id?: string; title: string }) {
 function FactRow({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-2.5 border-b border-white/5 py-1.5 last:border-b-0">
-      <dt className="shrink-0 text-[11.5px] text-[var(--admin-chrome-muted)]">{label}</dt>
-      <dd className={["min-w-0 truncate text-right text-[11.5px] font-medium text-[#eeeeee]", mono ? "font-mono" : ""].filter(Boolean).join(" ")}>{value}</dd>
+      <dt className="shrink-0 text-[12.5px] text-[var(--admin-chrome-muted)]">{label}</dt>
+      <dd className={["min-w-0 truncate text-right text-[12.5px] font-medium text-[#eeeeee]", mono ? "font-mono" : ""].filter(Boolean).join(" ")}>{value}</dd>
     </div>
   );
 }
@@ -895,7 +895,7 @@ export function SeatInspector({
             <h2 id="seat-inspector-title" className="truncate text-[13.5px] font-semibold leading-5 text-white">
               {formatDisplayName(assignmentIdentityLabel) || "Open seat"}
             </h2>
-            <div className="truncate text-[11px] leading-4 text-[var(--admin-chrome-muted)]">{occupantRoleLabel}</div>
+            <div className="truncate text-[12px] leading-4 text-[var(--admin-chrome-muted)]">{occupantRoleLabel}</div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <button
@@ -1015,7 +1015,7 @@ export function SeatInspector({
                 <FactRow label="Seat type" value={seatTypeLabel} mono={false} />
                 {hasAssignedPerson && (
                   <div className="flex items-center justify-between gap-2.5 py-1.5">
-                    <dt className="shrink-0 text-[11.5px] text-[var(--admin-chrome-muted)]">Status</dt>
+                    <dt className="shrink-0 text-[12.5px] text-[var(--admin-chrome-muted)]">Status</dt>
                     <dd><span className={["inline-block px-2 py-0.5 text-[10px] font-semibold", statusTagClass].join(" ")}>{currentStatusLabel}</span></dd>
                   </div>
                 )}
@@ -1025,7 +1025,7 @@ export function SeatInspector({
                   statuses and yields to a read-only tag while someone sits here. */}
               {!hasAssignedPerson && (
                 <label className="mt-1 block">
-                  <span className="text-[11px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Status</span>
+                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Status</span>
                   <select
                     ref={statusRef}
                     value={effectiveStatus}
@@ -1088,7 +1088,7 @@ export function SeatInspector({
               </div>
               {/* 3b INV-4: move-mode microcopy lives in the occupant (the inspector). */}
               {moveMode && (
-                <p role="status" className="mt-2 bg-[var(--admin-primary-soft)] px-3 py-2 text-[11.5px] font-semibold leading-4 text-[var(--admin-primary)]">
+                <p role="status" className="mt-2 bg-[var(--admin-primary-soft)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--admin-primary)]">
                   Drag the seat marker to its new spot. Esc exits move.
                 </p>
               )}
@@ -1112,7 +1112,7 @@ export function SeatInspector({
               <p id={employeeHelpId} className="mt-1.5 text-xs leading-5 text-[var(--admin-chrome-muted)]">{hasCurrentAssignment ? "Change or clear the draft assignment below." : "Search an existing employee or type a new name."}</p>
 
               <label className="mt-3 block">
-                <span className="text-[11px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Employee name</span>
+                <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Employee name</span>
                 <div className="relative">
                   <input
                     ref={employeeInputRef}
@@ -1204,7 +1204,7 @@ export function SeatInspector({
 
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-[11px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Job Title</span>
+                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Job Title</span>
                   <input
                     ref={employeePositionRef}
                     value={form.employeePosition}
@@ -1218,7 +1218,7 @@ export function SeatInspector({
                 </label>
 
                 <label className="block">
-                  <span className="text-[11px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Phone Ext.</span>
+                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Phone Ext.</span>
                   <input
                     ref={phoneExtensionRef}
                     value={form.phoneExtension}
@@ -1234,7 +1234,7 @@ export function SeatInspector({
               </div>
 
               <label className="mt-3 block">
-                <span className="text-[11px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Department</span>
+                <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Department</span>
                 <select
                   ref={departmentRef}
                   value={form.department}
@@ -1265,7 +1265,7 @@ export function SeatInspector({
               >
                 Delete seat
               </Button>
-              <p id="seat-inspector-delete-help" className="mt-1.5 text-[11.5px] leading-4 text-[var(--admin-chrome-muted)]">{deleteHelpText}</p>
+              <p id="seat-inspector-delete-help" className="mt-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)]">{deleteHelpText}</p>
               {isDirty && (
                 <Button type="button" onClick={handleResetEdits} disabled={pending} aria-label={`Discard edits for ${selectedSeat.label}`} className={`mt-2 min-w-0 w-full whitespace-normal rounded-[10px] ${footerNeutralButtonClass}`}>
                   Discard edits
@@ -1321,14 +1321,14 @@ export function SeatInspector({
               {activityEntries.length > 0 ? (
                 <ul>
                   {activityEntries.map((entry, index) => (
-                    <li key={`${entry}-${index}`} className="border-b border-white/5 py-1.5 text-[11px] leading-4 text-[var(--admin-chrome-muted)] last:border-b-0">
+                    <li key={`${entry}-${index}`} className="border-b border-white/5 py-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)] last:border-b-0">
                       <span className="font-medium text-[#d4d4d4]">{entry}</span>
                       <span className="ml-1.5">· this session</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-[11px] leading-4 text-[var(--admin-chrome-muted)]">No draft edits to this seat in this session. Saved changes appear here until publish.</p>
+                <p className="text-[12px] leading-4 text-[var(--admin-chrome-muted)]">No draft edits to this seat in this session. Saved changes appear here until publish.</p>
               )}
             </InspectorSection>
           </div>
@@ -1352,7 +1352,7 @@ export function SeatInspector({
               <FactRow label="Code" value={selectedSeat.label} />
               <FactRow label="Zone" value={currentZone} mono={false} />
               <div className="flex items-center justify-between gap-2.5 py-1.5">
-                <dt className="shrink-0 text-[11.5px] text-[var(--admin-chrome-muted)]">Status</dt>
+                <dt className="shrink-0 text-[12.5px] text-[var(--admin-chrome-muted)]">Status</dt>
                 <dd><span className={["inline-block px-2 py-0.5 text-[10px] font-semibold", statusTagClass].join(" ")}>{currentStatusLabel}</span></dd>
               </div>
             </dl>

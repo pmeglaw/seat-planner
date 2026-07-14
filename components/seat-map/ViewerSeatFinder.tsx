@@ -516,7 +516,8 @@ export function ViewerSeatFinder({
           <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
             <Image src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />
           </span>
-          <div aria-hidden="true" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-none sm:block">
+          {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
+          <div aria-hidden="true" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
             Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
           </div>
         </div>
