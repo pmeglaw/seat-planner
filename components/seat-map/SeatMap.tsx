@@ -2058,8 +2058,8 @@ export function SeatMap({
   const mapFrameClassName = [
     "relative mx-auto max-w-none",
     mapViewMode === "overview"
-      ? "w-full max-w-[1911px]"
-      : "[--map-detail-base:1120px] sm:[--map-detail-base:1460px] lg:[--map-detail-base:1911px]",
+      ? "w-full max-w-[1695px]"
+      : "[--map-detail-base:1120px] sm:[--map-detail-base:1460px] lg:[--map-detail-base:1695px]",
     addSeatMode ? "cursor-crosshair" : ""
   ].join(" ");
   // Zoom scales the rendered width only — a pure view transform (§9).

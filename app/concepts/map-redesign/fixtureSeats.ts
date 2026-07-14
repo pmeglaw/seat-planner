@@ -5,7 +5,7 @@
  * them through lib/mapLayoutTransform (seatsToVisualSeats) + lib/seatMath
  * (pointToStyle) exactly like production so markers land on the same chairs.
  *
- * Floor plan image: /images/office-floor-plan.png (1911x867).
+ * Floor plan image: /images/office-floor-plan.png (1695x841, map-v3).
  * Counts: 60 published · 6 assigned · 54 available.
  */
 

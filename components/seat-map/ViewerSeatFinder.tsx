@@ -499,8 +499,8 @@ export function ViewerSeatFinder({
   const mapFrameClassName = cx(
     "relative mx-auto max-w-none",
     zoomFactor === null
-      ? "w-[1040px] sm:w-[1340px] lg:w-full lg:max-w-[1911px] lg:shrink-0"
-      : "[--map-detail-base:1040px] sm:[--map-detail-base:1340px] lg:[--map-detail-base:1911px]"
+      ? "w-[1040px] sm:w-[1340px] lg:w-full lg:max-w-[1695px] lg:shrink-0"
+      : "[--map-detail-base:1040px] sm:[--map-detail-base:1340px] lg:[--map-detail-base:1695px]"
   );
   const mapFrameStyle = zoomFactor === null
     ? (fitMapWidth ? { width: `${fitMapWidth}px` } : undefined)

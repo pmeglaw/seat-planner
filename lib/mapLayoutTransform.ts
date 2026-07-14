@@ -1,14 +1,32 @@
 import { normalizePoint, type NormalizedPoint } from "@/lib/seatMath";
 import type { SeatWithEmployee } from "@/lib/types";
 
-export const MAP_IMAGE_WIDTH = 1911;
-export const MAP_IMAGE_HEIGHT = 867;
+export const MAP_IMAGE_WIDTH = 1695;
+export const MAP_IMAGE_HEIGHT = 841;
 export const MAP_ASPECT_RATIO = MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT;
-export const MAP_IMAGE_SRC = "/images/office-floor-plan.webp?v=map-v2-warm-1911x867";
+export const MAP_IMAGE_SRC = "/images/office-floor-plan.webp?v=map-v3-cool-1695x841";
 // 24px-wide preview of the same render, shown while the full image streams in.
-// Regenerate whenever the shipped asset's pixels change (sharp: resize(24).webp({quality:40})).
+// Regenerate whenever the shipped asset's pixels change (output/makemap.mjs).
 export const MAP_IMAGE_BLUR_DATA_URL =
-  "data:image/webp;base64,UklGRn4AAABXRUJQVlA4IHIAAACQAwCdASoYAAsAPu1iqU2ppaOiMAgBMB2JaQAAWobi1F3mibqAAP7t17tl0oh2LMhZdls8Y8KKQvArfCIx6UyS2UCzY/FzRzuIjANhVXMG20VNLCPzLaplSZz/nYM7kZIsKSLVmG/x4g5luNGIP9CgAAA=";
+  "data:image/webp;base64,UklGRkwCAABXRUJQVlA4WAoAAAAgAAAAFwAACwAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDggXgAAAJADAJ0BKhgADAA+7WKpTamlo6IwCAEwHYlnV58AN1fvKbA+PgAA/u23t976hY1+tE3keQPEhCPbPhhn2d0Kvz7eQU4aGLqlljstTqq/ofAknvoUjWCUeQs50JDAAAA=";
+
+// --- Map v3 asset remap ------------------------------------------------------
+//
+// The v3 asset (owner's cool-palette source render, cream side margins cropped
+// to 12px, 1695x841) frames the SAME floor plan slightly differently than the
+// v2 image every calibration area below was measured against (1911x867). The
+// per-area constants therefore stay expressed in v2 image space — byte-for-byte
+// untouched — and this single linear remap converts v2-normalized coordinates
+// to the v3 image's space as a final composition step (inverted first on the
+// input path). Derived by aligning the two renders' content bounding boxes:
+// v2 content x 140..1836 / y 22..863 of 1911x867, v3 source content
+// x 134..1805 / y 18..841 of 1870x841 cropped at x=122 (issue #121).
+const MAP_V3_REMAP: LinearTransform = {
+  xScale: 1.110811,
+  xOffset: -0.074293,
+  yScale: 1.008851,
+  yOffset: -0.004197
+};
 
 type SeatCalibrationSource = Pick<SeatWithEmployee, "x" | "y"> &
   Partial<Pick<SeatWithEmployee, "label" | "zone" | "department">>;
@@ -229,15 +247,19 @@ function applyInverseTransform(point: NormalizedPoint, transform: LinearTransfor
 
 export function savedPointToVisualPoint(point: NormalizedPoint, source?: SeatCalibrationSource) {
   const area = getSavedCalibrationArea(source);
-  return applyTransform(point, area?.transform ?? DEFAULT_PREVIEW_TRANSFORM);
+  // Calibrate into v2 image space, then remap into the shipped v3 asset.
+  return applyTransform(applyTransform(point, area?.transform ?? DEFAULT_PREVIEW_TRANSFORM), MAP_V3_REMAP);
 }
 
 export function visualPointToSavedPoint(
   point: NormalizedPoint,
   context?: { zone?: string | null; label?: string | null; source?: SeatCalibrationSource }
 ) {
-  const area = getVisualCalibrationArea(point, context);
-  return applyInverseTransform(point, area?.transform ?? DEFAULT_PREVIEW_TRANSFORM);
+  // Undo the v3 remap first: the calibration areas' visualBounds (and their
+  // inverse transforms) are expressed in v2 image space.
+  const v2Point = applyInverseTransform(point, MAP_V3_REMAP);
+  const area = getVisualCalibrationArea(v2Point, context);
+  return applyInverseTransform(v2Point, area?.transform ?? DEFAULT_PREVIEW_TRANSFORM);
 }
 
 export function seatToVisualSeat<T extends SeatCalibrationSource>(seat: T): T {
