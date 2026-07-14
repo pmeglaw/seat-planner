@@ -50,6 +50,7 @@ import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type SeatMapProps = {
   seats: SeatWithEmployee[];
@@ -294,6 +295,16 @@ export function SeatMap({
   const [deleteSeatConfirm, setDeleteSeatConfirm] = useState<DeleteSeatConfirmState>(null);
   const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
   const [pending, startTransition] = useTransition();
+  // `pending` outlives the server action: revalidatePath("/admin") keeps the
+  // transition busy through the RSC refresh for seconds after a mutation
+  // committed. Undo/Redo gate on this narrower flag instead, so they enable
+  // together with the success banner (the refresh only refreshes props that
+  // local state already reflects).
+  const [mutationInFlight, setMutationInFlight] = useState(false);
+  const deleteSeatDialogFocusRef = useDialogFocus<HTMLElement>();
+  const publishReviewDialogFocusRef = useDialogFocus<HTMLElement>();
+  const inspectorGuardDialogFocusRef = useDialogFocus<HTMLElement>();
+  const swapConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -1010,6 +1021,7 @@ export function SeatMap({
     }
 
     startTransition(async () => {
+      setMutationInFlight(true);
       try {
         setActionError(null);
         setActionNotice(null);
@@ -1035,6 +1047,8 @@ export function SeatMap({
       } catch (error) {
         setActionNotice(null);
         setActionError(error instanceof Error ? error.message : `Could not ${actionLabel.toLowerCase()} draft edit.`);
+      } finally {
+        setMutationInFlight(false);
       }
     });
   }
@@ -1473,6 +1487,7 @@ export function SeatMap({
     const swapLabel = `Swap ${sourceSeat.label} and ${targetSeat.label}`;
 
     startTransition(async () => {
+      setMutationInFlight(true);
       try {
         setActionError(null);
         setActionNotice(null);
@@ -1504,6 +1519,8 @@ export function SeatMap({
       } catch (error) {
         setActionNotice(null);
         setActionError(error instanceof Error ? error.message : "Could not swap seats.");
+      } finally {
+        setMutationInFlight(false);
       }
     });
   }
@@ -1529,6 +1546,7 @@ export function SeatMap({
       const beforeSnapshot = captureDraftSnapshot();
 
       startTransition(async () => {
+        setMutationInFlight(true);
         try {
           const savedPoint = visualPointToSavedPoint(visualPoint, { zone: targetZone });
           setActionError(null);
@@ -1551,6 +1569,8 @@ export function SeatMap({
         } catch (error) {
           setActionNotice(null);
           setActionError(error instanceof Error ? error.message : "Could not create seat.");
+        } finally {
+          setMutationInFlight(false);
         }
       });
       return;
@@ -1617,6 +1637,7 @@ export function SeatMap({
       : visualPointToSavedPoint(visualPoint);
 
     startTransition(async () => {
+      setMutationInFlight(true);
       try {
         setActionError(null);
         setActionNotice(null);
@@ -1629,6 +1650,8 @@ export function SeatMap({
         applyRestoredDraftPayload(beforeSnapshot);
         setActionNotice(null);
         setActionError(error instanceof Error ? error.message : "Could not move seat.");
+      } finally {
+        setMutationInFlight(false);
       }
     });
   }
@@ -1679,6 +1702,7 @@ export function SeatMap({
     setDeleteSeatConfirm(null);
 
     startTransition(async () => {
+      setMutationInFlight(true);
       try {
         setActionError(null);
         setActionNotice(null);
@@ -1695,6 +1719,8 @@ export function SeatMap({
       } catch (error) {
         setActionNotice(null);
         setActionError(error instanceof Error ? error.message : "Could not delete custom seat.");
+      } finally {
+        setMutationInFlight(false);
       }
     });
   }
@@ -1719,6 +1745,7 @@ export function SeatMap({
     setActionError(null);
     setActionNotice(null);
     startTransition(async () => {
+      setMutationInFlight(true);
       try {
         await publishSeatMapAction();
         setLocalPublishedSeats(nextPublishedSeats);
@@ -1729,6 +1756,8 @@ export function SeatMap({
       } catch (error) {
         setActionNotice(null);
         setActionError(error instanceof Error ? error.message : "Could not publish seat map.");
+      } finally {
+        setMutationInFlight(false);
       }
     });
   }
@@ -1752,7 +1781,7 @@ export function SeatMap({
       : "This selected seat does not match the current filters."
     : null;
   const clearSearchContextLabel = searchActive ? "Clear search" : "Clear filters";
-  const undoTitle = pending
+  const undoTitle = mutationInFlight
     ? "Wait for the current map change to finish"
     : inspectorDirty
       ? "Save or cancel inspector edits before undoing"
@@ -1761,7 +1790,7 @@ export function SeatMap({
           ? `Undo ${lastUndoLabel}`
           : "Undo last map change"
         : "No map changes to undo";
-  const redoTitle = pending
+  const redoTitle = mutationInFlight
     ? "Wait for the current map change to finish"
     : inspectorDirty
       ? "Save or cancel inspector edits before redoing"
@@ -2058,7 +2087,7 @@ export function SeatMap({
             <button
               type="button"
               onClick={undoDraftEdit}
-              disabled={pending || inspectorDirty || !undoAvailable}
+              disabled={mutationInFlight || inspectorDirty || !undoAvailable}
               aria-label="Undo last map change"
               title={undoTitle}
               className={chromeToolbarBtn}
@@ -2072,7 +2101,7 @@ export function SeatMap({
             <button
               type="button"
               onClick={redoDraftEdit}
-              disabled={pending || inspectorDirty || !redoAvailable}
+              disabled={mutationInFlight || inspectorDirty || !redoAvailable}
               aria-label="Redo last undone change"
               title={redoTitle}
               className={chromeToolbarBtn}
@@ -2257,7 +2286,7 @@ export function SeatMap({
           {actionNotice && !swapSourceSeatId && (
             <div role="status" aria-live="polite" className={actionNoticeBannerClassName}>
               <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{actionNotice}</span>
-              {canEdit && undoAvailable && lastUndoLabel && !pending && !inspectorDirty && (
+              {canEdit && undoAvailable && lastUndoLabel && !mutationInFlight && !inspectorDirty && (
                 <button
                   type="button"
                   onClick={undoDraftEdit}
@@ -2275,6 +2304,24 @@ export function SeatMap({
             <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
               <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} />
               {canEdit && floor === "3" && (
+                <button
+                  type="button"
+                  aria-pressed={addSeatMode}
+                  onClick={addSeatMode ? cancelAddSeatMode : startAddSeatMode}
+                  className={[
+                    "inline-flex h-[30px] items-center gap-1.5 border px-2.5 text-[12px] font-medium transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]",
+                    addSeatMode
+                      ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-on-soft)]"
+                      : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)]"
+                  ].join(" ")}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none">
+                    <path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                  </svg>
+                  {addSeatMode ? "Exit Add Seat" : "Add seat"}
+                </button>
+              )}
+              {canEdit && floor === "3" && (
                 <div data-map-menu className="relative">
                   <button
                     type="button"
@@ -2286,7 +2333,7 @@ export function SeatMap({
                     onClick={() => setMapMenuOpen(current => !current)}
                     className={[
                       "inline-flex h-[30px] w-8 items-center justify-center border transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]",
-                      mapMenuOpen || addSeatMode
+                      mapMenuOpen
                         ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-on-soft)]"
                         : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)]"
                     ].join(" ")}
@@ -2329,17 +2376,6 @@ export function SeatMap({
                         className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
                       >
                         Zoom to 100%
-                      </button>
-                      <button
-                        type="button"
-                        aria-pressed={addSeatMode}
-                        onClick={addSeatMode ? cancelAddSeatMode : startAddSeatMode}
-                        className={[
-                          "flex w-full items-center px-3 py-2 text-left text-[12px] font-medium transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]",
-                          addSeatMode ? "text-[var(--admin-primary-on-soft)]" : "text-[var(--admin-text-primary)]"
-                        ].join(" ")}
-                      >
-                        {addSeatMode ? "Exit Add Seat" : "Add seat"}
                       </button>
                     </div>
                   )}
@@ -2528,11 +2564,13 @@ export function SeatMap({
       {deleteSeatConfirm && (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
           <section
+            ref={deleteSeatDialogFocusRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-seat-confirm-title"
             aria-describedby="delete-seat-confirm-description"
-            className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
+            className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -2570,11 +2608,13 @@ export function SeatMap({
       {publishReviewOpen && (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--admin-rail-bg)]/48 p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
           <section
+            ref={publishReviewDialogFocusRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby="publish-review-title"
             aria-describedby="publish-review-description"
-            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[0_30px_90px_rgba(23,26,29,0.34)] backdrop-blur-2xl"
+            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[0_30px_90px_rgba(23,26,29,0.34)] backdrop-blur-2xl focus-visible:outline-none"
           >
             <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
               <div>
@@ -2810,11 +2850,13 @@ export function SeatMap({
       {inspectorGuardAction && selectedSeat && (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[60] sm:items-center">
           <section
+            ref={inspectorGuardDialogFocusRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby="inspector-unsaved-title"
             aria-describedby="inspector-unsaved-description"
-            className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
+            className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
           >
             <div>
               <h2 id="inspector-unsaved-title" className="text-base font-semibold">Unsaved seat edits</h2>
@@ -2840,10 +2882,12 @@ export function SeatMap({
       {swapConfirm && swapSourceSeat && swapTargetSeat && (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
           <section
+            ref={swapConfirmDialogFocusRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby="swap-confirm-title"
-            className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
+            className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
           >
             <div className="flex items-start justify-between gap-3">
               <div>

@@ -27,6 +27,12 @@ type ViewerSeatFinderProps = {
   employees: Employee[];
   departmentOptions?: DepartmentOption[];
   zoneOptions?: ZoneOption[];
+  // Only admins get the Admin chrome shortcut; for viewers it is a guaranteed
+  // dead end, so the server page passes their role down as a render gate.
+  showAdminShortcut?: boolean;
+  // Pre-formatted "last publish" date from the server page (viewer-safe copy
+  // for the old PUBLISHED/READ-ONLY badge pair).
+  lastPublishedLabel?: string | null;
 };
 
 type ViewerPanState = {
@@ -81,7 +87,9 @@ export function ViewerSeatFinder({
   seats,
   employees,
   departmentOptions = [],
-  zoneOptions = []
+  zoneOptions = [],
+  showAdminShortcut = false,
+  lastPublishedLabel = null
 }: ViewerSeatFinderProps) {
   const [search, setSearch] = useState("");
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
@@ -558,19 +566,21 @@ export function ViewerSeatFinder({
               </svg>
               Viewer
             </span>
-            <Link
-              href="/admin"
-              aria-label="Open admin surface"
-              title="Admin — requires admin access"
-              className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]")}
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="9" cy="7" r="3.1" />
-                <path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6" />
-                <path d="M14.5 18.4l2 2 4.2-4.6" />
-              </svg>
-              Admin
-            </Link>
+            {showAdminShortcut && (
+              <Link
+                href="/admin"
+                aria-label="Open admin surface"
+                title="Admin — draft editing surface"
+                className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]")}
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="7" r="3.1" />
+                  <path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6" />
+                  <path d="M14.5 18.4l2 2 4.2-4.6" />
+                </svg>
+                Admin
+              </Link>
+            )}
           </div>
           <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">V</span>
         </div>
@@ -581,8 +591,16 @@ export function ViewerSeatFinder({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-0.5 pb-2">
             <FloorSelector floor={floor} onChange={setFloor} />
             <span className="text-[12px] text-[var(--admin-text-secondary)]">{mapCrumbLabel}</span>
-            <span className="rounded-full bg-[var(--admin-success-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--admin-success)] ring-1 ring-[var(--admin-success)]/30">Published</span>
-            <span className="rounded-full bg-[var(--admin-surface)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-border)]">Read-only</span>
+            {/* Viewers don't need the layer model ("Published" / "Read-only"
+                badges) — a last-publish date answers the question they have. */}
+            {lastPublishedLabel && floor === "3" && (
+              <span
+                title="Read-only published view"
+                className="rounded-full bg-[var(--admin-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--admin-text-secondary)] ring-1 ring-[var(--admin-border)]"
+              >
+                Updated {lastPublishedLabel}
+              </span>
+            )}
             <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="ml-auto" />
           </div>
 

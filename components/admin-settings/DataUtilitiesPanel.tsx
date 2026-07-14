@@ -8,6 +8,7 @@ import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
 import { importAssignmentsCsvAction, restoreDraftSnapshotAction } from "@/app/actions";
 import { Button } from "@/components/ui/Button";
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type DataUtilitiesPanelProps = {
   seats: SeatWithEmployee[];
@@ -92,6 +93,8 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const jsonInputRef = useRef<HTMLInputElement | null>(null);
+  const csvReviewDialogFocusRef = useDialogFocus<HTMLElement>();
+  const jsonReviewDialogFocusRef = useDialogFocus<HTMLElement>();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -276,6 +279,8 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
       {csvReview && (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">
           <section
+            ref={csvReviewDialogFocusRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby="csv-import-review-title"
@@ -360,6 +365,8 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
       {jsonReview && (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">
           <section
+            ref={jsonReviewDialogFocusRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby="json-restore-review-title"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyAuthMessage, safeNextPath } from "@/lib/authMessages";
@@ -113,8 +114,30 @@ export function LoginForm() {
     setMessageType("success");
   }
 
-  const canSubmitPassword = Boolean(email.trim() && password.trim() && !busy);
-  const canSubmitMagicLink = Boolean(email.trim() && !busy);
+  // Submit stays enabled and validates on submit so Enter works everywhere and
+  // an empty click explains itself instead of hitting a silently dead button.
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+
+    if (!email.trim()) {
+      setMessage(mode === "password" ? "Enter your work email and password to sign in." : "Enter your work email to receive a sign-in link.");
+      setMessageType("error");
+      return;
+    }
+
+    if (mode === "password") {
+      if (!password.trim()) {
+        setMessage("Enter your password to sign in, or use the magic-link tab.");
+        setMessageType("error");
+        return;
+      }
+      void signInWithPassword();
+      return;
+    }
+
+    void sendMagicLink();
+  }
 
   const fieldClass = "mt-1 w-full border border-[var(--admin-border)] bg-white px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-muted)] hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]";
 
@@ -156,6 +179,9 @@ export function LoginForm() {
         </button>
       </div>
 
+      {/* Inputs are deliberately name-less: a pre-hydration native submit must
+          not serialize the password into the URL (GET form default). */}
+      <form onSubmit={handleSubmit} noValidate>
       <label className="mt-5 block">
         <span className="text-sm font-semibold text-[var(--admin-text-secondary)]">Email</span>
         <input
@@ -182,14 +208,14 @@ export function LoginForm() {
             />
           </label>
 
-          <Button className="mt-4 w-full" variant="primary" onClick={signInWithPassword} disabled={!canSubmitPassword}>
+          <Button type="submit" className="mt-4 w-full" variant="primary" disabled={busy}>
             {busy ? "Signing in…" : "Sign in"}
           </Button>
 
           <button
             type="button"
             onClick={sendPasswordReset}
-            disabled={resetBusy || !email.trim()}
+            disabled={resetBusy}
             className="mt-3 w-full text-sm font-semibold text-[var(--admin-primary-cta)] transition hover:text-[var(--admin-primary-cta-hover)] disabled:cursor-not-allowed disabled:text-[var(--admin-text-muted)]"
           >
             {resetBusy ? "Sending reset email…" : "Forgot password?"}
@@ -197,7 +223,7 @@ export function LoginForm() {
         </>
       ) : (
         <>
-          <Button className="mt-4 w-full" variant="primary" onClick={sendMagicLink} disabled={!canSubmitMagicLink}>
+          <Button type="submit" className="mt-4 w-full" variant="primary" disabled={busy}>
             {busy ? "Sending…" : "Send magic link"}
           </Button>
 
@@ -206,6 +232,7 @@ export function LoginForm() {
           </p>
         </>
       )}
+      </form>
 
       {message && (
         <p

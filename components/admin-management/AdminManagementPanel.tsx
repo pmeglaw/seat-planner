@@ -20,6 +20,7 @@ import { computeVirtualWindow } from "@/lib/virtualizedList";
 import { formatDisplayName } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
 import { Button } from "@/components/ui/Button";
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type EmployeeSortKey = "name" | "department" | "position" | "extension" | "seat" | "status";
 type SortDirection = "asc" | "desc";
@@ -142,6 +143,7 @@ export function AdminManagementPanel({
   departmentOptions,
   zoneOptions
 }: AdminManagementPanelProps) {
+  const managementConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   const [localEmployees, setLocalEmployees] = useState(employees);
   const [localDepartmentOptions, setLocalDepartmentOptions] = useState(departmentOptions);
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
@@ -722,7 +724,10 @@ export function AdminManagementPanel({
                             <td className={["px-3 py-2 transition-colors text-[var(--admin-text-secondary)]", cellBg].join(" ")}>{employee.phone_extension || "—"}</td>
                             <td className={["px-3 py-2 transition-colors font-medium text-[var(--admin-text-primary)]", cellBg].join(" ")}>{seatLabel}</td>
                             <td className={["px-3 py-2 transition-colors", cellBg].join(" ")}>
-                              <span className={["inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium", isAssigned ? "bg-[var(--admin-primary-soft)] text-[var(--admin-primary-on-soft)]" : "bg-[var(--admin-surface-alt)] text-[var(--admin-text-secondary)]"].join(" ")}>
+                              {/* Assigned mirrors the map legend's green chip — the
+                                  orange-soft family reads as a warning here. */}
+                              <span className={["inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium", isAssigned ? "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-1 ring-[var(--admin-success)]/30" : "bg-[var(--admin-surface-alt)] text-[var(--admin-text-secondary)]"].join(" ")}>
+                                {isAssigned && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />}
                                 {isAssigned ? "Assigned" : "Active"}
                               </span>
                             </td>
@@ -1036,6 +1041,8 @@ export function AdminManagementPanel({
       {managementConfirm && (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">
           <section
+            ref={managementConfirmDialogFocusRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby="management-confirm-title"
