@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { PointerEvent } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
@@ -15,6 +15,7 @@ import {
   MAP_IMAGE_WIDTH,
   seatsToVisualSeats
 } from "@/lib/mapLayoutTransform";
+import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { buildViewerSeatSearch, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
@@ -93,6 +94,10 @@ export function ViewerSeatFinder({
 }: ViewerSeatFinderProps) {
   const [search, setSearch] = useState("");
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
+  // Roving tabindex anchor: the last keyboard-visited seat (see SeatMap for
+  // the same pattern — the map is one tab stop, arrows walk between seats).
+  const [rovingSeatId, setRovingSeatId] = useState<string | null>(null);
+  const focusInspectorAfterSelectRef = useRef(false);
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [floor, setFloor] = useState<FloorId>("3");
@@ -112,12 +117,29 @@ export function ViewerSeatFinder({
   const publishedSeats = useMemo(() => seats.map(normalizeSeat), [seats]);
   const visualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
   const visualSeatById = useMemo(() => new Map(visualSeats.map(seat => [seat.id, seat])), [visualSeats]);
+  // Pixel-aspect points for arrow-key traversal (see lib/seatKeyboardNav).
+  const seatNavPoints = useMemo(
+    () => visualSeats.map(seat => ({ id: seat.id, x: seat.x * MAP_IMAGE_WIDTH, y: seat.y * MAP_IMAGE_HEIGHT })),
+    [visualSeats]
+  );
+  const mapRovingSeatId = resolveRovingSeatId(seatNavPoints, selectedSeatId ?? rovingSeatId);
   const seatById = useMemo(() => new Map(publishedSeats.map(seat => [seat.id, seat])), [publishedSeats]);
   const searchResults = useMemo(
     () => buildViewerSeatSearch({ query: search, seats: publishedSeats, employees, departmentOptions, zoneOptions }),
     [departmentOptions, employees, publishedSeats, search, zoneOptions]
   );
   const activeResult = searchResults.results.find(result => result.id === activeResultId) ?? null;
+
+  // Keyboard activation of a seat hands focus into the details panel once the
+  // selection commits; pointer interactions cancel the handoff.
+  useEffect(() => {
+    if (!focusInspectorAfterSelectRef.current) return;
+    focusInspectorAfterSelectRef.current = false;
+    if (!selectedSeatId) return;
+    window.requestAnimationFrame(() => {
+      document.getElementById("seat-inspector-panel")?.focus();
+    });
+  }, [selectedSeatId]);
   const selectedSeat = selectedSeatId ? seatById.get(selectedSeatId) ?? null : null;
   const searchActive = Boolean(searchResults.query);
   const structuredFiltersActive = department !== "all" || zone !== "all" || status !== "all";
@@ -366,6 +388,37 @@ export function ViewerSeatFinder({
     centerSeatInMap(seatId);
   }
 
+  // Delegated marker-layer keyboarding — same pattern as the admin map:
+  // arrows rove between seats (preventDefault keeps the scroll viewport from
+  // panning underneath), keyboard activation hands focus into the inspector.
+  function handleMarkerLayerKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const seatId = (event.target as HTMLElement).closest<HTMLElement>("[data-seat-id]")?.dataset.seatId;
+    if (!seatId) return;
+
+    const direction = arrowKeyToDirection(event.key);
+    if (direction) {
+      event.preventDefault();
+      event.stopPropagation();
+      const nextSeatId = findNearestSeatInDirection(seatNavPoints, seatId, direction);
+      if (nextSeatId) {
+        setRovingSeatId(nextSeatId);
+        window.requestAnimationFrame(() => {
+          document.querySelector<HTMLButtonElement>(`[data-seat-id="${nextSeatId}"]`)?.focus();
+        });
+      }
+      return;
+    }
+
+    if ((event.key === "Enter" || event.key === " ") && seatId !== selectedSeatId) {
+      focusInspectorAfterSelectRef.current = true;
+    }
+  }
+
+  function handleMarkerLayerFocusCapture(event: { target: EventTarget | null }) {
+    const seatId = (event.target as HTMLElement | null)?.closest?.<HTMLElement>("[data-seat-id]")?.dataset.seatId;
+    if (seatId) setRovingSeatId(seatId);
+  }
+
   function openResult(result: ViewerSearchResult) {
     setActiveResultId(result.id);
     if (result.seatId) {
@@ -514,6 +567,13 @@ export function ViewerSeatFinder({
                   if (event.key === "Escape" && search.trim()) {
                     event.stopPropagation();
                     clearSearch();
+                    return;
+                  }
+                  // Results are visually adjacent but far away in DOM order —
+                  // ArrowDown hops focus straight into the results panel.
+                  if (event.key === "ArrowDown" && resultsPanelOpen) {
+                    event.preventDefault();
+                    document.querySelector<HTMLButtonElement>('[aria-label="Viewer search results"] button')?.focus();
                   }
                 }}
                 placeholder="Search people or seats"
@@ -631,7 +691,14 @@ export function ViewerSeatFinder({
                     draggable={false}
                   />
 
-                  <div className="absolute inset-0">
+                  <div
+                    className="absolute inset-0"
+                    onKeyDown={handleMarkerLayerKeyDown}
+                    onFocusCapture={handleMarkerLayerFocusCapture}
+                    onPointerDownCapture={() => {
+                      focusInspectorAfterSelectRef.current = false;
+                    }}
+                  >
                     {visualSeats.map(seat => {
                       const inMatches = highlightedSeatIdSet.has(seat.id);
                       const dimmed = filtersActive && !inMatches && selectedSeatId !== seat.id;
@@ -656,6 +723,7 @@ export function ViewerSeatFinder({
                           addSeatMode={false}
                           viewportEdge="none"
                           viewportEdgeOffsetPx={0}
+                          tabIndex={seat.id === mapRovingSeatId ? 0 : -1}
                           onSelect={selectSeat}
                           onMovePointerDown={() => undefined}
                         />

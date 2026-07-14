@@ -880,6 +880,8 @@ export function SeatInspector({
   return (
     <>
     <aside
+      id="seat-inspector-panel"
+      tabIndex={-1}
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
       className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/10 bg-[var(--admin-chrome-bg)] text-[#f4f4f4] shadow-[var(--admin-elevation-4-shadow)] panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-10 panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] panel:border-0 panel:border-l panel:border-white/10 panel:shadow-none"

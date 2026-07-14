@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import type { PointerEvent } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -28,6 +28,7 @@ import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import { departmentKey } from "@/lib/departments";
 import { clientPointToNormalized } from "@/lib/seatMath";
 import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
+import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import {
@@ -298,6 +299,10 @@ export function SeatMap({
   const [swapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
   const [deleteSeatConfirm, setDeleteSeatConfirm] = useState<DeleteSeatConfirmState>(null);
   const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
+  // Last keyboard-visited seat (roving tabindex anchor). The derived tab stop
+  // also prefers the selected seat — see mapRovingSeatId.
+  const [rovingSeatId, setRovingSeatId] = useState<string | null>(null);
+  const focusInspectorAfterSelectRef = useRef(false);
   const [pending, startTransition] = useTransition();
   // `pending` outlives the server action: revalidatePath("/admin") keeps the
   // transition busy through the RSC refresh for seconds after a mutation
@@ -352,6 +357,18 @@ export function SeatMap({
       // old in-memory behavior instead of breaking edits.
     }
   }, [canEdit, draftHistory]);
+
+  // Keyboard activation of a seat hands focus into the inspector panel once
+  // the selection commits (mouse users keep their pointer focus — the flag is
+  // only set from the marker layer's keydown and cleared on pointerdown).
+  useEffect(() => {
+    if (!focusInspectorAfterSelectRef.current) return;
+    focusInspectorAfterSelectRef.current = false;
+    if (!selectedSeatId) return;
+    window.requestAnimationFrame(() => {
+      document.getElementById("seat-inspector-panel")?.focus();
+    });
+  }, [selectedSeatId]);
 
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -728,6 +745,14 @@ export function SeatMap({
   const swapTargetSeat = swapConfirm ? localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null : null;
   const visualLocalSeats = useMemo(() => seatsToVisualSeats(localSeats), [localSeats]);
   const visualSeatById = useMemo(() => new Map(visualLocalSeats.map(seat => [seat.id, seat])), [visualLocalSeats]);
+  // Roving tabindex: the map is ONE tab stop (the selected seat, else the last
+  // visited seat, else top-left) and arrow keys walk between seats. Points are
+  // scaled to the floor plan's pixel aspect so "right" matches the screen.
+  const seatNavPoints = useMemo(
+    () => visualLocalSeats.map(seat => ({ id: seat.id, x: seat.x * MAP_IMAGE_WIDTH, y: seat.y * MAP_IMAGE_HEIGHT })),
+    [visualLocalSeats]
+  );
+  const mapRovingSeatId = resolveRovingSeatId(seatNavPoints, selectedSeatId ?? rovingSeatId);
   const plannerHighlightedSeatIdSet = useMemo(() => new Set(plannerHighlightedSeatIds), [plannerHighlightedSeatIds]);
   const searchQuery = search.trim();
   const searchActive = Boolean(searchQuery);
@@ -857,6 +882,36 @@ export function SeatMap({
     const statusOk = status === "all" || seat.status === (status as SeatStatus);
 
     return searchOk && departmentOk && zoneOk && statusOk;
+  }
+
+  // Delegated keyboarding for the marker layer: arrows rove between seats
+  // (preventDefault stops the scroll-viewport from panning underneath), and a
+  // keyboard activation queues a focus handoff into the inspector once it
+  // opens. Pointer interactions cancel the handoff.
+  function handleMarkerLayerKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const seatId = (event.target as HTMLElement).closest<HTMLElement>("[data-seat-id]")?.dataset.seatId;
+    if (!seatId) return;
+
+    const direction = arrowKeyToDirection(event.key);
+    if (direction) {
+      event.preventDefault();
+      event.stopPropagation();
+      const nextSeatId = findNearestSeatInDirection(seatNavPoints, seatId, direction);
+      if (nextSeatId) {
+        setRovingSeatId(nextSeatId);
+        focusSeatMarker(nextSeatId);
+      }
+      return;
+    }
+
+    if ((event.key === "Enter" || event.key === " ") && seatId !== selectedSeatId) {
+      focusInspectorAfterSelectRef.current = true;
+    }
+  }
+
+  function handleMarkerLayerFocusCapture(event: { target: EventTarget | null }) {
+    const seatId = (event.target as HTMLElement | null)?.closest?.<HTMLElement>("[data-seat-id]")?.dataset.seatId;
+    if (seatId) setRovingSeatId(seatId);
   }
 
   function focusSeatMarker(seatId: string | null) {
@@ -2135,6 +2190,13 @@ export function SeatMap({
                   if (event.key === "Escape" && search.trim()) {
                     event.stopPropagation();
                     clearSearch();
+                    return;
+                  }
+                  // Results are visually adjacent but far away in DOM order —
+                  // ArrowDown hops focus straight into the results panel.
+                  if (event.key === "ArrowDown" && resultsPanelOpen) {
+                    event.preventDefault();
+                    document.querySelector<HTMLButtonElement>('[aria-label="Admin search results"] button')?.focus();
                   }
                 }}
                 placeholder="Search people or seats"
@@ -2343,6 +2405,13 @@ export function SeatMap({
                   if (event.key === "Escape" && search.trim()) {
                     event.stopPropagation();
                     clearSearch();
+                    return;
+                  }
+                  // Results are visually adjacent but far away in DOM order —
+                  // ArrowDown hops focus straight into the results panel.
+                  if (event.key === "ArrowDown" && resultsPanelOpen) {
+                    event.preventDefault();
+                    document.querySelector<HTMLButtonElement>('[aria-label="Admin search results"] button')?.focus();
                   }
                 }}
                 placeholder="Search people, seats, departments, or zones"
@@ -2515,7 +2584,14 @@ export function SeatMap({
                   draggable={false}
                 />
 
-                <div className={mapMarkerLayerClassName}>
+                <div
+                  className={mapMarkerLayerClassName}
+                  onKeyDown={handleMarkerLayerKeyDown}
+                  onFocusCapture={handleMarkerLayerFocusCapture}
+                  onPointerDownCapture={() => {
+                    focusInspectorAfterSelectRef.current = false;
+                  }}
+                >
                   {/* Every state renders individual seat markers — the fit view
                       never collapses to zone/cluster pills (owner QA, round 2). */}
                   {localSeats.map(seat => {
@@ -2554,6 +2630,7 @@ export function SeatMap({
                         // (SeatMarker keeps its admin-token branches; the admin map just
                         // no longer opts into them.)
                         variant="viewer"
+                        tabIndex={seat.id === mapRovingSeatId ? 0 : -1}
                         onSelect={selectSeat}
                         onMovePointerDown={handleMovePointerDown}
                       />

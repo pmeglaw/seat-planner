@@ -100,6 +100,29 @@ test("ask planner drawer and settings review dialogs keep dialog semantics and f
   assert.match(settingsPanelSource, /aria-describedby="json-restore-review-description"/);
 });
 
+test("seat maps use a roving tabindex with arrow-key traversal on both surfaces", async () => {
+  const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
+
+  // One tab stop per map, not one per seat: the marker takes its tabIndex from
+  // the surface, arrows move between seats, and a keyboard activation hands
+  // focus into the inspector panel.
+  assert.match(markerSource, /tabIndex=\{tabIndex\}/);
+  for (const source of [seatMapSource, viewerSource]) {
+    assert.match(source, /findNearestSeatInDirection/);
+    assert.match(source, /resolveRovingSeatId/);
+    assert.match(source, /tabIndex=\{seat\.id === mapRovingSeatId \? 0 : -1\}/);
+    assert.match(source, /onKeyDown=\{handleMarkerLayerKeyDown\}/);
+    assert.match(source, /getElementById\("seat-inspector-panel"\)\?\.focus\(\)/);
+  }
+  assert.match(inspectorSource, /id="seat-inspector-panel"/);
+  // ArrowDown hops from the search input into the results panel on both surfaces.
+  assert.match(seatMapSource, /\[aria-label="Admin search results"\] button/);
+  assert.match(viewerSource, /\[aria-label="Viewer search results"\] button/);
+});
+
 test("aria-modal dialogs take focus, trap Tab, and restore the opener", async () => {
   const hookSource = await readSource("../components/ui/useDialogFocus.ts");
   assert.match(hookSource, /key !== "Tab"/);
