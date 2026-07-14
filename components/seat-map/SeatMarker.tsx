@@ -14,6 +14,10 @@ type SeatMarkerProps = {
   searchResult: boolean;
   draftChanged?: boolean;
   compactNameLabel: boolean;
+  // Render-layer crowding (lib/seatCrowding): a neighbour pill would overlap
+  // this one at the current scale, so the resting code token drops its
+  // min-width and tightens padding. Hover/selected treatments are unchanged.
+  crowdedCode?: boolean;
   moveSeatMode: boolean;
   swapMode: boolean;
   swapSource: boolean;
@@ -97,6 +101,7 @@ export function SeatMarker({
   searchResult,
   draftChanged = false,
   compactNameLabel,
+  crowdedCode = false,
   moveSeatMode,
   swapMode,
   swapSource,
@@ -219,7 +224,9 @@ export function SeatMarker({
             "group-hover:w-[124px] group-hover:max-w-[124px] group-focus-visible:w-[124px] group-focus-visible:max-w-[124px]"
           ].filter(Boolean).join(" ")
           : [
-            "h-[24px] min-h-[24px] min-w-[34px] rounded-[9px] px-2 py-0 pl-2.5 text-center",
+            crowdedCode
+              ? "h-[22px] min-h-[22px] min-w-0 rounded-[8px] px-1.5 py-0 pl-2 text-center"
+              : "h-[24px] min-h-[24px] min-w-[34px] rounded-[9px] px-2 py-0 pl-2.5 text-center",
             hasHoverDisclosure ? "group-hover:min-w-[96px] group-hover:rounded-[12px] group-hover:px-2.5 group-hover:pl-3.5 group-hover:text-left group-focus-visible:min-w-[96px] group-focus-visible:rounded-[12px] group-focus-visible:px-2.5 group-focus-visible:pl-3.5 group-focus-visible:text-left" : ""
           ].filter(Boolean).join(" ");
 
@@ -372,7 +379,7 @@ export function SeatMarker({
         )}
         {tokenMode === "code" ? (
           <span className="relative z-10 flex min-w-0 items-center justify-center gap-1 group-hover:justify-start group-focus-visible:justify-start">
-            <span className="whitespace-nowrap text-[9.5px] font-extrabold leading-[1.05]">{seat.label}</span>
+            <span className={["whitespace-nowrap font-extrabold leading-[1.05]", crowdedCode ? "text-[9px]" : "text-[9.5px]"].join(" ")}>{seat.label}</span>
             {employeeName && (
               <span className="hidden max-w-[64px] truncate text-[9px] font-bold leading-[1.05] opacity-90 group-hover:block group-focus-visible:block">
                 {compactEmployeeName}
