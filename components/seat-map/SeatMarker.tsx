@@ -26,6 +26,9 @@ type SeatMarkerProps = {
   viewportEdge: "left" | "right" | "none";
   viewportEdgeOffsetPx: number;
   variant?: "admin" | "viewer";
+  // Roving tabindex: the map exposes ONE seat as a tab stop (0) and the rest
+  // as -1; arrow keys move between seats (handled by the marker layer).
+  tabIndex?: number;
   onSelect: (seatId: string) => void;
   onMovePointerDown: (event: PointerEvent<HTMLButtonElement>, seatId: string) => void;
 };
@@ -106,6 +109,7 @@ export function SeatMarker({
   viewportEdge,
   viewportEdgeOffsetPx,
   variant = "viewer",
+  tabIndex = 0,
   onSelect,
   onMovePointerDown
 }: SeatMarkerProps) {
@@ -319,6 +323,7 @@ export function SeatMarker({
         if (!isMovable) return;
         onMovePointerDown(event, seat.id);
       }}
+      tabIndex={tabIndex}
       data-seat-id={seat.id}
       data-marker-intent={markerIntent}
       data-draft-changed={draftChanged || undefined}

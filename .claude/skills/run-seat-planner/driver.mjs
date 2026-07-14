@@ -85,6 +85,7 @@ const commands = {
   title: async () => console.log(await page.title()),
   url: async () => console.log(page.url()),
   ss: async (name) => ss(name),
+  eval: async (expr) => console.log(JSON.stringify(await page.evaluate(expr))),
   errors: async () => console.log(consoleErrors.length ? consoleErrors.join("\n") : "(no console errors)"),
   quit: async () => { await browser.close(); process.exit(0); },
 };
