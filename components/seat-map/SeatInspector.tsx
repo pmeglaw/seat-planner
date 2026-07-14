@@ -247,6 +247,7 @@ export function SeatInspector({
   const resetSignalRef = useRef(resetSignal);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const actionRowRef = useRef<HTMLDivElement | null>(null);
+  const assignmentSectionRef = useRef<HTMLElement | null>(null);
   const vacateDialogFocusRef = useDialogFocus<HTMLElement>();
   const moveConflictDialogFocusRef = useDialogFocus<HTMLElement>();
   const employeeInputRef = useRef<HTMLInputElement | null>(null);
@@ -764,7 +765,13 @@ export function SeatInspector({
   function startAssignmentEditing() {
     if (pending) return;
     setEditingAssignment(true);
-    window.requestAnimationFrame(() => employeeInputRef.current?.focus());
+    window.requestAnimationFrame(() => {
+      // Scroll the whole form to the top of the panel before focusing: plain
+      // input focus only scrolls "nearest", which at short viewports leaves
+      // the input at the fold and drops the combobox list below it.
+      assignmentSectionRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+      employeeInputRef.current?.focus({ preventScroll: true });
+    });
   }
 
   function handleStartSwapSeat() {
@@ -1107,7 +1114,7 @@ export function SeatInspector({
               )}
 
             {editingAssignment && (
-            <section aria-labelledby="seat-assignment-heading" className="mt-3 border-t border-white/10 pt-3">
+            <section ref={assignmentSectionRef} aria-labelledby="seat-assignment-heading" className="mt-3 border-t border-white/10 pt-3">
               <SectionHeading id="seat-assignment-heading" title={hasCurrentAssignment ? "Assignment" : "Assign this seat"} />
               <p id={employeeHelpId} className="mt-1.5 text-xs leading-5 text-[var(--admin-chrome-muted)]">{hasCurrentAssignment ? "Change or clear the draft assignment below." : "Search an existing employee or type a new name."}</p>
 
