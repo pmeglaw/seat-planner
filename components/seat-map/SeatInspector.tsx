@@ -10,6 +10,7 @@ import { employeeAssignmentFields } from "@/lib/employeeAssignment";
 import { formatDisplayName } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type SeatInspectorProps = {
   seat: SeatWithEmployee | null;
@@ -239,6 +240,9 @@ export function SeatInspector({
   const activeSeatSnapshotRef = useRef(formSnapshot(emptyForm));
   const resetSignalRef = useRef(resetSignal);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const actionRowRef = useRef<HTMLDivElement | null>(null);
+  const vacateDialogFocusRef = useDialogFocus<HTMLElement>();
+  const moveConflictDialogFocusRef = useDialogFocus<HTMLElement>();
   const employeeInputRef = useRef<HTMLInputElement | null>(null);
   const employeePositionRef = useRef<HTMLInputElement | null>(null);
   const phoneExtensionRef = useRef<HTMLInputElement | null>(null);
@@ -300,6 +304,15 @@ export function SeatInspector({
   useEffect(() => {
     onDirtyChange(isDirty);
   }, [isDirty, onDirtyChange]);
+
+  // Once a person is staged in the assignment editor, bring the commit row
+  // (Cancel/Assign in the Actions section) into view: at short viewports it
+  // sits below the inspector's fold and the save step gets lost.
+  const stagedEmployeeId = editingAssignment ? form.employeeId : "";
+  useEffect(() => {
+    if (!stagedEmployeeId) return;
+    actionRowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [stagedEmployeeId]);
 
   const resetInspectorDraftForm = useCallback((nextForm: SeatInspectorForm) => {
     activeSeatSnapshotRef.current = formSnapshot(nextForm);
@@ -422,10 +435,13 @@ export function SeatInspector({
     : pending || isDirty
       ? "bg-[#f1c21b]/10 text-[#f1c21b]"
       : "bg-[#24a148]/15 text-[#42be65]";
-  const assignmentIdentityLabel = employeeNameValue || (hasCurrentAssignment ? selectedSeatEmployeeName : "");
+  // Header identity reflects the SAVED occupant only — a staged, unsaved pick
+  // must not flip the header, or the panel claims an assignment that doesn't
+  // exist yet (the draft-impact pill carries the unsaved-state signal).
+  const assignmentIdentityLabel = hasCurrentAssignment ? selectedSeatEmployeeName : "";
   const occupantInitials = buildInitials(formatDisplayName(assignmentIdentityLabel) || "Open seat") || "?";
-  const occupantRoleLabel = hasAssignedPerson || hasCurrentAssignment
-    ? [form.employeePosition.trim() || selectedSeat.employee?.position, form.department.trim() || selectedSeat.employee?.department].filter(Boolean).join(" · ") || "Employee"
+  const occupantRoleLabel = hasCurrentAssignment
+    ? [selectedSeat.employee?.position, selectedSeat.employee?.department].filter(Boolean).join(" · ") || "Employee"
     : "Unassigned";
   // Footer action buttons override the shared Button's variants with the dark
   // inspector surfaces (spec §6 — the panel wears the chrome, not the canvas).
@@ -1241,7 +1257,7 @@ export function SeatInspector({
                 <span className="min-w-0 truncate">{inspectorStateLabel}</span>
               </div>
               {(isDirty || editingAssignment) && (
-              <div className="mt-2 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(6.5rem,0.8fr)_minmax(0,1.5fr)]">
+              <div ref={actionRowRef} className="mt-2 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(6.5rem,0.8fr)_minmax(0,1.5fr)]">
                 {saveDisabledReason && (
                   <span id="seat-inspector-save-help" className="sr-only">
                     {saveDisabledReason}
@@ -1328,6 +1344,8 @@ export function SeatInspector({
     {vacateConfirmOpen && (
       <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
         <section
+          ref={vacateDialogFocusRef}
+          tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-labelledby="vacate-seat-confirm-title"
@@ -1383,6 +1401,8 @@ export function SeatInspector({
     {moveConflict && (
       <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
         <section
+          ref={moveConflictDialogFocusRef}
+          tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-labelledby="move-employee-confirm-title"

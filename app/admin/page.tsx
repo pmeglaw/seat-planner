@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SeatMap } from "@/components/seat-map/SeatMap";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
@@ -9,13 +10,30 @@ export default async function AdminPage() {
   const { supabase, isAdmin } = await getAdminPageContext("/admin");
 
   if (!isAdmin) {
+    // Deep links can still land viewers here (the in-app Admin shortcut is
+    // role-gated), so the page must offer a way back instead of a dead end.
     return (
       <main className="admin-theme flex min-h-screen items-center justify-center bg-[var(--admin-bg)] p-6 text-[var(--admin-text-primary)]">
-        <section className="max-w-md rounded-2xl bg-white p-6 shadow-soft">
-          <h1 className="text-lg font-bold text-slate-900">Admin access required</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            You are signed in, but your profile does not have admin permissions.
-          </p>
+        <section className="w-full max-w-md border border-[var(--admin-border)] bg-white shadow-[var(--admin-elevation-2-shadow)]">
+          <div className="flex items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] px-5 py-2.5 text-[12.5px] font-semibold text-[var(--admin-chrome-text)]">
+            <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static brand mark, unoptimized on purpose */}
+              <img src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} className="h-5 w-5 object-contain" />
+            </span>
+            Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
+          </div>
+          <div className="p-6">
+            <h1 className="text-lg font-semibold">Admin access required</h1>
+            <p className="mt-2 text-sm text-[var(--admin-text-secondary)]">
+              You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to edit the seat map.
+            </p>
+            <Link
+              href="/"
+              className="mt-5 inline-flex min-h-9 items-center justify-center border border-[var(--admin-primary-cta)] bg-[var(--admin-primary-cta)] px-4 py-2 text-sm font-semibold leading-none text-white transition-colors hover:border-[var(--admin-primary-cta-hover)] hover:bg-[var(--admin-primary-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] focus-visible:ring-offset-2"
+            >
+              Back to seat map
+            </Link>
+          </div>
         </section>
       </main>
     );

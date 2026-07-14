@@ -51,18 +51,26 @@ async function ss(name) {
 async function login() {
   if (!E2E_EMAIL || !E2E_PASSWORD) throw new Error("SEAT_PLANNER_E2E_EMAIL/PASSWORD not set (env or .env.local)");
   await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
-  // Not a <form>: the submit is a plain onClick Button (target by text), and it
-  // stays disabled until React state has both fields — filling before hydration
-  // updates the DOM but not React state, so fill-and-poll until it enables.
+  // The login page is a real <form> with an always-enabled submit, so the old
+  // button-disabled hydration fence is gone. Wait for hydration (networkidle),
+  // then fill+submit; an "Enter your ..." validation alert means the fill
+  // landed before React attached its handlers — re-fill and retry.
+  await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+  await page.waitForTimeout(300);
   const signIn = page.locator('button:text-is("Sign in")');
-  for (let i = 0; i < 20 && !(await signIn.isEnabled()); i++) {
+  for (let attempt = 0; attempt < 4; attempt++) {
     await page.locator("input[type=email]").fill(E2E_EMAIL);
     await page.locator("input[type=password]").fill(E2E_PASSWORD);
-    await page.waitForTimeout(250);
+    await signIn.click();
+    try {
+      await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 15000 });
+      console.log(`logged in as ${E2E_EMAIL} — url: ${page.url()}`);
+      return;
+    } catch {}
+    const alertText = await page.locator("main [role=alert]").innerText().catch(() => "");
+    if (!/enter your/i.test(alertText)) throw new Error(`login failed${alertText ? `: ${alertText}` : ": no navigation"}`);
   }
-  await signIn.click();
-  await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 20000 });
-  console.log(`logged in as ${E2E_EMAIL} — url: ${page.url()}`);
+  throw new Error("login failed: form never accepted the filled credentials");
 }
 
 const commands = {
