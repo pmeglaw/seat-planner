@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { askPlannerAction, type AskPlannerActionResult } from "@/app/actions";
 import type { AskPlannerResponse } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 export type AskPlannerQueuedRequest = {
   id: number;
@@ -107,6 +108,9 @@ export function AskPlannerDrawer({
   const [pending, startTransition] = useTransition();
   const questionRef = useRef<HTMLTextAreaElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  // Tab trap only — the drawer's own effect still moves initial focus to the
+  // question field (it runs after this ref callback, so it wins).
+  const drawerDialogFocusRef = useDialogFocus<HTMLElement>();
   const processedQueuedRequestIdRef = useRef<number | null>(null);
 
   const suggestedPrompts = useMemo(() => {
@@ -199,6 +203,8 @@ export function AskPlannerDrawer({
       />
 
       <aside
+        ref={drawerDialogFocusRef}
+        tabIndex={-1}
         id="ask-planner-drawer"
         role="dialog"
         aria-modal="true"

@@ -240,3 +240,62 @@ test("draftStatesEquivalent is order-independent for seats and employees", () =>
   const right = draftHistory.createDraftSnapshot([...left.seats].reverse(), [...left.employees]);
   assert.equal(draftHistory.draftStatesEquivalent(left, right), true);
 });
+
+// Persistence: the stacks round-trip through sessionStorage so a reload keeps
+// undo working — but only when the live draft still matches the state the
+// stacks left it in (the same adjacency rule that guards each undo click).
+
+test("draft history serializes and deserializes losslessly", () => {
+  const pushed = draftHistory.pushDraftHistory(draftHistory.createDraftHistory(), {
+    label: "Assign W01",
+    before: snapshot("W01"),
+    after: snapshot("W01", "Alex Admin")
+  });
+  const undone = draftHistory.undoDraftHistory(pushed);
+
+  const restored = draftHistory.deserializeDraftHistory(draftHistory.serializeDraftHistory(undone.history));
+
+  assert.deepEqual(restored, undone.history);
+  assert.equal(draftHistory.canRedoDraftHistory(restored), true);
+});
+
+test("deserializeDraftHistory rejects garbage, foreign versions, and malformed entries", () => {
+  assert.equal(draftHistory.deserializeDraftHistory(null), null);
+  assert.equal(draftHistory.deserializeDraftHistory(""), null);
+  assert.equal(draftHistory.deserializeDraftHistory("not json {"), null);
+  assert.equal(draftHistory.deserializeDraftHistory(JSON.stringify({ version: 999, history: { undoStack: [], redoStack: [] } })), null);
+  assert.equal(draftHistory.deserializeDraftHistory(JSON.stringify({ version: 1 })), null);
+  assert.equal(draftHistory.deserializeDraftHistory(JSON.stringify({ version: 1, history: { undoStack: [{ label: "x" }], redoStack: [] } })), null);
+  assert.equal(
+    draftHistory.deserializeDraftHistory(JSON.stringify({ version: 1, history: { undoStack: [{ label: "x", before: { seats: [] }, after: { seats: [], employees: [] } }], redoStack: [] } })),
+    null
+  );
+});
+
+test("persisted history is adopted only while the live draft matches its edge snapshots", () => {
+  const before = snapshot("W01");
+  const after = snapshot("W01", "Alex Admin");
+  const pushed = draftHistory.pushDraftHistory(draftHistory.createDraftHistory(), {
+    label: "Assign W01",
+    before,
+    after
+  });
+
+  // Reload with an unchanged draft (fresh timestamps only): adoptable.
+  const freshCurrent = snapshot("W01", "Alex Admin");
+  freshCurrent.seats[0].updated_at = "2026-07-14T09:00:00+00:00";
+  assert.equal(draftHistory.canAdoptPersistedHistory(pushed, freshCurrent), true);
+
+  // The draft moved on while the history sat in storage: not adoptable.
+  const foreignEdit = snapshot("W01", "Alex Admin");
+  foreignEdit.seats[0].notes = "edited elsewhere";
+  assert.equal(draftHistory.canAdoptPersistedHistory(pushed, foreignEdit), false);
+
+  // After an undo the live draft must equal the newest redo entry's `before`.
+  const undone = draftHistory.undoDraftHistory(pushed);
+  assert.equal(draftHistory.canAdoptPersistedHistory(undone.history, before), true);
+  assert.equal(draftHistory.canAdoptPersistedHistory(undone.history, after), false);
+
+  // Empty stacks carry nothing worth adopting.
+  assert.equal(draftHistory.canAdoptPersistedHistory(draftHistory.createDraftHistory(), before), false);
+});

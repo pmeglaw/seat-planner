@@ -6,14 +6,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  DRAFT_HISTORY_STORAGE_KEY,
+  canAdoptPersistedHistory,
   canRedoDraftHistory,
   canUndoDraftHistory,
   clearDraftHistory,
   createDraftHistory,
   createDraftSnapshot,
+  deserializeDraftHistory,
   draftStatesEquivalent,
   pushDraftHistory,
   redoDraftHistory,
+  serializeDraftHistory,
   undoDraftHistory,
   type DraftSnapshot
 } from "@/lib/draftHistory";
@@ -305,6 +309,50 @@ export function SeatMap({
   const publishReviewDialogFocusRef = useDialogFocus<HTMLElement>();
   const inspectorGuardDialogFocusRef = useDialogFocus<HTMLElement>();
   const swapConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
+
+  // Reload persistence, adopt half. On mount, take over the per-tab stacks the
+  // effect below saved — but only while the live draft still matches the state
+  // the stacks left it in (the same adjacency rule that guards every undo
+  // click). Anything else (another session's edit, a publish, an import while
+  // this tab was gone) makes the stored stacks unsafe, so they're dropped.
+  // Declared BEFORE the save effect: on first commit this reads storage before
+  // the save effect sees the still-empty stacks and clears the key.
+  useEffect(() => {
+    if (!canEdit) return;
+    let stored: string | null = null;
+    try {
+      stored = window.sessionStorage.getItem(DRAFT_HISTORY_STORAGE_KEY);
+    } catch {
+      return;
+    }
+    const persisted = deserializeDraftHistory(stored);
+    if (!persisted) return;
+    setDraftHistory(current => {
+      if (canUndoDraftHistory(current) || canRedoDraftHistory(current)) return current;
+      return canAdoptPersistedHistory(persisted, createDraftSnapshot(localSeats, localEmployees)) ? persisted : current;
+    });
+    // Mount-only (localSeats/localEmployees still hold the server-loaded
+    // draft); re-running later could clobber in-session stacks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canEdit]);
+
+  // Reload persistence, save half. Every history change mirrors to
+  // sessionStorage (per-tab, so parallel admin tabs never share stacks);
+  // cleared stacks (publish, stale-draft reset) also clear the key.
+  useEffect(() => {
+    if (!canEdit) return;
+    try {
+      if (canUndoDraftHistory(draftHistory) || canRedoDraftHistory(draftHistory)) {
+        window.sessionStorage.setItem(DRAFT_HISTORY_STORAGE_KEY, serializeDraftHistory(draftHistory));
+      } else {
+        window.sessionStorage.removeItem(DRAFT_HISTORY_STORAGE_KEY);
+      }
+    } catch {
+      // Storage unavailable or over quota: reload persistence degrades to the
+      // old in-memory behavior instead of breaking edits.
+    }
+  }, [canEdit, draftHistory]);
+
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -666,6 +714,16 @@ export function SeatMap({
   };
 
   const selectedSeat = localSeats.find(seat => seat.id === selectedSeatId) ?? null;
+  // Published counterpart position (matched by seat_key — ids differ between
+  // layers) for the inspector's "Reset position" escape hatch. Null when the
+  // seat never published (custom) or hasn't moved off its published spot.
+  const selectedSeatPublishedPosition = useMemo(() => {
+    if (!canEdit || !selectedSeat) return null;
+    const published = localPublishedSeats.find(seat => seat.seat_key === selectedSeat.seat_key);
+    if (!published) return null;
+    const moved = Math.abs(published.x - selectedSeat.x) > 1e-6 || Math.abs(published.y - selectedSeat.y) > 1e-6;
+    return moved ? { x: published.x, y: published.y } : null;
+  }, [canEdit, selectedSeat, localPublishedSeats]);
   const swapSourceSeat = swapSourceSeatId ? localSeats.find(seat => seat.id === swapSourceSeatId) ?? null : null;
   const swapTargetSeat = swapConfirm ? localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null : null;
   const visualLocalSeats = useMemo(() => seatsToVisualSeats(localSeats), [localSeats]);
@@ -1650,6 +1708,41 @@ export function SeatMap({
         applyRestoredDraftPayload(beforeSnapshot);
         setActionNotice(null);
         setActionError(error instanceof Error ? error.message : "Could not move seat.");
+      } finally {
+        setMutationInFlight(false);
+      }
+    });
+  }
+
+  // Targeted escape hatch for a mis-dragged marker: put the seat back exactly
+  // where it sits on the published map. Same commit path as a drag-move, so
+  // it records a normal history entry and is itself undoable.
+  function resetSeatPositionToPublished() {
+    if (!selectedSeat || !selectedSeatPublishedPosition) return;
+    if (inspectorDirty) {
+      setActionNotice(null);
+      setActionError("Save or discard the selected seat edits before resetting its position.");
+      return;
+    }
+
+    const seatId = selectedSeat.id;
+    const seatLabel = selectedSeat.label;
+    const target = selectedSeatPublishedPosition;
+    const beforeSnapshot = captureDraftSnapshot();
+
+    startTransition(async () => {
+      setMutationInFlight(true);
+      try {
+        setActionError(null);
+        setActionNotice(null);
+        const updated = await moveSeatAction({ seatId, x: target.x, y: target.y });
+        const afterSeats = replaceSeat(beforeSnapshot.seats, updated);
+        recordDraftHistory(`Move ${updated.label}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
+        setLocalSeats(afterSeats);
+        setActionNotice(`Reset ${seatLabel} to its published position.`);
+      } catch (error) {
+        setActionNotice(null);
+        setActionError(error instanceof Error ? error.message : "Could not reset the seat position.");
       } finally {
         setMutationInFlight(false);
       }
@@ -2817,6 +2910,8 @@ export function SeatMap({
           applyStartMoveSeatAction();
         }}
         moveMode={moveSeatMode}
+        canResetPosition={Boolean(selectedSeatPublishedPosition)}
+        onResetPosition={resetSeatPositionToPublished}
         onDeleteSeat={deleteSelectedSeat}
         onExplainSeat={explainSeatWithPlanner}
         onBeforeSeatUpdate={captureDraftSnapshot}
