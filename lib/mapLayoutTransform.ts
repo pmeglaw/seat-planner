@@ -1,17 +1,21 @@
 import { normalizePoint, type NormalizedPoint } from "@/lib/seatMath";
 import type { SeatWithEmployee } from "@/lib/types";
 
-export const MAP_IMAGE_WIDTH = 1911;
-export const MAP_IMAGE_HEIGHT = 867;
+export const MAP_IMAGE_WIDTH = 3822;
+export const MAP_IMAGE_HEIGHT = 1734;
 export const MAP_ASPECT_RATIO = MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT;
-// Cool retreatment (owner, 2026-07-14): the shipped webp is transcoded from
-// the repo's ORIGINAL cool-palette png — the exact pixels the warm version was
-// recolored from — so geometry, framing, and calibration are untouched.
-export const MAP_IMAGE_SRC = "/images/office-floor-plan.webp?v=map-v2-cool-1911x867";
+// 2x asset (issue #121, owner-approved AI upscale 2026-07-14): the shipped
+// webp is a Real-ESRGAN x4plus upscale of the repo's original cool-palette png
+// (public/images/office-floor-plan.png, 1911x867 — still the canonical master),
+// supersampled 4x then downscaled to exactly 2x. Full-frame scale only: same
+// framing, so normalized coordinates and calibration are untouched. The map's
+// DISPLAY caps stay 1911px (SeatMap/ViewerSeatFinder max-w / --map-detail-base),
+// which is what makes 200% zoom hit these pixels 1:1 instead of stretching.
+export const MAP_IMAGE_SRC = "/images/office-floor-plan.webp?v=map-v2-cool-2x-3822x1734";
 // 24px-wide preview of the same render, shown while the full image streams in.
-// Regenerate whenever the shipped asset's pixels change (output/makecool.mjs pattern).
+// Regenerate whenever the shipped asset's pixels change (output/make2x.mjs pattern).
 export const MAP_IMAGE_BLUR_DATA_URL =
-  "data:image/webp;base64,UklGRlICAABXRUJQVlA4WAoAAAAgAAAAFwAACgAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDggZAAAAJADAJ0BKhgACwA+7WKpTamlpCIwCAEwHYlpO4XgAAHE13c28AAA/u45L79lk1C5BbqgCK7f6P65PlUbrPWtqNhFvz6o4+u7lfGCoh1WDplygf9BtbKZ+MY3o9GBfh5CX7xLwAA=";
+  "data:image/webp;base64,UklGRk4CAABXRUJQVlA4WAoAAAAgAAAAFwAACgAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDggYAAAALADAJ0BKhgACwA+7WKpTamlo6IwCAEwHYlnAABcY4HwTuoh5SxQAP7rHGwqKqLTIktldm+PPeJbBhu2dhji2KNaLmeFPma9BfaSGpyjjazhmvSiMNxTusJpnL3q6LkAAA==";
 
 type SeatCalibrationSource = Pick<SeatWithEmployee, "x" | "y"> &
   Partial<Pick<SeatWithEmployee, "label" | "zone" | "department">>;
