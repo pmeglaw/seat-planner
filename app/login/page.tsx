@@ -1,6 +1,12 @@
+import { preload } from "react-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { MAP_IMAGE_SRC } from "@/lib/mapLayoutTransform";
 
 export default function LoginPage() {
+  // Warm the floor-plan raster while the user types their credentials: the
+  // map page's own priority preload only starts at navigation, which is what
+  // made the image visibly decode top-down right after sign-in.
+  preload(MAP_IMAGE_SRC, { as: "image", fetchPriority: "low" });
   return (
     <main className="shell-theme flex min-h-screen flex-col bg-[var(--admin-chrome-bg)] px-6 pb-8 pt-10 sm:px-12 lg:px-[9vw]">
       <div className="mx-auto flex w-full max-w-[1110px] flex-1 flex-col justify-center gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-20">

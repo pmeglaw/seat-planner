@@ -41,6 +41,7 @@ import {
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
 import { buildPublishChangeSummary, type PublishChangeItem } from "@/lib/publishSummary";
+import { clearanceFromScale, computeCrowdedSeatIds } from "@/lib/seatCrowding";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import {
   ActiveFilterChips,
@@ -2121,6 +2122,9 @@ export function SeatMap({
   const mapPixelsPerNormalizedUnit = visibleMapSpan > 0 && mapVisibleRange.viewportWidth > 0
     ? mapVisibleRange.viewportWidth / visibleMapSpan
     : 0;
+  // Zoom-aware pill crowding (render-layer only): dense pods drop the code
+  // token's min-width at fit zoom and recover it once zoom separates them.
+  const crowdedCodeSeatIdSet = computeCrowdedSeatIds(visualLocalSeats, clearanceFromScale(mapPixelsPerNormalizedUnit));
   const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;
   const markerEdgeThreshold = mapViewMode === "detail"
@@ -2737,6 +2741,7 @@ export function SeatMap({
                         searchResult={Boolean(search.trim()) && seatMatchesFilters}
                         draftChanged={draftChangedSeatLabelSet.has(seat.label)}
                         compactNameLabel={crowdedNameSeatIdSet.has(seat.id)}
+                        crowdedCode={crowdedCodeSeatIdSet.has(seat.id)}
                         moveSeatMode={moveSeatMode}
                         swapMode={Boolean(swapSourceSeatId)}
                         swapSource={seat.id === swapSourceSeatId}

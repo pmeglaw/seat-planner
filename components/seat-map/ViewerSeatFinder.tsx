@@ -22,6 +22,7 @@ import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
+import { computeCrowdedSeatIds } from "@/lib/seatCrowding";
 
 type ViewerSeatFinderProps = {
   seats: SeatWithEmployee[];
@@ -117,6 +118,8 @@ export function ViewerSeatFinder({
   const publishedSeats = useMemo(() => seats.map(normalizeSeat), [seats]);
   const visualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
   const visualSeatById = useMemo(() => new Map(visualSeats.map(seat => [seat.id, seat])), [visualSeats]);
+  // Pill crowding at the default fit-zoom clearance (render-layer only).
+  const crowdedCodeSeatIdSet = useMemo(() => computeCrowdedSeatIds(visualSeats), [visualSeats]);
   // Pixel-aspect points for arrow-key traversal (see lib/seatKeyboardNav).
   const seatNavPoints = useMemo(
     () => visualSeats.map(seat => ({ id: seat.id, x: seat.x * MAP_IMAGE_WIDTH, y: seat.y * MAP_IMAGE_HEIGHT })),
@@ -703,6 +706,7 @@ export function ViewerSeatFinder({
                     {visualSeats.map(seat => {
                       const inMatches = highlightedSeatIdSet.has(seat.id);
                       const dimmed = filtersActive && !inMatches && selectedSeatId !== seat.id;
+                      const crowdedCode = crowdedCodeSeatIdSet.has(seat.id);
 
                       return (
                         <SeatMarker
@@ -714,6 +718,7 @@ export function ViewerSeatFinder({
                           showNames={false}
                           searchResult={filtersActive && inMatches}
                           compactNameLabel
+                          crowdedCode={crowdedCode}
                           moveSeatMode={false}
                           swapMode={false}
                           swapSource={false}
