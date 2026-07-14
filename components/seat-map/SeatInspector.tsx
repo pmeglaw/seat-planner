@@ -33,6 +33,10 @@ type SeatInspectorProps = {
   onStartSwapSeat?: () => void;
   onStartMoveSeat?: () => void;
   moveMode?: boolean;
+  // True when the seat sits away from its published position — enables the
+  // Seat section's "Reset position" escape hatch for mis-dragged markers.
+  canResetPosition?: boolean;
+  onResetPosition?: () => void;
   onDeleteSeat?: () => void;
   onExplainSeat?: (seat: SeatWithEmployee) => void;
   onBeforeSeatUpdate?: () => DraftSnapshot;
@@ -207,6 +211,8 @@ export function SeatInspector({
   onStartSwapSeat = noopCallback,
   onStartMoveSeat = noopCallback,
   moveMode = false,
+  canResetPosition = false,
+  onResetPosition = noopCallback,
   onDeleteSeat = noopCallback,
   onExplainSeat,
   onBeforeSeatUpdate = emptyDraftSnapshot,
@@ -1032,6 +1038,18 @@ export function SeatInspector({
                   </select>
                   {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[#ff8389]">{fieldErrorMap.status}</p>}
                 </label>
+              )}
+              {canResetPosition && (
+                <Button
+                  type="button"
+                  onClick={onResetPosition}
+                  disabled={pending}
+                  aria-label={`Reset ${selectedSeat.label} to its published position`}
+                  title="Move this seat marker back to where it sits on the published map"
+                  className={`mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight ${footerNeutralButtonClass}`}
+                >
+                  Reset position to published
+                </Button>
               )}
             </InspectorSection>
 

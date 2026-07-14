@@ -152,3 +152,63 @@ export function canUndoDraftHistory(history: DraftHistoryState) {
 export function canRedoDraftHistory(history: DraftHistoryState) {
   return history.redoStack.length > 0;
 }
+
+// --- Persistence (sessionStorage) -------------------------------------------
+//
+// The history stacks survive a page reload by round-tripping through
+// sessionStorage (per-tab, so parallel admin tabs never share stacks). These
+// helpers are pure — the component owns the actual storage reads/writes — so
+// the serialization format and the adoption safety rule stay unit-testable.
+
+export const DRAFT_HISTORY_STORAGE_KEY = "seat-planner:draft-history:v1";
+
+const DRAFT_HISTORY_STORAGE_VERSION = 1;
+
+export function serializeDraftHistory(history: DraftHistoryState): string {
+  return JSON.stringify({ version: DRAFT_HISTORY_STORAGE_VERSION, history });
+}
+
+function isDraftSnapshotShape(value: unknown): value is DraftSnapshot {
+  if (!value || typeof value !== "object") return false;
+  const snapshot = value as DraftSnapshot;
+  return Array.isArray(snapshot.seats) && Array.isArray(snapshot.employees);
+}
+
+function isDraftHistoryEntryShape(value: unknown): value is DraftHistoryEntry {
+  if (!value || typeof value !== "object") return false;
+  const entry = value as DraftHistoryEntry;
+  return typeof entry.label === "string" && isDraftSnapshotShape(entry.before) && isDraftSnapshotShape(entry.after);
+}
+
+export function deserializeDraftHistory(raw: string | null): DraftHistoryState | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as { version?: number; history?: DraftHistoryState } | null;
+    if (parsed?.version !== DRAFT_HISTORY_STORAGE_VERSION || !parsed.history) return null;
+    const { undoStack, redoStack } = parsed.history;
+    if (!Array.isArray(undoStack) || !Array.isArray(redoStack)) return null;
+    if (![...undoStack, ...redoStack].every(isDraftHistoryEntryShape)) return null;
+    return { undoStack, redoStack };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Whether a persisted history may be adopted against the live draft.
+ *
+ * Same adjacency invariant that guards every undo/redo click: the stacks are
+ * only meaningful while the live draft equals the state they left it in — the
+ * newest undo entry's `after` AND the newest redo entry's `before` (both, when
+ * present). Anything else means the draft moved on while the history sat in
+ * storage (another session, a publish, an import), and adopting it would arm
+ * a restore that silently reverts those edits.
+ */
+export function canAdoptPersistedHistory(history: DraftHistoryState, current: DraftSnapshot): boolean {
+  const newestUndo = history.undoStack.at(-1);
+  const newestRedo = history.redoStack.at(-1);
+  if (!newestUndo && !newestRedo) return false;
+  if (newestUndo && !draftStatesEquivalent(newestUndo.after, current)) return false;
+  if (newestRedo && !draftStatesEquivalent(newestRedo.before, current)) return false;
+  return true;
+}

@@ -100,6 +100,33 @@ test("ask planner drawer and settings review dialogs keep dialog semantics and f
   assert.match(settingsPanelSource, /aria-describedby="json-restore-review-description"/);
 });
 
+test("aria-modal dialogs take focus, trap Tab, and restore the opener", async () => {
+  const hookSource = await readSource("../components/ui/useDialogFocus.ts");
+  assert.match(hookSource, /key !== "Tab"/);
+  assert.match(hookSource, /event\.preventDefault\(\)/);
+  assert.match(hookSource, /addEventListener\("keydown"/);
+  assert.match(hookSource, /restoreTargetRef\.current\?\.focus\(\)/);
+
+  // Every aria-modal surface must carry the shared focus hook (ref +
+  // tabIndex={-1}); aria-modal without focus management tells assistive tech
+  // the page is inert while the keyboard proves otherwise.
+  const dialogFiles = [
+    "../components/seat-map/SeatMap.tsx",
+    "../components/seat-map/SeatInspector.tsx",
+    "../components/seat-map/AskPlannerDrawer.tsx",
+    "../components/admin-settings/DataUtilitiesPanel.tsx",
+    "../components/admin-management/AdminManagementPanel.tsx"
+  ];
+  for (const file of dialogFiles) {
+    const source = await readSource(file);
+    const modalCount = (source.match(/aria-modal="true"/g) ?? []).length;
+    const focusRefCount = (source.match(/ref=\{\w*[Dd]ialogFocusRef\}/g) ?? []).length;
+    assert.ok(modalCount > 0, `${file} should still host at least one aria-modal dialog`);
+    assert.equal(focusRefCount, modalCount, `${file}: every aria-modal dialog needs a useDialogFocus ref`);
+    assert.ok((source.match(/tabIndex=\{-1\}/g) ?? []).length >= modalCount, `${file}: aria-modal dialogs need tabIndex={-1}`);
+  }
+});
+
 test("publish review summarizes draft changes before publish", async () => {
   const source = await readSource("../components/seat-map/SeatMap.tsx");
 
