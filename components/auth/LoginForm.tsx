@@ -67,6 +67,9 @@ export function LoginForm() {
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
+        // Never mint a new auth user from the login page — magic links are for
+        // existing accounts only. Admins provision accounts.
+        shouldCreateUser: false,
         emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(nextPath)}`
       }
     });

@@ -23,6 +23,14 @@ function friendlyAuthMessage(message) {
     return "Email or password is incorrect. Try again or use the magic-link fallback.";
   }
 
+  if (
+    normalized.includes("user not found") ||
+    normalized.includes("signup disabled") ||
+    normalized.includes("signups not allowed")
+  ) {
+    return "This email is not set up yet. Ask an admin to create the user first.";
+  }
+
   return message || "Something went wrong. Please try again.";
 }
 
@@ -42,6 +50,15 @@ test("auth message maps invalid credentials", () => {
   assert.equal(
     friendlyAuthMessage("Invalid login credentials"),
     "Email or password is incorrect. Try again or use the magic-link fallback."
+  );
+});
+
+test("auth message maps otp-signup-refused to admin-provisioning guidance", () => {
+  // GoTrue returns this when signInWithOtp runs with shouldCreateUser: false
+  // for an email that has no account.
+  assert.equal(
+    friendlyAuthMessage("Signups not allowed for otp"),
+    "This email is not set up yet. Ask an admin to create the user first."
   );
 });
 
