@@ -276,6 +276,7 @@ export function SeatMap({
   const [status, setStatus] = useState("all");
   const [filterCollapsed, setFilterCollapsed] = useState(true);
   const [mapMenuOpen, setMapMenuOpen] = useState(false);
+  const [chromeMenuOpen, setChromeMenuOpen] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
   const chromeSearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -497,6 +498,19 @@ export function SeatMap({
     return () => document.removeEventListener("pointerdown", handleOutsidePointer);
   }, [mapMenuOpen]);
 
+  // Same dismissal rule for the chrome-bar "More" menu (collapsed admin tools below lg).
+  useEffect(() => {
+    if (!chromeMenuOpen) return;
+
+    function handleOutsidePointer(event: globalThis.PointerEvent) {
+      if (event.target instanceof Element && event.target.closest("[data-chrome-menu]")) return;
+      setChromeMenuOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [chromeMenuOpen]);
+
   // Global command (3b): ⌘K / Ctrl+K focuses the command search — the chrome
   // input at lg+, the slim canvas row below that tier.
   useEffect(() => {
@@ -635,6 +649,11 @@ export function SeatMap({
         return;
       }
 
+      if (chromeMenuOpen) {
+        setChromeMenuOpen(false);
+        return;
+      }
+
       if (addSeatMode || moveSeatMode || swapSourceSeatId) {
         setAddSeatMode(false);
         setMoveSeatMode(false);
@@ -679,7 +698,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, publishReviewOpen, search, selectedSeatId, status, swapConfirm, swapSourceSeatId, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, publishReviewOpen, search, selectedSeatId, status, swapConfirm, swapSourceSeatId, zone]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -2125,6 +2144,12 @@ export function SeatMap({
   const chromeToolbarBtn = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
   const chromeToolbarBtnActive = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
   const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[8.5px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  // Below lg the command row can't fit every tool — Show names / Management /
+  // Ask Planner collapse into the chrome "More" menu instead of clipping
+  // behind an invisible horizontal scroll.
+  const chromeToolbarBtnCollapsible = chromeToolbarBtn.replace("inline-flex", "hidden lg:inline-flex");
+  const chromeToolbarBtnCollapsibleActive = chromeToolbarBtnActive.replace("inline-flex", "hidden lg:inline-flex");
+  const chromeMenuItem = "flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-chrome-text)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
@@ -2135,7 +2160,8 @@ export function SeatMap({
             {/* Megeredchian Law brand mark on a white chip so its orange + charcoal read on the dark chrome bar. */}
             <Image src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />
           </span>
-          <div aria-hidden="true" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-none sm:block">
+          {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
+          <div aria-hidden="true" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
             Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
           </div>
         </div>
@@ -2238,7 +2264,10 @@ export function SeatMap({
         </div>
 
         {canEdit && (
-          <nav role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:ml-0 lg:flex-none lg:overflow-visible">
+          /* No overflow-x scroll hack here: tools that don't fit below lg collapse
+             into the "More" menu instead, and a scroll container would clip the
+             menu's absolutely-positioned dropdown. */
+          <nav role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center lg:ml-0 lg:flex-none">
             <button
               type="button"
               onClick={undoDraftEdit}
@@ -2272,7 +2301,7 @@ export function SeatMap({
               onClick={() => setShowNames(current => !current)}
               aria-label={namesToggleLabel}
               title={namesToggleLabel}
-              className={showNames ? chromeToolbarBtnActive : chromeToolbarBtn}
+              className={showNames ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
             >
               {namesToggleLabel}
             </button>
@@ -2281,7 +2310,7 @@ export function SeatMap({
               onClick={event => {
                 if (!beforeManagementNavigation()) event.preventDefault();
               }}
-              className={chromeToolbarBtn}
+              className={chromeToolbarBtnCollapsible}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
                 <rect x="3" y="4" width="14" height="12" stroke="currentColor" strokeWidth="1.5" />
@@ -2297,7 +2326,7 @@ export function SeatMap({
               aria-expanded={askPlannerOpen}
               aria-haspopup="dialog"
               onClick={openAskPlannerDrawer}
-              className={askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? chromeToolbarBtnActive : chromeToolbarBtn}
+              className={askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
                 <path d="M10 3.2 11.7 8 16.5 9.7 11.7 11.4 10 16.2 8.3 11.4 3.5 9.7 8.3 8 10 3.2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
@@ -2308,6 +2337,78 @@ export function SeatMap({
                 <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
               )}
             </button>
+            <div data-chrome-menu className="relative flex h-full shrink-0 items-center lg:hidden">
+              <button
+                type="button"
+                aria-haspopup="true"
+                aria-expanded={chromeMenuOpen}
+                aria-controls={chromeMenuOpen ? "chrome-overflow-menu" : undefined}
+                aria-label="More tools"
+                title="More tools"
+                onClick={() => setChromeMenuOpen(current => !current)}
+                className={chromeMenuOpen ? chromeToolbarBtnActive : chromeToolbarBtn}
+              >
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
+                  <circle cx="4.5" cy="10" r="1.5" />
+                  <circle cx="10" cy="10" r="1.5" />
+                  <circle cx="15.5" cy="10" r="1.5" />
+                </svg>
+                More
+                {plannerHighlightedSeatIds.length > 0 && (
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
+                )}
+              </button>
+              {chromeMenuOpen && (
+                <div
+                  id="chrome-overflow-menu"
+                  role="group"
+                  aria-label="More tools"
+                  onKeyDown={event => {
+                    if (event.key === "Escape") {
+                      event.stopPropagation();
+                      setChromeMenuOpen(false);
+                    }
+                  }}
+                  className="absolute left-0 top-full z-50 min-w-[188px] border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] py-1 shadow-[var(--admin-elevation-3-shadow)]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChromeMenuOpen(false);
+                      setShowNames(current => !current);
+                    }}
+                    className={chromeMenuItem}
+                  >
+                    {namesToggleLabel}
+                  </button>
+                  <Link
+                    href="/admin/management"
+                    onClick={event => {
+                      if (!beforeManagementNavigation()) event.preventDefault();
+                      setChromeMenuOpen(false);
+                    }}
+                    className={chromeMenuItem}
+                  >
+                    Management
+                  </Link>
+                  <button
+                    type="button"
+                    aria-controls="ask-planner-drawer"
+                    aria-haspopup="dialog"
+                    onClick={() => {
+                      setChromeMenuOpen(false);
+                      openAskPlannerDrawer();
+                    }}
+                    className={chromeMenuItem}
+                  >
+                    Ask Planner
+                    {plannerHighlightedSeatIds.length > 0 && (
+                      <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
           </nav>
         )}
 

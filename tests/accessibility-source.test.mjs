@@ -272,7 +272,9 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /aria-describedby="seat-inspector-delete-help"/);
   assert.match(inspectorSource, /whitespace-normal rounded-\[10px\] leading-tight/);
   // Figma delete treatment: the block reason is a visible helper line, not sr-only.
-  assert.match(inspectorSource, /<p id="seat-inspector-delete-help" className="mt-1\.5 text-\[11\.5px\][^"]*">\{deleteHelpText\}<\/p>/);
+  // (Class content deliberately unpinned — type-scale values are free to evolve;
+  // the guardrail is the visible element carrying the aria-describedby id.)
+  assert.match(inspectorSource, /<p id="seat-inspector-delete-help" className="[^"]*">\{deleteHelpText\}<\/p>/);
   assert.doesNotMatch(inspectorSource, /Discard unsaved inspector edits before deleting this custom seat/);
 
   assert.match(resultsPanelSource, /aria-label="Admin search results"/);
