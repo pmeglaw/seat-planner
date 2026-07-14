@@ -24,7 +24,11 @@ export function friendlyAuthMessage(message: string) {
     return "Use a stronger password before continuing.";
   }
 
-  if (normalized.includes("user not found") || normalized.includes("signup disabled")) {
+  if (
+    normalized.includes("user not found") ||
+    normalized.includes("signup disabled") ||
+    normalized.includes("signups not allowed")
+  ) {
     return "This email is not set up yet. Ask an admin to create the user first.";
   }
 
