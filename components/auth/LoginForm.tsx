@@ -139,51 +139,54 @@ export function LoginForm() {
     void sendMagicLink();
   }
 
-  const fieldClass = "mt-1 w-full border border-[var(--admin-border)] bg-white px-3 py-2 text-sm text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-muted)] hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]";
+  // Shell login card (Figma "Login / Refined"): field boxes are 36px flat
+  // rectangles on border-strong; focus is a 2px brand-accent stroke.
+  const fieldClass = "mt-1.5 h-9 w-full border border-[var(--admin-border-strong)] bg-white px-3 text-sm text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-muted)] focus:border-[var(--admin-primary)] focus:ring-1 focus:ring-inset focus:ring-[var(--admin-primary)]";
+
+  const tabClass = (active: boolean) =>
+    cx(
+      "flex h-[38px] flex-1 flex-col items-center justify-between pt-2.5 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]",
+      active
+        ? "bg-white font-semibold text-[var(--admin-text-primary)]"
+        : "text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+    );
+
+  const tabIndicatorClass = (active: boolean) =>
+    cx("h-0.5 w-[100px] max-w-full", active ? "bg-[var(--admin-primary-cta)]" : "bg-transparent");
 
   return (
-    <div className="w-full max-w-md border border-[var(--admin-border)] bg-white shadow-[var(--admin-elevation-2-shadow)]">
-      <div className="flex items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] px-5 py-2.5 text-[12.5px] font-semibold text-[var(--admin-chrome-text)]">
-        <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static brand mark, unoptimized on purpose */}
-          <img src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} className="h-5 w-5 object-contain" />
-        </span>
-        Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
-      </div>
-      <div className="p-6">
-      <h1 className="text-xl font-semibold text-[var(--admin-text-primary)]">Sign in</h1>
-      <p className="mt-2 text-sm text-[var(--admin-text-secondary)]">
+    <div className="w-full max-w-[440px] bg-white p-6 sm:px-10 sm:pb-9 sm:pt-10">
+      <h1 className="text-2xl font-semibold text-[var(--admin-text-primary)]">Sign in</h1>
+      <p className="mt-4 text-[13px] text-[var(--admin-text-secondary)]">
         Use your work email to access the internal seating map.
       </p>
 
-      <div className="mt-5 grid grid-cols-2 border border-[var(--admin-border)] bg-[var(--admin-surface-alt)] p-1">
+      <div className="mt-4 flex bg-[var(--admin-surface-alt)]">
         <button
           type="button"
           onClick={() => setMode("password")}
-          className={cx(
-            "border-b-2 px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]",
-            mode === "password" ? "border-[var(--admin-primary)] bg-white text-[var(--admin-text-primary)]" : "border-transparent text-[var(--admin-text-muted)] hover:text-[var(--admin-text-primary)]"
-          )}
+          aria-pressed={mode === "password"}
+          className={tabClass(mode === "password")}
         >
           Password
+          <span aria-hidden="true" className={tabIndicatorClass(mode === "password")} />
         </button>
         <button
           type="button"
           onClick={() => setMode("magic")}
-          className={cx(
-            "border-b-2 px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]",
-            mode === "magic" ? "border-[var(--admin-primary)] bg-white text-[var(--admin-text-primary)]" : "border-transparent text-[var(--admin-text-muted)] hover:text-[var(--admin-text-primary)]"
-          )}
+          aria-pressed={mode === "magic"}
+          className={tabClass(mode === "magic")}
         >
           Magic link
+          <span aria-hidden="true" className={tabIndicatorClass(mode === "magic")} />
         </button>
       </div>
 
       {/* Inputs are deliberately name-less: a pre-hydration native submit must
           not serialize the password into the URL (GET form default). */}
       <form onSubmit={handleSubmit} noValidate>
-      <label className="mt-5 block">
-        <span className="text-sm font-semibold text-[var(--admin-text-secondary)]">Email</span>
+      <label className="mt-4 block">
+        <span className="text-xs font-medium text-[var(--admin-text-primary)]">Email</span>
         <input
           type="email"
           value={email}
@@ -197,7 +200,7 @@ export function LoginForm() {
       {mode === "password" ? (
         <>
           <label className="mt-4 block">
-            <span className="text-sm font-semibold text-[var(--admin-text-secondary)]">Password</span>
+            <span className="text-xs font-medium text-[var(--admin-text-primary)]">Password</span>
             <input
               type="password"
               value={password}
@@ -216,7 +219,7 @@ export function LoginForm() {
             type="button"
             onClick={sendPasswordReset}
             disabled={resetBusy}
-            className="mt-3 w-full text-sm font-semibold text-[var(--admin-primary-cta)] transition hover:text-[var(--admin-primary-cta-hover)] disabled:cursor-not-allowed disabled:text-[var(--admin-text-muted)]"
+            className="mt-4 w-full text-center text-[13px] font-medium text-[var(--admin-text-secondary)] transition hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:text-[var(--admin-text-muted)]"
           >
             {resetBusy ? "Sending reset email…" : "Forgot password?"}
           </button>
@@ -227,7 +230,7 @@ export function LoginForm() {
             {busy ? "Sending…" : "Send magic link"}
           </Button>
 
-          <p className="mt-3 text-xs leading-relaxed text-[var(--admin-text-muted)]">
+          <p className="mt-4 text-xs leading-relaxed text-[var(--admin-text-muted)]">
             Magic links are a fallback. Wait at least 60 seconds before requesting another link.
           </p>
         </>
@@ -248,7 +251,6 @@ export function LoginForm() {
           {message}
         </p>
       )}
-      </div>
     </div>
   );
 }
