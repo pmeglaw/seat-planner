@@ -44,3 +44,115 @@ export function computeCrowdedSeatIds<T extends { id: string; x: number; y: numb
   }
   return crowded;
 }
+
+// Density tiers layered on top of crowding: `crowded` is exactly what
+// computeCrowdedSeatIds flags today; `dense` is the tighter subset (0.6x the
+// clearance on both axes) where pills overlap so much a smaller/compact
+// treatment is warranted, not just a nudge.
+export type SeatDensityTiers = { crowded: Set<string>; dense: Set<string> };
+
+const DENSE_CLEARANCE_FACTOR = 0.6;
+
+export function computeSeatDensityTiers<T extends { id: string; x: number; y: number }>(
+  seats: ReadonlyArray<T>,
+  clearance: CrowdingClearance = CODE_PILL_DEFAULT_CLEARANCE
+): SeatDensityTiers {
+  const crowded = computeCrowdedSeatIds(seats, clearance);
+  const denseClearance: CrowdingClearance = {
+    x: clearance.x * DENSE_CLEARANCE_FACTOR,
+    y: clearance.y * DENSE_CLEARANCE_FACTOR
+  };
+  const dense = new Set<string>();
+  for (let i = 0; i < seats.length; i += 1) {
+    for (let j = i + 1; j < seats.length; j += 1) {
+      if (
+        Math.abs(seats[i].x - seats[j].x) < denseClearance.x &&
+        Math.abs(seats[i].y - seats[j].y) < denseClearance.y
+      ) {
+        dense.add(seats[i].id);
+        dense.add(seats[j].id);
+      }
+    }
+  }
+  return { crowded, dense };
+}
+
+// Deterministic name-label nudge assignment: only named seats participate in
+// collision clustering (an unnamed neighbour's position is irrelevant to
+// whether two visible name labels overlap). Within each colliding cluster,
+// members are sorted by (y, then x) and assigned a repeating 0, -1, +1
+// pattern so no two adjacent-in-order cluster members share a nudge value.
+// Never mutates the input seats — reads coordinates only.
+export function computeNameLabelNudges<T extends { id: string; x: number; y: number }>(
+  seats: ReadonlyArray<T>,
+  namedSeatIds: ReadonlySet<string>,
+  clearance: CrowdingClearance
+): Map<string, -1 | 0 | 1> {
+  const nudges = new Map<string, -1 | 0 | 1>();
+  const named = seats.filter((seat) => namedSeatIds.has(seat.id));
+  if (named.length === 0) {
+    return nudges;
+  }
+
+  // Union-find over named seats only, connecting pairs within clearance.
+  const parent = named.map((_, index) => index);
+  const find = (index: number): number => {
+    let root = index;
+    while (parent[root] !== root) {
+      root = parent[root];
+    }
+    let cursor = index;
+    while (parent[cursor] !== root) {
+      const next = parent[cursor];
+      parent[cursor] = root;
+      cursor = next;
+    }
+    return root;
+  };
+  const union = (a: number, b: number): void => {
+    const rootA = find(a);
+    const rootB = find(b);
+    if (rootA !== rootB) {
+      parent[rootA] = rootB;
+    }
+  };
+
+  for (let i = 0; i < named.length; i += 1) {
+    for (let j = i + 1; j < named.length; j += 1) {
+      if (
+        Math.abs(named[i].x - named[j].x) < clearance.x &&
+        Math.abs(named[i].y - named[j].y) < clearance.y
+      ) {
+        union(i, j);
+      }
+    }
+  }
+
+  const clusters = new Map<number, number[]>();
+  for (let i = 0; i < named.length; i += 1) {
+    const root = find(i);
+    const cluster = clusters.get(root);
+    if (cluster) {
+      cluster.push(i);
+    } else {
+      clusters.set(root, [i]);
+    }
+  }
+
+  const nudgePattern: ReadonlyArray<-1 | 0 | 1> = [0, -1, 1];
+  for (const cluster of clusters.values()) {
+    const sorted = [...cluster].sort((a, b) => {
+      const seatA = named[a];
+      const seatB = named[b];
+      if (seatA.y !== seatB.y) {
+        return seatA.y - seatB.y;
+      }
+      return seatA.x - seatB.x;
+    });
+    sorted.forEach((seatIndex, position) => {
+      nudges.set(named[seatIndex].id, nudgePattern[position % nudgePattern.length]);
+    });
+  }
+
+  return nudges;
+}
