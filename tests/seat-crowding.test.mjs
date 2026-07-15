@@ -219,6 +219,40 @@ test("computeNameLabelNudges handles a non-collinear 2D cluster pairwise-distinc
   assertCollidingPairsDistinct(seats, clearance, nudges);
 });
 
+test("computeNameLabelNudges: excluded seats don't influence coloring — 4-clique minus one named stays pairwise-distinct", () => {
+  // Contract pin for the SeatMap fix (fix/pill-legibility-crowding): the
+  // caller's namedSeatIds must contain only seats that actually render name
+  // labels (e.g. NOT dimmed seats). With all 4 members of a mutual clique
+  // named, the 3-value palette is exhausted and the least-used fallback may
+  // hand two seats the same nudge; with one member excluded, the remaining
+  // 3 named seats must get pairwise-distinct nudges and the excluded seat
+  // must receive no nudge at all.
+  const clearance = { x: 0.05, y: 0.05 };
+  const seats = [
+    { id: "dimmedSeat", x: 0.5, y: 0.5 },
+    { id: "a", x: 0.51, y: 0.5 },
+    { id: "b", x: 0.52, y: 0.51 },
+    { id: "c", x: 0.51, y: 0.51 }
+  ];
+  // Sanity: all four seats mutually collide (a true 4-clique).
+  for (let i = 0; i < seats.length; i += 1) {
+    for (let j = i + 1; j < seats.length; j += 1) {
+      assert.ok(
+        Math.abs(seats[i].x - seats[j].x) < clearance.x &&
+          Math.abs(seats[i].y - seats[j].y) < clearance.y,
+        `fixture broken: ${seats[i].id}/${seats[j].id} should collide`
+      );
+    }
+  }
+  const nudges = computeNameLabelNudges(seats, new Set(["a", "b", "c"]), clearance);
+  assert.equal(nudges.has("dimmedSeat"), false, "excluded seat must not be nudged");
+  const values = ["a", "b", "c"].map((id) => nudges.get(id));
+  assert.equal(new Set(values).size, 3, "expected the three named seats to be pairwise distinct");
+  for (const value of values) {
+    assert.ok([-1, 0, 1].includes(value));
+  }
+});
+
 test("computeNameLabelNudges is input-order invariant, including tied coordinates", () => {
   const clearance = CODE_PILL_DEFAULT_CLEARANCE;
   const baseSeats = [

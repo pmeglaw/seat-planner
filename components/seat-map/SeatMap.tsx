@@ -853,20 +853,6 @@ export function SeatMap({
     return [...seatCards, ...unassignedPeople].slice(0, 60);
   }, [localEmployees, localSeats, matchingSeats, searchQuery]);
   const selectedSeatMatchesFilters = selectedSeat ? matchesFilters(selectedSeat) : true;
-  // Named set for name-label collision nudging (lib/seatCrowding
-  // computeNameLabelNudges): seats that can render the "name" token mode.
-  // SeatMarker's namesVisible = showNames && hasEmployee && !dimmed, but
-  // `dimmed` here folds in both the filter match and the Ask Planner focus
-  // dim, computed inline per-marker in the render loop below. Mirroring that
-  // exactly at this call site would require duplicating both checks in this
-  // memo; instead we use the simpler, slightly broader "assigned seats while
-  // showNames is on" set the brief allows — a seat that's actually dimmed
-  // just never resolves to tokenMode "name" at render time (SeatMarker falls
-  // back to "code"), so its computed nudge is simply unused, never wrong.
-  const namedSeatIdSet = useMemo(() => {
-    if (!showNames) return new Set<string>();
-    return new Set(visualLocalSeats.filter(seat => seat.employee).map(seat => seat.id));
-  }, [showNames, visualLocalSeats]);
   const undoAvailable = canUndoDraftHistory(draftHistory);
   const redoAvailable = canRedoDraftHistory(draftHistory);
   // Session-local activity for the inspector's Activity section: undo-history
@@ -911,6 +897,19 @@ export function SeatMap({
     const statusOk = status === "all" || seat.status === (status as SeatStatus);
 
     return searchOk && departmentOk && zoneOk && statusOk;
+  }
+
+  // Single source of truth for SeatMarker's `dimmed` prop: a seat dims when
+  // it fails the active filters OR falls outside an Ask Planner highlight
+  // focus (the selected seat stays lit). The name-nudge collision graph
+  // (dimmedSeatIdSet → namedSeatIdSet below) reuses this exact predicate —
+  // keep both call sites on it rather than re-deriving either term.
+  function isSeatDimmed(seat: SeatWithEmployee) {
+    const dimmedByPlannerFocus =
+      plannerHighlightedSeatIds.length > 0 &&
+      !plannerHighlightedSeatIdSet.has(seat.id) &&
+      seat.id !== selectedSeatId;
+    return !matchesFilters(seat) || dimmedByPlannerFocus;
   }
 
   // Delegated keyboarding for the marker layer: arrows rove between seats
@@ -2128,6 +2127,24 @@ export function SeatMap({
   const seatDensityTiers = computeSeatDensityTiers(visualLocalSeats, seatDensityClearance);
   const crowdedCodeSeatIdSet = seatDensityTiers.crowded;
   const denseCodeSeatIdSet = seatDensityTiers.dense;
+  // Shared with the marker render loop below (dimmed={dimmedSeatIdSet.has(...)}).
+  const dimmedSeatIdSet = new Set(localSeats.filter(isSeatDimmed).map(seat => seat.id));
+  // Named set for name-label collision nudging (lib/seatCrowding
+  // computeNameLabelNudges): exactly the seats that will render the "name"
+  // token. SeatMarker's namesVisible gate is showNames && hasEmployee &&
+  // !dimmed, and dimmedSeatIdSet above is the same predicate the render loop
+  // feeds SeatMarker, so the collision graph mirrors it precisely. Dimmed
+  // seats must be excluded (not just "their nudge goes unused"): inside a
+  // 4-way mutual clique the least-used fallback can otherwise hand two
+  // genuinely visible labels the same nudge to dodge a label that is never
+  // actually shown.
+  const namedSeatIdSet = showNames
+    ? new Set(
+        visualLocalSeats
+          .filter(seat => seat.employee && !dimmedSeatIdSet.has(seat.id))
+          .map(seat => seat.id)
+      )
+    : new Set<string>();
   const nameLabelNudges = computeNameLabelNudges(visualLocalSeats, namedSeatIdSet, seatDensityClearance);
   const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;
@@ -2787,17 +2804,12 @@ export function SeatMap({
                     const visualSeat = visualSeatById.get(seat.id) ?? seat;
                     const viewportPlacement = getMarkerViewportPlacement(visualSeat.x);
 
-                    const dimmedByPlannerFocus =
-                      plannerHighlightedSeatIds.length > 0 &&
-                      !plannerHighlightedSeatIdSet.has(seat.id) &&
-                      seat.id !== selectedSeatId;
-
                     return (
                       <SeatMarker
                         key={seat.id}
                         seat={visualSeat}
                         selected={seat.id === selectedSeatId}
-                        dimmed={!seatMatchesFilters || dimmedByPlannerFocus}
+                        dimmed={dimmedSeatIdSet.has(seat.id)}
                         canEdit={canEdit}
                         showNames={showNames}
                         searchResult={Boolean(search.trim()) && seatMatchesFilters}
