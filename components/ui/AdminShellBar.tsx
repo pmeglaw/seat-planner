@@ -17,7 +17,7 @@ const toolLink =
 const toolLinkActive =
   "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 const surfaceShortcut =
-  "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[8.5px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
 type AdminShellPage = "management" | "settings";
 
@@ -41,7 +41,7 @@ export function AdminShellBar({ page }: { page: AdminShellPage }) {
       <nav aria-label="Admin sections" className="flex h-full min-w-0 items-center">
         <Link href="/admin" className={toolLink}>
           <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-            <path d="M3 5.5 8 3.5v11L3 16.5v-11ZM8 3.5l4 2v11l-4-2M12 5.5l5-2v11l-5 2" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M3 5.5 8 3.5v11L3 16.5v-11ZM8 3.5l4 2v11l-4-2M12 5.5l5-2v11l-5 2" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
           </svg>
           Seat map
         </Link>
@@ -51,10 +51,10 @@ export function AdminShellBar({ page }: { page: AdminShellPage }) {
           className={page === "management" ? toolLinkActive : toolLink}
         >
           <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-            <rect x="3" y="3" width="6" height="6" stroke="currentColor" strokeWidth="1.4" />
-            <rect x="11" y="3" width="6" height="6" stroke="currentColor" strokeWidth="1.4" />
-            <rect x="3" y="11" width="6" height="6" stroke="currentColor" strokeWidth="1.4" />
-            <rect x="11" y="11" width="6" height="6" stroke="currentColor" strokeWidth="1.4" />
+            <rect x="3" y="3" width="6" height="6" stroke="currentColor" strokeWidth="1.5" />
+            <rect x="11" y="3" width="6" height="6" stroke="currentColor" strokeWidth="1.5" />
+            <rect x="3" y="11" width="6" height="6" stroke="currentColor" strokeWidth="1.5" />
+            <rect x="11" y="11" width="6" height="6" stroke="currentColor" strokeWidth="1.5" />
           </svg>
           Management
         </Link>
@@ -64,8 +64,8 @@ export function AdminShellBar({ page }: { page: AdminShellPage }) {
           className={page === "settings" ? toolLinkActive : toolLink}
         >
           <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-            <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.4" />
-            <path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           Settings
         </Link>

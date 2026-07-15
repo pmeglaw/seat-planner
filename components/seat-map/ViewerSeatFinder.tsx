@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -510,12 +511,18 @@ export function ViewerSeatFinder({
     ? (fitMapWidth ? { width: `${fitMapWidth}px` } : undefined)
     : { width: `calc(var(--map-detail-base) * ${zoomFactor})` };
 
-  const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[8.5px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
        which captures the sticky header so it never pins to the viewport. */
     <div className="shell-theme flex min-h-screen flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
+      <a
+        href="#viewer-seat-map"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"
+      >
+        Skip to seat map
+      </a>
       <h1 className="sr-only">Office Seat Finder</h1>
       {/* z-50 matches the admin bar: sticky activates the z-index, which must
           outrank z-40 workspace overlays that follow in DOM order. */}
@@ -556,7 +563,7 @@ export function ViewerSeatFinder({
             </svg>
             Filter
             {structuredFilterCount > 0 && (
-              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{structuredFilterCount}</span>
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{structuredFilterCount}</span>
             )}
             <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--admin-chrome-muted)]">
               <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -608,7 +615,7 @@ export function ViewerSeatFinder({
                     document.querySelector<HTMLButtonElement>('[aria-label="Viewer search results"] button')?.focus();
                   }
                 }}
-                placeholder="Search people or seats"
+                placeholder={SEAT_SEARCH_PLACEHOLDER}
                 className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
               />
               {search.trim() && (
@@ -680,6 +687,7 @@ export function ViewerSeatFinder({
           <div className="relative min-w-0 lg:flex lg:min-h-0 lg:flex-1">
             <div
               ref={mapViewportRef}
+              id="viewer-seat-map"
               tabIndex={0}
               aria-label="Published office seat map. Drag to pan. Seat markers are read-only buttons."
               className={mapViewportClassName}
