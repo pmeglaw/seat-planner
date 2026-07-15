@@ -36,7 +36,12 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /Planning canvas/);
   assert.match(source, /aria-label="Seat status legend"/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
-  assert.match(source, /aria-label="Open settings"/);
+  // Settings is a labeled command-row destination (with a More-menu twin
+  // below lg), not an avatar-shaped icon link: the orange "A" chip looked
+  // like an account control but navigated to data utilities.
+  assert.doesNotMatch(source, /aria-label="Open settings"/);
+  assert.match(source, /href="\/admin\/settings"[\s\S]{0,600}Settings\s*<\/Link>/);
+  assert.match(source, /<span aria-hidden="true" className="mx-2\.5 flex h-\[26px\] w-\[26px\]/);
   assert.match(source, /aria-controls="ask-planner-drawer"/);
   assert.match(source, /aria-haspopup="dialog"/);
   assert.match(source, /No map changes to undo/);
@@ -295,10 +300,14 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /requestInspectorGuard\(\{ kind: "start-add-seat" \}\)/);
   assert.match(source, /requestInspectorGuard\(\{ kind: "start-move-seat" \}\)/);
   assert.match(source, /requestInspectorGuard\(\{ kind: "start-swap-seat" \}\)/);
-  assert.match(source, /requestInspectorGuard\(\{ kind: "navigate-management" \}\)/);
+  // Navigation guards carry their destination: Save/Discard must land the
+  // user on the page they actually clicked (Management OR Settings), and the
+  // dialog copy must name it.
+  assert.match(source, /requestInspectorGuard\(\{ kind: "navigate-admin-page", href, destination \}\)/);
+  assert.match(source, /window\.location\.assign\(action\.href\)/);
+  assert.match(source, /return `opening \$\{action\.destination\}\.`/);
   assert.match(source, /queueCenterSeatInMap\(action\.seatId\)/);
   assert.match(source, /Save or discard the selected seat edits before publishing/);
-  assert.match(source, /window\.location\.assign\("\/admin\/management"\)/);
   assert.match(source, /id="inspector-unsaved-title"/);
   assert.match(source, /Unsaved seat edits/);
   assert.match(source, /Save changes/);
@@ -307,8 +316,8 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /form\.requestSubmit\(\)/);
   assert.match(source, /onSubmitBlocked=\{cancelPendingInspectorGuardAction\}/);
   assert.match(source, /setPendingInspectorSaveAction\(null\)/);
-  assert.match(source, /href="\/admin\/management"[\s\S]{0,220}beforeManagementNavigation\(\)\) event\.preventDefault\(\)/);
-  assert.match(source, /href="\/admin\/settings"[\s\S]{0,320}beforeManagementNavigation\(\)\) event\.preventDefault\(\)/);
+  assert.match(source, /href="\/admin\/management"[\s\S]{0,260}beforeAdminPageNavigation\("\/admin\/management", "Management"\)\) event\.preventDefault\(\)/);
+  assert.match(source, /href="\/admin\/settings"[\s\S]{0,360}beforeAdminPageNavigation\("\/admin\/settings", "Settings"\)\) event\.preventDefault\(\)/);
   assert.doesNotMatch(source, /You have unsaved seat edits\. Discard them\?/);
 });
 
@@ -408,6 +417,40 @@ test("popovers restore trigger focus when a close unmounts the focused element",
   assert.match(seatMapSource, /setChromeMenuOpen\(false\);[\s\S]{0,90}returnFocusAfterClose\(chromeMenuButtonRef\)/);
   assert.match(seatMapSource, /ref=\{mapMenuButtonRef\}/);
   assert.match(seatMapSource, /setMapMenuOpen\(false\);[\s\S]{0,90}returnFocusAfterClose\(mapMenuButtonRef\)/);
+});
+
+test("chrome bars stay pinned and the filter menu precedes search in the tab order", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
+
+  // One scroll behavior on every surface: below lg the page scrolls, and a
+  // static bar carries the app's only chrome (search, filters, publish
+  // status) out of view. Only the pinning behavior is pinned here — z tiers
+  // and the rest of the class list are layout choices, free to evolve.
+  assert.match(shellBarSource, /<header className="sticky top-0 /);
+  assert.match(seatMapSource, /<header className="sticky top-0 /);
+  assert.match(viewerSource, /<header className="sticky top-0 /);
+  // The map roots must clip horizontal overflow with `clip`, not `hidden`:
+  // overflow-x-hidden turns the root into a scroll container, which captures
+  // the sticky header so it never pins to the viewport (live-caught).
+  for (const source of [seatMapSource, viewerSource]) {
+    assert.match(source, /overflow-x-clip/);
+    assert.doesNotMatch(source, /min-h-screen flex-col overflow-x-hidden/);
+  }
+
+  // The filter popover renders visually beneath its trigger, so it must also
+  // FOLLOW the trigger in DOM order — before the search field — or Tab from
+  // the open trigger detours through search before reaching the menu.
+  const adminPanelIndex = seatMapSource.indexOf("{showFilterPanel && (");
+  const adminSearchIndex = seatMapSource.indexOf('role="search" aria-label="Command search"');
+  assert.ok(adminPanelIndex >= 0 && adminSearchIndex >= 0, "admin filter panel and command search should remain source-visible");
+  assert.ok(adminPanelIndex < adminSearchIndex, "admin filter panel must precede the command search in DOM order");
+
+  const viewerPanelIndex = viewerSource.indexOf("{filterOpen && (");
+  const viewerSearchIndex = viewerSource.indexOf('role="search" aria-label="Viewer search"');
+  assert.ok(viewerPanelIndex >= 0 && viewerSearchIndex >= 0, "viewer filter panel and search should remain source-visible");
+  assert.ok(viewerPanelIndex < viewerSearchIndex, "viewer filter panel must precede the search in DOM order");
 });
 
 test("admin search clear controls use one clear path with distinct accessible names", async () => {

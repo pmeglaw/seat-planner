@@ -513,9 +513,13 @@ export function ViewerSeatFinder({
   const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[8.5px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
-    <div className="shell-theme flex min-h-screen flex-col overflow-x-hidden bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
+    /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
+       which captures the sticky header so it never pins to the viewport. */
+    <div className="shell-theme flex min-h-screen flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
       <h1 className="sr-only">Office Seat Finder</h1>
-      <header className="z-40 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+      {/* z-50 matches the admin bar: sticky activates the z-index, which must
+          outrank z-40 workspace overlays that follow in DOM order. */}
+      <header className="sticky top-0 z-50 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
             <Image src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />
@@ -558,6 +562,28 @@ export function ViewerSeatFinder({
               <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
+          {/* DOM order mirrors the visual order: the menu drops directly under
+              the trigger, so it must precede the search field in tab order. */}
+          {filterOpen && (
+            <div className="absolute -left-px top-full z-50 w-[288px] max-w-[calc(100vw-16px)]">
+              <FilterPanel
+                department={department}
+                status={status}
+                departments={departments}
+                zone={zone}
+                zones={zones}
+                activeChips={activeFilterChips}
+                panelId="viewer-filter-panel"
+                returnFocusRef={filterTriggerRef}
+                onClose={() => setFilterOpen(false)}
+                onDepartmentChange={setDepartment}
+                onZoneChange={setZone}
+                onStatusChange={setStatus}
+                onRemoveActiveChip={removeActiveFilterChip}
+                onClearFilters={clearStructuredFilters}
+              />
+            </div>
+          )}
           <div role="search" aria-label="Viewer search" className="h-full min-w-0 flex-1">
             <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
               <span className="sr-only">Search published seating</span>
@@ -598,26 +624,6 @@ export function ViewerSeatFinder({
               )}
             </label>
           </div>
-          {filterOpen && (
-            <div className="absolute -left-px top-full z-50 w-[288px] max-w-[calc(100vw-16px)]">
-              <FilterPanel
-                department={department}
-                status={status}
-                departments={departments}
-                zone={zone}
-                zones={zones}
-                activeChips={activeFilterChips}
-                panelId="viewer-filter-panel"
-                returnFocusRef={filterTriggerRef}
-                onClose={() => setFilterOpen(false)}
-                onDepartmentChange={setDepartment}
-                onZoneChange={setZone}
-                onStatusChange={setStatus}
-                onRemoveActiveChip={removeActiveFilterChip}
-                onClearFilters={clearStructuredFilters}
-              />
-            </div>
-          )}
         </div>
 
         <div className="ml-auto flex h-full shrink-0 items-center">

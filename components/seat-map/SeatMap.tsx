@@ -94,7 +94,7 @@ type InspectorGuardAction =
   | { kind: "start-add-seat" }
   | { kind: "start-move-seat" }
   | { kind: "start-swap-seat" }
-  | { kind: "navigate-management" };
+  | { kind: "navigate-admin-page"; href: "/admin/management" | "/admin/settings"; destination: string };
 
 type MapViewMode = "overview" | "detail";
 
@@ -1051,7 +1051,7 @@ export function SeatMap({
       return;
     }
 
-    window.location.assign("/admin/management");
+    window.location.assign(action.href);
   }
 
   function requestInspectorGuard(action: InspectorGuardAction) {
@@ -1106,7 +1106,7 @@ export function SeatMap({
     if (action.kind === "start-add-seat") return "starting Add Seat mode.";
     if (action.kind === "start-move-seat") return "starting Move Seat mode.";
     if (action.kind === "start-swap-seat") return "starting Swap Seats mode.";
-    return "opening Management.";
+    return `opening ${action.destination}.`;
   }
 
   function captureDraftSnapshot() {
@@ -1571,9 +1571,9 @@ export function SeatMap({
     setAddSeatMode(false);
   }
 
-  function beforeManagementNavigation() {
+  function beforeAdminPageNavigation(href: "/admin/management" | "/admin/settings", destination: string) {
     if (!inspectorDirty) return true;
-    requestInspectorGuard({ kind: "navigate-management" });
+    requestInspectorGuard({ kind: "navigate-admin-page", href, destination });
     return false;
   }
 
@@ -2168,16 +2168,24 @@ export function SeatMap({
   const chromeToolbarBtn = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
   const chromeToolbarBtnActive = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
   const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[8.5px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-  // Below lg the command row can't fit every tool — Show names / Management /
-  // Ask Planner collapse into the chrome "More" menu instead of clipping
-  // behind an invisible horizontal scroll.
+  // Two collapse tiers keep the flexible search group usable at every width
+  // (the row is otherwise rigid, so search absorbs the whole deficit):
+  // page links (Management, Settings) fold into the "More" menu below xl,
+  // map tools (Show names, Ask Planner) below lg. No horizontal scroll —
+  // a scroll container would clip the menu's absolutely-positioned dropdown.
   const chromeToolbarBtnCollapsible = chromeToolbarBtn.replace("inline-flex", "hidden lg:inline-flex");
   const chromeToolbarBtnCollapsibleActive = chromeToolbarBtnActive.replace("inline-flex", "hidden lg:inline-flex");
+  const chromeToolbarBtnCollapsibleXl = chromeToolbarBtn.replace("inline-flex", "hidden xl:inline-flex");
   const chromeMenuItem = "flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-chrome-text)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
-      <header className="z-40 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+    /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
+       which captures the sticky header so it never pins to the viewport. */
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
+      {/* z-50, not z-40: once sticky, the header's z-index is live and must
+          outrank the z-40 canvas overlays (toasts, map menu) that follow it
+          in DOM order, or they paint over the pinned bar and its menus. */}
+      <header className="sticky top-0 z-50 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
         <h1 className="sr-only">Megeredchian Law Seats</h1>
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
@@ -2226,6 +2234,27 @@ export function SeatMap({
               </svg>
             </button>
           )}
+          {/* DOM order mirrors the visual order: the menu drops directly under
+              the trigger, so it must precede the search field in tab order. */}
+          {showFilterPanel && (
+            <div data-filter-ui className="absolute -left-px top-full z-50 w-[288px] max-w-[calc(100vw-16px)]">
+              <FilterPanel
+                department={department}
+                status={status}
+                departments={departments}
+                zone={zone}
+                zones={zones}
+                activeChips={activeFilterChips}
+                returnFocusRef={filterTriggerRef}
+                onClose={() => setFilterCollapsed(true)}
+                onDepartmentChange={setDepartment}
+                onZoneChange={setZone}
+                onStatusChange={setStatus}
+                onRemoveActiveChip={removeActiveFilterChip}
+                onClearFilters={clearStructuredFilters}
+              />
+            </div>
+          )}
           <div role="search" aria-label="Command search" className="hidden h-full min-w-0 flex-1 lg:block">
             <label className="relative flex h-full w-full min-w-0 items-center">
               <span className="sr-only">Search employee, seat, job title, department, or zone</span>
@@ -2268,25 +2297,6 @@ export function SeatMap({
               ) : null}
             </label>
           </div>
-          {showFilterPanel && (
-            <div data-filter-ui className="absolute -left-px top-full z-50 w-[288px] max-w-[calc(100vw-16px)]">
-              <FilterPanel
-                department={department}
-                status={status}
-                departments={departments}
-                zone={zone}
-                zones={zones}
-                activeChips={activeFilterChips}
-                returnFocusRef={filterTriggerRef}
-                onClose={() => setFilterCollapsed(true)}
-                onDepartmentChange={setDepartment}
-                onZoneChange={setZone}
-                onStatusChange={setStatus}
-                onRemoveActiveChip={removeActiveFilterChip}
-                onClearFilters={clearStructuredFilters}
-              />
-            </div>
-          )}
         </div>
 
         {canEdit && (
@@ -2334,15 +2344,29 @@ export function SeatMap({
             <Link
               href="/admin/management"
               onClick={event => {
-                if (!beforeManagementNavigation()) event.preventDefault();
+                if (!beforeAdminPageNavigation("/admin/management", "Management")) event.preventDefault();
               }}
-              className={chromeToolbarBtnCollapsible}
+              className={chromeToolbarBtnCollapsibleXl}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
                 <rect x="3" y="4" width="14" height="12" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M3 8h14M8.5 8v8" stroke="currentColor" strokeWidth="1.5" />
               </svg>
               Management
+            </Link>
+            <Link
+              href="/admin/settings"
+              title="Settings — data utilities and recovery"
+              onClick={event => {
+                if (!beforeAdminPageNavigation("/admin/settings", "Settings")) event.preventDefault();
+              }}
+              className={chromeToolbarBtnCollapsibleXl}
+            >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+              Settings
             </Link>
             <button
               ref={askPlannerButtonRef}
@@ -2363,7 +2387,7 @@ export function SeatMap({
                 <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
               )}
             </button>
-            <div data-chrome-menu className="relative flex h-full shrink-0 items-center lg:hidden">
+            <div data-chrome-menu className="relative flex h-full shrink-0 items-center xl:hidden">
               <button
                 ref={chromeMenuButtonRef}
                 type="button"
@@ -2381,8 +2405,10 @@ export function SeatMap({
                   <circle cx="15.5" cy="10" r="1.5" />
                 </svg>
                 More
+                {/* Badge mirrors the collapsed Ask Planner state, so it only
+                    applies below lg where that tool lives in this menu. */}
                 {plannerHighlightedSeatIds.length > 0 && (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white lg:hidden">{plannerHighlightedSeatIds.length}</span>
                 )}
               </button>
               {chromeMenuOpen && (
@@ -2408,20 +2434,31 @@ export function SeatMap({
                       // focus hazard as Escape.
                       returnFocusAfterClose(chromeMenuButtonRef);
                     }}
-                    className={chromeMenuItem}
+                    className={[chromeMenuItem, "lg:hidden"].join(" ")}
                   >
                     {namesToggleLabel}
                   </button>
                   <Link
                     href="/admin/management"
                     onClick={event => {
-                      if (!beforeManagementNavigation()) event.preventDefault();
+                      if (!beforeAdminPageNavigation("/admin/management", "Management")) event.preventDefault();
                       setChromeMenuOpen(false);
                       returnFocusAfterClose(chromeMenuButtonRef);
                     }}
                     className={chromeMenuItem}
                   >
                     Management
+                  </Link>
+                  <Link
+                    href="/admin/settings"
+                    onClick={event => {
+                      if (!beforeAdminPageNavigation("/admin/settings", "Settings")) event.preventDefault();
+                      setChromeMenuOpen(false);
+                      returnFocusAfterClose(chromeMenuButtonRef);
+                    }}
+                    className={chromeMenuItem}
+                  >
+                    Settings
                   </Link>
                   <button
                     type="button"
@@ -2433,7 +2470,7 @@ export function SeatMap({
                       // and a deferred restore would steal it back.
                       openAskPlannerDrawer();
                     }}
-                    className={chromeMenuItem}
+                    className={[chromeMenuItem, "lg:hidden"].join(" ")}
                   >
                     Ask Planner
                     {plannerHighlightedSeatIds.length > 0 && (
@@ -2500,21 +2537,9 @@ export function SeatMap({
               )}
             </button>
           )}
-          {canEdit ? (
-            <Link
-              href="/admin/settings"
-              aria-label="Open settings"
-              title="Settings — data utilities and recovery"
-              onClick={event => {
-                if (!beforeManagementNavigation()) event.preventDefault();
-              }}
-              className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-chrome-bg)]"
-            >
-              A
-            </Link>
-          ) : (
-            <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">A</span>
-          )}
+          {/* Identity chip only — it reads as an avatar, so it must not act as
+              a control. Settings lives in the command row / More menu. */}
+          <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">A</span>
         </div>
       </header>
 

@@ -23,7 +23,9 @@ type AdminShellPage = "management" | "settings";
 
 export function AdminShellBar({ page }: { page: AdminShellPage }) {
   return (
-    <header className="sticky top-0 z-40 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+    /* z-50 matches the seat-map bar: the chrome tier sits above z-40 page
+       overlays so scrolled content never paints over the pinned bar. */
+    <header className="sticky top-0 z-50 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
       <div className="flex min-w-0 shrink-0 items-center gap-2">
         <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
           <Image src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />

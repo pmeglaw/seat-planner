@@ -78,7 +78,7 @@ export function ActiveFilterChips({
 // chrome bar. Content only — the caller's wrapper owns positioning (absolute
 // or fixed under the button), so admin and viewer share ONE filter presentation.
 const darkSelectClassName =
-  "mt-1 w-full min-w-0 cursor-pointer border border-white/20 bg-white/[0.06] px-2.5 py-1.5 text-sm text-[#f4f4f4] outline-none transition hover:border-white/30 focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] [&>option]:bg-[#262626] [&>option]:text-[#f4f4f4]";
+  "mt-1 w-full min-w-0 cursor-pointer border border-white/20 bg-white/[0.06] px-2.5 py-1.5 text-sm text-[var(--admin-chrome-text)] outline-none transition hover:border-white/30 focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] [&>option]:bg-[var(--admin-chrome-hover)] [&>option]:text-[var(--admin-chrome-text)]";
 
 export function FilterPanel({
   department,
@@ -114,13 +114,13 @@ export function FilterPanel({
           returnFocusAfterClose(returnFocusRef);
         }
       }}
-      className="w-full border border-white/15 bg-[#1f1f1f] p-3 text-[#f4f4f4] shadow-elevation-4"
+      className="w-full border border-white/15 bg-[var(--admin-chrome-elevated)] p-3 text-[var(--admin-chrome-text)] shadow-elevation-4"
     >
       <ActiveFilterChips chips={activeStructuredChips} onRemove={onRemoveActiveChip} onClearAll={onClearFilters} className="mb-3" />
 
       <div className="grid grid-cols-1 gap-2">
         <label className="block">
-          <span className="text-[11px] font-medium text-[#9a9a9a]">Department</span>
+          <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Department</span>
           <select value={department} onChange={event => onDepartmentChange(event.target.value)} className={darkSelectClassName}>
             <option value="all">All departments</option>
             {departments.map(dep => (
@@ -130,7 +130,7 @@ export function FilterPanel({
         </label>
 
         <label className="block">
-          <span className="text-[11px] font-medium text-[#9a9a9a]">Zone</span>
+          <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Zone</span>
           <select value={zone} onChange={event => onZoneChange(event.target.value)} className={darkSelectClassName}>
             <option value="all">All zones</option>
             {zones.map(value => (
@@ -140,7 +140,7 @@ export function FilterPanel({
         </label>
 
         <label className="block">
-          <span className="text-[11px] font-medium text-[#9a9a9a]">Status</span>
+          <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Status</span>
           <select value={status} onChange={event => onStatusChange(event.target.value)} className={darkSelectClassName}>
             <option value="all">All statuses</option>
             <option value="available">Available</option>
