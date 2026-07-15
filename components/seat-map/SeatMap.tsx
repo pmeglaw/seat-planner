@@ -1276,13 +1276,14 @@ export function SeatMap({
     }
   }
 
-  const scrollMapToPoint = useCallback((x: number, y: number) => {
+  const scrollMapToPoint = useCallback((x: number, y: number, options?: { verticalViewportAnchor?: number }) => {
     const viewport = mapViewportRef.current;
     const map = mapRef.current;
     if (!viewport || !map) return;
 
+    const anchor = options?.verticalViewportAnchor ?? 0.5;
     const left = clampScrollPosition((x * map.offsetWidth) - (viewport.clientWidth / 2), viewport.scrollWidth - viewport.clientWidth);
-    const top = clampScrollPosition((y * map.offsetHeight) - (viewport.clientHeight / 2), viewport.scrollHeight - viewport.clientHeight);
+    const top = clampScrollPosition((y * map.offsetHeight) - (viewport.clientHeight * anchor), viewport.scrollHeight - viewport.clientHeight);
     viewport.scrollTo({ left, top, behavior: "smooth" });
   }, []);
 
@@ -1429,11 +1430,11 @@ export function SeatMap({
     setMoveSeatMode(false);
   }
 
-  const centerSeatInMap = useCallback((seatId: string) => {
+  const centerSeatInMap = useCallback((seatId: string, options?: { verticalViewportAnchor?: number }) => {
     const seat = localSeats.find(item => item.id === seatId);
     if (!seat) return;
     const point = savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat);
-    scrollMapToPoint(point.x, point.y);
+    scrollMapToPoint(point.x, point.y, options);
   }, [localSeats, scrollMapToPoint]);
 
   function fitSeatsInMap(seatsToFit: SeatWithEmployee[]) {
@@ -1464,9 +1465,26 @@ export function SeatMap({
     });
   }, [centerSeatInMap]);
 
-  // The inspector reserves layout width (no overlay), so a selected seat can
-  // never sit hidden under the panel — no nudge scrolling on select. Explicit
-  // navigation (results "Show on map") still centers via queueCenterSeatInMap.
+  // At >=900px (the `panel` breakpoint) the inspector docks and reserves layout
+  // width, so a selected seat can never sit hidden under it — no nudge scrolling
+  // needed there. Below that width the inspector overlays as a fixed bottom sheet
+  // (max-h 60vh, SeatInspector.tsx), so a newly-selected seat can land underneath
+  // it; pan the seat into the visible strip above the sheet on selection change.
+  useEffect(() => {
+    if (!selectedSeatId) return;
+    if (window.matchMedia("(min-width: 900px)").matches) return;
+    const frame = requestAnimationFrame(() => {
+      centerSeatInMap(selectedSeatId, { verticalViewportAnchor: 0.28 });
+    });
+    return () => cancelAnimationFrame(frame);
+    // Pan on selection change only; centerSeatInMap re-resolves the current seat
+    // by id from localSeats each call, so we intentionally don't depend on the
+    // seats array identity (which churns on unrelated edits) to avoid re-panning
+    // mid-edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSeatId]);
+
+  // Explicit navigation (results "Show on map") still centers via queueCenterSeatInMap.
   function seatPersonLabel(seat: SeatWithEmployee | null) {
     return seat?.employee?.full_name ?? "Open";
   }
