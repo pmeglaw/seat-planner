@@ -54,6 +54,13 @@ const KIND_LABELS: Record<ViewerSearchResult["kind"], string> = {
   zone: "Zone"
 };
 
+// Result title/subtitle identity segments (person names, seat codes) are
+// already formatted for display by lib/viewerSeatSearch.ts at composition
+// time — that is the single formatting point; do not re-format here (both
+// formatters are idempotent, but one documented formatting point avoids
+// double-formatting drift). Search matching there still operates on raw
+// stored values, so this is display-only.
+
 // View-transform zoom (same rule as the admin map): scales the rendered frame
 // width only — never the stored coordinates or the calibration transform.
 const MAP_ZOOM_MIN = 0.6;

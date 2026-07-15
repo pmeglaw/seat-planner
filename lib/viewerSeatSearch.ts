@@ -53,6 +53,40 @@ const STATUS_LABELS: Record<SeatStatus, string> = {
   unavailable: "Unavailable"
 };
 
+// Display-only formatting for the identity segments composed into result
+// title/subtitle strings below (seat codes, person names). Mirrors
+// lib/formatName.ts's formatDisplayName/formatSeatCode byte-for-byte — kept
+// local rather than imported because tests/viewer-seat-search.test.mjs
+// transpiles this module standalone via a data: URL, and relative runtime
+// imports cannot resolve from there (verified: Node throws "Invalid relative
+// URL or base scheme is not hierarchical"). Both are exercised indirectly by
+// tests/format-name.test.mjs against the canonical copy; keep these two in
+// sync if that file's formatting rules change.
+//
+// CRITICAL: these must only touch human-visible composed strings (title/
+// subtitle). Search matching above always operates on the raw stored values
+// via matchesQuery/normalizeSearchText — never run a match input through
+// these formatters.
+function formatDisplayNameLocal(name: string | null | undefined): string {
+  if (!name) return "";
+  const trimmed = name.trim();
+  if (!trimmed) return "";
+  if (/[a-z]/.test(trimmed)) return trimmed;
+  return trimmed
+    .split(/(\s+)/)
+    .map(segment =>
+      /\s/.test(segment)
+        ? segment
+        : segment.toLowerCase().replace(/(^|[’'\-])([a-z])/g, (_match, boundary, letter) => boundary + letter.toUpperCase())
+    )
+    .join("");
+}
+
+function formatSeatCodeLocal(label: string | null | undefined): string {
+  if (!label) return "";
+  return label.trim().toUpperCase();
+}
+
 function normalizeSearchText(value: string | null | undefined) {
   return (value ?? "").trim().toLowerCase();
 }
@@ -155,8 +189,8 @@ export function buildViewerSeatSearch({
     results.push({
       id: `person:${employee.id}`,
       kind: "person",
-      title: employee.full_name,
-      subtitle: assignedSeat ? `${assignedSeat.label} · ${zone}` : "No published seat",
+      title: formatDisplayNameLocal(employee.full_name),
+      subtitle: assignedSeat ? `${formatSeatCodeLocal(assignedSeat.label)} · ${zone}` : "No published seat",
       meta: [employee.position, employee.department].filter(Boolean).join(" · ") || "Active employee",
       seatId: assignedSeat?.id ?? null,
       seatIds: assignedSeat ? [assignedSeat.id] : [],
@@ -174,8 +208,8 @@ export function buildViewerSeatSearch({
     results.push({
       id: `seat:${seat.id}`,
       kind: "seat",
-      title: seat.label,
-      subtitle: employee?.full_name ?? "Open seat",
+      title: formatSeatCodeLocal(seat.label),
+      subtitle: employee?.full_name ? formatDisplayNameLocal(employee.full_name) : "Open seat",
       meta: `${STATUS_LABELS[seat.status]} · ${department ?? "No department"} · ${zone}`,
       seatId: seat.id,
       seatIds: [seat.id],

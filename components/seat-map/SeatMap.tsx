@@ -31,6 +31,7 @@ import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
+import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import {
   MAP_IMAGE_BLUR_DATA_URL,
   MAP_IMAGE_HEIGHT,
@@ -823,15 +824,18 @@ export function SeatMap({
           return {
             key: `seat-${seat.id}`,
             seatId: seat.id,
-            title: `${seat.employee.full_name} — ${seat.label}`,
-            subtitle: [seat.employee.department, zoneLabel, STATUS_LABELS[seat.status]].filter(Boolean).join(" · "),
+            title: `${formatDisplayName(seat.employee.full_name)} — ${formatSeatCode(seat.label)}`,
+            // Person rows already imply "assigned" (they're built from an
+            // employee-bearing seat) — the trailing status token is redundant
+            // here and was truncating to "Assi…" in the narrow panel.
+            subtitle: [seat.employee.department, zoneLabel].filter(Boolean).join(" · "),
             status: seat.status
           };
         }
         return {
           key: `seat-${seat.id}`,
           seatId: seat.id,
-          title: seat.label,
+          title: formatSeatCode(seat.label),
           subtitle: [seat.status === "available" ? "Open seat" : STATUS_LABELS[seat.status], zoneLabel].join(" · "),
           status: seat.status
         };
@@ -845,7 +849,7 @@ export function SeatMap({
       .map(employee => ({
         key: `person-${employee.id}`,
         seatId: null,
-        title: employee.full_name,
+        title: formatDisplayName(employee.full_name),
         subtitle: [employee.position, employee.department, "Unassigned"].filter(Boolean).join(" · "),
         status: null,
         disabled: true

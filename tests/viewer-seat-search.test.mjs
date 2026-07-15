@@ -164,6 +164,54 @@ test("viewer department search suppresses empty option-only aggregate rows", () 
   assert.equal(result.results.find(item => item.kind === "department"), undefined);
 });
 
+test("viewer search formats a person's assigned seat label canonically in the subtitle", () => {
+  const casey = employee({ id: "emp-casey", full_name: "Casey Park", department: "Litigation" });
+  const caseySeat = seat({ id: "seat-cw01", label: "Cw01", employee: casey, zone: "Center West" });
+  const result = viewerSearch.buildViewerSeatSearch({
+    query: "Casey",
+    seats: [caseySeat],
+    employees: [casey],
+    departmentOptions,
+    zoneOptions
+  });
+  const person = result.results.find(item => item.kind === "person");
+
+  assert.ok(person);
+  assert.match(person.subtitle, /^CW01 · /);
+});
+
+test("viewer search formats a seat's assigned employee name canonically in the subtitle", () => {
+  const pam = employee({ id: "emp-pam", full_name: "PAM", department: "Intake" });
+  const pamSeat = seat({ id: "seat-w09", label: "W09", employee: pam, zone: "West Pod" });
+  const result = viewerSearch.buildViewerSeatSearch({
+    query: "W09",
+    seats: [pamSeat],
+    employees: [pam],
+    departmentOptions,
+    zoneOptions
+  });
+  const seatResult = result.results.find(item => item.kind === "seat");
+
+  assert.ok(seatResult);
+  assert.equal(seatResult.subtitle, "Pam");
+});
+
+test("viewer search matching stays case-insensitive on raw stored seat labels", () => {
+  const dee = employee({ id: "emp-dee", full_name: "Dee Osei", department: "Litigation" });
+  const deeSeat = seat({ id: "seat-cw01-b", label: "Cw01", employee: dee, zone: "Center West" });
+  const result = viewerSearch.buildViewerSeatSearch({
+    query: "cw01",
+    seats: [deeSeat],
+    employees: [dee],
+    departmentOptions,
+    zoneOptions
+  });
+  const seatResult = result.results.find(item => item.kind === "seat");
+
+  assert.ok(seatResult);
+  assert.equal(seatResult.seatId, "seat-cw01-b");
+});
+
 test("empty viewer search does not fabricate default results", () => {
   const result = viewerSearch.buildViewerSeatSearch({ query: "   ", seats, employees, departmentOptions, zoneOptions });
 

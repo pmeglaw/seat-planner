@@ -7,6 +7,9 @@ import { formatDisplayName } from "@/lib/formatName";
 export type AdminResultCard = {
   key: string;
   seatId: string | null;
+  // Callers must pre-format this (formatDisplayName for names, formatSeatCode
+  // for seat codes) — rendered verbatim here so mixed name+code titles don't
+  // get re-title-cased as a single "shouting" word (e.g. "CW01" -> "Cw01").
   title: string;
   subtitle: string;
   status: SeatStatus | null;
@@ -115,7 +118,7 @@ export function ResultsPanel({
                 data-result-card
                 disabled={result.disabled}
                 onClick={() => result.seatId && onOpen(result.seatId)}
-                title={result.disabled ? "No assigned seat to open" : `Open ${formatDisplayName(result.title)}`}
+                title={result.disabled ? "No assigned seat to open" : `Open ${result.title}`}
                 className="flex min-w-0 flex-1 items-start gap-2.5 px-2.5 py-2 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <span
@@ -126,7 +129,7 @@ export function ResultsPanel({
                   aria-hidden="true"
                 />
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-[var(--admin-text-primary)]">{formatDisplayName(result.title)}</span>
+                  <span className="block truncate text-sm font-semibold text-[var(--admin-text-primary)]">{result.title}</span>
                   <span className="block truncate text-xs font-medium text-[var(--admin-text-muted)]">{formatDisplayName(result.subtitle)}</span>
                 </span>
               </button>
@@ -134,8 +137,8 @@ export function ResultsPanel({
                 <button
                   type="button"
                   onClick={() => onShowOnMap(result.seatId as string)}
-                  aria-label={`Show ${formatDisplayName(result.title)} on the map`}
-                  title={`Show ${formatDisplayName(result.title)} on the map`}
+                  aria-label={`Show ${result.title} on the map`}
+                  title={`Show ${result.title} on the map`}
                   className="my-1 mr-1 flex shrink-0 items-center self-center whitespace-nowrap rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--admin-primary-cta)] transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-primary-soft)] hover:text-[var(--admin-primary-on-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 >
                   Show on map
