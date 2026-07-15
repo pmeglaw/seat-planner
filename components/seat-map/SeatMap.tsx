@@ -57,6 +57,7 @@ import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
+import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type SeatMapProps = {
@@ -1944,7 +1945,6 @@ export function SeatMap({
     });
   }
 
-  const namesToggleLabel = showNames ? "Hide names" : "Show names";
   const searchStatusTitle = searchActive ? `Searching “${searchQuery}”` : "Filtered results";
   const searchStatusSummary = `${matchingSeats.length} ${matchingSeats.length === 1 ? "match" : "matches"} · ${resultStatusBreakdown.assigned} assigned · ${resultStatusBreakdown.available} open`;
   const resultEmptyTitle = searchActive && structuredFiltersActive
@@ -2167,7 +2167,7 @@ export function SeatMap({
   // is the Carbon-style 2px brand-orange underline (5.37:1 on #161616).
   const chromeToolbarBtn = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
   const chromeToolbarBtnActive = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-  const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[8.5px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
   // Two collapse tiers keep the flexible search group usable at every width
   // (the row is otherwise rigid, so search absorbs the whole deficit):
   // page links (Management, Settings) fold into the "More" menu below xl,
@@ -2182,6 +2182,12 @@ export function SeatMap({
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
        which captures the sticky header so it never pins to the viewport. */
     <div className="flex min-h-screen flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
+      <a
+        href="#planning-canvas"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"
+      >
+        Skip to seat map
+      </a>
       {/* z-50, not z-40: once sticky, the header's z-index is live and must
           outrank the z-40 canvas overlays (toasts, map menu) that follow it
           in DOM order, or they paint over the pinned bar and its menus. */}
@@ -2227,7 +2233,7 @@ export function SeatMap({
               </svg>
               Filter
               {structuredFilterCount > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{structuredFilterCount}</span>
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{structuredFilterCount}</span>
               )}
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--admin-chrome-muted)]">
                 <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -2279,7 +2285,7 @@ export function SeatMap({
                     document.querySelector<HTMLButtonElement>('[aria-label="Admin search results"] button')?.focus();
                   }
                 }}
-                placeholder="Search people or seats"
+                placeholder={SEAT_SEARCH_PLACEHOLDER}
                 className="h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
               />
               {search.trim() ? (
@@ -2293,7 +2299,7 @@ export function SeatMap({
                   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
               ) : searchShortcutHint ? (
-                <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[9px] font-semibold text-[var(--admin-chrome-muted)]">{searchShortcutHint}</kbd>
+                <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)]">{searchShortcutHint}</kbd>
               ) : null}
             </label>
           </div>
@@ -2313,8 +2319,8 @@ export function SeatMap({
               className={chromeToolbarBtn}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <path d="M6.5 8.5H12a3.5 3.5 0 0 1 0 7H8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M8.5 5.5 5 8.5l3.5 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M6.5 8.5H12a3.5 3.5 0 0 1 0 7H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M8.5 5.5 5 8.5l3.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Undo
             </button>
@@ -2327,19 +2333,19 @@ export function SeatMap({
               className={chromeToolbarBtn}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <path d="M13.5 8.5H8a3.5 3.5 0 0 0 0 7h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M11.5 5.5 15 8.5l-3.5 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M13.5 8.5H8a3.5 3.5 0 0 0 0 7h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M11.5 5.5 15 8.5l-3.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Redo
             </button>
             <button
               type="button"
               onClick={() => setShowNames(current => !current)}
-              aria-label={namesToggleLabel}
-              title={namesToggleLabel}
+              aria-pressed={showNames}
+              title="Show or hide occupant names on seat pills"
               className={showNames ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
             >
-              {namesToggleLabel}
+              Show names
             </button>
             <Link
               href="/admin/management"
@@ -2363,8 +2369,8 @@ export function SeatMap({
               className={chromeToolbarBtnCollapsibleXl}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.4" />
-                <path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
               Settings
             </Link>
@@ -2379,12 +2385,12 @@ export function SeatMap({
               className={askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <path d="M10 3.2 11.7 8 16.5 9.7 11.7 11.4 10 16.2 8.3 11.4 3.5 9.7 8.3 8 10 3.2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-                <path d="M15.6 3.4v3M14.1 4.9h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                <path d="M10 3.2 11.7 8 16.5 9.7 11.7 11.4 10 16.2 8.3 11.4 3.5 9.7 8.3 8 10 3.2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                <path d="M15.6 3.4v3M14.1 4.9h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
               Ask Planner
               {plannerHighlightedSeatIds.length > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
               )}
             </button>
             <div data-chrome-menu className="relative flex h-full shrink-0 items-center xl:hidden">
@@ -2408,7 +2414,7 @@ export function SeatMap({
                 {/* Badge mirrors the collapsed Ask Planner state, so it only
                     applies below lg where that tool lives in this menu. */}
                 {plannerHighlightedSeatIds.length > 0 && (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white lg:hidden">{plannerHighlightedSeatIds.length}</span>
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white lg:hidden">{plannerHighlightedSeatIds.length}</span>
                 )}
               </button>
               {chromeMenuOpen && (
@@ -2427,6 +2433,7 @@ export function SeatMap({
                 >
                   <button
                     type="button"
+                    aria-pressed={showNames}
                     onClick={() => {
                       setChromeMenuOpen(false);
                       setShowNames(current => !current);
@@ -2436,7 +2443,12 @@ export function SeatMap({
                     }}
                     className={[chromeMenuItem, "lg:hidden"].join(" ")}
                   >
-                    {namesToggleLabel}
+                    Show names
+                    {showNames && (
+                      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-primary)]">
+                        <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
                   </button>
                   <Link
                     href="/admin/management"
@@ -2447,6 +2459,10 @@ export function SeatMap({
                     }}
                     className={chromeMenuItem}
                   >
+                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                      <rect x="3" y="4" width="14" height="12" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M3 8h14M8.5 8v8" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
                     Management
                   </Link>
                   <Link
@@ -2458,6 +2474,10 @@ export function SeatMap({
                     }}
                     className={chromeMenuItem}
                   >
+                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                      <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
                     Settings
                   </Link>
                   <button
@@ -2472,9 +2492,13 @@ export function SeatMap({
                     }}
                     className={[chromeMenuItem, "lg:hidden"].join(" ")}
                   >
+                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                      <path d="M10 3.2 11.7 8 16.5 9.7 11.7 11.4 10 16.2 8.3 11.4 3.5 9.7 8.3 8 10 3.2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                      <path d="M15.6 3.4v3M14.1 4.9h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
                     Ask Planner
                     {plannerHighlightedSeatIds.length > 0 && (
-                      <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[10px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
+                      <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
                     )}
                   </button>
                 </div>
@@ -2518,10 +2542,10 @@ export function SeatMap({
               aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
               title={draftStatusTitle}
               className={[
-                "inline-flex h-10 shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white",
+                "inline-flex h-10 shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
                 publishSummary.hasChanges
-                  ? "bg-[var(--admin-primary)] text-[var(--admin-primary-ink)] hover:brightness-105 motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
-                  : "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"
+                  ? "bg-[var(--admin-primary)] text-[var(--admin-primary-ink)] hover:brightness-105 focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
+                  : "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:ring-[var(--admin-primary)]"
               ].join(" ")}
             >
               {publishSummary.hasChanges ? (
@@ -2532,7 +2556,8 @@ export function SeatMap({
               ) : (
                 <>
                   <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--admin-status-ok)]" />
-                  <span className="hidden sm:inline">Published</span>
+                  {/* Label from 480px up — only true phone widths get the dot alone. */}
+                  <span className="hidden min-[480px]:inline">Published</span>
                 </>
               )}
             </button>
@@ -2574,7 +2599,7 @@ export function SeatMap({
                     document.querySelector<HTMLButtonElement>('[aria-label="Admin search results"] button')?.focus();
                   }
                 }}
-                placeholder="Search people, seats, departments, or zones"
+                placeholder={SEAT_SEARCH_PLACEHOLDER}
                 className="h-11 w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] pl-11 pr-10 text-sm font-medium text-[var(--admin-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--admin-text-subtle)] hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
               />
               {search.trim() && (
@@ -2592,7 +2617,7 @@ export function SeatMap({
           </div>
 
       <main className={["grid grid-cols-1 gap-2 bg-[var(--admin-surface-muted)] p-2 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
-        <section aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden relative p-0.5 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
+        <section id="planning-canvas" tabIndex={-1} aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden relative p-0.5 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
           {staleDraftNotice && (
             <div role="alert" className={actionErrorBannerClassName}>
               {staleDraftNotice}

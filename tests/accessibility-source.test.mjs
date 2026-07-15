@@ -40,7 +40,7 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   // below lg), not an avatar-shaped icon link: the orange "A" chip looked
   // like an account control but navigated to data utilities.
   assert.doesNotMatch(source, /aria-label="Open settings"/);
-  assert.match(source, /href="\/admin\/settings"[\s\S]{0,600}Settings\s*<\/Link>/);
+  assert.match(source, /href="\/admin\/settings"[\s\S]{0,900}Settings\s*<\/Link>/);
   assert.match(source, /<span aria-hidden="true" className="mx-2\.5 flex h-\[26px\] w-\[26px\]/);
   assert.match(source, /aria-controls="ask-planner-drawer"/);
   assert.match(source, /aria-haspopup="dialog"/);
@@ -351,7 +351,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /setStatus\("all"\)/);
   // The map-pushing search hint card is removed; the input placeholder carries the guidance.
   assert.doesNotMatch(seatMapSource, /Search the draft map/);
-  assert.match(seatMapSource, /placeholder="Search people, seats, departments, or zones"/);
+  assert.match(seatMapSource, /placeholder=\{SEAT_SEARCH_PLACEHOLDER\}/);
   assert.match(seatMapSource, /function openSeatFromResults/);
   assert.match(seatMapSource, /queueCenterSeatInMap\(seatId\)/);
   assert.match(seatMapSource, /No search results/);
@@ -460,6 +460,37 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   const viewerSearchIndex = viewerSource.indexOf('role="search" aria-label="Viewer search"');
   assert.ok(viewerPanelIndex >= 0 && viewerSearchIndex >= 0, "viewer filter panel and search should remain source-visible");
   assert.ok(viewerPanelIndex < viewerSearchIndex, "viewer filter panel must precede the search in DOM order");
+});
+
+test("chrome copy is unified, the names toggle exposes state, and skip links reach the maps", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const searchLibSource = await readSource("../lib/viewerSeatSearch.ts");
+
+  // One placeholder everywhere: three diverging copies each claimed a
+  // different search scope. The shared string is short enough for the
+  // narrowest chrome input (longer copy ellipsized exactly the part it
+  // advertised); the full field enumeration lives on each input's sr-label.
+  assert.match(searchLibSource, /export const SEAT_SEARCH_PLACEHOLDER = "Search people or seats"/);
+  assert.equal((seatMapSource.match(/placeholder=\{SEAT_SEARCH_PLACEHOLDER\}/g) ?? []).length, 2, "both admin search inputs share the placeholder");
+  assert.match(viewerSource, /placeholder=\{SEAT_SEARCH_PLACEHOLDER\}/);
+  assert.doesNotMatch(seatMapSource, /placeholder="Search people/);
+  assert.doesNotMatch(viewerSource, /placeholder="Search people/);
+
+  // Show names is a real toggle: stable accessible name + aria-pressed. The
+  // old flipping label ("Hide names") with no pressed state left the current
+  // view invisible to assistive tech — and the More-menu item must keep a
+  // VISIBLE state cue too (sighted users lost the flipping label).
+  assert.equal((seatMapSource.match(/aria-pressed=\{showNames\}/g) ?? []).length, 2, "row button and More-menu item both expose pressed state");
+  assert.doesNotMatch(seatMapSource, /Hide names/);
+  assert.match(seatMapSource, /Show names\s*\{showNames && \(/);
+
+  // A skip link is the first focusable on both map surfaces, targeting a
+  // focusable map region — the chrome gauntlet is 8+ tab stops otherwise.
+  assert.match(seatMapSource, /href="#planning-canvas"[\s\S]{0,420}Skip to seat map/);
+  assert.match(seatMapSource, /id="planning-canvas" tabIndex=\{-1\}/);
+  assert.match(viewerSource, /href="#viewer-seat-map"[\s\S]{0,420}Skip to seat map/);
+  assert.match(viewerSource, /id="viewer-seat-map"/);
 });
 
 test("admin search clear controls use one clear path with distinct accessible names", async () => {

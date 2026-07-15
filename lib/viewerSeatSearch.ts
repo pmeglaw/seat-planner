@@ -1,5 +1,12 @@
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
+// One placeholder for every seat-search input (admin chrome, admin canvas
+// row, viewer): three diverging copies each claimed a different scope. Kept
+// short enough for the narrowest chrome input — longer copy ellipsized
+// exactly the tail it advertised. Each input's sr-label carries the full
+// field enumeration (all four result kinds below).
+export const SEAT_SEARCH_PLACEHOLDER = "Search people or seats";
+
 export type ViewerSearchResultKind = "person" | "seat" | "department" | "zone";
 
 export type ViewerSearchResult = {
