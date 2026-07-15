@@ -254,7 +254,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
       <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
         <h2 className="text-sm font-semibold text-[var(--admin-text-primary)]">CSV assignments</h2>
         <p className="mt-1 text-xs leading-5 text-[var(--admin-text-muted)]">
-          CSV imports update draft assignments only. Marker positions stay fixed.
+          Imports update draft assignments; seat positions don&apos;t move.
         </p>
         <div className="mt-3 space-y-2">
           <UtilityButton label="Blank CSV" description="Download assignment template" onClick={downloadTemplate} disabled={busy} />

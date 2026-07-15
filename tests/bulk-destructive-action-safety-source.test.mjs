@@ -77,6 +77,6 @@ test("management destructive actions use one in-app confirmation path", async ()
   assert.match(source, /Deactivation impact/);
   assert.match(source, /Department delete impact/);
   assert.match(source, /Zone delete impact/);
-  assert.match(source, /Published assignments are protected server-side/);
-  assert.match(source, /published viewer map is unchanged until publish/i);
+  assert.match(source, /The published map everyone sees won't change until you publish again/);
+  assert.match(source, /published map (everyone sees )?(won't|will not) change until you publish/i);
 });

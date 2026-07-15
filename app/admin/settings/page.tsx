@@ -45,7 +45,7 @@ export default async function AdminSettingsPage() {
         <header className="mb-6 border-b border-[var(--admin-border)] pb-4">
           <h1 className="text-xl font-semibold text-[var(--admin-text-primary)]">Settings</h1>
           <p className="mt-1 text-sm leading-5 text-[var(--admin-text-muted)]">
-            Gated utilities — imports, exports, and recovery run against the draft layer
+            Import, export, and recovery tools. Everything here changes the draft only — the published map is never touched until you publish.
           </p>
         </header>
 

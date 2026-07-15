@@ -258,8 +258,8 @@ export function AdminManagementPanel({
   const managementSummaryCards = [
     { label: "Draft seats", value: localSeats.length },
     { label: "Active employees", value: activeEmployees.length },
-    { label: "Assigned", value: assignedEmployees },
-    { label: "Unassigned", value: unassignedEmployees },
+    { label: "Assigned employees", value: assignedEmployees },
+    { label: "Unassigned employees", value: unassignedEmployees },
     { label: "Active zones", value: zoneNames.length }
   ];
   const fieldClassName = "w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]";
@@ -591,7 +591,7 @@ export function AdminManagementPanel({
         <header className="border-b border-[var(--admin-border)] pb-4">
           <h1 className="text-xl font-semibold text-[var(--admin-text-primary)]">Management</h1>
           <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--admin-text-muted)]">
-            Manage people, departments, zones, and publish audit visibility outside the daily seat-map workflow.
+            People, departments, zones, and publish history.
           </p>
         </header>
 
@@ -639,7 +639,7 @@ export function AdminManagementPanel({
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Employees</h2>
-                  <p className="text-sm text-[var(--admin-text-secondary)]">Search, edit, and deactivate employees without touching marker tools.</p>
+                  <p className="text-sm text-[var(--admin-text-secondary)]">Search, edit, and deactivate employees. Seat placement happens on the map.</p>
                 </div>
                 <input
                   value={search}
@@ -785,7 +785,7 @@ export function AdminManagementPanel({
                     Current draft seat: <span className="font-bold">{selectedEmployeeSeatLabel}</span>.
                     {selectedEmployeeSeatLabel === "Unassigned"
                       ? " Deactivation removes this employee from the active directory."
-                      : " Deactivation clears this draft assignment. Published assignments are protected server-side."}
+                      : " Deactivation clears this draft assignment. The published map everyone sees won't change until you publish again."}
                   </div>
                 </div>
               )}
@@ -1112,7 +1112,7 @@ export function AdminManagementPanel({
 
               <div className="border border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-ready-text)]">
                 {managementConfirm.kind === "employee"
-                  ? "Published assignments are protected server-side. Publish draft changes when ready."
+                  ? "The published map everyone sees won't change until you publish again. Publish draft changes when ready."
                   : managementConfirm.kind === "department"
                     ? "This changes employee metadata. Viewers keep seeing current people details until you publish. Seat assignments are unchanged."
                     : "This updates draft zone metadata only. The published viewer map is unchanged until publish."}
