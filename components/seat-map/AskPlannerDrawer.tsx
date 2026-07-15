@@ -294,7 +294,7 @@ export function AskPlannerDrawer({
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
           {!pending && !error && !response && (
             <section className="rounded-xl border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] p-3 text-sm leading-6 text-[#c6c6c6]">
-              Ask about saved draft seats, assignments, zones, or departments. Ask Planner can highlight supporting seats, but it cannot change the map.
+              Ask about seats, assignments, zones, or departments. Ask Planner can highlight supporting seats, but it cannot change the map.
             </section>
           )}
 
