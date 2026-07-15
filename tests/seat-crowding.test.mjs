@@ -19,7 +19,9 @@ const {
   CODE_PILL_CLEARANCE_PX,
   CODE_PILL_DEFAULT_CLEARANCE,
   clearanceFromScale,
-  computeCrowdedSeatIds
+  computeCrowdedSeatIds,
+  computeSeatDensityTiers,
+  computeNameLabelNudges
 } = await importTsModule("lib/seatCrowding.ts");
 
 test("adjacent seats inside the clearance box are both flagged", () => {
@@ -65,4 +67,223 @@ test("clearanceFromScale converts px clearance and falls back on degenerate scal
 test("empty and single-seat inputs return an empty set", () => {
   assert.equal(computeCrowdedSeatIds([]).size, 0);
   assert.equal(computeCrowdedSeatIds([{ id: "solo", x: 0.5, y: 0.5 }]).size, 0);
+});
+
+test("computeSeatDensityTiers flags a tight pitch as both crowded and dense", () => {
+  const seats = [
+    { id: "a", x: 0.5, y: 0.5 },
+    { id: "b", x: 0.52, y: 0.5 } // 0.02 pitch — well inside dense (0.6x) clearance
+  ];
+  const tiers = computeSeatDensityTiers(seats);
+  assert.deepEqual([...tiers.crowded].sort(), ["a", "b"]);
+  assert.deepEqual([...tiers.dense].sort(), ["a", "b"]);
+});
+
+test("computeSeatDensityTiers flags a looser pitch as crowded only, not dense", () => {
+  const seats = [
+    { id: "a", x: 0.5, y: 0.5 },
+    { id: "b", x: 0.535, y: 0.5 } // 0.035 pitch — inside crowded clearance, outside 0.6x dense clearance
+  ];
+  const tiers = computeSeatDensityTiers(seats);
+  assert.deepEqual([...tiers.crowded].sort(), ["a", "b"]);
+  assert.equal(tiers.dense.size, 0);
+});
+
+test("computeSeatDensityTiers dense set is always a subset of crowded", () => {
+  const seats = [
+    { id: "a", x: 0.5, y: 0.5 },
+    { id: "b", x: 0.52, y: 0.5 },
+    { id: "c", x: 0.8, y: 0.1 }
+  ];
+  const tiers = computeSeatDensityTiers(seats);
+  for (const id of tiers.dense) {
+    assert.ok(tiers.crowded.has(id), `${id} is dense but not crowded`);
+  }
+});
+
+test("computeSeatDensityTiers honors an explicit clearance override", () => {
+  const seats = [
+    { id: "a", x: 0.5, y: 0.5 },
+    { id: "b", x: 0.6, y: 0.5 }
+  ];
+  // Not crowded under the default clearance...
+  assert.equal(computeSeatDensityTiers(seats).crowded.size, 0);
+  // ...but crowded (and dense) under a wide explicit clearance.
+  const wide = computeSeatDensityTiers(seats, { x: 0.2, y: 0.2 });
+  assert.deepEqual([...wide.crowded].sort(), ["a", "b"]);
+  assert.deepEqual([...wide.dense].sort(), ["a", "b"]);
+});
+
+test("computeNameLabelNudges gives two colliding named seats distinct nudges", () => {
+  const seats = [
+    { id: "a", x: 0.5, y: 0.5 },
+    { id: "b", x: 0.52, y: 0.5 } // within default clearance
+  ];
+  const nudges = computeNameLabelNudges(seats, new Set(["a", "b"]), CODE_PILL_DEFAULT_CLEARANCE);
+  const nudgeA = nudges.get("a");
+  const nudgeB = nudges.get("b");
+  assert.notEqual(nudgeA, nudgeB);
+  assert.ok([nudgeA, nudgeB].includes(0));
+  const other = nudgeA === 0 ? nudgeB : nudgeA;
+  assert.ok([-1, 1].includes(other));
+});
+
+test("computeNameLabelNudges gives three colliding named seats in a row pairwise-distinct nudges", () => {
+  const seats = [
+    { id: "a", x: 0.5, y: 0.5 },
+    { id: "b", x: 0.52, y: 0.5 },
+    { id: "c", x: 0.54, y: 0.5 }
+  ];
+  const nudges = computeNameLabelNudges(seats, new Set(["a", "b", "c"]), CODE_PILL_DEFAULT_CLEARANCE);
+  const values = ["a", "b", "c"].map((id) => nudges.get(id));
+  assert.equal(new Set(values).size, 3, "expected all three nudges to be pairwise distinct");
+  for (const value of values) {
+    assert.ok([-1, 0, 1].includes(value));
+  }
+});
+
+test("computeNameLabelNudges gives 0 to a named seat that only collides with an unnamed seat", () => {
+  const seats = [
+    { id: "namedSeat", x: 0.5, y: 0.5 },
+    { id: "unnamedSeat", x: 0.52, y: 0.5 } // within clearance, but not named
+  ];
+  const nudges = computeNameLabelNudges(seats, new Set(["namedSeat"]), CODE_PILL_DEFAULT_CLEARANCE);
+  assert.equal(nudges.get("namedSeat") ?? 0, 0);
+  assert.equal(nudges.has("unnamedSeat"), false);
+});
+
+test("computeNameLabelNudges returns an empty map when no seats are named", () => {
+  const seats = [
+    { id: "a", x: 0.5, y: 0.5 },
+    { id: "b", x: 0.52, y: 0.5 }
+  ];
+  const nudges = computeNameLabelNudges(seats, new Set(), CODE_PILL_DEFAULT_CLEARANCE);
+  assert.equal(nudges.size, 0);
+});
+
+test("computeNameLabelNudges never mutates the input seats", () => {
+  const seats = [
+    { id: "a", x: 0.5, y: 0.5 },
+    { id: "b", x: 0.52, y: 0.5 }
+  ];
+  const snapshot = JSON.parse(JSON.stringify(seats));
+  computeNameLabelNudges(seats, new Set(["a", "b"]), CODE_PILL_DEFAULT_CLEARANCE);
+  assert.deepEqual(seats, snapshot);
+});
+
+function assertCollidingPairsDistinct(seats, clearance, nudges) {
+  for (let i = 0; i < seats.length; i += 1) {
+    for (let j = i + 1; j < seats.length; j += 1) {
+      const a = seats[i];
+      const b = seats[j];
+      const colliding = Math.abs(a.x - b.x) < clearance.x && Math.abs(a.y - b.y) < clearance.y;
+      if (colliding) {
+        assert.notEqual(
+          nudges.get(a.id),
+          nudges.get(b.id),
+          `expected distinct nudges for colliding pair ${a.id}/${b.id}`
+        );
+      }
+    }
+  }
+}
+
+test("computeNameLabelNudges is collision-aware, not just positional (reviewer counterexample)", () => {
+  // A(0,0), B(0.05,0.001), C(0.02,0.002), D(0.03,0.003) under default clearance
+  // {x:0.044,y:0.024}. Collision edges: A-C, A-D, B-C, B-D, C-D (NOT A-B).
+  // A positional [0,-1,1] pattern by sorted (y,x) order (A,B,C,D) assigns
+  // [0,-1,1,0] — A and D share nudge 0 despite actually colliding.
+  const seats = [
+    { id: "A", x: 0, y: 0 },
+    { id: "B", x: 0.05, y: 0.001 },
+    { id: "C", x: 0.02, y: 0.002 },
+    { id: "D", x: 0.03, y: 0.003 }
+  ];
+  const clearance = CODE_PILL_DEFAULT_CLEARANCE;
+  const nudges = computeNameLabelNudges(seats, new Set(["A", "B", "C", "D"]), clearance);
+  assertCollidingPairsDistinct(seats, clearance, nudges);
+});
+
+test("computeNameLabelNudges handles a non-collinear 2D cluster pairwise-distinctly", () => {
+  // n1/n2/n3 form a mutually-colliding triangle (max clique = 3, exactly the
+  // palette size); n4 collides only with n3. Not collinear: n1/n2 share y=0,
+  // n3 is offset vertically, n4 is offset further in both x and y.
+  const clearance = { x: 0.044, y: 0.024 };
+  const seats = [
+    { id: "n1", x: 0, y: 0 },
+    { id: "n2", x: 0.02, y: 0 },
+    { id: "n3", x: 0, y: 0.01 },
+    { id: "n4", x: 0.02, y: 0.03 }
+  ];
+  const nudges = computeNameLabelNudges(seats, new Set(["n1", "n2", "n3", "n4"]), clearance);
+  assertCollidingPairsDistinct(seats, clearance, nudges);
+});
+
+test("computeNameLabelNudges: excluded seats don't influence coloring — 4-clique minus one named stays pairwise-distinct", () => {
+  // Contract pin for the SeatMap fix (fix/pill-legibility-crowding): the
+  // caller's namedSeatIds must contain only seats that actually render name
+  // labels (e.g. NOT dimmed seats). With all 4 members of a mutual clique
+  // named, the 3-value palette is exhausted and the least-used fallback may
+  // hand two seats the same nudge; with one member excluded, the remaining
+  // 3 named seats must get pairwise-distinct nudges and the excluded seat
+  // must receive no nudge at all.
+  // This is a generic lib-level contract (the "excluded" member is just an
+  // id absent from namedSeatIds) — it equally pins the round-2 fix, where
+  // SeatMap excludes a selected/dragging/swap-source/swap-target seat (which
+  // SeatMarker's nameNudgeApplicable never nudges) from namedSeatIdSet.
+  const clearance = { x: 0.05, y: 0.05 };
+  const seats = [
+    { id: "dimmedSeat", x: 0.5, y: 0.5 },
+    { id: "a", x: 0.51, y: 0.5 },
+    { id: "b", x: 0.52, y: 0.51 },
+    { id: "c", x: 0.51, y: 0.51 }
+  ];
+  // Sanity: all four seats mutually collide (a true 4-clique).
+  for (let i = 0; i < seats.length; i += 1) {
+    for (let j = i + 1; j < seats.length; j += 1) {
+      assert.ok(
+        Math.abs(seats[i].x - seats[j].x) < clearance.x &&
+          Math.abs(seats[i].y - seats[j].y) < clearance.y,
+        `fixture broken: ${seats[i].id}/${seats[j].id} should collide`
+      );
+    }
+  }
+  const nudges = computeNameLabelNudges(seats, new Set(["a", "b", "c"]), clearance);
+  assert.equal(nudges.has("dimmedSeat"), false, "excluded seat must not be nudged");
+  const values = ["a", "b", "c"].map((id) => nudges.get(id));
+  assert.equal(new Set(values).size, 3, "expected the three named seats to be pairwise distinct");
+  for (const value of values) {
+    assert.ok([-1, 0, 1].includes(value));
+  }
+});
+
+test("computeNameLabelNudges is input-order invariant, including tied coordinates", () => {
+  const clearance = CODE_PILL_DEFAULT_CLEARANCE;
+  const baseSeats = [
+    { id: "A", x: 0, y: 0 },
+    { id: "B", x: 0.05, y: 0.001 },
+    { id: "C", x: 0.02, y: 0.002 },
+    { id: "D", x: 0.03, y: 0.003 },
+    // Two seats sharing identical coordinates, distinguished only by id.
+    { id: "E", x: 0.5, y: 0.5 },
+    { id: "F", x: 0.5, y: 0.5 }
+  ];
+  const namedIds = new Set(baseSeats.map((seat) => seat.id));
+  const baseline = computeNameLabelNudges(baseSeats, namedIds, clearance);
+
+  const shuffled = [
+    baseSeats[4],
+    baseSeats[2],
+    baseSeats[5],
+    baseSeats[0],
+    baseSeats[3],
+    baseSeats[1]
+  ];
+  const shuffledResult = computeNameLabelNudges(shuffled, namedIds, clearance);
+
+  assert.deepEqual(
+    [...shuffledResult.entries()].sort(),
+    [...baseline.entries()].sort(),
+    "expected identical nudge assignment regardless of input array order"
+  );
 });

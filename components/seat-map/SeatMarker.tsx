@@ -18,6 +18,15 @@ type SeatMarkerProps = {
   // this one at the current scale, so the resting code token drops its
   // min-width and tightens padding. Hover/selected treatments are unchanged.
   crowdedCode?: boolean;
+  // Tighter tier below crowdedCode (lib/seatCrowding computeSeatDensityTiers):
+  // pods dense enough that even the crowdedCode treatment still overlaps get
+  // a further micro pill. Hover disclosure still reveals the full code.
+  denseCode?: boolean;
+  // Render-layer collision nudge for name-mode labels (lib/seatCrowding
+  // computeNameLabelNudges): translates the TOKEN vertically so two
+  // colliding name pills don't render on top of each other. The marker
+  // anchor (seat position) never moves.
+  nameNudge?: -1 | 0 | 1;
   moveSeatMode: boolean;
   swapMode: boolean;
   swapSource: boolean;
@@ -102,6 +111,8 @@ export function SeatMarker({
   draftChanged = false,
   compactNameLabel,
   crowdedCode = false,
+  denseCode = false,
+  nameNudge = 0,
   moveSeatMode,
   swapMode,
   swapSource,
@@ -174,9 +185,9 @@ export function SeatMarker({
             ? "border-[var(--admin-marker-unavailable-border)] bg-[var(--admin-marker-unavailable-surface)] text-[var(--admin-marker-unavailable-text)]"
             : "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)]"
       : seat.status === "assigned"
-        ? "border-[#B7AB9E]/85 bg-[#FFFDF8]/95 text-[#14171A]"
+        ? "border-[#1F7A55]/45 bg-[#E8F3EC]/95 text-[#156045]"
         : seat.status === "reserved"
-          ? "border-[#A26E23]/60 bg-[#F2E4C8]/95 text-[#67430F]"
+          ? "border-[#9A6418]/55 bg-[#FCF0D9]/95 text-[#6D4712]"
           : seat.status === "unavailable"
             ? "border-[#C8BFB3]/90 bg-[#E8E2DA]/[0.92] text-[#655E56]"
             : "border-[#AEB4BA]/95 bg-[#F2F2F3]/95 text-[#44494C]";
@@ -200,7 +211,7 @@ export function SeatMarker({
       : draftChanged && !selected && !searchProminent
         ? "bg-[#A26E23]"
         : seat.status === "assigned"
-        ? "bg-[#3F6F59]/85"
+        ? "bg-[#1F7A55]/85"
         : seat.status === "reserved"
           ? "bg-[#9A6418]/80"
           : seat.status === "unavailable"
@@ -230,9 +241,11 @@ export function SeatMarker({
             "group-hover:w-[124px] group-hover:max-w-[124px] group-focus-visible:w-[124px] group-focus-visible:max-w-[124px]"
           ].filter(Boolean).join(" ")
           : [
-            crowdedCode
-              ? "h-[22px] min-h-[22px] min-w-0 rounded-[8px] px-1.5 py-0 pl-2 text-center"
-              : "h-[24px] min-h-[24px] min-w-[34px] rounded-[9px] px-2 py-0 pl-2.5 text-center",
+            denseCode
+              ? "h-[18px] min-h-[18px] min-w-0 rounded-[7px] px-1 text-[8.5px]"
+              : crowdedCode
+                ? "h-[22px] min-h-[22px] min-w-0 rounded-[8px] px-1.5 py-0 pl-2 text-center"
+                : "h-[24px] min-h-[24px] min-w-[34px] rounded-[9px] px-2 py-0 pl-2.5 text-center",
             hasHoverDisclosure ? "group-hover:min-w-[96px] group-hover:rounded-[12px] group-hover:px-2.5 group-hover:pl-3.5 group-hover:text-left group-focus-visible:min-w-[96px] group-focus-visible:rounded-[12px] group-focus-visible:px-2.5 group-focus-visible:pl-3.5 group-focus-visible:text-left" : ""
           ].filter(Boolean).join(" ");
 
@@ -301,12 +314,27 @@ export function SeatMarker({
   const tokenCanHugViewportEdge = showInlineName || prominentToken;
   const resolvedViewportEdge = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? "none" : viewportEdge;
   const resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? 0 : Math.max(0, Math.round(viewportEdgeOffsetPx));
+  // Render-layer name-label collision nudge (lib/seatCrowding
+  // computeNameLabelNudges): only ever a vertical offset added on top of the
+  // existing centering translate on the TOKEN — the marker anchor (button,
+  // positioned via pointToStyle at seat.x/seat.y) never moves. It applies to
+  // resting name-bearing tokens: "name" mode (admin Show-names) and passive
+  // "prominent" pills (viewer search results show names via prominent mode,
+  // not name mode, because viewers have no Show-names). Active markers
+  // (selected / dragging / swap) always stay exactly on their anchor.
+  const nameNudgeApplicable = tokenMode === "name" || (tokenMode === "prominent" && !activeMarker);
+  const nameNudgeActive = nameNudgeApplicable && nameNudge !== 0;
+  const tokenVerticalTranslateClass = !nameNudgeActive
+    ? "-translate-y-1/2"
+    : nameNudge === -1
+      ? "-translate-y-[calc(50%+14px)]"
+      : "-translate-y-[calc(50%-14px)]";
   const tokenPositionClass =
     resolvedViewportEdge === "left"
-      ? "absolute top-1/2 translate-x-0 -translate-y-1/2"
+      ? `absolute top-1/2 translate-x-0 ${tokenVerticalTranslateClass}`
       : resolvedViewportEdge === "right"
-        ? "absolute top-1/2 translate-x-0 -translate-y-1/2"
-        : "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2";
+        ? `absolute top-1/2 translate-x-0 ${tokenVerticalTranslateClass}`
+        : `absolute left-1/2 top-1/2 -translate-x-1/2 ${tokenVerticalTranslateClass}`;
   const tokenPositionStyle: CSSProperties | undefined =
     resolvedViewportEdge === "left"
       ? { left: `calc(50% + ${resolvedViewportEdgeOffsetPx}px)` }
@@ -385,7 +413,7 @@ export function SeatMarker({
         )}
         {tokenMode === "code" ? (
           <span className="relative z-10 flex min-w-0 items-center justify-center gap-1 group-hover:justify-start group-focus-visible:justify-start">
-            <span className={["whitespace-nowrap font-extrabold leading-[1.05]", crowdedCode ? "text-[9px]" : "text-[9.5px]"].join(" ")}>{seat.label}</span>
+            <span className={["whitespace-nowrap font-extrabold leading-[1.05]", denseCode ? "text-[8.5px]" : crowdedCode ? "text-[9px]" : "text-[9.5px]"].join(" ")}>{seat.label}</span>
             {employeeName && (
               <span className="hidden max-w-[64px] truncate text-[9px] font-bold leading-[1.05] opacity-90 group-hover:block group-focus-visible:block">
                 {compactEmployeeName}

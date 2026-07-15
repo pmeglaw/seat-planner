@@ -44,3 +44,124 @@ export function computeCrowdedSeatIds<T extends { id: string; x: number; y: numb
   }
   return crowded;
 }
+
+// Density tiers layered on top of crowding: `crowded` is exactly what
+// computeCrowdedSeatIds flags today; `dense` is the tighter subset (0.6x the
+// clearance on both axes) where pills overlap so much a smaller/compact
+// treatment is warranted, not just a nudge.
+export type SeatDensityTiers = { crowded: Set<string>; dense: Set<string> };
+
+const DENSE_CLEARANCE_FACTOR = 0.6;
+
+export function computeSeatDensityTiers<T extends { id: string; x: number; y: number }>(
+  seats: ReadonlyArray<T>,
+  clearance: CrowdingClearance = CODE_PILL_DEFAULT_CLEARANCE
+): SeatDensityTiers {
+  const crowded = computeCrowdedSeatIds(seats, clearance);
+  const denseClearance: CrowdingClearance = {
+    x: clearance.x * DENSE_CLEARANCE_FACTOR,
+    y: clearance.y * DENSE_CLEARANCE_FACTOR
+  };
+  const dense = new Set<string>();
+  for (let i = 0; i < seats.length; i += 1) {
+    for (let j = i + 1; j < seats.length; j += 1) {
+      if (
+        Math.abs(seats[i].x - seats[j].x) < denseClearance.x &&
+        Math.abs(seats[i].y - seats[j].y) < denseClearance.y
+      ) {
+        dense.add(seats[i].id);
+        dense.add(seats[j].id);
+      }
+    }
+  }
+  return { crowded, dense };
+}
+
+// Deterministic name-label nudge assignment: only named seats participate in
+// collision clustering (an unnamed neighbour's position is irrelevant to
+// whether two visible name labels overlap). This is a greedy graph-coloring
+// over the actual pairwise collision edges among named seats, NOT a
+// positional pattern — a positional "every 3rd seat by sort order" scheme can
+// assign the same nudge to two seats that actually collide whenever a
+// cluster isn't a simple chain (e.g. a seat colliding with two different
+// same-valued neighbors that don't collide with each other). Seats are
+// visited in a fully deterministic order (y, then x, then id as a final
+// tiebreaker so tied coordinates don't fall back to input order) and each
+// seat takes the first nudge value not already used by any
+// previously-visited seat it actually collides with. If a seat has 3+
+// already-colored colliding neighbors covering all of [0, -1, 1] (typically
+// triggered by 4+ mutually-colliding named seats; greedy order can rarely
+// exhaust the palette without a literal 4-clique), there is no fully-distinct
+// value left — as a best effort we fall back to whichever value is least
+// represented among those colliding neighbors, breaking ties by palette
+// order for determinism.
+// Never mutates the input seats — reads coordinates only.
+export function computeNameLabelNudges<T extends { id: string; x: number; y: number }>(
+  seats: ReadonlyArray<T>,
+  namedSeatIds: ReadonlySet<string>,
+  clearance: CrowdingClearance
+): Map<string, -1 | 0 | 1> {
+  const nudges = new Map<string, -1 | 0 | 1>();
+  const named = seats.filter((seat) => namedSeatIds.has(seat.id));
+  if (named.length === 0) {
+    return nudges;
+  }
+
+  const sorted = [...named].sort((a, b) => {
+    if (a.y !== b.y) {
+      return a.y - b.y;
+    }
+    if (a.x !== b.x) {
+      return a.x - b.x;
+    }
+    if (a.id < b.id) {
+      return -1;
+    }
+    if (a.id > b.id) {
+      return 1;
+    }
+    return 0;
+  });
+
+  const collides = (a: T, b: T): boolean =>
+    Math.abs(a.x - b.x) < clearance.x && Math.abs(a.y - b.y) < clearance.y;
+
+  const palette: ReadonlyArray<-1 | 0 | 1> = [0, -1, 1];
+
+  for (let i = 0; i < sorted.length; i += 1) {
+    const seat = sorted[i];
+    const neighborUsage = new Map<-1 | 0 | 1, number>();
+    for (let j = 0; j < i; j += 1) {
+      const neighbor = sorted[j];
+      if (!collides(seat, neighbor)) {
+        continue;
+      }
+      const neighborNudge = nudges.get(neighbor.id);
+      if (neighborNudge !== undefined) {
+        neighborUsage.set(neighborNudge, (neighborUsage.get(neighborNudge) ?? 0) + 1);
+      }
+    }
+
+    const free = palette.find((value) => !neighborUsage.has(value));
+    if (free !== undefined) {
+      nudges.set(seat.id, free);
+      continue;
+    }
+
+    // All three values are already used by colliding, previously-assigned
+    // neighbors — pick the least-used one among them (best effort; see
+    // comment above the function).
+    let fallback: -1 | 0 | 1 = palette[0];
+    let fallbackCount = Number.POSITIVE_INFINITY;
+    for (const value of palette) {
+      const count = neighborUsage.get(value) ?? 0;
+      if (count < fallbackCount) {
+        fallbackCount = count;
+        fallback = value;
+      }
+    }
+    nudges.set(seat.id, fallback);
+  }
+
+  return nudges;
+}
