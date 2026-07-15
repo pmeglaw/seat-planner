@@ -118,6 +118,14 @@ const INSPECTOR_FORM_ID = "seat-inspector-form";
 const MAP_ZOOM_MIN = 0.6;
 const MAP_ZOOM_MAX = 2;
 const MAP_ZOOM_STEP = 0.2;
+// Below this width the inspector overlays as a fixed bottom sheet (max-h 60vh,
+// SeatInspector.tsx) instead of docking as a width-reserving side panel — the
+// `panel` breakpoint referenced throughout the seat-centering logic below.
+const SEAT_CENTER_PANEL_BREAKPOINT_PX = 900;
+// Default vertical anchor (fraction of viewport height from the top) used to
+// center a selected seat below the panel breakpoint, so the seat lands in the
+// visible strip above the 60vh bottom sheet instead of underneath it.
+const SEAT_CENTER_SHEET_ANCHOR = 0.28;
 
 function clampScrollPosition(value: number, max: number) {
   return Math.min(Math.max(value, 0), Math.max(max, 0));
@@ -1430,11 +1438,22 @@ export function SeatMap({
     setMoveSeatMode(false);
   }
 
+  // Every seat-centering path (results "Show on map", guard-action selection,
+  // and the selection-change effect below) funnels through this one function,
+  // so they all resolve the same anchor for the same selection — that's what
+  // makes two callers racing to center the same seat harmless (they land on
+  // the same target instead of fighting over it). Callers only need to pass
+  // an explicit verticalViewportAnchor when they want to override the default.
   const centerSeatInMap = useCallback((seatId: string, options?: { verticalViewportAnchor?: number }) => {
     const seat = localSeats.find(item => item.id === seatId);
     if (!seat) return;
     const point = savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat);
-    scrollMapToPoint(point.x, point.y, options);
+    const verticalViewportAnchor = options?.verticalViewportAnchor ?? (
+      window.matchMedia(`(min-width: ${SEAT_CENTER_PANEL_BREAKPOINT_PX}px)`).matches
+        ? 0.5
+        : SEAT_CENTER_SHEET_ANCHOR
+    );
+    scrollMapToPoint(point.x, point.y, { verticalViewportAnchor });
   }, [localSeats, scrollMapToPoint]);
 
   function fitSeatsInMap(seatsToFit: SeatWithEmployee[]) {
@@ -1466,25 +1485,35 @@ export function SeatMap({
   }, [centerSeatInMap]);
 
   // At >=900px (the `panel` breakpoint) the inspector docks and reserves layout
-  // width, so a selected seat can never sit hidden under it — no nudge scrolling
-  // needed there. Below that width the inspector overlays as a fixed bottom sheet
-  // (max-h 60vh, SeatInspector.tsx), so a newly-selected seat can land underneath
-  // it; pan the seat into the visible strip above the sheet on selection change.
+  // width, so a selected seat can never sit hidden under it — no pan needed
+  // there, so this effect stays a no-op (guarded below). Below that width the
+  // inspector overlays as a fixed bottom sheet (max-h 60vh, SeatInspector.tsx),
+  // so pan the seat into the visible strip above it on selection change.
+  //
+  // No anchor is passed here: centerSeatInMap resolves the default itself
+  // (matchMedia against the same panel breakpoint) so this effect and every
+  // other seat-centering caller (queueCenterSeatInMap — used by results "Show
+  // on map" and the guard-action "select-seat" branch) agree on the same
+  // target for the same seat. That's what makes it safe for two of these
+  // callers to race on the same selection: whichever `scrollTo` lands last
+  // still lands on the identical anchor, so the race is harmless instead of
+  // silently overriding one caller's intended anchor with another's.
   useEffect(() => {
     if (!selectedSeatId) return;
-    if (window.matchMedia("(min-width: 900px)").matches) return;
+    if (window.matchMedia(`(min-width: ${SEAT_CENTER_PANEL_BREAKPOINT_PX}px)`).matches) return;
     const frame = requestAnimationFrame(() => {
-      centerSeatInMap(selectedSeatId, { verticalViewportAnchor: 0.28 });
+      centerSeatInMap(selectedSeatId);
     });
     return () => cancelAnimationFrame(frame);
-    // Pan on selection change only; centerSeatInMap re-resolves the current seat
-    // by id from localSeats each call, so we intentionally don't depend on the
-    // seats array identity (which churns on unrelated edits) to avoid re-panning
-    // mid-edit.
+    // Pan on selection change only. centerSeatInMap is intentionally omitted:
+    // it's a useCallback that closes over localSeats, so its identity churns
+    // on unrelated seat edits — depending on it would re-run this effect (and
+    // re-pan the viewport) mid-edit whenever localSeats changes, not just when
+    // the selection changes. centerSeatInMap re-resolves the current seat by
+    // id at fire time, so omitting it from deps doesn't risk staleness.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSeatId]);
 
-  // Explicit navigation (results "Show on map") still centers via queueCenterSeatInMap.
   function seatPersonLabel(seat: SeatWithEmployee | null) {
     return seat?.employee?.full_name ?? "Open";
   }
