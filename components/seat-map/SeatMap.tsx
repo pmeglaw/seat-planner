@@ -2286,7 +2286,7 @@ export function SeatMap({
                   }
                 }}
                 placeholder={SEAT_SEARCH_PLACEHOLDER}
-                className="h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
+                className="h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
               />
               {search.trim() ? (
                 <button
@@ -2345,6 +2345,10 @@ export function SeatMap({
               title="Show or hide occupant names on seat pills"
               className={showNames ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
             >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                <path d="M2.5 10S5.3 5.5 10 5.5 17.5 10 17.5 10s-2.8 4.5-7.5 4.5S2.5 10 2.5 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                <circle cx="10" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
               Show names
             </button>
             <Link
@@ -2443,6 +2447,10 @@ export function SeatMap({
                     }}
                     className={[chromeMenuItem, "lg:hidden"].join(" ")}
                   >
+                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                      <path d="M2.5 10S5.3 5.5 10 5.5 17.5 10 17.5 10s-2.8 4.5-7.5 4.5S2.5 10 2.5 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                      <circle cx="10" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
                     Show names
                     {showNames && (
                       <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-primary)]">
