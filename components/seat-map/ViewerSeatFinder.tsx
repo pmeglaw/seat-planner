@@ -114,6 +114,7 @@ export function ViewerSeatFinder({
   const mapRef = useRef<HTMLDivElement | null>(null);
   const panStateRef = useRef<ViewerPanState>(null);
   const filterRootRef = useRef<HTMLDivElement | null>(null);
+  const filterTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const publishedSeats = useMemo(() => seats.map(normalizeSeat), [seats]);
   const visualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
@@ -532,6 +533,7 @@ export function ViewerSeatFinder({
             inside the group so the open menu butts directly against the button. */}
         <div ref={filterRootRef} className="relative mr-2 flex h-[26px] min-w-0 flex-1 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[340px]">
           <button
+            ref={filterTriggerRef}
             type="button"
             onClick={() => setFilterOpen(current => !current)}
             aria-expanded={filterOpen}
@@ -606,6 +608,7 @@ export function ViewerSeatFinder({
                 zones={zones}
                 activeChips={activeFilterChips}
                 panelId="viewer-filter-panel"
+                returnFocusRef={filterTriggerRef}
                 onClose={() => setFilterOpen(false)}
                 onDepartmentChange={setDepartment}
                 onZoneChange={setZone}
@@ -778,7 +781,7 @@ export function ViewerSeatFinder({
       {resultsPanelOpen && (
         <aside
           aria-labelledby="viewer-results-title"
-          className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-[var(--admin-elevation-3-shadow)] panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3 panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
             <h2 id="viewer-results-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Results</h2>

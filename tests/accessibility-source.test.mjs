@@ -381,6 +381,35 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /onShowOnMap=\{queueCenterSeatInMap\}/);
 });
 
+test("popovers restore trigger focus when a close unmounts the focused element", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const filterSource = await readSource("../components/seat-map/FilterPanel.tsx");
+  const helperSource = await readSource("../components/ui/returnFocus.ts");
+
+  // One shared mechanism: closing a popover from keyboard (or activating a
+  // menu item) unmounts the focused element, which strands keyboard focus on
+  // <body> (live-verified on prod 2026-07-14). The deferred helper is the
+  // single home for the restore.
+  assert.match(helperSource, /export function returnFocusAfterClose/);
+  assert.match(helperSource, /setTimeout\(\(\) => trigger\.current\?\.focus\(\), 0\)/);
+
+  // FilterPanel owns its Escape contract on BOTH surfaces: close, then
+  // restore the caller-supplied trigger.
+  assert.match(filterSource, /onKeyDown=\{event => \{\s*if \(event\.key === "Escape"\) \{[\s\S]{0,220}onClose\(\);[\s\S]{0,200}returnFocusAfterClose\(returnFocusRef\)/);
+  for (const source of [seatMapSource, viewerSource]) {
+    assert.match(source, /ref=\{filterTriggerRef\}/);
+    assert.match(source, /returnFocusRef=\{filterTriggerRef\}/);
+  }
+
+  // The chrome ⋯ More menu and the map ⋯ actions menu return focus to their
+  // triggers on Escape.
+  assert.match(seatMapSource, /ref=\{chromeMenuButtonRef\}/);
+  assert.match(seatMapSource, /setChromeMenuOpen\(false\);[\s\S]{0,90}returnFocusAfterClose\(chromeMenuButtonRef\)/);
+  assert.match(seatMapSource, /ref=\{mapMenuButtonRef\}/);
+  assert.match(seatMapSource, /setMapMenuOpen\(false\);[\s\S]{0,90}returnFocusAfterClose\(mapMenuButtonRef\)/);
+});
+
 test("admin search clear controls use one clear path with distinct accessible names", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");

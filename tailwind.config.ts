@@ -83,6 +83,13 @@ const config: Config = {
       },
       boxShadow: {
         soft: "0 18px 50px rgba(15, 23, 42, 0.16)",
+        // Elevation tiers must be NAMED utilities: Tailwind v3 drops arbitrary
+        // shadow-[var(--…)] candidates (box-shadow vs shadow-color ambiguity),
+        // so that form silently ships box-shadow: none.
+        "elevation-2": "var(--admin-elevation-2-shadow)",
+        "elevation-3": "var(--admin-elevation-3-shadow)",
+        "elevation-4": "var(--admin-elevation-4-shadow)",
+        panel: "var(--admin-shadow-panel)",
         "sp-raised": "var(--sp-shadow-raised)",
         "sp-floating": "var(--sp-shadow-floating)",
         "sp-sheet": "var(--sp-shadow-sheet)",

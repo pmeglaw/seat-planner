@@ -248,6 +248,9 @@ export function SeatMarker({
       ? searchSelected || moveOrigin
         ? ""
         : adminMarker
+          // KNOWN NO-OP: Tailwind v3 drops the arbitrary var()-shadow form, so the
+          // selected/hover marker shadows never render. Restoring them changes every
+          // pill's look — deferred owner call (see tests/elevation-shadow-tokens-source.test.mjs).
           ? "border-[var(--admin-marker-selected-border)] bg-[var(--admin-marker-selected-surface)] text-[var(--admin-marker-selected-text)] ring-2 ring-[var(--admin-marker-selected-border)] shadow-[var(--admin-marker-selected-shadow)]"
           : "border-[#D46A24] bg-[#171A1D] text-white ring-2 ring-[#D46A24]/90 shadow-[0_10px_24px_rgba(31,35,39,0.30),inset_0_1px_0_rgba(255,255,255,0.16)]"
       : "",
@@ -282,6 +285,8 @@ export function SeatMarker({
     : "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#D46A24]/75 focus-visible:ring-offset-2 focus-visible:ring-offset-white/70";
   // Teal hover is a transient cue: it must never repaint a committed (selected) seat's
   // orange ring, so the hover border applies only to unselected markers.
+  // (The var()-based group-hover shadow below is a KNOWN NO-OP — see the note
+  // on the selected-state classes above.)
   const tokenInteractionClass = adminMarker
     ? `transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out ${selected ? "" : "group-hover:border-[var(--admin-marker-hover-border)] "}group-hover:brightness-105 group-hover:shadow-[var(--admin-marker-hover-shadow)] group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--admin-marker-focus-ring)] motion-reduce:transition-none`
     : "transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out group-hover:border-[#D46A24] group-hover:brightness-105 group-hover:shadow-[0_6px_14px_rgba(23,26,29,0.20),inset_0_1px_0_rgba(255,255,255,0.82)] group-active:shadow-[0_2px_6px_rgba(23,26,29,0.16),inset_0_2px_4px_rgba(23,26,29,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[#D46A24]/75 motion-reduce:transition-none";
