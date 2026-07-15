@@ -36,12 +36,13 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /Planning canvas/);
   assert.match(source, /aria-label="Seat status legend"/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
-  // Settings is a labeled command-row destination (with a More-menu twin
-  // below lg), not an avatar-shaped icon link: the orange "A" chip looked
-  // like an account control but navigated to data utilities.
-  assert.doesNotMatch(source, /aria-label="Open settings"/);
-  assert.match(source, /href="\/admin\/settings"[\s\S]{0,900}Settings\s*<\/Link>/);
-  assert.match(source, /<span aria-hidden="true" className="mx-2\.5 flex h-\[26px\] w-\[26px\]/);
+  // Settings lives behind the identity chip (owner preference — data
+  // utilities are management-adjacent, not a peer nav item). The avatar shape
+  // doesn't announce its purpose, so the chip link MUST stay labeled and
+  // route through the unsaved-edits guard; the viewer keeps a decorative twin.
+  assert.match(source, /aria-label="Open settings"/);
+  assert.match(source, /<Link\s+href="\/admin\/settings"\s+aria-label="Open settings"[\s\S]{0,400}beforeAdminPageNavigation\("\/admin\/settings", "Settings"\)[\s\S]{0,600}>\s*A\s*<\/Link>/);
+  assert.doesNotMatch(source, /className=\{chromeToolbarBtnCollapsibleXl\}[\s\S]{0,220}Settings\s*<\/Link>/);
   assert.match(source, /aria-controls="ask-planner-drawer"/);
   assert.match(source, /aria-haspopup="dialog"/);
   assert.match(source, /No map changes to undo/);

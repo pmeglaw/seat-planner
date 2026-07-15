@@ -2359,24 +2359,12 @@ export function SeatMap({
               className={chromeToolbarBtnCollapsibleXl}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <rect x="3" y="4.5" width="14" height="11" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M3 8.2h14M3 11.8h14" stroke="currentColor" strokeWidth="1.5" />
+                <circle cx="7" cy="7.5" r="2.4" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M2.8 16v-.6a4.2 4.2 0 0 1 8.4 0v.6" stroke="currentColor" strokeWidth="1.5" />
+                <circle cx="14" cy="6.6" r="1.9" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M13 10.4a3.6 3.6 0 0 1 4.2 3.4v.6" stroke="currentColor" strokeWidth="1.5" />
               </svg>
               Management
-            </Link>
-            <Link
-              href="/admin/settings"
-              title="Settings — data utilities and recovery"
-              onClick={event => {
-                if (!beforeAdminPageNavigation("/admin/settings", "Settings")) event.preventDefault();
-              }}
-              className={chromeToolbarBtnCollapsibleXl}
-            >
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              Settings
             </Link>
             <button
               ref={askPlannerButtonRef}
@@ -2388,8 +2376,8 @@ export function SeatMap({
               onClick={openAskPlannerDrawer}
               className={askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
             >
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <path d="M10 3 11.9 8.1 17 10 11.9 11.9 10 17 8.1 11.9 3 10 8.1 8.1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5">
+                <path d="M10 3 11.9 8.1 17 10 11.9 11.9 10 17 8.1 11.9 3 10 8.1 8.1Z" fill="currentColor" />
               </svg>
               Ask Planner
               {plannerHighlightedSeatIds.length > 0 && (
@@ -2467,25 +2455,12 @@ export function SeatMap({
                     className={chromeMenuItem}
                   >
                     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                      <rect x="3" y="4.5" width="14" height="11" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M3 8.2h14M3 11.8h14" stroke="currentColor" strokeWidth="1.5" />
+                      <circle cx="7" cy="7.5" r="2.4" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M2.8 16v-.6a4.2 4.2 0 0 1 8.4 0v.6" stroke="currentColor" strokeWidth="1.5" />
+                      <circle cx="14" cy="6.6" r="1.9" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M13 10.4a3.6 3.6 0 0 1 4.2 3.4v.6" stroke="currentColor" strokeWidth="1.5" />
                     </svg>
                     Management
-                  </Link>
-                  <Link
-                    href="/admin/settings"
-                    onClick={event => {
-                      if (!beforeAdminPageNavigation("/admin/settings", "Settings")) event.preventDefault();
-                      setChromeMenuOpen(false);
-                      returnFocusAfterClose(chromeMenuButtonRef);
-                    }}
-                    className={chromeMenuItem}
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                      <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                    Settings
                   </Link>
                   <button
                     type="button"
@@ -2499,8 +2474,8 @@ export function SeatMap({
                     }}
                     className={[chromeMenuItem, "lg:hidden"].join(" ")}
                   >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                      <path d="M10 3 11.9 8.1 17 10 11.9 11.9 10 17 8.1 11.9 3 10 8.1 8.1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5">
+                      <path d="M10 3 11.9 8.1 17 10 11.9 11.9 10 17 8.1 11.9 3 10 8.1 8.1Z" fill="currentColor" />
                     </svg>
                     Ask Planner
                     {plannerHighlightedSeatIds.length > 0 && (
@@ -2568,9 +2543,25 @@ export function SeatMap({
               )}
             </button>
           )}
-          {/* Identity chip only — it reads as an avatar, so it must not act as
-              a control. Settings lives in the command row / More menu. */}
-          <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">A</span>
+          {/* The identity chip doubles as the Settings entry (owner preference):
+              data-utility settings are management-adjacent, so they live behind
+              this chip rather than as a separate labeled nav item. Labeled for
+              AT since the avatar shape doesn't announce its purpose. */}
+          {canEdit ? (
+            <Link
+              href="/admin/settings"
+              aria-label="Open settings"
+              title="Settings — data utilities and recovery"
+              onClick={event => {
+                if (!beforeAdminPageNavigation("/admin/settings", "Settings")) event.preventDefault();
+              }}
+              className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-chrome-bg)]"
+            >
+              A
+            </Link>
+          ) : (
+            <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">A</span>
+          )}
         </div>
       </header>
 
