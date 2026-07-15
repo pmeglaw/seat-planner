@@ -18,7 +18,6 @@ import {
 } from "@/lib/mapLayoutTransform";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { buildViewerSeatSearch, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
-import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
@@ -55,15 +54,12 @@ const KIND_LABELS: Record<ViewerSearchResult["kind"], string> = {
   zone: "Zone"
 };
 
-// Formats the identity segment of a result's title without touching
-// lib/viewerSeatSearch.ts, whose matching logic must keep operating on raw
-// values. Person titles are names (formatDisplayName); seat titles are seat
-// codes (formatSeatCode) — department/zone titles pass through untouched.
-function formatResultTitle(result: ViewerSearchResult): string {
-  if (result.kind === "person") return formatDisplayName(result.title);
-  if (result.kind === "seat") return formatSeatCode(result.title);
-  return result.title;
-}
+// Result title/subtitle identity segments (person names, seat codes) are
+// already formatted for display by lib/viewerSeatSearch.ts at composition
+// time — that is the single formatting point; do not re-format here (both
+// formatters are idempotent, but one documented formatting point avoids
+// double-formatting drift). Search matching there still operates on raw
+// stored values, so this is display-only.
 
 // View-transform zoom (same rule as the admin map): scales the rendered frame
 // width only — never the stored coordinates or the calibration transform.
@@ -841,7 +837,6 @@ export function ViewerSeatFinder({
             <div role="list" aria-label="Viewer search results" className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2">
               {searchResults.results.map(result => {
                 const selected = result.id === activeResultId || Boolean(result.seatId && result.seatId === selectedSeatId);
-                const formattedTitle = formatResultTitle(result);
                 return (
                   <button
                     key={result.id}
@@ -849,7 +844,7 @@ export function ViewerSeatFinder({
                     role="listitem"
                     disabled={result.disabled}
                     aria-current={selected ? "true" : undefined}
-                    aria-label={`${KIND_LABELS[result.kind]} result. ${formattedTitle}. ${result.subtitle}. ${result.meta}.${selected ? " Selected." : ""}`}
+                    aria-label={`${KIND_LABELS[result.kind]} result. ${result.title}. ${result.subtitle}. ${result.meta}.${selected ? " Selected." : ""}`}
                     onClick={() => openResult(result)}
                     className={cx(
                       "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:opacity-60",
@@ -858,7 +853,7 @@ export function ViewerSeatFinder({
                   >
                     <span className="min-w-0">
                       <span className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">{formattedTitle}</span>
+                        <span className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">{result.title}</span>
                         <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1", resultKindClass(result.kind))}>
                           {KIND_LABELS[result.kind]}
                         </span>
