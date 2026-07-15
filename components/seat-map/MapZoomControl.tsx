@@ -27,7 +27,7 @@ export function MapZoomControl({
     <div
       role="group"
       aria-label="Map zoom"
-      className="pointer-events-auto flex flex-col border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-[var(--admin-elevation-2-shadow)]"
+      className="pointer-events-auto flex flex-col border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-2"
     >
       <span aria-live="polite" className="border-b border-[var(--admin-border)] px-1 py-1 text-center font-mono text-[10.5px] tabular-nums text-[var(--admin-text-secondary)]">
         {label}

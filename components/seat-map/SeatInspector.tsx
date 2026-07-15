@@ -875,7 +875,7 @@ export function SeatInspector({
           onClick={onToggleCollapse}
           aria-label={`View details for ${selectedSeat.label}`}
           title={`View details for ${selectedSeat.label}`}
-          className="flex min-h-12 w-full items-center justify-center gap-2 border border-white/10 bg-[var(--admin-chrome-bg)] px-4 py-2 text-[#c6c6c6] shadow-[var(--admin-elevation-3-shadow)] transition hover:bg-[#1f1f1f] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] panel:h-full panel:min-h-full panel:w-11 panel:flex-col panel:border-0 panel:border-l panel:border-white/10 panel:px-2 panel:py-4 panel:shadow-none"
+          className="flex min-h-12 w-full items-center justify-center gap-2 border border-white/10 bg-[var(--admin-chrome-bg)] px-4 py-2 text-[#c6c6c6] shadow-elevation-3 transition hover:bg-[#1f1f1f] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] panel:h-full panel:min-h-full panel:w-11 panel:flex-col panel:border-0 panel:border-l panel:border-white/10 panel:px-2 panel:py-4 panel:shadow-none"
         >
           <span className="text-[10px] font-medium tracking-[0.14em] panel:rotate-180 panel:[writing-mode:vertical-rl]">VIEW DETAILS</span>
           <span className="rounded-full bg-[var(--admin-primary-soft)] px-2 py-1 text-[10px] font-bold text-[var(--admin-primary)] ring-1 ring-[var(--admin-primary-border)] panel:mt-2 panel:rotate-180 panel:bg-transparent panel:px-0 panel:py-0 panel:font-mono panel:text-white/60 panel:ring-0 panel:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
@@ -891,7 +891,7 @@ export function SeatInspector({
       tabIndex={-1}
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/10 bg-[var(--admin-chrome-bg)] text-[#f4f4f4] shadow-[var(--admin-elevation-4-shadow)] panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-10 panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] panel:border-0 panel:border-l panel:border-white/10 panel:shadow-none"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/10 bg-[var(--admin-chrome-bg)] text-[#f4f4f4] shadow-elevation-4 panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-10 panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] panel:border-0 panel:border-l panel:border-white/10 panel:shadow-none"
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-white/10 bg-[var(--admin-chrome-bg)] px-4 pb-3 pt-3.5">
         <div className="flex items-start gap-2.5">
@@ -1155,7 +1155,7 @@ export function SeatInspector({
                     <div
                       id="seat-inspector-employee-listbox"
                       role="listbox"
-                      className="absolute z-50 mt-1 max-h-[min(16rem,40vh)] w-full overflow-auto border border-white/15 bg-[#262626] p-1 shadow-[var(--admin-elevation-3-shadow)]"
+                      className="absolute z-50 mt-1 max-h-[min(16rem,40vh)] w-full overflow-auto border border-white/15 bg-[#262626] p-1 shadow-elevation-3"
                     >
                       {filteredEmployeeOptions.length > 0 ? filteredEmployeeOptions.map((option, index) => (
                         <button

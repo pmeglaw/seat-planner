@@ -607,7 +607,7 @@ export function AdminManagementPanel({
 
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           {managementSummaryCards.map(card => (
-            <div key={card.label} className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
+            <div key={card.label} className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
               <div className="text-2xl font-semibold text-[var(--admin-text-primary)]">{card.value}</div>
               <div className="mt-1 text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">{card.label}</div>
             </div>
@@ -635,7 +635,7 @@ export function AdminManagementPanel({
 
         {activeTab === "employees" && (
           <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
-            <div className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
+            <div className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Employees</h2>
@@ -745,7 +745,7 @@ export function AdminManagementPanel({
               )}
             </div>
 
-            <aside className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
+            <aside className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">{selectedEmployee ? "Edit employee" : "Add employee"}</h2>
@@ -798,7 +798,7 @@ export function AdminManagementPanel({
         )}
 
         {activeTab === "departments" && (
-          <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
+          <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Departments</h2>
@@ -857,7 +857,7 @@ export function AdminManagementPanel({
         )}
 
         {activeTab === "zones" && (
-          <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
+          <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Zones</h2>
@@ -908,7 +908,7 @@ export function AdminManagementPanel({
         )}
 
         {activeTab === "publishHistory" && (
-          <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-2-shadow)] sm:p-5">
+          <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2 sm:p-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="max-w-2xl">
                 <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Publish History</h2>
@@ -1053,7 +1053,7 @@ export function AdminManagementPanel({
                 closeManagementConfirm();
               }
             }}
-            className="w-full max-w-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-panel)]"
+            className="w-full max-w-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
           >
             <div className="flex items-start justify-between gap-3">
               <div>

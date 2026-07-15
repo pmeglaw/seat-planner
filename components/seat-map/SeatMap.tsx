@@ -56,6 +56,7 @@ import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
+import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type SeatMapProps = {
@@ -291,6 +292,9 @@ export function SeatMap({
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
   const chromeSearchInputRef = useRef<HTMLInputElement | null>(null);
   const canvasSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const filterTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const chromeMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mapMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const [inspectorDirty, setInspectorDirty] = useState(false);
   const [inspectorGuardAction, setInspectorGuardAction] = useState<InspectorGuardAction | null>(null);
   const [pendingInspectorSaveAction, setPendingInspectorSaveAction] = useState<InspectorGuardAction | null>(null);
@@ -404,7 +408,7 @@ export function SeatMap({
   }, []);
 
   const focusAskPlannerButton = useCallback(() => {
-    window.setTimeout(() => askPlannerButtonRef.current?.focus(), 0);
+    returnFocusAfterClose(askPlannerButtonRef);
   }, []);
 
   const closeAskPlannerDrawer = useCallback(() => {
@@ -2109,7 +2113,7 @@ export function SeatMap({
   const actionNoticeBannerClassName = [
     // Overlay, not layout: the toast floats above the floor-selector row so
     // its 6s lifetime never shifts the map column height mid-session.
-    "absolute left-0.5 right-0.5 top-0.5 z-40 shadow-[var(--admin-elevation-3-shadow)]",
+    "absolute left-0.5 right-0.5 top-0.5 z-40 shadow-elevation-3",
     "flex min-w-0 flex-col gap-2 rounded-xl border px-3 py-2 text-sm font-semibold sm:flex-row sm:items-center sm:justify-between",
     actionNoticeTone === "neutral"
       ? "border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)]"
@@ -2195,6 +2199,7 @@ export function SeatMap({
         <div data-filter-ui className="relative mr-1 flex h-[26px] min-w-0 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2 lg:min-w-0 lg:max-w-[340px] lg:flex-1">
           {canEdit && (
             <button
+              ref={filterTriggerRef}
               type="button"
               data-filter-ui
               onClick={toggleFilterPanel}
@@ -2272,7 +2277,8 @@ export function SeatMap({
                 zone={zone}
                 zones={zones}
                 activeChips={activeFilterChips}
-                onClose={toggleFilterPanel}
+                returnFocusRef={filterTriggerRef}
+                onClose={() => setFilterCollapsed(true)}
                 onDepartmentChange={setDepartment}
                 onZoneChange={setZone}
                 onStatusChange={setStatus}
@@ -2359,6 +2365,7 @@ export function SeatMap({
             </button>
             <div data-chrome-menu className="relative flex h-full shrink-0 items-center lg:hidden">
               <button
+                ref={chromeMenuButtonRef}
                 type="button"
                 aria-haspopup="true"
                 aria-expanded={chromeMenuOpen}
@@ -2387,15 +2394,19 @@ export function SeatMap({
                     if (event.key === "Escape") {
                       event.stopPropagation();
                       setChromeMenuOpen(false);
+                      returnFocusAfterClose(chromeMenuButtonRef);
                     }
                   }}
-                  className="absolute left-0 top-full z-50 min-w-[188px] border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] py-1 shadow-[var(--admin-elevation-3-shadow)]"
+                  className="absolute left-0 top-full z-50 min-w-[188px] border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] py-1 shadow-elevation-3"
                 >
                   <button
                     type="button"
                     onClick={() => {
                       setChromeMenuOpen(false);
                       setShowNames(current => !current);
+                      // Activation unmounts the focused item — same stranded-
+                      // focus hazard as Escape.
+                      returnFocusAfterClose(chromeMenuButtonRef);
                     }}
                     className={chromeMenuItem}
                   >
@@ -2406,6 +2417,7 @@ export function SeatMap({
                     onClick={event => {
                       if (!beforeManagementNavigation()) event.preventDefault();
                       setChromeMenuOpen(false);
+                      returnFocusAfterClose(chromeMenuButtonRef);
                     }}
                     className={chromeMenuItem}
                   >
@@ -2417,6 +2429,8 @@ export function SeatMap({
                     aria-haspopup="dialog"
                     onClick={() => {
                       setChromeMenuOpen(false);
+                      // No focus restore here: the drawer takes focus itself,
+                      // and a deferred restore would steal it back.
                       openAskPlannerDrawer();
                     }}
                     className={chromeMenuItem}
@@ -2612,6 +2626,7 @@ export function SeatMap({
               {canEdit && floor === "3" && (
                 <div data-map-menu className="relative">
                   <button
+                    ref={mapMenuButtonRef}
                     type="button"
                     aria-haspopup="true"
                     aria-expanded={mapMenuOpen}
@@ -2641,15 +2656,17 @@ export function SeatMap({
                         if (event.key === "Escape") {
                           event.stopPropagation();
                           setMapMenuOpen(false);
+                          returnFocusAfterClose(mapMenuButtonRef);
                         }
                       }}
-                      className="absolute right-0 top-full z-40 min-w-[176px] border border-[var(--admin-border)] bg-[var(--admin-surface)] py-1 shadow-[var(--admin-elevation-3-shadow)]"
+                      className="absolute right-0 top-full z-40 min-w-[176px] border border-[var(--admin-border)] bg-[var(--admin-surface)] py-1 shadow-elevation-3"
                     >
                       <button
                         type="button"
                         onClick={() => {
                           setMapMenuOpen(false);
                           fitMapToView();
+                          returnFocusAfterClose(mapMenuButtonRef);
                         }}
                         className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
                       >
@@ -2660,6 +2677,7 @@ export function SeatMap({
                         onClick={() => {
                           setMapMenuOpen(false);
                           applyMapZoom(1);
+                          returnFocusAfterClose(mapMenuButtonRef);
                         }}
                         className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
                       >
@@ -3053,7 +3071,7 @@ export function SeatMap({
           role="status"
           aria-live="polite"
           aria-label={`${activeMode.label} mode`}
-          className="fixed inset-x-3 bottom-3 z-[80] border border-[var(--admin-primary-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-4-shadow)] motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[48px] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-3 z-[80] border border-[var(--admin-primary-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-4 motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[48px] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="text-[10px] font-semibold text-[var(--admin-primary-cta)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--admin-text-primary)]">{activeMode.message}</p>

@@ -251,7 +251,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
         </div>
       )}
 
-      <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
+      <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
         <h2 className="text-sm font-semibold text-[var(--admin-text-primary)]">CSV assignments</h2>
         <p className="mt-1 text-xs leading-5 text-[var(--admin-text-muted)]">
           CSV imports update draft assignments only. Marker positions stay fixed.
@@ -264,7 +264,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
         </div>
       </section>
 
-      <section className="border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-4 shadow-[var(--admin-elevation-2-shadow)]">
+      <section className="border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-4 shadow-elevation-2">
         <h2 className="text-sm font-semibold text-[var(--admin-state-dirty-text)]">Advanced recovery</h2>
         <p className="mt-1 text-xs leading-5 text-[var(--admin-state-dirty-text)]">
           Full backup and restore. Restoring replaces the entire draft map, so review carefully before confirming.
@@ -291,7 +291,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                 closeCsvReview();
               }
             }}
-            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-panel)]"
+            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
           >
             <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
               <div>
@@ -377,7 +377,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                 closeJsonReview();
               }
             }}
-            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-panel)]"
+            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
           >
             <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
               <div>

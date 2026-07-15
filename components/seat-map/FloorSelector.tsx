@@ -117,7 +117,7 @@ export function FloorSelector({ floor, onChange }: FloorSelectorProps) {
               moveOptionFocus(-1);
             }
           }}
-          className="absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--admin-border)] bg-[var(--admin-surface)] py-1 shadow-[var(--admin-elevation-3-shadow)]"
+          className="absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--admin-border)] bg-[var(--admin-surface)] py-1 shadow-elevation-3"
         >
           {FLOORS.map(option => (
             <button

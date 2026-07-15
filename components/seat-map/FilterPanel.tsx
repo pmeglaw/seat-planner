@@ -1,5 +1,7 @@
 "use client";
 
+import type { RefObject } from "react";
+import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 import type { SeatStatus } from "@/lib/types";
 
 export type ActiveFilterChip = {
@@ -19,6 +21,8 @@ type FilterPanelProps = {
   zones: string[];
   activeChips: ActiveFilterChip[];
   panelId?: string;
+  /** The button that opened the panel — Escape hands focus back to it. */
+  returnFocusRef: RefObject<HTMLButtonElement | null>;
   onClose: () => void;
   onDepartmentChange: (value: string) => void;
   onZoneChange: (value: string) => void;
@@ -84,6 +88,7 @@ export function FilterPanel({
   zones,
   activeChips,
   panelId = "seat-map-filter-panel",
+  returnFocusRef,
   onClose,
   onDepartmentChange,
   onZoneChange,
@@ -104,9 +109,12 @@ export function FilterPanel({
         if (event.key === "Escape") {
           event.stopPropagation();
           onClose();
+          // The focused select unmounts with the panel — a bare close would
+          // strand keyboard focus on <body>.
+          returnFocusAfterClose(returnFocusRef);
         }
       }}
-      className="w-full border border-white/15 bg-[#1f1f1f] p-3 text-[#f4f4f4] shadow-[var(--admin-elevation-4-shadow)]"
+      className="w-full border border-white/15 bg-[#1f1f1f] p-3 text-[#f4f4f4] shadow-elevation-4"
     >
       <ActiveFilterChips chips={activeStructuredChips} onRemove={onRemoveActiveChip} onClearAll={onClearFilters} className="mb-3" />
 
