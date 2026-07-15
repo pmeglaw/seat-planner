@@ -174,9 +174,9 @@ export function SeatMarker({
             ? "border-[var(--admin-marker-unavailable-border)] bg-[var(--admin-marker-unavailable-surface)] text-[var(--admin-marker-unavailable-text)]"
             : "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)]"
       : seat.status === "assigned"
-        ? "border-[#B7AB9E]/85 bg-[#FFFDF8]/95 text-[#14171A]"
+        ? "border-[#1F7A55]/45 bg-[#E8F3EC]/95 text-[#156045]"
         : seat.status === "reserved"
-          ? "border-[#A26E23]/60 bg-[#F2E4C8]/95 text-[#67430F]"
+          ? "border-[#9A6418]/55 bg-[#FCF0D9]/95 text-[#6D4712]"
           : seat.status === "unavailable"
             ? "border-[#C8BFB3]/90 bg-[#E8E2DA]/[0.92] text-[#655E56]"
             : "border-[#AEB4BA]/95 bg-[#F2F2F3]/95 text-[#44494C]";
@@ -200,7 +200,7 @@ export function SeatMarker({
       : draftChanged && !selected && !searchProminent
         ? "bg-[#A26E23]"
         : seat.status === "assigned"
-        ? "bg-[#3F6F59]/85"
+        ? "bg-[#1F7A55]/85"
         : seat.status === "reserved"
           ? "bg-[#9A6418]/80"
           : seat.status === "unavailable"
