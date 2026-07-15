@@ -2318,9 +2318,9 @@ export function SeatMap({
               title={undoTitle}
               className={chromeToolbarBtn}
             >
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <path d="M6.5 8.5H12a3.5 3.5 0 0 1 0 7H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M8.5 5.5 5 8.5l3.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                <path d="M3 3v5h5" />
               </svg>
               Undo
             </button>
@@ -2332,9 +2332,9 @@ export function SeatMap({
               title={redoTitle}
               className={chromeToolbarBtn}
             >
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <path d="M13.5 8.5H8a3.5 3.5 0 0 0 0 7h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M11.5 5.5 15 8.5l-3.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+                <path d="M21 3v5h-5" />
               </svg>
               Redo
             </button>
@@ -2359,8 +2359,8 @@ export function SeatMap({
               className={chromeToolbarBtnCollapsibleXl}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <rect x="3" y="4" width="14" height="12" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M3 8h14M8.5 8v8" stroke="currentColor" strokeWidth="1.5" />
+                <rect x="3" y="4.5" width="14" height="11" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M3 8.2h14M3 11.8h14" stroke="currentColor" strokeWidth="1.5" />
               </svg>
               Management
             </Link>
@@ -2389,8 +2389,7 @@ export function SeatMap({
               className={askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <path d="M10 3.2 11.7 8 16.5 9.7 11.7 11.4 10 16.2 8.3 11.4 3.5 9.7 8.3 8 10 3.2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                <path d="M15.6 3.4v3M14.1 4.9h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M10 3 11.9 8.1 17 10 11.9 11.9 10 17 8.1 11.9 3 10 8.1 8.1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
               </svg>
               Ask Planner
               {plannerHighlightedSeatIds.length > 0 && (
@@ -2468,8 +2467,8 @@ export function SeatMap({
                     className={chromeMenuItem}
                   >
                     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                      <rect x="3" y="4" width="14" height="12" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M3 8h14M8.5 8v8" stroke="currentColor" strokeWidth="1.5" />
+                      <rect x="3" y="4.5" width="14" height="11" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M3 8.2h14M3 11.8h14" stroke="currentColor" strokeWidth="1.5" />
                     </svg>
                     Management
                   </Link>
@@ -2501,8 +2500,7 @@ export function SeatMap({
                     className={[chromeMenuItem, "lg:hidden"].join(" ")}
                   >
                     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                      <path d="M10 3.2 11.7 8 16.5 9.7 11.7 11.4 10 16.2 8.3 11.4 3.5 9.7 8.3 8 10 3.2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                      <path d="M15.6 3.4v3M14.1 4.9h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M10 3 11.9 8.1 17 10 11.9 11.9 10 17 8.1 11.9 3 10 8.1 8.1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
                     </svg>
                     Ask Planner
                     {plannerHighlightedSeatIds.length > 0 && (

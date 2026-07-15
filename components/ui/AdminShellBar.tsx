@@ -51,10 +51,8 @@ export function AdminShellBar({ page }: { page: AdminShellPage }) {
           className={page === "management" ? toolLinkActive : toolLink}
         >
           <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-            <rect x="3" y="3" width="6" height="6" stroke="currentColor" strokeWidth="1.5" />
-            <rect x="11" y="3" width="6" height="6" stroke="currentColor" strokeWidth="1.5" />
-            <rect x="3" y="11" width="6" height="6" stroke="currentColor" strokeWidth="1.5" />
-            <rect x="11" y="11" width="6" height="6" stroke="currentColor" strokeWidth="1.5" />
+            <rect x="3" y="4.5" width="14" height="11" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M3 8.2h14M3 11.8h14" stroke="currentColor" strokeWidth="1.5" />
           </svg>
           Management
         </Link>
