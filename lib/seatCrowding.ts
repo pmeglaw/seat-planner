@@ -79,9 +79,21 @@ export function computeSeatDensityTiers<T extends { id: string; x: number; y: nu
 
 // Deterministic name-label nudge assignment: only named seats participate in
 // collision clustering (an unnamed neighbour's position is irrelevant to
-// whether two visible name labels overlap). Within each colliding cluster,
-// members are sorted by (y, then x) and assigned a repeating 0, -1, +1
-// pattern so no two adjacent-in-order cluster members share a nudge value.
+// whether two visible name labels overlap). This is a greedy graph-coloring
+// over the actual pairwise collision edges among named seats, NOT a
+// positional pattern — a positional "every 3rd seat by sort order" scheme can
+// assign the same nudge to two seats that actually collide whenever a
+// cluster isn't a simple chain (e.g. a seat colliding with two different
+// same-valued neighbors that don't collide with each other). Seats are
+// visited in a fully deterministic order (y, then x, then id as a final
+// tiebreaker so tied coordinates don't fall back to input order) and each
+// seat takes the first nudge value not already used by any
+// previously-visited seat it actually collides with. If a seat has 3+
+// already-colored colliding neighbors covering all of [0, -1, 1] (only
+// possible for cliques larger than the 3-value palette, e.g. 4+ seats all
+// mutually within clearance), there is no fully-distinct value left — as a
+// best effort we fall back to whichever value is least represented among
+// those colliding neighbors, breaking ties by palette order for determinism.
 // Never mutates the input seats — reads coordinates only.
 export function computeNameLabelNudges<T extends { id: string; x: number; y: number }>(
   seats: ReadonlyArray<T>,
@@ -94,64 +106,60 @@ export function computeNameLabelNudges<T extends { id: string; x: number; y: num
     return nudges;
   }
 
-  // Union-find over named seats only, connecting pairs within clearance.
-  const parent = named.map((_, index) => index);
-  const find = (index: number): number => {
-    let root = index;
-    while (parent[root] !== root) {
-      root = parent[root];
+  const sorted = [...named].sort((a, b) => {
+    if (a.y !== b.y) {
+      return a.y - b.y;
     }
-    let cursor = index;
-    while (parent[cursor] !== root) {
-      const next = parent[cursor];
-      parent[cursor] = root;
-      cursor = next;
+    if (a.x !== b.x) {
+      return a.x - b.x;
     }
-    return root;
-  };
-  const union = (a: number, b: number): void => {
-    const rootA = find(a);
-    const rootB = find(b);
-    if (rootA !== rootB) {
-      parent[rootA] = rootB;
+    if (a.id < b.id) {
+      return -1;
     }
-  };
+    if (a.id > b.id) {
+      return 1;
+    }
+    return 0;
+  });
 
-  for (let i = 0; i < named.length; i += 1) {
-    for (let j = i + 1; j < named.length; j += 1) {
-      if (
-        Math.abs(named[i].x - named[j].x) < clearance.x &&
-        Math.abs(named[i].y - named[j].y) < clearance.y
-      ) {
-        union(i, j);
+  const collides = (a: T, b: T): boolean =>
+    Math.abs(a.x - b.x) < clearance.x && Math.abs(a.y - b.y) < clearance.y;
+
+  const palette: ReadonlyArray<-1 | 0 | 1> = [0, -1, 1];
+
+  for (let i = 0; i < sorted.length; i += 1) {
+    const seat = sorted[i];
+    const neighborUsage = new Map<-1 | 0 | 1, number>();
+    for (let j = 0; j < i; j += 1) {
+      const neighbor = sorted[j];
+      if (!collides(seat, neighbor)) {
+        continue;
+      }
+      const neighborNudge = nudges.get(neighbor.id);
+      if (neighborNudge !== undefined) {
+        neighborUsage.set(neighborNudge, (neighborUsage.get(neighborNudge) ?? 0) + 1);
       }
     }
-  }
 
-  const clusters = new Map<number, number[]>();
-  for (let i = 0; i < named.length; i += 1) {
-    const root = find(i);
-    const cluster = clusters.get(root);
-    if (cluster) {
-      cluster.push(i);
-    } else {
-      clusters.set(root, [i]);
+    const free = palette.find((value) => !neighborUsage.has(value));
+    if (free !== undefined) {
+      nudges.set(seat.id, free);
+      continue;
     }
-  }
 
-  const nudgePattern: ReadonlyArray<-1 | 0 | 1> = [0, -1, 1];
-  for (const cluster of clusters.values()) {
-    const sorted = [...cluster].sort((a, b) => {
-      const seatA = named[a];
-      const seatB = named[b];
-      if (seatA.y !== seatB.y) {
-        return seatA.y - seatB.y;
+    // All three values are already used by colliding, previously-assigned
+    // neighbors — pick the least-used one among them (best effort; see
+    // comment above the function).
+    let fallback: -1 | 0 | 1 = palette[0];
+    let fallbackCount = Number.POSITIVE_INFINITY;
+    for (const value of palette) {
+      const count = neighborUsage.get(value) ?? 0;
+      if (count < fallbackCount) {
+        fallbackCount = count;
+        fallback = value;
       }
-      return seatA.x - seatB.x;
-    });
-    sorted.forEach((seatIndex, position) => {
-      nudges.set(named[seatIndex].id, nudgePattern[position % nudgePattern.length]);
-    });
+    }
+    nudges.set(seat.id, fallback);
   }
 
   return nudges;

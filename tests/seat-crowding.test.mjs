@@ -170,3 +170,82 @@ test("computeNameLabelNudges never mutates the input seats", () => {
   computeNameLabelNudges(seats, new Set(["a", "b"]), CODE_PILL_DEFAULT_CLEARANCE);
   assert.deepEqual(seats, snapshot);
 });
+
+function assertCollidingPairsDistinct(seats, clearance, nudges) {
+  for (let i = 0; i < seats.length; i += 1) {
+    for (let j = i + 1; j < seats.length; j += 1) {
+      const a = seats[i];
+      const b = seats[j];
+      const colliding = Math.abs(a.x - b.x) < clearance.x && Math.abs(a.y - b.y) < clearance.y;
+      if (colliding) {
+        assert.notEqual(
+          nudges.get(a.id),
+          nudges.get(b.id),
+          `expected distinct nudges for colliding pair ${a.id}/${b.id}`
+        );
+      }
+    }
+  }
+}
+
+test("computeNameLabelNudges is collision-aware, not just positional (reviewer counterexample)", () => {
+  // A(0,0), B(0.05,0.001), C(0.02,0.002), D(0.03,0.003) under default clearance
+  // {x:0.044,y:0.024}. Collision edges: A-C, A-D, B-C, B-D, C-D (NOT A-B).
+  // A positional [0,-1,1] pattern by sorted (y,x) order (A,B,C,D) assigns
+  // [0,-1,1,0] — A and D share nudge 0 despite actually colliding.
+  const seats = [
+    { id: "A", x: 0, y: 0 },
+    { id: "B", x: 0.05, y: 0.001 },
+    { id: "C", x: 0.02, y: 0.002 },
+    { id: "D", x: 0.03, y: 0.003 }
+  ];
+  const clearance = CODE_PILL_DEFAULT_CLEARANCE;
+  const nudges = computeNameLabelNudges(seats, new Set(["A", "B", "C", "D"]), clearance);
+  assertCollidingPairsDistinct(seats, clearance, nudges);
+});
+
+test("computeNameLabelNudges handles a non-collinear 2D cluster pairwise-distinctly", () => {
+  // n1/n2/n3 form a mutually-colliding triangle (max clique = 3, exactly the
+  // palette size); n4 collides only with n3. Not collinear: n1/n2 share y=0,
+  // n3 is offset vertically, n4 is offset further in both x and y.
+  const clearance = { x: 0.044, y: 0.024 };
+  const seats = [
+    { id: "n1", x: 0, y: 0 },
+    { id: "n2", x: 0.02, y: 0 },
+    { id: "n3", x: 0, y: 0.01 },
+    { id: "n4", x: 0.02, y: 0.03 }
+  ];
+  const nudges = computeNameLabelNudges(seats, new Set(["n1", "n2", "n3", "n4"]), clearance);
+  assertCollidingPairsDistinct(seats, clearance, nudges);
+});
+
+test("computeNameLabelNudges is input-order invariant, including tied coordinates", () => {
+  const clearance = CODE_PILL_DEFAULT_CLEARANCE;
+  const baseSeats = [
+    { id: "A", x: 0, y: 0 },
+    { id: "B", x: 0.05, y: 0.001 },
+    { id: "C", x: 0.02, y: 0.002 },
+    { id: "D", x: 0.03, y: 0.003 },
+    // Two seats sharing identical coordinates, distinguished only by id.
+    { id: "E", x: 0.5, y: 0.5 },
+    { id: "F", x: 0.5, y: 0.5 }
+  ];
+  const namedIds = new Set(baseSeats.map((seat) => seat.id));
+  const baseline = computeNameLabelNudges(baseSeats, namedIds, clearance);
+
+  const shuffled = [
+    baseSeats[4],
+    baseSeats[2],
+    baseSeats[5],
+    baseSeats[0],
+    baseSeats[3],
+    baseSeats[1]
+  ];
+  const shuffledResult = computeNameLabelNudges(shuffled, namedIds, clearance);
+
+  assert.deepEqual(
+    [...shuffledResult.entries()].sort(),
+    [...baseline.entries()].sort(),
+    "expected identical nudge assignment regardless of input array order"
+  );
+});
