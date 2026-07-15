@@ -161,13 +161,24 @@ export function ViewerSeatFinder({
   }, [department, status, zone]);
 
   const resultSeatIdSet = useMemo(() => new Set(searchResults.resultSeatIds), [searchResults.resultSeatIds]);
+  // Named set for the nudge graph excludes the selected seat: SeatMarker's
+  // nameNudgeApplicable never nudges an active marker, and in the viewer the
+  // only way a seat goes active is selection (there's no swap/drag surface
+  // here). Leaving it in would let it occupy a palette slot/clique edge it
+  // never actually uses — the same phantom-member defect fixed for the admin
+  // map (see the 4-clique exclusion case in tests/seat-crowding.test.mjs).
+  const namedSeatIdSet = useMemo(() => {
+    const set = new Set(resultSeatIdSet);
+    if (selectedSeatId) set.delete(selectedSeatId);
+    return set;
+  }, [resultSeatIdSet, selectedSeatId]);
   // Name-label collision nudges (render-layer only): viewers have no
   // Show-names toggle, so the only pills that show inline names are the
   // search-prominent ones — nudges are computed over the search-result seat
   // ids as the "named" set, at the same default fit-zoom clearance.
   const nameLabelNudges = useMemo(
-    () => computeNameLabelNudges(visualSeats, resultSeatIdSet, CODE_PILL_DEFAULT_CLEARANCE),
-    [visualSeats, resultSeatIdSet]
+    () => computeNameLabelNudges(visualSeats, namedSeatIdSet, CODE_PILL_DEFAULT_CLEARANCE),
+    [visualSeats, namedSeatIdSet]
   );
   const activeResultSeatIdSet = useMemo(() => new Set(activeResult?.seatIds ?? []), [activeResult]);
   // Matches = search hits (narrowed by any structured filters), or filter hits alone.
