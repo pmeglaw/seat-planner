@@ -15,15 +15,10 @@ import test from "node:test";
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 const FORBIDDEN = /shadow-\[var\(/g;
 
-// Known no-ops the owner has deliberately deferred: restoring the seat-marker
-// hover/selected shadows would change every pill's rendered look, which is a
-// design decision, not a mechanical fix. Exactly these occurrences may remain.
-const ALLOWLIST = {
-  [path.join("components", "seat-map", "SeatMarker.tsx")]: [
-    "shadow-[var(--admin-marker-selected-shadow)]",
-    "group-hover:shadow-[var(--admin-marker-hover-shadow)]"
-  ]
-};
+// No exceptions: the seat-marker shadows (the last allowlisted no-ops) were
+// restored by owner decision on 2026-07-15 via named utilities like
+// everything else.
+const ALLOWLIST = {};
 
 async function collectSourceFiles(dir) {
   const entries = await readdir(path.join(repoRoot, dir), { recursive: true, withFileTypes: true });
@@ -43,6 +38,8 @@ test("tailwind config maps the elevation tokens to named shadow utilities", asyn
     );
   }
   assert.match(config, /panel:\s*"var\(--admin-shadow-panel\)"/, "boxShadow theme must expose shadow-panel bound to its token");
+  assert.match(config, /"marker-selected":\s*"var\(--admin-marker-selected-shadow\)"/, "boxShadow theme must expose the selected-marker shadow");
+  assert.match(config, /"marker-hover":\s*"var\(--admin-marker-hover-shadow\)"/, "boxShadow theme must expose the hover-marker shadow");
 });
 
 test("no component uses the silently-dropped arbitrary shadow-[var(…)] form", async () => {

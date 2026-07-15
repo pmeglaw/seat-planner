@@ -90,6 +90,8 @@ const config: Config = {
         "elevation-3": "var(--admin-elevation-3-shadow)",
         "elevation-4": "var(--admin-elevation-4-shadow)",
         panel: "var(--admin-shadow-panel)",
+        "marker-selected": "var(--admin-marker-selected-shadow)",
+        "marker-hover": "var(--admin-marker-hover-shadow)",
         "sp-raised": "var(--sp-shadow-raised)",
         "sp-floating": "var(--sp-shadow-floating)",
         "sp-sheet": "var(--sp-shadow-sheet)",
