@@ -29,3 +29,16 @@ export function formatDisplayName(name: string | null | undefined): string {
     .map(segment => (/\s/.test(segment) ? segment : titleCaseWord(segment)))
     .join("");
 }
+
+/**
+ * Display formatting for seat codes (e.g. "cw01" / "Cw01" -> "CW01").
+ *
+ * Seat codes are identifiers, not prose — unlike names they should always be
+ * rendered in one canonical (uppercase) casing, regardless of how the label
+ * was entered/stored. Never run seat codes through `formatDisplayName`,
+ * which title-cases all-caps input and would mangle "CW01" into "Cw01".
+ */
+export function formatSeatCode(label: string | null | undefined): string {
+  if (!label) return "";
+  return label.trim().toUpperCase();
+}
