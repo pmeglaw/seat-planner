@@ -159,7 +159,9 @@
   /* Dark chrome (#161616): top bar + inspector read as one continuous dark
      surface. Text #f4f4f4 (16.45:1), muted #9a9a9a (6.43:1) — both AA. */
   --admin-chrome-bg: #161616;
-  --admin-chrome-elevated: #161616;
+  /* Raised chrome surfaces (filter menu): one step lighter than the bar;
+     muted #9a9a9a stays AA on it (5.86:1). */
+  --admin-chrome-elevated: #1f1f1f;
   --admin-chrome-text: #f4f4f4;
   --admin-chrome-muted: #9a9a9a;
   --admin-chrome-border: rgba(255, 255, 255, 0.10);
@@ -344,6 +346,13 @@
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  /* The 40px chrome bar is sticky on every surface: without scroll padding,
+     browser-driven scrolls (focus-into-view, ⌘K) align the target flush
+     under the opaque bar and the focused control is fully obscured. */
+  scroll-padding-top: 2.5rem;
 }
 
 body {
