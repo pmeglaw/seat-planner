@@ -463,6 +463,19 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   assert.ok(viewerPanelIndex < viewerSearchIndex, "viewer filter panel must precede the search in DOM order");
 });
 
+test("the admin sub-page bar surfaces Settings clearly in the management context", async () => {
+  const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
+
+  // On the map header Settings is tucked behind the identity chip (clean map
+  // bar), but in the management/data context — the sub-page bar — it surfaces
+  // as a plain, labeled, current-aware nav item next to Management.
+  assert.match(shellBarSource, /href="\/admin\/settings"\s+aria-current=\{page === "settings" \? "page" : undefined\}[\s\S]{0,500}Settings\s*<\/Link>/);
+  // With Settings visible in the nav, the identity chip here must NOT double
+  // as a second (avatar-shaped) settings control — it is decorative only.
+  assert.match(shellBarSource, /<span\s+aria-hidden="true"[\s\S]{0,240}>\s*A\s*<\/span>/);
+  assert.doesNotMatch(shellBarSource, /<Link[^>]*aria-label="Open settings"/);
+});
+
 test("chrome copy is unified, the names toggle exposes state, and skip links reach the maps", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
