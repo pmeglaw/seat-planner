@@ -58,6 +58,19 @@ export function AdminShellBar({ page }: { page: AdminShellPage }) {
           </svg>
           Management
         </Link>
+        {/* Settings surfaces plainly in the management/data context (unlike the
+            map header, where it's tucked behind the identity chip). */}
+        <Link
+          href="/admin/settings"
+          aria-current={page === "settings" ? "page" : undefined}
+          className={page === "settings" ? toolLinkActive : toolLink}
+        >
+          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+            <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          Settings
+        </Link>
       </nav>
 
       <div className="ml-auto flex h-full shrink-0 items-center">
@@ -88,21 +101,14 @@ export function AdminShellBar({ page }: { page: AdminShellPage }) {
             Admin
           </Link>
         </div>
-        {/* The identity chip is the Settings entry — data utilities are
-            management-adjacent, so they live behind this chip instead of a
-            separate nav item. Labeled + aria-current on the settings page. */}
-        <Link
-          href="/admin/settings"
-          aria-label="Open settings"
-          aria-current={page === "settings" ? "page" : undefined}
-          title="Settings — data utilities and recovery"
-          className={[
-            "mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-chrome-bg)]",
-            page === "settings" ? "bg-white text-[var(--admin-primary)] ring-2 ring-[var(--admin-primary)]" : "bg-[var(--admin-primary)] text-[var(--admin-primary-ink)] hover:brightness-110"
-          ].join(" ")}
+        {/* Decorative identity chip — Settings is the visible nav item on this
+            bar, so the chip must not double as a second settings control. */}
+        <span
+          aria-hidden="true"
+          className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]"
         >
           A
-        </Link>
+        </span>
       </div>
     </header>
   );
