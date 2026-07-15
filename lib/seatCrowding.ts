@@ -89,11 +89,12 @@ export function computeSeatDensityTiers<T extends { id: string; x: number; y: nu
 // tiebreaker so tied coordinates don't fall back to input order) and each
 // seat takes the first nudge value not already used by any
 // previously-visited seat it actually collides with. If a seat has 3+
-// already-colored colliding neighbors covering all of [0, -1, 1] (only
-// possible for cliques larger than the 3-value palette, e.g. 4+ seats all
-// mutually within clearance), there is no fully-distinct value left — as a
-// best effort we fall back to whichever value is least represented among
-// those colliding neighbors, breaking ties by palette order for determinism.
+// already-colored colliding neighbors covering all of [0, -1, 1] (typically
+// triggered by 4+ mutually-colliding named seats; greedy order can rarely
+// exhaust the palette without a literal 4-clique), there is no fully-distinct
+// value left — as a best effort we fall back to whichever value is least
+// represented among those colliding neighbors, breaking ties by palette
+// order for determinism.
 // Never mutates the input seats — reads coordinates only.
 export function computeNameLabelNudges<T extends { id: string; x: number; y: number }>(
   seats: ReadonlyArray<T>,

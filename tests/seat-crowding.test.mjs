@@ -227,6 +227,10 @@ test("computeNameLabelNudges: excluded seats don't influence coloring — 4-cliq
   // hand two seats the same nudge; with one member excluded, the remaining
   // 3 named seats must get pairwise-distinct nudges and the excluded seat
   // must receive no nudge at all.
+  // This is a generic lib-level contract (the "excluded" member is just an
+  // id absent from namedSeatIds) — it equally pins the round-2 fix, where
+  // SeatMap excludes a selected/dragging/swap-source/swap-target seat (which
+  // SeatMarker's nameNudgeApplicable never nudges) from namedSeatIdSet.
   const clearance = { x: 0.05, y: 0.05 };
   const seats = [
     { id: "dimmedSeat", x: 0.5, y: 0.5 },

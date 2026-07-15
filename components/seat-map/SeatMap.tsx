@@ -2130,18 +2130,29 @@ export function SeatMap({
   // Shared with the marker render loop below (dimmed={dimmedSeatIdSet.has(...)}).
   const dimmedSeatIdSet = new Set(localSeats.filter(isSeatDimmed).map(seat => seat.id));
   // Named set for name-label collision nudging (lib/seatCrowding
-  // computeNameLabelNudges): exactly the seats that will render the "name"
-  // token. SeatMarker's namesVisible gate is showNames && hasEmployee &&
-  // !dimmed, and dimmedSeatIdSet above is the same predicate the render loop
-  // feeds SeatMarker, so the collision graph mirrors it precisely. Dimmed
-  // seats must be excluded (not just "their nudge goes unused"): inside a
-  // 4-way mutual clique the least-used fallback can otherwise hand two
-  // genuinely visible labels the same nudge to dodge a label that is never
-  // actually shown.
+  // computeNameLabelNudges): exactly the seats that can actually render a
+  // nudged name label. SeatMarker's namesVisible gate is showNames &&
+  // hasEmployee && !dimmed, and dimmedSeatIdSet above is the same predicate
+  // the render loop feeds SeatMarker, so the dimmed exclusion mirrors it
+  // precisely. But SeatMarker's nameNudgeApplicable
+  // (tokenMode === "name" || (tokenMode === "prominent" && !activeMarker))
+  // additionally never nudges a selected/dragging/swap-source/swap-target
+  // seat — those render tokenMode "selected" or active "prominent" and stay
+  // pinned to their anchor. Any seat in that set must also be excluded here
+  // (not just "their nudge goes unused"): inside a 4-way mutual clique the
+  // least-used fallback can otherwise hand two genuinely visible labels the
+  // same nudge to dodge a label that is never actually nudged.
   const namedSeatIdSet = showNames
     ? new Set(
         visualLocalSeats
-          .filter(seat => seat.employee && !dimmedSeatIdSet.has(seat.id))
+          .filter(seat =>
+            seat.employee &&
+            !dimmedSeatIdSet.has(seat.id) &&
+            seat.id !== selectedSeatId &&
+            seat.id !== swapSourceSeatId &&
+            seat.id !== swapConfirm?.targetSeatId &&
+            dragState?.seatId !== seat.id
+          )
           .map(seat => seat.id)
       )
     : new Set<string>();
