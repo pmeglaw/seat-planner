@@ -2318,10 +2318,9 @@ export function SeatMap({
               title={undoTitle}
               className={chromeToolbarBtn}
             >
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <path d="M6.5 8.5H12a3.5 3.5 0 0 1 0 7H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M8.5 5.5 5 8.5l3.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* Literal ↺ glyph (U+21BA) to match the owner's shell mockup exactly;
+                  sized to sit at the same weight as the SVG icons in the row. */}
+              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↺</span>
               Undo
             </button>
             <button
@@ -2332,10 +2331,8 @@ export function SeatMap({
               title={redoTitle}
               className={chromeToolbarBtn}
             >
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <path d="M13.5 8.5H8a3.5 3.5 0 0 0 0 7h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M11.5 5.5 15 8.5l-3.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
+              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
               Redo
             </button>
             <button
