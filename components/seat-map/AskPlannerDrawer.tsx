@@ -31,6 +31,12 @@ type DrawerError = {
 
 const emptyResponse: AskPlannerResponse | null = null;
 
+// Mirrors the server-side constant in lib/mapOperationsAgent.ts (client filter
+// only — do not import it, tests/map-operations-agent.test.mjs:894 pins a
+// truncated variant of the server string).
+const BROAD_ANSWER_EMPTY_HIGHLIGHT_WARNING =
+  "No seats highlighted for this broad answer. Ask for a specific zone, department, or smaller group to highlight seats.";
+
 function isAskPlannerError(result: AskPlannerActionResult): result is { error: string } {
   return "error" in result;
 }
@@ -123,7 +129,7 @@ export function AskPlannerDrawer({
     return [
       { label: "Which seats are open?", prompt: "Which seats are open?" },
       { label: `Open seats in ${zonePrompt}`, prompt: `Which seats are open in ${zonePrompt}?` },
-      { label: "What looks unhealthy?", prompt: "What looks unhealthy on the map?" },
+      { label: "Any problems on the map?", prompt: "Are there any seating problems or conflicts on the map?" },
       { label: "Show unassigned seats", prompt: "Show unassigned seats" },
       {
         label: "Explain highlighted seats",
@@ -270,7 +276,7 @@ export function AskPlannerDrawer({
                     askPlanner();
                   }
                 }}
-                placeholder="Ask about seats, zones, departments, or map health"
+                placeholder="Ask about seats, zones, departments, or assignments"
                 maxLength={800}
                 disabled={pending}
                 className="min-h-24 w-full resize-none rounded-xl border border-white/15 bg-[var(--admin-chrome-field)] px-3 py-2 text-sm text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary)] disabled:bg-white/5 disabled:text-[var(--admin-chrome-muted)]"
@@ -288,7 +294,7 @@ export function AskPlannerDrawer({
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
           {!pending && !error && !response && (
             <section className="rounded-xl border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] p-3 text-sm leading-6 text-[#c6c6c6]">
-              Ask about saved draft seats, assignments, zones, departments, or map health. Ask Planner can highlight supporting seats, but it cannot change the map.
+              Ask about saved draft seats, assignments, zones, or departments. Ask Planner can highlight supporting seats, but it cannot change the map.
             </section>
           )}
 
@@ -328,16 +334,19 @@ export function AskPlannerDrawer({
                 )}
               </section>
 
-              {response.warnings.length > 0 && (
-                <section className="rounded-xl border border-[#f1c21b]/40 bg-[#f1c21b]/10 p-3">
-                  <div className="text-[11px] font-semibold text-[#f1c21b]">Warnings</div>
-                  <ul className="mt-2 space-y-1 text-xs leading-5 text-[#f1c21b]">
-                    {response.warnings.map(warning => (
-                      <li key={warning}>{warning}</li>
-                    ))}
-                  </ul>
-                </section>
-              )}
+              {(() => {
+                const visibleWarnings = response.warnings.filter(w => w !== BROAD_ANSWER_EMPTY_HIGHLIGHT_WARNING);
+                return visibleWarnings.length > 0 && (
+                  <section className="rounded-xl border border-[#f1c21b]/40 bg-[#f1c21b]/10 p-3">
+                    <div className="text-[11px] font-semibold text-[#f1c21b]">Warnings</div>
+                    <ul className="mt-2 space-y-1 text-xs leading-5 text-[#f1c21b]">
+                      {visibleWarnings.map(warning => (
+                        <li key={warning}>{warning}</li>
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })()}
 
               <section className="rounded-xl border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-hover)] p-3">
                 <div className="flex items-center justify-between gap-2">
@@ -378,7 +387,7 @@ export function AskPlannerDrawer({
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-3 text-xs leading-5 text-[var(--admin-chrome-muted)]">No seats highlighted for this broad answer. Ask for a specific zone, department, or smaller group to highlight seats.</p>
+                  <p className="mt-3 text-xs leading-5 text-[var(--admin-chrome-muted)]">Broad answers don&apos;t highlight seats — ask about a specific zone or department to see them on the map.</p>
                 )}
               </section>
 
