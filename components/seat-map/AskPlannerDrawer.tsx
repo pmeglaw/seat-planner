@@ -199,7 +199,7 @@ export function AskPlannerDrawer({
         aria-label="Close Ask Planner"
         aria-hidden="true"
         tabIndex={-1}
-        className="fixed inset-0 z-[70] cursor-default bg-[var(--admin-chrome-bg)]/30 backdrop-blur-[1px] motion-safe:animate-[sp-fade-in_180ms_ease-out] sm:z-40"
+        className="fixed inset-0 z-[70] cursor-default bg-[var(--admin-chrome-bg)]/30 backdrop-blur-[1px] motion-safe:animate-[sp-fade-in_180ms_ease-out] sm:z-50"
         onClick={onClose}
       />
 

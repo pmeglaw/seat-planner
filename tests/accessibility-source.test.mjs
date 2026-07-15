@@ -423,6 +423,15 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
+  const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
+  const globalsSource = await readSource("../app/globals.css");
+
+  // Pinned-bar consequences: modal backdrops must still cover the chrome
+  // tier (the drawer's backdrop shields Publish/Settings while the dialog is
+  // open), and browser-driven scrolls must not align focused controls under
+  // the opaque bar (WCAG 2.4.11 focus-obscured).
+  assert.match(askPlannerSource, /aria-label="Close Ask Planner"[\s\S]{0,320}sm:z-50/);
+  assert.match(globalsSource, /scroll-padding-top/);
 
   // One scroll behavior on every surface: below lg the page scrolls, and a
   // static bar carries the app's only chrome (search, filters, publish
