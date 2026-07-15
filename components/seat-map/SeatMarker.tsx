@@ -118,6 +118,12 @@ export function SeatMarker({
   onSelect,
   onMovePointerDown
 }: SeatMarkerProps) {
+  // NOTE: no caller passes variant="admin" — both the admin map (SeatMap.tsx,
+  // variant="viewer" by owner preference) and the viewer render the "viewer"
+  // branch. Every `adminMarker ? … : …` below therefore takes the ELSE arm in
+  // the live app; the admin-token arms (incl. shadow-marker-selected/-hover)
+  // are correct-but-dormant, kept for a future admin variant. Don't assume a
+  // change to an `adminMarker` arm is visible without first flipping a caller.
   const adminMarker = variant === "admin";
   const employeeName = seat.employee?.full_name ?? "";
   const hasEmployee = Boolean(seat.employee);
