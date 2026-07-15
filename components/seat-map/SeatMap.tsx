@@ -41,7 +41,7 @@ import {
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
 import { buildPublishChangeSummary, type PublishChangeItem } from "@/lib/publishSummary";
-import { clearanceFromScale, computeCrowdedSeatIds } from "@/lib/seatCrowding";
+import { clearanceFromScale, computeNameLabelNudges, computeSeatDensityTiers } from "@/lib/seatCrowding";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import {
   ActiveFilterChips,
@@ -108,8 +108,6 @@ type MapPanState = {
   moved: boolean;
 } | null;
 
-const NAME_LABEL_COLLISION_X_THRESHOLD = 0.07;
-const NAME_LABEL_COLLISION_Y_THRESHOLD = 0.07;
 const ADMIN_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:names-visible";
 const DEFAULT_PUBLISHED_SEATS: SeatWithEmployee[] = [];
 const DEFAULT_PUBLISHED_EMPLOYEES: Employee[] = [];
@@ -855,24 +853,20 @@ export function SeatMap({
     return [...seatCards, ...unassignedPeople].slice(0, 60);
   }, [localEmployees, localSeats, matchingSeats, searchQuery]);
   const selectedSeatMatchesFilters = selectedSeat ? matchesFilters(selectedSeat) : true;
-  const crowdedNameSeatIdSet = useMemo(() => {
-    const crowded = new Set<string>();
-    const assignedSeats = visualLocalSeats.filter(seat => seat.employee);
-
-    assignedSeats.forEach(seat => {
-      const hasNearbySeat = visualLocalSeats.some(otherSeat => {
-        if (otherSeat.id === seat.id) return false;
-        return (
-          Math.abs(otherSeat.x - seat.x) <= NAME_LABEL_COLLISION_X_THRESHOLD &&
-          Math.abs(otherSeat.y - seat.y) <= NAME_LABEL_COLLISION_Y_THRESHOLD
-        );
-      });
-
-      if (hasNearbySeat) crowded.add(seat.id);
-    });
-
-    return crowded;
-  }, [visualLocalSeats]);
+  // Named set for name-label collision nudging (lib/seatCrowding
+  // computeNameLabelNudges): seats that can render the "name" token mode.
+  // SeatMarker's namesVisible = showNames && hasEmployee && !dimmed, but
+  // `dimmed` here folds in both the filter match and the Ask Planner focus
+  // dim, computed inline per-marker in the render loop below. Mirroring that
+  // exactly at this call site would require duplicating both checks in this
+  // memo; instead we use the simpler, slightly broader "assigned seats while
+  // showNames is on" set the brief allows — a seat that's actually dimmed
+  // just never resolves to tokenMode "name" at render time (SeatMarker falls
+  // back to "code"), so its computed nudge is simply unused, never wrong.
+  const namedSeatIdSet = useMemo(() => {
+    if (!showNames) return new Set<string>();
+    return new Set(visualLocalSeats.filter(seat => seat.employee).map(seat => seat.id));
+  }, [showNames, visualLocalSeats]);
   const undoAvailable = canUndoDraftHistory(draftHistory);
   const redoAvailable = canRedoDraftHistory(draftHistory);
   // Session-local activity for the inspector's Activity section: undo-history
@@ -2127,8 +2121,14 @@ export function SeatMap({
     ? mapVisibleRange.viewportWidth / visibleMapSpan
     : 0;
   // Zoom-aware pill crowding (render-layer only): dense pods drop the code
-  // token's min-width at fit zoom and recover it once zoom separates them.
-  const crowdedCodeSeatIdSet = computeCrowdedSeatIds(visualLocalSeats, clearanceFromScale(mapPixelsPerNormalizedUnit));
+  // token's min-width at fit zoom and recover it once zoom separates them;
+  // the tighter "dense" tier drops to a further micro pill. Both tiers and
+  // the name-label nudges share the same zoom-aware clearance.
+  const seatDensityClearance = clearanceFromScale(mapPixelsPerNormalizedUnit);
+  const seatDensityTiers = computeSeatDensityTiers(visualLocalSeats, seatDensityClearance);
+  const crowdedCodeSeatIdSet = seatDensityTiers.crowded;
+  const denseCodeSeatIdSet = seatDensityTiers.dense;
+  const nameLabelNudges = computeNameLabelNudges(visualLocalSeats, namedSeatIdSet, seatDensityClearance);
   const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;
   const markerEdgeThreshold = mapViewMode === "detail"
@@ -2802,8 +2802,10 @@ export function SeatMap({
                         showNames={showNames}
                         searchResult={Boolean(search.trim()) && seatMatchesFilters}
                         draftChanged={draftChangedSeatLabelSet.has(seat.label)}
-                        compactNameLabel={crowdedNameSeatIdSet.has(seat.id)}
+                        compactNameLabel={(nameLabelNudges.get(seat.id) ?? 0) !== 0}
                         crowdedCode={crowdedCodeSeatIdSet.has(seat.id)}
+                        denseCode={denseCodeSeatIdSet.has(seat.id)}
+                        nameNudge={nameLabelNudges.get(seat.id) ?? 0}
                         moveSeatMode={moveSeatMode}
                         swapMode={Boolean(swapSourceSeatId)}
                         swapSource={seat.id === swapSourceSeatId}

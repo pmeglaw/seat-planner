@@ -23,7 +23,7 @@ import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
-import { computeCrowdedSeatIds } from "@/lib/seatCrowding";
+import { CODE_PILL_DEFAULT_CLEARANCE, computeNameLabelNudges, computeSeatDensityTiers } from "@/lib/seatCrowding";
 
 type ViewerSeatFinderProps = {
   seats: SeatWithEmployee[];
@@ -120,8 +120,10 @@ export function ViewerSeatFinder({
   const publishedSeats = useMemo(() => seats.map(normalizeSeat), [seats]);
   const visualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
   const visualSeatById = useMemo(() => new Map(visualSeats.map(seat => [seat.id, seat])), [visualSeats]);
-  // Pill crowding at the default fit-zoom clearance (render-layer only).
-  const crowdedCodeSeatIdSet = useMemo(() => computeCrowdedSeatIds(visualSeats), [visualSeats]);
+  // Pill crowding at the default fit-zoom clearance (render-layer only):
+  // `crowded` tightens the code pill, the tighter `dense` tier drops to the
+  // micro pill (hover still discloses the full code).
+  const seatDensityTiers = useMemo(() => computeSeatDensityTiers(visualSeats), [visualSeats]);
   // Pixel-aspect points for arrow-key traversal (see lib/seatKeyboardNav).
   const seatNavPoints = useMemo(
     () => visualSeats.map(seat => ({ id: seat.id, x: seat.x * MAP_IMAGE_WIDTH, y: seat.y * MAP_IMAGE_HEIGHT })),
@@ -159,6 +161,14 @@ export function ViewerSeatFinder({
   }, [department, status, zone]);
 
   const resultSeatIdSet = useMemo(() => new Set(searchResults.resultSeatIds), [searchResults.resultSeatIds]);
+  // Name-label collision nudges (render-layer only): viewers have no
+  // Show-names toggle, so the only pills that show inline names are the
+  // search-prominent ones — nudges are computed over the search-result seat
+  // ids as the "named" set, at the same default fit-zoom clearance.
+  const nameLabelNudges = useMemo(
+    () => computeNameLabelNudges(visualSeats, resultSeatIdSet, CODE_PILL_DEFAULT_CLEARANCE),
+    [visualSeats, resultSeatIdSet]
+  );
   const activeResultSeatIdSet = useMemo(() => new Set(activeResult?.seatIds ?? []), [activeResult]);
   // Matches = search hits (narrowed by any structured filters), or filter hits alone.
   const highlightedSeatIdSet = useMemo(() => {
@@ -723,7 +733,6 @@ export function ViewerSeatFinder({
                     {visualSeats.map(seat => {
                       const inMatches = highlightedSeatIdSet.has(seat.id);
                       const dimmed = filtersActive && !inMatches && selectedSeatId !== seat.id;
-                      const crowdedCode = crowdedCodeSeatIdSet.has(seat.id);
 
                       return (
                         <SeatMarker
@@ -735,7 +744,9 @@ export function ViewerSeatFinder({
                           showNames={false}
                           searchResult={filtersActive && inMatches}
                           compactNameLabel
-                          crowdedCode={crowdedCode}
+                          crowdedCode={seatDensityTiers.crowded.has(seat.id)}
+                          denseCode={seatDensityTiers.dense.has(seat.id)}
+                          nameNudge={nameLabelNudges.get(seat.id) ?? 0}
                           moveSeatMode={false}
                           swapMode={false}
                           swapSource={false}
