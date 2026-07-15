@@ -263,18 +263,28 @@ export function ViewerSeatFinder({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [filterOpen, search, selectedSeatId, structuredFiltersActive]);
 
-  // Contain-fit for the fit view at lg (same pattern as SeatMap's overview):
-  // the frame width follows BOTH viewport dimensions, so a squat viewport no
-  // longer leaves a dead band under the plan. Below lg the fixed mobile
-  // widths (horizontal scroll by design) stay in charge — width stays null.
+  // Contain-fit for the fit view, three tiers by viewport width:
+  //  - >=1024 (lg): both-dimension contain-fit (same pattern as SeatMap's
+  //    overview) — the frame width follows BOTH viewport dimensions, so a
+  //    squat viewport no longer leaves a dead band under the plan.
+  //  - 640-1023 (sm..lg, tablet widths): width-only fit — the frame is sized
+  //    to the viewport's own width, so there is no default horizontal
+  //    scrollbar/dead band at tablet widths; frame height just follows the
+  //    image aspect ratio.
+  //  - <640: width stays null — the fixed mobile frame width (horizontal
+  //    scroll by design) stays in charge.
   useEffect(() => {
     const viewport = mapViewportRef.current;
     if (!viewport) return;
     const viewportElement = viewport;
 
     function updateFitMapWidth() {
-      if (!window.matchMedia("(min-width: 1024px)").matches) {
+      if (!window.matchMedia("(min-width: 640px)").matches) {
         setFitMapWidth(null);
+        return;
+      }
+      if (!window.matchMedia("(min-width: 1024px)").matches) {
+        setFitMapWidth(Math.floor(Math.max(1, viewportElement.clientWidth - 2)));
         return;
       }
       const availableWidth = Math.max(1, viewportElement.clientWidth - 2);
@@ -525,14 +535,14 @@ export function ViewerSeatFinder({
   const mapViewportClassName = cx(
     "relative mx-auto w-full max-w-full overflow-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)]",
     "min-h-[360px] max-h-[82svh] sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:h-full lg:min-h-0 lg:max-h-none lg:flex-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
-    zoomFactor === null ? "lg:flex lg:items-center lg:justify-center" : "",
+    zoomFactor === null ? "sm:flex sm:items-center sm:justify-center" : "",
     floor === "3" ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-map-floor)]"
   );
   const mapFrameClassName = cx(
     "relative mx-auto max-w-none",
     zoomFactor === null
-      ? "w-[1040px] sm:w-[1340px] lg:w-full lg:max-w-[1911px] lg:shrink-0"
+      ? "w-[1040px] sm:w-full sm:max-w-[1911px] sm:shrink-0"
       : "[--map-detail-base:1040px] sm:[--map-detail-base:1340px] lg:[--map-detail-base:1911px]"
   );
   const mapFrameStyle = zoomFactor === null
