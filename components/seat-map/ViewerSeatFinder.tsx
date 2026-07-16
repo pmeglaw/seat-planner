@@ -642,7 +642,7 @@ export function ViewerSeatFinder({
       >
         Skip to seat map
       </a>
-      <h1 className="sr-only">Office Seat Finder</h1>
+      <h1 className="sr-only">Seat Planner — office map</h1>
       {/* z-50 matches the admin bar: sticky activates the z-index, which must
           outrank z-40 workspace overlays that follow in DOM order. */}
       <header className="sticky top-0 z-50 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
@@ -983,7 +983,7 @@ export function ViewerSeatFinder({
             </div>
           ) : (
             <div role="status" aria-live="polite" className="p-4">
-              <div className="text-sm font-semibold text-[var(--admin-text-primary)]">No results for {search.trim()}</div>
+              <div className="text-sm font-semibold text-[var(--admin-text-primary)]">No results for “{search.trim()}”</div>
               <p className="mt-1 text-xs font-medium leading-5 text-[var(--admin-text-muted)]">
                 No matching people, seats, departments, or zones.
               </p>

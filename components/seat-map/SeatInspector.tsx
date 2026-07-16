@@ -7,6 +7,7 @@ import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@
 import { STATUS_LABELS } from "@/lib/types";
 import { updateSeatAction } from "@/app/actions";
 import { canDeleteSeat, getSeatDeleteBlockReason, isProtectedOriginalSeatLabel } from "@/lib/seatProtection";
+import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { buildOccupantRows, employeeAssignmentFields, type OccupantFactRow } from "@/lib/employeeAssignment";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
@@ -460,7 +461,7 @@ export function SeatInspector({
     return current;
   }, {});
   const inspectorStateLabel = pending
-    ? "Saving draft..."
+    ? "Saving draft…"
     : localError
       ? "Error"
       : isDirty
@@ -1177,7 +1178,7 @@ export function SeatInspector({
 
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Job Title</span>
+                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Job title</span>
                   <input
                     ref={employeePositionRef}
                     value={form.employeePosition}
@@ -1191,7 +1192,7 @@ export function SeatInspector({
                 </label>
 
                 <label className="block">
-                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Phone Ext.</span>
+                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Phone extension</span>
                   <input
                     ref={phoneExtensionRef}
                     value={form.phoneExtension}
@@ -1471,7 +1472,7 @@ export function SeatInspector({
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 id="vacate-seat-confirm-title" className="text-base font-black">Vacate {selectedSeat.label}?</h2>
+              <h2 id="vacate-seat-confirm-title" className="text-base font-black">Vacate {formatSeatCode(selectedSeat.label)}?</h2>
               <p id="vacate-seat-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
                 This clears {formatDisplayName(selectedSeatEmployeeName)} from this draft seat.
               </p>
@@ -1493,7 +1494,7 @@ export function SeatInspector({
               </div>
             )}
             <div className="rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-viewer-impact-text)]">
-              The published viewer map will not change until the draft is published.
+              {PUBLISH_IMPACT_NOTE}
             </div>
           </div>
 
@@ -1530,7 +1531,7 @@ export function SeatInspector({
             <div>
               <h2 id="move-employee-confirm-title" className="text-base font-black">Move {formatDisplayName(moveConflict.employeeName)} to {formatSeatCode(selectedSeat.label)}?</h2>
               <p id="move-employee-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
-                They currently sit at {moveConflict.currentSeatLabel}. Moving frees {moveConflict.currentSeatLabel} (it becomes Open).
+                They currently sit at {formatSeatCode(moveConflict.currentSeatLabel)}. Moving frees {formatSeatCode(moveConflict.currentSeatLabel)} (it becomes Open).
               </p>
             </div>
             <button
@@ -1545,7 +1546,7 @@ export function SeatInspector({
 
           <div className="mt-4 grid gap-2">
             <div className="rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-viewer-impact-text)]">
-              Viewers won&apos;t see this until you publish the draft.
+              {PUBLISH_IMPACT_NOTE}
             </div>
           </div>
 

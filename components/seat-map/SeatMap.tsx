@@ -24,6 +24,7 @@ import {
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
+import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import { departmentKey } from "@/lib/departments";
 import { clientPointToNormalized } from "@/lib/seatMath";
@@ -1215,9 +1216,9 @@ export function SeatMap({
     if (action.kind === "select-seat") return "opening another seat.";
     if (action.kind === "close-inspector") return "closing the inspector.";
     if (action.kind === "clear-selection") return "clearing the selection.";
-    if (action.kind === "start-add-seat") return "starting Add Seat mode.";
-    if (action.kind === "start-move-seat") return "starting Move Seat mode.";
-    if (action.kind === "start-swap-seat") return "starting Swap Seats mode.";
+    if (action.kind === "start-add-seat") return "starting add-seat mode.";
+    if (action.kind === "start-move-seat") return "starting move-seat mode.";
+    if (action.kind === "start-swap-seat") return "starting swap-seats mode.";
     return `opening ${action.destination}.`;
   }
 
@@ -1625,7 +1626,7 @@ export function SeatMap({
   }
 
   function buildSwapSummary(sourceSeat: SeatWithEmployee, targetSeat: SeatWithEmployee) {
-    return `${sourceSeat.label} (${seatPersonLabel(sourceSeat)}) <-> ${targetSeat.label} (${seatPersonLabel(targetSeat)})`;
+    return `${sourceSeat.label} (${seatPersonLabel(sourceSeat)}) ↔ ${targetSeat.label} (${seatPersonLabel(targetSeat)})`;
   }
 
   function requestSwapTarget(targetSeatId: string) {
@@ -2156,16 +2157,16 @@ export function SeatMap({
   const publishReadinessBadgeLabel = publishSummary.hasChanges ? "Ready" : "No changes";
   const activeMode = addSeatMode
     ? {
-      label: "Add Seat",
+      label: "Add seat",
       message: "Click inside a seating zone to place an automatically numbered custom marker.",
-      exitLabel: "Exit Add Seat",
+      exitLabel: "Exit add seat",
       onExit: cancelAddSeatMode
     }
     : moveSeatMode
       ? {
-        label: "Move Seat",
+        label: "Move seat",
         message: selectedSeat ? `Drag ${selectedSeat.label} to reposition it on the draft map.` : "Select a seat before moving it.",
-        exitLabel: "Exit Move Seat",
+        exitLabel: "Exit move seat",
         onExit: () => {
           setMoveSeatMode(false);
           setDragState(null);
@@ -2173,9 +2174,9 @@ export function SeatMap({
       }
       : swapSourceSeat
         ? {
-          label: "Swap Seats",
+          label: "Swap seats",
           message: `${swapSourceSeat.label} is the source. Select a target seat to review the swap.`,
-          exitLabel: "Exit Swap Seats",
+          exitLabel: "Exit swap seats",
           onExit: cancelSwapSeatMode
         }
         : null;
@@ -2389,7 +2390,7 @@ export function SeatMap({
           outrank the z-40 canvas overlays (toasts, map menu) that follow it
           in DOM order, or they paint over the pinned bar and its menus. */}
       <header className="sticky top-0 z-50 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
-        <h1 className="sr-only">Megeredchian Law Seats</h1>
+        <h1 className="sr-only">Seat Planner — admin map</h1>
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
             {/* Megeredchian Law brand mark on a white chip so its orange + charcoal read on the dark chrome bar. */}
@@ -2927,7 +2928,7 @@ export function SeatMap({
                   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none">
                     <path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                   </svg>
-                  {addSeatMode ? "Exit Add Seat" : "Add seat"}
+                  {addSeatMode ? "Exit add seat" : "Add seat"}
                 </button>
               )}
               {canEdit && floor === "3" && (
@@ -3393,7 +3394,7 @@ export function SeatMap({
                 title={publishSummary.hasChanges ? "Publish reviewed draft changes" : "No draft changes to publish"}
                 className={["w-full !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)]", focusRingClass].join(" ")}
               >
-                {pending ? "Publishing..." : actionError && publishSummary.hasChanges ? "Retry publish" : publishSummary.hasChanges ? (
+                {pending ? "Publishing…" : actionError && publishSummary.hasChanges ? "Retry publish" : publishSummary.hasChanges ? (
                   <>
                     <span className="sm:hidden">Publish changes</span>
                     <span className="hidden sm:inline">Publish reviewed changes</span>
@@ -3548,7 +3549,7 @@ export function SeatMap({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 id="swap-confirm-title" className="text-base font-semibold">Confirm seat swap</h2>
-                <p className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">This updates draft seats only. Viewers will not see it until publish.</p>
+                <p className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">This updates draft seats only. {PUBLISH_IMPACT_NOTE}</p>
               </div>
               <button
                 type="button"

@@ -112,7 +112,7 @@ test("admin names visibility preference persists locally without server storage"
 
 test("canvas add seat toggle is wired to add-seat mode", async () => {
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
-  const addSeatToggle = seatMapSource.match(/aria-pressed=\{addSeatMode\}[\s\S]*?\{addSeatMode \? "Exit Add Seat" : "Add seat"\}/);
+  const addSeatToggle = seatMapSource.match(/aria-pressed=\{addSeatMode\}[\s\S]*?\{addSeatMode \? "Exit add seat" : "Add seat"\}/);
 
   assert.ok(addSeatToggle, "Canvas Add seat toggle should be source-visible.");
   assert.match(addSeatToggle[0], /onClick=\{addSeatMode \? cancelAddSeatMode : startAddSeatMode\}/);
@@ -121,7 +121,7 @@ test("canvas add seat toggle is wired to add-seat mode", async () => {
 test("inspector copy uses Job Title instead of Team", async () => {
   const source = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /Job Title/);
+  assert.match(source, /Job title/);
   assert.match(source, /employeePosition/);
   assert.doesNotMatch(source, />\s*Team\s*</);
   assert.doesNotMatch(source, /No team/);

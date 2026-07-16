@@ -17,7 +17,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Office Seat Planner",
+  title: "Seat Planner",
   description: "Internal interactive office seating map"
 };
 

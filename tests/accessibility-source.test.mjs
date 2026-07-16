@@ -30,7 +30,7 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
 
   // Claude Design: identity moves into the top bar; the publish status is the top-bar
   // Review/Published pill; the bordered nested groups collapse into one flat text toolbar.
-  assert.match(source, /Megeredchian Law Seats/);
+  assert.match(source, /Seat Planner — admin map/);
   assert.match(source, /aria-label="Command search"/);
   assert.match(source, /aria-label="Admin command row"/);
   assert.match(source, /aria-label="Undo last map change"/);
@@ -52,7 +52,7 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /Draft matches published/);
   assert.match(source, /unpublished \$\{publishSummary\.totalChangeCount === 1 \? "change" : "changes"\}/);
   assert.match(source, /Esc exits/);
-  assert.match(source, /Exit Add Seat/);
+  assert.match(source, /Exit add seat/);
   // Publish chip contract (2026-07-16 critique, fix 3): with changes it is the
   // review entry point; idle it is a DISCLOSURE for the status popover — a
   // status indicator must not launch the publish workflow modal.
@@ -71,9 +71,9 @@ test("active modes exit after dialogs and keep visible exit controls", async () 
   assert.ok(publishDialogIndex >= 0, "Escape handler should check publish review.");
   assert.ok(activeModeIndex >= 0, "Escape handler should check active map modes.");
   assert.ok(publishDialogIndex < activeModeIndex, "Dialogs should receive Escape before active map modes.");
-  assert.match(source, /label: "Add Seat"[\s\S]*exitLabel: "Exit Add Seat"/);
-  assert.match(source, /label: "Move Seat"[\s\S]*exitLabel: "Exit Move Seat"/);
-  assert.match(source, /label: "Swap Seats"[\s\S]*exitLabel: "Exit Swap Seats"/);
+  assert.match(source, /label: "Add seat"[\s\S]*exitLabel: "Exit add seat"/);
+  assert.match(source, /label: "Move seat"[\s\S]*exitLabel: "Exit move seat"/);
+  assert.match(source, /label: "Swap seats"[\s\S]*exitLabel: "Exit swap seats"/);
 });
 
 test("viewer rendering path stays isolated from admin-only draft and delete controls", async () => {

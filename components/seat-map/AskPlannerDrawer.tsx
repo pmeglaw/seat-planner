@@ -110,7 +110,16 @@ export function AskPlannerDrawer({
   onSelectSeat
 }: AskPlannerDrawerProps) {
   const [question, setQuestion] = useState("");
+  const [submitShortcutHint, setSubmitShortcutHint] = useState("Ctrl+Enter");
   const [response, setResponse] = useState<AskPlannerResponse | null>(emptyResponse);
+  // Platform-adaptive hint, set a frame after mount so server markup never
+  // guesses the platform (matches the chrome search hint pattern).
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      if (/mac/i.test(window.navigator.platform)) setSubmitShortcutHint("⌘+Enter");
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
   const [error, setError] = useState<DrawerError | null>(null);
   const [pending, startTransition] = useTransition();
   const questionRef = useRef<HTMLTextAreaElement | null>(null);
@@ -283,9 +292,9 @@ export function AskPlannerDrawer({
               />
             </label>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-              <div className="truncate text-[11px] font-medium text-[var(--admin-chrome-muted)]">{question.trim().length}/800 · Ctrl+Enter to ask</div>
+              <div className="truncate text-[11px] font-medium text-[var(--admin-chrome-muted)]">{question.trim().length}/800 · {submitShortcutHint} to ask</div>
               <Button type="submit" variant="primary" disabled={pending || !question.trim()} title={!question.trim() ? "Enter a question before asking" : undefined} className="rounded-full px-4">
-                {pending ? "Asking..." : "Ask"}
+                {pending ? "Asking…" : "Ask"}
               </Button>
             </div>
           </form>
