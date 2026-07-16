@@ -133,3 +133,36 @@ test("formatPublishChangeSummary ignores unknown keys and non-numeric values", (
 test("formatPublishChangeSummary treats a string-encoded JSON object as invalid (not parsed)", () => {
   assert.equal(publishHistory.formatPublishChangeSummary('{"seats_added":1}'), null);
 });
+
+test("formatPublishChangeSummary handles realistic SQL wire shape with all six keys and mixed zeros", () => {
+  assert.equal(
+    publishHistory.formatPublishChangeSummary({
+      seats_added: 0,
+      seats_removed: 0,
+      assignments_changed: 0,
+      seats_moved: 2,
+      status_changes: 0,
+      employee_edits: 0
+    }),
+    "2 seats moved"
+  );
+});
+
+test("formatPublishChangeSummary pluralizes two seats added", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary({ seats_added: 2 }), "2 seats added");
+});
+
+test("formatPublishChangeSummary pluralizes three seats moved", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary({ seats_moved: 3 }), "3 seats moved");
+});
+
+test("formatPublishChangeSummary pluralizes two status changes", () => {
+  assert.equal(
+    publishHistory.formatPublishChangeSummary({ status_changes: 2 }),
+    "2 status changes"
+  );
+});
+
+test("formatPublishChangeSummary pluralizes four employee edits", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary({ employee_edits: 4 }), "4 employee edits");
+});
