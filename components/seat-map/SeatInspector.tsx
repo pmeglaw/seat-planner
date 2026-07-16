@@ -6,7 +6,7 @@ import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
 import { updateSeatAction } from "@/app/actions";
 import { canDeleteSeat, getSeatDeleteBlockReason, isProtectedOriginalSeatLabel } from "@/lib/seatProtection";
-import { employeeAssignmentFields } from "@/lib/employeeAssignment";
+import { buildOccupantRows, employeeAssignmentFields, type OccupantFactRow } from "@/lib/employeeAssignment";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
@@ -165,6 +165,30 @@ function FactRow({ label, value, mono = true }: { label: string; value: string; 
       <dt className="shrink-0 text-[12.5px] text-[var(--admin-chrome-muted)]">{label}</dt>
       <dd className={["min-w-0 truncate text-right text-[12.5px] font-medium text-[#eeeeee]", mono ? "font-mono" : ""].filter(Boolean).join(" ")}>{value}</dd>
     </div>
+  );
+}
+
+// Occupant facts hide fields with nothing on file instead of rendering "—"
+// dash rows (2026-07-16 critique carryover) — an absent row reads as "nothing
+// recorded"; a column of dashes reads as broken. When NOTHING is on file, one
+// quiet line says so, and admins get pointed at Management (where profiles
+// are completed).
+function OccupantFacts({ rows, canEdit }: { rows: OccupantFactRow[]; canEdit: boolean }) {
+  if (rows.length === 0) {
+    return (
+      <p className="py-1.5 text-[12.5px] leading-4 text-[var(--admin-chrome-muted)]">
+        No contact details on file.{canEdit ? " Add them from the Management page." : ""}
+      </p>
+    );
+  }
+  return (
+    <dl>
+      {rows.map(row =>
+        row.label === "Department"
+          ? <FactRow key={row.label} label={row.label} value={row.value} mono={false} />
+          : <FactRow key={row.label} label={row.label} value={row.value} />
+      )}
+    </dl>
   );
 }
 
@@ -1007,11 +1031,14 @@ export function SeatInspector({
 
             <div className="border-t border-white/10">
               <InspectorSection title="Occupant" headingId="seat-occupant-heading" defaultOpen>
-                <dl>
-                  <FactRow label="Department" value={form.department.trim() || selectedSeat.employee?.department || "—"} mono={false} />
-                  <FactRow label="Email" value={(matchedEmployee ?? selectedSeat.employee)?.email || "—"} />
-                  <FactRow label="Extension" value={form.phoneExtension.trim() || "—"} />
-                </dl>
+                <OccupantFacts
+                  canEdit
+                  rows={buildOccupantRows({
+                    department: form.department.trim() || selectedSeat.employee?.department,
+                    email: (matchedEmployee ?? selectedSeat.employee)?.email,
+                    extension: form.phoneExtension
+                  })}
+                />
               </InspectorSection>
             </div>
 
@@ -1351,11 +1378,14 @@ export function SeatInspector({
           <div className="border-t border-white/10">
             <InspectorSection title="Occupant" headingId="published-assignment-heading" defaultOpen>
               <p className="sr-only">Published assignment</p>
-              <dl>
-                <FactRow label="Department" value={selectedSeat.employee?.department || "—"} mono={false} />
-                <FactRow label="Email" value={selectedSeat.employee?.email || "—"} />
-                <FactRow label="Extension" value={selectedSeat.employee?.phone_extension || "—"} />
-              </dl>
+              <OccupantFacts
+                canEdit={false}
+                rows={buildOccupantRows({
+                  department: selectedSeat.employee?.department,
+                  email: selectedSeat.employee?.email,
+                  extension: selectedSeat.employee?.phone_extension
+                })}
+              />
             </InspectorSection>
           </div>
           <InspectorSection title="Seat" headingId="published-details-heading">

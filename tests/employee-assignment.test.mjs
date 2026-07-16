@@ -72,3 +72,31 @@ test("null position and extension become empty strings, not carried-over values"
   assert.equal(next.phoneExtension, "");
   assert.equal(next.department, "");
 });
+
+// 2026-07-16 critique carryover fix: the inspector's Occupant section hides
+// fields with nothing on file instead of rendering "—" dash rows (which made
+// the directory read as broken when 6/8 employees lack contact details).
+const { buildOccupantRows } = await importTsModule("lib/employeeAssignment.ts");
+
+test("buildOccupantRows keeps only fields that have values, in Department/Email/Extension order", () => {
+  const rows = buildOccupantRows({ department: "Intake", email: "pam@firm.com", extension: "202" });
+  assert.deepEqual(rows, [
+    { label: "Department", value: "Intake" },
+    { label: "Email", value: "pam@firm.com" },
+    { label: "Extension", value: "202" }
+  ]);
+});
+
+test("buildOccupantRows drops empty, null, and whitespace-only fields", () => {
+  const rows = buildOccupantRows({ department: "Intake", email: null, extension: "   " });
+  assert.deepEqual(rows, [{ label: "Department", value: "Intake" }]);
+});
+
+test("buildOccupantRows returns an empty list when nothing is on file", () => {
+  assert.deepEqual(buildOccupantRows({ department: undefined, email: "", extension: null }), []);
+});
+
+test("buildOccupantRows trims surrounding whitespace from kept values", () => {
+  const rows = buildOccupantRows({ department: " Intake ", email: null, extension: null });
+  assert.deepEqual(rows, [{ label: "Department", value: "Intake" }]);
+});
