@@ -271,6 +271,10 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /isProtectedOriginalSeatLabel/);
   assert.match(inspectorSource, /Protected original/);
   assert.match(inspectorSource, /Fix the highlighted inspector fields before saving/);
+  // Move-confirm dialog renders canonical identity casing for both segments
+  // (person via formatDisplayName, seat code via formatSeatCode) — raw stored
+  // values must not surface here (2026-07-16 critique, fix 2 follow-up).
+  assert.match(inspectorSource, /Move \{formatDisplayName\(moveConflict\.employeeName\)\} to \{formatSeatCode\(selectedSeat\.label\)\}\?/);
   assert.match(inspectorSource, /Review inspector fields/);
   assert.match(inspectorSource, /errorSummaryRef\.current\?\.focus\(\)/);
   assert.match(inspectorSource, /focusInspectorField\(error\.field\)/);

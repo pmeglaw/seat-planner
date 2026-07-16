@@ -7,7 +7,7 @@ import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@
 import { updateSeatAction } from "@/app/actions";
 import { canDeleteSeat, getSeatDeleteBlockReason, isProtectedOriginalSeatLabel } from "@/lib/seatProtection";
 import { employeeAssignmentFields } from "@/lib/employeeAssignment";
-import { formatDisplayName } from "@/lib/formatName";
+import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
@@ -899,7 +899,7 @@ export function SeatInspector({
             {occupantInitials}
           </span>
           <div className="min-w-0 flex-1">
-            <h2 id="seat-inspector-title" className="truncate text-[13.5px] font-semibold leading-5 text-white">
+            <h2 id="seat-inspector-title" className="truncate text-[15.5px] font-semibold leading-6 text-white">
               {formatDisplayName(assignmentIdentityLabel) || "Open seat"}
             </h2>
             <div className="truncate text-[12px] leading-4 text-[var(--admin-chrome-muted)]">{occupantRoleLabel}</div>
@@ -1444,7 +1444,7 @@ export function SeatInspector({
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 id="move-employee-confirm-title" className="text-base font-black">Move {formatDisplayName(moveConflict.employeeName)} to {selectedSeat.label}?</h2>
+              <h2 id="move-employee-confirm-title" className="text-base font-black">Move {formatDisplayName(moveConflict.employeeName)} to {formatSeatCode(selectedSeat.label)}?</h2>
               <p id="move-employee-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
                 They currently sit at {moveConflict.currentSeatLabel}. Moving frees {moveConflict.currentSeatLabel} (it becomes Open).
               </p>
