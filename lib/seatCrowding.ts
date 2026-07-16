@@ -78,8 +78,12 @@ export function computeSeatDensityTiers<T extends { id: string; x: number; y: nu
 }
 
 // Deterministic name-label nudge assignment: only named seats participate in
-// collision clustering (an unnamed neighbour's position is irrelevant to
-// whether two visible name labels overlap). This is a greedy graph-coloring
+// collision clustering and only named seats ever receive a nudge. Unnamed
+// neighbours matter one way (2026-07-16 critique, minor 9): their CODE pills
+// render pinned at the anchor line, so a name pill that overlaps one must
+// prefer a vertical offset — for such seats the anchor row (nudge 0) drops to
+// last preference. Unnamed seats still never consume a palette slot (the
+// 4-clique phantom-member fix stands). This is a greedy graph-coloring
 // over the actual pairwise collision edges among named seats, NOT a
 // positional pattern — a positional "every 3rd seat by sort order" scheme can
 // assign the same nudge to two seats that actually collide whenever a
@@ -106,6 +110,7 @@ export function computeNameLabelNudges<T extends { id: string; x: number; y: num
   if (named.length === 0) {
     return nudges;
   }
+  const unnamed = seats.filter((seat) => !namedSeatIds.has(seat.id));
 
   const sorted = [...named].sort((a, b) => {
     if (a.y !== b.y) {
@@ -127,6 +132,7 @@ export function computeNameLabelNudges<T extends { id: string; x: number; y: num
     Math.abs(a.x - b.x) < clearance.x && Math.abs(a.y - b.y) < clearance.y;
 
   const palette: ReadonlyArray<-1 | 0 | 1> = [0, -1, 1];
+  const obstaclePalette: ReadonlyArray<-1 | 0 | 1> = [-1, 1, 0];
 
   for (let i = 0; i < sorted.length; i += 1) {
     const seat = sorted[i];
@@ -142,7 +148,11 @@ export function computeNameLabelNudges<T extends { id: string; x: number; y: num
       }
     }
 
-    const free = palette.find((value) => !neighborUsage.has(value));
+    // An overlapping unnamed code pill pins the anchor row: prefer ±1 first,
+    // keeping 0 only as the last free value before the least-used fallback.
+    const overlapsObstacle = unnamed.some((obstacle) => collides(seat, obstacle));
+    const preference = overlapsObstacle ? obstaclePalette : palette;
+    const free = preference.find((value) => !neighborUsage.has(value));
     if (free !== undefined) {
       nudges.set(seat.id, free);
       continue;

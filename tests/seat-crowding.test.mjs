@@ -142,14 +142,44 @@ test("computeNameLabelNudges gives three colliding named seats in a row pairwise
   }
 });
 
-test("computeNameLabelNudges gives 0 to a named seat that only collides with an unnamed seat", () => {
+// 2026-07-16 critique, minor 9 (contract change from the earlier "unnamed
+// neighbours are irrelevant" rule): an unnamed neighbour's CODE pill renders
+// pinned at the anchor line, so a name pill overlapping it must prefer a
+// vertical offset — nudge 0 would leave the lateral clip (C06→"C07 Daniel",
+// CW01↔CW02 at 1920 fit). Unnamed seats still never receive a nudge and never
+// consume a palette slot (the 4-clique phantom-member fix stands).
+test("computeNameLabelNudges lifts a named seat off the anchor row when it collides with an unnamed seat", () => {
   const seats = [
     { id: "namedSeat", x: 0.5, y: 0.5 },
     { id: "unnamedSeat", x: 0.52, y: 0.5 } // within clearance, but not named
   ];
   const nudges = computeNameLabelNudges(seats, new Set(["namedSeat"]), CODE_PILL_DEFAULT_CLEARANCE);
-  assert.equal(nudges.get("namedSeat") ?? 0, 0);
+  assert.ok([-1, 1].includes(nudges.get("namedSeat")), "expected a non-zero nudge away from the code pill row");
   assert.equal(nudges.has("unnamedSeat"), false);
+});
+
+test("computeNameLabelNudges keeps 0 for a named seat with no collisions at all", () => {
+  const seats = [
+    { id: "namedSeat", x: 0.5, y: 0.5 },
+    { id: "farUnnamed", x: 0.8, y: 0.8 }
+  ];
+  const nudges = computeNameLabelNudges(seats, new Set(["namedSeat"]), CODE_PILL_DEFAULT_CLEARANCE);
+  assert.equal(nudges.get("namedSeat") ?? 0, 0);
+});
+
+test("computeNameLabelNudges keeps colliding named pairs distinct when both also collide with unnamed seats", () => {
+  const seats = [
+    { id: "a", x: 0.5, y: 0.5 },
+    { id: "b", x: 0.52, y: 0.5 },
+    { id: "openLeft", x: 0.48, y: 0.5 },
+    { id: "openRight", x: 0.54, y: 0.5 }
+  ];
+  const nudges = computeNameLabelNudges(seats, new Set(["a", "b"]), CODE_PILL_DEFAULT_CLEARANCE);
+  const nudgeA = nudges.get("a");
+  const nudgeB = nudges.get("b");
+  assert.notEqual(nudgeA, nudgeB);
+  assert.ok([-1, 1].includes(nudgeA), "obstacle-colliding name pill must leave the anchor row");
+  assert.ok([-1, 1].includes(nudgeB), "obstacle-colliding name pill must leave the anchor row");
 });
 
 test("computeNameLabelNudges returns an empty map when no seats are named", () => {
