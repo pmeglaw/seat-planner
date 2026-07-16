@@ -274,6 +274,13 @@ export function SeatInspector({
   const activeSeatSnapshotRef = useRef(formSnapshot(emptyForm));
   const resetSignalRef = useRef(resetSignal);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const primaryActionRef = useRef<HTMLButtonElement | null>(null);
+  const collapseRailRef = useRef<HTMLButtonElement | null>(null);
+  // Explicit collapse/expand toggles request a focus handoff; the search
+  // auto-collapse (INV-1) sets no flag, so typing never loses focus.
+  const focusRailAfterCollapseRef = useRef(false);
+  const focusPanelAfterExpandRef = useRef(false);
+  const prevCollapsedRef = useRef(collapsed);
   const assignmentSectionRef = useRef<HTMLElement | null>(null);
   const vacateDialogFocusRef = useDialogFocus<HTMLElement>();
   const moveConflictDialogFocusRef = useDialogFocus<HTMLElement>();
@@ -391,6 +398,20 @@ export function SeatInspector({
     activeSeatIdRef.current = seat.id;
     resetInspectorDraftForm(formFromSeat(seat));
   }, [resetSignal, seat, resetInspectorDraftForm]);
+
+  // Hand focus across explicit collapse/expand transitions — the clicked
+  // toggle unmounts with its panel (2026-07-16 critique, action 5).
+  useEffect(() => {
+    if (prevCollapsedRef.current === collapsed) return;
+    prevCollapsedRef.current = collapsed;
+    if (collapsed && focusRailAfterCollapseRef.current) {
+      focusRailAfterCollapseRef.current = false;
+      window.requestAnimationFrame(() => collapseRailRef.current?.focus());
+    } else if (!collapsed && focusPanelAfterExpandRef.current) {
+      focusPanelAfterExpandRef.current = false;
+      window.requestAnimationFrame(() => document.getElementById("seat-inspector-panel")?.focus());
+    }
+  }, [collapsed]);
 
   if (!seat) return null;
 
@@ -740,6 +761,7 @@ export function SeatInspector({
         onDirtyChange(false);
         setSaveFeedback(input.forceMove ? `Moved to ${updated.label}` : "Saved to draft");
         onSeatUpdated(updated, beforeSnapshot);
+        focusPrimaryActionSoon();
       } catch (error) {
         // Only genuinely unexpected failures (network/auth) reach here now.
         const message = error instanceof Error ? error.message : "Could not update assignment.";
@@ -766,14 +788,23 @@ export function SeatInspector({
     resetInspectorDraftForm(initialForm);
   }
 
+  // After Cancel or a successful save the commit bar (and the button the
+  // keyboard user just activated) unmounts — hand focus to the pinned
+  // primary action that re-renders in its place (critique action 5).
+  function focusPrimaryActionSoon() {
+    window.requestAnimationFrame(() => primaryActionRef.current?.focus());
+  }
+
   function handleCancelEditing() {
     if (isDirty) {
       resetInspectorDraftForm(initialForm);
+      focusPrimaryActionSoon();
       return;
     }
 
     if (editingAssignment) {
       setEditingAssignment(false);
+      focusPrimaryActionSoon();
       return;
     }
 
@@ -894,8 +925,12 @@ export function SeatInspector({
     return (
       <aside className="fixed inset-x-3 bottom-3 z-[80] panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-10 panel:z-40">
         <button
+          ref={collapseRailRef}
           type="button"
-          onClick={onToggleCollapse}
+          onClick={() => {
+            focusPanelAfterExpandRef.current = true;
+            onToggleCollapse();
+          }}
           aria-label={`View details for ${selectedSeat.label}`}
           title={`View details for ${selectedSeat.label}`}
           className="flex min-h-12 w-full items-center justify-center gap-2 border border-white/10 bg-[var(--admin-chrome-bg)] px-4 py-2 text-[#c6c6c6] shadow-elevation-3 transition hover:bg-[#1f1f1f] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] panel:h-full panel:min-h-full panel:w-11 panel:flex-col panel:border-0 panel:border-l panel:border-white/10 panel:px-2 panel:py-4 panel:shadow-none"
@@ -930,14 +965,17 @@ export function SeatInspector({
           <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
-              onClick={onToggleCollapse}
+              onClick={() => {
+                focusRailAfterCollapseRef.current = true;
+                onToggleCollapse();
+              }}
               aria-label={`Back to map from ${selectedSeat.label} details`}
               title="Back to map"
               className="inline-flex h-7 items-center justify-center border border-white/15 px-2.5 text-[11px] font-medium text-[#c6c6c6] transition hover:bg-[#262626] hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] panel:hidden"
             >
               Back to map
             </button>
-            <button type="button" onClick={onToggleCollapse} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-7 w-7 items-center justify-center text-[#9a9a9a] transition hover:bg-[#262626] hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] panel:inline-flex"><CollapseIcon /></button>
+            <button type="button" onClick={() => { focusRailAfterCollapseRef.current = true; onToggleCollapse(); }} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-7 w-7 items-center justify-center text-[#9a9a9a] transition hover:bg-[#262626] hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] panel:inline-flex"><CollapseIcon /></button>
             <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 items-center justify-center text-[#9a9a9a] transition hover:bg-[#262626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"><CloseIcon /></button>
           </div>
         </div>
@@ -1026,6 +1064,7 @@ export function SeatInspector({
                   disabled={pending}
                   aria-expanded={editingAssignment}
                   aria-controls="seat-inspector-form"
+                  ref={primaryActionRef}
                   aria-label={`Assign an employee to ${selectedSeat.label}`}
                   className="min-w-0 w-full rounded-[10px] !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)]"
                 >
@@ -1039,6 +1078,7 @@ export function SeatInspector({
                   disabled={pending}
                   aria-expanded={editingAssignment}
                   aria-controls="seat-inspector-form"
+                  ref={primaryActionRef}
                   aria-label={`Change assignment for ${selectedSeat.label}`}
                   className={`min-w-0 w-full rounded-[10px] ${footerNeutralButtonClass}`}
                 >

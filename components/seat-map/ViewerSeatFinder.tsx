@@ -93,6 +93,15 @@ function uniqueVisibleOptions(values: Array<string | null | undefined>) {
   return Array.from(seen.values()).sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
 }
 
+// Marker focus restore for deselect paths — the details panel (which may
+// hold focus) unmounts with the selection (critique action 5).
+function focusViewerSeatMarker(seatId: string | null) {
+  if (!seatId) return;
+  window.requestAnimationFrame(() => {
+    document.querySelector<HTMLButtonElement>(`[data-seat-id="${seatId}"]`)?.focus();
+  });
+}
+
 export function ViewerSeatFinder({
   seats,
   employees,
@@ -123,6 +132,7 @@ export function ViewerSeatFinder({
   const panStateRef = useRef<ViewerPanState>(null);
   const filterRootRef = useRef<HTMLDivElement | null>(null);
   const filterTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const publishedSeats = useMemo(() => seats.map(normalizeSeat), [seats]);
   const visualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
@@ -242,6 +252,7 @@ export function ViewerSeatFinder({
         return;
       }
       if (selectedSeatId) {
+        focusViewerSeatMarker(selectedSeatId);
         setSelectedSeatId(null);
         setInspectorCollapsed(false);
         return;
@@ -249,7 +260,11 @@ export function ViewerSeatFinder({
       const target = event.target;
       const editable = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement;
       if (!editable && search.trim()) {
+        const fromResultsPanel = target instanceof Element && Boolean(target.closest('[aria-label="Viewer search results"]'));
         setSearch("");
+        if (fromResultsPanel) {
+          window.requestAnimationFrame(() => searchInputRef.current?.focus());
+        }
         return;
       }
       if (!editable && structuredFiltersActive) {
@@ -678,6 +693,7 @@ export function ViewerSeatFinder({
                     document.querySelector<HTMLButtonElement>('[aria-label="Viewer search results"] button')?.focus();
                   }
                 }}
+                ref={searchInputRef}
                 placeholder={SEAT_SEARCH_PLACEHOLDER}
                 className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
               />
@@ -933,6 +949,7 @@ export function ViewerSeatFinder({
         pillSuppressed={resultsPanelOpen}
         swapMode={false}
         onClose={() => {
+          focusViewerSeatMarker(selectedSeatId);
           setSelectedSeatId(null);
           setInspectorCollapsed(false);
         }}
