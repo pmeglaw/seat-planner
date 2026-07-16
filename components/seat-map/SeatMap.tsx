@@ -776,13 +776,27 @@ export function SeatMap({
         }
         // Esc ladder: selected with a retained query returns to RESULTS (the panel
         // slot re-renders results); selected without a query returns to idle.
+        // Focus returns to the seat's marker — the inspector (which may hold
+        // focus) unmounts with the selection (critique action 5).
+        const escDeselectSeatId = selectedSeatId;
         setSelectedSeatId(null);
         setInspectorCollapsed(false);
+        focusSeatMarker(escDeselectSeatId);
         return;
       }
 
       if (!isEditableTarget(event.target) && search.trim()) {
+        // The results panel teaches "Esc clears" — when the press came from a
+        // result card, the card unmounts with the panel, so focus returns to
+        // the search input the cleared query belongs to.
+        const fromResultsPanel = event.target instanceof Element && Boolean(event.target.closest('[aria-label="Admin search results"]'));
         setSearch("");
+        if (fromResultsPanel) {
+          window.requestAnimationFrame(() => {
+            const chromeInput = chromeSearchInputRef.current;
+            (chromeInput && chromeInput.offsetParent !== null ? chromeInput : canvasSearchInputRef.current)?.focus();
+          });
+        }
         return;
       }
 
