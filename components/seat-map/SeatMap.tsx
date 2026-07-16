@@ -2792,8 +2792,18 @@ export function SeatMap({
                           returnFocusAfterClose(mapMenuButtonRef);
                           return;
                         }
+                        if (event.key === "Tab") {
+                          // APG menu-button pattern: preventDefault() is wrong for Tab —
+                          // close and return focus to the trigger (as Escape does) so
+                          // the next Tab continues naturally from there.
+                          event.stopPropagation();
+                          setMapMenuOpen(false);
+                          returnFocusAfterClose(mapMenuButtonRef);
+                          return;
+                        }
                         if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
                           event.preventDefault();
+                          event.stopPropagation();
                           const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'));
                           if (items.length === 0) return;
                           const currentIndex = items.indexOf(document.activeElement as HTMLElement);
@@ -2815,6 +2825,7 @@ export function SeatMap({
                       <button
                         type="button"
                         role="menuitem"
+                        tabIndex={-1}
                         onClick={() => {
                           setMapMenuOpen(false);
                           fitMapToView();
@@ -2827,6 +2838,7 @@ export function SeatMap({
                       <button
                         type="button"
                         role="menuitem"
+                        tabIndex={-1}
                         onClick={() => {
                           setMapMenuOpen(false);
                           applyMapZoom(1);
