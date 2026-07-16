@@ -2,6 +2,7 @@
 
 import type { CSSProperties, PointerEvent, ReactNode } from "react";
 import type { SeatWithEmployee } from "@/lib/types";
+import { STATUS_LABELS } from "@/lib/types";
 import { pointToStyle } from "@/lib/seatMath";
 import { formatDisplayName } from "@/lib/formatName";
 
@@ -380,7 +381,7 @@ export function SeatMarker({
       data-draft-changed={draftChanged || undefined}
       data-movable={isMovable}
       aria-pressed={selected}
-      title={`${seat.label} · ${displayName} · ${seat.status}`}
+      title={`${seat.label} · ${displayName} · ${STATUS_LABELS[seat.status]}`}
       className={[
         "group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-manipulation select-none items-center justify-center overflow-visible rounded-full border-0 bg-transparent p-0 font-extrabold leading-none text-slate-900",
         "transition-[transform,opacity,filter] duration-150 ease-out hover:z-30 active:scale-[0.96] active:duration-75 motion-reduce:transition-none",
@@ -393,7 +394,7 @@ export function SeatMarker({
         dragging ? "z-40 scale-[1.06] shadow-[0_18px_36px_rgba(31,35,39,0.24)]" : ""
       ].join(" ")}
       style={pointToStyle({ x: seat.x, y: seat.y })}
-      aria-label={`${seat.label}: ${displayName}. ${seat.status} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${moveOrigin ? " Move origin. Drag to reposition." : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
+      aria-label={`${seat.label}: ${displayName}. ${STATUS_LABELS[seat.status]} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${moveOrigin ? " Move origin. Drag to reposition." : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
     >
       <SeatToken
         style={tokenPositionStyle}

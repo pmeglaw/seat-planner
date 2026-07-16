@@ -3,6 +3,7 @@
 import type { RefObject } from "react";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 import type { SeatStatus } from "@/lib/types";
+import { STATUS_LABELS } from "@/lib/types";
 
 export type ActiveFilterChip = {
   id: string;
@@ -146,10 +147,10 @@ export function FilterPanel({
           <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Status</span>
           <select value={status} onChange={event => onStatusChange(event.target.value)} className={darkSelectClassName}>
             <option value="all">All statuses</option>
-            <option value="available">Available</option>
-            <option value="assigned">Assigned</option>
-            <option value="reserved">Reserved</option>
-            <option value="unavailable">Unavailable</option>
+            <option value="available">{STATUS_LABELS.available}</option>
+            <option value="assigned">{STATUS_LABELS.assigned}</option>
+            <option value="reserved">{STATUS_LABELS.reserved}</option>
+            <option value="unavailable">{STATUS_LABELS.unavailable}</option>
           </select>
         </label>
       </div>

@@ -93,7 +93,7 @@ test("viewer search distinguishes seat label results", () => {
   assert.ok(seatResult);
   assert.equal(seatResult.seatId, "seat-n02");
   assert.equal(seatResult.status, "available");
-  assert.match(seatResult.meta, /Available/);
+  assert.match(seatResult.meta, /Open/);
 });
 
 test("viewer search supports department and zone queries from existing viewer data", () => {

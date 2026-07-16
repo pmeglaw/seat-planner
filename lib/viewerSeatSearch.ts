@@ -48,7 +48,7 @@ const KIND_ORDER: Record<ViewerSearchResultKind, number> = {
 // transpiles this module standalone, so runtime imports cannot resolve here.
 const STATUS_LABELS: Record<SeatStatus, string> = {
   assigned: "Assigned",
-  available: "Available",
+  available: "Open",
   reserved: "Reserved",
   unavailable: "Unavailable"
 };

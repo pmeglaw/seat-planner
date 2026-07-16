@@ -124,8 +124,11 @@ export const SEAT_STATUSES: SeatStatus[] = [
   "unavailable"
 ];
 
+// "available" reads as "Open" everywhere a person sees it (legend, chips,
+// filters, tooltips) — one name per status, this map is the only place it is
+// spelled (2026-07-16 critique, action 3).
 export const STATUS_LABELS: Record<SeatStatus, string> = {
-  available: "Available",
+  available: "Open",
   assigned: "Assigned",
   reserved: "Reserved",
   unavailable: "Unavailable"

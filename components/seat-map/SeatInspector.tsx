@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import type { ChangeEvent, FormEvent, KeyboardEvent, ReactNode } from "react";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
+import { STATUS_LABELS } from "@/lib/types";
 import { updateSeatAction } from "@/app/actions";
 import { canDeleteSeat, getSeatDeleteBlockReason, isProtectedOriginalSeatLabel } from "@/lib/seatProtection";
 import { buildOccupantRows, employeeAssignmentFields, type OccupantFactRow } from "@/lib/employeeAssignment";
@@ -416,7 +417,7 @@ export function SeatInspector({
   const newEmployeeNoticeId = showNewEmployeeNotice ? "seat-inspector-new-employee-notice" : null;
 
   const currentZone = selectedSeat.zone ?? selectedSeat.department ?? "Unzoned";
-  const currentStatusLabel = effectiveStatus[0].toUpperCase() + effectiveStatus.slice(1);
+  const currentStatusLabel = STATUS_LABELS[effectiveStatus];
   // Header status chip on the dark panel: neutral pill, the status carries the
   // shell status hue on the dot only (never color-only — the label names it).
   const headerStatusDotClass = effectiveStatus === "assigned"
@@ -1233,9 +1234,9 @@ export function SeatInspector({
                     aria-describedby={fieldDescribedBy("status")}
                     className={fieldClassName}
                   >
-                    <option value="available">Available</option>
-                    <option value="reserved">Reserved</option>
-                    <option value="unavailable">Unavailable</option>
+                    <option value="available">{STATUS_LABELS.available}</option>
+                    <option value="reserved">{STATUS_LABELS.reserved}</option>
+                    <option value="unavailable">{STATUS_LABELS.unavailable}</option>
                   </select>
                   {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[#ff8389]">{fieldErrorMap.status}</p>}
                 </label>
