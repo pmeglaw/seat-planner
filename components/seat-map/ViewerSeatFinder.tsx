@@ -661,7 +661,14 @@ export function ViewerSeatFinder({
                 onKeyDown={event => {
                   if (event.key === "Escape" && search.trim()) {
                     event.stopPropagation();
-                    clearSearch();
+                    // Layered dismissal (2026-07-16 critique, minor 10): the
+                    // first Esc only clears the query and returns the panel
+                    // slot to the pre-search state; a second Esc reaches the
+                    // global handler, which deselects the seat. The × button
+                    // keeps the full clearSearch reset.
+                    setSearch("");
+                    setActiveResultId(null);
+                    setInspectorCollapsed(false);
                     return;
                   }
                   // Results are visually adjacent but far away in DOM order —
@@ -829,7 +836,13 @@ export function ViewerSeatFinder({
 
           <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2">
             <p className="min-w-0 truncate text-xs font-medium text-[var(--admin-text-muted)]">
-              {searchActive ? `${resultCountLabel} · ${searchResults.resultSeatIds.length} mapped` : "Published seating across people, seats, departments, and zones."}
+              {searchActive
+                ? `${resultCountLabel} · ${searchResults.resultSeatIds.length} mapped`
+                : structuredFiltersActive
+                  // Filters got no match count while search did (2026-07-16
+                  // critique, minor 8) — same status-line home for both.
+                  ? `${highlightedSeatIdSet.size} of ${publishedSeats.length} seats ${highlightedSeatIdSet.size === 1 ? "matches" : "match"} filters`
+                  : "Published seating across people, seats, departments, and zones."}
             </p>
             <ul aria-label="Seat status summary" className="flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--admin-text-secondary)]">
               {[
