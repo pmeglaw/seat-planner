@@ -84,6 +84,8 @@ export default async function HomePage() {
       zoneOptions={(zones ?? []) as ZoneOption[]}
       showAdminShortcut={profile?.role === "admin"}
       lastPublishedLabel={lastPublishedLabel}
+      accountEmail={user.email ?? ""}
+      accountRoleLabel={profile?.role === "admin" ? "Admin" : "Viewer"}
     />
   );
 }

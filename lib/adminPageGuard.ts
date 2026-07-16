@@ -21,5 +21,5 @@ export async function getAdminPageContext(nextPath: string) {
     .eq("id", user.id)
     .single();
 
-  return { supabase, isAdmin: profile?.role === "admin" };
+  return { supabase, isAdmin: profile?.role === "admin", user };
 }

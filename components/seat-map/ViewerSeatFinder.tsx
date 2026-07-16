@@ -18,6 +18,7 @@ import {
 } from "@/lib/mapLayoutTransform";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
+import { AccountMenu } from "@/components/ui/AccountMenu";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
@@ -36,6 +37,9 @@ type ViewerSeatFinderProps = {
   // Pre-formatted "last publish" date from the server page (viewer-safe copy
   // for the old PUBLISHED/READ-ONLY badge pair).
   lastPublishedLabel?: string | null;
+  // Signed-in identity for the account menu (email + role + sign out).
+  accountEmail?: string | null;
+  accountRoleLabel?: string;
 };
 
 type ViewerPanState = {
@@ -99,7 +103,9 @@ export function ViewerSeatFinder({
   departmentOptions = [],
   zoneOptions = [],
   showAdminShortcut = false,
-  lastPublishedLabel = null
+  lastPublishedLabel = null,
+  accountEmail = null,
+  accountRoleLabel = "Viewer"
 }: ViewerSeatFinderProps) {
   const [search, setSearch] = useState("");
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
@@ -725,7 +731,13 @@ export function ViewerSeatFinder({
               </Link>
             )}
           </div>
-          <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">V</span>
+          {/* Account menu (identity + sign out); decorative fallback keeps
+              unauthenticated prototype embeds rendering. */}
+          {accountEmail ? (
+            <AccountMenu email={accountEmail} roleLabel={accountRoleLabel} />
+          ) : (
+            <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">V</span>
+          )}
         </div>
       </header>
 

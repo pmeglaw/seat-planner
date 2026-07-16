@@ -55,6 +55,7 @@ import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
+import { AccountMenu } from "@/components/ui/AccountMenu";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
@@ -71,6 +72,10 @@ type SeatMapProps = {
   departmentOptions?: DepartmentOption[];
   zoneOptions?: ZoneOption[];
   canEdit: boolean;
+  // Signed-in identity for the account menu; absent on unauthenticated
+  // prototype routes, which keep the decorative chip instead.
+  accountEmail?: string | null;
+  accountRoleLabel?: string;
 };
 
 type DragState = {
@@ -256,7 +261,9 @@ export function SeatMap({
   publishedEmployees = DEFAULT_PUBLISHED_EMPLOYEES,
   departmentOptions = [],
   zoneOptions = [],
-  canEdit
+  canEdit,
+  accountEmail = null,
+  accountRoleLabel
 }: SeatMapProps) {
   const router = useRouter();
   const [localSeats, setLocalSeats] = useState(() => normalizeSeats(seats));
@@ -2746,22 +2753,23 @@ export function SeatMap({
               )}
             </div>
           )}
-          {/* The identity chip doubles as the Settings entry (owner preference):
-              data-utility settings are management-adjacent, so they live behind
-              this chip rather than as a separate labeled nav item. Labeled for
-              AT since the avatar shape doesn't announce its purpose. */}
-          {canEdit ? (
-            <Link
-              href="/admin/settings"
-              aria-label="Open settings"
-              title="Settings — data utilities and recovery"
-              onClick={event => {
-                if (!beforeAdminPageNavigation("/admin/settings", "Settings")) event.preventDefault();
-              }}
-              className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-chrome-bg)]"
-            >
-              A
-            </Link>
+          {/* The identity chip is the account menu (signed-in email + role +
+              Sign out). Settings stays behind this chip on the map surface
+              (owner preference) as a labeled menu item that still routes
+              through the unsaved-edits guard. Prototype routes render without
+              an authenticated user, so the chip falls back to decorative. */}
+          {accountEmail ? (
+            <AccountMenu
+              email={accountEmail}
+              roleLabel={accountRoleLabel ?? (canEdit ? "Admin" : "Viewer")}
+              onSelectSettings={
+                canEdit
+                  ? () => {
+                      if (beforeAdminPageNavigation("/admin/settings", "Settings")) window.location.assign("/admin/settings");
+                    }
+                  : undefined
+              }
+            />
           ) : (
             <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">A</span>
           )}

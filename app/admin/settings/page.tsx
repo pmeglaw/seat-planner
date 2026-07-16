@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AdminSettingsPage() {
-  const { supabase, isAdmin } = await getAdminPageContext("/admin/settings");
+  const { supabase, isAdmin, user } = await getAdminPageContext("/admin/settings");
 
   if (!isAdmin) {
     return (
@@ -40,7 +40,7 @@ export default async function AdminSettingsPage() {
 
   return (
     <main className="admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text-primary)]">
-      <AdminShellBar page="settings" />
+      <AdminShellBar page="settings" email={user.email ?? ""} roleLabel="Admin" />
       <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
         <header className="mb-6 border-b border-[var(--admin-border)] pb-4">
           <h1 className="text-xl font-semibold text-[var(--admin-text-primary)]">Settings</h1>
