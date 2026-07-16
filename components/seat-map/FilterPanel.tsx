@@ -30,6 +30,8 @@ type FilterPanelProps = {
   onStatusChange: (value: string) => void;
   onRemoveActiveChip: (chipId: string) => void;
   onClearFilters: () => void;
+  // Live "N of M seats match" line rendered inside the popover.
+  matchSummary?: string;
 };
 
 export function ActiveFilterChips({
@@ -98,7 +100,8 @@ export function FilterPanel({
   onZoneChange,
   onStatusChange,
   onRemoveActiveChip,
-  onClearFilters
+  onClearFilters,
+  matchSummary
 }: FilterPanelProps) {
   const activeStructuredChips = activeChips.filter(chip => chip.id !== "search");
 
@@ -154,6 +157,14 @@ export function FilterPanel({
           </select>
         </label>
       </div>
+      {/* Commit informed: the live match count sits inside the popover so
+          changing a select shows its effect before the panel closes
+          (2026-07-16 regrade, review 4). */}
+      {matchSummary && (
+        <p aria-live="polite" className="mt-3 border-t border-white/10 pt-2.5 text-[11px] font-medium text-[var(--admin-chrome-muted)]">
+          {matchSummary}
+        </p>
+      )}
     </div>
   );
 }

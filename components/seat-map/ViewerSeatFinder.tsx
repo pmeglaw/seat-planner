@@ -249,9 +249,12 @@ export function ViewerSeatFinder({
   }, [activeResultSeatIdSet, publishedSeats, resultSeatIdSet, searchActive, seatPassesStructuredFilters]);
 
   const selectedResultTitle = activeResult?.title ?? selectedSeat?.label ?? null;
-  const assignedCount = publishedSeats.filter(seat => seat.status === "assigned").length;
-  const openCount = publishedSeats.filter(seat => seat.status === "available").length;
-  const reservedCount = publishedSeats.filter(seat => seat.status === "reserved").length;
+  // Legend counts follow the active filters — the one number row everyone
+  // reads must not contradict a filtered map (2026-07-16 regrade, review 4).
+  const statusCountSeats = structuredFiltersActive ? publishedSeats.filter(seatPassesStructuredFilters) : publishedSeats;
+  const assignedCount = statusCountSeats.filter(seat => seat.status === "assigned").length;
+  const openCount = statusCountSeats.filter(seat => seat.status === "available").length;
+  const reservedCount = statusCountSeats.filter(seat => seat.status === "reserved").length;
   const departments = uniqueVisibleOptions([
     ...departmentOptions.filter(option => option.active).map(option => option.name),
     ...employees.filter(employee => employee.active).map(employee => employee.department)
@@ -734,6 +737,7 @@ export function ViewerSeatFinder({
                 onDepartmentChange={setDepartment}
                 onZoneChange={setZone}
                 onStatusChange={setStatus}
+                matchSummary={`${statusCountSeats.length} of ${publishedSeats.length} seats match`}
                 onRemoveActiveChip={removeActiveFilterChip}
                 onClearFilters={clearStructuredFilters}
               />
@@ -849,7 +853,7 @@ export function ViewerSeatFinder({
                 Updated {lastPublishedLabel}
               </span>
             )}
-            <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="ml-auto" />
+            <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} />
           </div>
 
           <div className={mapStageClassName}>
