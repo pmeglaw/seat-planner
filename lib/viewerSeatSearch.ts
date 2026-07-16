@@ -149,6 +149,17 @@ function resultScore(query: string, result: ViewerSearchResult) {
   return KIND_ORDER[result.kind] - (exactTitle ? 6 : 0) - (exactSeat ? 3 : 0);
 }
 
+// INV-1 (owner-revised, admin map; extended to the viewer by the 2026-07-16
+// critique, fix 5): an active search keystroke hands the panel slot to
+// results — the inspector auto-collapses to its pill/rail (selection
+// retained; expand to return) so results are never invisible behind it.
+// Unsaved inspector edits stay put: no collapse until save/discard (the
+// viewer's inspector is read-only, so it passes false). ONE home for the
+// rule — both maps call this instead of re-deriving it inline.
+export function searchHandsPanelToResults(nextQuery: string, hasSelection: boolean, inspectorDirty: boolean): boolean {
+  return Boolean(normalizeSearchText(nextQuery)) && hasSelection && !inspectorDirty;
+}
+
 export function buildViewerSeatSearch({
   query: rawQuery,
   seats,

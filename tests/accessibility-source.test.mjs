@@ -51,7 +51,12 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /unpublished \$\{publishSummary\.totalChangeCount === 1 \? "change" : "changes"\}/);
   assert.match(source, /Esc exits/);
   assert.match(source, /Exit Add Seat/);
-  assert.match(source, /\{canEdit && \([\s\S]*aria-label=\{`Review \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);
+  // Publish chip contract (2026-07-16 critique, fix 3): with changes it is the
+  // review entry point; idle it is a DISCLOSURE for the status popover — a
+  // status indicator must not launch the publish workflow modal.
+  assert.match(source, /\{canEdit && \([\s\S]*aria-label=\{publishSummary\.hasChanges \? `Review \$\{draftStatusLabel\.toLowerCase\(\)\}` : `Publish status: \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);
+  assert.match(source, /if \(publishSummary\.hasChanges\) \{\s*openPublishReview\(\);\s*return;\s*\}\s*setPublishStatusOpen\(current => !current\);/);
+  assert.match(source, /id="publish-status-popover"[\s\S]{0,300}aria-label="Publish status"/);
   assert.match(source, /Undo \{lastUndoLabel\}/);
   assert.match(source, /onClick=\{undoDraftEdit\}/);
 });
@@ -229,6 +234,10 @@ test("seat markers remain keyboard buttons with contextual accessible labels", a
   assert.match(source, /<button[\s\S]*type="button"/);
   assert.match(source, /aria-pressed=\{selected\}/);
   assert.match(source, /aria-label=\{`\$\{seat\.label\}: \$\{displayName\}\. \$\{seat\.status\} seat\./);
+  // Assistive strings carry the same display-formatted identity as the visible
+  // labels: raw stored casing ("PAM", "ALEX S.") must not leak into the
+  // marker's title tooltip / aria-label (2026-07-16 critique, fix 2).
+  assert.match(source, /const displayName = formatDisplayName\(employeeName\) \|\| "Open seat"/);
   assert.match(source, /Search result\./);
   assert.match(source, /highlightedDescription = "Highlighted by Ask Planner"/);
   assert.match(source, /\$\{highlightedDescription\}\./);
@@ -267,6 +276,10 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /isProtectedOriginalSeatLabel/);
   assert.match(inspectorSource, /Protected original/);
   assert.match(inspectorSource, /Fix the highlighted inspector fields before saving/);
+  // Move-confirm dialog renders canonical identity casing for both segments
+  // (person via formatDisplayName, seat code via formatSeatCode) — raw stored
+  // values must not surface here (2026-07-16 critique, fix 2 follow-up).
+  assert.match(inspectorSource, /Move \{formatDisplayName\(moveConflict\.employeeName\)\} to \{formatSeatCode\(selectedSeat\.label\)\}\?/);
   assert.match(inspectorSource, /Review inspector fields/);
   assert.match(inspectorSource, /errorSummaryRef\.current\?\.focus\(\)/);
   assert.match(inspectorSource, /focusInspectorField\(error\.field\)/);
@@ -363,7 +376,12 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   // inspector is closed or auto-collapsed to its pill; searching collapses (never
   // clears) an open clean selection. No reserved gutter, no idle Map key rail.
   assert.match(seatMapSource, /const resultsPanelOpen = canEdit && filtersActive && \(!selectedSeat \|\| inspectorCollapsed\)/);
-  assert.match(seatMapSource, /if \(value\.trim\(\) && selectedSeatId && !inspectorDirty\) \{\s*setInspectorCollapsed\(true\);/);
+  // INV-1 lives once in lib/viewerSeatSearch (searchHandsPanelToResults,
+  // unit-tested) and BOTH maps call it — the admin passes its dirty guard, the
+  // read-only viewer passes false (2026-07-16 critique, fix 5).
+  assert.match(seatMapSource, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), inspectorDirty\)\) \{\s*setInspectorCollapsed\(true\);/);
+  const viewerFinderForInv1 = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  assert.match(viewerFinderForInv1, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), false\)\) \{\s*setInspectorCollapsed\(true\);/);
   assert.doesNotMatch(seatMapSource, /mapKeyPanelOpen|desktopInspectorReserveMarginClassName|dock:/);
   assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = ""/);
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title" className=\{\[filterCollapsed \? "order-1" : "order-2", "min-w-0 overflow-hidden/);
@@ -384,8 +402,9 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /className=\{mapMarkerLayerClassName\}/);
   // INV-2: no auto-select - a single match stays in results until an explicit open.
   assert.doesNotMatch(seatMapSource, /singleResultSeat|autoSelectedSearchKeyRef|Auto-selected/);
-  // INV-1: typing a search evicts the open inspector (unsaved edits keep the guard).
-  assert.match(seatMapSource, /if \(value\.trim\(\) && selectedSeatId && !inspectorDirty\) \{/);
+  // INV-1: typing a search evicts the open inspector (unsaved edits keep the
+  // guard) — rule shared via lib/viewerSeatSearch.searchHandsPanelToResults.
+  assert.match(seatMapSource, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), inspectorDirty\)\) \{/);
   assert.match(seatMapSource, /\{resultsPanelOpen && !modeCardOpen && \(/);
   assert.match(seatMapSource, /onOpen=\{selectSeatResult\}/);
   assert.match(seatMapSource, /onShowOnMap=\{queueCenterSeatInMap\}/);

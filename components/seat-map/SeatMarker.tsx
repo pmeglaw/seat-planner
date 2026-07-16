@@ -138,7 +138,9 @@ export function SeatMarker({
   const adminMarker = variant === "admin";
   const employeeName = seat.employee?.full_name ?? "";
   const hasEmployee = Boolean(seat.employee);
-  const displayName = employeeName || "Open seat";
+  // Display-formatted for the title tooltip + aria-label below — assistive
+  // strings must match the visible casing, never the raw stored value.
+  const displayName = formatDisplayName(employeeName) || "Open seat";
   const namesVisible = showNames && hasEmployee && !dimmed;
   const isMovable = canEdit && selected && moveSeatMode;
   const moveOrigin = isMovable && !dragging;
@@ -309,7 +311,15 @@ export function SeatMarker({
     : "bg-[#A26E23] shadow-[0_2px_5px_rgba(23,26,29,0.24)]";
 
   const hitTargetSizeClass = tokenMode === "selected" ? "h-10 w-10" : tokenMode === "prominent" ? "h-9 w-9" : "h-8 w-8";
-  const codeTextClass = tokenMode === "selected" || tokenMode === "prominent" ? "text-[10px]" : "text-[9.5px]";
+  // Person-first hierarchy on the expanded name badge (2026-07-16 critique):
+  // the seat code demotes to a small muted eyebrow so the occupant name below
+  // it is the card's primary line. Code-only selected/prominent pills (open
+  // seats) keep the larger code — it is the only content there.
+  const codeTextClass = expandedNameBadge
+    ? "text-[8.5px] tracking-[0.04em] opacity-70"
+    : tokenMode === "selected" || tokenMode === "prominent"
+      ? "text-[10px]"
+      : "text-[9.5px]";
   const markerUsesTrueCoordinate = addSeatMode || moveSeatMode || swapMode;
   const tokenCanHugViewportEdge = showInlineName || prominentToken;
   const resolvedViewportEdge = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? "none" : viewportEdge;
@@ -343,9 +353,9 @@ export function SeatMarker({
         : undefined;
   const nameTextClass =
     tokenMode === "selected"
-      ? "max-w-[94px] text-[10px]"
+      ? "max-w-[98px] text-[13px]"
       : tokenMode === "prominent"
-        ? "max-w-[86px] text-[10px]"
+        ? "max-w-[88px] text-[12.5px]"
         : tokenDensity === "standard"
           ? "max-w-[74px] text-[9.5px] group-hover:max-w-[96px] group-hover:text-[10px] group-focus-visible:max-w-[96px] group-focus-visible:text-[10px]"
           : "max-w-[58px] text-[9px] group-hover:max-w-[94px] group-hover:text-[10px] group-focus-visible:max-w-[94px] group-focus-visible:text-[10px]";
@@ -415,7 +425,7 @@ export function SeatMarker({
           <span className="relative z-10 flex min-w-0 items-center justify-center gap-1 group-hover:justify-start group-focus-visible:justify-start">
             <span className={["whitespace-nowrap font-extrabold leading-[1.05]", denseCode ? "text-[8.5px]" : crowdedCode ? "text-[9px]" : "text-[9.5px]"].join(" ")}>{seat.label}</span>
             {employeeName && (
-              <span className="hidden max-w-[64px] truncate text-[9px] font-bold leading-[1.05] opacity-90 group-hover:block group-focus-visible:block">
+              <span className="hidden max-w-[64px] truncate text-[10px] font-bold leading-[1.05] opacity-90 group-hover:block group-focus-visible:block">
                 {compactEmployeeName}
               </span>
             )}

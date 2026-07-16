@@ -58,7 +58,7 @@ import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
-import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
+import { SEAT_SEARCH_PLACEHOLDER, searchHandsPanelToResults } from "@/lib/viewerSeatSearch";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type SeatMapProps = {
@@ -304,6 +304,10 @@ export function SeatMap({
   const chromeMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const mapMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const mapMenuRef = useRef<HTMLDivElement | null>(null);
+  // Idle publish chip discloses a status popover (2026-07-16 critique, fix 3);
+  // the review modal is reserved for the has-changes state.
+  const [publishStatusOpen, setPublishStatusOpen] = useState(false);
+  const publishStatusButtonRef = useRef<HTMLButtonElement | null>(null);
   const [inspectorDirty, setInspectorDirty] = useState(false);
   const [inspectorGuardAction, setInspectorGuardAction] = useState<InspectorGuardAction | null>(null);
   const [pendingInspectorSaveAction, setPendingInspectorSaveAction] = useState<InspectorGuardAction | null>(null);
@@ -529,6 +533,19 @@ export function SeatMap({
     firstItem?.focus();
   }, [mapMenuOpen]);
 
+  // Same dismissal rule for the publish status popover.
+  useEffect(() => {
+    if (!publishStatusOpen) return;
+
+    function handleOutsidePointer(event: globalThis.PointerEvent) {
+      if (event.target instanceof Element && event.target.closest("[data-publish-status]")) return;
+      setPublishStatusOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [publishStatusOpen]);
+
   // Same dismissal rule for the chrome-bar "More" menu (collapsed admin tools below lg).
   useEffect(() => {
     if (!chromeMenuOpen) return;
@@ -675,6 +692,11 @@ export function SeatMap({
         return;
       }
 
+      if (publishStatusOpen) {
+        setPublishStatusOpen(false);
+        return;
+      }
+
       if (mapMenuOpen) {
         setMapMenuOpen(false);
         return;
@@ -730,7 +752,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, publishReviewOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, zone]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -773,6 +795,24 @@ export function SeatMap({
     ...publishSummary.statusChanges,
     ...publishSummary.otherChanges
   ].map(item => item.label)), [publishSummary]);
+  // Changes appearing (a local edit or another session's refresh) retire the
+  // idle status popover — the chip morphs into the review entry point.
+  useEffect(() => {
+    if (publishSummary.hasChanges) setPublishStatusOpen(false);
+  }, [publishSummary.hasChanges]);
+  // Same derivation as app/page.tsx: publish_seat_map() re-inserts every
+  // published row, so the max updated_at over published seats IS the last
+  // publish time. Client-side formatting is hydration-safe here — the popover
+  // only ever renders after an interaction.
+  const lastPublishedLabel = useMemo(() => {
+    const lastPublishedAt = localPublishedSeats.reduce<string | null>(
+      (latest, seat) => (seat.updated_at && (!latest || seat.updated_at > latest) ? seat.updated_at : latest),
+      null
+    );
+    return lastPublishedAt
+      ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Los_Angeles" }).format(new Date(lastPublishedAt))
+      : null;
+  }, [localPublishedSeats]);
   const legendCounts: Record<string, number> = {
     assigned: stats.assigned,
     available: stats.available,
@@ -1267,7 +1307,7 @@ export function SeatMap({
     // INV-1 (owner-revised): search hands the panel slot to results — the
     // inspector auto-collapses to its pill (selection retained; expand to
     // return). Unsaved inspector edits stay put: no collapse until save/discard.
-    if (value.trim() && selectedSeatId && !inspectorDirty) {
+    if (searchHandsPanelToResults(value, Boolean(selectedSeatId), inspectorDirty)) {
       setInspectorCollapsed(true);
     }
   }
@@ -2602,31 +2642,87 @@ export function SeatMap({
             </span>
           </div>
           {canEdit && (
-            <button
-              type="button"
-              onClick={openPublishReview}
-              aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
-              title={draftStatusTitle}
-              className={[
-                "inline-flex h-10 shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
-                publishSummary.hasChanges
-                  ? "bg-[var(--admin-primary)] text-[var(--admin-primary-ink)] hover:brightness-105 focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
-                  : "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:ring-[var(--admin-primary)]"
-              ].join(" ")}
-            >
-              {publishSummary.hasChanges ? (
-                <>
-                  <span>Publish</span>
-                  <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#161616]/15 px-1 text-[11px] font-bold tabular-nums">{publishSummary.totalChangeCount}</span>
-                </>
-              ) : (
-                <>
-                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--admin-status-ok)]" />
-                  {/* Label from 480px up — only true phone widths get the dot alone. */}
-                  <span className="hidden min-[480px]:inline">Published</span>
-                </>
+            <div data-publish-status className="relative flex h-full shrink-0 items-center">
+              {/* With changes: the review entry point. Idle: a DISCLOSURE for the
+                  status popover — a status chip must not launch the publish
+                  workflow modal (2026-07-16 critique, fix 3). */}
+              <button
+                type="button"
+                ref={publishStatusButtonRef}
+                onClick={() => {
+                  if (publishSummary.hasChanges) {
+                    openPublishReview();
+                    return;
+                  }
+                  setPublishStatusOpen(current => !current);
+                }}
+                aria-label={publishSummary.hasChanges ? `Review ${draftStatusLabel.toLowerCase()}` : `Publish status: ${draftStatusLabel.toLowerCase()}`}
+                aria-haspopup={publishSummary.hasChanges ? undefined : "true"}
+                aria-expanded={publishSummary.hasChanges ? undefined : publishStatusOpen}
+                aria-controls={!publishSummary.hasChanges && publishStatusOpen ? "publish-status-popover" : undefined}
+                title={draftStatusTitle}
+                className={[
+                  "inline-flex h-10 shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
+                  publishSummary.hasChanges
+                    ? "bg-[var(--admin-primary)] text-[var(--admin-primary-ink)] hover:brightness-105 focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
+                    : publishStatusOpen
+                      ? "bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)] focus-visible:ring-[var(--admin-primary)]"
+                      : "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:ring-[var(--admin-primary)]"
+                ].join(" ")}
+              >
+                {publishSummary.hasChanges ? (
+                  <>
+                    <span>Publish</span>
+                    <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#161616]/15 px-1 text-[11px] font-bold tabular-nums">{publishSummary.totalChangeCount}</span>
+                  </>
+                ) : (
+                  <>
+                    <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--admin-status-ok)]" />
+                    {/* Label from 480px up — only true phone widths get the dot alone. */}
+                    <span className="hidden min-[480px]:inline">Published</span>
+                  </>
+                )}
+              </button>
+              {publishStatusOpen && !publishSummary.hasChanges && (
+                <div
+                  id="publish-status-popover"
+                  role="group"
+                  aria-label="Publish status"
+                  onKeyDown={event => {
+                    if (event.key === "Escape") {
+                      event.stopPropagation();
+                      setPublishStatusOpen(false);
+                      returnFocusAfterClose(publishStatusButtonRef);
+                    }
+                  }}
+                  className="absolute right-0 top-full z-50 w-[264px] border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] p-3 text-left shadow-elevation-3"
+                >
+                  <p className="flex items-center gap-1.5 text-[12.5px] font-semibold leading-none text-[var(--admin-chrome-text)]">
+                    <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--admin-status-ok)]" />
+                    Draft matches the published map
+                  </p>
+                  <p className="mt-1.5 text-[11.5px] leading-4 text-[var(--admin-chrome-muted)]">
+                    {lastPublishedLabel ? `Viewers see the map published ${lastPublishedLabel}.` : "Viewers see the currently published map."}
+                  </p>
+                  <Link
+                    href="/admin/management"
+                    onClick={event => {
+                      if (!beforeAdminPageNavigation("/admin/management", "Management")) {
+                        event.preventDefault();
+                        return;
+                      }
+                      setPublishStatusOpen(false);
+                    }}
+                    className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[var(--admin-chrome-text)] underline decoration-[var(--admin-chrome-muted)] underline-offset-2 transition hover:decoration-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+                  >
+                    View publish history
+                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3" fill="none">
+                      <path d="M7 5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </Link>
+                </div>
               )}
-            </button>
+            </div>
           )}
           {/* The identity chip doubles as the Settings entry (owner preference):
               data-utility settings are management-adjacent, so they live behind
