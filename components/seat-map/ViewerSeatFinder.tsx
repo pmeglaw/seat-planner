@@ -117,6 +117,7 @@ export function ViewerSeatFinder({
   accountRoleLabel = "Viewer"
 }: ViewerSeatFinderProps) {
   const [search, setSearch] = useState("");
+  const [searchShortcutHint, setSearchShortcutHint] = useState("");
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   // Roving tabindex anchor: the last keyboard-visited seat (see SeatMap for
   // the same pattern — the map is one tab stop, arrows walk between seats).
@@ -171,6 +172,26 @@ export function ViewerSeatFinder({
     });
   }, [selectedSeatId]);
   const selectedSeat = selectedSeatId ? seatById.get(selectedSeatId) ?? null : null;
+
+  // Arrow-key roving over result cards — parity with the admin ResultsPanel
+  // (critique action 6). ArrowUp from the first card returns focus to the
+  // search input the cards came from.
+  function handleResultsKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button[role="listitem"]:not([disabled])'));
+    if (items.length === 0) return;
+    event.preventDefault();
+    const activeIndex = items.findIndex(item => item === document.activeElement);
+    if (event.key === "ArrowDown") {
+      items[activeIndex === -1 ? 0 : Math.min(items.length - 1, activeIndex + 1)]?.focus();
+      return;
+    }
+    if (activeIndex <= 0) {
+      searchInputRef.current?.focus();
+      return;
+    }
+    items[activeIndex - 1]?.focus();
+  }
   const searchActive = Boolean(searchResults.query);
   const structuredFiltersActive = department !== "all" || zone !== "all" || status !== "all";
   const structuredFilterCount = [department !== "all", zone !== "all", status !== "all"].filter(Boolean).length;
@@ -249,6 +270,27 @@ export function ViewerSeatFinder({
     document.addEventListener("pointerdown", handleOutsidePointer);
     return () => document.removeEventListener("pointerdown", handleOutsidePointer);
   }, [filterOpen]);
+
+  // Ctrl/⌘+K focuses the search — the same muscle memory as the admin map
+  // (critique action 6). The hint renders a frame after mount so the server
+  // markup never guesses the platform.
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setSearchShortcutHint(/mac/i.test(window.navigator.platform) ? "⌘K" : "Ctrl K");
+    });
+    const handleSearchShortcut = (event: globalThis.KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", handleSearchShortcut);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", handleSearchShortcut);
+    };
+  }, []);
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
@@ -703,7 +745,7 @@ export function ViewerSeatFinder({
                 placeholder={SEAT_SEARCH_PLACEHOLDER}
                 className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
               />
-              {search.trim() && (
+              {search.trim() ? (
                 <button
                   type="button"
                   aria-label="Clear viewer search"
@@ -713,7 +755,9 @@ export function ViewerSeatFinder({
                 >
                   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
-              )}
+              ) : searchShortcutHint ? (
+                <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)]">{searchShortcutHint}</kbd>
+              ) : null}
             </label>
           </div>
         </div>
@@ -903,7 +947,7 @@ export function ViewerSeatFinder({
           </div>
 
           {searchResults.results.length > 0 ? (
-            <div role="list" aria-label="Viewer search results" className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2">
+            <div role="list" aria-label="Viewer search results" onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2">
               {searchResults.results.map(result => {
                 const selected = result.id === activeResultId || Boolean(result.seatId && result.seatId === selectedSeatId);
                 return (
@@ -948,6 +992,10 @@ export function ViewerSeatFinder({
               </button>
             </div>
           )}
+
+          <div className="border-t border-[var(--admin-border)] px-4 py-2 text-[11px] font-medium text-[var(--admin-text-subtle)]">
+            ↑↓ to move · Enter opens · Esc clears
+          </div>
         </aside>
       )}
 
