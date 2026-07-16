@@ -725,7 +725,7 @@ export async function getPublishHistoryAction(limit = 10) {
 
   const { data, error } = await supabase
     .from("publish_events")
-    .select("created_at,seat_count,published_by")
+    .select("created_at,seat_count,published_by,change_summary")
     .order("created_at", { ascending: false })
     .limit(pageSize);
 
@@ -735,13 +735,15 @@ export async function getPublishHistoryAction(limit = 10) {
     created_at: string;
     seat_count: number | string | null;
     published_by: string | null;
+    change_summary?: unknown;
   }>).map(record => {
     const seatCount = Number(record.seat_count ?? 0);
 
     return {
       created_at: record.created_at,
       seat_count: Number.isFinite(seatCount) ? seatCount : 0,
-      published_by: record.published_by
+      published_by: record.published_by,
+      change_summary: record.change_summary ?? null
     };
   }) satisfies PublishEventRecord[];
 

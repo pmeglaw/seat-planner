@@ -78,3 +78,58 @@ test("latest publish event uses the newest fetched row", () => {
 
   assert.equal(publishHistory.getLatestPublishEvent(events).seat_count, 61);
 });
+
+test("formatPublishChangeSummary returns null for null/undefined/non-object input", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary(null), null);
+  assert.equal(publishHistory.formatPublishChangeSummary(undefined), null);
+  assert.equal(publishHistory.formatPublishChangeSummary("not an object"), null);
+  assert.equal(publishHistory.formatPublishChangeSummary(42), null);
+  assert.equal(publishHistory.formatPublishChangeSummary([1, 2]), null);
+});
+
+test("formatPublishChangeSummary returns null for an empty object", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary({}), null);
+});
+
+test("formatPublishChangeSummary reports all-zero summaries as no changes recorded", () => {
+  assert.equal(
+    publishHistory.formatPublishChangeSummary({ seats_added: 0, seats_removed: 0 }),
+    "No changes recorded"
+  );
+});
+
+test("formatPublishChangeSummary joins nonzero buckets with singular/plural units in fixed order", () => {
+  assert.equal(
+    publishHistory.formatPublishChangeSummary({ assignments_changed: 2, employee_edits: 1 }),
+    "2 assignments changed · 1 employee edit"
+  );
+});
+
+test("formatPublishChangeSummary singularizes a single seat added", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary({ seats_added: 1 }), "1 seat added");
+});
+
+test("formatPublishChangeSummary orders all buckets: added, removed, assignments, moved, status, employee edits", () => {
+  assert.equal(
+    publishHistory.formatPublishChangeSummary({
+      employee_edits: 1,
+      status_changes: 1,
+      seats_moved: 1,
+      assignments_changed: 1,
+      seats_removed: 1,
+      seats_added: 1
+    }),
+    "1 seat added · 1 seat removed · 1 assignment changed · 1 seat moved · 1 status change · 1 employee edit"
+  );
+});
+
+test("formatPublishChangeSummary ignores unknown keys and non-numeric values", () => {
+  assert.equal(
+    publishHistory.formatPublishChangeSummary({ seats_added: "3", bogus_key: 5, seats_removed: 2 }),
+    "2 seats removed"
+  );
+});
+
+test("formatPublishChangeSummary treats a string-encoded JSON object as invalid (not parsed)", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary('{"seats_added":1}'), null);
+});

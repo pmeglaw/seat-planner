@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
-import { getLatestPublishEvent, getPublishHistoryActor, type PublishHistoryEvent } from "@/lib/publishHistory";
+import {
+  formatPublishChangeSummary,
+  getLatestPublishEvent,
+  getPublishHistoryActor,
+  type PublishHistoryEvent
+} from "@/lib/publishHistory";
 import {
   createDepartmentAction,
   createEmployeeAction,
@@ -933,7 +938,8 @@ export function AdminManagementPanel({
                 </div>
                 <div className="mt-4 divide-y divide-[var(--admin-border-subtle,var(--admin-border))] border border-[var(--admin-border)]">
                   {[0, 1, 2].map(item => (
-                    <div key={item} className="grid gap-3 p-3 md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_80px]">
+                    <div key={item} className="grid gap-3 p-3 md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_minmax(0,1.2fr)_80px]">
+                      <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
                       <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
                       <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
                       <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
@@ -992,21 +998,28 @@ export function AdminManagementPanel({
                         </div>
                       </div>
                     </div>
+                    <div className="mt-3 border-t border-[var(--admin-border-subtle,var(--admin-border))] pt-3">
+                      <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Changes</div>
+                      <div className="mt-1 text-sm text-[var(--admin-text-secondary)]">
+                        {formatPublishChangeSummary(latestPublish.change_summary) ?? "—"}
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 <div className="mt-4 overflow-hidden border border-[var(--admin-border)]">
-                  <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_80px] bg-[var(--admin-surface-alt)] px-3 py-2 text-xs font-semibold tracking-normal text-[var(--admin-text-secondary)] md:grid">
+                  <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_minmax(0,1.2fr)_80px] bg-[var(--admin-surface-alt)] px-3 py-2 text-xs font-semibold tracking-normal text-[var(--admin-text-secondary)] md:grid">
                     <div>Created At</div>
                     <div>Seat Count</div>
                     <div>Published By</div>
+                    <div>Changes</div>
                     <div>State</div>
                   </div>
                   <div className="divide-y divide-[var(--admin-border-subtle,var(--admin-border))]">
                     {publishHistoryState.events.map((event, index) => (
                       <div
                         key={`${event.created_at}-${event.published_by ?? "unknown"}-${index}`}
-                        className="grid gap-3 p-3 text-sm md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_80px] md:items-center"
+                        className="grid gap-3 p-3 text-sm md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_minmax(0,1.2fr)_80px] md:items-center"
                       >
                         <div>
                           <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Created At</div>
@@ -1020,6 +1033,12 @@ export function AdminManagementPanel({
                           <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Published By</div>
                           <div className="break-all font-semibold text-[var(--admin-text-secondary)]" title={event.published_by ?? undefined}>
                             {getPublishHistoryActor(event)}
+                          </div>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Changes</div>
+                          <div className="text-[var(--admin-text-secondary)]">
+                            {formatPublishChangeSummary(event.change_summary) ?? "—"}
                           </div>
                         </div>
                         <div>
