@@ -10,6 +10,7 @@ import { buildOccupantRows, employeeAssignmentFields, type OccupantFactRow } fro
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
+import { CloseIcon } from "@/components/ui/CloseIcon";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type SeatInspectorProps = {
@@ -113,14 +114,6 @@ function formsEqual(left: SeatInspectorForm, right: SeatInspectorForm) {
     const formKey = key as keyof SeatInspectorForm;
     return left[formKey] === right[formKey];
   });
-}
-
-function CloseIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
-      <path d="m5.5 5.5 9 9m0-9-9 9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 function CollapseIcon() {

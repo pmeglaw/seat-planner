@@ -25,6 +25,7 @@ import { computeVirtualWindow } from "@/lib/virtualizedList";
 import { formatDisplayName } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
 import { Button } from "@/components/ui/Button";
+import { CloseIcon } from "@/components/ui/CloseIcon";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type EmployeeSortKey = "name" | "department" | "position" | "extension" | "seat" | "status";
@@ -1103,7 +1104,7 @@ export function AdminManagementPanel({
                 className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 aria-label="Cancel management confirmation"
               >
-                x
+                <CloseIcon />
               </button>
             </div>
 
