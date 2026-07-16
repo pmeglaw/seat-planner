@@ -2194,6 +2194,18 @@ export function SeatMap({
     ? (overviewMapWidth ? { width: `${overviewMapWidth}px` } : undefined)
     : { width: `calc(var(--map-detail-base) * ${zoomFactor})` };
   const mapZoomLabel = mapViewMode === "overview" ? "Fit" : `${Math.round(zoomFactor * 100)}%`;
+  // Overview (fit) hugs the floor plan's aspect ratio at lg instead of
+  // stretching to fill leftover column height — same fix as the viewer's
+  // 2026-07-16 letterbox change (PR #144); 1911/867 mirrors MAP_IMAGE_*
+  // (Tailwind arbitrary values must be static). flex-shrink + lg:min-h-0 keep
+  // the height-bound contain behavior, and the aspect height derives from the
+  // stage WIDTH only, so the overview ResizeObserver's inputs stay rigid (no
+  // fit-calc feedback — the trap the outer column's lg:flex-1 comment warns
+  // about). Detail zoom keeps flex-1: panning wants the full column.
+  const mapStageClassName = [
+    "relative min-w-0 lg:flex lg:min-h-0",
+    mapViewMode === "overview" ? "lg:aspect-[1911/867]" : "lg:flex-1"
+  ].join(" ");
   const mapCrumbLabel = floor === "2" ? "Not yet mapped" : `Draft map · ${stats.total} ${stats.total === 1 ? "seat" : "seats"}`;
   const mapMarkerLayerClassName = [
     "absolute inset-0",
@@ -2953,7 +2965,7 @@ export function SeatMap({
             </div>
           </div>
 
-          <div className="relative min-w-0 lg:flex lg:min-h-0 lg:flex-1">
+          <div className={mapStageClassName}>
             <div
               ref={mapViewportRef}
               className={mapViewportClassName}
