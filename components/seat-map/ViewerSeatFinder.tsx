@@ -634,7 +634,8 @@ export function ViewerSeatFinder({
   // a zoomed view keeps its zoom.
 
   const mapViewportClassName = cx(
-    "relative mx-auto w-full max-w-full overflow-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)]",
+    // Mounted-sheet treatment (2026-07-16 regrade, review 3) — see SeatMap.
+    "relative mx-auto w-full max-w-full overflow-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)] shadow-elevation-2",
     "min-h-[360px] max-h-[82svh] sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:h-full lg:min-h-0 lg:max-h-none lg:flex-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     zoomFactor === null ? "sm:flex sm:items-center sm:justify-center" : "",
     floor === "3" ? (panning ? "cursor-grabbing" : "cursor-grab") : "",

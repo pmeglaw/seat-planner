@@ -2238,7 +2238,10 @@ export function SeatMap({
   );
   const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;
   const mapViewportClassName = [
-    "relative mx-auto w-full max-w-full overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
+    // Mounted-sheet treatment (2026-07-16 regrade, review 3): the hairline +
+    // elevation make the beige stage read as a drawing mounted on the desk,
+    // so the gray/beige/plan-edge seams become designed edges.
+    "relative mx-auto w-full max-w-full overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)] shadow-elevation-2 lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
     mapViewMode === "overview"
       ? "min-h-[300px] overflow-hidden p-1.5 sm:min-h-[480px] sm:p-2 lg:flex lg:min-h-0 lg:items-center lg:justify-center"
       : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
