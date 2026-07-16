@@ -17,7 +17,7 @@ import {
   seatsToVisualSeats
 } from "@/lib/mapLayoutTransform";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
-import { buildViewerSeatSearch, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
+import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
@@ -422,6 +422,12 @@ export function ViewerSeatFinder({
   function updateSearch(value: string) {
     setSearch(value);
     setActiveResultId(null);
+    // INV-1 (same rule as the admin map): an active search hands the panel
+    // slot to results, so matches are never invisible behind the inspector.
+    // The viewer inspector is read-only, so it is never dirty.
+    if (searchHandsPanelToResults(value, Boolean(selectedSeatId), false)) {
+      setInspectorCollapsed(true);
+    }
   }
 
   function selectSeat(seatId: string) {

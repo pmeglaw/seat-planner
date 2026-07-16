@@ -58,7 +58,7 @@ import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
-import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
+import { SEAT_SEARCH_PLACEHOLDER, searchHandsPanelToResults } from "@/lib/viewerSeatSearch";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type SeatMapProps = {
@@ -1307,7 +1307,7 @@ export function SeatMap({
     // INV-1 (owner-revised): search hands the panel slot to results — the
     // inspector auto-collapses to its pill (selection retained; expand to
     // return). Unsaved inspector edits stay put: no collapse until save/discard.
-    if (value.trim() && selectedSeatId && !inspectorDirty) {
+    if (searchHandsPanelToResults(value, Boolean(selectedSeatId), inspectorDirty)) {
       setInspectorCollapsed(true);
     }
   }

@@ -219,3 +219,22 @@ test("empty viewer search does not fabricate default results", () => {
   assert.deepEqual(result.resultSeatIds, []);
   assert.equal(result.query, "");
 });
+
+test("INV-1: an active search keystroke hands the panel slot to results", () => {
+  const handsOver = viewerSearch.searchHandsPanelToResults;
+
+  // Typing a query while a seat is selected: results surface over the
+  // inspector (selection retained; expand to return).
+  assert.equal(handsOver("p", true, false), true);
+  assert.equal(handsOver("pam", true, false), true);
+
+  // No selection: the results panel already owns the slot; nothing to collapse.
+  assert.equal(handsOver("p", false, false), false);
+
+  // Unsaved inspector edits stay put — no collapse until save/discard.
+  assert.equal(handsOver("p", true, true), false);
+
+  // Clearing or whitespace-only input is not an active search.
+  assert.equal(handsOver("", true, false), false);
+  assert.equal(handsOver("   ", true, false), false);
+});
