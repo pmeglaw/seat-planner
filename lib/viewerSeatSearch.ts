@@ -160,6 +160,61 @@ export function searchHandsPanelToResults(nextQuery: string, hasSelection: boole
   return Boolean(normalizeSearchText(nextQuery)) && hasSelection && !inspectorDirty;
 }
 
+// First seat per employee in seat order, matching on either the FK or the
+// joined employee row — shared by search and the idle People directory.
+function mapAssignedSeats(seats: SeatWithEmployee[]) {
+  const assignedSeatByEmployeeId = new Map<string, SeatWithEmployee>();
+  seats.forEach(seat => {
+    for (const employeeId of [seat.employee_id, seat.employee?.id]) {
+      if (employeeId && !assignedSeatByEmployeeId.has(employeeId)) {
+        assignedSeatByEmployeeId.set(employeeId, seat);
+      }
+    }
+  });
+  return assignedSeatByEmployeeId;
+}
+
+// Person-row builder shared by search results and the People directory — one
+// shape, one formatting point, so the two lists can never drift.
+function buildPersonRow(employee: Employee, assignedSeat: SeatWithEmployee | null): ViewerSearchResult {
+  const zone = assignedSeat ? getSeatZone(assignedSeat) : null;
+  return {
+    id: `person:${employee.id}`,
+    kind: "person",
+    title: formatDisplayNameLocal(employee.full_name),
+    subtitle: assignedSeat ? `${formatSeatCodeLocal(assignedSeat.label)} · ${zone}` : "No assigned seat",
+    meta: [employee.position, employee.department].filter(Boolean).join(" · ") || "Active employee",
+    seatId: assignedSeat?.id ?? null,
+    seatIds: assignedSeat ? [assignedSeat.id] : [],
+    status: assignedSeat?.status,
+    disabled: !assignedSeat
+  };
+}
+
+export type ViewerDirectory = {
+  rows: ViewerSearchResult[];
+  totalCount: number;
+  seatedCount: number;
+};
+
+/**
+ * The viewer's idle People directory (2026-07-16 regrade, review 5): every
+ * active person from the published snapshot, in the given (alphabetical)
+ * order, as the same person rows search produces. Consumers must pass the
+ * published_employees snapshot — never the live employees table.
+ */
+export function buildViewerDirectory({ seats, employees }: { seats: SeatWithEmployee[]; employees: Employee[] }): ViewerDirectory {
+  const assignedSeatByEmployeeId = mapAssignedSeats(seats);
+  const rows = employees
+    .filter(employee => employee.active)
+    .map(employee => buildPersonRow(employee, assignedSeatByEmployeeId.get(employee.id) ?? null));
+  return {
+    rows,
+    totalCount: rows.length,
+    seatedCount: rows.filter(row => !row.disabled).length
+  };
+}
+
 export function buildViewerSeatSearch({
   query: rawQuery,
   seats,
@@ -181,33 +236,14 @@ export function buildViewerSeatSearch({
     };
   }
 
-  // First seat per employee in seat order, matching on either the FK or the
-  // joined employee row — the Map replaces a per-employee scan of all seats.
-  const assignedSeatByEmployeeId = new Map<string, SeatWithEmployee>();
-  seats.forEach(seat => {
-    for (const employeeId of [seat.employee_id, seat.employee?.id]) {
-      if (employeeId && !assignedSeatByEmployeeId.has(employeeId)) {
-        assignedSeatByEmployeeId.set(employeeId, seat);
-      }
-    }
-  });
+  const assignedSeatByEmployeeId = mapAssignedSeats(seats);
 
   activeEmployees.forEach(employee => {
     const assignedSeat = assignedSeatByEmployeeId.get(employee.id) ?? null;
     const zone = assignedSeat ? getSeatZone(assignedSeat) : null;
     if (!matchesQuery(query, [employee.full_name, employee.position, employee.department, employee.phone_extension, assignedSeat?.label, zone])) return;
 
-    results.push({
-      id: `person:${employee.id}`,
-      kind: "person",
-      title: formatDisplayNameLocal(employee.full_name),
-      subtitle: assignedSeat ? `${formatSeatCodeLocal(assignedSeat.label)} · ${zone}` : "No assigned seat",
-      meta: [employee.position, employee.department].filter(Boolean).join(" · ") || "Active employee",
-      seatId: assignedSeat?.id ?? null,
-      seatIds: assignedSeat ? [assignedSeat.id] : [],
-      status: assignedSeat?.status,
-      disabled: !assignedSeat
-    });
+    results.push(buildPersonRow(employee, assignedSeat));
   });
 
   seats.forEach(seat => {

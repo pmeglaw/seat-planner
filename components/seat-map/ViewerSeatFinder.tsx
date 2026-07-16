@@ -17,7 +17,8 @@ import {
   seatsToVisualSeats
 } from "@/lib/mapLayoutTransform";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
-import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
+import { buildViewerDirectory, buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
+import { buildInitials } from "@/lib/validators";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
@@ -97,6 +98,10 @@ function uniqueVisibleOptions(values: Array<string | null | undefined>) {
   return Array.from(seen.values()).sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
 }
 
+// The People directory's collapse preference persists per browser, like the
+// admin names toggle.
+const VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY = "seat-planner:viewer-directory-collapsed";
+
 // Marker focus restore for deselect paths — the details panel (which may
 // hold focus) unmounts with the selection (critique action 5).
 function focusViewerSeatMarker(seatId: string | null) {
@@ -118,6 +123,12 @@ export function ViewerSeatFinder({
 }: ViewerSeatFinderProps) {
   const [search, setSearch] = useState("");
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
+  // People directory (2026-07-16 regrade, review 5): occupies the right slot
+  // at rest. Hydration-gated so server markup never guesses the persisted
+  // collapse preference.
+  const [directoryCollapsed, setDirectoryCollapsed] = useState(false);
+  const [directoryHydrated, setDirectoryHydrated] = useState(false);
+  const [directoryHoverSeatId, setDirectoryHoverSeatId] = useState<string | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   // Roving tabindex anchor: the last keyboard-visited seat (see SeatMap for
   // the same pattern — the map is one tab stop, arrows walk between seats).
@@ -160,6 +171,7 @@ export function ViewerSeatFinder({
     [departmentOptions, employees, publishedSeats, search, zoneOptions]
   );
   const activeResult = searchResults.results.find(result => result.id === activeResultId) ?? null;
+  const directory = useMemo(() => buildViewerDirectory({ seats: publishedSeats, employees }), [employees, publishedSeats]);
 
   // Keyboard activation of a seat hands focus into the details panel once the
   // selection commits; pointer interactions cancel the handoff.
@@ -270,6 +282,18 @@ export function ViewerSeatFinder({
     document.addEventListener("pointerdown", handleOutsidePointer);
     return () => document.removeEventListener("pointerdown", handleOutsidePointer);
   }, [filterOpen]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        setDirectoryCollapsed(window.localStorage.getItem(VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY) === "true");
+      } catch {
+        // Storage unavailable (private mode) — default to expanded.
+      }
+      setDirectoryHydrated(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   // Ctrl/⌘+K focuses the search — the same muscle memory as the admin map
   // (critique action 6). The hint renders a frame after mount so the server
@@ -578,6 +602,11 @@ export function ViewerSeatFinder({
     : `Office map · ${publishedSeats.length} ${publishedSeats.length === 1 ? "seat" : "seats"}`;
   const mapZoomLabel = zoomFactor === null ? "Fit" : `${Math.round(zoomFactor * 100)}%`;
   const resultsPanelOpen = searchActive && (!selectedSeat || inspectorCollapsed);
+  // The directory holds the slot only at rest; results and the inspector
+  // always win it (the INV-1 handoff is untouched). Desktop-only — below the
+  // panel tier the map stays map-first and the directory renders nothing.
+  const directoryOpen = directoryHydrated && !searchActive && !selectedSeat && !directoryCollapsed;
+  const directoryRail = directoryHydrated && !searchActive && !selectedSeat && directoryCollapsed;
   // Prototype "stage": at the panel tier the inspector reserves layout width
   // (320px expanded, 44px rail) instead of overlaying the map.
   const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
@@ -590,7 +619,7 @@ export function ViewerSeatFinder({
   // Whatever occupies the right slot reserves the column — expanded inspector
   // or results panel — so nothing renders hidden behind a panel.
   const rightSlotTier: "expanded" | "rail" | "none" =
-    inspectorDockTier === "expanded" || resultsPanelOpen ? "expanded" : inspectorDockTier;
+    inspectorDockTier === "expanded" || resultsPanelOpen || directoryOpen ? "expanded" : directoryRail ? "rail" : inspectorDockTier;
   const stageReservedClassName = rightSlotTier === "expanded"
     ? "panel:pr-[332px]"
     : rightSlotTier === "rail"
@@ -876,7 +905,7 @@ export function ViewerSeatFinder({
                           swapMode={false}
                           swapSource={false}
                           swapTarget={false}
-                          highlighted={activeResultSeatIdSet.has(seat.id)}
+                          highlighted={activeResultSeatIdSet.has(seat.id) || (directoryOpen && seat.id === directoryHoverSeatId)}
                           highlightedDescription="Highlighted search result"
                           dragging={false}
                           addSeatMode={false}
@@ -996,6 +1025,90 @@ export function ViewerSeatFinder({
           <div className="border-t border-[var(--admin-border)] px-4 py-2 text-[11px] font-medium text-[var(--admin-text-subtle)]">
             ↑↓ to move · Enter opens · Esc clears
           </div>
+        </aside>
+      )}
+
+      {directoryOpen && (
+        <aside
+          aria-labelledby="viewer-people-title"
+          className="hidden flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3 panel:fixed panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:flex panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+        >
+          <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
+            <h2 id="viewer-people-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">People</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-[var(--admin-text-muted)]">{directory.totalCount}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setDirectoryCollapsed(true);
+                  try {
+                    window.localStorage.setItem(VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY, "true");
+                  } catch {
+                    // Preference just won't persist.
+                  }
+                }}
+                aria-label="Collapse the people list"
+                title="Collapse"
+                className="flex h-6 w-6 items-center justify-center text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+              >
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4"><path d="M5 10h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+              </button>
+            </div>
+          </div>
+          <div role="list" aria-label="People directory" onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2">
+            {directory.rows.map(row => (
+              <button
+                key={row.id}
+                type="button"
+                role="listitem"
+                disabled={row.disabled}
+                aria-label={`${row.title}. ${row.subtitle}.`}
+                onClick={() => openResult(row)}
+                onPointerEnter={() => setDirectoryHoverSeatId(row.seatId)}
+                onPointerLeave={() => setDirectoryHoverSeatId(null)}
+                className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border border-transparent p-2.5 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--admin-surface-alt)] text-[11px] font-bold text-[var(--admin-text-secondary)]">
+                  {buildInitials(row.title) || "?"}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-[var(--admin-text-primary)]">{row.title}</span>
+                  <span className="mt-0.5 block truncate text-xs font-medium text-[var(--admin-text-secondary)]">{row.subtitle}</span>
+                </span>
+                {row.seatId ? (
+                  <span className="shrink-0 rounded-full bg-[var(--admin-surface-muted)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-border)]">
+                    {row.subtitle.split(" · ")[0]}
+                  </span>
+                ) : (
+                  <span className="shrink-0 text-[10px] font-medium text-[var(--admin-text-subtle)]">—</span>
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="border-t border-[var(--admin-border)] px-4 py-2 text-[11px] font-medium text-[var(--admin-text-subtle)]">
+            {directory.totalCount} {directory.totalCount === 1 ? "person" : "people"} · {directory.seatedCount} seated
+          </div>
+        </aside>
+      )}
+
+      {directoryRail && (
+        <aside className="hidden panel:block panel:fixed panel:bottom-0 panel:right-0 panel:top-10 panel:z-40">
+          <button
+            type="button"
+            onClick={() => {
+              setDirectoryCollapsed(false);
+              try {
+                window.localStorage.setItem(VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY, "false");
+              } catch {
+                // Preference just won't persist.
+              }
+            }}
+            aria-label={`Show the people list (${directory.totalCount} people)`}
+            title="Show people"
+            className="flex h-full w-11 flex-col items-center justify-center gap-2 border-l border-[var(--admin-border)] bg-[var(--admin-surface)] px-2 py-4 text-[var(--admin-text-secondary)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
+          >
+            <span className="rotate-180 text-[10px] font-medium tracking-[0.14em] [writing-mode:vertical-rl]">PEOPLE · {directory.totalCount}</span>
+          </button>
         </aside>
       )}
 
