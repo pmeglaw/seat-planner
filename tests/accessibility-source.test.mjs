@@ -81,7 +81,7 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
 
   assert.match(viewerSource, /ViewerSeatFinder/);
-  assert.match(viewerFinderSource, /Search published seating/);
+  assert.match(viewerFinderSource, /Search office seating/);
   assert.match(viewerFinderSource, /aria-label="Viewer search results"/);
   assert.match(viewerFinderSource, /aria-live="polite"/);
   assert.match(viewerFinderSource, /highlightedDescription="Highlighted search result"/);
