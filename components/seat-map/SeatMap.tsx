@@ -217,25 +217,25 @@ type SeatStatusLegendItem = {
 const SEAT_STATUS_LEGEND: SeatStatusLegendItem[] = [
   {
     key: "assigned",
-    label: "Assigned",
+    label: STATUS_LABELS.assigned,
     chipClass: "border-[var(--admin-marker-assigned-border)] bg-[var(--admin-marker-assigned-surface)]",
     accentClass: "bg-[var(--admin-marker-assigned-accent)]"
   },
   {
     key: "available",
-    label: "Open",
+    label: STATUS_LABELS.available,
     chipClass: "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)]",
     accentClass: "bg-[var(--admin-marker-available-accent)]"
   },
   {
     key: "reserved",
-    label: "Reserved",
+    label: STATUS_LABELS.reserved,
     chipClass: "border-[var(--admin-marker-reserved-border)] bg-[var(--admin-marker-reserved-surface)]",
     accentClass: "bg-[var(--admin-marker-reserved-accent)]"
   },
   {
     key: "unavailable",
-    label: "Unavailable",
+    label: STATUS_LABELS.unavailable,
     chipClass: "border-[var(--admin-marker-unavailable-border)] bg-[var(--admin-marker-unavailable-surface)]",
     accentClass: "bg-[var(--admin-marker-unavailable-accent)]"
   },
