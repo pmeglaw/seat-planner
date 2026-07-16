@@ -403,9 +403,10 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /role="menuitem"[\s\S]{0,40}tabIndex=\{-1\}[\s\S]{0,800}Fit map to view/);
   assert.match(seatMapSource, /role="menuitem"[\s\S]{0,40}tabIndex=\{-1\}[\s\S]{0,800}Zoom to 100%/);
   // Tab (and Shift+Tab) must close the menu and hand focus back to the
-  // trigger rather than leaving the panel open while focus escapes the
-  // subtree (only Escape closed it for keyboard users before this).
-  assert.match(seatMapSource, /event\.key === "Tab"[\s\S]{0,450}setMapMenuOpen\(false\);[\s\S]{0,90}returnFocusAfterClose\(mapMenuButtonRef\)/);
+  // trigger synchronously — preventDefault() stops the native focus hop and
+  // the trigger is focused immediately (not via the deferred
+  // returnFocusAfterClose helper), avoiding a double focus move.
+  assert.match(seatMapSource, /event\.key === "Tab"[\s\S]{0,450}event\.preventDefault\(\);[\s\S]{0,120}setMapMenuOpen\(false\);[\s\S]{0,90}mapMenuButtonRef\.current\?\.focus\(\)/);
   // The Arrow/Home/End branch must stopPropagation like the adjacent
   // Escape branch, for consistency and to avoid latent bubbling conflicts.
   assert.match(seatMapSource, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp"[\s\S]{0,120}event\.preventDefault\(\);\s*event\.stopPropagation\(\);/);

@@ -2793,12 +2793,14 @@ export function SeatMap({
                           return;
                         }
                         if (event.key === "Tab") {
-                          // APG menu-button pattern: preventDefault() is wrong for Tab —
-                          // close and return focus to the trigger (as Escape does) so
-                          // the next Tab continues naturally from there.
+                          // Tab closes and refocuses the trigger synchronously: preventDefault()
+                          // stops the native focus hop, and focusing the trigger immediately
+                          // (not via the deferred returnFocusAfterClose) avoids a double focus
+                          // move — the user's next Tab then proceeds from the trigger.
+                          event.preventDefault();
                           event.stopPropagation();
                           setMapMenuOpen(false);
-                          returnFocusAfterClose(mapMenuButtonRef);
+                          mapMenuButtonRef.current?.focus();
                           return;
                         }
                         if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
