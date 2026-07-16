@@ -968,19 +968,25 @@ export function AdminManagementPanel({
             {publishHistoryState.status === "loaded" && publishHistoryState.events.length > 0 && (
               <>
                 {latestPublish && (
-                  <div className="mt-4 border border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] p-4">
-                    <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-publish-ready-text)]">Latest Publish</div>
+                  <div className="mt-4 border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
+                    <div className="flex items-center gap-2">
+                      <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)]">Latest Publish</div>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--admin-success-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--admin-success)] ring-1 ring-[var(--admin-success)]/30">
+                        <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+                        Latest
+                      </span>
+                    </div>
                     <div className="mt-3 grid gap-3 md:grid-cols-3">
                       <div>
-                        <div className="text-xs font-medium tracking-normal text-[var(--admin-publish-ready-text)]">Created</div>
+                        <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Created</div>
                         <div className="mt-1 text-sm font-semibold text-[var(--admin-text-primary)]">{formatPublishDate(latestPublish.created_at)}</div>
                       </div>
                       <div>
-                        <div className="text-xs font-medium tracking-normal text-[var(--admin-publish-ready-text)]">Seat Count</div>
+                        <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Seat Count</div>
                         <div className="mt-1 text-sm font-semibold text-[var(--admin-text-primary)]">{latestPublish.seat_count.toLocaleString()}</div>
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xs font-medium tracking-normal text-[var(--admin-publish-ready-text)]">Published By</div>
+                        <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Published By</div>
                         <div className="mt-1 break-all text-sm font-semibold text-[var(--admin-text-primary)]" title={latestPublish.published_by ?? undefined}>
                           {getPublishHistoryActor(latestPublish)}
                         </div>
@@ -1019,7 +1025,10 @@ export function AdminManagementPanel({
                         <div>
                           <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">State</div>
                           {index === 0 ? (
-                            <span className="inline-flex rounded-full bg-[var(--admin-publish-ready-bg)] px-2 py-1 text-[11px] font-semibold tracking-normal text-[var(--admin-publish-ready-text)]">Latest</span>
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--admin-success-soft)] px-2 py-1 text-[11px] font-semibold tracking-normal text-[var(--admin-success)] ring-1 ring-[var(--admin-success)]/30">
+                              <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+                              Latest
+                            </span>
                           ) : (
                             <span className="text-xs font-semibold text-[var(--admin-text-muted)]">Previous</span>
                           )}
