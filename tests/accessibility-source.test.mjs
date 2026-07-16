@@ -51,7 +51,12 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /unpublished \$\{publishSummary\.totalChangeCount === 1 \? "change" : "changes"\}/);
   assert.match(source, /Esc exits/);
   assert.match(source, /Exit Add Seat/);
-  assert.match(source, /\{canEdit && \([\s\S]*aria-label=\{`Review \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);
+  // Publish chip contract (2026-07-16 critique, fix 3): with changes it is the
+  // review entry point; idle it is a DISCLOSURE for the status popover — a
+  // status indicator must not launch the publish workflow modal.
+  assert.match(source, /\{canEdit && \([\s\S]*aria-label=\{publishSummary\.hasChanges \? `Review \$\{draftStatusLabel\.toLowerCase\(\)\}` : `Publish status: \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);
+  assert.match(source, /if \(publishSummary\.hasChanges\) \{\s*openPublishReview\(\);\s*return;\s*\}\s*setPublishStatusOpen\(current => !current\);/);
+  assert.match(source, /id="publish-status-popover"[\s\S]{0,300}aria-label="Publish status"/);
   assert.match(source, /Undo \{lastUndoLabel\}/);
   assert.match(source, /onClick=\{undoDraftEdit\}/);
 });
