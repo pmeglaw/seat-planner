@@ -8,6 +8,7 @@ import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
 import { importAssignmentsCsvAction, restoreDraftSnapshotAction } from "@/app/actions";
 import { Button } from "@/components/ui/Button";
+import { CloseIcon } from "@/components/ui/CloseIcon";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type DataUtilitiesPanelProps = {
@@ -309,7 +310,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                 className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 aria-label="Close CSV import review"
               >
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4"><path d="m5.5 5.5 9 9m0-9-9 9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <CloseIcon />
               </button>
             </div>
 
@@ -393,7 +394,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                 className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 aria-label="Close JSON restore review"
               >
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4"><path d="m5.5 5.5 9 9m0-9-9 9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <CloseIcon />
               </button>
             </div>
 

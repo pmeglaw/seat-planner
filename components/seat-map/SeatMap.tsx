@@ -57,6 +57,7 @@ import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
+import { CloseIcon } from "@/components/ui/CloseIcon";
 import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 import { SEAT_SEARCH_PLACEHOLDER, searchHandsPanelToResults } from "@/lib/viewerSeatSearch";
@@ -3224,7 +3225,7 @@ export function SeatMap({
                 className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 aria-label="Cancel custom seat deletion"
               >
-                x
+                <CloseIcon />
               </button>
             </div>
 
@@ -3272,7 +3273,7 @@ export function SeatMap({
                 className={["flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40", focusRingClass].join(" ")}
                 aria-label="Close publish review"
               >
-                x
+                <CloseIcon />
               </button>
             </div>
 
@@ -3541,7 +3542,7 @@ export function SeatMap({
                 className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)]"
                 aria-label="Cancel swap confirmation"
               >
-                x
+                <CloseIcon />
               </button>
             </div>
 
