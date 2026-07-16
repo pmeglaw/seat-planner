@@ -63,7 +63,7 @@ function ReviewCountCard({ label, value, tone = "default" }: { label: string; va
   );
 }
 
-function UtilityButton({ label, description, tone = "default", disabled, onClick }: { label: string; description: string; tone?: "default" | "danger"; disabled?: boolean; onClick: () => void }) {
+function UtilityButton({ label, description, tone = "default", affordance = "review", disabled, onClick }: { label: string; description: string; tone?: "default" | "danger"; affordance?: "download" | "review"; disabled?: boolean; onClick: () => void }) {
   const toneClassName = tone === "danger"
     ? "border-[var(--admin-state-danger-border)] bg-[var(--admin-state-danger-bg)] text-[var(--admin-state-danger-text)] hover:border-[var(--admin-danger)] hover:bg-[var(--admin-danger-soft)]"
     : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-surface-alt)]";
@@ -85,7 +85,18 @@ function UtilityButton({ label, description, tone = "default", disabled, onClick
         <span className="block truncate text-sm font-semibold">{label}</span>
         <span className={["mt-0.5 block truncate text-xs font-medium", descriptionClassName].join(" ")}>{description}</span>
       </span>
-      <span aria-hidden="true" className="shrink-0 text-sm font-semibold opacity-40">&gt;</span>
+      <span aria-hidden="true" className="shrink-0 opacity-40">
+        {affordance === "download" ? (
+          <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+            <path d="M10 3.5v8m0 0 3.2-3.2M10 11.5 6.8 8.3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M4 13.5v1.7c0 .7.6 1.3 1.3 1.3h9.4c.7 0 1.3-.6 1.3-1.3v-1.7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+            <path d="m8 5.5 4.5 4.5L8 14.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </span>
     </button>
   );
 }
@@ -258,8 +269,8 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
           Imports update draft assignments; seat positions don&apos;t move.
         </p>
         <div className="mt-3 space-y-2">
-          <UtilityButton label="Blank CSV" description="Download assignment template" onClick={downloadTemplate} disabled={busy} />
-          <UtilityButton label="Export CSV" description="Download draft assignments" onClick={exportCsv} disabled={busy} />
+          <UtilityButton label="Download CSV template" description="A blank assignment sheet to fill in" affordance="download" onClick={downloadTemplate} disabled={busy} />
+          <UtilityButton label="Export CSV" description="Download draft assignments" affordance="download" onClick={exportCsv} disabled={busy} />
           <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={event => importCsv(event.target.files?.[0])} />
           <UtilityButton label="Import CSV" description="Review parsed rows before applying" onClick={() => fileInputRef.current?.click()} disabled={busy} />
         </div>
@@ -271,7 +282,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
           Full backup and restore. Restoring replaces the entire draft map, so review carefully before confirming.
         </p>
         <div className="mt-3 space-y-2">
-          <UtilityButton label="Export JSON backup" description="Download full draft recovery data" onClick={exportJsonBackup} disabled={busy} />
+          <UtilityButton label="Export JSON backup" description="Download full draft recovery data" affordance="download" onClick={exportJsonBackup} disabled={busy} />
           <input ref={jsonInputRef} type="file" accept=".json,application/json" className="hidden" onChange={event => importJson(event.target.files?.[0])} />
           <UtilityButton label="Restore JSON backup" description="Review a full draft backup before restoring" onClick={() => jsonInputRef.current?.click()} disabled={busy} />
         </div>
