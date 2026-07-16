@@ -569,13 +569,13 @@ export function ViewerSeatFinder({
 
   const resultCountLabel = searchResults.results.length === 1 ? "1 result" : `${searchResults.results.length} results`;
   const mapAnnouncement = selectedResultTitle
-    ? `${selectedResultTitle} selected on the published map.`
+    ? `${selectedResultTitle} selected on the map.`
     : searchActive
       ? `${resultCountLabel} for ${search}.`
-      : `${publishedSeats.length} published seats loaded.`;
+      : `${publishedSeats.length} seats loaded.`;
   const mapCrumbLabel = floor === "2"
     ? "Not yet mapped"
-    : `Published map · ${publishedSeats.length} ${publishedSeats.length === 1 ? "seat" : "seats"}`;
+    : `Office map · ${publishedSeats.length} ${publishedSeats.length === 1 ? "seat" : "seats"}`;
   const mapZoomLabel = zoomFactor === null ? "Fit" : `${Math.round(zoomFactor * 100)}%`;
   const resultsPanelOpen = searchActive && (!selectedSeat || inspectorCollapsed);
   // Prototype "stage": at the panel tier the inspector reserves layout width
@@ -669,7 +669,7 @@ export function ViewerSeatFinder({
             aria-expanded={filterOpen}
             aria-controls="viewer-filter-panel"
             aria-haspopup="true"
-            aria-label={structuredFilterCount ? `Filter published seating, ${structuredFilterCount} active` : "Filter published seating"}
+            aria-label={structuredFilterCount ? `Filter seating, ${structuredFilterCount} active` : "Filter seating"}
             className={[
               "flex shrink-0 items-center gap-1.5 border-b-2 border-r border-r-[var(--admin-chrome-border)] px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
               structuredFilterCount > 0 || filterOpen
@@ -712,7 +712,7 @@ export function ViewerSeatFinder({
           )}
           <div role="search" aria-label="Viewer search" className="h-full min-w-0 flex-1">
             <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
-              <span className="sr-only">Search published seating</span>
+              <span className="sr-only">Search office seating</span>
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
                 <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
                 <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
@@ -810,7 +810,7 @@ export function ViewerSeatFinder({
                 badges) — a last-publish date answers the question they have. */}
             {lastPublishedLabel && floor === "3" && (
               <span
-                title="Read-only published view"
+                title={`The map everyone sees — last updated ${lastPublishedLabel}`}
                 className="rounded-full bg-[var(--admin-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--admin-text-secondary)] ring-1 ring-[var(--admin-border)]"
               >
                 Updated {lastPublishedLabel}
@@ -824,7 +824,7 @@ export function ViewerSeatFinder({
               ref={mapViewportRef}
               id="viewer-seat-map"
               tabIndex={0}
-              aria-label="Published office seat map. Drag to pan. Seat markers are read-only buttons."
+              aria-label="Office seat map. Drag to pan. Seat markers are read-only buttons."
               className={mapViewportClassName}
               onPointerDown={handleViewportPointerDown}
               onPointerMove={handleViewportPointerMove}
@@ -914,7 +914,7 @@ export function ViewerSeatFinder({
                   // Filters got no match count while search did (2026-07-16
                   // critique, minor 8) — same status-line home for both.
                   ? `${highlightedSeatIdSet.size} of ${publishedSeats.length} seats ${highlightedSeatIdSet.size === 1 ? "matches" : "match"} filters`
-                  : "Published seating across people, seats, departments, and zones."}
+                  : "Seating across people, seats, departments, and zones."}
             </p>
             <ul aria-label="Seat status summary" className="flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--admin-text-secondary)]">
               {[
@@ -985,7 +985,7 @@ export function ViewerSeatFinder({
             <div role="status" aria-live="polite" className="p-4">
               <div className="text-sm font-semibold text-[var(--admin-text-primary)]">No results for {search.trim()}</div>
               <p className="mt-1 text-xs font-medium leading-5 text-[var(--admin-text-muted)]">
-                No matching published people, seats, departments, or zones.
+                No matching people, seats, departments, or zones.
               </p>
               <button type="button" onClick={clearSearch} className="mt-3 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:text-[var(--admin-primary-cta)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]">
                 Clear search

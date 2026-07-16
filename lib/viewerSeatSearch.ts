@@ -201,7 +201,7 @@ export function buildViewerSeatSearch({
       id: `person:${employee.id}`,
       kind: "person",
       title: formatDisplayNameLocal(employee.full_name),
-      subtitle: assignedSeat ? `${formatSeatCodeLocal(assignedSeat.label)} · ${zone}` : "No published seat",
+      subtitle: assignedSeat ? `${formatSeatCodeLocal(assignedSeat.label)} · ${zone}` : "No assigned seat",
       meta: [employee.position, employee.department].filter(Boolean).join(" · ") || "Active employee",
       seatId: assignedSeat?.id ?? null,
       seatIds: assignedSeat ? [assignedSeat.id] : [],
@@ -255,7 +255,7 @@ export function buildViewerSeatSearch({
       kind: "department",
       title: name,
       subtitle: "Department",
-      meta: `${countLabel(departmentPeopleById.size, "person")} · ${countLabel(departmentSeats.length, "published seat")}`,
+      meta: `${countLabel(departmentPeopleById.size, "person")} · ${countLabel(departmentSeats.length, "seat")}`,
       seatId: departmentSeats.length === 1 ? departmentSeats[0].id : null,
       seatIds: departmentSeats.map(seat => seat.id)
     });
