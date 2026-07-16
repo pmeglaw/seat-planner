@@ -2322,7 +2322,7 @@ export function SeatMap({
           {/* DOM order mirrors the visual order: the menu drops directly under
               the trigger, so it must precede the search field in tab order. */}
           {showFilterPanel && (
-            <div data-filter-ui className="absolute -left-px top-full z-50 w-[288px] max-w-[calc(100vw-16px)]">
+            <div data-filter-ui className="absolute -left-px top-[calc(100%+4px)] z-50 w-[288px] max-w-[calc(100vw-16px)]">
               <FilterPanel
                 department={department}
                 status={status}
