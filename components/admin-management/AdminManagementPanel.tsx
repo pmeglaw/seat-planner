@@ -130,14 +130,16 @@ function upsertOptionByIdOrName<T extends { id: string; name: string }>(current:
   return current.map(option => (option.id === next.id || option.name === next.name ? next : option));
 }
 
+// Drawn on the house 20-viewBox grid at the 16px stroke tier (1.7) so the
+// delete affordance matches the hand-drawn icon family (critique action 8).
 function TrashIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <path d="M3 6h18" />
-      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <path d="M3.5 5.5h13" />
+      <path d="M7.5 5.5V4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1.5" />
+      <path d="M15.5 5.5 14.7 15a1.6 1.6 0 0 1-1.6 1.5H6.9A1.6 1.6 0 0 1 5.3 15l-.8-9.5" />
+      <path d="M8.4 8.5v5" />
+      <path d="M11.6 8.5v5" />
     </svg>
   );
 }
@@ -273,6 +275,7 @@ export function AdminManagementPanel({
   // near the viewport render; padding preserves the page scroll height. Geometry
   // is measured from the live table so the rows keep their exact current look.
   const employeeGridRef = useRef<HTMLTableSectionElement | null>(null);
+  const employeeNameInputRef = useRef<HTMLInputElement | null>(null);
   const [employeeGridGeometry, setEmployeeGridGeometry] = useState({
     scrollOffset: 0,
     viewportHeight: 1080,
@@ -384,6 +387,8 @@ export function AdminManagementPanel({
     setActiveTab("employees");
     setMessage(null);
     setError(null);
+    // Hand focus to the form the row just populated (critique action 8).
+    window.requestAnimationFrame(() => employeeNameInputRef.current?.focus());
   }
 
   function saveEmployee() {
@@ -646,12 +651,19 @@ export function AdminManagementPanel({
                   <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Employees</h2>
                   <p className="text-sm text-[var(--admin-text-secondary)]">Search, edit, and deactivate employees. Seat placement happens on the map.</p>
                 </div>
-                <input
-                  value={search}
-                  onChange={event => setSearch(event.target.value)}
-                  placeholder="Search employees..."
-                  className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)] md:w-80"
-                />
+                <label className="relative block w-full md:w-80">
+                  <span className="sr-only">Search employees</span>
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-text-muted)]">
+                    <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
+                    <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                  </svg>
+                  <input
+                    value={search}
+                    onChange={event => setSearch(event.target.value)}
+                    placeholder="Search employees…"
+                    className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] py-2 pl-8 pr-3 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]"
+                  />
+                </label>
               </div>
               <p aria-live="polite" className="mt-3 text-xs font-medium text-[var(--admin-text-secondary)]">
                 {pluralize(sortedEmployees.length, "employee")} of {activeEmployees.length.toLocaleString()} shown
@@ -682,7 +694,9 @@ export function AdminManagementPanel({
                               >
                                 <span>{column.label}</span>
                                 <span aria-hidden="true" className={isSorted ? "text-[var(--admin-text-primary)]" : "text-transparent"}>
-                                  {isSorted ? (sortDirection === "asc" ? "▲" : "▼") : "▲"}
+                                  <svg viewBox="0 0 20 20" fill="none" className={["h-3 w-3 transition-transform", isSorted && sortDirection === "desc" ? "rotate-180" : ""].join(" ")}>
+                                    <path d="m5.5 12 4.5-4.5L14.5 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
                                 </span>
                               </button>
                             </th>
@@ -733,7 +747,7 @@ export function AdminManagementPanel({
                                   orange-soft family reads as a warning here. */}
                               <span className={["inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium", isAssigned ? "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-1 ring-[var(--admin-success)]/30" : "bg-[var(--admin-surface-alt)] text-[var(--admin-text-secondary)]"].join(" ")}>
                                 {isAssigned && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />}
-                                {isAssigned ? "Assigned" : "Active"}
+                                {isAssigned ? "Assigned" : "Unassigned"}
                               </span>
                             </td>
                           </tr>
@@ -762,7 +776,7 @@ export function AdminManagementPanel({
               <div className="mt-4 space-y-3">
                 <label className="block">
                   <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Name</span>
-                  <input value={employeeForm.fullName} onChange={event => setEmployeeForm(current => ({ ...current, fullName: event.target.value }))} className={fieldClassName} />
+                  <input ref={employeeNameInputRef} value={employeeForm.fullName} onChange={event => setEmployeeForm(current => ({ ...current, fullName: event.target.value }))} className={fieldClassName} />
                 </label>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="block">
@@ -922,7 +936,7 @@ export function AdminManagementPanel({
                 </p>
               </div>
               <Button type="button" onClick={loadPublishHistory} disabled={publishHistoryState.status === "loading"}>
-                {publishHistoryState.status === "loading" ? "Loading" : "Refresh history"}
+                {publishHistoryState.status === "loading" ? "Loading…" : "Refresh history"}
               </Button>
             </div>
 
@@ -976,7 +990,7 @@ export function AdminManagementPanel({
                 {latestPublish && (
                   <div className="mt-4 border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
                     <div className="flex items-center gap-2">
-                      <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)]">Latest Publish</div>
+                      <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)]">Latest publish</div>
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--admin-success-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--admin-success)] ring-1 ring-[var(--admin-success)]/30">
                         <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                         Latest
@@ -988,11 +1002,11 @@ export function AdminManagementPanel({
                         <div className="mt-1 text-sm font-semibold text-[var(--admin-text-primary)]">{formatPublishDate(latestPublish.created_at)}</div>
                       </div>
                       <div>
-                        <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Seat Count</div>
+                        <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Seat count</div>
                         <div className="mt-1 text-sm font-semibold text-[var(--admin-text-primary)]">{latestPublish.seat_count.toLocaleString()}</div>
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Published By</div>
+                        <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Published by</div>
                         <div className="mt-1 break-all text-sm font-semibold text-[var(--admin-text-primary)]" title={latestPublish.published_by ?? undefined}>
                           {getPublishHistoryActor(latestPublish)}
                         </div>
@@ -1009,9 +1023,9 @@ export function AdminManagementPanel({
 
                 <div className="mt-4 overflow-hidden border border-[var(--admin-border)]">
                   <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_minmax(0,1.2fr)_80px] bg-[var(--admin-surface-alt)] px-3 py-2 text-xs font-semibold tracking-normal text-[var(--admin-text-secondary)] md:grid">
-                    <div>Created At</div>
-                    <div>Seat Count</div>
-                    <div>Published By</div>
+                    <div>Created at</div>
+                    <div>Seat count</div>
+                    <div>Published by</div>
                     <div>Changes</div>
                     <div>State</div>
                   </div>
@@ -1022,15 +1036,15 @@ export function AdminManagementPanel({
                         className="grid gap-3 p-3 text-sm md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_minmax(0,1.2fr)_80px] md:items-center"
                       >
                         <div>
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Created At</div>
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Created at</div>
                           <div className="font-semibold text-[var(--admin-text-primary)]">{formatPublishDate(event.created_at)}</div>
                         </div>
                         <div>
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Seat Count</div>
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Seat count</div>
                           <div className="font-semibold text-[var(--admin-text-primary)]">{event.seat_count.toLocaleString()}</div>
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Published By</div>
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Published by</div>
                           <div className="break-all font-semibold text-[var(--admin-text-secondary)]" title={event.published_by ?? undefined}>
                             {getPublishHistoryActor(event)}
                           </div>
@@ -1089,8 +1103,8 @@ export function AdminManagementPanel({
                   {managementConfirm.kind === "employee"
                     ? `Deactivate ${formatDisplayName(managementConfirm.employee.full_name)}?`
                     : managementConfirm.kind === "department"
-                      ? `Delete department "${managementConfirm.name}"?`
-                      : `Delete zone "${managementConfirm.name}"?`}
+                      ? `Delete department “${managementConfirm.name}”?`
+                      : `Delete zone “${managementConfirm.name}”?`}
                 </h2>
                 <p id="management-confirm-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-secondary)]">
                   Review the exact management impact before applying this cleanup.
