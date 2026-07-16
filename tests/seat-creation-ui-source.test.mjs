@@ -100,7 +100,14 @@ test("admin names visibility preference persists locally without server storage"
   assert.match(seatMapSource, /window\.localStorage\.getItem\(ADMIN_NAMES_VISIBLE_STORAGE_KEY\)/);
   assert.match(seatMapSource, /window\.localStorage\.setItem\(ADMIN_NAMES_VISIBLE_STORAGE_KEY, showNames \? "true" : "false"\)/);
   assert.match(seatMapSource, /if \(!canEdit\) \{[\s\S]*?setNamesPreferenceHydrated\(true\);[\s\S]*?return;/);
-  assert.doesNotMatch(seatMapSource, /supabase[\s\S]*seat-planner:names-visible|seat-planner:names-visible[\s\S]*supabase/);
+  // Local-only guarantee, stated precisely: every use of the storage key is a
+  // window.localStorage call (plus its one declaration) — the key can never
+  // ride along into a supabase/server pathway. (The old whole-file
+  // "supabase never co-occurs with the key" regex broke the moment the file
+  // gained an unrelated supabase import for the session-expiry probe.)
+  const keyUses = seatMapSource.match(/ADMIN_NAMES_VISIBLE_STORAGE_KEY/g) ?? [];
+  const localStorageKeyUses = seatMapSource.match(/window\.localStorage\.(?:get|set)Item\(ADMIN_NAMES_VISIBLE_STORAGE_KEY/g) ?? [];
+  assert.equal(keyUses.length, localStorageKeyUses.length + 1, "names-visible key must be used only via window.localStorage");
 });
 
 test("canvas add seat toggle is wired to add-seat mode", async () => {

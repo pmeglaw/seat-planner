@@ -60,6 +60,7 @@ import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 import { SEAT_SEARCH_PLACEHOLDER, searchHandsPanelToResults } from "@/lib/viewerSeatSearch";
+import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type SeatMapProps = {
@@ -273,6 +274,9 @@ export function SeatMap({
   const [localDepartmentOptions, setLocalDepartmentOptions] = useState(departmentOptions);
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
   const [actionError, setActionError] = useState<string | null>(null);
+  // Auth loss detected by the client (prod digest-masks the server message);
+  // true swaps the generic action error for a sign-in banner.
+  const [sessionExpired, setSessionExpired] = useState(false);
   // Notices carry a tone: successes stay green, but cancellations and
   // guidance render neutral so "nothing happened" never reads as a completed
   // change. The wrapper keeps every existing setActionNotice(text) call
@@ -514,6 +518,27 @@ export function SeatMap({
     const timer = window.setTimeout(() => setStaleDraftNotice(null), 15000);
     return () => window.clearTimeout(timer);
   }, [staleDraftNotice]);
+
+  // Session-expiry probe: production replaces thrown server-action messages
+  // with an opaque digest, so an admin whose session lapsed mid-edit would
+  // otherwise see a generic error with no way forward. Whenever a new action
+  // error lands, ask the browser client whether the session still exists and,
+  // if not, swap the banner for an explicit sign-in path.
+  useEffect(() => {
+    if (!canEdit || !actionError) return;
+    let cancelled = false;
+    createBrowserSupabaseClient()
+      .auth.getUser()
+      .then(({ data }) => {
+        if (!cancelled) setSessionExpired(!data.user);
+      })
+      .catch(() => {
+        // Network hiccups keep the original error — never claim expiry blindly.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [actionError, canEdit]);
 
   // The filter dropdown behaves like a menu (prototype .fmenu): a pointer press
   // outside the panel or its trigger buttons dismisses it.
@@ -2832,7 +2857,16 @@ export function SeatMap({
             </div>
           )}
 
-          {actionError && (
+          {sessionExpired && actionError && (
+            <div role="alert" className={actionErrorBannerClassName}>
+              Your session expired — sign in again to keep editing. Unsaved changes stay in this tab until you leave.{" "}
+              <a href="/login?next=/admin" className="font-semibold underline underline-offset-2">
+                Sign in
+              </a>
+            </div>
+          )}
+
+          {actionError && !sessionExpired && (
             <div role="alert" className={actionErrorBannerClassName}>
               {actionError}
             </div>
