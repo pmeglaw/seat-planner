@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 
 // Employee-data layering (advisor MED finding): viewer people data must come
@@ -7,6 +7,8 @@ import test from "node:test";
 // publish transaction — never the live employees table, which is the admins'
 // draft-side working set.
 
+// The 07-08 migration owns the snapshot table, its RLS, and the seed insert;
+// those assertions read that file directly.
 const migrationSql = await readFile(
   new URL("../supabase/migrations/20260708230000_published_employee_snapshot.sql", import.meta.url),
   "utf8"
@@ -17,11 +19,27 @@ const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx
 
 function extractPublishFunction(sql) {
   const match = sql.match(/create or replace function app_private\.publish_seat_map\(\)[\s\S]+?\$\$;/);
-  assert.ok(match, "publish RPC should be recreated in the snapshot migration");
-  return match[0];
+  return match ? match[0] : null;
 }
 
-const publishSql = extractPublishFunction(migrationSql);
+// The publish RPC is redefined by later migrations (email column, change
+// summary, …). Pin the guardrail to the LATEST definition across all
+// migrations — sorting timestamped filenames ascending and keeping the last
+// match — so redefining the function never silently escapes these checks.
+async function latestPublishFunction() {
+  const migrationsDir = new URL("../supabase/migrations/", import.meta.url);
+  const files = (await readdir(migrationsDir)).filter(name => name.endsWith(".sql")).sort();
+  let latest = null;
+  for (const name of files) {
+    const sql = await readFile(new URL(name, migrationsDir), "utf8");
+    const fn = extractPublishFunction(sql);
+    if (fn) latest = fn;
+  }
+  assert.ok(latest, "at least one migration should define app_private.publish_seat_map()");
+  return latest;
+}
+
+const publishSql = await latestPublishFunction();
 
 test("published_employees snapshot table is select-only for clients", () => {
   assert.match(migrationSql, /create table if not exists public\.published_employees/);
