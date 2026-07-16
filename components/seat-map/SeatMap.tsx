@@ -308,6 +308,9 @@ export function SeatMap({
   // the review modal is reserved for the has-changes state.
   const [publishStatusOpen, setPublishStatusOpen] = useState(false);
   const publishStatusButtonRef = useRef<HTMLButtonElement | null>(null);
+  // Whether the docked inspector was expanded when Ask Planner took the right
+  // edge — closed drawers hand the slot back (2026-07-16 critique, minor 6).
+  const inspectorExpandedBeforePlannerRef = useRef(false);
   const [inspectorDirty, setInspectorDirty] = useState(false);
   const [inspectorGuardAction, setInspectorGuardAction] = useState<InspectorGuardAction | null>(null);
   const [pendingInspectorSaveAction, setPendingInspectorSaveAction] = useState<InspectorGuardAction | null>(null);
@@ -426,6 +429,12 @@ export function SeatMap({
 
   const closeAskPlannerDrawer = useCallback(() => {
     setAskPlannerOpen(false);
+    // The drawer borrowed the right edge from an expanded inspector — hand it
+    // back on close instead of stranding the still-selected seat at the rail
+    // (2026-07-16 critique, minor 6). The rail is unreachable while the drawer
+    // is open (pill suppressed), so this cannot fight a user toggle.
+    if (inspectorExpandedBeforePlannerRef.current) setInspectorCollapsed(false);
+    inspectorExpandedBeforePlannerRef.current = false;
     focusAskPlannerButton();
   }, [focusAskPlannerButton]);
 
@@ -439,10 +448,11 @@ export function SeatMap({
     // collapses the filter panel and the seat inspector so they don't stack /
     // overlap. Keep the seat selected (selectedSeatId untouched) — collapsing
     // only pins the inspector to its pill; expanding restores it.
+    inspectorExpandedBeforePlannerRef.current = Boolean(selectedSeatId) && !inspectorCollapsed;
     setFilterCollapsed(true);
     setInspectorCollapsed(true);
     setAskPlannerOpen(true);
-  }, []);
+  }, [inspectorCollapsed, selectedSeatId]);
 
   useEffect(() => setLocalSeats(normalizeSeats(seats)), [seats]);
   useEffect(() => setLocalPublishedSeats(normalizeSeats(publishedSeats)), [publishedSeats]);

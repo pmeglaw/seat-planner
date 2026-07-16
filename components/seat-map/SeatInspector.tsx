@@ -1095,7 +1095,11 @@ export function SeatInspector({
               </div>
               {/* 3b INV-4: move-mode microcopy lives in the occupant (the inspector). */}
               {moveMode && (
-                <p role="status" className="mt-2 bg-[var(--admin-primary-soft)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--admin-primary)]">
+                /* Neutral guidance, not an alert: the danger register is
+                   reserved for destructive actions (2026-07-16 critique,
+                   minor 7). Block style mirrors the Ask Planner drawer's
+                   dark-surface info card. */
+                <p role="status" className="mt-2 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-3 py-2 text-[12px] font-medium leading-4 text-[#c6c6c6]">
                   Drag the seat marker to its new spot. Esc exits move.
                 </p>
               )}
