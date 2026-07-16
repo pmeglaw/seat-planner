@@ -871,11 +871,16 @@ export function SeatMap({
       ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Los_Angeles" }).format(new Date(lastPublishedAt))
       : null;
   }, [localPublishedSeats]);
+  // Legend counts follow the active constraints — the number row must not
+  // contradict a filtered map (2026-07-16 regrade, review 4). matchesFilters
+  // covers search + structured filters, exactly what the map dims by.
+  const legendFiltersActive = search.trim() !== "" || department !== "all" || zone !== "all" || status !== "all";
+  const legendSourceSeats = legendFiltersActive ? localSeats.filter(matchesFilters) : localSeats;
   const legendCounts: Record<string, number> = {
-    assigned: stats.assigned,
-    available: stats.available,
-    reserved: stats.reserved,
-    unavailable: stats.unavailable,
+    assigned: legendSourceSeats.filter(seat => seat.status === "assigned").length,
+    available: legendSourceSeats.filter(seat => seat.status === "available").length,
+    reserved: legendSourceSeats.filter(seat => seat.status === "reserved").length,
+    unavailable: legendSourceSeats.filter(seat => seat.status === "unavailable").length,
     "draft-changed": draftChangedSeatLabelSet.size
   };
 
@@ -2454,6 +2459,7 @@ export function SeatMap({
                 onDepartmentChange={setDepartment}
                 onZoneChange={setZone}
                 onStatusChange={setStatus}
+                matchSummary={`${legendSourceSeats.length} of ${localSeats.length} seats match`}
                 onRemoveActiveChip={removeActiveFilterChip}
                 onClearFilters={clearStructuredFilters}
               />
@@ -2911,8 +2917,8 @@ export function SeatMap({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-0.5 pb-2 lg:pb-0">
             <FloorSelector floor={floor} onChange={setFloor} />
             <span className="text-[12px] text-[var(--admin-text-secondary)]">{mapCrumbLabel}</span>
+            <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} />
             <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
-              <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} />
               {canEdit && floor === "3" && (
                 <button
                   type="button"
