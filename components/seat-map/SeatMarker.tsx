@@ -261,7 +261,7 @@ export function SeatMarker({
     searchSelected
       ? adminMarker
         ? "border-[var(--admin-marker-selected-border)] bg-[var(--admin-marker-selected-surface)] text-[var(--admin-marker-selected-text)] ring-2 ring-[var(--admin-marker-selected-border)] outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-border)] shadow-[0_12px_28px_rgba(16,17,20,0.34),0_0_0_5px_var(--admin-marker-search-halo),inset_0_1px_0_rgba(255,255,255,0.14)]"
-        : "border-[#D46A24] bg-[#15181B] text-white ring-2 ring-[#D46A24]/90 outline outline-2 outline-offset-2 outline-[#2F6668]/75 shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_rgba(169,207,204,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
+        : "border-[#D46A24] bg-[#15181B] text-white ring-2 ring-[#D46A24]/90 outline outline-2 outline-offset-2 outline-[#D46A24]/75 shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_rgba(169,207,204,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
       : "",
     tokenMode === "selected"
       ? searchSelected || moveOrigin

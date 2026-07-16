@@ -389,6 +389,11 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /\{resultsPanelOpen && !modeCardOpen && \(/);
   assert.match(seatMapSource, /onOpen=\{selectSeatResult\}/);
   assert.match(seatMapSource, /onShowOnMap=\{queueCenterSeatInMap\}/);
+  // Map ⋯ overflow is a real menu: ARIA role/haspopup semantics plus
+  // roving keyboard support, not a plain button group.
+  assert.match(seatMapSource, /id="seat-map-overflow-menu"[\s\S]{0,160}role="menu"/);
+  assert.match(seatMapSource, /role="menuitem"/);
+  assert.match(seatMapSource, /aria-haspopup="menu"/);
 });
 
 test("popovers restore trigger focus when a close unmounts the focused element", async () => {

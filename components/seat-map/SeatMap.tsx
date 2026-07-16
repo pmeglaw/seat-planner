@@ -303,6 +303,7 @@ export function SeatMap({
   const filterTriggerRef = useRef<HTMLButtonElement | null>(null);
   const chromeMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const mapMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mapMenuRef = useRef<HTMLDivElement | null>(null);
   const [inspectorDirty, setInspectorDirty] = useState(false);
   const [inspectorGuardAction, setInspectorGuardAction] = useState<InspectorGuardAction | null>(null);
   const [pendingInspectorSaveAction, setPendingInspectorSaveAction] = useState<InspectorGuardAction | null>(null);
@@ -518,6 +519,14 @@ export function SeatMap({
 
     document.addEventListener("pointerdown", handleOutsidePointer);
     return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [mapMenuOpen]);
+
+  // Menus open with focus on the first item (WAI-ARIA menu button pattern),
+  // not left behind on the trigger.
+  useEffect(() => {
+    if (!mapMenuOpen) return;
+    const firstItem = mapMenuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
+    firstItem?.focus();
   }, [mapMenuOpen]);
 
   // Same dismissal rule for the chrome-bar "More" menu (collapsed admin tools below lg).
@@ -2751,7 +2760,7 @@ export function SeatMap({
                   <button
                     ref={mapMenuButtonRef}
                     type="button"
-                    aria-haspopup="true"
+                    aria-haspopup="menu"
                     aria-expanded={mapMenuOpen}
                     aria-controls={mapMenuOpen ? "seat-map-overflow-menu" : undefined}
                     aria-label="More map actions"
@@ -2773,19 +2782,39 @@ export function SeatMap({
                   {mapMenuOpen && (
                     <div
                       id="seat-map-overflow-menu"
-                      role="group"
+                      ref={mapMenuRef}
+                      role="menu"
                       aria-label="Map actions"
                       onKeyDown={event => {
                         if (event.key === "Escape") {
                           event.stopPropagation();
                           setMapMenuOpen(false);
                           returnFocusAfterClose(mapMenuButtonRef);
+                          return;
+                        }
+                        if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
+                          event.preventDefault();
+                          const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+                          if (items.length === 0) return;
+                          const currentIndex = items.indexOf(document.activeElement as HTMLElement);
+                          let nextIndex: number;
+                          if (event.key === "Home") {
+                            nextIndex = 0;
+                          } else if (event.key === "End") {
+                            nextIndex = items.length - 1;
+                          } else if (event.key === "ArrowDown") {
+                            nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
+                          } else {
+                            nextIndex = currentIndex < 0 ? items.length - 1 : (currentIndex - 1 + items.length) % items.length;
+                          }
+                          items[nextIndex]?.focus();
                         }
                       }}
                       className="absolute right-0 top-full z-40 min-w-[176px] border border-[var(--admin-border)] bg-[var(--admin-surface)] py-1 shadow-elevation-3"
                     >
                       <button
                         type="button"
+                        role="menuitem"
                         onClick={() => {
                           setMapMenuOpen(false);
                           fitMapToView();
@@ -2797,6 +2826,7 @@ export function SeatMap({
                       </button>
                       <button
                         type="button"
+                        role="menuitem"
                         onClick={() => {
                           setMapMenuOpen(false);
                           applyMapZoom(1);
