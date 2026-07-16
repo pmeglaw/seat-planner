@@ -554,6 +554,18 @@ export function ViewerSeatFinder({
   const mapFrameStyle = zoomFactor === null
     ? (fitMapWidth ? { width: `${fitMapWidth}px` } : undefined)
     : { width: `calc(var(--map-detail-base) * ${zoomFactor})` };
+  // Fit view hugs the floor plan's aspect ratio at lg instead of stretching to
+  // fill the leftover column height — the old flex-1 stage letterboxed the
+  // plan between dead beige bands (54% of the map viewport at ~1084px with the
+  // panel open; 2026-07-16 critique, fix 4). 1911/867 mirrors
+  // MAP_IMAGE_WIDTH/MAP_IMAGE_HEIGHT (Tailwind arbitrary values must be
+  // static). flex-shrink + lg:min-h-0 still cap the stage when height is the
+  // binding dimension — exactly the old contain-fit outcome. Detail zoom keeps
+  // flex-1: panning wants the full column.
+  const mapStageClassName = cx(
+    "relative min-w-0 lg:flex lg:min-h-0",
+    zoomFactor === null ? "lg:aspect-[1911/867]" : "lg:flex-1"
+  );
 
   const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
@@ -728,7 +740,7 @@ export function ViewerSeatFinder({
             <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="ml-auto" />
           </div>
 
-          <div className="relative min-w-0 lg:flex lg:min-h-0 lg:flex-1">
+          <div className={mapStageClassName}>
             <div
               ref={mapViewportRef}
               id="viewer-seat-map"

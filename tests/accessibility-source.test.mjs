@@ -376,7 +376,12 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   // inspector is closed or auto-collapsed to its pill; searching collapses (never
   // clears) an open clean selection. No reserved gutter, no idle Map key rail.
   assert.match(seatMapSource, /const resultsPanelOpen = canEdit && filtersActive && \(!selectedSeat \|\| inspectorCollapsed\)/);
-  assert.match(seatMapSource, /if \(value\.trim\(\) && selectedSeatId && !inspectorDirty\) \{\s*setInspectorCollapsed\(true\);/);
+  // INV-1 lives once in lib/viewerSeatSearch (searchHandsPanelToResults,
+  // unit-tested) and BOTH maps call it — the admin passes its dirty guard, the
+  // read-only viewer passes false (2026-07-16 critique, fix 5).
+  assert.match(seatMapSource, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), inspectorDirty\)\) \{\s*setInspectorCollapsed\(true\);/);
+  const viewerFinderForInv1 = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  assert.match(viewerFinderForInv1, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), false\)\) \{\s*setInspectorCollapsed\(true\);/);
   assert.doesNotMatch(seatMapSource, /mapKeyPanelOpen|desktopInspectorReserveMarginClassName|dock:/);
   assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = ""/);
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title" className=\{\[filterCollapsed \? "order-1" : "order-2", "min-w-0 overflow-hidden/);
@@ -397,8 +402,9 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /className=\{mapMarkerLayerClassName\}/);
   // INV-2: no auto-select - a single match stays in results until an explicit open.
   assert.doesNotMatch(seatMapSource, /singleResultSeat|autoSelectedSearchKeyRef|Auto-selected/);
-  // INV-1: typing a search evicts the open inspector (unsaved edits keep the guard).
-  assert.match(seatMapSource, /if \(value\.trim\(\) && selectedSeatId && !inspectorDirty\) \{/);
+  // INV-1: typing a search evicts the open inspector (unsaved edits keep the
+  // guard) — rule shared via lib/viewerSeatSearch.searchHandsPanelToResults.
+  assert.match(seatMapSource, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), inspectorDirty\)\) \{/);
   assert.match(seatMapSource, /\{resultsPanelOpen && !modeCardOpen && \(/);
   assert.match(seatMapSource, /onOpen=\{selectSeatResult\}/);
   assert.match(seatMapSource, /onShowOnMap=\{queueCenterSeatInMap\}/);
