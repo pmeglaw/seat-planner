@@ -5,10 +5,12 @@ import { AccountMenu } from "@/components/ui/AccountMenu";
 /**
  * The Shell chrome bar for admin sub-pages (Management, Settings).
  *
- * Mirrors the seat-map header (components/seat-map/SeatMap.tsx) exactly —
- * same 40px dark bar, brand chip, tool styling, and Viewer/Admin surface
- * shortcuts with the Carbon-style orange underline — so /admin,
- * /admin/management, and /admin/settings read as one continuous surface.
+ * Mirrors the seat-map header (components/seat-map/SeatMap.tsx) — same 40px
+ * dark bar, brand chip, and tool styling — so /admin, /admin/management, and
+ * /admin/settings read as one continuous surface. Unlike the map header it
+ * carries only the Viewer cross-surface exit: the section nav's underline
+ * already answers "where am I", and an active Admin tab would duplicate the
+ * "Seat map" link's destination.
  * Stateless on purpose: map-only tools (search, undo/redo, publish) stay in
  * the map header; this bar only carries identity and navigation.
  */
@@ -75,6 +77,9 @@ export function AdminShellBar({ page, email, roleLabel }: { page: AdminShellPage
       </nav>
 
       <div className="ml-auto flex h-full shrink-0 items-center">
+        {/* One cross-surface exit, one underline per bar (2026-07-16 regrade,
+            review 2): the old active "Admin" tab duplicated the "Seat map"
+            link's destination and fought the section nav's underline. */}
         <div className="hidden h-full items-center sm:flex">
           <Link
             href="/"
@@ -87,19 +92,6 @@ export function AdminShellBar({ page, email, roleLabel }: { page: AdminShellPage
               <circle cx="12" cy="12" r="3" />
             </svg>
             Viewer
-          </Link>
-          <Link
-            href="/admin"
-            aria-current="true"
-            title="Admin — draft planning"
-            className={[surfaceShortcut, "border-[var(--admin-primary)] text-white"].join(" ")}
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="7" r="3.1" />
-              <path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6" />
-              <path d="M14.5 18.4l2 2 4.2-4.6" />
-            </svg>
-            Admin
           </Link>
         </div>
         {/* Account menu (identity + sign out). Settings is the visible nav

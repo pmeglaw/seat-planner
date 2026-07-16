@@ -792,19 +792,23 @@ export function ViewerSeatFinder({
         </div>
 
         <div className="ml-auto flex h-full shrink-0 items-center">
-          <div className="flex h-full items-center">
-            <span
-              aria-current="page"
-              title="Viewer — published map"
-              className={cx(chromeSurfaceShortcut, "border-[var(--admin-primary)] text-white")}
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="8.2" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-              Viewer
-            </span>
-            {showAdminShortcut && (
+          {/* Surface tabs are admin equipment (2026-07-16 regrade, review 2):
+              non-admin staff would otherwise see one dead "tab" implying a
+              missing sibling. Their chrome ends at the account chip; surface
+              identity lives in the crumb and the menu's role line. */}
+          {showAdminShortcut && (
+            <div className="flex h-full items-center">
+              <span
+                aria-current="page"
+                title="Viewer — published map"
+                className={cx(chromeSurfaceShortcut, "border-[var(--admin-primary)] text-white")}
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="8.2" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                Viewer
+              </span>
               <Link
                 href="/admin"
                 aria-label="Open admin surface"
@@ -818,8 +822,8 @@ export function ViewerSeatFinder({
                 </svg>
                 Admin
               </Link>
-            )}
-          </div>
+            </div>
+          )}
           {/* Account menu (identity + sign out); decorative fallback keeps
               unauthenticated prototype embeds rendering. */}
           {accountEmail ? (
