@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AccountMenu } from "@/components/ui/AccountMenu";
 
 /**
  * The Shell chrome bar for admin sub-pages (Management, Settings).
@@ -21,7 +22,7 @@ const surfaceShortcut =
 
 type AdminShellPage = "management" | "settings";
 
-export function AdminShellBar({ page }: { page: AdminShellPage }) {
+export function AdminShellBar({ page, email, roleLabel }: { page: AdminShellPage; email: string; roleLabel: string }) {
   return (
     /* z-50 matches the seat-map bar: the chrome tier sits above z-40 page
        overlays so scrolled content never paints over the pinned bar. */
@@ -101,14 +102,10 @@ export function AdminShellBar({ page }: { page: AdminShellPage }) {
             Admin
           </Link>
         </div>
-        {/* Decorative identity chip — Settings is the visible nav item on this
-            bar, so the chip must not double as a second settings control. */}
-        <span
-          aria-hidden="true"
-          className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]"
-        >
-          A
-        </span>
+        {/* Account menu (identity + sign out). Settings is the visible nav
+            item on this bar, so the menu deliberately carries no settings
+            entry — the chip must not double as a second settings control. */}
+        <AccountMenu email={email} roleLabel={roleLabel} />
       </div>
     </header>
   );

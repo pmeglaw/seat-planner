@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AdminManagementPage() {
-  const { supabase, isAdmin } = await getAdminPageContext("/admin/management");
+  const { supabase, isAdmin, user } = await getAdminPageContext("/admin/management");
 
   if (!isAdmin) {
     return (
@@ -52,7 +52,7 @@ export default async function AdminManagementPage() {
 
   return (
     <div className="admin-theme flex min-h-screen flex-col bg-[var(--admin-bg)]">
-      <AdminShellBar page="management" />
+      <AdminShellBar page="management" email={user.email ?? ""} roleLabel="Admin" />
       <AdminManagementPanel
         seats={(seats ?? []) as SeatWithEmployee[]}
         employees={(employees ?? []) as Employee[]}

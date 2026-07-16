@@ -20,7 +20,9 @@ test("viewer route renders the published map as read-only", async () => {
   assert.match(adminSource, /\.eq\("layer", "draft"\)/);
   assert.match(adminSource, /\.eq\("layer", "published"\)/);
   assert.match(adminSource, /publishedSeats=\{\(publishedSeats \?\? \[\]\) as SeatWithEmployee\[\]\}/);
-  assert.match(adminSource, /canEdit\s*\/>/);
+  // canEdit stays the literal flag (never an expression); the identity props
+  // that follow it feed the account menu, not the edit gate.
+  assert.match(adminSource, /canEdit\s+accountEmail=/);
 });
 
 test("admin planning shell exposes status, panel relationships, and undo redo explanations", async () => {
@@ -36,12 +38,12 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /Planning canvas/);
   assert.match(source, /aria-label="Seat status legend"/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
-  // Settings lives behind the identity chip (owner preference — data
-  // utilities are management-adjacent, not a peer nav item). The avatar shape
-  // doesn't announce its purpose, so the chip link MUST stay labeled and
-  // route through the unsaved-edits guard; the viewer keeps a decorative twin.
-  assert.match(source, /aria-label="Open settings"/);
-  assert.match(source, /<Link\s+href="\/admin\/settings"\s+aria-label="Open settings"[\s\S]{0,400}beforeAdminPageNavigation\("\/admin\/settings", "Settings"\)[\s\S]{0,600}>\s*A\s*<\/Link>/);
+  // Session layer (2026-07-16 detail critique): the identity chip is the
+  // ACCOUNT MENU — signed-in email + role + Sign out. Settings stays behind
+  // the chip on the map surface (owner preference, now as a labeled menu item)
+  // and MUST keep routing through the unsaved-edits guard. Settings still
+  // never appears as a peer nav item on the map bar.
+  assert.match(source, /<AccountMenu[\s\S]{0,600}beforeAdminPageNavigation\("\/admin\/settings", "Settings"\)/);
   assert.doesNotMatch(source, /className=\{chromeToolbarBtnCollapsibleXl\}[\s\S]{0,220}Settings\s*<\/Link>/);
   assert.match(source, /aria-controls="ask-planner-drawer"/);
   assert.match(source, /aria-haspopup="dialog"/);
@@ -347,7 +349,10 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /onSubmitBlocked=\{cancelPendingInspectorGuardAction\}/);
   assert.match(source, /setPendingInspectorSaveAction\(null\)/);
   assert.match(source, /href="\/admin\/management"[\s\S]{0,260}beforeAdminPageNavigation\("\/admin\/management", "Management"\)\) event\.preventDefault\(\)/);
-  assert.match(source, /href="\/admin\/settings"[\s\S]{0,360}beforeAdminPageNavigation\("\/admin\/settings", "Settings"\)\) event\.preventDefault\(\)/);
+  // Settings moved off a Link into the account menu (2026-07-16 session
+  // layer): the menu item still routes through the same guard and only
+  // navigates when the guard allows it.
+  assert.match(source, /if \(beforeAdminPageNavigation\("\/admin\/settings", "Settings"\)\) window\.location\.assign\("\/admin\/settings"\)/);
   assert.doesNotMatch(source, /You have unsaved seat edits\. Discard them\?/);
 });
 
@@ -527,8 +532,10 @@ test("the admin sub-page bar surfaces Settings clearly in the management context
   // as a plain, labeled, current-aware nav item next to Management.
   assert.match(shellBarSource, /href="\/admin\/settings"\s+aria-current=\{page === "settings" \? "page" : undefined\}[\s\S]{0,500}Settings\s*<\/Link>/);
   // With Settings visible in the nav, the identity chip here must NOT double
-  // as a second (avatar-shaped) settings control — it is decorative only.
-  assert.match(shellBarSource, /<span\s+aria-hidden="true"[\s\S]{0,240}>\s*A\s*<\/span>/);
+  // as a second settings control — it is the account menu (identity +
+  // sign-out) with NO settings item on this surface (2026-07-16 session layer).
+  assert.match(shellBarSource, /<AccountMenu/);
+  assert.doesNotMatch(shellBarSource, /onSelectSettings/);
   assert.doesNotMatch(shellBarSource, /<Link[^>]*aria-label="Open settings"/);
 });
 
