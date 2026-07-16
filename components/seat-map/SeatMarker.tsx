@@ -138,7 +138,9 @@ export function SeatMarker({
   const adminMarker = variant === "admin";
   const employeeName = seat.employee?.full_name ?? "";
   const hasEmployee = Boolean(seat.employee);
-  const displayName = employeeName || "Open seat";
+  // Display-formatted for the title tooltip + aria-label below — assistive
+  // strings must match the visible casing, never the raw stored value.
+  const displayName = formatDisplayName(employeeName) || "Open seat";
   const namesVisible = showNames && hasEmployee && !dimmed;
   const isMovable = canEdit && selected && moveSeatMode;
   const moveOrigin = isMovable && !dragging;
