@@ -263,11 +263,27 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /Published assignment/);
   // Owner QA (2026-07-10, Shell round 3): status has exactly ONE home — the
   // Seat section (editable select for open seats, derived tag for occupied).
-  // The old "Status & notes" combo section is retired; Notes is note-only and
-  // the actions moved from a sticky footer into a collapsible Actions section.
   assert.doesNotMatch(inspectorSource, /Status &amp; notes/);
   assert.equal((inspectorSource.match(/ref=\{statusRef\}/g) ?? []).length, 1, "exactly one status control");
-  assert.match(inspectorSource, /title="Actions" headingId="seat-actions-heading" defaultOpen/);
+  // Owner QA (2026-07-16, inspector reorg): action and commit controls may
+  // never sit inside a collapsible container. "Actions" stopped being a
+  // <details> section — the primary assignment action is pinned under the
+  // header, seat ops live in a static end-of-panel group, and Save/Cancel sit
+  // in a conditional commit bar OUTSIDE the scroll area (rendered only while
+  // editing or dirty; the 2026-07-10 ban on a PERMANENT sticky footer stands).
+  assert.doesNotMatch(inspectorSource, /InspectorSection title="Actions"/);
+  assert.match(inspectorSource, /id="seat-actions-heading"/);
+  assert.match(inspectorSource, /const showCommitBar = /);
+  assert.match(inspectorSource, /id="seat-inspector-commit-bar"/);
+  // Collapsible sections hold only readable content and reset per seat —
+  // uncontrolled <details> open state must not leak from one seat to the next.
+  assert.match(inspectorSource, /key=\{`seat-inspector-sections-\$\{selectedSeat\.id\}`\}/);
+  // Delete renders only where it can ever succeed (custom draft seats); the
+  // Seat type fact explains protected originals instead of a dead button.
+  assert.match(inspectorSource, /\{selectedSeat\.is_custom && \(/);
+  // An open seat has no occupant — the Occupant section exists only when
+  // someone is assigned (admin and viewer variants alike).
+  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,200}title="Occupant"/);
   assert.match(inspectorSource, /title="Notes" headingId="seat-notes-heading"/);
   assert.doesNotMatch(inspectorSource, /sticky bottom-0/);
   assert.match(inspectorSource, /No unsaved changes\./);
