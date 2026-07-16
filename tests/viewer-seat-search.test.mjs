@@ -83,7 +83,7 @@ test("viewer search keeps unassigned people read-only without a map target", () 
   assert.equal(person.seatId, null);
   assert.deepEqual(person.seatIds, []);
   assert.equal(person.disabled, true);
-  assert.equal(person.subtitle, "No published seat");
+  assert.equal(person.subtitle, "No assigned seat");
 });
 
 test("viewer search distinguishes seat label results", () => {
@@ -148,8 +148,8 @@ test("viewer department aggregates align with tagged person and seat results", (
   assert.match(seatResult.meta, /Accounting/);
   assert.ok(departmentResult);
   assert.equal(departmentResult.title, "Accounting");
-  assert.equal(departmentResult.meta, "1 person · 1 published seat");
-  assert.doesNotMatch(departmentResult.meta, /0 people · 0 published seats/);
+  assert.equal(departmentResult.meta, "1 person · 1 seat");
+  assert.doesNotMatch(departmentResult.meta, /0 people · 0 seats/);
 });
 
 test("viewer department search suppresses empty option-only aggregate rows", () => {
