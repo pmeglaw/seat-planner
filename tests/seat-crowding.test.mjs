@@ -64,6 +64,31 @@ test("clearanceFromScale converts px clearance and falls back on degenerate scal
   assert.deepEqual(clearanceFromScale(-5), CODE_PILL_DEFAULT_CLEARANCE);
 });
 
+test("clearanceFromScale divides the y clearance by its own axis scale", () => {
+  // Normalized y spans the frame height — on the 1911×867 plan a 1100px-wide
+  // frame is only ~499px tall, so 26px of vertical clearance is a much larger
+  // normalized-y span than the width-divided fallback pretends.
+  const converted = clearanceFromScale(1100, 499);
+  assert.equal(converted.x, CODE_PILL_CLEARANCE_PX.x / 1100);
+  assert.equal(converted.y, CODE_PILL_CLEARANCE_PX.y / 499);
+  // A degenerate y scale falls back entirely.
+  assert.deepEqual(clearanceFromScale(1100, 0), CODE_PILL_DEFAULT_CLEARANCE);
+});
+
+test("a diagonal pair whose pills overlap vertically is crowded under the y-aware clearance", () => {
+  // SE03/SE04 on prod: dx ≈ 0.030 normalized-x, dy ≈ 0.022 normalized-y —
+  // ~33px apart horizontally and ~11px vertically at a 1096×497 frame, i.e.
+  // physically overlapping 24px-tall pills. The width-divided fallback put the
+  // y cutoff at ~12px-equivalent and let the pair render untreated.
+  const seats = [
+    { id: "se03", x: 0.63, y: 0.5 },
+    { id: "se04", x: 0.66, y: 0.522 }
+  ];
+  const yAware = computeSeatDensityTiers(seats, clearanceFromScale(1096, 497));
+  assert.deepEqual([...yAware.crowded].sort(), ["se03", "se04"]);
+  assert.deepEqual([...yAware.dense].sort(), ["se03", "se04"]);
+});
+
 test("empty and single-seat inputs return an empty set", () => {
   assert.equal(computeCrowdedSeatIds([]).size, 0);
   assert.equal(computeCrowdedSeatIds([{ id: "solo", x: 0.5, y: 0.5 }]).size, 0);
@@ -72,21 +97,49 @@ test("empty and single-seat inputs return an empty set", () => {
 test("computeSeatDensityTiers flags a tight pitch as both crowded and dense", () => {
   const seats = [
     { id: "a", x: 0.5, y: 0.5 },
-    { id: "b", x: 0.52, y: 0.5 } // 0.02 pitch — well inside dense (0.6x) clearance
+    { id: "b", x: 0.52, y: 0.5 } // 0.02 pitch — well inside the dense cutoff
   ];
   const tiers = computeSeatDensityTiers(seats);
   assert.deepEqual([...tiers.crowded].sort(), ["a", "b"]);
   assert.deepEqual([...tiers.dense].sort(), ["a", "b"]);
 });
 
-test("computeSeatDensityTiers flags a looser pitch as crowded only, not dense", () => {
+// Contract change (v1.9.x pill-overlap fix): dense takes over as soon as the
+// pitch cannot fit the ~40px crowded pill (40/48 of the clearance), so there
+// is no pitch band where the picked treatment still collides. 0.035 used to
+// be "crowded only" under the old 0.6 factor — and rendered overlapping
+// pills at the at-rest fit zoom.
+test("computeSeatDensityTiers flags a pitch below the crowded-pill footprint as dense", () => {
   const seats = [
     { id: "a", x: 0.5, y: 0.5 },
-    { id: "b", x: 0.535, y: 0.5 } // 0.035 pitch — inside crowded clearance, outside 0.6x dense clearance
+    { id: "b", x: 0.535, y: 0.5 } // 0.035 pitch — a ~40px crowded pill cannot fit (0.044 * 40/48 ≈ 0.0367)
+  ];
+  const tiers = computeSeatDensityTiers(seats);
+  assert.deepEqual([...tiers.crowded].sort(), ["a", "b"]);
+  assert.deepEqual([...tiers.dense].sort(), ["a", "b"]);
+});
+
+test("computeSeatDensityTiers keeps a pitch the crowded pill fits as crowded only", () => {
+  const seats = [
+    { id: "a", x: 0.5, y: 0.5 },
+    { id: "b", x: 0.54, y: 0.5 } // 0.04 pitch — inside crowded clearance, above the 40/48 dense cutoff
   ];
   const tiers = computeSeatDensityTiers(seats);
   assert.deepEqual([...tiers.crowded].sort(), ["a", "b"]);
   assert.equal(tiers.dense.size, 0);
+});
+
+test("the tightest real pod is dense at the directory-open rest scale", () => {
+  // ~1100px rendered frame (1440 viewport with the People directory holding
+  // the right slot). CW-pod pitch ≈ 0.025 normalized: the crowded pill (~40px)
+  // overlaps by ~13px there, so only the micro pill treatment may be picked.
+  const clearance = clearanceFromScale(1100);
+  const seats = [
+    { id: "cw05", x: 0.35, y: 0.62 },
+    { id: "cw06", x: 0.375, y: 0.62 }
+  ];
+  const tiers = computeSeatDensityTiers(seats, clearance);
+  assert.deepEqual([...tiers.dense].sort(), ["cw05", "cw06"]);
 });
 
 test("computeSeatDensityTiers dense set is always a subset of crowded", () => {

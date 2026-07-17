@@ -245,7 +245,7 @@ export function SeatMarker({
           ].filter(Boolean).join(" ")
           : [
             denseCode
-              ? "h-[18px] min-h-[18px] min-w-0 rounded-[7px] px-1 text-[8.5px]"
+              ? "h-[18px] min-h-[18px] min-w-0 rounded-[7px] px-[2px] text-[8px]"
               : crowdedCode
                 ? "h-[22px] min-h-[22px] min-w-0 rounded-[8px] px-1.5 py-0 pl-2 text-center"
                 : "h-[24px] min-h-[24px] min-w-[34px] rounded-[9px] px-2 py-0 pl-2.5 text-center",
@@ -424,7 +424,7 @@ export function SeatMarker({
         )}
         {tokenMode === "code" ? (
           <span className="relative z-10 flex min-w-0 items-center justify-center gap-1 group-hover:justify-start group-focus-visible:justify-start">
-            <span className={["whitespace-nowrap font-extrabold leading-[1.05]", denseCode ? "text-[8.5px]" : crowdedCode ? "text-[9px]" : "text-[9.5px]"].join(" ")}>{seat.label}</span>
+            <span className={["whitespace-nowrap font-extrabold leading-[1.05]", denseCode ? "text-[8px]" : crowdedCode ? "text-[9px]" : "text-[9.5px]"].join(" ")}>{seat.label}</span>
             {employeeName && (
               <span className="hidden max-w-[64px] truncate text-[10px] font-bold leading-[1.05] opacity-90 group-hover:block group-focus-visible:block">
                 {compactEmployeeName}
