@@ -18,3 +18,5 @@ tsconfig.tsbuildinfo
 
 # Local QA artifacts (screenshots, critique reports, driver output)
 /output/
+.env*
+!.env.local.example
