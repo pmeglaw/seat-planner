@@ -124,10 +124,10 @@ export function ViewerSeatFinder({
   const [search, setSearch] = useState("");
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
   // People directory (2026-07-16 regrade, review 5): occupies the right slot
-  // at rest. Hydration-gated so server markup never guesses the persisted
-  // collapse preference.
+  // at rest. Defaults to expanded on server markup and first paint — the
+  // persisted collapse preference is applied by effect after hydration (see
+  // directoryOpen below for why the slot must be reserved from first paint).
   const [directoryCollapsed, setDirectoryCollapsed] = useState(false);
-  const [directoryHydrated, setDirectoryHydrated] = useState(false);
   const [directoryHoverSeatId, setDirectoryHoverSeatId] = useState<string | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   // Roving tabindex anchor: the last keyboard-visited seat (see SeatMap for
@@ -313,7 +313,6 @@ export function ViewerSeatFinder({
       } catch {
         // Storage unavailable (private mode) — default to expanded.
       }
-      setDirectoryHydrated(true);
     });
     return () => window.cancelAnimationFrame(frame);
   }, []);
@@ -647,8 +646,15 @@ export function ViewerSeatFinder({
   // The directory holds the slot only at rest; results and the inspector
   // always win it (the INV-1 handoff is untouched). Desktop-only — below the
   // panel tier the map stays map-first and the directory renders nothing.
-  const directoryOpen = directoryHydrated && !searchActive && !selectedSeat && !directoryCollapsed;
-  const directoryRail = directoryHydrated && !searchActive && !selectedSeat && directoryCollapsed;
+  // Deliberately NOT hydration-gated: expanded is the default preference, so
+  // the server markup and first client paint reserve the right slot from the
+  // start — gating on hydration rendered every load full-bleed first and then
+  // snapped the canvas ~330px narrower when the persisted preference arrived
+  // (the map re-fit twice and everything derived from its width churned).
+  // Users who persisted a collapse still transition once, open → rail, when
+  // the preference effect lands — the same single transition they always had.
+  const directoryOpen = !searchActive && !selectedSeat && !directoryCollapsed;
+  const directoryRail = !searchActive && !selectedSeat && directoryCollapsed;
   // Prototype "stage": at the panel tier the inspector reserves layout width
   // (320px expanded, 44px rail) instead of overlaying the map.
   const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat

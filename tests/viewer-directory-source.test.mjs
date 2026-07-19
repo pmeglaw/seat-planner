@@ -12,8 +12,13 @@ test("the People directory fills the idle right slot without touching the search
 
   // Built from the shared snapshot-derived builder, not an ad-hoc list.
   assert.match(source, /buildViewerDirectory\(\{ seats: publishedSeats, employees \}\)/);
-  // Idle only: search results and the inspector always win the slot.
-  assert.match(source, /const directoryOpen = directoryHydrated && !searchActive && !selectedSeat && !directoryCollapsed/);
+  // Idle only: search results and the inspector always win the slot. The
+  // expression must NOT gate on a hydration flag: the first paint has to
+  // reserve the right slot (the expanded directory IS the default), or every
+  // load renders the map full-bleed and then snaps ~330px narrower when the
+  // persisted preference hydrates — the canvas-width jump/flash bug.
+  assert.match(source, /const directoryOpen = !searchActive && !selectedSeat && !directoryCollapsed/);
+  assert.doesNotMatch(source, /directoryOpen = directoryHydrated/);
   // Rows activate through the one existing selection path (explicit click —
   // INV-2 holds by construction).
   assert.match(source, /onClick=\{\(\) => openResult\(row\)\}/);
