@@ -17,10 +17,11 @@ async function importTsModule(relativePath) {
 
 const {
   CODE_PILL_CLEARANCE_PX,
+  CODE_PILL_SIZE_PX,
   CODE_PILL_DEFAULT_CLEARANCE,
+  PILL_NUDGE_PX,
   clearanceFromScale,
   computeCrowdedSeatIds,
-  computeSeatDensityTiers,
   computeNameLabelNudges,
   computeCodePillNudges
 } = await importTsModule("lib/seatCrowding.ts");
@@ -85,9 +86,8 @@ test("a diagonal pair whose pills overlap vertically is crowded under the y-awar
     { id: "se03", x: 0.63, y: 0.5 },
     { id: "se04", x: 0.66, y: 0.522 }
   ];
-  const yAware = computeSeatDensityTiers(seats, clearanceFromScale(1096, 497));
-  assert.deepEqual([...yAware.crowded].sort(), ["se03", "se04"]);
-  assert.deepEqual([...yAware.dense].sort(), ["se03", "se04"]);
+  const yAware = computeCrowdedSeatIds(seats, clearanceFromScale(1096, 497));
+  assert.deepEqual([...yAware].sort(), ["se03", "se04"]);
 });
 
 test("empty and single-seat inputs return an empty set", () => {
@@ -95,77 +95,27 @@ test("empty and single-seat inputs return an empty set", () => {
   assert.equal(computeCrowdedSeatIds([{ id: "solo", x: 0.5, y: 0.5 }]).size, 0);
 });
 
-test("computeSeatDensityTiers flags a tight pitch as both crowded and dense", () => {
-  const seats = [
-    { id: "a", x: 0.5, y: 0.5 },
-    { id: "b", x: 0.52, y: 0.5 } // 0.02 pitch — well inside the dense cutoff
-  ];
-  const tiers = computeSeatDensityTiers(seats);
-  assert.deepEqual([...tiers.crowded].sort(), ["a", "b"]);
-  assert.deepEqual([...tiers.dense].sort(), ["a", "b"]);
-});
-
-// Contract change (v1.9.x pill-overlap fix): dense takes over as soon as the
-// pitch cannot fit the ~40px crowded pill (40/48 of the clearance), so there
-// is no pitch band where the picked treatment still collides. 0.035 used to
-// be "crowded only" under the old 0.6 factor — and rendered overlapping
-// pills at the at-rest fit zoom.
-test("computeSeatDensityTiers flags a pitch below the crowded-pill footprint as dense", () => {
-  const seats = [
-    { id: "a", x: 0.5, y: 0.5 },
-    { id: "b", x: 0.535, y: 0.5 } // 0.035 pitch — a ~40px crowded pill cannot fit (0.044 * 40/48 ≈ 0.0367)
-  ];
-  const tiers = computeSeatDensityTiers(seats);
-  assert.deepEqual([...tiers.crowded].sort(), ["a", "b"]);
-  assert.deepEqual([...tiers.dense].sort(), ["a", "b"]);
-});
-
-test("computeSeatDensityTiers keeps a pitch the crowded pill fits as crowded only", () => {
-  const seats = [
-    { id: "a", x: 0.5, y: 0.5 },
-    { id: "b", x: 0.54, y: 0.5 } // 0.04 pitch — inside crowded clearance, above the 40/48 dense cutoff
-  ];
-  const tiers = computeSeatDensityTiers(seats);
-  assert.deepEqual([...tiers.crowded].sort(), ["a", "b"]);
-  assert.equal(tiers.dense.size, 0);
-});
-
-test("the tightest real pod is dense at the directory-open rest scale", () => {
+test("the tightest real pod is crowded at the directory-open rest scale", () => {
   // ~1100px rendered frame (1440 viewport with the People directory holding
-  // the right slot). CW-pod pitch ≈ 0.025 normalized: the crowded pill (~40px)
-  // overlaps by ~13px there, so only the micro pill treatment may be picked.
+  // the right slot). CW-pod pitch ≈ 0.025 normalized — well inside the 48px
+  // clearance, so these pills must be nudged apart at rest.
   const clearance = clearanceFromScale(1100);
   const seats = [
     { id: "cw05", x: 0.35, y: 0.62 },
     { id: "cw06", x: 0.375, y: 0.62 }
   ];
-  const tiers = computeSeatDensityTiers(seats, clearance);
-  assert.deepEqual([...tiers.dense].sort(), ["cw05", "cw06"]);
+  assert.deepEqual([...computeCrowdedSeatIds(seats, clearance)].sort(), ["cw05", "cw06"]);
 });
 
-test("computeSeatDensityTiers dense set is always a subset of crowded", () => {
-  const seats = [
-    { id: "a", x: 0.5, y: 0.5 },
-    { id: "b", x: 0.52, y: 0.5 },
-    { id: "c", x: 0.8, y: 0.1 }
-  ];
-  const tiers = computeSeatDensityTiers(seats);
-  for (const id of tiers.dense) {
-    assert.ok(tiers.crowded.has(id), `${id} is dense but not crowded`);
-  }
-});
-
-test("computeSeatDensityTiers honors an explicit clearance override", () => {
+test("computeCrowdedSeatIds honors an explicit clearance override", () => {
   const seats = [
     { id: "a", x: 0.5, y: 0.5 },
     { id: "b", x: 0.6, y: 0.5 }
   ];
   // Not crowded under the default clearance...
-  assert.equal(computeSeatDensityTiers(seats).crowded.size, 0);
-  // ...but crowded (and dense) under a wide explicit clearance.
-  const wide = computeSeatDensityTiers(seats, { x: 0.2, y: 0.2 });
-  assert.deepEqual([...wide.crowded].sort(), ["a", "b"]);
-  assert.deepEqual([...wide.dense].sort(), ["a", "b"]);
+  assert.equal(computeCrowdedSeatIds(seats).size, 0);
+  // ...but crowded under a wide explicit clearance.
+  assert.deepEqual([...computeCrowdedSeatIds(seats, { x: 0.2, y: 0.2 })].sort(), ["a", "b"]);
 });
 
 test("computeNameLabelNudges gives two colliding named seats distinct nudges", () => {
@@ -374,6 +324,20 @@ test("computeNameLabelNudges is input-order invariant, including tied coordinate
 
 // --- computeCodePillNudges: uniform-size code pills de-collide by nudging ---
 
+// Post-nudge overlap check in CSS px, using the SAME exported geometry the
+// scorer models — the assertions below are about what renders on screen.
+function projectedPairOverlap(a, b, nudges, clearance) {
+  const pxPerNormX = CODE_PILL_CLEARANCE_PX.x / clearance.x;
+  const pxPerNormY = CODE_PILL_CLEARANCE_PX.y / clearance.y;
+  const dx = Math.abs(a.x - b.x) * pxPerNormX;
+  const dy = Math.abs(
+    (a.y - b.y) * pxPerNormY + ((nudges.get(a.id) ?? 0) - (nudges.get(b.id) ?? 0)) * PILL_NUDGE_PX
+  );
+  const ox = CODE_PILL_SIZE_PX.w - dx;
+  const oy = CODE_PILL_SIZE_PX.h - dy;
+  return ox > 0 && oy > 0 ? ox * oy : 0;
+}
+
 test("computeCodePillNudges sends a colliding pair in opposite directions, upper seat up", () => {
   const clearance = CODE_PILL_DEFAULT_CLEARANCE;
   const seats = [
@@ -381,8 +345,7 @@ test("computeCodePillNudges sends a colliding pair in opposite directions, upper
     { id: "cw06", x: 0.382, y: 0.62 }, // 0.032 pitch — the tightest real pod
     { id: "e01", x: 0.62, y: 0.42 } // isolated — must stay on the anchor row
   ];
-  const crowded = computeSeatDensityTiers(seats, clearance).crowded;
-  const nudges = computeCodePillNudges(seats, crowded, clearance);
+  const nudges = computeCodePillNudges(seats, clearance);
   // Same y — the x/id tiebreaker makes cw05 the "upper/left" seat.
   assert.equal(nudges.get("cw05"), -1);
   assert.equal(nudges.get("cw06"), 1);
@@ -397,8 +360,7 @@ test("computeCodePillNudges diverges a diagonal pair instead of converging it", 
     { id: "se03", x: 0.63, y: 0.5 },
     { id: "se04", x: 0.66, y: 0.522 }
   ];
-  const crowded = computeSeatDensityTiers(seats, clearance).crowded;
-  const nudges = computeCodePillNudges(seats, crowded, clearance);
+  const nudges = computeCodePillNudges(seats, clearance);
   assert.equal(nudges.get("se03"), -1);
   assert.equal(nudges.get("se04"), 1);
 });
@@ -412,8 +374,7 @@ test("computeCodePillNudges never assigns the same direction to a colliding pair
     { id: "c", x: 0.18, y: 0.5 },
     { id: "d", x: 0.22, y: 0.5 }
   ];
-  const crowded = computeSeatDensityTiers(seats, clearance).crowded;
-  const nudges = computeCodePillNudges(seats, crowded, clearance);
+  const nudges = computeCodePillNudges(seats, clearance);
   for (let i = 0; i < seats.length; i += 1) {
     for (let j = i + 1; j < seats.length; j += 1) {
       const collide =
@@ -429,15 +390,108 @@ test("computeCodePillNudges never assigns the same direction to a colliding pair
   }
 });
 
+// The scorer is the load-bearing half of the algorithm: two horizontally
+// colliding pairs stacked one row apart each resolve internally with EITHER
+// orientation, but a palette-order-first assignment (upper pair down, lower
+// pair up) converges them into each other — the live NE-pod regression this
+// scoring exists to prevent. A plain "first free palette value" greedy fails
+// this test.
+test("computeCodePillNudges steers stacked pairs apart via projected-overlap scoring", () => {
+  // Real fit-zoom geometry: ~1414px frame → clearance {0.034, 0.0406};
+  // 39.6px horizontal pitch inside each pair, 45px row pitch between pairs
+  // (outside the collision clearance, inside nudge reach).
+  const clearance = clearanceFromScale(1414, 641);
+  const seats = [
+    { id: "a", x: 0.1, y: 0.5 },
+    { id: "b", x: 0.128, y: 0.5 },
+    { id: "c", x: 0.1, y: 0.5702 },
+    { id: "d", x: 0.128, y: 0.5702 }
+  ];
+  const nudges = computeCodePillNudges(seats, clearance);
+  // Upper pair: upper/left seat up, partner down (palette order).
+  assert.equal(nudges.get("a"), -1);
+  assert.equal(nudges.get("b"), 1);
+  // Lower pair must move AWAY from b (+1) above it: c takes +1 too (same
+  // direction as the row above = relative pitch preserved), not the naive
+  // palette-first -1 that would kiss b's row.
+  assert.equal(nudges.get("c"), 1);
+  // No colliding pair shares a row, and cross-pair overlap stays tiny
+  // (< 15% of a pill) instead of the deep naive convergence.
+  assert.notEqual(nudges.get("c"), nudges.get("d"));
+  const pillArea = CODE_PILL_SIZE_PX.w * CODE_PILL_SIZE_PX.h;
+  for (let i = 0; i < seats.length; i += 1) {
+    for (let j = i + 1; j < seats.length; j += 1) {
+      const overlap = projectedPairOverlap(seats[i], seats[j], nudges, clearance);
+      assert.ok(
+        overlap < pillArea * 0.15,
+        `${seats[i].id}/${seats[j].id} project ${Math.round(overlap)}px² of overlap`
+      );
+    }
+  }
+});
+
+test("computeCodePillNudges dodges a named neighbour's name-pill row", () => {
+  // A crowded unnamed seat next to a named seat whose name label was nudged
+  // up (-1) must NOT follow it onto the same row — pre-unification both
+  // graphs independently picked -1 and the code pill rendered under the
+  // name pill.
+  const clearance = CODE_PILL_DEFAULT_CLEARANCE;
+  const seats = [
+    { id: "named", x: 0.5, y: 0.5 },
+    { id: "vacant", x: 0.532, y: 0.5 }
+  ];
+  const nudges = computeCodePillNudges(seats, clearance, {
+    nameNudges: new Map([["named", -1]]),
+    namedSeatIds: new Set(["named"])
+  });
+  assert.equal(nudges.has("named"), false, "named seats never join the code graph");
+  assert.equal(nudges.get("vacant"), 1);
+});
+
+test("computeCodePillNudges scores the fallback row when a clique exhausts the palette", () => {
+  // A 2×2 grid tight enough that all four seats mutually collide (K4). The
+  // fourth seat's colliding neighbours cover all three rows — it must pick
+  // the least-overlapping one by scoring, not park on a hardcoded 0 (which
+  // here shares a row with its direct horizontal neighbour).
+  const clearance = CODE_PILL_DEFAULT_CLEARANCE;
+  const seats = [
+    { id: "t1", x: 0.5, y: 0.5 },
+    { id: "t2", x: 0.53, y: 0.5 },
+    { id: "t3", x: 0.5, y: 0.52 },
+    { id: "t4", x: 0.53, y: 0.52 }
+  ];
+  const nudges = computeCodePillNudges(seats, clearance);
+  assert.equal(nudges.get("t3"), 0, "third clique member takes the only unused row");
+  assert.notEqual(
+    nudges.get("t4"),
+    0,
+    "palette-exhausted seat must be scored onto a row, not parked beside its same-row neighbour"
+  );
+});
+
+test("computeCodePillNudges guards degenerate clearances instead of emitting NaN scores", () => {
+  const seats = [
+    { id: "a", x: 0.5, y: 0.5 },
+    { id: "b", x: 0.532, y: 0.5 }
+  ];
+  // Zero clearance would make pxPerNorm Infinity and every score NaN; the
+  // guard falls back to the default clearance, so the pair still diverges.
+  const nudges = computeCodePillNudges(seats, { x: 0, y: 0 });
+  assert.equal(nudges.get("a"), -1);
+  assert.equal(nudges.get("b"), 1);
+  // Denormal scales overflow clearanceFromScale's quotient — it must fall
+  // back rather than return an Infinity clearance.
+  assert.deepEqual(clearanceFromScale(1e-320, 1e-320), CODE_PILL_DEFAULT_CLEARANCE);
+});
+
 test("computeCodePillNudges leaves non-crowded seats and empty inputs alone", () => {
   const clearance = CODE_PILL_DEFAULT_CLEARANCE;
   const seats = [
     { id: "n01", x: 0.3, y: 0.2 },
     { id: "n05", x: 0.3, y: 0.26 }
   ];
-  const crowded = computeSeatDensityTiers(seats, clearance).crowded;
-  assert.equal(computeCodePillNudges(seats, crowded, clearance).size, 0);
-  assert.equal(computeCodePillNudges([], new Set(), clearance).size, 0);
+  assert.equal(computeCodePillNudges(seats, clearance).size, 0);
+  assert.equal(computeCodePillNudges([], clearance).size, 0);
 });
 
 test("computeCodePillNudges is input-order invariant and does not mutate its input", () => {
@@ -450,12 +504,11 @@ test("computeCodePillNudges is input-order invariant and does not mutate its inp
     { id: "E", x: 0.532, y: 0.5 } // tied coordinates — id tiebreaker
   ];
   const snapshot = JSON.parse(JSON.stringify(baseSeats));
-  const crowded = computeSeatDensityTiers(baseSeats, clearance).crowded;
-  const baseline = computeCodePillNudges(baseSeats, crowded, clearance);
+  const baseline = computeCodePillNudges(baseSeats, clearance);
   assert.deepEqual(baseSeats, snapshot, "input seats must not be mutated");
 
   const shuffled = [baseSeats[3], baseSeats[1], baseSeats[4], baseSeats[0], baseSeats[2]];
-  const shuffledResult = computeCodePillNudges(shuffled, crowded, clearance);
+  const shuffledResult = computeCodePillNudges(shuffled, clearance);
   assert.deepEqual(
     [...shuffledResult.entries()].sort(),
     [...baseline.entries()].sort(),

@@ -242,12 +242,14 @@ export function SeatMarker({
           ].filter(Boolean).join(" ")
           : [
             // ONE fixed code-pill geometry for every seat — width included, so
-            // label length never changes the footprint. Tight pods separate
-            // via codeNudge, never by a smaller pill. The 46px width is what
-            // CODE_PILL_CLEARANCE_PX models; hover disclosure still wins
-            // because min-width beats width when larger.
+            // label length never changes the resting footprint. Tight pods
+            // separate via codeNudge, never by a smaller pill. The 46px/24px
+            // numbers must match lib/seatCrowding's CODE_PILL_SIZE_PX (the
+            // nudge scorer reasons in that geometry; a source test pins the
+            // pair). Hover/focus disclosure switches to w-auto so the token
+            // grows to fit code + revealed name, as it did pre-fixed-width.
             "h-[24px] min-h-[24px] w-[46px] rounded-[9px] px-2 py-0 pl-2.5 text-center",
-            hasHoverDisclosure ? "group-hover:min-w-[96px] group-hover:rounded-[12px] group-hover:px-2.5 group-hover:pl-3.5 group-hover:text-left group-focus-visible:min-w-[96px] group-focus-visible:rounded-[12px] group-focus-visible:px-2.5 group-focus-visible:pl-3.5 group-focus-visible:text-left" : ""
+            hasHoverDisclosure ? "group-hover:w-auto group-hover:min-w-[96px] group-hover:rounded-[12px] group-hover:px-2.5 group-hover:pl-3.5 group-hover:text-left group-focus-visible:w-auto group-focus-visible:min-w-[96px] group-focus-visible:rounded-[12px] group-focus-visible:px-2.5 group-focus-visible:pl-3.5 group-focus-visible:text-left" : ""
           ].filter(Boolean).join(" ");
 
   const tokenStateClass = [
@@ -426,8 +428,11 @@ export function SeatMarker({
           </span>
         )}
         {tokenMode === "code" ? (
-          <span className="relative z-10 flex min-w-0 items-center justify-center gap-1 group-hover:justify-start group-focus-visible:justify-start">
-            <span className="whitespace-nowrap text-[9.5px] font-extrabold leading-[1.05]">{seat.label}</span>
+          <span className="relative z-10 flex w-full min-w-0 items-center justify-center gap-1 group-hover:justify-start group-focus-visible:justify-start">
+            {/* truncate (not plain nowrap): an over-long label must clip
+                inside the fixed pill rather than spill over neighbouring
+                markers — hover/focus grows the token, revealing it fully. */}
+            <span className="max-w-full truncate text-[9.5px] font-extrabold leading-[1.05]">{seat.label}</span>
             {employeeName && (
               <span className="hidden max-w-[64px] truncate text-[10px] font-bold leading-[1.05] opacity-90 group-hover:block group-focus-visible:block">
                 {compactEmployeeName}

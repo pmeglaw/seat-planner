@@ -43,7 +43,7 @@ import {
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
 import { buildPublishChangeSummary, type PublishChangeItem } from "@/lib/publishSummary";
-import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, computeSeatDensityTiers } from "@/lib/seatCrowding";
+import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import {
   ActiveFilterChips,
@@ -121,6 +121,10 @@ const ADMIN_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:names-visible";
 const DEFAULT_PUBLISHED_SEATS: SeatWithEmployee[] = [];
 const DEFAULT_PUBLISHED_EMPLOYEES: Employee[] = [];
 const INSPECTOR_FORM_ID = "seat-inspector-form";
+
+// Stable identity for the Show-names-off branch of namedSeatIdSet — a fresh
+// empty Set per render would defeat the nudge-pipeline memos below.
+const EMPTY_SEAT_ID_SET: ReadonlySet<string> = new Set<string>();
 // Map zoom is a view transform on the scroll container only (spec §9): it
 // scales the rendered frame width and never touches stored seat coordinates.
 const MAP_ZOOM_MIN = 0.6;
@@ -2301,13 +2305,17 @@ export function SeatMap({
   // size at every zoom; pods whose pitch is tighter than that footprint
   // separate via alternating vertical token nudges and recover the anchor row
   // once zoom separates them. The nudge graph and the name-label nudges share
-  // the same zoom-aware clearance.
-  const seatDensityClearance = clearanceFromScale(
-    mapPixelsPerNormalizedUnit,
-    mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH)
+  // the same zoom-aware clearance. The O(n²) geometry passes are memoized so
+  // pointer-move-driven re-renders (drag/pan/hover) don't rerun them: with
+  // Show names off (the hot-path default) every dep below is
+  // identity-stable, so the whole pipeline is cached.
+  const seatDensityClearance = useMemo(
+    () => clearanceFromScale(
+      mapPixelsPerNormalizedUnit,
+      mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH)
+    ),
+    [mapPixelsPerNormalizedUnit]
   );
-  const seatDensityTiers = computeSeatDensityTiers(visualLocalSeats, seatDensityClearance);
-  const codePillNudges = computeCodePillNudges(visualLocalSeats, seatDensityTiers.crowded, seatDensityClearance);
   // Shared with the marker render loop below (dimmed={dimmedSeatIdSet.has(...)}).
   const dimmedSeatIdSet = new Set(localSeats.filter(isSeatDimmed).map(seat => seat.id));
   // Named set for name-label collision nudging (lib/seatCrowding
@@ -2323,21 +2331,37 @@ export function SeatMap({
   // (not just "their nudge goes unused"): inside a 4-way mutual clique the
   // least-used fallback can otherwise hand two genuinely visible labels the
   // same nudge to dodge a label that is never actually nudged.
-  const namedSeatIdSet = showNames
-    ? new Set(
-        visualLocalSeats
-          .filter(seat =>
-            seat.employee &&
-            !dimmedSeatIdSet.has(seat.id) &&
-            seat.id !== selectedSeatId &&
-            seat.id !== swapSourceSeatId &&
-            seat.id !== swapConfirm?.targetSeatId &&
-            dragState?.seatId !== seat.id
-          )
-          .map(seat => seat.id)
-      )
-    : new Set<string>();
-  const nameLabelNudges = computeNameLabelNudges(visualLocalSeats, namedSeatIdSet, seatDensityClearance);
+  const swapTargetSeatId = swapConfirm?.targetSeatId;
+  const dragSeatId = dragState?.seatId;
+  const namedSeatIdSet = useMemo(() => {
+    // The Show-names-off branch returns a module-stable empty set, so the
+    // nudge memos below stay cached through pointer-driven re-renders even
+    // though dimmedSeatIdSet is rebuilt per render.
+    if (!showNames) return EMPTY_SEAT_ID_SET;
+    return new Set(
+      visualLocalSeats
+        .filter(seat =>
+          seat.employee &&
+          !dimmedSeatIdSet.has(seat.id) &&
+          seat.id !== selectedSeatId &&
+          seat.id !== swapSourceSeatId &&
+          seat.id !== swapTargetSeatId &&
+          dragSeatId !== seat.id
+        )
+        .map(seat => seat.id)
+    );
+  }, [dimmedSeatIdSet, dragSeatId, selectedSeatId, showNames, swapSourceSeatId, swapTargetSeatId, visualLocalSeats]);
+  const nameLabelNudges = useMemo(
+    () => computeNameLabelNudges(visualLocalSeats, namedSeatIdSet, seatDensityClearance),
+    [namedSeatIdSet, seatDensityClearance, visualLocalSeats]
+  );
+  // Code-pill nudges are computed AFTER the name nudges so the code graph
+  // can dodge the rows the name pills actually occupy (named seats render
+  // name tokens, not code pills).
+  const codePillNudges = useMemo(
+    () => computeCodePillNudges(visualLocalSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet }),
+    [nameLabelNudges, namedSeatIdSet, seatDensityClearance, visualLocalSeats]
+  );
   const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;
   const markerEdgeThreshold = mapViewMode === "detail"

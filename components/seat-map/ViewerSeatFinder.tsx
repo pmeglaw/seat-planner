@@ -25,7 +25,7 @@ import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
-import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, computeSeatDensityTiers } from "@/lib/seatCrowding";
+import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 
 type ViewerSeatFinderProps = {
   seats: SeatWithEmployee[];
@@ -171,11 +171,6 @@ export function ViewerSeatFinder({
     () => clearanceFromScale(mapRenderedWidth ?? 0, (mapRenderedWidth ?? 0) * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH)),
     [mapRenderedWidth]
   );
-  const seatDensityTiers = useMemo(() => computeSeatDensityTiers(visualSeats, seatDensityClearance), [seatDensityClearance, visualSeats]);
-  const codePillNudges = useMemo(
-    () => computeCodePillNudges(visualSeats, seatDensityTiers.crowded, seatDensityClearance),
-    [seatDensityClearance, seatDensityTiers, visualSeats]
-  );
   // Pixel-aspect points for arrow-key traversal (see lib/seatKeyboardNav).
   const seatNavPoints = useMemo(
     () => visualSeats.map(seat => ({ id: seat.id, x: seat.x * MAP_IMAGE_WIDTH, y: seat.y * MAP_IMAGE_HEIGHT })),
@@ -253,6 +248,13 @@ export function ViewerSeatFinder({
   const nameLabelNudges = useMemo(
     () => computeNameLabelNudges(visualSeats, namedSeatIdSet, seatDensityClearance),
     [namedSeatIdSet, seatDensityClearance, visualSeats]
+  );
+  // Code-pill nudges are computed AFTER the name nudges so the code graph
+  // can dodge the rows the name pills actually occupy (named seats render
+  // name/prominent tokens, not code pills).
+  const codePillNudges = useMemo(
+    () => computeCodePillNudges(visualSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet }),
+    [nameLabelNudges, namedSeatIdSet, seatDensityClearance, visualSeats]
   );
   const activeResultSeatIdSet = useMemo(() => new Set(activeResult?.seatIds ?? []), [activeResult]);
   // Matches = search hits (narrowed by any structured filters), or filter hits alone.

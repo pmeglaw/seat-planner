@@ -2,18 +2,19 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-// Guardrail (v1.9.x pill-overlap fix): seat-pill crowding tiers must be
-// computed against the LIVE rendered map scale on every map surface, and the
-// dense cutoff must cover the crowded pill's real footprint. When either half
-// regresses, dense pods render physically overlapping pills at fit zoom — the
-// People directory keeps the viewer's at-rest stage narrower than the old
-// full-bleed fit, so a static "fit-zoom" clearance under-flags exactly the
-// pods that collide. This pins wiring, not look: pill styling is free to
-// change as long as the picked treatment fits the pitch.
+// Guardrail (v1.9.x pill-overlap fix, reshaped for the uniform-pill system):
+// code pills render at ONE fixed size on every map surface, so collisions are
+// resolved by nudging — and the nudge graphs must be computed against the
+// LIVE rendered map scale, with the name-label rows fed into the code-pill
+// graph. When any of this regresses, dense pods render physically
+// overlapping pills at fit zoom — the People directory keeps the viewer's
+// at-rest stage narrower than the old full-bleed fit, so a static "fit-zoom"
+// clearance under-flags exactly the pods that collide, and two independent
+// nudge graphs converge pills onto the same row. This pins wiring, not look.
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("viewer computes density tiers and name nudges from the live rendered scale", async () => {
+test("viewer computes nudges from the live rendered scale, names feeding codes", async () => {
   const source = await read("components/seat-map/ViewerSeatFinder.tsx");
   assert.ok(
     source.includes("clearanceFromScale("),
@@ -24,27 +25,19 @@ test("viewer computes density tiers and name nudges from the live rendered scale
     "ViewerSeatFinder must pass an aspect-corrected y scale — normalized y spans the frame height, not its width"
   );
   assert.ok(
-    !/computeSeatDensityTiers\(\s*visualSeats\s*\)/.test(source),
-    "ViewerSeatFinder must not call computeSeatDensityTiers without an explicit live clearance — the static default only matches a ~1100px render"
-  );
-  assert.ok(
-    /computeSeatDensityTiers\(\s*visualSeats\s*,\s*seatDensityClearance\s*\)/.test(source),
-    "ViewerSeatFinder must pass the live seatDensityClearance to computeSeatDensityTiers"
-  );
-  assert.ok(
     /computeNameLabelNudges\(\s*visualSeats\s*,\s*namedSeatIdSet\s*,\s*seatDensityClearance\s*\)/.test(source),
     "ViewerSeatFinder must pass the same live clearance to computeNameLabelNudges (parity with the admin map)"
   );
   assert.ok(
-    /computeCodePillNudges\(\s*visualSeats\s*,\s*seatDensityTiers\.crowded\s*,\s*seatDensityClearance\s*\)/.test(source),
-    "ViewerSeatFinder must de-collide uniform-size code pills via computeCodePillNudges at the same live clearance — without it, tight pods (CW05-08) render physically overlapping pills at rest"
+    /computeCodePillNudges\(\s*visualSeats\s*,\s*seatDensityClearance\s*,\s*\{\s*nameNudges:\s*nameLabelNudges\s*,\s*namedSeatIds:\s*namedSeatIdSet\s*\}\s*\)/.test(source),
+    "ViewerSeatFinder must de-collide uniform-size code pills via computeCodePillNudges at the same live clearance, feeding it the name-label rows — two independent graphs converge pills onto the same row"
   );
 });
 
-test("admin map keeps its zoom-aware clearance wiring", async () => {
+test("admin map keeps its zoom-aware clearance wiring, names feeding codes", async () => {
   const source = await read("components/seat-map/SeatMap.tsx");
   assert.ok(
-    /clearanceFromScale\(\s*mapPixelsPerNormalizedUnit\b/.test(source),
+    /clearanceFromScale\(\s*\n?\s*mapPixelsPerNormalizedUnit\b/.test(source),
     "SeatMap must derive the crowding clearance from mapPixelsPerNormalizedUnit"
   );
   assert.ok(
@@ -52,18 +45,32 @@ test("admin map keeps its zoom-aware clearance wiring", async () => {
     "SeatMap must pass an aspect-corrected y scale — normalized y spans the frame height, not its width"
   );
   assert.ok(
-    /computeCodePillNudges\(\s*visualLocalSeats\s*,\s*seatDensityTiers\.crowded\s*,\s*seatDensityClearance\s*\)/.test(source),
-    "SeatMap must de-collide uniform-size code pills via computeCodePillNudges at the same zoom-aware clearance"
+    /computeCodePillNudges\(\s*visualLocalSeats\s*,\s*seatDensityClearance\s*,\s*\{\s*nameNudges:\s*nameLabelNudges\s*,\s*namedSeatIds:\s*namedSeatIdSet\s*\}\s*\)/.test(source),
+    "SeatMap must de-collide uniform-size code pills via computeCodePillNudges at the same zoom-aware clearance, feeding it the name-label rows"
   );
 });
 
-test("dense cutoff covers the crowded pill footprint", async () => {
-  const source = await read("lib/seatCrowding.ts");
-  const match = source.match(/const DENSE_CLEARANCE_FACTOR = ([0-9./ ]+);/);
-  assert.ok(match, "DENSE_CLEARANCE_FACTOR must stay a plain numeric constant");
-  const factor = Function(`"use strict"; return (${match[1]});`)();
+test("SeatMarker's pill geometry matches the scoring model's constants", async () => {
+  // The nudge scorer reasons about pills of CODE_PILL_SIZE_PX nudged by
+  // ±PILL_NUDGE_PX, but SeatMarker's Tailwind classes must embed literal
+  // numbers for static extraction — this pin keeps the two in sync. If the
+  // pill is restyled, update lib/seatCrowding's constants (and vice versa)
+  // or the scorer models pills that don't exist on screen.
+  const lib = await read("lib/seatCrowding.ts");
+  const sizeMatch = lib.match(/CODE_PILL_SIZE_PX = \{ w: (\d+), h: (\d+) \}/);
+  const nudgeMatch = lib.match(/PILL_NUDGE_PX = (\d+)/);
+  assert.ok(sizeMatch, "lib/seatCrowding.ts must export CODE_PILL_SIZE_PX as a plain literal");
+  assert.ok(nudgeMatch, "lib/seatCrowding.ts must export PILL_NUDGE_PX as a plain literal");
+  const [, w, h] = sizeMatch;
+  const [, nudge] = nudgeMatch;
+
+  const marker = await read("components/seat-map/SeatMarker.tsx");
   assert.ok(
-    factor >= 40 / 48,
-    `DENSE_CLEARANCE_FACTOR (${match[1].trim()}) must be at least 40/48 — below that, pitches between the dense cutoff and the ~40px crowded pill width render overlapping pills. Shrink the crowded pill before lowering this.`
+    marker.includes(`h-[${h}px] min-h-[${h}px] w-[${w}px]`),
+    `SeatMarker's resting code pill must be the fixed ${w}×${h}px geometry the nudge scorer models`
+  );
+  assert.ok(
+    marker.includes(`-translate-y-[calc(50%+${nudge}px)]`) && marker.includes(`-translate-y-[calc(50%-${nudge}px)]`),
+    `SeatMarker's token nudge classes must translate by the ±${nudge}px the nudge scorer models`
   );
 });
