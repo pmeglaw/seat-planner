@@ -43,7 +43,7 @@ import {
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
 import { buildPublishChangeSummary, type PublishChangeItem } from "@/lib/publishSummary";
-import { clearanceFromScale, computeNameLabelNudges, computeSeatDensityTiers } from "@/lib/seatCrowding";
+import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, computeSeatDensityTiers } from "@/lib/seatCrowding";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import {
   ActiveFilterChips,
@@ -2241,12 +2241,12 @@ export function SeatMap({
     // Mounted-sheet treatment (2026-07-16 regrade, review 3): the hairline +
     // elevation make the beige stage read as a drawing mounted on the desk,
     // so the gray/beige/plan-edge seams become designed edges.
-    "relative mx-auto w-full max-w-full overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)] shadow-elevation-2 lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
+    "relative mx-auto w-full max-w-full overscroll-contain border border-[var(--admin-border)] bg-[var(--sp-color-canvas)] shadow-elevation-2 lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
     mapViewMode === "overview"
       ? "min-h-[300px] overflow-hidden p-1.5 sm:min-h-[480px] sm:p-2 lg:flex lg:min-h-0 lg:items-center lg:justify-center"
       : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     mapViewMode === "detail" && floor === "3" && !addSeatMode ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
-    canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-map-floor)]" : ""
+    canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]" : ""
   ].join(" ");
   const mapFrameClassName = [
     "relative mx-auto max-w-none",
@@ -2297,17 +2297,17 @@ export function SeatMap({
   const mapPixelsPerNormalizedUnit = visibleMapSpan > 0 && mapVisibleRange.viewportWidth > 0
     ? mapVisibleRange.viewportWidth / visibleMapSpan
     : 0;
-  // Zoom-aware pill crowding (render-layer only): dense pods drop the code
-  // token's min-width at fit zoom and recover it once zoom separates them;
-  // the tighter "dense" tier drops to a further micro pill. Both tiers and
-  // the name-label nudges share the same zoom-aware clearance.
+  // Zoom-aware pill crowding (render-layer only): code pills keep ONE uniform
+  // size at every zoom; pods whose pitch is tighter than that footprint
+  // separate via alternating vertical token nudges and recover the anchor row
+  // once zoom separates them. The nudge graph and the name-label nudges share
+  // the same zoom-aware clearance.
   const seatDensityClearance = clearanceFromScale(
     mapPixelsPerNormalizedUnit,
     mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH)
   );
   const seatDensityTiers = computeSeatDensityTiers(visualLocalSeats, seatDensityClearance);
-  const crowdedCodeSeatIdSet = seatDensityTiers.crowded;
-  const denseCodeSeatIdSet = seatDensityTiers.dense;
+  const codePillNudges = computeCodePillNudges(visualLocalSeats, seatDensityTiers.crowded, seatDensityClearance);
   // Shared with the marker render loop below (dimmed={dimmedSeatIdSet.has(...)}).
   const dimmedSeatIdSet = new Set(localSeats.filter(isSeatDimmed).map(seat => seat.id));
   // Named set for name-label collision nudging (lib/seatCrowding
@@ -2877,7 +2877,7 @@ export function SeatMap({
             </label>
           </div>
 
-      <main className={["grid grid-cols-1 gap-2 bg-[var(--admin-surface-muted)] p-2 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
+      <main className={["grid grid-cols-1 gap-2 p-2 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
         <section id="planning-canvas" tabIndex={-1} aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden relative p-0.5 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
           {staleDraftNotice && (
             <div role="alert" className={actionErrorBannerClassName}>
@@ -2908,7 +2908,7 @@ export function SeatMap({
                   type="button"
                   onClick={undoDraftEdit}
                   className={[
-                    "shrink-0 self-start rounded-full border bg-white/80 px-3 py-1 text-[11px] font-semibold transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 sm:self-auto",
+                    "shrink-0 self-start rounded-full border bg-sp-surface/80 px-3 py-1 text-[11px] font-semibold transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 sm:self-auto",
                     actionNoticeTone === "neutral"
                       ? "border-[var(--admin-border-strong)] text-[var(--admin-text-secondary)] focus-visible:ring-[var(--admin-border-strong)]"
                       : "border-[var(--admin-state-saved-border)] text-[var(--admin-state-saved-text)] focus-visible:ring-[var(--admin-state-saved-border)]"
@@ -3109,8 +3109,7 @@ export function SeatMap({
                         searchResult={Boolean(search.trim()) && seatMatchesFilters}
                         draftChanged={draftChangedSeatLabelSet.has(seat.label)}
                         compactNameLabel={(nameLabelNudges.get(seat.id) ?? 0) !== 0}
-                        crowdedCode={crowdedCodeSeatIdSet.has(seat.id)}
-                        denseCode={denseCodeSeatIdSet.has(seat.id)}
+                        codeNudge={codePillNudges.get(seat.id) ?? 0}
                         nameNudge={nameLabelNudges.get(seat.id) ?? 0}
                         moveSeatMode={moveSeatMode}
                         swapMode={Boolean(swapSourceSeatId)}
@@ -3428,7 +3427,7 @@ export function SeatMap({
           <div className="text-[10px] font-semibold text-[var(--admin-primary-cta)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--admin-text-primary)]">{activeMode.message}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-on-soft)] ring-1 ring-[var(--admin-primary-border)] transition hover:bg-white active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
+            <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-[var(--admin-primary-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary-on-soft)] ring-1 ring-[var(--admin-primary-border)] transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
               {activeMode.exitLabel}
             </button>
             <span className="rounded-full bg-[var(--admin-surface-muted)] px-2 py-1 text-[10px] font-semibold text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-border)]">Esc exits</span>

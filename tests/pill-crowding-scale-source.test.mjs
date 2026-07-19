@@ -35,6 +35,10 @@ test("viewer computes density tiers and name nudges from the live rendered scale
     /computeNameLabelNudges\(\s*visualSeats\s*,\s*namedSeatIdSet\s*,\s*seatDensityClearance\s*\)/.test(source),
     "ViewerSeatFinder must pass the same live clearance to computeNameLabelNudges (parity with the admin map)"
   );
+  assert.ok(
+    /computeCodePillNudges\(\s*visualSeats\s*,\s*seatDensityTiers\.crowded\s*,\s*seatDensityClearance\s*\)/.test(source),
+    "ViewerSeatFinder must de-collide uniform-size code pills via computeCodePillNudges at the same live clearance — without it, tight pods (CW05-08) render physically overlapping pills at rest"
+  );
 });
 
 test("admin map keeps its zoom-aware clearance wiring", async () => {
@@ -46,6 +50,10 @@ test("admin map keeps its zoom-aware clearance wiring", async () => {
   assert.ok(
     /clearanceFromScale\([^;]*MAP_IMAGE_HEIGHT\s*\/\s*MAP_IMAGE_WIDTH/s.test(source),
     "SeatMap must pass an aspect-corrected y scale — normalized y spans the frame height, not its width"
+  );
+  assert.ok(
+    /computeCodePillNudges\(\s*visualLocalSeats\s*,\s*seatDensityTiers\.crowded\s*,\s*seatDensityClearance\s*\)/.test(source),
+    "SeatMap must de-collide uniform-size code pills via computeCodePillNudges at the same zoom-aware clearance"
   );
 });
 

@@ -15,14 +15,12 @@ type SeatMarkerProps = {
   searchResult: boolean;
   draftChanged?: boolean;
   compactNameLabel: boolean;
-  // Render-layer crowding (lib/seatCrowding): a neighbour pill would overlap
-  // this one at the current scale, so the resting code token drops its
-  // min-width and tightens padding. Hover/selected treatments are unchanged.
-  crowdedCode?: boolean;
-  // Tighter tier below crowdedCode (lib/seatCrowding computeSeatDensityTiers):
-  // pods dense enough that even the crowdedCode treatment still overlaps get
-  // a further micro pill. Hover disclosure still reveals the full code.
-  denseCode?: boolean;
+  // Render-layer collision nudge for CODE pills (lib/seatCrowding
+  // computeCodePillNudges): every code pill renders at ONE fixed size, so a
+  // pair whose pitch is tighter than that footprint separates by translating
+  // the TOKEN vertically (±14px) instead of shrinking. The marker anchor
+  // (seat position) never moves. Hover/selected treatments are unchanged.
+  codeNudge?: -1 | 0 | 1;
   // Render-layer collision nudge for name-mode labels (lib/seatCrowding
   // computeNameLabelNudges): translates the TOKEN vertically so two
   // colliding name pills don't render on top of each other. The marker
@@ -111,8 +109,7 @@ export function SeatMarker({
   searchResult,
   draftChanged = false,
   compactNameLabel,
-  crowdedCode = false,
-  denseCode = false,
+  codeNudge = 0,
   nameNudge = 0,
   moveSeatMode,
   swapMode,
@@ -244,11 +241,12 @@ export function SeatMarker({
             "group-hover:w-[124px] group-hover:max-w-[124px] group-focus-visible:w-[124px] group-focus-visible:max-w-[124px]"
           ].filter(Boolean).join(" ")
           : [
-            denseCode
-              ? "h-[18px] min-h-[18px] min-w-0 rounded-[7px] px-[2px] text-[8px]"
-              : crowdedCode
-                ? "h-[22px] min-h-[22px] min-w-0 rounded-[8px] px-1.5 py-0 pl-2 text-center"
-                : "h-[24px] min-h-[24px] min-w-[34px] rounded-[9px] px-2 py-0 pl-2.5 text-center",
+            // ONE fixed code-pill geometry for every seat — width included, so
+            // label length never changes the footprint. Tight pods separate
+            // via codeNudge, never by a smaller pill. The 46px width is what
+            // CODE_PILL_CLEARANCE_PX models; hover disclosure still wins
+            // because min-width beats width when larger.
+            "h-[24px] min-h-[24px] w-[46px] rounded-[9px] px-2 py-0 pl-2.5 text-center",
             hasHoverDisclosure ? "group-hover:min-w-[96px] group-hover:rounded-[12px] group-hover:px-2.5 group-hover:pl-3.5 group-hover:text-left group-focus-visible:min-w-[96px] group-focus-visible:rounded-[12px] group-focus-visible:px-2.5 group-focus-visible:pl-3.5 group-focus-visible:text-left" : ""
           ].filter(Boolean).join(" ");
 
@@ -335,9 +333,14 @@ export function SeatMarker({
   // (selected / dragging / swap) always stay exactly on their anchor.
   const nameNudgeApplicable = tokenMode === "name" || (tokenMode === "prominent" && !activeMarker);
   const nameNudgeActive = nameNudgeApplicable && nameNudge !== 0;
-  const tokenVerticalTranslateClass = !nameNudgeActive
+  // Code pills use the same token-only vertical translate to de-collide tight
+  // pods at their uniform size. Resting code tokens only — selection/search
+  // promote the token to selected/prominent, which always sits on the anchor.
+  const codeNudgeActive = tokenMode === "code" && codeNudge !== 0;
+  const activeTokenNudge = nameNudgeActive ? nameNudge : codeNudgeActive ? codeNudge : 0;
+  const tokenVerticalTranslateClass = activeTokenNudge === 0
     ? "-translate-y-1/2"
-    : nameNudge === -1
+    : activeTokenNudge === -1
       ? "-translate-y-[calc(50%+14px)]"
       : "-translate-y-[calc(50%-14px)]";
   const tokenPositionClass =
@@ -424,7 +427,7 @@ export function SeatMarker({
         )}
         {tokenMode === "code" ? (
           <span className="relative z-10 flex min-w-0 items-center justify-center gap-1 group-hover:justify-start group-focus-visible:justify-start">
-            <span className={["whitespace-nowrap font-extrabold leading-[1.05]", denseCode ? "text-[8px]" : crowdedCode ? "text-[9px]" : "text-[9.5px]"].join(" ")}>{seat.label}</span>
+            <span className="whitespace-nowrap text-[9.5px] font-extrabold leading-[1.05]">{seat.label}</span>
             {employeeName && (
               <span className="hidden max-w-[64px] truncate text-[10px] font-bold leading-[1.05] opacity-90 group-hover:block group-focus-visible:block">
                 {compactEmployeeName}

@@ -1,7 +1,9 @@
 // Render-layer crowding detection for seat code pills. In dense pods the
 // resting pills are wider than the seat pitch at fit zoom, so neighbours
 // overlap and truncate each other's labels. Callers pass VISUAL (on-image)
-// coordinates and use the result only to pick a tighter pill treatment —
+// coordinates and use the result to de-collide pills without resizing them:
+// code pills render at ONE fixed size everywhere, and colliding pairs are
+// separated by alternating vertical token nudges (computeCodePillNudges) —
 // stored seat coordinates are never touched.
 
 export type CrowdingClearance = { x: number; y: number };
@@ -91,6 +93,119 @@ export function computeSeatDensityTiers<T extends { id: string; x: number; y: nu
     }
   }
   return { crowded, dense };
+}
+
+// Deterministic code-pill nudge assignment: seats whose fixed-size code pills
+// would physically overlap at the current scale get alternating vertical
+// token nudges (±14px via SeatMarker) instead of a smaller pill. Same greedy
+// graph-coloring as computeNameLabelNudges, but the participants are the
+// caller's crowded set (seatDensityTiers.crowded, computed with the SAME
+// clearance) and the anchor row (0) is the LAST preference for colliding
+// seats — a colliding pair must diverge (−1/+1), never share a row. Visit order is (y, x, id), so
+// within a pair the upper/left seat nudges up and its partner down; diagonal
+// pairs therefore diverge rather than converge. Isolated seats keep 0 (no
+// map entry). Never mutates the input seats — reads coordinates only.
+export function computeCodePillNudges<T extends { id: string; x: number; y: number }>(
+  seats: ReadonlyArray<T>,
+  crowdedIds: ReadonlySet<string>,
+  clearance: CrowdingClearance
+): Map<string, -1 | 0 | 1> {
+  const nudges = new Map<string, -1 | 0 | 1>();
+  if (crowdedIds.size === 0) {
+    return nudges;
+  }
+  const crowded = seats.filter((seat) => crowdedIds.has(seat.id));
+
+  const sorted = [...crowded].sort((a, b) => {
+    if (a.y !== b.y) {
+      return a.y - b.y;
+    }
+    if (a.x !== b.x) {
+      return a.x - b.x;
+    }
+    if (a.id < b.id) {
+      return -1;
+    }
+    if (a.id > b.id) {
+      return 1;
+    }
+    return 0;
+  });
+
+  const collides = (a: T, b: T): boolean =>
+    Math.abs(a.x - b.x) < clearance.x && Math.abs(a.y - b.y) < clearance.y;
+
+  const palette: ReadonlyArray<-1 | 0 | 1> = [-1, 1, 0];
+
+  // Projected-overlap scoring, in CSS px recovered from the clearance (both
+  // axes of CODE_PILL_CLEARANCE_PX divide by the same live scale the caller
+  // used). Colliding pairs alone don't determine a good assignment: two
+  // stacked pairs each resolve internally yet converge into each other when
+  // the upper pair nudges down and the lower pair nudges up (NE-pod 2×2 at
+  // fit zoom). So among the values legal w.r.t. colliding neighbors, pick the
+  // one whose projected pill rect overlaps the least with EVERY already-known
+  // token — placed participants at their assigned nudge, non-participants
+  // pinned to the anchor row.
+  const pxPerNormX = CODE_PILL_CLEARANCE_PX.x / clearance.x;
+  const pxPerNormY = CODE_PILL_CLEARANCE_PX.y / clearance.y;
+  const PILL_W = 46;
+  const PILL_H = 24;
+  const NUDGE_PX = 14;
+  const resting = seats.filter((seat) => !crowdedIds.has(seat.id));
+  const projectedOverlapArea = (seat: T, value: -1 | 0 | 1, placedUpTo: number): number => {
+    let area = 0;
+    const against = (other: T, otherValue: -1 | 0 | 1) => {
+      const dxPx = Math.abs(seat.x - other.x) * pxPerNormX;
+      const dyPx = Math.abs((seat.y - other.y) * pxPerNormY + (value - otherValue) * NUDGE_PX);
+      const ox = PILL_W - dxPx;
+      const oy = PILL_H - dyPx;
+      if (ox > 0 && oy > 0) {
+        area += ox * oy;
+      }
+    };
+    for (let j = 0; j < placedUpTo; j += 1) {
+      against(sorted[j], nudges.get(sorted[j].id) ?? 0);
+    }
+    for (const other of resting) {
+      against(other, 0);
+    }
+    return area;
+  };
+
+  for (let i = 0; i < sorted.length; i += 1) {
+    const seat = sorted[i];
+    const used = new Set<-1 | 0 | 1>();
+    for (let j = 0; j < i; j += 1) {
+      const neighbor = sorted[j];
+      if (!collides(seat, neighbor)) {
+        continue;
+      }
+      const neighborNudge = nudges.get(neighbor.id);
+      if (neighborNudge !== undefined) {
+        used.add(neighborNudge);
+      }
+    }
+    // Palette exhaustion needs 3 mutually-colliding, already-colored
+    // neighbors — desktop fit widths only produce isolated pairs, and even
+    // sub-800px chain merges stay 2-colorable; fall back to the anchor row.
+    const candidates = palette.filter((value) => !used.has(value));
+    if (candidates.length === 0) {
+      nudges.set(seat.id, 0);
+      continue;
+    }
+    let best = candidates[0];
+    let bestArea = Number.POSITIVE_INFINITY;
+    for (const value of candidates) {
+      const area = projectedOverlapArea(seat, value, i);
+      if (area < bestArea) {
+        bestArea = area;
+        best = value;
+      }
+    }
+    nudges.set(seat.id, best);
+  }
+
+  return nudges;
 }
 
 // Deterministic name-label nudge assignment: only named seats participate in

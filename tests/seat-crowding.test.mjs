@@ -21,7 +21,8 @@ const {
   clearanceFromScale,
   computeCrowdedSeatIds,
   computeSeatDensityTiers,
-  computeNameLabelNudges
+  computeNameLabelNudges,
+  computeCodePillNudges
 } = await importTsModule("lib/seatCrowding.ts");
 
 test("adjacent seats inside the clearance box are both flagged", () => {
@@ -364,6 +365,97 @@ test("computeNameLabelNudges is input-order invariant, including tied coordinate
   ];
   const shuffledResult = computeNameLabelNudges(shuffled, namedIds, clearance);
 
+  assert.deepEqual(
+    [...shuffledResult.entries()].sort(),
+    [...baseline.entries()].sort(),
+    "expected identical nudge assignment regardless of input array order"
+  );
+});
+
+// --- computeCodePillNudges: uniform-size code pills de-collide by nudging ---
+
+test("computeCodePillNudges sends a colliding pair in opposite directions, upper seat up", () => {
+  const clearance = CODE_PILL_DEFAULT_CLEARANCE;
+  const seats = [
+    { id: "cw05", x: 0.35, y: 0.62 },
+    { id: "cw06", x: 0.382, y: 0.62 }, // 0.032 pitch — the tightest real pod
+    { id: "e01", x: 0.62, y: 0.42 } // isolated — must stay on the anchor row
+  ];
+  const crowded = computeSeatDensityTiers(seats, clearance).crowded;
+  const nudges = computeCodePillNudges(seats, crowded, clearance);
+  // Same y — the x/id tiebreaker makes cw05 the "upper/left" seat.
+  assert.equal(nudges.get("cw05"), -1);
+  assert.equal(nudges.get("cw06"), 1);
+  assert.equal(nudges.get("e01") ?? 0, 0);
+});
+
+test("computeCodePillNudges diverges a diagonal pair instead of converging it", () => {
+  // SE03/SE04-style: the lower-right seat must nudge DOWN while the
+  // upper-left seat nudges UP — a converging assignment would stack them.
+  const clearance = clearanceFromScale(1096, 497);
+  const seats = [
+    { id: "se03", x: 0.63, y: 0.5 },
+    { id: "se04", x: 0.66, y: 0.522 }
+  ];
+  const crowded = computeSeatDensityTiers(seats, clearance).crowded;
+  const nudges = computeCodePillNudges(seats, crowded, clearance);
+  assert.equal(nudges.get("se03"), -1);
+  assert.equal(nudges.get("se04"), 1);
+});
+
+test("computeCodePillNudges never assigns the same direction to a colliding pair", () => {
+  const clearance = CODE_PILL_DEFAULT_CLEARANCE;
+  // A 4-seat chain: a-b, b-c, c-d collide; a-c, b-d, a-d do not.
+  const seats = [
+    { id: "a", x: 0.1, y: 0.5 },
+    { id: "b", x: 0.14, y: 0.5 },
+    { id: "c", x: 0.18, y: 0.5 },
+    { id: "d", x: 0.22, y: 0.5 }
+  ];
+  const crowded = computeSeatDensityTiers(seats, clearance).crowded;
+  const nudges = computeCodePillNudges(seats, crowded, clearance);
+  for (let i = 0; i < seats.length; i += 1) {
+    for (let j = i + 1; j < seats.length; j += 1) {
+      const collide =
+        Math.abs(seats[i].x - seats[j].x) < clearance.x &&
+        Math.abs(seats[i].y - seats[j].y) < clearance.y;
+      if (!collide) continue;
+      assert.notEqual(
+        nudges.get(seats[i].id),
+        nudges.get(seats[j].id),
+        `${seats[i].id} and ${seats[j].id} collide but share a nudge row`
+      );
+    }
+  }
+});
+
+test("computeCodePillNudges leaves non-crowded seats and empty inputs alone", () => {
+  const clearance = CODE_PILL_DEFAULT_CLEARANCE;
+  const seats = [
+    { id: "n01", x: 0.3, y: 0.2 },
+    { id: "n05", x: 0.3, y: 0.26 }
+  ];
+  const crowded = computeSeatDensityTiers(seats, clearance).crowded;
+  assert.equal(computeCodePillNudges(seats, crowded, clearance).size, 0);
+  assert.equal(computeCodePillNudges([], new Set(), clearance).size, 0);
+});
+
+test("computeCodePillNudges is input-order invariant and does not mutate its input", () => {
+  const clearance = CODE_PILL_DEFAULT_CLEARANCE;
+  const baseSeats = [
+    { id: "A", x: 0.1, y: 0.5 },
+    { id: "B", x: 0.14, y: 0.5 },
+    { id: "C", x: 0.5, y: 0.5 },
+    { id: "D", x: 0.532, y: 0.5 },
+    { id: "E", x: 0.532, y: 0.5 } // tied coordinates — id tiebreaker
+  ];
+  const snapshot = JSON.parse(JSON.stringify(baseSeats));
+  const crowded = computeSeatDensityTiers(baseSeats, clearance).crowded;
+  const baseline = computeCodePillNudges(baseSeats, crowded, clearance);
+  assert.deepEqual(baseSeats, snapshot, "input seats must not be mutated");
+
+  const shuffled = [baseSeats[3], baseSeats[1], baseSeats[4], baseSeats[0], baseSeats[2]];
+  const shuffledResult = computeCodePillNudges(shuffled, crowded, clearance);
   assert.deepEqual(
     [...shuffledResult.entries()].sort(),
     [...baseline.entries()].sort(),

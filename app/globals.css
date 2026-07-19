@@ -59,17 +59,19 @@
   --sp-color-stone-rgb: 224 224 224;
   --sp-color-stone-muted-rgb: 168 168 168;
 
+  /* The ONLY two light neutrals: every page/canvas/mat surface uses canvas,
+     every panel/strip/control uses surface. The floor-plan raster is content
+     (its cream paper is baked into the image), not a third neutral — nothing
+     else may introduce one. */
   --sp-color-canvas: #f4f4f4;
   --sp-color-surface: #ffffff;
   --sp-color-surface-raised: #ffffff;
-  --sp-color-map-workspace: #ECE8E1;
   --sp-color-border-subtle: #e0e0e0;
   --sp-color-border-strong: #c6c6c6;
 
   --sp-color-canvas-rgb: 244 244 244;
   --sp-color-surface-rgb: 255 255 255;
   --sp-color-surface-raised-rgb: 255 255 255;
-  --sp-color-map-workspace-rgb: 236 232 225;
   --sp-color-border-subtle-rgb: 224 224 224;
   --sp-color-border-strong-rgb: 198 198 198;
 
@@ -153,8 +155,11 @@
    workspace — with admin-only chrome hidden for viewers in markup. */
 .admin-theme,
 .shell-theme {
-  /* Light workspace behind the map (shell spec: #f4f4f4). */
-  --admin-bg: #f4f4f4;
+  /* Light workspace behind the map (shell spec: #f4f4f4). The light-surface
+     admin tokens alias the two :root neutrals (--sp-color-canvas /
+     --sp-color-surface) — exactly ONE canvas tone and ONE panel tone exist,
+     so a stray third background can't creep back in per-component. */
+  --admin-bg: var(--sp-color-canvas);
 
   /* Dark chrome (#161616): top bar + inspector read as one continuous dark
      surface. Text #f4f4f4 (16.45:1), muted #9a9a9a (6.43:1) — both AA. */
@@ -172,11 +177,9 @@
   --admin-rail-surface: rgba(255, 255, 255, 0.05);
   --admin-rail-border: var(--admin-chrome-border);
   --admin-rail-muted: var(--admin-chrome-muted);
-  --admin-surface: #ffffff;
-  --admin-surface-alt: #f4f4f4;
-  --admin-surface-muted: #f4f4f4;
-  /* Warm parchment mat behind the floor-plan raster (prototype `--map`). */
-  --admin-map-floor: #ECE8E1;
+  --admin-surface: var(--sp-color-surface);
+  --admin-surface-alt: var(--sp-color-canvas);
+  --admin-surface-muted: var(--sp-color-canvas);
   --admin-border: #e0e0e0;
   --admin-border-strong: #c6c6c6;
 
@@ -357,7 +360,7 @@ html {
 
 body {
   margin: 0;
-  background: #f4f4f4;
+  background: var(--sp-color-canvas);
   color: #161616;
   font-family: var(--font-sans, "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
 }

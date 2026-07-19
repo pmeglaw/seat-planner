@@ -25,7 +25,7 @@ import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
-import { clearanceFromScale, computeNameLabelNudges, computeSeatDensityTiers } from "@/lib/seatCrowding";
+import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, computeSeatDensityTiers } from "@/lib/seatCrowding";
 
 type ViewerSeatFinderProps = {
   seats: SeatWithEmployee[];
@@ -159,10 +159,11 @@ export function ViewerSeatFinder({
   const visualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
   const visualSeatById = useMemo(() => new Map(visualSeats.map(seat => [seat.id, seat])), [visualSeats]);
   // Pill crowding at the live rendered scale (render-layer only, parity with
-  // the admin map): `crowded` tightens the code pill, the tighter `dense`
-  // tier drops to the micro pill (hover still discloses the full code). The
-  // clearance must track the actual frame width — the People directory keeps
-  // the at-rest stage narrower than the old full-bleed fit, and a static
+  // the admin map): code pills render at one uniform size, and the crowded
+  // set feeds alternating vertical token nudges that keep tight pods from
+  // overlapping (hover still discloses the full code + name). The clearance
+  // must track the actual frame width — the People directory keeps the
+  // at-rest stage narrower than the old full-bleed fit, and a static
   // fit-zoom clearance under-flags exactly those pods (they rendered
   // overlapping pills at rest). Before first measure (SSR/first paint) the
   // helper falls back to the default fit-zoom clearance.
@@ -171,6 +172,10 @@ export function ViewerSeatFinder({
     [mapRenderedWidth]
   );
   const seatDensityTiers = useMemo(() => computeSeatDensityTiers(visualSeats, seatDensityClearance), [seatDensityClearance, visualSeats]);
+  const codePillNudges = useMemo(
+    () => computeCodePillNudges(visualSeats, seatDensityTiers.crowded, seatDensityClearance),
+    [seatDensityClearance, seatDensityTiers, visualSeats]
+  );
   // Pixel-aspect points for arrow-key traversal (see lib/seatKeyboardNav).
   const seatNavPoints = useMemo(
     () => visualSeats.map(seat => ({ id: seat.id, x: seat.x * MAP_IMAGE_WIDTH, y: seat.y * MAP_IMAGE_HEIGHT })),
@@ -667,11 +672,11 @@ export function ViewerSeatFinder({
 
   const mapViewportClassName = cx(
     // Mounted-sheet treatment (2026-07-16 regrade, review 3) — see SeatMap.
-    "relative mx-auto w-full max-w-full overflow-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-map-floor)] shadow-elevation-2",
+    "relative mx-auto w-full max-w-full overflow-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--sp-color-canvas)] shadow-elevation-2",
     "min-h-[360px] max-h-[82svh] sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:h-full lg:min-h-0 lg:max-h-none lg:flex-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     zoomFactor === null ? "sm:flex sm:items-center sm:justify-center" : "",
     floor === "3" ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
-    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-map-floor)]"
+    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]"
   );
   const mapFrameClassName = cx(
     "relative mx-auto max-w-none",
@@ -939,8 +944,7 @@ export function ViewerSeatFinder({
                           showNames={false}
                           searchResult={filtersActive && inMatches}
                           compactNameLabel
-                          crowdedCode={seatDensityTiers.crowded.has(seat.id)}
-                          denseCode={seatDensityTiers.dense.has(seat.id)}
+                          codeNudge={codePillNudges.get(seat.id) ?? 0}
                           nameNudge={nameLabelNudges.get(seat.id) ?? 0}
                           moveSeatMode={false}
                           swapMode={false}
