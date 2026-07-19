@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent } from "react";
 import Image from "next/image";
@@ -101,6 +101,41 @@ function uniqueVisibleOptions(values: Array<string | null | undefined>) {
 // The People directory's collapse preference persists per browser, like the
 // admin names toggle.
 const VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY = "seat-planner:viewer-directory-collapsed";
+const VIEWER_DIRECTORY_PREF_EVENT = "seat-planner:viewer-directory-pref";
+
+// The collapse preference is read through useSyncExternalStore: the server
+// snapshot is the expanded default (so SSR markup reserves the directory
+// slot — see directoryOpen), and React swaps in the client snapshot
+// synchronously at hydration, BEFORE paint. A collapsed user therefore never
+// sees the populated panel flash open; an effect-based localStorage read
+// paints the default first and then snaps the canvas.
+function readDirectoryCollapsedPref(): boolean {
+  try {
+    return window.localStorage.getItem(VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY) === "true";
+  } catch {
+    // Storage unavailable (private mode) — default to expanded.
+    return false;
+  }
+}
+
+function subscribeToDirectoryCollapsedPref(onChange: () => void): () => void {
+  window.addEventListener("storage", onChange);
+  window.addEventListener(VIEWER_DIRECTORY_PREF_EVENT, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(VIEWER_DIRECTORY_PREF_EVENT, onChange);
+  };
+}
+
+function writeDirectoryCollapsedPref(collapsed: boolean) {
+  try {
+    window.localStorage.setItem(VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY, String(collapsed));
+  } catch {
+    // Preference just won't persist.
+  }
+  // Same-tab notification — the storage event only fires in OTHER tabs.
+  window.dispatchEvent(new Event(VIEWER_DIRECTORY_PREF_EVENT));
+}
 
 // Marker focus restore for deselect paths — the details panel (which may
 // hold focus) unmounts with the selection (critique action 5).
@@ -124,10 +159,14 @@ export function ViewerSeatFinder({
   const [search, setSearch] = useState("");
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
   // People directory (2026-07-16 regrade, review 5): occupies the right slot
-  // at rest. Defaults to expanded on server markup and first paint — the
-  // persisted collapse preference is applied by effect after hydration (see
-  // directoryOpen below for why the slot must be reserved from first paint).
-  const [directoryCollapsed, setDirectoryCollapsed] = useState(false);
+  // at rest. Server snapshot = expanded default, so SSR markup and the first
+  // paint reserve the slot; the persisted collapse preference lands
+  // synchronously at hydration (see the store helpers above the component).
+  const directoryCollapsed = useSyncExternalStore(
+    subscribeToDirectoryCollapsedPref,
+    readDirectoryCollapsedPref,
+    () => false
+  );
   const [directoryHoverSeatId, setDirectoryHoverSeatId] = useState<string | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   // Roving tabindex anchor: the last keyboard-visited seat (see SeatMap for
@@ -229,33 +268,6 @@ export function ViewerSeatFinder({
   }, [department, status, zone]);
 
   const resultSeatIdSet = useMemo(() => new Set(searchResults.resultSeatIds), [searchResults.resultSeatIds]);
-  // Named set for the nudge graph excludes the selected seat: SeatMarker's
-  // nameNudgeApplicable never nudges an active marker, and in the viewer the
-  // only way a seat goes active is selection (there's no swap/drag surface
-  // here). Leaving it in would let it occupy a palette slot/clique edge it
-  // never actually uses — the same phantom-member defect fixed for the admin
-  // map (see the 4-clique exclusion case in tests/seat-crowding.test.mjs).
-  const namedSeatIdSet = useMemo(() => {
-    const set = new Set(resultSeatIdSet);
-    if (selectedSeatId) set.delete(selectedSeatId);
-    return set;
-  }, [resultSeatIdSet, selectedSeatId]);
-  // Name-label collision nudges (render-layer only): viewers have no
-  // Show-names toggle, so the only pills that show inline names are the
-  // search-prominent ones — nudges are computed over the search-result seat
-  // ids as the "named" set, at the same live zoom-aware clearance as the
-  // density tiers (parity with the admin map).
-  const nameLabelNudges = useMemo(
-    () => computeNameLabelNudges(visualSeats, namedSeatIdSet, seatDensityClearance),
-    [namedSeatIdSet, seatDensityClearance, visualSeats]
-  );
-  // Code-pill nudges are computed AFTER the name nudges so the code graph
-  // can dodge the rows the name pills actually occupy (named seats render
-  // name/prominent tokens, not code pills).
-  const codePillNudges = useMemo(
-    () => computeCodePillNudges(visualSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet }),
-    [nameLabelNudges, namedSeatIdSet, seatDensityClearance, visualSeats]
-  );
   const activeResultSeatIdSet = useMemo(() => new Set(activeResult?.seatIds ?? []), [activeResult]);
   // Matches = search hits (narrowed by any structured filters), or filter hits alone.
   const highlightedSeatIdSet = useMemo(() => {
@@ -267,6 +279,40 @@ export function ViewerSeatFinder({
     });
     return matched;
   }, [activeResultSeatIdSet, publishedSeats, resultSeatIdSet, searchActive, seatPassesStructuredFilters]);
+
+  // Named set for the nudge graphs = exactly the seats that render a
+  // name/prominent TOKEN, mirroring the marker loop's props through
+  // SeatMarker's logic: searchProminent = searchResult && !dimmed, and both
+  // reduce to `filtersActive && highlightedSeatIdSet.has(id)` here (raw
+  // search hits that an active result card or structured filter dims render
+  // plain CODE pills — they must stay in the code graph and keep their
+  // codeNudge, not be modelled as phantom name obstacles). The selected seat
+  // is excluded: active markers never nudge, so leaving it in would occupy a
+  // palette slot/clique edge it never uses (the admin map's phantom-member
+  // fix). The transient directory-hover highlight is also excluded — it is
+  // momentary and z-raised, and including it would re-solve both nudge
+  // graphs on every list hover.
+  const namedSeatIdSet = useMemo(() => {
+    if (!filtersActive) return new Set<string>();
+    const set = new Set(highlightedSeatIdSet);
+    if (selectedSeatId) set.delete(selectedSeatId);
+    return set;
+  }, [filtersActive, highlightedSeatIdSet, selectedSeatId]);
+  // Name-label collision nudges (render-layer only): viewers have no
+  // Show-names toggle, so the only tokens that leave the anchor row are the
+  // prominent ones — nudged at the same live zoom-aware clearance as the
+  // code graph (parity with the admin map).
+  const nameLabelNudges = useMemo(
+    () => computeNameLabelNudges(visualSeats, namedSeatIdSet, seatDensityClearance),
+    [namedSeatIdSet, seatDensityClearance, visualSeats]
+  );
+  // Code-pill nudges are computed AFTER the name nudges so the code graph
+  // can dodge the rows the name pills actually occupy (named seats render
+  // name/prominent tokens, not code pills).
+  const codePillNudges = useMemo(
+    () => computeCodePillNudges(visualSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet }),
+    [nameLabelNudges, namedSeatIdSet, seatDensityClearance, visualSeats]
+  );
 
   const selectedResultTitle = activeResult?.title ?? selectedSeat?.label ?? null;
   // Legend counts follow the active filters — the one number row everyone
@@ -305,17 +351,6 @@ export function ViewerSeatFinder({
     document.addEventListener("pointerdown", handleOutsidePointer);
     return () => document.removeEventListener("pointerdown", handleOutsidePointer);
   }, [filterOpen]);
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      try {
-        setDirectoryCollapsed(window.localStorage.getItem(VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY) === "true");
-      } catch {
-        // Storage unavailable (private mode) — default to expanded.
-      }
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
 
   // Ctrl/⌘+K focuses the search — the same muscle memory as the admin map
   // (critique action 6). The hint renders a frame after mount so the server
@@ -1092,14 +1127,7 @@ export function ViewerSeatFinder({
               <span className="text-xs font-medium text-[var(--admin-text-muted)]">{directory.totalCount}</span>
               <button
                 type="button"
-                onClick={() => {
-                  setDirectoryCollapsed(true);
-                  try {
-                    window.localStorage.setItem(VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY, "true");
-                  } catch {
-                    // Preference just won't persist.
-                  }
-                }}
+                onClick={() => writeDirectoryCollapsedPref(true)}
                 aria-label="Collapse the people list"
                 title="Collapse"
                 className="flex h-6 w-6 items-center justify-center text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
@@ -1148,14 +1176,7 @@ export function ViewerSeatFinder({
         <aside className="hidden panel:block panel:fixed panel:bottom-0 panel:right-0 panel:top-10 panel:z-40">
           <button
             type="button"
-            onClick={() => {
-              setDirectoryCollapsed(false);
-              try {
-                window.localStorage.setItem(VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY, "false");
-              } catch {
-                // Preference just won't persist.
-              }
-            }}
+            onClick={() => writeDirectoryCollapsedPref(false)}
             aria-label={`Show the people list (${directory.totalCount} people)`}
             title="Show people"
             className="flex h-full w-11 flex-col items-center justify-center gap-2 border-l border-[var(--admin-border)] bg-[var(--admin-surface)] px-2 py-4 text-[var(--admin-text-secondary)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"

@@ -13,12 +13,18 @@ test("the People directory fills the idle right slot without touching the search
   // Built from the shared snapshot-derived builder, not an ad-hoc list.
   assert.match(source, /buildViewerDirectory\(\{ seats: publishedSeats, employees \}\)/);
   // Idle only: search results and the inspector always win the slot. The
-  // expression must NOT gate on a hydration flag: the first paint has to
+  // expressions must NOT gate on a hydration flag: the first paint has to
   // reserve the right slot (the expanded directory IS the default), or every
   // load renders the map full-bleed and then snaps ~330px narrower when the
-  // persisted preference hydrates — the canvas-width jump/flash bug.
-  assert.match(source, /const directoryOpen = !searchActive && !selectedSeat && !directoryCollapsed/);
-  assert.doesNotMatch(source, /directoryOpen = directoryHydrated/);
+  // persisted preference hydrates — the canvas-width jump/flash bug. The
+  // semicolon anchors pin the COMPLETE expressions, so a hydration term
+  // can't be appended anywhere.
+  assert.match(source, /const directoryOpen = !searchActive && !selectedSeat && !directoryCollapsed;/);
+  assert.match(source, /const directoryRail = !searchActive && !selectedSeat && directoryCollapsed;/);
+  // The collapse preference must land via useSyncExternalStore (server
+  // snapshot = expanded), never via a post-paint effect that repaints the
+  // canvas after the default has already rendered.
+  assert.match(source, /useSyncExternalStore\(\s*subscribeToDirectoryCollapsedPref,\s*readDirectoryCollapsedPref,\s*\(\) => false\s*\)/);
   // Rows activate through the one existing selection path (explicit click —
   // INV-2 holds by construction).
   assert.match(source, /onClick=\{\(\) => openResult\(row\)\}/);

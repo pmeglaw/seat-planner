@@ -246,10 +246,15 @@ export function SeatMarker({
             // separate via codeNudge, never by a smaller pill. The 46px/24px
             // numbers must match lib/seatCrowding's CODE_PILL_SIZE_PX (the
             // nudge scorer reasons in that geometry; a source test pins the
-            // pair). Hover/focus disclosure switches to w-auto so the token
-            // grows to fit code + revealed name, as it did pre-fixed-width.
+            // pair). EVERY code pill grows to content on hover/focus
+            // (w-auto + a min-width floor), so an over-long label that
+            // truncates at rest is always recoverable — including on open
+            // seats, which have no name to disclose.
             "h-[24px] min-h-[24px] w-[46px] rounded-[9px] px-2 py-0 pl-2.5 text-center",
-            hasHoverDisclosure ? "group-hover:w-auto group-hover:min-w-[96px] group-hover:rounded-[12px] group-hover:px-2.5 group-hover:pl-3.5 group-hover:text-left group-focus-visible:w-auto group-focus-visible:min-w-[96px] group-focus-visible:rounded-[12px] group-focus-visible:px-2.5 group-focus-visible:pl-3.5 group-focus-visible:text-left" : ""
+            "group-hover:w-auto group-focus-visible:w-auto",
+            hasHoverDisclosure
+              ? "group-hover:min-w-[96px] group-hover:rounded-[12px] group-hover:px-2.5 group-hover:pl-3.5 group-hover:text-left group-focus-visible:min-w-[96px] group-focus-visible:rounded-[12px] group-focus-visible:px-2.5 group-focus-visible:pl-3.5 group-focus-visible:text-left"
+              : "group-hover:min-w-[46px] group-focus-visible:min-w-[46px]"
           ].filter(Boolean).join(" ");
 
   const tokenStateClass = [

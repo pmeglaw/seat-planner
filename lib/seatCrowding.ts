@@ -29,11 +29,13 @@ export const CODE_PILL_CLEARANCE_PX: CrowdingClearance = { x: 48, y: 26 };
 export const CODE_PILL_SIZE_PX = { w: 46, h: 24 } as const;
 export const PILL_NUDGE_PX = 14;
 
-// Conservative footprint for a resting name/prominent token (standard name
-// pill 92–104px × min-h 34px; passive prominent up to 118px). Used only as
-// an obstacle extent when code pills dodge named neighbours — oversizing it
-// slightly just biases code pills further away.
-export const NAME_PILL_OBSTACLE_PX = { w: 96, h: 34 } as const;
+// Conservative footprint for a resting name/prominent token — sized to the
+// WIDEST variant so the scorer is never blind to a real overlap: passive
+// prominent tokens render 118px × min-h 39px (SeatMarker), standard name
+// pills up to 104px × min-h 34px at sm+. Used only as an obstacle extent
+// when code pills dodge named neighbours — oversizing for the narrower
+// variants just biases code pills further away.
+export const NAME_PILL_OBSTACLE_PX = { w: 118, h: 39 } as const;
 
 // Fallback for surfaces that don't track pixels-per-normalized-unit: the px
 // clearance at the fit-zoom scale of a ~1100px-wide map render. Normalized y
