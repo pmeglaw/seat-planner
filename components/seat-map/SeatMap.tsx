@@ -2301,7 +2301,10 @@ export function SeatMap({
   // token's min-width at fit zoom and recover it once zoom separates them;
   // the tighter "dense" tier drops to a further micro pill. Both tiers and
   // the name-label nudges share the same zoom-aware clearance.
-  const seatDensityClearance = clearanceFromScale(mapPixelsPerNormalizedUnit);
+  const seatDensityClearance = clearanceFromScale(
+    mapPixelsPerNormalizedUnit,
+    mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH)
+  );
   const seatDensityTiers = computeSeatDensityTiers(visualLocalSeats, seatDensityClearance);
   const crowdedCodeSeatIdSet = seatDensityTiers.crowded;
   const denseCodeSeatIdSet = seatDensityTiers.dense;

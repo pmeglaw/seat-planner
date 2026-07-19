@@ -25,7 +25,7 @@ import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
-import { CODE_PILL_DEFAULT_CLEARANCE, computeNameLabelNudges, computeSeatDensityTiers } from "@/lib/seatCrowding";
+import { clearanceFromScale, computeNameLabelNudges, computeSeatDensityTiers } from "@/lib/seatCrowding";
 
 type ViewerSeatFinderProps = {
   seats: SeatWithEmployee[];
@@ -140,6 +140,9 @@ export function ViewerSeatFinder({
   // null = fit-to-view; a number = zoom factor applied to the base frame width.
   const [zoomFactor, setZoomFactor] = useState<number | null>(null);
   const [fitMapWidth, setFitMapWidth] = useState<number | null>(null);
+  // Rendered map-frame width in CSS px (= pixels per normalized x unit),
+  // observed off the frame element so fit and detail zoom share one source.
+  const [mapRenderedWidth, setMapRenderedWidth] = useState<number | null>(null);
   const [panning, setPanning] = useState(false);
   const [department, setDepartment] = useState("all");
   const [zone, setZone] = useState("all");
@@ -155,10 +158,19 @@ export function ViewerSeatFinder({
   const publishedSeats = useMemo(() => seats.map(normalizeSeat), [seats]);
   const visualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
   const visualSeatById = useMemo(() => new Map(visualSeats.map(seat => [seat.id, seat])), [visualSeats]);
-  // Pill crowding at the default fit-zoom clearance (render-layer only):
-  // `crowded` tightens the code pill, the tighter `dense` tier drops to the
-  // micro pill (hover still discloses the full code).
-  const seatDensityTiers = useMemo(() => computeSeatDensityTiers(visualSeats), [visualSeats]);
+  // Pill crowding at the live rendered scale (render-layer only, parity with
+  // the admin map): `crowded` tightens the code pill, the tighter `dense`
+  // tier drops to the micro pill (hover still discloses the full code). The
+  // clearance must track the actual frame width — the People directory keeps
+  // the at-rest stage narrower than the old full-bleed fit, and a static
+  // fit-zoom clearance under-flags exactly those pods (they rendered
+  // overlapping pills at rest). Before first measure (SSR/first paint) the
+  // helper falls back to the default fit-zoom clearance.
+  const seatDensityClearance = useMemo(
+    () => clearanceFromScale(mapRenderedWidth ?? 0, (mapRenderedWidth ?? 0) * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH)),
+    [mapRenderedWidth]
+  );
+  const seatDensityTiers = useMemo(() => computeSeatDensityTiers(visualSeats, seatDensityClearance), [seatDensityClearance, visualSeats]);
   // Pixel-aspect points for arrow-key traversal (see lib/seatKeyboardNav).
   const seatNavPoints = useMemo(
     () => visualSeats.map(seat => ({ id: seat.id, x: seat.x * MAP_IMAGE_WIDTH, y: seat.y * MAP_IMAGE_HEIGHT })),
@@ -231,10 +243,11 @@ export function ViewerSeatFinder({
   // Name-label collision nudges (render-layer only): viewers have no
   // Show-names toggle, so the only pills that show inline names are the
   // search-prominent ones — nudges are computed over the search-result seat
-  // ids as the "named" set, at the same default fit-zoom clearance.
+  // ids as the "named" set, at the same live zoom-aware clearance as the
+  // density tiers (parity with the admin map).
   const nameLabelNudges = useMemo(
-    () => computeNameLabelNudges(visualSeats, namedSeatIdSet, CODE_PILL_DEFAULT_CLEARANCE),
-    [visualSeats, namedSeatIdSet]
+    () => computeNameLabelNudges(visualSeats, namedSeatIdSet, seatDensityClearance),
+    [namedSeatIdSet, seatDensityClearance, visualSeats]
   );
   const activeResultSeatIdSet = useMemo(() => new Set(activeResult?.seatIds ?? []), [activeResult]);
   // Matches = search hits (narrowed by any structured filters), or filter hits alone.
@@ -394,6 +407,25 @@ export function ViewerSeatFinder({
       window.removeEventListener("resize", updateFitMapWidth);
     };
   }, []);
+
+  // Live scale for pill-crowding tiers: the frame's offsetWidth is exactly the
+  // span of one normalized x unit, across fit, detail zoom, and the mobile
+  // fixed-width frame. Re-binds on floor change — the frame div only mounts
+  // for the mapped floor.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const mapElement = map;
+
+    function updateRenderedWidth() {
+      setMapRenderedWidth(mapElement.offsetWidth || null);
+    }
+
+    updateRenderedWidth();
+    const observer = new ResizeObserver(updateRenderedWidth);
+    observer.observe(mapElement);
+    return () => observer.disconnect();
+  }, [floor]);
 
   const scrollMapToPoint = useCallback((x: number, y: number, behavior: ScrollBehavior = "smooth") => {
     const viewport = mapViewportRef.current;

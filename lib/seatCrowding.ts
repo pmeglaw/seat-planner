@@ -15,13 +15,24 @@ export const CODE_PILL_CLEARANCE_PX: CrowdingClearance = { x: 48, y: 26 };
 // px clearance at the fit-zoom scale of a ~1100px-wide map render.
 export const CODE_PILL_DEFAULT_CLEARANCE: CrowdingClearance = { x: 0.044, y: 0.024 };
 
-export function clearanceFromScale(pixelsPerNormalizedUnit: number): CrowdingClearance {
-  if (!Number.isFinite(pixelsPerNormalizedUnit) || pixelsPerNormalizedUnit <= 0) {
+// Normalized y spans the frame HEIGHT, so the y clearance must divide by the
+// pixels-per-y-unit — callers pass it explicitly (frame height, or width ×
+// image aspect). Omitting it keeps the old width-divided fallback, which
+// understates the y clearance by the map aspect (~2.2× on the 1911×867 plan)
+// and lets vertically-overlapping diagonal pairs escape crowding.
+export function clearanceFromScale(
+  pixelsPerXUnit: number,
+  pixelsPerYUnit: number = pixelsPerXUnit
+): CrowdingClearance {
+  if (
+    !Number.isFinite(pixelsPerXUnit) || pixelsPerXUnit <= 0 ||
+    !Number.isFinite(pixelsPerYUnit) || pixelsPerYUnit <= 0
+  ) {
     return CODE_PILL_DEFAULT_CLEARANCE;
   }
   return {
-    x: CODE_PILL_CLEARANCE_PX.x / pixelsPerNormalizedUnit,
-    y: CODE_PILL_CLEARANCE_PX.y / pixelsPerNormalizedUnit
+    x: CODE_PILL_CLEARANCE_PX.x / pixelsPerXUnit,
+    y: CODE_PILL_CLEARANCE_PX.y / pixelsPerYUnit
   };
 }
 
@@ -46,12 +57,17 @@ export function computeCrowdedSeatIds<T extends { id: string; x: number; y: numb
 }
 
 // Density tiers layered on top of crowding: `crowded` is exactly what
-// computeCrowdedSeatIds flags today; `dense` is the tighter subset (0.6x the
-// clearance on both axes) where pills overlap so much a smaller/compact
-// treatment is warranted, not just a nudge.
+// computeCrowdedSeatIds flags today; `dense` is the tighter subset where even
+// the crowded pill treatment cannot fit the pitch. The crowded code pill
+// renders ~40px wide for the widest four-character codes (vs the 48px
+// clearance), so the dense cutoff is 40/48 of the clearance — below it the
+// crowded treatment itself would still overlap, and only the micro pill fits.
+// A 0.6 factor here leaves a pitch band (0.6–0.83 of clearance) where the
+// picked treatment is guaranteed to collide; don't lower it without also
+// shrinking the crowded pill.
 export type SeatDensityTiers = { crowded: Set<string>; dense: Set<string> };
 
-const DENSE_CLEARANCE_FACTOR = 0.6;
+const DENSE_CLEARANCE_FACTOR = 40 / 48;
 
 export function computeSeatDensityTiers<T extends { id: string; x: number; y: number }>(
   seats: ReadonlyArray<T>,
