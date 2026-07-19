@@ -205,10 +205,10 @@ function InspectorSection({
     // "which section am I in" reads at a glance on the dark panel.
     <details open={defaultOpen} className="group border-b border-l-2 border-white/10 border-l-transparent transition-colors open:border-l-[var(--admin-primary)]">
       <summary
-        className="flex cursor-pointer select-none list-none items-center px-4 py-2.5 text-[12px] font-medium text-[#e4e4e4] transition-colors hover:bg-[#262626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] [&::-webkit-details-marker]:hidden"
+        className="flex cursor-pointer select-none list-none items-center px-4 py-2.5 text-[12px] font-medium text-[#e4e4e4] transition-colors hover:bg-[var(--admin-chrome-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] [&::-webkit-details-marker]:hidden"
       >
         <span id={headingId} className="transition group-open:text-white group-open:[text-shadow:0_0_10px_rgba(241,90,36,0.45)]">{title}</span>
-        <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-auto h-3.5 w-3.5 text-[var(--admin-chrome-muted)] transition-transform duration-150 group-hover:text-[#f4f4f4] group-open:rotate-90 group-open:text-[var(--admin-primary)]">
+        <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-auto h-3.5 w-3.5 text-[var(--admin-chrome-muted)] transition-transform duration-150 group-hover:text-[var(--admin-chrome-text)] group-open:rotate-90 group-open:text-[var(--admin-primary)]">
           <path d="m8 5.5 4.5 4.5L8 14.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </summary>
@@ -441,7 +441,7 @@ export function SeatInspector({
       ? "bg-[var(--admin-status-warn)]"
       : effectiveStatus === "unavailable"
         ? "bg-[var(--admin-status-bad)]"
-        : "bg-[#8d8d8d]";
+        : "bg-[var(--admin-status-neutral)]";
   const seatTypeLabel = isProtectedOriginalSeatLabel(selectedSeat.label)
     ? "Protected original"
     : selectedSeat.is_custom
@@ -450,12 +450,12 @@ export function SeatInspector({
   // Solid status tag (Seat section): shell status hue + AA text partner
   // (#161616 on #24a148 ≈ 4.8:1, on #f1c21b ≈ 12:1; white on #da1e28 = 5.0:1).
   const statusTagClass = effectiveStatus === "assigned"
-    ? "bg-[var(--admin-status-ok)] text-[#161616]"
+    ? "bg-[var(--admin-status-ok)] text-[var(--sp-color-text-primary)]"
     : effectiveStatus === "reserved"
-      ? "bg-[var(--admin-status-warn)] text-[#161616]"
+      ? "bg-[var(--admin-status-warn)] text-[var(--sp-color-text-primary)]"
       : effectiveStatus === "unavailable"
         ? "bg-[var(--admin-status-bad)] text-white"
-        : "bg-[#8d8d8d] text-[#161616]";
+        : "bg-[var(--admin-status-neutral)] text-[var(--sp-color-text-primary)]";
   const fieldErrorMap = fieldErrors.reduce<Partial<Record<SeatInspectorField, string>>>((current, error) => {
     current[error.field] = error.message;
     return current;
@@ -472,10 +472,10 @@ export function SeatInspector({
   // Dark-panel state colors (measured on #161616): #f1c21b ≈ 10.4:1,
   // #ff8389 ≈ 7.9:1, #42be65 ≈ 7.3:1 — all clear AA for small text.
   const inspectorStatePillClassName = localError
-    ? "bg-[#da1e28]/15 text-[#ff8389]"
+    ? "bg-[rgb(var(--admin-status-bad-rgb)/0.15)] text-[var(--admin-chrome-danger-text)]"
     : pending || isDirty
-      ? "bg-[#f1c21b]/10 text-[#f1c21b]"
-      : "bg-[#24a148]/15 text-[#42be65]";
+      ? "bg-[rgb(var(--admin-status-warn-rgb)/0.10)] text-[var(--admin-status-warn)]"
+      : "bg-[rgb(var(--admin-status-ok-rgb)/0.15)] text-[var(--admin-chrome-success-text)]";
   // Header identity reflects the SAVED occupant only — a staged, unsaved pick
   // must not flip the header, or the panel claims an assignment that doesn't
   // exist yet (the draft-impact pill carries the unsaved-state signal).
@@ -487,13 +487,13 @@ export function SeatInspector({
   // Footer action buttons override the shared Button's variants with the dark
   // inspector surfaces (spec §6 — the panel wears the chrome, not the canvas).
   const footerNeutralButtonClass =
-    "!border-white/20 !bg-[#262626] !text-[#f4f4f4] hover:!border-white/30 hover:!bg-[#333333] hover:!text-white disabled:!border-white/10 disabled:!bg-[#1f1f1f] disabled:!text-[#8d8d8d]";
+    "!border-white/20 !bg-[var(--admin-chrome-raised)] !text-[var(--admin-chrome-text)] hover:!border-white/30 hover:!bg-[var(--admin-chrome-raised-hover)] hover:!text-white disabled:!border-white/10 disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)]";
   const footerDangerButtonClass =
-    "!border-transparent !bg-[#da1e28]/15 !text-[#ff8389] hover:!border-[#da1e28] hover:!bg-[#da1e28] hover:!text-white disabled:!border-transparent disabled:!bg-[#1f1f1f] disabled:!text-[#8d8d8d]";
-  const fieldErrorClassName = "border-[#da1e28] focus:border-[#da1e28] focus:ring-[#da1e28]/40";
-  const warningSurfaceClassName = "border-[#f1c21b]/40 bg-[#f1c21b]/10 text-[#f1c21b]";
-  const neutralPillClassName = "bg-white/10 text-[#c6c6c6] ring-white/15";
-  const successPillClassName = "bg-[#24a148]/15 text-[#42be65] ring-[#24a148]/40";
+    "!border-transparent !bg-[rgb(var(--admin-status-bad-rgb)/0.15)] !text-[var(--admin-chrome-danger-text)] hover:!border-[var(--admin-status-bad)] hover:!bg-[var(--admin-status-bad)] hover:!text-white disabled:!border-transparent disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)]";
+  const fieldErrorClassName = "border-[var(--admin-status-bad)] focus:border-[var(--admin-status-bad)] focus:ring-[rgb(var(--admin-status-bad-rgb)/0.40)]";
+  const warningSurfaceClassName = "border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] text-[var(--admin-status-warn)]";
+  const neutralPillClassName = "bg-white/10 text-[var(--admin-chrome-text-soft)] ring-white/15";
+  const successPillClassName = "bg-[rgb(var(--admin-status-ok-rgb)/0.15)] text-[var(--admin-chrome-success-text)] ring-[rgb(var(--admin-status-ok-rgb)/0.40)]";
 
   function fieldErrorId(field: SeatInspectorField) {
     return `seat-inspector-${field}-error`;
@@ -899,7 +899,7 @@ export function SeatInspector({
     onDeleteSeat();
   }
 
-  const fieldClassName = "mt-1 w-full border border-white/20 bg-white/[0.06] px-3 py-2 text-sm font-medium text-[#f4f4f4] outline-none transition placeholder:text-[#8d8d8d] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] disabled:bg-white/[0.03] disabled:text-[#8d8d8d]";
+  const fieldClassName = "mt-1 w-full border border-white/20 bg-white/[0.06] px-3 py-2 text-sm font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-disabled)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] disabled:bg-white/[0.03] disabled:text-[var(--admin-chrome-disabled)]";
   const saveDisabledReason = pending
     ? "Save is unavailable while the current draft change is finishing."
     : !isDirty
@@ -928,7 +928,7 @@ export function SeatInspector({
           }}
           aria-label={`View details for ${selectedSeat.label}`}
           title={`View details for ${selectedSeat.label}`}
-          className="flex min-h-12 w-full items-center justify-center gap-2 border border-white/10 bg-[var(--admin-chrome-bg)] px-4 py-2 text-[#c6c6c6] shadow-elevation-3 transition hover:bg-[#1f1f1f] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] panel:h-full panel:min-h-full panel:w-11 panel:flex-col panel:border-0 panel:border-l panel:border-white/10 panel:px-2 panel:py-4 panel:shadow-none"
+          className="flex min-h-12 w-full items-center justify-center gap-2 border border-white/10 bg-[var(--admin-chrome-bg)] px-4 py-2 text-[var(--admin-chrome-text-soft)] shadow-elevation-3 transition hover:bg-[var(--admin-chrome-elevated)] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] panel:h-full panel:min-h-full panel:w-11 panel:flex-col panel:border-0 panel:border-l panel:border-white/10 panel:px-2 panel:py-4 panel:shadow-none"
         >
           <span className="text-[10px] font-medium tracking-[0.14em] panel:rotate-180 panel:[writing-mode:vertical-rl]">VIEW DETAILS</span>
           <span className="rounded-full bg-[var(--admin-primary-soft)] px-2 py-1 text-[10px] font-bold text-[var(--admin-primary)] ring-1 ring-[var(--admin-primary-border)] panel:mt-2 panel:rotate-180 panel:bg-transparent panel:px-0 panel:py-0 panel:font-mono panel:text-white/60 panel:ring-0 panel:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
@@ -944,7 +944,7 @@ export function SeatInspector({
       tabIndex={-1}
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/10 bg-[var(--admin-chrome-bg)] text-[#f4f4f4] shadow-elevation-4 panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-10 panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] panel:border-0 panel:border-l panel:border-white/10 panel:shadow-none"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/10 bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-elevation-4 panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-10 panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] panel:border-0 panel:border-l panel:border-white/10 panel:shadow-none"
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-white/10 bg-[var(--admin-chrome-bg)] px-4 pb-3 pt-3.5">
         <div className="flex items-start gap-2.5">
@@ -966,12 +966,12 @@ export function SeatInspector({
               }}
               aria-label={`Back to map from ${selectedSeat.label} details`}
               title="Back to map"
-              className="inline-flex h-7 items-center justify-center border border-white/15 px-2.5 text-[11px] font-medium text-[#c6c6c6] transition hover:bg-[#262626] hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] panel:hidden"
+              className="inline-flex h-7 items-center justify-center border border-white/15 px-2.5 text-[11px] font-medium text-[var(--admin-chrome-text-soft)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] panel:hidden"
             >
               Back to map
             </button>
-            <button type="button" onClick={() => { focusRailAfterCollapseRef.current = true; onToggleCollapse(); }} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-7 w-7 items-center justify-center text-[#9a9a9a] transition hover:bg-[#262626] hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] panel:inline-flex"><CollapseIcon /></button>
-            <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 items-center justify-center text-[#9a9a9a] transition hover:bg-[#262626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"><CloseIcon /></button>
+            <button type="button" onClick={() => { focusRailAfterCollapseRef.current = true; onToggleCollapse(); }} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-7 w-7 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] panel:inline-flex"><CollapseIcon /></button>
+            <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"><CloseIcon /></button>
           </div>
         </div>
         <div className="flex min-w-0 items-center gap-2">
@@ -1001,7 +1001,7 @@ export function SeatInspector({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="bg-white/10 px-3 py-1.5 font-semibold text-[#f1c21b] ring-1 ring-[#f1c21b]/40 transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f1c21b]"
+                    className="bg-white/10 px-3 py-1.5 font-semibold text-[var(--admin-status-warn)] ring-1 ring-[rgb(var(--admin-status-warn-rgb)/0.40)] transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
                   >
                     Clear selection
                   </button>
@@ -1009,7 +1009,7 @@ export function SeatInspector({
                     <button
                       type="button"
                       onClick={onClearSearchContext}
-                      className="bg-white/10 px-3 py-1.5 font-semibold text-[#f1c21b] ring-1 ring-[#f1c21b]/40 transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f1c21b]"
+                      className="bg-white/10 px-3 py-1.5 font-semibold text-[var(--admin-status-warn)] ring-1 ring-[rgb(var(--admin-status-warn-rgb)/0.40)] transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
                     >
                       {searchMismatchClearLabel}
                     </button>
@@ -1024,9 +1024,9 @@ export function SeatInspector({
                 tabIndex={-1}
                 role="alert"
                 aria-labelledby="seat-inspector-error-title"
-                className="mx-4 mt-3 border border-[#da1e28]/40 bg-[#da1e28]/10 p-3 text-xs text-[#ff8389] outline-none focus-visible:ring-2 focus-visible:ring-[#da1e28]"
+                className="mx-4 mt-3 border border-[rgb(var(--admin-status-bad-rgb)/0.40)] bg-[rgb(var(--admin-status-bad-rgb)/0.10)] p-3 text-xs text-[var(--admin-chrome-danger-text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-bad)]"
               >
-                <h3 id="seat-inspector-error-title" className="font-bold text-[#ff8389]">Review inspector fields</h3>
+                <h3 id="seat-inspector-error-title" className="font-bold text-[var(--admin-chrome-danger-text)]">Review inspector fields</h3>
                 <p className="mt-1 font-medium leading-5">{localError}</p>
                 {fieldErrors.length > 0 && (
                   <ul className="mt-2 space-y-1">
@@ -1035,7 +1035,7 @@ export function SeatInspector({
                         <button
                           type="button"
                           onClick={() => focusInspectorField(error.field)}
-                          className="text-left font-bold underline decoration-[#da1e28]/60 underline-offset-2 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#da1e28]"
+                          className="text-left font-bold underline decoration-[rgb(var(--admin-status-bad-rgb)/0.60)] underline-offset-2 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-bad)]"
                         >
                           {error.message}
                         </button>
@@ -1122,7 +1122,7 @@ export function SeatInspector({
                     <div
                       id="seat-inspector-employee-listbox"
                       role="listbox"
-                      className="absolute z-50 mt-1 max-h-[min(16rem,40vh)] w-full overflow-auto border border-white/15 bg-[#262626] p-1 shadow-elevation-3"
+                      className="absolute z-50 mt-1 max-h-[min(16rem,40vh)] w-full overflow-auto border border-white/15 bg-[var(--admin-chrome-raised)] p-1 shadow-elevation-3"
                     >
                       {filteredEmployeeOptions.length > 0 ? filteredEmployeeOptions.map((option, index) => (
                         <button
@@ -1146,7 +1146,7 @@ export function SeatInspector({
                             <span className="block truncate text-sm font-semibold">{formatDisplayName(option.employee.full_name)}</span>
                             <span className="block truncate text-xs text-[var(--admin-chrome-muted)]">{option.meta}</span>
                           </span>
-                          <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 font-mono text-[10px] font-semibold tracking-normal text-[#c6c6c6] ring-1 ring-white/15">
+                          <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 font-mono text-[10px] font-semibold tracking-normal text-[var(--admin-chrome-text-soft)] ring-1 ring-white/15">
                             {option.assignedSeatLabel}
                           </span>
                         </button>
@@ -1160,7 +1160,7 @@ export function SeatInspector({
                   )}
                 </div>
                 {fieldErrorMap.employeeName && (
-                  <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[#ff8389]">{fieldErrorMap.employeeName}</p>
+                  <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.employeeName}</p>
                 )}
                 <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold tracking-normal ring-1", employeeNameValue ? matchedEmployee ? successPillClassName : "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]" : neutralPillClassName].join(" ")}>
                   {assignmentStateText}
@@ -1188,7 +1188,7 @@ export function SeatInspector({
                     aria-describedby={fieldDescribedBy("employeePosition")}
                     className={fieldClassName}
                   />
-                  {fieldErrorMap.employeePosition && <p id={fieldErrorId("employeePosition")} className="mt-1 text-xs font-semibold text-[#ff8389]">{fieldErrorMap.employeePosition}</p>}
+                  {fieldErrorMap.employeePosition && <p id={fieldErrorId("employeePosition")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.employeePosition}</p>}
                 </label>
 
                 <label className="block">
@@ -1203,7 +1203,7 @@ export function SeatInspector({
                     aria-invalid={Boolean(fieldErrorMap.phoneExtension)}
                     aria-describedby={fieldDescribedBy("phoneExtension")}
                   />
-                  {fieldErrorMap.phoneExtension && <p id={fieldErrorId("phoneExtension")} className="mt-1 text-xs font-semibold text-[#ff8389]">{fieldErrorMap.phoneExtension}</p>}
+                  {fieldErrorMap.phoneExtension && <p id={fieldErrorId("phoneExtension")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.phoneExtension}</p>}
                 </label>
               </div>
 
@@ -1222,7 +1222,7 @@ export function SeatInspector({
                     <option key={department} value={department}>{department}</option>
                   ))}
                 </select>
-                {fieldErrorMap.department && <p id={fieldErrorId("department")} className="mt-1 text-xs font-semibold text-[#ff8389]">{fieldErrorMap.department}</p>}
+                {fieldErrorMap.department && <p id={fieldErrorId("department")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.department}</p>}
               </label>
               </section>
               )}
@@ -1272,7 +1272,7 @@ export function SeatInspector({
                     <option value="reserved">{STATUS_LABELS.reserved}</option>
                     <option value="unavailable">{STATUS_LABELS.unavailable}</option>
                   </select>
-                  {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[#ff8389]">{fieldErrorMap.status}</p>}
+                  {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.status}</p>}
                 </label>
               )}
             </InspectorSection>
@@ -1289,7 +1289,7 @@ export function SeatInspector({
                   aria-describedby={fieldDescribedBy("notes")}
                   className={`${fieldClassName} min-h-20`}
                 />
-                {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-[#ff8389]">{fieldErrorMap.notes}</p>}
+                {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.notes}</p>}
               </label>
             </InspectorSection>
 
@@ -1338,7 +1338,7 @@ export function SeatInspector({
                    reserved for destructive actions (2026-07-16 critique,
                    minor 7). Block style mirrors the Ask Planner drawer's
                    dark-surface info card. */
-                <p role="status" className="mt-2 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-3 py-2 text-[12px] font-medium leading-4 text-[#c6c6c6]">
+                <p role="status" className="mt-2 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-3 py-2 text-[12px] font-medium leading-4 text-[var(--admin-chrome-text-soft)]">
                   Drag the seat marker to its new spot. Esc exits move.
                 </p>
               )}
@@ -1367,7 +1367,7 @@ export function SeatInspector({
                     aria-label={`Delete custom seat ${selectedSeat.label}`}
                     aria-describedby="seat-inspector-delete-help"
                     title={deleteHelpText}
-                    className="mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight !border-transparent !bg-[#262626] !text-[#ff8389] !shadow-none hover:!border-transparent hover:!bg-[#da1e28]/20 disabled:!border-transparent disabled:!bg-[#1f1f1f] disabled:!text-[#8d8d8d] disabled:hover:!bg-[#1f1f1f]"
+                    className="mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight !border-transparent !bg-[var(--admin-chrome-raised)] !text-[var(--admin-chrome-danger-text)] !shadow-none hover:!border-transparent hover:!bg-[rgb(var(--admin-status-bad-rgb)/0.20)] disabled:!border-transparent disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)] disabled:hover:!bg-[var(--admin-chrome-elevated)]"
                   >
                     Delete seat
                   </Button>

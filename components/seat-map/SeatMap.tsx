@@ -104,7 +104,11 @@ type InspectorGuardAction =
   | { kind: "start-add-seat" }
   | { kind: "start-move-seat" }
   | { kind: "start-swap-seat" }
-  | { kind: "navigate-admin-page"; href: "/admin/management" | "/admin/settings"; destination: string };
+  | { kind: "navigate-admin-page"; href: AdminPageGuardHref; destination: string };
+
+// Whitelisted in-admin destinations for the unsaved-edits guard. Query-string
+// variants must be listed explicitly so the guard stays a closed set.
+type AdminPageGuardHref = "/admin/management" | "/admin/management?tab=publishHistory" | "/admin/settings";
 
 type MapViewMode = "overview" | "detail";
 
@@ -630,6 +634,13 @@ export function SeatMap({
     const viewportElement = viewport;
 
     function updateOverviewMapWidth() {
+      // <640: keep the width null — the fixed mobile frame width (w-[1120px],
+      // horizontal scroll by design, parity with the viewer's fit tier) takes
+      // over, so overview never crushes 60 fixed-size pills into a phone width.
+      if (!window.matchMedia("(min-width: 640px)").matches) {
+        setOverviewMapWidth(null);
+        return;
+      }
       const availableWidth = Math.max(1, viewportElement.clientWidth - 12);
       const availableHeight = Math.max(1, viewportElement.clientHeight - 12);
       const desktopOverview = window.matchMedia("(min-width: 1024px)").matches;
@@ -1732,7 +1743,7 @@ export function SeatMap({
     setAddSeatMode(false);
   }
 
-  function beforeAdminPageNavigation(href: "/admin/management" | "/admin/settings", destination: string) {
+  function beforeAdminPageNavigation(href: AdminPageGuardHref, destination: string) {
     if (!inspectorDirty) return true;
     requestInspectorGuard({ kind: "navigate-admin-page", href, destination });
     return false;
@@ -2247,7 +2258,7 @@ export function SeatMap({
     // so the gray/beige/plan-edge seams become designed edges.
     "relative mx-auto w-full max-w-full overscroll-contain border border-[var(--admin-border)] bg-[var(--sp-color-canvas)] shadow-elevation-2 lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
     mapViewMode === "overview"
-      ? "min-h-[300px] overflow-hidden p-1.5 sm:min-h-[480px] sm:p-2 lg:flex lg:min-h-0 lg:items-center lg:justify-center"
+      ? "min-h-[300px] max-h-[82svh] overflow-auto p-1.5 sm:max-h-none sm:min-h-[480px] sm:overflow-hidden sm:p-2 lg:flex lg:min-h-0 lg:items-center lg:justify-center"
       : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     mapViewMode === "detail" && floor === "3" && !addSeatMode ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]" : ""
@@ -2255,7 +2266,7 @@ export function SeatMap({
   const mapFrameClassName = [
     "relative mx-auto max-w-none",
     mapViewMode === "overview"
-      ? "w-full max-w-[1911px]"
+      ? "w-[1120px] max-w-none sm:w-full sm:max-w-[1911px]"
       : "[--map-detail-base:1120px] sm:[--map-detail-base:1460px] lg:[--map-detail-base:1911px]",
     addSeatMode ? "cursor-crosshair" : ""
   ].join(" ");
@@ -2533,7 +2544,7 @@ export function SeatMap({
                   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
               ) : searchShortcutHint ? (
-                <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)]">{searchShortcutHint}</kbd>
+                <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)] sm:block">{searchShortcutHint}</kbd>
               ) : null}
             </label>
           </div>
@@ -2779,7 +2790,7 @@ export function SeatMap({
                 {publishSummary.hasChanges ? (
                   <>
                     <span>Publish</span>
-                    <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#161616]/15 px-1 text-[11px] font-bold tabular-nums">{publishSummary.totalChangeCount}</span>
+                    <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[rgb(var(--sp-color-text-primary-rgb)/0.15)] px-1 text-[11px] font-bold tabular-nums">{publishSummary.totalChangeCount}</span>
                   </>
                 ) : (
                   <>
@@ -2811,9 +2822,9 @@ export function SeatMap({
                     {lastPublishedLabel ? `Viewers see the map published ${lastPublishedLabel}.` : "Viewers see the currently published map."}
                   </p>
                   <Link
-                    href="/admin/management"
+                    href="/admin/management?tab=publishHistory"
                     onClick={event => {
-                      if (!beforeAdminPageNavigation("/admin/management", "Management")) {
+                      if (!beforeAdminPageNavigation("/admin/management?tab=publishHistory", "Management")) {
                         event.preventDefault();
                         return;
                       }
@@ -3180,7 +3191,7 @@ export function SeatMap({
                 <h2 id="admin-planning-canvas-title" className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">
                   {filtersActive ? searchStatusTitle : "Planning canvas"}
                 </h2>
-                <p aria-label="Seat inventory summary" className="truncate text-xs font-medium text-[var(--admin-text-muted)]">
+                <p aria-label="Seat inventory summary" className="text-xs font-medium text-[var(--admin-text-muted)] sm:truncate">
                   {filtersActive ? searchStatusSummary : (
                     <>
                       {stats.total} seats

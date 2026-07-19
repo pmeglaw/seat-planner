@@ -49,9 +49,9 @@ function statusLabel(status: AskPlannerResponse["status"]) {
 
 function statusClassName(status: AskPlannerResponse["status"]) {
   // Dark-panel state pills (contrast on #161616: #42be65 ≈ 7.3:1, #f1c21b ≈ 10:1, #78a9ff ≈ 6.6:1).
-  if (status === "refused") return "bg-[#f1c21b]/15 text-[#f1c21b] ring-[#f1c21b]/40";
-  if (status === "needs_clarification") return "bg-[#4589ff]/15 text-[#78a9ff] ring-[#4589ff]/40";
-  return "bg-[#24a148]/15 text-[#42be65] ring-[#24a148]/40";
+  if (status === "refused") return "bg-[rgb(var(--admin-status-warn-rgb)/0.15)] text-[var(--admin-status-warn)] ring-[rgb(var(--admin-status-warn-rgb)/0.40)]";
+  if (status === "needs_clarification") return "bg-[rgb(var(--admin-chrome-info-rgb)/0.15)] text-[var(--admin-chrome-info-text)] ring-[rgb(var(--admin-chrome-info-rgb)/0.40)]";
+  return "bg-[rgb(var(--admin-status-ok-rgb)/0.15)] text-[var(--admin-chrome-success-text)] ring-[rgb(var(--admin-status-ok-rgb)/0.40)]";
 }
 
 function friendlyDrawerError(message: string): DrawerError {
@@ -234,13 +234,13 @@ export function AskPlannerDrawer({
               <h2 id="ask-planner-title" className="text-base font-semibold">Ask Planner</h2>
               <p id="ask-planner-description" className="mt-1 text-xs leading-5 text-[var(--admin-chrome-muted)]">Read-only answers from saved draft map data.</p>
             </div>
-            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] transition hover:bg-white/10 hover:text-[#c6c6c6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
+            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] transition hover:bg-white/10 hover:text-[var(--admin-chrome-text-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
               Close
             </button>
           </div>
 
           {draftDirty && (
-            <div className="mt-3 rounded-lg border border-[#f1c21b]/40 bg-[#f1c21b]/10 px-3 py-2 text-xs font-medium text-[#f1c21b]">
+            <div className="mt-3 rounded-lg border border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] px-3 py-2 text-xs font-medium text-[var(--admin-status-warn)]">
               Unsaved inspector edits are not included.
             </div>
           )}
@@ -259,7 +259,7 @@ export function AskPlannerDrawer({
                 onClick={() => choosePrompt(promptOption.prompt)}
                 disabled={pending}
                 title={pending ? "Wait for Ask Planner to finish" : promptOption.prompt}
-                className="max-w-full rounded-full border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[#c6c6c6] transition hover:-translate-y-px hover:border-[var(--admin-primary)] hover:bg-[var(--admin-chrome-hover)] hover:text-white hover:shadow-elevation-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:hover:translate-y-0"
+                className="max-w-full rounded-full border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-chrome-text-soft)] transition hover:-translate-y-px hover:border-[var(--admin-primary)] hover:bg-[var(--admin-chrome-hover)] hover:text-white hover:shadow-elevation-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:hover:translate-y-0"
               >
                 {promptOption.label}
               </button>
@@ -302,7 +302,7 @@ export function AskPlannerDrawer({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
           {!pending && !error && !response && (
-            <section className="rounded-xl border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] p-3 text-sm leading-6 text-[#c6c6c6]">
+            <section className="rounded-xl border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] p-3 text-sm leading-6 text-[var(--admin-chrome-text-soft)]">
               Ask about seats, assignments, zones, or departments. Ask Planner can highlight supporting seats, but it cannot change the map.
             </section>
           )}
@@ -313,14 +313,14 @@ export function AskPlannerDrawer({
                 <span className="h-3 w-3 shrink-0 animate-pulse rounded-full bg-[var(--admin-primary)]" />
                 <div>
                   <div className="text-sm font-semibold text-[var(--admin-primary)]">Checking saved draft map data</div>
-                  <p className="mt-1 text-xs leading-5 text-[#c6c6c6]">Ask Planner is using read-only lookups. No seats or assignments will be changed.</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--admin-chrome-text-soft)]">Ask Planner is using read-only lookups. No seats or assignments will be changed.</p>
                 </div>
               </div>
             </section>
           )}
 
           {error && (
-            <div role="alert" className="rounded-xl border border-[#ff8389]/40 bg-[#fa4d56]/10 p-3 text-sm leading-6 text-[#ff8389]">
+            <div role="alert" className="rounded-xl border border-[rgb(var(--admin-chrome-danger-text-rgb)/0.40)] bg-[rgb(var(--admin-chrome-danger-rgb)/0.10)] p-3 text-sm leading-6 text-[var(--admin-chrome-danger-text)]">
               <div className="font-semibold">{error.title}</div>
               <p className="mt-1 font-semibold">{error.message}</p>
             </div>
@@ -337,7 +337,7 @@ export function AskPlannerDrawer({
                     {response.confidence} confidence
                   </span>
                 </div>
-                <p className="whitespace-pre-wrap text-sm leading-6 text-[#c6c6c6]">{response.answer}</p>
+                <p className="whitespace-pre-wrap text-sm leading-6 text-[var(--admin-chrome-text-soft)]">{response.answer}</p>
                 {response.summary && (
                   <p className="mt-3 border-t border-[var(--admin-chrome-border)] pt-2 text-xs font-medium leading-5 text-[var(--admin-chrome-muted)]">{response.summary}</p>
                 )}
@@ -346,9 +346,9 @@ export function AskPlannerDrawer({
               {(() => {
                 const visibleWarnings = response.warnings.filter(w => w !== BROAD_ANSWER_EMPTY_HIGHLIGHT_WARNING);
                 return visibleWarnings.length > 0 && (
-                  <section className="rounded-xl border border-[#f1c21b]/40 bg-[#f1c21b]/10 p-3">
-                    <div className="text-[11px] font-semibold text-[#f1c21b]">Warnings</div>
-                    <ul className="mt-2 space-y-1 text-xs leading-5 text-[#f1c21b]">
+                  <section className="rounded-xl border border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] p-3">
+                    <div className="text-[11px] font-semibold text-[var(--admin-status-warn)]">Warnings</div>
+                    <ul className="mt-2 space-y-1 text-xs leading-5 text-[var(--admin-status-warn)]">
                       {visibleWarnings.map(warning => (
                         <li key={warning}>{warning}</li>
                       ))}
@@ -387,7 +387,7 @@ export function AskPlannerDrawer({
                       >
                         <span className="min-w-0">
                           <span className="block text-sm font-semibold text-[var(--admin-chrome-text)]">{highlight.label}</span>
-                          <span className="mt-0.5 block text-xs leading-5 text-[#c6c6c6]">{highlight.reason}</span>
+                          <span className="mt-0.5 block text-xs leading-5 text-[var(--admin-chrome-text-soft)]">{highlight.reason}</span>
                         </span>
                         <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold text-[var(--admin-primary)] ring-1 ring-white/15">
                           Select
@@ -409,7 +409,7 @@ export function AskPlannerDrawer({
                         key={followUp}
                         type="button"
                         onClick={() => choosePrompt(followUp)}
-                        className="max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[#c6c6c6] ring-1 ring-[var(--admin-chrome-border)] transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                        className="max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-chrome-text-soft)] ring-1 ring-[var(--admin-chrome-border)] transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                       >
                         {followUp}
                       </button>

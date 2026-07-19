@@ -44,6 +44,10 @@ type AdminManagementPanelProps = {
   seats: SeatWithEmployee[];
   departmentOptions: DepartmentOption[];
   zoneOptions: ZoneOption[];
+  /* Deep-link target from ?tab= (e.g. the map's "View publish history" link);
+     tabs are otherwise client state only, so without this the link always
+     landed on Employees. */
+  initialTab?: ManagementTab;
 };
 
 type ManagementTab = "employees" | "departments" | "zones" | "publishHistory";
@@ -149,14 +153,15 @@ export function AdminManagementPanel({
   employees,
   seats,
   departmentOptions,
-  zoneOptions
+  zoneOptions,
+  initialTab
 }: AdminManagementPanelProps) {
   const managementConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   const [localEmployees, setLocalEmployees] = useState(employees);
   const [localDepartmentOptions, setLocalDepartmentOptions] = useState(departmentOptions);
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
   const [localSeats, setLocalSeats] = useState(seats);
-  const [activeTab, setActiveTab] = useState<ManagementTab>("employees");
+  const [activeTab, setActiveTab] = useState<ManagementTab>(initialTab ?? "employees");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<EmployeeSortKey>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");

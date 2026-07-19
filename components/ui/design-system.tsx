@@ -31,7 +31,7 @@ const buttonVariants: Record<ButtonVariant, string> = {
   quiet:
     "border-transparent bg-transparent text-[var(--sp-color-text-muted)] hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] active:bg-[var(--sp-color-stone)] active:text-[var(--sp-color-text-secondary)]",
   destructive:
-    "border-[var(--sp-color-state-danger)] bg-[var(--sp-color-state-danger)] text-white hover:border-[#7E2F24] hover:bg-[#7E2F24] active:border-[#6B271F] active:bg-[#6B271F]"
+    "border-[var(--sp-color-state-danger)] bg-[var(--sp-color-state-danger)] text-white hover:border-[var(--sp-color-state-danger-hover)] hover:bg-[var(--sp-color-state-danger-hover)] active:border-[var(--sp-color-state-danger-pressed)] active:bg-[var(--sp-color-state-danger-pressed)]"
 };
 
 const buttonLoadingVariants: Record<ButtonVariant, string> = {
@@ -48,7 +48,7 @@ const buttonDisabledVariants: Record<ButtonVariant, string> = {
     "disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-disabled)]",
   quiet: "disabled:border-transparent disabled:bg-transparent disabled:text-[var(--sp-color-stone-muted)]",
   destructive:
-    "disabled:border-[var(--sp-color-state-danger-border)] disabled:bg-[var(--sp-color-state-danger-border)] disabled:text-[#7E2F24]"
+    "disabled:border-[var(--sp-color-state-danger-border)] disabled:bg-[var(--sp-color-state-danger-border)] disabled:text-[var(--sp-color-state-danger-on-soft)]"
 };
 
 const buttonSizes: Record<ButtonSize, string> = {
@@ -115,7 +115,7 @@ const iconButtonVariants: Record<IconButtonVariant, string> = {
   primary:
     "border-[var(--sp-color-action-primary)] bg-[var(--sp-color-action-primary)] text-white hover:border-[var(--sp-color-action-primary-hover)] hover:bg-[var(--sp-color-action-primary-hover)]",
   destructive:
-    "border-[var(--sp-color-state-danger)] bg-[var(--sp-color-state-danger-surface)] text-[#7E2F24] hover:border-[var(--sp-color-state-danger)] hover:bg-[var(--sp-color-state-danger)] hover:text-white"
+    "border-[var(--sp-color-state-danger)] bg-[var(--sp-color-state-danger-surface)] text-[var(--sp-color-state-danger-on-soft)] hover:border-[var(--sp-color-state-danger)] hover:bg-[var(--sp-color-state-danger)] hover:text-white"
 };
 
 const iconButtonLoadingVariants: Record<IconButtonVariant, string> = {
@@ -180,17 +180,17 @@ export type StatusBadgeProps = {
 const statusBadgeTones: Record<StatusBadgeTone, string> = {
   neutral: "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-secondary)] ring-[var(--sp-color-border-subtle)]",
   published:
-    "bg-[var(--sp-color-state-published-surface)] text-[#284C3B] ring-[var(--sp-color-state-published-border)]",
-  draft: "bg-[var(--sp-color-state-draft-surface)] text-[#6D4712] ring-[var(--sp-color-state-draft-border)]",
+    "bg-[var(--sp-color-state-published-surface)] text-[var(--sp-color-state-published-on-soft)] ring-[var(--sp-color-state-published-border)]",
+  draft: "bg-[var(--sp-color-state-draft-surface)] text-[var(--sp-color-state-draft-on-soft)] ring-[var(--sp-color-state-draft-border)]",
   success:
-    "bg-[var(--sp-color-state-success-surface)] text-[#284C3B] ring-[var(--sp-color-state-success-border)]",
+    "bg-[var(--sp-color-state-success-surface)] text-[var(--sp-color-state-success-on-soft)] ring-[var(--sp-color-state-success-border)]",
   warning:
-    "bg-[var(--sp-color-state-warning-surface)] text-[#6D4712] ring-[var(--sp-color-state-warning-border)]",
-  danger: "bg-[var(--sp-color-state-danger-surface)] text-[#7E2F24] ring-[var(--sp-color-state-danger-border)]",
-  info: "bg-[var(--sp-color-state-info-surface)] text-[#244E50] ring-[var(--sp-color-state-info-border)]",
+    "bg-[var(--sp-color-state-warning-surface)] text-[var(--sp-color-state-warning-on-soft)] ring-[var(--sp-color-state-warning-border)]",
+  danger: "bg-[var(--sp-color-state-danger-surface)] text-[var(--sp-color-state-danger-on-soft)] ring-[var(--sp-color-state-danger-border)]",
+  info: "bg-[var(--sp-color-state-info-surface)] text-[var(--sp-color-state-info-on-soft)] ring-[var(--sp-color-state-info-border)]",
   readonly: "bg-[var(--sp-color-surface)] text-[var(--sp-color-text-muted)] ring-[var(--sp-color-border-subtle)]",
-  blocked: "bg-[var(--sp-color-state-danger-surface)] text-[#7E2F24] ring-[var(--sp-color-state-danger-border)]",
-  pending: "bg-[var(--sp-color-state-info-surface)] text-[#244E50] ring-[var(--sp-color-state-info-border)]"
+  blocked: "bg-[var(--sp-color-state-danger-surface)] text-[var(--sp-color-state-danger-on-soft)] ring-[var(--sp-color-state-danger-border)]",
+  pending: "bg-[var(--sp-color-state-info-surface)] text-[var(--sp-color-state-info-on-soft)] ring-[var(--sp-color-state-info-border)]"
 };
 
 export function StatusBadge({ children, className, icon, tone = "neutral" }: StatusBadgeProps) {

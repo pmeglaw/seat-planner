@@ -82,7 +82,7 @@ function getSeatDepartment(seat: SeatWithEmployee) {
 
 function resultKindClass(kind: ViewerSearchResult["kind"]) {
   if (kind === "person") return "bg-[var(--admin-info-soft)] text-[var(--admin-info)] ring-[var(--admin-info)]/30";
-  if (kind === "seat") return "bg-[#161616] text-white ring-[#161616]";
+  if (kind === "seat") return "bg-[var(--admin-chrome-bg)] text-white ring-[var(--admin-chrome-bg)]";
   if (kind === "department") return "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-[var(--admin-success)]/30";
   return "bg-[var(--admin-warning-soft)] text-[var(--admin-warning-text)] ring-[var(--admin-warning-text)]/30";
 }
@@ -1036,7 +1036,7 @@ export function ViewerSeatFinder({
             <ul aria-label="Seat status summary" className="flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--admin-text-secondary)]">
               {[
                 { label: "Assigned", value: assignedCount, dotClass: "bg-[var(--admin-status-ok)]" },
-                { label: "Open", value: openCount, dotClass: "bg-[#8d8d8d]" },
+                { label: "Open", value: openCount, dotClass: "bg-[var(--admin-status-neutral)]" },
                 { label: "Reserved", value: reservedCount, dotClass: "bg-[var(--admin-status-warn)]" }
               ].map(item => (
                 <li key={item.label} className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-2.5 py-1">

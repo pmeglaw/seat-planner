@@ -96,6 +96,18 @@
   --sp-color-state-danger: #B3232C;
   --sp-color-state-danger-surface: #FBE9EA;
   --sp-color-state-danger-border: #E8A5A9;
+  /* Interaction + on-soft text partners for the state families. The on-soft
+     values are the darkened AA text colors StatusBadge and the danger Button
+     variants already shipped as raw hex; promoted 2026-07-19 so the pairs
+     live beside their surfaces. */
+  --sp-color-state-danger-hover: #7E2F24;
+  --sp-color-state-danger-pressed: #6B271F;
+  --sp-color-state-danger-on-soft: #7E2F24;
+  --sp-color-state-published-on-soft: #284C3B;
+  --sp-color-state-draft-on-soft: #6D4712;
+  --sp-color-state-success-on-soft: #284C3B;
+  --sp-color-state-warning-on-soft: #6D4712;
+  --sp-color-state-info-on-soft: #244E50;
   --sp-color-state-info: #31626A;
   --sp-color-state-info-surface: #E0EEF0;
   --sp-color-state-info-border: #A9CDD2;
@@ -221,6 +233,30 @@
   --admin-status-ok: #24a148;
   --admin-status-warn: #f1c21b;
   --admin-status-bad: #da1e28;
+  --admin-status-neutral: #8d8d8d;
+  --admin-status-ok-rgb: 36 161 72;
+  --admin-status-warn-rgb: 241 194 27;
+  --admin-status-bad-rgb: 218 30 40;
+
+  /* Dark-chrome raised surfaces and state/text ladder (measured on #161616:
+     danger text #ff8389 ≈ 7.9:1, success text #42be65 ≈ 7.3:1, info text
+     #78a9ff ≈ 6.6:1, soft #c6c6c6 ≈ 9.9:1, disabled #8d8d8d ≈ 4.6:1).
+     Promoted 2026-07-19 from repeated component-level hex (SeatInspector,
+     AskPlannerDrawer) so the dark-panel palette lives beside the other
+     chrome tokens. Raised (#262626) intentionally shares the hover value —
+     distinct roles, one gray. */
+  --admin-chrome-raised: #262626;
+  --admin-chrome-raised-hover: #333333;
+  --admin-chrome-text-soft: #c6c6c6;
+  --admin-chrome-disabled: #8d8d8d;
+  --admin-chrome-danger: #fa4d56;
+  --admin-chrome-danger-rgb: 250 77 86;
+  --admin-chrome-danger-text: #ff8389;
+  --admin-chrome-danger-text-rgb: 255 131 137;
+  --admin-chrome-success-text: #42be65;
+  --admin-chrome-info: #4589ff;
+  --admin-chrome-info-rgb: 69 137 255;
+  --admin-chrome-info-text: #78a9ff;
 
   --admin-success: #1D6E41;
   --admin-success-soft: #DEF3E4;
