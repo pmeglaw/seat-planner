@@ -14,7 +14,7 @@ export default async function AdminPage() {
     // role-gated), so the page must offer a way back instead of a dead end.
     return (
       <main className="admin-theme flex min-h-screen items-center justify-center bg-[var(--admin-bg)] p-6 text-[var(--admin-text-primary)]">
-        <section className="w-full max-w-md border border-[var(--admin-border)] bg-white shadow-elevation-2">
+        <section className="w-full max-w-md border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-2">
           <div className="flex items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] px-5 py-2.5 text-[12.5px] font-semibold text-[var(--admin-chrome-text)]">
             <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
               {/* eslint-disable-next-line @next/next/no-img-element -- static brand mark, unoptimized on purpose */}

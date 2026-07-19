@@ -41,7 +41,7 @@ export default async function LoginPage() {
         </section>
 
         {user?.email ? (
-          <section className="w-full max-w-[440px] bg-white p-6 sm:px-10 sm:pb-9 sm:pt-10">
+          <section className="w-full max-w-[440px] bg-[var(--admin-surface)] p-6 sm:px-10 sm:pb-9 sm:pt-10">
             <h1 className="text-2xl font-semibold text-[var(--admin-text-primary)]">Already signed in</h1>
             <p className="mt-4 text-[13px] text-[var(--admin-text-secondary)]">
               You&apos;re signed in as <span className="font-semibold text-[var(--admin-text-primary)]">{user.email}</span>.
@@ -55,7 +55,7 @@ export default async function LoginPage() {
             <form action="/auth/signout" method="post" className="mt-2">
               <button
                 type="submit"
-                className="flex h-10 w-full items-center justify-center border border-[var(--admin-border-strong)] bg-white text-sm font-semibold text-[var(--admin-text-primary)] transition-colors hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] focus-visible:ring-offset-2"
+                className="flex h-10 w-full items-center justify-center border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-sm font-semibold text-[var(--admin-text-primary)] transition-colors hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] focus-visible:ring-offset-2"
               >
                 Sign out
               </button>

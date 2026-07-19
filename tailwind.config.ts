@@ -57,7 +57,6 @@ const config: Config = {
           disabled: "rgb(var(--sp-color-state-disabled-rgb) / <alpha-value>)",
           canvas: "rgb(var(--sp-color-canvas-rgb) / <alpha-value>)",
           workspace: "rgb(var(--sp-color-workspace-rgb) / <alpha-value>)",
-          "map-workspace": "rgb(var(--sp-color-map-workspace-rgb) / <alpha-value>)",
           surface: "rgb(var(--sp-color-surface-rgb) / <alpha-value>)",
           "surface-raised": "rgb(var(--sp-color-surface-raised-rgb) / <alpha-value>)",
           subtle: "rgb(var(--sp-color-border-subtle-rgb) / <alpha-value>)",
