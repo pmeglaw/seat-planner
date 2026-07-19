@@ -250,7 +250,11 @@ export function SeatMarker({
             // (w-auto + a min-width floor), so an over-long label that
             // truncates at rest is always recoverable — including on open
             // seats, which have no name to disclose.
-            "h-[24px] min-h-[24px] w-[46px] rounded-[9px] px-2 py-0 pl-2.5 text-center",
+            // px-1.5 (symmetric): the centered label's content box is
+            // 46 − 2 borders − 12 padding = 32px, which fits the widest
+            // 4-char code ("CW05" ≈ 27px in Plex extrabold at 9.5px). The
+            // old px-2/pl-2.5 left 26px and ellipsized every CW label.
+            "h-[24px] min-h-[24px] w-[46px] rounded-[9px] px-1.5 py-0 text-center",
             "group-hover:w-auto group-focus-visible:w-auto",
             hasHoverDisclosure
               ? "group-hover:min-w-[96px] group-hover:rounded-[12px] group-hover:px-2.5 group-hover:pl-3.5 group-hover:text-left group-focus-visible:min-w-[96px] group-focus-visible:rounded-[12px] group-focus-visible:px-2.5 group-focus-visible:pl-3.5 group-focus-visible:text-left"
