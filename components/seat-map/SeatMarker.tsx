@@ -138,7 +138,9 @@ export function SeatMarker({
   const hasEmployee = Boolean(seat.employee);
   // Display-formatted for the title tooltip + aria-label below — assistive
   // strings must match the visible casing, never the raw stored value.
-  const displayName = formatDisplayName(employeeName) || "Open seat";
+  // "Unassigned", not "Open seat": the aria-label already appends the status
+  // ("Open seat."), so an "Open seat" fallback read as "Open seat. Open seat."
+  const displayName = formatDisplayName(employeeName) || "Unassigned";
   const namesVisible = showNames && hasEmployee && !dimmed;
   const isMovable = canEdit && selected && moveSeatMode;
   const moveOrigin = isMovable && !dragging;

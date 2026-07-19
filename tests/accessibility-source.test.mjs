@@ -240,8 +240,11 @@ test("seat markers remain keyboard buttons with contextual accessible labels", a
   assert.match(source, /aria-label=\{`\$\{seat\.label\}: \$\{displayName\}\. \$\{STATUS_LABELS\[seat\.status\]\} seat\./);
   // Assistive strings carry the same display-formatted identity as the visible
   // labels: raw stored casing ("PAM", "ALEX S.") must not leak into the
-  // marker's title tooltip / aria-label (2026-07-16 critique, fix 2).
-  assert.match(source, /const displayName = formatDisplayName\(employeeName\) \|\| "Open seat"/);
+  // marker's title tooltip / aria-label (2026-07-16 critique, fix 2). The
+  // unassigned fallback is "Unassigned", not "Open seat" — the aria-label
+  // already appends the status ("Open seat."), so an "Open seat" fallback
+  // announced as "Open seat. Open seat." (2026-07-19 a11y pass).
+  assert.match(source, /const displayName = formatDisplayName\(employeeName\) \|\| "Unassigned"/);
   assert.match(source, /Search result\./);
   assert.match(source, /highlightedDescription = "Highlighted by Ask Planner"/);
   assert.match(source, /\$\{highlightedDescription\}\./);

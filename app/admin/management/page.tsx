@@ -6,8 +6,21 @@ import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function AdminManagementPage() {
+const managementTabIds = ["employees", "departments", "zones", "publishHistory"] as const;
+type ManagementTabId = (typeof managementTabIds)[number];
+
+function parseTabParam(value: string | string[] | undefined): ManagementTabId | undefined {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  return managementTabIds.find(id => id === candidate);
+}
+
+export default async function AdminManagementPage({
+  searchParams
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { supabase, isAdmin, user } = await getAdminPageContext("/admin/management");
+  const initialTab = parseTabParam((await searchParams)?.tab);
 
   if (!isAdmin) {
     return (
@@ -58,6 +71,7 @@ export default async function AdminManagementPage() {
         employees={(employees ?? []) as Employee[]}
         departmentOptions={(departments ?? []) as DepartmentOption[]}
         zoneOptions={(zones ?? []) as ZoneOption[]}
+        initialTab={initialTab}
       />
     </div>
   );

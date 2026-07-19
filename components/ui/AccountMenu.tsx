@@ -118,7 +118,7 @@ export function AccountMenu({ email, roleLabel, onSelectSettings }: AccountMenuP
             className="absolute right-0 top-[34px] z-50 w-60 border border-white/15 bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
           >
             <div className="border-b border-white/10 px-3 pb-2 pt-1.5">
-              <div className="truncate text-[12.5px] font-medium text-[#f4f4f4]">{email}</div>
+              <div className="truncate text-[12.5px] font-medium text-[var(--admin-chrome-text)]">{email}</div>
               <div className="text-[11px] text-[var(--admin-chrome-muted)]">{roleLabel}</div>
             </div>
             {onSelectSettings && (
