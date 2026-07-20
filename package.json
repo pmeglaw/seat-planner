@@ -15,6 +15,7 @@
     "test": "node --test tests/*.test.mjs",
     "test:db": "node --test tests/rpc-execution.test.mjs",
     "test:ct": "node --test tests/login-form.test.mjs tests/seat-inspector.test.mjs tests/seat-map-components.test.mjs",
+    "test:browser": "playwright test -c playwright-ct.config.ts",
     "test:e2e": "playwright test",
     "coverage": "c8 node --test tests/*.test.mjs",
     "coverage:check": "c8 --check-coverage --lines 90 --functions 95 --branches 80 node --test tests/*.test.mjs"

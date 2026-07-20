@@ -17,6 +17,7 @@ Package manager: npm. Use the existing `package-lock.json`.
 - Test: `npm test`
 - Coverage: `npm run coverage` (c8; `npm run coverage:check` enforces floors)
 - Component tests: `npm run test:ct` (jsdom + esbuild + Testing Library; run inside `npm test` too)
+- SeatMap browser tests: `npm run test:browser` (real Chromium via Playwright, `playwright-ct.config.ts`; runs in CI's e2e job)
 - Typecheck: `npm run typecheck`
 
 `npm test` runs `node --test tests/*.test.mjs`. It requires installed dependencies because some tests import `typescript`, and `tests/rpc-execution.test.mjs` (`npm run test:db`) applies the real `supabase/migrations` to an in-process Postgres (`@electric-sql/pglite`) to exercise the atomic RPCs. `npm run coverage` measures the real `lib/*.ts` via c8: the behavior tests load source through `tests/helpers/tsModuleLoader.mjs` (inline source maps) and c8 runs with `exclude-after-remap`, so coverage attributes to `lib/**` rather than the transpiled temp modules.
