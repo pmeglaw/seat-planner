@@ -1,119 +1,120 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 
-const headers = ["seat_label", "employee_name", "employee_email", "position", "department", "zone", "status", "notes"];
+// Exercises the REAL lib/csv.ts. Previously this file re-implemented the CSV
+// parser/serializer inline (with a different issue shape), so the shipped
+// import/export code never ran under test.
+const {
+  ASSIGNMENT_CSV_HEADERS,
+  parseCsv,
+  parseAssignmentCsv,
+  stringifyCsv,
+  createAssignmentCsvTemplate,
+  exportSeatsToAssignmentCsv
+} = await importTsModule("lib/csv.ts");
 
-function parseCsvLine(line) {
-  const cells = [];
-  let cell = "";
-  let inQuotes = false;
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index];
-    const nextChar = line[index + 1];
-    if (char === '"' && inQuotes && nextChar === '"') {
-      cell += '"';
-      index += 1;
-      continue;
-    }
-    if (char === '"') {
-      inQuotes = !inQuotes;
-      continue;
-    }
-    if (char === "," && !inQuotes) {
-      cells.push(cell);
-      cell = "";
-      continue;
-    }
-    cell += char;
-  }
-  cells.push(cell);
-  return cells.map(value => value.trim());
-}
-
-function parseAssignmentCsv(text) {
-  const lines = text.trim().split(/\r?\n/).filter(Boolean);
-  const parsedHeaders = parseCsvLine(lines[0]).map(value => value.trim().toLowerCase());
-  const issues = [];
-  for (const header of headers) {
-    if (!parsedHeaders.includes(header)) issues.push(`Missing ${header}`);
-  }
-  const rows = lines.slice(1).map((line, rowIndex) => {
-    const cells = parseCsvLine(line);
-    const row = Object.fromEntries(headers.map(header => [header, ""]));
-    parsedHeaders.forEach((header, index) => {
-      if (header in row) row[header] = cells[index] ?? "";
-    });
-    if (!row.seat_label) issues.push(`Row ${rowIndex + 2}: Seat label is required.`);
-    if (row.status === "assigned" && !row.employee_name) issues.push(`Row ${rowIndex + 2}: Assigned rows require employee_name.`);
-    if ((row.status === "reserved" || row.status === "unavailable") && row.employee_name) {
-      issues.push(`Row ${rowIndex + 2}: Rows with employee_name cannot be ${row.status}.`);
-    }
-    if (row.employee_email && !row.employee_name) {
-      issues.push(`Row ${rowIndex + 2}: employee_email requires employee_name.`);
-    }
-    return row;
-  });
-  const seenSeats = new Set();
-  const seenAssignedEmployees = new Set();
-  rows.forEach((row, rowIndex) => {
-    const seatKey = row.seat_label.trim().toLowerCase();
-    if (seatKey) {
-      if (seenSeats.has(seatKey)) issues.push(`Row ${rowIndex + 2}: Duplicate seat row '${row.seat_label}'.`);
-      seenSeats.add(seatKey);
-    }
-    if (row.employee_name.trim() && row.status !== "reserved" && row.status !== "unavailable") {
-      const employeeKey = row.employee_name.trim().toLowerCase();
-      if (seenAssignedEmployees.has(employeeKey)) {
-        issues.push(`Row ${rowIndex + 2}: Employee '${row.employee_name}' appears as assigned more than once.`);
-      }
-      seenAssignedEmployees.add(employeeKey);
-    }
-  });
-  return { rows, issues };
-}
-
-function escapeCsvCell(value) {
-  const text = String(value ?? "");
-  if (/[",\n\r]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
-  return text;
-}
-
-function stringifyCsv(rows) {
-  return [headers.join(","), ...rows.map(row => headers.map(header => escapeCsvCell(row[header])).join(","))].join("\n") + "\n";
-}
+const HEADER_ROW = ASSIGNMENT_CSV_HEADERS.join(",");
+const messages = result => result.issues.map(issue => issue.message);
 
 test("CSV parser accepts assignment rows", () => {
-  const result = parseAssignmentCsv(`seat_label,employee_name,employee_email,position,department,zone,status,notes\nN01,Jane Doe,jane@example.com,Case Manager,Intake,North Pod,assigned,Near window\n`);
-  assert.equal(result.issues.length, 0);
+  const result = parseAssignmentCsv(
+    `${HEADER_ROW}\nN01,Jane Doe,jane@example.com,Case Manager,Intake,North Pod,assigned,Near window\n`
+  );
+  assert.deepEqual(result.issues, []);
   assert.equal(result.rows[0].seat_label, "N01");
   assert.equal(result.rows[0].employee_name, "Jane Doe");
+  assert.equal(result.rows[0].status, "assigned");
 });
 
-test("CSV parser rejects assigned rows without employee name", () => {
-  const result = parseAssignmentCsv(`seat_label,employee_name,employee_email,position,department,zone,status,notes\nN01,,,,North Pod,North Pod,assigned,\n`);
-  assert.equal(result.issues.length, 1);
+test("CSV parser reports issues as {row, message} objects", () => {
+  const result = parseAssignmentCsv(`${HEADER_ROW}\nN01,,,,North Pod,North Pod,assigned,\n`);
+  assert.deepEqual(result.issues, [{ row: 2, message: "Assigned rows require employee_name." }]);
 });
 
 test("CSV parser rejects employee names on reserved or unavailable rows", () => {
-  const result = parseAssignmentCsv(`seat_label,employee_name,employee_email,position,department,zone,status,notes\nN01,Jane Doe,jane@example.com,Case Manager,Intake,North Pod,reserved,\nN02,John Doe,john@example.com,Case Manager,Intake,North Pod,unavailable,\n`);
-  assert.deepEqual(result.issues, [
-    "Row 2: Rows with employee_name cannot be reserved.",
-    "Row 3: Rows with employee_name cannot be unavailable."
+  const result = parseAssignmentCsv(
+    `${HEADER_ROW}\nN01,Jane Doe,jane@example.com,Case Manager,Intake,North Pod,reserved,\nN02,John Doe,john@example.com,Case Manager,Intake,North Pod,unavailable,\n`
+  );
+  assert.deepEqual(messages(result), [
+    "Rows with employee_name cannot be reserved.",
+    "Rows with employee_name cannot be unavailable."
   ]);
 });
 
+test("CSV parser rejects invalid status values", () => {
+  const result = parseAssignmentCsv(`${HEADER_ROW}\nN01,,,,North Pod,North Pod,teleporting,\n`);
+  assert.ok(messages(result).some(message => /Invalid status 'teleporting'\./.test(message)));
+});
+
+test("CSV parser rejects duplicate seat rows", () => {
+  const result = parseAssignmentCsv(
+    `${HEADER_ROW}\nN01,,,,North Pod,North Pod,available,\nN01,,,,North Pod,North Pod,available,\n`
+  );
+  assert.deepEqual(messages(result), ["Duplicate seat row 'N01'."]);
+});
+
 test("CSV parser rejects duplicate employee names even when emails differ", () => {
-  const result = parseAssignmentCsv(`seat_label,employee_name,employee_email,position,department,zone,status,notes\nN01,Jane Doe,jane@example.com,Case Manager,Intake,North Pod,assigned,\nN02,Jane Doe,jane.alt@example.com,Case Manager,Intake,North Pod,assigned,\n`);
-  assert.deepEqual(result.issues, ["Row 3: Employee 'Jane Doe' appears as assigned more than once."]);
+  const result = parseAssignmentCsv(
+    `${HEADER_ROW}\nN01,Jane Doe,jane@example.com,Case Manager,Intake,North Pod,assigned,\nN02,Jane Doe,jane.alt@example.com,Case Manager,Intake,North Pod,assigned,\n`
+  );
+  assert.deepEqual(messages(result), ["Employee 'Jane Doe' appears as assigned more than once."]);
 });
 
 test("CSV parser rejects email-only employee identity", () => {
-  const result = parseAssignmentCsv(`seat_label,employee_name,employee_email,position,department,zone,status,notes\nN01,,jane@example.com,Case Manager,Intake,North Pod,available,\n`);
-  assert.deepEqual(result.issues, ["Row 2: employee_email requires employee_name."]);
+  const result = parseAssignmentCsv(`${HEADER_ROW}\nN01,,jane@example.com,Case Manager,Intake,North Pod,available,\n`);
+  assert.deepEqual(messages(result), ["employee_email requires employee_name."]);
+});
+
+test("CSV parser flags missing required columns and empty input", () => {
+  assert.deepEqual(parseAssignmentCsv("").issues, [{ row: 1, message: "CSV is empty." }]);
+  const missing = parseAssignmentCsv("seat_label,employee_name\nN01,Jane Doe\n");
+  assert.ok(messages(missing).some(message => /Missing required columns:/.test(message)));
+});
+
+test("parseCsv keeps newlines that are inside quoted cells", () => {
+  const rows = parseCsv(`seat_label,notes\nN01,"line one\nline two"\n`);
+  assert.deepEqual(rows, [
+    ["seat_label", "notes"],
+    ["N01", "line one\nline two"]
+  ]);
+});
+
+test("CSV template exposes only the safe assignment headers", () => {
+  assert.equal(createAssignmentCsvTemplate(), `${HEADER_ROW}\n`);
 });
 
 test("CSV stringifier escapes commas and quotes", () => {
-  const csv = stringifyCsv([{ seat_label: "N01", employee_name: "Doe, Jane", employee_email: "", position: "Lead \"QA\"", department: "QA", zone: "North", status: "assigned", notes: "" }]);
+  const csv = stringifyCsv([
+    {
+      seat_label: "N01",
+      employee_name: "Doe, Jane",
+      employee_email: "",
+      position: 'Lead "QA"',
+      department: "QA",
+      zone: "North",
+      status: "assigned",
+      notes: ""
+    }
+  ]);
   assert.match(csv, /"Doe, Jane"/);
   assert.match(csv, /"Lead ""QA"""/);
+});
+
+test("exportSeatsToAssignmentCsv round-trips cleanly back through the parser", () => {
+  const csv = exportSeatsToAssignmentCsv([
+    {
+      label: "N01",
+      status: "assigned",
+      zone: "North Pod",
+      department: "Intake",
+      notes: "Near window",
+      employee: { full_name: "Jane Doe", position: "Case Manager", department: "Intake" }
+    }
+  ]);
+  const parsed = parseAssignmentCsv(csv);
+  assert.deepEqual(parsed.issues, []);
+  assert.equal(parsed.rows[0].seat_label, "N01");
+  assert.equal(parsed.rows[0].employee_name, "Jane Doe");
+  assert.equal(parsed.rows[0].zone, "North Pod");
 });
