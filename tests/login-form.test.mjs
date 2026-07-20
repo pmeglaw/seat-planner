@@ -1,0 +1,143 @@
+import test, { before, afterEach } from "node:test";
+import assert from "node:assert/strict";
+import {
+  loadComponent,
+  renderElement,
+  screen,
+  fireEvent,
+  act,
+  React,
+  configureContext,
+  setUrl,
+  cleanup
+} from "./helpers/renderComponent.mjs";
+
+// Interaction tests for the real LoginForm component: rendered in jsdom with the
+// router and Supabase client replaced by controllable doubles, so we assert on
+// validation, trimming, the auth calls it makes, and the post-login redirect.
+let LoginForm;
+before(async () => {
+  ({ LoginForm } = await loadComponent("@/components/auth/LoginForm"));
+});
+afterEach(() => cleanup());
+
+// Build a Supabase auth double that records calls and returns the given results.
+function makeSupabase(results = {}) {
+  const calls = { password: [], otp: [], reset: [] };
+  const supabase = {
+    auth: {
+      signInWithPassword: async arg => {
+        calls.password.push(arg);
+        return results.password ?? { error: null };
+      },
+      signInWithOtp: async arg => {
+        calls.otp.push(arg);
+        return results.otp ?? { error: null };
+      },
+      resetPasswordForEmail: async (email, options) => {
+        calls.reset.push({ email, options });
+        return results.reset ?? { error: null };
+      }
+    }
+  };
+  return { supabase, calls };
+}
+
+async function mountLogin({ url = "/login", results = {} } = {}) {
+  setUrl(url);
+  const pushed = [];
+  const { supabase, calls } = makeSupabase(results);
+  configureContext({ router: { push: p => pushed.push(p) }, supabase });
+  await renderElement(React.createElement(LoginForm));
+  return { calls, pushed };
+}
+
+const type = (selector, value) => act(async () => fireEvent.change(document.querySelector(selector), { target: { value } }));
+const submit = () => act(async () => fireEvent.submit(document.querySelector("form")));
+const flush = () => act(async () => {});
+
+test("renders the sign-in form with both auth modes", async () => {
+  await mountLogin();
+  assert.equal(screen.getByRole("heading", { name: "Sign in" }).tagName, "H1");
+  assert.ok(document.querySelector('input[type="email"]'));
+  assert.ok(document.querySelector('input[type="password"]'));
+  assert.equal(screen.getByRole("button", { name: /^Password/ }).getAttribute("aria-pressed"), "true");
+  assert.equal(screen.getByRole("button", { name: /Magic link/ }).getAttribute("aria-pressed"), "false");
+});
+
+test("submitting with no email shows a validation alert and makes no auth call", async () => {
+  const { calls } = await mountLogin();
+  await submit();
+  assert.match(screen.getByRole("alert").textContent, /Enter your work email and password/);
+  assert.equal(calls.password.length, 0);
+});
+
+test("password mode requires a password", async () => {
+  const { calls } = await mountLogin();
+  await type('input[type="email"]', "person@example.com");
+  await submit();
+  assert.match(screen.getByRole("alert").textContent, /Enter your password/);
+  assert.equal(calls.password.length, 0);
+});
+
+test("successful sign-in calls Supabase with the credentials and redirects to ?next", async () => {
+  const { calls, pushed } = await mountLogin({ url: "/login?next=/admin" });
+  await type('input[type="email"]', "person@example.com");
+  await type('input[type="password"]', "hunter2");
+  await submit();
+  await flush();
+
+  assert.deepEqual(calls.password, [{ email: "person@example.com", password: "hunter2" }]);
+  assert.match(screen.getByRole("status").textContent, /Redirecting/);
+  assert.deepEqual(pushed, ["/admin"]);
+});
+
+test("an open-redirect ?next is ignored in favor of '/'", async () => {
+  const { pushed } = await mountLogin({ url: "/login?next=https://evil.example" });
+  await type('input[type="email"]', "person@example.com");
+  await type('input[type="password"]', "hunter2");
+  await submit();
+  await flush();
+  assert.deepEqual(pushed, ["/"]);
+});
+
+test("a Supabase error is mapped to friendly guidance and blocks redirect", async () => {
+  const { pushed } = await mountLogin({ results: { password: { error: { message: "Email rate limit exceeded" } } } });
+  await type('input[type="email"]', "person@example.com");
+  await type('input[type="password"]', "hunter2");
+  await submit();
+  await flush();
+  assert.match(screen.getByRole("alert").textContent, /Please wait 60 seconds/);
+  assert.deepEqual(pushed, []);
+});
+
+test("magic-link mode sends an OTP without creating a user", async () => {
+  const { calls } = await mountLogin();
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: /Magic link/ })));
+  await type('input[type="email"]', "person@example.com");
+  await submit();
+  await flush();
+
+  assert.equal(calls.otp.length, 1);
+  assert.equal(calls.otp[0].email, "person@example.com");
+  assert.equal(calls.otp[0].options.shouldCreateUser, false);
+  assert.match(screen.getByRole("status").textContent, /Check your email/);
+});
+
+test("forgot-password requires an email before sending a reset", async () => {
+  const { calls } = await mountLogin();
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: /Forgot password/ })));
+  assert.match(screen.getByRole("alert").textContent, /Enter your work email first/);
+  assert.equal(calls.reset.length, 0);
+
+  await type('input[type="email"]', "person@example.com");
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: /Forgot password/ })));
+  await flush();
+  assert.equal(calls.reset.length, 1);
+  assert.equal(calls.reset[0].email, "person@example.com");
+});
+
+test("an ?error query param is surfaced through friendlyAuthMessage on load", async () => {
+  await mountLogin({ url: `/login?error=${encodeURIComponent("Invalid login credentials")}` });
+  assert.match(screen.getByRole("alert").textContent, /Email or password is incorrect/);
+});
