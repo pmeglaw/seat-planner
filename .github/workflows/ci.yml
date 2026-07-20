@@ -50,6 +50,9 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      - name: SeatMap component tests
+        run: npm run test:browser
+
       - name: Build
         run: npm run build
 
