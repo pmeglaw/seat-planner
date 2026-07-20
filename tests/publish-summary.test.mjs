@@ -1,20 +1,6 @@
 import assert from "node:assert/strict";
+import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 import test from "node:test";
-import ts from "typescript";
-
-async function importTsModule(path) {
-  const source = await import("node:fs/promises").then(fs => fs.readFile(new URL(`../${path}`, import.meta.url), "utf8"));
-  const transpiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.ESNext,
-      target: ts.ScriptTarget.ES2022,
-      moduleResolution: ts.ModuleResolutionKind.Bundler
-    }
-  });
-  const moduleUrl = `data:text/javascript;base64,${Buffer.from(transpiled.outputText).toString("base64")}`;
-  return import(moduleUrl);
-}
-
 const publishSummary = await importTsModule("lib/publishSummary.ts");
 
 function employee(id, fullName) {

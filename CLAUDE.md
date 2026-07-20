@@ -14,6 +14,7 @@ Private office seat-planning app: Next.js 15 (App Router) · React 19 · TypeScr
 - Build: `npm run build` · Lint: `npm run lint` · Typecheck: `npm run typecheck`
 - Tests: `npm test` (runs `node --test tests/*.test.mjs`; requires `node_modules` because some tests import `typescript` to type-check source)
 - Single test file: `node --test tests/seat-swap.test.mjs`
+- Coverage: `npm run coverage` (c8; text summary + HTML in `coverage/`) · `npm run coverage:check` enforces floors (lines 90 / funcs 95 / branches 80). Coverage is measured against the real `lib/*.ts` because the behavior tests run source through `tests/helpers/tsModuleLoader.mjs`, which emits inline source maps; c8 runs with `exclude-after-remap` so it attributes coverage to the source files. Scope is `lib/**` (the tested business core); framework-coupled modules with no unit suite (`lib/supabase/*`, `lib/adminPageGuard.ts`, page-level code, Ask Planner's OpenAI I/O) fall outside it.
 - E2E smoke suite: `npm run test:e2e` (Playwright; needs a prior `npm run build`)
 - Install (CI-faithful): `npm ci` (Node `>=22`, matching CI and `engines`)
 - QA handoff report: `npm run qa:handoff` (regenerates the improvement-loop handoff under `tools/seat-planner-improvement-loop/`)

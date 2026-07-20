@@ -1,20 +1,7 @@
 import assert from "node:assert/strict";
+import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import ts from "typescript";
-
-async function importTsModule(relativePath) {
-  const source = await readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
-  const transpiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.ESNext,
-      target: ts.ScriptTarget.ES2022
-    }
-  });
-  const moduleUrl = `data:text/javascript;base64,${Buffer.from(transpiled.outputText).toString("base64")}`;
-  return import(moduleUrl);
-}
-
 const agent = await importTsModule("lib/mapOperationsAgent.ts");
 
 function employee(id, fullName, department, active = true) {

@@ -1,22 +1,9 @@
 import assert from "node:assert/strict";
+import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 import test from "node:test";
-import ts from "typescript";
 
 // Same standalone-transpile harness as viewer-seat-search.test.mjs: the
 // module keeps local formatting mirrors so it can run from a data: URL.
-async function importTsModule(path) {
-  const source = await import("node:fs/promises").then(fs => fs.readFile(new URL(`../${path}`, import.meta.url), "utf8"));
-  const transpiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.ESNext,
-      target: ts.ScriptTarget.ES2022,
-      moduleResolution: ts.ModuleResolutionKind.Bundler
-    }
-  });
-  const moduleUrl = `data:text/javascript;base64,${Buffer.from(transpiled.outputText).toString("base64")}`;
-  return import(moduleUrl);
-}
-
 const viewerSearch = await importTsModule("lib/viewerSeatSearch.ts");
 
 function employee(overrides) {

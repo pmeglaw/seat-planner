@@ -1,24 +1,10 @@
 import assert from "node:assert/strict";
+import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 import test from "node:test";
-import ts from "typescript";
 
 // E1 regression coverage: the management Departments tab and Employees tab must
 // derive department counts from ONE case-insensitive source so "Accounting — 0
 // employees" while an Accounting employee exists is structurally impossible.
-
-async function importTsModule(path) {
-  const source = await import("node:fs/promises").then(fs => fs.readFile(new URL(`../${path}`, import.meta.url), "utf8"));
-  const transpiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.ESNext,
-      target: ts.ScriptTarget.ES2022,
-      moduleResolution: ts.ModuleResolutionKind.Bundler
-    }
-  });
-  const encoded = Buffer.from(transpiled.outputText, "utf8").toString("base64");
-  return import(`data:text/javascript;base64,${encoded}`);
-}
-
 const { buildDepartmentRoster, departmentKey, normalizeDepartmentName } = await importTsModule("lib/departments.ts");
 
 function employee(overrides = {}) {
