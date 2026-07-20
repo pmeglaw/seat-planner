@@ -1,0 +1,10 @@
+{
+  "all": false,
+  "include": ["lib/**/*.ts"],
+  "exclude": ["**/*.d.ts", "lib/types.ts"],
+  "exclude-after-remap": true,
+  "reporter": ["text", "html"],
+  "reports-dir": "coverage",
+  "clean": true,
+  "skip-full": false
+}

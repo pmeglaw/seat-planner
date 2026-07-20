@@ -15,9 +15,10 @@ Package manager: npm. Use the existing `package-lock.json`.
 - Build: `npm run build`
 - Lint: `npm run lint`
 - Test: `npm test`
+- Coverage: `npm run coverage` (c8; `npm run coverage:check` enforces floors)
 - Typecheck: `npm run typecheck`
 
-`npm test` runs `node --test tests/*.test.mjs`. It requires installed dependencies because some tests import `typescript`.
+`npm test` runs `node --test tests/*.test.mjs`. It requires installed dependencies because some tests import `typescript`. `npm run coverage` measures the real `lib/*.ts` via c8: the behavior tests load source through `tests/helpers/tsModuleLoader.mjs` (inline source maps) and c8 runs with `exclude-after-remap`, so coverage attributes to `lib/**` rather than the transpiled temp modules.
 
 ## Important Folders
 
