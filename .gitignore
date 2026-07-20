@@ -16,6 +16,9 @@ coverage
 # TypeScript incremental build cache
 tsconfig.tsbuildinfo
 
+# Local Claude Code plugin-enablement config (per-machine)
+.claude/settings.json
+
 # Local QA artifacts (screenshots, critique reports, driver output)
 /output/
 .env*
