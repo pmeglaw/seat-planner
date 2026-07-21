@@ -30,13 +30,14 @@ test("desktop marker system keeps true coordinates and calibration constants unt
   assert.match(transformSource, /xScale: 0\.821622/);
   assert.match(transformSource, /xOffset: 0\.099048/);
   assert.match(transformSource, /yScale: 1\.180036/);
-  // Chair-center re-fit, 2026-07-20 (fix/floor-plan-chair-calibration): north /
-  // west / center-west (both) / center-desks were ~10–17px above their chairs and
-  // were least-squares re-fit to detected chair centres. These pin north-pod's
-  // tuned xScale/xOffset and center-west-lower's tuned yScale.
-  // Earlier micro-tune (fix/floor-plan-polish) pinned NE-right xOffset and
-  // SE-lower xScale, both left untouched here:
-  assert.match(transformSource, /xOffset: -0\.175684/);
+  // Chair-centre re-fits (2026-07-20). Phase 1 (fix/floor-plan-chair-calibration):
+  // north / west / center-west (both) / center-desks were ~10–17px above their
+  // chairs. Phase 2 (fix/floor-plan-calibration-ene-tighten): east / northeast
+  // (both quads) were ~7–10px high (NE right column also drifted right) and re-fit
+  // too. Pins below sample the tuned constants — north-pod xScale/xOffset,
+  // center-west-lower yScale, and NE-right's re-fit xOffset. SE-lower xScale is
+  // unchanged since the fix/floor-plan-polish micro-tune:
+  assert.match(transformSource, /xOffset: -0\.088457/);
   assert.match(transformSource, /xScale: 0\.835824/);
 });
 
