@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 An `AGENTS.md` also exists with overlapping guidance (folder map, coding conventions, "done means" checklist). Read it too; this file focuses on the architecture that only becomes clear after reading several files together.
 
+Repo-scoped skills live in `.claude/skills/` — `run-seat-planner` (boot and drive the app), `chrome-pixel-capture` (pixel-accurate screenshots), `test-tiers` (harness mechanics). Use `run-seat-planner` to check UI work in a real browser: build, typecheck and tests passing is **not** visual verification. When a convention or workflow needs repeating across sessions, add a `SKILL.md` there rather than growing this file — only a skill's one-line description stays resident, while everything here is loaded into every session.
+
 ## Stack
 
 Private office seat-planning app (Next.js App Router + Supabase, TypeScript strict). Deployed on Vercel to `seats.megeredchianlaw.com`.
@@ -16,7 +18,7 @@ Framework and library **versions live in `package.json`** — don't restate them
 - Tests: `npm test` (runs `node --test tests/*.test.mjs`; requires `node_modules` because some tests import `typescript` to type-check source)
 - Single test file: `node --test tests/seat-swap.test.mjs`
 - Coverage: `npm run coverage` (c8; text summary + HTML in `coverage/`) · `npm run coverage:check` enforces floors (lines 90 / funcs 95 / branches 80). Coverage is measured against the real `lib/*.ts` because the behavior tests run source through `tests/helpers/tsModuleLoader.mjs`, which emits inline source maps; c8 runs with `exclude-after-remap` so it attributes coverage to the source files. Scope is `lib/**` (the tested business core); framework-coupled modules with no unit suite (`lib/supabase/*`, `lib/adminPageGuard.ts`, page-level code, Ask Planner's OpenAI I/O) fall outside it.
-- E2E smoke suite: `npm run test:e2e` (Playwright; needs a prior `npm run build`)
+- E2E smoke suite: `npm run test:e2e` (Playwright; needs a prior `npm run build`; locally point `PW_CHROMIUM_PATH` at a prebuilt Chromium — CI installs its own)
 - Install (CI-faithful): `npm ci` (Node `>=22`, matching CI and `engines`)
 - QA handoff report: `npm run qa:handoff` (regenerates the improvement-loop handoff under `tools/seat-planner-improvement-loop/`)
 
@@ -36,13 +38,19 @@ Keep this separation absolute: never let a viewer path read draft, never let an 
 
 **Employee data is layered by snapshot, not by row.** `employees` (plus `department_options`/`zone_options`) is the admins' live working set; viewers never read it. `publish_seat_map()` atomically replaces `public.published_employees` (a snapshot of the active directory) alongside the seat copy, and `app/page.tsx` stitches viewer seat→employee joins from that snapshot only. Consequences: employee/department edits (Management, inspector, CSV, `rename_department`) reach viewers **only at the next publish**; the publish review diffs live vs snapshot (`employeeDetailChanges` in `lib/publishSummary.ts`) so pending people edits are visible and publishable. Never point a viewer surface at live `employees`, and never write `published_employees` outside the publish RPC/migrations (it is select-only under RLS; `tests/published-employee-snapshot.test.mjs` guards all of this).
 
+**The draft layer is ONE shared copy, and concurrent admin edits are fenced.** Undo/redo and JSON restore rewrite the *whole* draft from a client-held snapshot, so a session working from stale data can silently revert another admin's edits. `lib/draftConcurrency.ts` plus the draft RPCs close that hole: the client sends the state it believes is current — an exact per-row `(id, updated_at)` expectation for whole-draft operations, or one seat's `updated_at` for per-seat edits — and the RPC rejects with SQLSTATE `'MLS02'` (`STALE_DRAFT_SQLSTATE`) if the database has advanced past it. `updated_at` is maintained by the `touch_seats_updated_at` trigger.
+
+**Thread the fence through any new draft mutation** — `tests/draft-concurrency.test.mjs` guards it. Two details there look like redundancy and are load-bearing (the per-row map instead of an aggregate; timestamps passed back verbatim, never re-parsed through `Date`); the header comment in `lib/draftConcurrency.ts` explains why before you "simplify" either.
+
 ## Security boundary (three enforced layers, do not rely on any one alone)
 
 1. **Server actions** — all mutations live in `app/actions.ts` (`"use server"`). Every exported action calls `requireAdmin()` first, which re-checks `profiles.role === 'admin'` against the authenticated Supabase user. `lib/permissions.ts` (`isAdmin`/`assertAdmin`) is the pure-function version used in components/tests.
 2. **Postgres RLS + SECURITY DEFINER RPCs** — the database independently enforces admin. Client-side guards are UX only.
 3. **`middleware.ts`** → `lib/supabase/middleware.ts` refreshes the auth session cookie on every matched request.
 
-Never bypass admin checks with client-only guards, and never expose the service-role key to the browser (only `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` are client-safe). Auth is email/password-primary with magic-link fallback; the callback routes (`app/auth/confirm`, `app/auth/callback`, `app/auth/update-password`) accept PKCE `code` / `token_hash` links and store the session in server cookies. Auth-facing copy lives in `lib/authMessages.ts`.
+`lib/adminPageGuard.ts` (`getAdminPageContext`) is the shared prologue for the `/admin*` pages (login redirect + `profiles.role` check). It is UX-layer gating only — **not** a substitute for layers 1–2.
+
+Never bypass admin checks with client-only guards, and never expose the service-role key to the browser (only `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` are client-safe). Auth is email/password-primary with magic-link fallback; magic-link sign-in passes `shouldCreateUser: false`, so it never self-provisions accounts. The callback routes (`app/auth/confirm`, `app/auth/callback`, `app/auth/update-password`) accept PKCE `code` / `token_hash` links and store the session in server cookies. Auth-facing copy lives in `lib/authMessages.ts`.
 
 ## Mutations go through RPCs for transaction safety
 
@@ -74,7 +82,7 @@ Styling is organized around **semantic design tokens**: CSS custom properties na
 
 Treat the tokens and primitives as an **evolvable starting point, not fixed law**: they exist so a redesign can restyle the whole app by changing values in one place, and adding/renaming/retiring tokens or reworking the look is expected and welcome. The only hard rule the tests still enforce is **accessibility** (`accessibility-source` — keep focus rings, keyboard operability, and dialog semantics intact) and **not leaking contrast/a11y regressions** — nothing pins a specific palette or layout. `app/globals.css` documents measured contrast ratios in comments; when you change colors, keep body text ≥ 4.5:1 and re-check those notes, but the colors themselves are yours to change.
 
-`app/concepts/component-state-board` is a **prototype-only** design surface, gated by `prototypesEnabled()` — it returns 404 in production unless `SEAT_PLANNER_ENABLE_PROTOTYPES=true`. It is not part of the shipped viewer/admin flows.
+`app/concepts/` holds **prototype-only** design surfaces — `component-state-board` and `map-redesign`. Each page carries its own `prototypesEnabled()` gate and returns 404 in production unless `SEAT_PLANNER_ENABLE_PROTOTYPES=true`. They are not part of the shipped viewer/admin flows. Because the pages are statically prerendered, that flag must be set at **build** time to reach them via `npm run start` — setting it at request time only works in dev.
 
 ## Migrations directory has a dual-numbering history
 
