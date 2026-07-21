@@ -1,0 +1,20 @@
+---
+name: test-tiers
+description: How the seat-planner test tiers are wired — the jsdom component-test harness (renderComponent.mjs), the real-browser Playwright SeatMap tier (test:browser), and the backend-free e2e smoke suite (test:e2e). Use when writing, debugging, or extending tests in any of these tiers, or when a test fails for harness/boundary-stubbing reasons rather than product logic.
+---
+
+# Test tier mechanics
+
+Reference for the three framework-coupled test tiers. The always-loaded rules (prefer extending a `lib/` helper; the `*-source.test.mjs` guardrail contract) live in `CLAUDE.md` — this file is only the wiring.
+
+## Component tests (jsdom) — `npm run test:ct`
+
+**Component tests** render real client components in jsdom via `tests/helpers/renderComponent.mjs`: it bundles a component with esbuild (resolving `@/` through tsconfig) while swapping the server/framework boundaries — `@/app/actions`, `@/lib/supabase/client`, `next/navigation`, `next/image`, `next/link` — for controllable doubles read from `globalThis.__ct`, then renders with `@testing-library/react`. `login-form` (auth flows, validation, the `safeNextPath` redirect guard) and `seat-inspector` (viewer↔admin isolation, close/collapse/delete callbacks, custom-vs-protected delete) cover their whole components. `SeatMap` itself can't be unit-rendered in jsdom — it runs live layout/de-collision measurement that never converges against jsdom's zero-size geometry — so `seat-map-components` covers the renderable pieces it composes (`SeatMarker`, `MapZoomControl`, `FloorSelector`) there. Needs `esbuild`, `jsdom`, and `@testing-library/*` installed.
+
+## Real-browser SeatMap tier — `npm run test:browser`
+
+The **full SeatMap** is instead exercised in a **real browser** by a separate Playwright tier (`npm run test:browser`, `playwright-ct.config.ts`, `tests/browser/`). `tests/browser/build-harness.ts` esbuild-bundles the real SeatMap into a static IIFE harness (the same server/framework boundaries swapped for doubles that call back to Node via `window.__ctCall`), which `seat-map.spec.ts` loads over `file://` — no app server, no Next build — and drives marker→inspector selection, close, and the viewer↔admin edit-affordance gate. The harness ships no Tailwind CSS, so markers aren't laid out for hit-testing: clicks use `dispatchEvent` and assertions are presence-based (`toBeAttached`), targeting SeatMap's composed behavior, not pixel layout. It runs in CI's `e2e` job (Chromium already installed there), separate from `npm test`.
+
+## End-to-end smoke suite — `npm run test:e2e`
+
+A separate **end-to-end tier** lives in `tests/e2e/` (Playwright, config in `playwright.config.ts`). It is a **backend-free smoke suite**: it builds the app, boots it with only *dummy* Supabase env, and asserts the app starts, `/login` renders the sign-in form, and the auth middleware redirects unauthenticated `/` and `/admin` to `/login`. Authenticated flows would need a seeded test project + CI secrets (tracked as a follow-up).
