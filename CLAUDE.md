@@ -6,7 +6,9 @@ An `AGENTS.md` also exists with overlapping guidance (folder map, coding convent
 
 ## Stack
 
-Private office seat-planning app: Next.js 15 (App Router) · React 19 · TypeScript (strict) · Tailwind CSS 3 · Supabase (Auth + Postgres + RLS) · Next.js server actions. Deployed on Vercel to `seats.megeredchianlaw.com`.
+Private office seat-planning app (Next.js App Router + Supabase, TypeScript strict). Deployed on Vercel to `seats.megeredchianlaw.com`.
+
+Framework and library **versions live in `package.json`** — don't restate them here, they go stale silently.
 
 ## Commands
 
@@ -51,7 +53,9 @@ When changing this kind of logic you usually edit **both** the TypeScript action
 
 ## Coordinates and the map calibration transform
 
-Seats store **normalized `x`/`y` in `[0,1]`** (already normalized in the DB — do not re-run any normalization pass; see `BASELINE_NOTES.md`). `lib/seatMath.ts` clamps/rounds and converts to CSS percentages. `lib/mapLayoutTransform.ts` applies a per-area linear calibration between *saved* coordinates and *visual* on-image coordinates (the floor-plan image is 1911×867). When adding/moving seats, keep saved coordinates normalized and let the transform handle display.
+Seats store **normalized `x`/`y` in `[0,1]`** (already normalized in the DB — do not re-run any normalization pass; see `BASELINE_NOTES.md`). `lib/seatMath.ts` clamps/rounds and converts to CSS percentages. `lib/mapLayoutTransform.ts` applies a per-area linear calibration between *saved* coordinates and *visual* on-image coordinates. When adding/moving seats, keep saved coordinates normalized and let the transform handle display.
+
+`MAP_IMAGE_WIDTH`/`MAP_IMAGE_HEIGHT` are **3822×1734** — the shipped webp is a 2x upscale (#124) of the 1911×867 master PNG, which is still the canonical source. The display cap stays 1911px, and because calibration is normalized and the upscale kept the same framing, the 2x swap changed no constants. Don't read 3822 as a coordinate space: saved and visual coordinates are both in `[0,1]`.
 
 ## `lib/` is the tested business core
 
