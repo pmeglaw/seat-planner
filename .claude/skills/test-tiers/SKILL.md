@@ -1,11 +1,11 @@
 ---
 name: test-tiers
-description: How the seat-planner test tiers are wired — the jsdom component-test harness (renderComponent.mjs), the real-browser Playwright SeatMap tier (test:browser), and the backend-free e2e smoke suite (test:e2e). Use when writing, debugging, or extending tests in any of these tiers, or when a test fails for harness/boundary-stubbing reasons rather than product logic.
+description: How the seat-planner test tiers are wired — the jsdom component-test harness (renderComponent.mjs), the real-browser Playwright SeatMap tier (test:browser), the backend-free e2e smoke suite (test:e2e), and the PGlite SQL-execution harness behind rpc-execution. Use when writing, debugging, or extending tests in any of these tiers, or when a test fails for harness/boundary-stubbing reasons rather than product logic.
 ---
 
 # Test tier mechanics
 
-Reference for the three framework-coupled test tiers. The always-loaded rules (prefer extending a `lib/` helper; the `*-source.test.mjs` guardrail contract) live in `CLAUDE.md` — this file is only the wiring.
+Reference for the three framework-coupled test tiers, plus the SQL-execution harness that runs inside `npm test`. The always-loaded rules (prefer extending a `lib/` helper; the `*-source.test.mjs` guardrail contract) live in `CLAUDE.md` — this file is only the wiring.
 
 ## Component tests (jsdom) — `npm run test:ct`
 
@@ -18,3 +18,7 @@ The **full SeatMap** is instead exercised in a **real browser** by a separate Pl
 ## End-to-end smoke suite — `npm run test:e2e`
 
 A separate **end-to-end tier** lives in `tests/e2e/` (Playwright, config in `playwright.config.ts`). It is a **backend-free smoke suite**: it builds the app, boots it with only *dummy* Supabase env, and asserts the app starts, `/login` renders the sign-in form, and the auth middleware redirects unauthenticated `/` and `/admin` to `/login`. Authenticated flows would need a seeded test project + CI secrets (tracked as a follow-up).
+
+## SQL-execution harness — `tests/rpc-execution.test.mjs`
+
+Unlike the three tiers above, this one runs inside `npm test`. `tests/helpers/pgHarness.mjs` stubs what PGlite doesn't have: Supabase's `auth` schema, `auth.uid()`, and the `anon`/`authenticated` roles. The RPCs' own `app_private.is_admin()` gate is then exercised by switching `app.current_user_id` between an admin and a viewer. What the tier covers and why it exists stays in `CLAUDE.md`.
