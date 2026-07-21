@@ -53,9 +53,11 @@ const DEFAULT_PREVIEW_TRANSFORM: LinearTransform = {
 // Per-area saved→visual calibration, fit so each seat's visual point lands on the
 // CHAIR CENTRE in the render. 2026-07-20 chair re-fit (fix/floor-plan-chair-
 // calibration): north / west / center-west (both sub-areas) / center-desks were
-// placing pills ~10–17px ABOVE their chairs (verified against the real floor plan,
-// then least-squares re-fit to detected chair centres). east / northeast / southeast
-// were already chair-aligned and are left untouched.
+// placing pills ~10–17px ABOVE their chairs. Follow-up (fix/floor-plan-calibration-
+// ene-tighten): east / northeast (both quads) were a smaller ~7–10px high — and the
+// NE right column also drifted right — so they were re-fit too. Southeast reads
+// aligned and is left untouched. All fits are least-squares to chair centres
+// detected on the real floor plan.
 const CALIBRATION_AREAS: CalibrationArea[] = [
   {
     id: "north-pod",
@@ -73,7 +75,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["NE"],
     savedBounds: { xMin: 0.72, xMax: 0.849, yMin: 0.03, yMax: 0.2 },
     visualBounds: { xMin: 0.68, xMax: 0.81, yMin: 0.04, yMax: 0.22 },
-    transform: { xScale: 0.944658, xOffset: 0.002919, yScale: 1.044793, yOffset: 0.010215 }
+    transform: { xScale: 0.863842, xOffset: 0.067799, yScale: 1.078751, yOffset: 0.013379 }
   },
   {
     id: "northeast-pod-right",
@@ -81,7 +83,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["NE"],
     savedBounds: { xMin: 0.849, xMax: 0.97, yMin: 0.03, yMax: 0.2 },
     visualBounds: { xMin: 0.8, xMax: 0.94, yMin: 0.04, yMax: 0.22 },
-    transform: { xScale: 1.146341, xOffset: -0.175684, yScale: 1.020304, yOffset: 0.012247 }
+    transform: { xScale: 1.048987, xOffset: -0.088457, yScale: 1.078814, yOffset: 0.011572 }
   },
   {
     id: "west-pod",
@@ -121,7 +123,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["E"],
     savedBounds: { xMin: 0.55, xMax: 0.8, yMin: 0.34, yMax: 0.5 },
     visualBounds: { xMin: 0.56, xMax: 0.77, yMin: 0.38, yMax: 0.52 },
-    transform: { xScale: 0.867223, xOffset: 0.075999, yScale: 1.108807, yOffset: -0.010603 }
+    transform: { xScale: 0.861886, xOffset: 0.079448, yScale: 1.102316, yOffset: 0.002865 }
   },
   {
     id: "southeast-office-upper",
