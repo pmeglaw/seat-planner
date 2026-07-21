@@ -15,6 +15,31 @@ import ts from "typescript";
 // floor — and taking each pad run's midpoint. Re-measure only if the floor-plan
 // artwork is re-rendered.
 //
+// KNOWN GAP — these values are NOT reproducible from the paragraph above, so
+// treat them as a fixed baseline rather than something to re-derive casually.
+// The script that produced them was scratch and is gone; the description omits
+// the thresholds, window size and warmth/luminance formulas, and those decide
+// the answer at the 1-2px level this file asserts on. A 2026-07-21 sweep of
+// 1082 viable parameter combinations of the described method got no closer
+// than 0.84px mean / 2.15px worst-case against these numbers — the worst case
+// exceeding this file's own 2px tolerance. (Measured on the webp; the 1911x867
+// master PNG is worse at 3.60px, which does confirm the webp provenance above.
+// The refit harness's other detector — a down-biased darkness-weighted
+// centroid — disagrees by up to 7px and finds nothing at all for NE03.)
+//
+// Consequences, if you are extending this file:
+//   1. Budget for it. The 2px tolerance here is roughly the measurement noise
+//      floor, so a re-measured fixture cannot be told apart from real drift.
+//      Set any new tolerance above that floor; ~4-5px still catches the
+//      failure mode this file exists for (#178/#179 were 10-17px).
+//   2. Commit the generator before adding seats. Ground truth for the other 52
+//      seats should come from a script in the repo, not another scratch file,
+//      or this gap is simply reproduced at scale. `sharp` can read the asset
+//      but is only a transitive dependency today — declare it first.
+//   3. This file asserts X only. #178/#179 fixed a VERTICAL error, which means
+//      these assertions would have stayed green throughout that bug. Adding a
+//      Y assertion is worth more than adding seats on X.
+//
 // SAVED_X are the coordinates in the live published layer. They differ from
 // supabase/migrations/002_seed_initial_data.sql for the NE right quad, whose
 // seats were hand-dragged in production; the calibration must fit the live
