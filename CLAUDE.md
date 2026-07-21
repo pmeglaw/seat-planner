@@ -64,6 +64,8 @@ Seats store **normalized `x`/`y` in `[0,1]`** (already normalized in the DB — 
 
 `MAP_IMAGE_WIDTH`/`MAP_IMAGE_HEIGHT` are **3822×1734** — the shipped webp is a 2x upscale (#124) of the 1911×867 master PNG, which is still the canonical source. The display cap stays 1911px, and because calibration is normalized and the upscale kept the same framing, the 2x swap changed no constants. Don't read 3822 as a coordinate space: saved and visual coordinates are both in `[0,1]`.
 
+Re-rendering that asset (quality, color, size) is allowed, but it carries a contract: `MAP_IMAGE_SRC` ends in a `?v=…` cache-buster and `MAP_IMAGE_BLUR_DATA_URL` holds a tiny blur-up preview, both in `lib/mapLayoutTransform.ts`. **Regenerate both whenever the shipped pixels change** — skip the version bump and browsers keep serving the stale image, which looks like "the deploy didn't land" rather than a caching bug.
+
 ## `lib/` is the tested business core
 
 Risky/pure logic lives in `lib/*.ts` and is covered by matching `tests/*.test.mjs` (plain Node test runner, no framework). Prefer extending an existing `lib/` helper over inlining logic in a component or action, and add/adjust its test. One contract worth knowing up front: `seatProtection` enforces that original seats can't be deleted — only `is_custom` seats. (The module list itself lives in `lib/` — like versions, don't restate it here.)
