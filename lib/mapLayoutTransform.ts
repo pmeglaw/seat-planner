@@ -50,6 +50,12 @@ const DEFAULT_PREVIEW_TRANSFORM: LinearTransform = {
   yOffset: 0.016
 };
 
+// Per-area saved→visual calibration, fit so each seat's visual point lands on the
+// CHAIR CENTRE in the render. 2026-07-20 chair re-fit (fix/floor-plan-chair-
+// calibration): north / west / center-west (both sub-areas) / center-desks were
+// placing pills ~10–17px ABOVE their chairs (verified against the real floor plan,
+// then least-squares re-fit to detected chair centres). east / northeast / southeast
+// were already chair-aligned and are left untouched.
 const CALIBRATION_AREAS: CalibrationArea[] = [
   {
     id: "north-pod",
@@ -57,7 +63,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["N"],
     savedBounds: { xMin: 0.25, xMax: 0.5, yMin: 0.03, yMax: 0.26 },
     visualBounds: { xMin: 0.3, xMax: 0.51, yMin: 0.05, yMax: 0.25 },
-    transform: { xScale: 0.815189, xOffset: 0.101478, yScale: 0.994098, yOffset: 0.014924 }
+    transform: { xScale: 0.821622, xOffset: 0.099048, yScale: 1.003477, yOffset: 0.023857 }
   },
   {
     // The render's NE desk quads aren't linearly spaced against the saved grid,
@@ -83,7 +89,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["W"],
     savedBounds: { xMin: 0.04, xMax: 0.23, yMin: 0.34, yMax: 0.78 },
     visualBounds: { xMin: 0.11, xMax: 0.26, yMin: 0.38, yMax: 0.82 },
-    transform: { xScale: 0.879674, xOffset: 0.076266, yScale: 1.040423, yOffset: 0.016583 }
+    transform: { xScale: 0.880795, xOffset: 0.076535, yScale: 1.052002, yOffset: 0.020189 }
   },
   {
     id: "center-west-upper",
@@ -91,7 +97,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["CW"],
     savedBounds: { xMin: 0.27, xMax: 0.37, yMin: 0.33, yMax: 0.5 },
     visualBounds: { xMin: 0.31, xMax: 0.4, yMin: 0.35, yMax: 0.54 },
-    transform: { xScale: 0.843074, xOffset: 0.086277, yScale: 1.138639, yOffset: -0.026398 }
+    transform: { xScale: 0.836374, xOffset: 0.089418, yScale: 1.089163, yOffset: -0.008517 }
   },
   {
     id: "center-west-lower",
@@ -99,7 +105,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["CW"],
     savedBounds: { xMin: 0.28, xMax: 0.36, yMin: 0.5, yMax: 0.76 },
     visualBounds: { xMin: 0.32, xMax: 0.39, yMin: 0.55, yMax: 0.81 },
-    transform: { xScale: 0.7805, xOffset: 0.1035, yScale: 1.125499, yOffset: -0.031461 }
+    transform: { xScale: 0.828036, xOffset: 0.086902, yScale: 1.180036, yOffset: -0.060352 }
   },
   {
     id: "center-desks",
@@ -107,7 +113,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["C"],
     savedBounds: { xMin: 0.39, xMax: 0.62, yMin: 0.49, yMax: 0.73 },
     visualBounds: { xMin: 0.42, xMax: 0.61, yMin: 0.55, yMax: 0.78 },
-    transform: { xScale: 0.876898, xOffset: 0.068871, yScale: 1.069709, yOffset: 0.013881 }
+    transform: { xScale: 0.872516, xOffset: 0.072945, yScale: 1.091846, yOffset: 0.009857 }
   },
   {
     id: "east-pod",
