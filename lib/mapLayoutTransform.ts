@@ -50,14 +50,6 @@ const DEFAULT_PREVIEW_TRANSFORM: LinearTransform = {
   yOffset: 0.016
 };
 
-// Per-area saved→visual calibration, fit so each seat's visual point lands on the
-// CHAIR CENTRE in the render. 2026-07-20 chair re-fit (fix/floor-plan-chair-
-// calibration): north / west / center-west (both sub-areas) / center-desks were
-// placing pills ~10–17px ABOVE their chairs. Follow-up (fix/floor-plan-calibration-
-// ene-tighten): east / northeast (both quads) were a smaller ~7–10px high — and the
-// NE right column also drifted right — so they were re-fit too. Southeast reads
-// aligned and is left untouched. All fits are least-squares to chair centres
-// detected on the real floor plan.
 const CALIBRATION_AREAS: CalibrationArea[] = [
   {
     id: "north-pod",
@@ -65,7 +57,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["N"],
     savedBounds: { xMin: 0.25, xMax: 0.5, yMin: 0.03, yMax: 0.26 },
     visualBounds: { xMin: 0.3, xMax: 0.51, yMin: 0.05, yMax: 0.25 },
-    transform: { xScale: 0.821622, xOffset: 0.099048, yScale: 1.003477, yOffset: 0.023857 }
+    transform: { xScale: 0.815189, xOffset: 0.101478, yScale: 0.994098, yOffset: 0.014924 }
   },
   {
     // The render's NE desk quads aren't linearly spaced against the saved grid,
@@ -75,15 +67,21 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["NE"],
     savedBounds: { xMin: 0.72, xMax: 0.849, yMin: 0.03, yMax: 0.2 },
     visualBounds: { xMin: 0.68, xMax: 0.81, yMin: 0.04, yMax: 0.22 },
-    transform: { xScale: 0.863842, xOffset: 0.067799, yScale: 1.078751, yOffset: 0.013379 }
+    transform: { xScale: 0.944658, xOffset: 0.002919, yScale: 1.044793, yOffset: 0.010215 }
   },
   {
+    // Refit 2026-07-19 against measured chair centres. The previous fit
+    // (xScale 1.146341, xOffset -0.175684) reproduced this area's
+    // savedBounds->visualBounds RECTANGLE rather than the chairs inside it,
+    // which pushed NE04/NE08 ~13px right of their seats onto bare floor while
+    // the left quad landed correctly — the two halves of one pod visibly
+    // disagreed. tests/map-calibration.test.mjs pins the chair alignment.
     id: "northeast-pod-right",
     zones: ["northeast pod"],
     labelPrefixes: ["NE"],
     savedBounds: { xMin: 0.849, xMax: 0.97, yMin: 0.03, yMax: 0.2 },
-    visualBounds: { xMin: 0.8, xMax: 0.94, yMin: 0.04, yMax: 0.22 },
-    transform: { xScale: 1.048987, xOffset: -0.088457, yScale: 1.078814, yOffset: 0.011572 }
+    visualBounds: { xMin: 0.8, xMax: 0.89, yMin: 0.04, yMax: 0.22 },
+    transform: { xScale: 1.010018, xOffset: -0.056543, yScale: 1.020304, yOffset: 0.012247 }
   },
   {
     id: "west-pod",
@@ -91,7 +89,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["W"],
     savedBounds: { xMin: 0.04, xMax: 0.23, yMin: 0.34, yMax: 0.78 },
     visualBounds: { xMin: 0.11, xMax: 0.26, yMin: 0.38, yMax: 0.82 },
-    transform: { xScale: 0.880795, xOffset: 0.076535, yScale: 1.052002, yOffset: 0.020189 }
+    transform: { xScale: 0.879674, xOffset: 0.076266, yScale: 1.040423, yOffset: 0.016583 }
   },
   {
     id: "center-west-upper",
@@ -99,7 +97,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["CW"],
     savedBounds: { xMin: 0.27, xMax: 0.37, yMin: 0.33, yMax: 0.5 },
     visualBounds: { xMin: 0.31, xMax: 0.4, yMin: 0.35, yMax: 0.54 },
-    transform: { xScale: 0.836374, xOffset: 0.089418, yScale: 1.089163, yOffset: -0.008517 }
+    transform: { xScale: 0.843074, xOffset: 0.086277, yScale: 1.138639, yOffset: -0.026398 }
   },
   {
     id: "center-west-lower",
@@ -107,7 +105,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["CW"],
     savedBounds: { xMin: 0.28, xMax: 0.36, yMin: 0.5, yMax: 0.76 },
     visualBounds: { xMin: 0.32, xMax: 0.39, yMin: 0.55, yMax: 0.81 },
-    transform: { xScale: 0.828036, xOffset: 0.086902, yScale: 1.180036, yOffset: -0.060352 }
+    transform: { xScale: 0.7805, xOffset: 0.1035, yScale: 1.125499, yOffset: -0.031461 }
   },
   {
     id: "center-desks",
@@ -115,7 +113,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["C"],
     savedBounds: { xMin: 0.39, xMax: 0.62, yMin: 0.49, yMax: 0.73 },
     visualBounds: { xMin: 0.42, xMax: 0.61, yMin: 0.55, yMax: 0.78 },
-    transform: { xScale: 0.872516, xOffset: 0.072945, yScale: 1.091846, yOffset: 0.009857 }
+    transform: { xScale: 0.876898, xOffset: 0.068871, yScale: 1.069709, yOffset: 0.013881 }
   },
   {
     id: "east-pod",
@@ -123,7 +121,7 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
     labelPrefixes: ["E"],
     savedBounds: { xMin: 0.55, xMax: 0.8, yMin: 0.34, yMax: 0.5 },
     visualBounds: { xMin: 0.56, xMax: 0.77, yMin: 0.38, yMax: 0.52 },
-    transform: { xScale: 0.861886, xOffset: 0.079448, yScale: 1.102316, yOffset: 0.002865 }
+    transform: { xScale: 0.867223, xOffset: 0.075999, yScale: 1.108807, yOffset: -0.010603 }
   },
   {
     id: "southeast-office-upper",
