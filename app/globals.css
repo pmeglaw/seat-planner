@@ -111,9 +111,17 @@
   --sp-color-state-info: #31626A;
   --sp-color-state-info-surface: #E0EEF0;
   --sp-color-state-info-border: #A9CDD2;
-  --sp-color-state-search: #2F6668;
-  --sp-color-state-search-surface: #DCEDEA;
-  --sp-color-state-search-border: #A9CFCC;
+  /* Search/filter highlight is the brand accent, NOT a teal. Until 2026-07-21
+     this family was #2F6668 — a near-twin of state-info #31626A doing a
+     similar job, which is what made the palette read as more colors than it
+     is. These three now describe exactly what SeatMarker paints for a
+     search/filter match, so tokenizing that marker later is a visual no-op:
+     text #9E2F06 = 6.27:1 on the #FBEAE1 fill; the #D23F0A edge = 4.03:1 on
+     that fill and 4.71:1 on white, clearing the 3:1 non-text minimum on both
+     sides. Measured 2026-07-21. */
+  --sp-color-state-search: #9E2F06;
+  --sp-color-state-search-surface: #FBEAE1;
+  --sp-color-state-search-border: #D23F0A;
   --sp-color-state-planner: #5E5E5E;
   --sp-color-state-planner-surface: #efefef;
   --sp-color-state-planner-border: #d4d4d4;
@@ -126,7 +134,7 @@
   --sp-color-state-warning-rgb: 138 97 22;
   --sp-color-state-danger-rgb: 179 35 44;
   --sp-color-state-info-rgb: 49 98 106;
-  --sp-color-state-search-rgb: 47 102 104;
+  --sp-color-state-search-rgb: 158 47 6;
   --sp-color-state-disabled-rgb: 224 224 224;
 
   --sp-space-1: 4px;
@@ -327,11 +335,14 @@
   --admin-marker-selected-border: var(--admin-primary-cta);
   --admin-marker-selected-text: #161616;
   --admin-marker-selected-shadow: 0 0 0 2px rgba(255, 87, 21, 0.30), 0 0 0 3px rgba(22, 22, 22, 0.30), 0 10px 22px rgba(22, 22, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
-  --admin-marker-search-surface: var(--admin-info-soft);
-  --admin-marker-search-border: rgba(47, 102, 104, 0.78);
-  --admin-marker-search-text: #2F6668;
-  --admin-marker-search-ring: rgba(75, 149, 166, 0.44);
-  --admin-marker-search-halo: rgba(75, 149, 166, 0.32);
+  /* Re-hued off the teal onto the brand accent 2026-07-21, and deliberately
+     decoupled from --admin-info-soft: info is slated to fold into neutral
+     gray, and the search highlight must not follow it there. */
+  --admin-marker-search-surface: var(--admin-paper);
+  --admin-marker-search-border: var(--admin-primary-cta);
+  --admin-marker-search-text: var(--admin-primary-on-soft);
+  --admin-marker-search-ring: rgba(255, 87, 21, 0.44);
+  --admin-marker-search-halo: rgba(255, 87, 21, 0.32);
   --admin-marker-draft-surface: rgba(210, 63, 10, 0.10);
   --admin-marker-draft-border: rgba(210, 63, 10, 0.60);
   --admin-marker-draft-text: #7A2E0C;
