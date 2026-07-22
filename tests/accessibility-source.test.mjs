@@ -561,9 +561,24 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
 
   // Show names is a real toggle: stable accessible name + aria-pressed. The
   // old flipping label ("Hide names") with no pressed state left the current
-  // view invisible to assistive tech — and the More-menu item must keep a
+  // view invisible to assistive tech — and the surviving control must keep a
   // VISIBLE state cue too (sighted users lost the flipping label).
-  assert.equal((seatMapSource.match(/aria-pressed=\{showNames\}/g) ?? []).length, 2, "row button and More-menu item both expose pressed state");
+  //
+  // Counted RELATIONALLY, not as a fixed 2. The 2026-07-22 chrome declutter
+  // moved the toggle out of the tool row and into the More overflow, so HOW
+  // MANY toggles exist is a layout decision this file does not own. The
+  // invariant that matters is that every control which flips showNames exposes
+  // its pressed state — that survives any relayout, and it still fails the
+  // regression this test exists to catch (a toggle shipped without
+  // aria-pressed). A fixed count would instead have failed on the relayout
+  // while passing a third toggle that forgot the attribute.
+  const namesToggleControls = (seatMapSource.match(/setShowNames\(current => !current\)/g) ?? []).length;
+  assert.ok(namesToggleControls >= 1, "the admin map must keep a names toggle");
+  assert.equal(
+    (seatMapSource.match(/aria-pressed=\{showNames\}/g) ?? []).length,
+    namesToggleControls,
+    "every control that toggles showNames must expose its pressed state"
+  );
   assert.doesNotMatch(seatMapSource, /Hide names/);
   assert.match(seatMapSource, /Show names\s*\{showNames && \(/);
 

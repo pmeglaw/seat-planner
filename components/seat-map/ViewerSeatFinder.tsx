@@ -19,6 +19,7 @@ import {
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { buildViewerDirectory, buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { buildInitials } from "@/lib/validators";
+import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
@@ -184,6 +185,7 @@ export function ViewerSeatFinder({
   const [mapRenderedWidth, setMapRenderedWidth] = useState<number | null>(null);
   const [panning, setPanning] = useState(false);
   const [department, setDepartment] = useState("all");
+  const [position, setPosition] = useState("all");
   const [zone, setZone] = useState("all");
   const [status, setStatus] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -256,16 +258,17 @@ export function ViewerSeatFinder({
     items[activeIndex - 1]?.focus();
   }
   const searchActive = Boolean(searchResults.query);
-  const structuredFiltersActive = department !== "all" || zone !== "all" || status !== "all";
-  const structuredFilterCount = [department !== "all", zone !== "all", status !== "all"].filter(Boolean).length;
+  const structuredFiltersActive = department !== "all" || position !== "all" || zone !== "all" || status !== "all";
+  const structuredFilterCount = [department !== "all", position !== "all", zone !== "all", status !== "all"].filter(Boolean).length;
   const filtersActive = searchActive || structuredFiltersActive;
 
   const seatPassesStructuredFilters = useCallback((seat: SeatWithEmployee) => {
     const departmentOk = department === "all" || getSeatDepartment(seat).toLowerCase() === department.toLowerCase();
+    const positionOk = seatMatchesPosition(seat.employee?.position, position);
     const zoneOk = zone === "all" || getSeatZone(seat) === zone;
     const statusOk = status === "all" || seat.status === (status as SeatStatus);
-    return departmentOk && zoneOk && statusOk;
-  }, [department, status, zone]);
+    return departmentOk && positionOk && zoneOk && statusOk;
+  }, [department, position, status, zone]);
 
   const resultSeatIdSet = useMemo(() => new Set(searchResults.resultSeatIds), [searchResults.resultSeatIds]);
   const activeResultSeatIdSet = useMemo(() => new Set(activeResult?.seatIds ?? []), [activeResult]);
@@ -325,6 +328,9 @@ export function ViewerSeatFinder({
     ...departmentOptions.filter(option => option.active).map(option => option.name),
     ...employees.filter(employee => employee.active).map(employee => employee.department)
   ]);
+  // Positions come off the published_employees snapshot the viewer already
+  // holds — same publish cadence as every other person detail here.
+  const positions = buildPositionOptions(employees);
   const zones = uniqueVisibleOptions([
     ...zoneOptions.filter(option => option.active).map(option => option.name),
     ...publishedSeats.map(seat => getSeatZone(seat))
@@ -573,6 +579,7 @@ export function ViewerSeatFinder({
 
   function clearStructuredFilters() {
     setDepartment("all");
+    setPosition("all");
     setZone("all");
     setStatus("all");
   }
@@ -647,6 +654,7 @@ export function ViewerSeatFinder({
   const activeFilterChips: ActiveFilterChip[] = [
     searchActive ? { id: "search", label: "Search", value: searchResults.query, removeLabel: `Remove search filter ${searchResults.query}` } : null,
     department !== "all" ? { id: "department", label: "Department", value: department, removeLabel: `Remove department filter ${department}` } : null,
+    position !== "all" ? { id: "position", label: "Position", value: position, removeLabel: `Remove position filter ${position}` } : null,
     zone !== "all" ? { id: "zone", label: "Zone", value: zone, removeLabel: `Remove zone filter ${zone}` } : null,
     status !== "all" ? { id: "status", label: "Status", value: STATUS_LABELS[status as SeatStatus] ?? status, removeLabel: `Remove status filter ${STATUS_LABELS[status as SeatStatus] ?? status}` } : null
   ].filter(Boolean) as ActiveFilterChip[];
@@ -658,6 +666,10 @@ export function ViewerSeatFinder({
     }
     if (chipId === "department") {
       setDepartment("all");
+      return;
+    }
+    if (chipId === "position") {
+      setPosition("all");
       return;
     }
     if (chipId === "zone") {
@@ -771,10 +783,13 @@ export function ViewerSeatFinder({
 
         <span aria-hidden="true" className="mx-2.5 hidden h-[22px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
 
-        {/* Filter + Search: ONE connected control — Filter segment immediately
-            LEFT of the search input, sharing one border; the dropdown anchors
-            inside the group so the open menu butts directly against the button. */}
-        <div ref={filterRootRef} className="relative mr-2 flex h-[26px] min-w-0 flex-1 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[340px]">
+        {/* Filter and Search are two DISTINCT controls (was one shared 26px box
+            capped at 340px for BOTH). Finding your own seat or looking up a
+            person is the paramount job on this surface, so search gets its own
+            field and the width; Filter keeps the pairing by sitting immediately
+            to its LEFT with the dropdown anchored to itself. Both Carbon `sm` =
+            32px inside the 40px bar. */}
+        <div ref={filterRootRef} className="relative mr-1.5 flex h-8 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
           <button
             ref={filterTriggerRef}
             type="button"
@@ -784,7 +799,7 @@ export function ViewerSeatFinder({
             aria-haspopup="true"
             aria-label={structuredFilterCount ? `Filter seating, ${structuredFilterCount} active` : "Filter seating"}
             className={[
-              "flex shrink-0 items-center gap-1.5 border-b-2 border-r border-r-[var(--admin-chrome-border)] px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+              "flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
               structuredFilterCount > 0 || filterOpen
                 ? "border-b-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)]"
                 : "border-b-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"
@@ -807,8 +822,10 @@ export function ViewerSeatFinder({
             <div className="absolute -left-px top-full z-50 w-[288px] max-w-[calc(100vw-16px)]">
               <FilterPanel
                 department={department}
+                position={position}
                 status={status}
                 departments={departments}
+                positions={positions}
                 zone={zone}
                 zones={zones}
                 activeChips={activeFilterChips}
@@ -816,6 +833,7 @@ export function ViewerSeatFinder({
                 returnFocusRef={filterTriggerRef}
                 onClose={() => setFilterOpen(false)}
                 onDepartmentChange={setDepartment}
+                onPositionChange={setPosition}
                 onZoneChange={setZone}
                 onStatusChange={setStatus}
                 matchSummary={`${statusCountSeats.length} of ${publishedSeats.length} seats match`}
@@ -824,56 +842,58 @@ export function ViewerSeatFinder({
               />
             </div>
           )}
-          <div role="search" aria-label="Viewer search" className="h-full min-w-0 flex-1">
-            <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
-              <span className="sr-only">Search office seating</span>
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
-                <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
-                <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-              </svg>
-              <input
-                id="viewer-seat-search"
-                value={search}
-                onChange={event => updateSearch(event.target.value)}
-                onKeyDown={event => {
-                  if (event.key === "Escape" && search.trim()) {
-                    event.stopPropagation();
-                    // Layered dismissal (2026-07-16 critique, minor 10): the
-                    // first Esc only clears the query and returns the panel
-                    // slot to the pre-search state; a second Esc reaches the
-                    // global handler, which deselects the seat. The × button
-                    // keeps the full clearSearch reset.
-                    setSearch("");
-                    setActiveResultId(null);
-                    setInspectorCollapsed(false);
-                    return;
-                  }
-                  // Results are visually adjacent but far away in DOM order —
-                  // ArrowDown hops focus straight into the results panel.
-                  if (event.key === "ArrowDown" && resultsPanelOpen) {
-                    event.preventDefault();
-                    document.querySelector<HTMLButtonElement>('[aria-label="Viewer search results"] button')?.focus();
-                  }
-                }}
-                ref={searchInputRef}
-                placeholder={SEAT_SEARCH_PLACEHOLDER}
-                className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
-              />
-              {search.trim() ? (
-                <button
-                  type="button"
-                  aria-label="Clear viewer search"
-                  title="Clear search"
-                  className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
-                  onClick={clearSearch}
-                >
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </button>
-              ) : searchShortcutHint ? (
-                <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)]">{searchShortcutHint}</kbd>
-              ) : null}
-            </label>
-          </div>
+        </div>
+
+        {/* Search dominates the row on the viewer: cap 340 -> 480px on lg. */}
+        <div role="search" aria-label="Viewer search" className="h-8 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[480px]">
+          <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
+            <span className="sr-only">Search office seating</span>
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
+              <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
+              <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            </svg>
+            <input
+              id="viewer-seat-search"
+              value={search}
+              onChange={event => updateSearch(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === "Escape" && search.trim()) {
+                  event.stopPropagation();
+                  // Layered dismissal (2026-07-16 critique, minor 10): the
+                  // first Esc only clears the query and returns the panel
+                  // slot to the pre-search state; a second Esc reaches the
+                  // global handler, which deselects the seat. The × button
+                  // keeps the full clearSearch reset.
+                  setSearch("");
+                  setActiveResultId(null);
+                  setInspectorCollapsed(false);
+                  return;
+                }
+                // Results are visually adjacent but far away in DOM order —
+                // ArrowDown hops focus straight into the results panel.
+                if (event.key === "ArrowDown" && resultsPanelOpen) {
+                  event.preventDefault();
+                  document.querySelector<HTMLButtonElement>('[aria-label="Viewer search results"] button')?.focus();
+                }
+              }}
+              ref={searchInputRef}
+              placeholder={SEAT_SEARCH_PLACEHOLDER}
+              className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
+            />
+            {search.trim() ? (
+              <button
+                type="button"
+                aria-label="Clear viewer search"
+                title="Clear search"
+                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+                onClick={clearSearch}
+              >
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </button>
+            ) : searchShortcutHint ? (
+              <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)]">{searchShortcutHint}</kbd>
+            ) : null}
+          </label>
         </div>
 
         <div className="ml-auto flex h-full shrink-0 items-center">
