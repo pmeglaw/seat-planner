@@ -583,7 +583,9 @@ export function SeatMap({
   // not left behind on the trigger.
   useEffect(() => {
     if (!mapMenuOpen) return;
-    const firstItem = mapMenuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
+    // menuitemcheckbox too, or the Show names toggle — the FIRST item — is
+    // skipped and the menu opens with focus on the second entry.
+    const firstItem = mapMenuRef.current?.querySelector<HTMLElement>('[role="menuitem"],[role="menuitemcheckbox"]');
     firstItem?.focus();
   }, [mapMenuOpen]);
 
@@ -2430,15 +2432,14 @@ export function SeatMap({
   // Two collapse tiers keep the flexible search group usable at every width
   // (the row is otherwise rigid, so search absorbs the whole deficit):
   // page links (Management, Settings) fold into the "More" menu below xl,
-  // Ask Planner below lg. Show names no longer has a row button at all — it
-  // lives in "More" at every width (2026-07-22 declutter). No horizontal
-  // scroll: a scroll container would clip the menu's absolute dropdown.
+  // Ask Planner below lg. At xl and up nothing is collapsed, so the row reads
+  // exactly like the prototype — no overflow button in sight. Show names is
+  // not here at all: it is a map display option and lives in "More map
+  // actions" (2026-07-22). No horizontal scroll: a scroll container would clip
+  // the menu's absolute dropdown.
   const chromeToolbarBtnCollapsible = chromeToolbarBtn.replace("inline-flex", "hidden lg:inline-flex");
   const chromeToolbarBtnCollapsibleActive = chromeToolbarBtnActive.replace("inline-flex", "hidden lg:inline-flex");
   const chromeToolbarBtnCollapsibleXl = chromeToolbarBtn.replace("inline-flex", "hidden xl:inline-flex");
-  // Icon-only segment inside the undo/redo pair. No underline: the group's own
-  // border carries the edge, and neither button is a "current section".
-  const chromeSegmentBtn = "flex w-8 shrink-0 items-center justify-center text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
   const chromeMenuItem = "flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-chrome-text)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
@@ -2583,38 +2584,35 @@ export function SeatMap({
              into the "More" menu instead, and a scroll container would clip the
              menu's absolutely-positioned dropdown. */
           <nav role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center lg:ml-0 lg:flex-none">
-            {/* Undo/redo are ONE segmented pair, icon-only. They keep their row
-                slot (high-frequency, and ↺/↻ are universally read), but the
-                "Undo"/"Redo" text was pure doubling beside the glyph — the
-                accessible name and the keyboard-shortcut explanation still ride
-                on aria-label + title, which is what assistive tech and hover
-                actually consume. */}
-            <div className="mr-1.5 flex h-8 shrink-0 items-stretch border border-[var(--admin-chrome-border)]">
-              <button
-                type="button"
-                onClick={undoDraftEdit}
-                disabled={mutationInFlight || inspectorDirty || !undoAvailable}
-                aria-label="Undo last map change"
-                title={undoTitle}
-                className={chromeSegmentBtn}
-              >
-                {/* Literal ↺ glyph (U+21BA) to match the owner's shell mockup exactly;
-                    sized to sit at the same weight as the SVG icons in the row. */}
-                <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↺</span>
-              </button>
-              <span aria-hidden="true" className="my-1 w-px shrink-0 bg-[var(--admin-chrome-border)]" />
-              <button
-                type="button"
-                onClick={redoDraftEdit}
-                disabled={mutationInFlight || inspectorDirty || !redoAvailable}
-                aria-label="Redo last undone change"
-                title={redoTitle}
-                className={chromeSegmentBtn}
-              >
-                {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
-                <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
-              </button>
-            </div>
+            {/* One flat tool row, per the prototype (docs/ui/seat-planner-shell.html
+                lines 144-147): no bordered segment group, every tool at the same
+                weight. Undo/redo are icon-only by owner direction — ↺/↻ are
+                universally read, and the accessible name plus the keyboard-
+                shortcut explanation still ride on aria-label + title, which is
+                what assistive tech and hover actually consume. */}
+            <button
+              type="button"
+              onClick={undoDraftEdit}
+              disabled={mutationInFlight || inspectorDirty || !undoAvailable}
+              aria-label="Undo last map change"
+              title={undoTitle}
+              className={chromeToolbarBtn}
+            >
+              {/* Literal ↺ glyph (U+21BA) to match the owner's shell mockup exactly;
+                  sized to sit at the same weight as the SVG icons in the row. */}
+              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↺</span>
+            </button>
+            <button
+              type="button"
+              onClick={redoDraftEdit}
+              disabled={mutationInFlight || inspectorDirty || !redoAvailable}
+              aria-label="Redo last undone change"
+              title={redoTitle}
+              className={chromeToolbarBtn}
+            >
+              {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
+              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
+            </button>
             <Link
               href="/admin/management"
               onClick={event => {
@@ -2648,10 +2646,9 @@ export function SeatMap({
                 <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
               )}
             </button>
-            {/* The overflow is now permanent, not just a below-xl fallback: the
-                names toggle lives here at every width, so the primary row can
-                stay search + active tools + Publish. */}
-            <div data-chrome-menu className="relative flex h-full shrink-0 items-center">
+            {/* Below-xl fallback only. At xl the whole tool row fits, so this
+                button is absent and the bar matches the prototype exactly. */}
+            <div data-chrome-menu className="relative flex h-full shrink-0 items-center xl:hidden">
               <button
                 ref={chromeMenuButtonRef}
                 type="button"
@@ -2691,36 +2688,6 @@ export function SeatMap({
                   }}
                   className="absolute left-0 top-full z-50 min-w-[188px] border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] py-1 shadow-elevation-3"
                 >
-                  {/* No longer lg:hidden — this is the ONLY names toggle now, at
-                      every width. It keeps aria-pressed AND the visible
-                      checkmark below, so neither assistive tech nor sighted
-                      users lose the current state when it leaves the row. */}
-                  <button
-                    type="button"
-                    aria-pressed={showNames}
-                    onClick={() => {
-                      setChromeMenuOpen(false);
-                      setShowNames(current => !current);
-                      // Activation unmounts the focused item — same stranded-
-                      // focus hazard as Escape.
-                      returnFocusAfterClose(chromeMenuButtonRef);
-                    }}
-                    className={chromeMenuItem}
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                      <path d="M2.5 10S5.3 5.5 10 5.5 17.5 10 17.5 10s-2.8 4.5-7.5 4.5S2.5 10 2.5 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                      <circle cx="10" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.5" />
-                    </svg>
-                    Show names
-                    {showNames && (
-                      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-primary)]">
-                        <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </button>
-                  {/* xl:hidden now that the menu itself is permanent — above xl
-                      Management is already an inline row item, and showing both
-                      would duplicate it. */}
                   <Link
                     href="/admin/management"
                     onClick={event => {
@@ -2728,7 +2695,7 @@ export function SeatMap({
                       setChromeMenuOpen(false);
                       returnFocusAfterClose(chromeMenuButtonRef);
                     }}
-                    className={[chromeMenuItem, "xl:hidden"].join(" ")}
+                    className={chromeMenuItem}
                   >
                     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
                       <circle cx="7" cy="7.5" r="2.4" stroke="currentColor" strokeWidth="1.5" />
@@ -3063,7 +3030,10 @@ export function SeatMap({
                         if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
                           event.preventDefault();
                           event.stopPropagation();
-                          const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+                          // Both roles: Show names is a menuitemcheckbox (ARIA
+                          // forbids aria-pressed on a menu item), and it must
+                          // still rove with the arrow keys like every sibling.
+                          const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"],[role="menuitemcheckbox"]'));
                           if (items.length === 0) return;
                           const currentIndex = items.indexOf(document.activeElement as HTMLElement);
                           let nextIndex: number;
@@ -3081,6 +3051,32 @@ export function SeatMap({
                       }}
                       className="absolute right-0 top-full z-40 min-w-[176px] border border-[var(--admin-border)] bg-[var(--admin-surface)] py-1 shadow-elevation-3"
                     >
+                      {/* Show names lives HERE, not in the chrome bar: it is a
+                          map DISPLAY option like fit/zoom below it, not an app
+                          tool. That keeps the top bar to the prototype's tool
+                          row (Undo · Redo · Management · Ask Planner) with no
+                          overflow button at desktop widths. aria-pressed plus
+                          the visible checkmark travel with it, so neither
+                          assistive tech nor sighted users lose the state. */}
+                      <button
+                        type="button"
+                        role="menuitemcheckbox"
+                        tabIndex={-1}
+                        aria-checked={showNames}
+                        onClick={() => {
+                          setMapMenuOpen(false);
+                          setShowNames(current => !current);
+                          returnFocusAfterClose(mapMenuButtonRef);
+                        }}
+                        className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
+                      >
+                        Show names
+                        {showNames && (
+                          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-primary)]">
+                            <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </button>
                       <button
                         type="button"
                         role="menuitem"
