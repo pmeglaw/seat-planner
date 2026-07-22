@@ -53,12 +53,9 @@ export function AdminShellBar({ page, email, roleLabel }: { page: AdminShellPage
           aria-current={page === "management" ? "page" : undefined}
           className={page === "management" ? toolLinkActive : toolLink}
         >
-          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-            <circle cx="7" cy="7.5" r="2.4" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M2.8 16v-.6a4.2 4.2 0 0 1 8.4 0v.6" stroke="currentColor" strokeWidth="1.5" />
-            <circle cx="14" cy="6.6" r="1.9" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M13 10.4a3.6 3.6 0 0 1 4.2 3.4v.6" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
+          {/* Literal ▤ glyph (U+25A4), matching the map bar — Management is one
+              nav item and must carry one identity across both admin bars. */}
+          <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">▤</span>
           Management
         </Link>
         {/* Settings surfaces plainly in the management/data context (unlike the

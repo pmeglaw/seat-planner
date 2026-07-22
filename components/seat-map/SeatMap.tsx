@@ -27,6 +27,7 @@ import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapActio
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import { departmentKey } from "@/lib/departments";
+import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
 import { clientPointToNormalized } from "@/lib/seatMath";
 import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
@@ -312,6 +313,7 @@ export function SeatMap({
   const [dragState, setDragState] = useState<DragState>(null);
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("all");
+  const [position, setPosition] = useState("all");
   const [zone, setZone] = useState("all");
   const [status, setStatus] = useState("all");
   const [filterCollapsed, setFilterCollapsed] = useState(true);
@@ -825,7 +827,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, position, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, zone]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -835,6 +837,10 @@ export function SeatMap({
     });
     return Array.from(values).sort();
   }, [localDepartmentOptions, localEmployees]);
+
+  // No position_options side table exists — job titles are free text on
+  // employees, so the facet's options come straight off the roster.
+  const positions = useMemo(() => buildPositionOptions(localEmployees), [localEmployees]);
 
   const zones = useMemo(() => {
     const values = new Set<string>();
@@ -889,7 +895,7 @@ export function SeatMap({
   // Legend counts follow the active constraints — the number row must not
   // contradict a filtered map (2026-07-16 regrade, review 4). matchesFilters
   // covers search + structured filters, exactly what the map dims by.
-  const legendFiltersActive = search.trim() !== "" || department !== "all" || zone !== "all" || status !== "all";
+  const legendFiltersActive = search.trim() !== "" || department !== "all" || position !== "all" || zone !== "all" || status !== "all";
   const legendSourceSeats = legendFiltersActive ? localSeats.filter(matchesFilters) : localSeats;
   const legendCounts: Record<string, number> = {
     assigned: legendSourceSeats.filter(seat => seat.status === "assigned").length,
@@ -925,15 +931,17 @@ export function SeatMap({
   const plannerHighlightedSeatIdSet = useMemo(() => new Set(plannerHighlightedSeatIds), [plannerHighlightedSeatIds]);
   const searchQuery = search.trim();
   const searchActive = Boolean(searchQuery);
-  const structuredFiltersActive = department !== "all" || zone !== "all" || status !== "all";
+  const structuredFiltersActive = department !== "all" || position !== "all" || zone !== "all" || status !== "all";
   const activeFilterChips: ActiveFilterChip[] = [
     searchActive ? { id: "search", label: "Search", value: searchQuery, removeLabel: `Remove search filter ${searchQuery}` } : null,
     department !== "all" ? { id: "department", label: "Department", value: department, removeLabel: `Remove department filter ${department}` } : null,
+    position !== "all" ? { id: "position", label: "Position", value: position, removeLabel: `Remove position filter ${position}` } : null,
     zone !== "all" ? { id: "zone", label: "Zone", value: zone, removeLabel: `Remove zone filter ${zone}` } : null,
     status !== "all" ? { id: "status", label: "Status", value: STATUS_LABELS[status as SeatStatus] ?? status, removeLabel: `Remove status filter ${STATUS_LABELS[status as SeatStatus] ?? status}` } : null
   ].filter(Boolean) as ActiveFilterChip[];
   const structuredFilterCount = [
     department !== "all",
+    position !== "all",
     zone !== "all",
     status !== "all"
   ].filter(Boolean).length;
@@ -1032,10 +1040,11 @@ export function SeatMap({
     const seatZone = getSeatZone(seat);
     const searchOk = !needle || haystack.includes(needle);
     const departmentOk = department === "all" || departmentKey(seatDepartment) === departmentKey(department);
+    const positionOk = seatMatchesPosition(seat.employee?.position, position);
     const zoneOk = zone === "all" || seatZone === zone;
     const statusOk = status === "all" || seat.status === (status as SeatStatus);
 
-    return searchOk && departmentOk && zoneOk && statusOk;
+    return searchOk && departmentOk && positionOk && zoneOk && statusOk;
   }
 
   // Single source of truth for SeatMarker's `dimmed` prop: a seat dims when
@@ -1366,6 +1375,7 @@ export function SeatMap({
 
   function clearStructuredFilters() {
     setDepartment("all");
+    setPosition("all");
     setZone("all");
     setStatus("all");
   }
@@ -1398,6 +1408,11 @@ export function SeatMap({
 
     if (chipId === "department") {
       setDepartment("all");
+      return;
+    }
+
+    if (chipId === "position") {
+      setPosition("all");
       return;
     }
 
@@ -2407,16 +2422,22 @@ export function SeatMap({
     return { edge: "none", offsetPx: 0 };
   }
 
-  // Shell top bar: full-height quiet tools on the 40px dark bar. Active state
+  // Shell top bar: full-height quiet tools on the 48px dark bar. Active state
   // is the Carbon-style 2px brand-orange underline (5.37:1 on #161616).
-  const chromeToolbarBtn = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
-  const chromeToolbarBtnActive = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-  const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  // The bar grew 40 -> 48px on 2026-07-22 so the fields could take Carbon `md`
+  // (40px) and still keep 4px of clearance; every full-height item here tracks
+  // the bar, or the underline stops landing on its bottom edge.
+  const chromeToolbarBtn = "inline-flex h-12 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
+  const chromeToolbarBtnActive = "inline-flex h-12 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeSurfaceShortcut = "flex h-12 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
   // Two collapse tiers keep the flexible search group usable at every width
   // (the row is otherwise rigid, so search absorbs the whole deficit):
   // page links (Management, Settings) fold into the "More" menu below xl,
-  // map tools (Show names, Ask Planner) below lg. No horizontal scroll —
-  // a scroll container would clip the menu's absolutely-positioned dropdown.
+  // Ask Planner below lg. At xl and up nothing is collapsed, so the row reads
+  // exactly like the prototype — no overflow button in sight. Show names is
+  // not here at all: it is a map display option and lives in "More map
+  // actions" (2026-07-22). No horizontal scroll: a scroll container would clip
+  // the menu's absolute dropdown.
   const chromeToolbarBtnCollapsible = chromeToolbarBtn.replace("inline-flex", "hidden lg:inline-flex");
   const chromeToolbarBtnCollapsibleActive = chromeToolbarBtnActive.replace("inline-flex", "hidden lg:inline-flex");
   const chromeToolbarBtnCollapsibleXl = chromeToolbarBtn.replace("inline-flex", "hidden xl:inline-flex");
@@ -2435,7 +2456,7 @@ export function SeatMap({
       {/* z-50, not z-40: once sticky, the header's z-index is live and must
           outrank the z-40 canvas overlays (toasts, map menu) that follow it
           in DOM order, or they paint over the pinned bar and its menus. */}
-      <header className="sticky top-0 z-50 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+      <header className="sticky top-0 z-50 flex h-12 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
         <h1 className="sr-only">Seat Planner — admin map</h1>
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
@@ -2448,13 +2469,18 @@ export function SeatMap({
           </div>
         </div>
 
-        <span aria-hidden="true" className="mx-2.5 hidden h-[22px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
+        {/* Divider tracks the bar (was 22px in a 40px bar — same 0.55 ratio). */}
+        <span aria-hidden="true" className="mx-2.5 hidden h-[26px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
 
-        {/* Filter + Search: ONE connected control — the Filter segment sits
-            immediately LEFT of the search input, sharing one border (prototype
-            pairing). The dropdown anchors inside this group so the open menu
-            butts directly against the button, no gap. */}
-        <div data-filter-ui className="relative mr-1 flex h-[26px] min-w-0 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2 lg:min-w-0 lg:max-w-[340px] lg:flex-1">
+        {/* Filter and Search are two DISTINCT controls, no longer one shared
+            box. Sharing a 26px border made search — a paramount job — read as a
+            cramped sibling of the filter and forced both to share a 340px cap.
+            The filter keeps its dropdown anchored to itself (immediately LEFT
+            of search, per the locked pairing); search gets its own field below.
+            Both are Carbon `md` = 40px (owner, 2026-07-22), which is why the bar
+            itself grew to 48px — a 40px field in a 40px bar would sit flush
+            against both edges. 4px of clearance top and bottom, as before. */}
+        <div data-filter-ui className="relative mr-1.5 flex h-10 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
           {canEdit && (
             <button
               ref={filterTriggerRef}
@@ -2466,7 +2492,7 @@ export function SeatMap({
               aria-haspopup="true"
               aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
               className={[
-                "flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] lg:border-r lg:border-r-[var(--admin-chrome-border)]",
+                "flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
                 structuredFilterCount > 0 || !filterCollapsed
                   ? "border-b-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)]"
                   : "border-b-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"
@@ -2490,14 +2516,17 @@ export function SeatMap({
             <div data-filter-ui className="absolute -left-px top-[calc(100%+4px)] z-50 w-[288px] max-w-[calc(100vw-16px)]">
               <FilterPanel
                 department={department}
+                position={position}
                 status={status}
                 departments={departments}
+                positions={positions}
                 zone={zone}
                 zones={zones}
                 activeChips={activeFilterChips}
                 returnFocusRef={filterTriggerRef}
                 onClose={() => setFilterCollapsed(true)}
                 onDepartmentChange={setDepartment}
+                onPositionChange={setPosition}
                 onZoneChange={setZone}
                 onStatusChange={setStatus}
                 matchSummary={`${legendSourceSeats.length} of ${localSeats.length} seats match`}
@@ -2506,48 +2535,53 @@ export function SeatMap({
               />
             </div>
           )}
-          <div role="search" aria-label="Command search" className="hidden h-full min-w-0 flex-1 lg:block">
-            <label className="relative flex h-full w-full min-w-0 items-center">
-              <span className="sr-only">Search employee, seat, job title, department, or zone</span>
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
-                <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
-                <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-              </svg>
-              <input
-                ref={chromeSearchInputRef}
-                value={search}
-                onChange={event => handleSearchInputChange(event.target.value)}
-                onKeyDown={event => {
-                  if (event.key === "Escape" && search.trim()) {
-                    event.stopPropagation();
-                    clearSearch();
-                    return;
-                  }
-                  // Results are visually adjacent but far away in DOM order —
-                  // ArrowDown hops focus straight into the results panel.
-                  if (event.key === "ArrowDown" && resultsPanelOpen) {
-                    event.preventDefault();
-                    document.querySelector<HTMLButtonElement>('[aria-label="Admin search results"] button')?.focus();
-                  }
-                }}
-                placeholder={SEAT_SEARCH_PLACEHOLDER}
-                className="h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
-              />
-              {search.trim() ? (
-                <button
-                  type="button"
-                  aria-label="Clear search"
-                  title="Clear search"
-                  className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
-                  onClick={clearSearch}
-                >
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </button>
-              ) : searchShortcutHint ? (
-                <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)] sm:block">{searchShortcutHint}</kbd>
-              ) : null}
-            </label>
-          </div>
+        </div>
+
+        {/* Search owns its own field, sized MEDIUM: the cap rises 340 -> 420px
+            on lg — the bottom of the refinement brief's 420-560 range, so it
+            still clears the old cramped shared box without dominating the bar
+            the way 480 did. */}
+        <div role="search" aria-label="Command search" className="hidden h-10 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:block lg:max-w-[420px]">
+          <label className="relative flex h-full w-full min-w-0 items-center">
+            <span className="sr-only">Search employee, seat, job title, department, or zone</span>
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
+              <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
+              <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            </svg>
+            <input
+              ref={chromeSearchInputRef}
+              value={search}
+              onChange={event => handleSearchInputChange(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === "Escape" && search.trim()) {
+                  event.stopPropagation();
+                  clearSearch();
+                  return;
+                }
+                // Results are visually adjacent but far away in DOM order —
+                // ArrowDown hops focus straight into the results panel.
+                if (event.key === "ArrowDown" && resultsPanelOpen) {
+                  event.preventDefault();
+                  document.querySelector<HTMLButtonElement>('[aria-label="Admin search results"] button')?.focus();
+                }
+              }}
+              placeholder={SEAT_SEARCH_PLACEHOLDER}
+              className="h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
+            />
+            {search.trim() ? (
+              <button
+                type="button"
+                aria-label="Clear search"
+                title="Clear search"
+                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+                onClick={clearSearch}
+              >
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </button>
+            ) : searchShortcutHint ? (
+              <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)] sm:block">{searchShortcutHint}</kbd>
+            ) : null}
+          </label>
         </div>
 
         {canEdit && (
@@ -2555,6 +2589,12 @@ export function SeatMap({
              into the "More" menu instead, and a scroll container would clip the
              menu's absolutely-positioned dropdown. */
           <nav role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center lg:ml-0 lg:flex-none">
+            {/* One flat tool row, per the prototype (docs/ui/seat-planner-shell.html
+                lines 144-147): no bordered segment group, every tool at the same
+                weight. Undo/redo are icon-only by owner direction — ↺/↻ are
+                universally read, and the accessible name plus the keyboard-
+                shortcut explanation still ride on aria-label + title, which is
+                what assistive tech and hover actually consume. */}
             <button
               type="button"
               onClick={undoDraftEdit}
@@ -2566,7 +2606,6 @@ export function SeatMap({
               {/* Literal ↺ glyph (U+21BA) to match the owner's shell mockup exactly;
                   sized to sit at the same weight as the SVG icons in the row. */}
               <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↺</span>
-              Undo
             </button>
             <button
               type="button"
@@ -2578,8 +2617,15 @@ export function SeatMap({
             >
               {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
               <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
-              Redo
             </button>
+            {/* Text-only by owner direction: the prototype has no Show-names
+                tool, so there is no glyph to borrow, and inventing one would
+                read as a fifth icon language in a four-glyph row. On-state is
+                the orange underline (chromeToolbarBtnCollapsibleActive) plus
+                aria-pressed. The label must NOT flip to the inverse verb when
+                active: a flipping label with no pressed state is what left the
+                current view invisible to assistive tech before, and
+                accessibility-source pins that it never comes back. */}
             <button
               type="button"
               onClick={() => setShowNames(current => !current)}
@@ -2587,10 +2633,6 @@ export function SeatMap({
               title="Show or hide occupant names on seat pills"
               className={showNames ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
             >
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <path d="M2.5 10S5.3 5.5 10 5.5 17.5 10 17.5 10s-2.8 4.5-7.5 4.5S2.5 10 2.5 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                <circle cx="10" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
               Show names
             </button>
             <Link
@@ -2600,12 +2642,9 @@ export function SeatMap({
               }}
               className={chromeToolbarBtnCollapsibleXl}
             >
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <circle cx="7" cy="7.5" r="2.4" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M2.8 16v-.6a4.2 4.2 0 0 1 8.4 0v.6" stroke="currentColor" strokeWidth="1.5" />
-                <circle cx="14" cy="6.6" r="1.9" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M13 10.4a3.6 3.6 0 0 1 4.2 3.4v.6" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
+              {/* Literal ▤ glyph (U+25A4) — the prototype renders all four tools
+                  as <i> characters, not SVGs; see Undo/Redo above. */}
+              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">▤</span>
               Management
             </Link>
             <button
@@ -2618,14 +2657,15 @@ export function SeatMap({
               onClick={openAskPlannerDrawer}
               className={askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
             >
-              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5">
-                <path d="M10 3 11.9 8.1 17 10 11.9 11.9 10 17 8.1 11.9 3 10 8.1 8.1Z" fill="currentColor" />
-              </svg>
+              {/* Literal ✦ glyph (U+2726) — see Management above. */}
+              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">✦</span>
               Ask Planner
               {plannerHighlightedSeatIds.length > 0 && (
                 <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
               )}
             </button>
+            {/* Below-xl fallback only. At xl the whole tool row fits, so this
+                button is absent and the bar matches the prototype exactly. */}
             <div data-chrome-menu className="relative flex h-full shrink-0 items-center xl:hidden">
               <button
                 ref={chromeMenuButtonRef}
@@ -2643,7 +2683,9 @@ export function SeatMap({
                   <circle cx="10" cy="10" r="1.5" />
                   <circle cx="15.5" cy="10" r="1.5" />
                 </svg>
-                More
+                {/* Icon-only: the ⋯ glyph IS the overflow affordance, so the
+                    "More" label was the row's clearest icon+label doubling.
+                    aria-label + title still carry the name. */}
                 {/* Badge mirrors the collapsed Ask Planner state, so it only
                     applies below lg where that tool lives in this menu. */}
                 {plannerHighlightedSeatIds.length > 0 && (
@@ -2664,6 +2706,10 @@ export function SeatMap({
                   }}
                   className="absolute left-0 top-full z-50 min-w-[188px] border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] py-1 shadow-elevation-3"
                 >
+                  {/* Below-lg twin of the row button. Text-only like its row
+                      counterpart, but it KEEPS the trailing checkmark: that is a
+                      state cue, not an icon, and without it sighted users lose
+                      the current state in a menu that has no underline. */}
                   <button
                     type="button"
                     aria-pressed={showNames}
@@ -2676,10 +2722,6 @@ export function SeatMap({
                     }}
                     className={[chromeMenuItem, "lg:hidden"].join(" ")}
                   >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                      <path d="M2.5 10S5.3 5.5 10 5.5 17.5 10 17.5 10s-2.8 4.5-7.5 4.5S2.5 10 2.5 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                      <circle cx="10" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.5" />
-                    </svg>
                     Show names
                     {showNames && (
                       <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-primary)]">
@@ -2696,12 +2738,7 @@ export function SeatMap({
                     }}
                     className={chromeMenuItem}
                   >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                      <circle cx="7" cy="7.5" r="2.4" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M2.8 16v-.6a4.2 4.2 0 0 1 8.4 0v.6" stroke="currentColor" strokeWidth="1.5" />
-                      <circle cx="14" cy="6.6" r="1.9" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M13 10.4a3.6 3.6 0 0 1 4.2 3.4v.6" stroke="currentColor" strokeWidth="1.5" />
-                    </svg>
+                    <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">▤</span>
                     Management
                   </Link>
                   <button
@@ -2716,9 +2753,7 @@ export function SeatMap({
                     }}
                     className={[chromeMenuItem, "lg:hidden"].join(" ")}
                   >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5">
-                      <path d="M10 3 11.9 8.1 17 10 11.9 11.9 10 17 8.1 11.9 3 10 8.1 8.1Z" fill="currentColor" />
-                    </svg>
+                    <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">✦</span>
                     Ask Planner
                     {plannerHighlightedSeatIds.length > 0 && (
                       <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
@@ -2779,7 +2814,7 @@ export function SeatMap({
                 aria-controls={!publishSummary.hasChanges && publishStatusOpen ? "publish-status-popover" : undefined}
                 title={draftStatusTitle}
                 className={[
-                  "inline-flex h-10 shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
+                  "inline-flex h-12 shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
                   publishSummary.hasChanges
                     ? "bg-[var(--admin-primary)] text-[var(--admin-primary-ink)] hover:brightness-105 focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
                     : publishStatusOpen

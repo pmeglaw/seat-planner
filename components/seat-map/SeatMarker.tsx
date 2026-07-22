@@ -275,7 +275,7 @@ export function SeatMarker({
     searchSelected
       ? adminMarker
         ? "border-[var(--admin-marker-selected-border)] bg-[var(--admin-marker-selected-surface)] text-[var(--admin-marker-selected-text)] ring-2 ring-[var(--admin-marker-selected-border)] outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-border)] shadow-[0_12px_28px_rgba(16,17,20,0.34),0_0_0_5px_var(--admin-marker-search-halo),inset_0_1px_0_rgba(255,255,255,0.14)]"
-        : "border-[#D46A24] bg-[#15181B] text-white ring-2 ring-[#D46A24]/90 outline outline-2 outline-offset-2 outline-[#D46A24]/75 shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_rgba(169,207,204,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
+        : "border-[#D46A24] bg-[#15181B] text-white ring-2 ring-[#D46A24]/90 outline outline-2 outline-offset-2 outline-[#D46A24]/75 shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_rgba(255,87,21,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
       : "",
     tokenMode === "selected"
       ? searchSelected || moveOrigin
@@ -301,8 +301,14 @@ export function SeatMarker({
       : "",
     searchProminent && !selected
       ? adminMarker
-        ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-2 ring-[var(--admin-marker-search-ring)] shadow-[0_8px_18px_rgba(22,83,89,0.20),inset_0_1px_0_rgba(255,255,255,0.78)]"
-        : "border-[#2F6668] bg-[#DCEDEA] text-[#1F4749] ring-2 ring-[#2F6668]/55 shadow-[0_0_0_4px_rgba(47,102,104,0.20),0_10px_20px_-4px_rgba(47,102,104,0.35),inset_0_1px_0_rgba(255,255,255,0.78)]"
+        ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-2 ring-[var(--admin-marker-search-ring)] shadow-[0_8px_18px_rgba(158,47,6,0.20),inset_0_1px_0_rgba(255,255,255,0.78)]"
+        // Search/filter match = the brand accent (was teal #2F6668 until
+        // 2026-07-21). Text #9E2F06 on the #FBEAE1 fill = 6.27:1; the #D23F0A
+        // edge = 4.03:1 on that fill and 4.71:1 on white, so the pill reads
+        // against both the cream floor plan and its own surface. The bright
+        // #FF5715 stays in the outer glow only — at 2.71:1 on the fill it is
+        // decoration, never the boundary that identifies the match.
+        : "border-[#D23F0A] bg-[#FBEAE1] text-[#9E2F06] ring-2 ring-[#D23F0A]/55 shadow-[0_0_0_4px_rgba(255,87,21,0.20),0_10px_20px_-4px_rgba(210,63,10,0.35),inset_0_1px_0_rgba(255,255,255,0.78)]"
       : "",
     highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-ring)]" : "outline outline-2 outline-offset-2 outline-[#2F6668]/70" : "",
     swapSource ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#3E6F72] bg-[#DCEDEA] text-[#244E50] ring-4 ring-[#A9CFCC]/80" : "",

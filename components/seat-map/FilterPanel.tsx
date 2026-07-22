@@ -16,9 +16,11 @@ export type ResultStatusBreakdown = Record<SeatStatus, number>;
 
 type FilterPanelProps = {
   department: string;
+  position: string;
   zone: string;
   status: string;
   departments: string[];
+  positions: string[];
   zones: string[];
   activeChips: ActiveFilterChip[];
   panelId?: string;
@@ -26,6 +28,7 @@ type FilterPanelProps = {
   returnFocusRef: RefObject<HTMLButtonElement | null>;
   onClose: () => void;
   onDepartmentChange: (value: string) => void;
+  onPositionChange: (value: string) => void;
   onZoneChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onRemoveActiveChip: (chipId: string) => void;
@@ -88,15 +91,18 @@ const darkSelectClassName =
 
 export function FilterPanel({
   department,
+  position,
   zone,
   status,
   departments,
+  positions,
   zones,
   activeChips,
   panelId = "seat-map-filter-panel",
   returnFocusRef,
   onClose,
   onDepartmentChange,
+  onPositionChange,
   onZoneChange,
   onStatusChange,
   onRemoveActiveChip,
@@ -107,7 +113,7 @@ export function FilterPanel({
 
   return (
     // The trigger button already says "Filter", so the menu carries no repeated
-    // heading (prototype .fmenu) — just chips + the three facet selects.
+    // heading (prototype .fmenu) — just chips + the four facet selects.
     <div
       id={panelId}
       role="group"
@@ -132,6 +138,20 @@ export function FilterPanel({
             <option value="all">All departments</option>
             {departments.map(dep => (
               <option key={dep} value={dep}>{dep}</option>
+            ))}
+          </select>
+        </label>
+
+        {/* Position sits beside Department because both describe the PERSON;
+            Zone and Status below describe the SEAT. Grouping them this way is
+            what makes "show me every Case Manager, then look at their zones"
+            readable as one motion. */}
+        <label className="block">
+          <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Position</span>
+          <select value={position} onChange={event => onPositionChange(event.target.value)} className={darkSelectClassName}>
+            <option value="all">All positions</option>
+            {positions.map(value => (
+              <option key={value} value={value}>{value}</option>
             ))}
           </select>
         </label>

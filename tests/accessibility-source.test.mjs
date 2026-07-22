@@ -561,9 +561,34 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
 
   // Show names is a real toggle: stable accessible name + aria-pressed. The
   // old flipping label ("Hide names") with no pressed state left the current
-  // view invisible to assistive tech — and the More-menu item must keep a
+  // view invisible to assistive tech — and the surviving control must keep a
   // VISIBLE state cue too (sighted users lost the flipping label).
-  assert.equal((seatMapSource.match(/aria-pressed=\{showNames\}/g) ?? []).length, 2, "row button and More-menu item both expose pressed state");
+  //
+  // Counted RELATIONALLY, not as a fixed number. The toggle moved twice on
+  // 2026-07-22 — out of the row into the map menu, then back to the row — so
+  // HOW MANY toggles exist and WHERE are layout decisions this file does not
+  // own. The invariant that survived both moves: every control which flips
+  // showNames exposes its state to assistive tech. A fixed count fails on a
+  // relayout while still passing a toggle that forgot the attribute entirely,
+  // which is backwards.
+  //
+  // aria-pressed OR aria-checked, because the correct attribute depends on the
+  // control's role: a plain button takes aria-pressed, a menu item cannot (see
+  // the guard below) and would need role="menuitemcheckbox" + aria-checked.
+  // Having NEITHER is the regression.
+  const namesToggleControls = (seatMapSource.match(/setShowNames\(current => !current\)/g) ?? []).length;
+  assert.ok(namesToggleControls >= 1, "the admin map must keep a names toggle");
+  assert.equal(
+    (seatMapSource.match(/aria-(?:pressed|checked)=\{showNames\}/g) ?? []).length,
+    namesToggleControls,
+    "every control that toggles showNames must expose its state to assistive tech"
+  );
+  // Permanent guard, learned the hard way: aria-pressed is INVALID on
+  // role="menuitem" and assistive tech may drop it silently, which would void
+  // the assertion above while it still passed. Putting a toggle in a role="menu"
+  // means menuitemcheckbox + aria-checked — and note that changing the role also
+  // breaks any [role="menuitem"] selector driving that menu's keyboard roving.
+  assert.doesNotMatch(seatMapSource, /role="menuitem"[\s\S]{0,120}aria-pressed=/);
   assert.doesNotMatch(seatMapSource, /Hide names/);
   assert.match(seatMapSource, /Show names\s*\{showNames && \(/);
 

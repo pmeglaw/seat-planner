@@ -212,7 +212,7 @@ export const markerStateClassRecipes = {
   available: "border-[#BEB4A8] bg-white text-[#070A0D]",
   assigned: "border-[#8E8276] bg-white text-[#070A0D]",
   selected: "border-[#C2410C] bg-[#171A1D] text-white ring-4 ring-[#D46A24]/35",
-  searchResult: "border-[#2F6668] bg-[#DCEDEA] text-[#1F4749] ring-4 ring-[#A9CFCC]",
+  searchResult: "border-[#D23F0A] bg-[#FBEAE1] text-[#9E2F06] ring-4 ring-[#F0B49A]",
   keyboardFocus: "border-[#070A0D] bg-white text-[#070A0D] ring-4 ring-[#D46A24]/45",
   draftModified: "border-[#9A6418] bg-[#F1E2C4] text-[#6D4712]",
   moveOrigin: "border-[#6E655A] bg-[#EFE9DF] text-[#353532] ring-4 ring-[#D8D0C5]",
