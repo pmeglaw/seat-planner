@@ -48,7 +48,8 @@ Your own answer: supervisors want employees grouped by **position** (all Case Ma
 
 - **§3a line counts/dates are understated ~30%** (god-pass 485→617, ux-audit 119→152; the superpowers plan 342/07-15 → 440/07-20). Cosmetic, but the table wasn't ground-truthed.
 - **Version:** "v1.4.x → v1.10.0" is the git-tag/doc scheme; `package.json` says `0.1.0`. Don't cite the package version.
-- **Access model:** the plan assumes prod + you logging in. The repo also boots locally (`run-seat-planner` skill), which is cheaper for iterative capture and lets the executor exercise a full draft→publish cycle **without touching prod**. Give it both, with prod as the "as users see it" pass.
+- **Access model:** the plan assumes prod + you logging in. The repo also boots locally (`run-seat-planner` skill), which is cheaper for iterative capture ~~and lets the executor exercise a full draft→publish cycle **without touching prod**~~. Give it both, with prod as the "as users see it" pass.
+  > ⚠️ **CORRECTION (2026-07-22):** the struck-through half is wrong — local dev points at the production Supabase project (there is no second database), so a local publish is a production publish. Draft edits remain viewer-invisible and are safe.
 - **Scope:** two full tracks × 7 phases is large (you flagged it). Since you chose autonomous-through-Gate-1, the hand-off front-loads the cheap, high-value output (walkthrough + scorecards + the 07-15 reconciliation) so you get signal before the expensive wireframe/prototype phases.
 
 ## System-design & synthesis notes
