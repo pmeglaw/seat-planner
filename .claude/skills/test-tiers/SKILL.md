@@ -1,6 +1,6 @@
 ---
 name: test-tiers
-description: How the seat-planner test tiers are wired — the jsdom component-test harness (renderComponent.mjs), the real-browser Playwright SeatMap tier (test:browser), the backend-free e2e smoke suite (test:e2e), and the PGlite SQL-execution harness behind rpc-execution. Use when writing, debugging, or extending tests in any of these tiers, or when a test fails for harness/boundary-stubbing reasons rather than product logic.
+description: How the seat-planner test tiers are wired — the jsdom component-test harness (renderComponent.mjs), the real-browser Playwright SeatMap tier (test:browser), the backend-free e2e smoke suite (test:e2e), the PGlite SQL-execution harness behind rpc-execution, and the c8 coverage wiring. Use when writing, debugging, or extending tests in any of these tiers, when coverage attributes to the wrong files, or when a test fails for harness/boundary-stubbing reasons rather than product logic.
 ---
 
 # Test tier mechanics
@@ -22,3 +22,9 @@ A separate **end-to-end tier** lives in `tests/e2e/` (Playwright, config in `pla
 ## SQL-execution harness — `tests/rpc-execution.test.mjs`
 
 Unlike the three tiers above, this one runs inside `npm test`. `tests/helpers/pgHarness.mjs` stubs what PGlite doesn't have: Supabase's `auth` schema, `auth.uid()`, and the `anon`/`authenticated` roles. The RPCs' own `app_private.is_admin()` gate is then exercised by switching `app.current_user_id` between an admin and a viewer. What the tier covers and why it exists stays in `CLAUDE.md`.
+
+## Coverage wiring — `npm run coverage`
+
+c8 emits a text summary plus HTML in `coverage/`. Coverage is measured against the real `lib/*.ts` rather than transpiled temp modules: the behavior tests load source through `tests/helpers/tsModuleLoader.mjs`, which emits **inline source maps**, and c8 runs with **`exclude-after-remap`** so it attributes coverage back to the source files. That pairing is load-bearing — drop either half and `lib/**` reads as uncovered.
+
+Scope is `lib/**`, the tested business core. Framework-coupled modules with no unit suite (`lib/supabase/*`, `lib/adminPageGuard.ts`, page-level code, Ask Planner's OpenAI I/O) fall outside it by design, so don't "fix" their absence from the report. `npm run coverage:check` enforces the floors (lines 90 / funcs 95 / branches 80) and CI runs it on every PR.

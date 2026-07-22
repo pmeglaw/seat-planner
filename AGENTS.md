@@ -1,36 +1,14 @@
 # AGENTS.md
 
-## Purpose And Stack
+## Purpose
 
 This repo is a private office seat-planning app. Authenticated viewers see the published seating map at `/`; admins edit a draft map at `/admin`, manage data at `/admin/management`, and publish draft changes when ready.
 
-Tech stack: Next.js App Router, React, TypeScript, Tailwind CSS, Supabase Auth, Supabase Postgres, RLS, and Next.js server actions.
-
 ## Commands
 
-Package manager: npm. Use the existing `package-lock.json`.
+Package manager: npm. Use the existing `package-lock.json`. The script names are in `package.json`; the non-obvious parts are the test tiers — see the `test-tiers` skill for how each is wired.
 
-- Install: `npm ci`
-- Dev: `npm run dev`
-- Build: `npm run build`
-- Lint: `npm run lint`
-- Test: `npm test`
-- Coverage: `npm run coverage` (c8; `npm run coverage:check` enforces floors)
-- Component tests: `npm run test:ct` (jsdom + esbuild + Testing Library; run inside `npm test` too)
-- SeatMap browser tests: `npm run test:browser` (real Chromium via Playwright, `playwright-ct.config.ts`; runs in CI's e2e job)
-- Typecheck: `npm run typecheck`
-
-`npm test` runs `node --test tests/*.test.mjs`. It requires installed dependencies because some tests import `typescript`, and `tests/rpc-execution.test.mjs` (`npm run test:db`) applies the real `supabase/migrations` to an in-process Postgres (`@electric-sql/pglite`) to exercise the atomic RPCs. `npm run coverage` measures the real `lib/*.ts` via c8: the behavior tests load source through `tests/helpers/tsModuleLoader.mjs` (inline source maps) and c8 runs with `exclude-after-remap`, so coverage attributes to `lib/**` rather than the transpiled temp modules.
-
-## Important Folders
-
-- `app/`: App Router routes, layouts, auth pages, and `app/actions.ts` server actions.
-- `components/`: UI for the seat map, inspector, filters, advanced drawer, auth forms, and admin management.
-- `lib/`: Supabase clients, auth helpers, validators, CSV logic, seat math, seat labels, seat protection, and draft history.
-- `tests/`: focused Node `.mjs` tests for business logic.
-- `supabase/migrations/`: database schema, seed data, RLS policies, and security migrations.
-- `public/images/`: static assets, including the office floor plan.
-- `docs/`: release, QA, auth, implementation, and patch notes.
+`npm test` runs `node --test tests/*.test.mjs`. It requires installed dependencies because some tests import `typescript`, and `tests/rpc-execution.test.mjs` (`npm run test:db`) applies the real `supabase/migrations` to an in-process Postgres (`@electric-sql/pglite`) to exercise the atomic RPCs.
 
 ## Supabase And Env
 
@@ -43,8 +21,6 @@ Package manager: npm. Use the existing `package-lock.json`.
 
 ## Coding Conventions
 
-- Keep changes small and consistent with existing patterns.
-- Prefer existing helpers and components before adding new abstractions.
 - Put shared business rules in `lib/` and cover risky logic with tests in `tests/`.
 - Keep mutations that touch Supabase in server actions and enforce admin access with `requireAdmin()`.
 - Treat Supabase RLS, `profiles.role`, and server-side checks as the security boundary.

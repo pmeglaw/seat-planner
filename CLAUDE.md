@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-An `AGENTS.md` also exists with overlapping guidance (folder map, coding conventions, "done means" checklist). Read it too; this file focuses on the architecture that only becomes clear after reading several files together.
+An `AGENTS.md` also exists with overlapping guidance (coding conventions, safe-change rules, "done means" checklist). Read it too; this file focuses on the architecture that only becomes clear after reading several files together.
 
 Repo-scoped skills live in `.claude/skills/` — `run-seat-planner` (boot and drive the app), `chrome-pixel-capture` (pixel-accurate screenshots), `test-tiers` (harness mechanics). Use `run-seat-planner` to check UI work in a real browser: build, typecheck and tests passing is **not** visual verification. When a convention or workflow needs repeating across sessions, add a `SKILL.md` there rather than growing this file — only a skill's one-line description stays resident, while everything here is loaded into every session.
 
@@ -14,13 +14,10 @@ Framework and library **versions live in `package.json`** — don't restate them
 
 ## Commands
 
-- Dev server: `npm run dev` (http://localhost:3000; `/` = viewer, `/admin` = editor, `/admin/management` = data, `/admin/settings` = data utilities)
+- Dev server: `npm run dev` — `/` = viewer, `/admin` = editor, `/admin/management` = data, `/admin/settings` = data utilities
 - Tests: `npm test` (runs `node --test tests/*.test.mjs`; requires `node_modules` because some tests import `typescript` to type-check source)
-- Single test file: `node --test tests/seat-swap.test.mjs`
-- Coverage: `npm run coverage` (c8; text summary + HTML in `coverage/`) · `npm run coverage:check` enforces floors (lines 90 / funcs 95 / branches 80). Coverage is measured against the real `lib/*.ts` because the behavior tests run source through `tests/helpers/tsModuleLoader.mjs`, which emits inline source maps; c8 runs with `exclude-after-remap` so it attributes coverage to the source files. Scope is `lib/**` (the tested business core); framework-coupled modules with no unit suite (`lib/supabase/*`, `lib/adminPageGuard.ts`, page-level code, Ask Planner's OpenAI I/O) fall outside it.
+- Coverage: `npm run coverage` · `npm run coverage:check` enforces floors (lines 90 / funcs 95 / branches 80), scoped to `lib/**`. The c8/source-map wiring behind that is in the `test-tiers` skill.
 - E2E smoke suite: `npm run test:e2e` (Playwright; needs a prior `npm run build`; locally point `PW_CHROMIUM_PATH` at a prebuilt Chromium — CI installs its own)
-- Install (CI-faithful): `npm ci` (Node `>=22`, matching CI and `engines`)
-- QA handoff report: `npm run qa:handoff` (regenerates the improvement-loop handoff under `tools/seat-planner-improvement-loop/`)
 
 Restart the dev server after editing `.env.local`, `tailwind.config.ts`, or Supabase Auth settings — Tailwind/CSS and env changes are not always picked up hot.
 
