@@ -1,6 +1,18 @@
 {
   "version": 1,
   "skills": {
+    "high-end-visual-design": {
+      "source": "leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/soft-skill/SKILL.md",
+      "computedHash": "f730e4132775f13eea19e3dc39afc6bb453cfc0498872b127ad8f0d47cfd802d"
+    },
+    "nextjs-react-redux-typescript-cursor-rules": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "nextjs-react-redux-typescript-cursor-rules/SKILL.md",
+      "computedHash": "21843b9a7b3ce1146e3335e5faa0c4567d9e8586eb8c576489c70b1dcd519cbf"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",
