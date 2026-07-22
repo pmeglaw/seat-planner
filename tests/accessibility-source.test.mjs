@@ -564,18 +564,18 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   // view invisible to assistive tech — and the surviving control must keep a
   // VISIBLE state cue too (sighted users lost the flipping label).
   //
-  // Counted RELATIONALLY, not as a fixed 2. The 2026-07-22 declutter moved the
-  // toggle out of the tool row and into the "More map actions" menu (it is a
-  // map DISPLAY option, not an app tool), so HOW MANY toggles exist and WHERE
-  // are layout decisions this file does not own. The invariant that survives
-  // any relayout: every control which flips showNames exposes its state to
-  // assistive tech. A fixed count would have failed on the relayout while
-  // still passing a toggle that forgot the attribute entirely.
+  // Counted RELATIONALLY, not as a fixed number. The toggle moved twice on
+  // 2026-07-22 — out of the row into the map menu, then back to the row — so
+  // HOW MANY toggles exist and WHERE are layout decisions this file does not
+  // own. The invariant that survived both moves: every control which flips
+  // showNames exposes its state to assistive tech. A fixed count fails on a
+  // relayout while still passing a toggle that forgot the attribute entirely,
+  // which is backwards.
   //
-  // Either attribute satisfies it, because the correct one depends on the
-  // control's role — ARIA does NOT allow aria-pressed on a menu item, so the
-  // menu version must be a menuitemcheckbox carrying aria-checked. Having
-  // NEITHER is the regression.
+  // aria-pressed OR aria-checked, because the correct attribute depends on the
+  // control's role: a plain button takes aria-pressed, a menu item cannot (see
+  // the guard below) and would need role="menuitemcheckbox" + aria-checked.
+  // Having NEITHER is the regression.
   const namesToggleControls = (seatMapSource.match(/setShowNames\(current => !current\)/g) ?? []).length;
   assert.ok(namesToggleControls >= 1, "the admin map must keep a names toggle");
   assert.equal(
@@ -583,16 +583,12 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
     namesToggleControls,
     "every control that toggles showNames must expose its state to assistive tech"
   );
-  // The role/attribute pairing must stay valid, and the menu's keyboard roving
-  // must still reach a checkbox item — widening the role selector is what keeps
-  // the toggle arrow-navigable alongside its plain-menuitem siblings.
-  assert.match(seatMapSource, /role="menuitemcheckbox"[\s\S]{0,120}aria-checked=\{showNames\}/);
+  // Permanent guard, learned the hard way: aria-pressed is INVALID on
+  // role="menuitem" and assistive tech may drop it silently, which would void
+  // the assertion above while it still passed. Putting a toggle in a role="menu"
+  // means menuitemcheckbox + aria-checked — and note that changing the role also
+  // breaks any [role="menuitem"] selector driving that menu's keyboard roving.
   assert.doesNotMatch(seatMapSource, /role="menuitem"[\s\S]{0,120}aria-pressed=/);
-  assert.equal(
-    (seatMapSource.match(/\[role="menuitem"\],\[role="menuitemcheckbox"\]/g) ?? []).length,
-    2,
-    "both map-menu keyboard paths (open-focus and arrow roving) must match checkbox items too"
-  );
   assert.doesNotMatch(seatMapSource, /Hide names/);
   assert.match(seatMapSource, /Show names\s*\{showNames && \(/);
 

@@ -583,9 +583,7 @@ export function SeatMap({
   // not left behind on the trigger.
   useEffect(() => {
     if (!mapMenuOpen) return;
-    // menuitemcheckbox too, or the Show names toggle — the FIRST item — is
-    // skipped and the menu opens with focus on the second entry.
-    const firstItem = mapMenuRef.current?.querySelector<HTMLElement>('[role="menuitem"],[role="menuitemcheckbox"]');
+    const firstItem = mapMenuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
     firstItem?.focus();
   }, [mapMenuOpen]);
 
@@ -2613,6 +2611,23 @@ export function SeatMap({
               {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
               <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
             </button>
+            {/* Text-only by owner direction: the prototype has no Show-names
+                tool, so there is no glyph to borrow, and inventing one would
+                read as a fifth icon language in a four-glyph row. On-state is
+                the orange underline (chromeToolbarBtnCollapsibleActive) plus
+                aria-pressed. The label must NOT flip to the inverse verb when
+                active: a flipping label with no pressed state is what left the
+                current view invisible to assistive tech before, and
+                accessibility-source pins that it never comes back. */}
+            <button
+              type="button"
+              onClick={() => setShowNames(current => !current)}
+              aria-pressed={showNames}
+              title="Show or hide occupant names on seat pills"
+              className={showNames ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
+            >
+              Show names
+            </button>
             <Link
               href="/admin/management"
               onClick={event => {
@@ -2620,12 +2635,9 @@ export function SeatMap({
               }}
               className={chromeToolbarBtnCollapsibleXl}
             >
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                <circle cx="7" cy="7.5" r="2.4" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M2.8 16v-.6a4.2 4.2 0 0 1 8.4 0v.6" stroke="currentColor" strokeWidth="1.5" />
-                <circle cx="14" cy="6.6" r="1.9" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M13 10.4a3.6 3.6 0 0 1 4.2 3.4v.6" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
+              {/* Literal ▤ glyph (U+25A4) — the prototype renders all four tools
+                  as <i> characters, not SVGs; see Undo/Redo above. */}
+              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">▤</span>
               Management
             </Link>
             <button
@@ -2638,9 +2650,8 @@ export function SeatMap({
               onClick={openAskPlannerDrawer}
               className={askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
             >
-              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5">
-                <path d="M10 3 11.9 8.1 17 10 11.9 11.9 10 17 8.1 11.9 3 10 8.1 8.1Z" fill="currentColor" />
-              </svg>
+              {/* Literal ✦ glyph (U+2726) — see Management above. */}
+              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">✦</span>
               Ask Planner
               {plannerHighlightedSeatIds.length > 0 && (
                 <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
@@ -2688,6 +2699,29 @@ export function SeatMap({
                   }}
                   className="absolute left-0 top-full z-50 min-w-[188px] border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] py-1 shadow-elevation-3"
                 >
+                  {/* Below-lg twin of the row button. Text-only like its row
+                      counterpart, but it KEEPS the trailing checkmark: that is a
+                      state cue, not an icon, and without it sighted users lose
+                      the current state in a menu that has no underline. */}
+                  <button
+                    type="button"
+                    aria-pressed={showNames}
+                    onClick={() => {
+                      setChromeMenuOpen(false);
+                      setShowNames(current => !current);
+                      // Activation unmounts the focused item — same stranded-
+                      // focus hazard as Escape.
+                      returnFocusAfterClose(chromeMenuButtonRef);
+                    }}
+                    className={[chromeMenuItem, "lg:hidden"].join(" ")}
+                  >
+                    Show names
+                    {showNames && (
+                      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-primary)]">
+                        <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </button>
                   <Link
                     href="/admin/management"
                     onClick={event => {
@@ -2697,12 +2731,7 @@ export function SeatMap({
                     }}
                     className={chromeMenuItem}
                   >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                      <circle cx="7" cy="7.5" r="2.4" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M2.8 16v-.6a4.2 4.2 0 0 1 8.4 0v.6" stroke="currentColor" strokeWidth="1.5" />
-                      <circle cx="14" cy="6.6" r="1.9" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M13 10.4a3.6 3.6 0 0 1 4.2 3.4v.6" stroke="currentColor" strokeWidth="1.5" />
-                    </svg>
+                    <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">▤</span>
                     Management
                   </Link>
                   <button
@@ -2717,9 +2746,7 @@ export function SeatMap({
                     }}
                     className={[chromeMenuItem, "lg:hidden"].join(" ")}
                   >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5">
-                      <path d="M10 3 11.9 8.1 17 10 11.9 11.9 10 17 8.1 11.9 3 10 8.1 8.1Z" fill="currentColor" />
-                    </svg>
+                    <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">✦</span>
                     Ask Planner
                     {plannerHighlightedSeatIds.length > 0 && (
                       <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
@@ -3030,10 +3057,7 @@ export function SeatMap({
                         if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
                           event.preventDefault();
                           event.stopPropagation();
-                          // Both roles: Show names is a menuitemcheckbox (ARIA
-                          // forbids aria-pressed on a menu item), and it must
-                          // still rove with the arrow keys like every sibling.
-                          const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"],[role="menuitemcheckbox"]'));
+                          const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'));
                           if (items.length === 0) return;
                           const currentIndex = items.indexOf(document.activeElement as HTMLElement);
                           let nextIndex: number;
@@ -3051,32 +3075,6 @@ export function SeatMap({
                       }}
                       className="absolute right-0 top-full z-40 min-w-[176px] border border-[var(--admin-border)] bg-[var(--admin-surface)] py-1 shadow-elevation-3"
                     >
-                      {/* Show names lives HERE, not in the chrome bar: it is a
-                          map DISPLAY option like fit/zoom below it, not an app
-                          tool. That keeps the top bar to the prototype's tool
-                          row (Undo · Redo · Management · Ask Planner) with no
-                          overflow button at desktop widths. aria-pressed plus
-                          the visible checkmark travel with it, so neither
-                          assistive tech nor sighted users lose the state. */}
-                      <button
-                        type="button"
-                        role="menuitemcheckbox"
-                        tabIndex={-1}
-                        aria-checked={showNames}
-                        onClick={() => {
-                          setMapMenuOpen(false);
-                          setShowNames(current => !current);
-                          returnFocusAfterClose(mapMenuButtonRef);
-                        }}
-                        className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
-                      >
-                        Show names
-                        {showNames && (
-                          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-primary)]">
-                            <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </button>
                       <button
                         type="button"
                         role="menuitem"
