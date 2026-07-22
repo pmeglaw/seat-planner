@@ -2287,7 +2287,13 @@ export function SeatMap({
     "relative mx-auto w-full max-w-full overscroll-contain border border-[var(--admin-border)] bg-[var(--sp-color-canvas)] shadow-elevation-2 lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
     mapViewMode === "overview"
       ? "min-h-[300px] max-h-[82svh] overflow-auto p-1.5 sm:max-h-none sm:min-h-[480px] sm:overflow-hidden sm:p-2 lg:flex lg:min-h-0 lg:items-center lg:justify-center"
-      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+      // The sm cap budgets the FULL stacked chrome above/below the map (top
+      // bar + search row + canvas header + status footer + gaps ≈ 300px,
+      // measured live at 876px), so the page itself doesn't grow a second
+      // scrollbar next to the pan viewport — below lg the map viewport is the
+      // one vertical scroll owner (#197). On short windows the min-h floor
+      // wins and the page scrolls a little; that beats an unusably short map.
+      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px] sm:max-h-[calc(100svh-300px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     mapViewMode === "detail" && floor === "3" && !addSeatMode ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]" : ""
   ].join(" ");
@@ -2753,6 +2759,24 @@ export function SeatMap({
                   >
                     <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">▤</span>
                     Management
+                  </Link>
+                  {/* Below sm the bar's Viewer/Admin shortcuts hide, so the menu
+                      must keep the surface switch reachable (#197) — routed
+                      through the same unsaved-edits guard as the row link. */}
+                  <Link
+                    href="/"
+                    onClick={event => {
+                      if (!beforeGuardedNavigation("/", "the viewer")) event.preventDefault();
+                      setChromeMenuOpen(false);
+                      returnFocusAfterClose(chromeMenuButtonRef);
+                    }}
+                    className={[chromeMenuItem, "sm:hidden"].join(" ")}
+                  >
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                      <circle cx="12" cy="12" r="8.2" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    Viewer
                   </Link>
                   <button
                     type="button"

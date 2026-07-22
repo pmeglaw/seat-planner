@@ -635,3 +635,25 @@ test("custom seat deletion remains guarded by the parent map action", async () =
   assert.match(source, /aria-labelledby="delete-seat-confirm-title"/);
   assert.match(source, /Cancel custom seat deletion/);
 });
+
+test("narrow widths keep the viewer switch and people directory reachable", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+
+  // Below sm the bar's Viewer/Admin shortcuts hide, so the overflow menu must
+  // carry a Viewer item — routed through the same unsaved-edits guard as every
+  // other in-app navigation (#197). Without it the admin surface is a dead end
+  // at phone widths.
+  assert.match(
+    seatMapSource,
+    /id="chrome-overflow-menu"[\s\S]{0,7000}beforeGuardedNavigation\("\/", "the viewer"\)\) event\.preventDefault\(\)/
+  );
+
+  // Below the panel breakpoint the docked People directory disappears, so a
+  // panel:hidden toggle must open it as a sheet, and the sheet must offer its
+  // own close control (the desktop collapse rail is panel-only) (#197).
+  assert.match(viewerSource, /id="viewer-people-directory"/);
+  assert.match(viewerSource, /aria-controls="viewer-people-directory"/);
+  assert.match(viewerSource, /aria-label=\{`Show the people list \(\$\{directory\.totalCount\} people\)`\}[\s\S]{0,800}panel:hidden/);
+  assert.match(viewerSource, /aria-label="Close the people list"/);
+});

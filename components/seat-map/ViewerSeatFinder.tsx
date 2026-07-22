@@ -169,6 +169,10 @@ export function ViewerSeatFinder({
     () => false
   );
   const [directoryHoverSeatId, setDirectoryHoverSeatId] = useState<string | null>(null);
+  // Below the panel breakpoint the docked directory has no home, so it opens
+  // as an on-demand bottom sheet instead (#197). Session-scoped, not a
+  // persisted pref — the desktop collapse pref stays separate.
+  const [mobileDirectoryOpen, setMobileDirectoryOpen] = useState(false);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   // Roving tabindex anchor: the last keyboard-visited seat (see SeatMap for
   // the same pattern — the map is one tab stop, arrows walk between seats).
@@ -702,6 +706,9 @@ export function ViewerSeatFinder({
   // the preference effect lands — the same single transition they always had.
   const directoryOpen = !searchActive && !selectedSeat && !directoryCollapsed;
   const directoryRail = !searchActive && !selectedSeat && directoryCollapsed;
+  // Narrow-width sheet: same search/selection yielding rules as the docked
+  // panel, driven by its own toggle instead of the persisted collapse pref.
+  const mobileDirectorySheetOpen = mobileDirectoryOpen && !searchActive && !selectedSeat;
   // Prototype "stage": at the panel tier the inspector reserves layout width
   // (320px expanded, 44px rail) instead of overlaying the map.
   const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
@@ -1139,24 +1146,46 @@ export function ViewerSeatFinder({
         </aside>
       )}
 
-      {directoryOpen && (
+      {(directoryOpen || mobileDirectorySheetOpen) && (
         <aside
+          id="viewer-people-directory"
           aria-labelledby="viewer-people-title"
-          className="hidden flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3 panel:fixed panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:flex panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className={cx(
+            "flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3",
+            // Docked panel at panel widths; below that it exists only as the
+            // toggled bottom sheet (#197).
+            mobileDirectorySheetOpen
+              ? "fixed inset-x-3 bottom-3 z-40 flex max-h-[60svh] panel:inset-x-auto"
+              : "hidden",
+            directoryOpen && "panel:fixed panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:flex panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          )}
         >
           <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
             <h2 id="viewer-people-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">People</h2>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-[var(--admin-text-muted)]">{directory.totalCount}</span>
-              <button
-                type="button"
-                onClick={() => writeDirectoryCollapsedPref(true)}
-                aria-label="Collapse the people list"
-                title="Collapse"
-                className="flex h-6 w-6 items-center justify-center text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
-              >
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4"><path d="M5 10h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
-              </button>
+              {directoryOpen && (
+                <button
+                  type="button"
+                  onClick={() => writeDirectoryCollapsedPref(true)}
+                  aria-label="Collapse the people list"
+                  title="Collapse"
+                  className="hidden h-6 w-6 items-center justify-center text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] panel:flex"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4"><path d="M5 10h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                </button>
+              )}
+              {mobileDirectorySheetOpen && (
+                <button
+                  type="button"
+                  onClick={() => setMobileDirectoryOpen(false)}
+                  aria-label="Close the people list"
+                  title="Close"
+                  className="flex h-6 w-6 items-center justify-center text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] panel:hidden"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4"><path d="m5.5 5.5 9 9m0-9-9 9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                </button>
+              )}
             </div>
           </div>
           <div role="list" aria-label="People directory" onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2">
@@ -1207,6 +1236,24 @@ export function ViewerSeatFinder({
             <span className="rotate-180 text-[10px] font-medium tracking-[0.14em] [writing-mode:vertical-rl]">PEOPLE · {directory.totalCount}</span>
           </button>
         </aside>
+      )}
+
+      {/* Narrow-width entry point to the directory: below the panel breakpoint
+          neither the docked panel nor the collapse rail renders, so this pill
+          is the only path to the people list (#197). Hidden while search
+          results or the inspector own the bottom of the screen. */}
+      {!mobileDirectorySheetOpen && !searchActive && !selectedSeat && (
+        <button
+          type="button"
+          onClick={() => setMobileDirectoryOpen(true)}
+          aria-controls="viewer-people-directory"
+          aria-expanded={false}
+          aria-label={`Show the people list (${directory.totalCount} people)`}
+          title="Show people"
+          className="fixed bottom-3 right-3 z-40 flex items-center gap-1.5 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-[11px] font-semibold tracking-wide text-[var(--admin-text-secondary)] shadow-elevation-2 transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] panel:hidden"
+        >
+          PEOPLE · {directory.totalCount}
+        </button>
       )}
 
       <SeatInspector
