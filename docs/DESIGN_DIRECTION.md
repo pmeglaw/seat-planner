@@ -28,14 +28,14 @@ Add/adjust these as `--sp-*` design tokens in `app/globals.css` (surface through
 | Panels / cards | light surface | `#ffffff` |
 | Borders (light) | line | `#e0e0e0` |
 | Text primary / secondary (light) | | `#161616` / `#525252` |
-| **Brand accent** | orange | **`#F15A24`** |
+| **Brand accent** | orange | **`#FF5715`** |
 | Status — assigned / reserved / danger | | `#24a148` / `#f1c21b` / `#da1e28` |
 | Font (UI) | | **IBM Plex Sans** |
 | Font (codes / numeric) | mono | IBM Plex Mono |
 
-* **Orange is restrained.** Use `#F15A24` only for: the Publish button, the active tool underline, the selected seat, the search/filter highlight ring, and primary action buttons. It is not a background or a hierarchy device.
+* **Orange is restrained.** Use `#FF5715` only for: the Publish button, the active tool underline, the selected seat, the search/filter highlight ring, and primary action buttons. It is not a background or a hierarchy device.
 * **Shape:** flat, square corners for chrome/controls (Carbon feel). Exception: the seat pills keep their rounded shape (they're unchanged — §5).
-* **Accessibility on the accent:** white text on `#F15A24` measures ≈3.3:1 (fails AA for text). For text-bearing orange fills (Publish, primary buttons) use **dark ink text** or a slightly deepened orange so the label clears **≥ 4.5:1**. Resolve with measurement during build.
+* **Accessibility on the accent:** white text on `#FF5715` measures ≈3.2:1 (fails AA for text). Text-bearing orange fills use **dark ink text** (ink `#161616` on `#FF5715` = 5.7:1) or the deepened **`#D23F0A`** (4.71:1 on white); hover **`#B83708`**, pressed **`#9E2F06`**. Measured 2026-07-21.
 
 ---
 
@@ -127,4 +127,4 @@ Implement viewer/admin as one component set with the admin-only pieces condition
 
 ## 11. Definition of done
 
-The shipped app matches this spec and the prototype: dark slim shell (Filter-left-of-Search, Viewer/Admin shortcuts, admin-only edit tools), centered map with pan/zoom + floor selector + search/filter highlighting, the seamless dark click-to-open inspector with the specified sections and defaults, viewer vs admin behavior, brand orange `#F15A24`, IBM Plex — **with the seat markers/pills unchanged**, all invariants intact, accessibility green, and the flagged data items (§9) resolved or explicitly deferred.
+The shipped app matches this spec and the prototype: dark slim shell (Filter-left-of-Search, Viewer/Admin shortcuts, admin-only edit tools), centered map with pan/zoom + floor selector + search/filter highlighting, the seamless dark click-to-open inspector with the specified sections and defaults, viewer vs admin behavior, brand orange `#FF5715`, IBM Plex — **with the seat markers/pills unchanged**, all invariants intact, accessibility green, and the flagged data items (§9) resolved or explicitly deferred.

@@ -948,7 +948,7 @@ export function SeatInspector({
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-white/10 bg-[var(--admin-chrome-bg)] px-4 pb-3 pt-3.5">
         <div className="flex items-start gap-2.5">
-          <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#F15A24,#8a3a1a)] text-[11px] font-bold text-white">
+          <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#FF5715,#8a3a1a)] text-[11px] font-bold text-white">
             {occupantInitials}
           </span>
           <div className="min-w-0 flex-1">

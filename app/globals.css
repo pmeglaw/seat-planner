@@ -6,34 +6,34 @@
   color-scheme: light;
 
   /* Brand constants (Megeredchian Law). The Shell redesign accent is the
-     signature orange #F15A24 — used sparingly: Publish, active tool underline,
-     selected seat, search/filter highlight, primary actions. */
-  --ml-orange-signature: #F15A24;
-  --ml-orange-hover: #D9501F;
-  --ml-orange-cta: #C94A12;
+     signature orange #FF5715 — used sparingly: Publish, active tool underline,
+     selected seat, search/filter highlight, primary actions. Owner-set 2026-07-21. */
+  --ml-orange-signature: #FF5715;
+  --ml-orange-hover: #E64E13;
+  --ml-orange-cta: #D23F0A;
   --ml-graphite: #262626;
   --ml-ink: #161616;
 
   --sp-color-brand-ivory: #FFFFFF;
   --sp-color-brand-paper: #FBEAE1;
-  --sp-color-brand-copper: #C94A12;
-  --sp-color-brand-accent: #F15A24;
-  /* Action ladder for text-bearing orange fills. The raw brand #F15A24 is only
-     3.37:1 with white (fails AA text), so buttons that keep white labels use the
-     deepened #C94A12 (4.70:1). The hero Publish button instead uses #F15A24 with
-     dark ink text (#161616 on #F15A24 = 5.37:1). Measured 2026-07-10. */
-  --sp-color-action-primary: #C94A12;
-  --sp-color-action-primary-hover: #B54210;
-  --sp-color-action-primary-pressed: #9E3A0E;
+  --sp-color-brand-copper: #D23F0A;
+  --sp-color-brand-accent: #FF5715;
+  /* Action ladder for text-bearing orange fills. The raw brand #FF5715 is only
+     3.17:1 with white (fails AA text), so buttons that keep white labels use the
+     deepened #D23F0A (4.71:1). The hero Publish button instead uses #FF5715 with
+     dark ink text (#161616 on #FF5715 = 5.71:1). Measured 2026-07-21. */
+  --sp-color-action-primary: #D23F0A;
+  --sp-color-action-primary-hover: #B83708;
+  --sp-color-action-primary-pressed: #9E2F06;
   --sp-color-brand-clay: #7A2E0C;
 
   --sp-color-brand-ivory-rgb: 255 255 255;
   --sp-color-brand-paper-rgb: 251 234 225;
-  --sp-color-brand-copper-rgb: 201 74 18;
-  --sp-color-brand-accent-rgb: 241 90 36;
-  --sp-color-action-primary-rgb: 201 74 18;
-  --sp-color-action-primary-hover-rgb: 181 66 16;
-  --sp-color-action-primary-pressed-rgb: 158 58 14;
+  --sp-color-brand-copper-rgb: 210 63 10;
+  --sp-color-brand-accent-rgb: 255 87 21;
+  --sp-color-action-primary-rgb: 210 63 10;
+  --sp-color-action-primary-hover-rgb: 184 55 8;
+  --sp-color-action-primary-pressed-rgb: 158 47 6;
   --sp-color-brand-clay-rgb: 122 46 12;
 
   /* Shell neutrals (IBM-gray family): #161616 chrome, #f4f4f4 workspace,
@@ -78,7 +78,7 @@
   /* State families. Accent hues follow the shell status colors (assigned
      #24a148 / reserved #f1c21b / danger #da1e28) for dots and bars; the
      text-bearing variants stay dark enough for AA on their soft surfaces. */
-  --sp-color-state-selected: #C94A12;
+  --sp-color-state-selected: #D23F0A;
   --sp-color-state-selected-surface: #FBEAE1;
   --sp-color-state-selected-border: #F0B49A;
   --sp-color-state-published: #1D6E41;
@@ -119,7 +119,7 @@
   --sp-color-state-planner-border: #d4d4d4;
   --sp-color-state-disabled: #e0e0e0;
 
-  --sp-color-state-selected-rgb: 201 74 18;
+  --sp-color-state-selected-rgb: 210 63 10;
   --sp-color-state-published-rgb: 29 110 65;
   --sp-color-state-draft-rgb: 138 97 22;
   --sp-color-state-success-rgb: 29 110 65;
@@ -156,7 +156,7 @@
   --sp-duration-standard: 200ms;
   --sp-duration-deliberate: 280ms;
 
-  --sp-focus-ring-color: rgb(201 74 18 / 0.9);
+  --sp-focus-ring-color: rgb(255 87 21 / 0.9);
   --sp-focus-ring-width: 4px;
   --sp-focus-ring-offset: 2px;
   --sp-focus-ring-offset-color: var(--sp-color-surface-raised);
@@ -203,24 +203,24 @@
   --admin-text-inverse: #f4f4f4;
 
   /* Brand ladder. accent = identity + selection (never behind white text,
-     3.37:1); cta = deepened orange for white-label fills (4.70:1 vs white,
-     but only 4.19:1 as TEXT on primary-soft, 4.33:1 on surface-alt, and
-     4.02:1 on paper — use on-soft for orange text on tinted/alt/paper
-     surfaces: #9E3A0E = 6.09:1 on soft, 6.23:1 on #f4f4f4, 5.86:1 on paper;
-     the hero Publish button uses accent + ink text (#161616 on #F15A24 =
-     5.37:1). White-label fills must hover to cta-hover (#B54210 = 5.60:1),
-     never primary-hover (#D9501F = 4.10:1 — fails AA; kept for non-text use
-     only). Measured 2026-07-13. */
-  --admin-primary: #F15A24;
-  --admin-primary-hover: #D9501F;
-  --admin-primary-cta: #C94A12;
-  --admin-primary-cta-hover: #B54210;
-  --admin-primary-cta-active: #9E3A0E;
-  --admin-primary-on-soft: #9E3A0E;
+     3.17:1); cta = deepened orange for white-label fills (4.71:1 vs white,
+     but only ~4.0-4.3:1 as TEXT on primary-soft / surface-alt / paper —
+     use on-soft for orange text on tinted/alt/paper surfaces: #9E2F06 =
+     ~6.5:1 on soft, 6.67:1 on #f4f4f4, 6.26:1 on paper; the hero Publish
+     button uses accent + ink text (#161616 on #FF5715 = 5.71:1). White-label
+     fills hover to cta-hover (#B83708 = 5.85:1), never primary-hover
+     (#E64E13 = 3.84:1 vs white — fails AA text; kept for non-text use and
+     ink-on-accent, ink on #E64E13 = 4.90:1). Measured 2026-07-21. */
+  --admin-primary: #FF5715;
+  --admin-primary-hover: #E64E13;
+  --admin-primary-cta: #D23F0A;
+  --admin-primary-cta-hover: #B83708;
+  --admin-primary-cta-active: #9E2F06;
+  --admin-primary-on-soft: #9E2F06;
   --admin-primary-ink: #161616;
-  --admin-primary-soft: rgba(241, 90, 36, 0.10);
-  --admin-primary-border: rgba(241, 90, 36, 0.40);
-  --admin-copper: #C94A12;
+  --admin-primary-soft: rgba(255, 87, 21, 0.10);
+  --admin-primary-border: rgba(255, 87, 21, 0.40);
+  --admin-copper: #D23F0A;
   --admin-paper: #FBEAE1;
 
   --admin-secondary: #525252;
@@ -269,7 +269,7 @@
   --admin-info: #31626A;
   --admin-info-soft: #E0EEF0;
   --admin-analytics: #525252;
-  --admin-focus: #C94A12;
+  --admin-focus: #FF5715;
 
   --admin-state-clean-bg: #DEF3E4;
   --admin-state-clean-border: rgba(36, 161, 72, 0.36);
@@ -326,19 +326,19 @@
   --admin-marker-selected-surface: rgba(255, 255, 255, 0.97);
   --admin-marker-selected-border: var(--admin-primary-cta);
   --admin-marker-selected-text: #161616;
-  --admin-marker-selected-shadow: 0 0 0 2px rgba(241, 90, 36, 0.30), 0 0 0 3px rgba(22, 22, 22, 0.30), 0 10px 22px rgba(22, 22, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  --admin-marker-selected-shadow: 0 0 0 2px rgba(255, 87, 21, 0.30), 0 0 0 3px rgba(22, 22, 22, 0.30), 0 10px 22px rgba(22, 22, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
   --admin-marker-search-surface: var(--admin-info-soft);
   --admin-marker-search-border: rgba(47, 102, 104, 0.78);
   --admin-marker-search-text: #2F6668;
   --admin-marker-search-ring: rgba(75, 149, 166, 0.44);
   --admin-marker-search-halo: rgba(75, 149, 166, 0.32);
-  --admin-marker-draft-surface: rgba(201, 74, 18, 0.10);
-  --admin-marker-draft-border: rgba(201, 74, 18, 0.60);
+  --admin-marker-draft-surface: rgba(210, 63, 10, 0.10);
+  --admin-marker-draft-border: rgba(210, 63, 10, 0.60);
   --admin-marker-draft-text: #7A2E0C;
   --admin-marker-draft-accent: var(--admin-copper);
   --admin-marker-hover-border: #2F6668;
   --admin-marker-hover-shadow: 0 6px 14px rgba(22, 22, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
-  --admin-marker-focus-ring: rgba(201, 74, 18, 0.75);
+  --admin-marker-focus-ring: rgba(255, 87, 21, 0.75);
   --admin-marker-focus-offset: rgba(255, 255, 255, 0.70);
   --admin-marker-move-origin-surface: #f4f4f4;
   --admin-marker-move-origin-border: #a8a8a8;
