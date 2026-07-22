@@ -66,6 +66,10 @@ A single **40px** dark bar packs: brand chip · section nav (Seat map / Manageme
 - **Reduce icon+label doubling:** Carbon convention — labels for primary text nav; icon-only (with tooltip + `aria-label`, already present) for secondary tool buttons. Don't show both for every control.
 - **One divider rhythm, one underline:** keep a single active-underline per bar (the code already fixed a duplicate-underline bug — hold that line).
 - Keep the 40px height and dark `#161616` continuity between bar and inspector.
+  **Superseded 2026-07-22:** the bar is now **48px**. The owner chose Carbon `md`
+  (40px) fields over the `sm` (32px) proposed in Target 3 below, and a 40px field
+  cannot sit in a 40px bar without touching both edges. The `#161616` continuity
+  is unchanged.
 
 ---
 
@@ -79,6 +83,8 @@ A single **40px** dark bar packs: brand chip · section nav (Seat map / Manageme
 ### Target
 - Give search its **own** field, not a box shared with the filter.
 - Raise the field height to **Carbon `sm` = 32px** (fits inside a 40px bar with padding), keep flat/square.
+  **Superseded 2026-07-22:** shipped at **Carbon `md` = 40px**, with the bar grown
+  to 48px to hold it. Filter matches Search so the paired controls align.
 - Widen the cap: allow **~420–560px** on `lg` where space exists; on the viewer, search is a primary job — let it dominate the row.
 - Carbon search affordances: leading search glyph, clear (✕) affordance (already present), visible focus ring in brand orange.
 

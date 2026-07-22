@@ -755,7 +755,7 @@ export function ViewerSeatFinder({
     zoomFactor === null ? "lg:aspect-[1911/867]" : "lg:flex-1"
   );
 
-  const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeSurfaceShortcut = "flex h-12 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
@@ -770,7 +770,7 @@ export function ViewerSeatFinder({
       <h1 className="sr-only">Seat Planner — office map</h1>
       {/* z-50 matches the admin bar: sticky activates the z-index, which must
           outrank z-40 workspace overlays that follow in DOM order. */}
-      <header className="sticky top-0 z-50 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+      <header className="sticky top-0 z-50 flex h-12 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
             <Image src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />
@@ -781,15 +781,16 @@ export function ViewerSeatFinder({
           </div>
         </div>
 
-        <span aria-hidden="true" className="mx-2.5 hidden h-[22px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
+        {/* Divider tracks the bar (was 22px in a 40px bar — same 0.55 ratio). */}
+        <span aria-hidden="true" className="mx-2.5 hidden h-[26px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
 
         {/* Filter and Search are two DISTINCT controls (was one shared 26px box
             capped at 340px for BOTH). Finding your own seat or looking up a
             person is the paramount job on this surface, so search gets its own
             field and the width; Filter keeps the pairing by sitting immediately
             to its LEFT with the dropdown anchored to itself. Both Carbon `sm` =
-            32px inside the 40px bar. */}
-        <div ref={filterRootRef} className="relative mr-1.5 flex h-8 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
+            Carbon `md` = 40px inside the 48px bar (owner, 2026-07-22). */}
+        <div ref={filterRootRef} className="relative mr-1.5 flex h-10 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
           <button
             ref={filterTriggerRef}
             type="button"
@@ -847,7 +848,7 @@ export function ViewerSeatFinder({
         {/* Medium cap, 340 -> 420px on lg — matching the admin bar so the two
             surfaces read as one shell. Finding your seat is still the paramount
             job here, but 480 made the field the loudest thing in the row. */}
-        <div role="search" aria-label="Viewer search" className="h-8 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[420px]">
+        <div role="search" aria-label="Viewer search" className="h-10 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[420px]">
           <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
             <span className="sr-only">Search office seating</span>
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">

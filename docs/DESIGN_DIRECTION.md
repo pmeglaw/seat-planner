@@ -41,7 +41,12 @@ Add/adjust these as `--sp-*` design tokens in `app/globals.css` (surface through
 
 ## 3. Top bar (app shell)
 
-A **slim 40px** dark (`#161616`) bar, full width, `z` above everything. Left → right:
+A **slim 48px** dark (`#161616`) bar, full width, `z` above everything. (Was 40px
+through 2026-07-22; the owner raised the Filter and Search fields to Carbon `md` =
+40px, and a 40px field in a 40px bar sits flush against both edges — so the bar
+took 48px to keep 4px of clearance. Every full-height item in the bar tracks this
+number: the tool buttons, the Viewer/Admin shortcuts, and Publish, or the active
+underline stops landing on the bar's bottom edge.) Left → right:
 
 1. **Brand:** menu glyph + "Megeredchian Law · Seat Planner".
 2. Divider, then the **Filter dropdown immediately to the LEFT of the Search field** (this pairing is deliberate). Filter opens a menu (Department / Zone / Status); Search is a live text field.

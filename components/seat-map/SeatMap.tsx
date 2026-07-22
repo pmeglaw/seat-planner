@@ -2422,11 +2422,14 @@ export function SeatMap({
     return { edge: "none", offsetPx: 0 };
   }
 
-  // Shell top bar: full-height quiet tools on the 40px dark bar. Active state
+  // Shell top bar: full-height quiet tools on the 48px dark bar. Active state
   // is the Carbon-style 2px brand-orange underline (5.37:1 on #161616).
-  const chromeToolbarBtn = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
-  const chromeToolbarBtnActive = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-  const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  // The bar grew 40 -> 48px on 2026-07-22 so the fields could take Carbon `md`
+  // (40px) and still keep 4px of clearance; every full-height item here tracks
+  // the bar, or the underline stops landing on its bottom edge.
+  const chromeToolbarBtn = "inline-flex h-12 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
+  const chromeToolbarBtnActive = "inline-flex h-12 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeSurfaceShortcut = "flex h-12 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
   // Two collapse tiers keep the flexible search group usable at every width
   // (the row is otherwise rigid, so search absorbs the whole deficit):
   // page links (Management, Settings) fold into the "More" menu below xl,
@@ -2453,7 +2456,7 @@ export function SeatMap({
       {/* z-50, not z-40: once sticky, the header's z-index is live and must
           outrank the z-40 canvas overlays (toasts, map menu) that follow it
           in DOM order, or they paint over the pinned bar and its menus. */}
-      <header className="sticky top-0 z-50 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+      <header className="sticky top-0 z-50 flex h-12 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
         <h1 className="sr-only">Seat Planner — admin map</h1>
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
@@ -2466,16 +2469,18 @@ export function SeatMap({
           </div>
         </div>
 
-        <span aria-hidden="true" className="mx-2.5 hidden h-[22px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
+        {/* Divider tracks the bar (was 22px in a 40px bar — same 0.55 ratio). */}
+        <span aria-hidden="true" className="mx-2.5 hidden h-[26px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
 
         {/* Filter and Search are two DISTINCT controls, no longer one shared
             box. Sharing a 26px border made search — a paramount job — read as a
             cramped sibling of the filter and forced both to share a 340px cap.
             The filter keeps its dropdown anchored to itself (immediately LEFT
             of search, per the locked pairing); search gets its own field below.
-            Both are Carbon `sm` = 32px, which clears the 40px bar with 4px of
-            breathing room top and bottom. */}
-        <div data-filter-ui className="relative mr-1.5 flex h-8 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
+            Both are Carbon `md` = 40px (owner, 2026-07-22), which is why the bar
+            itself grew to 48px — a 40px field in a 40px bar would sit flush
+            against both edges. 4px of clearance top and bottom, as before. */}
+        <div data-filter-ui className="relative mr-1.5 flex h-10 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
           {canEdit && (
             <button
               ref={filterTriggerRef}
@@ -2536,7 +2541,7 @@ export function SeatMap({
             on lg — the bottom of the refinement brief's 420-560 range, so it
             still clears the old cramped shared box without dominating the bar
             the way 480 did. */}
-        <div role="search" aria-label="Command search" className="hidden h-8 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:block lg:max-w-[420px]">
+        <div role="search" aria-label="Command search" className="hidden h-10 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:block lg:max-w-[420px]">
           <label className="relative flex h-full w-full min-w-0 items-center">
             <span className="sr-only">Search employee, seat, job title, department, or zone</span>
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
@@ -2809,7 +2814,7 @@ export function SeatMap({
                 aria-controls={!publishSummary.hasChanges && publishStatusOpen ? "publish-status-popover" : undefined}
                 title={draftStatusTitle}
                 className={[
-                  "inline-flex h-10 shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
+                  "inline-flex h-12 shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
                   publishSummary.hasChanges
                     ? "bg-[var(--admin-primary)] text-[var(--admin-primary-ink)] hover:brightness-105 focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
                     : publishStatusOpen
