@@ -89,6 +89,13 @@ underline stops landing on the bar's bottom edge.) Left → right:
 
 ## 5. Seat markers — PROTECTED, do not restyle
 
+> **Marker fills are contrast-checked against the CREAM FLOOR PLAN, not against
+> white.** The floor-plan raster is warm beige, and warm/ivory marker fills were
+> measured at **1.02–1.10:1 against the floor** — they camouflage into the
+> carpet and effectively vanish. This is why marker surfaces are cool/neutral or
+> clearly tinted rather than warm. Measured 2026-07-02; the numbers are not
+> recomputable from anything else in the repo, so they are recorded here.
+
 The seat pills (the rounded plate with the status bar + code/name, and the selected dark-orange state) are **already correct in the live published app** and must ship **pixel-identical**. Do **not** restyle `SeatMarker` or change its markup, colors, sizing, or the selected-state look. The redesign works *around* the markers. (The separate, later tokenization of the marker hex is out of scope here — see the `RISKS.md` backlog.)
 
 ---

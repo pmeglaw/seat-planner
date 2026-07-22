@@ -30,7 +30,8 @@ Run a rigorous, evidence-based UX/UI review of the live Seat Planner across two 
 3. `docs/ui/seat-planner-shell.html` — committed prototype = visual source of truth for the locked direction.
 4. `output/ui-ux-critique-2026-07-15/report.md` — the **current** critique (six days before this review). Read `_kept.txt` and `_refuted.txt` beside it — the live "verified / refuted findings" lists — plus `prod-verify/`. **These are the lists the source plan called "executor memory"; they are files, not memory.**
 5. `docs/superpowers/plans/2026-07-15-critique-top8.md` — the current 8-item fix backlog with the exact global constraints (last touched 2026-07-20).
-6. **Archival only — pre-rebuild, do NOT grade against:** `docs/ui-ux-review-god-pass.md`, `qa-report.md`, `design-critique.md`, `design-critique-admin-2026-06-29.md`, `design-direction-verdict.md`, `ux-audit-production-2026-07-01.md`.
+6. ~~**Archival only — pre-rebuild, do NOT grade against:** `docs/ui-ux-review-god-pass.md`, `qa-report.md`, `design-critique.md`, `design-critique-admin-2026-06-29.md`, `design-direction-verdict.md`, `ux-audit-production-2026-07-01.md`.~~
+   > **Retired 2026-07-22.** All six were deleted in the `docs/` sweep — this file had already classified them as archival, and every finding in them was either shipped or superseded. Nothing to read, nothing to grade against. Recoverable from git history if ever needed (`git show <sha>:docs/<name>`). The one non-recomputable measurement among them — warm marker fills sit at 1.02–1.10:1 against the beige floor plan — was rescued into `DESIGN_DIRECTION.md` §5.
 
 **How to use prior work:** fresh-eyes on behavior, but reconcile every finding against #4 and #5. If `_refuted.txt` already refuted it, say so and drop it. If the top-8 plan already covers it, merge — don't re-file. Never let an old note suppress a fresh, evidence-backed finding. Challenge the locked design direction only with evidence.
 

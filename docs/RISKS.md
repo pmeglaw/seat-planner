@@ -159,3 +159,59 @@ Current: import/publish unfenced. Proposed: add `expected_draft_seats jsonb defa
 1. **R-01 — the entire runtime mutation path is unverified by automation.** The DB design is the best-engineered part of the system and the least-tested; the pg-safeupdate incident proves the failure mode is real. Fix foundation: M6 + L1.
 2. **R-02 — `SeatMap.tsx`** concentrates 2,684 lines, ~85 hooks, the concurrency contract, and a wholesale re-render hotspot in one file; every editor change pays its tax. Fix: M3 → M4 + M5, incrementally.
 3. **R-03/R-04 — the safety net has holes shaped like its own methodology:** the most-rewritten RPC (`publish_seat_map`) is the one no test pins, and five tests assert on stale copies of shipped code. Fix: Q1 + Q2, in hours.
+
+---
+
+## Appendix — known-and-accepted, rescued from retired docs (2026-07-22)
+
+These are **recorded, not prioritized**: each was the only surviving copy of a fact
+in a doc deleted during the 2026-07-22 `docs/` sweep. They sit outside the R-NN
+taxonomy deliberately — none is new work, and several are decisions *not* to act.
+
+**A-1 · Server-action errors are digest-stripped in production.** Every remaining
+`throw new Error(rpcMessage)` in `app/actions.ts` (`createEmployeeAction`,
+`updateEmployeeAction`, `createDepartmentAction`, `deleteEmployeeAction`) is
+replaced by Next.js with the generic "Server Components render … digest" string
+once deployed, so the RPC's carefully-worded message never reaches the admin.
+Only `updateSeatAction` / `swapSeatAssignmentsAction` / the restore path return
+discriminated results instead of throwing. **Diagnostic signature:** a red banner
+mentioning "a digest property is included". Formerly
+`docs/crash-fix-double-booking-assignment.md` §8.
+
+**A-2 · Two option-upserts are deliberately non-atomic.** `createEmployeeAction`,
+`updateEmployeeAction` and `createSeatAction` each `await upsertDepartmentOption(…)`
+(or the zone equivalent) and *then* issue a separate main write — two statements,
+no transaction — so a failure between them leaves an orphan
+`department_options` / `zone_options` row. Low risk (additive, self-healing) and
+knowingly left out of the RPC conversion. `createDepartmentAction` and
+`createZoneAction` are single-table upserts and **intentionally do not need RPC
+treatment**. This is an *atomicity* gap; R-07 covers the separate *concurrency*
+gaps. Formerly `docs/transaction-safety-rollout.md`.
+
+**A-3 · Two Supabase advisor warnings are open by decision, not oversight.**
+(1) *Leaked-password protection disabled* — Supabase gates HaveIBeenPwned checking
+to Pro and above; this project is on Hobby, so enabling it fails. Revisit only if
+upgrading to Pro or adding external password users. (2) *Unused-index INFO
+advisories* (`publish_events_published_by_idx`, `department_options_active_idx`,
+`zone_options_active_idx`, `seats_layer_custom_idx`, `seats_employee_id_idx`) —
+expected on low-traffic tables. **Do not drop useful indexes to silence them.**
+Formerly `docs/v1.3.5-supabase-maintenance-review.md` / `docs/supabase-live-cleanup.md`.
+
+**A-4 · Known non-blocking schema drift (recorded 2026-05-28, deliberately not
+fixed).** Production was missing `public.publish_events_created_at_idx`, which
+`20260521000100_publish_audit_logging_hardening.sql` creates.
+`publish_events_published_by_idx` exists; the admin publish-history query orders
+by `created_at desc`, so this is performance-only on a near-empty table. If it is
+ever wanted, ship it as a normal tested migration — **do not fold it into
+migration-history work.** Not re-verified against prod since 2026-05-28. Formerly
+`docs/supabase-migration-ledger-reconciliation-plan.md`.
+
+**A-5 · The "Phase 3" relational target that R-13 defers to.** `departments` /
+`zones` as unique-name tables with **no stored counts**; `people.department_id` FK
+replacing free-text `employees.department` (backfill creates rows for legacy
+orphans "Social Media" / "HR"); `zone_id` on seats; and every count a live
+aggregate rather than a stored column. This is the design
+`supabase/migrations/20260702100000_department_integrity_normalization.sql` defers
+to — that migration cited `docs/redesign-architecture.md §5`, which no longer
+exists, so the citation now points here. Never implemented; captured so R-13 has a
+target rather than a blank.

@@ -14,7 +14,8 @@
 -- whitespace-normalize employee departments, reactivate options that match a
 -- live employee department, and register orphan department strings as managed
 -- options. The relational FK model remains a Phase 3 follow-up
--- (docs/redesign-architecture.md §5 on the design branch).
+-- (docs/RISKS.md appendix A-5; formerly docs/redesign-architecture.md §5,
+--  retired in the 2026-07-22 docs sweep).
 
 create or replace function public.deactivate_employee(employee_to_deactivate uuid)
 returns uuid
