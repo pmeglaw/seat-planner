@@ -207,7 +207,7 @@ function InspectorSection({
       <summary
         className="flex cursor-pointer select-none list-none items-center px-4 py-2.5 text-[12px] font-medium text-[#e4e4e4] transition-colors hover:bg-[var(--admin-chrome-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] [&::-webkit-details-marker]:hidden"
       >
-        <span id={headingId} className="transition group-open:text-white group-open:[text-shadow:0_0_10px_rgba(241,90,36,0.45)]">{title}</span>
+        <span id={headingId} className="transition group-open:text-white group-open:[text-shadow:0_0_10px_rgba(255,87,21,0.45)]">{title}</span>
         <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-auto h-3.5 w-3.5 text-[var(--admin-chrome-muted)] transition-transform duration-150 group-hover:text-[var(--admin-chrome-text)] group-open:rotate-90 group-open:text-[var(--admin-primary)]">
           <path d="m8 5.5 4.5 4.5L8 14.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
