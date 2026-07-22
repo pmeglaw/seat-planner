@@ -82,7 +82,8 @@ Phases 1–2 evaluate these four explicitly per surface; Phase 4 designs them wi
 ## 7. Access & tooling
 
 - **Prod pass ("as users see it"):** open Chrome; **Patrick logs in himself** in his own tab (the extension can't read the Supabase auth cookie); continue in that authenticated tab. Prod = `seats.megeredchianlaw.com`.
-- **Local pass (iterative capture + safe draft/publish):** boot via the **`run-seat-planner`** skill (`localhost:3000`; `/` = viewer, `/admin` = editor, `/admin/management` = data, `/admin/settings` = utilities). Use this to run a full **draft → edit → publish** cycle **without touching prod data**.
+- **Local pass (iterative capture):** boot via the **`run-seat-planner`** skill (`localhost:3000`; `/` = viewer, `/admin` = editor, `/admin/management` = data, `/admin/settings` = utilities). ~~Use this to run a full **draft → edit → publish** cycle **without touching prod data**.~~
+  > ⚠️ **CORRECTION (2026-07-22): the struck-through claim is false.** `.env.local` points at the **production** Supabase project and there is no dev/staging database, so localhost writes to prod. Draft-layer edits are safe (viewers never read draft), but **publishing from localhost publishes to the live map 100+ viewers see**. Verified by driving a full round-trip; see the ⚠️ block in the `run-seat-planner` skill.
 - **Evidence:** `chrome-pixel-capture` skill for pixel-accurate shots. **Test mechanics:** `test-tiers` skill.
 
 ## 8. Run plan — autonomous through Gate 1
