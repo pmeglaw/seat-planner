@@ -101,3 +101,42 @@ test("an admin sees the edit affordances for a custom draft seat", async ({ page
   await expect(page.locator('[aria-label^="Move seat"]')).toBeAttached();
   await expect(page.locator('[aria-label^="Swap seat"]')).toBeAttached();
 });
+
+// Edit the notes field through React's controlled-input path so the inspector
+// reports dirty (native setter + bubbling input, per the harness's no-CSS rules).
+async function dirtyInspectorNotes(page: Page) {
+  await clickMarker(page, "CW01");
+  await expect(page.locator("textarea").first()).toBeAttached();
+  await page.evaluate(() => {
+    const field = document.querySelector("textarea");
+    if (!field) throw new Error("notes textarea not found");
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
+    setter.call(field, "unsaved note");
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
+
+test("a dirty inspector intercepts the viewer link with the unsaved-edits dialog", async ({ page }) => {
+  await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
+  await dirtyInspectorNotes(page);
+
+  await page.locator('a[aria-label="Open viewer surface"]').dispatchEvent("click");
+  await expect(page.locator("#inspector-unsaved-title")).toBeAttached();
+  // The click must not have navigated the harness away.
+  expect(page.url()).toContain("harness.html");
+});
+
+test("a dirty inspector arms a beforeunload warning; a clean one does not", async ({ page }) => {
+  await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
+
+  const fire = () =>
+    page.evaluate(() => {
+      const event = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    });
+
+  expect(await fire()).toBe(false);
+  await dirtyInspectorNotes(page);
+  expect(await fire()).toBe(true);
+});

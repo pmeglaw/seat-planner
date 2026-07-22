@@ -43,7 +43,7 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   // the chip on the map surface (owner preference, now as a labeled menu item)
   // and MUST keep routing through the unsaved-edits guard. Settings still
   // never appears as a peer nav item on the map bar.
-  assert.match(source, /<AccountMenu[\s\S]{0,600}beforeAdminPageNavigation\("\/admin\/settings", "Settings"\)/);
+  assert.match(source, /<AccountMenu[\s\S]{0,600}beforeGuardedNavigation\("\/admin\/settings", "Settings"\)/);
   assert.doesNotMatch(source, /className=\{chromeToolbarBtnCollapsibleXl\}[\s\S]{0,220}Settings\s*<\/Link>/);
   assert.match(source, /aria-controls="ask-planner-drawer"/);
   assert.match(source, /aria-haspopup="dialog"/);
@@ -353,11 +353,17 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /form\.requestSubmit\(\)/);
   assert.match(source, /onSubmitBlocked=\{cancelPendingInspectorGuardAction\}/);
   assert.match(source, /setPendingInspectorSaveAction\(null\)/);
-  assert.match(source, /href="\/admin\/management"[\s\S]{0,260}beforeAdminPageNavigation\("\/admin\/management", "Management"\)\) event\.preventDefault\(\)/);
+  assert.match(source, /href="\/admin\/management"[\s\S]{0,260}beforeGuardedNavigation\("\/admin\/management", "Management"\)\) event\.preventDefault\(\)/);
+  // The viewer surface link routes through the same guard (#194): a dirty
+  // inspector must intercept it instead of silently dropping the edits.
+  assert.match(source, /href="\/"[\s\S]{0,320}beforeGuardedNavigation\("\/", "the viewer"\)\) event\.preventDefault\(\)/);
+  // And the browser-owned path (tab close / hard navigation) arms beforeunload
+  // while the inspector is dirty.
+  assert.match(source, /window\.addEventListener\("beforeunload", warnBeforeUnload\)/);
   // Settings moved off a Link into the account menu (2026-07-16 session
   // layer): the menu item still routes through the same guard and only
   // navigates when the guard allows it.
-  assert.match(source, /if \(beforeAdminPageNavigation\("\/admin\/settings", "Settings"\)\) window\.location\.assign\("\/admin\/settings"\)/);
+  assert.match(source, /if \(beforeGuardedNavigation\("\/admin\/settings", "Settings"\)\) window\.location\.assign\("\/admin\/settings"\)/);
   assert.doesNotMatch(source, /You have unsaved seat edits\. Discard them\?/);
 });
 
