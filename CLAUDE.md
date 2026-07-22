@@ -40,6 +40,8 @@ Keep this separation absolute: never let a viewer path read draft, never let an 
 
 **The draft layer is ONE shared copy, and concurrent admin edits are fenced.** Undo/redo and JSON restore rewrite the *whole* draft from a client-held snapshot, so a session working from stale data can silently revert another admin's edits. `lib/draftConcurrency.ts` plus the draft RPCs close that hole: the client sends the state it believes is current — an exact per-row `(id, updated_at)` expectation for whole-draft operations, or one seat's `updated_at` for per-seat edits — and the RPC rejects with SQLSTATE `'MLS02'` (`STALE_DRAFT_SQLSTATE`) if the database has advanced past it. `updated_at` is maintained by the `touch_seats_updated_at` trigger.
 
+**Undo/redo and snapshot restore never remove an employee created during assignment — this is deliberate and owner-confirmed.** Draft history restores `seats` rows and re-upserts employees; `restore_draft_snapshot` only ever inserts/upserts into `public.employees`, never deletes. So a person created inline while assigning a seat stays in the directory after an undo, and is removed via Management → Deactivate. It reads like an undo bug and is not — do not "fix" it by adding a delete.
+
 **Thread the fence through any new draft mutation** — `tests/draft-concurrency.test.mjs` guards it. Two details there look like redundancy and are load-bearing (the per-row map instead of an aggregate; timestamps passed back verbatim, never re-parsed through `Date`); the header comment in `lib/draftConcurrency.ts` explains why before you "simplify" either.
 
 ## Security boundary (three enforced layers, do not rely on any one alone)
