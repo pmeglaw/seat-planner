@@ -844,8 +844,10 @@ export function ViewerSeatFinder({
           )}
         </div>
 
-        {/* Search dominates the row on the viewer: cap 340 -> 480px on lg. */}
-        <div role="search" aria-label="Viewer search" className="h-8 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[480px]">
+        {/* Medium cap, 340 -> 420px on lg — matching the admin bar so the two
+            surfaces read as one shell. Finding your seat is still the paramount
+            job here, but 480 made the field the loudest thing in the row. */}
+        <div role="search" aria-label="Viewer search" className="h-8 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[420px]">
           <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
             <span className="sr-only">Search office seating</span>
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">

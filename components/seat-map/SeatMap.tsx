@@ -2532,9 +2532,11 @@ export function SeatMap({
           )}
         </div>
 
-        {/* Search owns its own field and the room to dominate the row: the cap
-            rises 340 -> 480px on lg, where the space exists. */}
-        <div role="search" aria-label="Command search" className="hidden h-8 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:block lg:max-w-[480px]">
+        {/* Search owns its own field, sized MEDIUM: the cap rises 340 -> 420px
+            on lg — the bottom of the refinement brief's 420-560 range, so it
+            still clears the old cramped shared box without dominating the bar
+            the way 480 did. */}
+        <div role="search" aria-label="Command search" className="hidden h-8 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:block lg:max-w-[420px]">
           <label className="relative flex h-full w-full min-w-0 items-center">
             <span className="sr-only">Search employee, seat, job title, department, or zone</span>
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
