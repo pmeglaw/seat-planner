@@ -14,7 +14,8 @@ export function UpdatePasswordForm() {
   const [messageType, setMessageType] = useState<"error" | "success">("success");
   const [busy, setBusy] = useState(false);
 
-  async function updatePassword() {
+  async function updatePassword(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setMessage(null);
 
     if (password.length < 12) {
@@ -53,37 +54,44 @@ export function UpdatePasswordForm() {
         Enter a new password for your seat planner account.
       </p>
 
-      <label className="mt-5 block">
-        <span className="text-sm font-semibold text-slate-700">New password</span>
-        <input
-          type="password"
-          value={password}
-          onChange={event => setPassword(event.target.value)}
-          autoComplete="new-password"
-          className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
-        />
-      </label>
+      <form onSubmit={updatePassword} noValidate>
+        <label className="mt-5 block">
+          <span className="text-sm font-semibold text-slate-700">New password</span>
+          <input
+            type="password"
+            name="password"
+            value={password}
+            onChange={event => setPassword(event.target.value)}
+            autoComplete="new-password"
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+          />
+        </label>
 
-      <label className="mt-4 block">
-        <span className="text-sm font-semibold text-slate-700">Confirm password</span>
-        <input
-          type="password"
-          value={confirmPassword}
-          onChange={event => setConfirmPassword(event.target.value)}
-          autoComplete="new-password"
-          className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
-        />
-      </label>
+        <label className="mt-4 block">
+          <span className="text-sm font-semibold text-slate-700">Confirm password</span>
+          <input
+            type="password"
+            name="confirmPassword"
+            value={confirmPassword}
+            onChange={event => setConfirmPassword(event.target.value)}
+            autoComplete="new-password"
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+          />
+        </label>
 
-      <Button className="mt-4 w-full" variant="primary" onClick={updatePassword} disabled={busy}>
-        {busy ? "Updating…" : "Update password"}
-      </Button>
+        <Button type="submit" className="mt-4 w-full" variant="primary" disabled={busy}>
+          {busy ? "Updating…" : "Update password"}
+        </Button>
+      </form>
 
       {message && (
-        <p className={[
-          "mt-4 rounded-xl p-3 text-sm",
-          messageType === "error" ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"
-        ].join(" ")}
+        <p
+          role={messageType === "error" ? "alert" : "status"}
+          aria-live={messageType === "error" ? "assertive" : "polite"}
+          className={[
+            "mt-4 rounded-xl p-3 text-sm",
+            messageType === "error" ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"
+          ].join(" ")}
         >
           {message}
         </p>
