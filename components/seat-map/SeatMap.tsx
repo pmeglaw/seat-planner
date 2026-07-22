@@ -105,11 +105,11 @@ type InspectorGuardAction =
   | { kind: "start-add-seat" }
   | { kind: "start-move-seat" }
   | { kind: "start-swap-seat" }
-  | { kind: "navigate-admin-page"; href: AdminPageGuardHref; destination: string };
+  | { kind: "navigate-admin-page"; href: GuardedNavigationHref; destination: string };
 
-// Whitelisted in-admin destinations for the unsaved-edits guard. Query-string
+// Whitelisted in-app destinations for the unsaved-edits guard. Query-string
 // variants must be listed explicitly so the guard stays a closed set.
-type AdminPageGuardHref = "/admin/management" | "/admin/management?tab=publishHistory" | "/admin/settings";
+type GuardedNavigationHref = "/" | "/admin/management" | "/admin/management?tab=publishHistory" | "/admin/settings";
 
 type MapViewMode = "overview" | "detail";
 
@@ -828,6 +828,19 @@ export function SeatMap({
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, position, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, zone]);
+
+  // Warn on tab close / hard navigation while the inspector holds unsaved
+  // edits — in-app links route through the guard dialog, but only the browser
+  // can intercept unload (#194).
+  useEffect(() => {
+    if (!inspectorDirty) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [inspectorDirty]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
@@ -1758,7 +1771,7 @@ export function SeatMap({
     setAddSeatMode(false);
   }
 
-  function beforeAdminPageNavigation(href: AdminPageGuardHref, destination: string) {
+  function beforeGuardedNavigation(href: GuardedNavigationHref, destination: string) {
     if (!inspectorDirty) return true;
     requestInspectorGuard({ kind: "navigate-admin-page", href, destination });
     return false;
@@ -2638,7 +2651,7 @@ export function SeatMap({
             <Link
               href="/admin/management"
               onClick={event => {
-                if (!beforeAdminPageNavigation("/admin/management", "Management")) event.preventDefault();
+                if (!beforeGuardedNavigation("/admin/management", "Management")) event.preventDefault();
               }}
               className={chromeToolbarBtnCollapsibleXl}
             >
@@ -2732,7 +2745,7 @@ export function SeatMap({
                   <Link
                     href="/admin/management"
                     onClick={event => {
-                      if (!beforeAdminPageNavigation("/admin/management", "Management")) event.preventDefault();
+                      if (!beforeGuardedNavigation("/admin/management", "Management")) event.preventDefault();
                       setChromeMenuOpen(false);
                       returnFocusAfterClose(chromeMenuButtonRef);
                     }}
@@ -2772,6 +2785,9 @@ export function SeatMap({
               href="/"
               aria-label="Open viewer surface"
               title="Viewer — published map"
+              onClick={event => {
+                if (!beforeGuardedNavigation("/", "the viewer")) event.preventDefault();
+              }}
               className={[chromeSurfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"].join(" ")}
             >
               <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -2859,7 +2875,7 @@ export function SeatMap({
                   <Link
                     href="/admin/management?tab=publishHistory"
                     onClick={event => {
-                      if (!beforeAdminPageNavigation("/admin/management?tab=publishHistory", "Management")) {
+                      if (!beforeGuardedNavigation("/admin/management?tab=publishHistory", "Management")) {
                         event.preventDefault();
                         return;
                       }
@@ -2888,7 +2904,7 @@ export function SeatMap({
               onSelectSettings={
                 canEdit
                   ? () => {
-                      if (beforeAdminPageNavigation("/admin/settings", "Settings")) window.location.assign("/admin/settings");
+                      if (beforeGuardedNavigation("/admin/settings", "Settings")) window.location.assign("/admin/settings");
                     }
                   : undefined
               }
