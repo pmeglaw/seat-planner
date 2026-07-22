@@ -50,7 +50,7 @@ underline stops landing on the bar's bottom edge.) Left → right:
 
 1. **Brand:** menu glyph + "Megeredchian Law · Seat Planner".
 2. Divider, then the **Filter dropdown immediately to the LEFT of the Search field** (this pairing is deliberate). Filter opens a menu (Department / Zone / Status); Search is a live text field.
-3. Divider, then tools: **Undo · Redo · Management · Ask Planner** (Management sits *before* Ask Planner). Undo, Redo, Management are **admin-only** (hidden for viewers); Ask Planner stays (read-only assistant).
+3. Divider, then tools: **Undo · Redo · Management · Ask Planner** (Management sits *before* Ask Planner). All four are **admin-only** — including Ask Planner, despite the read-only nature of the assistant. See the correction in §7.
 4. Spacer.
 5. **Two surface shortcuts on the right: Viewer · Admin.** Admin uses the **user-with-checkmark icon** (see prototype SVG / the owner's reference image), Viewer uses an eye/target glyph. The active surface shows the orange underline.
 6. **Publish** button (orange, **admin-only**), then avatar.
@@ -87,6 +87,13 @@ The seat pills (the rounded plate with the status bar + code/name, and the selec
   5. **Activity** — *admin-only.* Recent history log.
 * Open seats show an "Open seat / Unassigned" state with the Assign action; reserved seats show the reserved status.
 
+> **Deliberate deviation from the §6.3 enumeration — OWNER-CONFIRMED 2026-07-10.**
+> **Move and Swap stay visible for OPEN seats too**, not just occupied ones. In
+> this app "Move" repositions the seat **marker**, not the occupant, and the
+> inspector button is the only entry into move mode — hiding it for open seats
+> would strand a newly added custom seat wherever it was first clicked. This
+> reads like a bug against the occupied/open split above. **Do not "fix" it.**
+
 ---
 
 ## 7. Roles — Viewer vs Admin
@@ -94,7 +101,17 @@ The seat pills (the rounded plate with the status bar + code/name, and the selec
 Same shell and same inspector for both; the **viewer is read-only**:
 
 * **Admin** sees everything: all tools, Publish, and the full inspector (Occupant, Seat, Actions, Notes, Activity).
-* **Viewer** sees only **Occupant + Seat** in the inspector — **no Actions, Notes, or Activity** — and the edit-only chrome is hidden (**no Publish, Undo, Redo, or Management**). Search, Filter, Ask Planner, floor selector, pan/zoom, and seat selection remain.
+* **Viewer** sees only **Occupant + Seat** in the inspector — **no Actions, Notes, or Activity** — and the edit-only chrome is hidden (**no Publish, Undo, Redo, or Management**). Search, Filter, floor selector, pan/zoom, and seat selection remain.
+
+> **CORRECTION 2026-07-22 — Ask Planner is admin-only.** This section and §3
+> originally listed Ask Planner as staying for viewers. That is wrong and was
+> never built: the owner chose admin-only on 2026-07-10,
+> `components/seat-map/ViewerSeatFinder.tsx` contains zero references to it, and
+> `tests/accessibility-source.test.mjs` actively **forbids** the string there
+> (the viewer-isolation guard). `askPlannerAction` also requires admin. If a
+> future change adds it to the viewer, that guard test will fail — the failure
+> is **correct**; do not loosen it. Revisit both the guard and the server action
+> if the decision is ever genuinely reversed.
 
 Implement viewer/admin as one component set with the admin-only pieces conditionally hidden (a `viewer` mode flag), not two separate designs.
 
