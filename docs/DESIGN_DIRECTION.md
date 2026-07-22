@@ -36,6 +36,25 @@ Add/adjust these as `--sp-*` design tokens in `app/globals.css` (surface through
 * **Orange is restrained.** Use `#FF5715` only for: the Publish button, the active tool underline, the selected seat, the search/filter highlight ring, and primary action buttons. It is not a background or a hierarchy device.
 * **Shape:** flat, square corners for chrome/controls (Carbon feel). Exception: the seat pills keep their rounded shape (they're unchanged — §5).
 * **Accessibility on the accent:** white text on `#FF5715` measures ≈3.2:1 (fails AA for text). Text-bearing orange fills use **dark ink text** (ink `#161616` on `#FF5715` = 5.7:1) or the deepened **`#D23F0A`** (4.71:1 on white); hover **`#B83708`**, pressed **`#9E2F06`**. Measured 2026-07-21.
+* **Info is neutral gray, not a hue** (`#525252` text · `#F4F4F4` surface · `#C6C6C6` border). Three status hues carry meaning; a fourth coloured family for "here is some context" competed with them while signalling nothing.
+
+> **Teal is a deliberate, bounded exception — owner-decided 2026-07-22.**
+> The palette is otherwise neutrals + one orange + three status hues, and the
+> `info` and search/filter-highlight teals are both retired. Teal survives in
+> **exactly two `SeatMarker` states — planner-highlight and swap-source** — and
+> is **reserved for transient INTERACTION MODES. It is never a status colour.**
+>
+> This is not an oversight. Both alternatives were measured and rejected:
+> neutral gray collides with the **default** seat pill (`#F2F2F3` bg /
+> `#AEB4BA` border — a planner highlight in gray stops reading as a highlight),
+> and orange is already the search/filter match, which planner-highlight must
+> stay distinguishable from. The sanctioned palette has no free colour for
+> "the assistant suggested this", so the honest answer is a documented
+> exception rather than a collision.
+>
+> Do not "finish" this by re-hueing those two states without re-deciding the
+> above — and if it is ever re-decided, `SeatMarker` is protected (§5) and
+> `desktop-seat-marker-system-source` must be re-run.
 
 ---
 

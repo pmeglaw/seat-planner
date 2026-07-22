@@ -107,10 +107,16 @@
   --sp-color-state-draft-on-soft: #6D4712;
   --sp-color-state-success-on-soft: #284C3B;
   --sp-color-state-warning-on-soft: #6D4712;
-  --sp-color-state-info-on-soft: #244E50;
-  --sp-color-state-info: #31626A;
-  --sp-color-state-info-surface: #E0EEF0;
-  --sp-color-state-info-border: #A9CDD2;
+  /* Info is NEUTRAL GRAY, not a hue. It was the last teal family (#31626A) and
+     the brief retires it: three status hues carry meaning (success / warning /
+     danger), so a fourth coloured family for "here is some context" competed
+     with them for attention while signalling nothing. Folding it onto the IBM
+     gray ramp leaves colour to the states that need it.
+     Measured 2026-07-22: #525252 on #F4F4F4 = 7.10:1, on white = 7.81:1. */
+  --sp-color-state-info-on-soft: #525252;
+  --sp-color-state-info: #525252;
+  --sp-color-state-info-surface: #F4F4F4;
+  --sp-color-state-info-border: #C6C6C6;
   /* Search/filter highlight is the brand accent, NOT a teal. Until 2026-07-21
      this family was #2F6668 — a near-twin of state-info #31626A doing a
      similar job, which is what made the palette read as more colors than it
@@ -122,9 +128,13 @@
   --sp-color-state-search: #9E2F06;
   --sp-color-state-search-surface: #FBEAE1;
   --sp-color-state-search-border: #D23F0A;
-  --sp-color-state-planner: #5E5E5E;
-  --sp-color-state-planner-surface: #efefef;
-  --sp-color-state-planner-border: #d4d4d4;
+  /* --sp-color-state-planner-* retired 2026-07-22. The brief folds info into
+     neutral gray by MERGING it with this family, and its target values
+     (#525252 / #F4F4F4 / #C6C6C6) are what state-info above now carries. This
+     family held three near-duplicate greys (#5E5E5E / #efefef / #d4d4d4) with
+     ZERO consumers — no var() reference, no tailwind mapping, no rgb partner —
+     so the merge is a deletion, not an alias. Use state-info for neutral
+     context surfaces. */
   --sp-color-state-disabled: #e0e0e0;
 
   --sp-color-state-selected-rgb: 210 63 10;
@@ -133,7 +143,7 @@
   --sp-color-state-success-rgb: 29 110 65;
   --sp-color-state-warning-rgb: 138 97 22;
   --sp-color-state-danger-rgb: 179 35 44;
-  --sp-color-state-info-rgb: 49 98 106;
+  --sp-color-state-info-rgb: 82 82 82;
   --sp-color-state-search-rgb: 158 47 6;
   --sp-color-state-disabled-rgb: 224 224 224;
 
@@ -274,8 +284,9 @@
   --admin-error: #da1e28;
   --admin-danger: #A2191F;
   --admin-danger-soft: #FBE9EA;
-  --admin-info: #31626A;
-  --admin-info-soft: #E0EEF0;
+  /* Neutral, matching --sp-color-state-info above — see the note there. */
+  --admin-info: #525252;
+  --admin-info-soft: #F4F4F4;
   --admin-analytics: #525252;
   --admin-focus: #FF5715;
 
@@ -286,7 +297,7 @@
   --admin-state-dirty-border: rgba(138, 97, 22, 0.46);
   --admin-state-dirty-text: #684E00;
   --admin-state-saving-bg: var(--admin-info-soft);
-  --admin-state-saving-border: rgba(49, 98, 106, 0.36);
+  --admin-state-saving-border: rgba(141, 141, 141, 0.36);
   --admin-state-saving-text: var(--admin-info);
   --admin-state-saved-bg: var(--admin-success-soft);
   --admin-state-saved-border: rgba(36, 161, 72, 0.36);
@@ -308,7 +319,7 @@
   --admin-publish-no-change-border: var(--admin-state-clean-border);
   --admin-publish-no-change-text: var(--admin-state-clean-text);
   --admin-publish-viewer-impact-bg: var(--admin-info-soft);
-  --admin-publish-viewer-impact-border: rgba(49, 98, 106, 0.34);
+  --admin-publish-viewer-impact-border: rgba(141, 141, 141, 0.34);
   --admin-publish-viewer-impact-text: var(--admin-info);
 
   /* Marker-legend tokens. The map pills themselves render via SeatMarker's
@@ -347,7 +358,10 @@
   --admin-marker-draft-border: rgba(210, 63, 10, 0.60);
   --admin-marker-draft-text: #7A2E0C;
   --admin-marker-draft-accent: var(--admin-copper);
-  --admin-marker-hover-border: #2F6668;
+  /* Neutral: a hover cue is transient feedback, not a status, so it should not
+     borrow a status hue. (Dormant — the shipped viewer branch hovers to the
+     accent; see the note at SeatMarker.tsx:130.) */
+  --admin-marker-hover-border: #8D8D8D;
   --admin-marker-hover-shadow: 0 6px 14px rgba(22, 22, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
   --admin-marker-focus-ring: rgba(255, 87, 21, 0.75);
   --admin-marker-focus-offset: rgba(255, 255, 255, 0.70);
