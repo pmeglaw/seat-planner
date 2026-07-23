@@ -456,6 +456,12 @@ export function SeatMarker({
                 inside the fixed pill rather than spill over neighbouring
                 markers — hover/focus grows the token, revealing it fully. */}
             <span translate="no" className="max-w-full truncate text-[9.5px] font-extrabold leading-[1.05]">{seat.label}</span>
+            {/* The literal space text node keeps the code and name as separate
+                words when a checker serializes the subtree (axe 4.10's
+                label-content-name-mismatch joins spans without one); flex
+                containers never render whitespace-only nodes, so it is
+                visually inert. */}
+            {employeeName && " "}
             {employeeName && (
               <span className="hidden max-w-[64px] truncate text-[10px] font-bold leading-[1.05] opacity-90 group-hover:block group-focus-visible:block">
                 {compactEmployeeName}
@@ -465,6 +471,9 @@ export function SeatMarker({
         ) : (
           <span className="relative z-10 flex w-full min-w-0 flex-col items-start text-left">
             <span translate="no" className={["whitespace-nowrap font-extrabold leading-[1.05]", codeTextClass].join(" ")}>{seat.label}</span>
+            {/* Word separator for subtree-text serializers — see the twin
+                comment in the hover-disclosure branch above. */}
+            {showInlineName && " "}
             {showInlineName && (
               <span className={["block min-w-0 truncate font-bold leading-[1.08] opacity-95", nameTextClass].join(" ")}>
                 {inlineNameLabel}
