@@ -417,7 +417,7 @@ export function SeatMarker({
             colorblind-legibility intent survives the redesign. */}
         {seat.status === "assigned" && !dragging && !invalidTarget && (
           <span
-            className="pointer-events-none absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#2FA36B] ring-2 ring-white/90"
+            className="pointer-events-none absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#2FA36B] ring-[1.5px] ring-white/90"
             aria-hidden="true"
           />
         )}
