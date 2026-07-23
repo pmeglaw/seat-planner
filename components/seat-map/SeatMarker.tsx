@@ -203,48 +203,21 @@ export function SeatMarker({
   const validTargetTone = swapCandidate && !searchProminent && !plannerHighlighted;
   const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent" || moveOrigin || validTargetTone || invalidTarget) ? "" : baseStatusToneClass;
 
-  const statusAccentClass =
-    adminMarker
-      ? invalidTarget
-        ? "bg-[var(--admin-marker-target-invalid-accent)]"
-        : draftChanged && !selected && !searchProminent
-        ? "bg-[var(--admin-marker-draft-accent)]"
-        : seat.status === "assigned"
-        ? "bg-[var(--admin-marker-assigned-accent)]"
-        : seat.status === "reserved"
-          ? "bg-[var(--admin-marker-reserved-accent)]"
-          : seat.status === "unavailable"
-            ? "bg-[var(--admin-marker-unavailable-accent)]"
-            : "bg-[var(--admin-marker-available-accent)]"
-      : draftChanged && !selected && !searchProminent
-        ? "bg-[#A26E23]"
-        : seat.status === "assigned"
-        ? "bg-[#1F7A55]/85"
-        : seat.status === "reserved"
-          ? "bg-[#9A6418]/80"
-          : seat.status === "unavailable"
-            ? "bg-[#8E8276]/70"
-            : "bg-[#8B9198]/85";
-
-  // A3 non-color status cue: the resting accent reads as a FILLED disc for an
-  // assigned seat and a HOLLOW ring for an open/available seat, so assigned vs
-  // available is legible without relying on the pale hue difference. Additive only:
-  // it is suppressed while a special interaction state owns the marker.
-  const restingStatusShape = !activeMarker && !searchProminent && !plannerHighlighted && !swapCandidate && !invalidTarget && !draftChanged;
-  const statusShapeFilled = seat.status !== "available";
-
+  // Capsule geometry (2026-07-23 owner reference hybrid): every token is a
+  // full stadium (rounded-full on a fixed height), and with the left accent
+  // bar gone the paddings are symmetric again.
   const tokenSizeClass =
     tokenMode === "selected"
       ? expandedNameBadge
-        ? "min-h-[42px] w-[126px] max-w-[126px] rounded-[14px] px-3 py-1.5 pl-4 text-left"
-        : "h-[32px] min-h-[32px] min-w-[48px] rounded-[11px] px-3 pl-3.5 text-center"
+        ? "min-h-[42px] w-[126px] max-w-[126px] rounded-full px-4 py-1.5 text-left"
+        : "h-[32px] min-h-[32px] min-w-[48px] rounded-full px-3 text-center"
       : tokenMode === "prominent"
         ? expandedNameBadge
-          ? "min-h-[39px] w-[118px] max-w-[118px] rounded-[13px] px-3 py-1.5 pl-4 text-left"
-          : "h-[30px] min-h-[30px] min-w-[46px] rounded-[11px] px-3 pl-3.5 text-center"
+          ? "min-h-[39px] w-[118px] max-w-[118px] rounded-full px-4 py-1.5 text-left"
+          : "h-[30px] min-h-[30px] min-w-[46px] rounded-full px-3 text-center"
         : tokenMode === "name"
           ? [
-            "min-h-[34px] rounded-[12px] px-2.5 py-1.5 pl-3.5 text-left",
+            "min-h-[34px] rounded-full px-3 py-1.5 text-left",
             tokenDensity === "standard" ? "w-[92px] max-w-[92px] sm:w-[104px] sm:max-w-[104px]" : "w-[78px] max-w-[78px] sm:w-[86px] sm:max-w-[86px]",
             "group-hover:w-[124px] group-hover:max-w-[124px] group-focus-visible:w-[124px] group-focus-visible:max-w-[124px]"
           ].filter(Boolean).join(" ")
@@ -262,16 +235,18 @@ export function SeatMarker({
             // 46 − 2 borders − 12 padding = 32px, which fits the widest
             // 4-char code ("CW05" ≈ 27px in Plex extrabold at 9.5px). The
             // old px-2/pl-2.5 left 26px and ellipsized every CW label.
-            "h-[24px] min-h-[24px] w-[46px] rounded-[9px] px-1.5 py-0 text-center",
+            "h-[24px] min-h-[24px] w-[46px] rounded-full px-1.5 py-0 text-center",
             "group-hover:w-auto group-focus-visible:w-auto",
             hasHoverDisclosure
-              ? "group-hover:min-w-[96px] group-hover:rounded-[12px] group-hover:px-2.5 group-hover:pl-3.5 group-hover:text-left group-focus-visible:min-w-[96px] group-focus-visible:rounded-[12px] group-focus-visible:px-2.5 group-focus-visible:pl-3.5 group-focus-visible:text-left"
+              ? "group-hover:min-w-[96px] group-hover:px-3 group-hover:text-left group-focus-visible:min-w-[96px] group-focus-visible:px-3 group-focus-visible:text-left"
               : "group-hover:min-w-[46px] group-focus-visible:min-w-[46px]"
           ].filter(Boolean).join(" ");
 
   const tokenStateClass = [
     tokenMode === "code" || tokenMode === "name"
-      ? "shadow-[0_2px_5px_rgba(23,26,29,0.13),inset_0_1px_0_rgba(255,255,255,0.82)]"
+      // Softer, slightly lifted diffusion than the old 2px/5px — the capsule
+      // reads as the reference's soft token without changing the palette.
+      ? "shadow-[0_3px_9px_rgba(23,26,29,0.16),inset_0_1px_0_rgba(255,255,255,0.85)]"
       : "",
     draftChanged && !selected && !searchProminent
       ? adminMarker
@@ -435,13 +410,14 @@ export function SeatMarker({
           tokenStateClass
         ].join(" ")}
       >
-        <span className={["pointer-events-none absolute bottom-1.5 left-1.5 top-1.5 w-0.5 rounded-full", statusAccentClass].join(" ")} aria-hidden="true" />
-        {restingStatusShape && (
+        {/* 2026-07-23 capsule hybrid (owner reference): the key-look accent
+            bar + top-left status shape are replaced by ONE non-color cue — a
+            green dot on the pill's bottom-right edge for occupied seats. Dot
+            PRESENCE (not hue) is what separates assigned from open, so the A3
+            colorblind-legibility intent survives the redesign. */}
+        {seat.status === "assigned" && !dragging && !invalidTarget && (
           <span
-            className={[
-              "pointer-events-none absolute left-1 top-1 h-[5px] w-[5px] rounded-full",
-              statusShapeFilled ? "bg-current opacity-80" : "border border-current bg-transparent opacity-70"
-            ].join(" ")}
+            className="pointer-events-none absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#2FA36B] ring-2 ring-white/90"
             aria-hidden="true"
           />
         )}
