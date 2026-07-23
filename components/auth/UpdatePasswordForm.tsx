@@ -49,33 +49,33 @@ export function UpdatePasswordForm() {
 
   return (
     <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-soft">
-      <h1 className="text-xl font-bold text-slate-900">Set a new password</h1>
-      <p className="mt-2 text-sm text-slate-600">
+      <h1 className="text-xl font-bold text-[var(--sp-color-text-primary)]">Set a new password</h1>
+      <p className="mt-2 text-sm text-[var(--sp-color-text-muted)]">
         Enter a new password for your seat planner account.
       </p>
 
       <form onSubmit={updatePassword} noValidate>
         <label className="mt-5 block">
-          <span className="text-sm font-semibold text-slate-700">New password</span>
+          <span className="text-sm font-semibold text-[var(--sp-color-text-secondary)]">New password</span>
           <input
             type="password"
             name="password"
             value={password}
             onChange={event => setPassword(event.target.value)}
             autoComplete="new-password"
-            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+            className="mt-1 w-full rounded-xl border border-[#D8D0C5] px-3 py-2 outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
           />
         </label>
 
         <label className="mt-4 block">
-          <span className="text-sm font-semibold text-slate-700">Confirm password</span>
+          <span className="text-sm font-semibold text-[var(--sp-color-text-secondary)]">Confirm password</span>
           <input
             type="password"
             name="confirmPassword"
             value={confirmPassword}
             onChange={event => setConfirmPassword(event.target.value)}
             autoComplete="new-password"
-            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
+            className="mt-1 w-full rounded-xl border border-[#D8D0C5] px-3 py-2 outline-none focus:border-brand focus:ring-4 focus:ring-orange-100"
           />
         </label>
 

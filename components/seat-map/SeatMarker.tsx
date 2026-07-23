@@ -198,7 +198,7 @@ export function SeatMarker({
           ? "border-[#8A6116]/55 bg-[#FCF4D6]/95 text-[#6D4712]"
           : seat.status === "unavailable"
             ? "border-[#BEB4A8]/90 bg-[#E7E1D8]/[0.92] text-[#696159]"
-            : "border-[#AEB4BA]/95 bg-[#F2F2F3]/95 text-[#453D33]";
+            : "border-[#B8AEA2] bg-white/95 text-[#453D33]";
   // Search/planner emphasis keeps visual priority over the passive valid-target tint.
   const validTargetTone = swapCandidate && !searchProminent && !plannerHighlighted;
   const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent" || moveOrigin || validTargetTone || invalidTarget) ? "" : baseStatusToneClass;
@@ -386,7 +386,7 @@ export function SeatMarker({
       aria-pressed={selected}
       title={`${seat.label} · ${displayName} · ${STATUS_LABELS[seat.status]}`}
       className={[
-        "group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-manipulation select-none items-center justify-center overflow-visible rounded-full border-0 bg-transparent p-0 font-extrabold leading-none text-slate-900",
+        "group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-manipulation select-none items-center justify-center overflow-visible rounded-full border-0 bg-transparent p-0 font-extrabold leading-none text-[#453D33]",
         "transition-[transform,opacity,filter] duration-150 ease-out hover:z-30 active:scale-[0.96] active:duration-75 motion-reduce:transition-none",
         markerFocusClass,
         hitTargetSizeClass,
