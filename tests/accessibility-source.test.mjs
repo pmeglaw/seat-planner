@@ -714,3 +714,22 @@ test("form fields carry the hygiene attributes users and password managers rely 
   // Management phone extension is tel like the inspector's (#199).
   assert.match(managementSource, /type="tel"[\s\S]{0,240}inputMode="numeric"/);
 });
+
+test("looping animations honor prefers-reduced-motion via motion-safe gating", async () => {
+  // Tailwind's animate-spin / animate-pulse loop forever and bypass the
+  // motion-safe convention the custom keyframes follow (globals.css) — every
+  // use must be motion-safe: gated (#201). Static spinners/skeletons remain
+  // meaningful (each is paired with text or structure).
+  const files = [
+    "../components/ui/design-system.tsx",
+    "../components/seat-map/AskPlannerDrawer.tsx",
+    "../components/admin-management/AdminManagementPanel.tsx",
+    "../components/seat-map/SeatMap.tsx",
+    "../components/seat-map/SeatInspector.tsx",
+    "../components/seat-map/ViewerSeatFinder.tsx"
+  ];
+  for (const file of files) {
+    const source = await readSource(file);
+    assert.doesNotMatch(source, /(?<!motion-safe:)animate-(spin|pulse)/, `${file} has an ungated looping animation`);
+  }
+});

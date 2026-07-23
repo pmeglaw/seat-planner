@@ -10,7 +10,7 @@ export const focusRingClass =
   "outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--sp-focus-ring-offset-color)]";
 
 const loadingSpinnerClass =
-  "h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent";
+  "h-3.5 w-3.5 shrink-0 motion-safe:animate-spin rounded-full border-2 border-current border-t-transparent";
 
 export type ButtonVariant = "primary" | "secondary" | "quiet" | "destructive";
 export type ButtonSize = "small" | "medium";
