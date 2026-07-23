@@ -193,9 +193,9 @@ export function SeatMarker({
             ? "border-[var(--admin-marker-unavailable-border)] bg-[var(--admin-marker-unavailable-surface)] text-[var(--admin-marker-unavailable-text)]"
             : "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)]"
       : seat.status === "assigned"
-        ? "border-[#1F7A55]/45 bg-[#E8F3EC]/95 text-[#156045]"
+        ? "border-[#1D6E41]/45 bg-[#E8F3EC]/95 text-[#1D6E41]"
         : seat.status === "reserved"
-          ? "border-[#9A6418]/55 bg-[#FCF0D9]/95 text-[#6D4712]"
+          ? "border-[#8A6116]/55 bg-[#FCF4D6]/95 text-[#6D4712]"
           : seat.status === "unavailable"
             ? "border-[#C8BFB3]/90 bg-[#E8E2DA]/[0.92] text-[#655E56]"
             : "border-[#AEB4BA]/95 bg-[#F2F2F3]/95 text-[#44494C]";
@@ -251,7 +251,7 @@ export function SeatMarker({
     draftChanged && !selected && !searchProminent
       ? adminMarker
         ? "border-[var(--admin-marker-draft-border)] bg-[var(--admin-marker-draft-surface)] text-[var(--admin-marker-draft-text)] ring-1 ring-[var(--admin-marker-draft-border)] shadow-[0_4px_12px_rgba(212,154,6,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
-        : "border-[#A26E23]/70 bg-[#F4E7CF]/95 text-[#613D0E] ring-1 ring-[#C49349]/55 shadow-[0_4px_12px_rgba(162,110,35,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
+        : "border-[#8A6116]/70 bg-[#FCF4D6]/95 text-[#6D4712] ring-1 ring-[#E0C46E]/55 shadow-[0_4px_12px_rgba(162,110,35,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
       : "",
     searchSelected
       ? adminMarker
@@ -273,17 +273,17 @@ export function SeatMarker({
     validTargetTone
       ? adminMarker
         ? "border-[var(--admin-marker-target-valid-border)] bg-[var(--admin-marker-target-valid-surface)] text-[var(--admin-marker-target-valid-text)]"
-        : "border-[#3F6F59] bg-[#DDE9DF] text-[#284C3B]"
+        : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B]"
       : "",
     invalidTarget
       ? adminMarker
         ? "border-[var(--admin-marker-target-invalid-border)] bg-[var(--admin-marker-target-invalid-surface)] text-[var(--admin-marker-target-invalid-text)]"
-        : "border-[#963D2F] bg-[#F3DAD2] text-[#7E2F24]"
+        : "border-[#B3232C] bg-[#FBE9EA] text-[#7E2F24]"
       : "",
     searchProminent && !selected
       ? adminMarker
         ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-2 ring-[var(--admin-marker-search-ring)] shadow-[0_8px_18px_rgba(158,47,6,0.20),inset_0_1px_0_rgba(255,255,255,0.78)]"
-        // Search/filter match = the brand accent (was teal #2F6668 until
+        // Search/filter match = the brand accent (was teal until
         // 2026-07-21). Text #9E2F06 on the #FBEAE1 fill = 6.27:1; the #D23F0A
         // edge = 4.03:1 on that fill and 4.71:1 on white, so the pill reads
         // against both the cream floor plan and its own surface. The bright
@@ -291,23 +291,23 @@ export function SeatMarker({
         // decoration, never the boundary that identifies the match.
         : "border-[#D23F0A] bg-[#FBEAE1] text-[#9E2F06] ring-2 ring-[#D23F0A]/55 shadow-[0_0_0_4px_rgba(255,87,21,0.20),0_10px_20px_-4px_rgba(210,63,10,0.35),inset_0_1px_0_rgba(255,255,255,0.78)]"
       : "",
-    highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-ring)]" : "outline outline-2 outline-offset-2 outline-[#2F6668]/70" : "",
-    swapSource ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#3E6F72] bg-[#DCEDEA] text-[#244E50] ring-4 ring-[#A9CFCC]/80" : "",
+    highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-ring)]" : "outline outline-2 outline-offset-2 outline-[#1D6E41]/70" : "",
+    swapSource ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B] ring-4 ring-[#A9D7B8]/80" : "",
     swapTarget ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#6E655A] bg-[#F1ECE4] text-[#353532] ring-4 ring-[#D8D0C5]/85" : "",
-    plannerHighlighted ? adminMarker ? "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)] ring-2 ring-[var(--admin-border)] shadow-[0_6px_14px_rgba(140,102,69,0.18),inset_0_1px_0_rgba(255,255,255,0.72)]" : "border-[#2F6668] bg-[#DCEDEA] text-[#1F4749] ring-2 ring-[#2F6668]/55 shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
-    swapMode && !swapSource ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--admin-marker-search-ring)]" : "group-hover:ring-4 group-hover:ring-[#A9CFCC]/80" : ""
+    plannerHighlighted ? adminMarker ? "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)] ring-2 ring-[var(--admin-border)] shadow-[0_6px_14px_rgba(140,102,69,0.18),inset_0_1px_0_rgba(255,255,255,0.72)]" : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B] ring-2 ring-[#1D6E41]/55 shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
+    swapMode && !swapSource ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--admin-marker-search-ring)]" : "group-hover:ring-4 group-hover:ring-[#A9D7B8]/80" : ""
   ].join(" ");
   const markerFocusClass = adminMarker
     ? "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-marker-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-marker-focus-offset)]"
     : "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#D46A24]/75 focus-visible:ring-offset-2 focus-visible:ring-offset-white/70";
-  // Teal hover is a transient cue: it must never repaint a committed (selected) seat's
+  // Hover is a transient cue: it must never repaint a committed (selected) seat's
   // orange ring, so the hover border applies only to unselected markers.
   const tokenInteractionClass = adminMarker
     ? `transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out ${selected ? "" : "group-hover:border-[var(--admin-marker-hover-border)] "}group-hover:brightness-105 group-hover:shadow-marker-hover group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--admin-marker-focus-ring)] motion-reduce:transition-none`
     : "transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out group-hover:border-[#D46A24] group-hover:brightness-105 group-hover:shadow-[0_6px_14px_rgba(23,26,29,0.20),inset_0_1px_0_rgba(255,255,255,0.82)] group-active:shadow-[0_2px_6px_rgba(23,26,29,0.16),inset_0_2px_4px_rgba(23,26,29,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[#D46A24]/75 motion-reduce:transition-none";
   const draftBadgeClass = adminMarker
     ? "bg-[var(--admin-marker-draft-accent)] shadow-[0_2px_5px_rgba(16,17,20,0.24)]"
-    : "bg-[#A26E23] shadow-[0_2px_5px_rgba(23,26,29,0.24)]";
+    : "bg-[#8A6116] shadow-[0_2px_5px_rgba(23,26,29,0.24)]";
 
   const hitTargetSizeClass = tokenMode === "selected" ? "h-10 w-10" : tokenMode === "prominent" ? "h-9 w-9" : "h-8 w-8";
   // Person-first hierarchy on the expanded name badge (2026-07-16 critique):
@@ -417,7 +417,7 @@ export function SeatMarker({
             colorblind-legibility intent survives the redesign. */}
         {seat.status === "assigned" && !dragging && !invalidTarget && (
           <span
-            className="pointer-events-none absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#2FA36B] ring-[1.5px] ring-white/90"
+            className="pointer-events-none absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#1D6E41] ring-[1.5px] ring-white/90"
             aria-hidden="true"
           />
         )}
