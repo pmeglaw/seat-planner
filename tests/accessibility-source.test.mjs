@@ -714,3 +714,101 @@ test("form fields carry the hygiene attributes users and password managers rely 
   // Management phone extension is tel like the inspector's (#199).
   assert.match(managementSource, /type="tel"[\s\S]{0,240}inputMode="numeric"/);
 });
+
+test("looping animations honor prefers-reduced-motion via motion-safe gating", async () => {
+  // Tailwind's animate-spin / animate-pulse loop forever and bypass the
+  // motion-safe convention the custom keyframes follow (globals.css) — every
+  // use must be motion-safe: gated (#201). Static spinners/skeletons remain
+  // meaningful (each is paired with text or structure).
+  const files = [
+    "../components/ui/design-system.tsx",
+    "../components/seat-map/AskPlannerDrawer.tsx",
+    "../components/admin-management/AdminManagementPanel.tsx",
+    "../components/seat-map/SeatMap.tsx",
+    "../components/seat-map/SeatInspector.tsx",
+    "../components/seat-map/ViewerSeatFinder.tsx"
+  ];
+  for (const file of files) {
+    const source = await readSource(file);
+    assert.doesNotMatch(source, /(?<!motion-safe:)animate-(spin|pulse)/, `${file} has an ungated looping animation`);
+  }
+});
+
+test("touch devices get visible destructive affordances, contained modals, and safe-area sheets", async () => {
+  const managementSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  const dataUtilitiesSource = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
+  const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const accountMenuSource = await readSource("../components/ui/AccountMenu.tsx");
+  const globalsSource = await readSource("../app/globals.css");
+
+  // Hover-revealed delete buttons are invisible on touch (no hover): both
+  // Management row deletes must also reveal under hover-none media (#198).
+  assert.equal(
+    (managementSource.match(/\[@media\(hover:none\)\]:opacity-100/g) ?? []).length,
+    (managementSource.match(/group-hover:opacity-100/g) ?? []).length,
+    "every hover-revealed control also reveals on hover-none devices"
+  );
+
+  // Modal/drawer scroll regions contain overscroll so touch scrolls don't
+  // chain to the page behind (#198).
+  assert.match(askPlannerSource, /min-h-0 flex-1 overflow-y-auto overscroll-contain/);
+  assert.equal((dataUtilitiesSource.match(/min-h-0 overflow-y-auto overscroll-contain/g) ?? []).length, 2);
+  assert.match(seatMapSource, /min-h-0 overflow-y-auto overscroll-contain/);
+  assert.match(managementSource, /role="dialog"[\s\S]{0,600}overscroll-contain/);
+
+  // Viewport-fixed bottom sheets respect the home-indicator inset (#198).
+  assert.match(seatMapSource, /env\(safe-area-inset-bottom\)/);
+  assert.ok((viewerSource.match(/env\(safe-area-inset-bottom\)/g) ?? []).length >= 3, "viewer sheets and pill respect the bottom inset");
+
+  // Tap ergonomics: interactive elements skip the double-tap zoom delay, and
+  // the small chrome controls extend their hit area to ~44px without growing
+  // visually (#198).
+  assert.match(globalsSource, /touch-action: manipulation/);
+  assert.match(accountMenuSource, /after:absolute after:-inset-\[9px\]/);
+  assert.equal((dataUtilitiesSource.match(/after:absolute after:-inset-1\.5/g) ?? []).length, 2, "both dialog close buttons extend their hit area");
+});
+
+test("nit sweep: real list semantics, translate=no tokens, localized counts, skip links on sub-pages", async () => {
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
+  const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
+  const managementSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  const managementPageSource = await readSource("../app/admin/management/page.tsx");
+  const settingsPageSource = await readSource("../app/admin/settings/page.tsx");
+  const loginPageSource = await readSource("../app/login/page.tsx");
+
+  // role="listitem" directly on a <button> overrides the native button role
+  // for AT — items are wrapper divs with real buttons inside (#202, matching
+  // ResultsPanel's pattern).
+  assert.doesNotMatch(viewerSource, /type="button"\s+role="listitem"/);
+  assert.doesNotMatch(viewerSource, /role="listitem"[\s\S]{0,80}onClick/);
+  assert.ok((viewerSource.match(/<div role="listitem"/g) ?? []).length >= 2, "viewer lists wrap buttons in listitem divs");
+
+  // Brand and seat-code tokens are identifiers — never machine-translated.
+  for (const [name, source] of [["SeatMap", seatMapSource], ["Viewer", viewerSource], ["ShellBar", shellBarSource]]) {
+    assert.match(source, /translate="no"[\s\S]{0,200}Megeredchian Law|Megeredchian Law[\s\S]{0,60}translate="no"/, `${name} brand is translate=no`);
+  }
+  assert.ok((markerSource.match(/translate="no"/g) ?? []).length >= 2, "seat-code labels are translate=no");
+
+  // Counts render localized, consistent with the panel's own convention.
+  assert.match(managementSource, /\{card\.value\.toLocaleString\(\)\}/);
+  assert.match(managementSource, /\{row\.employeeCount\.toLocaleString\(\)\}/);
+  assert.match(managementSource, /zoneCounts\.get\(name\) \?\? 0\)\.toLocaleString\(\)/);
+
+  // Publisher emails truncate with a title tooltip instead of wrapping
+  // mid-glyph (#202).
+  assert.doesNotMatch(managementSource, /break-all/);
+
+  // Straight apostrophe entity → curly on the login card.
+  assert.doesNotMatch(loginPageSource, /You&apos;re/);
+  assert.match(loginPageSource, /You’re/);
+
+  // The admin sub-pages get the same skip affordance the maps have: the shell
+  // bar's first focusable jumps past the chrome to the page content.
+  assert.match(shellBarSource, /href="#admin-subpage-main"[\s\S]{0,420}Skip to content/);
+  assert.match(managementPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
+  assert.match(settingsPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
+});

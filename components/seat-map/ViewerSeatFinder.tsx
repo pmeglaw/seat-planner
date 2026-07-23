@@ -248,7 +248,7 @@ export function ViewerSeatFinder({
   // search input the cards came from.
   function handleResultsKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button[role="listitem"]:not([disabled])'));
+    const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="listitem"] button:not([disabled])'));
     if (items.length === 0) return;
     event.preventDefault();
     const activeIndex = items.findIndex(item => item === document.activeElement);
@@ -809,7 +809,7 @@ export function ViewerSeatFinder({
             <Image src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />
           </span>
           {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
-          <div aria-hidden="true" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
+          <div aria-hidden="true" translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
             Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
           </div>
         </div>
@@ -1110,7 +1110,7 @@ export function ViewerSeatFinder({
       {resultsPanelOpen && (
         <aside
           aria-labelledby="viewer-results-title"
-          className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3 panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3 panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
             <h2 id="viewer-results-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Results</h2>
@@ -1124,10 +1124,9 @@ export function ViewerSeatFinder({
               {searchResults.results.map(result => {
                 const selected = result.id === activeResultId || Boolean(result.seatId && result.seatId === selectedSeatId);
                 return (
+                  <div role="listitem" key={result.id}>
                   <button
-                    key={result.id}
                     type="button"
-                    role="listitem"
                     disabled={result.disabled}
                     aria-current={selected ? "true" : undefined}
                     aria-label={`${KIND_LABELS[result.kind]} result. ${result.title}. ${result.subtitle}. ${result.meta}.${selected ? " Selected." : ""}`}
@@ -1151,6 +1150,7 @@ export function ViewerSeatFinder({
                       {result.seatIds.length || "-"}
                     </span>
                   </button>
+                  </div>
                 );
               })}
             </div>
@@ -1181,7 +1181,7 @@ export function ViewerSeatFinder({
             // Docked panel at panel widths; below that it exists only as the
             // toggled bottom sheet (#197).
             mobileDirectorySheetOpen
-              ? "fixed inset-x-3 bottom-3 z-40 flex max-h-[60svh] panel:inset-x-auto"
+              ? "fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex max-h-[60svh] panel:inset-x-auto panel:bottom-3"
               : "hidden",
             directoryOpen && "panel:fixed panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:flex panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
           )}
@@ -1216,10 +1216,9 @@ export function ViewerSeatFinder({
           </div>
           <div role="list" aria-label="People directory" onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2">
             {directory.rows.map(row => (
+              <div role="listitem" key={row.id}>
               <button
-                key={row.id}
                 type="button"
-                role="listitem"
                 disabled={row.disabled}
                 aria-label={`${row.title}. ${row.subtitle}.`}
                 onClick={() => openResult(row)}
@@ -1242,6 +1241,7 @@ export function ViewerSeatFinder({
                   <span className="shrink-0 text-[10px] font-medium text-[var(--admin-text-subtle)]">—</span>
                 )}
               </button>
+              </div>
             ))}
           </div>
           <div className="border-t border-[var(--admin-border)] px-4 py-2 text-[11px] font-medium text-[var(--admin-text-subtle)]">
@@ -1276,7 +1276,7 @@ export function ViewerSeatFinder({
           aria-expanded={false}
           aria-label={`Show the people list (${directory.totalCount} people)`}
           title="Show people"
-          className="fixed bottom-3 right-3 z-40 flex items-center gap-1.5 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-[11px] font-semibold tracking-wide text-[var(--admin-text-secondary)] shadow-elevation-2 transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] panel:hidden"
+          className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] right-3 z-40 flex items-center gap-1.5 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-[11px] font-semibold tracking-wide text-[var(--admin-text-secondary)] shadow-elevation-2 transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] panel:hidden"
         >
           PEOPLE · {directory.totalCount}
         </button>

@@ -301,7 +301,7 @@ export function AskPlannerDrawer({
           </form>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
           {!pending && !error && !response && (
             <section className="rounded-xl border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] p-3 text-sm leading-6 text-[var(--admin-chrome-text-soft)]">
               Ask about seats, assignments, zones, or departments. Ask Planner can highlight supporting seats, but it cannot change the map.
@@ -311,7 +311,7 @@ export function AskPlannerDrawer({
           {pending && (
             <section role="status" aria-live="polite" className="rounded-xl border border-[var(--admin-primary)]/40 bg-[var(--admin-primary)]/10 p-3">
               <div className="flex items-center gap-3">
-                <span className="h-3 w-3 shrink-0 animate-pulse rounded-full bg-[var(--admin-primary)]" />
+                <span className="h-3 w-3 shrink-0 motion-safe:animate-pulse rounded-full bg-[var(--admin-primary)]" />
                 <div>
                   <div className="text-sm font-semibold text-[var(--admin-primary)]">Checking saved draft map data</div>
                   <p className="mt-1 text-xs leading-5 text-[var(--admin-chrome-text-soft)]">Ask Planner is using read-only lookups. No seats or assignments will be changed.</p>
