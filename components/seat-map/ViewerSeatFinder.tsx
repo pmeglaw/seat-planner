@@ -1257,7 +1257,7 @@ export function ViewerSeatFinder({
           <button
             type="button"
             onClick={() => writeDirectoryCollapsedPref(false)}
-            aria-label={`Show the people list (${directory.totalCount} people)`}
+            aria-label={`People · ${directory.totalCount} — show the people list`}
             title="Show people"
             className="flex h-full w-11 flex-col items-center justify-center gap-2 border-l border-[var(--admin-border)] bg-[var(--admin-surface)] px-2 py-4 text-[var(--admin-text-secondary)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
           >
@@ -1276,7 +1276,7 @@ export function ViewerSeatFinder({
           onClick={() => setMobileDirectoryOpen(true)}
           aria-controls="viewer-people-directory"
           aria-expanded={false}
-          aria-label={`Show the people list (${directory.totalCount} people)`}
+          aria-label={`People · ${directory.totalCount} — show the people list`}
           title="Show people"
           className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] right-3 z-40 flex items-center gap-1.5 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-[11px] font-semibold tracking-wide text-[var(--admin-text-secondary)] shadow-elevation-2 transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] panel:hidden"
         >
