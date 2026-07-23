@@ -29,6 +29,11 @@ const config: Config = {
       "sp-full": "var(--sp-radius-full)"
     },
     extend: {
+      // Default border color follows the greige neutral ramp instead of
+      // Tailwind cool gray-200 — recolors every unqualified `border` (2026-07-23).
+      borderColor: {
+        DEFAULT: "#E7E1D8"
+      },
       fontFamily: {
         sans: ["var(--font-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "IBM Plex Mono", "ui-monospace", "monospace"]

@@ -76,7 +76,7 @@
   --sp-color-border-strong-rgb: 198 198 198;
 
   /* State families. Accent hues follow the shell status colors (assigned
-     #24a148 / reserved #f1c21b / danger #B3232C) for dots and bars; the
+     #1D6E41 / reserved #f1c21b / danger #B3232C) for dots and bars; the
      text-bearing variants stay dark enough for AA on their soft surfaces. */
   --sp-color-state-selected: #D23F0A;
   --sp-color-state-selected-surface: #FBEAE1;
@@ -245,10 +245,10 @@
   --admin-secondary-hover: #393939;
   --admin-secondary-soft: rgba(82, 82, 82, 0.12);
 
-  /* Status hues (shell spec): ok #24a148 · warn #f1c21b · bad #B3232C for
+  /* Status hues (shell spec): ok #1D6E41 · warn #f1c21b · bad #B3232C for
      dots/bars/graphics (≥3:1 on white for the green/red; the yellow pairs with
      a dark text partner). Text-bearing variants below are darkened for AA. */
-  --admin-status-ok: #24a148;
+  --admin-status-ok: #1D6E41;
   --admin-status-warn: #f1c21b;
   --admin-status-bad: #B3232C;
   --admin-status-neutral: #8E8276;
@@ -329,19 +329,19 @@
   --admin-marker-assigned-surface: rgba(255, 255, 255, 0.96);
   --admin-marker-assigned-border: rgba(29, 110, 65, 0.5);
   --admin-marker-assigned-text: #1D6E41;
-  --admin-marker-assigned-accent: rgba(31, 122, 85, 0.85);
+  --admin-marker-assigned-accent: rgba(29, 110, 65, 0.85);
   --admin-marker-available-surface: rgba(252, 252, 253, 0.96);
   --admin-marker-available-border: rgba(31, 34, 37, 0.16);
   --admin-marker-available-text: #696159;
-  --admin-marker-available-accent: rgba(107, 113, 119, 0.5);
+  --admin-marker-available-accent: rgba(110, 101, 90, 0.5);
   --admin-marker-reserved-surface: rgba(252, 240, 217, 0.96);
-  --admin-marker-reserved-border: rgba(154, 100, 24, 0.4);
+  --admin-marker-reserved-border: rgba(138, 97, 22, 0.4);
   --admin-marker-reserved-text: #6D4712;
-  --admin-marker-reserved-accent: rgba(154, 100, 24, 0.85);
+  --admin-marker-reserved-accent: rgba(138, 97, 22, 0.85);
   --admin-marker-unavailable-surface: rgba(236, 238, 240, 0.96);
-  --admin-marker-unavailable-border: rgba(107, 113, 119, 0.26);
+  --admin-marker-unavailable-border: rgba(110, 101, 90, 0.26);
   --admin-marker-unavailable-text: #6E655A;
-  --admin-marker-unavailable-accent: rgba(107, 113, 119, 0.6);
+  --admin-marker-unavailable-accent: rgba(110, 101, 90, 0.6);
   --admin-marker-selected-surface: rgba(255, 255, 255, 0.97);
   --admin-marker-selected-border: var(--admin-primary-cta);
   --admin-marker-selected-text: #161616;
@@ -369,7 +369,7 @@
   --admin-marker-move-origin-border: #B8AEA2;
   --admin-marker-move-origin-text: #55504A;
   --admin-marker-target-valid-surface: #DEF3E4;
-  --admin-marker-target-valid-border: #24a148;
+  --admin-marker-target-valid-border: #1D6E41;
   --admin-marker-target-valid-text: #1D6E41;
   --admin-marker-target-invalid-surface: #ffffff;
   --admin-marker-target-invalid-border: #8E8276;
