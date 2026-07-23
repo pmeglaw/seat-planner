@@ -2639,7 +2639,10 @@ export function SeatMap({
           /* No overflow-x scroll hack here: tools that don't fit below lg collapse
              into the "More" menu instead, and a scroll container would clip the
              menu's absolutely-positioned dropdown. */
-          <nav role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center lg:ml-0 lg:flex-none">
+          /* div, not <nav>: role="group" is not an allowed role on nav (axe
+             aria-allowed-role), and this is a grouped tool cluster, not a
+             navigation landmark. */
+          <div role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center lg:ml-0 lg:flex-none">
             {/* One flat tool row, per the prototype (docs/ui/seat-planner-shell.html
                 lines 144-147): no bordered segment group, every tool at the same
                 weight. Undo/redo are icon-only by owner direction — ↺/↻ are
@@ -2831,7 +2834,7 @@ export function SeatMap({
                 </div>
               )}
             </div>
-          </nav>
+          </div>
         )}
 
         <div className="ml-auto flex h-full shrink-0 items-center">

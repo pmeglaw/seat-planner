@@ -237,7 +237,7 @@ test("seat markers remain keyboard buttons with contextual accessible labels", a
   assert.match(source, /aria-pressed=\{selected\}/);
   // Status is announced through STATUS_LABELS ("Open seat."), never the raw
   // lowercase enum value (2026-07-16 critique, action 3).
-  assert.match(source, /aria-label=\{`\$\{seat\.label\}: \$\{displayName\}\. \$\{STATUS_LABELS\[seat\.status\]\} seat\./);
+  assert.match(source, /aria-label=\{`\$\{seat\.label\} \$\{accessibleSeatName\}\. \$\{STATUS_LABELS\[seat\.status\]\} seat\./);
   // Assistive strings carry the same display-formatted identity as the visible
   // labels: raw stored casing ("PAM", "ALEX S.") must not leak into the
   // marker's title tooltip / aria-label (2026-07-16 critique, fix 2). The
@@ -811,4 +811,26 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   assert.match(shellBarSource, /href="#admin-subpage-main"[\s\S]{0,420}Skip to content/);
   assert.match(managementPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
   assert.match(settingsPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
+});
+
+test("axe findings stay fixed: allowed roles, single main landmark, marker name containment", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
+  const adminPageSource = await readSource("../app/admin/page.tsx");
+
+  // role="group" is not an allowed role on <nav> (axe aria-allowed-role); the
+  // command row is a grouped toolbar cluster, not a nav landmark.
+  assert.doesNotMatch(seatMapSource, /<nav role="group"/);
+  assert.match(seatMapSource, /<div role="group" aria-label="Admin command row"/);
+
+  // SeatMap carries its own <main>, so the admin page wrapper must not add a
+  // second, nested one (axe landmark-no-duplicate-main / main-is-top-level).
+  assert.doesNotMatch(adminPageSource, /<main className="admin-theme min-h-screen bg/);
+
+  // Marker accessible names must CONTAIN the visible text (axe
+  // label-content-name-mismatch): the old "W08: Patrick…" colon broke the
+  // containment for assigned pills, and abbreviated visible names ("Alex S.")
+  // must appear verbatim before the full name.
+  assert.doesNotMatch(markerSource, /aria-label=\{`\$\{seat\.label\}: /);
+  assert.match(markerSource, /accessibleSeatName/);
 });

@@ -800,7 +800,6 @@ export function ViewerSeatFinder({
       >
         Skip to seat map
       </a>
-      <h1 className="sr-only">Seat Planner — office map</h1>
       {/* z-50 matches the admin bar: sticky activates the z-index, which must
           outrank z-40 workspace overlays that follow in DOM order. */}
       <header className="sticky top-0 z-50 flex h-9 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
@@ -977,6 +976,9 @@ export function ViewerSeatFinder({
 
       <div className={["mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
         <main className="flex min-w-0 flex-1 flex-col lg:min-h-0 lg:overflow-hidden">
+          {/* Inside <main>, not above the header: page content outside every
+              landmark trips axe's region rule. */}
+          <h1 className="sr-only">Seat Planner — office map</h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-0.5 pb-2">
             <FloorSelector floor={floor} onChange={setFloor} />
             <span className="text-[12px] text-[var(--admin-text-secondary)]">{mapCrumbLabel}</span>

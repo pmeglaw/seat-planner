@@ -157,6 +157,12 @@ export function SeatMarker({
   const hasHoverDisclosure = hasEmployee && !showInlineName;
   const expandedNameBadge = hasEmployee && (tokenMode === "selected" || tokenMode === "prominent");
   const inlineNameLabel = expandedNameBadge || (namesVisible && tokenDensity === "standard" && !compactNameLabel) ? formatDisplayName(employeeName) : compactEmployeeName;
+  // Accessible name must CONTAIN the pill's visible text verbatim (axe
+  // label-content-name-mismatch): "W08: Patrick" failed because the colon
+  // broke containment, and abbreviated visible names ("Alex S.") must appear
+  // before the full name they abbreviate.
+  const accessibleSeatName =
+    !hasEmployee || inlineNameLabel === displayName ? displayName : `${inlineNameLabel} ${displayName}`;
   const markerIntent: MarkerIntent = swapSource
     ? "swap-source"
     : swapTarget
@@ -416,7 +422,7 @@ export function SeatMarker({
         dragging ? "z-40 scale-[1.06] shadow-[0_18px_36px_rgba(31,35,39,0.24)]" : ""
       ].join(" ")}
       style={pointToStyle({ x: seat.x, y: seat.y })}
-      aria-label={`${seat.label}: ${displayName}. ${STATUS_LABELS[seat.status]} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${moveOrigin ? " Move origin. Drag to reposition." : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
+      aria-label={`${seat.label} ${accessibleSeatName}. ${STATUS_LABELS[seat.status]} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${moveOrigin ? " Move origin. Drag to reposition." : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
     >
       <SeatToken
         style={tokenPositionStyle}
