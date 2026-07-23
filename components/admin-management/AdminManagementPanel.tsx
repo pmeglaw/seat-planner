@@ -633,7 +633,7 @@ export function AdminManagementPanel({
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           {managementSummaryCards.map(card => (
             <div key={card.label} className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
-              <div className="text-2xl font-semibold text-[var(--admin-text-primary)]">{card.value}</div>
+              <div className="text-2xl font-semibold text-[var(--admin-text-primary)]">{card.value.toLocaleString()}</div>
               <div className="mt-1 text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">{card.label}</div>
             </div>
           ))}
@@ -853,7 +853,7 @@ export function AdminManagementPanel({
                         <span className="rounded-full bg-[var(--admin-state-dirty-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--admin-state-dirty-text)]">Not in managed list</span>
                       )}
                     </div>
-                    <div className="text-xs text-[var(--admin-text-secondary)]">{row.employeeCount} employee{row.employeeCount === 1 ? "" : "s"}</div>
+                    <div className="text-xs text-[var(--admin-text-secondary)]">{row.employeeCount.toLocaleString()} employee{row.employeeCount === 1 ? "" : "s"}</div>
                   </div>
                   {editingDepartment === row.name ? (
                     <div className="flex flex-1 flex-col gap-2 md:max-w-md md:flex-row">
@@ -907,7 +907,7 @@ export function AdminManagementPanel({
                 <div key={name} className="group flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="text-sm font-semibold text-[var(--admin-text-primary)]">{name}</div>
-                    <div className="text-xs text-[var(--admin-text-secondary)]">{zoneCounts.get(name) ?? 0} draft seat{(zoneCounts.get(name) ?? 0) === 1 ? "" : "s"}</div>
+                    <div className="text-xs text-[var(--admin-text-secondary)]">{(zoneCounts.get(name) ?? 0).toLocaleString()} draft seat{(zoneCounts.get(name) ?? 0) === 1 ? "" : "s"}</div>
                   </div>
                   {editingZone === name ? (
                     <div className="flex flex-1 flex-col gap-2 md:max-w-md md:flex-row">
@@ -1022,7 +1022,7 @@ export function AdminManagementPanel({
                       </div>
                       <div className="min-w-0">
                         <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Published by</div>
-                        <div className="mt-1 break-all text-sm font-semibold text-[var(--admin-text-primary)]" title={latestPublish.published_by ?? undefined}>
+                        <div className="mt-1 truncate text-sm font-semibold text-[var(--admin-text-primary)]" title={latestPublish.published_by ?? undefined}>
                           {getPublishHistoryActor(latestPublish)}
                         </div>
                       </div>
@@ -1060,7 +1060,7 @@ export function AdminManagementPanel({
                         </div>
                         <div className="min-w-0">
                           <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Published by</div>
-                          <div className="break-all font-semibold text-[var(--admin-text-secondary)]" title={event.published_by ?? undefined}>
+                          <div className="truncate font-semibold text-[var(--admin-text-secondary)]" title={event.published_by ?? undefined}>
                             {getPublishHistoryActor(event)}
                           </div>
                         </div>

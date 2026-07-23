@@ -769,3 +769,46 @@ test("touch devices get visible destructive affordances, contained modals, and s
   assert.match(accountMenuSource, /after:absolute after:-inset-\[9px\]/);
   assert.equal((dataUtilitiesSource.match(/after:absolute after:-inset-1\.5/g) ?? []).length, 2, "both dialog close buttons extend their hit area");
 });
+
+test("nit sweep: real list semantics, translate=no tokens, localized counts, skip links on sub-pages", async () => {
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
+  const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
+  const managementSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  const managementPageSource = await readSource("../app/admin/management/page.tsx");
+  const settingsPageSource = await readSource("../app/admin/settings/page.tsx");
+  const loginPageSource = await readSource("../app/login/page.tsx");
+
+  // role="listitem" directly on a <button> overrides the native button role
+  // for AT — items are wrapper divs with real buttons inside (#202, matching
+  // ResultsPanel's pattern).
+  assert.doesNotMatch(viewerSource, /type="button"\s+role="listitem"/);
+  assert.doesNotMatch(viewerSource, /role="listitem"[\s\S]{0,80}onClick/);
+  assert.ok((viewerSource.match(/<div role="listitem"/g) ?? []).length >= 2, "viewer lists wrap buttons in listitem divs");
+
+  // Brand and seat-code tokens are identifiers — never machine-translated.
+  for (const [name, source] of [["SeatMap", seatMapSource], ["Viewer", viewerSource], ["ShellBar", shellBarSource]]) {
+    assert.match(source, /translate="no"[\s\S]{0,200}Megeredchian Law|Megeredchian Law[\s\S]{0,60}translate="no"/, `${name} brand is translate=no`);
+  }
+  assert.ok((markerSource.match(/translate="no"/g) ?? []).length >= 2, "seat-code labels are translate=no");
+
+  // Counts render localized, consistent with the panel's own convention.
+  assert.match(managementSource, /\{card\.value\.toLocaleString\(\)\}/);
+  assert.match(managementSource, /\{row\.employeeCount\.toLocaleString\(\)\}/);
+  assert.match(managementSource, /zoneCounts\.get\(name\) \?\? 0\)\.toLocaleString\(\)/);
+
+  // Publisher emails truncate with a title tooltip instead of wrapping
+  // mid-glyph (#202).
+  assert.doesNotMatch(managementSource, /break-all/);
+
+  // Straight apostrophe entity → curly on the login card.
+  assert.doesNotMatch(loginPageSource, /You&apos;re/);
+  assert.match(loginPageSource, /You’re/);
+
+  // The admin sub-pages get the same skip affordance the maps have: the shell
+  // bar's first focusable jumps past the chrome to the page content.
+  assert.match(shellBarSource, /href="#admin-subpage-main"[\s\S]{0,420}Skip to content/);
+  assert.match(managementPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
+  assert.match(settingsPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
+});
