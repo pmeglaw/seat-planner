@@ -42,7 +42,9 @@ function seat(overrides: Record<string, unknown> = {}) {
 
 const n01 = seat({ id: "s1", seat_key: "n01", label: "N01", status: "assigned", employee_id: "emp-1", department: "Intake", employee: alice });
 const n02 = seat({ id: "s2", seat_key: "n02", label: "N02", x: 0.5, y: 0.4 });
-const custom = seat({ id: "s3", seat_key: "cw01", label: "CW01", x: 0.6, y: 0.5, is_custom: true });
+// A legitimately deletable custom seat: S-zone label — NOT a protected-
+// original label, which the delete gate now also guards against.
+const custom = seat({ id: "s3", seat_key: "s01", label: "S01", x: 0.6, y: 0.5, is_custom: true });
 
 const marker = (page: Page, label: string) => page.locator(`button[aria-label^="${label}"]`).first();
 const clickMarker = (page: Page, label: string) => marker(page, label).dispatchEvent("click");
@@ -87,7 +89,7 @@ test("closing the inspector clears the selection", async ({ page }) => {
 
 test("a viewer sees no edit affordances in the inspector", async ({ page }) => {
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: false });
-  await clickMarker(page, "CW01");
+  await clickMarker(page, "S01");
   await expect(page.locator('[aria-label="Close inspector"]')).toBeAttached();
   await expect(page.locator('[aria-label^="Delete"]')).toHaveCount(0);
   await expect(page.locator('[aria-label^="Move seat"]')).toHaveCount(0);
@@ -96,7 +98,7 @@ test("a viewer sees no edit affordances in the inspector", async ({ page }) => {
 
 test("an admin sees the edit affordances for a custom draft seat", async ({ page }) => {
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
-  await clickMarker(page, "CW01");
+  await clickMarker(page, "S01");
   await expect(page.locator('[aria-label^="Delete custom seat"]')).toBeAttached();
   await expect(page.locator('[aria-label^="Move seat"]')).toBeAttached();
   await expect(page.locator('[aria-label^="Swap seat"]')).toBeAttached();
@@ -105,7 +107,7 @@ test("an admin sees the edit affordances for a custom draft seat", async ({ page
 // Edit the notes field through React's controlled-input path so the inspector
 // reports dirty (native setter + bubbling input, per the harness's no-CSS rules).
 async function dirtyInspectorNotes(page: Page) {
-  await clickMarker(page, "CW01");
+  await clickMarker(page, "S01");
   await expect(page.locator("textarea").first()).toBeAttached();
   await page.evaluate(() => {
     const field = document.querySelector("textarea");

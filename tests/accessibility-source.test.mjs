@@ -287,7 +287,9 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /key=\{`seat-inspector-sections-\$\{selectedSeat\.id\}`\}/);
   // Delete renders only where it can ever succeed (custom draft seats); the
   // Seat type fact explains protected originals instead of a dead button.
-  assert.match(inspectorSource, /\{selectedSeat\.is_custom && \(/);
+  // Drift-proof delete gate: custom AND not a protected-original label, so
+  // is_custom data drift on original seats can't resurrect a dead button.
+  assert.match(inspectorSource, /\{selectedSeat\.is_custom && !isProtectedOriginalSeatLabel\(selectedSeat\.label\) && \(/);
   // An open seat has no occupant — the Occupant section exists only when
   // someone is assigned (admin and viewer variants alike).
   assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,200}title="Occupant"/);
