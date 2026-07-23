@@ -21,6 +21,7 @@ import {
   updateEmployeeAction
 } from "@/app/actions";
 import { buildDepartmentRoster, departmentKey } from "@/lib/departments";
+import { withTabParam } from "@/lib/deepLink";
 import { computeVirtualWindow } from "@/lib/virtualizedList";
 import { formatDisplayName } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
@@ -162,6 +163,14 @@ export function AdminManagementPanel({
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
   const [localSeats, setLocalSeats] = useState(seats);
   const [activeTab, setActiveTab] = useState<ManagementTab>(initialTab ?? "employees");
+  // Deep-link (#196): the page already READS ?tab= (initialTab); mirror tab
+  // switches back with a shallow replaceState so the URL stays shareable.
+  // Idempotent at mount (the URL already matches initialTab).
+  useEffect(() => {
+    const next = `${window.location.pathname}${withTabParam(window.location.search, activeTab, "employees")}${window.location.hash}`;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (next !== current) window.history.replaceState(window.history.state, "", next);
+  }, [activeTab]);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<EmployeeSortKey>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");

@@ -8,6 +8,9 @@ type MountOptions = {
   // Result each server action / router call returns, keyed by "action:<name>",
   // "router.push", etc. A function receives the call args.
   responses?: Record<string, unknown | ((args: unknown[]) => unknown)>;
+  // Query string (e.g. "?seat=n02") appended to the harness URL before mount,
+  // for deep-link specs.
+  query?: string;
 };
 
 export type CtCall = { name: string; args: unknown[] };
@@ -17,14 +20,14 @@ export type CtCall = { name: string; args: unknown[] };
 // calls back). Markers/controls are driven with dispatchEvent because the
 // harness ships no Tailwind CSS, so elements aren't laid out for hit-testing —
 // the point here is SeatMap's real composed behavior, not its pixel layout.
-export async function mountSeatMap(page: Page, props: unknown, { responses = {} }: MountOptions = {}) {
+export async function mountSeatMap(page: Page, props: unknown, { responses = {}, query = "" }: MountOptions = {}) {
   const calls: CtCall[] = [];
   await page.exposeFunction("__ctCall", (name: string, args: unknown[]) => {
     calls.push({ name, args });
     const result = responses[name];
     return typeof result === "function" ? (result as (a: unknown[]) => unknown)(args) : (result ?? null);
   });
-  await page.goto(HARNESS_URL);
+  await page.goto(HARNESS_URL + query);
   await page.evaluate(p => (window as unknown as { __mountSeatMap: (p: unknown) => void }).__mountSeatMap(p), props);
   // Let the first layout/measure pass settle.
   await page.waitForTimeout(250);

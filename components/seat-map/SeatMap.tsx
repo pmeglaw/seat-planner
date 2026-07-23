@@ -25,6 +25,7 @@ import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOpti
 import { STATUS_LABELS } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
+import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
 import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import { departmentKey } from "@/lib/departments";
 import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
@@ -841,6 +842,31 @@ export function SeatMap({
     window.addEventListener("beforeunload", warnBeforeUnload);
     return () => window.removeEventListener("beforeunload", warnBeforeUnload);
   }, [inspectorDirty]);
+
+  // Deep-link (#196): `?seat=<label>` is the shareable face of the selection.
+  // Read once on mount; the write effect below then mirrors every selection
+  // change back with a shallow replaceState — no router navigation (so no
+  // server refetch) and no history entry per click.
+  const seatParamAppliedRef = useRef(false);
+  useEffect(() => {
+    const seatId = findSeatIdByParam(localSeats, readSeatParam(window.location.search));
+    seatParamAppliedRef.current = true;
+    if (!seatId) return;
+    if (commitSeatSelection(seatId)) queueCenterSeatInMap(seatId);
+    // Mount-only by design: replaceState fires no events, and re-running on
+    // seat updates would fight the user's live selection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!seatParamAppliedRef.current) return;
+    const label = selectedSeatId ? (localSeats.find(seat => seat.id === selectedSeatId)?.label ?? null) : null;
+    const next = `${window.location.pathname}${withSeatParam(window.location.search, label)}${window.location.hash}`;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (next !== current) window.history.replaceState(window.history.state, "", next);
+    // localSeats omitted: a seat's label is stable for the life of its id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSeatId]);
 
   const departments = useMemo(() => {
     const values = new Set<string>();
