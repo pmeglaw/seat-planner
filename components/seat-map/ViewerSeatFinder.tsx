@@ -805,8 +805,8 @@ export function ViewerSeatFinder({
           outrank z-40 workspace overlays that follow in DOM order. */}
       <header className="sticky top-0 z-50 flex h-12 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
         <div className="flex min-w-0 shrink-0 items-center gap-2">
-          <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
-            <Image src="/images/megeredchian-mark.png?v=ma-2026" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />
+          <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
+            <Image src="/images/megeredchian-mark.png?v=ma-2026" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
           </span>
           {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
           <div aria-hidden="true" translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">

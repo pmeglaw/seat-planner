@@ -2504,9 +2504,9 @@ export function SeatMap({
       <header className="sticky top-0 z-50 flex h-12 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
         <h1 className="sr-only">Seat Planner — admin map</h1>
         <div className="flex min-w-0 shrink-0 items-center gap-2">
-          <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
-            {/* Megeredchian Law brand mark on a white chip so its orange + charcoal read on the dark chrome bar. */}
-            <Image src="/images/megeredchian-mark.png?v=ma-2026" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />
+          <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
+            {/* Brand monogram straight on the dark bar — the 2026 mark carries its own contrast. */}
+            <Image src="/images/megeredchian-mark.png?v=ma-2026" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
           </span>
           {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
           <div aria-hidden="true" translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
