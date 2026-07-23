@@ -141,3 +141,18 @@ test("an ?error query param is surfaced through friendlyAuthMessage on load", as
   await mountLogin({ url: `/login?error=${encodeURIComponent("Invalid login credentials")}` });
   assert.match(screen.getByRole("alert").textContent, /Email or password is incorrect/);
 });
+
+test("the email input disables spellcheck", async () => {
+  await mountLogin();
+  assert.equal(document.querySelector('input[type="email"]').getAttribute("spellcheck"), "false");
+});
+
+test("a failed validation focuses the offending field", async () => {
+  await mountLogin();
+  await submit();
+  assert.equal(document.activeElement, document.querySelector('input[type="email"]'), "empty submit focuses email");
+
+  await type('input[type="email"]', "person@example.com");
+  await submit();
+  assert.equal(document.activeElement, document.querySelector('input[type="password"]'), "missing password focuses password");
+});

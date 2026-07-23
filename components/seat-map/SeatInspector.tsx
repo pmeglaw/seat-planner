@@ -1093,12 +1093,15 @@ export function SeatInspector({
                 <div className="relative">
                   <input
                     ref={employeeInputRef}
+                    name="employeeName"
+                    autoComplete="off"
+                    spellCheck={false}
                     value={form.employeeName}
                     onChange={handleEmployeeNameChange}
                     onFocus={() => setEmployeeComboboxOpen(true)}
                     onBlur={() => window.setTimeout(() => setEmployeeComboboxOpen(false), 120)}
                     onKeyDown={handleEmployeeNameKeyDown}
-                    placeholder="Search or enter employee name"
+                    placeholder="Search or enter employee name…"
                     role="combobox"
                     aria-expanded={employeeComboboxOpen}
                     aria-controls="seat-inspector-employee-listbox"
@@ -1184,9 +1187,11 @@ export function SeatInspector({
                   <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Job title</span>
                   <input
                     ref={employeePositionRef}
+                    name="employeePosition"
+                    autoComplete="off"
                     value={form.employeePosition}
                     onChange={event => handleTextChange("employeePosition", event)}
-                    placeholder="Optional"
+                    placeholder="e.g. Case Manager…"
                     aria-invalid={Boolean(fieldErrorMap.employeePosition)}
                     aria-describedby={fieldDescribedBy("employeePosition")}
                     className={fieldClassName}
@@ -1198,9 +1203,12 @@ export function SeatInspector({
                   <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Phone extension</span>
                   <input
                     ref={phoneExtensionRef}
+                    name="phoneExtension"
+                    type="tel"
+                    autoComplete="off"
                     value={form.phoneExtension}
                     onChange={event => handleTextChange("phoneExtension", event)}
-                    placeholder="Optional"
+                    placeholder="e.g. 202…"
                     className={fieldClassName}
                     inputMode="numeric"
                     aria-invalid={Boolean(fieldErrorMap.phoneExtension)}
@@ -1285,9 +1293,10 @@ export function SeatInspector({
                 <span className="sr-only">Seat note</span>
                 <textarea
                   ref={notesRef}
+                  name="seatNote"
                   value={form.notes}
                   onChange={event => handleTextChange("notes", event)}
-                  placeholder="Add a seat note"
+                  placeholder="Add a seat note…"
                   aria-invalid={Boolean(fieldErrorMap.notes)}
                   aria-describedby={fieldDescribedBy("notes")}
                   className={`${fieldClassName} min-h-20`}

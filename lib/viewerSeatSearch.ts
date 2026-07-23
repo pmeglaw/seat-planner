@@ -5,7 +5,7 @@ import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOpti
 // short enough for the narrowest chrome input — longer copy ellipsized
 // exactly the tail it advertised. Each input's sr-label carries the full
 // field enumeration (all four result kinds below).
-export const SEAT_SEARCH_PLACEHOLDER = "Search people or seats";
+export const SEAT_SEARCH_PLACEHOLDER = "Search people or seats…";
 
 export type ViewerSearchResultKind = "person" | "seat" | "department" | "zone";
 

@@ -559,7 +559,7 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   // different search scope. The shared string is short enough for the
   // narrowest chrome input (longer copy ellipsized exactly the part it
   // advertised); the full field enumeration lives on each input's sr-label.
-  assert.match(searchLibSource, /export const SEAT_SEARCH_PLACEHOLDER = "Search people or seats"/);
+  assert.match(searchLibSource, /export const SEAT_SEARCH_PLACEHOLDER = "Search people or seats…"/);
   assert.equal((seatMapSource.match(/placeholder=\{SEAT_SEARCH_PLACEHOLDER\}/g) ?? []).length, 2, "both admin search inputs share the placeholder");
   assert.match(viewerSource, /placeholder=\{SEAT_SEARCH_PLACEHOLDER\}/);
   assert.doesNotMatch(seatMapSource, /placeholder="Search people/);
@@ -671,4 +671,46 @@ test("dark-panel selects style their options and the app declares a theme color"
 
   // Browser chrome should match the app's dark top bar on mobile (#200).
   assert.match(layoutSource, /themeColor/);
+});
+
+test("form fields carry the hygiene attributes users and password managers rely on", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
+  const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
+  const loginSource = await readSource("../components/auth/LoginForm.tsx");
+  const managementSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  const searchLibSource = await readSource("../lib/viewerSeatSearch.ts");
+  const globalsSource = await readSource("../app/globals.css");
+
+  // Search inputs are real searches: correct type, a name, no password-manager
+  // triggers — and the shared placeholder ends with an ellipsis (#199). The
+  // native webkit cancel button is suppressed so the app's own clear control
+  // stays the single clear path (see the clear-controls test above).
+  assert.match(searchLibSource, /SEAT_SEARCH_PLACEHOLDER = "Search people or seats…"/);
+  assert.equal((seatMapSource.match(/name="seat-search"/g) ?? []).length, 2, "both admin search inputs carry a name");
+  assert.equal((seatMapSource.match(/type="search"/g) ?? []).length, 2, "both admin search inputs are type=search");
+  assert.match(viewerSource, /type="search"[\s\S]{0,240}name="seat-search"/);
+  assert.match(globalsSource, /::-webkit-search-cancel-button/);
+
+  // Inspector assignment fields: names for autofill sanity, autocomplete off
+  // on the combobox (it is not an auth field), tel semantics on the extension,
+  // and instruction placeholders end with an ellipsis (#199).
+  assert.match(inspectorSource, /name="employeeName"[\s\S]{0,400}autoComplete="off"/);
+  assert.match(inspectorSource, /placeholder="Search or enter employee name…"/);
+  assert.match(inspectorSource, /name="employeePosition"/);
+  assert.match(inspectorSource, /name="phoneExtension"[\s\S]{0,240}type="tel"/);
+  assert.match(inspectorSource, /name="seatNote"/);
+  assert.match(inspectorSource, /placeholder="Add a seat note…"/);
+
+  // Ask Planner question box: named, ellipsized prompt (#199).
+  assert.match(askPlannerSource, /name="askPlannerQuestion"/);
+  assert.match(askPlannerSource, /placeholder="Ask about seats, zones, departments, or assignments…"/);
+
+  // Email inputs never spellcheck (#199) — login and the management form.
+  assert.match(loginSource, /type="email"[\s\S]{0,240}spellCheck=\{false\}/);
+  assert.match(managementSource, /type="email"[\s\S]{0,240}spellCheck=\{false\}/);
+
+  // Management phone extension is tel like the inspector's (#199).
+  assert.match(managementSource, /type="tel"[\s\S]{0,240}inputMode="numeric"/);
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -20,6 +20,8 @@ export function LoginForm() {
   const [messageType, setMessageType] = useState<"info" | "error" | "success">("info");
   const [busy, setBusy] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
+  const emailInputRef = useRef<HTMLInputElement | null>(null);
+  const passwordInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -123,6 +125,7 @@ export function LoginForm() {
     if (!email.trim()) {
       setMessage(mode === "password" ? "Enter your work email and password to sign in." : "Enter your work email to receive a sign-in link.");
       setMessageType("error");
+      emailInputRef.current?.focus();
       return;
     }
 
@@ -130,6 +133,7 @@ export function LoginForm() {
       if (!password.trim()) {
         setMessage("Enter your password to sign in, or use the magic-link tab.");
         setMessageType("error");
+        passwordInputRef.current?.focus();
         return;
       }
       void signInWithPassword();
@@ -188,7 +192,9 @@ export function LoginForm() {
       <label className="mt-4 block">
         <span className="text-xs font-medium text-[var(--admin-text-primary)]">Email</span>
         <input
+          ref={emailInputRef}
           type="email"
+          spellCheck={false}
           value={email}
           onChange={event => setEmail(event.target.value)}
           placeholder="you@company.com"
@@ -202,6 +208,7 @@ export function LoginForm() {
           <label className="mt-4 block">
             <span className="text-xs font-medium text-[var(--admin-text-primary)]">Password</span>
             <input
+              ref={passwordInputRef}
               type="password"
               value={password}
               onChange={event => setPassword(event.target.value)}

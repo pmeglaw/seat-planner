@@ -800,12 +800,12 @@ export function AdminManagementPanel({
                   </label>
                   <label className="block">
                     <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Phone Ext.</span>
-                    <input value={employeeForm.phoneExtension} onChange={event => setEmployeeForm(current => ({ ...current, phoneExtension: event.target.value }))} className={fieldClassName} inputMode="numeric" />
+                    <input type="tel" value={employeeForm.phoneExtension} onChange={event => setEmployeeForm(current => ({ ...current, phoneExtension: event.target.value }))} className={fieldClassName} inputMode="numeric" />
                   </label>
                 </div>
                 <label className="block">
                   <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Email</span>
-                  <input type="email" value={employeeForm.email} onChange={event => setEmployeeForm(current => ({ ...current, email: event.target.value }))} placeholder="Optional" className={fieldClassName} inputMode="email" autoComplete="off" />
+                  <input type="email" spellCheck={false} value={employeeForm.email} onChange={event => setEmployeeForm(current => ({ ...current, email: event.target.value }))} placeholder="Optional" className={fieldClassName} inputMode="email" autoComplete="off" />
                 </label>
                 <label className="block">
                   <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Department</span>
