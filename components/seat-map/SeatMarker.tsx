@@ -193,12 +193,12 @@ export function SeatMarker({
             ? "border-[var(--admin-marker-unavailable-border)] bg-[var(--admin-marker-unavailable-surface)] text-[var(--admin-marker-unavailable-text)]"
             : "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)]"
       : seat.status === "assigned"
-        ? "border-[#1D6E41]/45 bg-[#E8F3EC]/95 text-[#1D6E41]"
+        ? "border-[#1D6E41]/55 bg-white/95 text-[#284C3B]"
         : seat.status === "reserved"
           ? "border-[#8A6116]/55 bg-[#FCF4D6]/95 text-[#6D4712]"
           : seat.status === "unavailable"
-            ? "border-[#C8BFB3]/90 bg-[#E8E2DA]/[0.92] text-[#655E56]"
-            : "border-[#AEB4BA]/95 bg-[#F2F2F3]/95 text-[#44494C]";
+            ? "border-[#BEB4A8]/90 bg-[#E7E1D8]/[0.92] text-[#696159]"
+            : "border-[#AEB4BA]/95 bg-[#F2F2F3]/95 text-[#453D33]";
   // Search/planner emphasis keeps visual priority over the passive valid-target tint.
   const validTargetTone = swapCandidate && !searchProminent && !plannerHighlighted;
   const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent" || moveOrigin || validTargetTone || invalidTarget) ? "" : baseStatusToneClass;

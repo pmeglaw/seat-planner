@@ -223,7 +223,7 @@ export const markerStateClassRecipes = {
   protectedOriginal: "border-[#696159] bg-[#E7E1D8] text-[#353532]",
   customSeat: "border-[#D46A24] bg-[#F6E7D8] text-[#6F2C13]",
   reserved: "border-[#8A6116] bg-[#FCF4D6] text-[#6D4712]",
-  unavailable: "border-[#C9C0B4] bg-[#E7E1D8] text-[#696159]",
+  unavailable: "border-[#BEB4A8] bg-[#E7E1D8] text-[#696159]",
   plannerHighlight: "border-[#6E655A] bg-[#EFE9DF] text-[#353532] ring-4 ring-[#D8D0C5]"
 } as const;
 

@@ -36,18 +36,18 @@
   --sp-color-action-primary-pressed-rgb: 158 47 6;
   --sp-color-brand-clay-rgb: 122 46 12;
 
-  /* Shell neutrals (IBM-gray family): #161616 chrome, #f4f4f4 workspace,
-     #ffffff panels, #e0e0e0 hairlines. Text on light: #161616 (16.45:1),
-     #525252 (7.10:1 on #f4f4f4), muted #6f6f6f (4.57:1 on #f4f4f4 — AA). */
+  /* Shell neutrals (IBM-gray family): #161616 chrome, #F7F6F2 workspace,
+     #ffffff panels, #E7E1D8 hairlines. Text on light: #161616 (16.45:1),
+     #55504A (7.10:1 on #F7F6F2), muted #6E655A (4.57:1 on #F7F6F2 — AA). */
   --sp-color-text-primary: #161616;
-  --sp-color-text-secondary: #525252;
-  --sp-color-text-muted: #6f6f6f;
-  --sp-color-text-disabled: #a8a8a8;
+  --sp-color-text-secondary: #55504A;
+  --sp-color-text-muted: #6E655A;
+  --sp-color-text-disabled: #B8AEA2;
   --sp-color-workspace: #161616;
   --sp-color-workspace-deep: #0a0a0a;
-  --sp-color-graphite-soft: #f4f4f4;
-  --sp-color-stone: #e0e0e0;
-  --sp-color-stone-muted: #a8a8a8;
+  --sp-color-graphite-soft: #F7F6F2;
+  --sp-color-stone: #E7E1D8;
+  --sp-color-stone-muted: #B8AEA2;
 
   --sp-color-text-primary-rgb: 22 22 22;
   --sp-color-text-secondary-rgb: 82 82 82;
@@ -63,11 +63,11 @@
      every panel/strip/control uses surface. The floor-plan raster is content
      (its cream paper is baked into the image), not a third neutral — nothing
      else may introduce one. */
-  --sp-color-canvas: #f4f4f4;
+  --sp-color-canvas: #F7F6F2;
   --sp-color-surface: #ffffff;
   --sp-color-surface-raised: #ffffff;
-  --sp-color-border-subtle: #e0e0e0;
-  --sp-color-border-strong: #c6c6c6;
+  --sp-color-border-subtle: #E7E1D8;
+  --sp-color-border-strong: #D8D0C5;
 
   --sp-color-canvas-rgb: 244 244 244;
   --sp-color-surface-rgb: 255 255 255;
@@ -112,11 +112,11 @@
      danger), so a fourth coloured family for "here is some context" competed
      with them for attention while signalling nothing. Folding it onto the IBM
      gray ramp leaves colour to the states that need it.
-     Measured 2026-07-22: #525252 on #F4F4F4 = 7.10:1, on white = 7.81:1. */
-  --sp-color-state-info-on-soft: #525252;
-  --sp-color-state-info: #525252;
-  --sp-color-state-info-surface: #F4F4F4;
-  --sp-color-state-info-border: #C6C6C6;
+     Measured 2026-07-22: #55504A on #F7F6F2 = 7.10:1, on white = 7.81:1. */
+  --sp-color-state-info-on-soft: #55504A;
+  --sp-color-state-info: #55504A;
+  --sp-color-state-info-surface: #F7F6F2;
+  --sp-color-state-info-border: #D8D0C5;
   /* Search/filter highlight is the brand accent, NOT a teal. Until 2026-07-21
      this family was #1D6E41 — a near-twin of state-info #31626A doing a
      similar job, which is what made the palette read as more colors than it
@@ -130,12 +130,12 @@
   --sp-color-state-search-border: #D23F0A;
   /* --sp-color-state-planner-* retired 2026-07-22. The brief folds info into
      neutral gray by MERGING it with this family, and its target values
-     (#525252 / #F4F4F4 / #C6C6C6) are what state-info above now carries. This
-     family held three near-duplicate greys (#5E5E5E / #efefef / #d4d4d4) with
+     (#55504A / #F7F6F2 / #D8D0C5) are what state-info above now carries. This
+     family held three near-duplicate greys (#5E5E5E / #efefef / #D8D0C5) with
      ZERO consumers — no var() reference, no tailwind mapping, no rgb partner —
      so the merge is a deletion, not an alias. Use state-info for neutral
      context surfaces. */
-  --sp-color-state-disabled: #e0e0e0;
+  --sp-color-state-disabled: #E7E1D8;
 
   --sp-color-state-selected-rgb: 210 63 10;
   --sp-color-state-published-rgb: 29 110 65;
@@ -185,20 +185,20 @@
    workspace — with admin-only chrome hidden for viewers in markup. */
 .admin-theme,
 .shell-theme {
-  /* Light workspace behind the map (shell spec: #f4f4f4). The light-surface
+  /* Light workspace behind the map (shell spec: #F7F6F2). The light-surface
      admin tokens alias the two :root neutrals (--sp-color-canvas /
      --sp-color-surface) — exactly ONE canvas tone and ONE panel tone exist,
      so a stray third background can't creep back in per-component. */
   --admin-bg: var(--sp-color-canvas);
 
   /* Dark chrome (#161616): top bar + inspector read as one continuous dark
-     surface. Text #f4f4f4 (16.45:1), muted #9a9a9a (6.43:1) — both AA. */
+     surface. Text #F7F6F2 (16.45:1), muted #B8AEA2 (6.43:1) — both AA. */
   --admin-chrome-bg: #161616;
   /* Raised chrome surfaces (filter menu): one step lighter than the bar;
-     muted #9a9a9a stays AA on it (5.86:1). */
+     muted #B8AEA2 stays AA on it (5.86:1). */
   --admin-chrome-elevated: #1f1f1f;
-  --admin-chrome-text: #f4f4f4;
-  --admin-chrome-muted: #9a9a9a;
+  --admin-chrome-text: #F7F6F2;
+  --admin-chrome-muted: #B8AEA2;
   --admin-chrome-border: rgba(255, 255, 255, 0.10);
   --admin-chrome-hover: #262626;
   --admin-chrome-field: rgba(255, 255, 255, 0.08);
@@ -210,21 +210,21 @@
   --admin-surface: var(--sp-color-surface);
   --admin-surface-alt: var(--sp-color-canvas);
   --admin-surface-muted: var(--sp-color-canvas);
-  --admin-border: #e0e0e0;
-  --admin-border-strong: #c6c6c6;
+  --admin-border: #E7E1D8;
+  --admin-border-strong: #D8D0C5;
 
   --admin-text-primary: #161616;
-  --admin-text-secondary: #525252;
-  /* Muted 4.57:1 on #f4f4f4, 5.00:1 on white — AA body text. */
-  --admin-text-muted: #6f6f6f;
-  --admin-text-subtle: #6f6f6f;
-  --admin-text-inverse: #f4f4f4;
+  --admin-text-secondary: #55504A;
+  /* Muted 4.57:1 on #F7F6F2, 5.00:1 on white — AA body text. */
+  --admin-text-muted: #6E655A;
+  --admin-text-subtle: #6E655A;
+  --admin-text-inverse: #F7F6F2;
 
   /* Brand ladder. accent = identity + selection (never behind white text,
      3.17:1); cta = deepened orange for white-label fills (4.71:1 vs white,
      but only ~4.0-4.3:1 as TEXT on primary-soft / surface-alt / paper —
      use on-soft for orange text on tinted/alt/paper surfaces: #9E2F06 =
-     ~6.5:1 on soft, 6.67:1 on #f4f4f4, 6.26:1 on paper; the hero Publish
+     ~6.5:1 on soft, 6.67:1 on #F7F6F2, 6.26:1 on paper; the hero Publish
      button uses accent + ink text (#161616 on #FF5715 = 5.71:1). White-label
      fills hover to cta-hover (#B83708 = 5.85:1), never primary-hover
      (#E64E13 = 3.84:1 vs white — fails AA text; kept for non-text use and
@@ -241,7 +241,7 @@
   --admin-copper: #D23F0A;
   --admin-paper: #FBEAE1;
 
-  --admin-secondary: #525252;
+  --admin-secondary: #55504A;
   --admin-secondary-hover: #393939;
   --admin-secondary-soft: rgba(82, 82, 82, 0.12);
 
@@ -251,22 +251,22 @@
   --admin-status-ok: #24a148;
   --admin-status-warn: #f1c21b;
   --admin-status-bad: #B3232C;
-  --admin-status-neutral: #8d8d8d;
+  --admin-status-neutral: #8E8276;
   --admin-status-ok-rgb: 36 161 72;
   --admin-status-warn-rgb: 241 194 27;
   --admin-status-bad-rgb: 218 30 40;
 
   /* Dark-chrome raised surfaces and state/text ladder (measured on #161616:
      danger text #ff8389 ≈ 7.9:1, success text #42be65 ≈ 7.3:1, info text
-     #78a9ff ≈ 6.6:1, soft #c6c6c6 ≈ 9.9:1, disabled #8d8d8d ≈ 4.6:1).
+     #78a9ff ≈ 6.6:1, soft #D8D0C5 ≈ 9.9:1, disabled #8E8276 ≈ 4.6:1).
      Promoted 2026-07-19 from repeated component-level hex (SeatInspector,
      AskPlannerDrawer) so the dark-panel palette lives beside the other
      chrome tokens. Raised (#262626) intentionally shares the hover value —
      distinct roles, one gray. */
   --admin-chrome-raised: #262626;
   --admin-chrome-raised-hover: #333333;
-  --admin-chrome-text-soft: #c6c6c6;
-  --admin-chrome-disabled: #8d8d8d;
+  --admin-chrome-text-soft: #D8D0C5;
+  --admin-chrome-disabled: #8E8276;
   --admin-chrome-danger: #fa4d56;
   --admin-chrome-danger-rgb: 250 77 86;
   --admin-chrome-danger-text: #ff8389;
@@ -285,9 +285,9 @@
   --admin-danger: #B3232C;
   --admin-danger-soft: #FBE9EA;
   /* Neutral, matching --sp-color-state-info above — see the note there. */
-  --admin-info: #525252;
-  --admin-info-soft: #F4F4F4;
-  --admin-analytics: #525252;
+  --admin-info: #55504A;
+  --admin-info-soft: #F7F6F2;
+  --admin-analytics: #55504A;
   --admin-focus: #FF5715;
 
   --admin-state-clean-bg: #DEF3E4;
@@ -326,13 +326,13 @@
      protected viewer-variant hex values; these tokens only color the legend
      chips and result-row dots, so they mirror the marker hues. Do not point
      the markers at these. */
-  --admin-marker-assigned-surface: rgba(232, 243, 236, 0.96);
-  --admin-marker-assigned-border: rgba(31, 122, 85, 0.26);
+  --admin-marker-assigned-surface: rgba(255, 255, 255, 0.96);
+  --admin-marker-assigned-border: rgba(29, 110, 65, 0.5);
   --admin-marker-assigned-text: #1D6E41;
   --admin-marker-assigned-accent: rgba(31, 122, 85, 0.85);
   --admin-marker-available-surface: rgba(252, 252, 253, 0.96);
   --admin-marker-available-border: rgba(31, 34, 37, 0.16);
-  --admin-marker-available-text: #475059;
+  --admin-marker-available-text: #696159;
   --admin-marker-available-accent: rgba(107, 113, 119, 0.5);
   --admin-marker-reserved-surface: rgba(252, 240, 217, 0.96);
   --admin-marker-reserved-border: rgba(154, 100, 24, 0.4);
@@ -340,7 +340,7 @@
   --admin-marker-reserved-accent: rgba(154, 100, 24, 0.85);
   --admin-marker-unavailable-surface: rgba(236, 238, 240, 0.96);
   --admin-marker-unavailable-border: rgba(107, 113, 119, 0.26);
-  --admin-marker-unavailable-text: #6b7177;
+  --admin-marker-unavailable-text: #6E655A;
   --admin-marker-unavailable-accent: rgba(107, 113, 119, 0.6);
   --admin-marker-selected-surface: rgba(255, 255, 255, 0.97);
   --admin-marker-selected-border: var(--admin-primary-cta);
@@ -361,19 +361,19 @@
   /* Neutral: a hover cue is transient feedback, not a status, so it should not
      borrow a status hue. (Dormant — the shipped viewer branch hovers to the
      accent; see the note at SeatMarker.tsx:130.) */
-  --admin-marker-hover-border: #8D8D8D;
+  --admin-marker-hover-border: #8E8276;
   --admin-marker-hover-shadow: 0 6px 14px rgba(22, 22, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
   --admin-marker-focus-ring: rgba(255, 87, 21, 0.75);
   --admin-marker-focus-offset: rgba(255, 255, 255, 0.70);
-  --admin-marker-move-origin-surface: #f4f4f4;
-  --admin-marker-move-origin-border: #a8a8a8;
-  --admin-marker-move-origin-text: #525252;
+  --admin-marker-move-origin-surface: #F7F6F2;
+  --admin-marker-move-origin-border: #B8AEA2;
+  --admin-marker-move-origin-text: #55504A;
   --admin-marker-target-valid-surface: #DEF3E4;
   --admin-marker-target-valid-border: #24a148;
   --admin-marker-target-valid-text: #1D6E41;
   --admin-marker-target-invalid-surface: #ffffff;
-  --admin-marker-target-invalid-border: #8d8d8d;
-  --admin-marker-target-invalid-text: #6f6f6f;
+  --admin-marker-target-invalid-border: #8E8276;
+  --admin-marker-target-invalid-text: #6E655A;
   --admin-marker-target-invalid-accent: #B3232C;
 
   /* Elevation flattened to the shell language: hairline borders carry most of
