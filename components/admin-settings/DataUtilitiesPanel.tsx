@@ -6,13 +6,15 @@ import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
-import { importAssignmentsCsvAction, restoreDraftSnapshotAction } from "@/app/actions";
+import { importAssignmentsCsvAction, resetDraftToPublishedAction, restoreDraftSnapshotAction } from "@/app/actions";
+import { buildPublishChangeSummary } from "@/lib/publishSummary";
 import { Button } from "@/components/ui/Button";
 import { CloseIcon } from "@/components/ui/CloseIcon";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type DataUtilitiesPanelProps = {
   seats: SeatWithEmployee[];
+  publishedSeats: SeatWithEmployee[];
   employees: Employee[];
 };
 
@@ -101,17 +103,22 @@ function UtilityButton({ label, description, tone = "default", affordance = "rev
   );
 }
 
-export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps) {
+export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUtilitiesPanelProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const jsonInputRef = useRef<HTMLInputElement | null>(null);
   const csvReviewDialogFocusRef = useDialogFocus<HTMLElement>();
   const jsonReviewDialogFocusRef = useDialogFocus<HTMLElement>();
+  const resetReviewDialogFocusRef = useDialogFocus<HTMLElement>();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [csvReview, setCsvReview] = useState<CsvImportReview | null>(null);
   const [jsonReview, setJsonReview] = useState<JsonRestoreReview | null>(null);
+  const [resetReviewOpen, setResetReviewOpen] = useState(false);
+  // Seat-only diff for the reset review: employees deliberately excluded —
+  // reset never touches the directory (owner-confirmed people contract).
+  const resetSummary = buildPublishChangeSummary(seats, publishedSeats);
 
   const busy = pending;
 
@@ -222,6 +229,39 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
     });
   }
 
+  function openResetReview() {
+    resetMessages();
+    if (!resetSummary.hasChanges) {
+      setNotice("The draft already matches the published map — nothing to reset.");
+      return;
+    }
+    setResetReviewOpen(true);
+  }
+
+  function confirmResetToPublished() {
+    startTransition(async () => {
+      try {
+        resetMessages();
+        // Fence on the draft this page loaded, same as JSON restore: a reset
+        // confirmed against stale data cannot silently erase another admin's
+        // newer edits.
+        const result = await resetDraftToPublishedAction(listDraftSeatExpectations(seats));
+        setResetReviewOpen(false);
+        if (!result.ok) {
+          setNotice(null);
+          setError(`${result.message} This page has been refreshed with the latest draft — review it and try the reset again if it is still what you want.`);
+          router.refresh();
+          return;
+        }
+        setNotice("Draft reset to the published map. Seat changes were discarded; people edits in Management were kept.");
+        router.refresh();
+      } catch (caught) {
+        setResetReviewOpen(false);
+        reportError(caught, "Could not reset the draft to the published map.");
+      }
+    });
+  }
+
   function confirmJsonRestore() {
     if (!jsonReview) return;
     const review = jsonReview;
@@ -285,8 +325,62 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
           <UtilityButton label="Export JSON backup" description="Download full draft recovery data" affordance="download" onClick={exportJsonBackup} disabled={busy} />
           <input ref={jsonInputRef} type="file" accept=".json,application/json" className="hidden" onChange={event => importJson(event.target.files?.[0])} />
           <UtilityButton label="Restore JSON backup" description="Review a full draft backup before restoring" onClick={() => jsonInputRef.current?.click()} disabled={busy} />
+          <UtilityButton label="Reset draft to published" description="Discard every draft seat change; people edits are kept" tone="danger" onClick={openResetReview} disabled={busy} />
         </div>
       </section>
+
+      {resetReviewOpen && (
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">
+          <section
+            ref={resetReviewDialogFocusRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reset-review-title"
+            aria-describedby="reset-review-description"
+            onKeyDown={event => {
+              if (event.key === "Escape" && !busy) {
+                event.stopPropagation();
+                setResetReviewOpen(false);
+              }
+            }}
+            className="w-full max-w-lg overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 id="reset-review-title" className="text-base font-semibold">Reset draft to published?</h2>
+                <p id="reset-review-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-secondary)]">
+                  Every draft seat change is erased and the draft goes back to exactly what viewers see today.
+                  People edits in Management are kept. This cannot be undone.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setResetReviewOpen(false)}
+                disabled={busy}
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                aria-label="Close reset review"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <ReviewCountCard label="Added seats erased" value={resetSummary.addedSeats.length} tone={resetSummary.addedSeats.length > 0 ? "warn" : "default"} />
+              <ReviewCountCard label="Updated seats reverted" value={resetSummary.updatedSeatCount} tone={resetSummary.updatedSeatCount > 0 ? "warn" : "default"} />
+              <ReviewCountCard label="Removed seats restored" value={resetSummary.removedSeats.length} tone={resetSummary.removedSeats.length > 0 ? "warn" : "default"} />
+              <ReviewCountCard label="Total changes discarded" value={resetSummary.totalChangeCount} tone="warn" />
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Button type="button" onClick={() => setResetReviewOpen(false)} disabled={busy} className="w-full">
+                Keep draft changes
+              </Button>
+              <Button type="button" variant="danger" onClick={confirmResetToPublished} disabled={busy} className="w-full">
+                {busy ? "Resetting…" : "Reset to published"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {csvReview && (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">

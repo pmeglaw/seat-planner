@@ -320,3 +320,74 @@ test("rename_department: rewrites employees and toggles the option rows", async 
   assert.equal(byName.New, true);
   assert.equal(byName.Old, false);
 });
+
+// ---------------------------------------------------------------------------
+// reset_draft_seats_to_published
+// ---------------------------------------------------------------------------
+
+test("reset: converges the draft back to the published map, preserving draft ids", async () => {
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  const n01 = await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+  // N02 is a published CUSTOM seat: originals can never be deleted from the
+  // draft (protection trigger), so the "restore a missing seat" leg must use
+  // a custom seat that was published and then deleted.
+  const n02 = await db.seedSeat({ label: "N02", status: "available", isCustom: true });
+  await db.query("select public.publish_seat_map()");
+
+  // Diverge the draft in all three ways: mutate, delete, add.
+  await db.query("update public.seats set status = 'available', employee_id = null, x = 0.9 where id = $1", [n01.id]);
+  await db.query("delete from public.seats where id = $1", [n02.id]);
+  await db.seedSeat({ label: "CX01", key: "cx01", status: "available", isCustom: true });
+
+  const { rows } = await db.query("select public.reset_draft_seats_to_published() as changed");
+  assert.ok(Number(rows[0].changed) >= 3, "reports the touched row count");
+
+  const seats = await db.draftSeats();
+  const byLabel = Object.fromEntries(seats.map(s => [s.label, s]));
+  assert.deepEqual(Object.keys(byLabel).sort(), ["N01", "N02"], "custom addition erased, deleted seat restored");
+  assert.equal(byLabel.N01.status, "assigned");
+  assert.equal(byLabel.N01.employee_id, alice);
+  assert.equal(byLabel.N01.id, n01.id, "surviving draft rows keep their ids");
+
+  const coords = await db.query("select x from public.seats where id = $1", [n01.id]);
+  assert.equal(Number(coords.rows[0].x), 0.5, "moved seat returns to the published position");
+});
+
+test("reset: leaves the employee directory untouched", async () => {
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+  await db.query("select public.publish_seat_map()");
+  const bob = await db.seedEmployee({ fullName: "Bob (added after publish)" });
+
+  await db.query("select public.reset_draft_seats_to_published()");
+
+  const employees = await db.query("select id from public.employees order by full_name");
+  assert.deepEqual(employees.rows.map(r => r.id).sort(), [alice, bob].sort(), "reset never adds or removes people");
+});
+
+test("reset: requires admin", async () => {
+  await db.seedSeat({ label: "N01", status: "available" });
+  await db.query("select public.publish_seat_map()");
+  await db.actAsViewer();
+  await expectThrow(db.query("select public.reset_draft_seats_to_published()"), {
+    code: "42501",
+    match: /Admin permission required/
+  });
+});
+
+test("reset: refuses when no published map exists", async () => {
+  await db.seedSeat({ label: "N01", status: "available" });
+  await expectThrow(db.query("select public.reset_draft_seats_to_published()"), {
+    match: /No published map exists/
+  });
+});
+
+test("reset: enforces the concurrency fence on stale expectations (MLS02)", async () => {
+  const n01 = await db.seedSeat({ label: "N01", status: "available" });
+  await db.query("select public.publish_seat_map()");
+  const staleExpectations = JSON.stringify([{ id: n01.id, updated_at: STALE_TS }]);
+  await expectThrow(
+    db.query("select public.reset_draft_seats_to_published($1::jsonb)", [staleExpectations]),
+    { code: "MLS02", match: /changed in another session/ }
+  );
+});

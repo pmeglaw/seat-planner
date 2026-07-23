@@ -769,7 +769,13 @@ test("touch devices get visible destructive affordances, contained modals, and s
   // visually (#198).
   assert.match(globalsSource, /touch-action: manipulation/);
   assert.match(accountMenuSource, /after:absolute after:-inset-\[9px\]/);
-  assert.equal((dataUtilitiesSource.match(/after:absolute after:-inset-1\.5/g) ?? []).length, 2, "both dialog close buttons extend their hit area");
+  // Relational, not a fixed count: every 32px dialog close button must carry
+  // the hit-area extension (CSV review, JSON review, reset review, …).
+  assert.equal(
+    (dataUtilitiesSource.match(/after:absolute after:-inset-1\.5/g) ?? []).length,
+    (dataUtilitiesSource.match(/aria-label="Close [^"]+"/g) ?? []).length,
+    "every dialog close button extends its hit area"
+  );
 });
 
 test("nit sweep: real list semantics, translate=no tokens, localized counts, skip links on sub-pages", async () => {

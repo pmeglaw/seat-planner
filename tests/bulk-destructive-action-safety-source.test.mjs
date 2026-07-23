@@ -81,3 +81,22 @@ test("management destructive actions use one in-app confirmation path", async ()
   assert.match(source, /published map (everyone sees )?(won't|will not) change until you publish/i);
   assert.match(source, /published viewer map is unchanged until publish/i);
 });
+
+test("reset-to-published reviews in-app on both surfaces before calling the reset action", async () => {
+  const settingsSource = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+
+  // Settings: the danger tile opens a review dialog (counts of what gets
+  // discarded) and only the dialog's confirm calls the action.
+  assert.match(settingsSource, /function openResetReview\(\)[\s\S]{0,400}setResetReviewOpen\(true\)/);
+  assert.match(settingsSource, /aria-labelledby="reset-review-title"/);
+  assert.match(settingsSource, /function confirmResetToPublished\(\)[\s\S]{0,900}resetDraftToPublishedAction\(listDraftSeatExpectations\(seats\)\)/);
+  assert.equal((settingsSource.match(/resetDraftToPublishedAction\(/g) ?? []).length, 1, "settings has exactly one reset call site, inside the confirm");
+
+  // Seat map: the publish review dialog's discard button opens a SECOND
+  // explicit confirm dialog; only that confirm calls the fenced action.
+  assert.match(seatMapSource, /setDiscardDraftConfirmOpen\(true\)/);
+  assert.match(seatMapSource, /aria-labelledby="discard-draft-title"/);
+  assert.match(seatMapSource, /function confirmDiscardDraftChanges\(\)[\s\S]{0,900}resetDraftToPublishedAction\(listDraftSeatExpectations\(localSeats\)\)/);
+  assert.equal((seatMapSource.match(/resetDraftToPublishedAction\(/g) ?? []).length, 1, "the map has exactly one reset call site, inside the confirm");
+});

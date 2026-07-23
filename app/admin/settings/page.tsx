@@ -28,14 +28,20 @@ export default async function AdminSettingsPage() {
     .eq("layer", "draft")
     .order("label");
 
+  const { data: publishedSeats, error: publishedSeatsError } = await supabase
+    .from("seats")
+    .select("*, employee:employees(*)")
+    .eq("layer", "published")
+    .order("label");
+
   const { data: employees, error: employeesError } = await supabase
     .from("employees")
     .select("*")
     .eq("active", true)
     .order("full_name");
 
-  if (seatsError || employeesError) {
-    throw new Error(seatsError?.message ?? employeesError?.message);
+  if (seatsError || publishedSeatsError || employeesError) {
+    throw new Error(seatsError?.message ?? publishedSeatsError?.message ?? employeesError?.message);
   }
 
   return (
@@ -54,6 +60,7 @@ export default async function AdminSettingsPage() {
 
         <DataUtilitiesPanel
           seats={(seats ?? []) as SeatWithEmployee[]}
+          publishedSeats={(publishedSeats ?? []) as SeatWithEmployee[]}
           employees={(employees ?? []) as Employee[]}
         />
       </div>
