@@ -416,7 +416,7 @@ html {
   /* The 40px chrome bar is sticky on every surface: without scroll padding,
      browser-driven scrolls (focus-into-view, ⌘K) align the target flush
      under the opaque bar and the focused control is fully obscured. */
-  scroll-padding-top: 2.5rem;
+  scroll-padding-top: 2.25rem;
 }
 
 body {

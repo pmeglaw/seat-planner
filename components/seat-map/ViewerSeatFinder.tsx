@@ -788,7 +788,7 @@ export function ViewerSeatFinder({
     zoomFactor === null ? "lg:aspect-[1911/867]" : "lg:flex-1"
   );
 
-  const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeSurfaceShortcut = "flex h-9 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
@@ -803,7 +803,7 @@ export function ViewerSeatFinder({
       <h1 className="sr-only">Seat Planner — office map</h1>
       {/* z-50 matches the admin bar: sticky activates the z-index, which must
           outrank z-40 workspace overlays that follow in DOM order. */}
-      <header className="sticky top-0 z-50 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+      <header className="sticky top-0 z-50 flex h-9 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
             <Image src="/images/megeredchian-mark.png?v=ma-2026" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
@@ -823,7 +823,7 @@ export function ViewerSeatFinder({
             field and the width; Filter keeps the pairing by sitting immediately
             to its LEFT with the dropdown anchored to itself. Both Carbon `sm` =
             Carbon `md` = 40px inside the 48px bar (owner, 2026-07-22). */}
-        <div ref={filterRootRef} className="relative mr-1.5 flex h-8 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
+        <div ref={filterRootRef} className="relative mr-1.5 flex h-7 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
           <button
             ref={filterTriggerRef}
             type="button"
@@ -881,7 +881,7 @@ export function ViewerSeatFinder({
         {/* Medium cap, 340 -> 420px on lg — matching the admin bar so the two
             surfaces read as one shell. Finding your seat is still the paramount
             job here, but 480 made the field the loudest thing in the row. */}
-        <div role="search" aria-label="Viewer search" className="h-8 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[420px]">
+        <div role="search" aria-label="Viewer search" className="h-7 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[420px]">
           <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
             <span className="sr-only">Search office seating</span>
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
@@ -1110,7 +1110,7 @@ export function ViewerSeatFinder({
       {resultsPanelOpen && (
         <aside
           aria-labelledby="viewer-results-title"
-          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3 panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[40px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3 panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[36px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
             <h2 id="viewer-results-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Results</h2>
@@ -1183,7 +1183,7 @@ export function ViewerSeatFinder({
             mobileDirectorySheetOpen
               ? "fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex max-h-[60svh] panel:inset-x-auto panel:bottom-3"
               : "hidden",
-            directoryOpen && "panel:fixed panel:bottom-3 panel:right-3 panel:top-[40px] panel:z-40 panel:flex panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+            directoryOpen && "panel:fixed panel:bottom-3 panel:right-3 panel:top-[36px] panel:z-40 panel:flex panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
           )}
         >
           <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
@@ -1251,7 +1251,7 @@ export function ViewerSeatFinder({
       )}
 
       {directoryRail && (
-        <aside className="hidden panel:block panel:fixed panel:bottom-0 panel:right-0 panel:top-10 panel:z-40">
+        <aside className="hidden panel:block panel:fixed panel:bottom-0 panel:right-0 panel:top-9 panel:z-40">
           <button
             type="button"
             onClick={() => writeDirectoryCollapsedPref(false)}
