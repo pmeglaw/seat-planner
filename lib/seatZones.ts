@@ -36,7 +36,11 @@ export const SEAT_ZONE_RECTS: SeatZoneRect[] = [
   { zone: "Southeast Office", xMin: 0.66, xMax: 0.76, yMin: 0.84, yMax: 0.92 },
   { zone: "Southeast Office", xMin: 0.79, xMax: 0.91, yMin: 0.27, yMax: 0.53 },
   { zone: "Southeast Office", xMin: 0.79, xMax: 0.91, yMin: 0.56, yMax: 0.7 },
-  { zone: "Southeast Office", xMin: 0.79, xMax: 0.91, yMin: 0.7, yMax: 0.9 }
+  { zone: "Southeast Office", xMin: 0.79, xMax: 0.91, yMin: 0.7, yMax: 0.9 },
+  // Bottom-band offices (owner request 2026-07-23): the two rooms along the
+  // map's lower edge. Bounds are SAVED coordinates, measured on the floor
+  // plan and converted visual->saved through the calibration transform.
+  { zone: "South Offices", xMin: 0.06, xMax: 0.43, yMin: 0.845, yMax: 0.97 }
 ];
 
 export function pointIsInsideSeatZone(point: NormalizedPoint, rect: SeatZoneRect) {
