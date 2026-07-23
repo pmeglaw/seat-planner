@@ -1239,37 +1239,22 @@ export function SeatInspector({
               )}
             </div>
 
-            <div key={`seat-inspector-sections-${selectedSeat.id}`}>
-              {hasCurrentAssignment && (
-              <InspectorSection title="Occupant" headingId="seat-occupant-heading" defaultOpen>
-                <OccupantFacts
-                  canEdit
-                  rows={buildOccupantRows({
-                    department: form.department.trim() || selectedSeat.employee?.department,
-                    email: (matchedEmployee ?? selectedSeat.employee)?.email,
-                    extension: form.phoneExtension
-                  })}
-                />
-              </InspectorSection>
-              )}
-
-            <InspectorSection title="Seat" headingId="seat-details-heading" defaultOpen>
-              <dl>
-                <FactRow label="Code" value={selectedSeat.label} />
-                <FactRow label="Zone" value={currentZone} mono={false} />
-                <FactRow label="Seat type" value={seatTypeLabel} mono={false} />
-                {hasAssignedPerson && (
-                  <div className="flex items-center justify-between gap-2.5 py-1.5">
-                    <dt className="shrink-0 text-[12.5px] text-[var(--admin-chrome-muted)]">Status</dt>
-                    <dd><span className={["inline-block px-2 py-0.5 text-[10px] font-semibold", statusTagClass].join(" ")}>{currentStatusLabel}</span></dd>
-                  </div>
-                )}
-              </dl>
-              {/* Status has ONE home (spec §6). Occupied seats derive "assigned"
-                  from the occupant, so the dropdown only offers the open-seat
-                  statuses and yields to a read-only tag while someone sits here. */}
+            {/* Seat actions — moved from the panel's end to directly under the
+                assignment CTA (owner call 2026-07-23, superseding the
+                2026-07-16 end-of-panel call): Change/Move/Swap/Vacate are one
+                re-seat workflow, so the verbs cluster within one glance of the
+                header instead of splitting across 460px of reference rows.
+                Still never collapsible. Status rides here for OPEN seats — it
+                is an action, not a fact (its one-home rule intact: occupied
+                seats derive "assigned" from the occupant and show no control,
+                the chip carries the tag). */}
+            <div role="group" aria-labelledby="seat-actions-heading" className="px-4 pb-1 pt-3">
+              <div className="flex items-center gap-2">
+                <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[#E7E1D8]">Seat actions</h3>
+                <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-white/10" />
+              </div>
               {!hasAssignedPerson && (
-                <label className="mt-1 block">
+                <label className="mt-2 block">
                   <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Status</span>
                   <select
                     ref={statusRef}
@@ -1286,6 +1271,81 @@ export function SeatInspector({
                   {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.status}</p>}
                 </label>
               )}
+              <div className="mt-2.5 flex min-w-0 gap-2">
+                <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move seat ${selectedSeat.label} on the map`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
+                  {moveMode ? "Exit move" : "Move"}
+                </Button>
+                <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Swap seat ${selectedSeat.label} with another draft seat`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
+                  Swap
+                </Button>
+                {hasCurrentAssignment && (
+                  <Button type="button" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className={`min-w-0 flex-1 rounded-[10px] ${footerDangerButtonClass}`}>
+                    Vacate
+                  </Button>
+                )}
+              </div>
+              {/* 3b INV-4: move-mode microcopy lives in the occupant (the inspector). */}
+              {moveMode && (
+                <p role="status" className="mt-2 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-3 py-2 text-[12px] font-medium leading-4 text-[var(--admin-chrome-text-soft)]">
+                  Drag the seat marker to its new spot. Esc exits move.
+                </p>
+              )}
+              {canResetPosition && (
+                <Button
+                  type="button"
+                  onClick={onResetPosition}
+                  disabled={pending}
+                  aria-label={`Reset ${selectedSeat.label} to its published position`}
+                  title="Move this seat marker back to where it sits on the published map"
+                  className={`mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight ${footerNeutralButtonClass}`}
+                >
+                  Reset position to published
+                </Button>
+              )}
+              {/* Figma delete treatment: full-width low-emphasis button + visible
+                  helper line. Rendered only for deletable-class seats: custom
+                  AND not a protected-original label — the label guard makes the
+                  gate immune to is_custom data drift on original seats. */}
+              {selectedSeat.is_custom && !isProtectedOriginalSeatLabel(selectedSeat.label) && (
+                <>
+                  <Button
+                    type="button"
+                    onClick={handleDeleteSeat}
+                    disabled={pending || !selectedSeatCanDelete}
+                    aria-label={`Delete custom seat ${selectedSeat.label}`}
+                    aria-describedby="seat-inspector-delete-help"
+                    title={deleteHelpText}
+                    className="mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight !border-transparent !bg-[var(--admin-chrome-raised)] !text-[var(--admin-chrome-danger-text)] !shadow-none hover:!border-transparent hover:!bg-[rgb(var(--admin-status-bad-rgb)/0.20)] disabled:!border-transparent disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)] disabled:hover:!bg-[var(--admin-chrome-elevated)]"
+                  >
+                    Delete seat
+                  </Button>
+                  <p id="seat-inspector-delete-help" className="mt-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)]">{deleteHelpText}</p>
+                </>
+              )}
+            </div>
+
+            <div key={`seat-inspector-sections-${selectedSeat.id}`}>
+              {hasCurrentAssignment && (
+              <InspectorSection title="Occupant" headingId="seat-occupant-heading" defaultOpen>
+                <OccupantFacts
+                  canEdit
+                  rows={buildOccupantRows({
+                    department: form.department.trim() || selectedSeat.employee?.department,
+                    email: (matchedEmployee ?? selectedSeat.employee)?.email,
+                    extension: form.phoneExtension
+                  })}
+                />
+              </InspectorSection>
+              )}
+
+            {/* Code and Status rows retired 2026-07-23: the header chips carry
+                both at a glance, and the Status CONTROL for open seats moved
+                into the Seat-actions zone above (it is an action, not a fact). */}
+            <InspectorSection title="Seat" headingId="seat-details-heading" defaultOpen>
+              <dl>
+                <FactRow label="Zone" value={currentZone} mono={false} />
+                <FactRow label="Seat type" value={seatTypeLabel} mono={false} />
+              </dl>
             </InspectorSection>
 
             <InspectorSection title="Notes" headingId="seat-notes-heading">
@@ -1321,71 +1381,9 @@ export function SeatInspector({
             </InspectorSection>
             </div>
 
-            {/* Seat actions — static end-of-panel group (owner call 2026-07-16:
-                seat operations read last, like a record card). Never collapsible,
-                so Move/Swap/Vacate can't vanish the way the old Actions section
-                could. Move stays for open seats too — it is the only way to
-                reposition a (custom) seat marker on the map. */}
-            <div role="group" aria-labelledby="seat-actions-heading" className="px-4 pb-4 pt-3">
-              <div className="flex items-center gap-2">
-                <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[#E7E1D8]">Seat actions</h3>
-                <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-white/10" />
-              </div>
-              <div className="mt-2.5 flex min-w-0 gap-2">
-                <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move seat ${selectedSeat.label} on the map`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
-                  {moveMode ? "Exit move" : "Move"}
-                </Button>
-                <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Swap seat ${selectedSeat.label} with another draft seat`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
-                  Swap
-                </Button>
-                {hasCurrentAssignment && (
-                  <Button type="button" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className={`min-w-0 flex-1 rounded-[10px] ${footerDangerButtonClass}`}>
-                    Vacate
-                  </Button>
-                )}
-              </div>
-              {/* 3b INV-4: move-mode microcopy lives in the occupant (the inspector). */}
-              {moveMode && (
-                /* Neutral guidance, not an alert: the danger register is
-                   reserved for destructive actions (2026-07-16 critique,
-                   minor 7). Block style mirrors the Ask Planner drawer's
-                   dark-surface info card. */
-                <p role="status" className="mt-2 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-3 py-2 text-[12px] font-medium leading-4 text-[var(--admin-chrome-text-soft)]">
-                  Drag the seat marker to its new spot. Esc exits move.
-                </p>
-              )}
-              {canResetPosition && (
-                <Button
-                  type="button"
-                  onClick={onResetPosition}
-                  disabled={pending}
-                  aria-label={`Reset ${selectedSeat.label} to its published position`}
-                  title="Move this seat marker back to where it sits on the published map"
-                  className={`mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight ${footerNeutralButtonClass}`}
-                >
-                  Reset position to published
-                </Button>
-              )}
-              {/* Figma delete treatment: full-width low-emphasis button + visible
-                  helper line. Rendered only for custom draft seats — protected
-                  originals can never be deleted, so they carry no dead button;
-                  the Seat type fact explains their protection instead. */}
-              {selectedSeat.is_custom && (
-                <>
-                  <Button
-                    type="button"
-                    onClick={handleDeleteSeat}
-                    disabled={pending || !selectedSeatCanDelete}
-                    aria-label={`Delete custom seat ${selectedSeat.label}`}
-                    aria-describedby="seat-inspector-delete-help"
-                    title={deleteHelpText}
-                    className="mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight !border-transparent !bg-[var(--admin-chrome-raised)] !text-[var(--admin-chrome-danger-text)] !shadow-none hover:!border-transparent hover:!bg-[rgb(var(--admin-status-bad-rgb)/0.20)] disabled:!border-transparent disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)] disabled:hover:!bg-[var(--admin-chrome-elevated)]"
-                  >
-                    Delete seat
-                  </Button>
-                  <p id="seat-inspector-delete-help" className="mt-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)]">{deleteHelpText}</p>
-                </>
-              )}
+            {/* Ask Planner stays the panel's last word — tertiary, after the
+                reference sections; the verbs live in the action zone above. */}
+            <div className="px-4 pb-4 pt-1">
               {onExplainSeat && (
                 <button
                   type="button"

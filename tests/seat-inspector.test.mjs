@@ -18,15 +18,17 @@ afterEach(() => cleanup());
 function makeSeat(overrides = {}) {
   return {
     id: "seat-1",
-    seat_key: "n01",
-    label: "N01",
+    // A legitimately deletable custom label (S-zone): the delete gate now
+    // also excludes protected-original labels regardless of is_custom.
+    seat_key: "s01",
+    label: "S01",
     x: 0.3,
     y: 0.3,
     status: "available",
     layer: "draft",
     employee_id: null,
     department: null,
-    zone: "North Pod",
+    zone: "South Offices",
     notes: null,
     is_custom: true,
     created_at: "2026-01-01T00:00:00Z",
@@ -79,7 +81,7 @@ test("viewer mode shows the seat's read-only facts", async () => {
   const text = document.body.textContent;
   assert.match(text, /Alice Smith/);
   assert.match(text, /Analyst/);
-  assert.match(text, /North Pod/);
+  assert.match(text, /South Offices/);
   assert.match(text, /Assigned/);
 });
 
