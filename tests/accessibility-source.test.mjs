@@ -654,7 +654,9 @@ test("narrow widths keep the viewer switch and people directory reachable", asyn
   // own close control (the desktop collapse rail is panel-only) (#197).
   assert.match(viewerSource, /id="viewer-people-directory"/);
   assert.match(viewerSource, /aria-controls="viewer-people-directory"/);
-  assert.match(viewerSource, /aria-label=\{`Show the people list \(\$\{directory\.totalCount\} people\)`\}[\s\S]{0,800}panel:hidden/);
+  // Label opens with the visible "People · N" text (axe visible-text
+  // containment — the rail and pill render that string).
+  assert.match(viewerSource, /aria-label=\{`People · \$\{directory\.totalCount\} — show the people list`\}[\s\S]{0,800}panel:hidden/);
   assert.match(viewerSource, /aria-label="Close the people list"/);
 });
 
