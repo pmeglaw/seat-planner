@@ -921,7 +921,7 @@ export function SeatInspector({
     // Collapsed = the thin 44px dark rail on the right edge (spec §6); below
     // the panel tier it stays a bottom pill so it never covers the map.
     return (
-      <aside className="fixed inset-x-3 bottom-3 z-[80] panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-10 panel:z-40">
+      <aside className="fixed inset-x-3 bottom-3 z-[80] panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-9 panel:z-40">
         <button
           ref={collapseRailRef}
           type="button"
@@ -947,7 +947,7 @@ export function SeatInspector({
       tabIndex={-1}
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/10 bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-elevation-4 panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-10 panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] panel:border-0 panel:border-l panel:border-white/10 panel:shadow-none"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/10 bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-elevation-4 panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-9 panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] panel:border-0 panel:border-l panel:border-white/10 panel:shadow-none"
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-white/10 bg-[var(--admin-chrome-bg)] px-4 pb-3 pt-3.5">
         <div className="flex items-start gap-2.5">
