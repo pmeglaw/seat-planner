@@ -236,6 +236,10 @@
   --admin-primary-cta-active: #9E2F06;
   --admin-primary-on-soft: #9E2F06;
   --admin-primary-ink: #161616;
+  /* Identity/brand chip fill — sampled from the monogram artwork (#FC672A),
+     not the interaction orange: the avatar ties to the mark, CTAs stay CTA.
+     Ink #161616 on it = 6.13:1 (measured 2026-07-23). */
+  --admin-brand: #FC672A;
   --admin-primary-soft: rgba(255, 87, 21, 0.10);
   --admin-primary-border: rgba(255, 87, 21, 0.40);
   --admin-copper: #D23F0A;
