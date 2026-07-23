@@ -277,6 +277,7 @@ export function AskPlannerDrawer({
               <span className="sr-only">Ask Planner question</span>
               <textarea
                 ref={questionRef}
+                name="askPlannerQuestion"
                 value={question}
                 onChange={event => setQuestion(event.target.value)}
                 onKeyDown={event => {
@@ -285,7 +286,7 @@ export function AskPlannerDrawer({
                     askPlanner();
                   }
                 }}
-                placeholder="Ask about seats, zones, departments, or assignments"
+                placeholder="Ask about seats, zones, departments, or assignments…"
                 maxLength={800}
                 disabled={pending}
                 className="min-h-24 w-full resize-none rounded-xl border border-white/15 bg-[var(--admin-chrome-field)] px-3 py-2 text-sm text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary)] disabled:bg-white/5 disabled:text-[var(--admin-chrome-muted)]"

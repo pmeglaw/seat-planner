@@ -2610,7 +2610,7 @@ export function SeatMap({
                   document.querySelector<HTMLButtonElement>('[aria-label="Admin search results"] button')?.focus();
                 }
               }}
-              placeholder={SEAT_SEARCH_PLACEHOLDER}
+              type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
               className="h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
             />
             {search.trim() ? (
@@ -2996,7 +2996,7 @@ export function SeatMap({
                     document.querySelector<HTMLButtonElement>('[aria-label="Admin search results"] button')?.focus();
                   }
                 }}
-                placeholder={SEAT_SEARCH_PLACEHOLDER}
+                type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
                 className="h-11 w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] pl-11 pr-10 text-sm font-medium text-[var(--admin-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--admin-text-subtle)] hover:border-[var(--admin-border-strong)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)]"
               />
               {search.trim() && (

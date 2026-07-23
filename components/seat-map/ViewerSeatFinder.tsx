@@ -913,7 +913,7 @@ export function ViewerSeatFinder({
                 }
               }}
               ref={searchInputRef}
-              placeholder={SEAT_SEARCH_PLACEHOLDER}
+              type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
               className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
             />
             {search.trim() ? (
