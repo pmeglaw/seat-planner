@@ -449,7 +449,7 @@ export function SeatMarker({
             {/* truncate (not plain nowrap): an over-long label must clip
                 inside the fixed pill rather than spill over neighbouring
                 markers — hover/focus grows the token, revealing it fully. */}
-            <span className="max-w-full truncate text-[9.5px] font-extrabold leading-[1.05]">{seat.label}</span>
+            <span translate="no" className="max-w-full truncate text-[9.5px] font-extrabold leading-[1.05]">{seat.label}</span>
             {employeeName && (
               <span className="hidden max-w-[64px] truncate text-[10px] font-bold leading-[1.05] opacity-90 group-hover:block group-focus-visible:block">
                 {compactEmployeeName}
@@ -458,7 +458,7 @@ export function SeatMarker({
           </span>
         ) : (
           <span className="relative z-10 flex w-full min-w-0 flex-col items-start text-left">
-            <span className={["whitespace-nowrap font-extrabold leading-[1.05]", codeTextClass].join(" ")}>{seat.label}</span>
+            <span translate="no" className={["whitespace-nowrap font-extrabold leading-[1.05]", codeTextClass].join(" ")}>{seat.label}</span>
             {showInlineName && (
               <span className={["block min-w-0 truncate font-bold leading-[1.08] opacity-95", nameTextClass].join(" ")}>
                 {inlineNameLabel}

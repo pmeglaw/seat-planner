@@ -66,6 +66,9 @@ export default async function AdminManagementPage({
   return (
     <div className="admin-theme flex min-h-screen flex-col bg-[var(--admin-bg)]">
       <AdminShellBar page="management" email={user.email ?? ""} roleLabel="Admin" />
+      {/* Skip-link landing: focusable zero-height marker; the next Tab enters
+          the panel content. */}
+      <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />
       <AdminManagementPanel
         seats={(seats ?? []) as SeatWithEmployee[]}
         employees={(employees ?? []) as Employee[]}

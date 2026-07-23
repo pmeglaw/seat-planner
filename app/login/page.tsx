@@ -44,7 +44,7 @@ export default async function LoginPage() {
           <section className="w-full max-w-[440px] bg-[var(--admin-surface)] p-6 sm:px-10 sm:pb-9 sm:pt-10">
             <h1 className="text-2xl font-semibold text-[var(--admin-text-primary)]">Already signed in</h1>
             <p className="mt-4 text-[13px] text-[var(--admin-text-secondary)]">
-              You&apos;re signed in as <span className="font-semibold text-[var(--admin-text-primary)]">{user.email}</span>.
+              You’re signed in as <span className="font-semibold text-[var(--admin-text-primary)]">{user.email}</span>.
             </p>
             <Link
               href="/"
