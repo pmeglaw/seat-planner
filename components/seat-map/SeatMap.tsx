@@ -23,7 +23,7 @@ import {
 } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
-import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
+import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, resetDraftToPublishedAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
 import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
@@ -308,6 +308,10 @@ export function SeatMap({
   const [moveSeatMode, setMoveSeatMode] = useState(false);
   const [addSeatMode, setAddSeatMode] = useState(false);
   const [publishReviewOpen, setPublishReviewOpen] = useState(false);
+  // Second confirm layer for "discard all draft changes" — the publish review
+  // dialog is the change-by-change review; this is the explicit destructive
+  // confirmation on top of it (#reset, owner request 2026-07-23).
+  const [discardDraftConfirmOpen, setDiscardDraftConfirmOpen] = useState(false);
   const [askPlannerOpen, setAskPlannerOpen] = useState(false);
   const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
   const [plannerHighlightedSeatIds, setPlannerHighlightedSeatIds] = useState<string[]>([]);
@@ -367,6 +371,7 @@ export function SeatMap({
   const [mutationInFlight, setMutationInFlight] = useState(false);
   const deleteSeatDialogFocusRef = useDialogFocus<HTMLElement>();
   const publishReviewDialogFocusRef = useDialogFocus<HTMLElement>();
+  const discardDraftDialogFocusRef = useDialogFocus<HTMLElement>();
   const inspectorGuardDialogFocusRef = useDialogFocus<HTMLElement>();
   const swapConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
 
@@ -2170,6 +2175,36 @@ export function SeatMap({
     });
   }
 
+  function confirmDiscardDraftChanges() {
+    setActionError(null);
+    setActionNotice(null);
+    startTransition(async () => {
+      setMutationInFlight(true);
+      try {
+        setStaleDraftNotice(null);
+        // Fence on the draft this page holds: if another session advanced the
+        // draft, discarding would silently erase their edits — reject + reload.
+        const result = await resetDraftToPublishedAction(listDraftSeatExpectations(localSeats));
+        if (!result.ok) {
+          setDiscardDraftConfirmOpen(false);
+          setPublishReviewOpen(false);
+          handleStaleDraft(result.message);
+          return;
+        }
+        applyRestoredDraftPayload(result);
+        setDraftHistory(clearDraftHistory());
+        setDiscardDraftConfirmOpen(false);
+        setPublishReviewOpen(false);
+        setActionNotice("All draft changes discarded — the draft matches the published map again. Undo/Redo history was cleared.");
+      } catch (error) {
+        setActionNotice(null);
+        setActionError(error instanceof Error ? error.message : "Could not discard draft changes.");
+      } finally {
+        setMutationInFlight(false);
+      }
+    });
+  }
+
   const searchStatusTitle = searchActive ? `Searching “${searchQuery}”` : "Filtered results";
   const searchStatusSummary = `${matchingSeats.length} ${matchingSeats.length === 1 ? "match" : "matches"} · ${resultStatusBreakdown.assigned} assigned · ${resultStatusBreakdown.available} open`;
   const resultEmptyTitle = searchActive && structuredFiltersActive
@@ -3535,6 +3570,23 @@ export function SeatMap({
               )}
             </div>
 
+            {publishSummary.hasChanges && (
+              <div className="flex items-center justify-between gap-3 border-t border-[var(--admin-border)] py-2.5">
+                <p className="text-xs font-semibold leading-4 text-[var(--admin-text-muted)]">
+                  Changed your mind entirely? Reset the draft so it matches the published map again.
+                </p>
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={() => setDiscardDraftConfirmOpen(true)}
+                  disabled={pending}
+                  className={["shrink-0", focusRingClass].join(" ")}
+                >
+                  Discard all draft changes
+                </Button>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-2 border-t border-[var(--admin-border)] pt-3">
               <Button type="button" onClick={() => {
                 setActionError(null);
@@ -3556,6 +3608,47 @@ export function SeatMap({
                     <span className="hidden sm:inline">Publish reviewed changes</span>
                   </>
                 ) : "No changes to publish"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {discardDraftConfirmOpen && (
+        <div className="fixed inset-0 z-[95] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">
+          <section
+            ref={discardDraftDialogFocusRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="discard-draft-title"
+            aria-describedby="discard-draft-description"
+            onKeyDown={event => {
+              if (event.key === "Escape" && !pending) {
+                event.stopPropagation();
+                setDiscardDraftConfirmOpen(false);
+              }
+            }}
+            className="w-full max-w-lg overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
+          >
+            <h2 id="discard-draft-title" className="text-base font-semibold">Discard all draft changes?</h2>
+            <p id="discard-draft-description" className="mt-2 text-sm leading-5 text-[var(--admin-text-secondary)]">
+              Every reviewed seat change ({publishSummary.totalChangeCount === 1 ? "1 change" : `${publishSummary.totalChangeCount} changes`}) is
+              erased and the draft goes back to exactly what viewers see today. People edits in Management are kept.
+              This cannot be undone — Undo/Redo history is cleared.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Button type="button" onClick={() => setDiscardDraftConfirmOpen(false)} disabled={pending} className={["w-full", focusRingClass].join(" ")}>
+                Keep draft changes
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                onClick={confirmDiscardDraftChanges}
+                disabled={pending}
+                className={["w-full", adminDangerButtonClassName, focusRingClass].join(" ")}
+              >
+                {pending ? "Discarding…" : "Discard everything"}
               </Button>
             </div>
           </section>

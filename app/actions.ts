@@ -718,6 +718,31 @@ export async function restoreDraftSnapshotAction(
   return { ok: true, ...(await getDraftMapPayload(supabase)) };
 }
 
+export async function resetDraftToPublishedAction(
+  /**
+   * Concurrency fence: exact (id, updated_at) of every draft seat the client
+   * currently holds. The RPC rejects with STALE_DRAFT if any row differs, so
+   * a stale reset cannot silently discard another admin's newer edits.
+   */
+  expectedDraftSeats?: DraftSeatExpectation[]
+): Promise<RestoreDraftSnapshotResult> {
+  const supabase = await requireAdmin();
+
+  const { error } = await supabase.rpc("reset_draft_seats_to_published", {
+    expected_draft_seats: expectedDraftSeats ?? null
+  });
+
+  if (error) {
+    if (isStaleDraftErrorCode((error as SupabaseMutationError).code)) {
+      return { ok: false, code: "STALE_DRAFT", message: error.message };
+    }
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/admin");
+  return { ok: true, ...(await getDraftMapPayload(supabase)) };
+}
+
 export async function getPublishHistoryAction(limit = 10) {
   const supabase = await requireAdmin();
   const requestedLimit = Number.isFinite(limit) ? Math.trunc(limit) : 10;
