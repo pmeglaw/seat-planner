@@ -148,7 +148,7 @@ function ChevronRightIcon() {
 function SectionHeading({ id, title }: { id?: string; title: string }) {
   return (
     <div className="flex items-center gap-2">
-      <h3 id={id} className="shrink-0 text-[12px] font-semibold text-[#e4e4e4]">{title}</h3>
+      <h3 id={id} className="shrink-0 text-[12px] font-semibold text-[#E7E1D8]">{title}</h3>
       <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-white/10" />
     </div>
   );
@@ -205,7 +205,7 @@ function InspectorSection({
     // "which section am I in" reads at a glance on the dark panel.
     <details open={defaultOpen} className="group border-b border-l-2 border-white/10 border-l-transparent transition-colors open:border-l-[var(--admin-primary)]">
       <summary
-        className="flex cursor-pointer select-none list-none items-center px-4 py-2.5 text-[12px] font-medium text-[#e4e4e4] transition-colors hover:bg-[var(--admin-chrome-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] [&::-webkit-details-marker]:hidden"
+        className="flex cursor-pointer select-none list-none items-center px-4 py-2.5 text-[12px] font-medium text-[#E7E1D8] transition-colors hover:bg-[var(--admin-chrome-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] [&::-webkit-details-marker]:hidden"
       >
         <span id={headingId} className="transition group-open:text-white group-open:[text-shadow:0_0_10px_rgba(255,87,21,0.45)]">{title}</span>
         <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-auto h-3.5 w-3.5 text-[var(--admin-chrome-muted)] transition-transform duration-150 group-hover:text-[var(--admin-chrome-text)] group-open:rotate-90 group-open:text-[var(--admin-primary)]">
@@ -978,11 +978,11 @@ export function SeatInspector({
           </div>
         </div>
         <div className="flex min-w-0 items-center gap-2">
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[#e0e0e0] ring-1 ring-white/15">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[#E7E1D8] ring-1 ring-white/15">
             <span aria-hidden="true" className={["h-2 w-2 rounded-full", headerStatusDotClass].join(" ")} />
             {currentStatusLabel}
           </span>
-          <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[11px] font-medium text-[#e0e0e0] ring-1 ring-white/15">{selectedSeat.label}</span>
+          <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[11px] font-medium text-[#E7E1D8] ring-1 ring-white/15">{selectedSeat.label}</span>
           {!canEdit && (
             <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] ring-1 ring-white/15">Published seat</span>
           )}
@@ -1142,7 +1142,7 @@ export function SeatInspector({
                           onClick={() => selectEmployee(option.employee)}
                           className={[
                             "flex w-full items-start gap-3 px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
-                            index === activeEmployeeIndex ? "bg-white/10 text-white" : "text-[#d4d4d4] hover:bg-white/5"
+                            index === activeEmployeeIndex ? "bg-white/10 text-white" : "text-[#D8D0C5] hover:bg-white/5"
                           ].join(" ")}
                         >
                           <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[var(--admin-primary-cta)]">
@@ -1310,7 +1310,7 @@ export function SeatInspector({
                 <ul>
                   {activityEntries.map((entry, index) => (
                     <li key={`${entry}-${index}`} className="border-b border-white/5 py-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)] last:border-b-0">
-                      <span className="font-medium text-[#d4d4d4]">{entry}</span>
+                      <span className="font-medium text-[#D8D0C5]">{entry}</span>
                       <span className="ml-1.5">· this session</span>
                     </li>
                   ))}
@@ -1328,7 +1328,7 @@ export function SeatInspector({
                 reposition a (custom) seat marker on the map. */}
             <div role="group" aria-labelledby="seat-actions-heading" className="px-4 pb-4 pt-3">
               <div className="flex items-center gap-2">
-                <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[#e4e4e4]">Seat actions</h3>
+                <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[#E7E1D8]">Seat actions</h3>
                 <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-white/10" />
               </div>
               <div className="mt-2.5 flex min-w-0 gap-2">
@@ -1392,7 +1392,7 @@ export function SeatInspector({
                   onClick={() => onExplainSeat(selectedSeat)}
                   aria-label={`Ask Planner about ${selectedSeat.label}`}
                   title={`Ask Planner about ${selectedSeat.label}`}
-                  className="mt-2 flex w-full cursor-pointer items-center justify-between gap-3 border border-white/15 bg-white/[0.06] px-3 py-2 text-left text-xs font-semibold text-[#d4d4d4] transition hover:bg-white/[0.10] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+                  className="mt-2 flex w-full cursor-pointer items-center justify-between gap-3 border border-white/15 bg-white/[0.06] px-3 py-2 text-left text-xs font-semibold text-[#D8D0C5] transition hover:bg-white/[0.10] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
                 >
                   <span>Ask Planner about this seat</span>
                   <span aria-hidden="true" className="shrink-0 leading-none"><ChevronRightIcon /></span>

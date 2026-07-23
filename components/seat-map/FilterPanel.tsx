@@ -85,7 +85,7 @@ export function ActiveFilterChips({
 // or fixed under the button), so admin and viewer share ONE filter presentation.
 // Native <select> keeps its semantics (disclosure pattern verified adversarially) —
 // only the chrome is styled: appearance-none + an inline SVG chevron (data-URI,
-// stroke #9a9a9a to match --admin-chrome-muted) standing in for the native arrow.
+// stroke #B8AEA2 to match --admin-chrome-muted) standing in for the native arrow.
 const darkSelectClassName =
   "mt-1 w-full min-w-0 cursor-pointer appearance-none border border-white/20 bg-white/[0.06] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2012%208%22%20fill=%22none%22%3E%3Cpolyline%20points=%221,1.5%206,6.5%2011,1.5%22%20stroke=%22%239a9a9a%22%20stroke-width=%221.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[length:12px_8px] bg-[position:right_8px_center] bg-no-repeat px-2.5 py-1.5 pr-8 text-sm text-[var(--admin-chrome-text)] outline-none transition hover:border-white/30 focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] [&>option]:bg-[var(--admin-chrome-hover)] [&>option]:text-[var(--admin-chrome-text)]";
 

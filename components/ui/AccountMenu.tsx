@@ -14,7 +14,7 @@ type AccountMenuProps = {
 };
 
 const menuItemClassName =
-  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-[#e4e4e4] transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-[#E7E1D8] transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
 /**
  * The chrome bar's identity chip, opened into a small account menu: signed-in
