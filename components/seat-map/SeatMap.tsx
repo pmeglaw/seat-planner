@@ -2475,6 +2475,12 @@ export function SeatMap({
   const chromeToolbarBtn = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
   const chromeToolbarBtnActive = "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
   const chromeSurfaceShortcut = "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  // Icon-only tools (undo/redo) sit as 32px squares matching the Filter/search
+  // field pair (2026-07-23), not as full-height flat tools — they carry no
+  // active-underline state, so nothing ties them to the bar's bottom edge.
+  // after:-inset-1 keeps the ~40px hit target the full-height buttons had
+  // (#198's touch-target line) while the visual stays 32px.
+  const chromeIconBtn = "relative flex h-8 w-8 shrink-0 items-center justify-center text-[var(--admin-chrome-muted)] transition-colors duration-150 after:absolute after:-inset-1 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
   // Two collapse tiers keep the flexible search group usable at every width
   // (the row is otherwise rigid, so search absorbs the whole deficit):
   // page links (Management, Settings) fold into the "More" menu below xl,
@@ -2646,7 +2652,7 @@ export function SeatMap({
               disabled={mutationInFlight || inspectorDirty || !undoAvailable}
               aria-label="Undo last map change"
               title={undoTitle}
-              className={chromeToolbarBtn}
+              className={chromeIconBtn}
             >
               {/* Literal ↺ glyph (U+21BA) to match the owner's shell mockup exactly;
                   sized to sit at the same weight as the SVG icons in the row. */}
@@ -2658,7 +2664,7 @@ export function SeatMap({
               disabled={mutationInFlight || inspectorDirty || !redoAvailable}
               aria-label="Redo last undone change"
               title={redoTitle}
-              className={chromeToolbarBtn}
+              className={chromeIconBtn}
             >
               {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
               <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
