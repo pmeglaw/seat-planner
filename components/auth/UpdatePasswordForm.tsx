@@ -90,7 +90,9 @@ export function UpdatePasswordForm() {
           aria-live={messageType === "error" ? "assertive" : "polite"}
           className={[
             "mt-4 rounded-xl p-3 text-sm",
-            messageType === "error" ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"
+            messageType === "error"
+              ? "bg-[var(--sp-color-state-danger-surface)] text-[var(--sp-color-state-danger-on-soft)]"
+              : "bg-[var(--sp-color-state-success-surface)] text-[var(--sp-color-state-success-on-soft)]"
           ].join(" ")}
         >
           {message}
