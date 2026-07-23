@@ -81,7 +81,9 @@ export default async function AdminPage() {
   }
 
   return (
-    <main className="admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text-primary)]">
+    // div, not <main>: SeatMap renders the page's real <main> internally, and
+    // nesting a second one trips axe landmark-no-duplicate-main.
+    <div className="admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text-primary)]">
       <SeatMap
         seats={(seats ?? []) as SeatWithEmployee[]}
         publishedSeats={(publishedSeats ?? []) as SeatWithEmployee[]}
@@ -93,6 +95,6 @@ export default async function AdminPage() {
         accountEmail={user.email ?? ""}
         accountRoleLabel="Admin"
       />
-    </main>
+    </div>
   );
 }
