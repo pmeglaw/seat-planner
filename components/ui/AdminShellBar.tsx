@@ -16,11 +16,11 @@ import { AccountMenu } from "@/components/ui/AccountMenu";
  */
 
 const toolLink =
-  "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  "inline-flex h-9 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 const toolLinkActive =
-  "inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  "inline-flex h-9 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 const surfaceShortcut =
-  "flex h-10 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  "flex h-9 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
 type AdminShellPage = "management" | "settings";
 
@@ -28,12 +28,12 @@ export function AdminShellBar({ page, email, roleLabel }: { page: AdminShellPage
   return (
     /* z-50 matches the seat-map bar: the chrome tier sits above z-40 page
        overlays so scrolled content never paints over the pinned bar. */
-    <header className="sticky top-0 z-50 flex h-10 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+    <header className="sticky top-0 z-50 flex h-9 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
       {/* Same skip affordance as the map surfaces: first focusable jumps the
           chrome straight to the page content (#202). */}
       <a
         href="#admin-subpage-main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-12 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-surface)] focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--admin-text-primary)]"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-11 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-surface)] focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--admin-text-primary)]"
       >
         Skip to content
       </a>
