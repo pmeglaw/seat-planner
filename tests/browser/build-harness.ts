@@ -23,6 +23,7 @@ const ACTION_EXPORTS = [
   "deleteSeatAction",
   "swapSeatAssignmentsAction",
   "publishSeatMapAction",
+  "resetDraftToPublishedAction",
   "restoreDraftSnapshotAction",
   "getPublishHistoryAction",
   "askPlannerAction",
