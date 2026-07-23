@@ -18,7 +18,7 @@ export default async function AdminPage() {
           <div className="flex items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] px-5 py-2.5 text-[12.5px] font-semibold text-[var(--admin-chrome-text)]">
             <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
               {/* eslint-disable-next-line @next/next/no-img-element -- static brand mark, unoptimized on purpose */}
-              <img src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} className="h-5 w-5 object-contain" />
+              <img src="/images/megeredchian-mark.png?v=ma-2026" alt="" width={20} height={20} className="h-5 w-5 object-contain" />
             </span>
             Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
           </div>

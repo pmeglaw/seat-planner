@@ -24,12 +24,16 @@ export default async function LoginPage() {
     <main className="shell-theme flex min-h-screen flex-col bg-[var(--admin-chrome-bg)] px-6 pb-8 pt-10 sm:px-12 lg:px-[9vw]">
       <div className="mx-auto flex w-full max-w-[1110px] flex-1 flex-col justify-center gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-20">
         <section className="w-full max-w-[440px] shrink-0 lg:max-w-[340px]">
-          <span
+          {/* eslint-disable-next-line @next/next/no-img-element -- static brand
+              mark, same intentional raw-img pattern as app/admin/page.tsx */}
+          <img
+            src="/images/megeredchian-mark.png?v=ma-2026"
+            alt=""
             aria-hidden="true"
-            className="flex h-12 w-12 items-center justify-center bg-[var(--admin-primary)] text-[22px] font-semibold text-[var(--admin-primary-ink)]"
-          >
-            M
-          </span>
+            width={48}
+            height={48}
+            className="h-12 w-12 object-contain"
+          />
           <p className="mt-5 text-[28px] font-semibold leading-9 text-[var(--admin-chrome-text)] sm:text-[34px] sm:leading-[42px]">
             Megeredchian Law
             <br />

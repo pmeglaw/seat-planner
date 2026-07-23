@@ -39,7 +39,7 @@ export function AdminShellBar({ page, email, roleLabel }: { page: AdminShellPage
       </a>
       <div className="flex min-w-0 shrink-0 items-center gap-2">
         <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden bg-white">
-          <Image src="/images/megeredchian-mark.png?v=tight" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />
+          <Image src="/images/megeredchian-mark.png?v=ma-2026" alt="" width={20} height={20} unoptimized className="h-5 w-5 object-contain" />
         </span>
         {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
         <div translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
