@@ -126,6 +126,25 @@ test("a dirty inspector intercepts the viewer link with the unsaved-edits dialog
   expect(page.url()).toContain("harness.html");
 });
 
+test("selecting a seat writes ?seat= to the URL and deselecting clears it", async ({ page }) => {
+  await mountSeatMap(page, { seats: [n01, n02], employees: [alice], canEdit: false });
+
+  await clickMarker(page, "N01");
+  await expect(marker(page, "N01")).toHaveAttribute("aria-pressed", "true");
+  expect(page.url()).toContain("seat=N01");
+
+  await page.locator('[aria-label="Close inspector"]').dispatchEvent("click");
+  await expect(marker(page, "N01")).toHaveAttribute("aria-pressed", "false");
+  expect(page.url()).not.toContain("seat=");
+});
+
+test("a ?seat= URL selects that seat on load, case-insensitively", async ({ page }) => {
+  await mountSeatMap(page, { seats: [n01, n02], employees: [alice], canEdit: false }, { query: "?seat=n02" });
+  await expect(marker(page, "N02")).toHaveAttribute("aria-pressed", "true");
+  // The param survives the mount round-trip instead of being stripped.
+  expect(page.url()).toContain("seat=");
+});
+
 test("a dirty inspector arms a beforeunload warning; a clean one does not", async ({ page }) => {
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
 

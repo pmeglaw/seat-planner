@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
+import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -610,6 +611,31 @@ export function ViewerSeatFinder({
     setInspectorCollapsed(false);
     centerSeatInMap(seatId);
   }
+
+  // Deep-link (#196): same `?seat=<label>` contract as the admin map — read
+  // once on mount, then mirror selection changes with a shallow replaceState.
+  const seatParamAppliedRef = useRef(false);
+  useEffect(() => {
+    const seatId = findSeatIdByParam(publishedSeats, readSeatParam(window.location.search));
+    seatParamAppliedRef.current = true;
+    if (!seatId) return;
+    // Deferred a frame so centerSeatInMap measures the settled layout (and the
+    // selection isn't a sync setState inside the effect).
+    const frame = window.requestAnimationFrame(() => selectSeat(seatId));
+    return () => window.cancelAnimationFrame(frame);
+    // Mount-only by design (see the admin map's twin effect).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!seatParamAppliedRef.current) return;
+    const label = selectedSeatId ? (publishedSeats.find(seat => seat.id === selectedSeatId)?.label ?? null) : null;
+    const next = `${window.location.pathname}${withSeatParam(window.location.search, label)}${window.location.hash}`;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (next !== current) window.history.replaceState(window.history.state, "", next);
+    // publishedSeats omitted: a seat's label is stable for the life of its id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSeatId]);
 
   // Delegated marker-layer keyboarding — same pattern as the admin map:
   // arrows rove between seats (preventDefault keeps the scroll viewport from
