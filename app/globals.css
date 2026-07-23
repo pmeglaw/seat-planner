@@ -437,6 +437,16 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Skip the 300ms double-tap zoom delay on every interactive control. */
+button,
+a,
+input,
+select,
+textarea,
+label {
+  touch-action: manipulation;
+}
+
 /* The app's search fields render their own clear button (a single clear path
    the a11y tests pin), so the native webkit cancel control stays suppressed. */
 input[type="search"]::-webkit-search-cancel-button {

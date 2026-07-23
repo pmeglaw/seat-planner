@@ -318,14 +318,14 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                 type="button"
                 onClick={closeCsvReview}
                 disabled={busy}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 aria-label="Close CSV import review"
               >
                 <CloseIcon />
               </button>
             </div>
 
-            <div className="min-h-0 overflow-y-auto py-4">
+            <div className="min-h-0 overflow-y-auto overscroll-contain py-4">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                 <ReviewCountCard label="Rows" value={csvReview.rowCount} tone={csvReview.rowCount > 0 ? "warn" : "default"} />
                 <ReviewCountCard label="Assignments" value={csvReview.assignedCount} tone={csvReview.assignedCount > 0 ? "warn" : "default"} />
@@ -402,14 +402,14 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
                 type="button"
                 onClick={closeJsonReview}
                 disabled={busy}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                 aria-label="Close JSON restore review"
               >
                 <CloseIcon />
               </button>
             </div>
 
-            <div className="min-h-0 overflow-y-auto py-4">
+            <div className="min-h-0 overflow-y-auto overscroll-contain py-4">
               <div className="grid grid-cols-2 gap-2">
                 <ReviewCountCard label="Draft seats" value={jsonReview.seatCount} tone="warn" />
                 <ReviewCountCard label="Employees" value={jsonReview.employeeCount} tone="warn" />

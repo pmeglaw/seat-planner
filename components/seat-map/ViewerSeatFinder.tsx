@@ -1110,7 +1110,7 @@ export function ViewerSeatFinder({
       {resultsPanelOpen && (
         <aside
           aria-labelledby="viewer-results-title"
-          className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3 panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3 panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
             <h2 id="viewer-results-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Results</h2>
@@ -1181,7 +1181,7 @@ export function ViewerSeatFinder({
             // Docked panel at panel widths; below that it exists only as the
             // toggled bottom sheet (#197).
             mobileDirectorySheetOpen
-              ? "fixed inset-x-3 bottom-3 z-40 flex max-h-[60svh] panel:inset-x-auto"
+              ? "fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex max-h-[60svh] panel:inset-x-auto panel:bottom-3"
               : "hidden",
             directoryOpen && "panel:fixed panel:bottom-3 panel:right-3 panel:top-[48px] panel:z-40 panel:flex panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
           )}
@@ -1276,7 +1276,7 @@ export function ViewerSeatFinder({
           aria-expanded={false}
           aria-label={`Show the people list (${directory.totalCount} people)`}
           title="Show people"
-          className="fixed bottom-3 right-3 z-40 flex items-center gap-1.5 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-[11px] font-semibold tracking-wide text-[var(--admin-text-secondary)] shadow-elevation-2 transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] panel:hidden"
+          className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] right-3 z-40 flex items-center gap-1.5 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-[11px] font-semibold tracking-wide text-[var(--admin-text-secondary)] shadow-elevation-2 transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] panel:hidden"
         >
           PEOPLE · {directory.totalCount}
         </button>

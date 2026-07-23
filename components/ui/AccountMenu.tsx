@@ -95,7 +95,7 @@ export function AccountMenu({ email, roleLabel, onSelectSettings }: AccountMenuP
         aria-label={`Account — ${email}`}
         title={`Account — ${email} (${roleLabel})`}
         onClick={() => (open ? closeMenu(false) : openMenu())}
-        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-chrome-bg)]"
+        className="relative flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)] transition after:absolute after:-inset-[9px] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-chrome-bg)]"
       >
         {initial}
       </button>

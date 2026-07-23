@@ -733,3 +733,39 @@ test("looping animations honor prefers-reduced-motion via motion-safe gating", a
     assert.doesNotMatch(source, /(?<!motion-safe:)animate-(spin|pulse)/, `${file} has an ungated looping animation`);
   }
 });
+
+test("touch devices get visible destructive affordances, contained modals, and safe-area sheets", async () => {
+  const managementSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  const dataUtilitiesSource = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
+  const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const accountMenuSource = await readSource("../components/ui/AccountMenu.tsx");
+  const globalsSource = await readSource("../app/globals.css");
+
+  // Hover-revealed delete buttons are invisible on touch (no hover): both
+  // Management row deletes must also reveal under hover-none media (#198).
+  assert.equal(
+    (managementSource.match(/\[@media\(hover:none\)\]:opacity-100/g) ?? []).length,
+    (managementSource.match(/group-hover:opacity-100/g) ?? []).length,
+    "every hover-revealed control also reveals on hover-none devices"
+  );
+
+  // Modal/drawer scroll regions contain overscroll so touch scrolls don't
+  // chain to the page behind (#198).
+  assert.match(askPlannerSource, /min-h-0 flex-1 overflow-y-auto overscroll-contain/);
+  assert.equal((dataUtilitiesSource.match(/min-h-0 overflow-y-auto overscroll-contain/g) ?? []).length, 2);
+  assert.match(seatMapSource, /min-h-0 overflow-y-auto overscroll-contain/);
+  assert.match(managementSource, /role="dialog"[\s\S]{0,600}overscroll-contain/);
+
+  // Viewport-fixed bottom sheets respect the home-indicator inset (#198).
+  assert.match(seatMapSource, /env\(safe-area-inset-bottom\)/);
+  assert.ok((viewerSource.match(/env\(safe-area-inset-bottom\)/g) ?? []).length >= 3, "viewer sheets and pill respect the bottom inset");
+
+  // Tap ergonomics: interactive elements skip the double-tap zoom delay, and
+  // the small chrome controls extend their hit area to ~44px without growing
+  // visually (#198).
+  assert.match(globalsSource, /touch-action: manipulation/);
+  assert.match(accountMenuSource, /after:absolute after:-inset-\[9px\]/);
+  assert.equal((dataUtilitiesSource.match(/after:absolute after:-inset-1\.5/g) ?? []).length, 2, "both dialog close buttons extend their hit area");
+});

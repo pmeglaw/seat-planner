@@ -3439,7 +3439,7 @@ export function SeatMap({
               </button>
             </div>
 
-            <div className="min-h-0 overflow-y-auto py-4">
+            <div className="min-h-0 overflow-y-auto overscroll-contain py-4">
               {!publishSummary.hasChanges && (
                 <p className="rounded-xl border border-[var(--admin-publish-no-change-border)] bg-[var(--admin-publish-no-change-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-no-change-text)]">
                   No draft changes to publish. The saved draft already matches the currently published viewer map.
@@ -3558,7 +3558,7 @@ export function SeatMap({
           role="status"
           aria-live="polite"
           aria-label={`${activeMode.label} mode`}
-          className="fixed inset-x-3 bottom-3 z-[80] border border-[var(--admin-primary-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-4 motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[48px] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--admin-primary-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-4 motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[48px] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="text-[10px] font-semibold text-[var(--admin-primary-cta)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--admin-text-primary)]">{activeMode.message}</p>

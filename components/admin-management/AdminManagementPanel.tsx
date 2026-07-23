@@ -872,7 +872,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteDepartment(row.name)}
                         disabled={pending}
                         aria-label={`Delete ${row.name}`}
-                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--admin-text-muted)] opacity-0 outline-none transition hover:bg-[var(--admin-state-error-bg)] hover:text-[var(--admin-state-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--admin-error)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100"
+                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--admin-text-muted)] opacity-0 outline-none transition hover:bg-[var(--admin-state-error-bg)] hover:text-[var(--admin-state-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--admin-error)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -923,7 +923,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteZone(name)}
                         disabled={pending}
                         aria-label={`Delete ${name}`}
-                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--admin-text-muted)] opacity-0 outline-none transition hover:bg-[var(--admin-state-error-bg)] hover:text-[var(--admin-state-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--admin-error)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100"
+                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--admin-text-muted)] opacity-0 outline-none transition hover:bg-[var(--admin-state-error-bg)] hover:text-[var(--admin-state-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--admin-error)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -1110,7 +1110,7 @@ export function AdminManagementPanel({
                 closeManagementConfirm();
               }
             }}
-            className="w-full max-w-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
+            className="w-full max-w-lg overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
