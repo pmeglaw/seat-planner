@@ -657,3 +657,18 @@ test("narrow widths keep the viewer switch and people directory reachable", asyn
   assert.match(viewerSource, /aria-label=\{`Show the people list \(\$\{directory\.totalCount\} people\)`\}[\s\S]{0,800}panel:hidden/);
   assert.match(viewerSource, /aria-label="Close the people list"/);
 });
+
+test("dark-panel selects style their options and the app declares a theme color", async () => {
+  const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
+  const layoutSource = await readSource("../app/layout.tsx");
+
+  // Native <select> popups ignore the control's classes: without explicit
+  // option colors, Windows dark mode renders OS-colored options against the
+  // inspector's dark panel (#200). FilterPanel already does this — the
+  // inspector's shared field class must too. Token VALUES are free to evolve;
+  // the invariant is that option bg+text are explicitly set.
+  assert.match(inspectorSource, /fieldClassName = "[^"]*\[&>option\]:bg-\[[^\]]+\][^"]*\[&>option\]:text-\[[^\]]+\]/);
+
+  // Browser chrome should match the app's dark top bar on mobile (#200).
+  assert.match(layoutSource, /themeColor/);
+});
