@@ -899,7 +899,10 @@ export function SeatInspector({
     onDeleteSeat();
   }
 
-  const fieldClassName = "mt-1 w-full border border-white/20 bg-white/[0.06] px-3 py-2 text-sm font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-disabled)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] disabled:bg-white/[0.03] disabled:text-[var(--admin-chrome-disabled)]";
+  // [&>option] colors: native select popups ignore the control's own classes,
+  // so without these Windows dark mode paints OS-colored options against the
+  // dark panel (#200) — same pattern as FilterPanel's selectClassName.
+  const fieldClassName = "mt-1 w-full border border-white/20 bg-white/[0.06] px-3 py-2 text-sm font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-disabled)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] disabled:bg-white/[0.03] disabled:text-[var(--admin-chrome-disabled)] [&>option]:bg-[var(--admin-chrome-hover)] [&>option]:text-[var(--admin-chrome-text)]";
   const saveDisabledReason = pending
     ? "Save is unavailable while the current draft change is finishing."
     : !isDirty
