@@ -122,11 +122,23 @@ test("zone rectangles are explicit normalized bounds", () => {
     "Center West": 2,
     "Center Desks": 2,
     "East Pod": 1,
-    "Southeast Office": 5
+    "Southeast Office": 5,
+    "South Offices": 1
   });
 
   for (const rect of SEAT_ZONE_RECTS) {
     assert.ok(rect.xMin >= 0 && rect.xMin <= rect.xMax && rect.xMax <= 1);
     assert.ok(rect.yMin >= 0 && rect.yMin <= rect.yMax && rect.yMax <= 1);
   }
+});
+
+test("the bottom-band offices detect as South Offices (owner request 2026-07-23)", () => {
+  // Room centers measured on the floor plan and converted visual->saved via
+  // the calibration transform: left office and center office of the bottom
+  // band, where Add seat previously failed with "Could not detect a zone".
+  assert.equal(inferSeatZoneFromPoint({ x: 0.13, y: 0.908 }), "South Offices");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.337, y: 0.898 }), "South Offices");
+  // The band must not bleed into its neighbours.
+  assert.equal(inferSeatZoneFromPoint({ x: 0.2, y: 0.8 }), "West Pod");
+  assert.equal(inferSeatZoneFromPoint({ x: 0.7, y: 0.88 }), "Southeast Office");
 });
