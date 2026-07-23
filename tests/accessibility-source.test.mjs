@@ -833,4 +833,12 @@ test("axe findings stay fixed: allowed roles, single main landmark, marker name 
   // must appear verbatim before the full name.
   assert.doesNotMatch(markerSource, /aria-label=\{`\$\{seat\.label\}: /);
   assert.match(markerSource, /accessibleSeatName/);
+
+  // Subtree-text serializers (axe 4.10 / the Vercel toolbar) join adjacent
+  // spans WITHOUT whitespace, so the literal space text nodes between the
+  // code and name spans are load-bearing — without them the visible text
+  // reads "C07Daniel" and fails name containment (#223). Flex containers
+  // never render whitespace-only nodes, so they are visually inert.
+  assert.match(markerSource, /\{employeeName && " "\}/);
+  assert.match(markerSource, /\{showInlineName && " "\}/);
 });
