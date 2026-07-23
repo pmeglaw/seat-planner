@@ -958,21 +958,21 @@ export function AdminManagementPanel({
             {publishHistoryState.status === "loading" && (
               <>
                 <div className="mt-4 border border-[var(--admin-border)] bg-[var(--admin-surface-alt)] p-4">
-                  <div className="h-3 w-24 animate-pulse rounded bg-[var(--admin-border)]" />
+                  <div className="h-3 w-24 motion-safe:animate-pulse rounded bg-[var(--admin-border)]" />
                   <div className="mt-4 grid gap-3 md:grid-cols-3">
-                    <div className="h-14 animate-pulse bg-[var(--admin-surface)]" />
-                    <div className="h-14 animate-pulse bg-[var(--admin-surface)]" />
-                    <div className="h-14 animate-pulse bg-[var(--admin-surface)]" />
+                    <div className="h-14 motion-safe:animate-pulse bg-[var(--admin-surface)]" />
+                    <div className="h-14 motion-safe:animate-pulse bg-[var(--admin-surface)]" />
+                    <div className="h-14 motion-safe:animate-pulse bg-[var(--admin-surface)]" />
                   </div>
                 </div>
                 <div className="mt-4 divide-y divide-[var(--admin-border-subtle,var(--admin-border))] border border-[var(--admin-border)]">
                   {[0, 1, 2].map(item => (
                     <div key={item} className="grid gap-3 p-3 md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_minmax(0,1.2fr)_80px]">
-                      <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
-                      <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
-                      <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
-                      <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
-                      <div className="h-5 animate-pulse rounded bg-[var(--admin-surface-alt)]" />
+                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--admin-surface-alt)]" />
+                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--admin-surface-alt)]" />
+                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--admin-surface-alt)]" />
+                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--admin-surface-alt)]" />
+                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--admin-surface-alt)]" />
                     </div>
                   ))}
                 </div>
