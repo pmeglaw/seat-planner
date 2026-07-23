@@ -823,7 +823,7 @@ export function ViewerSeatFinder({
             field and the width; Filter keeps the pairing by sitting immediately
             to its LEFT with the dropdown anchored to itself. Both Carbon `sm` =
             Carbon `md` = 40px inside the 48px bar (owner, 2026-07-22). */}
-        <div ref={filterRootRef} className="relative mr-1.5 flex h-10 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
+        <div ref={filterRootRef} className="relative mr-1.5 flex h-8 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
           <button
             ref={filterTriggerRef}
             type="button"

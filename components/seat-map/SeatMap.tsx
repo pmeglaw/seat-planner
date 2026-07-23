@@ -2522,10 +2522,10 @@ export function SeatMap({
             cramped sibling of the filter and forced both to share a 340px cap.
             The filter keeps its dropdown anchored to itself (immediately LEFT
             of search, per the locked pairing); search gets its own field below.
-            Both are Carbon `md` = 40px (owner, 2026-07-22), which is why the bar
-            itself grew to 48px — a 40px field in a 40px bar would sit flush
-            against both edges. 4px of clearance top and bottom, as before. */}
-        <div data-filter-ui className="relative mr-1.5 flex h-10 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
+            Resized 2026-07-23 (owner): both fields are 32px in the slimmed
+            40px bar — same 4px clearance top and bottom as the original
+            40px-in-48px pairing. */}
+        <div data-filter-ui className="relative mr-1.5 flex h-8 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
           {canEdit && (
             <button
               ref={filterTriggerRef}
