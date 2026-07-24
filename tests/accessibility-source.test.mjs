@@ -300,6 +300,11 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /Edit assignment for \$\{selectedSeat\.label\}/);
   assert.doesNotMatch(inspectorSource, /Change assignment/);
   assert.match(inspectorSource, /title="Notes" headingId="seat-notes-heading"/);
+  // The solid Assigned status tag pairs WHITE text with the deep green — the
+  // 2026-07-23 harmonization darkened --admin-status-ok (#24a148 → #1D6E41)
+  // and dark #161616 text on it fails AA at 2.89:1 (axe, prod 2026-07-24).
+  assert.match(inspectorSource, /bg-\[var\(--admin-status-ok\)\] text-white/);
+  assert.doesNotMatch(inspectorSource, /bg-\[var\(--admin-status-ok\)\] text-\[var\(--sp-color-text-primary\)\]/);
   assert.doesNotMatch(inspectorSource, /sticky bottom-0/);
   assert.match(inspectorSource, /No unsaved changes\./);
   // The verbose repeated panels are gone (Claude Design cleanup).
