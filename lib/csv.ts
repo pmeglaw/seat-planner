@@ -96,6 +96,14 @@ export function parseCsv(text: string): string[][] {
   return rows;
 }
 
+// Undo the export-side formula guard (Step 1) so import(export(x)) === x.
+// Strips exactly one leading quote, and only when it directly precedes a
+// formula-trigger character — a legitimate leading apostrophe on ordinary
+// text (e.g. "'tis") is left untouched.
+function stripCsvFormulaGuard(value: string) {
+  return value.startsWith("'") && CSV_FORMULA_TRIGGERS.test(value.slice(1)) ? value.slice(1) : value;
+}
+
 function emptyAssignmentRow(): CsvAssignmentRow {
   return {
     seat_label: "",
@@ -130,7 +138,7 @@ export function parseAssignmentCsv(text: string): CsvValidationResult {
     const row = emptyAssignmentRow();
     headers.forEach((header, cellIndex) => {
       if (ASSIGNMENT_CSV_HEADERS.includes(header as AssignmentCsvHeader)) {
-        row[header as AssignmentCsvHeader] = cells[cellIndex]?.trim() ?? "";
+        row[header as AssignmentCsvHeader] = stripCsvFormulaGuard(cells[cellIndex]?.trim() ?? "");
       }
     });
 
@@ -181,8 +189,16 @@ export function parseAssignmentCsv(text: string): CsvValidationResult {
   return { rows, issues };
 }
 
+// OWASP CSV-injection guard: a cell starting with one of these is evaluated as
+// a formula by Excel/Sheets. Prefix it with a single quote on export; strip
+// that guard quote on import so a round-trip is lossless. The class also
+// includes a leading TAB and CR, which some spreadsheet importers treat as
+// formula lead-ins.
+const CSV_FORMULA_TRIGGERS = /^[=+\-@\t\r]/;
+
 function escapeCsvCell(value: unknown) {
-  const text = String(value ?? "");
+  let text = String(value ?? "");
+  if (CSV_FORMULA_TRIGGERS.test(text)) text = `'${text}`;
   if (/[",\n\r]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
   return text;
 }
