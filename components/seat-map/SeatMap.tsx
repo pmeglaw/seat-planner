@@ -3284,7 +3284,7 @@ export function SeatMap({
                     key={wash.key}
                     aria-hidden="true"
                     data-office-wash={wash.key}
-                    className="pointer-events-none absolute rounded-lg bg-[#1D6E41]/[0.06] shadow-[inset_0_0_0_1.5px_rgba(29,110,65,0.22)]"
+                    className="pointer-events-none absolute rounded-lg bg-[#1D6E41]/[0.10] shadow-[inset_0_0_0_1.5px_rgba(29,110,65,0.22)]"
                     style={{
                       left: `${wash.rect.xMin * 100}%`,
                       top: `${wash.rect.yMin * 100}%`,
