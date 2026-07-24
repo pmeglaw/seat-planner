@@ -102,6 +102,19 @@ class SeatPlannerDb {
     await this.actAs(VIEWER_ID);
   }
 
+  // Run `fn` with the SQL session role switched (so `to authenticated` RLS
+  // policies actually apply — the owner is otherwise RLS-exempt). Always resets
+  // the role, even on failure. `auth.uid()` is unaffected, so set the identity
+  // with actAs()/actAsViewer() first, then wrap the RLS-guarded queries here.
+  async asRole(role, fn) {
+    await this.db.exec(`set role ${role}`);
+    try {
+      return await fn();
+    } finally {
+      await this.db.exec("reset role");
+    }
+  }
+
   async isAdmin() {
     const { rows } = await this.db.query("select app_private.is_admin() as ok");
     return rows[0].ok;
@@ -152,6 +165,20 @@ export async function createSeatPlannerDb() {
     const sql = sanitize(await readFile(new URL(file, MIGRATIONS_DIR), "utf8"));
     await db.exec(sql);
   }
+
+  // Supabase grants the `authenticated` role broad table DML by default and
+  // relies on RLS as the actual gate. PGlite has no such bootstrap, so mirror
+  // it here: without these grants, `set role authenticated` fails with a
+  // grant-level "permission denied" before any policy is even evaluated.
+  await db.exec(`
+    grant usage on schema public to authenticated, anon;
+    grant select, insert, update, delete on all tables in schema public to authenticated;
+    grant usage, select on all sequences in schema public to authenticated;
+    -- published_employees is select-only for authenticated in prod
+    -- (20260708230000); keep the harness faithful so a viewer write is denied
+    -- by the missing grant AND the missing RLS write-policy, as in prod.
+    revoke insert, update, delete on public.published_employees from authenticated;
+  `);
 
   return new SeatPlannerDb(db);
 }
