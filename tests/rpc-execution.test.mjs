@@ -391,3 +391,106 @@ test("reset: enforces the concurrency fence on stale expectations (MLS02)", asyn
     { code: "MLS02", match: /changed in another session/ }
   );
 });
+
+// Permuted-draft cases: before the staged-writes migration, the RPC's single
+// bulk UPDATE rewrote employee_id/label per row and collided with itself
+// mid-statement on the non-deferrable one_draft_seat_per_employee /
+// seats_unique_label_per_layer indexes whenever the draft permuted an
+// assignment or label relative to published. These reproduce that class.
+
+test("reset: survives a permuted assignment swap between two draft seats", async () => {
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  const bob = await db.seedEmployee({ fullName: "Bob" });
+  const n01 = await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+  const n02 = await db.seedSeat({ label: "N02", status: "assigned", employeeId: bob });
+  await db.query("select public.publish_seat_map()");
+
+  // Permute the draft assignments, staged through null the way the UI would.
+  await db.query(
+    "update public.seats set employee_id = null, status = 'available' where layer = 'draft' and label in ('N01', 'N02')"
+  );
+  await db.query(
+    "update public.seats set employee_id = $1, status = 'assigned' where layer = 'draft' and label = 'N01'",
+    [bob]
+  );
+  await db.query(
+    "update public.seats set employee_id = $1, status = 'assigned' where layer = 'draft' and label = 'N02'",
+    [alice]
+  );
+
+  await db.query("select public.reset_draft_seats_to_published()");
+
+  const seats = await db.draftSeats();
+  const byLabel = Object.fromEntries(seats.map(s => [s.label, s]));
+  assert.equal(byLabel.N01.employee_id, alice, "N01 restored to its published occupant");
+  assert.equal(byLabel.N01.status, "assigned");
+  assert.equal(byLabel.N02.employee_id, bob, "N02 restored to its published occupant");
+  assert.equal(byLabel.N02.status, "assigned");
+  assert.equal(byLabel.N01.id, n01.id, "surviving draft row keeps its id");
+  assert.equal(byLabel.N02.id, n02.id, "surviving draft row keeps its id");
+});
+
+test("reset: survives moving one person from seat A to seat B in the draft", async () => {
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  const n01 = await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+  const n02 = await db.seedSeat({ label: "N02", status: "available" });
+  await db.query("select public.publish_seat_map()");
+
+  // Move Alice from N01 to N02 in the draft, staged through null.
+  await db.query(
+    "update public.seats set employee_id = null, status = 'available' where layer = 'draft' and label = 'N01'"
+  );
+  await db.query(
+    "update public.seats set employee_id = $1, status = 'assigned' where layer = 'draft' and label = 'N02'",
+    [alice]
+  );
+
+  await db.query("select public.reset_draft_seats_to_published()");
+
+  const seats = await db.draftSeats();
+  const byLabel = Object.fromEntries(seats.map(s => [s.label, s]));
+  assert.equal(byLabel.N01.employee_id, alice, "Alice restored to her published seat");
+  assert.equal(byLabel.N01.status, "assigned");
+  assert.equal(byLabel.N01.id, n01.id, "surviving draft row keeps its id");
+  assert.equal(byLabel.N02.employee_id, null, "N02 returns to available");
+  assert.equal(byLabel.N02.status, "available");
+  assert.equal(byLabel.N02.id, n02.id, "surviving draft row keeps its id");
+});
+
+test("reset: survives a label permutation between two draft seats with stable seat_key", async () => {
+  const n01 = await db.seedSeat({ label: "N01", key: "k-n01", status: "available" });
+  const n02 = await db.seedSeat({ label: "N02", key: "k-n02", status: "available" });
+  await db.query("select public.publish_seat_map()");
+
+  // Swap the two draft labels one seat at a time via a collision-free temp
+  // value, the way sequential single-seat edits would leave the draft.
+  await db.query("update public.seats set label = '~tmp~' where id = $1", [n01.id]);
+  await db.query("update public.seats set label = 'N01' where id = $1", [n02.id]);
+  await db.query("update public.seats set label = 'N02' where id = $1", [n01.id]);
+
+  await db.query("select public.reset_draft_seats_to_published()");
+
+  const seats = await db.draftSeats();
+  const byLabel = Object.fromEntries(seats.map(s => [s.label, s]));
+  assert.deepEqual(Object.keys(byLabel).sort(), ["N01", "N02"]);
+  assert.equal(byLabel.N01.id, n01.id, "seat_key k-n01 keeps its id and its published label");
+  assert.equal(byLabel.N02.id, n02.id, "seat_key k-n02 keeps its id and its published label");
+});
+
+test("reset: a draft-only seat squatting on a published label is removed before labels converge", async () => {
+  const seatA = await db.seedSeat({ label: "N01", key: "k-a", status: "available" });
+  await db.query("select public.publish_seat_map()");
+
+  // Diverge: rename A in the draft, then let a new custom seat squat on the
+  // label A is about to reclaim.
+  await db.query("update public.seats set label = 'N09' where id = $1", [seatA.id]);
+  const squatter = await db.seedSeat({ label: "N01", key: "k-squat", status: "available", isCustom: true });
+
+  await db.query("select public.reset_draft_seats_to_published()");
+
+  const seats = await db.draftSeats();
+  const n01Rows = seats.filter(s => s.label === "N01");
+  assert.equal(n01Rows.length, 1, "exactly one draft N01 remains");
+  assert.equal(n01Rows[0].id, seatA.id, "the surviving N01 is seat A, restored to its published label");
+  assert.ok(!seats.some(s => s.id === squatter.id), "the squatter is gone");
+});

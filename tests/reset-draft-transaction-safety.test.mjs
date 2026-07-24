@@ -5,9 +5,18 @@ import test from "node:test";
 // Pins the reset-to-published TS action and SQL RPC in lockstep, like the
 // other *-transaction-safety tests: the whole reset is one fenced transaction,
 // seats only, admin only. Execution behavior is covered in rpc-execution.
+//
+// The live definition is 20260724150000_reset_draft_staged_writes.sql, which
+// supersedes 20260723230000_reset_draft_to_published.sql (create or replace):
+// the original's single bulk UPDATE rewrote employee_id/label per row and
+// collided with itself mid-statement on the non-deferrable
+// one_draft_seat_per_employee / seats_unique_label_per_layer indexes whenever
+// the draft permuted an assignment or label relative to published. The
+// staged-writes migration keeps the same contract (seats only, fenced,
+// stable draft ids) and only changes how the mutation is sequenced.
 
 const migrationSql = await readFile(
-  new URL("../supabase/migrations/20260723230000_reset_draft_to_published.sql", import.meta.url),
+  new URL("../supabase/migrations/20260724150000_reset_draft_staged_writes.sql", import.meta.url),
   "utf8"
 );
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
@@ -46,4 +55,15 @@ test("reset action is a fenced server action returning STALE_DRAFT instead of th
   assert.match(resetActionSource, /isStaleDraftErrorCode/);
   assert.match(resetActionSource, /return \{ ok: false, code: "STALE_DRAFT", message: error\.message \};/);
   assert.match(resetActionSource, /revalidatePath\("\/admin"\)/);
+});
+
+test("reset RPC stages vacate and label parking before the converging update", () => {
+  const vacate = migrationSql.indexOf("set employee_id = null");
+  const park = migrationSql.indexOf("'~reset~'");
+  const converge = migrationSql.indexOf("seat_key = p.seat_key");
+  const draftOnlyDelete = migrationSql.indexOf("delete from public.seats as d");
+  assert.ok(vacate > -1 && park > -1 && converge > -1 && draftOnlyDelete > -1);
+  assert.ok(draftOnlyDelete < vacate, "draft-only delete runs before staging");
+  assert.ok(vacate < converge, "assignment vacate runs before the converging update");
+  assert.ok(park < converge, "label parking runs before the converging update");
 });
