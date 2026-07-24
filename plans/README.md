@@ -10,7 +10,7 @@ This audit was a **re-audit** — the prior pass (`docs/RISKS.md`, 2026-07-08, ~
 |------|-------|----------|--------|------|------------|----------|--------|
 | 001 | Reset RPC stages employee/label writes (survives permuted drafts) | P1 | S | LOW | — | bug | TODO |
 | 002 | Discard-draft dialog surfaces reset errors + joins Escape ladder | P1 | S | LOW | — (pairs with 001) | bug | TODO |
-| 003 | Close control-character open redirect in `safeNextPath` | P1 | S | LOW | — | security | TODO |
+| 003 | Close control-character open redirect in `safeNextPath` | P1 | S | LOW | — | security | DONE — branch `advisor/003-harden-safe-next-path` @432c75c, reviewer-verified, awaiting merge |
 | 004 | Fix South Offices zone rect (visual frame + wall coverage) | P2 | S | LOW-MED | — | bug | TODO |
 | 005 | Publish `change_summary` parity with the review dialog | P2 | S-M | LOW | — | bug | TODO |
 | 006 | Neutralize CSV formula injection on export | P2 | S | LOW | — | security | TODO |
