@@ -8,8 +8,8 @@ This audit was a **re-audit** — the prior pass (`docs/RISKS.md`, 2026-07-08, ~
 
 | Plan | Title | Priority | Effort | Risk | Depends on | Category | Status |
 |------|-------|----------|--------|------|------------|----------|--------|
-| 001 | Reset RPC stages employee/label writes (survives permuted drafts) | P1 | S | LOW | — | bug | TODO |
-| 002 | Discard-draft dialog surfaces reset errors + joins Escape ladder | P1 | S | LOW | — (pairs with 001) | bug | TODO |
+| 001 | Reset RPC stages employee/label writes (survives permuted drafts) | P1 | S | LOW | — | bug | DONE — branch `advisor/001-reset-rpc-staged-writes` @9b902fe, reviewer-verified, awaiting merge |
+| 002 | Discard-draft dialog surfaces reset errors + joins Escape ladder | P1 | S | LOW | — (pairs with 001) | bug | DONE — branch `advisor/002-discard-dialog-error-surfacing` @98d419f, reviewer-verified, awaiting merge |
 | 003 | Close control-character open redirect in `safeNextPath` | P1 | S | LOW | — | security | DONE — branch `advisor/003-harden-safe-next-path` @432c75c, reviewer-verified, awaiting merge |
 | 004 | Fix South Offices zone rect (visual frame + wall coverage) | P2 | S | LOW-MED | — | bug | TODO |
 | 005 | Publish `change_summary` parity with the review dialog | P2 | S-M | LOW | — | bug | TODO |
@@ -66,6 +66,7 @@ Real findings, verified at HEAD, deliberately **not** turned into plans now (the
 - **TEST-03** — the c8 gate uses `"all": false`, so 6 never-imported `lib` files (incl. `adminPageGuard.ts`, `supabase/authRedirect.ts` — both security-adjacent) are invisible to the coverage floor. Flip to `all: true` with an explicit exclude list.
 - **TEST-05** — calibration behavior test covers 1 area / 1 axis; add zero-fixture round-trip identity per area + overlapping-area selection assertions.
 - **TEST-07** — `repair_original_is_custom` regex duplicates `lib/seatProtection.ts` prefix ranges, unpinned and already divergent on unpadded labels (`N7`).
+- **Browser-harness gap (surfaced executing plan 002)** — `tests/browser/build-harness.ts` stubs `auth.signOut` but not `auth.getUser`, so any browser spec combining `canEdit:true` with a rejected action crashes on SeatMap's session-expiry probe effect (`getUser()` on the mock). This blocks the whole class of browser regression tests for admin-mutation *error* paths — consequence: plan 002's discard-error surfacing shipped with no automated browser test (verified by typecheck + manual QA only). A one-line `auth.getUser` stub unblocks it; connects to TEST-04.
 
 **Security (lower severity, same-org internal tool):**
 - **SECURITY-02** — `employees` RLS select policy is `active = true or is_admin()`, so an authenticated viewer can read the *draft-side* employee working set (unpublished renames/edits) directly via PostgREST; the two-layer promise is enforced only by the viewer page's table choice, not by RLS. Fix is a one-line policy narrowing to admin-only + a TEST-01-style assertion. Verified: viewers read people from `published_employees`, and admin pages read `employees` as admin, so the narrowing is safe. **Deferred, not dismissed** — worth doing, best done alongside TEST-01 so it can be verified.
