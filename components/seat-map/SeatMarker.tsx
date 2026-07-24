@@ -29,6 +29,12 @@ type SeatMarkerProps = {
   nameNudge?: -1 | 0 | 1;
   moveSeatMode: boolean;
   swapMode: boolean;
+  // Office-plate layout, derived by SeatMap from the seat's room rect:
+  // token offset (px) from the seat anchor to the room center, and a width
+  // capped to the room. All display-only; absent/zero for non-office seats.
+  officePlateOffsetXPx?: number;
+  officePlateOffsetYPx?: number;
+  officePlateWidthPx?: number;
   swapSource: boolean;
   swapTarget: boolean;
   invalidTarget?: boolean;
@@ -138,6 +144,9 @@ export function SeatMarker({
   nameNudge = 0,
   moveSeatMode,
   swapMode,
+  officePlateOffsetXPx = 0,
+  officePlateOffsetYPx = 0,
+  officePlateWidthPx,
   swapSource,
   swapTarget,
   invalidTarget = false,
@@ -379,18 +388,37 @@ export function SeatMarker({
     : activeTokenNudge === -1
       ? "-translate-y-[calc(50%+14px)]"
       : "-translate-y-[calc(50%-14px)]";
-  const tokenPositionClass =
-    resolvedViewportEdge === "left"
+  // Room-centered plate offset (display-only, same contract as the nudge and
+  // viewport-edge offsets above: the anchor button NEVER moves). SeatMap
+  // derives the offset from the seat's office-room rect; move/add/swap modes
+  // snap the token back to the true coordinate so dragging stays honest.
+  const officePlateOffsetActive =
+    officePlate && !markerUsesTrueCoordinate && (officePlateOffsetXPx !== 0 || officePlateOffsetYPx !== 0);
+  const tokenPositionClass = officePlateOffsetActive
+    ? "absolute -translate-x-1/2 -translate-y-1/2"
+    : resolvedViewportEdge === "left"
       ? `absolute top-1/2 translate-x-0 ${tokenVerticalTranslateClass}`
       : resolvedViewportEdge === "right"
         ? `absolute top-1/2 translate-x-0 ${tokenVerticalTranslateClass}`
         : `absolute left-1/2 top-1/2 -translate-x-1/2 ${tokenVerticalTranslateClass}`;
-  const tokenPositionStyle: CSSProperties | undefined =
-    resolvedViewportEdge === "left"
-      ? { left: `calc(50% + ${resolvedViewportEdgeOffsetPx}px)` }
+  // The room-fitted width applies in EVERY mode (a 152px plate must not
+  // overflow a ~123px NE room even mid-drag); only the centering offset is
+  // mode-dependent.
+  const officePlateSizeStyle: CSSProperties | undefined =
+    officePlate && officePlateWidthPx
+      ? { width: `${officePlateWidthPx}px`, maxWidth: `${officePlateWidthPx}px` }
+      : undefined;
+  const tokenPositionStyle: CSSProperties | undefined = officePlateOffsetActive
+    ? {
+        left: `calc(50% + ${officePlateOffsetXPx}px)`,
+        top: `calc(50% + ${officePlateOffsetYPx}px)`,
+        ...officePlateSizeStyle
+      }
+    : resolvedViewportEdge === "left"
+      ? { left: `calc(50% + ${resolvedViewportEdgeOffsetPx}px)`, ...officePlateSizeStyle }
       : resolvedViewportEdge === "right"
-        ? { right: `calc(50% + ${resolvedViewportEdgeOffsetPx}px)` }
-        : undefined;
+        ? { right: `calc(50% + ${resolvedViewportEdgeOffsetPx}px)`, ...officePlateSizeStyle }
+        : officePlateSizeStyle;
   const nameTextClass =
     tokenMode === "selected"
       ? "max-w-[98px] text-[13px]"

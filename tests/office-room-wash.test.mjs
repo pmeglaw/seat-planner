@@ -5,7 +5,7 @@ import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 // PR B of the office two-step: a room washes green only while an assigned
 // seat sits inside it, and the wash yields to every stronger map treatment.
 // Extended 2026-07-24 to all eight private offices (N/NE/SE/S).
-const { buildOfficeRoomWashes, isInsideOfficeRoom, OFFICE_ROOM_VISUAL_RECTS } = await importTsModule("lib/officeRoomWash.ts");
+const { buildOfficeRoomWashes, findOfficeRoom, isInsideOfficeRoom, OFFICE_ROOM_VISUAL_RECTS } = await importTsModule("lib/officeRoomWash.ts");
 
 // Visual-space points inside each measured room.
 const LEFT = { x: 0.17, y: 0.955 };
@@ -88,6 +88,12 @@ test("each live office seat washes exactly its own room when assigned", () => {
     const washes = buildOfficeRoomWashes({ seats: [seat(label, point)] });
     assert.deepEqual(washes.map(w => w.key), [room], label);
   }
+});
+
+test("findOfficeRoom returns the containing room, null elsewhere", () => {
+  assert.equal(findOfficeRoom({ x: 0.17, y: 0.955 })?.key, "south-office-1");
+  assert.equal(findOfficeRoom({ x: 0.6593, y: 0.168 })?.key, "northeast-office-2");
+  assert.equal(findOfficeRoom({ x: 0.3, y: 0.32 }), null);
 });
 
 test("isInsideOfficeRoom accepts office points and rejects pod points", () => {
