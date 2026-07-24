@@ -41,5 +41,18 @@ export function friendlyAuthMessage(message: string) {
 
 export function safeNextPath(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) return "/";
+  // The consumer re-parses this via `new URL(value, origin)`. The WHATWG
+  // parser strips ASCII tab/newline/carriage-return anywhere in the input and
+  // treats "\\" as "/" in special schemes, so a value like "/<TAB>//evil.example"
+  // clears the prefix checks above and still resolves protocol-relative to a
+  // foreign origin. Reject every C0 control, DEL, and backslash outright.
+  if (/[\u0000-\u001F\u007F\\]/.test(value)) return "/";
+  // Belt and suspenders: confirm the value stays same-origin under that parser.
+  // The sentinel origin is arbitrary; only the origin equality matters.
+  try {
+    if (new URL(value, "https://sentinel.invalid").origin !== "https://sentinel.invalid") return "/";
+  } catch {
+    return "/";
+  }
   return value;
 }
