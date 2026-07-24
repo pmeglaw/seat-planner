@@ -12,10 +12,32 @@ import type { SeatStatus } from "@/lib/types";
  */
 export type OfficeRoomRect = { key: string; xMin: number; xMax: number; yMin: number; yMax: number };
 
-export const SOUTH_OFFICE_ROOM_VISUAL_RECTS: OfficeRoomRect[] = [
+// All eight private offices (extended from the two South rooms on 2026-07-24,
+// owner ask "N13, N14, NE09, NE10, SE06, SE05 need the same"). Each rect was
+// verified against prod: it contains exactly its own office seat and none of
+// the other 60+ seats — re-run that containment audit when adding a room.
+export const OFFICE_ROOM_VISUAL_RECTS: OfficeRoomRect[] = [
+  { key: "north-office-1", xMin: 0.093, xMax: 0.189, yMin: 0.118, yMax: 0.248 },
+  { key: "north-office-2", xMin: 0.21, xMax: 0.297, yMin: 0.118, yMax: 0.248 },
+  { key: "northeast-office-1", xMin: 0.509, xMax: 0.603, yMin: 0.11, yMax: 0.248 },
+  { key: "northeast-office-2", xMin: 0.623, xMax: 0.704, yMin: 0.11, yMax: 0.248 },
+  { key: "southeast-office-6", xMin: 0.663, xMax: 0.748, yMin: 0.672, yMax: 0.829 },
+  { key: "southeast-office-5", xMin: 0.802, xMax: 0.903, yMin: 0.756, yMax: 0.932 },
   { key: "south-office-1", xMin: 0.118, xMax: 0.223, yMin: 0.921, yMax: 0.99 },
   { key: "south-office-2", xMin: 0.227, xMax: 0.425, yMin: 0.921, yMax: 0.99 }
 ];
+
+/**
+ * Is a VISUAL-space point inside any measured office room? This is also the
+ * seat-marker's nameplate gate: office seats can carry pod zones (N13 is
+ * zone "North Pod" — zone inference has no room concept), so room geometry,
+ * not zone, decides who renders as a plate.
+ */
+export function isInsideOfficeRoom(point: { x: number; y: number }): boolean {
+  return OFFICE_ROOM_VISUAL_RECTS.some(
+    rect => point.x >= rect.xMin && point.x <= rect.xMax && point.y >= rect.yMin && point.y <= rect.yMax
+  );
+}
 
 export type OfficeWashSeat = { id: string; x: number; y: number; status: SeatStatus };
 
@@ -38,7 +60,7 @@ export function buildOfficeRoomWashes(input: {
   draggingSeatId?: string | null;
 }): OfficeRoomWash[] {
   const {
-    rooms = SOUTH_OFFICE_ROOM_VISUAL_RECTS,
+    rooms = OFFICE_ROOM_VISUAL_RECTS,
     seats,
     dimmedSeatIds,
     searchActiveSeatIds,

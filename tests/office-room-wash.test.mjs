@@ -4,7 +4,8 @@ import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 
 // PR B of the office two-step: a room washes green only while an assigned
 // seat sits inside it, and the wash yields to every stronger map treatment.
-const { buildOfficeRoomWashes, SOUTH_OFFICE_ROOM_VISUAL_RECTS } = await importTsModule("lib/officeRoomWash.ts");
+// Extended 2026-07-24 to all eight private offices (N/NE/SE/S).
+const { buildOfficeRoomWashes, isInsideOfficeRoom, OFFICE_ROOM_VISUAL_RECTS } = await importTsModule("lib/officeRoomWash.ts");
 
 // Visual-space points inside each measured room.
 const LEFT = { x: 0.17, y: 0.955 };
@@ -56,12 +57,45 @@ test("a dragged seat's room drops its wash until the drop", () => {
   assert.deepEqual(washes, []);
 });
 
-test("the measured rects stay two rooms inside the map band", () => {
-  assert.equal(SOUTH_OFFICE_ROOM_VISUAL_RECTS.length, 2);
-  for (const rect of SOUTH_OFFICE_ROOM_VISUAL_RECTS) {
-    assert.ok(rect.xMin < rect.xMax && rect.yMin < rect.yMax);
-    assert.ok(rect.yMin > 0.9 && rect.yMax <= 1);
+test("eight measured office rooms, none overlapping", () => {
+  assert.equal(OFFICE_ROOM_VISUAL_RECTS.length, 8);
+  for (const rect of OFFICE_ROOM_VISUAL_RECTS) {
+    assert.ok(rect.xMin < rect.xMax && rect.yMin < rect.yMax, rect.key);
+    assert.ok(rect.xMin >= 0 && rect.xMax <= 1 && rect.yMin >= 0 && rect.yMax <= 1, rect.key);
   }
-  const [left, right] = SOUTH_OFFICE_ROOM_VISUAL_RECTS;
-  assert.ok(left.xMax <= right.xMin, "rooms never overlap");
+  for (const a of OFFICE_ROOM_VISUAL_RECTS) {
+    for (const b of OFFICE_ROOM_VISUAL_RECTS) {
+      if (a === b) continue;
+      const overlaps = a.xMin < b.xMax && b.xMin < a.xMax && a.yMin < b.yMax && b.yMin < a.yMax;
+      assert.ok(!overlaps, `${a.key} overlaps ${b.key}`);
+    }
+  }
+});
+
+// Live positions of the six 2026-07-24 office seats (read off prod) — each
+// must land in its intended room, so the plate gate and wash both catch them.
+const LIVE_OFFICE_POINTS = [
+  { label: "N13", point: { x: 0.1413, y: 0.181 }, room: "north-office-1" },
+  { label: "N14", point: { x: 0.2416, y: 0.1882 }, room: "north-office-2" },
+  { label: "NE09", point: { x: 0.5531, y: 0.1766 }, room: "northeast-office-1" },
+  { label: "NE10", point: { x: 0.6593, y: 0.168 }, room: "northeast-office-2" },
+  { label: "SE05", point: { x: 0.8567, y: 0.8458 }, room: "southeast-office-5" },
+  { label: "SE06", point: { x: 0.6987, y: 0.7505 }, room: "southeast-office-6" }
+];
+
+test("each live office seat washes exactly its own room when assigned", () => {
+  for (const { label, point, room } of LIVE_OFFICE_POINTS) {
+    const washes = buildOfficeRoomWashes({ seats: [seat(label, point)] });
+    assert.deepEqual(washes.map(w => w.key), [room], label);
+  }
+});
+
+test("isInsideOfficeRoom accepts office points and rejects pod points", () => {
+  for (const { label, point } of LIVE_OFFICE_POINTS) {
+    assert.ok(isInsideOfficeRoom(point), label);
+  }
+  assert.ok(isInsideOfficeRoom(LEFT) && isInsideOfficeRoom(RIGHT), "south rooms");
+  for (const pod of [{ x: 0.3, y: 0.32 }, { x: 0.5, y: 0.4 }, { x: 0.85, y: 0.4 }]) {
+    assert.ok(!isInsideOfficeRoom(pod), JSON.stringify(pod));
+  }
 });
