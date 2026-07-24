@@ -240,6 +240,61 @@ test("publish: requires admin", async () => {
   await expectThrow(db.query("select public.publish_seat_map()"), { match: /Admin permission required/ });
 });
 
+test("publish: change_summary counts every change kind the client review dialog shows (Plan 005 parity)", async () => {
+  // Baseline employees. Alice/Erin swap N01 (assignment change); Frank gets
+  // edited between publishes; Bob is deactivated between publishes (removed);
+  // Grace is created only after the baseline publish (added).
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  const erin = await db.seedEmployee({ fullName: "Erin" });
+  const frank = await db.seedEmployee({ fullName: "Frank", position: "Analyst" });
+  const bob = await db.seedEmployee({ fullName: "Bob" });
+
+  const n01 = await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice }); // assignment change target
+  const n02 = await db.seedSeat({ label: "N02", status: "available", zone: "North" }); // seat detail change target
+  const n03 = await db.seedSeat({ label: "N03", status: "available" }); // status change target
+  const n04 = await db.seedSeat({ label: "N04", status: "available", x: 0.5, y: 0.5 }); // seat moved target
+  const cx02 = await db.seedSeat({ label: "CX02", key: "cx02", status: "available", isCustom: true }); // seat removed target (custom: deletable)
+
+  // Baseline publish establishes the "currently published" side of the diff
+  // the second publish's change_summary will be computed against.
+  await db.query("select public.publish_seat_map()");
+  const baseline = await db.query("select id from public.publish_events");
+  const baselineId = baseline.rows[0].id;
+
+  // Diverge the draft, exercising every change kind independently so no two
+  // counts can be satisfied by the same edit.
+  await db.query("update public.seats set employee_id = $1 where id = $2", [erin, n01.id]); // assignments_changed (status stays 'assigned' both sides)
+  await db.query("update public.seats set zone = $1 where id = $2", ["South", n02.id]); // seat_detail_changes
+  await db.query("update public.seats set status = 'reserved' where id = $1", [n03.id]); // status_changes (employee_id stays null both sides)
+  await db.query("update public.seats set x = 0.9 where id = $1", [n04.id]); // seats_moved (delta 0.4 >> 0.0005 epsilon)
+  await db.query("delete from public.seats where id = $1", [cx02.id]); // seats_removed
+  await db.seedSeat({ label: "CX01", key: "cx01", status: "available", isCustom: true }); // seats_added
+
+  await db.query("update public.employees set position = 'Manager' where id = $1", [frank]); // employee_edits
+  await db.query("update public.employees set active = false where id = $1", [bob]); // employees_removed
+  await db.seedEmployee({ fullName: "Grace" }); // employees_added (active, no snapshot row yet)
+
+  await db.query("select public.publish_seat_map()");
+
+  const second = await db.query("select change_summary from public.publish_events where id <> $1", [baselineId]);
+  assert.equal(second.rows.length, 1, "the diverging publish recorded exactly one new event");
+  const summary = second.rows[0].change_summary;
+
+  // The three counts this plan adds.
+  assert.equal(summary.employees_added, 1, "Grace has no published_employees row yet");
+  assert.equal(summary.employees_removed, 1, "Bob's snapshot row has no matching active employee");
+  assert.equal(summary.seat_detail_changes, 1, "N02's zone changed North -> South");
+
+  // Spot-check (plus full coverage) of the pre-existing counts: adding the
+  // three new jsonb keys must not perturb any of these.
+  assert.equal(summary.seats_added, 1, "CX01 exists in draft but not in the baseline publish");
+  assert.equal(summary.seats_removed, 1, "CX02 was published then deleted from the draft");
+  assert.equal(summary.assignments_changed, 1, "N01 moved from Alice to Erin");
+  assert.equal(summary.seats_moved, 1, "N04 moved past the 0.0005 epsilon");
+  assert.equal(summary.status_changes, 1, "N03 flipped available -> reserved with no employee change");
+  assert.equal(summary.employee_edits, 1, "Frank's position changed");
+});
+
 // ---------------------------------------------------------------------------
 // import_assignments_csv
 // ---------------------------------------------------------------------------

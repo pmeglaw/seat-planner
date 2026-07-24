@@ -152,3 +152,44 @@ test("formatPublishChangeSummary pluralizes two status changes", () => {
 test("formatPublishChangeSummary pluralizes four employee edits", () => {
   assert.equal(publishHistory.formatPublishChangeSummary({ employee_edits: 4 }), "4 employee edits");
 });
+
+test("formatPublishChangeSummary singularizes a single seat detail change", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary({ seat_detail_changes: 1 }), "1 seat detail change");
+});
+
+test("formatPublishChangeSummary pluralizes two seat detail changes", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary({ seat_detail_changes: 2 }), "2 seat detail changes");
+});
+
+test("formatPublishChangeSummary singularizes a single person added", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary({ employees_added: 1 }), "1 person added");
+});
+
+test("formatPublishChangeSummary pluralizes two people added", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary({ employees_added: 2 }), "2 people added");
+});
+
+test("formatPublishChangeSummary singularizes a single person removed", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary({ employees_removed: 1 }), "1 person removed");
+});
+
+test("formatPublishChangeSummary pluralizes two people removed", () => {
+  assert.equal(publishHistory.formatPublishChangeSummary({ employees_removed: 2 }), "2 people removed");
+});
+
+test("formatPublishChangeSummary orders all nine buckets, including the added/removed-people and seat-detail parity additions", () => {
+  assert.equal(
+    publishHistory.formatPublishChangeSummary({
+      employees_removed: 1,
+      employees_added: 1,
+      employee_edits: 1,
+      seat_detail_changes: 1,
+      status_changes: 1,
+      seats_moved: 1,
+      assignments_changed: 1,
+      seats_removed: 1,
+      seats_added: 1
+    }),
+    "1 seat added · 1 seat removed · 1 assignment changed · 1 seat moved · 1 status change · 1 seat detail change · 1 employee edit · 1 person added · 1 person removed"
+  );
+});

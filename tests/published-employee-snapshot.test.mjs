@@ -54,6 +54,7 @@ test("published_employees snapshot table is select-only for clients", () => {
 
 test("publish RPC replaces the employee snapshot atomically with the seat copy", () => {
   assert.match(publishSql, /security definer/);
+  assert.match(publishSql, /set search_path = public/);
   assert.match(publishSql, /if not app_private\.is_admin\(\) then/);
 
   const seatDelete = publishSql.indexOf("delete from public.seats where layer = 'published'");
@@ -69,6 +70,12 @@ test("publish RPC replaces the employee snapshot atomically with the seat copy",
   assert.ok(employeeDelete < employeeInsert, "snapshot delete precedes reinsert");
   assert.ok(employeeInsert < auditInsert, "snapshot happens inside the same transaction, before the audit event");
   assert.match(publishSql, /from public\.employees\s+where active/);
+
+  // Plan 005 parity: change_summary must count added/removed people and seat
+  // detail edits, not just edits to people/seats present on both sides.
+  assert.match(publishSql, /'employees_added'/);
+  assert.match(publishSql, /'employees_removed'/);
+  assert.match(publishSql, /'seat_detail_changes'/);
 });
 
 test("snapshot migration seeds the table so viewers are never blank pre-publish", () => {
