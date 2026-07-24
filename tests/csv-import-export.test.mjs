@@ -118,3 +118,47 @@ test("exportSeatsToAssignmentCsv round-trips cleanly back through the parser", (
   assert.equal(parsed.rows[0].employee_name, "Jane Doe");
   assert.equal(parsed.rows[0].zone, "North Pod");
 });
+
+test("exportSeatsToAssignmentCsv guards cells that start with a formula trigger", () => {
+  const csv = exportSeatsToAssignmentCsv([
+    {
+      label: "N02",
+      status: "assigned",
+      zone: "North Pod",
+      department: "Intake",
+      notes: "+cmd",
+      employee: { full_name: "=SUM(A1:A9)", position: "-x", department: "@ref" }
+    }
+  ]);
+  assert.match(csv, /'=SUM\(A1:A9\)/);
+  assert.match(csv, /'-x/);
+  assert.match(csv, /'@ref/);
+  assert.match(csv, /'\+cmd/);
+});
+
+test("a formula-guarded export round-trips losslessly back through the parser", () => {
+  const csv = exportSeatsToAssignmentCsv([
+    {
+      label: "N02",
+      status: "assigned",
+      zone: "North Pod",
+      department: "Intake",
+      notes: "+cmd",
+      employee: { full_name: "=SUM(A1:A9)", position: "-x", department: "@ref" }
+    }
+  ]);
+  const parsed = parseAssignmentCsv(csv);
+  assert.deepEqual(parsed.issues, []);
+  assert.equal(parsed.rows[0].employee_name, "=SUM(A1:A9)");
+  assert.equal(parsed.rows[0].position, "-x");
+  assert.equal(parsed.rows[0].department, "@ref");
+  assert.equal(parsed.rows[0].notes, "+cmd");
+});
+
+test("CSV parser preserves a leading apostrophe that isn't guarding a formula trigger", () => {
+  const result = parseAssignmentCsv(
+    `${HEADER_ROW}\nN03,'Tis Studios,,Lead,Ops,North Pod,assigned,\n`
+  );
+  assert.deepEqual(result.issues, []);
+  assert.equal(result.rows[0].employee_name, "'Tis Studios");
+});
