@@ -445,10 +445,13 @@ export function SeatInspector({
     : selectedSeat.is_custom
       ? "Custom draft"
       : "Original";
-  // Solid status tag (Seat section): shell status hue + AA text partner
-  // (#161616 on #24a148 ≈ 4.8:1, on #f1c21b ≈ 12:1; white on #da1e28 = 5.0:1).
+  // Solid status tag (Seat section): shell status hue + AA text partner,
+  // measured against the 2026-07-23 harmonized tokens: white on #1D6E41 ≈
+  // 6.2:1, #161616 on #f1c21b ≈ 10.6:1, white on #B3232C ≈ 6.5:1, #161616 on
+  // #8E8276 ≈ 4.9:1. Re-measure all four arms whenever these tokens move —
+  // the assigned arm shipped a 2.89:1 fail when the green darkened untested.
   const statusTagClass = effectiveStatus === "assigned"
-    ? "bg-[var(--admin-status-ok)] text-[var(--sp-color-text-primary)]"
+    ? "bg-[var(--admin-status-ok)] text-white"
     : effectiveStatus === "reserved"
       ? "bg-[var(--admin-status-warn)] text-[var(--sp-color-text-primary)]"
       : effectiveStatus === "unavailable"
