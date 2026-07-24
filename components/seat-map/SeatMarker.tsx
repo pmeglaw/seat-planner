@@ -5,6 +5,7 @@ import type { SeatWithEmployee } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { pointToStyle } from "@/lib/seatMath";
 import { formatDisplayName } from "@/lib/formatName";
+import { isInsideOfficeRoom } from "@/lib/officeRoomWash";
 
 type SeatMarkerProps = {
   seat: SeatWithEmployee;
@@ -100,15 +101,18 @@ function getPassiveEmployeeLabel(name: string) {
   return formatDisplayName(compactName);
 }
 
-// Private-office door-plate (owner pick 2026-07-24, specimen option 2): South
-// Offices seats render as a rectangular nameplate — always-visible short name
-// plus a title line — instead of the stadium pill; pods keep pills. Zone
-// string decides; the exact-"S" prefix fallback covers zone-less rows (SE is
-// its own prefix and stays a pill until the owner extends the scope).
-function isOfficePlateSeat(seat: Pick<SeatWithEmployee, "label" | "zone" | "department">) {
+// Private-office door-plate (owner pick 2026-07-24, specimen option 2):
+// office seats render as a rectangular nameplate — always-visible short name
+// plus a title line — instead of the stadium pill; pods keep pills. The gate
+// is ROOM GEOMETRY (the seat's VISUAL point inside a measured office rect in
+// lib/officeRoomWash): office seats can carry pod zones (N13 is zone "North
+// Pod" — zone inference has no room concept). The South zone / exact-"S"
+// prefix checks stay as a belt for those rows even if their rect ever moves.
+function isOfficePlateSeat(seat: Pick<SeatWithEmployee, "label" | "zone" | "department" | "x" | "y">) {
   const zone = (seat.zone ?? seat.department ?? "").trim().toLowerCase();
-  if (zone) return zone === "south offices";
-  return getSeatLabelPrefix(seat.label) === "S";
+  if (zone === "south offices") return true;
+  if (!zone && getSeatLabelPrefix(seat.label) === "S") return true;
+  return isInsideOfficeRoom({ x: seat.x, y: seat.y });
 }
 
 // Selected/prominent and names-on pills show "First L." — the full name lives

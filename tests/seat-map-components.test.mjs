@@ -22,8 +22,11 @@ function makeSeat(overrides = {}) {
     id: "s1",
     seat_key: "n01",
     label: "N01",
+    // y 0.32 sits in the pod aisle, clearly OUTSIDE every measured office
+    // room rect (N rooms end at y 0.248) — the plate gate is geometry-based,
+    // so pod fixtures must not graze a room edge.
     x: 0.3,
-    y: 0.2,
+    y: 0.32,
     status: "assigned",
     layer: "draft",
     employee_id: "emp-1",
@@ -154,6 +157,18 @@ test("pod seats keep the stadium pill — no title line, no plate copy", async (
   const text = document.body.textContent;
   assert.ok(!/Analyst/.test(text), "pods never show the title line");
   assert.ok(!/Open office/.test(text));
+});
+
+// 2026-07-24 extension: a seat placed INSIDE a measured office room renders
+// the plate regardless of zone — N13 carries the pod zone "North Pod" (zone
+// inference has no room concept), so the gate must be geometry-based.
+test("a pod-zoned seat inside an office room still renders the plate", async () => {
+  const n13 = makeSeat({ id: "s5", seat_key: "n13", label: "N13", zone: "North Pod", x: 0.1413, y: 0.181 });
+  await renderElement(React.createElement(SeatMarker, markerProps(n13, { showNames: false })));
+  const text = document.body.textContent;
+  assert.match(text, /N13/);
+  assert.match(text, /Alice S\./, "plate name renders from geometry gate alone");
+  assert.match(text, /Analyst/);
 });
 
 // --- MapZoomControl --------------------------------------------------------
