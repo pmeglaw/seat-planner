@@ -58,6 +58,7 @@ import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
+import { buildOfficeRoomWashes } from "@/lib/officeRoomWash";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { CloseIcon } from "@/components/ui/CloseIcon";
@@ -2468,6 +2469,17 @@ export function SeatMap({
     () => computeCodePillNudges(visualLocalSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet }),
     [nameLabelNudges, namedSeatIdSet, seatDensityClearance, visualLocalSeats]
   );
+  // Office room wash (PR B, 2026-07-24): a private office glows faintly green
+  // while an assigned seat sits in it. buildOfficeRoomWashes owns the
+  // composition rules — the wash yields to dim, search highlight, swap mode,
+  // and an in-flight drag — so this call site stays a straight data feed.
+  const officeRoomWashes = buildOfficeRoomWashes({
+    seats: visualLocalSeats.map(seat => ({ id: seat.id, x: seat.x, y: seat.y, status: seat.status })),
+    dimmedSeatIds: dimmedSeatIdSet,
+    searchActiveSeatIds: search.trim() ? new Set(localSeats.filter(matchesFilters).map(seat => seat.id)) : undefined,
+    swapMode: Boolean(swapSourceSeatId),
+    draggingSeatId: dragSeatId ?? null
+  });
   const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;
   const markerEdgeThreshold = mapViewMode === "detail"
@@ -3262,6 +3274,25 @@ export function SeatMap({
                   className="block h-auto w-full select-none"
                   draggable={false}
                 />
+
+                {/* Room washes render between the floor-plan image and the
+                    marker layer: purely decorative occupancy reinforcement
+                    (the plate carries the fact in text — WCAG 1.4.1 stays
+                    satisfied by redundancy, never by the wash alone). */}
+                {officeRoomWashes.map(wash => (
+                  <div
+                    key={wash.key}
+                    aria-hidden="true"
+                    data-office-wash={wash.key}
+                    className="pointer-events-none absolute rounded-lg bg-[#1D6E41]/[0.06] shadow-[inset_0_0_0_1.5px_rgba(29,110,65,0.22)]"
+                    style={{
+                      left: `${wash.rect.xMin * 100}%`,
+                      top: `${wash.rect.yMin * 100}%`,
+                      width: `${(wash.rect.xMax - wash.rect.xMin) * 100}%`,
+                      height: `${(wash.rect.yMax - wash.rect.yMin) * 100}%`
+                    }}
+                  />
+                ))}
 
                 <div
                   className={mapMarkerLayerClassName}

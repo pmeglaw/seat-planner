@@ -45,6 +45,22 @@ const n02 = seat({ id: "s2", seat_key: "n02", label: "N02", x: 0.5, y: 0.4 });
 // A legitimately deletable custom seat: S-zone label — NOT a protected-
 // original label, which the delete gate now also guards against.
 const custom = seat({ id: "s3", seat_key: "s01", label: "S01", x: 0.6, y: 0.5, is_custom: true });
+// South Offices seat whose SAVED coords transform into the left room's
+// measured VISUAL rect (0.1066, 0.902 → visual ≈ 0.170, 0.955, computed by
+// inverting the real calibration with the FULL seat as source — a bare
+// zone/label source resolves a different area) — drives the office room wash.
+const officeAssigned = seat({
+  id: "s4",
+  seat_key: "s02",
+  label: "S02",
+  x: 0.1066,
+  y: 0.902,
+  zone: "South Offices",
+  status: "assigned",
+  employee_id: "emp-1",
+  is_custom: true,
+  employee: alice
+});
 
 const marker = (page: Page, label: string) => page.locator(`button[aria-label^="${label}"]`).first();
 const clickMarker = (page: Page, label: string) => marker(page, label).dispatchEvent("click");
@@ -75,6 +91,19 @@ test("selecting another seat swaps the inspector content", async ({ page }) => {
   await expect(marker(page, "N02")).toHaveAttribute("aria-pressed", "true");
   await expect(marker(page, "N01")).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByText("Alice Smith")).toHaveCount(0);
+});
+
+test("an assigned office seat washes its room; an open one does not", async ({ page }) => {
+  await mountSeatMap(page, { seats: [officeAssigned, n02], employees: [alice], canEdit: false });
+  await expect(page.locator('[data-office-wash="south-office-1"]')).toBeAttached();
+  await expect(page.locator('[data-office-wash="south-office-2"]')).toHaveCount(0);
+});
+
+test("an open office seat leaves the room unwashed", async ({ page }) => {
+  const officeOpen = { ...officeAssigned, status: "available", employee_id: null, employee: null };
+  await mountSeatMap(page, { seats: [officeOpen], employees: [], canEdit: false });
+  await expect(marker(page, "S02")).toBeAttached();
+  await expect(page.locator("[data-office-wash]")).toHaveCount(0);
 });
 
 test("closing the inspector clears the selection", async ({ page }) => {
