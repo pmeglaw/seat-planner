@@ -100,6 +100,17 @@ function getPassiveEmployeeLabel(name: string) {
   return formatDisplayName(compactName);
 }
 
+// Private-office door-plate (owner pick 2026-07-24, specimen option 2): South
+// Offices seats render as a rectangular nameplate — always-visible short name
+// plus a title line — instead of the stadium pill; pods keep pills. Zone
+// string decides; the exact-"S" prefix fallback covers zone-less rows (SE is
+// its own prefix and stays a pill until the owner extends the scope).
+function isOfficePlateSeat(seat: Pick<SeatWithEmployee, "label" | "zone" | "department">) {
+  const zone = (seat.zone ?? seat.department ?? "").trim().toLowerCase();
+  if (zone) return zone === "south offices";
+  return getSeatLabelPrefix(seat.label) === "S";
+}
+
 // Selected/prominent and names-on pills show "First L." — the full name lives
 // in the inspector header and the aria-label (owner call 2026-07-24). Dense
 // passive pills keep getPassiveEmployeeLabel's tighter width cap above.
@@ -166,13 +177,21 @@ export function SeatMarker({
   const tokenMode: TokenMode = selected ? "selected" : prominentToken ? "prominent" : showInlineName ? "name" : "code";
   const hasHoverDisclosure = hasEmployee && !showInlineName;
   const expandedNameBadge = hasEmployee && (tokenMode === "selected" || tokenMode === "prominent");
-  const inlineNameLabel = expandedNameBadge || (namesVisible && tokenDensity === "standard" && !compactNameLabel) ? getShortEmployeeLabel(employeeName) : compactEmployeeName;
+  const officePlate = isOfficePlateSeat(seat);
+  const officeTitleLabel = officePlate && hasEmployee ? (seat.employee?.position ?? "").trim() : "";
+  const inlineNameLabel = officePlate
+    ? getShortEmployeeLabel(employeeName)
+    : expandedNameBadge || (namesVisible && tokenDensity === "standard" && !compactNameLabel) ? getShortEmployeeLabel(employeeName) : compactEmployeeName;
   // Accessible name must CONTAIN the pill's visible text verbatim (axe
   // label-content-name-mismatch): "W08: Patrick" failed because the colon
   // broke containment, and abbreviated visible names ("Alex S.") must appear
-  // before the full name they abbreviate.
-  const accessibleSeatName =
-    !hasEmployee || inlineNameLabel === displayName ? displayName : `${inlineNameLabel} ${displayName}`;
+  // before the full name they abbreviate. Office plates add their visible
+  // title line (and the "Open office" copy) under the same containment rule.
+  const accessibleSeatName = officePlate
+    ? !hasEmployee
+      ? "Open office"
+      : [inlineNameLabel, officeTitleLabel, inlineNameLabel === displayName ? "" : displayName].filter(Boolean).join(" ")
+    : !hasEmployee || inlineNameLabel === displayName ? displayName : `${inlineNameLabel} ${displayName}`;
   const markerIntent: MarkerIntent = swapSource
     ? "swap-source"
     : swapTarget
@@ -216,8 +235,11 @@ export function SeatMarker({
   // Capsule geometry (2026-07-23 owner reference hybrid): every token is a
   // full stadium (rounded-full on a fixed height), and with the left accent
   // bar gone the paddings are symmetric again.
-  const tokenSizeClass =
-    tokenMode === "selected"
+  const tokenSizeClass = officePlate
+    // One plate geometry for every mode — selection/search emphasis comes from
+    // the state classes (ring/surface), never a size jump inside the room.
+    ? "min-h-[46px] w-[152px] max-w-[152px] rounded-lg px-3.5 py-1.5 text-left"
+    : tokenMode === "selected"
       ? expandedNameBadge
         ? "min-h-[42px] w-[126px] max-w-[126px] rounded-full px-4 py-1.5 text-left"
         : "h-[32px] min-h-[32px] min-w-[48px] rounded-full px-3 text-center"
@@ -436,7 +458,28 @@ export function SeatMarker({
             D
           </span>
         )}
-        {tokenMode === "code" ? (
+        {officePlate ? (
+          <span className="relative z-10 flex w-full min-w-0 flex-col items-start gap-0.5 text-left">
+            <span translate="no" className="whitespace-nowrap text-[8.5px] font-extrabold tracking-[0.09em] opacity-70">{seat.label}</span>
+            {/* Literal space text nodes between the plate's lines — same axe
+                4.10 subtree-serialization contract as the pill branches. */}
+            {hasEmployee ? (
+              <>
+                {" "}
+                <span className="block w-full min-w-0 truncate text-[13px] font-bold leading-[1.15]">{inlineNameLabel}</span>
+                {officeTitleLabel && " "}
+                {officeTitleLabel && (
+                  <span className="block w-full min-w-0 truncate text-[9.5px] font-semibold leading-[1.2] opacity-75">{officeTitleLabel}</span>
+                )}
+              </>
+            ) : (
+              <>
+                {" "}
+                <span className="block text-[12px] font-semibold leading-[1.15] opacity-80">Open office</span>
+              </>
+            )}
+          </span>
+        ) : tokenMode === "code" ? (
           <span className="relative z-10 flex w-full min-w-0 items-center justify-center gap-1 group-hover:justify-start group-focus-visible:justify-start">
             {/* truncate (not plain nowrap): an over-long label must clip
                 inside the fixed pill rather than spill over neighbouring
