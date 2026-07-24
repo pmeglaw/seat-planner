@@ -133,12 +133,15 @@ test("zone rectangles are explicit normalized bounds", () => {
 });
 
 test("the bottom-band offices detect as South Offices (owner request 2026-07-23)", () => {
-  // Room centers measured on the floor plan and converted visual->saved via
-  // the calibration transform: left office and center office of the bottom
-  // band, where Add seat previously failed with "Could not detect a zone".
-  assert.equal(inferSeatZoneFromPoint({ x: 0.13, y: 0.908 }), "South Offices");
-  assert.equal(inferSeatZoneFromPoint({ x: 0.337, y: 0.898 }), "South Offices");
-  // The band must not bleed into its neighbours.
+  // Room centers in VISUAL space (frame corrected 2026-07-24): midpoints of the
+  // two south rooms in OFFICE_ROOM_VISUAL_RECTS.
+  assert.equal(inferSeatZoneFromPoint({ x: 0.17, y: 0.955 }), "South Offices");   // south-office-1
+  assert.equal(inferSeatZoneFromPoint({ x: 0.326, y: 0.955 }), "South Offices");  // south-office-2
+  // Bottom-wall clicks must still resolve (the old rect stopped at 0.97).
+  assert.equal(inferSeatZoneFromPoint({ x: 0.17, y: 0.985 }), "South Offices");
+  // Must not bleed into neighbours.
   assert.equal(inferSeatZoneFromPoint({ x: 0.2, y: 0.8 }), "West Pod");
   assert.equal(inferSeatZoneFromPoint({ x: 0.7, y: 0.88 }), "Southeast Office");
+  // The corridor ABOVE the rooms must NOT be zoned (regression: old rect started at 0.845).
+  assert.equal(inferSeatZoneFromPoint({ x: 0.25, y: 0.88 }), null);
 });
