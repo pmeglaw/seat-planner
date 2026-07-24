@@ -8,9 +8,9 @@ This audit was a **re-audit** — the prior pass (`docs/RISKS.md`, 2026-07-08, ~
 
 | Plan | Title | Priority | Effort | Risk | Depends on | Category | Status |
 |------|-------|----------|--------|------|------------|----------|--------|
-| 001 | Reset RPC stages employee/label writes (survives permuted drafts) | P1 | S | LOW | — | bug | DONE — branch `advisor/001-reset-rpc-staged-writes` @9b902fe, reviewer-verified, awaiting merge |
-| 002 | Discard-draft dialog surfaces reset errors + joins Escape ladder | P1 | S | LOW | — (pairs with 001) | bug | DONE — branch `advisor/002-discard-dialog-error-surfacing` @98d419f, reviewer-verified, awaiting merge |
-| 003 | Close control-character open redirect in `safeNextPath` | P1 | S | LOW | — | security | DONE — branch `advisor/003-harden-safe-next-path` @432c75c, reviewer-verified, awaiting merge |
+| 001 | Reset RPC stages employee/label writes (survives permuted drafts) | P1 | S | LOW | — | bug | DONE — merged to main (cd31605) |
+| 002 | Discard-draft dialog surfaces reset errors + joins Escape ladder | P1 | S | LOW | — (pairs with 001) | bug | DONE — merged to main (1415ffe) |
+| 003 | Close control-character open redirect in `safeNextPath` | P1 | S | LOW | — | security | DONE — merged to main (e9ee393) |
 | 004 | Fix South Offices zone rect (visual frame + wall coverage) | P2 | S | LOW-MED | — | bug | TODO |
 | 005 | Publish `change_summary` parity with the review dialog | P2 | S-M | LOW | — | bug | TODO |
 | 006 | Neutralize CSV formula injection on export | P2 | S | LOW | — | security | TODO |
