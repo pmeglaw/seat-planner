@@ -735,6 +735,11 @@ export function SeatMap({
     function handleEscape(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
 
+      if (discardDraftConfirmOpen) {
+        setDiscardDraftConfirmOpen(false);
+        return;
+      }
+
       if (inspectorGuardAction) {
         keepEditingInspector();
         return;
@@ -834,7 +839,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, position, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, position, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, zone]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
@@ -3677,6 +3682,11 @@ export function SeatMap({
               erased and the draft goes back to exactly what viewers see today. People edits in Management are kept.
               This cannot be undone — Undo/Redo history is cleared.
             </p>
+            {actionError && (
+              <p role="alert" className="mt-3 rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-error-text)]">
+                {actionError}
+              </p>
+            )}
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button type="button" onClick={() => setDiscardDraftConfirmOpen(false)} disabled={pending} className={["w-full", focusRingClass].join(" ")}>
                 Keep draft changes
@@ -3688,7 +3698,7 @@ export function SeatMap({
                 disabled={pending}
                 className={["w-full", adminDangerButtonClassName, focusRingClass].join(" ")}
               >
-                {pending ? "Discarding…" : "Discard everything"}
+                {pending ? "Discarding…" : actionError ? "Retry discard" : "Discard everything"}
               </Button>
             </div>
           </section>
