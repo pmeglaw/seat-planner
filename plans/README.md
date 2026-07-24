@@ -14,7 +14,7 @@ This audit was a **re-audit** — the prior pass (`docs/RISKS.md`, 2026-07-08, ~
 | 004 | Fix South Offices zone rect (visual frame + wall coverage) | P2 | S | LOW-MED | — | bug | DONE — merged to main (40515a2) |
 | 005 | Publish `change_summary` parity with the review dialog | P2 | S-M | LOW | — | bug | DONE — merged to main (921a328) |
 | 006 | Neutralize CSV formula injection on export | P2 | S | LOW | — | security | DONE — merged to main (a757062) |
-| 007 | Execute RLS + seat-protection trigger in the PGlite tier | P2 | M | LOW | — | tests | TODO |
+| 007 | Execute RLS + seat-protection trigger in the PGlite tier | P2 | M | LOW | — | tests | DONE — branch `advisor/007-rls-execution-harness` @56a647a, reviewer-verified, awaiting merge |
 | 008 | Narrow `employees` select policy to admins (RLS gap) | P2 | S | MED | 007 | security | TODO |
 
 **Plans 001–006 are shipped to main and deployed.** 007–008 are the follow-on security cycle (planned at `7b447ed`, 2026-07-24): 007 makes RLS a tested boundary (the harness runs as the owner today and never exercises it), 008 uses that harness to close the one real RLS gap — an authenticated viewer can read the draft-side `employees` table directly. **008 depends on 007** (007's `asRole` harness is how 008's fix is verified). Recommended order: 007 then 008.
