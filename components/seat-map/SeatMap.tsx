@@ -58,7 +58,7 @@ import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
-import { buildOfficeRoomWashes, findOfficeRoom } from "@/lib/officeRoomWash";
+import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { CloseIcon } from "@/components/ui/CloseIcon";
@@ -3312,17 +3312,8 @@ export function SeatMap({
                     // click point is wherever the admin happened to add the
                     // seat; the room is the identity). Display-only offset —
                     // the marker snaps back to the anchor in move/add/swap.
-                    const officeRoom = findOfficeRoom(visualSeat);
-                    const officeVerticalScale = mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH);
-                    const officePlateOffsetXPx = officeRoom && mapPixelsPerNormalizedUnit > 0
-                      ? Math.round(((officeRoom.xMin + officeRoom.xMax) / 2 - visualSeat.x) * mapPixelsPerNormalizedUnit)
-                      : 0;
-                    const officePlateOffsetYPx = officeRoom && officeVerticalScale > 0
-                      ? Math.round(((officeRoom.yMin + officeRoom.yMax) / 2 - visualSeat.y) * officeVerticalScale)
-                      : 0;
-                    const officePlateWidthPx = officeRoom && mapPixelsPerNormalizedUnit > 0
-                      ? Math.max(96, Math.min(152, Math.round((officeRoom.xMax - officeRoom.xMin) * mapPixelsPerNormalizedUnit) - 12))
-                      : undefined;
+                    // One shared implementation with the viewer surface.
+                    const officePlateLayout = getOfficePlateLayout(visualSeat, mapPixelsPerNormalizedUnit);
 
                     return (
                       <SeatMarker
@@ -3339,9 +3330,9 @@ export function SeatMap({
                         nameNudge={nameLabelNudges.get(seat.id) ?? 0}
                         moveSeatMode={moveSeatMode}
                         swapMode={Boolean(swapSourceSeatId)}
-                        officePlateOffsetXPx={officePlateOffsetXPx}
-                        officePlateOffsetYPx={officePlateOffsetYPx}
-                        officePlateWidthPx={officePlateWidthPx}
+                        officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}
+                        officePlateOffsetYPx={officePlateLayout?.offsetYPx ?? 0}
+                        officePlateWidthPx={officePlateLayout?.widthPx}
                         swapSource={seat.id === swapSourceSeatId}
                         swapTarget={seat.id === swapConfirm?.targetSeatId}
                         highlighted={plannerHighlightedSeatIdSet.has(seat.id)}

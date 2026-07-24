@@ -1,4 +1,5 @@
 import type { SeatStatus } from "@/lib/types";
+import { MAP_IMAGE_HEIGHT, MAP_IMAGE_WIDTH } from "@/lib/mapLayoutTransform";
 
 /**
  * Room-wash geometry + composition rules for the private offices (PR B of the
@@ -44,6 +45,32 @@ export function findOfficeRoom(point: { x: number; y: number }): OfficeRoomRect 
 
 export function isInsideOfficeRoom(point: { x: number; y: number }): boolean {
   return findOfficeRoom(point) !== null;
+}
+
+export type OfficePlateLayout = { offsetXPx: number; offsetYPx: number; widthPx: number };
+
+/**
+ * Room-centered plate layout for an office seat: token offset (px) from the
+ * seat anchor to its room's center, plus a room-fitted width (96px legibility
+ * floor, 152px cap, 12px wall margin). ONE implementation for BOTH map
+ * surfaces — SeatMap (admin) and ViewerSeatFinder (viewer) each feed their
+ * own pixels-per-normalized-x scale; vertical scale derives from the map
+ * aspect. Null when the point is outside every room or the map is unmeasured
+ * (first paint), which renders the plate at its default anchor/size.
+ */
+export function getOfficePlateLayout(
+  point: { x: number; y: number },
+  pixelsPerNormalizedX: number
+): OfficePlateLayout | null {
+  const room = findOfficeRoom(point);
+  if (!room || pixelsPerNormalizedX <= 0) return null;
+
+  const pixelsPerNormalizedY = pixelsPerNormalizedX * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH);
+  return {
+    offsetXPx: Math.round(((room.xMin + room.xMax) / 2 - point.x) * pixelsPerNormalizedX),
+    offsetYPx: Math.round(((room.yMin + room.yMax) / 2 - point.y) * pixelsPerNormalizedY),
+    widthPx: Math.max(96, Math.min(152, Math.round((room.xMax - room.xMin) * pixelsPerNormalizedX) - 12))
+  };
 }
 
 export type OfficeWashSeat = { id: string; x: number; y: number; status: SeatStatus };
