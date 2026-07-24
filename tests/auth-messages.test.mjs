@@ -56,4 +56,15 @@ test("safeNextPath accepts local paths only", () => {
   assert.equal(safeNextPath("//evil.example"), "/");
   assert.equal(safeNextPath("relative/path"), "/");
   assert.equal(safeNextPath(null), "/");
+  // Positive: querystrings and hashes on local paths keep working unchanged.
+  assert.equal(safeNextPath("/admin?tab=people#top"), "/admin?tab=people#top");
+  // WHATWG-strip bypasses: a control character anywhere must reject.
+  assert.equal(safeNextPath("/\t//evil.example"), "/");
+  assert.equal(safeNextPath("/\n//evil.example"), "/");
+  assert.equal(safeNextPath("/\r//evil.example"), "/");
+  // Backslash is "/" to the URL parser in special schemes.
+  assert.equal(safeNextPath("/\\evil.example"), "/");
+  assert.equal(safeNextPath("/\\\\evil.example"), "/");
+  // A literal percent-encoded sequence is data, not structure — still a safe local path.
+  assert.equal(safeNextPath("/%09/notes"), "/%09/notes");
 });
