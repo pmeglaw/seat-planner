@@ -28,6 +28,7 @@ import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
+import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 
 type ViewerSeatFinderProps = {
   seats: SeatWithEmployee[];
@@ -306,6 +307,20 @@ export function ViewerSeatFinder({
     if (selectedSeatId) set.delete(selectedSeatId);
     return set;
   }, [filtersActive, highlightedSeatIdSet, selectedSeatId]);
+  // Office room wash, published layer (parity with the admin map — the
+  // 2026-07-24 publish check caught the viewer missing it entirely). Dim and
+  // search-highlight sets mirror the marker loop's own predicates below; the
+  // viewer has no swap/drag modes, so those wash rules never engage here.
+  const officeRoomWashes = useMemo(() => {
+    const dimmedSeatIds = filtersActive
+      ? new Set(visualSeats.filter(seat => !highlightedSeatIdSet.has(seat.id) && seat.id !== selectedSeatId).map(seat => seat.id))
+      : undefined;
+    return buildOfficeRoomWashes({
+      seats: visualSeats.map(seat => ({ id: seat.id, x: seat.x, y: seat.y, status: seat.status })),
+      dimmedSeatIds,
+      searchActiveSeatIds: filtersActive ? highlightedSeatIdSet : undefined
+    });
+  }, [filtersActive, highlightedSeatIdSet, selectedSeatId, visualSeats]);
   // Name-label collision nudges (render-layer only): viewers have no
   // Show-names toggle, so the only tokens that leave the anchor row are the
   // prominent ones — nudged at the same live zoom-aware clearance as the
@@ -1023,6 +1038,24 @@ export function ViewerSeatFinder({
                     draggable={false}
                   />
 
+                  {/* Room washes between the floor-plan image and the marker
+                      layer — decorative occupancy reinforcement; the plate
+                      carries the fact in text (WCAG 1.4.1 via redundancy). */}
+                  {officeRoomWashes.map(wash => (
+                    <div
+                      key={wash.key}
+                      aria-hidden="true"
+                      data-office-wash={wash.key}
+                      className="pointer-events-none absolute rounded-lg bg-[#1D6E41]/[0.10] shadow-[inset_0_0_0_1.5px_rgba(29,110,65,0.22)]"
+                      style={{
+                        left: `${wash.rect.xMin * 100}%`,
+                        top: `${wash.rect.yMin * 100}%`,
+                        width: `${(wash.rect.xMax - wash.rect.xMin) * 100}%`,
+                        height: `${(wash.rect.yMax - wash.rect.yMin) * 100}%`
+                      }}
+                    />
+                  ))}
+
                   <div
                     className="absolute inset-0"
                     onKeyDown={handleMarkerLayerKeyDown}
@@ -1034,6 +1067,7 @@ export function ViewerSeatFinder({
                     {visualSeats.map(seat => {
                       const inMatches = highlightedSeatIdSet.has(seat.id);
                       const dimmed = filtersActive && !inMatches && selectedSeatId !== seat.id;
+                      const officePlateLayout = getOfficePlateLayout(seat, mapRenderedWidth ?? 0);
 
                       return (
                         <SeatMarker
@@ -1049,6 +1083,9 @@ export function ViewerSeatFinder({
                           nameNudge={nameLabelNudges.get(seat.id) ?? 0}
                           moveSeatMode={false}
                           swapMode={false}
+                          officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}
+                          officePlateOffsetYPx={officePlateLayout?.offsetYPx ?? 0}
+                          officePlateWidthPx={officePlateLayout?.widthPx}
                           swapSource={false}
                           swapTarget={false}
                           highlighted={activeResultSeatIdSet.has(seat.id) || (directoryOpen && seat.id === directoryHoverSeatId)}

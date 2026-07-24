@@ -5,7 +5,7 @@ import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 // PR B of the office two-step: a room washes green only while an assigned
 // seat sits inside it, and the wash yields to every stronger map treatment.
 // Extended 2026-07-24 to all eight private offices (N/NE/SE/S).
-const { buildOfficeRoomWashes, findOfficeRoom, isInsideOfficeRoom, OFFICE_ROOM_VISUAL_RECTS } = await importTsModule("lib/officeRoomWash.ts");
+const { buildOfficeRoomWashes, findOfficeRoom, getOfficePlateLayout, isInsideOfficeRoom, OFFICE_ROOM_VISUAL_RECTS } = await importTsModule("lib/officeRoomWash.ts");
 
 // Visual-space points inside each measured room.
 const LEFT = { x: 0.17, y: 0.955 };
@@ -94,6 +94,37 @@ test("findOfficeRoom returns the containing room, null elsewhere", () => {
   assert.equal(findOfficeRoom({ x: 0.17, y: 0.955 })?.key, "south-office-1");
   assert.equal(findOfficeRoom({ x: 0.6593, y: 0.168 })?.key, "northeast-office-2");
   assert.equal(findOfficeRoom({ x: 0.3, y: 0.32 }), null);
+});
+
+test("getOfficePlateLayout centers in the room and fits the width", () => {
+  // NE10's live point at a 1000px-wide map: room northeast-office-2 spans
+  // 0.623–0.704 (81px) — width floors at 96; offsets aim at the room center.
+  const layout = getOfficePlateLayout({ x: 0.6593, y: 0.168 }, 1000);
+  assert.equal(layout.widthPx, 96, "narrow room floors at 96px");
+  assert.equal(layout.offsetXPx, Math.round(((0.623 + 0.704) / 2 - 0.6593) * 1000));
+  assert.equal(layout.offsetYPx, Math.round(((0.11 + 0.248) / 2 - 0.168) * 1000 * (1734 / 3822)));
+  // Wide south room at the same scale caps at 152.
+  const wide = getOfficePlateLayout({ x: 0.3, y: 0.955 }, 1000);
+  assert.equal(wide.widthPx, 152);
+});
+
+test("getOfficePlateLayout is null outside rooms and before first measure", () => {
+  assert.equal(getOfficePlateLayout({ x: 0.3, y: 0.32 }, 1000), null);
+  assert.equal(getOfficePlateLayout({ x: 0.6593, y: 0.168 }, 0), null);
+});
+
+// The wash + plate layout must exist on BOTH map surfaces — the viewer is
+// ViewerSeatFinder, not SeatMap, and the 2026-07-24 publish check caught the
+// viewer shipping plates with no wash and no room fit. Source-level parity pin.
+test("both map surfaces render washes and feed the plate layout", async () => {
+  const { readFile } = await import("node:fs/promises");
+  for (const file of ["components/seat-map/SeatMap.tsx", "components/seat-map/ViewerSeatFinder.tsx"]) {
+    const source = await readFile(new URL(`../${file}`, import.meta.url), "utf8");
+    assert.match(source, /data-office-wash/, `${file} renders the wash layer`);
+    assert.match(source, /buildOfficeRoomWashes\(/, `${file} computes washes`);
+    assert.match(source, /getOfficePlateLayout\(/, `${file} feeds the plate layout`);
+    assert.match(source, /officePlateOffsetXPx=/, `${file} passes the plate offset`);
+  }
 });
 
 test("isInsideOfficeRoom accepts office points and rejects pod points", () => {
