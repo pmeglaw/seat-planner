@@ -100,6 +100,16 @@ function getPassiveEmployeeLabel(name: string) {
   return formatDisplayName(compactName);
 }
 
+// Selected/prominent and names-on pills show "First L." — the full name lives
+// in the inspector header and the aria-label (owner call 2026-07-24). Dense
+// passive pills keep getPassiveEmployeeLabel's tighter width cap above.
+function getShortEmployeeLabel(name: string) {
+  const { firstName, lastInitial } = getEmployeeNameParts(name);
+  if (!firstName) return formatDisplayName(name);
+
+  return formatDisplayName(lastInitial ? `${firstName} ${lastInitial}.` : firstName);
+}
+
 export function SeatMarker({
   seat,
   selected,
@@ -156,7 +166,7 @@ export function SeatMarker({
   const tokenMode: TokenMode = selected ? "selected" : prominentToken ? "prominent" : showInlineName ? "name" : "code";
   const hasHoverDisclosure = hasEmployee && !showInlineName;
   const expandedNameBadge = hasEmployee && (tokenMode === "selected" || tokenMode === "prominent");
-  const inlineNameLabel = expandedNameBadge || (namesVisible && tokenDensity === "standard" && !compactNameLabel) ? formatDisplayName(employeeName) : compactEmployeeName;
+  const inlineNameLabel = expandedNameBadge || (namesVisible && tokenDensity === "standard" && !compactNameLabel) ? getShortEmployeeLabel(employeeName) : compactEmployeeName;
   // Accessible name must CONTAIN the pill's visible text verbatim (axe
   // label-content-name-mismatch): "W08: Patrick" failed because the colon
   // broke containment, and abbreviated visible names ("Alex S.") must appear

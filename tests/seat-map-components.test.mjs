@@ -113,6 +113,27 @@ test("SeatMarker reflects selection through aria-pressed", async () => {
   assert.equal(document.querySelector("button").getAttribute("aria-pressed"), "true");
 });
 
+// Owner call 2026-07-24: pill inline names are first name + last initial —
+// the inspector header carries the full name. The aria-label must still
+// contain BOTH (axe label-content-name-mismatch: visible text verbatim,
+// then the full name it abbreviates).
+test("a selected pill shows the short name; the accessible label keeps the full name", async () => {
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { selected: true })));
+  const text = document.body.textContent;
+  assert.match(text, /Alice S\./, "visible pill name is First L.");
+  assert.ok(!/Alice Smith/.test(text), "full name never renders on the pill");
+  const label = document.querySelector("button").getAttribute("aria-label");
+  assert.match(label, /Alice S\. Alice Smith/, "aria contains short form then full name");
+});
+
+test("a names-on pill in a standard zone shows the short name too", async () => {
+  const southSeat = makeSeat({ id: "s3", seat_key: "s01", label: "S01", zone: "South Offices" });
+  await renderElement(React.createElement(SeatMarker, markerProps(southSeat)));
+  const text = document.body.textContent;
+  assert.match(text, /Alice S\./);
+  assert.ok(!/Alice Smith/.test(text));
+});
+
 // --- MapZoomControl --------------------------------------------------------
 
 test("MapZoomControl wires zoom in / out / fit to their callbacks", async () => {
