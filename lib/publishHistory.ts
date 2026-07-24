@@ -45,7 +45,10 @@ const CHANGE_SUMMARY_BUCKETS: Array<{ key: string; singular: string; plural: str
   { key: "assignments_changed", singular: "assignment changed", plural: "assignments changed" },
   { key: "seats_moved", singular: "seat moved", plural: "seats moved" },
   { key: "status_changes", singular: "status change", plural: "status changes" },
-  { key: "employee_edits", singular: "employee edit", plural: "employee edits" }
+  { key: "seat_detail_changes", singular: "seat detail change", plural: "seat detail changes" },
+  { key: "employee_edits", singular: "employee edit", plural: "employee edits" },
+  { key: "employees_added", singular: "person added", plural: "people added" },
+  { key: "employees_removed", singular: "person removed", plural: "people removed" }
 ];
 
 /**
