@@ -126,12 +126,34 @@ test("a selected pill shows the short name; the accessible label keeps the full 
   assert.match(label, /Alice S\. Alice Smith/, "aria contains short form then full name");
 });
 
-test("a names-on pill in a standard zone shows the short name too", async () => {
-  const southSeat = makeSeat({ id: "s3", seat_key: "s01", label: "S01", zone: "South Offices" });
-  await renderElement(React.createElement(SeatMarker, markerProps(southSeat)));
+// Office nameplate (owner pick 2026-07-24, specimen option 2): South Offices
+// seats render a door-plate card — code eyebrow, always-visible short name,
+// title line — instead of the stadium pill. Pods keep pills.
+test("a South Offices seat renders a door-plate: code, short name, title — names toggle irrelevant", async () => {
+  const officeSeat = makeSeat({ id: "s3", seat_key: "s01", label: "S01", zone: "South Offices" });
+  await renderElement(React.createElement(SeatMarker, markerProps(officeSeat, { showNames: false })));
   const text = document.body.textContent;
-  assert.match(text, /Alice S\./);
-  assert.ok(!/Alice Smith/.test(text));
+  assert.match(text, /S01/);
+  assert.match(text, /Alice S\./, "plate shows the short name even with Show names off");
+  assert.match(text, /Analyst/, "plate shows the title line");
+  assert.ok(!/Alice Smith/.test(text), "full name never renders on the plate");
+  const label = document.querySelector("button").getAttribute("aria-label");
+  assert.match(label, /Alice S\. Analyst Alice Smith/, "aria contains visible text then the full name");
+});
+
+test("an open South Offices seat plate reads Open office", async () => {
+  const openOffice = makeSeat({ id: "s4", seat_key: "s02", label: "S02", zone: "South Offices", status: "available", employee_id: null, employee: null });
+  await renderElement(React.createElement(SeatMarker, markerProps(openOffice)));
+  assert.match(document.body.textContent, /Open office/);
+  const label = document.querySelector("button").getAttribute("aria-label");
+  assert.match(label, /S02 Open office/, "aria contains the visible plate text");
+});
+
+test("pod seats keep the stadium pill — no title line, no plate copy", async () => {
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat())));
+  const text = document.body.textContent;
+  assert.ok(!/Analyst/.test(text), "pods never show the title line");
+  assert.ok(!/Open office/.test(text));
 });
 
 // --- MapZoomControl --------------------------------------------------------
