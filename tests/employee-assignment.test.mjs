@@ -59,30 +59,31 @@ test("null position and extension become empty strings, not carried-over values"
   assert.equal(next.department, "");
 });
 
-// 2026-07-16 critique carryover fix: the inspector's Occupant section hides
+// 2026-07-16 critique carryover fix: the inspector's Contact section hides
 // fields with nothing on file instead of rendering "—" dash rows (which made
 // the directory read as broken when 6/8 employees lack contact details).
-const { buildOccupantRows } = await importTsModule("lib/employeeAssignment.ts");
+// Department is NOT a contact row: the header role line already names it, and
+// the duplicate row was the inspector's last reading-order defect (2026-07-23).
+const { buildContactRows } = await importTsModule("lib/employeeAssignment.ts");
 
-test("buildOccupantRows keeps only fields that have values, in Department/Email/Extension order", () => {
-  const rows = buildOccupantRows({ department: "Intake", email: "pam@firm.com", extension: "202" });
+test("buildContactRows keeps only fields that have values, in Email/Extension order", () => {
+  const rows = buildContactRows({ email: "pam@firm.com", extension: "202" });
   assert.deepEqual(rows, [
-    { label: "Department", value: "Intake" },
     { label: "Email", value: "pam@firm.com" },
     { label: "Extension", value: "202" }
   ]);
 });
 
-test("buildOccupantRows drops empty, null, and whitespace-only fields", () => {
-  const rows = buildOccupantRows({ department: "Intake", email: null, extension: "   " });
-  assert.deepEqual(rows, [{ label: "Department", value: "Intake" }]);
+test("buildContactRows drops empty, null, and whitespace-only fields", () => {
+  const rows = buildContactRows({ email: "pam@firm.com", extension: "   " });
+  assert.deepEqual(rows, [{ label: "Email", value: "pam@firm.com" }]);
 });
 
-test("buildOccupantRows returns an empty list when nothing is on file", () => {
-  assert.deepEqual(buildOccupantRows({ department: undefined, email: "", extension: null }), []);
+test("buildContactRows returns an empty list when nothing is on file", () => {
+  assert.deepEqual(buildContactRows({ email: "", extension: null }), []);
 });
 
-test("buildOccupantRows trims surrounding whitespace from kept values", () => {
-  const rows = buildOccupantRows({ department: " Intake ", email: null, extension: null });
-  assert.deepEqual(rows, [{ label: "Department", value: "Intake" }]);
+test("buildContactRows trims surrounding whitespace from kept values", () => {
+  const rows = buildContactRows({ email: null, extension: " 202 " });
+  assert.deepEqual(rows, [{ label: "Extension", value: "202" }]);
 });

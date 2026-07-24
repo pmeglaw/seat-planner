@@ -290,9 +290,15 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // Drift-proof delete gate: custom AND not a protected-original label, so
   // is_custom data drift on original seats can't resurrect a dead button.
   assert.match(inspectorSource, /\{selectedSeat\.is_custom && !isProtectedOriginalSeatLabel\(selectedSeat\.label\) && \(/);
-  // An open seat has no occupant — the Occupant section exists only when
-  // someone is assigned (admin and viewer variants alike).
-  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,200}title="Occupant"/);
+  // An open seat has no occupant — the Contact section exists only when
+  // someone is assigned (admin and viewer variants alike). Department stays
+  // out of it: the header role line already carries it (dedup 2026-07-23).
+  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,200}title="Contact"/);
+  assert.doesNotMatch(inspectorSource, /FactRow label="Department"/);
+  // The occupied-seat CTA reads as an edit verb — it opens a form, it does
+  // not act; "Change assignment" collided with Move/Swap/Vacate (2026-07-23).
+  assert.match(inspectorSource, /Edit assignment for \$\{selectedSeat\.label\}/);
+  assert.doesNotMatch(inspectorSource, /Change assignment/);
   assert.match(inspectorSource, /title="Notes" headingId="seat-notes-heading"/);
   assert.doesNotMatch(inspectorSource, /sticky bottom-0/);
   assert.match(inspectorSource, /No unsaved changes\./);
