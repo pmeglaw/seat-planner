@@ -1322,7 +1322,7 @@ export function SeatMap({
     if (!previous) return `Update ${updated.label}`;
     if (previous.employee_id && !updated.employee_id) return `Vacate ${updated.label}`;
     if (!previous.employee_id && updated.employee_id) return `Assign ${updated.label}`;
-    if (previous.employee_id !== updated.employee_id) return `Change assignment ${updated.label}`;
+    if (previous.employee_id !== updated.employee_id) return `Reassign ${updated.label}`;
     if (previous.status !== updated.status) return `Change status ${updated.label}`;
     return `Update ${updated.label}`;
   }

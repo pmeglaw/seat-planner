@@ -106,7 +106,7 @@ The seat pills (the rounded plate with the status bar + code/name, and the selec
 * **Opens when a seat is selected (click), and stays open** until dismissed. Clicking another seat switches its contents in place. A **✕** in the panel header closes it. (Not hover-triggered.)
 * **Header:** avatar + name + role, and the close ✕.
 * **Sections** (collapsible), in this order:
-  1. **Occupant** — *open by default.* Department, Email, Extension. (Name + role live in the header.)
+  1. **Contact** — *open by default.* Email, Extension. (Name + role + department live in the header; the section was renamed from "Occupant" and Department deduped out on 2026-07-23.)
   2. **Seat** — Code, Zone, Status (colored tag).
   3. **Actions** — *open by default; admin-only.* Occupied seat → Move / Swap / Vacate. Open seat → Assign occupant.
   4. **Notes** — *admin-only.* Free-text note. (Placed directly under Actions.)
@@ -126,8 +126,8 @@ The seat pills (the rounded plate with the status bar + code/name, and the selec
 
 Same shell and same inspector for both; the **viewer is read-only**:
 
-* **Admin** sees everything: all tools, Publish, and the full inspector (Occupant, Seat, Actions, Notes, Activity).
-* **Viewer** sees only **Occupant + Seat** in the inspector — **no Actions, Notes, or Activity** — and the edit-only chrome is hidden (**no Publish, Undo, Redo, or Management**). Search, Filter, floor selector, pan/zoom, and seat selection remain.
+* **Admin** sees everything: all tools, Publish, and the full inspector (Contact, Seat, Actions, Notes, Activity).
+* **Viewer** sees only **Contact + Seat** in the inspector — **no Actions, Notes, or Activity** — and the edit-only chrome is hidden (**no Publish, Undo, Redo, or Management**). Search, Filter, floor selector, pan/zoom, and seat selection remain.
 
 > **CORRECTION 2026-07-22 — Ask Planner is admin-only.** This section and §3
 > originally listed Ask Planner as staying for viewers. That is wrong and was
@@ -156,7 +156,7 @@ Implement viewer/admin as one component set with the admin-only pieces condition
 **Unchanged (do not touch):** the draft → published two-layer model and publish semantics; the three-layer admin security boundary; normalized seat coordinates and the calibration transform; Ask Planner staying read-only; migrations applied only by merge to `main`.
 
 **Flagged items that touch data/behavior — confirm before building each:**
-1. **`employees.email`** — the Occupant section shows Email; confirm the column exists (it was previously flagged as a gap). If absent, add nullable `employees.email` + `published_employees.email` via a migration and surface it; until then render "—".
+1. **`employees.email`** — the Contact section shows Email; confirm the column exists (it was previously flagged as a gap). If absent, add nullable `employees.email` + `published_employees.email` via a migration and surface it; until then render "—".
 2. **Notes field** — the Notes section needs a stored note. Confirm whether a notes column exists; if not, this is a new nullable column (admin-editable) via migration. Flag as a behavior/data addition.
 3. **Multi-floor is future scope.** The floor selector is **UI only** now. Real Floor 2 support (seats on a second floor, a second floor-plan image, and its own calibration) is a **separate future project** — do not build it here.
 4. **Pan/zoom is view-only** — presentation transform on the map container; must not persist to or recompute seat coordinates.

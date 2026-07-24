@@ -8,7 +8,7 @@ import { STATUS_LABELS } from "@/lib/types";
 import { updateSeatAction } from "@/app/actions";
 import { canDeleteSeat, getSeatDeleteBlockReason, isProtectedOriginalSeatLabel } from "@/lib/seatProtection";
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
-import { buildOccupantRows, employeeAssignmentFields, type OccupantFactRow } from "@/lib/employeeAssignment";
+import { buildContactRows, employeeAssignmentFields, type ContactFactRow } from "@/lib/employeeAssignment";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
@@ -163,12 +163,12 @@ function FactRow({ label, value, mono = true }: { label: string; value: string; 
   );
 }
 
-// Occupant facts hide fields with nothing on file instead of rendering "—"
+// Contact facts hide fields with nothing on file instead of rendering "—"
 // dash rows (2026-07-16 critique carryover) — an absent row reads as "nothing
 // recorded"; a column of dashes reads as broken. When NOTHING is on file, one
 // quiet line says so, and admins get pointed at Management (where profiles
 // are completed).
-function OccupantFacts({ rows, canEdit }: { rows: OccupantFactRow[]; canEdit: boolean }) {
+function ContactFacts({ rows, canEdit }: { rows: ContactFactRow[]; canEdit: boolean }) {
   if (rows.length === 0) {
     return (
       <p className="py-1.5 text-[12.5px] leading-4 text-[var(--admin-chrome-muted)]">
@@ -178,11 +178,9 @@ function OccupantFacts({ rows, canEdit }: { rows: OccupantFactRow[]; canEdit: bo
   }
   return (
     <dl>
-      {rows.map(row =>
-        row.label === "Department"
-          ? <FactRow key={row.label} label={row.label} value={row.value} mono={false} />
-          : <FactRow key={row.label} label={row.label} value={row.value} />
-      )}
+      {rows.map(row => (
+        <FactRow key={row.label} label={row.label} value={row.value} />
+      ))}
     </dl>
   );
 }
@@ -254,7 +252,7 @@ export function SeatInspector({
   const [form, setForm] = useState<SeatInspectorForm>(emptyForm);
   const [initialForm, setInitialForm] = useState<SeatInspectorForm>(emptyForm);
   // Figma resting inspector is compact facts + notes + actions; the full
-  // assignment editor reveals progressively behind Assign/Change assignment.
+  // assignment editor reveals progressively behind Assign/Edit assignment.
   const [editingAssignment, setEditingAssignment] = useState(false);
   const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
   const [activeEmployeeIndex, setActiveEmployeeIndex] = useState(0);
@@ -1077,10 +1075,10 @@ export function SeatInspector({
                   aria-expanded={editingAssignment}
                   aria-controls="seat-inspector-form"
                   ref={primaryActionRef}
-                  aria-label={`Change assignment for ${selectedSeat.label}`}
+                  aria-label={`Edit assignment for ${selectedSeat.label}`}
                   className={`min-w-0 w-full rounded-[10px] ${footerNeutralButtonClass}`}
                 >
-                  Change assignment
+                  Edit assignment
                 </Button>
               )}
               {editingAssignment && (
@@ -1325,12 +1323,14 @@ export function SeatInspector({
             </div>
 
             <div key={`seat-inspector-sections-${selectedSeat.id}`}>
+              {/* Contact, not "Occupant": the sticky header already carries the
+                  identity (name, position · department) — this section holds only
+                  the reach-them facts, so Department never renders twice. */}
               {hasCurrentAssignment && (
-              <InspectorSection title="Occupant" headingId="seat-occupant-heading" defaultOpen>
-                <OccupantFacts
+              <InspectorSection title="Contact" headingId="seat-contact-heading" defaultOpen>
+                <ContactFacts
                   canEdit
-                  rows={buildOccupantRows({
-                    department: form.department.trim() || selectedSeat.employee?.department,
+                  rows={buildContactRows({
                     email: (matchedEmployee ?? selectedSeat.employee)?.email,
                     extension: form.phoneExtension
                   })}
@@ -1431,17 +1431,16 @@ export function SeatInspector({
           )}
         </form>
       ) : (
-        // Viewer inspector (spec §7): Occupant + Seat only — no Actions, Notes,
+        // Viewer inspector (spec §7): Contact + Seat only — no Actions, Notes,
         // or Activity. The data is the published assignment snapshot.
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div key={`seat-inspector-sections-${selectedSeat.id}`}>
             {hasCurrentAssignment && (
-            <InspectorSection title="Occupant" headingId="published-assignment-heading" defaultOpen>
+            <InspectorSection title="Contact" headingId="published-contact-heading" defaultOpen>
               <p className="sr-only">Published assignment</p>
-              <OccupantFacts
+              <ContactFacts
                 canEdit={false}
-                rows={buildOccupantRows({
-                  department: selectedSeat.employee?.department,
+                rows={buildContactRows({
                   email: selectedSeat.employee?.email,
                   extension: selectedSeat.employee?.phone_extension
                 })}

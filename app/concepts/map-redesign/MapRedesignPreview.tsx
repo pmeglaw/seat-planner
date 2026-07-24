@@ -311,7 +311,7 @@ function SeatInspectorDock({ seat, surface, onClose }: InspectorProps) {
                 </button>
               </div>
               <button type="button" className="ink-primarybtn">
-                Change assignment
+                Edit assignment
               </button>
             </>
           ) : (

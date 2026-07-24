@@ -102,6 +102,18 @@ test("admin mode exposes the edit affordances", async () => {
   assert.ok(byLabelPrefix("Assign an employee"), "assign control present");
 });
 
+test("an occupied seat's CTA reads Edit assignment (it opens a form, never acts)", async () => {
+  await renderInspector(assignedSeat, { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {}, onStartSwapSeat() {} });
+  assert.ok(byLabelPrefix("Edit assignment"), "occupied-seat CTA is an edit verb");
+  assert.equal(byLabelPrefix("Change assignment"), null, "old ambiguous label retired");
+});
+
+test("Contact section never repeats Department — the header role line carries it", async () => {
+  await renderInspector(assignedSeat, { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {}, onStartSwapSeat() {} });
+  const factLabels = [...document.querySelectorAll("dt")].map(dt => dt.textContent);
+  assert.ok(!factLabels.includes("Department"), "no duplicate Department fact row");
+});
+
 test("the close button invokes onClose", async () => {
   let closed = 0;
   await renderInspector(assignedSeat, { onClose: () => (closed += 1) });
