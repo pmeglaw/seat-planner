@@ -11,9 +11,13 @@ This audit was a **re-audit** — the prior pass (`docs/RISKS.md`, 2026-07-08, ~
 | 001 | Reset RPC stages employee/label writes (survives permuted drafts) | P1 | S | LOW | — | bug | DONE — merged to main (cd31605) |
 | 002 | Discard-draft dialog surfaces reset errors + joins Escape ladder | P1 | S | LOW | — (pairs with 001) | bug | DONE — merged to main (1415ffe) |
 | 003 | Close control-character open redirect in `safeNextPath` | P1 | S | LOW | — | security | DONE — merged to main (e9ee393) |
-| 004 | Fix South Offices zone rect (visual frame + wall coverage) | P2 | S | LOW-MED | — | bug | TODO |
-| 005 | Publish `change_summary` parity with the review dialog | P2 | S-M | LOW | — | bug | TODO |
-| 006 | Neutralize CSV formula injection on export | P2 | S | LOW | — | security | TODO |
+| 004 | Fix South Offices zone rect (visual frame + wall coverage) | P2 | S | LOW-MED | — | bug | DONE — merged to main (40515a2) |
+| 005 | Publish `change_summary` parity with the review dialog | P2 | S-M | LOW | — | bug | DONE — merged to main (921a328) |
+| 006 | Neutralize CSV formula injection on export | P2 | S | LOW | — | security | DONE — merged to main (a757062) |
+
+**All six advisor plans (001–006) are shipped to main and deployed.** Follow-ups recorded below remain open for a future cycle.
+
+Post-005 follow-up (minor): `seat_detail_changes` and `employee_edits` in the publish `change_summary` use raw `is distinct from`, so a seat/employee detail field flipping null↔'' could over-count by 1 versus the review dialog (which normalizes null/'' via `textChanged`). Negligible edge case, mirrors pre-existing `employee_edits` behavior; tighten with coalesce-to-'' if exact dialog parity is ever wanted.
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED (one-line rationale).
 
