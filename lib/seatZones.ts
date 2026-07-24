@@ -37,10 +37,13 @@ export const SEAT_ZONE_RECTS: SeatZoneRect[] = [
   { zone: "Southeast Office", xMin: 0.79, xMax: 0.91, yMin: 0.27, yMax: 0.53 },
   { zone: "Southeast Office", xMin: 0.79, xMax: 0.91, yMin: 0.56, yMax: 0.7 },
   { zone: "Southeast Office", xMin: 0.79, xMax: 0.91, yMin: 0.7, yMax: 0.9 },
-  // Bottom-band offices (owner request 2026-07-23): the two rooms along the
-  // map's lower edge. Bounds are SAVED coordinates, measured on the floor
-  // plan and converted visual->saved through the calibration transform.
-  { zone: "South Offices", xMin: 0.06, xMax: 0.43, yMin: 0.845, yMax: 0.97 }
+  // Bottom-band offices (owner request 2026-07-23; frame corrected 2026-07-24):
+  // one rectangle over the two rooms along the map's lower edge. Bounds are
+  // VISUAL coordinates (like every other rect here) — detectSeatZoneForPoint is
+  // fed a visual point (see app/actions.ts). Derived from the two south rooms in
+  // OFFICE_ROOM_VISUAL_RECTS (lib/officeRoomWash.ts) with wall slack so clicks
+  // anywhere inside either room, including the bottom wall, resolve here.
+  { zone: "South Offices", xMin: 0.085, xMax: 0.455, yMin: 0.9, yMax: 1 }
 ];
 
 export function pointIsInsideSeatZone(point: NormalizedPoint, rect: SeatZoneRect) {

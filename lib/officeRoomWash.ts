@@ -7,9 +7,9 @@ import { MAP_IMAGE_HEIGHT, MAP_IMAGE_WIDTH } from "@/lib/mapLayoutTransform";
  *
  * The rects are VISUAL-space room interiors ([0,1] of the displayed image),
  * measured 2026-07-24 against wall pixels on the 1911x867 master PNG. They
- * are deliberately NOT the SEAT_ZONE_RECTS band (saved space, one generous
- * rectangle across both rooms): detection wants slack around the walls, the
- * wash must hug them. Never derive one set from the other.
+ * are deliberately NOT the SEAT_ZONE_RECTS band (also visual space, but one
+ * generous rectangle across both rooms): detection wants slack around the
+ * walls, the wash must hug them. Never derive one set from the other.
  */
 export type OfficeRoomRect = { key: string; xMin: number; xMax: number; yMin: number; yMax: number };
 
