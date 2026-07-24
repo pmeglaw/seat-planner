@@ -28,15 +28,22 @@ export const OFFICE_ROOM_VISUAL_RECTS: OfficeRoomRect[] = [
 ];
 
 /**
- * Is a VISUAL-space point inside any measured office room? This is also the
- * seat-marker's nameplate gate: office seats can carry pod zones (N13 is
- * zone "North Pod" — zone inference has no room concept), so room geometry,
- * not zone, decides who renders as a plate.
+ * The measured office room containing a VISUAL-space point, or null. Room
+ * geometry (not zone) decides who renders as a nameplate — office seats can
+ * carry pod zones (N13 is zone "North Pod"; zone inference has no room
+ * concept) — and the rect also drives the plate's room-centered offset and
+ * room-fitted width in SeatMap.
  */
-export function isInsideOfficeRoom(point: { x: number; y: number }): boolean {
-  return OFFICE_ROOM_VISUAL_RECTS.some(
-    rect => point.x >= rect.xMin && point.x <= rect.xMax && point.y >= rect.yMin && point.y <= rect.yMax
+export function findOfficeRoom(point: { x: number; y: number }): OfficeRoomRect | null {
+  return (
+    OFFICE_ROOM_VISUAL_RECTS.find(
+      rect => point.x >= rect.xMin && point.x <= rect.xMax && point.y >= rect.yMin && point.y <= rect.yMax
+    ) ?? null
   );
+}
+
+export function isInsideOfficeRoom(point: { x: number; y: number }): boolean {
+  return findOfficeRoom(point) !== null;
 }
 
 export type OfficeWashSeat = { id: string; x: number; y: number; status: SeatStatus };
