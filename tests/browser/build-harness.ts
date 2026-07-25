@@ -56,6 +56,9 @@ const MOCKS: Record<string, string> = {
       const resolved = typeof src === "object" && src ? (src.src ?? "") : src;
       return React.createElement("img", { src: resolved, alt });
     }`,
+  // getUser defaults to a valid session so SeatMap's canEdit+actionError
+  // session-expiry probe (auth.getUser()) doesn't crash the mount; a test can
+  // still override it via responses["supabase.getUser"] like the other mocks.
   "@/lib/supabase/client": `export const createClient = () => ({ auth: {
     signOut: async () => window.__ctCall("supabase.signOut", []),
     getUser: async () => (await window.__ctCall("supabase.getUser", [])) ?? { data: { user: { id: "harness-user" } }, error: null }
