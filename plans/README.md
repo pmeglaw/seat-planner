@@ -14,10 +14,10 @@ This audit was a **re-audit** — the prior pass (`docs/RISKS.md`, 2026-07-08, ~
 | 004 | Fix South Offices zone rect (visual frame + wall coverage) | P2 | S | LOW-MED | — | bug | DONE — merged to main (40515a2) |
 | 005 | Publish `change_summary` parity with the review dialog | P2 | S-M | LOW | — | bug | DONE — merged to main (921a328) |
 | 006 | Neutralize CSV formula injection on export | P2 | S | LOW | — | security | DONE — merged to main (a757062) |
-| 007 | Execute RLS + seat-protection trigger in the PGlite tier | P2 | M | LOW | — | tests | DONE — branch `advisor/007-rls-execution-harness` @56a647a, reviewer-verified, awaiting merge |
-| 008 | Narrow `employees` select policy to admins (RLS gap) | P2 | S | MED | 007 | security | TODO |
+| 007 | Execute RLS + seat-protection trigger in the PGlite tier | P2 | M | LOW | — | tests | DONE — merged to main (0ea5afa) |
+| 008 | Narrow `employees` select policy to admins (RLS gap) | P2 | S | MED | 007 | security | DONE — merged to main (0ea5afa) |
 
-**Plans 001–006 are shipped to main and deployed.** 007–008 are the follow-on security cycle (planned at `7b447ed`, 2026-07-24): 007 makes RLS a tested boundary (the harness runs as the owner today and never exercises it), 008 uses that harness to close the one real RLS gap — an authenticated viewer can read the draft-side `employees` table directly. **008 depends on 007** (007's `asRole` harness is how 008's fix is verified). Recommended order: 007 then 008.
+**All eight advisor plans (001–008) are shipped to main and deployed.** 007–008 were the follow-on security cycle: 007 made RLS a tested boundary (the harness ran as the owner and never exercised it — now it runs as `authenticated` via `asRole`, with viewer-denied/admin-allowed proving policies evaluate), and 008 rode on it to close the one real RLS gap — an authenticated viewer could read the draft-side `employees` table directly via PostgREST; now it's admin-only and viewers read only the `published_employees` snapshot. Migration `20260724170000` carries the policy change.
 
 Post-005 follow-up (minor): `seat_detail_changes` and `employee_edits` in the publish `change_summary` use raw `is distinct from`, so a seat/employee detail field flipping null↔'' could over-count by 1 versus the review dialog (which normalizes null/'' via `textChanged`). Negligible edge case, mirrors pre-existing `employee_edits` behavior; tighten with coalesce-to-'' if exact dialog parity is ever wanted.
 
