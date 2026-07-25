@@ -127,18 +127,24 @@ test("RLS-adjacent: the seat-protection trigger refuses an original draft delete
 // employees_select_authenticated
 // ---------------------------------------------------------------------------
 
-test("RLS: viewer reads active employees but not inactive ones (documents the CURRENT policy, not the target end state)", async () => {
-  // A follow-up plan narrows employees_select_authenticated to admin-only; when
-  // it lands, this assertion flips to "viewer reads zero employees" — until
-  // then, this pins the leak so the narrowing change has a red test to turn green.
-  const active = await db.seedEmployee({ fullName: "Active Employee", active: true });
-  const inactive = await db.seedEmployee({ fullName: "Inactive Employee", active: false });
+test("RLS: a viewer reads zero employees; an admin reads all", async () => {
+  const alice = await db.seedEmployee({ fullName: "Alice", active: true });
+  await db.seedEmployee({ fullName: "Zoe (inactive)", active: false });
 
+  // Viewer: the live employees table is now fully hidden — people reach the
+  // viewer only through published_employees (Plan 008). (Pre-008 this read the
+  // active row.)
   await db.actAsViewer();
   await db.asRole("authenticated", async () => {
-    const { rows } = await db.query("select id from public.employees");
-    const ids = rows.map(r => r.id);
-    assert.ok(ids.includes(active), "viewer currently reads active employees");
-    assert.ok(!ids.includes(inactive), "viewer does not read inactive employees");
+    const seen = await db.query("select id from public.employees");
+    assert.equal(seen.rows.length, 0, "viewer cannot read the draft-side directory at all");
+  });
+
+  // Admin: still reads the full live directory (active and inactive).
+  await db.actAs(db.adminId);
+  await db.asRole("authenticated", async () => {
+    const seen = await db.query("select id from public.employees order by full_name");
+    assert.equal(seen.rows.length, 2, "admin reads every employee");
+    assert.ok(seen.rows.some(r => r.id === alice), "including the active one");
   });
 });
