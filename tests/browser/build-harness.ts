@@ -56,7 +56,10 @@ const MOCKS: Record<string, string> = {
       const resolved = typeof src === "object" && src ? (src.src ?? "") : src;
       return React.createElement("img", { src: resolved, alt });
     }`,
-  "@/lib/supabase/client": `export const createClient = () => ({ auth: { signOut: async () => window.__ctCall("supabase.signOut", []) } });`
+  "@/lib/supabase/client": `export const createClient = () => ({ auth: {
+    signOut: async () => window.__ctCall("supabase.signOut", []),
+    getUser: async () => (await window.__ctCall("supabase.getUser", [])) ?? { data: { user: { id: "harness-user" } }, error: null }
+  } });`
 };
 
 function mockPlugin(): esbuild.Plugin {
