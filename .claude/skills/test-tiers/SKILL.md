@@ -19,6 +19,47 @@ The **full SeatMap** is instead exercised in a **real browser** by a separate Pl
 
 A separate **end-to-end tier** lives in `tests/e2e/` (Playwright, config in `playwright.config.ts`). It is a **backend-free smoke suite**: it builds the app, boots it with only *dummy* Supabase env, and asserts the app starts, `/login` renders the sign-in form, and the auth middleware redirects unauthenticated `/` and `/admin` to `/login`. Authenticated flows would need a seeded test project + CI secrets (tracked as a follow-up).
 
+## Authenticated e2e tier — `npm run test:e2e:auth`
+
+Real sign-in, the admin role gate, and a real **publish**, driven against a
+disposable local Supabase stack (`npm run db:start` → `supabase start`, Docker).
+Config `playwright-auth.config.ts`, specs in `tests/e2e-auth/`. Credentials are
+seeded by `supabase/seed.sql` and are local-only. Because the stack dies with
+`npm run db:stop`, these specs are free to mutate seats and publish for real —
+coverage the hosted-production setup could never safely have.
+
+Three traps, each of which costs an hour if rediscovered:
+
+- **The config BUILDS the app, it does not just start it.** `NEXT_PUBLIC_*` is
+  inlined at *build* time, so a build made from `.env.local` ships a browser
+  bundle pointed at **production** no matter what env `npm run start` is given.
+  Symptom: sign-in silently fails and the page stays on `/login`.
+- **Hand-seeded `auth.users` rows need `''`, not NULL, in the token columns**
+  (`confirmation_token`, `recovery_token`, `email_change*`, `phone_change*`,
+  `reauthentication_token`). GoTrue scans them into non-nullable Go strings, so
+  NULL yields a 500 "Database error querying schema" that names the schema and
+  never the row. The app renders it as an empty `{}` alert.
+- **Prefer `supabase start` over `supabase db reset`.** A reset restarts the
+  containers with new IPs while Kong keeps the old ones cached, so the auth
+  endpoint 502s and it reads as a broken login. If you do reset, restart the
+  auth and kong containers afterwards.
+
+**`[db.seed] enabled = false` in `supabase/config.toml` is deliberate — do not
+flip it back.** Adding that config.toml made the Supabase GitHub integration
+create a hosted **preview branch per PR**, and preview branches run `seed.sql`.
+That put accounts whose password is committed in plain text onto an
+internet-reachable database (found on PR #251; branch deleted). Seeding is now
+explicit — `scripts/seed-local-db.mjs`, run by `tests/e2e-auth/global-setup.ts`
+or `npm run db:seed` — and goes through `docker exec` into the local container,
+so it has no connection string and cannot address a hosted project even by
+mistake. Keep that property when editing it.
+
+`supabase/seed.sql` also replicates the hosted platform's bootstrap grants
+(`grant all on all tables in schema public to anon, authenticated,
+service_role`). The migrations never declare these — production only works
+because Supabase Cloud sets them at project-creation time. Without them every
+viewer query 403s locally and the map renders Next's generic server-error page.
+
 ## SQL-execution harness — `tests/rpc-execution.test.mjs`
 
 Unlike the three tiers above, this one runs inside `npm test`. `tests/helpers/pgHarness.mjs` stubs what PGlite doesn't have: Supabase's `auth` schema, `auth.uid()`, and the `anon`/`authenticated` roles. The RPCs' own `app_private.is_admin()` gate is then exercised by switching `app.current_user_id` between an admin and a viewer. What the tier covers and why it exists stays in `CLAUDE.md`.
