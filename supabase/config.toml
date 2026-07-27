@@ -64,8 +64,18 @@ enabled = true
 schema_paths = []
 
 [db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
+# DISABLED ON PURPOSE — do not flip this back to true.
+#
+# Adding this config.toml made the Supabase GitHub integration create a hosted
+# PREVIEW BRANCH per pull request, and a preview branch runs seed.sql. That put
+# accounts whose password is committed in plain text onto an internet-reachable
+# database (verified on PR #251, since deleted). seed.sql is written for a
+# throwaway Docker container and must never execute on hosted infrastructure.
+#
+# The authenticated e2e tier seeds explicitly instead — scripts/seed-local-db.mjs,
+# invoked by tests/e2e-auth/global-setup.ts — which can only ever reach the local
+# container. See `npm run db:seed`.
+enabled = false
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
 sql_paths = ["./seed.sql"]

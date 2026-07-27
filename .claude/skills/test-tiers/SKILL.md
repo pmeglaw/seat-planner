@@ -44,6 +44,16 @@ Three traps, each of which costs an hour if rediscovered:
   endpoint 502s and it reads as a broken login. If you do reset, restart the
   auth and kong containers afterwards.
 
+**`[db.seed] enabled = false` in `supabase/config.toml` is deliberate — do not
+flip it back.** Adding that config.toml made the Supabase GitHub integration
+create a hosted **preview branch per PR**, and preview branches run `seed.sql`.
+That put accounts whose password is committed in plain text onto an
+internet-reachable database (found on PR #251; branch deleted). Seeding is now
+explicit — `scripts/seed-local-db.mjs`, run by `tests/e2e-auth/global-setup.ts`
+or `npm run db:seed` — and goes through `docker exec` into the local container,
+so it has no connection string and cannot address a hosted project even by
+mistake. Keep that property when editing it.
+
 `supabase/seed.sql` also replicates the hosted platform's bootstrap grants
 (`grant all on all tables in schema public to anon, authenticated,
 service_role`). The migrations never declare these — production only works

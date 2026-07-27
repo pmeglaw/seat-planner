@@ -67,6 +67,9 @@ const executablePath = process.env.PW_CHROMIUM_PATH || undefined;
 
 export default defineConfig({
   testDir: "./tests/e2e-auth",
+  // Seeds the local stack. The CLI no longer auto-seeds — see the [db.seed]
+  // comment in supabase/config.toml for why that had to change.
+  globalSetup: "./tests/e2e-auth/global-setup.ts",
   // NOT fullyParallel: these specs share one database. Publishing in one spec
   // while another asserts on the publish pill is a race that would read as
   // flakiness rather than as the shared-state bug it is.
