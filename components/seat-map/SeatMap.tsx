@@ -28,6 +28,12 @@ import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
 import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import {
+  hasActiveConstraints,
+  seatMatchesFilters,
+  structuredFilterCount as countStructuredFilters,
+  type SeatFilterCriteria
+} from "@/lib/seatFilters";
+import {
   MAP_ZOOM_MAX,
   MAP_ZOOM_MIN,
   boundingBoxCenter,
@@ -39,8 +45,7 @@ import {
   scrollTargetForZoomAnchor,
   zoomAnchorFromViewport
 } from "@/lib/mapViewport";
-import { departmentKey } from "@/lib/departments";
-import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
+import { buildPositionOptions } from "@/lib/positions";
 import { clientPointToNormalized } from "@/lib/seatMath";
 import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
@@ -951,7 +956,10 @@ export function SeatMap({
   // Legend counts follow the active constraints — the number row must not
   // contradict a filtered map (2026-07-16 regrade, review 4). matchesFilters
   // covers search + structured filters, exactly what the map dims by.
-  const legendFiltersActive = search.trim() !== "" || department !== "all" || position !== "all" || zone !== "all" || status !== "all";
+  const filterCriteria: SeatFilterCriteria = { search, department, position, zone, status };
+  // One source for "is anything narrowing the map?". The legend and the result
+  // list used to derive this separately and agreed only by coincidence.
+  const legendFiltersActive = hasActiveConstraints(filterCriteria);
   const legendSourceSeats = legendFiltersActive ? localSeats.filter(matchesFilters) : localSeats;
   const legendCounts: Record<string, number> = {
     assigned: legendSourceSeats.filter(seat => seat.status === "assigned").length,
@@ -987,7 +995,7 @@ export function SeatMap({
   const plannerHighlightedSeatIdSet = useMemo(() => new Set(plannerHighlightedSeatIds), [plannerHighlightedSeatIds]);
   const searchQuery = search.trim();
   const searchActive = Boolean(searchQuery);
-  const structuredFiltersActive = department !== "all" || position !== "all" || zone !== "all" || status !== "all";
+  const structuredFiltersActive = countStructuredFilters(filterCriteria) > 0;
   const activeFilterChips: ActiveFilterChip[] = [
     searchActive ? { id: "search", label: "Search", value: searchQuery, removeLabel: `Remove search filter ${searchQuery}` } : null,
     department !== "all" ? { id: "department", label: "Department", value: department, removeLabel: `Remove department filter ${department}` } : null,
@@ -995,14 +1003,9 @@ export function SeatMap({
     zone !== "all" ? { id: "zone", label: "Zone", value: zone, removeLabel: `Remove zone filter ${zone}` } : null,
     status !== "all" ? { id: "status", label: "Status", value: STATUS_LABELS[status as SeatStatus] ?? status, removeLabel: `Remove status filter ${STATUS_LABELS[status as SeatStatus] ?? status}` } : null
   ].filter(Boolean) as ActiveFilterChip[];
-  const structuredFilterCount = [
-    department !== "all",
-    position !== "all",
-    zone !== "all",
-    status !== "all"
-  ].filter(Boolean).length;
+  const structuredFilterCount = countStructuredFilters(filterCriteria);
   const activeFilterCount = activeFilterChips.length;
-  const filtersActive = activeFilterCount > 0;
+  const filtersActive = legendFiltersActive;
   const matchingSeats = filtersActive ? localSeats.filter(seat => matchesFilters(seat)) : localSeats;
   const resultStatusBreakdown = useMemo<ResultStatusBreakdown>(() => ({
     available: matchingSeats.filter(seat => seat.status === "available").length,
@@ -1077,30 +1080,10 @@ export function SeatMap({
     return clientPointToNormalized(event.clientX, event.clientY, rect);
   }
 
+  // Kept as a local binding so every call site here reads the same, and so the
+  // predicate itself stays one tested definition in lib/seatFilters.ts.
   function matchesFilters(seat: SeatWithEmployee) {
-    const needle = search.trim().toLowerCase();
-    const haystack = [
-      seat.label,
-      seat.status,
-      getSeatZone(seat),
-      seat.employee?.full_name,
-      seat.employee?.position,
-      seat.employee?.department,
-      seat.employee?.phone_extension
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    const seatDepartment = seat.employee?.department ?? "";
-    const seatZone = getSeatZone(seat);
-    const searchOk = !needle || haystack.includes(needle);
-    const departmentOk = department === "all" || departmentKey(seatDepartment) === departmentKey(department);
-    const positionOk = seatMatchesPosition(seat.employee?.position, position);
-    const zoneOk = zone === "all" || seatZone === zone;
-    const statusOk = status === "all" || seat.status === (status as SeatStatus);
-
-    return searchOk && departmentOk && positionOk && zoneOk && statusOk;
+    return seatMatchesFilters(seat, filterCriteria);
   }
 
   // Single source of truth for SeatMarker's `dimmed` prop: a seat dims when
