@@ -27,6 +27,18 @@ import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapActio
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
 import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
+import {
+  MAP_ZOOM_MAX,
+  MAP_ZOOM_MIN,
+  boundingBoxCenter,
+  centerScrollTarget,
+  clampZoom,
+  hasPassedPanThreshold,
+  panScrollTarget,
+  scrollTargetForPoint,
+  scrollTargetForZoomAnchor,
+  zoomAnchorFromViewport
+} from "@/lib/mapViewport";
 import { departmentKey } from "@/lib/departments";
 import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
 import { clientPointToNormalized } from "@/lib/seatMath";
@@ -134,8 +146,6 @@ const INSPECTOR_FORM_ID = "seat-inspector-form";
 const EMPTY_SEAT_ID_SET: ReadonlySet<string> = new Set<string>();
 // Map zoom is a view transform on the scroll container only (spec §9): it
 // scales the rendered frame width and never touches stored seat coordinates.
-const MAP_ZOOM_MIN = 0.6;
-const MAP_ZOOM_MAX = 2;
 const MAP_ZOOM_STEP = 0.2;
 // Below this width the inspector overlays as a fixed bottom sheet (max-h 60vh,
 // SeatInspector.tsx) instead of docking as a width-reserving side panel — the
@@ -145,10 +155,6 @@ const SEAT_CENTER_PANEL_BREAKPOINT_PX = 900;
 // center a selected seat below the panel breakpoint, so the seat lands in the
 // visible strip above the 60vh bottom sheet instead of underneath it.
 const SEAT_CENTER_SHEET_ANCHOR = 0.28;
-
-function clampScrollPosition(value: number, max: number) {
-  return Math.min(Math.max(value, 0), Math.max(max, 0));
-}
 
 function replaceSeat(seats: SeatWithEmployee[], nextSeat: SeatWithEmployee) {
   const normalizedSeat = normalizeSeat(nextSeat);
@@ -1481,19 +1487,15 @@ export function SeatMap({
     const map = mapRef.current;
     if (!viewport || !map) return;
 
-    const anchor = options?.verticalViewportAnchor ?? 0.5;
-    const left = clampScrollPosition((x * map.offsetWidth) - (viewport.clientWidth / 2), viewport.scrollWidth - viewport.clientWidth);
-    const top = clampScrollPosition((y * map.offsetHeight) - (viewport.clientHeight * anchor), viewport.scrollHeight - viewport.clientHeight);
-    viewport.scrollTo({ left, top, behavior: "smooth" });
+    const target = scrollTargetForPoint({ x, y }, map, viewport, options?.verticalViewportAnchor ?? 0.5);
+    viewport.scrollTo({ ...target, behavior: "smooth" });
   }, []);
 
   const centerMapViewport = useCallback((behavior: ScrollBehavior = "smooth") => {
     const viewport = mapViewportRef.current;
     if (!viewport) return;
 
-    const left = clampScrollPosition((viewport.scrollWidth - viewport.clientWidth) / 2, viewport.scrollWidth - viewport.clientWidth);
-    const top = clampScrollPosition((viewport.scrollHeight - viewport.clientHeight) / 2, viewport.scrollHeight - viewport.clientHeight);
-    viewport.scrollTo({ left, top, behavior });
+    viewport.scrollTo({ ...centerScrollTarget(viewport), behavior });
   }, []);
 
   function changeMapViewMode(nextMode: MapViewMode) {
@@ -1521,7 +1523,7 @@ export function SeatMap({
   // viewport on the point that was previously centered. Stored coordinates and
   // the calibration transform are untouched (spec §9).
   function applyMapZoom(nextZoom: number) {
-    const clamped = Math.min(MAP_ZOOM_MAX, Math.max(MAP_ZOOM_MIN, Math.round(nextZoom * 100) / 100));
+    const clamped = clampZoom(nextZoom);
 
     if (mapViewMode !== "detail") {
       setMapViewMode("detail");
@@ -1532,11 +1534,8 @@ export function SeatMap({
 
     const viewport = mapViewportRef.current;
     const map = mapRef.current;
-    if (viewport && map && map.offsetWidth > 0 && map.offsetHeight > 0) {
-      pendingZoomCenterRef.current = {
-        x: Math.min(1, Math.max(0, (viewport.scrollLeft + viewport.clientWidth / 2 - map.offsetLeft) / map.offsetWidth)),
-        y: Math.min(1, Math.max(0, (viewport.scrollTop + viewport.clientHeight / 2 - map.offsetTop) / map.offsetHeight))
-      };
+    if (viewport && map) {
+      pendingZoomCenterRef.current = zoomAnchorFromViewport(viewport, map);
     }
 
     setZoomFactor(clamped);
@@ -1551,11 +1550,7 @@ export function SeatMap({
       const viewport = mapViewportRef.current;
       const map = mapRef.current;
       if (!viewport || !map) return;
-      viewport.scrollTo({
-        left: clampScrollPosition(map.offsetLeft + (center.x * map.offsetWidth) - (viewport.clientWidth / 2), viewport.scrollWidth - viewport.clientWidth),
-        top: clampScrollPosition(map.offsetTop + (center.y * map.offsetHeight) - (viewport.clientHeight / 2), viewport.scrollHeight - viewport.clientHeight),
-        behavior: "auto"
-      });
+      viewport.scrollTo({ ...scrollTargetForZoomAnchor(center, map, viewport), behavior: "auto" });
     });
     return () => window.cancelAnimationFrame(frame);
   }, [zoomFactor]);
@@ -1601,9 +1596,10 @@ export function SeatMap({
 
     const deltaX = event.clientX - pan.startClientX;
     const deltaY = event.clientY - pan.startClientY;
-    if (!pan.moved && Math.abs(deltaX) + Math.abs(deltaY) > 4) pan.moved = true;
-    viewport.scrollLeft = pan.startScrollLeft - deltaX;
-    viewport.scrollTop = pan.startScrollTop - deltaY;
+    if (!pan.moved && hasPassedPanThreshold(deltaX, deltaY)) pan.moved = true;
+    const panned = panScrollTarget({ scrollLeft: pan.startScrollLeft, scrollTop: pan.startScrollTop }, deltaX, deltaY);
+    viewport.scrollLeft = panned.left;
+    viewport.scrollTop = panned.top;
   }
 
   function handleViewportPointerEnd(event: PointerEvent<HTMLDivElement>) {
@@ -1656,18 +1652,8 @@ export function SeatMap({
       return;
     }
 
-    const visualSeatsToFit = seatsToFit.map(seat => savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat));
-    const bounds = visualSeatsToFit.reduce(
-      (current, point) => ({
-        minX: Math.min(current.minX, point.x),
-        maxX: Math.max(current.maxX, point.x),
-        minY: Math.min(current.minY, point.y),
-        maxY: Math.max(current.maxY, point.y)
-      }),
-      { minX: 1, maxX: 0, minY: 1, maxY: 0 }
-    );
-
-    scrollMapToPoint((bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2);
+    const center = boundingBoxCenter(seatsToFit.map(seat => savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat)));
+    if (center) scrollMapToPoint(center.x, center.y);
   }
 
   const queueCenterSeatInMap = useCallback((seatId: string) => {
