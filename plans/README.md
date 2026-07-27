@@ -16,10 +16,10 @@ This audit was a **re-audit** — the prior pass (`docs/RISKS.md`, 2026-07-08, ~
 | 006 | Neutralize CSV formula injection on export | P2 | S | LOW | — | security | DONE — merged to main (a757062) |
 | 007 | Execute RLS + seat-protection trigger in the PGlite tier | P2 | M | LOW | — | tests | DONE — merged to main (0ea5afa) |
 | 008 | Narrow `employees` select policy to admins (RLS gap) | P2 | S | MED | 007 | security | DONE — merged to main (0ea5afa) |
-| 009 | Execution-test `restore_draft_snapshot` + 3 management RPCs | P2 | M | LOW | — | tests | DONE — branch `advisor/009-…` @2c28ff2, reviewer-verified, awaiting merge |
-| 010 | Browser harness `auth.getUser` stub + 002 discard-error regression test | P2 | M | LOW | — | tests | DONE — branch `advisor/010-…` @942d990, reviewer-verified, awaiting merge (stub + trimmed 002 spec; see harness-limitation follow-up) |
+| 009 | Execution-test `restore_draft_snapshot` + 3 management RPCs | P2 | M | LOW | — | tests | DONE — merged to main (cbd7242) |
+| 010 | Browser harness `auth.getUser` stub + 002 discard-error regression test | P2 | M | LOW | — | tests | DONE — merged to main (ae7471b); stub + trimmed 002 spec (relabel deferred — see harness follow-up) |
 
-**Plans 001–008 are shipped to main and deployed.** 009–010 are a test-hardening follow-on (planned at `ff556e3`): 009 gives the four still-string-only atomic RPCs (`restore_draft_snapshot`, `delete_department`, `rename_zone`, `delete_zone`) real PGlite execution coverage; 010 fills the browser-harness `auth.getUser` gap (surfaced executing 002) and lands 002's missing automated regression test. Both are test-only, independent, and can run in parallel.
+**All ten advisor plans (001–010) are shipped to main.** 009–010 were a test-hardening follow-on: 009 gave the four still-string-only atomic RPCs (`restore_draft_snapshot`, `delete_department`, `rename_zone`, `delete_zone`) real PGlite execution coverage; 010 filled the browser-harness `auth.getUser` gap and landed 002's discard-error regression test (in-dialog alert; the "Retry discard" relabel is deferred behind the harness `pending`-never-settles finding recorded below). Both test-only — no runtime change, no migration.
 
 **Original eight-plan cycle (001–008):** 007–008 were the follow-on security cycle: 007 made RLS a tested boundary (the harness ran as the owner and never exercised it — now it runs as `authenticated` via `asRole`, with viewer-denied/admin-allowed proving policies evaluate), and 008 rode on it to close the one real RLS gap — an authenticated viewer could read the draft-side `employees` table directly via PostgREST; now it's admin-only and viewers read only the `published_employees` snapshot. Migration `20260724170000` carries the policy change.
 
