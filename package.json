@@ -17,6 +17,9 @@
     "test:ct": "node --test tests/login-form.test.mjs tests/update-password-form.test.mjs tests/seat-inspector.test.mjs tests/seat-map-components.test.mjs",
     "test:browser": "playwright test -c playwright-ct.config.ts",
     "test:e2e": "playwright test",
+    "test:e2e:auth": "playwright test -c playwright-auth.config.ts",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
     "coverage": "c8 node --test tests/*.test.mjs",
     "coverage:check": "c8 --check-coverage --lines 90 --functions 95 --branches 80 node --test tests/*.test.mjs"
   },
@@ -43,6 +46,7 @@
     "eslint-config-next": "^16.2.10",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.20",
+    "supabase": "^2.110.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^6.0.3"
   },

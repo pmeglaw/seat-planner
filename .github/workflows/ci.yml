@@ -66,3 +66,55 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # Authenticated flows (sign-in, the admin role gate, publish) against a
+  # throwaway local Supabase stack. Separate from `e2e` so the fast, Docker-free
+  # smoke tier still reports on its own, and so a Docker hiccup here can never
+  # be mistaken for an app failure there.
+  e2e-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      # Applies supabase/migrations/* then supabase/seed.sql. Deliberately
+      # `start` and never `db reset`: a reset gives the containers new IPs while
+      # Kong keeps the old ones cached, which surfaces as a 502 from the auth
+      # endpoint and looks like a broken login rather than stale routing.
+      - name: Start local Supabase stack
+        run: npx supabase start
+
+      - name: Wait for the auth endpoint
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null "$(npx supabase status -o env | grep '^API_URL=' | cut -d= -f2- | tr -d '\"')/auth/v1/health"; then
+              echo "auth ready"; exit 0
+            fi
+            sleep 5
+          done
+          echo "auth endpoint never became ready"; exit 1
+
+      # No build step: playwright-auth.config.ts builds the app itself with the
+      # local stack's env. NEXT_PUBLIC_* is inlined at build time, so a build
+      # made anywhere else would ship a bundle pointing at the wrong project.
+      - name: Run authenticated e2e tests
+        run: npm run test:e2e:auth
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-auth
+          path: playwright-report/
+          retention-days: 7
