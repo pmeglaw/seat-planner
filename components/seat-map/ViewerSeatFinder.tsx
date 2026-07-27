@@ -1068,6 +1068,11 @@ export function ViewerSeatFinder({
                       const inMatches = highlightedSeatIdSet.has(seat.id);
                       const dimmed = filtersActive && !inMatches && selectedSeatId !== seat.id;
                       const officePlateLayout = getOfficePlateLayout(seat, mapRenderedWidth ?? 0);
+                      // Two independent causes light a seat up, and neither may
+                      // borrow the other's announcement: resting the pointer on a
+                      // people-list row is not a search result.
+                      const seatIsSearchHit = activeResultSeatIdSet.has(seat.id);
+                      const seatIsDirectoryHover = directoryOpen && seat.id === directoryHoverSeatId;
 
                       return (
                         <SeatMarker
@@ -1088,8 +1093,8 @@ export function ViewerSeatFinder({
                           officePlateWidthPx={officePlateLayout?.widthPx}
                           swapSource={false}
                           swapTarget={false}
-                          highlighted={activeResultSeatIdSet.has(seat.id) || (directoryOpen && seat.id === directoryHoverSeatId)}
-                          highlightedDescription="Highlighted search result"
+                          highlighted={seatIsSearchHit || seatIsDirectoryHover}
+                          highlightedDescription={seatIsSearchHit ? "Highlighted search result" : "Highlighted from the people list"}
                           dragging={false}
                           addSeatMode={false}
                           viewportEdge="none"

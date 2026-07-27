@@ -86,13 +86,29 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   assert.match(viewerFinderSource, /Search office seating/);
   assert.match(viewerFinderSource, /aria-label="Viewer search results"/);
   assert.match(viewerFinderSource, /aria-live="polite"/);
-  assert.match(viewerFinderSource, /highlightedDescription="Highlighted search result"/);
+  assert.match(viewerFinderSource, /highlightedDescription=\{/);
   assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*draftStatusLabel/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AskPlannerDrawer/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Swap seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Vacate/);
+});
+
+// A viewer seat can light up for two unrelated reasons — it matched the active
+// search result, or the pointer is resting on its row in the people list. Both
+// looked identical to a screen reader while only one of them was true, so a
+// hovered seat announced a search result that did not exist.
+test("a highlighted viewer seat announces which of the two causes lit it up", async () => {
+  const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+
+  assert.match(viewerFinderSource, /const seatIsSearchHit = activeResultSeatIdSet\.has\(seat\.id\)/);
+  assert.match(viewerFinderSource, /const seatIsDirectoryHover = directoryOpen && seat\.id === directoryHoverSeatId/);
+  assert.match(viewerFinderSource, /highlighted=\{seatIsSearchHit \|\| seatIsDirectoryHover\}/);
+  assert.match(
+    viewerFinderSource,
+    /highlightedDescription=\{seatIsSearchHit \? "Highlighted search result" : "Highlighted from the people list"\}/
+  );
 });
 
 test("ask planner drawer and settings review dialogs keep dialog semantics and focus targets", async () => {
