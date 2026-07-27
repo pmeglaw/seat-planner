@@ -34,5 +34,10 @@ test("the People directory fills the idle right slot without touching the search
   // Hover-locate is render-only: it feeds the marker highlight prop and never
   // selects, centers, or scrolls.
   assert.match(source, /directoryHoverSeatId/);
-  assert.match(source, /highlighted=\{activeResultSeatIdSet\.has\(seat\.id\) \|\| \(directoryOpen && seat\.id === directoryHoverSeatId\)\}/);
+  // The hover still only ever reaches a render prop. It is named apart from the
+  // search cause so the two can announce differently (accessibility-source pins
+  // the announcement itself), but it feeds nothing but `highlighted`.
+  assert.match(source, /const seatIsDirectoryHover = directoryOpen && seat\.id === directoryHoverSeatId;/);
+  assert.match(source, /highlighted=\{seatIsSearchHit \|\| seatIsDirectoryHover\}/);
+  assert.doesNotMatch(source, /seatIsDirectoryHover[\s\S]{0,80}(openResult|selectSeat|scrollIntoView|centerOn)/);
 });
