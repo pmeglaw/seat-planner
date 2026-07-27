@@ -104,7 +104,11 @@ export async function buildHarness() {
   await writeFile(path.join(HARNESS_DIR, "bundle.js"), result.outputFiles[0].text, "utf8");
   await writeFile(
     HARNESS_HTML,
-    `<!doctype html><html><head><meta charset="utf8"><title>SeatMap harness</title></head><body><div id="root"></div><script src="./bundle.js"></script></body></html>`,
+    // lang="en" mirrors app/layout.tsx. Without it the harness itself trips
+    // axe's html-has-lang in accessibility.spec.ts — a harness artefact that
+    // says nothing about the app, so keep the shell faithful rather than
+    // disabling the rule.
+    `<!doctype html><html lang="en"><head><meta charset="utf8"><title>SeatMap harness</title></head><body><div id="root"></div><script src="./bundle.js"></script></body></html>`,
     "utf8"
   );
   return HARNESS_HTML;
