@@ -190,3 +190,34 @@ test("a dirty inspector arms a beforeunload warning; a clean one does not", asyn
   await dirtyInspectorNotes(page);
   expect(await fire()).toBe(true);
 });
+
+// Regression for plan 002: a failed discard must surface its error INSIDE
+// the discard-confirm dialog, not swallow it or leave only the generic
+// top-of-canvas banner. This is also the first browser-tier spec combining
+// canEdit:true with a rejected action — exercising the auth.getUser()
+// session-expiry probe (SeatMap.tsx) that the harness's supabase client mock
+// previously had no stub for.
+test("a failed discard surfaces its error inside the discard dialog (002)", async ({ page }) => {
+  await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true, publishedSeats: [] }, {
+    responses: { "action:resetDraftToPublishedAction": () => { throw new Error("Server error"); } }
+  });
+
+  // custom has no published counterpart, so it reads as an "added" draft
+  // change and the publish-review entry point ("Review N unpublished
+  // change(s)") becomes reachable.
+  await page.getByRole("button", { name: /unpublished change/ }).dispatchEvent("click");
+  await page.getByRole("button", { name: "Discard all draft changes" }).dispatchEvent("click");
+  await page.getByRole("button", { name: "Discard everything" }).dispatchEvent("click");
+
+  const dialog = page.getByRole("dialog", { name: /Discard all draft changes/ });
+  await expect(dialog).toBeAttached();                             // dialog stayed open on failure (not swallowed)
+  await expect(dialog.getByRole("alert")).toBeAttached();          // the error renders INSIDE the dialog — plan 002's core fix
+  await expect(dialog.getByText(/Server error/)).toBeAttached();   // ...carrying the action's error text
+
+  // The confirm button's "Retry discard" relabel is gated on useTransition's
+  // `pending`, which never settles in this CSS-less harness (SeatMap's
+  // ResizeObserver layout effects never converge, causing a continuous
+  // re-render — a pre-existing harness limitation, not a 002 regression;
+  // the relabel is verified by prod QA + source). We assert 002's core:
+  // the error surfaces inside the discard dialog rather than behind it.
+});
