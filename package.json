@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "eslint . --ignore-pattern \"supabase/.temp/**\" --ignore-pattern \"supabase/.branches/**\" --ignore-pattern \"coverage/**\"",
     "qa:handoff": "node tools/seat-planner-improvement-loop/generate-handoff.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
