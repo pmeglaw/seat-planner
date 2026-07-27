@@ -26,3 +26,18 @@ test("viewer result cards rove with arrow keys and teach their keys", async () =
   // The same footer legend the admin panel shows.
   assert.match(source, /↑↓ to move · Enter opens · Esc clears/);
 });
+
+// That legend is on screen while focus is still in the search input, so all
+// three keys have to work from there. ↑↓ and Esc always did; Enter did not,
+// leaving the panel advertising a key that did nothing until the user had
+// first arrowed into the list.
+test("the search input honours the Enter its own legend promises", async () => {
+  const source = await readFile(new URL("../components/seat-map/ViewerSeatFinder.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /if \(event\.key === "Enter" && resultsPanelOpen\)/);
+  assert.match(source, /const \[firstSearchResult\] = searchResults\.results;/);
+  // Opening goes through the one existing selection path, exactly as a click does.
+  assert.match(source, /openResult\(firstSearchResult\)/);
+  // An empty result set must not swallow the keystroke.
+  assert.match(source, /if \(!firstSearchResult\) return;/);
+});
