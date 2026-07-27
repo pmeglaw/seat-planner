@@ -23,6 +23,8 @@ Restart the dev server after editing `.env.local`, `tailwind.config.ts`, or Supa
 
 Env vars: `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` are the only client-safe values. `OPENAI_API_KEY` (+ optional `OPENAI_MODEL`) is **server-only** — it powers Ask Planner and must never be prefixed with `NEXT_PUBLIC_`. The Supabase service-role key must never reach the browser.
 
+**Local dev writes to PRODUCTION.** `NEXT_PUBLIC_SUPABASE_URL` points at the live Supabase project — there is no dev or staging database. Draft-layer edits are safe (viewers never read draft), but running `publish_seat_map()` from a local `npm run dev` updates the live map at `seats.megeredchianlaw.com` for real viewers — treat any local publish as a production deploy.
+
 ## The draft / published two-layer model (central concept)
 
 Every seat row carries a `layer` of `'draft'` or `'published'`. There are effectively two parallel copies of the whole map:
@@ -43,7 +45,7 @@ Keep this separation absolute: never let a viewer path read draft, never let an 
 
 ## Security boundary (three enforced layers, do not rely on any one alone)
 
-1. **Server actions** — all mutations live in `app/actions.ts` (`"use server"`). Every exported action calls `requireAdmin()` first, which re-checks `profiles.role === 'admin'` against the authenticated Supabase user. `lib/permissions.ts` (`isAdmin`/`assertAdmin`) is the pure-function version used in components/tests.
+1. **Server actions** — all mutations live in `app/actions.ts` (`"use server"`). Every exported action calls `requireAdmin()` first, which re-checks `profiles.role === 'admin'` against the authenticated Supabase user.
 2. **Postgres RLS + SECURITY DEFINER RPCs** — the database independently enforces admin. Client-side guards are UX only.
 3. **`middleware.ts`** → `lib/supabase/middleware.ts` refreshes the auth session cookie on every matched request.
 
