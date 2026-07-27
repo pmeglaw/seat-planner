@@ -18,6 +18,7 @@ This audit was a **re-audit** — the prior pass (`docs/RISKS.md`, 2026-07-08, ~
 | 008 | Narrow `employees` select policy to admins (RLS gap) | P2 | S | MED | 007 | security | DONE — merged to main (0ea5afa) |
 | 009 | Execution-test `restore_draft_snapshot` + 3 management RPCs | P2 | M | LOW | — | tests | DONE — merged to main (cbd7242) |
 | 010 | Browser harness `auth.getUser` stub + 002 discard-error regression test | P2 | M | LOW | — | tests | DONE — merged to main (ae7471b); stub + trimmed 002 spec (relabel deferred — see harness follow-up) |
+| 011 | Doc-drift + prod-DB footgun warning + dead-code removal | P2 | S | LOW | — | docs | TODO |
 
 **All ten advisor plans (001–010) are shipped to main.** 009–010 were a test-hardening follow-on: 009 gave the four still-string-only atomic RPCs (`restore_draft_snapshot`, `delete_department`, `rename_zone`, `delete_zone`) real PGlite execution coverage; 010 filled the browser-harness `auth.getUser` gap and landed 002's discard-error regression test (in-dialog alert; the "Retry discard" relabel is deferred behind the harness `pending`-never-settles finding recorded below). Both test-only — no runtime change, no migration.
 
