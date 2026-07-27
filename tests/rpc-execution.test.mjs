@@ -359,6 +359,153 @@ test("deactivate_employee: blocks an employee still on the published map", async
 });
 
 // ---------------------------------------------------------------------------
+// restore_draft_snapshot
+// ---------------------------------------------------------------------------
+//
+// Builds the same JSON shape restoreDraftSnapshotAction sends: snapshot_seats
+// mirrors DraftSeatRestoreRecord (an Omit<SeatWithEmployee, "employee">, see
+// normalizeRestoreSeat in app/actions.ts) and snapshot_employees mirrors
+// Employee (normalizeRestoreEmployee). Extra properties like created_at are
+// harmless — jsonb_to_recordset only reads the columns it declares.
+
+function toSnapshotSeat(seat, overrides = {}) {
+  return {
+    id: seat.id,
+    seat_key: seat.seat_key,
+    label: seat.label,
+    x: seat.x,
+    y: seat.y,
+    status: seat.status,
+    layer: "draft",
+    employee_id: seat.employee_id ?? null,
+    zone: seat.zone ?? null,
+    department: seat.department ?? null,
+    notes: seat.notes ?? null,
+    is_custom: Boolean(seat.is_custom),
+    ...overrides
+  };
+}
+
+function toSnapshotEmployee(employee, overrides = {}) {
+  return {
+    id: employee.id,
+    full_name: employee.full_name,
+    position: employee.position ?? null,
+    department: employee.department ?? null,
+    phone_extension: employee.phone_extension ?? null,
+    avatar_url: employee.avatar_url ?? null,
+    active: employee.active !== false,
+    ...overrides
+  };
+}
+
+async function employeeRow(id) {
+  const { rows } = await db.query("select * from public.employees where id = $1", [id]);
+  return rows[0];
+}
+
+test("restore_draft_snapshot: converges the draft to the snapshot, preserving ids", async () => {
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  const n01 = await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+  const n02 = await db.seedSeat({ label: "N02", status: "available", zone: "North" });
+
+  const snapshotSeats = [toSnapshotSeat(n01), toSnapshotSeat(n02)];
+  const snapshotEmployees = [toSnapshotEmployee(await employeeRow(alice))];
+
+  // Diverge the live draft: unassign N01 and move it, change N02's zone, and
+  // add a custom seat that isn't part of the snapshot at all.
+  await db.query("update public.seats set status = 'available', employee_id = null, x = 0.9 where id = $1", [n01.id]);
+  await db.query("update public.seats set zone = 'South' where id = $1", [n02.id]);
+  await db.seedSeat({ label: "CX01", key: "cx01", status: "available", isCustom: true });
+
+  const { rows } = await db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb) as count", [
+    JSON.stringify(snapshotSeats),
+    JSON.stringify(snapshotEmployees)
+  ]);
+  assert.equal(Number(rows[0].count), 2, "returns the snapshot's seat count");
+
+  const seats = await db.draftSeats();
+  const byLabel = Object.fromEntries(seats.map(s => [s.label, s]));
+  assert.deepEqual(Object.keys(byLabel).sort(), ["N01", "N02"], "the un-snapshotted custom seat is gone");
+  assert.equal(byLabel.N01.status, "assigned");
+  assert.equal(byLabel.N01.employee_id, alice);
+  assert.equal(byLabel.N01.id, n01.id, "surviving draft rows keep their ids");
+  assert.equal(byLabel.N02.zone, "North", "zone reverted to the snapshot value");
+
+  const coords = await db.query("select x from public.seats where id = $1", [n01.id]);
+  assert.equal(Number(coords.rows[0].x), 0.5, "moved seat returns to the snapshot position");
+});
+
+test("restore_draft_snapshot: refuses when an original (non-custom) seat is missing from the snapshot", async () => {
+  // N01 is deliberately left unbound: it only needs to exist in the draft
+  // (excluded from the snapshot below is the point of the test) and its id
+  // is never read.
+  await db.seedSeat({ label: "N01", status: "available" });
+  const n02 = await db.seedSeat({ label: "N02", status: "available" });
+
+  // The snapshot omits N01 (is_custom: false) entirely. Unlike an eligible
+  // custom seat, an original can never be silently dropped by a restore.
+  const snapshotSeats = [toSnapshotSeat(n02)];
+
+  await expectThrow(
+    db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb)", [JSON.stringify(snapshotSeats), JSON.stringify([])]),
+    { match: /protected or occupied seats are missing/ }
+  );
+
+  const seats = await db.draftSeats();
+  assert.deepEqual(seats.map(s => s.label).sort(), ["N01", "N02"], "the whole restore rolled back; N01 still exists");
+});
+
+test("restore_draft_snapshot: re-upserts employees from the snapshot and never deletes one absent from it", async () => {
+  const alice = await db.seedEmployee({ fullName: "Alice", position: "Analyst" });
+  const bob = await db.seedEmployee({ fullName: "Bob" }); // absent from the snapshot below
+  const n01 = await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+
+  const snapshotSeats = [toSnapshotSeat(n01)];
+  const snapshotEmployees = [toSnapshotEmployee(await employeeRow(alice))];
+
+  // Diverge Alice's live record so the restore has something to re-upsert.
+  await db.query("update public.employees set position = 'Manager' where id = $1", [alice]);
+
+  await db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb)", [
+    JSON.stringify(snapshotSeats),
+    JSON.stringify(snapshotEmployees)
+  ]);
+
+  const aliceAfter = await employeeRow(alice);
+  assert.equal(aliceAfter.position, "Analyst", "the snapshot's employee fields are re-upserted");
+
+  const bobAfter = await db.query("select id, active from public.employees where id = $1", [bob]);
+  assert.equal(bobAfter.rows.length, 1, "an employee absent from the snapshot is never deleted (owner-confirmed contract)");
+  assert.equal(bobAfter.rows[0].active, true);
+});
+
+test("restore_draft_snapshot: enforces the concurrency fence on stale expected_draft_seats (MLS02)", async () => {
+  const n01 = await db.seedSeat({ label: "N01", status: "available" });
+  const snapshotSeats = [toSnapshotSeat(n01)];
+  const staleExpectations = JSON.stringify([{ id: n01.id, updated_at: STALE_TS }]);
+
+  await expectThrow(
+    db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb, $3::jsonb)", [
+      JSON.stringify(snapshotSeats),
+      JSON.stringify([]),
+      staleExpectations
+    ]),
+    { code: "MLS02", match: /changed in another session/ }
+  );
+});
+
+test("restore_draft_snapshot: requires admin", async () => {
+  const n01 = await db.seedSeat({ label: "N01", status: "available" });
+  const snapshotSeats = [toSnapshotSeat(n01)];
+  await db.actAsViewer();
+  await expectThrow(
+    db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb)", [JSON.stringify(snapshotSeats), JSON.stringify([])]),
+    { code: "42501", match: /Admin permission required/ }
+  );
+});
+
+// ---------------------------------------------------------------------------
 // rename_department
 // ---------------------------------------------------------------------------
 
@@ -374,6 +521,116 @@ test("rename_department: rewrites employees and toggles the option rows", async 
   const byName = Object.fromEntries(options.rows.map(o => [o.name, o.active]));
   assert.equal(byName.New, true);
   assert.equal(byName.Old, false);
+});
+
+// ---------------------------------------------------------------------------
+// delete_department
+// ---------------------------------------------------------------------------
+//
+// Unlike rename_department, delete_department does NOT reject an in-use
+// department: it clears employees.department to null and deactivates the
+// option row (read from the live RPC body, 20260702100000).
+
+test("delete_department: clears the department from matching employees and deactivates the option", async () => {
+  await db.query("insert into public.department_options(name, active) values ('Ops', true)");
+  const alice = await db.seedEmployee({ fullName: "Alice", department: "Ops" });
+
+  await db.query("select public.delete_department($1)", ["Ops"]);
+
+  const emp = await db.query("select department from public.employees where id = $1", [alice]);
+  assert.equal(emp.rows[0].department, null, "the employee's department is cleared, not the employee itself");
+  const opt = await db.query("select active from public.department_options where name = 'Ops'");
+  assert.equal(opt.rows[0]?.active, false);
+});
+
+test("delete_department: requires admin", async () => {
+  await db.query("insert into public.department_options(name, active) values ('Ops', true)");
+  await db.actAsViewer();
+  await expectThrow(db.query("select public.delete_department($1)", ["Ops"]), {
+    code: "42501",
+    match: /Admin permission required/
+  });
+});
+
+// ---------------------------------------------------------------------------
+// rename_zone
+// ---------------------------------------------------------------------------
+//
+// Unlike rename_department (case-insensitive, trim-safe, matches employees
+// with no layer concept), rename_zone matches seats.zone by exact string
+// equality and only ever rewrites layer = 'draft' seats (read from the live
+// RPC body, 20260702100000) — the published layer is untouched until the
+// next publish.
+
+test("rename_zone: rewrites draft seats and toggles the option rows", async () => {
+  await db.query("insert into public.zone_options(name, active) values ('North', true)");
+  const n01 = await db.seedSeat({ label: "N01", status: "available", zone: "North" });
+
+  await db.query("select public.rename_zone($1, $2)", ["North", "Northwest"]);
+
+  const seat = await db.query("select zone from public.seats where id = $1", [n01.id]);
+  assert.equal(seat.rows[0].zone, "Northwest");
+  const options = await db.query("select name, active from public.zone_options order by name");
+  const byName = Object.fromEntries(options.rows.map(o => [o.name, o.active]));
+  assert.equal(byName.Northwest, true);
+  assert.equal(byName.North, false);
+});
+
+test("rename_zone: only rewrites draft-layer seats, leaving published untouched", async () => {
+  await db.query("insert into public.zone_options(name, active) values ('North', true)");
+  const draftSeat = await db.seedSeat({ label: "N01", status: "available", zone: "North" });
+  const publishedSeat = await db.seedSeat({ label: "N02", status: "available", zone: "North", layer: "published" });
+
+  await db.query("select public.rename_zone($1, $2)", ["North", "Northwest"]);
+
+  const draft = await db.query("select zone from public.seats where id = $1", [draftSeat.id]);
+  assert.equal(draft.rows[0].zone, "Northwest");
+  const published = await db.query("select zone from public.seats where id = $1", [publishedSeat.id]);
+  assert.equal(published.rows[0].zone, "North", "rename_zone does not touch the published layer");
+});
+
+test("rename_zone: requires admin", async () => {
+  await db.query("insert into public.zone_options(name, active) values ('North', true)");
+  await db.actAsViewer();
+  await expectThrow(db.query("select public.rename_zone($1, $2)", ["North", "Northwest"]), {
+    code: "42501",
+    match: /Admin permission required/
+  });
+});
+
+// ---------------------------------------------------------------------------
+// delete_zone
+// ---------------------------------------------------------------------------
+
+test("delete_zone: clears the zone from draft seats and deactivates the option", async () => {
+  await db.query("insert into public.zone_options(name, active) values ('North', true)");
+  const n01 = await db.seedSeat({ label: "N01", status: "available", zone: "North" });
+
+  await db.query("select public.delete_zone($1)", ["North"]);
+
+  const seat = await db.query("select zone from public.seats where id = $1", [n01.id]);
+  assert.equal(seat.rows[0].zone, null);
+  const opt = await db.query("select active from public.zone_options where name = 'North'");
+  assert.equal(opt.rows[0]?.active, false);
+});
+
+test("delete_zone: only clears draft-layer seats, leaving published untouched", async () => {
+  await db.query("insert into public.zone_options(name, active) values ('North', true)");
+  const publishedSeat = await db.seedSeat({ label: "N01", status: "available", zone: "North", layer: "published" });
+
+  await db.query("select public.delete_zone($1)", ["North"]);
+
+  const published = await db.query("select zone from public.seats where id = $1", [publishedSeat.id]);
+  assert.equal(published.rows[0].zone, "North", "delete_zone does not touch the published layer");
+});
+
+test("delete_zone: requires admin", async () => {
+  await db.query("insert into public.zone_options(name, active) values ('North', true)");
+  await db.actAsViewer();
+  await expectThrow(db.query("select public.delete_zone($1)", ["North"]), {
+    code: "42501",
+    match: /Admin permission required/
+  });
 });
 
 // ---------------------------------------------------------------------------
