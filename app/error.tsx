@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/design-system";
+import { planChunkErrorRecovery } from "@/lib/chunkLoadRecovery";
 
 // Route error boundary for every non-admin segment (viewer map, login, auth
 // callbacks). Without one, a failed Supabase query in app/page.tsx renders
@@ -21,6 +22,21 @@ export default function ViewerError({
   reset: () => void;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // A tab left open across a deploy throws ChunkLoadError on its next lazy
+  // import, and `reset()` cannot fix that — it re-renders against the same
+  // purged URL. Reload once to pick up the new HTML; the guard inside
+  // planChunkErrorRecovery keeps a still-broken deploy from looping.
+  useEffect(() => {
+    const recovery = planChunkErrorRecovery(
+      error,
+      typeof window === "undefined" ? null : window.sessionStorage,
+      Date.now()
+    );
+    if (recovery === "reload") {
+      window.location.reload();
+    }
+  }, [error]);
 
   // The boundary swaps the whole page out from under the user. Without an
   // explicit handoff, focus stays on a node that no longer exists and screen

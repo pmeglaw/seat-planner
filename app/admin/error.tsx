@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/design-system";
+import { planChunkErrorRecovery } from "@/lib/chunkLoadRecovery";
 
 // Route error boundary for the /admin subtree. All three admin pages throw on a
 // failed query (app/admin/page.tsx:80, management/page.tsx:63,
@@ -21,6 +22,21 @@ export default function AdminError({
   reset: () => void;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // An admin tab left open across a deploy throws ChunkLoadError on its next
+  // lazy import; `reset()` re-renders against the same purged URL and can never
+  // clear it. Reloading is safe here because the draft layer is server state —
+  // only the (already lost) unsaved edit in this render is at stake.
+  useEffect(() => {
+    const recovery = planChunkErrorRecovery(
+      error,
+      typeof window === "undefined" ? null : window.sessionStorage,
+      Date.now()
+    );
+    if (recovery === "reload") {
+      window.location.reload();
+    }
+  }, [error]);
 
   // The boundary replaces the page; focus must be moved explicitly or it is
   // left on a detached node and nothing is announced.
