@@ -2019,13 +2019,23 @@ export function SeatMap({
     const savedPoint = movedSeat
       ? visualPointToSavedPoint(visualPoint, { source: movedSeat })
       : visualPointToSavedPoint(visualPoint);
+    // Fence on the seat as it stood when the drag began — the pointermove
+    // handler rewrites x/y locally but never updated_at, so the pre-drag
+    // snapshot is what this client actually believes is current.
+    const expectedUpdatedAt = beforeSnapshot.seats.find(seat => seat.id === seatId)?.updated_at ?? null;
 
     startTransition(async () => {
       setMutationInFlight(true);
       try {
         setActionError(null);
         setActionNotice(null);
-        const updated = await moveSeatAction({ seatId, x: savedPoint.x, y: savedPoint.y });
+        const result = await moveSeatAction({ seatId, x: savedPoint.x, y: savedPoint.y, expectedUpdatedAt });
+        if (!result.ok) {
+          applyRestoredDraftPayload(beforeSnapshot);
+          handleStaleDraft(result.message);
+          return;
+        }
+        const updated = result.seat;
         const afterSeats = replaceSeat(beforeSnapshot.seats, updated);
         recordDraftHistory(`Move ${updated.label}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
         setLocalSeats(afterSeats);
@@ -2055,13 +2065,19 @@ export function SeatMap({
     const seatLabel = selectedSeat.label;
     const target = selectedSeatPublishedPosition;
     const beforeSnapshot = captureDraftSnapshot();
+    const expectedUpdatedAt = selectedSeat.updated_at ?? null;
 
     startTransition(async () => {
       setMutationInFlight(true);
       try {
         setActionError(null);
         setActionNotice(null);
-        const updated = await moveSeatAction({ seatId, x: target.x, y: target.y });
+        const result = await moveSeatAction({ seatId, x: target.x, y: target.y, expectedUpdatedAt });
+        if (!result.ok) {
+          handleStaleDraft(result.message);
+          return;
+        }
+        const updated = result.seat;
         const afterSeats = replaceSeat(beforeSnapshot.seats, updated);
         recordDraftHistory(`Move ${updated.label}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
         setLocalSeats(afterSeats);

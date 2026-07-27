@@ -42,7 +42,7 @@ test("move-seat action updates one draft seat without publishing", async () => {
   assert.match(moveAction[0], /const supabase = await requireAdmin\(\)/);
   assert.match(moveAction[0], /validateSeatCoordinates\(input\.x, input\.y\)/);
   assert.match(moveAction[0], /\.from\("seats"\)[\s\S]*\.update\(\{ x: point\.x, y: point\.y \}\)[\s\S]*\.eq\("id", input\.seatId\)[\s\S]*\.eq\("layer", "draft"\)/);
-  assert.match(moveAction[0], /return getDraftSeatById\(supabase, input\.seatId\)/);
+  assert.match(moveAction[0], /return \{ ok: true, seat: await getDraftSeatById\(supabase, input\.seatId\) \}/);
   assert.doesNotMatch(moveAction[0], /\.eq\("layer", "published"\)|publishSeatMapAction|publish_seat_map|revalidatePath\("\/"\)/);
 });
 
