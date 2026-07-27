@@ -285,3 +285,73 @@ test("persisted history is adopted only while the live draft matches its edge sn
   // Empty stacks carry nothing worth adopting.
   assert.equal(draftHistory.canAdoptPersistedHistory(draftHistory.createDraftHistory(), before), false);
 });
+
+// --- Entry labels -----------------------------------------------------------
+//
+// The label is load-bearing, not just display text: redo parses it back to
+// learn which seat an "Add" entry created so it can reselect that seat. Builder
+// and parser previously lived ~500 lines apart in SeatMap.tsx with nothing
+// pinning the format between them.
+
+function labelSeat(overrides = {}) {
+  return { id: "s1", label: "W13", status: "available", employee_id: null, ...overrides };
+}
+
+function snapshotOf(seats) {
+  return { seats, employees: [] };
+}
+
+test("an added-seat label round-trips through build and parse", () => {
+  const built = draftHistory.addedSeatHistoryLabel("W13");
+  assert.equal(built, "Add W13");
+  assert.equal(draftHistory.parseAddedSeatLabel(built), "W13");
+});
+
+test("labels containing spaces and punctuation survive the round-trip", () => {
+  for (const seatLabel of ["W13", "South Office 2", "CW-01", "Add"]) {
+    assert.equal(
+      draftHistory.parseAddedSeatLabel(draftHistory.addedSeatHistoryLabel(seatLabel)),
+      seatLabel,
+      `round-trip should preserve ${seatLabel}`
+    );
+  }
+});
+
+test("parseAddedSeatLabel returns null for every non-add entry", () => {
+  // Null means "nothing to reselect", which is correct for these.
+  for (const other of ["Move W13", "Vacate W13", "Undo", "Added W13", "add W13", ""]) {
+    assert.equal(draftHistory.parseAddedSeatLabel(other), null, `${other} is not an add entry`);
+  }
+});
+
+test("describeSeatUpdate names the assignment transitions before the status change", () => {
+  // Assigning and vacating also move the status, so they must be reported as
+  // themselves rather than as the vaguer "Change status".
+  const assignedBefore = snapshotOf([labelSeat({ employee_id: "emp-1", status: "assigned" })]);
+  const openBefore = snapshotOf([labelSeat()]);
+
+  assert.equal(
+    draftHistory.describeSeatUpdate(assignedBefore, labelSeat({ employee_id: null, status: "available" })),
+    "Vacate W13"
+  );
+  assert.equal(
+    draftHistory.describeSeatUpdate(openBefore, labelSeat({ employee_id: "emp-1", status: "assigned" })),
+    "Assign W13"
+  );
+  assert.equal(
+    draftHistory.describeSeatUpdate(assignedBefore, labelSeat({ employee_id: "emp-2", status: "assigned" })),
+    "Reassign W13"
+  );
+});
+
+test("describeSeatUpdate falls back to status and then to a generic update", () => {
+  const openBefore = snapshotOf([labelSeat()]);
+
+  assert.equal(
+    draftHistory.describeSeatUpdate(openBefore, labelSeat({ status: "reserved" })),
+    "Change status W13"
+  );
+  assert.equal(draftHistory.describeSeatUpdate(openBefore, labelSeat()), "Update W13");
+  // A seat absent from the before-snapshot has no transition to describe.
+  assert.equal(draftHistory.describeSeatUpdate(snapshotOf([]), labelSeat()), "Update W13");
+});
