@@ -60,12 +60,14 @@ Add/adjust these as `--sp-*` design tokens in `app/globals.css` (surface through
 
 ## 3. Top bar (app shell)
 
-A **slim 48px** dark (`#161616`) bar, full width, `z` above everything. (Was 40px
-through 2026-07-22; the owner raised the Filter and Search fields to Carbon `md` =
-40px, and a 40px field in a 40px bar sits flush against both edges — so the bar
-took 48px to keep 4px of clearance. Every full-height item in the bar tracks this
-number: the tool buttons, the Viewer/Admin shortcuts, and Publish, or the active
-underline stops landing on the bar's bottom edge.) Left → right:
+A dark (`#161616`) bar, full width, `z` above everything. **Now 36px** — #216
+slimmed the original 48px bar to 40px (map) / 36px (sub-pages), and #221 then
+matched the map bar to the sub-pages' 36px so the whole app shares one chrome
+height. Every full-height item in the bar tracks this number: the tool buttons,
+the Viewer/Admin shortcuts, and Publish, or the active underline stops landing
+on the bar's bottom edge. (This spec originally called for 48px, reasoning that
+a 40px Search/Filter field needed 4px of clearance on each side; the owner
+later chose the tighter 36px instead — see #216/#221.) Left → right:
 
 1. **Brand:** menu glyph + "Megeredchian Law · Seat Planner".
 2. Divider, then the **Filter dropdown immediately to the LEFT of the Search field** (this pairing is deliberate). Filter opens a menu (Department / Zone / Status); Search is a live text field.
@@ -87,7 +89,7 @@ underline stops landing on the bar's bottom edge.) Left → right:
 
 ---
 
-## 5. Seat markers — PROTECTED, do not restyle
+## 5. Seat markers — the frozen contract is anchor + calibration, not the look
 
 > **Marker fills are contrast-checked against the CREAM FLOOR PLAN, not against
 > white.** The floor-plan raster is warm beige, and warm/ivory marker fills were
@@ -96,7 +98,23 @@ underline stops landing on the bar's bottom edge.) Left → right:
 > clearly tinted rather than warm. Measured 2026-07-02; the numbers are not
 > recomputable from anything else in the repo, so they are recorded here.
 
-The seat pills (the rounded plate with the status bar + code/name, and the selected dark-orange state) are **already correct in the live published app** and must ship **pixel-identical**. Do **not** restyle `SeatMarker` or change its markup, colors, sizing, or the selected-state look. The redesign works *around* the markers. (The separate, later tokenization of the marker hex is out of scope here — see the `RISKS.md` backlog.)
+**Correction: the pills were not shipped pixel-identical, and that's fine.**
+This spec originally froze the seat pills' appearance. Since then `SeatMarker`
+has been deliberately restyled several times, owner-directed — capsule/stadium
+pills (#227), a door-plate nameplate treatment (#240), inline names shortened
+to first name + last initial (#238), and private-office nameplate sizing
+(#243/#244), among others. The pills' look is not frozen; what
+**is** frozen is the **anchor + calibration**: `pointToStyle({x: seat.x, y:
+seat.y})` and the calibration constants in `lib/mapLayoutTransform.ts` must
+keep placing every marker at its true saved coordinate, guarded by
+`tests/desktop-seat-marker-system-source.test.mjs`. Restyle the pills freely;
+never change how a seat's `x`/`y` maps to its on-screen position. (The
+separate tokenization of the marker hex remains tracked in the `RISKS.md`
+backlog.)
+
+`app/concepts/map-redesign` is the gated, prototype-only implementation of the
+"Counsel Ink" direction this document's header already names as superseded —
+it is not part of the shipped viewer/admin flows (see CLAUDE.md).
 
 ---
 

@@ -6,7 +6,7 @@ Production: [seats.megeredchianlaw.com](https://seats.megeredchianlaw.com) (depl
 
 ## Stack
 
-Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS 3 · Supabase (Auth + Postgres + Row Level Security) · Next.js server actions.
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 3 · Supabase (Auth + Postgres + Row Level Security) · Next.js server actions.
 
 ## Getting started
 
@@ -15,6 +15,12 @@ npm install
 cp .env.local.example .env.local   # then fill in your Supabase values
 npm run dev                        # http://localhost:3000
 ```
+
+> ⚠️ **Local dev writes to PRODUCTION.** `.env.local` points
+> `NEXT_PUBLIC_SUPABASE_URL` at the live Supabase project — there is no dev or
+> staging database. Draft-layer seat edits are safe (viewers only ever read
+> published data), but **Publish updates the live map for real viewers** —
+> treat any local publish as a production deploy.
 
 Required environment variables (`.env.local`):
 
