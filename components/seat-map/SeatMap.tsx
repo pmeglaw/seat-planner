@@ -7,14 +7,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   DRAFT_HISTORY_STORAGE_KEY,
+  addedSeatHistoryLabel,
   canAdoptPersistedHistory,
   canRedoDraftHistory,
   canUndoDraftHistory,
   clearDraftHistory,
   createDraftHistory,
   createDraftSnapshot,
+  describeSeatUpdate,
   deserializeDraftHistory,
   draftStatesEquivalent,
+  parseAddedSeatLabel,
   pushDraftHistory,
   redoDraftHistory,
   serializeDraftHistory,
@@ -1329,16 +1332,6 @@ export function SeatMap({
     setDraftHistory(current => pushDraftHistory(current, { label, before, after }));
   }
 
-  function describeSeatUpdate(before: DraftSnapshot, updated: SeatWithEmployee) {
-    const previous = before.seats.find(seat => seat.id === updated.id);
-    if (!previous) return `Update ${updated.label}`;
-    if (previous.employee_id && !updated.employee_id) return `Vacate ${updated.label}`;
-    if (!previous.employee_id && updated.employee_id) return `Assign ${updated.label}`;
-    if (previous.employee_id !== updated.employee_id) return `Reassign ${updated.label}`;
-    if (previous.status !== updated.status) return `Change status ${updated.label}`;
-    return `Update ${updated.label}`;
-  }
-
   // The draft-concurrency fence fired: another admin session changed the draft
   // after this page loaded it. The local undo/redo baselines (and any pending
   // mode) predate those edits, so keeping them would re-arm the same stale
@@ -1425,7 +1418,7 @@ export function SeatMap({
       handleStaleDraft("The draft changed in another session after this edit was undone, so redoing it is no longer safe.");
       return;
     }
-    const addSeatLabel = result.entry.label.match(/^Add (.+)$/)?.[1];
+    const addSeatLabel = parseAddedSeatLabel(result.entry.label) ?? undefined;
     restoreHistorySnapshot(result.snapshot, result.history, "Redo", `Redid ${result.entry.label}.`, addSeatLabel);
   }
 
@@ -1928,7 +1921,7 @@ export function SeatMap({
             visualY: visualPoint.y
           });
           const afterSeats = replaceSeat(beforeSnapshot.seats, created);
-          recordDraftHistory(`Add ${created.label}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
+          recordDraftHistory(addedSeatHistoryLabel(created.label), beforeSnapshot, afterSeats, beforeSnapshot.employees);
           setLocalSeats(afterSeats);
           setSelectedSeatId(created.id);
           setInspectorDirty(false);

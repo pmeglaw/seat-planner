@@ -87,7 +87,12 @@ test("redo of an added seat reselects the restored seat", async () => {
 
   assert.ok(redoFunction, "redoDraftEdit should remain source-visible.");
   assert.ok(restoreFunction, "restoreHistorySnapshot should remain source-visible.");
-  assert.match(redoFunction[0], /result\.entry\.label\.match\(\/\^Add/);
+  // The label parse moved into lib/draftHistory.ts, where addedSeatHistoryLabel
+  // and parseAddedSeatLabel are round-tripped by tests/draft-history.test.mjs —
+  // builder and parser can no longer drift apart. The contract this line
+  // guards is unchanged: redo must still derive the added seat's label from
+  // the entry so restoreHistorySnapshot can reselect it.
+  assert.match(redoFunction[0], /parseAddedSeatLabel\(result\.entry\.label\)/);
   assert.match(redoFunction[0], /restoreHistorySnapshot\(result\.snapshot, result\.history, "Redo", `Redid \$\{result\.entry\.label\}\.`, addSeatLabel\)/);
   assert.match(restoreFunction[0], /setSelectedSeatId\(restoredSeat\.id\)/);
   assert.match(restoreFunction[0], /setInspectorCollapsed\(false\)/);

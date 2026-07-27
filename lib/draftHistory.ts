@@ -153,6 +153,49 @@ export function canRedoDraftHistory(history: DraftHistoryState) {
   return history.redoStack.length > 0;
 }
 
+// --- Entry labels -----------------------------------------------------------
+//
+// A history entry's label is not just display text. Redo PARSES it back to
+// learn which seat an "Add" entry created, so it can reselect that seat after
+// restoring. Builder and parser used to sit ~500 lines apart in SeatMap.tsx
+// with nothing tying them together: renaming the label would have silently
+// stopped redo reselecting the seat, with no test failing. Keeping both here,
+// round-tripped by one test, makes that drift impossible.
+
+const ADDED_SEAT_LABEL_PATTERN = /^Add (.+)$/;
+
+/** History label for creating a seat. Must stay parseable by parseAddedSeatLabel. */
+export function addedSeatHistoryLabel(seatLabel: string): string {
+  return `Add ${seatLabel}`;
+}
+
+/**
+ * The seat label an "Add" entry created, or null for any other entry.
+ *
+ * Redo uses this to reselect the restored seat; returning null simply means
+ * "nothing to reselect", which is the correct behaviour for every other label.
+ */
+export function parseAddedSeatLabel(historyLabel: string): string | null {
+  return historyLabel.match(ADDED_SEAT_LABEL_PATTERN)?.[1] ?? null;
+}
+
+/**
+ * Describe what an edit did to a seat, for the undo/redo notice.
+ *
+ * Order matters: the assignment transitions are checked before the generic
+ * status change, because assigning or vacating also moves the status and would
+ * otherwise be reported as the vaguer "Change status".
+ */
+export function describeSeatUpdate(before: DraftSnapshot, updated: SeatWithEmployee): string {
+  const previous = before.seats.find(seat => seat.id === updated.id);
+  if (!previous) return `Update ${updated.label}`;
+  if (previous.employee_id && !updated.employee_id) return `Vacate ${updated.label}`;
+  if (!previous.employee_id && updated.employee_id) return `Assign ${updated.label}`;
+  if (previous.employee_id !== updated.employee_id) return `Reassign ${updated.label}`;
+  if (previous.status !== updated.status) return `Change status ${updated.label}`;
+  return `Update ${updated.label}`;
+}
+
 // --- Persistence (sessionStorage) -------------------------------------------
 //
 // The history stacks survive a page reload by round-tripping through
