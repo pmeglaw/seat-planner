@@ -62,28 +62,14 @@ begin
   update public.profiles set role = 'admin' where id = admin_id;
 end $$;
 
--- Replicate the hosted platform's bootstrap grants.
+-- No table grants here. They lived in this file only to compensate for
+-- supabase/migrations/* never declaring them; 20260727190000_declare_table_grants.sql
+-- now does that properly, so the migrations alone stand up a working project.
 --
--- FINDING, worth fixing properly: supabase/migrations/* never grants DML on
--- public tables to anon/authenticated/service_role. It gets away with it in
--- production because Supabase Cloud sets `alter default privileges ... grant
--- all on tables to anon, authenticated, service_role` when a project is
--- created. The local stack has no such history, so `authenticated` arrives
--- holding only TRIGGER/REFERENCES/TRUNCATE and every viewer query 403s —
--- the seat map renders Next's generic server-error page.
---
--- The consequence outside this file: a project rebuilt from these migrations
--- alone (disaster recovery, a second environment) would be completely
--- non-functional, and nothing in the repo says so. The durable fix is a
--- migration declaring these grants; that touches production, so it is raised
--- rather than done here.
---
--- Broad grants with restrictive RLS IS the Supabase model — row access is still
--- decided by the policies the migrations do declare — so applying them here
--- makes the local stack behave like production rather than diverge from it.
-grant usage on schema public to anon, authenticated, service_role;
-grant all on all tables in schema public to anon, authenticated, service_role;
-grant all on all sequences in schema public to anon, authenticated, service_role;
+-- If a fresh stack starts returning 42501 again, the fix belongs in the
+-- migration that created the offending table — putting grants back here would
+-- make the tests pass while leaving a rebuilt project broken, which is exactly
+-- the gap that hid here the first time.
 
 -- Viewers read published seats joined against the published_employees
 -- snapshot, which only publish_seat_map() ever writes. Without a snapshot the
