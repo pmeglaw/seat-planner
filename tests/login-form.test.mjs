@@ -1,5 +1,6 @@
 import test, { before, afterEach } from "node:test";
 import assert from "node:assert/strict";
+import { renderToStaticMarkup } from "react-dom/server";
 import {
   loadComponent,
   renderElement,
@@ -55,6 +56,28 @@ async function mountLogin({ url = "/login", results = {} } = {}) {
 const type = (selector, value) => act(async () => fireEvent.change(document.querySelector(selector), { target: { value } }));
 const submit = () => act(async () => fireEvent.submit(document.querySelector("form")));
 const flush = () => act(async () => {});
+
+// UX-01 (#276): before hydration there is no onSubmit handler, so an enabled
+// submit button ran the browser's NATIVE submit — a GET back to /login that
+// reloaded the page and discarded whatever had been typed, with no message.
+// The server-rendered markup must therefore ship the button disabled, and the
+// label must say why rather than leaving a silently dead control.
+test("server-rendered markup ships the submit button disabled and says why", async () => {
+  const { supabase } = makeSupabase();
+  configureContext({ router: { push: () => {} }, supabase });
+  const html = renderToStaticMarkup(React.createElement(LoginForm));
+
+  assert.match(html, /Starting up…/, "pre-hydration label explains the disabled state");
+  assert.match(html, /disabled/, "pre-hydration submit is disabled");
+  assert.doesNotMatch(html, /Sign in<\/button>/, "the live label must not render before hydration");
+});
+
+test("hydration enables the submit button and restores its label", async () => {
+  await mountLogin();
+  const submitButton = screen.getByRole("button", { name: "Sign in" });
+  assert.equal(submitButton.disabled, false, "hydrated submit is clickable");
+  assert.doesNotMatch(document.body.innerHTML, /Starting up…/);
+});
 
 test("renders the sign-in form with both auth modes", async () => {
   await mountLogin();
