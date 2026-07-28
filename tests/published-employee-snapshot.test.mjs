@@ -95,7 +95,12 @@ test("viewer page reads only the published employee snapshot", () => {
 
 test("admin publish review diffs live employees against the viewer snapshot", () => {
   assert.match(adminSource, /from\("published_employees"\)/);
-  assert.match(adminSource, /publishedEmployees=\{\(publishedEmployees \?\? \[\]\) as Employee\[\]\}/);
+  // Same intent as before — the viewer snapshot reaches SeatMap as its own
+  // prop, so the publish review can diff live employees against it. The value
+  // is now a non-null Employee[] from fetchAllRows rather than a cast of a
+  // possibly-null query result, so only the spelling moved. The query that
+  // feeds it is still asserted on the line above.
+  assert.match(adminSource, /publishedEmployees=\{publishedEmployees\}/);
   assert.match(seatMapSource, /employees: localEmployees,\s+publishedEmployees: localPublishedEmployees/);
   assert.match(seatMapSource, /employeeDetailChanges/);
 });

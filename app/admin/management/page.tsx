@@ -1,5 +1,6 @@
 import { AdminManagementPanel } from "@/components/admin-management/AdminManagementPanel";
 import { AdminShellBar } from "@/components/ui/AdminShellBar";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
@@ -35,17 +36,29 @@ export default async function AdminManagementPage({
     );
   }
 
-  const { data: seats, error: seatsError } = await supabase
-    .from("seats")
-    .select("*, employee:employees(*)")
-    .eq("layer", "draft")
-    .order("label");
+  // Paged: an unbounded select is silently truncated at the project row cap,
+  // which here would hide people from the directory with no indication.
+  const seats = await fetchAllRows<SeatWithEmployee>(
+    (from, to) =>
+      supabase
+        .from("seats")
+        .select("*, employee:employees(*)", { count: "exact" })
+        .eq("layer", "draft")
+        .order("label")
+        .range(from, to),
+    { label: "draft seats" }
+  );
 
-  const { data: employees, error: employeesError } = await supabase
-    .from("employees")
-    .select("*")
-    .eq("active", true)
-    .order("full_name");
+  const employees = await fetchAllRows<Employee>(
+    (from, to) =>
+      supabase
+        .from("employees")
+        .select("*", { count: "exact" })
+        .eq("active", true)
+        .order("full_name")
+        .range(from, to),
+    { label: "employees" }
+  );
 
   const { data: departments, error: departmentsError } = await supabase
     .from("department_options")
@@ -59,8 +72,9 @@ export default async function AdminManagementPage({
     .eq("active", true)
     .order("name");
 
-  if (seatsError || employeesError || departmentsError || zonesError) {
-    throw new Error(seatsError?.message ?? employeesError?.message ?? departmentsError?.message ?? zonesError?.message);
+  // Seat and employee failures already threw inside fetchAllRows.
+  if (departmentsError || zonesError) {
+    throw new Error(departmentsError?.message ?? zonesError?.message);
   }
 
   return (
@@ -70,8 +84,8 @@ export default async function AdminManagementPage({
           the panel content. */}
       <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />
       <AdminManagementPanel
-        seats={(seats ?? []) as SeatWithEmployee[]}
-        employees={(employees ?? []) as Employee[]}
+        seats={seats}
+        employees={employees}
         departmentOptions={(departments ?? []) as DepartmentOption[]}
         zoneOptions={(zones ?? []) as ZoneOption[]}
         initialTab={initialTab}

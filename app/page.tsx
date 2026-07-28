@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { ViewerSeatFinder } from "@/components/seat-map/ViewerSeatFinder";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 import { createClient } from "@/lib/supabase/server";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
@@ -30,20 +31,32 @@ export default async function HomePage() {
   // which is the admins' draft-side working set. Employee edits therefore
   // wait for publish, exactly like seat edits. The employee join is stitched
   // here because seats' FK points at employees, not the snapshot.
-  const { data: seatRows, error: seatsError } = await supabase
-    .from("seats")
-    .select("*")
-    .eq("layer", "published")
-    .order("label");
+  // Paged, not a bare select: PostgREST truncates at the project row cap and
+  // says nothing, which would render a partial floor plan that looks whole.
+  const seatRows = await fetchAllRows<SeatWithEmployee>(
+    (from, to) =>
+      supabase
+        .from("seats")
+        .select("*", { count: "exact" })
+        .eq("layer", "published")
+        .order("label")
+        .range(from, to),
+    { label: "published seats" }
+  );
 
-  const { data: employees, error: employeesError } = await supabase
-    .from("published_employees")
-    .select("*")
-    .eq("active", true)
-    .order("full_name");
+  const employees = await fetchAllRows<Employee>(
+    (from, to) =>
+      supabase
+        .from("published_employees")
+        .select("*", { count: "exact" })
+        .eq("active", true)
+        .order("full_name")
+        .range(from, to),
+    { label: "published employees" }
+  );
 
-  const employeesById = new Map(((employees ?? []) as Employee[]).map(employee => [employee.id, employee]));
-  const seats = ((seatRows ?? []) as SeatWithEmployee[]).map(seat => ({
+  const employeesById = new Map(employees.map(employee => [employee.id, employee]));
+  const seats = seatRows.map(seat => ({
     ...seat,
     employee: seat.employee_id ? employeesById.get(seat.employee_id) ?? null : null
   }));
@@ -59,10 +72,6 @@ export default async function HomePage() {
     .select("*")
     .eq("active", true)
     .order("name");
-
-  if (seatsError || employeesError) {
-    throw new Error(seatsError?.message ?? employeesError?.message);
-  }
 
   // publish_seat_map() re-inserts every published row, so updated_at defaults
   // to the publish moment — the max over published seats IS the last publish

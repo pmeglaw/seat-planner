@@ -1,5 +1,6 @@
 import { DataUtilitiesPanel } from "@/components/admin-settings/DataUtilitiesPanel";
 import { AdminShellBar } from "@/components/ui/AdminShellBar";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 
@@ -22,27 +23,44 @@ export default async function AdminSettingsPage() {
     );
   }
 
-  const { data: seats, error: seatsError } = await supabase
-    .from("seats")
-    .select("*, employee:employees(*)")
-    .eq("layer", "draft")
-    .order("label");
+  // Paged: an unbounded select is silently truncated at the project row cap.
+  // This page feeds CSV export and the JSON snapshot, so a short read would
+  // write an incomplete backup that still looks like a complete one.
+  // Two explicit queries, not one parameterised helper: which layer a surface
+  // reads is the invariant this codebase is built on, and it is verified by
+  // grepping these files. A `layer` variable would hide it.
+  const seats = await fetchAllRows<SeatWithEmployee>(
+    (from, to) =>
+      supabase
+        .from("seats")
+        .select("*, employee:employees(*)", { count: "exact" })
+        .eq("layer", "draft")
+        .order("label")
+        .range(from, to),
+    { label: "draft seats" }
+  );
 
-  const { data: publishedSeats, error: publishedSeatsError } = await supabase
-    .from("seats")
-    .select("*, employee:employees(*)")
-    .eq("layer", "published")
-    .order("label");
+  const publishedSeats = await fetchAllRows<SeatWithEmployee>(
+    (from, to) =>
+      supabase
+        .from("seats")
+        .select("*, employee:employees(*)", { count: "exact" })
+        .eq("layer", "published")
+        .order("label")
+        .range(from, to),
+    { label: "published seats" }
+  );
 
-  const { data: employees, error: employeesError } = await supabase
-    .from("employees")
-    .select("*")
-    .eq("active", true)
-    .order("full_name");
-
-  if (seatsError || publishedSeatsError || employeesError) {
-    throw new Error(seatsError?.message ?? publishedSeatsError?.message ?? employeesError?.message);
-  }
+  const employees = await fetchAllRows<Employee>(
+    (from, to) =>
+      supabase
+        .from("employees")
+        .select("*", { count: "exact" })
+        .eq("active", true)
+        .order("full_name")
+        .range(from, to),
+    { label: "employees" }
+  );
 
   return (
     <main className="admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text-primary)]">
@@ -59,9 +77,9 @@ export default async function AdminSettingsPage() {
         </header>
 
         <DataUtilitiesPanel
-          seats={(seats ?? []) as SeatWithEmployee[]}
-          publishedSeats={(publishedSeats ?? []) as SeatWithEmployee[]}
-          employees={(employees ?? []) as Employee[]}
+          seats={seats}
+          publishedSeats={publishedSeats}
+          employees={employees}
         />
       </div>
     </main>

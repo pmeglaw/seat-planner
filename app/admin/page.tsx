@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SeatMap } from "@/components/seat-map/SeatMap";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
@@ -39,30 +40,59 @@ export default async function AdminPage() {
     );
   }
 
-  const { data: seats, error: seatsError } = await supabase
-    .from("seats")
-    .select("*, employee:employees(*)")
-    .eq("layer", "draft")
-    .order("label");
+  // Paged, not bare selects: PostgREST truncates at the project row cap and
+  // says nothing. On the admin map that is worse than on the viewer — an admin
+  // could publish a draft believing it complete when half of it never loaded.
+  //
+  // The two layers stay as two explicit queries rather than one parameterised
+  // helper: which layer each surface reads is the central invariant of this
+  // codebase, and it is asserted by grepping this file
+  // (tests/accessibility-source.test.mjs). A `layer` variable would satisfy the
+  // compiler and quietly destroy that check.
+  const seats = await fetchAllRows<SeatWithEmployee>(
+    (from, to) =>
+      supabase
+        .from("seats")
+        .select("*, employee:employees(*)", { count: "exact" })
+        .eq("layer", "draft")
+        .order("label")
+        .range(from, to),
+    { label: "draft seats" }
+  );
 
-  const { data: publishedSeats, error: publishedSeatsError } = await supabase
-    .from("seats")
-    .select("*, employee:employees(*)")
-    .eq("layer", "published")
-    .order("label");
+  const publishedSeats = await fetchAllRows<SeatWithEmployee>(
+    (from, to) =>
+      supabase
+        .from("seats")
+        .select("*, employee:employees(*)", { count: "exact" })
+        .eq("layer", "published")
+        .order("label")
+        .range(from, to),
+    { label: "published seats" }
+  );
 
-  const { data: employees, error: employeesError } = await supabase
-    .from("employees")
-    .select("*")
-    .eq("active", true)
-    .order("full_name");
+  const employees = await fetchAllRows<Employee>(
+    (from, to) =>
+      supabase
+        .from("employees")
+        .select("*", { count: "exact" })
+        .eq("active", true)
+        .order("full_name")
+        .range(from, to),
+    { label: "employees" }
+  );
 
   // Viewer-facing snapshot, loaded so the publish review can diff live
   // employee details against what viewers currently see.
-  const { data: publishedEmployees, error: publishedEmployeesError } = await supabase
-    .from("published_employees")
-    .select("*")
-    .order("full_name");
+  const publishedEmployees = await fetchAllRows<Employee>(
+    (from, to) =>
+      supabase
+        .from("published_employees")
+        .select("*", { count: "exact" })
+        .order("full_name")
+        .range(from, to),
+    { label: "published employees" }
+  );
 
   const { data: departments, error: departmentsError } = await supabase
     .from("department_options")
@@ -76,8 +106,9 @@ export default async function AdminPage() {
     .eq("active", true)
     .order("name");
 
-  if (seatsError || publishedSeatsError || employeesError || publishedEmployeesError || departmentsError || zonesError) {
-    throw new Error(seatsError?.message ?? publishedSeatsError?.message ?? employeesError?.message ?? publishedEmployeesError?.message ?? departmentsError?.message ?? zonesError?.message);
+  // Seat and employee failures already threw inside fetchAllRows.
+  if (departmentsError || zonesError) {
+    throw new Error(departmentsError?.message ?? zonesError?.message);
   }
 
   return (
@@ -85,10 +116,10 @@ export default async function AdminPage() {
     // nesting a second one trips axe landmark-no-duplicate-main.
     <div className="admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text-primary)]">
       <SeatMap
-        seats={(seats ?? []) as SeatWithEmployee[]}
-        publishedSeats={(publishedSeats ?? []) as SeatWithEmployee[]}
-        employees={(employees ?? []) as Employee[]}
-        publishedEmployees={(publishedEmployees ?? []) as Employee[]}
+        seats={seats}
+        publishedSeats={publishedSeats}
+        employees={employees}
+        publishedEmployees={publishedEmployees}
         departmentOptions={(departments ?? []) as DepartmentOption[]}
         zoneOptions={(zones ?? []) as ZoneOption[]}
         canEdit
