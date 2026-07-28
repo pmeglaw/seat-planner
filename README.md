@@ -12,15 +12,32 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 3 · Supabase 
 
 ```bash
 npm install
-cp .env.local.example .env.local   # then fill in your Supabase values
+npm run db:start                   # local Supabase; applies supabase/migrations
+npm run db:seed                    # local admin + viewer accounts
 npm run dev                        # http://localhost:3000
 ```
 
-> ⚠️ **Local dev writes to PRODUCTION.** `.env.local` points
-> `NEXT_PUBLIC_SUPABASE_URL` at the live Supabase project — there is no dev or
-> staging database. Draft-layer seat edits are safe (viewers only ever read
-> published data), but **Publish updates the live map for real viewers** —
-> treat any local publish as a production deploy.
+`npm run db:start` prints a local API URL and anon key. Put them in `.env.local`,
+or export them for a single run — process environment variables take precedence
+over `.env.local`, so this leaves the file untouched:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 \
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<local anon key> npm run dev
+```
+
+`npm run db:stop` tears the stack down. The seeded accounts are
+`e2e-admin@example.test` and `e2e-viewer@example.test` (password in
+`supabase/seed.sql`) — local-only, and the container is disposable. CI's
+`e2e-auth` job runs the authenticated suite against exactly this stack, so it is
+a supported path, not a workaround.
+
+> ⚠️ **Pointing `.env.local` at the live project makes local dev write to
+> PRODUCTION.** Draft-layer seat edits are still safe (viewers only ever read
+> published data), but **Publish updates the live map for real viewers** — treat
+> any local publish as a production deploy. Prefer the local stack above for all
+> routine work; use the live project only when you specifically need production
+> data in front of you.
 
 Required environment variables (`.env.local`):
 
@@ -41,9 +58,20 @@ Restart the dev server after editing `.env.local`, `tailwind.config.ts`, or Supa
 | --- | --- |
 | `npm run dev` | Start the dev server |
 | `npm run build` | Production build |
+| `npm start` | Serve a production build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Node test runner over `tests/*.test.mjs` (requires installed deps) |
+| `npm run test:db` | SQL tier — applies the real migrations to in-process Postgres (PGlite) and calls the RPCs |
+| `npm run test:ct` | jsdom component tests |
+| `npm run test:browser` | Real-Chromium `SeatMap` tests (Playwright) |
+| `npm run test:e2e` | Backend-free smoke suite (needs a prior `npm run build`) |
+| `npm run test:e2e:auth` | Authenticated publish-flow suite (needs the local Supabase stack) |
+| `npm run coverage` | Coverage report, scoped to `lib/**` |
+| `npm run coverage:check` | Coverage with enforced floors (lines 90 / funcs 95 / branches 80) — the gate CI runs |
+| `npm run db:start` | Start the local Supabase stack and apply migrations |
+| `npm run db:seed` | Seed local-only admin + viewer accounts |
+| `npm run db:stop` | Stop and remove the local Supabase stack |
 | `npm run qa:handoff` | Regenerate the improvement-loop QA handoff |
 
 Run a single test file with `node --test tests/seat-swap.test.mjs`.
