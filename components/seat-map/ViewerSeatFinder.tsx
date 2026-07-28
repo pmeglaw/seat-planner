@@ -10,6 +10,12 @@ import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOpti
 import { STATUS_LABELS } from "@/lib/types";
 import { normalizeSeat } from "@/lib/seatNormalize";
 import { cx } from "@/components/ui/design-system";
+
+// Module-level so the identity never changes. An inline `() => undefined` here
+// is a new function on every render, which silently disables SeatMarker's memo
+// for every marker on the viewer map. Seats are not movable in the viewer, so
+// the handler genuinely does nothing.
+const NOOP_MOVE_POINTER_DOWN = () => undefined;
 import {
   MAP_IMAGE_BLUR_DATA_URL,
   MAP_IMAGE_HEIGHT,
@@ -627,6 +633,23 @@ export function ViewerSeatFinder({
     }
   }
 
+  // Identity-stable handle for the memoized SeatMarker. selectSeat is
+  // re-created every render, so passing it directly would give ~2000 markers a
+  // new prop whenever anything on this page changes — including directory
+  // hover, which is exactly the interaction the memo is meant to make cheap.
+  // The ref keeps the closure current, so nothing goes stale.
+  const latestSelectSeat = useRef(selectSeat);
+  // Refreshed in an effect, not during render: writing a ref mid-render trips
+  // react-hooks' "Cannot access refs during render". Effects flush before the
+  // browser dispatches the next pointer event, so the handler a marker calls
+  // is always the current one.
+  useEffect(() => {
+    latestSelectSeat.current = selectSeat;
+  });
+  const stableSelectSeat = useCallback((seatId: string) => {
+    latestSelectSeat.current(seatId);
+  }, []);
+
   function selectSeat(seatId: string) {
     setSelectedSeatId(seatId);
     setActiveResultId(null);
@@ -1118,8 +1141,8 @@ export function ViewerSeatFinder({
                           viewportEdge="none"
                           viewportEdgeOffsetPx={0}
                           tabIndex={seat.id === mapRovingSeatId ? 0 : -1}
-                          onSelect={selectSeat}
-                          onMovePointerDown={() => undefined}
+                          onSelect={stableSelectSeat}
+                          onMovePointerDown={NOOP_MOVE_POINTER_DOWN}
                         />
                       );
                     })}
