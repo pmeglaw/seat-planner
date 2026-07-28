@@ -1,5 +1,6 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { isSecureForwardedProto, supabaseCookieOptions } from "@/lib/supabase/cookieOptions";
 
 type CookieToSet = {
   name: string;
@@ -16,7 +17,15 @@ export async function createClient() {
     throw new Error("Missing Supabase environment variables.");
   }
 
+  // Session refreshes rewrite the cookie from the server, so the same Secure
+  // attribute has to be applied here too — otherwise the first refresh would
+  // quietly downgrade a cookie the browser client had set correctly.
+  const cookieOptions = supabaseCookieOptions(
+    isSecureForwardedProto((await headers()).get("x-forwarded-proto"))
+  );
+
   return createServerClient(url, anonKey, {
+    cookieOptions,
     cookies: {
       getAll() {
         return cookieStore.getAll();

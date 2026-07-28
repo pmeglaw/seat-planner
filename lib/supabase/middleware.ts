@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isSecureForwardedProto, supabaseCookieOptions } from "@/lib/supabase/cookieOptions";
 
 type CookieToSet = {
   name: string;
@@ -17,7 +18,17 @@ export async function updateSession(request: NextRequest) {
     return response;
   }
 
+  // This runs on every matched request and is where the session refresh
+  // actually rewrites the cookie, so it carries the same Secure attribute.
+  // The scheme comes from x-forwarded-proto, not request.nextUrl.protocol:
+  // Vercel terminates TLS at the edge, so nextUrl is http even for an https
+  // visitor and would mark every production cookie insecure.
+  const cookieOptions = supabaseCookieOptions(
+    isSecureForwardedProto(request.headers.get("x-forwarded-proto"))
+  );
+
   const supabase = createServerClient(url, anonKey, {
+    cookieOptions,
     cookies: {
       getAll() {
         return request.cookies.getAll();
