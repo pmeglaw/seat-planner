@@ -17,6 +17,8 @@ import {
   MAP_IMAGE_WIDTH,
   seatsToVisualSeats
 } from "@/lib/mapLayoutTransform";
+// Aliased: `fitMapWidth` is already this component's state for the resolved width.
+import { fitMapWidth as computeFitMapWidth } from "@/lib/mapViewport";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { buildViewerDirectory, buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { buildInitials } from "@/lib/validators";
@@ -457,10 +459,15 @@ export function ViewerSeatFinder({
         setFitMapWidth(Math.floor(Math.max(1, viewportElement.clientWidth - 2)));
         return;
       }
-      const availableWidth = Math.max(1, viewportElement.clientWidth - 2);
-      const availableHeight = Math.max(1, viewportElement.clientHeight - 2);
-      const nextWidth = Math.min(MAP_IMAGE_WIDTH, availableWidth, availableHeight * (MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT));
-      setFitMapWidth(Math.floor(nextWidth));
+      // Height carries a marker gutter: the sheet hugs the plan's aspect ratio,
+      // but markers are fixed-size and centred, so the bottom row hangs off the
+      // plan and would be clipped by a scroll container with no visible bar.
+      setFitMapWidth(computeFitMapWidth({
+        availableWidth: Math.max(1, viewportElement.clientWidth - 2),
+        availableHeight: Math.max(1, viewportElement.clientHeight - 2),
+        planRatio: MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT,
+        naturalWidth: MAP_IMAGE_WIDTH
+      }));
     }
 
     updateFitMapWidth();

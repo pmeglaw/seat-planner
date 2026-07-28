@@ -41,6 +41,64 @@ export const MAP_ZOOM_MAX = 2;
 export const PAN_DRAG_THRESHOLD_PX = 4;
 
 /**
+ * Vertical room the fit view holds back for seat markers that overhang the plan.
+ *
+ * Markers do not scale with the map: SeatMarker's resting pill is min-h-[34px]
+ * and centres on its coordinate via -translate-y-1/2, so the bottom row always
+ * hangs ~17px below the plan's edge, plus 2px for the occupied dot. Fit view
+ * sizes the sheet to the plan's own aspect ratio, so without a reserve the sheet
+ * is exactly as tall as the plan and that overhang has nowhere to go — it spills
+ * out of an overflow-auto container whose scrollbar is hidden at lg, clipping
+ * content with nothing on screen admitting it is clipped. On a 1920 window the
+ * overhang is 1.5% of a 711px plan and hides inside rounding slack; at 1024 it
+ * is 3.6% of a 305px plan and two seats lose their bottom edge (measured
+ * 2026-07-28: scrollHeight 316 against clientHeight 307).
+ *
+ * 24px splits to 12px above and below once the plan is centred — clear of the
+ * 19px worst case for a resting pill. It is deliberately NOT sized for the 46px
+ * selected pill: covering that would cost ~12% of the plan's width to reserve
+ * room only one transient marker ever uses.
+ */
+export const MAP_MARKER_EDGE_GUTTER_PX = 24;
+
+export type FitMapWidthInput = {
+  /** Usable width of the scroll container, borders already deducted. */
+  availableWidth: number;
+  /** Usable height of the scroll container, borders already deducted. */
+  availableHeight: number;
+  /** The plan's own width/height ratio. */
+  planRatio: number;
+  /** Upper bound so the plan is never upscaled past its shipped pixels. */
+  naturalWidth?: number;
+  markerGutterPx?: number;
+};
+
+/**
+ * Width to render the map frame at so the whole plan — and the markers hanging
+ * off its edges — fit inside the container.
+ *
+ * The gutter is charged against HEIGHT, never width, because height is the only
+ * dimension where it can cost anything: a column with height to spare gives up
+ * nothing at all. That also keeps the reserve away from the plan whenever the
+ * layout is width-bound, which is the common case on wide monitors.
+ *
+ * Callers pass the ratio rather than this module importing the map constants —
+ * lib/mapLayoutTransform.ts owns those, and this module stays clear of it.
+ */
+export function fitMapWidth({
+  availableWidth,
+  availableHeight,
+  planRatio,
+  naturalWidth = Number.POSITIVE_INFINITY,
+  markerGutterPx = MAP_MARKER_EDGE_GUTTER_PX
+}: FitMapWidthInput): number {
+  // Mid-resize a container can report less height than the gutter itself;
+  // clamping here keeps the map renderable instead of blanking it.
+  const usableHeight = Math.max(1, availableHeight - markerGutterPx);
+  return Math.max(1, Math.floor(Math.min(naturalWidth, availableWidth, usableHeight * planRatio)));
+}
+
+/**
  * Keep a scroll offset inside [0, max].
  *
  * `max` is routinely negative — a viewport larger than its content has
