@@ -12,8 +12,10 @@ const {
   panScrollTarget,
   hasPassedPanThreshold,
   boundingBoxCenter,
+  fitMapWidth,
   MAP_ZOOM_MIN,
-  MAP_ZOOM_MAX
+  MAP_ZOOM_MAX,
+  MAP_MARKER_EDGE_GUTTER_PX
 } = await importTsModule("lib/mapViewport.ts");
 
 // A viewport showing 800x600 of a 1600x1200 scrollable area, scrolled to origin.
@@ -169,4 +171,56 @@ test("boundingBoxCenter centers the box, not the crowd", () => {
 test("boundingBoxCenter handles a single point and an empty list", () => {
   assert.deepEqual(boundingBoxCenter([{ x: 0.3, y: 0.7 }]), { x: 0.3, y: 0.7 });
   assert.equal(boundingBoxCenter([]), null);
+});
+
+// Fit view sizes the plan to its own aspect ratio, so the sheet ends up exactly
+// as tall as the plan. Seat markers do not scale with it: SeatMarker's resting
+// pill is min-h-[34px] and centres on its coordinate via -translate-y-1/2, so
+// the bottom row hangs a fixed ~17px below the plan, plus 2px for the occupied
+// dot. At a 1920 window that overhang is 1.5% of a 711px-tall plan and lands
+// inside the sheet's rounding slack; at 1024 it is 3.6% of a 305px plan and
+// spills out of an overflow-auto container whose scrollbar is hidden at lg —
+// content clipped with nothing on screen saying it is clipped. Measured
+// 2026-07-28: scrollHeight 316 vs clientHeight 307, with "S01 Alex M." and
+// "S02 Edith T." losing their bottom edge and part of the title line.
+//
+// The reserve comes out of the column HEIGHT, which fit view leaves unused
+// (431px spare at 1024x800), never out of the plan's width.
+const PLAN_RATIO = 3822 / 1734;
+
+test("fitMapWidth lets width win when the column is the binding dimension", () => {
+  // Tall, narrow column: height could carry a far wider plan, so the gutter is
+  // free and the plan keeps every available pixel of width.
+  assert.equal(fitMapWidth({ availableWidth: 600, availableHeight: 4000, planRatio: PLAN_RATIO }), 600);
+});
+
+test("fitMapWidth reserves the marker gutter before height becomes width", () => {
+  // The measured 1024x800 case. Without a reserve this returns 676 — a plan
+  // exactly as tall as the sheet, which is precisely what clips the bottom row.
+  const width = fitMapWidth({ availableWidth: 678, availableHeight: 307, planRatio: PLAN_RATIO });
+
+  assert.ok(width < Math.floor(307 * PLAN_RATIO), "the gutter has to cost width when height binds");
+  assert.equal(width, Math.floor((307 - MAP_MARKER_EDGE_GUTTER_PX) * PLAN_RATIO));
+});
+
+test("fitMapWidth clears the marker overhang at every measured window size", () => {
+  // Half a 34px resting pill plus its 2px dot is 19px of overhang; fit view
+  // centres the plan, so the gutter splits evenly and only half must clear.
+  for (const [availableWidth, availableHeight] of [[678, 307], [1082, 495], [1562, 713]]) {
+    const width = fitMapWidth({ availableWidth, availableHeight, planRatio: PLAN_RATIO });
+    const slackBelowPlan = (availableHeight - width / PLAN_RATIO) / 2;
+    assert.ok(slackBelowPlan >= 9, `${availableWidth}x${availableHeight}: only ${slackBelowPlan.toFixed(1)}px below the plan`);
+  }
+});
+
+test("fitMapWidth never upscales the plan past its natural width", () => {
+  assert.equal(fitMapWidth({ availableWidth: 99_999, availableHeight: 99_999, planRatio: PLAN_RATIO, naturalWidth: 1911 }), 1911);
+});
+
+test("fitMapWidth still yields a renderable width when the column collapses", () => {
+  // Mid-resize a container can report less height than the gutter itself.
+  const width = fitMapWidth({ availableWidth: 500, availableHeight: 4, planRatio: PLAN_RATIO });
+
+  assert.ok(width >= 1, "a zero or negative width would blank the map");
+  assert.ok(Number.isInteger(width), "a subpixel frame width shifts every marker off the plan");
 });
