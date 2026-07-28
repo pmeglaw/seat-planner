@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 import { parseAssignmentCsv } from "@/lib/csv";
 import { isStaleDraftErrorCode, type DraftSeatExpectation } from "@/lib/draftConcurrency";
 import type { DraftSnapshot } from "@/lib/draftHistory";
@@ -61,26 +62,38 @@ async function getDraftMapPayload(
   supabase: Awaited<ReturnType<typeof requireAdmin>>,
   fallbackErrorMessage = "Could not reload draft history state."
 ) {
-  const { data: seats, error: seatsError } = await supabase
-    .from("seats")
-    .select("*, employee:employees(*)")
-    .eq("layer", "draft")
-    .order("label");
+  // Paged: an unbounded select is silently truncated at the project row cap,
+  // and this payload is what undo/redo and CSV import hand back to the client
+  // as the new draft state — a short read here would look like data loss.
+  try {
+    const seats = await fetchAllRows<SeatWithEmployee>(
+      (from, to) =>
+        supabase
+          .from("seats")
+          .select("*, employee:employees(*)", { count: "exact" })
+          .eq("layer", "draft")
+          .order("label")
+          .range(from, to),
+      { label: "draft seats" }
+    );
 
-  const { data: employees, error: employeesError } = await supabase
-    .from("employees")
-    .select("*")
-    .eq("active", true)
-    .order("full_name");
+    const employees = await fetchAllRows<Employee>(
+      (from, to) =>
+        supabase
+          .from("employees")
+          .select("*", { count: "exact" })
+          .eq("active", true)
+          .order("full_name")
+          .range(from, to),
+      { label: "employees" }
+    );
 
-  if (seatsError || employeesError) {
-    throw new Error(seatsError?.message ?? employeesError?.message ?? fallbackErrorMessage);
+    return { seats, employees };
+  } catch (error) {
+    // Preserve the caller-supplied fallback wording for empty/unknown failures,
+    // which the drawer and inspector surface verbatim.
+    throw new Error(error instanceof Error && error.message ? error.message : fallbackErrorMessage);
   }
-
-  return {
-    seats: (seats ?? []) as SeatWithEmployee[],
-    employees: (employees ?? []) as Employee[]
-  };
 }
 
 export type AskPlannerActionError = {
@@ -152,13 +165,19 @@ function isUniqueLabelViolation(error: SupabaseMutationError | null) {
 }
 
 async function getDraftSeatZoneSources(supabase: Awaited<ReturnType<typeof requireAdmin>>) {
-  const { data, error } = await supabase
-    .from("seats")
-    .select("label,zone,department,x,y")
-    .eq("layer", "draft");
-
-  if (error) throw new Error(error.message);
-  return (data ?? []) as DraftSeatZoneSource[];
+  // Paged for the same reason as the map reads, and it matters more here than
+  // it looks: these rows are the reference set for detecting which zone a new
+  // seat falls into, and for generating its next label. A truncated read would
+  // put a seat in the wrong zone or reuse a label that already exists.
+  return fetchAllRows<DraftSeatZoneSource>(
+    (from, to) =>
+      supabase
+        .from("seats")
+        .select("label,zone,department,x,y", { count: "exact" })
+        .eq("layer", "draft")
+        .range(from, to),
+    { label: "draft seats" }
+  );
 }
 
 function normalizeRestoreSeat(seat: SeatWithEmployee): DraftSeatRestoreRecord {

@@ -19,7 +19,13 @@ test("viewer route renders the published map as read-only", async () => {
   assert.doesNotMatch(viewerFinderSource, /createSeatAction|deleteSeatAction|moveSeatAction|publishSeatMapAction|restoreDraftSnapshotAction|swapSeatAssignmentsAction/);
   assert.match(adminSource, /\.eq\("layer", "draft"\)/);
   assert.match(adminSource, /\.eq\("layer", "published"\)/);
-  assert.match(adminSource, /publishedSeats=\{\(publishedSeats \?\? \[\]\) as SeatWithEmployee\[\]\}/);
+  // Guards that the published layer is plumbed into SeatMap as read-only
+  // context. The value used to arrive as `(publishedSeats ?? []) as
+  // SeatWithEmployee[]`; it is now already a non-null SeatWithEmployee[] from
+  // fetchAllRows, so that cast would be dead syntax. The invariant — a distinct
+  // publishedSeats prop, fed by the published-layer query asserted above — is
+  // unchanged.
+  assert.match(adminSource, /publishedSeats=\{publishedSeats\}/);
   // canEdit stays the literal flag (never an expression); the identity props
   // that follow it feed the account menu, not the edit gate.
   assert.match(adminSource, /canEdit\s+accountEmail=/);
