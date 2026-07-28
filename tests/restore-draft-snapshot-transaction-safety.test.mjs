@@ -127,7 +127,7 @@ test("draft snapshot restore RPC preserves employee and option restore behavior"
 });
 
 test("server draft snapshot restore action delegates dependent writes to the transaction-safe RPC", () => {
-  assert.match(restoreActionSource, /JSON backup must include seats and employees arrays/);
+  assert.match(restoreActionSource, /Draft snapshot must include seats and employees arrays/);
   assert.match(restoreActionSource, /const seatsToRestore = snapshot\.seats\.map\(normalizeRestoreSeat\)/);
   assert.match(restoreActionSource, /const employeesToRestore = snapshot\.employees\.map\(normalizeRestoreEmployee\)/);
   assert.match(restoreActionSource, /Cannot restore an empty draft map snapshot/);

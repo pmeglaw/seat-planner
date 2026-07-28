@@ -150,7 +150,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
     downloadFile("seat-assignments-template.csv", createAssignmentCsvTemplate(), "text/csv;charset=utf-8");
   }
 
-  function exportJsonBackup() {
+  function exportDraftSnapshot() {
     downloadJson("seat-map-export.json", { exportedAt: new Date().toISOString(), seats, employees });
   }
 
@@ -213,7 +213,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
         const parsed = JSON.parse(text) as unknown;
 
         if (!isDraftSnapshot(parsed)) {
-          throw new Error("JSON backup must include seats and employees arrays.");
+          throw new Error("Draft snapshot must include seats and employees arrays.");
         }
 
         setJsonReview({
@@ -224,7 +224,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
 
         if (jsonInputRef.current) jsonInputRef.current.value = "";
       } catch (caught) {
-        reportError(caught, "Could not import JSON backup.");
+        reportError(caught, "Could not import the draft snapshot.");
       }
     });
   }
@@ -284,7 +284,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
         router.refresh();
       } catch (caught) {
         setJsonReview(null);
-        reportError(caught, "Could not import JSON backup.");
+        reportError(caught, "Could not import the draft snapshot.");
       }
     });
   }
@@ -317,14 +317,15 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
       </section>
 
       <section className="border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-4 shadow-elevation-2">
-        <h2 className="text-sm font-semibold text-[var(--admin-state-dirty-text)]">Advanced recovery</h2>
+        <h2 className="text-sm font-semibold text-[var(--admin-state-dirty-text)]">Draft working-copy snapshots</h2>
         <p className="mt-1 text-xs leading-5 text-[var(--admin-state-dirty-text)]">
-          Full backup and restore. Restoring replaces the entire draft map, so review carefully before confirming.
+          Draft seats and employees only. Restoring replaces the entire draft map, so review carefully before confirming.
+          These snapshots are not a database backup: they do not include the published map, publish history, or user accounts.
         </p>
         <div className="mt-3 space-y-2">
-          <UtilityButton label="Export JSON backup" description="Download full draft recovery data" affordance="download" onClick={exportJsonBackup} disabled={busy} />
+          <UtilityButton label="Export draft snapshot" description="Download draft seats and employees as JSON" affordance="download" onClick={exportDraftSnapshot} disabled={busy} />
           <input ref={jsonInputRef} type="file" accept=".json,application/json" className="hidden" onChange={event => importJson(event.target.files?.[0])} />
-          <UtilityButton label="Restore JSON backup" description="Review a full draft backup before restoring" onClick={() => jsonInputRef.current?.click()} disabled={busy} />
+          <UtilityButton label="Restore draft snapshot" description="Review a draft snapshot before restoring" onClick={() => jsonInputRef.current?.click()} disabled={busy} />
           <UtilityButton label="Reset draft to published" description="Discard every draft seat change; people edits are kept" tone="danger" onClick={openResetReview} disabled={busy} />
         </div>
       </section>
@@ -487,9 +488,9 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
           >
             <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
               <div>
-                <h2 id="json-restore-review-title" className="text-base font-semibold">Review JSON restore</h2>
+                <h2 id="json-restore-review-title" className="text-base font-semibold">Review draft snapshot restore</h2>
                 <p id="json-restore-review-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-muted)]">
-                  JSON restore imports a full draft backup. The published viewer map will not change until you publish.
+                  A draft snapshot covers draft seats and employees only. The published viewer map will not change until you publish.
                 </p>
               </div>
               <button
@@ -497,7 +498,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 onClick={closeJsonReview}
                 disabled={busy}
                 className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
-                aria-label="Close JSON restore review"
+                aria-label="Close draft snapshot restore review"
               >
                 <CloseIcon />
               </button>
@@ -519,7 +520,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 Cancel
               </Button>
               <Button type="button" variant="danger" onClick={confirmJsonRestore} disabled={busy} className="w-full">
-                Restore draft backup
+                Restore draft snapshot
               </Button>
             </div>
           </section>
