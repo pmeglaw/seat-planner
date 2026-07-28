@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { CSSProperties, PointerEvent, ReactNode } from "react";
 import type { SeatWithEmployee } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
@@ -131,7 +132,7 @@ function getShortEmployeeLabel(name: string) {
   return formatDisplayName(lastInitial ? `${firstName} ${lastInitial}.` : firstName);
 }
 
-export function SeatMarker({
+function SeatMarkerComponent({
   seat,
   selected,
   dimmed,
@@ -546,3 +547,52 @@ export function SeatMarker({
     </button>
   );
 }
+
+// The ONLY seat fields this component renders. Kept as an explicit list rather
+// than a deep compare because a deep compare of every seat on every pointermove
+// is the cost we are trying to remove.
+//
+// ⚠ If you start reading a new `seat.<field>` above, ADD IT HERE. Forgetting
+// leaves the marker rendering stale data with no error — the field changes, the
+// comparator says "equal", React skips the update. tests/seat-marker-memo.test.mjs
+// greps this file and fails if the two lists drift apart, so the mistake is
+// caught in CI rather than in someone's face on the map.
+const RENDERED_SEAT_FIELDS = ["id", "label", "x", "y", "status", "zone", "department"] as const;
+
+function seatRenderEqual(previous: SeatWithEmployee, next: SeatWithEmployee) {
+  for (const field of RENDERED_SEAT_FIELDS) {
+    if (!Object.is(previous[field], next[field])) return false;
+  }
+  // Occupant is read through two fields only; comparing the employee object by
+  // reference would defeat the memo, because the map rebuilds those objects
+  // whenever it re-stitches seats to employees.
+  return (
+    (previous.employee?.full_name ?? null) === (next.employee?.full_name ?? null) &&
+    (previous.employee?.position ?? null) === (next.employee?.position ?? null)
+  );
+}
+
+function seatMarkerPropsEqual(previous: SeatMarkerProps, next: SeatMarkerProps) {
+  const nextKeys = Object.keys(next) as (keyof SeatMarkerProps)[];
+  if (nextKeys.length !== Object.keys(previous).length) return false;
+
+  for (const key of nextKeys) {
+    // `seat` is compared field-wise below; every OTHER prop is a primitive or a
+    // stable callback, so identity comparison is both correct and cheap. New
+    // props are covered automatically by this loop.
+    if (key === "seat") continue;
+    if (!Object.is(previous[key], next[key])) return false;
+  }
+
+  return seatRenderEqual(previous.seat, next.seat);
+}
+
+// Memoized because the admin map re-renders the whole marker layer on every
+// pointermove of a drag: `setLocalSeats` replaces the array, so every seat
+// object is a new identity even though only one of them actually moved.
+// Without this, dragging one seat re-rendered all of them.
+//
+// This only pays off while the callback props keep a stable identity — SeatMap
+// routes onSelect/onMovePointerDown through latest-value refs for exactly that
+// reason. Passing an inline arrow from a caller silently disables the memo.
+export const SeatMarker = memo(SeatMarkerComponent, seatMarkerPropsEqual);

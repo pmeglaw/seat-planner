@@ -1953,6 +1953,37 @@ export function SeatMap({
     setDragState({ seatId, pointerId: event.pointerId, beforeSnapshot: captureDraftSnapshot() });
   }
 
+  // Identity-stable handles for the memoized SeatMarker.
+  //
+  // selectSeat and handleMovePointerDown are re-created on every render, and
+  // handleMovePointerDown reaches captureDraftSnapshot, which closes over
+  // localSeats — so it changes on every frame of a drag. Passing either one
+  // directly hands ~2000 markers a new prop each frame and defeats the memo
+  // entirely. useCallback cannot help for the same reason: its dependencies
+  // are exactly the values that keep changing.
+  //
+  // Instead the latest functions live in a ref that is refreshed each render,
+  // and the markers receive wrappers whose identity never changes. The wrapper
+  // reads the ref at call time, so it always runs the current closure — this is
+  // stable identity WITHOUT the stale-closure bug that a useCallback with
+  // trimmed dependencies would introduce.
+  // Refreshed in an effect, not during render: writing a ref mid-render trips
+  // react-hooks' "Cannot access refs during render". Effects flush before the
+  // browser dispatches the next pointer event, so a marker always calls the
+  // current handler.
+  const latestSeatHandlers = useRef({ selectSeat, handleMovePointerDown });
+  useEffect(() => {
+    latestSeatHandlers.current = { selectSeat, handleMovePointerDown };
+  });
+
+  const stableSelectSeat = useCallback((seatId: string) => {
+    latestSeatHandlers.current.selectSeat(seatId);
+  }, []);
+
+  const stableMovePointerDown = useCallback((event: PointerEvent<HTMLButtonElement>, seatId: string) => {
+    latestSeatHandlers.current.handleMovePointerDown(event, seatId);
+  }, []);
+
   function handleMapPointerMove(event: PointerEvent<HTMLDivElement>) {
     if (!dragState) return;
     const visualPoint = eventToPoint(event);
@@ -3330,8 +3361,8 @@ export function SeatMap({
                         // no longer opts into them.)
                         variant="viewer"
                         tabIndex={seat.id === mapRovingSeatId ? 0 : -1}
-                        onSelect={selectSeat}
-                        onMovePointerDown={handleMovePointerDown}
+                        onSelect={stableSelectSeat}
+                        onMovePointerDown={stableMovePointerDown}
                       />
                     );
                   })}

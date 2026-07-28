@@ -22,7 +22,12 @@ test("desktop marker system keeps true coordinates and calibration constants unt
   assert.match(markerSource, /resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate \|\| !tokenCanHugViewportEdge \? 0 : Math\.max\(0, Math\.round\(viewportEdgeOffsetPx\)\)/);
   assert.match(seatMapSource, /const visualSeat = visualSeatById\.get\(seat\.id\) \?\? seat/);
   assert.match(seatMapSource, /viewportEdgeOffsetPx=\{viewportPlacement\.offsetPx\}/);
-  assert.match(seatMapSource, /onMovePointerDown=\{handleMovePointerDown\}/);
+  // Drag start is still wired from the marker to handleMovePointerDown; it now
+  // goes through an identity-stable wrapper so SeatMarker's memo survives a
+  // drag. Both halves are asserted, so the wiring cannot be broken by dropping
+  // either the prop or the delegation.
+  assert.match(seatMapSource, /onMovePointerDown=\{stableMovePointerDown\}/);
+  assert.match(seatMapSource, /latestSeatHandlers\.current\.handleMovePointerDown\(event, seatId\)/);
 
   assert.match(transformSource, /MAP_IMAGE_SRC = "\/images\/office-floor-plan\.webp\?v=map-v2-cool-2x-3822x1734"/);
   assert.match(transformSource, /MAP_IMAGE_WIDTH = 3822/);
