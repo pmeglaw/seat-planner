@@ -45,10 +45,19 @@ test("settings data utilities review JSON restores in-app before calling the res
   // page cannot silently revert edits another admin committed after it loaded.
   assert.match(confirmJsonFunction[0], /restoreDraftSnapshotAction\(review\.snapshot, listDraftSeatExpectations\(seats\)\)/);
   assert.match(closeJsonFunction[0], /setJsonReview\(null\)/);
-  assert.match(source, /Review JSON restore/);
-  assert.match(source, /JSON restore imports a full draft backup/);
+  assert.match(source, /Review draft snapshot restore/);
+  assert.match(source, /A draft snapshot covers draft seats and employees only/);
   assert.match(source, /This can replace draft assignments, custom seats, notes, and employee details in the draft/);
-  assert.match(source, /Restore draft backup/);
+  assert.match(source, /Restore draft snapshot/);
+
+  // INFRA-02 (#277): this panel is a draft working copy, not a backup. It once
+  // called itself "Advanced recovery" / "Full backup and restore", which invites
+  // treating the JSON file as a database backup — it covers neither the
+  // published layer nor auth users. Keep the scope and the disclaimer on screen.
+  assert.match(source, /Draft working-copy snapshots/);
+  assert.doesNotMatch(source, /Advanced recovery/);
+  assert.match(source, /not a database backup/);
+  assert.match(source, /do not include the published map, publish history, or user accounts/);
 });
 
 test("management destructive actions use one in-app confirmation path", async () => {

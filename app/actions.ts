@@ -732,7 +732,7 @@ export async function restoreDraftSnapshotAction(
 ): Promise<RestoreDraftSnapshotResult> {
   const supabase = await requireAdmin();
   if (!snapshot || !Array.isArray(snapshot.seats) || !Array.isArray(snapshot.employees)) {
-    throw new Error("JSON backup must include seats and employees arrays.");
+    throw new Error("Draft snapshot must include seats and employees arrays.");
   }
 
   const seatsToRestore = snapshot.seats.map(normalizeRestoreSeat);

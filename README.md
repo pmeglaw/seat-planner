@@ -114,6 +114,43 @@ Schema, seed, RLS policies, and RPCs live in `supabase/migrations/`. Add new wor
 
 **Do not apply migrations to prod manually.** Merging to `main` triggers the Supabase GitHub integration, which applies migrations and deploys via Vercel.
 
+## Backups & recovery
+
+**The snapshot tools on `/admin/settings` are not a database backup.** "Export draft
+snapshot" writes the draft seats plus the active employee directory to a JSON file, and
+`restoreDraftSnapshotAction` restores exactly that. It never touches the published
+`seats` layer, `published_employees`, `publish_events`, `department_options`,
+`zone_options`, `profiles`, or Supabase auth users. Treat it as an undo for the draft
+working copy, not as disaster recovery.
+
+**The real backup position: there is currently no database backup.** The Supabase
+organisation is on the **Free** plan, which has neither scheduled backups nor
+point-in-time recovery. If the production database were lost or corrupted today, nothing
+exists to restore from. Close that gap one of two ways, then record which was chosen:
+
+1. **Upgrade the project to Supabase Pro** — daily backups with 7-day retention; PITR is
+   a further paid add-on. Nothing in this repository changes.
+2. **Take manual dumps** with the Supabase CLI. `SUPABASE_DB_URL` is the connection
+   string from Project Settings → Database:
+
+   ```bash
+   supabase db dump --db-url "$SUPABASE_DB_URL" -f backup-$(date +%Y%m%d).sql
+   supabase db dump --db-url "$SUPABASE_DB_URL" --data-only -f data-$(date +%Y%m%d).sql
+   ```
+
+   The dump contains the entire employee directory — store it outside this repository and
+   never commit it.
+
+**Restoring.** Restore into a *new* Supabase project or the local stack first, point a
+local `npm run dev` at it, confirm `/` renders the published map and `/admin` the draft,
+and only then repoint production. Never restore over a live project as a first attempt.
+
+**Rehearsal log.** A backup that has never been restored is not a backup.
+
+| Date | What was rehearsed | Outcome |
+| --- | --- | --- |
+| _not yet rehearsed_ | — | — |
+
 ## Ask Planner
 
 `/admin` includes a **read-only** AI assistant that answers questions about the map and highlights matching seats. It must never mutate data. Manual QA:
