@@ -924,6 +924,17 @@ export function ViewerSeatFinder({
                 if (event.key === "ArrowDown" && resultsPanelOpen) {
                   event.preventDefault();
                   document.querySelector<HTMLButtonElement>('[aria-label="Viewer search results"] button')?.focus();
+                  return;
+                }
+                // The panel's own legend promises "Enter opens" while focus is
+                // still here, so honour it against the top result rather than
+                // making the user arrow into the list first. With no results
+                // the keystroke stays unclaimed.
+                if (event.key === "Enter" && resultsPanelOpen) {
+                  const [firstSearchResult] = searchResults.results;
+                  if (!firstSearchResult) return;
+                  event.preventDefault();
+                  openResult(firstSearchResult);
                 }
               }}
               ref={searchInputRef}
