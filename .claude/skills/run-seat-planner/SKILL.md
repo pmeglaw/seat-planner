@@ -148,14 +148,17 @@ need no auth at all.
 
 ## Gotchas
 
-- **The login form is not a `<form>`.** The submit is a plain `onClick` Button —
-  there is no `button[type=submit]`, and Enter does not submit. Click
-  `button:text-is("Sign in")` (`:text-is`, because the page `<h1>` is also
-  "Sign in").
-- **Filling the login form races hydration.** The Sign in button is `disabled`
-  until React state holds both fields; a `fill` right after `domcontentloaded`
-  sets the DOM value before `onChange` attaches, so the button never enables.
-  The driver's `login` fills-and-polls until it is enabled — do the same in any
+- **The login form is a real `<form onSubmit>`.** The submit is
+  `button[type=submit]` and Enter submits. Still target it with
+  `button:text-is("Sign in")` rather than a substring match — the page `<h1>` is
+  also "Sign in". (This bullet used to claim the opposite; the form was
+  converted before 2026-07-28.)
+- **The submit button is disabled until hydration.** It server-renders as
+  "Starting up…" and only becomes an enabled "Sign in" once React mounts (#282),
+  so a `fill` + `click` right after `domcontentloaded` finds a dead control —
+  and before that fix, a click in that window ran the browser's native GET and
+  silently reloaded the page, discarding what had been typed. The driver's
+  `login` fills-and-polls until the button is enabled; do the same in any
   hand-rolled flow.
 - **`[role=alert]` matches Next's route announcer.** Next keeps an
   always-present, empty `[role=alert]` on `<body>`, so a bare alert wait

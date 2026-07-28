@@ -20,10 +20,15 @@ export function LoginForm() {
   const [messageType, setMessageType] = useState<"info" | "error" | "success">("info");
   const [busy, setBusy] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
+  // False through SSR and the first client render, true once effects run — the
+  // only reliable "React is listening now" signal. Drives the submit button's
+  // pre-hydration state; see the note above handleSubmit.
+  const [hydrated, setHydrated] = useState(false);
   const emailInputRef = useRef<HTMLInputElement | null>(null);
   const passwordInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    setHydrated(true);
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
     const next = safeNextPath(params.get("next"));
@@ -116,8 +121,15 @@ export function LoginForm() {
     setMessageType("success");
   }
 
-  // Submit stays enabled and validates on submit so Enter works everywhere and
-  // an empty click explains itself instead of hitting a silently dead button.
+  // Once hydrated, submit stays enabled and validates on submit so Enter works
+  // everywhere and an empty click explains itself instead of hitting a silently
+  // dead button.
+  //
+  // Before hydration there is no onSubmit yet, so a click ran the browser's
+  // native submit: a GET back to /login that reloaded the page and threw away
+  // whatever had been typed, with no message (UX-01, #276). Holding the button
+  // disabled for that window keeps the input, and the "Starting up…" label keeps
+  // the disabled state from being the silently dead button above — it says why.
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
@@ -218,8 +230,8 @@ export function LoginForm() {
             />
           </label>
 
-          <Button type="submit" className="mt-4 w-full" variant="primary" disabled={busy}>
-            {busy ? "Signing in…" : "Sign in"}
+          <Button type="submit" className="mt-4 w-full" variant="primary" disabled={busy || !hydrated}>
+            {!hydrated ? "Starting up…" : busy ? "Signing in…" : "Sign in"}
           </Button>
 
           <button
@@ -233,8 +245,8 @@ export function LoginForm() {
         </>
       ) : (
         <>
-          <Button type="submit" className="mt-4 w-full" variant="primary" disabled={busy}>
-            {busy ? "Sending…" : "Send magic link"}
+          <Button type="submit" className="mt-4 w-full" variant="primary" disabled={busy || !hydrated}>
+            {!hydrated ? "Starting up…" : busy ? "Sending…" : "Send magic link"}
           </Button>
 
           <p className="mt-4 text-xs leading-relaxed text-[var(--admin-text-muted)]">
