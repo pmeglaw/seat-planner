@@ -149,10 +149,21 @@ export function AskPlannerDrawer({
     ];
   }, [highlightedSeatIds, response?.highlights, zones]);
 
+  // Staging only — a suggested prompt is a starting point the admin is meant to
+  // edit, and every ask spends a model call, so it never submits by itself.
   function choosePrompt(prompt: string) {
     setQuestion(prompt);
     setError(null);
     window.setTimeout(() => questionRef.current?.focus(), 0);
+  }
+
+  // A follow-up is different: it sits under a finished answer, already phrased
+  // as the next question, so filling a box the admin must then click Ask on is
+  // a step that means nothing. Show it in the box for the record, and ask it.
+  function askFollowUp(prompt: string) {
+    setQuestion(prompt);
+    setError(null);
+    askPlanner(prompt);
   }
 
   const askPlanner = useCallback((prompt = question, seatId?: string | null) => {
@@ -409,8 +420,10 @@ export function AskPlannerDrawer({
                       <button
                         key={followUp}
                         type="button"
-                        onClick={() => choosePrompt(followUp)}
-                        className="max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-chrome-text-soft)] ring-1 ring-[var(--admin-chrome-border)] transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                        onClick={() => askFollowUp(followUp)}
+                        disabled={pending}
+                        title={pending ? "Wait for Ask Planner to finish" : followUp}
+                        className="max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-chrome-text-soft)] ring-1 ring-[var(--admin-chrome-border)] transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {followUp}
                       </button>
