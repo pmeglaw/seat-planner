@@ -13,6 +13,7 @@ import { canDeleteDraftSeat, getSeatDeleteBlockReason } from "@/lib/seatProtecti
 import { buildSeatSwapPlan, type SeatSwapPlan } from "@/lib/seatSwap";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { savedPointToVisualPoint, seatsToVisualSeats } from "@/lib/mapLayoutTransform";
+import { parseEmployeeInput, parseUuid } from "@/lib/schemas";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import { SEAT_STATUSES, type AskPlannerRequest, type AskPlannerResponse, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type UpdateSeatResult, type ZoneOption } from "@/lib/types";
 
@@ -492,16 +493,28 @@ export async function swapSeatAssignmentsAction(input: {
   };
 }
 
+export type EmployeeMutationResult =
+  | { ok: true; employee: Employee }
+  | { ok: false; code: "VALIDATION"; message: string };
+
 export async function createEmployeeAction(input: {
   fullName: string;
   position?: string | null;
   department?: string | null;
   phoneExtension?: string | null;
   email?: string | null;
-}) {
+}): Promise<EmployeeMutationResult> {
   const supabase = await requireAdmin();
-  const fullName = assertNonEmpty(input.fullName, "Employee name");
-  const department = normalizeOptionalText(input.department);
+
+  // Parse before the first write. The parameter type above is erased at build
+  // time, so an action invoked over the wire receives whatever the caller sent;
+  // lib/schemas.ts is the only length/format bound these columns have. The
+  // failure is returned rather than thrown for the reason recorded on
+  // mapUpdateSeatError — production strips a thrown message to a digest.
+  const parsed = parseEmployeeInput(input);
+  if (!parsed.ok) return { ok: false, code: "VALIDATION", message: parsed.message };
+
+  const { fullName, position, department, phoneExtension, email } = parsed.value;
 
   await upsertDepartmentOption(supabase, department);
 
@@ -509,10 +522,10 @@ export async function createEmployeeAction(input: {
     .from("employees")
     .insert({
       full_name: fullName,
-      position: input.position?.trim() || null,
+      position,
       department,
-      phone_extension: normalizeOptionalText(input.phoneExtension),
-      email: normalizeOptionalText(input.email),
+      phone_extension: phoneExtension,
+      email: email ?? null,
       avatar_url: null,
       active: true
     })
@@ -521,7 +534,7 @@ export async function createEmployeeAction(input: {
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
-  return data as Employee;
+  return { ok: true, employee: data as Employee };
 }
 
 export async function updateEmployeeAction(input: {
@@ -531,10 +544,16 @@ export async function updateEmployeeAction(input: {
   department?: string | null;
   phoneExtension?: string | null;
   email?: string | null;
-}) {
+}): Promise<EmployeeMutationResult> {
   const supabase = await requireAdmin();
-  const fullName = assertNonEmpty(input.fullName, "Employee name");
-  const department = normalizeOptionalText(input.department);
+
+  const employeeId = parseUuid(input.employeeId, "Employee id");
+  if (!employeeId.ok) return { ok: false, code: "VALIDATION", message: employeeId.message };
+
+  const parsed = parseEmployeeInput(input);
+  if (!parsed.ok) return { ok: false, code: "VALIDATION", message: parsed.message };
+
+  const { fullName, position, department, phoneExtension, email } = parsed.value;
 
   await upsertDepartmentOption(supabase, department);
 
@@ -542,22 +561,23 @@ export async function updateEmployeeAction(input: {
     .from("employees")
     .update({
       full_name: fullName,
-      position: input.position?.trim() || null,
+      position,
       department,
-      phone_extension: normalizeOptionalText(input.phoneExtension),
+      phone_extension: phoneExtension,
       // Only write email when the caller sends the field, so existing callers
-      // that predate the column can never null out a stored address.
-      ...(input.email !== undefined ? { email: normalizeOptionalText(input.email) } : {}),
+      // that predate the column can never null out a stored address. The parser
+      // preserves that absent-vs-null distinction; see parseEmployeeInput.
+      ...(email !== undefined ? { email } : {}),
       active: true
     })
-    .eq("id", input.employeeId)
+    .eq("id", employeeId.value)
     .select("*")
     .single();
 
   if (error) throw new Error(error.message);
   revalidatePath("/");
   revalidatePath("/admin");
-  return data as Employee;
+  return { ok: true, employee: data as Employee };
 }
 
 export async function deleteEmployeeAction(employeeId: string) {
