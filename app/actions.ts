@@ -13,7 +13,7 @@ import { canDeleteDraftSeat, getSeatDeleteBlockReason } from "@/lib/seatProtecti
 import { buildSeatSwapPlan, type SeatSwapPlan } from "@/lib/seatSwap";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { savedPointToVisualPoint, seatsToVisualSeats } from "@/lib/mapLayoutTransform";
-import { parseEmployeeInput, parseUuid } from "@/lib/schemas";
+import { MAX_OPTION_NAME_LENGTH, parseEmployeeInput, parseRequiredText, parseUuid } from "@/lib/schemas";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import { SEAT_STATUSES, type AskPlannerRequest, type AskPlannerResponse, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type UpdateSeatResult, type ZoneOption } from "@/lib/types";
 
@@ -493,9 +493,21 @@ export async function swapSeatAssignmentsAction(input: {
   };
 }
 
-export type EmployeeMutationResult =
-  | { ok: true; employee: Employee }
-  | { ok: false; code: "VALIDATION"; message: string };
+/**
+ * Shared rejection shape for every action that parses caller input. Validation
+ * failures are RETURNED rather than thrown for the reason recorded on
+ * mapUpdateSeatError — production reduces a thrown error to a digest, so the
+ * message never reaches the admin who typed the value.
+ */
+export type ActionValidationFailure = { ok: false; code: "VALIDATION"; message: string };
+
+export type EmployeeMutationResult = { ok: true; employee: Employee } | ActionValidationFailure;
+export type EmployeeDeleteResult = { ok: true; employeeId: string } | ActionValidationFailure;
+export type DepartmentMutationResult = { ok: true; department: DepartmentOption } | ActionValidationFailure;
+export type DepartmentDeleteResult = { ok: true; department: string } | ActionValidationFailure;
+export type ZoneMutationResult = { ok: true; zone: ZoneOption } | ActionValidationFailure;
+export type ZoneDeleteResult = { ok: true; zone: string } | ActionValidationFailure;
+export type OptionRenameResult = { ok: true; from: string; to: string } | ActionValidationFailure;
 
 export async function createEmployeeAction(input: {
   fullName: string;
@@ -580,8 +592,12 @@ export async function updateEmployeeAction(input: {
   return { ok: true, employee: data as Employee };
 }
 
-export async function deleteEmployeeAction(employeeId: string) {
+export async function deleteEmployeeAction(targetEmployeeId: string): Promise<EmployeeDeleteResult> {
   const supabase = await requireAdmin();
+
+  const parsed = parseUuid(targetEmployeeId, "Employee id");
+  if (!parsed.ok) return { ok: false, code: "VALIDATION", message: parsed.message };
+  const employeeId = parsed.value;
 
   const { error } = await supabase.rpc("deactivate_employee", {
     employee_to_deactivate: employeeId
@@ -589,28 +605,36 @@ export async function deleteEmployeeAction(employeeId: string) {
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
-  return { employeeId };
+  return { ok: true, employeeId };
 }
 
-export async function createDepartmentAction(name: string) {
+export async function createDepartmentAction(name: string): Promise<DepartmentMutationResult> {
   const supabase = await requireAdmin();
-  const cleanName = assertNonEmpty(name, "Department name");
+
+  const parsed = parseRequiredText(name, "Department name", MAX_OPTION_NAME_LENGTH);
+  if (!parsed.ok) return { ok: false, code: "VALIDATION", message: parsed.message };
 
   const { data, error } = await supabase
     .from("department_options")
-    .upsert({ name: cleanName, active: true }, { onConflict: "name" })
+    .upsert({ name: parsed.value, active: true }, { onConflict: "name" })
     .select("*")
     .single();
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
-  return data as DepartmentOption;
+  return { ok: true, department: data as DepartmentOption };
 }
 
-export async function renameDepartmentAction(input: { from: string; to: string }) {
+export async function renameDepartmentAction(input: { from: string; to: string }): Promise<OptionRenameResult> {
   const supabase = await requireAdmin();
-  const from = assertNonEmpty(input.from, "Department to rename");
-  const to = assertNonEmpty(input.to, "New department name");
+
+  const parsedFrom = parseRequiredText(input.from, "Department to rename", MAX_OPTION_NAME_LENGTH);
+  if (!parsedFrom.ok) return { ok: false, code: "VALIDATION", message: parsedFrom.message };
+  const parsedTo = parseRequiredText(input.to, "New department name", MAX_OPTION_NAME_LENGTH);
+  if (!parsedTo.ok) return { ok: false, code: "VALIDATION", message: parsedTo.message };
+
+  const from = parsedFrom.value;
+  const to = parsedTo.value;
 
   const { error } = await supabase.rpc("rename_department", {
     department_from: from,
@@ -620,12 +644,15 @@ export async function renameDepartmentAction(input: { from: string; to: string }
   if (error) throw new Error(error.message);
   revalidatePath("/");
   revalidatePath("/admin");
-  return { from, to };
+  return { ok: true, from, to };
 }
 
-export async function deleteDepartmentAction(department: string) {
+export async function deleteDepartmentAction(department: string): Promise<DepartmentDeleteResult> {
   const supabase = await requireAdmin();
-  const target = assertNonEmpty(department, "Department");
+
+  const parsed = parseRequiredText(department, "Department", MAX_OPTION_NAME_LENGTH);
+  if (!parsed.ok) return { ok: false, code: "VALIDATION", message: parsed.message };
+  const target = parsed.value;
 
   const { error } = await supabase.rpc("delete_department", {
     department_name: target
@@ -634,28 +661,36 @@ export async function deleteDepartmentAction(department: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/");
   revalidatePath("/admin");
-  return { department: target };
+  return { ok: true, department: target };
 }
 
-export async function createZoneAction(name: string) {
+export async function createZoneAction(name: string): Promise<ZoneMutationResult> {
   const supabase = await requireAdmin();
-  const cleanName = assertNonEmpty(name, "Zone name");
+
+  const parsed = parseRequiredText(name, "Zone name", MAX_OPTION_NAME_LENGTH);
+  if (!parsed.ok) return { ok: false, code: "VALIDATION", message: parsed.message };
 
   const { data, error } = await supabase
     .from("zone_options")
-    .upsert({ name: cleanName, active: true }, { onConflict: "name" })
+    .upsert({ name: parsed.value, active: true }, { onConflict: "name" })
     .select("*")
     .single();
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
-  return data as ZoneOption;
+  return { ok: true, zone: data as ZoneOption };
 }
 
-export async function renameZoneAction(input: { from: string; to: string }) {
+export async function renameZoneAction(input: { from: string; to: string }): Promise<OptionRenameResult> {
   const supabase = await requireAdmin();
-  const from = assertNonEmpty(input.from, "Zone to rename");
-  const to = assertNonEmpty(input.to, "New zone name");
+
+  const parsedFrom = parseRequiredText(input.from, "Zone to rename", MAX_OPTION_NAME_LENGTH);
+  if (!parsedFrom.ok) return { ok: false, code: "VALIDATION", message: parsedFrom.message };
+  const parsedTo = parseRequiredText(input.to, "New zone name", MAX_OPTION_NAME_LENGTH);
+  if (!parsedTo.ok) return { ok: false, code: "VALIDATION", message: parsedTo.message };
+
+  const from = parsedFrom.value;
+  const to = parsedTo.value;
 
   const { error } = await supabase.rpc("rename_zone", {
     zone_from: from,
@@ -664,12 +699,15 @@ export async function renameZoneAction(input: { from: string; to: string }) {
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
-  return { from, to };
+  return { ok: true, from, to };
 }
 
-export async function deleteZoneAction(zone: string) {
+export async function deleteZoneAction(zone: string): Promise<ZoneDeleteResult> {
   const supabase = await requireAdmin();
-  const target = assertNonEmpty(zone, "Zone");
+
+  const parsed = parseRequiredText(zone, "Zone", MAX_OPTION_NAME_LENGTH);
+  if (!parsed.ok) return { ok: false, code: "VALIDATION", message: parsed.message };
+  const target = parsed.value;
 
   const { error } = await supabase.rpc("delete_zone", {
     zone_name: target
@@ -677,7 +715,7 @@ export async function deleteZoneAction(zone: string) {
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
-  return { zone: target };
+  return { ok: true, zone: target };
 }
 
 export async function deleteSeatAction(seatId: string) {

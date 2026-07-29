@@ -463,7 +463,12 @@ export function AdminManagementPanel({
     startTransition(async () => {
       try {
         setError(null);
-        const department = await createDepartmentAction(newDepartmentName);
+        const result = await createDepartmentAction(newDepartmentName);
+        if (!result.ok) {
+          showError(result.message, "Could not add department.");
+          return;
+        }
+        const department = result.department;
         setLocalDepartmentOptions(current => upsertOptionByIdOrName(current, department));
         setNewDepartmentName("");
         showSuccess(`Department ${department.name} added.`);
@@ -477,7 +482,12 @@ export function AdminManagementPanel({
     startTransition(async () => {
       try {
         setError(null);
-        const department = await createDepartmentAction(name);
+        const result = await createDepartmentAction(name);
+        if (!result.ok) {
+          showError(result.message, "Could not add department to the managed list.");
+          return;
+        }
+        const department = result.department;
         setLocalDepartmentOptions(current => upsertOptionByIdOrName(current, department));
         showSuccess(`Department ${department.name} added to the managed list.`);
       } catch (errorValue) {
@@ -499,6 +509,10 @@ export function AdminManagementPanel({
       try {
         setError(null);
         const result = await renameDepartmentAction({ from: editingDepartment, to: departmentDraft });
+        if (!result.ok) {
+          showError(result.message, "Could not rename department.");
+          return;
+        }
         setLocalDepartmentOptions(current => [
           ...current.map(option => (option.name === result.from ? { ...option, active: false } : option)),
           { id: result.to, name: result.to, active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
@@ -526,7 +540,12 @@ export function AdminManagementPanel({
     startTransition(async () => {
       try {
         setError(null);
-        const zone = await createZoneAction(newZoneName);
+        const result = await createZoneAction(newZoneName);
+        if (!result.ok) {
+          showError(result.message, "Could not add zone.");
+          return;
+        }
+        const zone = result.zone;
         setLocalZoneOptions(current => upsertOptionByIdOrName(current, zone));
         setNewZoneName("");
         showSuccess(`Zone ${zone.name} added.`);
@@ -549,6 +568,10 @@ export function AdminManagementPanel({
       try {
         setError(null);
         const result = await renameZoneAction({ from: editingZone, to: zoneDraft });
+        if (!result.ok) {
+          showError(result.message, "Could not rename zone.");
+          return;
+        }
         setLocalZoneOptions(current => [
           ...current.map(option => (option.name === result.from ? { ...option, active: false } : option)),
           { id: result.to, name: result.to, active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
@@ -586,7 +609,11 @@ export function AdminManagementPanel({
         setError(null);
 
         if (action.kind === "employee") {
-          await deleteEmployeeAction(action.employee.id);
+          const result = await deleteEmployeeAction(action.employee.id);
+          if (!result.ok) {
+            showError(result.message, "Could not deactivate employee.");
+            return;
+          }
           setLocalEmployees(current => current.filter(employee => employee.id !== action.employee.id));
           setLocalSeats(current => current.map(seat => (
             seat.employee_id === action.employee.id ? { ...seat, employee_id: null, employee: null, status: "available" } : seat
@@ -598,7 +625,11 @@ export function AdminManagementPanel({
         }
 
         if (action.kind === "department") {
-          await deleteDepartmentAction(action.name);
+          const result = await deleteDepartmentAction(action.name);
+          if (!result.ok) {
+            showError(result.message, "Could not delete department.");
+            return;
+          }
           setLocalDepartmentOptions(current => current.map(option => (option.name === action.name ? { ...option, active: false } : option)));
           setLocalEmployees(current => current.map(employee => (
             employee.department === action.name ? { ...employee, department: null } : employee
@@ -607,7 +638,11 @@ export function AdminManagementPanel({
           return;
         }
 
-        await deleteZoneAction(action.name);
+        const zoneResult = await deleteZoneAction(action.name);
+        if (!zoneResult.ok) {
+          showError(zoneResult.message, "Could not delete zone.");
+          return;
+        }
         setLocalZoneOptions(current => current.map(option => (option.name === action.name ? { ...option, active: false } : option)));
         setLocalSeats(current => current.map(seat => (
           getSeatZone(seat) === action.name ? { ...seat, zone: null } : seat

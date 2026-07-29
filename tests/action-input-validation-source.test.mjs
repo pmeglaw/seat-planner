@@ -72,11 +72,87 @@ test("updateEmployeeAction validates the employee id it targets", () => {
   assert.match(source, /\.eq\("id", employeeId\.value\)/, "the parsed id is what reaches the query");
 });
 
-test("the employee mutation result stays a discriminated union", () => {
+test("every input-parsing action shares one discriminated failure arm", () => {
+  // A single alias means a new action cannot invent its own rejection shape,
+  // which is what lets callers handle `!result.ok` uniformly.
   assert.match(
     actionsSource,
-    /export type EmployeeMutationResult =\s+\| \{ ok: true; employee: Employee \}\s+\| \{ ok: false; code: "VALIDATION"; message: string \};/
+    /export type ActionValidationFailure = \{ ok: false; code: "VALIDATION"; message: string \};/
   );
+
+  const unions = [
+    /export type EmployeeMutationResult = \{ ok: true; employee: Employee \} \| ActionValidationFailure;/,
+    /export type EmployeeDeleteResult = \{ ok: true; employeeId: string \} \| ActionValidationFailure;/,
+    /export type DepartmentMutationResult = \{ ok: true; department: DepartmentOption \} \| ActionValidationFailure;/,
+    /export type DepartmentDeleteResult = \{ ok: true; department: string \} \| ActionValidationFailure;/,
+    /export type ZoneMutationResult = \{ ok: true; zone: ZoneOption \} \| ActionValidationFailure;/,
+    /export type ZoneDeleteResult = \{ ok: true; zone: string \} \| ActionValidationFailure;/,
+    /export type OptionRenameResult = \{ ok: true; from: string; to: string \} \| ActionValidationFailure;/
+  ];
+  for (const union of unions) assert.match(actionsSource, union);
+});
+
+// Department and zone names are free text typed by an admin. Postgres only
+// rejects blank (`check (char_length(trim(name)) > 0)`), so the type check, the
+// control-character check, and the length bound exist solely in lib/schemas.ts.
+const optionActions = [
+  { name: "createDepartmentAction", nextName: "renameDepartmentAction", field: "Department name" },
+  { name: "renameDepartmentAction", nextName: "deleteDepartmentAction", field: "Department to rename" },
+  { name: "deleteDepartmentAction", nextName: "createZoneAction", field: "Department" },
+  { name: "createZoneAction", nextName: "renameZoneAction", field: "Zone name" },
+  { name: "renameZoneAction", nextName: "deleteZoneAction", field: "Zone to rename" },
+  { name: "deleteZoneAction", nextName: "deleteSeatAction", field: "Zone" }
+];
+
+test("option actions parse their name before writing, and return the failure", () => {
+  for (const action of optionActions) {
+    const source = extractAction(action.name, action.nextName);
+
+    const guardIndex = source.indexOf("parseRequiredText(");
+    assert.notEqual(guardIndex, -1, `${action.name} should parse its name`);
+    assert.ok(
+      source.includes(`"${action.field}", MAX_OPTION_NAME_LENGTH`),
+      `${action.name} should bound the name length`
+    );
+
+    const writeIndex = Math.min(
+      ...[".rpc(", '.from("department_options")', '.from("zone_options")']
+        .map(fragment => source.indexOf(fragment))
+        .filter(index => index !== -1)
+    );
+    assert.ok(guardIndex < writeIndex, `${action.name} must parse before it writes`);
+    assert.ok(source.indexOf("await requireAdmin()") < guardIndex, `${action.name} must authorize before validating`);
+    assert.match(source, /return \{ ok: false, code: "VALIDATION", message: parsed(From|To)?\.message \};/);
+  }
+});
+
+test("deleteEmployeeAction validates the id it deactivates", () => {
+  const source = extractAction("deleteEmployeeAction", "createDepartmentAction");
+  const guardIndex = source.indexOf('parseUuid(targetEmployeeId, "Employee id")');
+  assert.notEqual(guardIndex, -1, "the target id should be parsed as a uuid");
+  assert.ok(guardIndex < source.indexOf(".rpc("), "id must be validated before the RPC call");
+  assert.match(source, /employee_to_deactivate: employeeId/, "the parsed id is what reaches the RPC");
+});
+
+test("the management panel handles every returned option failure", async () => {
+  const panel = await readFile(new URL("../components/admin-management/AdminManagementPanel.tsx", import.meta.url), "utf8");
+  const fallbacks = [
+    "Could not add department.",
+    "Could not add department to the managed list.",
+    "Could not rename department.",
+    "Could not add zone.",
+    "Could not rename zone.",
+    "Could not deactivate employee.",
+    "Could not delete department.",
+    "Could not delete zone."
+  ];
+  for (const fallback of fallbacks) {
+    assert.ok(
+      panel.includes(`showError(result.message, "${fallback}")`) ||
+        panel.includes(`showError(zoneResult.message, "${fallback}")`),
+      `${fallback} should be surfaced from a returned failure`
+    );
+  }
 });
 
 test("the management panel surfaces a returned validation message", () => {
