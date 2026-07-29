@@ -135,9 +135,23 @@ matters more than the tooling does.
 SUPABASE_DB_URL='postgresql://...' npm run backup:prod
 ```
 
-`SUPABASE_DB_URL` is the connection string from Supabase → Project Settings → Database.
-Pass it inline for the one command rather than storing it: the script **deliberately does
-not read `.env.local`**, so reaching production is always an explicit act.
+`SUPABASE_DB_URL` comes from the dashboard's **Connect** button (top bar), not the
+Database settings page. Three details cost time the first time round:
+
+- Take the **Session pooler** string, port **5432**. The **Transaction pooler** (port
+  6543) cannot be used by `pg_dump` at all, and the **Direct connection** is IPv6-only on
+  the Free plan, so it may simply time out.
+- **The database password is not viewable after project creation.** If it is not in a
+  password manager, reset it on the Database settings page. The app is unaffected — it
+  reaches Supabase over HTTPS with the anon key, not this password.
+- When resetting, choose a password of **letters and digits only**. Special characters
+  have to be percent-encoded in the connection string and fail confusingly if they are not.
+
+Pass the string inline for the one command rather than storing it: the script
+**deliberately does not read `.env.local`**, so reaching production is always an explicit
+act. On Windows, `$env:SUPABASE_DB_URL = Read-Host "Connection string"` keeps it out of
+the PowerShell history file; clear it with `$env:SUPABASE_DB_URL = $null` afterwards.
+Docker must be running — the CLI shells out to a containerised `pg_dump`.
 
 Each run writes three files — Supabase's full-backup triad, restored back in this order:
 
@@ -165,6 +179,7 @@ and only then repoint production. Never restore over a live project as a first a
 
 | Date | What was rehearsed | Outcome |
 | --- | --- | --- |
+| 2026-07-29 | **First real production dump.** `npm run backup:prod` against the live project via the session pooler (`aws-1-us-east-1.pooler.supabase.com:5432`) | **Pass.** Every table matched the live row counts exactly — 29 employees, 136 seats (68 draft + 68 published), 14 published\_employees, 18 departments, 8 zones, 24 publish events, 2 profiles. The dump also captures `auth.users`, `auth.identities`, and sessions, so sign-in accounts are covered — the draft snapshot never included those. Schema dump holds all 7 tables and the publish RPC. Not restore-tested; the mechanism was proven by the local rehearsal below. |
 | 2026-07-29 | `npm run backup:prod` against the **local** stack, then all three dumps restored into a fresh database in the same cluster | **Pass.** Row counts matched the source exactly (74 employees / 4,060 seats / 72 published\_employees / 8 zones / 2 publish events); all five core RPCs present; RLS still enabled on `seats`, `employees`, `profiles`, `published_employees`. Schema and data applied with zero errors. Restoring roles into the same cluster conflicts with the roles already there — harmless here, and not a case a real restore into a new project hits. **This exercised the mechanism on local fixture data; a production dump has not yet been taken or restored.** |
 
 ## Ask Planner
