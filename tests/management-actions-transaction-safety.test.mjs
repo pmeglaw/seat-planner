@@ -110,35 +110,37 @@ test("management server actions delegate multi-write mutations to RPCs", () => {
       nextName: "createDepartmentAction",
       rpc: "deactivate_employee",
       args: [/employee_to_deactivate: employeeId/],
-      returnShape: /return \{ employeeId \};/
+      // CODE-01 (#275): these actions parse caller input and RETURN the failure
+      // rather than throwing, so each success path is now an ok:true union arm.
+      returnShape: /return \{ ok: true, employeeId \};/
     },
     {
       name: "renameDepartmentAction",
       nextName: "deleteDepartmentAction",
       rpc: "rename_department",
       args: [/department_from: from/, /department_to: to/],
-      returnShape: /return \{ from, to \};/
+      returnShape: /return \{ ok: true, from, to \};/
     },
     {
       name: "deleteDepartmentAction",
       nextName: "createZoneAction",
       rpc: "delete_department",
       args: [/department_name: target/],
-      returnShape: /return \{ department: target \};/
+      returnShape: /return \{ ok: true, department: target \};/
     },
     {
       name: "renameZoneAction",
       nextName: "deleteZoneAction",
       rpc: "rename_zone",
       args: [/zone_from: from/, /zone_to: to/],
-      returnShape: /return \{ from, to \};/
+      returnShape: /return \{ ok: true, from, to \};/
     },
     {
       name: "deleteZoneAction",
       nextName: "deleteSeatAction",
       rpc: "delete_zone",
       args: [/zone_name: target/],
-      returnShape: /return \{ zone: target \};/
+      returnShape: /return \{ ok: true, zone: target \};/
     }
   ];
 

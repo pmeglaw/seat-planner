@@ -42,6 +42,10 @@ export const MAX_EMPLOYEE_NAME_LENGTH = 120;
 export const MAX_EMPLOYEE_TEXT_LENGTH = 120;
 export const MAX_PHONE_EXTENSION_LENGTH = 20;
 export const MAX_EMAIL_LENGTH = 254;
+// department_options.name and zone_options.name are `text not null unique check
+// (char_length(trim(name)) > 0)` — Postgres rejects blank, nothing else. The
+// upper bound and the type/control-character checks only exist here.
+export const MAX_OPTION_NAME_LENGTH = 120;
 
 // Deliberately permissive: one `@`, no whitespace, and a dotted domain. This is
 // a typo guard for a directory field, not an RFC 5322 parser — Supabase Auth
