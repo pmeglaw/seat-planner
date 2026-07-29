@@ -21,6 +21,7 @@
     "db:start": "supabase start",
     "db:seed": "node scripts/seed-local-db.mjs",
     "db:stop": "supabase stop",
+    "backup:prod": "node scripts/backup-prod.mjs",
     "coverage": "c8 node --test tests/*.test.mjs",
     "coverage:check": "c8 --check-coverage --lines 90 --functions 95 --branches 80 node --test tests/*.test.mjs"
   },

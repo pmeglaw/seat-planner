@@ -23,3 +23,11 @@ tsconfig.tsbuildinfo
 /output/
 .env*
 !.env.local.example
+
+# Production dumps carry the whole employee directory. scripts/backup-prod.mjs
+# already refuses to write inside the repo; this is the second line of defence
+# for a dump copied here by hand. Deliberately narrow so supabase/migrations
+# stays tracked.
+seat-planner-*-roles.sql
+seat-planner-*-schema.sql
+seat-planner-*-data.sql
