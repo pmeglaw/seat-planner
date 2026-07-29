@@ -1,9 +1,20 @@
 name: CI
 
+# Pull requests only. The `push: [main]` trigger used to re-run the whole suite
+# after every merge, which doubled the billed minutes for no new information:
+# merges are squashes of a branch this workflow had just tested against an
+# up-to-date main, so the second run re-tested an identical tree. Actions
+# minutes are metered on this private repo, and a full run bills roughly 7.6
+# minutes across the three jobs (they run in parallel, but billing sums per job).
+#
+# The trade, stated plainly: a commit pushed straight to main now gets no CI at
+# all. Branch protection would normally prevent that, but it is unavailable here
+# — GitHub reserves it for Pro on private repositories — so the only thing
+# keeping main tested is the convention that every change goes through a PR.
+# If that convention slips, or if the repo moves to a plan with branch
+# protection and it is NOT configured, restore `push: branches: [main]`.
 on:
   pull_request:
-    branches: [main]
-  push:
     branches: [main]
 
 concurrency:
