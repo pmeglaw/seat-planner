@@ -72,6 +72,7 @@ Restart the dev server after editing `.env.local`, `tailwind.config.ts`, or Supa
 | `npm run db:start` | Start the local Supabase stack and apply migrations |
 | `npm run db:seed` | Seed local-only admin + viewer accounts |
 | `npm run db:stop` | Stop and remove the local Supabase stack |
+| `npm run backup:prod` | Manual production backup — needs `SUPABASE_DB_URL`; writes outside the repo |
 | `npm run qa:handoff` | Regenerate the improvement-loop QA handoff |
 
 Run a single test file with `node --test tests/seat-swap.test.mjs`.
@@ -123,23 +124,38 @@ snapshot" writes the draft seats plus the active employee directory to a JSON fi
 `zone_options`, `profiles`, or Supabase auth users. Treat it as an undo for the draft
 working copy, not as disaster recovery.
 
-**The real backup position: there is currently no database backup.** The Supabase
-organisation is on the **Free** plan, which has neither scheduled backups nor
-point-in-time recovery. If the production database were lost or corrupted today, nothing
-exists to restore from. Close that gap one of two ways, then record which was chosen:
+**The backup position: the Supabase organisation is on the Free plan**, which has
+neither scheduled backups nor point-in-time recovery. Nothing takes a copy of the
+production database automatically. **The chosen remedy is a manual weekly dump** —
+`npm run backup:prod`. If a week is missed, the exposure is a week of seat and directory
+edits; if the habit lapses entirely, there is no backup at all, so the calendar entry
+matters more than the tooling does.
 
-1. **Upgrade the project to Supabase Pro** — daily backups with 7-day retention; PITR is
-   a further paid add-on. Nothing in this repository changes.
-2. **Take manual dumps** with the Supabase CLI. `SUPABASE_DB_URL` is the connection
-   string from Project Settings → Database:
+```bash
+SUPABASE_DB_URL='postgresql://...' npm run backup:prod
+```
 
-   ```bash
-   supabase db dump --db-url "$SUPABASE_DB_URL" -f backup-$(date +%Y%m%d).sql
-   supabase db dump --db-url "$SUPABASE_DB_URL" --data-only -f data-$(date +%Y%m%d).sql
-   ```
+`SUPABASE_DB_URL` is the connection string from Supabase → Project Settings → Database.
+Pass it inline for the one command rather than storing it: the script **deliberately does
+not read `.env.local`**, so reaching production is always an explicit act.
 
-   The dump contains the entire employee directory — store it outside this repository and
-   never commit it.
+Each run writes three files — Supabase's full-backup triad, restored back in this order:
+
+```
+seat-planner-<YYYY-MM-DD>-roles.sql     # --role-only
+seat-planner-<YYYY-MM-DD>-schema.sql
+seat-planner-<YYYY-MM-DD>-data.sql      # --data-only
+```
+
+They land in `$SEAT_PLANNER_BACKUP_DIR`, defaulting to `../seat-planner-backups` — a
+sibling of this repository. **The script refuses to write anywhere inside the working
+tree**, because the data dump contains the entire employee directory and `.gitignore` is
+one `git add -f` away from not helping. Keep the files off shared drives, and keep at
+least the last four weeks so a corruption noticed late is still recoverable.
+
+If the plan is ever upgraded to Supabase Pro (daily backups, 7-day retention; PITR is a
+further paid add-on), this section and `scripts/backup-prod.mjs` become redundant rather
+than wrong — retire them deliberately, don't just stop running the dump.
 
 **Restoring.** Restore into a *new* Supabase project or the local stack first, point a
 local `npm run dev` at it, confirm `/` renders the published map and `/admin` the draft,
@@ -149,7 +165,7 @@ and only then repoint production. Never restore over a live project as a first a
 
 | Date | What was rehearsed | Outcome |
 | --- | --- | --- |
-| _not yet rehearsed_ | — | — |
+| 2026-07-29 | `npm run backup:prod` against the **local** stack, then all three dumps restored into a fresh database in the same cluster | **Pass.** Row counts matched the source exactly (74 employees / 4,060 seats / 72 published\_employees / 8 zones / 2 publish events); all five core RPCs present; RLS still enabled on `seats`, `employees`, `profiles`, `published_employees`. Schema and data applied with zero errors. Restoring roles into the same cluster conflicts with the roles already there — harmless here, and not a case a real restore into a new project hits. **This exercised the mechanism on local fixture data; a production dump has not yet been taken or restored.** |
 
 ## Ask Planner
 
