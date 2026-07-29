@@ -18,7 +18,9 @@ function extractFunctionSql(sql) {
 }
 
 function extractSwapAction(source) {
-  const match = source.match(/export async function swapSeatAssignmentsAction[\s\S]+?\r?\n}\r?\n\r?\nexport async function createEmployeeAction/);
+  // Stops at whatever export comes next rather than naming it, so inserting a
+  // type or action after the swap does not silently blank this extraction.
+  const match = source.match(/export async function swapSeatAssignmentsAction[\s\S]+?\r?\n}\r?\n\r?\nexport (?:async function|type) \w+/);
   assert.ok(match, "swap action should be present");
   return match[0];
 }

@@ -386,6 +386,13 @@ export function AdminManagementPanel({
 
   function showError(errorValue: unknown, fallback: string) {
     setMessage(null);
+    // A plain string is a message an action *returned* (the validation path in
+    // lib/schemas.ts) rather than threw, so it is already admin-facing and must
+    // not be swallowed by the generic fallback.
+    if (typeof errorValue === "string" && errorValue.trim()) {
+      setError(errorValue);
+      return;
+    }
     setError(errorValue instanceof Error ? errorValue.message : fallback);
   }
 
@@ -417,9 +424,18 @@ export function AdminManagementPanel({
           phoneExtension: employeeForm.phoneExtension,
           email: employeeForm.email
         };
-        const employee = selectedEmployee
+        const result = selectedEmployee
           ? await updateEmployeeAction({ employeeId: selectedEmployee.id, ...payload })
           : await createEmployeeAction(payload);
+
+        // Validation failures come back rather than throwing, so the field-level
+        // message survives production's digest stripping — surface it and stop.
+        if (!result.ok) {
+          showError(result.message, "Could not save employee.");
+          return;
+        }
+
+        const employee = result.employee;
 
         setLocalEmployees(current => {
           const exists = current.some(item => item.id === employee.id);
