@@ -26,6 +26,10 @@
   --sp-color-action-primary-hover: #B83708;
   --sp-color-action-primary-pressed: #9E2F06;
   --sp-color-brand-clay: #6D4712;
+  /* Pressed tint for the secondary-button warm hover pair (promoted from a
+     hardcoded hex in design-system.tsx 2026-07-29 so the dark theme can
+     retarget it). */
+  --sp-color-brand-paper-active: #F3D1B9;
 
   --sp-color-brand-ivory-rgb: 255 255 255;
   --sp-color-brand-paper-rgb: 251 234 225;
@@ -391,6 +395,144 @@
   --admin-shadow-command: none;
   --admin-shadow-map: none;
   --admin-shadow-panel: var(--admin-elevation-3-shadow);
+}
+
+/* ADMIN GOES DARK END-TO-END (2026-07-29). The block above stays the shared
+   base; this override retargets the surface-level tokens so every `.admin-theme`
+   page (map chrome strips, Management, Settings, dialogs, popovers) renders on
+   the SAME dark ladder the chrome bar / inspector already use, while
+   `.shell-theme` (viewer, login) keeps the light workspace. The floor-plan
+   raster is content and stays light in both.
+
+   Ladder (no new neutrals): #161616 page/chrome · #1f1f1f panel · #262626
+   raised/hover · #333333 active · borders #303030/#454545.
+   Text (computed 2026-07-29, AA at panel sizes): #F7F6F2 on #161616 = 16.45:1,
+   on #1f1f1f ≈ 14.6:1; #D8D0C5 ≈ 9.9:1 / 8.8:1; #B8AEA2 = 6.43:1 / 5.7:1
+   (4.98:1 on #262626 — still AA body). Accents on dark panels: #42be65 ≈ 7.3:1,
+   #ff8389 ≈ 7.9:1, #f1c21b ≈ 10.9:1, #FF5715 ≈ 6.0:1, #FFA982 ≈ 7.0:1 on
+   #3A2013.
+
+   Deliberately NOT overridden — white-label fills keep their deepened values so
+   label contrast survives on any page: --sp-color-action-primary ladder,
+   --admin-primary-cta(+hover/active), --admin-danger, --sp-color-state-danger
+   (+hover/pressed). Orange TEXT on tinted/dark surfaces must use
+   --admin-primary-on-soft (dark: #FFA982), never --admin-primary-cta — same
+   rule as light, different value. */
+.admin-theme {
+  color-scheme: dark;
+
+  /* Base neutrals + rgb partners (drive both var() consumers and sp-* utilities). */
+  --sp-color-canvas: #161616;
+  --sp-color-surface: #1f1f1f;
+  --sp-color-surface-raised: #262626;
+  --sp-color-graphite-soft: #262626;
+  --sp-color-stone: #333333;
+  --sp-color-border-subtle: #303030;
+  --sp-color-border-strong: #454545;
+  --sp-color-text-primary: #F7F6F2;
+  --sp-color-text-secondary: #D8D0C5;
+  --sp-color-text-muted: #B8AEA2;
+  --sp-color-text-disabled: #8E8276;
+  --sp-color-canvas-rgb: 22 22 22;
+  --sp-color-surface-rgb: 31 31 31;
+  --sp-color-surface-raised-rgb: 38 38 38;
+  --sp-color-graphite-soft-rgb: 38 38 38;
+  --sp-color-stone-rgb: 51 51 51;
+  --sp-color-border-subtle-rgb: 48 48 48;
+  --sp-color-border-strong-rgb: 69 69 69;
+  --sp-color-text-primary-rgb: 247 246 242;
+  --sp-color-text-secondary-rgb: 216 208 197;
+  --sp-color-text-muted-rgb: 184 174 162;
+  --sp-color-text-disabled-rgb: 142 130 118;
+
+  /* Warm hover tint pair (secondary-button hover): dark paper + bright clay. */
+  --sp-color-brand-paper: #3A2A20;
+  --sp-color-brand-paper-rgb: 58 42 32;
+  --sp-color-brand-clay: #FFB49A;
+  --sp-color-brand-paper-active: #45301F;
+
+  /* State softs: dark-tinted surfaces + bright text partners (Carbon-g100
+     style). Base hues stay fill-safe; dots/graphics brighten via --admin-status-*. */
+  --sp-color-state-selected-surface: #3A2013;
+  --sp-color-state-selected-border: #8A4A2B;
+  --sp-color-state-published: #42be65;
+  --sp-color-state-published-surface: #16301F;
+  --sp-color-state-published-border: #2F5C3C;
+  --sp-color-state-published-on-soft: #42be65;
+  --sp-color-state-published-rgb: 66 190 101;
+  --sp-color-state-draft-surface: #33290F;
+  --sp-color-state-draft-border: #6D5A1F;
+  --sp-color-state-draft-on-soft: #f1c21b;
+  --sp-color-state-success: #42be65;
+  --sp-color-state-success-surface: #16301F;
+  --sp-color-state-success-border: #2F5C3C;
+  --sp-color-state-success-on-soft: #42be65;
+  --sp-color-state-success-rgb: 66 190 101;
+  --sp-color-state-warning-surface: #33290F;
+  --sp-color-state-warning-border: #6D5A1F;
+  --sp-color-state-warning-on-soft: #f1c21b;
+  --sp-color-state-danger-surface: #3A1A1C;
+  --sp-color-state-danger-border: #77282C;
+  --sp-color-state-danger-on-soft: #ff8389;
+  --sp-color-state-info: #B8AEA2;
+  --sp-color-state-info-surface: #262626;
+  --sp-color-state-info-border: #454545;
+  --sp-color-state-info-on-soft: #D8D0C5;
+  --sp-color-state-info-rgb: 184 174 162;
+  --sp-color-state-search: #FFA982;
+  --sp-color-state-search-surface: #3A2013;
+  --sp-color-state-search-rgb: 255 169 130;
+  --sp-color-state-disabled: #333333;
+  --sp-color-state-disabled-rgb: 51 51 51;
+
+  /* Literal-valued admin aliases (the var()-aliased ones flip automatically). */
+  --admin-border: #303030;
+  --admin-border-strong: #454545;
+  --admin-text-primary: #F7F6F2;
+  --admin-text-secondary: #D8D0C5;
+  --admin-text-muted: #B8AEA2;
+  --admin-text-subtle: #B8AEA2;
+  --admin-text-inverse: #161616;
+  --admin-surface-alt: #262626;
+  --admin-surface-muted: #161616;
+  --admin-primary-on-soft: #FFA982;
+  --admin-paper: #3A2013;
+  --admin-secondary: #B8AEA2;
+  --admin-secondary-hover: #D8D0C5;
+
+  /* Status dots/graphics brighten to stay ≥3:1 on dark panels; text-bearing
+     soft pairs follow the sp state families above. */
+  --admin-status-ok: #42be65;
+  --admin-status-bad: #fa4d56;
+  --admin-status-neutral: #8E8276;
+  --admin-success: #42be65;
+  --admin-success-soft: #16301F;
+  --admin-warning-text: #f1c21b;
+  --admin-warning-soft: #33290F;
+  --admin-danger-soft: #3A1A1C;
+  --admin-info: #B8AEA2;
+  --admin-info-soft: #262626;
+  --admin-analytics: #B8AEA2;
+
+  --admin-state-clean-bg: #16301F;
+  --admin-state-clean-border: rgba(66, 190, 101, 0.36);
+  --admin-state-clean-text: #42be65;
+  --admin-state-dirty-border: rgba(241, 194, 27, 0.40);
+  --admin-state-dirty-text: #f1c21b;
+  --admin-state-saving-border: rgba(184, 174, 162, 0.36);
+  --admin-state-error-bg: #3A1A1C;
+  --admin-state-error-border: rgba(250, 77, 86, 0.38);
+  --admin-state-error-text: #ff8389;
+  --admin-state-danger-text: #ff8389;
+
+  --admin-publish-ready-text: #FF8A5C;
+  --admin-publish-viewer-impact-border: rgba(184, 174, 162, 0.34);
+
+  /* Shadows read heavier on dark to keep menus/overlays separable. */
+  --admin-elevation-2-shadow: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --admin-elevation-3-shadow: 0 6px 16px rgba(0, 0, 0, 0.50);
+  --admin-elevation-4-shadow: 0 12px 40px rgba(0, 0, 0, 0.60);
+  --admin-elevation-5-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
 
 /* Chrome motion — quiet, one-shot entrances. Applied only via Tailwind's `motion-safe:`

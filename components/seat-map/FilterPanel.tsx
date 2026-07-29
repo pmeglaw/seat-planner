@@ -55,7 +55,9 @@ export function ActiveFilterChips({
       {chips.map(chip => (
         <span key={chip.id} className="inline-flex max-w-full items-center gap-1 bg-[var(--admin-surface)] py-0.5 pl-2 pr-1 text-[11px] font-semibold text-[var(--admin-text-secondary)] ring-1 ring-[var(--admin-primary-border)]">
           <span className="shrink-0 text-[var(--admin-text-muted)]">{chip.label}</span>
-          <span className="min-w-0 truncate text-[var(--admin-primary-cta)]">{chip.value}</span>
+          {/* on-soft, not cta: this is orange TEXT on a panel surface — cta is
+              reserved for white-label fills (see the token note in globals.css). */}
+          <span className="min-w-0 truncate text-[var(--admin-primary-on-soft)]">{chip.value}</span>
           <button
             type="button"
             onClick={() => onRemove(chip.id)}
@@ -80,14 +82,17 @@ export function ActiveFilterChips({
   );
 }
 
-// Prototype `.fmenu`: a compact dark menu anchored to the Filter button in the
-// chrome bar. Content only — the caller's wrapper owns positioning (absolute
-// or fixed under the button), so admin and viewer share ONE filter presentation.
-// Native <select> keeps its semantics (disclosure pattern verified adversarially) —
-// only the chrome is styled: appearance-none + an inline SVG chevron (data-URI,
-// stroke #B8AEA2 to match --admin-chrome-muted) standing in for the native arrow.
-const darkSelectClassName =
-  "mt-1 w-full min-w-0 cursor-pointer appearance-none border border-white/20 bg-white/[0.06] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2012%208%22%20fill=%22none%22%3E%3Cpolyline%20points=%221,1.5%206,6.5%2011,1.5%22%20stroke=%22%239a9a9a%22%20stroke-width=%221.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[length:12px_8px] bg-[position:right_8px_center] bg-no-repeat px-2.5 py-1.5 pr-8 text-sm text-[var(--admin-chrome-text)] outline-none transition hover:border-white/30 focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] [&>option]:bg-[var(--admin-chrome-hover)] [&>option]:text-[var(--admin-chrome-text)]";
+// A compact menu anchored to the Filter button. Content only — the caller's
+// wrapper owns positioning (absolute or fixed under the button), so admin and
+// viewer share ONE filter presentation. Styling is theme-relative (2026-07-29):
+// the same `--admin-*` aliases resolve light under `.shell-theme` (viewer
+// popovers are light surfaces) and dark under `.admin-theme` (the admin is dark
+// end-to-end). Native <select> keeps its semantics (disclosure pattern verified
+// adversarially) — only the chrome is styled: appearance-none + an inline SVG
+// chevron (data-URI, stroke #9a9a9a — legible on both themes) standing in for
+// the native arrow.
+const selectClassName =
+  "mt-1 w-full min-w-0 cursor-pointer appearance-none border border-[var(--admin-border-strong)] bg-[var(--admin-surface-muted)] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2012%208%22%20fill=%22none%22%3E%3Cpolyline%20points=%221,1.5%206,6.5%2011,1.5%22%20stroke=%22%239a9a9a%22%20stroke-width=%221.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[length:12px_8px] bg-[position:right_8px_center] bg-no-repeat px-2.5 py-1.5 pr-8 text-sm text-[var(--admin-text-primary)] outline-none transition hover:border-[var(--admin-text-subtle)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] [&>option]:bg-[var(--admin-surface)] [&>option]:text-[var(--admin-text-primary)]";
 
 export function FilterPanel({
   department,
@@ -127,14 +132,14 @@ export function FilterPanel({
           returnFocusAfterClose(returnFocusRef);
         }
       }}
-      className="w-full border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-elevated)] p-3 text-[var(--admin-chrome-text)] shadow-elevation-4"
+      className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 text-[var(--admin-text-primary)] shadow-elevation-4"
     >
       <ActiveFilterChips chips={activeStructuredChips} onRemove={onRemoveActiveChip} onClearAll={onClearFilters} className="mb-3" />
 
       <div className="grid grid-cols-1 gap-2">
         <label className="block">
-          <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Department</span>
-          <select value={department} onChange={event => onDepartmentChange(event.target.value)} className={darkSelectClassName}>
+          <span className="text-[11px] font-medium text-[var(--admin-text-muted)]">Department</span>
+          <select value={department} onChange={event => onDepartmentChange(event.target.value)} className={selectClassName}>
             <option value="all">All departments</option>
             {departments.map(dep => (
               <option key={dep} value={dep}>{dep}</option>
@@ -147,8 +152,8 @@ export function FilterPanel({
             what makes "show me every Case Manager, then look at their zones"
             readable as one motion. */}
         <label className="block">
-          <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Position</span>
-          <select value={position} onChange={event => onPositionChange(event.target.value)} className={darkSelectClassName}>
+          <span className="text-[11px] font-medium text-[var(--admin-text-muted)]">Position</span>
+          <select value={position} onChange={event => onPositionChange(event.target.value)} className={selectClassName}>
             <option value="all">All positions</option>
             {positions.map(value => (
               <option key={value} value={value}>{value}</option>
@@ -157,8 +162,8 @@ export function FilterPanel({
         </label>
 
         <label className="block">
-          <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Zone</span>
-          <select value={zone} onChange={event => onZoneChange(event.target.value)} className={darkSelectClassName}>
+          <span className="text-[11px] font-medium text-[var(--admin-text-muted)]">Zone</span>
+          <select value={zone} onChange={event => onZoneChange(event.target.value)} className={selectClassName}>
             <option value="all">All zones</option>
             {zones.map(value => (
               <option key={value} value={value}>{value}</option>
@@ -167,8 +172,8 @@ export function FilterPanel({
         </label>
 
         <label className="block">
-          <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Status</span>
-          <select value={status} onChange={event => onStatusChange(event.target.value)} className={darkSelectClassName}>
+          <span className="text-[11px] font-medium text-[var(--admin-text-muted)]">Status</span>
+          <select value={status} onChange={event => onStatusChange(event.target.value)} className={selectClassName}>
             <option value="all">All statuses</option>
             <option value="available">{STATUS_LABELS.available}</option>
             <option value="assigned">{STATUS_LABELS.assigned}</option>
@@ -181,7 +186,7 @@ export function FilterPanel({
           changing a select shows its effect before the panel closes
           (2026-07-16 regrade, review 4). */}
       {matchSummary && (
-        <p aria-live="polite" className="mt-3 border-t border-white/10 pt-2.5 text-[11px] font-medium text-[var(--admin-chrome-muted)]">
+        <p aria-live="polite" className="mt-3 border-t border-[var(--admin-border)] pt-2.5 text-[11px] font-medium text-[var(--admin-text-muted)]">
           {matchSummary}
         </p>
       )}

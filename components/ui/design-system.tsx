@@ -27,7 +27,7 @@ const buttonVariants: Record<ButtonVariant, string> = {
   primary:
     "border-[var(--sp-color-action-primary)] bg-[var(--sp-color-action-primary)] text-white hover:border-[var(--sp-color-action-primary-hover)] hover:bg-[var(--sp-color-action-primary-hover)] active:border-[var(--sp-color-action-primary-pressed)] active:bg-[var(--sp-color-action-primary-pressed)]",
   secondary:
-    "border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface-raised)] text-[var(--sp-color-text-primary)] hover:border-[var(--sp-color-brand-copper)] hover:bg-[var(--sp-color-brand-paper)] hover:text-[var(--sp-color-brand-clay)] active:border-[var(--sp-color-action-primary)] active:bg-[#F3D1B9]",
+    "border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface-raised)] text-[var(--sp-color-text-primary)] hover:border-[var(--sp-color-brand-copper)] hover:bg-[var(--sp-color-brand-paper)] hover:text-[var(--sp-color-brand-clay)] active:border-[var(--sp-color-action-primary)] active:bg-[var(--sp-color-brand-paper-active)]",
   quiet:
     "border-transparent bg-transparent text-[var(--sp-color-text-muted)] hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] active:bg-[var(--sp-color-stone)] active:text-[var(--sp-color-text-secondary)]",
   destructive:
