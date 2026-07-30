@@ -174,6 +174,19 @@
   --sp-duration-standard: 200ms;
   --sp-duration-deliberate: 280ms;
 
+  /* Chrome bar height — the one place it is spelled.
+     Declared on :root rather than on the theme classes because `html` (below)
+     has to read it for scroll-padding-top, and a token defined on a descendant
+     is out of scope there.
+     36px on every surface (owner call: the top chrome keeps its original
+     size). The v12 handoff asks for 48px; if that is ever revisited, change
+     this one value and add a `.shell-theme { --admin-chrome-h: 36px }` override
+     after the theme block to hold the viewer back.
+     Every full-height chrome item tracks this value instead of a literal: the
+     active state is a 2px bottom border, and it only lands on the bar's bottom
+     edge while item height == bar height. */
+  --admin-chrome-h: 36px;
+
   --sp-focus-ring-color: rgb(255 87 21 / 0.9);
   --sp-focus-ring-width: 4px;
   --sp-focus-ring-offset: 2px;
@@ -417,10 +430,11 @@
 }
 
 html {
-  /* The 40px chrome bar is sticky on every surface: without scroll padding,
+  /* The chrome bar is sticky on every surface: without scroll padding,
      browser-driven scrolls (focus-into-view, ⌘K) align the target flush
-     under the opaque bar and the focused control is fully obscured. */
-  scroll-padding-top: 2.25rem;
+     under the opaque bar and the focused control is fully obscured.
+     Reads the shared token so this can never drift from the bar it clears. */
+  scroll-padding-top: var(--admin-chrome-h);
 }
 
 body {

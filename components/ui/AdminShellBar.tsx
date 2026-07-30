@@ -1,26 +1,29 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AccountMenu } from "@/components/ui/AccountMenu";
+// Aliased on import so every call site below reads unchanged. The three class
+// strings used to be private copies here, byte-identical to the map header's
+// until they drifted (this bar's divider stayed tuned for a 40px bar while the
+// map's was retuned) — components/ui/adminChrome.ts now owns them.
+import {
+  adminChromeDividerRule,
+  adminChromeSurfaceShortcut as surfaceShortcut,
+  adminChromeTool as toolLink,
+  adminChromeToolActive as toolLinkActive
+} from "@/components/ui/adminChrome";
 
 /**
  * The Shell chrome bar for admin sub-pages (Management, Settings).
  *
- * Mirrors the seat-map header (components/seat-map/SeatMap.tsx) — same 40px
- * dark bar, brand chip, and tool styling — so /admin, /admin/management, and
- * /admin/settings read as one continuous surface. Unlike the map header it
- * carries only the Viewer cross-surface exit: the section nav's underline
- * already answers "where am I", and an active Admin tab would duplicate the
- * "Seat map" link's destination.
+ * Mirrors the seat-map header (components/seat-map/SeatMap.tsx) — same dark bar
+ * (height from --admin-chrome-h), brand chip, and tool styling — so /admin,
+ * /admin/management, and /admin/settings read as one continuous surface. Unlike
+ * the map header it carries only the Viewer cross-surface exit: the section
+ * nav's underline already answers "where am I", and an active Admin tab would
+ * duplicate the "Seat map" link's destination.
  * Stateless on purpose: map-only tools (search, undo/redo, publish) stay in
  * the map header; this bar only carries identity and navigation.
  */
-
-const toolLink =
-  "inline-flex h-9 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-const toolLinkActive =
-  "inline-flex h-9 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-const surfaceShortcut =
-  "flex h-9 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
 type AdminShellPage = "management" | "settings";
 
@@ -28,7 +31,7 @@ export function AdminShellBar({ page, email, roleLabel }: { page: AdminShellPage
   return (
     /* z-50 matches the seat-map bar: the chrome tier sits above z-40 page
        overlays so scrolled content never paints over the pinned bar. */
-    <header className="sticky top-0 z-50 flex h-9 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+    <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
       {/* Same skip affordance as the map surfaces: first focusable jumps the
           chrome straight to the page content (#202). */}
       <a
@@ -47,7 +50,7 @@ export function AdminShellBar({ page, email, roleLabel }: { page: AdminShellPage
         </div>
       </div>
 
-      <span aria-hidden="true" className="mx-2.5 h-[22px] w-px shrink-0 bg-[var(--admin-chrome-border)]" />
+      <span aria-hidden="true" className={`mx-2.5 h-[22px] ${adminChromeDividerRule}`} />
 
       <nav aria-label="Admin sections" className="flex h-full min-w-0 items-center">
         <Link href="/admin" className={toolLink}>
