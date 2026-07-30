@@ -21,17 +21,17 @@ Delete, following the enumeration in `docs/handoff-v12-shell.md`:
 - `moveSeatAction` in `app/actions.ts`. The SQL function it called stays in `supabase/migrations/` untouched — migrations are history; the function simply becomes uncalled.
 - `SeatMap.tsx`: move-seat mode state, `dragState`, `handleMovePointerDown` and related drag plumbing, the `start-move-seat` guard arm, and the mode's Esc/cancel handling.
 - `SeatInspector.tsx`: the `MOVE_UI_ENABLED` constant and its guarded JSX, the `onStartMoveSeat` / `moveMode` props, and the move-mode microcopy.
-- `lib/publishSummary.ts`: the `seatMoves` diff category, plus its rendering in the publish review and its test coverage.
+- `lib/publishSummary.ts`: the `seatMoves` diff category, plus its rendering in the publish review and its test coverage. Coordinate drift stays *detectable*: snapshot restore and legacy JSON snapshots can still shift x/y, so the position comparison folds into `otherChanges` instead of vanishing — the publish review must never silently publish a position change.
 - **"Reset position to published": delete as well.** Verified live 2026-07-30 against prod: a draft-vs-published position drift query returned zero rows, so no existing draft depends on this escape hatch.
 
 Leave intact: the assignment flow's "Move them?" double-booking dialog in `SeatInspector` (same person-move semantic, different entry point), and `update_draft_seat`'s `force_move` behavior.
 
 ## Part 2 — person-centric Move
 
-Mirrors Swap's architecture exactly: verb button in the inspector, mode logic in `SeatMap`.
+Mirrors Swap's architecture exactly: verb button on the canvas `SeatActionBar`, mode logic in `SeatMap`. *(Corrected 2026-07-30 after code extraction, owner-approved: the spec first said "inspector action row", but Swap/Vacate actually live on the canvas action bar — the panel-collapse rationale in `SeatActionBar.tsx`'s docstring applies to Move equally.)*
 
-- The Move button appears in the inspector action row (Change / Move / Swap / Vacate) **only for occupied seats** — it acts on the occupant. Accessible name: "Move {name} to another seat".
-- Button fires `onStartMoveEmployee` → `SeatMap` enters move mode (`moveEmployeeSourceSeatId`), with a dirty-inspector guard arm `start-move-employee` (same pattern as `start-swap-seat`).
+- The Move button joins the canvas action bar **only for occupied seats** (bar reads Move · Swap · Vacate) — it acts on the occupant. Accessible name: "Move {name} to another seat".
+- Button fires the bar's `onMove` → `SeatMap` enters move mode (`moveEmployeeSourceSeatId`), with a dirty-inspector guard arm `start-move-employee` (same pattern as `start-swap-seat`).
 - **Click an open destination seat** → confirm dialog: "Move {A} to {B}? Frees {source seat} (it becomes Open)." Confirm executes the existing `update_draft_seat` RPC with `force_move` — already atomic and concurrency-fenced. **No new RPCs, no migrations.**
 - **Click an occupied destination seat** → swap offer: "{B} sits there — swap {A} and {B}?" Confirm executes the existing `swap_draft_seat_assignments` RPC.
 - **Esc** cancels the mode. Clicking the source seat itself cancels with a neutral notice.
@@ -39,7 +39,7 @@ Mirrors Swap's architecture exactly: verb button in the inspector, mode logic in
 ## Edge handling
 
 - Stale draft: existing SQLSTATE `MLS02` handling covers both RPC paths — no new code.
-- Undo/redo: capture a before-snapshot exactly as Swap does, so the move (or swap) is one undo step.
+- Undo/redo: capture a before-snapshot exactly as Swap does, so the move (or swap) is one undo step. Extraction found a latent bug here: after a force-move, `SeatMap.applySeatUpdated` replaces only the target seat locally, leaving the vacated source seat occupied on screen and inside the recorded undo snapshot. The fix — a tested `lib` helper that clears the employee's other seats — ships with this work and is used by both the new flow and the existing "Move them?" path.
 - Move never displaces anyone into unassigned — occupied destinations route to swap, and declining the swap leaves everything unchanged.
 
 ## Tests
@@ -48,6 +48,7 @@ Mirrors Swap's architecture exactly: verb button in the inspector, mode logic in
 - `lib/publishSummary` tests: drop `seatMoves` expectations.
 - `tests/accessibility-source.test.mjs`: mode microcopy, `aria-pressed`/labels, dialog semantics for both confirm dialogs.
 - Transaction-safety tests referencing `moveSeatAction`: remove or repoint.
+- `tests/browser/seat-map.spec.ts` lines 128–134 are already stale (they assert the `Move seat` affordance is attached, which `MOVE_UI_ENABLED = false` removed) — rewrite them against the action-bar verbs.
 - Source-test guardrails (`seat-creation-ui-source`, `desktop-seat-marker-system-source`) must stay green — calibration constants and draft-only mutation lines are untouched by this work.
 
 ## Out of scope
