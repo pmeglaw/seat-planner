@@ -155,9 +155,28 @@ export function LoginForm() {
     void sendMagicLink();
   }
 
-  // Shell login card (Figma "Login / Refined"): field boxes are 36px flat
-  // rectangles on border-strong; focus is a 2px brand-accent stroke.
-  const fieldClass = "mt-1.5 h-9 w-full border border-[var(--admin-border-strong)] bg-white px-3 text-sm text-[var(--admin-text-primary)] outline-none transition placeholder:text-[var(--admin-text-muted)] focus:border-[var(--admin-primary)] focus:ring-1 focus:ring-inset focus:ring-[var(--admin-primary)]";
+  // Fluid fields (Carbon v12 prediction §06): the label lives INSIDE the field,
+  // there is a bottom rule and no box. Only the fields adopt the pattern — the
+  // card, tabs and buttons are unchanged.
+  //
+  // Height is fixed at 56px and box-sizing is border-box (app/globals.css), so
+  // the 1px → 2px rule change on focus cannot shift layout.
+  //
+  // The resting rule borrows --admin-status-neutral rather than the
+  // --admin-border-strong these fields used to box themselves with: #D8D0C5 on
+  // the field's #F7F6F2 fill is about 1.2:1, which fails WCAG 1.4.11's 3:1 for
+  // an essential UI boundary — survivable as one edge of a full rectangle, not
+  // as the single line that says "this is an input". #8E8276 measures ≈3.6:1
+  // and the focus rule (#FF5715 on the same fill) ≈3.0:1, so both clear it, and
+  // the doubling thickness is a second, non-colour cue. Borrowing a status
+  // token here is a semantic stretch: the repo has no field-underline token,
+  // which is precisely the gap the DTCG rename would close.
+  const fieldShellClass =
+    "mt-4 flex h-14 flex-col justify-center border-b border-[var(--admin-status-neutral)] bg-[var(--admin-surface-alt)] px-4 transition-colors focus-within:border-b-2 focus-within:border-[var(--admin-primary)]";
+  const fieldLabelClass = "text-[12px] font-normal leading-[1.3] text-[var(--admin-text-muted)]";
+  // outline-none is safe only because the shell above draws the focus rule.
+  const fieldInputClass =
+    "w-full border-0 bg-transparent p-0 text-[15px] font-normal leading-[1.4] text-[var(--admin-text-primary)] outline-none placeholder:text-[var(--admin-text-muted)]";
 
   const tabClass = (active: boolean) =>
     cx(
@@ -201,8 +220,8 @@ export function LoginForm() {
       {/* Inputs are deliberately name-less: a pre-hydration native submit must
           not serialize the password into the URL (GET form default). */}
       <form onSubmit={handleSubmit} noValidate>
-      <label className="mt-4 block">
-        <span className="text-xs font-medium text-[var(--admin-text-primary)]">Email</span>
+      <label className={fieldShellClass}>
+        <span className={fieldLabelClass}>Email</span>
         <input
           ref={emailInputRef}
           type="email"
@@ -211,14 +230,14 @@ export function LoginForm() {
           onChange={event => setEmail(event.target.value)}
           placeholder="you@company.com"
           autoComplete="email"
-          className={fieldClass}
+          className={fieldInputClass}
         />
       </label>
 
       {mode === "password" ? (
         <>
-          <label className="mt-4 block">
-            <span className="text-xs font-medium text-[var(--admin-text-primary)]">Password</span>
+          <label className={fieldShellClass}>
+            <span className={fieldLabelClass}>Password</span>
             <input
               ref={passwordInputRef}
               type="password"
@@ -226,7 +245,7 @@ export function LoginForm() {
               onChange={event => setPassword(event.target.value)}
               placeholder="Enter your password"
               autoComplete="current-password"
-              className={fieldClass}
+              className={fieldInputClass}
             />
           </label>
 
