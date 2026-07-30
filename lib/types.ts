@@ -134,8 +134,16 @@ export const STATUS_LABELS: Record<SeatStatus, string> = {
   unavailable: "Unavailable"
 };
 
+// The ok branch also carries the fresh full draft payload (same helper
+// swapSeatAssignmentsAction uses) — not just the one seat the caller asked to
+// update. A force_move vacates the mover's OTHER draft seat server-side, which
+// bumps that row's updated_at via the touch_seats_updated_at trigger; a caller
+// that only had `seat` could only reconstruct that other seat by spreading its
+// own stale pre-mutation copy, baking a stale timestamp into local state that
+// fails the next Undo's per-row concurrency fence (MLS02). Ingest `seats`/
+// `employees` wholesale instead, exactly like swap already does.
 export type UpdateSeatResult =
-  | { ok: true; seat: SeatWithEmployee }
+  | { ok: true; seat: SeatWithEmployee; seats: SeatWithEmployee[]; employees: Employee[] }
   | { ok: false; code: "EMPLOYEE_ALREADY_ASSIGNED"; message: string; currentSeatLabel: string }
   | { ok: false; code: "STALE_DRAFT"; message: string }
   | { ok: false; code: "VALIDATION"; message: string };

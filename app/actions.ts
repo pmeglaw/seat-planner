@@ -363,7 +363,11 @@ export async function updateSeatAction(input: {
 
   revalidatePath("/admin");
   const seat = await getDraftSeatById(supabase, input.seatId);
-  return { ok: true, seat };
+  // Fresh full payload alongside the single seat — see UpdateSeatResult's
+  // comment: a force_move also vacates another draft seat server-side, and a
+  // caller reconstructing that seat from its own stale copy bakes a stale
+  // updated_at into local state that fails the next Undo's concurrency fence.
+  return { ok: true, seat, ...(await getDraftMapPayload(supabase)) };
 }
 
 function mapUpdateSeatError(error: SupabaseMutationError): UpdateSeatResult {

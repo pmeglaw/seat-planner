@@ -53,7 +53,7 @@ import { clientPointToNormalized } from "@/lib/seatMath";
 import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
-import { canVacateSeat, vacateOtherSeatsForEmployee } from "@/lib/seatDraftActions";
+import { canVacateSeat } from "@/lib/seatDraftActions";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import {
@@ -1361,15 +1361,28 @@ export function SeatMap({
    * surfaces record undo history the same way — a vacate from the bar must be
    * indistinguishable from one made in the panel, or Undo starts behaving
    * differently depending on where the user clicked.
+   *
+   * `freshDraftPayload` is only ever passed for a force_move commit (inspector
+   * "Move them?" retry). force_move also vacates the mover's OTHER draft seat
+   * server-side, which bumps THAT row's updated_at via the DB trigger — the
+   * caller here only has `seat` (the target row) plus its own now-stale
+   * pre-mutation copy of the vacated seat, and reconstructing that seat by
+   * spreading the stale copy bakes a stale updated_at into localSeats that
+   * fails the next Undo's per-row concurrency fence (MLS02, fix round 1,
+   * 2026-07-30 — reproduced live). Ingest the fresh payload wholesale instead,
+   * same as swap. Ordinary saves and the bar's vacate never touch a second
+   * row, so they keep the plain spread-and-replace path.
    */
-  function applySeatUpdated(seat: SeatWithEmployee, beforeSnapshot: DraftSnapshot) {
+  function applySeatUpdated(
+    seat: SeatWithEmployee,
+    beforeSnapshot: DraftSnapshot,
+    freshDraftPayload?: { seats: SeatWithEmployee[]; employees: Employee[] }
+  ) {
     setActionError(null);
     setActionNotice(null);
     setInspectorDirty(false);
-    // A force_move (inspector "Move them?" or a bar Move) vacated the seat the
-    // employee came from server-side — mirror it before recording history.
-    const afterSeats = replaceSeat(vacateOtherSeatsForEmployee(beforeSnapshot.seats, seat), seat);
-    const afterEmployees = replaceEmployee(beforeSnapshot.employees, seat);
+    const afterSeats = freshDraftPayload ? normalizeSeats(freshDraftPayload.seats) : replaceSeat(beforeSnapshot.seats, seat);
+    const afterEmployees = freshDraftPayload ? freshDraftPayload.employees : replaceEmployee(beforeSnapshot.employees, seat);
     recordDraftHistory(describeSeatUpdate(beforeSnapshot, seat), beforeSnapshot, afterSeats, afterEmployees);
     setLocalSeats(afterSeats);
     setLocalEmployees(afterEmployees);
@@ -2106,11 +2119,16 @@ export function SeatMap({
           setActionError(result.message);
           return;
         }
-        // The RPC vacated the source server-side; mirror it locally so the map
-        // and the recorded undo snapshot match the database.
-        const afterSeats = replaceSeat(vacateOtherSeatsForEmployee(beforeSnapshot.seats, result.seat), result.seat);
-        recordDraftHistory(moveLabel, beforeSnapshot, afterSeats, beforeSnapshot.employees);
+        // The RPC vacated the source server-side, bumping ITS updated_at too —
+        // ingest the fresh draft payload wholesale (same as swap) instead of
+        // reconstructing the source seat from the client's now-stale copy,
+        // which would bake a stale timestamp into localSeats and fail the
+        // next Undo's per-row concurrency fence (MLS02, fix round 1, 2026-07-30).
+        const afterSeats = normalizeSeats(result.seats);
+        const afterEmployees = result.employees;
+        recordDraftHistory(moveLabel, beforeSnapshot, afterSeats, afterEmployees);
         setLocalSeats(afterSeats);
+        setLocalEmployees(afterEmployees);
         setSelectedSeatId(targetSeat.id);
         setInspectorDirty(false);
         setMoveEmployeeSourceSeatId(null);

@@ -108,25 +108,6 @@ export function classifySeatUpdateResult(result: SeatUpdateResultLike): SeatDraf
 }
 
 /**
- * After a force_move commit, the update_draft_seat RPC has already vacated the
- * employee's other draft seat server-side. Mirror that locally: replacing only
- * the updated seat would leave the person visible on both seats until the next
- * full reload — and bake the double-assignment into the recorded undo snapshot.
- */
-export function vacateOtherSeatsForEmployee(
-  seats: SeatWithEmployee[],
-  updatedSeat: SeatWithEmployee
-): SeatWithEmployee[] {
-  const employeeId = updatedSeat.employee_id;
-  if (!employeeId) return seats;
-  return seats.map(seat =>
-    seat.id !== updatedSeat.id && seat.employee_id === employeeId
-      ? { ...seat, employee_id: null, employee: null, status: "available" as SeatStatus }
-      : seat
-  );
-}
-
-/**
  * Whether vacating should stop for a confirmation first.
  *
  * Vacate is a draft-only edit with a toast and Undo behind it, so it runs

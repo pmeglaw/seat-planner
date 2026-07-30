@@ -116,10 +116,34 @@ test("settings JSON restore fences on the draft the page loaded", async () => {
   assert.match(source, /router\.refresh\(\)/);
 });
 
-test("force-move outcomes reconcile the vacated source seat locally", async () => {
+test("force-move outcomes ingest the fresh draft payload instead of a stale client-side vacate", async () => {
+  // Fix round 1 (2026-07-30): a force_move also vacates the mover's OTHER
+  // draft seat server-side, bumping its updated_at. Reconstructing that seat
+  // by spreading the client's stale pre-mutation copy (the original
+  // vacateOtherSeatsForEmployee approach) baked a stale timestamp into
+  // localSeats and made the next Undo bounce off the per-row concurrency
+  // fence (MLS02) — reproduced live. Both force_move commit paths must
+  // instead ingest the fresh `seats`/`employees` updateSeatAction now returns
+  // (same helper swap already uses), so both consumers must NOT reconstruct
+  // the vacated seat from a client-side spread.
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
-  // Both force_move commit paths must clear the mover's previous seat before
-  // recording history, or undo snapshots bake in a double assignment.
-  assert.match(seatMapSource, /replaceSeat\(vacateOtherSeatsForEmployee\(beforeSnapshot\.seats, seat\), seat\)/);
-  assert.match(seatMapSource, /replaceSeat\(vacateOtherSeatsForEmployee\(beforeSnapshot\.seats, result\.seat\), result\.seat\)/);
+  const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
+  const inspectorSource = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
+
+  assert.doesNotMatch(seatMapSource, /vacateOtherSeatsForEmployee/);
+
+  // updateSeatAction's success result carries the fresh full draft payload.
+  assert.match(actionsSource, /return \{ ok: true, seat, \.\.\.\(await getDraftMapPayload\(supabase\)\) \}/);
+
+  // Bar Move (confirmMoveEmployeeToOpenSeat): ingests result.seats/employees wholesale.
+  assert.match(seatMapSource, /const afterSeats = normalizeSeats\(result\.seats\);\s*\n\s*const afterEmployees = result\.employees;/);
+
+  // applySeatUpdated: ingests the fresh payload wholesale when the caller (a
+  // force_move) hands one in, falling back to the plain spread otherwise.
+  assert.match(seatMapSource, /freshDraftPayload \? normalizeSeats\(freshDraftPayload\.seats\) : replaceSeat\(beforeSnapshot\.seats, seat\)/);
+  assert.match(seatMapSource, /freshDraftPayload \? freshDraftPayload\.employees : replaceEmployee\(beforeSnapshot\.employees, seat\)/);
+
+  // SeatInspector's "Move them?" retry hands applySeatUpdated the fresh
+  // payload exactly when it force_moved, never otherwise.
+  assert.match(inspectorSource, /onSeatUpdated\(updated, beforeSnapshot, input\.forceMove \? \{ seats: result\.seats, employees: result\.employees \} : undefined\)/);
 });

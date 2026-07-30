@@ -36,7 +36,12 @@ type SeatInspectorProps = {
   onDeleteSeat?: () => void;
   onExplainSeat?: (seat: SeatWithEmployee) => void;
   onBeforeSeatUpdate?: () => DraftSnapshot;
-  onSeatUpdated?: (seat: SeatWithEmployee, beforeSnapshot: DraftSnapshot) => void;
+  // `freshDraftPayload` is only ever passed for a force_move commit — it also
+  // vacates the mover's OTHER draft seat server-side, so the parent needs the
+  // fresh full draft state (not just this seat) to reconcile it without
+  // baking a stale updated_at into local state. See SeatMap.tsx's
+  // applySeatUpdated for the full rationale.
+  onSeatUpdated?: (seat: SeatWithEmployee, beforeSnapshot: DraftSnapshot, freshDraftPayload?: { seats: SeatWithEmployee[]; employees: Employee[] }) => void;
   onError?: (message: string | null) => void;
   // The draft-concurrency fence fired: the seat changed in another admin
   // session. The parent owns recovery (reload draft, reset history).
@@ -760,7 +765,10 @@ export function SeatInspector({
         setEditingAssignment(false);
         onDirtyChange(false);
         setSaveFeedback(input.forceMove ? `Moved to ${updated.label}` : "Saved to draft");
-        onSeatUpdated(updated, beforeSnapshot);
+        // force_move vacated another seat server-side; hand the parent the
+        // fresh draft payload it needs to reconcile that seat's bumped
+        // updated_at instead of reconstructing it from a stale local copy.
+        onSeatUpdated(updated, beforeSnapshot, input.forceMove ? { seats: result.seats, employees: result.employees } : undefined);
         focusPrimaryActionSoon();
       } catch (error) {
         // Only genuinely unexpected failures (network/auth) reach here now.
