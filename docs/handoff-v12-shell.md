@@ -1,6 +1,6 @@
 # v12 admin shell — where this stands
 
-Branch `feat/v12-shell-action-bar`, five commits on `f18efc1`. Not pushed.
+Branch `feat/v12-shell-action-bar`, seven commits on `f18efc1`. Not pushed.
 Green at the tip: `npm test` 623/623 · `npm run test:ct` 41/41 ·
 `npm run coverage:check` passes · `typecheck` 0 · `lint` 0 errors.
 
@@ -34,29 +34,30 @@ This document goes stale; the code does not. Read, in order:
   be exercised by the plain `node --test` tier and would have sunk the floors.
 - **`components/seat-map/SeatActionBar.tsx`** — the canvas action bar, wired
   into `SeatMap`, with the seat verbs removed from `SeatInspector`.
+- **The dead code the verb move left behind** (`763420d`) — `onStartSwapSeat`
+  and `SeatMap`'s pass-through, the `adminDangerButtonClassName` import,
+  `vacateConfirmOpen` + its two resets, `vacateDialogFocusRef`,
+  `footerDangerButtonClass`. Lint is back to its 26 baseline.
+  The earlier claim that the 26 → 31 delta was `react-hooks/set-state-in-effect`
+  from the new `startAssignmentSignal` effect was **wrong**: all five new
+  warnings were `no-unused-vars` in `SeatInspector`, confirmed by diffing
+  identifier usage against `f18efc1`. `startAssignmentSignal` adds a sixth
+  `useEffect` and no warning. `handleResetEdits` is still unused — it was
+  already unused at `f18efc1`, so it is left alone deliberately.
+- **The superseded mocks deleted** (`880d489`) — `app/concepts/action-bar/` and
+  `app/concepts/inspector/`. `nav-rail` and `login-v12` kept.
 
 ## Next, in order
 
-1. **Remove the dead `onStartSwapSeat` prop.** Still in `SeatInspector`'s props
-   type and destructure, still passed by `SeatMap`, consumed by nothing since
-   the verbs moved.
-2. **Account for lint warnings going 26 → 31**, all
-   `react-hooks/set-state-in-effect`. At least one is the new
-   `startAssignmentSignal` effect in `SeatInspector`. Decide fix-or-accept —
-   don't just restate the count.
-3. **Delete `app/concepts/action-bar/` and `app/concepts/inspector/`.** Both are
-   superseded by the shipped `SeatActionBar` and the stripped inspector, and a
-   mock that disagrees with shipped code misleads. Keep `nav-rail` and
-   `login-v12`; they describe work that isn't built.
-4. **Live-verify one vacate end to end at `/admin`.** It is the only path proven
+1. **Live-verify one vacate end to end at `/admin`.** It is the only path proven
    by tests alone. Local dev writes to the **production** draft layer, so
    nominate a seat, record its baseline first, and undo after.
-5. **Retire Move.** "Seats never move, people do." Removing the button makes
+2. **Retire Move.** "Seats never move, people do." Removing the button makes
    `moveSeatAction`, `moveMode`/`dragState`/`handleMovePointerDown`, "Reset
    position to published", the `start-move-seat` guard arm, and
    `publishSummary`'s `seatMoves` all unreachable. Coordinates do **not** die:
    Add seat still writes x/y and undo/redo still restores them.
-6. **The nav rail (§1)** — mock at `/concepts/nav-rail`. The risk is not the
+3. **The nav rail (§1)** — mock at `/concepts/nav-rail`. The risk is not the
    CSS, it is creating `app/admin/layout.tsx`:
    - `getAdminPageContext` is not `cache()`-wrapped, and
      `revalidatePath("/admin")` fires from **18** call sites in `app/actions.ts`,
