@@ -46,21 +46,27 @@ This document goes stale; the code does not. Read, in order:
   already unused at `f18efc1`, so it is left alone deliberately.
 - **The superseded mocks deleted** (`880d489`) — `app/concepts/action-bar/` and
   `app/concepts/inspector/`. `nav-rail` and `login-v12` kept.
-- **Move hidden behind `MOVE_UI_ENABLED`**, not retired. The plan here was to
-  delete it outright; the owner reversed that, and the reversal is the better
-  call — "seats never move, people do" is a *product* claim, and no one has yet
-  run the weeks of real use that could falsify it. So the bet is now reversible
-  by one boolean instead of by reverting a commit.
-  The flag guards the JSX rather than deleting it **so that nothing goes
-  unused**: `handleStartMoveSeat`, the `moveMode` prop and `SeatMap`'s whole
-  move machinery stay referenced, `SeatMap.tsx` is untouched, and lint stays at
-  26. That was the deciding detail — a naive hide would have re-created exactly
-  the dead-symbol residue `763420d` had just cleaned up.
-  What retiring it later still costs, if the claim holds: `moveSeatAction`,
-  `moveMode`/`dragState`/`handleMovePointerDown`, "Reset position to published",
-  the `start-move-seat` guard arm, and `publishSummary`'s `seatMoves`, across 12
-  files. Coordinates do **not** die with it — Add seat still writes x/y and
-  undo/redo still restores them.
+- **Geometry Move retired outright, 2026-07-30** — not hidden behind a flag.
+  The prior entry here described `MOVE_UI_ENABLED` gating the JSX so the drag
+  machinery stayed referenced and reversible by one boolean; the owner
+  revisited that call the same day and confirmed the product claim it was
+  waiting on: "seats never move, people do" — the app is person > action, and
+  seat geometry is fixed. That settles it, so the geometry capability was
+  deleted rather than kept dormant: `moveSeatAction`, `moveMode`/`dragState`/
+  `handleMovePointerDown`, "Reset position to published", the
+  `start-move-seat` guard arm, and `publishSummary`'s `seatMoves` category are
+  all gone. Coordinates did **not** die with it — Add seat still writes x/y
+  and undo/redo still restores them; position drift is still detectable, just
+  folded into `publishSummary`'s `otherChanges` instead of its own category.
+  In its place, **Move now means relocating the occupant**: a verb on the
+  canvas `SeatActionBar` for occupied seats (bar reads Move · Swap · Vacate),
+  mirroring Swap's architecture — click a destination seat on the map; an open
+  destination offers a relocate confirm, an occupied one offers a swap
+  (backed by the same existing `update_draft_seat`/`force_move` and
+  `swap_draft_seat_assignments` RPCs Swap already used — no new RPCs, no
+  migrations). Full rationale and edge-case handling:
+  `docs/superpowers/specs/2026-07-30-person-move-design.md`, implemented via
+  `docs/superpowers/plans/2026-07-30-person-centric-move.md`.
 
 - **One vacate live-verified end to end** at `/admin` against the production
   draft layer (2026-07-30, owner-approved, subject seat `W08`). Verified in the
@@ -101,7 +107,7 @@ reader will otherwise helpfully re-propose them.
 | Match the **live greige palette** | Not the handoff's IBM ramp (`#f4f4f4`, `#e0e0e0`, `#6f6f6f`). |
 | Seat verbs live on the **canvas bar**, not the panel | Because the panel keeps a collapse rail, and collapsed is when the map is widest. |
 | The bar **confirms vacate every time** | The inspector's straight-through vacate is gone with its button. |
-| Move is **hidden, not retired** | Owner reversed the retire call on 2026-07-30. One boolean, `MOVE_UI_ENABLED` in `SeatInspector.tsx`; the capability behind it is whole. Don't re-propose deleting it — and don't quietly leave it hidden either; the flag's docstring names what decides it. |
+| Geometry Move is **retired outright**; Move now relocates the occupant | Owner-confirmed on 2026-07-30: "seats never move, people do." The drag/geometry machinery, `moveSeatAction`, and `publishSummary`'s `seatMoves` category are deleted, not flagged off. Person-centric Move shipped on the canvas `SeatActionBar` instead — see `docs/superpowers/specs/2026-07-30-person-move-design.md`. Don't re-propose a geometry drag affordance. |
 
 ## Traps that cost real time
 

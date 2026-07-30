@@ -14,7 +14,7 @@ import type { SeatWithEmployee } from "@/lib/types";
  * On the canvas they survive every panel state, including closed.
  *
  * VERBS ARE CONTEXTUAL AND HIDE RATHER THAN DISABLE. Occupied seats get
- * Swap · Vacate; open seats get Assign… · Swap. A fixed row of equal cells had
+ * Move · Swap · Vacate; open seats get Assign… · Swap. A fixed row of equal cells had
  * to disable inapplicable verbs, because a vanishing cell resized its
  * neighbours; a content-sized floating bar has no such constraint, so nobody
  * has to look at a greyed-out Vacate on every empty seat.
