@@ -977,7 +977,6 @@ export function SeatMap({
     ...publishSummary.addedSeats,
     ...publishSummary.assignmentChanges,
     ...publishSummary.vacatedSeats,
-    ...publishSummary.seatMoves,
     ...publishSummary.statusChanges,
     ...publishSummary.otherChanges
   ].map(item => item.label)), [publishSummary]);
@@ -2231,7 +2230,6 @@ export function SeatMap({
     : "Draft and published maps currently match";
   const publishPeopleChangeCount = publishSummary.assignmentChanges.length + publishSummary.vacatedSeats.length + publishSummary.employeeDetailChanges.length;
   const publishSeatInventoryChangeCount = publishSummary.addedSeats.length + publishSummary.removedSeats.length;
-  const publishLayoutChangeCount = publishSummary.seatMoves.length;
   const publishMetadataChangeCount = publishSummary.statusChanges.length + publishSummary.otherChanges.length;
   const publishReadinessTitle = publishSummary.hasChanges ? "Ready to publish reviewed changes" : "Draft and viewer map are in sync";
   const publishReadinessDescription = publishSummary.hasChanges
@@ -3569,10 +3567,9 @@ export function SeatMap({
                 </div>
               )}
 
-              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-3 grid grid-cols-3 gap-2">
                 <PublishImpactCard label="People affected" value={publishPeopleChangeCount} description="Assignments, vacated seats, and people details." tone={publishPeopleChangeCount > 0 ? "warn" : "default"} />
                 <PublishImpactCard label="Seat inventory" value={publishSeatInventoryChangeCount} description="Added and removed seats." tone={publishSeatInventoryChangeCount > 0 ? "warn" : "default"} />
-                <PublishImpactCard label="Layout" value={publishLayoutChangeCount} description="Moved seat positions." tone={publishLayoutChangeCount > 0 ? "warn" : "default"} />
                 <PublishImpactCard label="Metadata" value={publishMetadataChangeCount} description="Status, zone, label, notes, or custom flags." tone={publishMetadataChangeCount > 0 ? "warn" : "default"} />
               </div>
 
@@ -3599,7 +3596,6 @@ export function SeatMap({
                 <PublishChangeList title="Removed seats" items={publishSummary.removedSeats} emptyLabel="No removed seats detected." />
                 <PublishChangeList title="Assignment changes" items={publishSummary.assignmentChanges} emptyLabel="No assignment changes detected." />
                 <PublishChangeList title="Vacated seats" items={publishSummary.vacatedSeats} emptyLabel="No vacated seats detected." />
-                <PublishChangeList title="Seat moves/layout changes" items={publishSummary.seatMoves} emptyLabel="No seat moves detected." />
                 <PublishChangeList title="Status changes" items={publishSummary.statusChanges} emptyLabel="No status-only changes detected." />
                 <div className="md:col-span-2">
                   <PublishChangeList title="People details (names, titles, departments, extensions)" items={publishSummary.employeeDetailChanges} emptyLabel="No people-detail changes detected." />

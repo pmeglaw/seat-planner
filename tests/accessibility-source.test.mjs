@@ -223,7 +223,6 @@ test("publish review summarizes draft changes before publish", async () => {
   assert.match(source, /Removed seats/);
   assert.match(source, /Assignment changes/);
   assert.match(source, /Vacated seats/);
-  assert.match(source, /Seat moves\/layout changes/);
   assert.match(source, /Status changes/);
   assert.match(source, /Other draft changes/);
   assert.match(source, /Publish review blocked: Save or discard the selected seat edits before publishing/);
