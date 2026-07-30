@@ -37,6 +37,8 @@ type SeatMarkerProps = {
   officePlateWidthPx?: number;
   swapSource: boolean;
   swapTarget: boolean;
+  moveEmployeeMode: boolean;
+  moveEmployeeSource: boolean;
   invalidTarget?: boolean;
   highlighted: boolean;
   highlightedDescription?: string;
@@ -146,6 +148,8 @@ function SeatMarkerComponent({
   officePlateWidthPx,
   swapSource,
   swapTarget,
+  moveEmployeeMode,
+  moveEmployeeSource,
   invalidTarget = false,
   highlighted,
   highlightedDescription = "Highlighted by Ask Planner",
@@ -172,10 +176,11 @@ function SeatMarkerComponent({
   const displayName = formatDisplayName(employeeName) || "Unassigned";
   const namesVisible = showNames && hasEmployee && !dimmed;
   const swapCandidate = canEdit && swapMode && !swapSource && !swapTarget && !invalidTarget;
-  const activeMarker = selected || swapSource || swapTarget;
+  const moveCandidate = canEdit && moveEmployeeMode && !moveEmployeeSource && !invalidTarget;
+  const activeMarker = selected || swapSource || swapTarget || moveEmployeeSource;
   const searchProminent = searchResult && !dimmed;
   const searchSelected = selected && searchProminent;
-  const plannerHighlighted = highlighted && !selected && !swapSource && !swapTarget;
+  const plannerHighlighted = highlighted && !selected && !swapSource && !swapTarget && !moveEmployeeSource;
   const tokenDensity = getSeatTokenDensity(seat, compactNameLabel);
   const compactEmployeeName = getPassiveEmployeeLabel(employeeName);
   const showInlineName = Boolean(employeeName) && (namesVisible || activeMarker || searchProminent || plannerHighlighted);
@@ -198,13 +203,13 @@ function SeatMarkerComponent({
       ? "Open office"
       : [inlineNameLabel, officeTitleLabel, inlineNameLabel === displayName ? "" : displayName].filter(Boolean).join(" ")
     : !hasEmployee || inlineNameLabel === displayName ? displayName : `${inlineNameLabel} ${displayName}`;
-  const markerIntent: MarkerIntent = swapSource
+  const markerIntent: MarkerIntent = swapSource || moveEmployeeSource
     ? "swap-source"
     : swapTarget
       ? "swap-target"
       : invalidTarget
         ? "target-invalid"
-        : swapCandidate
+        : swapCandidate || moveCandidate
             ? "target-valid"
             : searchSelected
               ? "search-selected"
@@ -233,7 +238,7 @@ function SeatMarkerComponent({
             ? "border-[#BEB4A8]/90 bg-[#E7E1D8]/[0.92] text-[#696159]"
             : "border-[#B8AEA2] bg-white/95 text-[#453D33]";
   // Search/planner emphasis keeps visual priority over the passive valid-target tint.
-  const validTargetTone = swapCandidate && !searchProminent && !plannerHighlighted;
+  const validTargetTone = (swapCandidate || moveCandidate) && !searchProminent && !plannerHighlighted;
   const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent" || validTargetTone || invalidTarget) ? "" : baseStatusToneClass;
 
   // Capsule geometry (2026-07-23 owner reference hybrid): every token is a
@@ -323,10 +328,10 @@ function SeatMarkerComponent({
         : "border-[#D23F0A] bg-[#FBEAE1] text-[#9E2F06] ring-2 ring-[#D23F0A]/55 shadow-[0_0_0_4px_rgba(255,87,21,0.20),0_10px_20px_-4px_rgba(210,63,10,0.35),inset_0_1px_0_rgba(255,255,255,0.78)]"
       : "",
     highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-ring)]" : "outline outline-2 outline-offset-2 outline-[#1D6E41]/70" : "",
-    swapSource ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B] ring-4 ring-[#A9D7B8]/80" : "",
+    swapSource || moveEmployeeSource ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B] ring-4 ring-[#A9D7B8]/80" : "",
     swapTarget ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#6E655A] bg-[#F1ECE4] text-[#353532] ring-4 ring-[#D8D0C5]/85" : "",
     plannerHighlighted ? adminMarker ? "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)] ring-2 ring-[var(--admin-border)] shadow-[0_6px_14px_rgba(140,102,69,0.18),inset_0_1px_0_rgba(255,255,255,0.72)]" : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B] ring-2 ring-[#1D6E41]/55 shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
-    swapMode && !swapSource ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--admin-marker-search-ring)]" : "group-hover:ring-4 group-hover:ring-[#A9D7B8]/80" : ""
+    (swapMode && !swapSource) || (moveEmployeeMode && !moveEmployeeSource) ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--admin-marker-search-ring)]" : "group-hover:ring-4 group-hover:ring-[#A9D7B8]/80" : ""
   ].join(" ");
   const markerFocusClass = adminMarker
     ? "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-marker-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-marker-focus-offset)]"
@@ -350,7 +355,7 @@ function SeatMarkerComponent({
     : tokenMode === "selected" || tokenMode === "prominent"
       ? "text-[10px]"
       : "text-[9.5px]";
-  const markerUsesTrueCoordinate = addSeatMode || swapMode;
+  const markerUsesTrueCoordinate = addSeatMode || swapMode || moveEmployeeMode;
   const tokenCanHugViewportEdge = showInlineName || prominentToken;
   const resolvedViewportEdge = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? "none" : viewportEdge;
   const resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? 0 : Math.max(0, Math.round(viewportEdgeOffsetPx));
@@ -441,7 +446,7 @@ function SeatMarkerComponent({
         "cursor-pointer"
       ].join(" ")}
       style={pointToStyle({ x: seat.x, y: seat.y })}
-      aria-label={`${seat.label} ${accessibleSeatName}. ${STATUS_LABELS[seat.status]} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
+      aria-label={`${seat.label} ${accessibleSeatName}. ${STATUS_LABELS[seat.status]} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${moveEmployeeSource ? " Move source." : ""}${moveCandidate ? " Valid destination seat." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
     >
       <SeatToken
         style={tokenPositionStyle}

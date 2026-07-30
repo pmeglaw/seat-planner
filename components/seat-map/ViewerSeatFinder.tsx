@@ -1123,11 +1123,13 @@ export function ViewerSeatFinder({
                           codeNudge={codePillNudges.get(seat.id) ?? 0}
                           nameNudge={nameLabelNudges.get(seat.id) ?? 0}
                           swapMode={false}
+                          moveEmployeeMode={false}
                           officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}
                           officePlateOffsetYPx={officePlateLayout?.offsetYPx ?? 0}
                           officePlateWidthPx={officePlateLayout?.widthPx}
                           swapSource={false}
                           swapTarget={false}
+                          moveEmployeeSource={false}
                           highlighted={seatIsSearchHit || seatIsDirectoryHover}
                           highlightedDescription={seatIsSearchHit ? "Highlighted search result" : "Highlighted from the people list"}
                           addSeatMode={false}

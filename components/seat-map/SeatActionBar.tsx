@@ -25,7 +25,9 @@ import type { SeatWithEmployee } from "@/lib/types";
  * exemption — it is not the primary intent on any seat, so it stays beside the
  * field it targets.
  *
- * MOVE IS ABSENT: seats never move, people do.
+ * MOVE RELOCATES THE OCCUPANT, never the seat: the app is person > action. Seat
+ * geometry is fixed — the 2026-07-30 owner call retired the drag machinery
+ * outright.
  *
  * THE ENTRANCE ANIMATES THE `translate` LONGHAND, NEVER `transform`. The bar is
  * centred with translate:-50%, so a transform keyframe would overwrite that
@@ -47,6 +49,8 @@ type SeatActionBarProps = {
   /** Mirrors the map's in-flight mutation state; blocks double-firing. */
   busy?: boolean;
   onAssign: () => void;
+  /** Starts move-employee mode: pick the occupant's new seat on the map. */
+  onMove: () => void;
   onSwap: () => void;
   /** Opens the confirm. The bar NEVER vacates directly — the parent owns the dialog. */
   onVacate: () => void;
@@ -69,13 +73,14 @@ const TONE = {
   primary: "bg-[var(--admin-primary)] font-semibold text-[var(--admin-primary-ink)] hover:brightness-105"
 } as const;
 
-export function SeatActionBar({ seat, busy = false, onAssign, onSwap, onVacate, firstActionRef }: SeatActionBarProps) {
+export function SeatActionBar({ seat, busy = false, onAssign, onMove, onSwap, onVacate, firstActionRef }: SeatActionBarProps) {
   const visible = Boolean(seat);
   const occupied = canVacateSeat(seat);
   const occupantName = seat?.employee?.full_name ?? null;
 
-  const actions = occupied
+  const actions: { key: string; label: string; verb: string; onClick: () => void; tone: "default" | "danger" | "primary"; aria?: string }[] = occupied
     ? [
+        { key: "move", label: "Move", verb: "Move", onClick: onMove, tone: "default" as const, aria: occupantName ? `Move ${occupantName} to another seat` : undefined },
         { key: "swap", label: "Swap", verb: "Swap", onClick: onSwap, tone: "default" as const },
         // Opens a confirm every time — see onVacate's contract.
         { key: "vacate", label: "Vacate", verb: "Vacate", onClick: onVacate, tone: "danger" as const }
@@ -115,7 +120,8 @@ export function SeatActionBar({ seat, busy = false, onAssign, onSwap, onVacate, 
           onClick={action.onClick}
           disabled={busy || !visible}
           // Names the seat, matching the inspector's existing label patterns.
-          aria-label={seat ? `${action.verb} ${seat.label}` : undefined}
+          // Some entries override with a person-centric label (see `aria` above).
+          aria-label={seat ? action.aria ?? `${action.verb} ${seat.label}` : undefined}
           tabIndex={visible ? 0 : -1}
           className={`${ACTION_BASE} ${TONE[action.tone]}`}
         >

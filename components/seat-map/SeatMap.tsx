@@ -26,7 +26,7 @@ import {
 } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
-import { createSeatAction, deleteSeatAction, publishSeatMapAction, resetDraftToPublishedAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
+import { createSeatAction, deleteSeatAction, publishSeatMapAction, resetDraftToPublishedAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction, updateSeatAction } from "@/app/actions";
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
 import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
@@ -53,7 +53,7 @@ import { clientPointToNormalized } from "@/lib/seatMath";
 import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
-import { canVacateSeat } from "@/lib/seatDraftActions";
+import { canVacateSeat, vacateOtherSeatsForEmployee } from "@/lib/seatDraftActions";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import {
@@ -119,6 +119,8 @@ type SwapConfirmState = {
   targetSeatId: string;
 } | null;
 
+type MoveEmployeeConfirmState = { targetSeatId: string; offerSwap: boolean } | null;
+
 type DeleteSeatConfirmState = {
   seatId: string;
   label: string;
@@ -142,6 +144,7 @@ type InspectorGuardAction =
   | { kind: "clear-selection" }
   | { kind: "start-add-seat" }
   | { kind: "start-swap-seat" }
+  | { kind: "start-move-employee" }
   | { kind: "navigate-admin-page"; href: GuardedNavigationHref; destination: string };
 
 // Whitelisted in-app destinations for the unsaved-edits guard. Query-string
@@ -384,6 +387,8 @@ export function SeatMap({
   const [mapVisibleRange, setMapVisibleRange] = useState({ left: 0, right: 1, viewportWidth: 0 });
   const [swapSourceSeatId, setSwapSourceSeatId] = useState<string | null>(null);
   const [swapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
+  const [moveEmployeeSourceSeatId, setMoveEmployeeSourceSeatId] = useState<string | null>(null);
+  const [moveEmployeeConfirm, setMoveEmployeeConfirm] = useState<MoveEmployeeConfirmState>(null);
   const [deleteSeatConfirm, setDeleteSeatConfirm] = useState<DeleteSeatConfirmState>(null);
   const [vacateConfirm, setVacateConfirm] = useState<VacateConfirmState>(null);
   // Mirrors inspectorResetSignal: the bar's Assign… has to reach into the
@@ -408,6 +413,7 @@ export function SeatMap({
   const discardDraftDialogFocusRef = useDialogFocus<HTMLElement>();
   const inspectorGuardDialogFocusRef = useDialogFocus<HTMLElement>();
   const swapConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
+  const moveEmployeeConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
 
   // Reload persistence, adopt half. On mount, take over the per-tab stacks the
   // effect below saved — but only while the live draft still matches the state
@@ -819,6 +825,11 @@ export function SeatMap({
         return;
       }
 
+      if (moveEmployeeConfirm) {
+        setMoveEmployeeConfirm(null);
+        return;
+      }
+
       if (askPlannerOpen) {
         closeAskPlannerDrawer();
         return;
@@ -839,10 +850,11 @@ export function SeatMap({
         return;
       }
 
-      if (addSeatMode || swapSourceSeatId) {
-        const canceledMode = swapSourceSeatId ? "Swap" : "Add seat";
+      if (addSeatMode || swapSourceSeatId || moveEmployeeSourceSeatId) {
+        const canceledMode = swapSourceSeatId ? "Swap" : moveEmployeeSourceSeatId ? "Move" : "Add seat";
         setAddSeatMode(false);
         setSwapSourceSeatId(null);
+        setMoveEmployeeSourceSeatId(null);
         setActionNotice(`${canceledMode} canceled — no changes made.`, "neutral");
         return;
       }
@@ -896,7 +908,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, position, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveEmployeeConfirm, moveEmployeeSourceSeatId, position, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
@@ -1017,6 +1029,8 @@ export function SeatMap({
   const selectedSeat = localSeats.find(seat => seat.id === selectedSeatId) ?? null;
   const swapSourceSeat = swapSourceSeatId ? localSeats.find(seat => seat.id === swapSourceSeatId) ?? null : null;
   const swapTargetSeat = swapConfirm ? localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null : null;
+  const moveEmployeeSourceSeat = moveEmployeeSourceSeatId ? localSeats.find(seat => seat.id === moveEmployeeSourceSeatId) ?? null : null;
+  const moveEmployeeTargetSeat = moveEmployeeConfirm ? localSeats.find(seat => seat.id === moveEmployeeConfirm.targetSeatId) ?? null : null;
   const visualLocalSeats = useMemo(() => seatsToVisualSeats(localSeats), [localSeats]);
   const visualSeatById = useMemo(() => new Map(visualLocalSeats.map(seat => [seat.id, seat])), [visualLocalSeats]);
   // Roving tabindex: the map is ONE tab stop (the selected seat, else the last
@@ -1177,6 +1191,8 @@ export function SeatMap({
     setInspectorDirty(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
+    setMoveEmployeeSourceSeatId(null);
+    setMoveEmployeeConfirm(null);
     setDeleteSeatConfirm(null);
     setInspectorCollapsed(false);
     focusSeatMarker(seatIdToFocus);
@@ -1189,6 +1205,8 @@ export function SeatMap({
     setAddSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
+    setMoveEmployeeSourceSeatId(null);
+    setMoveEmployeeConfirm(null);
     setDeleteSeatConfirm(null);
     setInspectorCollapsed(false);
     focusSeatMarker(seatIdToFocus);
@@ -1199,6 +1217,8 @@ export function SeatMap({
     setInspectorDirty(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
+    setMoveEmployeeSourceSeatId(null);
+    setMoveEmployeeConfirm(null);
     setAddSeatMode(true);
     setInspectorCollapsed(false);
   }
@@ -1215,7 +1235,26 @@ export function SeatMap({
     setInspectorDirty(false);
     setAddSeatMode(false);
     setSwapConfirm(null);
+    setMoveEmployeeSourceSeatId(null);
+    setMoveEmployeeConfirm(null);
     setSwapSourceSeatId(selectedSeat.id);
+    setInspectorCollapsed(true);
+  }
+
+  function applyStartMoveEmployeeAction() {
+    if (!selectedSeat || !canVacateSeat(selectedSeat)) {
+      setActionError("Select an occupied seat first, then choose Move.");
+      setActionNotice(null);
+      return;
+    }
+    setActionError(null);
+    setActionNotice(null);
+    setInspectorDirty(false);
+    setAddSeatMode(false);
+    setSwapConfirm(null);
+    setSwapSourceSeatId(null);
+    setMoveEmployeeConfirm(null);
+    setMoveEmployeeSourceSeatId(selectedSeat.id);
     setInspectorCollapsed(true);
   }
 
@@ -1246,6 +1285,11 @@ export function SeatMap({
 
     if (action.kind === "start-swap-seat") {
       applyStartSwapSeatAction();
+      return;
+    }
+
+    if (action.kind === "start-move-employee") {
+      applyStartMoveEmployeeAction();
       return;
     }
 
@@ -1303,6 +1347,7 @@ export function SeatMap({
     if (action.kind === "clear-selection") return "clearing the selection.";
     if (action.kind === "start-add-seat") return "starting add-seat mode.";
     if (action.kind === "start-swap-seat") return "starting swap-seats mode.";
+    if (action.kind === "start-move-employee") return "starting move-employee mode.";
     return `opening ${action.destination}.`;
   }
 
@@ -1392,6 +1437,8 @@ export function SeatMap({
     setAddSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
+    setMoveEmployeeSourceSeatId(null);
+    setMoveEmployeeConfirm(null);
   }
 
   function recordDraftHistory(label: string, before: DraftSnapshot, afterSeats: SeatWithEmployee[], afterEmployees: Employee[]) {
@@ -1413,6 +1460,8 @@ export function SeatMap({
     setAddSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
+    setMoveEmployeeSourceSeatId(null);
+    setMoveEmployeeConfirm(null);
     router.refresh();
   }
 
@@ -1671,7 +1720,7 @@ export function SeatMap({
     // selection (guarded while the inspector holds unsaved edits).
     if (isPanBlockedTarget(event.target)) return;
     if (canEdit && addSeatMode) return;
-    if (swapSourceSeatId) {
+    if (swapSourceSeatId || moveEmployeeSourceSeatId) {
       setActionNotice(null);
       return;
     }
@@ -1783,7 +1832,30 @@ export function SeatMap({
     return true;
   }
 
+  function requestMoveEmployeeTarget(targetSeatId: string) {
+    if (!moveEmployeeSourceSeatId) return false;
+    if (targetSeatId === moveEmployeeSourceSeatId) {
+      // Spec: clicking the person's own seat backs out of the move.
+      cancelMoveEmployeeMode();
+      return true;
+    }
+    const sourceSeat = localSeats.find(seat => seat.id === moveEmployeeSourceSeatId) ?? null;
+    const targetSeat = localSeats.find(seat => seat.id === targetSeatId) ?? null;
+    if (!sourceSeat?.employee || !targetSeat) {
+      setActionError("Could not find both seats for the move.");
+      return false;
+    }
+    setActionError(null);
+    setActionNotice(null);
+    setMoveEmployeeConfirm({ targetSeatId: targetSeat.id, offerSwap: Boolean(targetSeat.employee_id) });
+    return true;
+  }
+
   function commitSeatSelection(seatId: string) {
+    if (canEdit && moveEmployeeSourceSeatId) {
+      return requestMoveEmployeeTarget(seatId);
+    }
+
     if (canEdit && swapSourceSeatId) {
       if (seatId !== swapSourceSeatId) {
         return requestSwapTarget(seatId);
@@ -1798,6 +1870,8 @@ export function SeatMap({
       setAddSeatMode(false);
       setSwapSourceSeatId(null);
       setSwapConfirm(null);
+      setMoveEmployeeSourceSeatId(null);
+      setMoveEmployeeConfirm(null);
       setInspectorCollapsed(false);
       return true;
     }
@@ -1807,6 +1881,8 @@ export function SeatMap({
     setAddSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
+    setMoveEmployeeSourceSeatId(null);
+    setMoveEmployeeConfirm(null);
     setInspectorCollapsed(false);
     return true;
   }
@@ -1897,10 +1973,30 @@ export function SeatMap({
     setActionNotice("Swap canceled — no changes made.", "neutral");
   }
 
-  function confirmSwapSeats() {
-    if (!swapConfirm) return;
-    const sourceSeat = localSeats.find(seat => seat.id === swapConfirm.sourceSeatId) ?? null;
-    const targetSeat = localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null;
+  function startMoveEmployeeMode(skipDirtyCheck = false) {
+    if (!canEdit) return;
+    if (!selectedSeat || !canVacateSeat(selectedSeat)) {
+      setActionError("Select an occupied seat first, then choose Move.");
+      setActionNotice(null);
+      return;
+    }
+    if (!skipDirtyCheck && inspectorDirty) {
+      requestInspectorGuard({ kind: "start-move-employee" });
+      return;
+    }
+    applyStartMoveEmployeeAction();
+  }
+
+  function cancelMoveEmployeeMode() {
+    setMoveEmployeeSourceSeatId(null);
+    setMoveEmployeeConfirm(null);
+    setInspectorCollapsed(false);
+    setActionNotice("Move canceled — no changes made.", "neutral");
+  }
+
+  function executeSwap(sourceSeatId: string, targetSeatId: string) {
+    const sourceSeat = localSeats.find(seat => seat.id === sourceSeatId) ?? null;
+    const targetSeat = localSeats.find(seat => seat.id === targetSeatId) ?? null;
 
     if (!sourceSeat || !targetSeat) {
       setActionError("Could not find both seats for swapping.");
@@ -1938,11 +2034,89 @@ export function SeatMap({
         setAddSeatMode(false);
         setSwapSourceSeatId(null);
         setSwapConfirm(null);
+        setMoveEmployeeSourceSeatId(null);
+        setMoveEmployeeConfirm(null);
         setInspectorCollapsed(false);
         setActionNotice(`Swapped ${buildSwapSummary(sourceSeat, targetSeat)}.`);
       } catch (error) {
         setActionNotice(null);
         setActionError(error instanceof Error ? error.message : "Could not swap seats.");
+      } finally {
+        setMutationInFlight(false);
+      }
+    });
+  }
+
+  function confirmSwapSeats() {
+    if (!swapConfirm) return;
+    executeSwap(swapConfirm.sourceSeatId, swapConfirm.targetSeatId);
+  }
+
+  function confirmMoveEmployeeAsSwap() {
+    if (!moveEmployeeConfirm?.offerSwap || !moveEmployeeSourceSeatId) return;
+    const targetSeatId = moveEmployeeConfirm.targetSeatId;
+    const sourceSeatId = moveEmployeeSourceSeatId;
+    setMoveEmployeeConfirm(null);
+    setMoveEmployeeSourceSeatId(null);
+    executeSwap(sourceSeatId, targetSeatId);
+  }
+
+  function confirmMoveEmployeeToOpenSeat() {
+    if (!moveEmployeeConfirm || moveEmployeeConfirm.offerSwap) return;
+    const sourceSeat = moveEmployeeSourceSeat;
+    const targetSeat = localSeats.find(seat => seat.id === moveEmployeeConfirm.targetSeatId) ?? null;
+    const mover = sourceSeat?.employee ?? null;
+    if (!sourceSeat || !targetSeat || !mover) {
+      setActionError("Could not find both seats for the move.");
+      setMoveEmployeeConfirm(null);
+      return;
+    }
+    const beforeSnapshot = captureDraftSnapshot();
+    const moveLabel = `Move ${mover.full_name} to ${targetSeat.label}`;
+    setMoveEmployeeConfirm(null);
+    startTransition(async () => {
+      setMutationInFlight(true);
+      try {
+        setActionError(null);
+        setActionNotice(null);
+        setStaleDraftNotice(null);
+        const result = await updateSeatAction({
+          seatId: targetSeat.id,
+          label: targetSeat.label,
+          status: "assigned",
+          employeeId: mover.id,
+          employeeName: mover.full_name,
+          // Position/extension omitted on purpose: absent fields are
+          // "not provided" to the RPC, which preserves stored values.
+          department: mover.department ?? null,
+          zone: targetSeat.zone ?? null,
+          notes: targetSeat.notes ?? null,
+          forceMove: true,
+          // Fence on the DESTINATION row; the RPC vacates the source atomically.
+          expectedUpdatedAt: targetSeat.updated_at
+        });
+        if (!result.ok) {
+          if (result.code === "STALE_DRAFT") {
+            handleStaleDraft(result.message);
+            return;
+          }
+          setActionNotice(null);
+          setActionError(result.message);
+          return;
+        }
+        // The RPC vacated the source server-side; mirror it locally so the map
+        // and the recorded undo snapshot match the database.
+        const afterSeats = replaceSeat(vacateOtherSeatsForEmployee(beforeSnapshot.seats, result.seat), result.seat);
+        recordDraftHistory(moveLabel, beforeSnapshot, afterSeats, beforeSnapshot.employees);
+        setLocalSeats(afterSeats);
+        setSelectedSeatId(targetSeat.id);
+        setInspectorDirty(false);
+        setMoveEmployeeSourceSeatId(null);
+        setInspectorCollapsed(false);
+        setActionNotice(`Moved ${formatDisplayName(mover.full_name)} to ${targetSeat.label}.`);
+      } catch (error) {
+        setActionNotice(null);
+        setActionError(error instanceof Error ? error.message : "Could not move the employee.");
       } finally {
         setMutationInFlight(false);
       }
@@ -2006,7 +2180,7 @@ export function SeatMap({
     // stayed within the drag threshold. Overview presses deselect immediately.
     if (mapViewMode === "detail") return;
 
-    if (swapSourceSeatId) {
+    if (swapSourceSeatId || moveEmployeeSourceSeatId) {
       setActionNotice(null);
       return;
     }
@@ -2102,6 +2276,8 @@ export function SeatMap({
         setInspectorDirty(false);
         setSwapSourceSeatId(null);
         setSwapConfirm(null);
+        setMoveEmployeeSourceSeatId(null);
+        setMoveEmployeeConfirm(null);
         setActionNotice(`Deleted custom seat ${deletedSeatLabel}. Undo is available until publish.`);
       } catch (error) {
         setActionNotice(null);
@@ -2244,14 +2420,21 @@ export function SeatMap({
       exitLabel: "Exit add seat",
       onExit: cancelAddSeatMode
     }
-    : swapSourceSeat
+    : moveEmployeeSourceSeat
       ? {
-        label: "Swap seats",
-        message: `${swapSourceSeat.label} is the source. Select a target seat to review the swap.`,
-        exitLabel: "Exit swap seats",
-        onExit: cancelSwapSeatMode
+        label: "Move employee",
+        message: `Moving ${seatPersonLabel(moveEmployeeSourceSeat)} from ${moveEmployeeSourceSeat.label}. Select the destination seat.`,
+        exitLabel: "Exit move employee",
+        onExit: cancelMoveEmployeeMode
       }
-      : null;
+      : swapSourceSeat
+        ? {
+          label: "Swap seats",
+          message: `${swapSourceSeat.label} is the source. Select a target seat to review the swap.`,
+          exitLabel: "Exit swap seats",
+          onExit: cancelSwapSeatMode
+        }
+        : null;
   // 3b OVERLAY + INV-6: Filters floats over the full-bleed canvas at lg — the
   // canvas never reflows when the drawer opens.
   const desktopMapGridClass = "lg:grid-cols-[minmax(0,1fr)]";
@@ -2274,7 +2457,7 @@ export function SeatMap({
   const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
     ? !inspectorCollapsed
       ? "expanded"
-      : swapSourceSeatId || inspectorPillSuppressed
+      : swapSourceSeatId || moveEmployeeSourceSeatId || inspectorPillSuppressed
         ? "none"
         : "rail"
     : "none";
@@ -2300,7 +2483,8 @@ export function SeatMap({
     publishReviewOpen ||
     Boolean(deleteSeatConfirm) ||
     Boolean(inspectorGuardAction) ||
-    Boolean(swapConfirm)
+    Boolean(swapConfirm) ||
+    Boolean(moveEmployeeConfirm)
   );
   const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;
   const mapViewportClassName = [
@@ -2412,11 +2596,13 @@ export function SeatMap({
           !dimmedSeatIdSet.has(seat.id) &&
           seat.id !== selectedSeatId &&
           seat.id !== swapSourceSeatId &&
-          seat.id !== swapTargetSeatId
+          seat.id !== swapTargetSeatId &&
+          seat.id !== moveEmployeeSourceSeatId &&
+          seat.id !== moveEmployeeConfirm?.targetSeatId
         )
         .map(seat => seat.id)
     );
-  }, [dimmedSeatIdSet, selectedSeatId, showNames, swapSourceSeatId, swapTargetSeatId, visualLocalSeats]);
+  }, [dimmedSeatIdSet, moveEmployeeConfirm, moveEmployeeSourceSeatId, selectedSeatId, showNames, swapSourceSeatId, swapTargetSeatId, visualLocalSeats]);
   const nameLabelNudges = useMemo(
     () => computeNameLabelNudges(visualLocalSeats, namedSeatIdSet, seatDensityClearance),
     [namedSeatIdSet, seatDensityClearance, visualLocalSeats]
@@ -2436,7 +2622,7 @@ export function SeatMap({
     seats: visualLocalSeats.map(seat => ({ id: seat.id, x: seat.x, y: seat.y, status: seat.status })),
     dimmedSeatIds: dimmedSeatIdSet,
     searchActiveSeatIds: search.trim() ? new Set(localSeats.filter(matchesFilters).map(seat => seat.id)) : undefined,
-    swapMode: Boolean(swapSourceSeatId),
+    swapMode: Boolean(swapSourceSeatId || moveEmployeeSourceSeatId),
     draggingSeatId: null
   });
   const markerEdgeBaseOffsetPx = 0;
@@ -3057,7 +3243,7 @@ export function SeatMap({
             </div>
           )}
 
-          {actionNotice && !swapSourceSeatId && (
+          {actionNotice && !swapSourceSeatId && !moveEmployeeSourceSeatId && (
             <div role="status" aria-live="polite" className={actionNoticeBannerClassName}>
               <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{actionNotice}</span>
               {canEdit && undoAvailable && lastUndoLabel && !mutationInFlight && !inspectorDirty && (
@@ -3288,11 +3474,13 @@ export function SeatMap({
                         codeNudge={codePillNudges.get(seat.id) ?? 0}
                         nameNudge={nameLabelNudges.get(seat.id) ?? 0}
                         swapMode={Boolean(swapSourceSeatId)}
+                        moveEmployeeMode={Boolean(moveEmployeeSourceSeatId)}
                         officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}
                         officePlateOffsetYPx={officePlateLayout?.offsetYPx ?? 0}
                         officePlateWidthPx={officePlateLayout?.widthPx}
                         swapSource={seat.id === swapSourceSeatId}
                         swapTarget={seat.id === swapConfirm?.targetSeatId}
+                        moveEmployeeSource={seat.id === moveEmployeeSourceSeatId}
                         highlighted={plannerHighlightedSeatIdSet.has(seat.id)}
                         addSeatMode={addSeatMode}
                         viewportEdge={viewportPlacement.edge}
@@ -3332,6 +3520,7 @@ export function SeatMap({
                 seat={selectedSeat}
                 busy={mutationInFlight || barSeatActions.pending}
                 onAssign={requestAssignFromBar}
+                onMove={() => startMoveEmployeeMode()}
                 onSwap={() => startSwapSeatMode()}
                 onVacate={requestVacateFromBar}
                 firstActionRef={seatActionBarFirstActionRef}
@@ -3746,7 +3935,7 @@ export function SeatMap({
         canEdit={canEdit}
         collapsed={inspectorCollapsed}
         pillSuppressed={inspectorPillSuppressed}
-        swapMode={Boolean(swapSourceSeatId)}
+        swapMode={Boolean(swapSourceSeatId || moveEmployeeSourceSeatId)}
         searchMismatchNotice={selectedSeatMismatchNotice}
         searchMismatchClearLabel={clearSearchContextLabel}
         onClose={() => {
@@ -3856,6 +4045,51 @@ export function SeatMap({
                 Confirm swap
               </Button>
             </div>
+          </section>
+        </div>
+      )}
+
+      {moveEmployeeConfirm && moveEmployeeSourceSeat?.employee && moveEmployeeTargetSeat && (
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
+          <section
+            ref={moveEmployeeConfirmDialogFocusRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="move-employee-map-confirm-title"
+            aria-describedby="move-employee-map-confirm-description"
+            className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
+          >
+            {moveEmployeeConfirm.offerSwap ? (
+              <>
+                <h2 id="move-employee-map-confirm-title" className="text-base font-semibold">
+                  Swap {formatDisplayName(moveEmployeeSourceSeat.employee.full_name)} and {formatDisplayName(seatPersonLabel(moveEmployeeTargetSeat))}?
+                </h2>
+                <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
+                  {formatDisplayName(seatPersonLabel(moveEmployeeTargetSeat))} already sits at {formatSeatCode(moveEmployeeTargetSeat.label)}. Swapping moves them to {formatSeatCode(moveEmployeeSourceSeat.label)}. {PUBLISH_IMPACT_NOTE}
+                </p>
+                <div className="mt-4 rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold text-[var(--admin-publish-viewer-impact-text)]">
+                  {buildSwapSummary(moveEmployeeSourceSeat, moveEmployeeTargetSeat)}
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Button type="button" onClick={() => setMoveEmployeeConfirm(null)} disabled={pending} className="w-full">Cancel</Button>
+                  <Button type="button" variant="primary" onClick={confirmMoveEmployeeAsSwap} disabled={pending} className="w-full">Swap them</Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 id="move-employee-map-confirm-title" className="text-base font-semibold">
+                  Move {formatDisplayName(moveEmployeeSourceSeat.employee.full_name)} to {formatSeatCode(moveEmployeeTargetSeat.label)}?
+                </h2>
+                <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
+                  They currently sit at {formatSeatCode(moveEmployeeSourceSeat.label)}. Moving frees {formatSeatCode(moveEmployeeSourceSeat.label)} (it becomes Open). {PUBLISH_IMPACT_NOTE}
+                </p>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Button type="button" onClick={() => setMoveEmployeeConfirm(null)} disabled={pending} className="w-full">Cancel</Button>
+                  <Button type="button" variant="primary" onClick={confirmMoveEmployeeToOpenSeat} disabled={pending} className="w-full">Move them</Button>
+                </div>
+              </>
+            )}
           </section>
         </div>
       )}
