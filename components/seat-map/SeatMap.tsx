@@ -1366,7 +1366,9 @@ export function SeatMap({
     setActionError(null);
     setActionNotice(null);
     setInspectorDirty(false);
-    const afterSeats = replaceSeat(beforeSnapshot.seats, seat);
+    // A force_move (inspector "Move them?" or a bar Move) vacated the seat the
+    // employee came from server-side — mirror it before recording history.
+    const afterSeats = replaceSeat(vacateOtherSeatsForEmployee(beforeSnapshot.seats, seat), seat);
     const afterEmployees = replaceEmployee(beforeSnapshot.employees, seat);
     recordDraftHistory(describeSeatUpdate(beforeSnapshot, seat), beforeSnapshot, afterSeats, afterEmployees);
     setLocalSeats(afterSeats);

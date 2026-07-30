@@ -115,3 +115,11 @@ test("settings JSON restore fences on the draft the page loaded", async () => {
   assert.match(source, /restoreDraftSnapshotAction\(review\.snapshot, listDraftSeatExpectations\(seats\)\)/);
   assert.match(source, /router\.refresh\(\)/);
 });
+
+test("force-move outcomes reconcile the vacated source seat locally", async () => {
+  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  // Both force_move commit paths must clear the mover's previous seat before
+  // recording history, or undo snapshots bake in a double assignment.
+  assert.match(seatMapSource, /replaceSeat\(vacateOtherSeatsForEmployee\(beforeSnapshot\.seats, seat\), seat\)/);
+  assert.match(seatMapSource, /replaceSeat\(vacateOtherSeatsForEmployee\(beforeSnapshot\.seats, result\.seat\), result\.seat\)/);
+});
