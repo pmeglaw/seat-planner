@@ -47,17 +47,29 @@ This document goes stale; the code does not. Read, in order:
 - **The superseded mocks deleted** (`880d489`) — `app/concepts/action-bar/` and
   `app/concepts/inspector/`. `nav-rail` and `login-v12` kept.
 
+- **One vacate live-verified end to end** at `/admin` against the production
+  draft layer (2026-07-30, owner-approved, subject seat `W08`). Verified in the
+  database, not from the pill — the pill is documented to lag:
+  - `status` assigned → available, `employee_id` → null.
+  - **`zone` survived** as "West Pod" and **`notes` survived** verbatim. These
+    are the two claims in `buildVacateSeatInput`'s docstring that no test can
+    prove against the real column defaults, and both held.
+  - `x`/`y` untouched; `updated_at` bumped, so the trigger fired.
+  - **`layer='published'` was byte-identical throughout** — viewers saw nothing.
+  - Undo restored the row exactly; the draft↔published diff went 0 → 1 → **0**
+    across all 68 seats. Only `updated_at` differs, which is the trigger, not
+    content.
+  - The bar re-rendered contextually: occupied `Swap · Vacate` → open
+    `Assign… · Swap`, hiding rather than greying.
+
 ## Next, in order
 
-1. **Live-verify one vacate end to end at `/admin`.** It is the only path proven
-   by tests alone. Local dev writes to the **production** draft layer, so
-   nominate a seat, record its baseline first, and undo after.
-2. **Retire Move.** "Seats never move, people do." Removing the button makes
+1. **Retire Move.** "Seats never move, people do." Removing the button makes
    `moveSeatAction`, `moveMode`/`dragState`/`handleMovePointerDown`, "Reset
    position to published", the `start-move-seat` guard arm, and
    `publishSummary`'s `seatMoves` all unreachable. Coordinates do **not** die:
    Add seat still writes x/y and undo/redo still restores them.
-3. **The nav rail (§1)** — mock at `/concepts/nav-rail`. The risk is not the
+2. **The nav rail (§1)** — mock at `/concepts/nav-rail`. The risk is not the
    CSS, it is creating `app/admin/layout.tsx`:
    - `getAdminPageContext` is not `cache()`-wrapped, and
      `revalidatePath("/admin")` fires from **18** call sites in `app/actions.ts`,
