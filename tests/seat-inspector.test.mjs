@@ -97,7 +97,6 @@ test("viewer mode exposes no edit affordances (viewer/admin isolation)", async (
 test("admin mode exposes the edit affordances", async () => {
   await renderInspector(makeSeat(), { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {} });
   assert.ok(byLabelPrefix("Delete custom seat"), "delete control present");
-  assert.ok(byLabelPrefix("Move seat"), "move control present");
   assert.ok(byLabelPrefix("Assign an employee"), "assign control present");
   // Swap and Vacate are deliberately NOT here any more: they moved to the
   // canvas action bar so they survive the panel being collapsed, which is the
@@ -105,6 +104,12 @@ test("admin mode exposes the edit affordances", async () => {
   // absence is what stops them drifting back and duplicating the bar.
   assert.equal(byLabelPrefix("Swap seat"), null, "swap lives on the canvas bar, not this panel");
   assert.equal(byLabelPrefix("Vacate"), null, "vacate lives on the canvas bar, not this panel");
+  // Move is HIDDEN, not retired (MOVE_UI_ENABLED in SeatInspector.tsx, 2026-07-30).
+  // moveSeatAction and SeatMap's drag machinery are still live and still wired to
+  // this panel's props — this assertion is what makes putting the button back a
+  // deliberate decision rather than a drift, since the capability behind it never
+  // went away. Flip the flag and this line together, or not at all.
+  assert.equal(byLabelPrefix("Move seat"), null, "move is switched off at the flag, not deleted");
 });
 
 test("an occupied seat's CTA reads Edit assignment (it opens a form, never acts)", async () => {

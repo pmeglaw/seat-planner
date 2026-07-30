@@ -84,6 +84,32 @@ type FieldError = {
 // Stable defaults for the optional edit callbacks (the viewer omits them).
 // These MUST be module-level constants: inline `= () => {}` defaults mint a
 // new identity per render, which cascades through effect deps into a setState loop.
+/**
+ * MOVE IS HIDDEN, NOT RETIRED (owner call, 2026-07-30).
+ *
+ * "Seats never move, people do" is a product claim, not a code fact — it takes
+ * weeks of real use to falsify, and nobody has run that experiment yet. So the
+ * single UI entry point is switched off here while the capability stays whole:
+ * `moveSeatAction`, `SeatMap`'s move mode / drag handlers / `start-move-seat`
+ * guard arm, `publishSummary`'s `seatMoves`, and this panel's move-mode
+ * microcopy are all untouched and still wired. Reinstating is this one boolean.
+ *
+ * The flag guards the JSX rather than deleting it deliberately: that keeps
+ * `handleStartMoveSeat` and the `moveMode` prop referenced, so hiding Move
+ * leaves no unused-symbol residue behind it (the exact debt `763420d` cleaned
+ * up after the Swap/Vacate move).
+ *
+ * "Reset position to published" stays visible regardless — drafts moved before
+ * this flag flipped still need their escape hatch.
+ *
+ * WHAT DECIDES THIS: an admin asking to reposition a seat means flip it back to
+ * `true`. Silence through a full seating change (a pod rearrangement, a new-hire
+ * intake) means the claim held and Move can be retired outright — the work is
+ * enumerated in `docs/handoff-v12-shell.md`. Do not leave it hidden forever;
+ * unowned live code rots.
+ */
+const MOVE_UI_ENABLED = false;
+
 const noopCallback = () => undefined;
 const emptyDraftSnapshot = (): DraftSnapshot => ({ seats: [], employees: [] });
 
@@ -1215,17 +1241,17 @@ export function SeatInspector({
                   {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.status}</p>}
                 </label>
               )}
-              <div className="mt-2.5 flex min-w-0 gap-2">
-                <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move seat ${selectedSeat.label} on the map`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
-                  {moveMode ? "Exit move" : "Move"}
-                </Button>
-                {/* Swap and Vacate live on the canvas action bar now
-                    (components/seat-map/SeatActionBar.tsx). With them here,
-                    collapsing this panel hid the verbs exactly when the map was
-                    at its widest — which is when reseating actually happens.
-                    Move stays: removing it retires seat-drag entirely, and that
-                    is its own change with its own review. */}
-              </div>
+              {MOVE_UI_ENABLED && (
+                <div className="mt-2.5 flex min-w-0 gap-2">
+                  <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move seat ${selectedSeat.label} on the map`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
+                    {moveMode ? "Exit move" : "Move"}
+                  </Button>
+                  {/* Swap and Vacate live on the canvas action bar now
+                      (components/seat-map/SeatActionBar.tsx). With them here,
+                      collapsing this panel hid the verbs exactly when the map was
+                      at its widest — which is when reseating actually happens. */}
+                </div>
+              )}
               {/* 3b INV-4: move-mode microcopy lives in the occupant (the inspector). */}
               {moveMode && (
                 <p role="status" className="mt-2 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-3 py-2 text-[12px] font-medium leading-4 text-[var(--admin-chrome-text-soft)]">

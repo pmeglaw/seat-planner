@@ -1,6 +1,6 @@
 # v12 admin shell — where this stands
 
-Branch `feat/v12-shell-action-bar`, seven commits on `f18efc1`. Not pushed.
+Branch `feat/v12-shell-action-bar`, eight commits on `f18efc1`. Not pushed.
 Green at the tip: `npm test` 623/623 · `npm run test:ct` 41/41 ·
 `npm run coverage:check` passes · `typecheck` 0 · `lint` 0 errors.
 
@@ -46,6 +46,21 @@ This document goes stale; the code does not. Read, in order:
   already unused at `f18efc1`, so it is left alone deliberately.
 - **The superseded mocks deleted** (`880d489`) — `app/concepts/action-bar/` and
   `app/concepts/inspector/`. `nav-rail` and `login-v12` kept.
+- **Move hidden behind `MOVE_UI_ENABLED`**, not retired. The plan here was to
+  delete it outright; the owner reversed that, and the reversal is the better
+  call — "seats never move, people do" is a *product* claim, and no one has yet
+  run the weeks of real use that could falsify it. So the bet is now reversible
+  by one boolean instead of by reverting a commit.
+  The flag guards the JSX rather than deleting it **so that nothing goes
+  unused**: `handleStartMoveSeat`, the `moveMode` prop and `SeatMap`'s whole
+  move machinery stay referenced, `SeatMap.tsx` is untouched, and lint stays at
+  26. That was the deciding detail — a naive hide would have re-created exactly
+  the dead-symbol residue `763420d` had just cleaned up.
+  What retiring it later still costs, if the claim holds: `moveSeatAction`,
+  `moveMode`/`dragState`/`handleMovePointerDown`, "Reset position to published",
+  the `start-move-seat` guard arm, and `publishSummary`'s `seatMoves`, across 12
+  files. Coordinates do **not** die with it — Add seat still writes x/y and
+  undo/redo still restores them.
 
 - **One vacate live-verified end to end** at `/admin` against the production
   draft layer (2026-07-30, owner-approved, subject seat `W08`). Verified in the
@@ -64,12 +79,7 @@ This document goes stale; the code does not. Read, in order:
 
 ## Next, in order
 
-1. **Retire Move.** "Seats never move, people do." Removing the button makes
-   `moveSeatAction`, `moveMode`/`dragState`/`handleMovePointerDown`, "Reset
-   position to published", the `start-move-seat` guard arm, and
-   `publishSummary`'s `seatMoves` all unreachable. Coordinates do **not** die:
-   Add seat still writes x/y and undo/redo still restores them.
-2. **The nav rail (§1)** — mock at `/concepts/nav-rail`. The risk is not the
+1. **The nav rail (§1)** — mock at `/concepts/nav-rail`. The risk is not the
    CSS, it is creating `app/admin/layout.tsx`:
    - `getAdminPageContext` is not `cache()`-wrapped, and
      `revalidatePath("/admin")` fires from **18** call sites in `app/actions.ts`,
@@ -91,7 +101,7 @@ reader will otherwise helpfully re-propose them.
 | Match the **live greige palette** | Not the handoff's IBM ramp (`#f4f4f4`, `#e0e0e0`, `#6f6f6f`). |
 | Seat verbs live on the **canvas bar**, not the panel | Because the panel keeps a collapse rail, and collapsed is when the map is widest. |
 | The bar **confirms vacate every time** | The inspector's straight-through vacate is gone with its button. |
-| **Move is retired** | From the row now; the capability in step 5. |
+| Move is **hidden, not retired** | Owner reversed the retire call on 2026-07-30. One boolean, `MOVE_UI_ENABLED` in `SeatInspector.tsx`; the capability behind it is whole. Don't re-propose deleting it — and don't quietly leave it hidden either; the flag's docstring names what decides it. |
 
 ## Traps that cost real time
 
