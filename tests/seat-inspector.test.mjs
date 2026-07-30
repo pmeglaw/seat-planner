@@ -95,7 +95,7 @@ test("viewer mode exposes no edit affordances (viewer/admin isolation)", async (
 });
 
 test("admin mode exposes the edit affordances", async () => {
-  await renderInspector(makeSeat(), { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {}, onStartSwapSeat() {} });
+  await renderInspector(makeSeat(), { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {} });
   assert.ok(byLabelPrefix("Delete custom seat"), "delete control present");
   assert.ok(byLabelPrefix("Move seat"), "move control present");
   assert.ok(byLabelPrefix("Assign an employee"), "assign control present");
@@ -108,13 +108,13 @@ test("admin mode exposes the edit affordances", async () => {
 });
 
 test("an occupied seat's CTA reads Edit assignment (it opens a form, never acts)", async () => {
-  await renderInspector(assignedSeat, { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {}, onStartSwapSeat() {} });
+  await renderInspector(assignedSeat, { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {} });
   assert.ok(byLabelPrefix("Edit assignment"), "occupied-seat CTA is an edit verb");
   assert.equal(byLabelPrefix("Change assignment"), null, "old ambiguous label retired");
 });
 
 test("Contact section never repeats Department — the header role line carries it", async () => {
-  await renderInspector(assignedSeat, { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {}, onStartSwapSeat() {} });
+  await renderInspector(assignedSeat, { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {} });
   const factLabels = [...document.querySelectorAll("dt")].map(dt => dt.textContent);
   assert.ok(!factLabels.includes("Department"), "no duplicate Department fact row");
 });

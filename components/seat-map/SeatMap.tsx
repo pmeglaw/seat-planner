@@ -3951,7 +3951,6 @@ export function SeatMap({
         }}
         onClearSearchContext={searchActive ? clearSearch : clearStructuredFilters}
         onToggleCollapse={() => setInspectorCollapsed(current => !current)}
-        onStartSwapSeat={() => startSwapSeatMode()}
         onStartMoveSeat={() => {
           if (!selectedSeatId) return;
           if (inspectorDirty) {

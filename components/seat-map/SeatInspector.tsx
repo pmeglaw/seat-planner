@@ -11,7 +11,7 @@ import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { buildContactRows, employeeAssignmentFields, type ContactFactRow } from "@/lib/employeeAssignment";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
-import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { CloseIcon } from "@/components/ui/CloseIcon";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
@@ -33,7 +33,6 @@ type SeatInspectorProps = {
   onToggleCollapse: () => void;
   // Edit callbacks are optional so the read-only viewer can render the same
   // inspector without wiring any draft machinery (canEdit=false never calls them).
-  onStartSwapSeat?: () => void;
   onStartMoveSeat?: () => void;
   moveMode?: boolean;
   // True when the seat sits away from its published position — enables the
@@ -236,7 +235,6 @@ export function SeatInspector({
   onClose,
   onClearSearchContext,
   onToggleCollapse,
-  onStartSwapSeat = noopCallback,
   onStartMoveSeat = noopCallback,
   moveMode = false,
   canResetPosition = false,
@@ -264,7 +262,6 @@ export function SeatInspector({
   const [editingAssignment, setEditingAssignment] = useState(false);
   const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
   const [activeEmployeeIndex, setActiveEmployeeIndex] = useState(0);
-  const [vacateConfirmOpen, setVacateConfirmOpen] = useState(false);
   const [moveConflict, setMoveConflict] = useState<{
     employeeName: string;
     currentSeatLabel: string;
@@ -284,7 +281,6 @@ export function SeatInspector({
   const focusPanelAfterExpandRef = useRef(false);
   const prevCollapsedRef = useRef(collapsed);
   const assignmentSectionRef = useRef<HTMLElement | null>(null);
-  const vacateDialogFocusRef = useDialogFocus<HTMLElement>();
   const moveConflictDialogFocusRef = useDialogFocus<HTMLElement>();
   const employeeInputRef = useRef<HTMLInputElement | null>(null);
   const employeePositionRef = useRef<HTMLInputElement | null>(null);
@@ -358,7 +354,6 @@ export function SeatInspector({
     setEditingAssignment(false);
     setEmployeeComboboxOpen(false);
     setActiveEmployeeIndex(0);
-    setVacateConfirmOpen(false);
     setMoveConflict(null);
     onError(null);
     onDirtyChange(false);
@@ -376,7 +371,6 @@ export function SeatInspector({
       setEditingAssignment(false);
       setEmployeeComboboxOpen(false);
       setActiveEmployeeIndex(0);
-      setVacateConfirmOpen(false);
       setMoveConflict(null);
       onDirtyChange(false);
       return;
@@ -511,8 +505,6 @@ export function SeatInspector({
   // inspector surfaces (spec §6 — the panel wears the chrome, not the canvas).
   const footerNeutralButtonClass =
     "!border-white/20 !bg-[var(--admin-chrome-raised)] !text-[var(--admin-chrome-text)] hover:!border-white/30 hover:!bg-[var(--admin-chrome-raised-hover)] hover:!text-white disabled:!border-white/10 disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)]";
-  const footerDangerButtonClass =
-    "!border-transparent !bg-[rgb(var(--admin-status-bad-rgb)/0.15)] !text-[var(--admin-chrome-danger-text)] hover:!border-[var(--admin-status-bad)] hover:!bg-[var(--admin-status-bad)] hover:!text-white disabled:!border-transparent disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)]";
   const fieldErrorClassName = "border-[var(--admin-status-bad)] focus:border-[var(--admin-status-bad)] focus:ring-[rgb(var(--admin-status-bad-rgb)/0.40)]";
   const warningSurfaceClassName = "border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] text-[var(--admin-status-warn)]";
   const neutralPillClassName = "bg-white/10 text-[var(--admin-chrome-text-soft)] ring-white/15";
