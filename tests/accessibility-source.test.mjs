@@ -16,7 +16,7 @@ test("viewer route renders the published map as read-only", async () => {
   assert.doesNotMatch(viewerSource, /<SeatMap/);
   assert.match(viewerFinderSource, /Read-only/);
   assert.match(viewerFinderSource, /Published/);
-  assert.doesNotMatch(viewerFinderSource, /createSeatAction|deleteSeatAction|moveSeatAction|publishSeatMapAction|restoreDraftSnapshotAction|swapSeatAssignmentsAction/);
+  assert.doesNotMatch(viewerFinderSource, /createSeatAction|deleteSeatAction|publishSeatMapAction|restoreDraftSnapshotAction|swapSeatAssignmentsAction/);
   assert.match(adminSource, /\.eq\("layer", "draft"\)/);
   assert.match(adminSource, /\.eq\("layer", "published"\)/);
   // Guards that the published layer is plumbed into SeatMap as read-only

@@ -75,7 +75,6 @@ export function configureContext({ router, supabase, actions } = {}) {
 const ACTION_EXPORTS = [
   "updateSeatAction",
   "createSeatAction",
-  "moveSeatAction",
   "deleteSeatAction",
   "swapSeatAssignmentsAction",
   "publishSeatMapAction",

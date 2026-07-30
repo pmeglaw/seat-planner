@@ -305,54 +305,6 @@ export async function createSeatAction(input: {
   throw new Error("Could not create a unique seat label for this zone.");
 }
 
-export type MoveSeatResult =
-  | { ok: true; seat: SeatWithEmployee }
-  | { ok: false; code: "STALE_DRAFT"; message: string };
-
-export async function moveSeatAction(input: {
-  seatId: string;
-  x: number;
-  y: number;
-  /** Concurrency fence: the seat's updated_at as the client rendered it. */
-  expectedUpdatedAt?: string | null;
-}): Promise<MoveSeatResult> {
-  const supabase = await requireAdmin();
-  const point = validateSeatCoordinates(input.x, input.y);
-
-  // Compare-and-swap inside the UPDATE's own WHERE clause: one statement, so
-  // the check and the write cannot straddle a concurrent commit — the same
-  // guarantee the draft RPCs get from their expected_updated_at parameter, in
-  // the form CLAUDE.md sanctions for a single-row write. The timestamp is
-  // forwarded verbatim, never re-parsed through Date (which drops the
-  // microseconds Postgres stored and would trip the fence on a false
-  // positive) — see the header of lib/draftConcurrency.ts.
-  const query = supabase
-    .from("seats")
-    .update({ x: point.x, y: point.y })
-    .eq("id", input.seatId)
-    .eq("layer", "draft");
-  const fencedQuery = input.expectedUpdatedAt ? query.eq("updated_at", input.expectedUpdatedAt) : query;
-
-  const { data: movedRows, error } = await fencedQuery.select("id");
-
-  if (error) throw new Error(error.message);
-
-  // Under a fence, zero rows means the seat advanced past what the client held
-  // (another admin committed) or is no longer an eligible draft row. Returned
-  // rather than thrown so the message survives production's digest stripping,
-  // matching updateSeatAction and the swap/restore paths.
-  if (input.expectedUpdatedAt && (movedRows ?? []).length !== 1) {
-    return {
-      ok: false,
-      code: "STALE_DRAFT",
-      message: "This seat changed in another session after this page loaded, so the move was not applied."
-    };
-  }
-
-  revalidatePath("/admin");
-  return { ok: true, seat: await getDraftSeatById(supabase, input.seatId) };
-}
-
 // Expected/validation failures are RETURNED (not thrown). A thrown error inside a
 // production Server Action is replaced by Next.js with a generic "Server Components
 // render … digest" message, which hid the real, user-friendly text the
