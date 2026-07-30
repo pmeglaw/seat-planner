@@ -96,7 +96,14 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*draftStatusLabel/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AskPlannerDrawer/);
-  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Swap seat/);
+  // Swap moved to the canvas action bar, so the panel's admin-gated control is
+  // now Move. The guarantee is unchanged — admin-only affordances must sit
+  // inside the canEdit branch — only its anchor moved.
+  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Move seat/);
+  // ...and the same guarantee, followed to where the verbs actually went: the
+  // action bar is admin-gated at its render site, so a viewer never gets Swap
+  // or Vacate on the canvas either.
+  assert.match(seatMapSource, /\{canEdit && floor === "3" && \([\s\S]*<SeatActionBar/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Vacate/);
 });

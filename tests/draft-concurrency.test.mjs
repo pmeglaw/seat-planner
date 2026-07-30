@@ -116,13 +116,29 @@ test("moveSeatAction fences the position write and SeatMap threads it on both mo
   assert.match(seatMapSource, /if \(!result\.ok\) \{\s*applyRestoredDraftPayload\(beforeSnapshot\);\s*handleStaleDraft\(result\.message\);/);
 });
 
-test("SeatInspector threads the per-seat fence and routes STALE_DRAFT to the parent", async () => {
+test("the save and vacate paths both thread the per-seat fence and route STALE_DRAFT to the parent", async () => {
   const source = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
+  const vacateSource = await readFile(new URL("../lib/seatDraftActions.ts", import.meta.url), "utf8");
+  const hookSource = await readFile(new URL("../components/seat-map/useSeatDraftActions.ts", import.meta.url), "utf8");
 
-  const fenceInputs = source.match(/expectedUpdatedAt: selectedSeat\.updated_at/g) ?? [];
-  assert.ok(fenceInputs.length >= 2, "both the save and vacate paths should pass the seat's updated_at");
+  // This used to count two `expectedUpdatedAt: selectedSeat.updated_at` inputs
+  // in one file, because the inspector was the only surface that wrote a seat.
+  // Vacate moved out so the canvas action bar shares one path with it, so the
+  // guarantee is now checked where each half actually lives. Same two rules,
+  // and one more file's worth of them — do not collapse this back to a count.
+
+  // Save path: still builds its own input inline in the inspector.
+  assert.match(source, /expectedUpdatedAt: selectedSeat\.updated_at/);
   assert.match(source, /result\.code === "STALE_DRAFT"/);
   assert.match(source, /onStaleDraft\(result\.message\)/);
+
+  // Vacate path: the payload carries the fence through verbatim...
+  assert.match(vacateSource, /expectedUpdatedAt: seat\.updated_at/);
+  assert.match(vacateSource, /result\.code === "STALE_DRAFT"/);
+  // ...and a rejected write reaches the parent's stale recovery rather than
+  // being surfaced as a generic error the user can only retry into.
+  assert.match(hookSource, /outcome\.kind === "stale"/);
+  assert.match(hookSource, /onStaleDraft\(outcome\.message\)/);
 });
 
 test("settings JSON restore fences on the draft the page loaded", async () => {

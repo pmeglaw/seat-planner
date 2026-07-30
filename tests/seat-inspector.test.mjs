@@ -98,8 +98,13 @@ test("admin mode exposes the edit affordances", async () => {
   await renderInspector(makeSeat(), { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {}, onStartSwapSeat() {} });
   assert.ok(byLabelPrefix("Delete custom seat"), "delete control present");
   assert.ok(byLabelPrefix("Move seat"), "move control present");
-  assert.ok(byLabelPrefix("Swap seat"), "swap control present");
   assert.ok(byLabelPrefix("Assign an employee"), "assign control present");
+  // Swap and Vacate are deliberately NOT here any more: they moved to the
+  // canvas action bar so they survive the panel being collapsed, which is the
+  // state the map is widest in and reseating actually happens. Asserting their
+  // absence is what stops them drifting back and duplicating the bar.
+  assert.equal(byLabelPrefix("Swap seat"), null, "swap lives on the canvas bar, not this panel");
+  assert.equal(byLabelPrefix("Vacate"), null, "vacate lives on the canvas bar, not this panel");
 });
 
 test("an occupied seat's CTA reads Edit assignment (it opens a form, never acts)", async () => {

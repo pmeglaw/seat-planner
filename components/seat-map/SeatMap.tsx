@@ -53,6 +53,7 @@ import { clientPointToNormalized } from "@/lib/seatMath";
 import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
+import { canVacateSeat } from "@/lib/seatDraftActions";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import {
@@ -76,10 +77,19 @@ import {
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
+import { SeatActionBar } from "@/components/seat-map/SeatActionBar";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
+import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { AccountMenu } from "@/components/ui/AccountMenu";
+import {
+  adminChromeDividerRule,
+  adminChromeSurfaceShortcut,
+  adminChromeTool,
+  adminChromeToolActive,
+  adminChromeToolDisabled
+} from "@/components/ui/adminChrome";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { CloseIcon } from "@/components/ui/CloseIcon";
 import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
@@ -118,6 +128,18 @@ type SwapConfirmState = {
 type DeleteSeatConfirmState = {
   seatId: string;
   label: string;
+} | null;
+
+/**
+ * The action bar's vacate ALWAYS confirms, dirty or not — it is a transient
+ * surface that appears and disappears with the selection, so it earns less
+ * trust than a control inside a panel the user deliberately opened. The rule
+ * itself lives in lib/seatDraftActions (vacateNeedsConfirmation).
+ */
+type VacateConfirmState = {
+  seatId: string;
+  label: string;
+  occupantName: string;
 } | null;
 
 type InspectorGuardAction =
@@ -372,6 +394,11 @@ export function SeatMap({
   const [swapSourceSeatId, setSwapSourceSeatId] = useState<string | null>(null);
   const [swapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
   const [deleteSeatConfirm, setDeleteSeatConfirm] = useState<DeleteSeatConfirmState>(null);
+  const [vacateConfirm, setVacateConfirm] = useState<VacateConfirmState>(null);
+  // Mirrors inspectorResetSignal: the bar's Assign… has to reach into the
+  // inspector's progressive editor, and a bumped signal is how this file
+  // already talks to that component without owning its internals.
+  const [assignmentRequestSignal, setAssignmentRequestSignal] = useState(0);
   const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
   // Last keyboard-visited seat (roving tabindex anchor). The derived tab stop
   // also prefers the selected seat — see mapRovingSeatId.
@@ -385,6 +412,7 @@ export function SeatMap({
   // local state already reflects).
   const [mutationInFlight, setMutationInFlight] = useState(false);
   const deleteSeatDialogFocusRef = useDialogFocus<HTMLElement>();
+  const vacateConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   const publishReviewDialogFocusRef = useDialogFocus<HTMLElement>();
   const discardDraftDialogFocusRef = useDialogFocus<HTMLElement>();
   const inspectorGuardDialogFocusRef = useDialogFocus<HTMLElement>();
@@ -441,6 +469,16 @@ export function SeatMap({
     focusInspectorAfterSelectRef.current = false;
     if (!selectedSeatId) return;
     window.requestAnimationFrame(() => {
+      // Keyboard selection lands on something ACTIONABLE. That used to mean the
+      // inspector panel, because the panel owned the verbs; the canvas action
+      // bar owns them now, so its first verb is the target. The panel stays the
+      // fallback for surfaces that render no bar (the read-only viewer), which
+      // is also why the getElementById line below must not be deleted.
+      const barAction = seatActionBarFirstActionRef.current;
+      if (barAction) {
+        barAction.focus();
+        return;
+      }
       document.getElementById("seat-inspector-panel")?.focus();
     });
   }, [selectedSeatId]);
@@ -448,6 +486,17 @@ export function SeatMap({
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const seatActionBarFirstActionRef = useRef<HTMLButtonElement | null>(null);
+  // The bar and the inspector run ONE vacate path — same payload, same undo
+  // snapshot, same stale-draft fence. Both commit through applySeatUpdated
+  // below, so a seat vacated from the canvas records history identically to one
+  // vacated from the panel and Undo cannot tell them apart.
+  const barSeatActions = useSeatDraftActions({
+    onBeforeSeatUpdate: captureDraftSnapshot,
+    onSeatUpdated: applySeatUpdated,
+    onStaleDraft: handleStaleDraft,
+    onDirtyChange: setInspectorDirty
+  });
 
   const updateMapVisibleRange = useCallback(() => {
     const viewport = mapViewportRef.current;
@@ -764,6 +813,11 @@ export function SeatMap({
         return;
       }
 
+      if (vacateConfirm) {
+        setVacateConfirm(null);
+        return;
+      }
+
       if (publishReviewOpen) {
         setPublishReviewOpen(false);
         return;
@@ -853,7 +907,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, position, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, position, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
@@ -1295,6 +1349,79 @@ export function SeatMap({
 
   function captureDraftSnapshot() {
     return createDraftSnapshot(localSeats, localEmployees);
+  }
+
+  /**
+   * The single commit path for a saved seat, shared by the inspector's form and
+   * the canvas action bar. Extracted from the inspector's inline prop so both
+   * surfaces record undo history the same way — a vacate from the bar must be
+   * indistinguishable from one made in the panel, or Undo starts behaving
+   * differently depending on where the user clicked.
+   */
+  function applySeatUpdated(seat: SeatWithEmployee, beforeSnapshot: DraftSnapshot) {
+    setActionError(null);
+    setActionNotice(null);
+    setInspectorDirty(false);
+    const afterSeats = replaceSeat(beforeSnapshot.seats, seat);
+    const afterEmployees = replaceEmployee(beforeSnapshot.employees, seat);
+    recordDraftHistory(describeSeatUpdate(beforeSnapshot, seat), beforeSnapshot, afterSeats, afterEmployees);
+    setLocalSeats(afterSeats);
+    setLocalEmployees(afterEmployees);
+    setActionNotice(`Saved changes to ${seat.label}.`);
+    if (pendingInspectorSaveAction) {
+      const action = pendingInspectorSaveAction;
+      setPendingInspectorSaveAction(null);
+      window.requestAnimationFrame(() => applyInspectorGuardAction(action));
+    }
+  }
+
+  // Assign… on the bar discloses rather than acts: assignment needs a person,
+  // which needs the inspector's combobox. Expand the panel and bump the signal
+  // the inspector watches — the same idiom inspectorResetSignal already uses.
+  function requestAssignFromBar() {
+    if (!selectedSeat) return;
+    setInspectorCollapsed(false);
+    setAssignmentRequestSignal(current => current + 1);
+  }
+
+  // The bar never vacates directly. It always raises the confirm first, because
+  // it is a transient surface (lib/seatDraftActions: vacateNeedsConfirmation).
+  function requestVacateFromBar() {
+    if (!selectedSeat || !canVacateSeat(selectedSeat)) return;
+    setActionError(null);
+    setActionNotice(null);
+    setVacateConfirm({
+      seatId: selectedSeat.id,
+      label: selectedSeat.label,
+      occupantName: selectedSeat.employee?.full_name ?? "this employee"
+    });
+  }
+
+  function confirmVacateFromBar() {
+    if (!vacateConfirm) return;
+    // Re-resolve from live state: the dialog holds an id, not a seat, so a
+    // refresh between opening and confirming cannot commit a stale row.
+    const seatToVacate = localSeats.find(seat => seat.id === vacateConfirm.seatId) ?? null;
+    setVacateConfirm(null);
+    if (!seatToVacate || !canVacateSeat(seatToVacate)) return;
+
+    setActionError(null);
+    setActionNotice(null);
+    setStaleDraftNotice(null);
+    setMutationInFlight(true);
+
+    void barSeatActions.vacateSeat(seatToVacate).then(outcome => {
+      setMutationInFlight(false);
+      if (outcome.kind === "stale") return;
+      if (outcome.kind === "saved") {
+        // applySeatUpdated already set the generic save notice; name the actual
+        // verb, since "Saved changes to C01" reads oddly for a vacate.
+        setActionNotice(`Vacated ${outcome.seat.label}.`);
+        return;
+      }
+      setActionNotice(null);
+      setActionError(outcome.message);
+    });
   }
 
   function applyRestoredDraftPayload(payload: { seats: SeatWithEmployee[]; employees: Employee[] }) {
@@ -2528,19 +2655,23 @@ export function SeatMap({
     return { edge: "none", offsetPx: 0 };
   }
 
-  // Shell top bar: full-height quiet tools on the 48px dark bar. Active state
-  // is the Carbon-style 2px brand-orange underline (5.37:1 on #161616).
-  // The bar grew 40 -> 48px on 2026-07-22 so the fields could take Carbon `md`
-  // (40px) and still keep 4px of clearance; every full-height item here tracks
-  // the bar, or the underline stops landing on its bottom edge.
-  const chromeToolbarBtn = "inline-flex h-9 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
-  const chromeToolbarBtnActive = "inline-flex h-9 shrink-0 items-center gap-1.5 border-b-2 border-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] px-2.5 text-[12.5px] font-medium leading-none text-[var(--admin-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-  const chromeSurfaceShortcut = "flex h-9 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-  // Icon-only tools (undo/redo) sit as 32px squares matching the Filter/search
+  // Shell top bar: full-height quiet tools on the dark bar, height from
+  // --admin-chrome-h (36px — the top chrome keeps its original size). Active
+  // state is the Carbon-style 2px brand-orange underline (5.37:1 on #161616).
+  // Every full-height item tracks the bar through that token, or the underline
+  // stops landing on its bottom edge — which is exactly why the shared strings
+  // in components/ui/adminChrome.ts carry h-[var(--admin-chrome-h)] and not a
+  // literal. The sub-page bar (AdminShellBar) composes the same three.
+  const chromeToolbarBtn = `${adminChromeTool} ${adminChromeToolDisabled}`;
+  const chromeToolbarBtnActive = adminChromeToolActive;
+  const chromeSurfaceShortcut = adminChromeSurfaceShortcut;
+  // Icon-only tools (undo/redo) sit as small squares beside the Filter/search
   // field pair (2026-07-23), not as full-height flat tools — they carry no
   // active-underline state, so nothing ties them to the bar's bottom edge.
-  // after:-inset-1 keeps the ~40px hit target the full-height buttons had
-  // (#198's touch-target line) while the visual stays 32px.
+  // after:-inset-1.5 keeps the ~40px hit target the full-height buttons had
+  // (#198's touch-target line) while the visual stays 28px. (This comment used
+  // to claim 32px; the class has been h-7 = 28px throughout, so the number was
+  // wrong, not the class.)
   const chromeIconBtn = "relative flex h-7 w-7 shrink-0 items-center justify-center text-[var(--admin-chrome-muted)] transition-colors duration-150 after:absolute after:-inset-1.5 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
   // Two collapse tiers keep the flexible search group usable at every width
   // (the row is otherwise rigid, so search absorbs the whole deficit):
@@ -2568,7 +2699,7 @@ export function SeatMap({
       {/* z-50, not z-40: once sticky, the header's z-index is live and must
           outrank the z-40 canvas overlays (toasts, map menu) that follow it
           in DOM order, or they paint over the pinned bar and its menus. */}
-      <header className="sticky top-0 z-50 flex h-9 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+      <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
         <h1 className="sr-only">Seat Planner — admin map</h1>
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
@@ -2581,17 +2712,19 @@ export function SeatMap({
           </div>
         </div>
 
-        {/* Divider tracks the bar (was 22px in a 40px bar — same 0.55 ratio). */}
-        <span aria-hidden="true" className="mx-2.5 hidden h-[26px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
+        {/* 26px here vs 22px on the sub-page bar — a real disagreement between
+            the two bars that is left alone, because unifying it would resize
+            one bar's chrome. Only the 1px rule and its color are shared. */}
+        <span aria-hidden="true" className={`mx-2.5 hidden h-[26px] lg:block ${adminChromeDividerRule}`} />
 
         {/* Filter and Search are two DISTINCT controls, no longer one shared
             box. Sharing a 26px border made search — a paramount job — read as a
             cramped sibling of the filter and forced both to share a 340px cap.
             The filter keeps its dropdown anchored to itself (immediately LEFT
             of search, per the locked pairing); search gets its own field below.
-            Resized 2026-07-23 (owner): both fields are 32px in the slimmed
-            40px bar — same 4px clearance top and bottom as the original
-            40px-in-48px pairing. */}
+            Resized 2026-07-23 (owner): both fields are 28px in the 36px bar,
+            keeping 4px of clearance top and bottom. (This comment used to say
+            32px in a 40px bar — the classes have been h-7 = 28px.) */}
         <div data-filter-ui className="relative mr-1.5 flex h-7 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
           {canEdit && (
             <button
@@ -2950,7 +3083,7 @@ export function SeatMap({
                 aria-controls={!publishSummary.hasChanges && publishStatusOpen ? "publish-status-popover" : undefined}
                 title={draftStatusTitle}
                 className={[
-                  "inline-flex h-9 shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
+                  "inline-flex h-[var(--admin-chrome-h)] shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
                   publishSummary.hasChanges
                     ? "bg-[var(--admin-primary)] text-[var(--admin-primary-ink)] hover:brightness-105 focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
                     : publishStatusOpen
@@ -3382,6 +3515,19 @@ export function SeatMap({
                 />
               </div>
             )}
+            {/* Positioned against the map stage, NOT the viewport: that is what
+                makes it re-centre on the narrowed map when the inspector
+                reserves its column instead of drifting underneath it. */}
+            {canEdit && floor === "3" && (
+              <SeatActionBar
+                seat={selectedSeat}
+                busy={mutationInFlight || barSeatActions.pending}
+                onAssign={requestAssignFromBar}
+                onSwap={() => startSwapSeatMode()}
+                onVacate={requestVacateFromBar}
+                firstActionRef={seatActionBarFirstActionRef}
+              />
+            )}
           </div>
 
           {canEdit && (
@@ -3459,6 +3605,41 @@ export function SeatMap({
           onClearHighlights={() => setPlannerHighlightedSeatIds([])}
           onSelectSeat={selectPlannerHighlightedSeat}
         />
+      )}
+
+      {vacateConfirm && (
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+          <section
+            ref={vacateConfirmDialogFocusRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="vacate-seat-confirm-title"
+            aria-describedby="vacate-seat-confirm-description"
+            className="w-full max-w-md border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel focus-visible:outline-none"
+          >
+            <h2 id="vacate-seat-confirm-title" className="text-base font-semibold">
+              Vacate {formatSeatCode(vacateConfirm.label)}?
+            </h2>
+            <p id="vacate-seat-confirm-description" className="mt-2 text-sm leading-5 text-[var(--admin-text-secondary)]">
+              This clears {formatDisplayName(vacateConfirm.occupantName)} from this draft seat. {PUBLISH_IMPACT_NOTE}
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Button type="button" onClick={() => setVacateConfirm(null)} disabled={pending} className={["w-full", focusRingClass].join(" ")}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                onClick={confirmVacateFromBar}
+                disabled={pending}
+                className={["w-full", adminDangerButtonClassName, focusRingClass].join(" ")}
+              >
+                Vacate seat
+              </Button>
+            </div>
+          </section>
+        </div>
       )}
 
       {deleteSeatConfirm && (
@@ -3719,7 +3900,7 @@ export function SeatMap({
           role="status"
           aria-live="polite"
           aria-label={`${activeMode.label} mode`}
-          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--admin-primary-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-4 motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[36px] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--admin-primary-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-4 motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[var(--admin-chrome-h)] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="text-[10px] font-semibold text-[var(--admin-primary-cta)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--admin-text-primary)]">{activeMode.message}</p>
@@ -3785,22 +3966,7 @@ export function SeatMap({
         onDeleteSeat={deleteSelectedSeat}
         onExplainSeat={explainSeatWithPlanner}
         onBeforeSeatUpdate={captureDraftSnapshot}
-        onSeatUpdated={(seat, beforeSnapshot) => {
-          setActionError(null);
-          setActionNotice(null);
-          setInspectorDirty(false);
-          const afterSeats = replaceSeat(beforeSnapshot.seats, seat);
-          const afterEmployees = replaceEmployee(beforeSnapshot.employees, seat);
-          recordDraftHistory(describeSeatUpdate(beforeSnapshot, seat), beforeSnapshot, afterSeats, afterEmployees);
-          setLocalSeats(afterSeats);
-          setLocalEmployees(afterEmployees);
-          setActionNotice(`Saved changes to ${seat.label}.`);
-          if (pendingInspectorSaveAction) {
-            const action = pendingInspectorSaveAction;
-            setPendingInspectorSaveAction(null);
-            window.requestAnimationFrame(() => applyInspectorGuardAction(action));
-          }
-        }}
+        onSeatUpdated={applySeatUpdated}
         onError={message => {
           setActionError(message);
           if (message) setActionNotice(null);
@@ -3809,6 +3975,7 @@ export function SeatMap({
         onDirtyChange={setInspectorDirty}
         onSubmitBlocked={cancelPendingInspectorGuardAction}
         resetSignal={inspectorResetSignal}
+        startAssignmentSignal={assignmentRequestSignal}
         activityEntries={selectedSeatActivity}
       />
 
