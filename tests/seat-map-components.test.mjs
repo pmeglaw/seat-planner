@@ -61,19 +61,16 @@ function markerProps(seat, overrides = {}) {
     showNames: true,
     searchResult: false,
     compactNameLabel: false,
-    moveSeatMode: false,
     swapMode: false,
     swapSource: false,
     swapTarget: false,
     highlighted: false,
-    dragging: false,
     addSeatMode: false,
     viewportEdge: "none",
     viewportEdgeOffsetPx: 0,
     variant: "viewer",
     tabIndex: 0,
     onSelect() {},
-    onMovePointerDown() {},
     ...overrides
   };
 }
@@ -176,19 +173,6 @@ test("plate token honors the room offset and width props", async () => {
   assert.match(token.getAttribute("style") ?? "", /calc\(50% \+ 20px\)/, "horizontal room-center offset applied");
   assert.match(token.getAttribute("style") ?? "", /top: calc\(50% - 10px\)/, "vertical room-center offset applied");
   assert.match(token.getAttribute("style") ?? "", /width: 120px/, "room-fitted width applied");
-});
-
-test("move mode snaps the plate back to the true anchor (offset dropped, width kept)", async () => {
-  const officeSeat = makeSeat({ id: "s7", seat_key: "s01", label: "S01", zone: "South Offices" });
-  await renderElement(React.createElement(SeatMarker, markerProps(officeSeat, {
-    moveSeatMode: true,
-    officePlateOffsetXPx: 20,
-    officePlateOffsetYPx: -10,
-    officePlateWidthPx: 120
-  })));
-  const token = document.querySelector("button > span");
-  assert.ok(!/calc\(50% \+ 20px\)/.test(token.getAttribute("style") ?? ""), "offset dropped in move mode");
-  assert.match(token.getAttribute("style") ?? "", /width: 120px/, "width still room-fitted");
 });
 
 // 2026-07-24 extension: a seat placed INSIDE a measured office room renders

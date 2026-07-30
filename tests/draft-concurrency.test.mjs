@@ -84,38 +84,6 @@ test("SeatMap threads the fence through undo/redo restore and swap", async () =>
   assert.doesNotMatch(staleHandler[0], /setActionError\(`/);
 });
 
-test("moveSeatAction fences the position write and SeatMap threads it on both move paths", async () => {
-  const actionSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
-  const moveAction = actionSource.match(/export async function moveSeatAction[\s\S]*?export async function updateSeatAction/);
-
-  assert.ok(moveAction, "moveSeatAction should remain source-visible");
-  // Compare-and-swap in the UPDATE's own WHERE clause: the check and the write
-  // are one statement, so they cannot straddle a concurrent commit. Position is
-  // the only per-seat draft write that does not go through an RPC, so the fence
-  // has to live in the query itself or not at all.
-  assert.match(moveAction[0], /\.eq\("updated_at", input\.expectedUpdatedAt\)/);
-  assert.match(moveAction[0], /code: "STALE_DRAFT"/);
-  // Timestamps go back verbatim — re-serializing through Date drops the
-  // microseconds Postgres stored and trips the fence on a false positive.
-  assert.doesNotMatch(moveAction[0], /new Date\(\s*input\.expectedUpdatedAt/);
-
-  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
-  const moveCalls = seatMapSource.match(/moveSeatAction\(\{[\s\S]*?\}\)/g) ?? [];
-  assert.equal(moveCalls.length, 2, "drag-commit and reset-to-published are the only move callers");
-  for (const call of moveCalls) {
-    assert.match(call, /expectedUpdatedAt/, `move call should thread the fence: ${call}`);
-  }
-
-  // Drag fences on the PRE-drag snapshot: pointermove rewrites x/y locally but
-  // never updated_at, so the snapshot is what this client believes is current.
-  assert.match(seatMapSource, /const expectedUpdatedAt = beforeSnapshot\.seats\.find\(seat => seat\.id === seatId\)\?\.updated_at \?\? null/);
-  assert.match(seatMapSource, /const expectedUpdatedAt = selectedSeat\.updated_at \?\? null/);
-  // A rejected move must reach the shared stale recovery, not the generic
-  // action-error line, or the history baselines are left pointing at a draft
-  // the database no longer has.
-  assert.match(seatMapSource, /if \(!result\.ok\) \{\s*applyRestoredDraftPayload\(beforeSnapshot\);\s*handleStaleDraft\(result\.message\);/);
-});
-
 test("the save and vacate paths both thread the per-seat fence and route STALE_DRAFT to the parent", async () => {
   const source = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
   const vacateSource = await readFile(new URL("../lib/seatDraftActions.ts", import.meta.url), "utf8");

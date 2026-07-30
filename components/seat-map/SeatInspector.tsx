@@ -33,12 +33,6 @@ type SeatInspectorProps = {
   onToggleCollapse: () => void;
   // Edit callbacks are optional so the read-only viewer can render the same
   // inspector without wiring any draft machinery (canEdit=false never calls them).
-  onStartMoveSeat?: () => void;
-  moveMode?: boolean;
-  // True when the seat sits away from its published position — enables the
-  // Seat section's "Reset position" escape hatch for mis-dragged markers.
-  canResetPosition?: boolean;
-  onResetPosition?: () => void;
   onDeleteSeat?: () => void;
   onExplainSeat?: (seat: SeatWithEmployee) => void;
   onBeforeSeatUpdate?: () => DraftSnapshot;
@@ -84,32 +78,6 @@ type FieldError = {
 // Stable defaults for the optional edit callbacks (the viewer omits them).
 // These MUST be module-level constants: inline `= () => {}` defaults mint a
 // new identity per render, which cascades through effect deps into a setState loop.
-/**
- * MOVE IS HIDDEN, NOT RETIRED (owner call, 2026-07-30).
- *
- * "Seats never move, people do" is a product claim, not a code fact — it takes
- * weeks of real use to falsify, and nobody has run that experiment yet. So the
- * single UI entry point is switched off here while the capability stays whole:
- * `moveSeatAction`, `SeatMap`'s move mode / drag handlers / `start-move-seat`
- * guard arm, `publishSummary`'s `seatMoves`, and this panel's move-mode
- * microcopy are all untouched and still wired. Reinstating is this one boolean.
- *
- * The flag guards the JSX rather than deleting it deliberately: that keeps
- * `handleStartMoveSeat` and the `moveMode` prop referenced, so hiding Move
- * leaves no unused-symbol residue behind it (the exact debt `763420d` cleaned
- * up after the Swap/Vacate move).
- *
- * "Reset position to published" stays visible regardless — drafts moved before
- * this flag flipped still need their escape hatch.
- *
- * WHAT DECIDES THIS: an admin asking to reposition a seat means flip it back to
- * `true`. Silence through a full seating change (a pod rearrangement, a new-hire
- * intake) means the claim held and Move can be retired outright — the work is
- * enumerated in `docs/handoff-v12-shell.md`. Do not leave it hidden forever;
- * unowned live code rots.
- */
-const MOVE_UI_ENABLED = false;
-
 const noopCallback = () => undefined;
 const emptyDraftSnapshot = (): DraftSnapshot => ({ seats: [], employees: [] });
 
@@ -261,10 +229,6 @@ export function SeatInspector({
   onClose,
   onClearSearchContext,
   onToggleCollapse,
-  onStartMoveSeat = noopCallback,
-  moveMode = false,
-  canResetPosition = false,
-  onResetPosition = noopCallback,
   onDeleteSeat = noopCallback,
   onExplainSeat,
   onBeforeSeatUpdate = emptyDraftSnapshot,
@@ -859,11 +823,6 @@ export function SeatInspector({
     });
   }
 
-  function handleStartMoveSeat() {
-    if (pending) return;
-    onStartMoveSeat();
-  }
-
   function handleDeleteSeat() {
     if (!selectedSeatCanDelete || pending) return;
     onDeleteSeat();
@@ -1209,15 +1168,14 @@ export function SeatInspector({
               )}
             </div>
 
-            {/* Seat actions — moved from the panel's end to directly under the
-                assignment CTA (owner call 2026-07-23, superseding the
-                2026-07-16 end-of-panel call): Change/Move/Swap/Vacate are one
-                re-seat workflow, so the verbs cluster within one glance of the
-                header instead of splitting across 460px of reference rows.
-                Still never collapsible. Status rides here for OPEN seats — it
-                is an action, not a fact (its one-home rule intact: occupied
-                seats derive "assigned" from the occupant and show no control,
-                the chip carries the tag). */}
+            {/* Seat actions — the assignment CTA, Status for OPEN seats (it is
+                an action, not a fact: occupied seats derive "assigned" from
+                the occupant and show no control, the chip carries the tag),
+                and Delete live here. The reseat verbs — Move (person-centric),
+                Swap, Vacate — live on the canvas SeatActionBar instead, so
+                they survive the panel being collapsed, which is the state the
+                map is widest in and reseating actually happens. Still never
+                collapsible. */}
             <div role="group" aria-labelledby="seat-actions-heading" className="px-4 pb-1 pt-3">
               <div className="flex items-center gap-2">
                 <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[#E7E1D8]">Seat actions</h3>
@@ -1240,35 +1198,6 @@ export function SeatInspector({
                   </select>
                   {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.status}</p>}
                 </label>
-              )}
-              {MOVE_UI_ENABLED && (
-                <div className="mt-2.5 flex min-w-0 gap-2">
-                  <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move seat ${selectedSeat.label} on the map`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
-                    {moveMode ? "Exit move" : "Move"}
-                  </Button>
-                  {/* Swap and Vacate live on the canvas action bar now
-                      (components/seat-map/SeatActionBar.tsx). With them here,
-                      collapsing this panel hid the verbs exactly when the map was
-                      at its widest — which is when reseating actually happens. */}
-                </div>
-              )}
-              {/* 3b INV-4: move-mode microcopy lives in the occupant (the inspector). */}
-              {moveMode && (
-                <p role="status" className="mt-2 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-3 py-2 text-[12px] font-medium leading-4 text-[var(--admin-chrome-text-soft)]">
-                  Drag the seat marker to its new spot. Esc exits move.
-                </p>
-              )}
-              {canResetPosition && (
-                <Button
-                  type="button"
-                  onClick={onResetPosition}
-                  disabled={pending}
-                  aria-label={`Reset ${selectedSeat.label} to its published position`}
-                  title="Move this seat marker back to where it sits on the published map"
-                  className={`mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight ${footerNeutralButtonClass}`}
-                >
-                  Reset position to published
-                </Button>
               )}
               {/* Figma delete treatment: full-width low-emphasis button + visible
                   helper line. Rendered only for deletable-class seats: custom

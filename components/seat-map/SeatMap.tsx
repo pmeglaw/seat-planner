@@ -26,7 +26,7 @@ import {
 } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
-import { createSeatAction, deleteSeatAction, moveSeatAction, publishSeatMapAction, resetDraftToPublishedAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
+import { createSeatAction, deleteSeatAction, publishSeatMapAction, resetDraftToPublishedAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction } from "@/app/actions";
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
 import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
@@ -114,12 +114,6 @@ type SeatMapProps = {
   accountRoleLabel?: string;
 };
 
-type DragState = {
-  seatId: string;
-  pointerId: number;
-  beforeSnapshot: DraftSnapshot;
-} | null;
-
 type SwapConfirmState = {
   sourceSeatId: string;
   targetSeatId: string;
@@ -147,7 +141,6 @@ type InspectorGuardAction =
   | { kind: "close-inspector" }
   | { kind: "clear-selection" }
   | { kind: "start-add-seat" }
-  | { kind: "start-move-seat" }
   | { kind: "start-swap-seat" }
   | { kind: "navigate-admin-page"; href: GuardedNavigationHref; destination: string };
 
@@ -342,7 +335,6 @@ export function SeatMap({
   // PR #99 preview). It must survive those resets.
   const [staleDraftNotice, setStaleDraftNotice] = useState<string | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
-  const [moveSeatMode, setMoveSeatMode] = useState(false);
   const [addSeatMode, setAddSeatMode] = useState(false);
   const [publishReviewOpen, setPublishReviewOpen] = useState(false);
   // Second confirm layer for "discard all draft changes" — the publish review
@@ -352,7 +344,6 @@ export function SeatMap({
   const [askPlannerOpen, setAskPlannerOpen] = useState(false);
   const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
   const [plannerHighlightedSeatIds, setPlannerHighlightedSeatIds] = useState<string[]>([]);
-  const [dragState, setDragState] = useState<DragState>(null);
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("all");
   const [position, setPosition] = useState("all");
@@ -848,12 +839,10 @@ export function SeatMap({
         return;
       }
 
-      if (addSeatMode || moveSeatMode || swapSourceSeatId) {
-        const canceledMode = swapSourceSeatId ? "Swap" : moveSeatMode ? "Move" : "Add seat";
+      if (addSeatMode || swapSourceSeatId) {
+        const canceledMode = swapSourceSeatId ? "Swap" : "Add seat";
         setAddSeatMode(false);
-        setMoveSeatMode(false);
         setSwapSourceSeatId(null);
-        setDragState(null);
         setActionNotice(`${canceledMode} canceled — no changes made.`, "neutral");
         return;
       }
@@ -907,7 +896,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveSeatMode, position, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, position, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
@@ -1027,16 +1016,6 @@ export function SeatMap({
   };
 
   const selectedSeat = localSeats.find(seat => seat.id === selectedSeatId) ?? null;
-  // Published counterpart position (matched by seat_key — ids differ between
-  // layers) for the inspector's "Reset position" escape hatch. Null when the
-  // seat never published (custom) or hasn't moved off its published spot.
-  const selectedSeatPublishedPosition = useMemo(() => {
-    if (!canEdit || !selectedSeat) return null;
-    const published = localPublishedSeats.find(seat => seat.seat_key === selectedSeat.seat_key);
-    if (!published) return null;
-    const moved = Math.abs(published.x - selectedSeat.x) > 1e-6 || Math.abs(published.y - selectedSeat.y) > 1e-6;
-    return moved ? { x: published.x, y: published.y } : null;
-  }, [canEdit, selectedSeat, localPublishedSeats]);
   const swapSourceSeat = swapSourceSeatId ? localSeats.find(seat => seat.id === swapSourceSeatId) ?? null : null;
   const swapTargetSeat = swapConfirm ? localSeats.find(seat => seat.id === swapConfirm.targetSeatId) ?? null : null;
   const visualLocalSeats = useMemo(() => seatsToVisualSeats(localSeats), [localSeats]);
@@ -1197,7 +1176,6 @@ export function SeatMap({
     const seatIdToFocus = selectedSeatId;
     setSelectedSeatId(null);
     setInspectorDirty(false);
-    setMoveSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
     setDeleteSeatConfirm(null);
@@ -1209,7 +1187,6 @@ export function SeatMap({
     const seatIdToFocus = selectedSeatId;
     setSelectedSeatId(null);
     setInspectorDirty(false);
-    setMoveSeatMode(false);
     setAddSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
@@ -1221,19 +1198,10 @@ export function SeatMap({
   function applyStartAddSeatAction() {
     setSelectedSeatId(null);
     setInspectorDirty(false);
-    setMoveSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
     setAddSeatMode(true);
     setInspectorCollapsed(false);
-  }
-
-  function applyStartMoveSeatAction() {
-    if (!selectedSeatId) return;
-    setAddSeatMode(false);
-    setSwapSourceSeatId(null);
-    setSwapConfirm(null);
-    setMoveSeatMode(current => !current);
   }
 
   function applyStartSwapSeatAction() {
@@ -1246,9 +1214,7 @@ export function SeatMap({
     setActionError(null);
     setActionNotice(null);
     setInspectorDirty(false);
-    setMoveSeatMode(false);
     setAddSeatMode(false);
-    setDragState(null);
     setSwapConfirm(null);
     setSwapSourceSeatId(selectedSeat.id);
     setInspectorCollapsed(true);
@@ -1276,11 +1242,6 @@ export function SeatMap({
 
     if (action.kind === "start-add-seat") {
       applyStartAddSeatAction();
-      return;
-    }
-
-    if (action.kind === "start-move-seat") {
-      applyStartMoveSeatAction();
       return;
     }
 
@@ -1342,7 +1303,6 @@ export function SeatMap({
     if (action.kind === "close-inspector") return "closing the inspector.";
     if (action.kind === "clear-selection") return "clearing the selection.";
     if (action.kind === "start-add-seat") return "starting add-seat mode.";
-    if (action.kind === "start-move-seat") return "starting move-seat mode.";
     if (action.kind === "start-swap-seat") return "starting swap-seats mode.";
     return `opening ${action.destination}.`;
   }
@@ -1430,11 +1390,9 @@ export function SeatMap({
     setLocalEmployees(payload.employees);
     setSelectedSeatId(current => (current && restoredSeats.some(seat => seat.id === current) ? current : null));
     setInspectorDirty(false);
-    setMoveSeatMode(false);
     setAddSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
-    setDragState(null);
   }
 
   function recordDraftHistory(label: string, before: DraftSnapshot, afterSeats: SeatWithEmployee[], afterEmployees: Employee[]) {
@@ -1453,11 +1411,9 @@ export function SeatMap({
     setDraftHistory(clearDraftHistory());
     setInspectorDirty(false);
     setInspectorResetSignal(current => current + 1);
-    setMoveSeatMode(false);
     setAddSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
-    setDragState(null);
     router.refresh();
   }
 
@@ -1674,7 +1630,7 @@ export function SeatMap({
   function handleViewportPointerDown(event: PointerEvent<HTMLDivElement>) {
     if (mapViewMode !== "detail" || floor !== "3") return;
     if (event.button !== 0) return;
-    if ((canEdit && addSeatMode) || dragState) return;
+    if (canEdit && addSeatMode) return;
     if (isPanBlockedTarget(event.target)) return;
     const viewport = mapViewportRef.current;
     if (!viewport) return;
@@ -1726,7 +1682,6 @@ export function SeatMap({
     }
     setSelectedSeatId(null);
     setInspectorDirty(false);
-    setMoveSeatMode(false);
   }
 
   // Every seat-centering path (results "Show on map", guard-action selection,
@@ -1841,7 +1796,6 @@ export function SeatMap({
     }
 
     if (selectedSeatId === seatId) {
-      setMoveSeatMode(false);
       setAddSeatMode(false);
       setSwapSourceSeatId(null);
       setSwapConfirm(null);
@@ -1851,7 +1805,6 @@ export function SeatMap({
 
     setSelectedSeatId(seatId);
     setInspectorDirty(false);
-    setMoveSeatMode(false);
     setAddSeatMode(false);
     setSwapSourceSeatId(null);
     setSwapConfirm(null);
@@ -1983,7 +1936,6 @@ export function SeatMap({
         setLocalEmployees(result.employees);
         setSelectedSeatId(targetSeat.id);
         setInspectorDirty(false);
-        setMoveSeatMode(false);
         setAddSeatMode(false);
         setSwapSourceSeatId(null);
         setSwapConfirm(null);
@@ -2036,7 +1988,6 @@ export function SeatMap({
           setSelectedSeatId(created.id);
           setInspectorDirty(false);
           setAddSeatMode(false);
-          setMoveSeatMode(false);
           setInspectorCollapsed(false);
           setActionNotice(`Added ${created.label} to ${created.zone ?? created.department ?? targetZone}.`);
         } catch (error) {
@@ -2061,155 +2012,38 @@ export function SeatMap({
       return;
     }
 
-    if (!dragState) {
-      if (selectedSeatId && inspectorDirty) {
-        requestInspectorGuard({ kind: "clear-selection" });
-        return;
-      }
-      setSelectedSeatId(null);
-      setInspectorDirty(false);
-      setMoveSeatMode(false);
+    if (selectedSeatId && inspectorDirty) {
+      requestInspectorGuard({ kind: "clear-selection" });
+      return;
     }
+    setSelectedSeatId(null);
+    setInspectorDirty(false);
   }
 
-  function handleMovePointerDown(event: PointerEvent<HTMLButtonElement>, seatId: string) {
-    if (!canEdit || !moveSeatMode || selectedSeatId !== seatId) return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDragState({ seatId, pointerId: event.pointerId, beforeSnapshot: captureDraftSnapshot() });
-  }
-
-  // Identity-stable handles for the memoized SeatMarker.
+  // Identity-stable handle for the memoized SeatMarker.
   //
-  // selectSeat and handleMovePointerDown are re-created on every render, and
-  // handleMovePointerDown reaches captureDraftSnapshot, which closes over
-  // localSeats — so it changes on every frame of a drag. Passing either one
-  // directly hands ~2000 markers a new prop each frame and defeats the memo
-  // entirely. useCallback cannot help for the same reason: its dependencies
-  // are exactly the values that keep changing.
+  // selectSeat is re-created on every render — passing it directly hands
+  // ~2000 markers a new prop every render and defeats the memo entirely.
+  // useCallback cannot help: its dependency is exactly the value that keeps
+  // changing.
   //
-  // Instead the latest functions live in a ref that is refreshed each render,
-  // and the markers receive wrappers whose identity never changes. The wrapper
-  // reads the ref at call time, so it always runs the current closure — this is
-  // stable identity WITHOUT the stale-closure bug that a useCallback with
-  // trimmed dependencies would introduce.
+  // Instead the latest function lives in a ref that is refreshed each render,
+  // and the markers receive a wrapper whose identity never changes. The
+  // wrapper reads the ref at call time, so it always runs the current closure
+  // — this is stable identity WITHOUT the stale-closure bug that a useCallback
+  // with trimmed dependencies would introduce.
   // Refreshed in an effect, not during render: writing a ref mid-render trips
   // react-hooks' "Cannot access refs during render". Effects flush before the
   // browser dispatches the next pointer event, so a marker always calls the
   // current handler.
-  const latestSeatHandlers = useRef({ selectSeat, handleMovePointerDown });
+  const latestSeatHandlers = useRef({ selectSeat });
   useEffect(() => {
-    latestSeatHandlers.current = { selectSeat, handleMovePointerDown };
+    latestSeatHandlers.current = { selectSeat };
   });
 
   const stableSelectSeat = useCallback((seatId: string) => {
     latestSeatHandlers.current.selectSeat(seatId);
   }, []);
-
-  const stableMovePointerDown = useCallback((event: PointerEvent<HTMLButtonElement>, seatId: string) => {
-    latestSeatHandlers.current.handleMovePointerDown(event, seatId);
-  }, []);
-
-  function handleMapPointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (!dragState) return;
-    const visualPoint = eventToPoint(event);
-    if (!visualPoint) return;
-
-    setLocalSeats(current => current.map(seat => {
-      if (seat.id !== dragState.seatId) return seat;
-      const savedPoint = visualPointToSavedPoint(visualPoint, { source: seat });
-      return { ...seat, x: savedPoint.x, y: savedPoint.y };
-    }));
-  }
-
-  function handleMapPointerUp(event: PointerEvent<HTMLDivElement>) {
-    if (!dragState) return;
-    const visualPoint = eventToPoint(event);
-    const seatId = dragState.seatId;
-    const beforeSnapshot = dragState.beforeSnapshot;
-    setDragState(null);
-    setMoveSeatMode(false);
-    if (!visualPoint) {
-      applyRestoredDraftPayload(beforeSnapshot);
-      return;
-    }
-
-    const movedSeat = localSeats.find(seat => seat.id === seatId);
-    const savedPoint = movedSeat
-      ? visualPointToSavedPoint(visualPoint, { source: movedSeat })
-      : visualPointToSavedPoint(visualPoint);
-    // Fence on the seat as it stood when the drag began — the pointermove
-    // handler rewrites x/y locally but never updated_at, so the pre-drag
-    // snapshot is what this client actually believes is current.
-    const expectedUpdatedAt = beforeSnapshot.seats.find(seat => seat.id === seatId)?.updated_at ?? null;
-
-    startTransition(async () => {
-      setMutationInFlight(true);
-      try {
-        setActionError(null);
-        setActionNotice(null);
-        const result = await moveSeatAction({ seatId, x: savedPoint.x, y: savedPoint.y, expectedUpdatedAt });
-        if (!result.ok) {
-          applyRestoredDraftPayload(beforeSnapshot);
-          handleStaleDraft(result.message);
-          return;
-        }
-        const updated = result.seat;
-        const afterSeats = replaceSeat(beforeSnapshot.seats, updated);
-        recordDraftHistory(`Move ${updated.label}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
-        setLocalSeats(afterSeats);
-        setActionNotice(`Moved ${updated.label}.`);
-      } catch (error) {
-        applyRestoredDraftPayload(beforeSnapshot);
-        setActionNotice(null);
-        setActionError(error instanceof Error ? error.message : "Could not move seat.");
-      } finally {
-        setMutationInFlight(false);
-      }
-    });
-  }
-
-  // Targeted escape hatch for a mis-dragged marker: put the seat back exactly
-  // where it sits on the published map. Same commit path as a drag-move, so
-  // it records a normal history entry and is itself undoable.
-  function resetSeatPositionToPublished() {
-    if (!selectedSeat || !selectedSeatPublishedPosition) return;
-    if (inspectorDirty) {
-      setActionNotice(null);
-      setActionError("Save or discard the selected seat edits before resetting its position.");
-      return;
-    }
-
-    const seatId = selectedSeat.id;
-    const seatLabel = selectedSeat.label;
-    const target = selectedSeatPublishedPosition;
-    const beforeSnapshot = captureDraftSnapshot();
-    const expectedUpdatedAt = selectedSeat.updated_at ?? null;
-
-    startTransition(async () => {
-      setMutationInFlight(true);
-      try {
-        setActionError(null);
-        setActionNotice(null);
-        const result = await moveSeatAction({ seatId, x: target.x, y: target.y, expectedUpdatedAt });
-        if (!result.ok) {
-          handleStaleDraft(result.message);
-          return;
-        }
-        const updated = result.seat;
-        const afterSeats = replaceSeat(beforeSnapshot.seats, updated);
-        recordDraftHistory(`Move ${updated.label}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
-        setLocalSeats(afterSeats);
-        setActionNotice(`Reset ${seatLabel} to its published position.`);
-      } catch (error) {
-        setActionNotice(null);
-        setActionError(error instanceof Error ? error.message : "Could not reset the seat position.");
-      } finally {
-        setMutationInFlight(false);
-      }
-    });
-  }
 
   function deleteSelectedSeat() {
     if (!selectedSeat) {
@@ -2267,7 +2101,6 @@ export function SeatMap({
         setLocalSeats(afterSeats);
         setSelectedSeatId(null);
         setInspectorDirty(false);
-        setMoveSeatMode(false);
         setSwapSourceSeatId(null);
         setSwapConfirm(null);
         setActionNotice(`Deleted custom seat ${deletedSeatLabel}. Undo is available until publish.`);
@@ -2413,24 +2246,14 @@ export function SeatMap({
       exitLabel: "Exit add seat",
       onExit: cancelAddSeatMode
     }
-    : moveSeatMode
+    : swapSourceSeat
       ? {
-        label: "Move seat",
-        message: selectedSeat ? `Drag ${selectedSeat.label} to reposition it on the draft map.` : "Select a seat before moving it.",
-        exitLabel: "Exit move seat",
-        onExit: () => {
-          setMoveSeatMode(false);
-          setDragState(null);
-        }
+        label: "Swap seats",
+        message: `${swapSourceSeat.label} is the source. Select a target seat to review the swap.`,
+        exitLabel: "Exit swap seats",
+        onExit: cancelSwapSeatMode
       }
-      : swapSourceSeat
-        ? {
-          label: "Swap seats",
-          message: `${swapSourceSeat.label} is the source. Select a target seat to review the swap.`,
-          exitLabel: "Exit swap seats",
-          onExit: cancelSwapSeatMode
-        }
-        : null;
+      : null;
   // 3b OVERLAY + INV-6: Filters floats over the full-bleed canvas at lg — the
   // canvas never reflows when the drawer opens.
   const desktopMapGridClass = "lg:grid-cols-[minmax(0,1fr)]";
@@ -2442,8 +2265,7 @@ export function SeatMap({
   // auto-collapsed to its pill. Tiers: bottom sheet ≤899, floating panel ≥900.
   const resultsPanelOpen = canEdit && filtersActive && (!selectedSeat || inspectorCollapsed);
   // 3b MODE CARD: while a mode runs without an expanded inspector, the mode
-  // owns the panel slot (its microcopy lives in the occupant, INV-4). Move mode
-  // keeps the inspector as the occupant — the drag hint renders inside it.
+  // owns the panel slot (its microcopy lives in the occupant, INV-4).
   const modeCardOpen = canEdit && Boolean(activeMode) && (!selectedSeat || inspectorCollapsed);
   // Prototype "stage": at the panel tier the inspector RESERVES layout width
   // instead of overlaying the canvas — expanded takes the 320px column, the
@@ -2573,14 +2395,13 @@ export function SeatMap({
   // the render loop feeds SeatMarker, so the dimmed exclusion mirrors it
   // precisely. But SeatMarker's nameNudgeApplicable
   // (tokenMode === "name" || (tokenMode === "prominent" && !activeMarker))
-  // additionally never nudges a selected/dragging/swap-source/swap-target
+  // additionally never nudges a selected/swap-source/swap-target
   // seat — those render tokenMode "selected" or active "prominent" and stay
   // pinned to their anchor. Any seat in that set must also be excluded here
   // (not just "their nudge goes unused"): inside a 4-way mutual clique the
   // least-used fallback can otherwise hand two genuinely visible labels the
   // same nudge to dodge a label that is never actually nudged.
   const swapTargetSeatId = swapConfirm?.targetSeatId;
-  const dragSeatId = dragState?.seatId;
   const namedSeatIdSet = useMemo(() => {
     // The Show-names-off branch returns a module-stable empty set, so the
     // nudge memos below stay cached through pointer-driven re-renders even
@@ -2593,12 +2414,11 @@ export function SeatMap({
           !dimmedSeatIdSet.has(seat.id) &&
           seat.id !== selectedSeatId &&
           seat.id !== swapSourceSeatId &&
-          seat.id !== swapTargetSeatId &&
-          dragSeatId !== seat.id
+          seat.id !== swapTargetSeatId
         )
         .map(seat => seat.id)
     );
-  }, [dimmedSeatIdSet, dragSeatId, selectedSeatId, showNames, swapSourceSeatId, swapTargetSeatId, visualLocalSeats]);
+  }, [dimmedSeatIdSet, selectedSeatId, showNames, swapSourceSeatId, swapTargetSeatId, visualLocalSeats]);
   const nameLabelNudges = useMemo(
     () => computeNameLabelNudges(visualLocalSeats, namedSeatIdSet, seatDensityClearance),
     [namedSeatIdSet, seatDensityClearance, visualLocalSeats]
@@ -2619,7 +2439,7 @@ export function SeatMap({
     dimmedSeatIds: dimmedSeatIdSet,
     searchActiveSeatIds: search.trim() ? new Set(localSeats.filter(matchesFilters).map(seat => seat.id)) : undefined,
     swapMode: Boolean(swapSourceSeatId),
-    draggingSeatId: dragSeatId ?? null
+    draggingSeatId: null
   });
   const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;
@@ -3402,12 +3222,6 @@ export function SeatMap({
                 className={mapFrameClassName}
                 style={mapFrameStyle}
                 onPointerDown={handleMapPointerDown}
-                onPointerMove={handleMapPointerMove}
-                onPointerUp={handleMapPointerUp}
-                onPointerCancel={() => {
-                  setDragState(null);
-                  setMoveSeatMode(false);
-                }}
               >
                 <Image
                   src={MAP_IMAGE_SRC}
@@ -3458,7 +3272,7 @@ export function SeatMap({
                     // Office plates center in their ROOM and size to it (the
                     // click point is wherever the admin happened to add the
                     // seat; the room is the identity). Display-only offset —
-                    // the marker snaps back to the anchor in move/add/swap.
+                    // the marker snaps back to the anchor in add/swap.
                     // One shared implementation with the viewer surface.
                     const officePlateLayout = getOfficePlateLayout(visualSeat, mapPixelsPerNormalizedUnit);
 
@@ -3475,7 +3289,6 @@ export function SeatMap({
                         compactNameLabel={(nameLabelNudges.get(seat.id) ?? 0) !== 0}
                         codeNudge={codePillNudges.get(seat.id) ?? 0}
                         nameNudge={nameLabelNudges.get(seat.id) ?? 0}
-                        moveSeatMode={moveSeatMode}
                         swapMode={Boolean(swapSourceSeatId)}
                         officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}
                         officePlateOffsetYPx={officePlateLayout?.offsetYPx ?? 0}
@@ -3483,7 +3296,6 @@ export function SeatMap({
                         swapSource={seat.id === swapSourceSeatId}
                         swapTarget={seat.id === swapConfirm?.targetSeatId}
                         highlighted={plannerHighlightedSeatIdSet.has(seat.id)}
-                        dragging={dragState?.seatId === seat.id}
                         addSeatMode={addSeatMode}
                         viewportEdge={viewportPlacement.edge}
                         viewportEdgeOffsetPx={viewportPlacement.offsetPx}
@@ -3495,7 +3307,6 @@ export function SeatMap({
                         variant="viewer"
                         tabIndex={seat.id === mapRovingSeatId ? 0 : -1}
                         onSelect={stableSelectSeat}
-                        onMovePointerDown={stableMovePointerDown}
                       />
                     );
                   })}
@@ -3951,17 +3762,6 @@ export function SeatMap({
         }}
         onClearSearchContext={searchActive ? clearSearch : clearStructuredFilters}
         onToggleCollapse={() => setInspectorCollapsed(current => !current)}
-        onStartMoveSeat={() => {
-          if (!selectedSeatId) return;
-          if (inspectorDirty) {
-            requestInspectorGuard({ kind: "start-move-seat" });
-            return;
-          }
-          applyStartMoveSeatAction();
-        }}
-        moveMode={moveSeatMode}
-        canResetPosition={Boolean(selectedSeatPublishedPosition)}
-        onResetPosition={resetSeatPositionToPublished}
         onDeleteSeat={deleteSelectedSeat}
         onExplainSeat={explainSeatWithPlanner}
         onBeforeSeatUpdate={captureDraftSnapshot}

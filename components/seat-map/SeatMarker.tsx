@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import type { CSSProperties, PointerEvent, ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { SeatWithEmployee } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { pointToStyle } from "@/lib/seatMath";
@@ -28,7 +28,6 @@ type SeatMarkerProps = {
   // colliding name pills don't render on top of each other. The marker
   // anchor (seat position) never moves.
   nameNudge?: -1 | 0 | 1;
-  moveSeatMode: boolean;
   swapMode: boolean;
   // Office-plate layout, derived by SeatMap from the seat's room rect:
   // token offset (px) from the seat anchor to the room center, and a width
@@ -41,7 +40,6 @@ type SeatMarkerProps = {
   invalidTarget?: boolean;
   highlighted: boolean;
   highlightedDescription?: string;
-  dragging: boolean;
   addSeatMode: boolean;
   viewportEdge: "left" | "right" | "none";
   viewportEdgeOffsetPx: number;
@@ -50,12 +48,11 @@ type SeatMarkerProps = {
   // as -1; arrow keys move between seats (handled by the marker layer).
   tabIndex?: number;
   onSelect: (seatId: string) => void;
-  onMovePointerDown: (event: PointerEvent<HTMLButtonElement>, seatId: string) => void;
 };
 
 type TokenDensity = "compact" | "standard";
 type TokenMode = "code" | "name" | "prominent" | "selected";
-type MarkerIntent = "assigned" | "available" | "reserved" | "unavailable" | "draft-changed" | "search-result" | "search-selected" | "selected" | "move-origin" | "swap-source" | "swap-target" | "target-valid" | "target-invalid";
+type MarkerIntent = "assigned" | "available" | "reserved" | "unavailable" | "draft-changed" | "search-result" | "search-selected" | "selected" | "swap-source" | "swap-target" | "target-valid" | "target-invalid";
 
 function SeatToken({ className, style, children }: { className: string; style?: CSSProperties; children: ReactNode }) {
   return <span className={className} style={style}>{children}</span>;
@@ -143,7 +140,6 @@ function SeatMarkerComponent({
   compactNameLabel,
   codeNudge = 0,
   nameNudge = 0,
-  moveSeatMode,
   swapMode,
   officePlateOffsetXPx = 0,
   officePlateOffsetYPx = 0,
@@ -153,14 +149,12 @@ function SeatMarkerComponent({
   invalidTarget = false,
   highlighted,
   highlightedDescription = "Highlighted by Ask Planner",
-  dragging,
   addSeatMode,
   viewportEdge,
   viewportEdgeOffsetPx,
   variant = "viewer",
   tabIndex = 0,
-  onSelect,
-  onMovePointerDown
+  onSelect
 }: SeatMarkerProps) {
   // NOTE: no caller passes variant="admin" — both the admin map (SeatMap.tsx,
   // variant="viewer" by owner preference) and the viewer render the "viewer"
@@ -177,10 +171,8 @@ function SeatMarkerComponent({
   // ("Open seat."), so an "Open seat" fallback read as "Open seat. Open seat."
   const displayName = formatDisplayName(employeeName) || "Unassigned";
   const namesVisible = showNames && hasEmployee && !dimmed;
-  const isMovable = canEdit && selected && moveSeatMode;
-  const moveOrigin = isMovable && !dragging;
   const swapCandidate = canEdit && swapMode && !swapSource && !swapTarget && !invalidTarget;
-  const activeMarker = selected || dragging || swapSource || swapTarget;
+  const activeMarker = selected || swapSource || swapTarget;
   const searchProminent = searchResult && !dimmed;
   const searchSelected = selected && searchProminent;
   const plannerHighlighted = highlighted && !selected && !swapSource && !swapTarget;
@@ -210,11 +202,9 @@ function SeatMarkerComponent({
     ? "swap-source"
     : swapTarget
       ? "swap-target"
-      : moveOrigin
-        ? "move-origin"
-        : invalidTarget
-          ? "target-invalid"
-          : swapCandidate
+      : invalidTarget
+        ? "target-invalid"
+        : swapCandidate
             ? "target-valid"
             : searchSelected
               ? "search-selected"
@@ -244,7 +234,7 @@ function SeatMarkerComponent({
             : "border-[#B8AEA2] bg-white/95 text-[#453D33]";
   // Search/planner emphasis keeps visual priority over the passive valid-target tint.
   const validTargetTone = swapCandidate && !searchProminent && !plannerHighlighted;
-  const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent" || moveOrigin || validTargetTone || invalidTarget) ? "" : baseStatusToneClass;
+  const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent" || validTargetTone || invalidTarget) ? "" : baseStatusToneClass;
 
   // Capsule geometry (2026-07-23 owner reference hybrid): every token is a
   // full stadium (rounded-full on a fixed height), and with the left accent
@@ -305,16 +295,11 @@ function SeatMarkerComponent({
         : "border-[#D46A24] bg-[#15181B] text-white ring-2 ring-[#D46A24]/90 outline outline-2 outline-offset-2 outline-[#D46A24]/75 shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_rgba(255,87,21,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
       : "",
     tokenMode === "selected"
-      ? searchSelected || moveOrigin
+      ? searchSelected
         ? ""
         : adminMarker
           ? "border-[var(--admin-marker-selected-border)] bg-[var(--admin-marker-selected-surface)] text-[var(--admin-marker-selected-text)] ring-2 ring-[var(--admin-marker-selected-border)] shadow-marker-selected"
           : "border-[#D46A24] bg-[#171A1D] text-white ring-2 ring-[#D46A24]/90 shadow-[0_10px_24px_rgba(31,35,39,0.30),inset_0_1px_0_rgba(255,255,255,0.16)]"
-      : "",
-    moveOrigin
-      ? adminMarker
-        ? "border-[var(--admin-marker-move-origin-border)] bg-[var(--admin-marker-move-origin-surface)] text-[var(--admin-marker-move-origin-text)] ring-2 ring-[var(--admin-border-strong)] shadow-[0_10px_24px_rgba(31,34,37,0.18)]"
-        : "border-[#6E655A] bg-[#EFE9DF] text-[#353532] ring-4 ring-[#D8D0C5]"
       : "",
     validTargetTone
       ? adminMarker
@@ -365,7 +350,7 @@ function SeatMarkerComponent({
     : tokenMode === "selected" || tokenMode === "prominent"
       ? "text-[10px]"
       : "text-[9.5px]";
-  const markerUsesTrueCoordinate = addSeatMode || moveSeatMode || swapMode;
+  const markerUsesTrueCoordinate = addSeatMode || swapMode;
   const tokenCanHugViewportEdge = showInlineName || prominentToken;
   const resolvedViewportEdge = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? "none" : viewportEdge;
   const resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? 0 : Math.max(0, Math.round(viewportEdgeOffsetPx));
@@ -376,7 +361,7 @@ function SeatMarkerComponent({
   // resting name-bearing tokens: "name" mode (admin Show-names) and passive
   // "prominent" pills (viewer search results show names via prominent mode,
   // not name mode, because viewers have no Show-names). Active markers
-  // (selected / dragging / swap) always stay exactly on their anchor.
+  // (selected / swap) always stay exactly on their anchor.
   const nameNudgeApplicable = tokenMode === "name" || (tokenMode === "prominent" && !activeMarker);
   const nameNudgeActive = nameNudgeApplicable && nameNudge !== 0;
   // Code pills use the same token-only vertical translate to de-collide tight
@@ -391,7 +376,7 @@ function SeatMarkerComponent({
       : "-translate-y-[calc(50%-14px)]";
   // Room-centered plate offset (display-only, same contract as the nudge and
   // viewport-edge offsets above: the anchor button NEVER moves). SeatMap
-  // derives the offset from the seat's office-room rect; move/add/swap modes
+  // derives the offset from the seat's office-room rect; add/swap modes
   // snap the token back to the true coordinate so dragging stays honest.
   const officePlateOffsetActive =
     officePlate && !markerUsesTrueCoordinate && (officePlateOffsetXPx !== 0 || officePlateOffsetYPx !== 0);
@@ -439,15 +424,10 @@ function SeatMarkerComponent({
         }
         onSelect(seat.id);
       }}
-      onPointerDown={event => {
-        if (!isMovable) return;
-        onMovePointerDown(event, seat.id);
-      }}
       tabIndex={tabIndex}
       data-seat-id={seat.id}
       data-marker-intent={markerIntent}
       data-draft-changed={draftChanged || undefined}
-      data-movable={isMovable}
       aria-pressed={selected}
       title={`${seat.label} · ${displayName} · ${STATUS_LABELS[seat.status]}`}
       className={[
@@ -458,11 +438,10 @@ function SeatMarkerComponent({
         selected ? "z-40 focus-visible:z-40" : "",
         prominentToken ? "z-30" : "",
         dimmed ? "opacity-45 saturate-50" : "",
-        isMovable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
-        dragging ? "z-40 scale-[1.06] shadow-[0_18px_36px_rgba(31,35,39,0.24)]" : ""
+        "cursor-pointer"
       ].join(" ")}
       style={pointToStyle({ x: seat.x, y: seat.y })}
-      aria-label={`${seat.label} ${accessibleSeatName}. ${STATUS_LABELS[seat.status]} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${moveOrigin ? " Move origin. Drag to reposition." : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
+      aria-label={`${seat.label} ${accessibleSeatName}. ${STATUS_LABELS[seat.status]} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
     >
       <SeatToken
         style={tokenPositionStyle}
@@ -480,7 +459,7 @@ function SeatMarkerComponent({
             green dot on the pill's bottom-right edge for occupied seats. Dot
             PRESENCE (not hue) is what separates assigned from open, so the A3
             colorblind-legibility intent survives the redesign. */}
-        {seat.status === "assigned" && !dragging && !invalidTarget && (
+        {seat.status === "assigned" && !invalidTarget && (
           <span
             className="pointer-events-none absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#1D6E41] ring-[1.5px] ring-white/90"
             aria-hidden="true"
@@ -587,12 +566,13 @@ function seatMarkerPropsEqual(previous: SeatMarkerProps, next: SeatMarkerProps) 
   return seatRenderEqual(previous.seat, next.seat);
 }
 
-// Memoized because the admin map re-renders the whole marker layer on every
-// pointermove of a drag: `setLocalSeats` replaces the array, so every seat
-// object is a new identity even though only one of them actually moved.
-// Without this, dragging one seat re-rendered all of them.
+// Memoized because both maps re-render the whole marker layer wholesale on
+// selection, search, and notice-state changes: `setLocalSeats` (and the
+// equivalent viewer state) replaces the array, so every seat object is a new
+// identity even though only one of them actually changed. Without this, one
+// seat's update re-rendered every marker on the map.
 //
 // This only pays off while the callback props keep a stable identity — SeatMap
-// routes onSelect/onMovePointerDown through latest-value refs for exactly that
-// reason. Passing an inline arrow from a caller silently disables the memo.
+// routes onSelect through a latest-value ref for exactly that reason. Passing
+// an inline arrow from a caller silently disables the memo.
 export const SeatMarker = memo(SeatMarkerComponent, seatMarkerPropsEqual);

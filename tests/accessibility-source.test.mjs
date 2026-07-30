@@ -72,13 +72,12 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
 test("active modes exit after dialogs and keep visible exit controls", async () => {
   const source = await readSource("../components/seat-map/SeatMap.tsx");
   const publishDialogIndex = source.indexOf("if (publishReviewOpen)");
-  const activeModeIndex = source.indexOf("if (addSeatMode || moveSeatMode || swapSourceSeatId)");
+  const activeModeIndex = source.indexOf("if (addSeatMode || swapSourceSeatId)");
 
   assert.ok(publishDialogIndex >= 0, "Escape handler should check publish review.");
   assert.ok(activeModeIndex >= 0, "Escape handler should check active map modes.");
   assert.ok(publishDialogIndex < activeModeIndex, "Dialogs should receive Escape before active map modes.");
   assert.match(source, /label: "Add seat"[\s\S]*exitLabel: "Exit add seat"/);
-  assert.match(source, /label: "Move seat"[\s\S]*exitLabel: "Exit move seat"/);
   assert.match(source, /label: "Swap seats"[\s\S]*exitLabel: "Exit swap seats"/);
 });
 
@@ -378,7 +377,6 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /requestInspectorGuard\(\{ kind: "select-seat", seatId, center: true, sourceLabel \}\)/);
   assert.match(source, /requestInspectorGuard\(\{ kind: "close-inspector" \}\)/);
   assert.match(source, /requestInspectorGuard\(\{ kind: "start-add-seat" \}\)/);
-  assert.match(source, /requestInspectorGuard\(\{ kind: "start-move-seat" \}\)/);
   assert.match(source, /requestInspectorGuard\(\{ kind: "start-swap-seat" \}\)/);
   // Navigation guards carry their destination: Save/Discard must land the
   // user on the page they actually clicked (Management OR Settings), and the

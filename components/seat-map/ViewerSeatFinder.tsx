@@ -11,11 +11,6 @@ import { STATUS_LABELS } from "@/lib/types";
 import { normalizeSeat } from "@/lib/seatNormalize";
 import { cx } from "@/components/ui/design-system";
 
-// Module-level so the identity never changes. An inline `() => undefined` here
-// is a new function on every render, which silently disables SeatMarker's memo
-// for every marker on the viewer map. Seats are not movable in the viewer, so
-// the handler genuinely does nothing.
-const NOOP_MOVE_POINTER_DOWN = () => undefined;
 import {
   MAP_IMAGE_BLUR_DATA_URL,
   MAP_IMAGE_HEIGHT,
@@ -1127,7 +1122,6 @@ export function ViewerSeatFinder({
                           compactNameLabel
                           codeNudge={codePillNudges.get(seat.id) ?? 0}
                           nameNudge={nameLabelNudges.get(seat.id) ?? 0}
-                          moveSeatMode={false}
                           swapMode={false}
                           officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}
                           officePlateOffsetYPx={officePlateLayout?.offsetYPx ?? 0}
@@ -1136,13 +1130,11 @@ export function ViewerSeatFinder({
                           swapTarget={false}
                           highlighted={seatIsSearchHit || seatIsDirectoryHover}
                           highlightedDescription={seatIsSearchHit ? "Highlighted search result" : "Highlighted from the people list"}
-                          dragging={false}
                           addSeatMode={false}
                           viewportEdge="none"
                           viewportEdgeOffsetPx={0}
                           tabIndex={seat.id === mapRovingSeatId ? 0 : -1}
                           onSelect={stableSelectSeat}
-                          onMovePointerDown={NOOP_MOVE_POINTER_DOWN}
                         />
                       );
                     })}
