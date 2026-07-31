@@ -3111,7 +3111,7 @@ export function SeatMap({
                 className={[
                   "inline-flex h-[var(--admin-chrome-h)] shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
                   publishSummary.hasChanges
-                    ? "bg-[var(--admin-primary)] text-[var(--admin-primary-ink)] hover:brightness-105 focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
+                    ? "bg-[var(--admin-primary-cta)] text-white hover:bg-[var(--admin-primary-cta-hover)] focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
                     : publishStatusOpen
                       ? "bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)] focus-visible:ring-[var(--admin-primary)]"
                       : "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:ring-[var(--admin-primary)]"
@@ -3120,7 +3120,7 @@ export function SeatMap({
                 {publishSummary.hasChanges ? (
                   <>
                     <span>Publish</span>
-                    <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[rgb(var(--sp-color-text-primary-rgb)/0.15)] px-1 text-[11px] font-bold tabular-nums">{publishSummary.totalChangeCount}</span>
+                    <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold tabular-nums text-[var(--admin-primary-ink)]">{publishSummary.totalChangeCount}</span>
                   </>
                 ) : (
                   <>

@@ -68,8 +68,10 @@ const ACTION_BASE =
 const TONE = {
   default: "text-[var(--admin-chrome-muted)] hover:bg-white/10 hover:text-white",
   danger: "text-[var(--admin-chrome-danger-text)] hover:bg-white/10",
-  // The hero pairing the app already uses for Publish: brand fill with ink text
-  // (#161616 on #FF5715 = 5.71:1). Never white-on-orange, which fails AA.
+  // Accent fill + ink text (#161616 on #FF5715 = 5.71:1, AA). Publish left this
+  // pairing for the CTA ladder (v12 decision 2a); the action bar retains it
+  // pending the slice-4 inspector/action-bar redesign. Never white-on-orange,
+  // which fails AA.
   primary: "bg-[var(--admin-primary)] font-semibold text-[var(--admin-primary-ink)] hover:brightness-105"
 } as const;
 

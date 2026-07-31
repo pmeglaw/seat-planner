@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script src="shared/seats.js"></script>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#161616;font-family:"IBM Plex Sans",system-ui,sans-serif}
+a{color:#9E2F06;text-decoration:none}a:hover{color:#D23F0A}
+input{font-family:inherit}
+input::placeholder{color:#8f8f8f}
+</style>
+</helmet>
+
+<div data-screen-label="v12 prototype" style="position:fixed;inset:0;background:#ECE8E0;overflow:hidden">
+
+  <!-- ===== LEFT RAIL (1c) — Carbon side nav: click hamburger to expand ===== -->
+  <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ false }}"><div onClick="{{ closeRail }}" style="position:fixed;inset:0;z-index:79"></div></sc-if>
+  <div style="position:absolute;top:0;left:0;bottom:0;width:{{ railW }};background:#161616;border-right:1px solid rgba(255,255,255,.10);display:flex;flex-direction:column;z-index:80;transition:width .15s ease;overflow:hidden;box-shadow:{{ railShadow }}">
+    <button onClick="{{ toggleRail }}" title="{{ railToggleTitle }}" style-hover="background:#262626" style="display:flex;align-items:center;height:44px;border:none;cursor:pointer;background:transparent;font-family:inherit;padding:0;flex-shrink:0">
+      <span style="width:48px;display:grid;place-items:center;flex-shrink:0;color:#F7F6F2"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 5.5h14M3 10h14M3 14.5h14"></path></svg></span>
+      <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#F7F6F2;white-space:nowrap"><img src="public/images/megeredchian-mark.png" alt="" style="width:20px;height:20px;object-fit:contain">Seat Planner</span></sc-if>
+    </button>
+    <button onClick="{{ railMap }}" title="Seat map" style-hover="background:#262626;color:#fff" style="display:flex;align-items:center;height:44px;border:none;cursor:pointer;color:{{ railMapColor }};background:{{ railMapBg }};box-shadow:{{ railMapShadow }};font-family:inherit;padding:0">
+      <span style="width:48px;display:grid;place-items:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M3 5.5 8 3.5v11L3 16.5v-11ZM8 3.5l4 2v11l-4-2M12 5.5l5-2v11l-5 2" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg></span>
+      <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:600;white-space:nowrap">Seat map</span></sc-if>
+    </button>
+    <button onClick="{{ railPeople }}" title="People" style-hover="background:#262626;color:#fff" style="display:flex;align-items:center;height:44px;border:none;cursor:pointer;color:{{ peopleRailColor }};background:{{ peopleRailBg }};font-family:inherit;padding:0">
+      <span style="width:48px;display:grid;place-items:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="2.6"></circle><path d="M2.5 16v-.8a4 4 0 0 1 4-4h1a4 4 0 0 1 4 4v.8"></path><circle cx="14" cy="7.5" r="2.1"></circle><path d="M13 11.6h.6a3.6 3.6 0 0 1 3.6 3.6v.8"></path></svg></span>
+      <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:500;white-space:nowrap">People</span></sc-if>
+    </button>
+    <button onClick="{{ railData }}" title="Management" style-hover="background:#262626;color:#fff" style="display:flex;align-items:center;height:44px;border:none;cursor:pointer;color:{{ railDataColor }};background:{{ railDataBg }};box-shadow:{{ railDataShadow }};font-family:inherit;padding:0">
+      <span style="width:48px;display:grid;place-items:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h12v3.5H4zM4 9.5h12V13H4zM4 15h7.5v1.5H4z"></path></svg></span>
+      <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:500;white-space:nowrap">Management</span></sc-if>
+    </button>
+    <button onClick="{{ railSettings }}" title="Settings" style-hover="background:#262626;color:#fff" style="display:flex;align-items:center;height:44px;border:none;cursor:pointer;color:{{ railSetColor }};background:{{ railSetBg }};box-shadow:{{ railSetShadow }};font-family:inherit;padding:0">
+      <span style="width:48px;display:grid;place-items:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.6" stroke="currentColor" stroke-width="1.5"></circle><path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></span>
+      <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:500;white-space:nowrap">Settings</span></sc-if>
+    </button>
+    <div style="flex:1"></div>
+    <button onClick="{{ openAI }}" title="Ask Planner (AI)" style-hover="background:#262626" style="display:flex;align-items:center;height:44px;border:none;cursor:pointer;color:#78a9ff;background:{{ aiRailBg }};font-family:inherit;padding:0">
+      <span style="width:48px;display:grid;place-items:center;flex-shrink:0;position:relative"><span style="font-size:15px">✦</span><span style="position:absolute;top:4px;right:7px;border:1px solid #78a9ff;color:#78a9ff;font-size:7.5px;font-weight:700;padding:0 2px">AI</span></span>
+      <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:500;white-space:nowrap">Ask Planner</span></sc-if>
+    </button>
+    <button onClick="{{ toggleViewer }}" title="{{ viewerToggleTitle }}" style-hover="background:#262626;color:#fff" style="display:flex;align-items:center;height:44px;border:none;cursor:pointer;color:{{ viewerIconColor }};background:transparent;margin-bottom:2px;font-family:inherit;padding:0">
+      <span style="width:48px;display:grid;place-items:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.2"></circle><circle cx="12" cy="12" r="3"></circle></svg></span>
+      <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:500;white-space:nowrap">{{ viewerRailLabel }}</span></sc-if>
+    </button>
+    <button onClick="{{ signOut }}" title="Account — sign out" style-hover="background:#262626" style="display:flex;align-items:center;height:44px;margin-bottom:8px;flex-shrink:0;border:none;background:transparent;cursor:pointer;font-family:inherit;padding:0">
+      <span style="width:48px;display:grid;place-items:center;flex-shrink:0"><span style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600">E</span></span>
+      <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ false }}"><span style="text-align:left"><span style="display:block;font-size:11.5px;color:#F4F4F4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">e2e-admin@example.test</span><span style="display:block;font-size:10.5px;color:#B8AEA2">Sign out</span></span></sc-if>
+    </button>
+  </div>
+
+  <!-- ===== TOP BAR (36px, xs fields from 1a) ===== -->
+  <div style="position:absolute;top:0;left:48px;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:70">
+    <div style="font-size:12.5px;font-weight:600;white-space:nowrap">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></div>
+    <sc-if value="{{ isMap }}" hint-placeholder-val="{{ true }}">
+    <span style="margin:0 10px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <button onClick="{{ toggleFilter }}" style-hover="background:rgba(255,255,255,.12)" style="display:flex;align-items:center;gap:7px;height:24px;background:{{ filterBtnBg }};border:1px solid rgba(255,255,255,.15);padding:0 9px;font-size:12px;color:#d4d4d4;white-space:nowrap;cursor:pointer;font-family:inherit">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M3 4h14l-5.5 6.5V16l-3-1.6v-3.9L3 4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+      Filter{{ filterCountLabel }}
+      <svg width="10" height="10" viewBox="0 0 20 20" fill="none"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+    </button>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:0 9px;flex:1;min-width:140px;max-width:460px;margin-left:8px">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none" style="color:#8f8f8f;flex-shrink:0"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <input value="{{ search }}" onChange="{{ onSearch }}" placeholder="Search people or seats..." style="flex:1;background:transparent;border:none;outline:none;color:#F4F4F4;font-size:12px;min-width:0">
+      <sc-if value="{{ hasSearch }}" hint-placeholder-val="{{ false }}"><button onClick="{{ clearSearch }}" style="border:none;background:transparent;color:#B8AEA2;cursor:pointer;font-size:12px;padding:0 2px">✕</button></sc-if>
+      <sc-if value="{{ noSearch }}" hint-placeholder-val="{{ true }}"><span style="font:600 9.5px 'IBM Plex Mono',monospace;background:#262626;border:1px solid rgba(255,255,255,.15);padding:1px 5px;color:#B8AEA2">Ctrl K</span></sc-if>
+    </div>
+    <sc-if value="{{ matchLabel }}" hint-placeholder-val="{{ false }}"><span style="margin-left:10px;font-size:11.5px;font-weight:600;color:#FF5715;white-space:nowrap">{{ matchLabel }}</span></sc-if>
+    <span style="margin:0 10px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ undo }}" title="Undo" style="width:32px;height:36px;display:grid;place-items:center;border:none;background:transparent;cursor:pointer;color:#B8AEA2;font-size:14px;opacity:{{ undoOpacity }}">↺</button>
+      <button onClick="{{ toggleKebab }}" title="More" style-hover="background:#262626" style="width:32px;height:36px;display:grid;place-items:center;border:none;background:{{ kebabBg }};cursor:pointer;color:#B8AEA2;font-size:15px;font-weight:700">⋮</button>
+    </sc-if>
+    </sc-if>
+    <div style="flex:1"></div>
+    <sc-if value="{{ aiToolVisible }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ openAI }}" style-hover="background:#262626" style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:{{ aiToolColor }};background:{{ aiToolBg }};border:none;border-bottom:2px solid {{ aiToolEdge }};cursor:pointer;font-family:inherit"><span style="font-size:13px;color:#78a9ff">✦</span> Ask Planner <span style="border:1px solid #78a9ff;color:#78a9ff;font-size:9.5px;font-weight:700;padding:1px 4px;letter-spacing:.04em">AI</span></button>
+    </sc-if>
+    <sc-if value="{{ showPublish }}" hint-placeholder-val="{{ false }}">
+      <span style="font-size:12px;color:#B8AEA2;margin-right:12px;white-space:nowrap">Draft · {{ draftCount }} {{ draftWord }}</span>
+      <button onClick="{{ openPublish }}" style-hover="background:#B83708" style="display:flex;align-items:center;gap:7px;height:36px;padding:0 15px;background:#D23F0A;color:#fff;font-size:12.5px;font-weight:600;border:none;cursor:pointer;font-family:inherit">Publish
+        <span style="background:#fff;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">{{ draftCount }}</span>
+      </button>
+    </sc-if>
+    <sc-if value="{{ isViewer }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#B8AEA2;border:1px solid rgba(255,255,255,.2);padding:3px 8px;margin-right:12px">VIEWER · READ-ONLY</span></sc-if>
+    <span style="width:12px"></span>
+  </div>
+
+  <!-- kebab Menu (v12 Menu subsystem) -->
+  <sc-if value="{{ kebabOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeMenus }}" style="position:fixed;inset:0;z-index:75"></div>
+    <div style="position:absolute;top:38px;left:{{ kebabLeft }};width:230px;background:#262626;border:1px solid rgba(255,255,255,.15);box-shadow:0 6px 16px rgba(0,0,0,.4);z-index:76;padding:4px 0;color:#F4F4F4">
+      <button onClick="{{ kebabShowNames }}" style-hover="background:#333333" style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px;width:100%;border:none;background:transparent;color:#F4F4F4;cursor:pointer;text-align:left;font-family:inherit"><span style="width:14px;text-align:center;color:#42be65">{{ namesCheck }}</span>Show occupant names</button>
+      <button onClick="{{ zoomFit }}" style-hover="background:#333333" style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px;width:100%;border:none;background:transparent;color:#F4F4F4;cursor:pointer;text-align:left;font-family:inherit"><span style="width:14px"></span>Reset zoom &amp; position</button>
+      <div style="height:1px;background:rgba(255,255,255,.12);margin:4px 0"></div>
+      <button onClick="{{ discardDraft }}" style-hover="background:#333333" style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px;width:100%;border:none;background:transparent;color:#ff8389;cursor:pointer;text-align:left;font-family:inherit"><span style="width:14px"></span>Discard draft changes</button>
+    </div>
+  </sc-if>
+
+  <!-- filter panel -->
+  <sc-if value="{{ filterOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeMenus }}" style="position:fixed;inset:0;z-index:75"></div>
+    <div style="position:absolute;top:38px;left:230px;width:260px;background:#262626;border:1px solid rgba(255,255,255,.15);box-shadow:0 6px 16px rgba(0,0,0,.4);z-index:76;padding:12px;color:#F4F4F4">
+      <div style="font-size:11px;font-weight:500;color:#B8AEA2">Zone — hover to preview on the map</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+        <sc-for list="{{ zoneChips }}" as="zc" hint-placeholder-count="4">
+          <button onClick="{{ zc.click }}" onMouseEnter="{{ zc.enter }}" onMouseLeave="{{ zc.leave }}" style-hover="border-color:#FF5715" style="border-radius:999px;border:1px solid {{ zc.bd }};background:{{ zc.bg }};color:{{ zc.fg }};padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">{{ zc.label }}</button>
+        </sc-for>
+      </div>
+      <div style="font-size:11px;font-weight:500;color:#B8AEA2;margin-top:10px">Status</div>
+      <select value="{{ fStatus }}" onChange="{{ setFStatus }}" style="margin-top:4px;width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2);color:#F4F4F4;font-size:13px;padding:6px 8px;outline:none;font-family:inherit">
+        <option value="all">All statuses</option>
+        <option value="assigned">Assigned</option>
+        <option value="available">Open</option>
+        <option value="reserved">Reserved</option>
+        <option value="unavailable">Unavailable</option>
+      </select>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px">
+        <span style="font-size:11px;font-weight:500;color:#B8AEA2">{{ filterSummary }}</span>
+        <button onClick="{{ clearFilters }}" style="border:1px solid rgba(255,87,21,.5);background:rgba(255,87,21,.1);color:#FF5715;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;cursor:pointer;font-family:inherit">Clear</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== FULL-BLEED MAP (1b) ===== -->
+  <div onPointerDown="{{ panStart }}" onPointerMove="{{ panMove }}" onPointerUp="{{ panEnd }}" style="position:absolute;top:36px;left:48px;right:{{ mapRight }};bottom:0;overflow:hidden;cursor:{{ mapCursor }};transition:right .15s ease">
+    <div style="position:absolute;left:50%;top:50%">
+      <div style="position:relative;width:{{ displayW }}px;transform:translate(calc(-50% + {{ panX }}px),calc(-50% + {{ panY }}px)) scale({{ zoom }});transform-origin:center center;transition:width .15s ease">
+        <img src="public/images/office-floor-plan.webp" alt="Floor 3 plan" draggable="false" style="display:block;width:100%;user-select:none;filter:{{ mapFilter }}">
+        <sc-if value="{{ washOn }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:{{ washLeft }};top:{{ washTop }};width:{{ washW }};height:{{ washH }};background:rgba(255,87,21,.09);border:1.5px solid rgba(210,63,10,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4);z-index:5;pointer-events:none">
+            <span style="position:absolute;top:-11px;left:10px;background:#D23F0A;color:#fff;font-size:10px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;white-space:nowrap">{{ washLabel }}</span>
+          </div>
+        </sc-if>
+        <sc-for list="{{ codeMarkers }}" as="s" hint-placeholder-count="8">
+          <button onClick="{{ s.click }}" title="{{ s.tip }}" style-hover="filter:brightness(1.04)" style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:{{ s.h }};min-width:{{ s.w }};max-width:{{ s.maxw }};border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.shadow }};display:flex;flex-direction:column;align-items:{{ s.align }};justify-content:center;gap:0;font-family:inherit;cursor:pointer;z-index:{{ s.z }};opacity:{{ s.op }};padding:{{ s.pad }};text-align:left;transition:opacity .15s,box-shadow .15s">
+            <span style="font-size:{{ s.codeSize }};font-weight:800;letter-spacing:.02em;line-height:1.05;white-space:nowrap;opacity:{{ s.codeOp }}">{{ s.label }}</span>
+            <sc-if value="{{ s.nameLine }}" hint-placeholder-val="{{ false }}"><span style="font-size:{{ s.nameSize }};font-weight:700;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:104px">{{ s.name }}</span></sc-if>
+            <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+            <sc-if value="{{ s.draftB }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:999px;background:#8A6116;border:1px solid rgba(255,255,255,.85);color:#fff;font-size:8px;font-weight:900;display:grid;place-items:center">D</span></sc-if>
+            <sc-if value="{{ s.aiChip }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-7px;right:-9px;border:1px solid #4589ff;background:#fff;color:#0043ce;font-size:7.5px;font-weight:700;padding:0 3px;letter-spacing:.04em;border-radius:2px">AI</span></sc-if>
+          </button>
+        </sc-for>
+        <sc-for list="{{ plateMarkers }}" as="p" hint-placeholder-count="2">
+          <button onClick="{{ p.click }}" title="{{ p.tip }}" style-hover="filter:brightness(1.04)" style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:152px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.shadow }};padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:{{ p.z }};text-align:left;font-family:inherit;cursor:pointer;opacity:{{ p.op }};transition:opacity .15s,box-shadow .15s">
+            <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.label }}</span>
+            <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+            <sc-if value="{{ p.title }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:600;line-height:1.2;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span></sc-if>
+            <sc-if value="{{ p.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+            <sc-if value="{{ p.draftB }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:999px;background:#8A6116;border:1px solid rgba(255,255,255,.85);color:#fff;font-size:8px;font-weight:900;display:grid;place-items:center">D</span></sc-if>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- floating floor cluster -->
+  <div style="position:absolute;top:48px;left:60px;display:flex;align-items:center;gap:8px;z-index:40">
+    <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12.5px;font-weight:600;color:#161616">Floor 3 · Pre-Litigation <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style="color:#6E655A"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+    <span style="background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12px;color:#6E655A">{{ crumb }}</span>
+    <sc-if value="{{ aiActive }}" hint-placeholder-val="{{ false }}">
+      <span style="display:flex;align-items:center;gap:6px;background:linear-gradient(180deg,rgba(69,137,255,.12),rgba(255,255,255,0) 70%),#fff;border:1px solid #4589ff;box-shadow:0 6px 16px rgba(69,137,255,.2);padding:6px 11px;font-size:12px;font-weight:600;color:#0043ce"><span style="border:1px solid #4589ff;font-size:9px;font-weight:700;padding:0 3px">AI</span>{{ aiCount }} seats highlighted
+        <button onClick="{{ clearAI }}" style="border:none;background:transparent;color:#55504A;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;padding:0">· Clear</button>
+      </span>
+    </sc-if>
+  </div>
+  <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute;top:48px;right:{{ floatRight }};display:flex;gap:8px;z-index:40;transition:right .15s ease">
+      <button onClick="{{ addSeatStub }}" style-hover="background:#F7F6F2" style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);height:32px;padding:0 12px;font-size:12.5px;font-weight:600;color:#161616;cursor:pointer;font-family:inherit">＋ Add seat</button>
+    </div>
+  </sc-if>
+
+  <!-- floating legend -->
+  <div style="position:absolute;left:60px;bottom:12px;display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;max-width:min(56vw,620px);background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:8px 14px;z-index:40">
+    <span style="font-size:12px;font-weight:600;color:#161616">{{ totalSeats }} seats</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#1D6E41"></span>Assigned {{ nAssigned }}</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8E8276"></span>Open {{ nOpen }}</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8A6116"></span>Reserved {{ nReserved }}</span>
+    <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}"><span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#D23F0A"></span>{{ draftCount }} draft</span></sc-if>
+  </div>
+
+  <!-- zoom -->
+  <div style="position:absolute;right:{{ floatRight }};bottom:12px;display:flex;flex-direction:column;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);z-index:40;transition:right .15s ease">
+    <span style="width:32px;padding:6px 0;text-align:center;font:500 10px 'IBM Plex Mono',monospace;color:#55504A;border-bottom:1px solid #E7E1D8">{{ zoomPct }}</span>
+    <button onClick="{{ zoomIn }}" style-hover="background:#F7F6F2" style="width:32px;height:32px;display:grid;place-items:center;border:none;border-bottom:1px solid #E7E1D8;background:#fff;font-size:15px;color:#161616;cursor:pointer">+</button>
+    <button onClick="{{ zoomOut }}" style-hover="background:#F7F6F2" style="width:32px;height:32px;display:grid;place-items:center;border:none;border-bottom:1px solid #E7E1D8;background:#fff;font-size:15px;color:#161616;cursor:pointer">−</button>
+    <button onClick="{{ zoomFit }}" title="Fit" style-hover="background:#F7F6F2" style="width:32px;height:32px;display:grid;place-items:center;border:none;background:#fff;color:#161616;cursor:pointer"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M7 3.5H3.5V7M13 3.5h3.5V7M7 16.5H3.5V13M13 16.5h3.5V13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+  </div>
+
+  <!-- ===== FLOATING INSPECTOR (1a structure) ===== -->
+  <sc-if value="{{ showInspector }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;top:48px;right:12px;bottom:12px;width:min(332px,calc(100vw - 132px));background:#161616;border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 40px rgba(22,22,22,.32);color:#F7F6F2;display:flex;flex-direction:column;z-index:60">
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:14px 16px 10px">
+      <div style="width:36px;height:36px;border-radius:999px;background:{{ selAvatarBg }};color:{{ selAvatarFg }};display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0">{{ selInitials }}</div>
+      <div style="min-width:0;flex:1">
+        <div style="font-size:15px;font-weight:600;line-height:1.25">{{ selName }}</div>
+        <div style="font-size:12px;color:#B8AEA2;margin-top:1px">{{ selRole }}</div>
+      </div>
+      <button onClick="{{ closePanel }}" style-hover="background:rgba(255,255,255,.1)" style="border:none;background:transparent;color:#B8AEA2;font-size:14px;line-height:1;padding:4px 6px;cursor:pointer">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:0 16px 12px">
+      <span style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.10);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#D8D0C5"><span style="width:6px;height:6px;border-radius:999px;background:{{ selStatusDot }}"></span>{{ selStatus }}</span>
+      <span style="background:rgba(255,255,255,.10);padding:3px 8px;font:600 11px 'IBM Plex Mono',monospace;color:#D8D0C5">{{ selLabel }}</span>
+      <span style="background:rgba(255,255,255,.10);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#D8D0C5">{{ selZone }}</span>
+    </div>
+    <sc-if value="{{ inspActions }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:1px;padding:0 16px 14px">
+        <button onClick="{{ actionStub }}" style-hover="background:#333333" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#262626;padding:9px 0;font-size:11px;font-weight:600;color:#F4F4F4;border:none;cursor:pointer;font-family:inherit"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3v14M3 10h14" stroke-linecap="round"></path><path d="m7.5 5.5 2.5-2.5 2.5 2.5M7.5 14.5l2.5 2.5 2.5-2.5M5.5 7.5 3 10l2.5 2.5M14.5 7.5 17 10l-2.5 2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>Move</button>
+        <button onClick="{{ actionStub }}" style-hover="background:#333333" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#262626;padding:9px 0;font-size:11px;font-weight:600;color:#F4F4F4;border:none;cursor:pointer;font-family:inherit"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11l-3-3M16 13H5l3 3"></path></svg>Swap</button>
+        <sc-if value="{{ selHasEmployee }}" hint-placeholder-val="{{ false }}"><button onClick="{{ vacate }}" style-hover="background:rgba(179,35,44,.25)" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#2b1a1b;padding:9px 0;font-size:11px;font-weight:600;color:#ff8389;border:none;cursor:pointer;font-family:inherit"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="7" r="2.8"></circle><path d="M3.5 16.5v-1a4 4 0 0 1 4-4h1.5"></path><path d="M12.5 13.5h5"></path></svg>Vacate</button></sc-if>
+      </div>
+    </sc-if>
+    <sc-if value="{{ assignMode }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;min-height:0;overflow:auto;padding:0 16px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276;padding:4px 0 8px">ASSIGN — {{ unseatedCount }} UNSEATED PEOPLE</div>
+        <sc-for list="{{ unseated }}" as="u" hint-placeholder-count="4">
+          <button onClick="{{ u.pick }}" style-hover="background:#333333" style="display:flex;align-items:center;gap:10px;width:100%;background:#262626;border:none;padding:9px 12px;margin-bottom:6px;cursor:pointer;font-family:inherit;text-align:left">
+            <span style="width:26px;height:26px;border-radius:999px;background:#FBEAE1;color:#9E2F06;display:grid;place-items:center;font-size:10px;font-weight:700;flex-shrink:0">{{ u.initials }}</span>
+            <span style="min-width:0;flex:1"><span style="display:block;font-size:13px;font-weight:600;color:#F4F4F4">{{ u.name }}</span><span style="display:block;font-size:11px;color:#B8AEA2">{{ u.sub }}</span></span>
+            <span style="color:#8E8276">›</span>
+          </button>
+        </sc-for>
+        <button onClick="{{ cancelAssign }}" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,.2);color:#B8AEA2;font-size:12px;font-weight:600;padding:8px 0;cursor:pointer;font-family:inherit;margin:4px 0 12px">Cancel</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ overviewMode }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ inspActions }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;background:#262626;margin:0 16px">
+          <button onClick="{{ tabOverview }}" style="flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:600;background:{{ tab1Bg }};border:none;border-top:2px solid {{ tab1Edge }};color:{{ tab1Fg }};cursor:pointer;font-family:inherit">Overview</button>
+          <button onClick="{{ tabNotes }}" style="flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:600;background:{{ tab2Bg }};border:none;border-top:2px solid {{ tab2Edge }};color:{{ tab2Fg }};cursor:pointer;font-family:inherit">Notes</button>
+          <button onClick="{{ tabActivity }}" style="flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:600;background:{{ tab3Bg }};border:none;border-top:2px solid {{ tab3Edge }};color:{{ tab3Fg }};cursor:pointer;font-family:inherit">Activity</button>
+        </div>
+      </sc-if>
+      <div style="flex:1;min-height:0;overflow:auto;padding:14px 16px 0">
+        <sc-if value="{{ showOverviewTab }}" hint-placeholder-val="{{ true }}">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">CONTACT</div>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0 4px;font-size:12px"><span style="color:#B8AEA2">Email</span><span style="color:#F7F6F2;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ selEmail }}</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.08)"><span style="color:#B8AEA2">Extension</span><span style="color:#F7F6F2;font-family:'IBM Plex Mono',monospace">{{ selExt }}</span></div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276;margin-top:12px">SEAT</div>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0 4px;font-size:12px"><span style="color:#B8AEA2">Zone</span><span style="color:#F7F6F2;font-weight:600">{{ selZone }}</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px"><span style="color:#B8AEA2">Department</span><span style="color:#F7F6F2;font-weight:600">{{ selDept }}</span></div>
+        </sc-if>
+        <sc-if value="{{ showNotesTab }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0;font-size:12.5px;line-height:1.6;color:#D8D0C5">{{ selNote }}</p>
+          <button onClick="{{ actionStub }}" style="margin-top:12px;background:#262626;border:none;color:#F4F4F4;font-size:12px;font-weight:600;padding:8px 14px;cursor:pointer;font-family:inherit">Add note</button>
+        </sc-if>
+        <sc-if value="{{ showActivityTab }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:11.5px;color:#B8AEA2;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)"><b style="color:#D8D0C5;font-weight:600">Assigned</b> to seat · Jun 14</div>
+          <div style="font-size:11.5px;color:#B8AEA2;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)"><b style="color:#D8D0C5;font-weight:600">Moved</b> from N02 · May 30</div>
+          <div style="font-size:11.5px;color:#B8AEA2;padding:6px 0"><b style="color:#D8D0C5;font-weight:600">Seat created</b> · Apr 02</div>
+        </sc-if>
+      </div>
+      <sc-if value="{{ inspActions }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ openAIForSeat }}" style-hover="background:#333333" style="display:flex;align-items:center;justify-content:space-between;margin:0 16px 12px;background:#262626;border:none;padding:10px 12px;font-size:12px;font-weight:600;color:#F4F4F4;cursor:pointer;font-family:inherit">
+          <span style="display:flex;align-items:center;gap:8px"><span style="border:1px solid #78a9ff;color:#78a9ff;font-size:9.5px;font-weight:700;padding:1px 4px;letter-spacing:.04em">AI</span>Ask Planner about this seat</span><span style="color:#8E8276">›</span>
+        </button>
+        <button onClick="{{ primaryAction }}" style-hover="background:#B83708" style="height:48px;background:#D23F0A;color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">{{ primaryLabel }}</button>
+      </sc-if>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- ===== PEOPLE PANEL ===== -->
+  <sc-if value="{{ showPeople }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;top:48px;right:12px;bottom:12px;width:min(320px,calc(100vw - 132px));background:#fff;border:1px solid #E7E1D8;box-shadow:0 12px 40px rgba(22,22,22,.18);display:flex;flex-direction:column;z-index:60">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #E7E1D8">
+      <span style="font-size:14px;font-weight:600;color:#161616">People</span>
+      <div style="flex:1"></div>
+      <span style="font-size:12px;color:#6E655A">{{ peopleTotal }}</span>
+      <button onClick="{{ closePanel }}" style="border:none;background:transparent;color:#6E655A;font-size:13px;cursor:pointer;padding:2px 4px">✕</button>
+    </div>
+    <div style="flex:1;overflow:auto">
+      <sc-for list="{{ people }}" as="pp" hint-placeholder-count="10">
+        <button onClick="{{ pp.jump }}" style-hover="background:#F7F6F2" style="display:flex;align-items:center;gap:10px;padding:8px 16px;border:none;border-bottom:1px solid #F0ECE5;background:#fff;width:100%;cursor:pointer;font-family:inherit;text-align:left">
+          <span style="width:28px;height:28px;border-radius:999px;background:#FBEAE1;color:#9E2F06;display:grid;place-items:center;font-size:10px;font-weight:700;flex-shrink:0">{{ pp.initials }}</span>
+          <span style="min-width:0;flex:1;display:flex;flex-direction:column">
+            <span style="font-size:13px;font-weight:600;color:#161616;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ pp.name }}</span>
+            <span style="font-size:11px;color:#6E655A">{{ pp.sub }}</span>
+          </span>
+          <span style="border:1px solid #E7E1D8;background:#F7F6F2;border-radius:999px;padding:2px 8px;font:600 10px 'IBM Plex Mono',monospace;color:#55504A">{{ pp.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="border-top:1px solid #E7E1D8;padding:9px 16px;font-size:11px;color:#6E655A">{{ peopleFooter }}</div>
+  </div>
+  </sc-if>
+
+  <!-- ===== AI DRAWER ===== -->
+  <sc-if value="{{ showAI }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;top:48px;right:12px;bottom:12px;width:min(400px,calc(100vw - 132px));background:#161616;border:1px solid rgba(120,169,255,.35);box-shadow:0 12px 48px rgba(22,22,22,.45);color:#F7F6F2;display:flex;flex-direction:column;z-index:60;background-image:linear-gradient(180deg,rgba(69,137,255,.10),rgba(22,22,22,0) 140px)">
+    <div style="padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:flex-start;gap:12px">
+      <div style="min-width:0;flex:1">
+        <div style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600">Ask Planner <span style="border:1px solid #78a9ff;color:#78a9ff;font-size:10px;font-weight:700;padding:1px 5px;letter-spacing:.04em">AI</span></div>
+        <div style="font-size:12px;color:#B8AEA2;margin-top:3px">Read-only answers from saved draft map data.</div>
+      </div>
+      <button onClick="{{ closePanel }}" style-hover="background:rgba(255,255,255,.1)" style="border:none;background:transparent;border-radius:999px;padding:4px 12px;font-size:11px;font-weight:500;color:#B8AEA2;cursor:pointer;font-family:inherit">Close</button>
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.10)">
+      <div style="font-size:11px;font-weight:500;color:#B8AEA2;margin-bottom:8px">Suggested prompts — click to ask</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <sc-for list="{{ aiPrompts }}" as="ap" hint-placeholder-count="3">
+          <button onClick="{{ ap.ask }}" style-hover="background:rgba(255,255,255,.15)" style="border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);padding:6px 10px;font-size:11px;font-weight:500;color:#D8D0C5;cursor:pointer;font-family:inherit">{{ ap.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="flex:1;min-height:0;overflow:auto;padding:12px 16px">
+      <sc-if value="{{ aiIdle }}" hint-placeholder-val="{{ true }}">
+        <div style="border-radius:0;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.08);padding:12px 14px;font-size:13.5px;line-height:1.6;color:#D8D0C5">Ask about seats, assignments, zones, or departments. Ask Planner highlights supporting seats on the map — it can never change it.</div>
+      </sc-if>
+      <sc-if value="{{ aiThinking }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid rgba(120,169,255,.4);background:rgba(69,137,255,.1);padding:12px 14px;display:flex;align-items:center;gap:10px"><span style="width:10px;height:10px;border-radius:999px;background:#78a9ff;animation:none;opacity:.9"></span><span style="font-size:13px;font-weight:600;color:#78a9ff">Checking saved draft map data…</span></div>
+      </sc-if>
+      <sc-if value="{{ aiAnswered }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid rgba(120,169,255,.35);background:linear-gradient(180deg,rgba(69,137,255,.12),rgba(38,38,38,0) 80px),#262626;padding:14px">
+          <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+            <span style="background:rgba(66,190,101,.15);border:1px solid rgba(66,190,101,.4);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:600;color:#42be65">Answered</span>
+            <span style="background:rgba(255,255,255,.10);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:600;color:#B8AEA2">read-only</span>
+            <button onClick="{{ toggleExplain }}" style="margin-left:auto;border:1px solid #78a9ff;background:transparent;color:#78a9ff;font-size:9.5px;font-weight:700;padding:1px 5px;letter-spacing:.04em;cursor:pointer;font-family:inherit">AI ▾</button>
+          </div>
+          <p style="margin:0;font-size:13.5px;line-height:1.6;color:#F4F4F4">{{ aiAnswer }}</p>
+        </div>
+        <sc-if value="{{ explainOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:8px;background:#262626;border:1px solid rgba(120,169,255,.4);padding:12px 14px">
+            <div style="font-size:11.5px;font-weight:600;color:#78a9ff">How this answer was made</div>
+            <p style="margin:6px 0 0;font-size:12px;line-height:1.55;color:#D8D0C5">Generated from the <b style="color:#F4F4F4">saved draft layer only</b> — seats, directory, zones. The model reads the map; it cannot modify it. Unsaved inspector edits are excluded.</p>
+            <div style="display:flex;gap:8px;margin-top:8px"><span style="background:rgba(255,255,255,.10);border-radius:999px;padding:2px 9px;font-size:10px;font-weight:600;color:#D8D0C5">Sources: draft seats · directory</span><span style="background:rgba(66,190,101,.15);border:1px solid rgba(66,190,101,.4);border-radius:999px;padding:2px 9px;font-size:10px;font-weight:600;color:#42be65">High confidence</span></div>
+          </div>
+        </sc-if>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+          <span style="font-size:11px;font-weight:600;color:#B8AEA2">Highlighted seats · {{ aiCount }}</span>
+          <button onClick="{{ clearAI }}" style="border:1px solid rgba(255,87,21,.5);background:rgba(255,87,21,.1);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#FF5715;cursor:pointer;font-family:inherit">Clear highlights</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+          <sc-for list="{{ aiRows }}" as="ar" hint-placeholder-count="3">
+            <button onClick="{{ ar.jump }}" style-hover="background:rgba(69,137,255,.16)" style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(120,169,255,.3);background:rgba(69,137,255,.08);padding:9px 12px;cursor:pointer;font-family:inherit;text-align:left">
+              <span><span style="display:block;font-size:13px;font-weight:600;color:#F4F4F4">{{ ar.title }}</span><span style="display:block;font-size:11.5px;color:#B8AEA2;margin-top:1px">{{ ar.reason }}</span></span>
+              <span style="background:rgba(255,255,255,.10);border-radius:999px;padding:3px 9px;font-size:10px;font-weight:600;color:#78a9ff">Select</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+    <div style="padding:12px 16px 16px">
+      <div style="display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);padding:9px 12px">
+        <span style="flex:1;font-size:13px;color:#8f8f8f">Ask a follow-up…</span>
+        <span style="border-radius:999px;background:#D23F0A;color:#fff;padding:6px 14px;font-size:12.5px;font-weight:600;opacity:.5">Ask</span>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== MANAGEMENT SCREEN (1f) ===== -->
+  <sc-if value="{{ isMgmt }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Management" style="position:absolute;top:36px;left:48px;right:0;bottom:0;background:#F7F6F2;overflow:auto;z-index:65">
+    <div style="max-width:1240px;margin:0 auto;padding:0 32px 48px">
+      <h1 style="margin:24px 0 0;font-size:22px;font-weight:600;color:#161616">Management</h1>
+      <p style="margin:4px 0 16px;font-size:13px;color:#6E655A">People, departments, zones, and publish history.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:#E7E1D8;border:1px solid #E7E1D8">
+        <div style="position:relative;background:#fff;padding:16px"><div style="font-size:24px;font-weight:600;color:#161616">{{ totalSeats }}</div><div style="font-size:12px;color:#6E655A;margin-top:2px">Draft seats</div><span style="position:absolute;top:10px;right:10px;color:#8E8276"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+        <div style="position:relative;background:#fff;padding:16px"><div style="font-size:24px;font-weight:600;color:#161616">{{ empTotal }}</div><div style="font-size:12px;color:#6E655A;margin-top:2px">Active employees</div><span style="position:absolute;top:10px;right:10px;color:#8E8276"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+        <div style="position:relative;background:#fff;padding:16px"><div style="font-size:24px;font-weight:600;color:#161616">{{ statAssigned }}</div><div style="font-size:12px;color:#6E655A;margin-top:2px">Assigned</div><span style="position:absolute;top:10px;right:10px;color:#8E8276"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+        <div style="position:relative;background:#fff;padding:16px"><div style="font-size:24px;font-weight:600;color:#161616">{{ statUnassigned }}</div><div style="font-size:12px;color:#6E655A;margin-top:2px">Unassigned</div><span style="position:absolute;top:10px;right:10px;color:#8E8276"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+        <div style="position:relative;background:#fff;padding:16px"><div style="font-size:24px;font-weight:600;color:#161616">{{ statZones }}</div><div style="font-size:12px;color:#6E655A;margin-top:2px">Active zones</div><span style="position:absolute;top:10px;right:10px;color:#8E8276"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+      </div>
+      <div style="display:flex;margin-top:16px">
+        <span style="padding:9px 16px;font-size:13px;font-weight:600;color:#161616;background:#fff;border:1px solid #E7E1D8;border-bottom:2px solid #D23F0A">Employees</span>
+        <button onClick="{{ tabStub }}" style="padding:9px 16px;font-size:13px;color:#55504A;border:none;border-bottom:1px solid #E7E1D8;background:transparent;cursor:pointer;font-family:inherit">Departments</button>
+        <button onClick="{{ tabStub }}" style="padding:9px 16px;font-size:13px;color:#55504A;border:none;border-bottom:1px solid #E7E1D8;background:transparent;cursor:pointer;font-family:inherit">Zones</button>
+        <button onClick="{{ tabStub }}" style="padding:9px 16px;font-size:13px;color:#55504A;border:none;border-bottom:1px solid #E7E1D8;background:transparent;cursor:pointer;font-family:inherit">Publish History</button>
+        <span style="flex:1;border-bottom:1px solid #E7E1D8"></span>
+      </div>
+      <div style="background:#fff;border:1px solid #E7E1D8;border-top:none">
+        <div style="display:flex;align-items:center;border-bottom:1px solid #E7E1D8">
+          <div style="display:flex;align-items:center;gap:8px;padding:0 16px;height:44px;flex:1;min-width:0">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" style="color:#8f8f8f;flex-shrink:0"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+            <input value="{{ mSearch }}" onChange="{{ onMSearch }}" placeholder="Search employees…" style="flex:1;border:none;outline:none;font-size:13px;color:#161616;background:transparent;min-width:0">
+          </div>
+          <button onClick="{{ addEmpStub }}" style-hover="background:#B83708" style="height:44px;display:flex;align-items:center;gap:8px;background:#D23F0A;color:#fff;padding:0 18px;font-size:13.5px;font-weight:600;border:none;cursor:pointer;font-family:inherit">Add employee ＋</button>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1.2fr 1.4fr .7fr 1.1fr 44px;background:#F0EDE7;border-bottom:1px solid #E7E1D8">
+          <span style="padding:9px 16px;font-size:12px;font-weight:600;color:#161616">Name ⌃</span>
+          <span style="padding:9px 12px;font-size:12px;font-weight:600;color:#161616">Department</span>
+          <span style="padding:9px 12px;font-size:12px;font-weight:600;color:#161616">Position</span>
+          <span style="padding:9px 12px;font-size:12px;font-weight:600;color:#161616">Seat</span>
+          <span style="padding:9px 12px;font-size:12px;font-weight:600;color:#161616">Status</span>
+          <span></span>
+        </div>
+        <sc-for list="{{ mgmtAll }}" as="r" hint-placeholder-count="10">
+          <div style="display:grid;grid-template-columns:2fr 1.2fr 1.4fr .7fr 1.1fr 44px;border-bottom:1px solid #F0ECE5;align-items:center">
+            <button onClick="{{ r.jump }}" title="Show on map" style-hover="background:#F7F6F2" style="padding:8px 16px;display:flex;align-items:center;gap:10px;border:none;background:transparent;cursor:pointer;font-family:inherit;text-align:left;min-width:0"><span style="width:24px;height:24px;border-radius:999px;background:#FBEAE1;color:#9E2F06;display:grid;place-items:center;font-size:9px;font-weight:700;flex-shrink:0">{{ r.initials }}</span><span style="font-size:13px;font-weight:600;color:#161616;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span></button>
+            <span style="padding:8px 12px;font-size:12.5px;color:#55504A">{{ r.dept }}</span>
+            <span style="padding:8px 12px;font-size:12.5px;color:#55504A">{{ r.position }}</span>
+            <span style="padding:8px 12px;font:600 12px 'IBM Plex Mono',monospace;color:#161616">{{ r.label }}</span>
+            <span style="padding:8px 12px">
+              <sc-if value="{{ r.seated }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:5px;background:#DEF3E4;border:1px solid #A9D7B8;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:600;color:#284C3B"><span style="width:5px;height:5px;border-radius:999px;background:#1D6E41"></span>Assigned</span></sc-if>
+              <sc-if value="{{ r.unseated }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:5px;background:#F7F6F2;border:1px solid #E7E1D8;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:600;color:#55504A"><span style="width:5px;height:5px;border-radius:999px;background:#8E8276"></span>Unassigned</span></sc-if>
+            </span>
+            <button onClick="{{ rowKebabStub }}" style-hover="background:#F7F6F2" style="height:100%;display:grid;place-items:center;color:#8E8276;font-size:14px;font-weight:700;border:none;background:transparent;cursor:pointer">⋮</button>
+          </div>
+        </sc-for>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;font-size:12px;color:#6E655A">
+          <span>{{ mgmtCount }} of {{ empTotal }} employees shown — click a name to show them on the map</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== SETTINGS SCREEN (1g) ===== -->
+  <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Settings" style="position:absolute;top:36px;left:48px;right:0;bottom:0;background:#F7F6F2;overflow:auto;z-index:65">
+    <div style="max-width:760px;margin:0 auto;padding:0 24px 48px">
+      <h1 style="margin:24px 0 0;font-size:22px;font-weight:600;color:#161616">Settings</h1>
+      <p style="margin:6px 0 0;font-size:13.5px;line-height:1.55;color:#55504A">Import, export, and recovery tools. Everything here changes the draft only.</p>
+      <div style="display:flex;align-items:flex-start;gap:10px;background:#fff;border-left:3px solid #8A6116;box-shadow:0 1px 2px rgba(22,22,22,.06);padding:12px 14px;margin-top:16px">
+        <span style="width:16px;height:16px;border-radius:999px;background:#F1C21B;color:#161616;display:grid;place-items:center;font-size:10px;font-weight:800;flex-shrink:0;margin-top:1px">!</span>
+        <span style="font-size:12.5px;line-height:1.5;color:#161616"><b>The published map is never touched until you publish.</b> Restores replace the entire draft — review before confirming.</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:#55504A;margin:22px 0 8px;letter-spacing:.04em">CSV ASSIGNMENTS</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:#E7E1D8;border:1px solid #E7E1D8">
+        <button onClick="{{ tileStub }}" style-hover="background:#FBFAF8" style="position:relative;background:#fff;padding:16px;min-height:96px;border:none;cursor:pointer;font-family:inherit;text-align:left"><span style="display:block;font-size:13.5px;font-weight:600;color:#161616">Download CSV template</span><span style="display:block;font-size:12.5px;color:#6E655A;margin-top:3px">A blank assignment sheet to fill in</span><span style="position:absolute;bottom:12px;right:12px;color:#161616"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9 10 12.5 13.5 9M4 16.5h12"></path></svg></span></button>
+        <button onClick="{{ tileStub }}" style-hover="background:#FBFAF8" style="position:relative;background:#fff;padding:16px;min-height:96px;border:none;cursor:pointer;font-family:inherit;text-align:left"><span style="display:block;font-size:13.5px;font-weight:600;color:#161616">Export CSV</span><span style="display:block;font-size:12.5px;color:#6E655A;margin-top:3px">Download draft assignments</span><span style="position:absolute;bottom:12px;right:12px;color:#161616"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9 10 12.5 13.5 9M4 16.5h12"></path></svg></span></button>
+        <button onClick="{{ tileStub }}" style-hover="background:#FBFAF8" style="position:relative;background:#fff;padding:16px;min-height:96px;border:none;cursor:pointer;font-family:inherit;text-align:left;grid-column:1 / -1"><span style="display:block;font-size:13.5px;font-weight:600;color:#161616">Import CSV</span><span style="display:block;font-size:12.5px;color:#6E655A;margin-top:3px">Review parsed rows before applying — nothing writes until you confirm</span><span style="position:absolute;bottom:12px;right:12px;color:#161616"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></button>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:#B3232C;margin:22px 0 8px;letter-spacing:.04em">ADVANCED RECOVERY</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:#E7E1D8;border:1px solid #E7E1D8">
+        <button onClick="{{ tileStub }}" style-hover="background:#FBFAF8" style="position:relative;background:#fff;padding:16px;min-height:96px;border:none;cursor:pointer;font-family:inherit;text-align:left"><span style="display:block;font-size:13.5px;font-weight:600;color:#161616">Export JSON backup</span><span style="display:block;font-size:12.5px;color:#6E655A;margin-top:3px">Download full draft recovery data</span><span style="position:absolute;bottom:12px;right:12px;color:#161616"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9 10 12.5 13.5 9M4 16.5h12"></path></svg></span></button>
+        <button onClick="{{ tileStub }}" style-hover="background:#FBFAF8" style="position:relative;background:#fff;padding:16px;min-height:96px;border:none;cursor:pointer;font-family:inherit;text-align:left"><span style="display:block;font-size:13.5px;font-weight:600;color:#161616">Restore JSON backup</span><span style="display:block;font-size:12.5px;color:#6E655A;margin-top:3px">Review a full draft backup before restoring</span><span style="position:absolute;bottom:12px;right:12px;color:#161616"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></button>
+        <button onClick="{{ dangerStub }}" style-hover="background:#F8DEE0" style="position:relative;background:#FBE9EA;padding:16px;min-height:96px;border:none;cursor:pointer;font-family:inherit;text-align:left;grid-column:1 / -1"><span style="display:block;font-size:13.5px;font-weight:600;color:#B3232C">Reset draft to published</span><span style="display:block;font-size:12.5px;color:#7E2F24;margin-top:3px">Discard every draft seat change; people edits are kept</span><span style="position:absolute;bottom:12px;right:12px;color:#B3232C"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== LOGIN SCREEN (1h) ===== -->
+  <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Login" style="position:fixed;inset:0;background:#161616;z-index:100;display:flex;flex-direction:column;overflow:auto">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:32px 24px">
+      <div style="width:min(1110px,100%);display:flex;align-items:center;justify-content:center;gap:60px;flex-wrap:wrap">
+        <div style="max-width:340px;min-width:260px">
+          <img src="public/images/megeredchian-mark.png" alt="" style="width:48px;height:48px;object-fit:contain">
+          <p style="margin:20px 0 0;font-size:34px;font-weight:600;line-height:42px;color:#F7F6F2">Megeredchian Law<br>Seat Planner</p>
+          <p style="margin:20px 0 0;font-size:15px;line-height:1.45;color:#B8AEA2;max-width:320px">The internal seating map — who sits where, across every floor we occupy.</p>
+        </div>
+        <div style="width:min(440px,100%);background:#fff;padding:40px 40px 36px">
+          <div style="font-size:24px;font-weight:600;color:#161616">Sign in</div>
+          <p style="margin:12px 0 0;font-size:13px;color:#55504A">Use your work email to access the internal seating map.</p>
+          <div style="margin-top:20px;font-size:12px;color:#55504A">Email</div>
+          <div style="height:40px;background:#F4F4F4;border-bottom:1px solid #8d8d8d;margin-top:6px;display:flex;align-items:center;padding:0 14px;font-size:14px;color:#161616">e2e-admin@example.test</div>
+          <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:#55504A">Password</span><span style="font-size:12px;color:#9E2F06;font-weight:500">Forgot password?</span></div>
+          <div style="height:40px;background:#F4F4F4;border-bottom:1px solid #8d8d8d;margin-top:6px;display:flex;align-items:center;padding:0 14px;font-size:14px;color:#161616;letter-spacing:.2em">••••••••••••</div>
+          <div style="display:flex;gap:1px;margin-top:24px">
+            <button onClick="{{ signIn }}" style-hover="background:#B83708" style="flex:1.4;height:48px;background:#D23F0A;color:#fff;display:flex;align-items:center;padding:0 16px;font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:inherit">Sign in <span style="margin-left:auto">→</span></button>
+            <button onClick="{{ magicStub }}" style-hover="background:#F7F6F2" style="flex:1;height:48px;border:1px solid #D8D0C5;background:#fff;color:#161616;display:grid;place-items:center;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit">Magic link</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="margin:0;padding:0 48px 24px;font:400 11px 'IBM Plex Mono',monospace;color:#B8AEA2">seats.megeredchianlaw.com · internal use only</p>
+  </div>
+  </sc-if>
+
+  <!-- ===== PUBLISH MODAL ===== -->
+  <sc-if value="{{ publishOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closePublish }}" style="position:fixed;inset:0;background:rgba(22,22,22,.45);z-index:90"></div>
+  <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,92vw);background:#fff;box-shadow:0 12px 40px rgba(22,22,22,.4);z-index:91;font-family:'IBM Plex Sans',sans-serif">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:18px 20px 0">
+      <div>
+        <div style="font-size:16px;font-weight:600;color:#161616">Review draft before publishing</div>
+        <div style="font-size:13px;color:#55504A;margin-top:4px">Confirm the saved draft changes before viewers see them.</div>
+      </div>
+      <button onClick="{{ closePublish }}" style="border:none;background:transparent;color:#55504A;font-size:14px;cursor:pointer;padding:2px 4px">✕</button>
+    </div>
+    <div style="margin:16px 20px 0;border:1px solid #F0B49A;background:#FBEAE1;padding:12px 14px">
+      <span style="border:1px solid #D23F0A;color:#9E2F06;border-radius:999px;font-size:10px;font-weight:700;padding:1px 8px">READY</span>
+      <div style="font-size:13.5px;font-weight:600;color:#161616;margin-top:8px">Ready to publish {{ draftCount }} reviewed {{ draftWord }}</div>
+      <div style="font-size:12px;color:#9E2F06;font-weight:600;margin-top:2px">Saved draft changes only — unsaved inspector edits are excluded.</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin:14px 20px 0;flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:600;color:#161616">{{ draftCount }} {{ draftWord }}</span>
+      <span style="display:inline-flex;align-items:center;gap:5px;background:#DEF3E4;border:1px solid #A9D7B8;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:600;color:#284C3B">{{ nAssignedDiff }} assigned</span>
+      <span style="display:inline-flex;align-items:center;gap:5px;background:#FBE9EA;border:1px solid #E8A5A9;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:600;color:#B3232C">{{ nVacatedDiff }} vacated</span>
+      <span style="display:inline-flex;align-items:center;gap:5px;background:#FCF4D6;border:1px solid #E0C46E;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:600;color:#6D4712">{{ nReassignedDiff }} reassigned</span>
+    </div>
+    <div style="margin:10px 20px 0;border:1px solid #E7E1D8;max-height:224px;overflow:auto">
+      <div style="display:grid;grid-template-columns:64px 1fr 1fr 96px;background:#F0EDE7;border-bottom:1px solid #E7E1D8;position:sticky;top:0">
+        <span style="padding:7px 12px;font-size:11px;font-weight:600;color:#55504A">Seat</span>
+        <span style="padding:7px 10px;font-size:11px;font-weight:600;color:#55504A">Published now</span>
+        <span style="padding:7px 10px;font-size:11px;font-weight:600;color:#55504A">After publish</span>
+        <span style="padding:7px 12px;font-size:11px;font-weight:600;color:#55504A">Change</span>
+      </div>
+      <sc-for list="{{ diffRows }}" as="d" hint-placeholder-count="2">
+        <div style="display:grid;grid-template-columns:64px 1fr 1fr 96px;border-bottom:1px solid #F0ECE5;align-items:center">
+          <span style="padding:8px 12px;font:600 12px 'IBM Plex Mono',monospace;color:#161616">{{ d.label }}</span>
+          <span style="padding:8px 10px;font-size:12.5px;color:#6E655A;display:flex;align-items:center;gap:6px;min-width:0"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.from }}</span><span style="color:#B8AEA2;flex-shrink:0">→</span></span>
+          <span style="padding:8px 10px;font-size:12.5px;font-weight:600;color:#161616;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.to }}</span>
+          <span style="padding:8px 12px"><span style="display:inline-flex;background:{{ d.kindBg }};border:1px solid {{ d.kindBd }};border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:600;color:{{ d.kindFg }}">{{ d.kind }}</span></span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-size:11.5px;color:#6E655A;margin:10px 20px 0">Draft: {{ totalSeats }} seats · Currently published: {{ totalSeats }} seats · Seat positions unchanged</div>
+    <div style="display:flex;margin-top:18px">
+      <button onClick="{{ closePublish }}" style-hover="background:#F7F6F2" style="flex:1;height:48px;border:none;background:#fff;border-top:1px solid #E7E1D8;font-size:14px;font-weight:600;color:#161616;cursor:pointer;font-family:inherit">Cancel</button>
+      <button onClick="{{ doPublish }}" style-hover="background:#B83708" style="flex:1.4;height:48px;border:none;background:#D23F0A;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Publish reviewed changes</button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- toast -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#161616;color:#F4F4F4;border-left:3px solid #FF5715;box-shadow:0 8px 24px rgba(0,0,0,.35);padding:10px 16px;font-size:12.5px;font-weight:500;z-index:95">{{ toast }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;start_mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;admin&quot;,&quot;viewer&quot;],&quot;default&quot;:&quot;admin&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;names_on&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const base = (window.SEAT_DATA && window.SEAT_DATA.seats) || [];
+    this.state = {
+      seats: base.map(s => Object.assign({}, s)),
+      screen: "map", mSearch: "",
+      sel: null, panel: "none", tab: "overview", assignMode: false,
+      mode: (props && props.start_mode) === "viewer" ? "viewer" : "admin",
+      search: "", fZone: "all", fStatus: "all",
+      showNames: !!(props && props.names_on),
+      kebabOpen: false, filterOpen: false,
+      zoom: 1, panX: 0, panY: 0,
+      draft: {}, undoStack: [],
+      publishOpen: false, aiState: "idle", aiSet: {}, explainOpen: false, toast: "", railOpen: false, hoverZone: null
+    };
+    this._pan = null;
+    this._unseated = [
+      ["Wes Tanaka", "Paralegal", "Litigation"], ["Xenia Petrou", "Intake Specialist", "Intake"],
+      ["Yusuf Ali", "Case Manager", "Case Management"], ["Zara Malik", "Accountant", "Accounting"],
+      ["Peter Okafor", "IT Support", "IT"], ["Ravi Iyer", "Records Clerk", "Records"],
+      ["Sana Qureshi", "Associate Attorney", "Pre-Litigation"], ["Tomás Rivera", "Paralegal", "Litigation"]
+    ].map(u => ({ name: u[0], position: u[1], dept: u[2], seated: false }));
+  }
+  componentDidMount() {
+    this._onResize = () => this.forceUpdate();
+    window.addEventListener("resize", this._onResize);
+    this.forceUpdate();
+  }
+  componentWillUnmount() { window.removeEventListener("resize", this._onResize); clearTimeout(this._toastT); clearTimeout(this._railT); }
+  set(patch) { this.setState(patch); }
+  flash(msg) {
+    this.set({ toast: msg });
+    clearTimeout(this._toastT);
+    this._toastT = setTimeout(() => this.set({ toast: "" }), 2600);
+  }
+  seatBy(label) { return this.state.seats.find(s => s.label === label); }
+  fitW(reflow) {
+    const vw = window.innerWidth || 1440, vh = window.innerHeight || 800;
+    const availW = vw - 48 - (reflow ? (this.state.panel === "ai" ? 424 : 356) : 0) - 16;
+    const availH = vh - 36 - 16;
+    return Math.max(320, Math.round(Math.min(availW, availH * 2.204)));
+  }
+  selectSeat(label) {
+    const S = this.state, vw = window.innerWidth || 1440;
+    const seat = this.seatBy(label); if (!seat) return;
+    const dw = this.fitW(false), containerW = vw - 48;
+    const seatX = 48 + containerW / 2 + S.panX + (seat.x - 0.5) * dw * S.zoom;
+    const panelLeft = vw - 356;
+    this.set({ sel: label, panel: "inspector", tab: "overview", assignMode: false, screen: "map" });
+    if (seatX > panelLeft - 24) this.tweenPanX(S.panX - (seatX - (panelLeft - 48)));
+  }
+  tweenPanX(target) {
+    cancelAnimationFrame(this._nudgeRaf);
+    const from = this.state.panX, delta = target - from, t0 = performance.now();
+    const step = now => {
+      const t = Math.min(1, (now - t0) / 250);
+      const e = 1 - Math.pow(1 - t, 3);
+      this.set({ panX: Math.round(from + delta * e) });
+      if (t < 1 && !this._pan) this._nudgeRaf = requestAnimationFrame(step);
+    };
+    this._nudgeRaf = requestAnimationFrame(step);
+  }
+  applyPerson(seat, person) {
+    seat.name = person ? person.name : "";
+    seat.position = person ? person.position : "";
+    seat.dept = person ? person.dept : "";
+    seat.status = person ? "assigned" : "available";
+    const parts = seat.name.split(" ");
+    seat.shortName = parts[0] ? parts[0] + (parts[1] ? " " + parts[1][0] + "." : "") : "";
+    seat.initials = parts[0] ? (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase() : "";
+  }
+  // draft = baseline map: label -> occupant name at first change (null = was open).
+  recordBase(label, prevName) {
+    if (label in this.state.draft) return;
+    const draft = Object.assign({}, this.state.draft); draft[label] = prevName || null;
+    this.set({ draft });
+  }
+  renderVals() {
+    const S = this.state;
+    const pct = v => (v * 100).toFixed(3) + "%";
+    const isAdmin = S.mode === "admin";
+    const q = S.search.trim().toLowerCase();
+    const filtersOn = S.fZone !== "all" || S.fStatus !== "all";
+    const emphasisOn = !!q || filtersOn;
+    const aiOn = Object.keys(S.aiSet).length > 0;
+    const matches = s => {
+      if (S.fZone !== "all" && s.zone !== S.fZone) return false;
+      if (S.fStatus !== "all" && s.status !== S.fStatus) return false;
+      if (q) { const hay = (s.name + " " + s.label + " " + s.zone + " " + s.dept).toLowerCase(); if (!hay.includes(q)) return false; }
+      return true;
+    };
+    // effective diff vs baseline: a seat undone back to its original occupant drops out
+    const diffRows = [];
+    const diffSet = {};
+    Object.keys(S.draft).forEach(l => {
+      const seat = this.seatBy(l); if (!seat) return;
+      const from = S.draft[l] || null, to = seat.name || null;
+      if (from === to) return;
+      diffSet[l] = true;
+      diffRows.push({
+        label: l, from: from || "Open seat", to: to || "Open seat",
+        kind: !from ? "Assigned" : !to ? "Vacated" : "Reassigned",
+        kindBg: !from ? "#DEF3E4" : !to ? "#FBE9EA" : "#FCF4D6",
+        kindBd: !from ? "#A9D7B8" : !to ? "#E8A5A9" : "#E0C46E",
+        kindFg: !from ? "#284C3B" : !to ? "#B3232C" : "#6D4712"
+      });
+    });
+    diffRows.sort((a, b) => a.label.localeCompare(b.label));
+    const tone = s => {
+      if (diffSet[s.label]) return { bd: "rgba(138,97,22,.7)", bg: "rgba(252,244,214,.95)", fg: "#6D4712" };
+      if (s.status === "assigned") return { bd: "rgba(29,110,65,.55)", bg: "rgba(255,255,255,.95)", fg: "#284C3B" };
+      if (s.status === "reserved") return { bd: "rgba(138,97,22,.55)", bg: "rgba(252,244,214,.95)", fg: "#6D4712" };
+      if (s.status === "unavailable") return { bd: "rgba(190,180,168,.9)", bg: "rgba(231,225,216,.92)", fg: "#696159" };
+      return { bd: "#B8AEA2", bg: "rgba(255,255,255,.95)", fg: "#453D33" };
+    };
+    const baseShadow = "0 3px 9px rgba(23,26,29,.16),inset 0 1px 0 rgba(255,255,255,.85),0 0 0 1px rgba(255,255,255,.45)";
+    const mkCode = s => {
+      const t = tone(s), seld = S.sel === s.label, m = matches(s), ai = S.aiSet[s.label];
+      const nameMode = S.showNames && s.status === "assigned" && !seld;
+      let bd = t.bd, bg = t.bg, fg = t.fg, shadow = baseShadow, z = 10, op = 1;
+      if (emphasisOn && m && !seld) { bd = "#D23F0A"; bg = "#FBEAE1"; fg = "#9E2F06"; shadow = "0 0 0 2px rgba(210,63,10,.55),0 0 0 4px rgba(255,87,21,.20),0 10px 20px -4px rgba(210,63,10,.35),inset 0 1px 0 rgba(255,255,255,.78)"; z = 25; }
+      if ((emphasisOn && !m) || (aiOn && !ai && !seld)) op = 0.35;
+      if (ai && !seld) { bd = "#4589ff"; bg = "linear-gradient(180deg,rgba(69,137,255,.14),rgba(255,255,255,0) 60%),#fff"; fg = "#0043ce"; shadow = "0 0 0 2px rgba(69,137,255,.45),0 0 0 6px rgba(69,137,255,.18),0 10px 22px rgba(69,137,255,.35)"; z = 30; op = 1; }
+      if (seld) { bd = "#D46A24"; bg = "#171A1D"; fg = "#fff"; shadow = "0 10px 24px rgba(31,35,39,.30),0 0 0 2px rgba(212,106,36,.9),inset 0 1px 0 rgba(255,255,255,.16)"; z = 40; op = 1; }
+      const showName = (seld || nameMode) && s.name;
+      return {
+        label: s.label, left: pct(s.x), top: pct(s.y),
+        bd, bg, fg, shadow, z: String(z), op: String(op),
+        h: seld ? "42px" : showName ? "34px" : "24px",
+        w: seld ? "118px" : showName ? "86px" : "46px",
+        maxw: seld ? "126px" : showName ? "104px" : "56px",
+        pad: showName || seld ? "5px 13px" : "0 6px",
+        align: showName || seld ? "flex-start" : "center",
+        codeSize: seld ? "8.5px" : "9.5px",
+        codeOp: showName || seld ? ".7" : "1",
+        nameLine: !!showName, name: s.shortName || "", nameSize: seld ? "13px" : "9.5px",
+        dot: s.status === "assigned" && !seld && !ai,
+        draftB: !!diffSet[s.label] && !seld, aiChip: !!ai && !seld,
+        tip: s.label + " · " + (s.name || "Unassigned"),
+        click: () => this.selectSeat(s.label)
+      };
+    };
+    const mkPlate = s => {
+      const t = tone(s), seld = S.sel === s.label, m = matches(s), ai = S.aiSet[s.label];
+      let bd = t.bd, bg = t.bg, fg = t.fg, shadow = baseShadow, z = 11, op = 1;
+      if (emphasisOn && m && !seld) { bd = "#D23F0A"; bg = "#FBEAE1"; fg = "#9E2F06"; z = 25; }
+      if ((emphasisOn && !m) || (aiOn && !ai && !seld)) op = 0.35;
+      if (seld) { bd = "#D46A24"; shadow = "0 0 0 2px rgba(212,106,36,.9),0 10px 24px rgba(31,35,39,.30)"; z = 40; op = 1; }
+      return {
+        label: s.label, left: pct(s.x), top: pct(s.y), bd, bg, fg, shadow, z: String(z), op: String(op),
+        name: s.shortName || "Open office", title: s.position || "",
+        dot: s.status === "assigned", draftB: !!diffSet[s.label],
+        tip: s.label + " · " + (s.name || "Open office"),
+        click: () => this.selectSeat(s.label)
+      };
+    };
+    const codeMarkers = S.seats.filter(s => s.kind === "code").map(mkCode);
+    const plateMarkers = S.seats.filter(s => s.kind === "plate").map(mkPlate);
+    const nAssigned = S.seats.filter(s => s.status === "assigned").length;
+    const nOpen = S.seats.filter(s => s.status === "available").length;
+    const nReserved = S.seats.filter(s => s.status === "reserved").length;
+    const matchCount = emphasisOn ? S.seats.filter(matches).length : 0;
+    const sel = S.sel ? this.seatBy(S.sel) : null;
+    const selHasEmployee = !!(sel && sel.name);
+    const draftLabels = diffRows.map(r => r.label);
+    const seated = S.seats.filter(s => s.name).sort((a, b) => a.name.localeCompare(b.name));
+    const people = seated.map(s => ({
+      initials: s.initials, name: s.name, sub: s.label + " · " + s.zone, label: s.label,
+      jump: () => this.selectSeat(s.label)
+    }));
+    const unseated = this._unseated.filter(u => !u.seated).map(u => ({
+      initials: (u.name[0] + u.name.split(" ")[1][0]).toUpperCase(), name: u.name, sub: u.position + " · " + u.dept,
+      pick: () => {
+        const seat = this.seatBy(S.sel); if (!seat) return;
+        this.state.undoStack.push({ label: seat.label, prev: seat.name ? { name: seat.name, position: seat.position, dept: seat.dept } : null, person: u });
+        this.recordBase(seat.label, seat.name);
+        u.seated = true;
+        this.applyPerson(seat, u);
+        this.set({ assignMode: false, seats: S.seats.slice() });
+        this.flash(u.name + " assigned to " + seat.label + " — draft change");
+      }
+    }));
+    const zoneOptions = Array.from(new Set(S.seats.map(s => s.zone))).sort();
+    const aiZone = "North Pod";
+    const aiRows = Object.keys(S.aiSet).sort().map(l => ({
+      title: l + " — open", reason: "Back row, " + aiZone,
+      jump: () => this.selectSeat(l)
+    }));
+    const askOpenSeats = () => {
+      this.set({ aiState: "thinking", explainOpen: false });
+      setTimeout(() => {
+        const set = {}; ["N09", "N10", "N11", "N12"].forEach(l => set[l] = true);
+        this.set({ aiState: "answered", aiSet: set });
+      }, 900);
+    };
+    const askProblems = () => {
+      this.set({ aiState: "thinking", explainOpen: false });
+      setTimeout(() => {
+        const set = {}; ["OF28", "OF29", "OF30"].forEach(l => set[l] = true);
+        this.set({ aiState: "answered", aiSet: set });
+      }, 900);
+    };
+    const tabBg = t => S.tab === t ? "#161616" : "transparent";
+    const tabEdge = t => S.tab === t ? "#FF5715" : "transparent";
+    const tabFg = t => S.tab === t ? "#F4F4F4" : "#B8AEA2";
+    const panelOffset = S.panel !== "none";
+    return {
+      isAdmin, isViewer: !isAdmin,
+      viewerToggleTitle: isAdmin ? "Switch to viewer (read-only)" : "Back to admin",
+      viewerIconColor: isAdmin ? "#B8AEA2" : "#FF5715",
+      railOpen: S.railOpen, railW: S.railOpen ? "208px" : "48px",
+      railShadow: S.railOpen ? "8px 0 24px rgba(0,0,0,.35)" : "none",
+      toggleRail: () => this.set({ railOpen: !S.railOpen }),
+      closeRail: () => this.set({ railOpen: false }),
+      railToggleTitle: S.railOpen ? "Collapse navigation" : "Expand navigation",
+      viewerRailLabel: isAdmin ? "Viewer mode" : "Admin mode",
+      railMap: () => this.set({ screen: "map", panel: "none", sel: null, railOpen: false }),
+      railPeople: () => this.set({ screen: "map", panel: S.panel === "people" ? "none" : "people", sel: null, railOpen: false }),
+      railData: () => this.set({ screen: "management", panel: "none", sel: null, railOpen: false, kebabOpen: false, filterOpen: false }),
+      railSettings: () => this.set({ screen: "settings", panel: "none", sel: null, railOpen: false, kebabOpen: false, filterOpen: false }),
+      signOut: () => { this.set({ screen: "login", panel: "none", sel: null, railOpen: false }); },
+      signIn: () => { this.set({ screen: "map" }); this.flash("Signed in as e2e-admin@example.test"); },
+      magicStub: () => this.flash("Magic link sent — check your email (not wired in this mockup)."),
+      isMap: S.screen === "map", isMgmt: S.screen === "management", isSettings: S.screen === "settings", isLogin: S.screen === "login",
+      railMapBg: S.screen === "map" ? "#262626" : "transparent",
+      railMapShadow: S.screen === "map" ? "inset 3px 0 0 #FF5715" : "none",
+      railMapColor: S.screen === "map" ? "#fff" : "#B8AEA2",
+      railDataBg: S.screen === "management" ? "#262626" : "transparent",
+      railDataShadow: S.screen === "management" ? "inset 3px 0 0 #FF5715" : "none",
+      railDataColor: S.screen === "management" ? "#fff" : "#B8AEA2",
+      railSetBg: S.screen === "settings" ? "#262626" : "transparent",
+      railSetShadow: S.screen === "settings" ? "inset 3px 0 0 #FF5715" : "none",
+      railSetColor: S.screen === "settings" ? "#fff" : "#B8AEA2",
+      peopleRailColor: S.panel === "people" ? "#fff" : "#B8AEA2",
+      peopleRailBg: S.panel === "people" ? "#262626" : "transparent",
+      aiRailBg: S.panel === "ai" ? "#262626" : "transparent",
+      aiToolBg: S.panel === "ai" ? "#262626" : "transparent",
+      aiToolEdge: S.panel === "ai" ? "#78a9ff" : "transparent",
+      aiToolColor: S.panel === "ai" ? "#fff" : "#B8AEA2",
+      openAI: () => this.set({ panel: "ai", sel: null, railOpen: false }),
+      openAIForSeat: () => this.set({ panel: "ai" }),
+      toggleViewer: () => { const admin = !isAdmin; this.set({ mode: admin ? "admin" : "viewer", panel: "none", sel: null, kebabOpen: false, filterOpen: false, railOpen: false }); this.flash(admin ? "Admin mode" : "Viewer mode — read-only: edit chrome and actions hidden"); },
+      search: S.search, hasSearch: !!q, noSearch: !q,
+      onSearch: e => this.set({ search: e.target.value }),
+      clearSearch: () => this.set({ search: "" }),
+      matchLabel: emphasisOn ? matchCount + " of " + S.seats.length + " match" : "",
+      toggleFilter: () => this.set({ filterOpen: !S.filterOpen, kebabOpen: false }),
+      filterBtnBg: filtersOn ? "rgba(255,87,21,.18)" : "rgba(255,255,255,.06)",
+      filterCountLabel: filtersOn ? " · on" : "",
+      filterOpen: S.filterOpen,
+      fZone: S.fZone, fStatus: S.fStatus, zoneOptions,
+      zoneChips: [{ label: "All zones", value: "all" }].concat(zoneOptions.map(z => ({ label: z, value: z }))).map(c => {
+        const active = S.fZone === c.value;
+        return {
+          label: c.label,
+          bg: active ? "rgba(255,87,21,.15)" : "rgba(255,255,255,.06)",
+          bd: active ? "#FF5715" : "rgba(255,255,255,.2)",
+          fg: active ? "#FF5715" : "#D8D0C5",
+          click: () => this.set({ fZone: active && c.value !== "all" ? "all" : c.value }),
+          enter: () => c.value !== "all" && this.set({ hoverZone: c.value }),
+          leave: () => this.set({ hoverZone: null })
+        };
+      }),
+      ...(() => {
+        const wz = S.hoverZone || (S.fZone !== "all" ? S.fZone : null);
+        if (!wz) return { washOn: false, washLeft: "0%", washTop: "0%", washW: "0%", washH: "0%", washLabel: "" };
+        const zs = S.seats.filter(s => s.zone === wz);
+        if (!zs.length) return { washOn: false, washLeft: "0%", washTop: "0%", washW: "0%", washH: "0%", washLabel: "" };
+        const padX = 0.022, padY = 0.042;
+        const minX = Math.min.apply(null, zs.map(s => s.x)) - padX;
+        const maxX = Math.max.apply(null, zs.map(s => s.x)) + padX;
+        const minY = Math.min.apply(null, zs.map(s => s.y)) - padY;
+        const maxY = Math.max.apply(null, zs.map(s => s.y)) + padY;
+        return {
+          washOn: true,
+          washLeft: (minX * 100).toFixed(2) + "%", washTop: (minY * 100).toFixed(2) + "%",
+          washW: ((maxX - minX) * 100).toFixed(2) + "%", washH: ((maxY - minY) * 100).toFixed(2) + "%",
+          washLabel: wz + " · " + zs.length + " seats"
+        };
+      })(),
+      setFStatus: e => this.set({ fStatus: e.target.value }),
+      clearFilters: () => this.set({ fZone: "all", fStatus: "all", filterOpen: false }),
+      filterSummary: emphasisOn ? matchCount + " seats match" : "No filters",
+      kebabOpen: S.kebabOpen, kebabLeft: "664px",
+      kebabBg: S.kebabOpen ? "#262626" : "transparent",
+      toggleKebab: () => this.set({ kebabOpen: !S.kebabOpen, filterOpen: false }),
+      closeMenus: () => this.set({ kebabOpen: false, filterOpen: false }),
+      kebabShowNames: () => { this.set({ showNames: !S.showNames, kebabOpen: false }); },
+      namesCheck: S.showNames ? "✓" : "",
+      discardDraft: () => {
+        this.state.undoStack.slice().reverse().forEach(a => { const seat = this.seatBy(a.label); if (a.person) a.person.seated = false; this.applyPerson(seat, a.prev); });
+        this.set({ draft: {}, undoStack: [], kebabOpen: false, seats: S.seats.slice() });
+        this.flash("Draft changes discarded");
+      },
+      undo: () => {
+        const a = this.state.undoStack.pop(); if (!a) return;
+        const seat = this.seatBy(a.label);
+        if (a.person) a.person.seated = false;
+        this.applyPerson(seat, a.prev);
+        const draft = Object.assign({}, S.draft);
+        if ((draft[a.label] || null) === (seat.name || null)) delete draft[a.label];
+        this.set({ draft, seats: S.seats.slice() });
+        this.flash("Undid change to " + a.label);
+      },
+      undoOpacity: this.state.undoStack.length ? "1" : ".4",
+      draftCount: draftLabels.length, hasDraft: draftLabels.length > 0,
+      showPublish: isAdmin && draftLabels.length > 0 && S.screen === "map",
+      aiToolVisible: isAdmin && S.screen === "map",
+      draftWord: draftLabels.length === 1 ? "change" : "changes",
+      diffRows,
+      nAssignedDiff: diffRows.filter(r => r.kind === "Assigned").length,
+      nVacatedDiff: diffRows.filter(r => r.kind === "Vacated").length,
+      nReassignedDiff: diffRows.filter(r => r.kind === "Reassigned").length,
+      openPublish: () => draftLabels.length ? this.set({ publishOpen: true }) : this.flash("No draft changes to publish yet — assign or vacate a seat first."),
+      closePublish: () => this.set({ publishOpen: false }),
+      publishOpen: S.publishOpen,
+      doPublish: () => { this.set({ publishOpen: false, draft: {}, undoStack: [] }); this.flash("Published — viewers now see this map."); },
+      crumb: (isAdmin ? "Draft map · " : "Office map · ") + S.seats.length + " seats",
+      codeMarkers, plateMarkers,
+      totalSeats: S.seats.length, nAssigned, nOpen, nReserved,
+      zoom: S.zoom, zoomPct: Math.round(S.zoom * 100) + "%",
+      panX: S.panX, panY: S.panY,
+      mapFilter: aiOn ? "saturate(.8)" : "none",
+      mapCursor: this._pan ? "grabbing" : "grab",
+      zoomIn: () => this.set({ zoom: Math.min(2.5, Math.round((S.zoom + 0.25) * 100) / 100) }),
+      zoomOut: () => this.set({ zoom: Math.max(0.5, Math.round((S.zoom - 0.25) * 100) / 100) }),
+      zoomFit: () => this.set({ zoom: 1, panX: 0, panY: 0, kebabOpen: false }),
+      panStart: e => { if (e.target.closest("button")) return; this._pan = { x: e.clientX - S.panX, y: e.clientY - S.panY }; e.currentTarget.setPointerCapture(e.pointerId); },
+      panMove: e => { if (!this._pan) return; this.set({ panX: e.clientX - this._pan.x, panY: e.clientY - this._pan.y }); },
+      panEnd: () => { this._pan = null; this.forceUpdate(); },
+      mapRight: (S.panel === "people" || S.panel === "ai") ? (S.panel === "ai" ? "424px" : "356px") : "0px",
+      floatRight: panelOffset ? (S.panel === "ai" ? "436px" : "368px") : "12px",
+      displayW: this.fitW(S.panel === "people" || S.panel === "ai"),
+
+      addSeatStub: () => this.flash("Add seat: click a spot on the plan (not wired in this mockup)."),
+      actionStub: () => this.flash("Move & Swap are map interactions — not wired in this mockup."),
+      showInspector: S.panel === "inspector" && !!sel,
+      showPeople: S.panel === "people",
+      showAI: S.panel === "ai",
+      closePanel: () => this.set({ panel: "none", sel: null }),
+      selLabel: sel ? sel.label : "", selZone: sel ? sel.zone : "", selDept: sel ? (sel.dept || "—") : "",
+      selName: selHasEmployee ? sel.name : "Open seat",
+      selRole: selHasEmployee ? ((sel.position || "—") + " · " + (sel.dept || "—")) : "Unassigned",
+      selInitials: selHasEmployee ? sel.initials : "—",
+      selAvatarBg: selHasEmployee ? "#FC672A" : "#262626",
+      selAvatarFg: selHasEmployee ? "#161616" : "#B8AEA2",
+      selStatus: sel ? (sel.status === "available" ? "Open" : sel.status.charAt(0).toUpperCase() + sel.status.slice(1)) : "",
+      selStatusDot: sel ? (sel.status === "assigned" ? "#42be65" : sel.status === "reserved" ? "#f1c21b" : "#8E8276") : "#8E8276",
+      selHasEmployee,
+      selEmail: selHasEmployee ? (sel.name.toLowerCase().replace(/[^a-z ]/g, "").split(" ").join(".") + "@megeredchianlaw.com") : "—",
+      selExt: selHasEmployee ? ("0" + (200 + (sel.label.charCodeAt(0) + sel.label.charCodeAt(sel.label.length - 1)) % 80)) : "—",
+      selNote: selHasEmployee ? "No notes yet for this seat." : "Open seats carry no notes.",
+      inspActions: isAdmin,
+      assignMode: S.assignMode, overviewMode: !S.assignMode,
+      unseated, unseatedCount: unseated.length,
+      cancelAssign: () => this.set({ assignMode: false }),
+      vacate: () => {
+        const seat = this.seatBy(S.sel); if (!seat || !seat.name) return;
+        this.state.undoStack.push({ label: seat.label, prev: { name: seat.name, position: seat.position, dept: seat.dept }, person: null });
+        this.recordBase(seat.label, seat.name);
+        const who = seat.name;
+        this.applyPerson(seat, null);
+        this.set({ seats: S.seats.slice() });
+        this.flash(who + " vacated from " + seat.label + " — draft change");
+      },
+      primaryLabel: selHasEmployee ? "Edit assignment" : "Assign occupant",
+      primaryAction: () => selHasEmployee ? this.flash("Edit assignment opens the occupant editor — not wired in this mockup.") : this.set({ assignMode: true }),
+      tabOverview: () => this.set({ tab: "overview" }), tabNotes: () => this.set({ tab: "notes" }), tabActivity: () => this.set({ tab: "activity" }),
+      tab1Bg: tabBg("overview"), tab1Edge: tabEdge("overview"), tab1Fg: tabFg("overview"),
+      tab2Bg: tabBg("notes"), tab2Edge: tabEdge("notes"), tab2Fg: tabFg("notes"),
+      tab3Bg: tabBg("activity"), tab3Edge: tabEdge("activity"), tab3Fg: tabFg("activity"),
+      showOverviewTab: !isAdmin || S.tab === "overview",
+      showNotesTab: isAdmin && S.tab === "notes",
+      showActivityTab: isAdmin && S.tab === "activity",
+      people, peopleTotal: seated.length + unseated.length,
+      peopleFooter: (seated.length + unseated.length) + " people · " + seated.length + " seated",
+      aiPrompts: [
+        { label: "Which seats are open in North Pod?", ask: askOpenSeats },
+        { label: "Any problems on the map?", ask: askProblems },
+        { label: "Show unassigned seats", ask: askOpenSeats }
+      ],
+      aiIdle: S.aiState === "idle", aiThinking: S.aiState === "thinking", aiAnswered: S.aiState === "answered",
+      aiAnswer: Object.keys(S.aiSet).some(l => l.indexOf("OF") === 0)
+        ? "Two reserved offices (OF28, OF29) have no start dates recorded, and OF30 is marked unavailable with no reason. All three are highlighted — worth a review before the next publish."
+        : "4 seats are open in North Pod: N09, N10, N11, N12 — the full back row, nearest the records room. They are highlighted on the map.",
+      aiActive: aiOn, aiCount: Object.keys(S.aiSet).length, aiRows,
+      clearAI: () => this.set({ aiSet: {}, aiState: "idle", explainOpen: false }),
+      explainOpen: S.explainOpen,
+      toggleExplain: () => this.set({ explainOpen: !S.explainOpen }),
+      toast: S.toast,
+      mSearch: S.mSearch,
+      onMSearch: e => this.set({ mSearch: e.target.value }),
+      empTotal: seated.length + unseated.length,
+      statAssigned: seated.length, statUnassigned: unseated.length, statZones: zoneOptions.length,
+      mgmtAll: (() => {
+        const mq = S.mSearch.trim().toLowerCase();
+        const rows = seated.map(s => ({ initials: s.initials, name: s.name, dept: s.dept, position: s.position || "—", label: s.label, seated: true, sub: s.zone,
+          jump: () => this.selectSeat(s.label) }))
+          .concat(unseated.map(u => ({ initials: u.initials, name: u.name, dept: u.sub.split(" · ")[1], position: u.sub.split(" · ")[0], label: "—", seated: false, sub: "Unassigned",
+            jump: () => this.flash(u.name + " has no seat — assign one from an open seat's inspector.") })));
+        return (mq ? rows.filter(r => (r.name + " " + r.dept + " " + r.position + " " + r.label).toLowerCase().includes(mq)) : rows)
+          .map(r => Object.assign(r, { unseated: !r.seated }));
+      })(),
+      mgmtCount: (() => { const mq = S.mSearch.trim().toLowerCase(); const all = seated.length + unseated.length; if (!mq) return all; let n = 0; seated.forEach(s => { if ((s.name + " " + s.dept + " " + (s.position || "") + " " + s.label).toLowerCase().includes(mq)) n++; }); unseated.forEach(u => { if ((u.name + " " + u.sub).toLowerCase().includes(mq)) n++; }); return n; })(),
+      addEmpStub: () => this.flash("Add employee opens a modal — in this prototype, assign people from an open seat's inspector."),
+      rowKebabStub: () => this.flash("Row actions (edit, deactivate) — not wired in this mockup."),
+      tileStub: () => this.flash("Export / import flows — not wired in this mockup."),
+      dangerStub: () => this.flash("Reset draft to published: this discards every draft change (use the kebab menu on the map)."),
+      tabStub: () => this.flash("Departments, Zones and Publish History tabs — not wired in this mockup.")
+    };
+  }
+}
+</script>
+</body>
+</html>

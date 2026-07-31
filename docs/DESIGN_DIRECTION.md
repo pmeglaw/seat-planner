@@ -33,7 +33,7 @@ Add/adjust these as `--sp-*` design tokens in `app/globals.css` (surface through
 | Font (UI) | | **IBM Plex Sans** |
 | Font (codes / numeric) | mono | IBM Plex Mono |
 
-* **Orange is restrained.** Use `#FF5715` only for: the Publish button, the active tool underline, the selected seat, the search/filter highlight ring, and primary action buttons. It is not a background or a hierarchy device.
+* **Orange is restrained.** Use `#FF5715` only for: the active tool underline, the selected seat, the search/filter highlight ring, and focus. It is not a background or a hierarchy device. (Publish moved to the CTA ladder — `#D23F0A` + white — v12 decision 2a, 2026-07-31.) (SeatActionBar's Assign retains accent + ink for now — owner call deferred to the slice-4 action-bar redesign.)
 * **Shape:** flat, square corners for chrome/controls (Carbon feel). Exception: the seat pills keep their rounded shape (they're unchanged — §5).
 * **Accessibility on the accent:** white text on `#FF5715` measures ≈3.2:1 (fails AA for text). Text-bearing orange fills use **dark ink text** (ink `#161616` on `#FF5715` = 5.7:1) or the deepened **`#D23F0A`** (4.71:1 on white); hover **`#B83708`**, pressed **`#9E2F06`**. Measured 2026-07-21.
 * **Info is neutral gray, not a hue** (`#525252` text · `#F4F4F4` surface · `#C6C6C6` border). Three status hues carry meaning; a fourth coloured family for "here is some context" competed with them while signalling nothing.

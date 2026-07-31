@@ -6,8 +6,9 @@
   color-scheme: light;
 
   /* Brand constants (Megeredchian Law). The Shell redesign accent is the
-     signature orange #FF5715 — used sparingly: Publish, active tool underline,
-     selected seat, search/filter highlight, primary actions. Owner-set 2026-07-21. */
+     signature orange #FF5715 — indicator-only: active tool underline, selected
+     seat, search/filter highlight, focus. Publish moved to the CTA ladder
+     (#D23F0A + white, v12 owner decision 2a, 2026-07-31). Owner-set 2026-07-21. */
   --ml-orange-signature: #FF5715;
   --ml-orange-hover: #E64E13;
   --ml-orange-cta: #D23F0A;
@@ -19,9 +20,10 @@
   --sp-color-brand-copper: #D23F0A;
   --sp-color-brand-accent: #FF5715;
   /* Action ladder for text-bearing orange fills. The raw brand #FF5715 is only
-     3.17:1 with white (fails AA text), so buttons that keep white labels use the
-     deepened #D23F0A (4.71:1). The hero Publish button instead uses #FF5715 with
-     dark ink text (#161616 on #FF5715 = 5.71:1). Measured 2026-07-21. */
+     3.17:1 with white (fails AA text), so white-label buttons use the deepened
+     #D23F0A (4.71:1). The hero Publish button joined this ladder 2026-07-31
+     (v12 owner decision 2a): #D23F0A bg + white label + white count badge with
+     ink text (18.10:1). Measured 2026-07-21/2026-07-31. */
   --sp-color-action-primary: #D23F0A;
   --sp-color-action-primary-hover: #B83708;
   --sp-color-action-primary-pressed: #9E2F06;
@@ -238,7 +240,7 @@
      but only ~4.0-4.3:1 as TEXT on primary-soft / surface-alt / paper —
      use on-soft for orange text on tinted/alt/paper surfaces: #9E2F06 =
      ~6.5:1 on soft, 6.67:1 on #F7F6F2, 6.26:1 on paper; the hero Publish
-     button uses accent + ink text (#161616 on #FF5715 = 5.71:1). White-label
+     button sits on the cta ladder (#D23F0A + white, 4.71:1; v12 decision 2a). White-label
      fills hover to cta-hover (#B83708 = 5.85:1), never primary-hover
      (#E64E13 = 3.84:1 vs white — fails AA text; kept for non-text use and
      ink-on-accent, ink on #E64E13 = 4.90:1). Measured 2026-07-21. */
@@ -292,6 +294,26 @@
   --admin-chrome-info: #4589ff;
   --admin-chrome-info-rgb: 69 137 255;
   --admin-chrome-info-text: #78a9ff;
+
+  /* Carbon-for-AI family (v12 handoff, 2026-07-31). Reserved EXCLUSIVELY for
+     AI presence — Ask Planner chip/drawer and the planner-highlight seat
+     state. Never a status hue, never the brand. Light pair: text #0043ce =
+     7.79:1 on white, 7.21:1 on #F7F6F2; border #4589ff = 3.35:1 on white
+     (graphics ≥3:1, not for text). Dark-chrome pair: #78a9ff = 7.68:1 on
+     #161616, 6.43:1 on #262626. Measured 2026-07-31. */
+  --admin-ai-border: #4589ff;
+  --admin-ai-text: #0043ce;
+  --admin-ai-rgb: 69 137 255;
+  --admin-ai-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.12), rgba(255, 255, 255, 0) 70%);
+  --admin-ai-marker-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.14), rgba(255, 255, 255, 0) 60%);
+  --admin-ai-ring: rgba(69, 137, 255, 0.45);
+  --admin-ai-ring-soft: rgba(69, 137, 255, 0.18);
+  --admin-marker-ai-shadow: 0 0 0 2px rgba(69, 137, 255, 0.45), 0 0 0 6px rgba(69, 137, 255, 0.18), 0 10px 22px rgba(69, 137, 255, 0.35);
+  --admin-ai-chrome-text: #78a9ff;
+  --admin-ai-chrome-border: #78a9ff;
+  --admin-ai-panel-border: rgba(120, 169, 255, 0.35);
+  --admin-ai-glow: linear-gradient(180deg, rgba(69, 137, 255, 0.10), rgba(69, 137, 255, 0) 140px);
+  --admin-ai-row: rgba(69, 137, 255, 0.08);
 
   --admin-success: #1D6E41;
   --admin-success-soft: #DEF3E4;
