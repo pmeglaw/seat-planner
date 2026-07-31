@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script src="shared/seats.js"></script>
+<style>
+body{margin:0;background:#EBE8E2;font-family:"IBM Plex Sans",system-ui,sans-serif}
+a{color:#9E2F06;text-decoration:none}a:hover{color:#D23F0A;text-decoration:underline}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 6px}
+.dv-tid{font:600 10px "IBM Plex Mono",monospace;padding:3px 7px;background:#1a1a1a;color:#fff;text-decoration:none}
+.dv-tname{font:600 14px/1.2 "IBM Plex Sans",sans-serif;color:#1a1a1a}
+.dv-opts{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px "IBM Plex Mono",monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 12px/1.3 "IBM Plex Sans",sans-serif;color:rgba(0,0,0,.6)}
+.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
+.dv-opt:target .dv-oid{background:#D23F0A;color:#fff}
+.dv-next{margin:26px 0 0;font:12px/1.5 "IBM Plex Sans",sans-serif;color:rgba(0,0,0,.5)}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t2" data-screen-label="Publish button alternatives">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Publish button — alternatives to the bright #FF5715 + ink</span></div>
+<p style="margin:0 0 20px;font:400 12px/1.6 'IBM Plex Sans',sans-serif;color:rgba(0,0,0,.55);max-width:780px">Context: the bright signature orange can't hold white text (3.17:1, fails AA), which is why it carries ink — the "pumpkin" effect. Every option below is AA-checked. Picking one recolors Publish only; the active-tab underline and selected-seat orange can stay or follow.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Deep CTA orange — joins the app's action ladder · white 4.71:1</div>
+<div class="dv-card" style="width:420px;background:#161616">
+  <div style="height:36px;display:flex;align-items:center;justify-content:flex-end;font-family:'IBM Plex Sans',sans-serif;color:#F7F6F2">
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#B8AEA2"><span style="font-size:13px">✦</span> Ask Planner</div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;height:36px;color:#fff;background:#262626;border-bottom:2px solid #D23F0A;font-size:10px;font-weight:500"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3.1"></circle><path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6"></path><path d="M14.5 18.4l2 2 4.2-4.6"></path></svg>Admin</div>
+    <div style="display:flex;align-items:center;gap:7px;height:100%;padding:0 15px;background:#D23F0A;color:#fff;font-size:12.5px;font-weight:600;margin-left:6px">Publish <span style="background:#fff;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">2</span></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Ember — deepest of the brand ladder, rich not bright · white 7.33:1</div>
+<div class="dv-card" style="width:420px;background:#161616">
+  <div style="height:36px;display:flex;align-items:center;justify-content:flex-end;font-family:'IBM Plex Sans',sans-serif;color:#F7F6F2">
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#B8AEA2"><span style="font-size:13px">✦</span> Ask Planner</div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;height:36px;color:#fff;background:#262626;border-bottom:2px solid #FF5715;font-size:10px;font-weight:500"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3.1"></circle><path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6"></path><path d="M14.5 18.4l2 2 4.2-4.6"></path></svg>Admin</div>
+    <div style="display:flex;align-items:center;gap:7px;height:100%;padding:0 15px;background:#9E2F06;color:#fff;font-size:12.5px;font-weight:600;margin-left:6px">Publish <span style="background:#fff;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">2</span></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="2c">
+<div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Quiet ink — orange demoted to an accent edge; Publish stops shouting</div>
+<div class="dv-card" style="width:420px;background:#161616">
+  <div style="height:36px;display:flex;align-items:center;justify-content:flex-end;font-family:'IBM Plex Sans',sans-serif;color:#F7F6F2">
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#B8AEA2"><span style="font-size:13px">✦</span> Ask Planner</div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;height:36px;color:#fff;background:#262626;border-bottom:2px solid #FF5715;font-size:10px;font-weight:500"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3.1"></circle><path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6"></path><path d="M14.5 18.4l2 2 4.2-4.6"></path></svg>Admin</div>
+    <div style="display:flex;align-items:center;gap:7px;height:100%;padding:0 15px;background:#393939;border-bottom:2px solid #FF5715;color:#F4F4F4;font-size:12.5px;font-weight:600;margin-left:6px">Publish <span style="background:#FF5715;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">2</span></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="2d">
+<div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Monogram coral — matches the brand mark and avatar · ink 6.13:1</div>
+<div class="dv-card" style="width:420px;background:#161616">
+  <div style="height:36px;display:flex;align-items:center;justify-content:flex-end;font-family:'IBM Plex Sans',sans-serif;color:#F7F6F2">
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#B8AEA2"><span style="font-size:13px">✦</span> Ask Planner</div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;height:36px;color:#fff;background:#262626;border-bottom:2px solid #FC672A;font-size:10px;font-weight:500"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3.1"></circle><path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6"></path><path d="M14.5 18.4l2 2 4.2-4.6"></path></svg>Admin</div>
+    <div style="display:flex;align-items:center;gap:7px;height:100%;padding:0 15px;background:#FC672A;color:#161616;font-size:12.5px;font-weight:600;margin-left:6px">Publish <span style="background:#161616;color:#fff;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">2</span></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="2e">
+<div class="dv-olabel"><a class="dv-oid" href="#2e">2e</a>Carbon blue #0f62fe — the authentic v12 primary · white 4.83:1 (breaks the white-label rule)</div>
+<div class="dv-card" style="width:420px;background:#161616">
+  <div style="height:36px;display:flex;align-items:center;justify-content:flex-end;font-family:'IBM Plex Sans',sans-serif;color:#F7F6F2">
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#B8AEA2"><span style="font-size:13px">✦</span> Ask Planner</div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;height:36px;color:#fff;background:#262626;border-bottom:2px solid #0f62fe;font-size:10px;font-weight:500"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3.1"></circle><path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6"></path><path d="M14.5 18.4l2 2 4.2-4.6"></path></svg>Admin</div>
+    <div style="display:flex;align-items:center;gap:7px;height:100%;padding:0 15px;background:#0f62fe;color:#fff;font-size:12.5px;font-weight:600;margin-left:6px">Publish <span style="background:#fff;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">2</span></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="2f">
+<div class="dv-olabel"><a class="dv-oid" href="#2f">2f</a>Ghost — quietest; the count badge alone carries the draft state</div>
+<div class="dv-card" style="width:420px;background:#161616">
+  <div style="height:36px;display:flex;align-items:center;justify-content:flex-end;font-family:'IBM Plex Sans',sans-serif;color:#F7F6F2">
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#B8AEA2"><span style="font-size:13px">✦</span> Ask Planner</div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;height:36px;color:#fff;background:#262626;border-bottom:2px solid #FF5715;font-size:10px;font-weight:500"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3.1"></circle><path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6"></path><path d="M14.5 18.4l2 2 4.2-4.6"></path></svg>Admin</div>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;padding:0 13px;background:transparent;border:1px solid rgba(255,255,255,.35);color:#F4F4F4;font-size:12.5px;font-weight:600;margin:0 6px;align-self:center">Publish <span style="background:#FF5715;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">2</span></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "apply <a class="dv-oid" href="#2a">2a</a> everywhere" · "use <a class="dv-oid" href="#2c">2c</a> but keep the orange underline on Admin" · "show <a class="dv-oid" href="#2b">2b</a> on the full 1b screen"</p>
+</section>
+<section class="dv-turn" id="t1" data-screen-label="Carbon v12 redesign">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Seat Planner on predicted Carbon v12 — conservative (committed enable-v12 flags only), firm-orange white label</span></div>
+<p style="margin:0 0 24px;font:400 12px/1.6 'IBM Plex Sans',sans-serif;color:rgba(0,0,0,.55);max-width:820px">v12 is not a visual-language break — every breaking change IBM has committed ships behind an <span style="font-family:'IBM Plex Mono',monospace">enable-v12-*</span> flag today: the Layer model replaces per-component light props, Menu-based overflow, Tile default icons, reduced label spacing, xs/sm density, and the <span style="font-family:'IBM Plex Mono',monospace">slug → decorator</span> rename that makes the AI label a first-class slot on every component. Full evidence in the <a href="Carbon v12 Brief.dc.html">prediction brief</a>. Baseline: <a href="Current UI.dc.html">current UI recreation</a>. Orange stays the brand accent; AI presence keeps Carbon's reserved blue-light treatment so "the system did this" never competes with brand or status hues.</p>
+
+<div class="dv-opts">
+
+<!-- ================= 1a DOCKED ================= -->
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Docked — literal flag adoption: today's layout, v12 structure (Menu overflow, xs fields, tabbed inspector, flat buttons)</div>
+<div class="dv-card" data-screen-label="1a Docked admin" style="position:relative;width:1440px;height:880px;background:#F7F6F2;font-family:'IBM Plex Sans',sans-serif">
+  <div style="position:absolute;top:0;left:0;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:50">
+    <img src="public/images/megeredchian-mark.png" alt="" style="width:24px;height:24px;object-fit:contain">
+    <div style="margin-left:8px;font-size:12.5px;font-weight:600;white-space:nowrap">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></div>
+    <span style="margin:0 10px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);padding:0 9px;font-size:12px;color:#d4d4d4;white-space:nowrap">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M3 4h14l-5.5 6.5V16l-3-1.6v-3.9L3 4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+      Filter
+      <svg width="10" height="10" viewBox="0 0 20 20" fill="none"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:0 9px;width:460px;margin-left:8px;color:#8f8f8f">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="flex:1;font-size:12px">Search people or seats...</span>
+      <span style="font:600 9.5px 'IBM Plex Mono',monospace;background:#262626;border:1px solid rgba(255,255,255,.15);padding:1px 5px;color:#B8AEA2">Ctrl K</span>
+    </div>
+    <span style="margin:0 10px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <span style="width:32px;height:36px;display:grid;place-items:center;color:#6E655A;font-size:14px;opacity:.55">↺</span>
+    <span style="width:32px;height:36px;display:grid;place-items:center;color:#6E655A;font-size:14px;opacity:.55">↻</span>
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#B8AEA2"><span style="font-size:13px">▤</span> Management</div>
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#B8AEA2"><span style="font-size:13px">✦</span> Ask Planner</div>
+    <span style="width:32px;height:36px;display:grid;place-items:center;color:#B8AEA2;background:#262626;font-size:15px;font-weight:700">⋮</span>
+    <div style="flex:1"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;height:36px;color:#B8AEA2;font-size:10px;font-weight:500">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.2"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+      Viewer
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;height:36px;color:#fff;background:#262626;border-bottom:2px solid #FF5715;font-size:10px;font-weight:500">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3.1"></circle><path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6"></path><path d="M14.5 18.4l2 2 4.2-4.6"></path></svg>
+      Admin
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;height:100%;padding:0 15px;background:#D23F0A;color:#fff;font-size:12.5px;font-weight:600;margin-left:6px">Publish <span style="background:#fff;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">2</span></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+
+  <!-- open v12 Menu (enable-v12-overflowmenu) -->
+  <div style="position:absolute;top:38px;left:872px;width:224px;background:#262626;border:1px solid rgba(255,255,255,.15);box-shadow:0 6px 16px rgba(0,0,0,.4);z-index:60;padding:4px 0;color:#F4F4F4">
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px"><span style="width:14px;text-align:center;color:#42be65">✓</span>Show occupant names</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;font-size:12.5px"><span style="display:flex;gap:10px"><span style="width:14px"></span>Export view</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#8E8276">⌘E</span></div>
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px"><span style="width:14px"></span>Reset zoom</div>
+    <div style="height:1px;background:rgba(255,255,255,.12);margin:4px 0"></div>
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px;color:#ff8389"><span style="width:14px"></span>Discard draft changes</div>
+  </div>
+  <sc-if value="{{ notes }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:44px;left:1104px;z-index:61;background:#161616;color:#fff;font:500 10px 'IBM Plex Mono',monospace;padding:4px 7px;border-left:2px solid #FF5715;box-shadow:0 2px 8px rgba(0,0,0,.3)">enable-v12-overflowmenu: kebab → Menu subsystem</span></sc-if>
+  <sc-if value="{{ notes }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:44px;left:180px;z-index:61;background:#161616;color:#fff;font:500 10px 'IBM Plex Mono',monospace;padding:4px 7px;border-left:2px solid #FF5715;box-shadow:0 2px 8px rgba(0,0,0,.3)">xs (24px) fields — v12 density ramp</span></sc-if>
+
+  <div style="position:absolute;top:36px;left:0;right:320px;display:flex;align-items:center;gap:12px;padding:10px 12px 8px">
+    <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E1D8;padding:5px 10px;font-size:12.5px;font-weight:600;color:#161616">Floor 3 · Pre-Litigation <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style="color:#6E655A"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+    <span style="font-size:12px;color:#6E655A">Draft map · 90 seats</span>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #E7E1D8;height:28px;padding:0 11px;font-size:12.5px;font-weight:600;color:#161616">＋ Add seat</div>
+  </div>
+
+  <div style="position:absolute;top:82px;left:12px;right:332px;border:1px solid #E7E1D8;background:#fff;padding:10px">
+    <div style="position:relative">
+      <img src="public/images/office-floor-plan.webp" alt="Floor 3 plan" style="display:block;width:100%">
+      <sc-for list="{{ codeNoSel }}" as="s" hint-placeholder-count="8">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:24px;width:46px;border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:0 3px 9px rgba(23,26,29,.16),inset 0 1px 0 rgba(255,255,255,.85),0 0 0 1px rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;z-index:10">
+          {{ s.label }}
+          <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ plateSeats }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:152px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:0 3px 9px rgba(23,26,29,.16),inset 0 1px 0 rgba(255,255,255,.85);padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:11;text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.eyebrow }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+          <span style="font-size:9.5px;font-weight:600;line-height:1.2;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span>
+          <sc-if value="{{ p.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+          <sc-if value="{{ p.draftB }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:999px;background:#8A6116;border:1px solid rgba(255,255,255,.85);color:#fff;font-size:8px;font-weight:900;display:grid;place-items:center">D</span></sc-if>
+        </span>
+      </sc-for>
+      <span style="position:absolute;left:{{ selLeft }};top:{{ selTop }};transform:translate(-50%,-50%);width:126px;border-radius:999px;border:1px solid #D46A24;background:#171A1D;color:#fff;box-shadow:0 10px 24px rgba(31,35,39,.30),0 0 0 2px rgba(212,106,36,.9),inset 0 1px 0 rgba(255,255,255,.16);padding:6px 16px;display:flex;flex-direction:column;gap:1px;z-index:40;text-align:left">
+        <span style="font-size:8.5px;font-weight:800;letter-spacing:.04em;opacity:.7">C01</span>
+        <span style="font-size:13px;font-weight:700;line-height:1.1;white-space:nowrap">Adele M.</span>
+      </span>
+      <div style="position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;background:#fff;border:1px solid #E7E1D8;box-shadow:0 1px 2px rgba(22,22,22,.06);z-index:20">
+        <span style="width:32px;padding:7px 0;text-align:center;font:500 10.5px 'IBM Plex Mono',monospace;color:#55504A;border-bottom:1px solid #E7E1D8">Fit</span>
+        <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">+</span>
+        <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">−</span>
+        <span style="width:32px;height:32px;display:grid;place-items:center;color:#161616"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M7 3.5H3.5V7M13 3.5h3.5V7M7 16.5H3.5V13M13 16.5h3.5V13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+      </div>
+    </div>
+  </div>
+  <!-- single-line footer strip -->
+  <div style="position:absolute;left:12px;right:332px;top:592px;background:#fff;border:1px solid #E7E1D8;border-top:none;display:flex;align-items:center;gap:14px;padding:8px 16px">
+    <span style="font-size:12.5px;font-weight:600;color:#161616">Planning canvas</span>
+    <span style="font-size:12px;color:#6E655A">90 seats</span>
+    <div style="flex:1"></div>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#1D6E41"></span>Assigned 60</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8E8276"></span>Open 27</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8A6116"></span>Reserved 2</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#B8AEA2"></span>Unavailable 1</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#D23F0A"></span>Draft 1</span>
+  </div>
+  <sc-if value="{{ notes }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:600px;left:24px;z-index:61;background:#161616;color:#fff;font:500 10px 'IBM Plex Mono',monospace;padding:4px 7px;border-left:2px solid #FF5715;box-shadow:0 2px 8px rgba(0,0,0,.3)">status band condensed to one 36px strip</span></sc-if>
+
+  <!-- v12 inspector: docked, tabbed, pinned footer -->
+  <div style="position:absolute;top:36px;right:0;bottom:0;width:320px;background:#161616;border-left:1px solid rgba(255,255,255,.10);color:#F7F6F2;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:14px 16px 10px">
+      <div style="width:36px;height:36px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0">AM</div>
+      <div style="min-width:0;flex:1">
+        <div style="font-size:15px;font-weight:600;line-height:1.25">Adele Marchetti</div>
+        <div style="font-size:12px;color:#B8AEA2;margin-top:1px">Billing Specialist · IT</div>
+      </div>
+      <span style="color:#B8AEA2;font-size:14px;line-height:1;padding:2px 4px">✕</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:0 16px 12px">
+      <span style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.10);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#D8D0C5"><span style="width:6px;height:6px;border-radius:999px;background:#42be65"></span>Assigned</span>
+      <span style="background:rgba(255,255,255,.10);padding:3px 8px;font:600 11px 'IBM Plex Mono',monospace;color:#D8D0C5">C01</span>
+      <sc-if value="{{ aiEverywhere }}" hint-placeholder-val="{{ false }}"><span style="border:1px solid #78a9ff;color:#78a9ff;font-size:9.5px;font-weight:700;padding:2px 5px;letter-spacing:.04em">AI</span></sc-if>
+    </div>
+    <div style="display:flex;gap:1px;padding:0 16px 14px">
+      <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#262626;padding:9px 0;font-size:11px;font-weight:600;color:#F4F4F4"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3v14M3 10h14" stroke-linecap="round"></path><path d="m7.5 5.5 2.5-2.5 2.5 2.5M7.5 14.5l2.5 2.5 2.5-2.5M5.5 7.5 3 10l2.5 2.5M14.5 7.5 17 10l-2.5 2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>Move</span>
+      <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#262626;padding:9px 0;font-size:11px;font-weight:600;color:#F4F4F4"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11l-3-3M16 13H5l3 3"></path></svg>Swap</span>
+      <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#262626;padding:9px 0;font-size:11px;font-weight:600;color:#ff8389"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="7" r="2.8"></circle><path d="M3.5 16.5v-1a4 4 0 0 1 4-4h1.5"></path><path d="M12.5 13.5h5"></path></svg>Vacate</span>
+    </div>
+    <div style="display:flex;background:#262626;margin:0 16px">
+      <span style="flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:600;background:#161616;border-top:2px solid #FF5715;color:#F4F4F4">Overview</span>
+      <span style="flex:1;text-align:center;padding:8px 0;font-size:12px;color:#B8AEA2;border-top:2px solid transparent">Notes</span>
+      <span style="flex:1;text-align:center;padding:8px 0;font-size:12px;color:#B8AEA2;border-top:2px solid transparent">Activity</span>
+    </div>
+    <div style="flex:1;overflow:hidden;padding:14px 16px 0">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">CONTACT</div>
+      <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0 4px;font-size:12px"><span style="color:#B8AEA2">Email</span><span style="color:#F7F6F2;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">adele.marchetti27@megeredchianl…</span></div>
+      <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.08)"><span style="color:#B8AEA2">Extension</span><span style="color:#F7F6F2;font-family:'IBM Plex Mono',monospace">0227</span></div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276;margin-top:12px">SEAT</div>
+      <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0 4px;font-size:12px"><span style="color:#B8AEA2">Zone</span><span style="color:#F7F6F2;font-weight:600">Center Desks</span></div>
+      <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px"><span style="color:#B8AEA2">Seat type</span><span style="color:#F7F6F2;font-weight:600">Protected original</span></div>
+      <sc-if value="{{ notes }}" hint-placeholder-val="{{ true }}"><span style="display:inline-block;margin-top:14px;background:#262626;color:#D8D0C5;font:500 10px 'IBM Plex Mono',monospace;padding:4px 7px;border-left:2px solid #FF5715">v12: accordions → contained tabs; reduced label spacing</span></sc-if>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:0 16px 12px;background:#262626;padding:10px 12px;font-size:12px;font-weight:600;color:#F4F4F4">
+      <span style="display:flex;align-items:center;gap:8px"><span style="border:1px solid #78a9ff;color:#78a9ff;font-size:9.5px;font-weight:700;padding:1px 4px;letter-spacing:.04em">AI</span>Ask Planner about this seat</span><span style="color:#8E8276">›</span>
+    </div>
+    <div style="height:48px;background:#D23F0A;color:#fff;display:grid;place-items:center;font-size:14px;font-weight:600">Edit assignment</div>
+  </div>
+</div>
+</div>
+
+<!-- ================= 1b FULL-BLEED ================= -->
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Full-bleed workspace (recommended) — map edge-to-edge, everything floats on the Layer model; kills the dead space</div>
+<div class="dv-card" data-screen-label="1b Full-bleed admin" style="position:relative;width:1440px;height:800px;background:#ECE8E0;font-family:'IBM Plex Sans',sans-serif">
+  <div style="position:absolute;top:0;left:0;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:50">
+    <img src="public/images/megeredchian-mark.png" alt="" style="width:24px;height:24px;object-fit:contain">
+    <div style="margin-left:8px;font-size:12.5px;font-weight:600;white-space:nowrap">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></div>
+    <span style="margin:0 10px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);padding:0 9px;font-size:12px;color:#d4d4d4">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M3 4h14l-5.5 6.5V16l-3-1.6v-3.9L3 4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+      Filter
+      <svg width="10" height="10" viewBox="0 0 20 20" fill="none"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:0 9px;width:460px;margin-left:8px;color:#8f8f8f">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="flex:1;font-size:12px">Search people or seats...</span>
+      <span style="font:600 9.5px 'IBM Plex Mono',monospace;background:#262626;border:1px solid rgba(255,255,255,.15);padding:1px 5px;color:#B8AEA2">Ctrl K</span>
+    </div>
+    <span style="margin:0 10px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <span style="width:32px;height:36px;display:grid;place-items:center;color:#6E655A;font-size:14px;opacity:.55">↺</span>
+    <span style="width:32px;height:36px;display:grid;place-items:center;color:#6E655A;font-size:14px;opacity:.55">↻</span>
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#B8AEA2"><span style="font-size:13px">▤</span> Management</div>
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#B8AEA2"><span style="font-size:13px">✦</span> Ask Planner</div>
+    <span style="width:32px;height:36px;display:grid;place-items:center;color:#B8AEA2;font-size:15px;font-weight:700">⋮</span>
+    <div style="flex:1"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;height:36px;color:#B8AEA2;font-size:10px;font-weight:500">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.2"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+      Viewer
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;height:36px;color:#fff;background:#262626;border-bottom:2px solid #FF5715;font-size:10px;font-weight:500">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3.1"></circle><path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6"></path><path d="M14.5 18.4l2 2 4.2-4.6"></path></svg>
+      Admin
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;height:100%;padding:0 15px;background:#D23F0A;color:#fff;font-size:12.5px;font-weight:600;margin-left:6px">Publish <span style="background:#fff;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">2</span></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+
+  <!-- full-bleed raster -->
+  <div style="position:absolute;top:60px;left:0;right:0;height:653px">
+    <div style="position:relative;width:1440px">
+      <img src="public/images/office-floor-plan.webp" alt="Floor 3 plan" style="display:block;width:100%">
+      <sc-for list="{{ codeNoSel }}" as="s" hint-placeholder-count="8">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:24px;width:46px;border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:0 3px 9px rgba(23,26,29,.16),inset 0 1px 0 rgba(255,255,255,.85),0 0 0 1px rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;z-index:10">
+          {{ s.label }}
+          <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ plateSeats }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:152px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:0 3px 9px rgba(23,26,29,.16),inset 0 1px 0 rgba(255,255,255,.85);padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:11;text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.eyebrow }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+          <span style="font-size:9.5px;font-weight:600;line-height:1.2;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span>
+          <sc-if value="{{ p.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+          <sc-if value="{{ p.draftB }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:999px;background:#8A6116;border:1px solid rgba(255,255,255,.85);color:#fff;font-size:8px;font-weight:900;display:grid;place-items:center">D</span></sc-if>
+        </span>
+      </sc-for>
+      <span style="position:absolute;left:{{ selLeft }};top:{{ selTop }};transform:translate(-50%,-50%);width:126px;border-radius:999px;border:1px solid #D46A24;background:#171A1D;color:#fff;box-shadow:0 10px 24px rgba(31,35,39,.30),0 0 0 2px rgba(212,106,36,.9),inset 0 1px 0 rgba(255,255,255,.16);padding:6px 16px;display:flex;flex-direction:column;gap:1px;z-index:40;text-align:left">
+        <span style="font-size:8.5px;font-weight:800;letter-spacing:.04em;opacity:.7">C01</span>
+        <span style="font-size:13px;font-weight:700;line-height:1.1;white-space:nowrap">Adele M.</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- floating chrome on layer-01 -->
+  <div style="position:absolute;top:48px;left:12px;display:flex;align-items:center;gap:8px;z-index:30">
+    <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12.5px;font-weight:600;color:#161616">Floor 3 · Pre-Litigation <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style="color:#6E655A"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+    <span style="background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12px;color:#6E655A">Draft map · 90 seats</span>
+  </div>
+  <div style="position:absolute;top:48px;right:356px;display:flex;gap:8px;z-index:30">
+    <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);height:32px;padding:0 12px;font-size:12.5px;font-weight:600;color:#161616">＋ Add seat</div>
+    <div style="width:32px;height:32px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);display:grid;place-items:center;color:#55504A;font-size:15px;font-weight:700">⋮</div>
+  </div>
+  <div style="position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:8px 14px;z-index:30">
+    <span style="font-size:12px;font-weight:600;color:#161616">90 seats</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#1D6E41"></span>60</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8E8276"></span>27</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8A6116"></span>2</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#B8AEA2"></span>1</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#D23F0A"></span>1 draft</span>
+  </div>
+  <div style="position:absolute;right:356px;bottom:12px;display:flex;flex-direction:column;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);z-index:30">
+    <span style="width:32px;padding:7px 0;text-align:center;font:500 10.5px 'IBM Plex Mono',monospace;color:#55504A;border-bottom:1px solid #E7E1D8">Fit</span>
+    <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">+</span>
+    <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">−</span>
+    <span style="width:32px;height:32px;display:grid;place-items:center;color:#161616"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M7 3.5H3.5V7M13 3.5h3.5V7M7 16.5H3.5V13M13 16.5h3.5V13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+  </div>
+
+  <!-- floating inspector card -->
+  <div style="position:absolute;top:48px;right:12px;bottom:12px;width:332px;background:#161616;border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 40px rgba(22,22,22,.32);color:#F7F6F2;display:flex;flex-direction:column;z-index:35">
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:14px 16px 10px">
+      <div style="width:36px;height:36px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0">AM</div>
+      <div style="min-width:0;flex:1">
+        <div style="font-size:15px;font-weight:600;line-height:1.25">Adele Marchetti</div>
+        <div style="font-size:12px;color:#B8AEA2;margin-top:1px">Billing Specialist · IT</div>
+      </div>
+      <span style="color:#B8AEA2;font-size:14px;line-height:1;padding:2px 4px">✕</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:0 16px 12px">
+      <span style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.10);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#D8D0C5"><span style="width:6px;height:6px;border-radius:999px;background:#42be65"></span>Assigned</span>
+      <span style="background:rgba(255,255,255,.10);padding:3px 8px;font:600 11px 'IBM Plex Mono',monospace;color:#D8D0C5">C01</span>
+      <span style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.10);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#D8D0C5">Center Desks</span>
+    </div>
+    <div style="display:flex;gap:1px;padding:0 16px 14px">
+      <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#262626;padding:9px 0;font-size:11px;font-weight:600;color:#F4F4F4"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3v14M3 10h14" stroke-linecap="round"></path><path d="m7.5 5.5 2.5-2.5 2.5 2.5M7.5 14.5l2.5 2.5 2.5-2.5M5.5 7.5 3 10l2.5 2.5M14.5 7.5 17 10l-2.5 2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>Move</span>
+      <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#262626;padding:9px 0;font-size:11px;font-weight:600;color:#F4F4F4"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11l-3-3M16 13H5l3 3"></path></svg>Swap</span>
+      <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#262626;padding:9px 0;font-size:11px;font-weight:600;color:#ff8389"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="7" r="2.8"></circle><path d="M3.5 16.5v-1a4 4 0 0 1 4-4h1.5"></path><path d="M12.5 13.5h5"></path></svg>Vacate</span>
+    </div>
+    <div style="display:flex;background:#262626;margin:0 16px">
+      <span style="flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:600;background:#161616;border-top:2px solid #FF5715;color:#F4F4F4">Overview</span>
+      <span style="flex:1;text-align:center;padding:8px 0;font-size:12px;color:#B8AEA2;border-top:2px solid transparent">Notes</span>
+      <span style="flex:1;text-align:center;padding:8px 0;font-size:12px;color:#B8AEA2;border-top:2px solid transparent">Activity</span>
+    </div>
+    <div style="flex:1;overflow:hidden;padding:14px 16px 0">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">CONTACT</div>
+      <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0 4px;font-size:12px"><span style="color:#B8AEA2">Email</span><span style="color:#F7F6F2;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">adele.marchetti27@megeredchianl…</span></div>
+      <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.08)"><span style="color:#B8AEA2">Extension</span><span style="color:#F7F6F2;font-family:'IBM Plex Mono',monospace">0227</span></div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276;margin-top:12px">SEAT</div>
+      <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0 4px;font-size:12px"><span style="color:#B8AEA2">Seat type</span><span style="color:#F7F6F2;font-weight:600">Protected original</span></div>
+      <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px"><span style="color:#B8AEA2">Last change</span><span style="color:#F7F6F2">Moved from N02 · May 30</span></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:0 16px 12px;background:#262626;padding:10px 12px;font-size:12px;font-weight:600;color:#F4F4F4">
+      <span style="display:flex;align-items:center;gap:8px"><span style="border:1px solid #78a9ff;color:#78a9ff;font-size:9.5px;font-weight:700;padding:1px 4px;letter-spacing:.04em">AI</span>Ask Planner about this seat</span><span style="color:#8E8276">›</span>
+    </div>
+    <div style="height:48px;background:#D23F0A;color:#fff;display:grid;place-items:center;font-size:14px;font-weight:600">Edit assignment</div>
+  </div>
+  <sc-if value="{{ notes }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:722px;left:320px;z-index:61;background:#161616;color:#fff;font:500 10px 'IBM Plex Mono',monospace;padding:4px 7px;border-left:2px solid #FF5715;box-shadow:0 2px 8px rgba(0,0,0,.3)">layer-00 workspace = the map itself; every control floats on layer-01 — no mat, no gutter, no dead band</span></sc-if>
+</div>
+</div>
+
+<!-- ================= 1c LEFT RAIL ================= -->
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Left rail — Carbon UI Shell rail replaces text nav; search owns the bar; boldest structural change</div>
+<div class="dv-card" data-screen-label="1c Rail admin" style="position:relative;width:1440px;height:760px;background:#ECE8E0;font-family:'IBM Plex Sans',sans-serif">
+  <div style="position:absolute;top:0;left:48px;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:50">
+    <div style="font-size:12.5px;font-weight:600;white-space:nowrap">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></div>
+    <span style="margin:0 10px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:0 9px;width:520px;color:#8f8f8f">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="flex:1;font-size:12px">Search people or seats — filters live here too</span>
+      <span style="font:600 9.5px 'IBM Plex Mono',monospace;background:#262626;border:1px solid rgba(255,255,255,.15);padding:1px 5px;color:#B8AEA2">Ctrl K</span>
+    </div>
+    <div style="flex:1"></div>
+    <span style="font-size:12px;color:#B8AEA2;margin-right:12px">Draft · 2 changes</span>
+    <div style="display:flex;align-items:center;gap:7px;height:100%;padding:0 15px;background:#D23F0A;color:#fff;font-size:12.5px;font-weight:600">Publish <span style="background:#fff;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">2</span></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+  <!-- rail -->
+  <div style="position:absolute;top:0;left:0;bottom:0;width:48px;background:#161616;border-right:1px solid rgba(255,255,255,.10);display:flex;flex-direction:column;align-items:center;z-index:55">
+    <img src="public/images/megeredchian-mark.png" alt="" style="width:24px;height:24px;object-fit:contain;margin:6px 0 14px">
+    <span style="width:48px;height:44px;display:grid;place-items:center;color:#fff;background:#262626;box-shadow:inset 3px 0 0 #FF5715"><svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M3 5.5 8 3.5v11L3 16.5v-11ZM8 3.5l4 2v11l-4-2M12 5.5l5-2v11l-5 2" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg></span>
+    <span style="width:48px;height:44px;display:grid;place-items:center;color:#B8AEA2"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="2.6"></circle><path d="M2.5 16v-.8a4 4 0 0 1 4-4h1a4 4 0 0 1 4 4v.8"></path><circle cx="14" cy="7.5" r="2.1"></circle><path d="M13 11.6h.6a3.6 3.6 0 0 1 3.6 3.6v.8"></path></svg></span>
+    <span style="width:48px;height:44px;display:grid;place-items:center;color:#B8AEA2"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h12v3.5H4zM4 9.5h12V13H4zM4 15h7.5v1.5H4z"></path></svg></span>
+    <span style="width:48px;height:44px;display:grid;place-items:center;color:#B8AEA2"><svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.6" stroke="currentColor" stroke-width="1.5"></circle><path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></span>
+    <div style="flex:1"></div>
+    <span style="width:48px;height:44px;display:grid;place-items:center;color:#78a9ff;position:relative"><span style="font-size:15px">✦</span><span style="position:absolute;top:6px;right:8px;border:1px solid #78a9ff;color:#78a9ff;font-size:7.5px;font-weight:700;padding:0 2px">AI</span></span>
+    <span style="width:48px;height:44px;display:grid;place-items:center;color:#B8AEA2;margin-bottom:6px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.2"></circle><circle cx="12" cy="12" r="3"></circle></svg></span>
+  </div>
+  <div style="position:absolute;top:56px;left:48px;right:0;height:653px;overflow:hidden">
+    <div style="position:relative;width:1392px;margin-left:0">
+      <img src="public/images/office-floor-plan.webp" alt="Floor 3 plan" style="display:block;width:100%">
+      <sc-for list="{{ codeSeats }}" as="s" hint-placeholder-count="8">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:24px;width:46px;border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:0 3px 9px rgba(23,26,29,.16),inset 0 1px 0 rgba(255,255,255,.85),0 0 0 1px rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;z-index:10">
+          {{ s.label }}
+          <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ plateSeats }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:152px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:0 3px 9px rgba(23,26,29,.16),inset 0 1px 0 rgba(255,255,255,.85);padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:11;text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.eyebrow }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+          <span style="font-size:9.5px;font-weight:600;line-height:1.2;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span>
+          <sc-if value="{{ p.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+          <sc-if value="{{ p.draftB }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:999px;background:#8A6116;border:1px solid rgba(255,255,255,.85);color:#fff;font-size:8px;font-weight:900;display:grid;place-items:center">D</span></sc-if>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position:absolute;top:48px;left:60px;display:flex;align-items:center;gap:8px;z-index:30">
+    <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12.5px;font-weight:600;color:#161616">Floor 3 · Pre-Litigation <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style="color:#6E655A"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+  </div>
+  <div style="position:absolute;left:60px;bottom:12px;display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:8px 14px;z-index:30">
+    <span style="font-size:12px;font-weight:600;color:#161616">90 seats</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#1D6E41"></span>60</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8E8276"></span>27</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8A6116"></span>2</span>
+  </div>
+  <div style="position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);z-index:30">
+    <span style="width:32px;padding:7px 0;text-align:center;font:500 10.5px 'IBM Plex Mono',monospace;color:#55504A;border-bottom:1px solid #E7E1D8">Fit</span>
+    <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">+</span>
+    <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">−</span>
+    <span style="width:32px;height:32px;display:grid;place-items:center;color:#161616"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M7 3.5H3.5V7M13 3.5h3.5V7M7 16.5H3.5V13M13 16.5h3.5V13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+  </div>
+  <sc-if value="{{ notes }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:88px;left:60px;z-index:61;background:#161616;color:#fff;font:500 10px 'IBM Plex Mono',monospace;padding:4px 7px;border-left:2px solid #FF5715;box-shadow:0 2px 8px rgba(0,0,0,.3)">rail: Map · People · Data · Settings — Ask Planner + Viewer pinned bottom</span></sc-if>
+</div>
+</div>
+
+<!-- ================= 1d ASK PLANNER AI ================= -->
+<div class="dv-opt" id="1d">
+<div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Ask Planner as Carbon-for-AI — AI label + explainability popover, luminous AI layer, AI-suggested seats on the map</div>
+<div class="dv-card" data-screen-label="1d Ask Planner AI" style="position:relative;width:1440px;height:800px;background:#ECE8E0;font-family:'IBM Plex Sans',sans-serif">
+  <div style="position:absolute;top:0;left:0;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:50">
+    <img src="public/images/megeredchian-mark.png" alt="" style="width:24px;height:24px;object-fit:contain">
+    <div style="margin-left:8px;font-size:12.5px;font-weight:600;white-space:nowrap">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#fff;background:#262626;border-bottom:2px solid #78a9ff"><span style="font-size:13px;color:#78a9ff">✦</span> Ask Planner <span style="border:1px solid #78a9ff;color:#78a9ff;font-size:9.5px;font-weight:700;padding:1px 4px;letter-spacing:.04em">AI</span></div>
+    <div style="display:flex;align-items:center;gap:7px;height:100%;padding:0 15px;background:#D23F0A;color:#fff;font-size:12.5px;font-weight:600;margin-left:6px">Publish <span style="background:#fff;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">2</span></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+  <div style="position:absolute;top:60px;left:0;right:0;height:653px">
+    <div style="position:relative;width:1440px">
+      <img src="public/images/office-floor-plan.webp" alt="Floor 3 plan" style="display:block;width:100%;filter:saturate(.75)">
+      <sc-for list="{{ dimCode }}" as="s" hint-placeholder-count="8">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:24px;width:46px;border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:0 3px 9px rgba(23,26,29,.16),inset 0 1px 0 rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;z-index:10;opacity:.4;filter:saturate(.5)">
+          {{ s.label }}
+        </span>
+      </sc-for>
+      <sc-for list="{{ dimPlate }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:152px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:0 3px 9px rgba(23,26,29,.16);padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:11;text-align:left;opacity:.4;filter:saturate(.5)">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.eyebrow }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+        </span>
+      </sc-for>
+      <sc-for list="{{ aiSeats }}" as="a" hint-placeholder-count="4">
+        <span style="position:absolute;left:{{ a.left }};top:{{ a.top }};transform:translate(-50%,-50%);height:26px;min-width:52px;border-radius:999px;border:1px solid #4589ff;background:linear-gradient(180deg,rgba(69,137,255,.14),rgba(255,255,255,0) 60%),#fff;color:#0043ce;box-shadow:0 0 0 2px rgba(69,137,255,.45),0 0 0 6px rgba(69,137,255,.18),0 10px 22px rgba(69,137,255,.35);display:flex;align-items:center;justify-content:center;gap:4px;font-size:9.5px;font-weight:800;z-index:30;padding:0 8px">
+          {{ a.label }}
+          <span style="border:1px solid #4589ff;color:#0043ce;font-size:7.5px;font-weight:700;padding:0 3px;letter-spacing:.04em;border-radius:2px">AI</span>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position:absolute;top:48px;left:12px;display:flex;align-items:center;gap:8px;z-index:30">
+    <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12.5px;font-weight:600;color:#161616">Floor 3 · Pre-Litigation <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style="color:#6E655A"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+    <span style="display:flex;align-items:center;gap:6px;background:linear-gradient(180deg,rgba(69,137,255,.12),rgba(255,255,255,0) 70%),#fff;border:1px solid #4589ff;box-shadow:0 6px 16px rgba(69,137,255,.2);padding:7px 11px;font-size:12px;font-weight:600;color:#0043ce"><span style="border:1px solid #4589ff;font-size:9px;font-weight:700;padding:0 3px">AI</span>4 seats highlighted by Ask Planner <span style="color:#55504A;font-weight:500">· Clear</span></span>
+  </div>
+
+  <!-- AI drawer -->
+  <div style="position:absolute;top:48px;right:12px;bottom:12px;width:420px;background:#161616;border:1px solid rgba(120,169,255,.35);box-shadow:0 0 0 1px rgba(69,137,255,.15),0 12px 48px rgba(22,22,22,.45),0 -20px 80px -40px rgba(69,137,255,.35) inset;color:#F7F6F2;display:flex;flex-direction:column;z-index:40;background-image:linear-gradient(180deg,rgba(69,137,255,.10),rgba(22,22,22,0) 140px)">
+    <div style="padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:flex-start;gap:12px">
+      <div style="min-width:0;flex:1">
+        <div style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600">Ask Planner <span style="border:1px solid #78a9ff;color:#78a9ff;font-size:10px;font-weight:700;padding:1px 5px;letter-spacing:.04em">AI</span></div>
+        <div style="font-size:12px;color:#B8AEA2;margin-top:3px">Read-only answers from saved draft map data.</div>
+      </div>
+      <span style="border-radius:999px;padding:4px 12px;font-size:11px;font-weight:500;color:#B8AEA2">Close</span>
+    </div>
+    <!-- explainability popover -->
+    <div style="margin:12px 16px 0;background:#262626;border:1px solid rgba(120,169,255,.4);box-shadow:0 8px 24px rgba(0,0,0,.4);padding:14px">
+      <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#78a9ff"><span style="border:1px solid #78a9ff;font-size:9.5px;font-weight:700;padding:1px 4px">AI</span>How this answer was made</div>
+      <p style="margin:8px 0 0;font-size:12px;line-height:1.55;color:#D8D0C5">Generated from the <b style="color:#F4F4F4">saved draft layer only</b> — seats, the employee directory, zones and departments. The model reads the map; it can never modify it. Unsaved inspector edits are not included.</p>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <span style="background:rgba(255,255,255,.10);border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:600;color:#D8D0C5">Sources: draft seats · directory</span>
+        <span style="background:rgba(66,190,101,.15);border:1px solid rgba(66,190,101,.4);border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:600;color:#42be65">High confidence</span>
+      </div>
+    </div>
+    <!-- answer card with AI layer -->
+    <div style="margin:12px 16px 0;border:1px solid rgba(120,169,255,.35);background:linear-gradient(180deg,rgba(69,137,255,.12),rgba(38,38,38,0) 80px),#262626;padding:14px">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <span style="background:rgba(66,190,101,.15);border:1px solid rgba(66,190,101,.4);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:600;color:#42be65">Answered</span>
+        <span style="background:rgba(255,255,255,.10);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:600;color:#B8AEA2">read-only</span>
+      </div>
+      <p style="margin:0;font-size:13.5px;line-height:1.6;color:#F4F4F4">4 seats are open in North Pod: <b>N09, N10, N11, N12</b> — the full back row. All four sit inside the pod's quiet half, nearest the records room. They are highlighted on the map.</p>
+    </div>
+    <!-- highlighted seats -->
+    <div style="margin:12px 16px 0;flex:1;min-height:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:600;color:#B8AEA2">Highlighted seats · 4 in answer</span>
+        <span style="border:1px solid rgba(255,87,21,.5);background:rgba(255,87,21,.1);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#FF5715">Clear highlights</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(120,169,255,.3);background:rgba(69,137,255,.08);padding:9px 12px"><span><span style="display:block;font-size:13px;font-weight:600;color:#F4F4F4">N09 — open</span><span style="display:block;font-size:11.5px;color:#B8AEA2;margin-top:1px">Back row, next to records</span></span><span style="background:rgba(255,255,255,.10);border-radius:999px;padding:3px 9px;font-size:10px;font-weight:600;color:#78a9ff">Select</span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(120,169,255,.3);background:rgba(69,137,255,.08);padding:9px 12px"><span><span style="display:block;font-size:13px;font-weight:600;color:#F4F4F4">N10 — open</span><span style="display:block;font-size:11.5px;color:#B8AEA2;margin-top:1px">Back row, center</span></span><span style="background:rgba(255,255,255,.10);border-radius:999px;padding:3px 9px;font-size:10px;font-weight:600;color:#78a9ff">Select</span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(120,169,255,.3);background:rgba(69,137,255,.08);padding:9px 12px"><span><span style="display:block;font-size:13px;font-weight:600;color:#F4F4F4">N11 — open</span><span style="display:block;font-size:11.5px;color:#B8AEA2;margin-top:1px">Back row, center</span></span><span style="background:rgba(255,255,255,.10);border-radius:999px;padding:3px 9px;font-size:10px;font-weight:600;color:#78a9ff">Select</span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(120,169,255,.3);background:rgba(69,137,255,.08);padding:9px 12px"><span><span style="display:block;font-size:13px;font-weight:600;color:#F4F4F4">N12 — open</span><span style="display:block;font-size:11.5px;color:#B8AEA2;margin-top:1px">Back row, window side</span></span><span style="background:rgba(255,255,255,.10);border-radius:999px;padding:3px 9px;font-size:10px;font-weight:600;color:#78a9ff">Select</span></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <span style="border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.12);padding:5px 10px;font-size:11px;font-weight:500;color:#D8D0C5">Who sits nearest N09?</span>
+        <span style="border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.12);padding:5px 10px;font-size:11px;font-weight:500;color:#D8D0C5">Open seats in other pods</span>
+      </div>
+    </div>
+    <div style="padding:12px 16px 16px">
+      <div style="display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);padding:9px 12px">
+        <span style="flex:1;font-size:13px;color:#8f8f8f">Ask a follow-up…</span>
+        <span style="border-radius:999px;background:#D23F0A;color:#fff;padding:6px 14px;font-size:12.5px;font-weight:600">Ask</span>
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{ notes }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:722px;left:12px;z-index:61;background:#161616;color:#fff;font:500 10px 'IBM Plex Mono',monospace;padding:4px 7px;border-left:2px solid #78a9ff;box-shadow:0 2px 8px rgba(0,0,0,.3)">Carbon for AI: label + explainability + luminous layer — AI blue stays reserved; never a status, never the brand</span></sc-if>
+</div>
+</div>
+
+<!-- ================= 1e VIEWER ================= -->
+<div class="dv-opt" id="1e">
+<div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Viewer — full-bleed, floating People card, read-only chrome</div>
+<div class="dv-card" data-screen-label="1e Viewer v12" style="position:relative;width:1440px;height:800px;background:#ECE8E0;font-family:'IBM Plex Sans',sans-serif">
+  <div style="position:absolute;top:0;left:0;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:50">
+    <img src="public/images/megeredchian-mark.png" alt="" style="width:24px;height:24px;object-fit:contain">
+    <div style="margin-left:8px;font-size:12.5px;font-weight:600;white-space:nowrap">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></div>
+    <span style="margin:0 10px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);padding:0 9px;font-size:12px;color:#d4d4d4">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M3 4h14l-5.5 6.5V16l-3-1.6v-3.9L3 4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+      Filter
+      <svg width="10" height="10" viewBox="0 0 20 20" fill="none"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:0 9px;width:520px;margin-left:8px;color:#8f8f8f">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="flex:1;font-size:12px">Find your seat, a person, or a zone…</span>
+      <span style="font:600 9.5px 'IBM Plex Mono',monospace;background:#262626;border:1px solid rgba(255,255,255,.15);padding:1px 5px;color:#B8AEA2">Ctrl K</span>
+    </div>
+    <div style="flex:1"></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+  <div style="position:absolute;top:60px;left:0;right:0;height:653px">
+    <div style="position:relative;width:1440px">
+      <img src="public/images/office-floor-plan.webp" alt="Floor 3 plan" style="display:block;width:100%">
+      <sc-for list="{{ codeSeats }}" as="s" hint-placeholder-count="8">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:24px;width:46px;border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:0 3px 9px rgba(23,26,29,.16),inset 0 1px 0 rgba(255,255,255,.85),0 0 0 1px rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;z-index:10">
+          {{ s.label }}
+          <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ viewerPlates }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:152px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:0 3px 9px rgba(23,26,29,.16),inset 0 1px 0 rgba(255,255,255,.85);padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:11;text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.label }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+          <span style="font-size:9.5px;font-weight:600;line-height:1.2;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span>
+          <sc-if value="{{ p.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position:absolute;top:48px;left:12px;display:flex;align-items:center;gap:8px;z-index:30">
+    <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12.5px;font-weight:600;color:#161616">Floor 3 · Pre-Litigation <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style="color:#6E655A"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+    <span style="background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12px;color:#6E655A">Office map · 90 seats · Updated Jul 28, 2026</span>
+  </div>
+  <div style="position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:8px 14px;z-index:30">
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#1D6E41"></span>Assigned 60</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8E8276"></span>Open 27</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8A6116"></span>Reserved 2</span>
+  </div>
+  <div style="position:absolute;top:48px;right:12px;bottom:12px;width:320px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 12px 40px rgba(22,22,22,.18);display:flex;flex-direction:column;z-index:35">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #E7E1D8">
+      <span style="font-size:14px;font-weight:600;color:#161616">People</span>
+      <div style="flex:1"></div>
+      <span style="font-size:12px;color:#6E655A">67</span>
+      <span style="color:#6E655A;font-size:14px">–</span>
+    </div>
+    <div style="flex:1;overflow:hidden">
+      <sc-for list="{{ people }}" as="pp" hint-placeholder-count="10">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid #F0ECE5">
+          <span style="width:28px;height:28px;border-radius:999px;background:#FBEAE1;color:#9E2F06;display:grid;place-items:center;font-size:10px;font-weight:700;flex-shrink:0">{{ pp.initials }}</span>
+          <span style="min-width:0;flex:1;display:flex;flex-direction:column">
+            <span style="font-size:13px;font-weight:600;color:#161616;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ pp.name }}</span>
+            <span style="font-size:11px;color:#6E655A">{{ pp.sub }}</span>
+          </span>
+          <span style="border:1px solid #E7E1D8;background:#F7F6F2;border-radius:999px;padding:2px 8px;font:600 10px 'IBM Plex Mono',monospace;color:#55504A">{{ pp.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="border-top:1px solid #E7E1D8;padding:9px 16px;font-size:11px;color:#6E655A">67 people · 60 seated</div>
+  </div>
+</div>
+</div>
+
+<!-- ================= 1f MANAGEMENT ================= -->
+<div class="dv-opt" id="1f">
+<div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Management — Carbon DataTable pattern: toolbar-integrated search + Add, stat tiles with default icons, denser rows</div>
+<div class="dv-card" data-screen-label="1f Management v12" style="position:relative;width:1440px;height:940px;background:#F7F6F2;font-family:'IBM Plex Sans',sans-serif">
+  <div style="height:36px;background:#161616;display:flex;align-items:center;padding-left:12px;color:#F7F6F2">
+    <img src="public/images/megeredchian-mark.png" alt="" style="width:24px;height:24px;object-fit:contain">
+    <div style="margin:0 8px;font-size:12.5px;font-weight:600;white-space:nowrap">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></div>
+    <span style="margin:0 10px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 10px;font-size:12.5px;font-weight:500;color:#B8AEA2"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M3 5.5 8 3.5v11L3 16.5v-11ZM8 3.5l4 2v11l-4-2M12 5.5l5-2v11l-5 2" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg> Seat map</div>
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 10px;font-size:12.5px;font-weight:500;color:#F7F6F2;background:#262626;border-bottom:2px solid #FF5715"><span style="font-size:13px">▤</span> Management</div>
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 10px;font-size:12.5px;font-weight:500;color:#B8AEA2"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.6" stroke="currentColor" stroke-width="1.5"></circle><path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg> Settings</div>
+    <div style="flex:1"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;height:36px;color:#B8AEA2;font-size:10px;font-weight:500">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.2"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+      Viewer
+    </div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+  <div style="max-width:1330px;margin:0 auto;padding:0 40px">
+    <h1 style="margin:24px 0 0;font-size:22px;font-weight:600;color:#161616">Management</h1>
+    <p style="margin:4px 0 16px;font-size:13px;color:#6E655A">People, departments, zones, and publish history.</p>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#E7E1D8;border:1px solid #E7E1D8">
+      <div style="position:relative;background:#fff;padding:16px"><div style="font-size:24px;font-weight:600;color:#161616">90</div><div style="font-size:12px;color:#6E655A;margin-top:2px">Draft seats</div><span style="position:absolute;top:10px;right:10px;color:#8E8276"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+      <div style="position:relative;background:#fff;padding:16px"><div style="font-size:24px;font-weight:600;color:#161616">68</div><div style="font-size:12px;color:#6E655A;margin-top:2px">Active employees</div><span style="position:absolute;top:10px;right:10px;color:#8E8276"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+      <div style="position:relative;background:#fff;padding:16px"><div style="font-size:24px;font-weight:600;color:#161616">60</div><div style="font-size:12px;color:#6E655A;margin-top:2px">Assigned</div><span style="position:absolute;top:10px;right:10px;color:#8E8276"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+      <div style="position:relative;background:#fff;padding:16px"><div style="font-size:24px;font-weight:600;color:#161616">8</div><div style="font-size:12px;color:#6E655A;margin-top:2px">Unassigned</div><span style="position:absolute;top:10px;right:10px;color:#8E8276"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+      <div style="position:relative;background:#fff;padding:16px"><div style="font-size:24px;font-weight:600;color:#161616">8</div><div style="font-size:12px;color:#6E655A;margin-top:2px">Active zones</div><span style="position:absolute;top:10px;right:10px;color:#8E8276"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+    </div>
+    <sc-if value="{{ notes }}" hint-placeholder-val="{{ true }}"><span style="position:relative;top:-8px;display:inline-block;background:#161616;color:#fff;font:500 10px 'IBM Plex Mono',monospace;padding:4px 7px;border-left:2px solid #FF5715">enable-v12-tile-default-icons: clickable tiles get a default glyph</span></sc-if>
+    <div style="display:flex;margin-top:12px">
+      <span style="padding:9px 16px;font-size:13px;font-weight:600;color:#161616;background:#fff;border:1px solid #E7E1D8;border-bottom:2px solid #D23F0A">Employees</span>
+      <span style="padding:9px 16px;font-size:13px;color:#55504A;border-bottom:1px solid #E7E1D8">Departments</span>
+      <span style="padding:9px 16px;font-size:13px;color:#55504A;border-bottom:1px solid #E7E1D8">Zones</span>
+      <span style="padding:9px 16px;font-size:13px;color:#55504A;border-bottom:1px solid #E7E1D8">Publish History</span>
+      <span style="flex:1;border-bottom:1px solid #E7E1D8"></span>
+    </div>
+    <div style="background:#fff;border:1px solid #E7E1D8;border-top:none">
+      <div style="display:flex;align-items:center;border-bottom:1px solid #E7E1D8">
+        <div style="display:flex;align-items:center;gap:8px;padding:0 16px;height:44px;flex:1;color:#8f8f8f">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+          <span style="font-size:13px">Search 68 employees</span>
+        </div>
+        <span style="width:44px;height:44px;display:grid;place-items:center;color:#55504A;border-left:1px solid #E7E1D8"><svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3 4h14l-5.5 6.5V16l-3-1.6v-3.9L3 4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg></span>
+        <span style="width:44px;height:44px;display:grid;place-items:center;color:#55504A;border-left:1px solid #E7E1D8;font-size:15px;font-weight:700">⋮</span>
+        <span style="height:44px;display:flex;align-items:center;gap:8px;background:#D23F0A;color:#fff;padding:0 18px;font-size:13.5px;font-weight:600">Add employee ＋</span>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 1.3fr 1.3fr .8fr .7fr 1fr 44px;background:#F0EDE7;border-bottom:1px solid #E7E1D8">
+        <span style="padding:9px 16px;font-size:12px;font-weight:600;color:#161616">Name ⌃</span>
+        <span style="padding:9px 12px;font-size:12px;font-weight:600;color:#161616">Department</span>
+        <span style="padding:9px 12px;font-size:12px;font-weight:600;color:#161616">Position</span>
+        <span style="padding:9px 12px;font-size:12px;font-weight:600;color:#161616">Extension</span>
+        <span style="padding:9px 12px;font-size:12px;font-weight:600;color:#161616">Seat</span>
+        <span style="padding:9px 12px;font-size:12px;font-weight:600;color:#161616">Status</span>
+        <span></span>
+      </div>
+      <sc-for list="{{ mgmtRows }}" as="r" hint-placeholder-count="10">
+        <div style="display:grid;grid-template-columns:2fr 1.3fr 1.3fr .8fr .7fr 1fr 44px;border-bottom:1px solid #F0ECE5;align-items:center">
+          <span style="padding:8px 16px;display:flex;align-items:center;gap:10px"><span style="width:24px;height:24px;border-radius:999px;background:#FBEAE1;color:#9E2F06;display:grid;place-items:center;font-size:9px;font-weight:700">{{ r.initials }}</span><span style="font-size:13px;font-weight:600;color:#161616">{{ r.name }}</span></span>
+          <span style="padding:8px 12px;font-size:12.5px;color:#55504A">{{ r.dept }}</span>
+          <span style="padding:8px 12px;font-size:12.5px;color:#55504A">{{ r.position }}</span>
+          <span style="padding:8px 12px;font-size:12.5px;color:#55504A;font-family:'IBM Plex Mono',monospace">{{ r.ext }}</span>
+          <span style="padding:8px 12px;font:600 12px 'IBM Plex Mono',monospace;color:#161616">{{ r.label }}</span>
+          <span style="padding:8px 12px"><span style="display:inline-flex;align-items:center;gap:5px;background:#DEF3E4;border:1px solid #A9D7B8;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:600;color:#284C3B"><span style="width:5px;height:5px;border-radius:999px;background:#1D6E41"></span>Assigned</span></span>
+          <span style="display:grid;place-items:center;color:#8E8276;font-size:14px;font-weight:700">⋮</span>
+        </div>
+      </sc-for>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;font-size:12px;color:#6E655A">
+        <span>1–10 of 68 employees</span>
+        <span style="display:flex;gap:14px"><span>‹ Prev</span><span style="color:#161616;font-weight:600">Next ›</span></span>
+      </div>
+    </div>
+    <sc-if value="{{ notes }}" hint-placeholder-val="{{ true }}"><span style="display:inline-block;margin-top:10px;background:#161616;color:#fff;font:500 10px 'IBM Plex Mono',monospace;padding:4px 7px;border-left:2px solid #FF5715">side form → toolbar action + modal (Carbon DataTable); rows 40px; per-row Menu kebab</span></sc-if>
+  </div>
+</div>
+</div>
+
+<!-- ================= 1g SETTINGS ================= -->
+<div class="dv-opt" id="1g">
+<div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Settings — clickable tiles with v12 default icons, inline notification, Menu overflow</div>
+<div class="dv-card" data-screen-label="1g Settings v12" style="position:relative;width:1440px;height:852px;background:#F7F6F2;font-family:'IBM Plex Sans',sans-serif">
+  <div style="height:36px;background:#161616;display:flex;align-items:center;padding-left:12px;color:#F7F6F2">
+    <img src="public/images/megeredchian-mark.png" alt="" style="width:24px;height:24px;object-fit:contain">
+    <div style="margin:0 8px;font-size:12.5px;font-weight:600;white-space:nowrap">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></div>
+    <span style="margin:0 10px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 10px;font-size:12.5px;font-weight:500;color:#B8AEA2"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M3 5.5 8 3.5v11L3 16.5v-11ZM8 3.5l4 2v11l-4-2M12 5.5l5-2v11l-5 2" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg> Seat map</div>
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 10px;font-size:12.5px;font-weight:500;color:#B8AEA2"><span style="font-size:13px">▤</span> Management</div>
+    <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 10px;font-size:12.5px;font-weight:500;color:#F7F6F2;background:#262626;border-bottom:2px solid #FF5715"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.6" stroke="currentColor" stroke-width="1.5"></circle><path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg> Settings</div>
+    <div style="flex:1"></div>
+    <div style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;margin:0 12px">E</div>
+  </div>
+  <div style="max-width:760px;margin:0 auto">
+    <h1 style="margin:28px 0 0;font-size:22px;font-weight:600;color:#161616">Settings</h1>
+    <p style="margin:6px 0 0;font-size:13.5px;line-height:1.55;color:#55504A">Import, export, and recovery tools. Everything here changes the draft only.</p>
+    <div style="display:flex;align-items:flex-start;gap:10px;background:#fff;border-left:3px solid #8A6116;box-shadow:0 1px 2px rgba(22,22,22,.06);padding:12px 14px;margin-top:16px">
+      <span style="width:16px;height:16px;border-radius:999px;background:#F1C21B;color:#161616;display:grid;place-items:center;font-size:10px;font-weight:800;flex-shrink:0;margin-top:1px">!</span>
+      <span style="font-size:12.5px;line-height:1.5;color:#161616"><b>The published map is never touched until you publish.</b> Restores replace the entire draft — review before confirming.</span>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:#55504A;margin:22px 0 8px;letter-spacing:.04em">CSV ASSIGNMENTS</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#E7E1D8;border:1px solid #E7E1D8">
+      <div style="position:relative;background:#fff;padding:16px;min-height:96px"><div style="font-size:13.5px;font-weight:600;color:#161616">Download CSV template</div><div style="font-size:12.5px;color:#6E655A;margin-top:3px">A blank assignment sheet to fill in</div><span style="position:absolute;bottom:12px;right:12px;color:#161616"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9 10 12.5 13.5 9M4 16.5h12"></path></svg></span></div>
+      <div style="position:relative;background:#fff;padding:16px;min-height:96px"><div style="font-size:13.5px;font-weight:600;color:#161616">Export CSV</div><div style="font-size:12.5px;color:#6E655A;margin-top:3px">Download draft assignments</div><span style="position:absolute;bottom:12px;right:12px;color:#161616"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9 10 12.5 13.5 9M4 16.5h12"></path></svg></span></div>
+      <div style="position:relative;background:#fff;padding:16px;min-height:96px;grid-column:1 / -1"><div style="font-size:13.5px;font-weight:600;color:#161616">Import CSV</div><div style="font-size:12.5px;color:#6E655A;margin-top:3px">Review parsed rows before applying — nothing writes until you confirm</div><span style="position:absolute;bottom:12px;right:12px;color:#161616"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+    </div>
+    <sc-if value="{{ notes }}" hint-placeholder-val="{{ true }}"><span style="display:inline-block;margin-top:8px;background:#161616;color:#fff;font:500 10px 'IBM Plex Mono',monospace;padding:4px 7px;border-left:2px solid #FF5715">rows → clickable tiles; enable-v12-tile-default-icons puts the action glyph on every tile</span></sc-if>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 8px">
+      <span style="font-size:12px;font-weight:600;color:#B3232C;letter-spacing:.04em">ADVANCED RECOVERY</span>
+      <span style="width:28px;height:28px;display:grid;place-items:center;color:#55504A;border:1px solid #E7E1D8;background:#fff;font-size:14px;font-weight:700">⋮</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#E7E1D8;border:1px solid #E7E1D8">
+      <div style="position:relative;background:#fff;padding:16px;min-height:96px"><div style="font-size:13.5px;font-weight:600;color:#161616">Export JSON backup</div><div style="font-size:12.5px;color:#6E655A;margin-top:3px">Download full draft recovery data</div><span style="position:absolute;bottom:12px;right:12px;color:#161616"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9 10 12.5 13.5 9M4 16.5h12"></path></svg></span></div>
+      <div style="position:relative;background:#fff;padding:16px;min-height:96px"><div style="font-size:13.5px;font-weight:600;color:#161616">Restore JSON backup</div><div style="font-size:12.5px;color:#6E655A;margin-top:3px">Review a full draft backup before restoring</div><span style="position:absolute;bottom:12px;right:12px;color:#161616"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+      <div style="position:relative;background:#FBE9EA;padding:16px;min-height:96px;grid-column:1 / -1"><div style="font-size:13.5px;font-weight:600;color:#B3232C">Reset draft to published</div><div style="font-size:12.5px;color:#7E2F24;margin-top:3px">Discard every draft seat change; people edits are kept</div><span style="position:absolute;bottom:12px;right:12px;color:#B3232C"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14 14 6M8 6h6v6"></path></svg></span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ================= 1h LOGIN ================= -->
+<div class="dv-opt" id="1h">
+<div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>Login — Carbon form fields (filled, bottom-border), ghost secondary action</div>
+<div class="dv-card" data-screen-label="1h Login v12" style="position:relative;width:1440px;height:820px;background:#161616;font-family:'IBM Plex Sans',sans-serif;display:flex;flex-direction:column">
+  <div style="flex:1;display:flex;align-items:center;justify-content:center">
+    <div style="width:1110px;display:flex;align-items:center;justify-content:space-between;gap:80px">
+      <div style="max-width:340px">
+        <img src="public/images/megeredchian-mark.png" alt="" style="width:48px;height:48px;object-fit:contain">
+        <p style="margin:20px 0 0;font-size:34px;font-weight:600;line-height:42px;color:#F7F6F2">Megeredchian Law<br>Seat Planner</p>
+        <p style="margin:20px 0 0;font-size:15px;line-height:1.45;color:#B8AEA2;max-width:320px">The internal seating map — who sits where, across every floor we occupy.</p>
+      </div>
+      <div style="width:440px;background:#fff;padding:40px 40px 36px">
+        <div style="font-size:24px;font-weight:600;color:#161616">Sign in</div>
+        <p style="margin:12px 0 0;font-size:13px;color:#55504A">Use your work email to access the internal seating map.</p>
+        <div style="margin-top:20px;font-size:12px;color:#55504A">Email</div>
+        <div style="height:40px;background:#F4F4F4;border-bottom:1px solid #8d8d8d;margin-top:6px;display:flex;align-items:center;padding:0 14px;font-size:14px;color:#8f8f8f">you@company.com</div>
+        <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:#55504A">Password</span><span style="font-size:12px;color:#9E2F06;font-weight:500">Forgot password?</span></div>
+        <div style="height:40px;background:#F4F4F4;border-bottom:1px solid #8d8d8d;margin-top:6px;display:flex;align-items:center;padding:0 14px;font-size:14px;color:#8f8f8f">Enter your password</div>
+        <div style="display:flex;gap:1px;margin-top:24px">
+          <div style="flex:1.4;height:48px;background:#D23F0A;color:#fff;display:flex;align-items:center;padding:0 16px;font-size:14px;font-weight:600">Sign in <span style="margin-left:auto">→</span></div>
+          <div style="flex:1;height:48px;border:1px solid #D8D0C5;color:#161616;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500">Magic link</div>
+        </div>
+        <sc-if value="{{ notes }}" hint-placeholder-val="{{ true }}"><span style="display:inline-block;margin-top:16px;background:#161616;color:#fff;font:500 10px 'IBM Plex Mono',monospace;padding:4px 7px;border-left:2px solid #FF5715">Carbon filled fields; tabs → button pair; primary keeps trailing icon (Carbon button anatomy)</span></sc-if>
+      </div>
+    </div>
+  </div>
+  <p style="margin:0;padding:0 48px 24px;font:400 11px 'IBM Plex Mono',monospace;color:#B8AEA2">seats.megeredchianlaw.com · internal use only</p>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "make <a class="dv-oid" href="#1b">1b</a> the direction and apply it to every screen" · "show the floating inspector from <a class="dv-oid" href="#1b">1b</a> collapsed" · "swap the AI blue in <a class="dv-oid" href="#1d">1d</a> for brand orange" · "new shell directions"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;show_annotations&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Presentation&quot;},&quot;ai_labels_everywhere&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;AI presence&quot;}}">
+class Component extends DCLogic {
+  componentDidMount() {
+    if (!this.mounted) { this.mounted = true; this.forceUpdate(); }
+  }
+  renderVals() {
+    const data = (window.SEAT_DATA && window.SEAT_DATA.seats) || [];
+    const pct = v => (v * 100).toFixed(3) + "%";
+    const tone = s => {
+      if (s.draft) return { bd: "rgba(138,97,22,.7)", bg: "rgba(252,244,214,.95)", fg: "#6D4712" };
+      if (s.status === "assigned") return { bd: "rgba(29,110,65,.55)", bg: "rgba(255,255,255,.95)", fg: "#284C3B" };
+      if (s.status === "reserved") return { bd: "rgba(138,97,22,.55)", bg: "rgba(252,244,214,.95)", fg: "#6D4712" };
+      if (s.status === "unavailable") return { bd: "rgba(190,180,168,.9)", bg: "rgba(231,225,216,.92)", fg: "#696159" };
+      return { bd: "#B8AEA2", bg: "rgba(255,255,255,.95)", fg: "#453D33" };
+    };
+    const mk = s => {
+      const t = tone(s);
+      return { label: s.label, left: pct(s.x), top: pct(s.y), bd: t.bd, bg: t.bg, fg: t.fg, dot: s.status === "assigned", draftB: !!s.draft };
+    };
+    const codeSeats = data.filter(s => s.kind === "code").map(mk);
+    const plateSeats = data.filter(s => s.kind === "plate").map(s => Object.assign(mk(s), {
+      name: s.shortName || "Open office",
+      title: s.position || "",
+      eyebrow: s.draft ? "ZZCANARYDRAFT" : s.label
+    }));
+    const viewerPlates = plateSeats.map(p => Object.assign({}, p, { eyebrow: p.label }));
+    const c01 = data.find(s => s.label === "C01") || { x: .58, y: .74 };
+    const codeNoSel = codeSeats.filter(s => s.label !== "C01");
+    const aiLabels = { N09: 1, N10: 1, N11: 1, N12: 1 };
+    const aiSeats = data.filter(s => aiLabels[s.label]).map(s => ({ label: s.label, left: pct(s.x), top: pct(s.y) }));
+    const dimCode = codeSeats.filter(s => !aiLabels[s.label]);
+    const sorted = data.filter(s => s.name).sort((a, b) => a.name.localeCompare(b.name));
+    const people = sorted.slice(0, 14).map(s => ({ initials: s.initials, name: s.name, sub: s.label + " · " + s.zone, label: s.label }));
+    const exts = { C01: "0227", C02: "—", C03: "0201", C04: "—", C05: "0251", C06: "0252", C07: "0202", C08: "0228", CW01: "0203", CW02: "0204" };
+    const mgmtRows = sorted.slice(0, 10).map(s => ({ initials: s.initials, name: s.name, dept: s.dept, position: s.position || "—", ext: exts[s.label] || "—", label: s.label }));
+    return {
+      codeSeats, plateSeats, viewerPlates, codeNoSel,
+      selLeft: pct(c01.x), selTop: pct(c01.y),
+      aiSeats, dimCode, dimPlate: plateSeats,
+      people, mgmtRows,
+      notes: this.props.show_annotations ?? true,
+      aiEverywhere: this.props.ai_labels_everywhere ?? false
+    };
+  }
+}
+</script>
+</body>
+</html>
