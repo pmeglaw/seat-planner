@@ -2706,10 +2706,10 @@ export function SeatMap({
             cramped sibling of the filter and forced both to share a 340px cap.
             The filter keeps its dropdown anchored to itself (immediately LEFT
             of search, per the locked pairing); search gets its own field below.
-            Resized 2026-07-23 (owner): both fields are 28px in the 36px bar,
-            keeping 4px of clearance top and bottom. (This comment used to say
-            32px in a 40px bar — the classes have been h-7 = 28px.) */}
-        <div data-filter-ui className="relative mr-1.5 flex h-7 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
+            v12 (2026-07-31): both fields are 24px (h-6) in the 36px bar,
+            keeping 6px of clearance top and bottom — down from the prior
+            28px (h-7) resize, to read lighter next to the new rail. */}
+        <div data-filter-ui className="relative mr-1.5 flex h-6 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
           {canEdit && (
             <button
               ref={filterTriggerRef}
@@ -2770,7 +2770,7 @@ export function SeatMap({
             on lg — the bottom of the refinement brief's 420-560 range, so it
             still clears the old cramped shared box without dominating the bar
             the way 480 did. */}
-        <div role="search" aria-label="Command search" className="hidden h-7 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:block lg:max-w-[420px]">
+        <div role="search" aria-label="Command search" className="hidden h-6 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:block lg:max-w-[420px]">
           <label className="relative flex h-full w-full min-w-0 items-center">
             <span className="sr-only">Search employee, seat, job title, department, or zone</span>
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
