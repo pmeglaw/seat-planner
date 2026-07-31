@@ -2636,8 +2636,10 @@ export function SeatMap({
   );
   // Office room wash (PR B, 2026-07-24): a private office glows faintly green
   // while an assigned seat sits in it. buildOfficeRoomWashes owns the
-  // composition rules — the wash yields to dim, search highlight, swap mode,
-  // and an in-flight drag — so this call site stays a straight data feed.
+  // composition rules — the wash yields to dim, search highlight, and
+  // targeting modes (swap/move). draggingSeatId is a lib parameter this
+  // caller no longer exercises (geometry drag retired 2026-07-30), so this
+  // call site stays a straight data feed.
   const officeRoomWashes = buildOfficeRoomWashes({
     seats: visualLocalSeats.map(seat => ({ id: seat.id, x: seat.x, y: seat.y, status: seat.status })),
     dimmedSeatIds: dimmedSeatIdSet,
@@ -3776,7 +3778,7 @@ export function SeatMap({
                 </div>
               )}
 
-              <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
                 <PublishImpactCard label="People affected" value={publishPeopleChangeCount} description="Assignments, vacated seats, and people details." tone={publishPeopleChangeCount > 0 ? "warn" : "default"} />
                 <PublishImpactCard label="Seat inventory" value={publishSeatInventoryChangeCount} description="Added and removed seats." tone={publishSeatInventoryChangeCount > 0 ? "warn" : "default"} />
                 <PublishImpactCard label="Metadata" value={publishMetadataChangeCount} description="Status, zone, label, notes, or custom flags." tone={publishMetadataChangeCount > 0 ? "warn" : "default"} />

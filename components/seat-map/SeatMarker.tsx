@@ -381,8 +381,9 @@ function SeatMarkerComponent({
       : "-translate-y-[calc(50%-14px)]";
   // Room-centered plate offset (display-only, same contract as the nudge and
   // viewport-edge offsets above: the anchor button NEVER moves). SeatMap
-  // derives the offset from the seat's office-room rect; add/swap modes
-  // snap the token back to the true coordinate so dragging stays honest.
+  // derives the offset from the seat's office-room rect; add/swap/move
+  // modes snap the token back to the true coordinate so targeting stays
+  // honest.
   const officePlateOffsetActive =
     officePlate && !markerUsesTrueCoordinate && (officePlateOffsetXPx !== 0 || officePlateOffsetYPx !== 0);
   const tokenPositionClass = officePlateOffsetActive
@@ -393,8 +394,7 @@ function SeatMarkerComponent({
         ? `absolute top-1/2 translate-x-0 ${tokenVerticalTranslateClass}`
         : `absolute left-1/2 top-1/2 -translate-x-1/2 ${tokenVerticalTranslateClass}`;
   // The room-fitted width applies in EVERY mode (a 152px plate must not
-  // overflow a ~123px NE room even mid-drag); only the centering offset is
-  // mode-dependent.
+  // overflow a ~123px NE room); only the centering offset is mode-dependent.
   const officePlateSizeStyle: CSSProperties | undefined =
     officePlate && officePlateWidthPx
       ? { width: `${officePlateWidthPx}px`, maxWidth: `${officePlateWidthPx}px` }

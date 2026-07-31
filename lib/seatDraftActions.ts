@@ -66,7 +66,7 @@ export function canVacateSeat(seat: Pick<SeatWithEmployee, "employee_id"> | null
  * `phoneExtension` is deliberately ABSENT while `employeePosition` is explicitly
  * null. That asymmetry is not a tidy-up target: updateSeatAction distinguishes
  * the two with `"employeePosition" in input` / `"phoneExtension" in input`
- * (app/actions.ts:381-382), so an omitted key means "leave unchanged" and an
+ * (app/actions.ts:333-334), so an omitted key means "leave unchanged" and an
  * explicit null means "clear". Adding phoneExtension here would start writing to
  * a field vacate has never touched. Pinned by tests/seat-draft-actions.test.mjs.
  */

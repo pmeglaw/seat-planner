@@ -68,7 +68,7 @@ test("vacate carries expectedUpdatedAt through verbatim", () => {
 
 test("vacate omits phoneExtension while explicitly nulling employeePosition", () => {
   // Not a quirk to tidy away. updateSeatAction distinguishes the two with
-  // `"phoneExtension" in input` (app/actions.ts:381-382): an omitted key means
+  // `"phoneExtension" in input` (app/actions.ts:333-334): an omitted key means
   // "leave unchanged", an explicit null means "clear". Adding phoneExtension
   // here would start writing to a field vacate has never touched.
   const input = buildVacateSeatInput(seat());

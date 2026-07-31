@@ -43,6 +43,8 @@ Line numbers below are from the 2026-07-30 extraction pass — treat them as anc
 
 ### Task 1: `vacateOtherSeatsForEmployee` helper (lib + tests)
 
+> **SUPERSEDED (fix round 1, commit e5c4262):** the helper approach below shipped and was then replaced — client-spread rows keep stale `updated_at` and break undo with MLS02. The live design: `updateSeatAction` returns the fresh draft payload; both force-move consumers ingest `result.seats`/`result.employees`. Do not rebuild `vacateOtherSeatsForEmployee`; `tests/draft-concurrency.test.mjs` pins its absence.
+
 **Files:**
 - Modify: `lib/seatDraftActions.ts` (currently exports `canVacateSeat`, `vacateNeedsConfirmation`)
 - Create: `tests/seat-move-employee.test.mjs`
@@ -325,6 +327,9 @@ Destructure `onMove`. Give action entries an optional aria override — the butt
 
   - Marker props (marker map loop): `moveEmployeeMode={Boolean(moveEmployeeSourceSeatId)}` and `moveEmployeeSource={seat.id === moveEmployeeSourceSeatId}`; nudge-exclusion set adds `moveEmployeeSourceSeatId` and `moveEmployeeConfirm?.targetSeatId`; office wash line ≈2621 becomes `swapMode: Boolean(swapSourceSeatId || moveEmployeeSourceSeatId),` (the lib param means "targeting mode active"); SeatInspector's `swapMode` prop becomes `swapMode={Boolean(swapSourceSeatId || moveEmployeeSourceSeatId)}` (that prop only suppresses the collapsed pill during targeting).
   - Bar wiring: `onMove={() => startMoveEmployeeMode()}` on `<SeatActionBar`.
+
+> **SUPERSEDED (fix round 1, commit e5c4262):** the helper approach below shipped and was then replaced — client-spread rows keep stale `updated_at` and break undo with MLS02. The live design: `updateSeatAction` returns the fresh draft payload; both force-move consumers ingest `result.seats`/`result.employees`. Do not rebuild `vacateOtherSeatsForEmployee`; `tests/draft-concurrency.test.mjs` pins its absence.
+
 - [ ] **Step 4: `SeatMap.tsx` mutations.** Add `updateSeatAction` to the import from `@/app/actions` and `vacateOtherSeatsForEmployee` to the `@/lib/seatDraftActions` import. Refactor `confirmSwapSeats` into a parameterized core (identical body, only the seat-id source changes) and add the two move confirms:
 
 ```ts
@@ -510,6 +515,8 @@ test("occupied seats expose Move · Swap · Vacate on the canvas bar", async () 
 ---
 
 ### Task 6: Fix the latent force-move reconciliation bug in `applySeatUpdated`
+
+> **SUPERSEDED (fix round 1, commit e5c4262):** the helper approach below shipped and was then replaced — client-spread rows keep stale `updated_at` and break undo with MLS02. The live design: `updateSeatAction` returns the fresh draft payload; both force-move consumers ingest `result.seats`/`result.employees`. Do not rebuild `vacateOtherSeatsForEmployee`; `tests/draft-concurrency.test.mjs` pins its absence.
 
 The existing inspector "Move them?" flow leaves the vacated source seat occupied in local state and in the recorded undo snapshot. Same helper, same fix.
 

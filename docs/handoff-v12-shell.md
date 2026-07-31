@@ -108,6 +108,7 @@ reader will otherwise helpfully re-propose them.
 | Seat verbs live on the **canvas bar**, not the panel | Because the panel keeps a collapse rail, and collapsed is when the map is widest. |
 | The bar **confirms vacate every time** | The inspector's straight-through vacate is gone with its button. |
 | Geometry Move is **retired outright**; Move now relocates the occupant | Owner-confirmed on 2026-07-30: "seats never move, people do." The drag/geometry machinery, `moveSeatAction`, and `publishSummary`'s `seatMoves` category are deleted, not flagged off. Person-centric Move shipped on the canvas `SeatActionBar` instead — see `docs/superpowers/specs/2026-07-30-person-move-design.md`. Don't re-propose a geometry drag affordance. |
+| Force-move reconciliation uses **fresh-payload ingestion**, not a client-side vacate helper | Fix round 1, 2026-07-30 (commit `e5c4262`): the original `vacateOtherSeatsForEmployee` helper spread a stale pre-mutation copy of the seat a force-move vacated, and the stale `updated_at` it baked into local state broke the next Undo with `MLS02` — reproduced live against the production draft. `updateSeatAction` now returns the fresh draft payload (`getDraftMapPayload`); both force-move consumers (bar Move, inspector "Move them?") ingest `result.seats`/`result.employees` wholesale instead. The helper is deleted; `tests/draft-concurrency.test.mjs` pins its absence. Don't rebuild it. |
 
 ## Traps that cost real time
 
