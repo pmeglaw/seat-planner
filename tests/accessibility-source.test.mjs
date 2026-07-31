@@ -584,17 +584,24 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   assert.ok(viewerPanelIndex < viewerSearchIndex, "viewer filter panel must precede the search in DOM order");
 });
 
-test("the admin sub-page bar surfaces Settings clearly in the management context", async () => {
+test("the admin account menu surfaces identity and sign-out from the rail on every sub-page", async () => {
+  const railSource = await readSource("../components/ui/AppRail.tsx");
   const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
 
-  // On the map header Settings is tucked behind the identity chip (clean map
-  // bar), but in the management/data context — the sub-page bar — it surfaces
-  // as a plain, labeled, current-aware nav item next to Management.
-  assert.match(shellBarSource, /href="\/admin\/settings"\s+aria-current=\{page === "settings" \? "page" : undefined\}[\s\S]{0,500}Settings\s*<\/Link>/);
-  // With Settings visible in the nav, the identity chip here must NOT double
-  // as a second settings control — it is the account menu (identity +
-  // sign-out) with NO settings item on this surface (2026-07-16 session layer).
-  assert.match(shellBarSource, /<AccountMenu/);
+  // v12 (2026-07-31 rail shell, Task 3): Settings is no longer specially
+  // promoted in the sub-page bar — it's just one of AppRail's three nav items,
+  // present identically on every admin surface (map included). The
+  // AccountMenu-in-shell-bar pin moves here: identity + sign-out now live in
+  // AppRail's own account cell (menu role + sign-out form), not a shared
+  // <AccountMenu> mounted in the sub-page bar.
+  assert.match(railSource, /role="menu"/);
+  assert.match(railSource, /role="menuitem"/);
+  assert.match(railSource, /<form action="\/auth\/signout" method="post"/);
+  assert.match(railSource, /Sign out/);
+  // With identity + sign-out in the rail, the sub-page bar itself must NOT
+  // double as a second account or settings control (2026-07-16 session layer,
+  // still true, just relocated).
+  assert.doesNotMatch(shellBarSource, /<AccountMenu/);
   assert.doesNotMatch(shellBarSource, /onSelectSettings/);
   assert.doesNotMatch(shellBarSource, /<Link[^>]*aria-label="Open settings"/);
 });

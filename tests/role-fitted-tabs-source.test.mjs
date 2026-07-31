@@ -15,11 +15,21 @@ test("the viewer's surface tabs render only for admins", async () => {
 });
 
 test("the sub-page bar keeps one underline and one cross-surface exit", async () => {
-  const source = await readFile(new URL("../components/ui/AdminShellBar.tsx", import.meta.url), "utf8");
+  const railSource = await readFile(new URL("../components/ui/AppRail.tsx", import.meta.url), "utf8");
+  const shellBarSource = await readFile(new URL("../components/ui/AdminShellBar.tsx", import.meta.url), "utf8");
 
-  // The Viewer exit stays; the redundant active Admin tab is gone.
-  assert.match(source, /aria-label="Open viewer surface"/);
-  assert.doesNotMatch(source, /aria-current="true"/);
-  // The account menu gains no navigation as part of this change.
-  assert.doesNotMatch(source, /onSelectSettings/);
+  // v12 (2026-07-31 rail shell, Task 3): the "one cross-surface exit"
+  // semantic now lives in the rail, not the sub-page bar — AppRail's Viewer
+  // item is the one cross-surface exit on every admin surface.
+  assert.match(railSource, /aria-label="Open viewer surface"/);
+
+  // The one-underline hazard (a redundant active Admin tab fighting a section
+  // nav's underline) is structurally gone: AdminShellBar carries no section
+  // nav, no Viewer link, and no account menu at all anymore — navigation and
+  // account controls live in the rail exclusively. Assert their absence.
+  assert.doesNotMatch(shellBarSource, /<nav/);
+  assert.doesNotMatch(shellBarSource, /aria-label="Open viewer surface"/);
+  assert.doesNotMatch(shellBarSource, /aria-current="true"/);
+  assert.doesNotMatch(shellBarSource, /<AccountMenu/);
+  assert.doesNotMatch(shellBarSource, /onSelectSettings/);
 });

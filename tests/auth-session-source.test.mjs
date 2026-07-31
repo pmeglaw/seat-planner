@@ -43,23 +43,28 @@ test("the account menu shows identity and hosts a no-JS sign-out form", async ()
   assert.match(source, /returnFocusAfterClose/);
 });
 
-test("every signed-in chrome bar mounts an identity + sign-out affordance", async () => {
+test("every signed-in surface mounts an identity + sign-out affordance", async () => {
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
-  const shellBar = await readSource("../components/ui/AdminShellBar.tsx");
+  const managementPage = await readSource("../app/admin/management/page.tsx");
+  const settingsPage = await readSource("../app/admin/settings/page.tsx");
   const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
-  // v12 (2026-07-31 rail shell, Task 2): the map surface's identity chip
-  // moved from the shared AccountMenu component into AppRail's own account
-  // cell — same information (email + role) and the same real
-  // <form action="/auth/signout" method="post"> sign-out contract, just a
-  // different component. AppRail's own test suite (tests/app-rail.test.mjs)
-  // is the source of truth for that cell's shape; this file only pins that
-  // SOME identity + sign-out affordance is mounted on every signed-in
-  // surface, which is the semantic this test has always guarded. The other
-  // two surfaces (AdminShellBar, ViewerSeatFinder) are untouched by this
-  // task and still mount the shared component directly.
+  // v12 (2026-07-31 rail shell, Task 2 + Task 3): every admin surface — the
+  // map and both sub-pages — now mounts AppRail directly, which carries its
+  // own identity + sign-out cell (same real
+  // <form action="/auth/signout" method="post"> contract as the old shared
+  // AccountMenu). AppRail's own test suite (tests/app-rail.test.mjs) is the
+  // source of truth for that cell's shape; this file only pins that SOME
+  // identity + sign-out affordance is mounted on every signed-in surface,
+  // which is the semantic this test has always guarded. AdminShellBar (Task
+  // 3) is identity-only chrome now and mounts no account affordance at all —
+  // the rail is the one place sign-out lives on admin surfaces, so the
+  // pin moved from that component to the pages that mount the rail. The
+  // viewer surface is untouched by this task and still mounts the shared
+  // component directly.
   assert.match(seatMap, /<AppRail/);
-  assert.match(shellBar, /<AccountMenu/);
+  assert.match(managementPage, /<AppRail/);
+  assert.match(settingsPage, /<AppRail/);
   assert.match(viewer, /<AccountMenu/);
 });
 
