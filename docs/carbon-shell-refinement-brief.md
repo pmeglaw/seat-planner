@@ -61,7 +61,7 @@ At implementation, in `app/globals.css`: set `--ml-orange-signature` / `--sp-col
 A single **40px** dark bar packs: brand chip · section nav (Seat map / Management / Settings) · **Command search** · **Undo** · **Redo** · **names toggle** ("Show/hide occupant names") · **More tools** overflow · **Viewer/Admin** surface toggle · **Publish** + **Publish status** — plus a separate mobile "Canvas search" and "More map actions." Every item pairs an icon *and* a text label.
 
 ### Target (within Carbon)
-- **Primary row = only the top jobs:** search, the active-tool set, and **Publish** (the hero action). Publish keeps the accent `#FF5715` + ink text; everything else is quieter.
+- **Primary row = only the top jobs:** search, the active-tool set, and **Publish** (the hero action). Publish keeps the accent `#FF5715` + ink text; everything else is quieter. *(Superseded 2026-07-31: Publish moved to the CTA ladder — v12 owner decision 2a.)*
 - **Push secondary tools into the existing "More tools" overflow:** names toggle, and undo/redo if the row is still tight (or group undo/redo as a single segmented control). The overflow pattern already exists — use it harder.
 - **Reduce icon+label doubling:** Carbon convention — labels for primary text nav; icon-only (with tooltip + `aria-label`, already present) for secondary tool buttons. Don't show both for every control.
 - **One divider rhythm, one underline:** keep a single active-underline per bar (the code already fixed a duplicate-underline bug — hold that line).
