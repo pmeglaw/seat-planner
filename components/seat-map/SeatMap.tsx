@@ -536,6 +536,17 @@ export function SeatMap({
     setAskPlannerOpen(true);
   }, [inspectorCollapsed, selectedSeatId]);
 
+  // ?ask-planner=open contract (v12): a sub-page's AI rail item falls back to
+  // <Link href="/admin?ask-planner=open"> when onOpenAskPlanner is absent
+  // (AppRail's own interface — see Task 1). Landing here opens the drawer in
+  // place and strips the param so it doesn't reopen on refresh/back.
+  useEffect(() => {
+    if (!canEdit) return;
+    if (!window.location.search.includes("ask-planner=open")) return;
+    openAskPlannerDrawer();
+    window.history.replaceState(null, "", "/admin");
+  }, [canEdit, openAskPlannerDrawer]);
+
   useEffect(() => setLocalSeats(normalizeSeats(seats)), [seats]);
   useEffect(() => setLocalPublishedSeats(normalizeSeats(publishedSeats)), [publishedSeats]);
   useEffect(() => setLocalPublishedEmployees(publishedEmployees), [publishedEmployees]);
