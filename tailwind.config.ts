@@ -96,6 +96,7 @@ const config: Config = {
         panel: "var(--admin-shadow-panel)",
         "marker-selected": "var(--admin-marker-selected-shadow)",
         "marker-hover": "var(--admin-marker-hover-shadow)",
+        "marker-ai": "var(--admin-marker-ai-shadow)",
         "sp-raised": "var(--sp-shadow-raised)",
         "sp-floating": "var(--sp-shadow-floating)",
         "sp-sheet": "var(--sp-shadow-sheet)",

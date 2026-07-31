@@ -293,6 +293,26 @@
   --admin-chrome-info-rgb: 69 137 255;
   --admin-chrome-info-text: #78a9ff;
 
+  /* Carbon-for-AI family (v12 handoff, 2026-07-31). Reserved EXCLUSIVELY for
+     AI presence — Ask Planner chip/drawer and the planner-highlight seat
+     state. Never a status hue, never the brand. Light pair: text #0043ce =
+     7.79:1 on white, 7.21:1 on #F7F6F2; border #4589ff = 3.35:1 on white
+     (graphics ≥3:1, not for text). Dark-chrome pair: #78a9ff = 7.68:1 on
+     #161616, 6.43:1 on #262626. Measured 2026-07-31. */
+  --admin-ai-border: #4589ff;
+  --admin-ai-text: #0043ce;
+  --admin-ai-rgb: 69 137 255;
+  --admin-ai-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.12), rgba(255, 255, 255, 0) 70%);
+  --admin-ai-marker-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.14), rgba(255, 255, 255, 0) 60%);
+  --admin-ai-ring: rgba(69, 137, 255, 0.45);
+  --admin-ai-ring-soft: rgba(69, 137, 255, 0.18);
+  --admin-marker-ai-shadow: 0 0 0 2px rgba(69, 137, 255, 0.45), 0 0 0 6px rgba(69, 137, 255, 0.18), 0 10px 22px rgba(69, 137, 255, 0.35);
+  --admin-ai-chrome-text: #78a9ff;
+  --admin-ai-chrome-border: #78a9ff;
+  --admin-ai-panel-border: rgba(120, 169, 255, 0.35);
+  --admin-ai-glow: linear-gradient(180deg, rgba(69, 137, 255, 0.10), rgba(69, 137, 255, 0) 140px);
+  --admin-ai-row: rgba(69, 137, 255, 0.08);
+
   --admin-success: #1D6E41;
   --admin-success-soft: #DEF3E4;
   --admin-warning: #f1c21b;
