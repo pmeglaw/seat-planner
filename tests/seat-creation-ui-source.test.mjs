@@ -24,7 +24,7 @@ test("normal add-seat UI does not pass manual labels or zones", async () => {
 
 test("add-seat action creates custom draft seats without publishing", async () => {
   const source = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
-  const createAction = source.match(/export async function createSeatAction[\s\S]*?export async function moveSeatAction/);
+  const createAction = source.match(/export async function createSeatAction[\s\S]*?export async function updateSeatAction/);
 
   assert.ok(createAction, "createSeatAction should remain source-visible.");
   assert.match(source, /async function getDraftSeatZoneSources[\s\S]*\.eq\("layer", "draft"\)/);
@@ -32,18 +32,6 @@ test("add-seat action creates custom draft seats without publishing", async () =
   assert.match(createAction[0], /detectSeatZoneForPointResult/);
   assert.match(createAction[0], /label,\s*x:\s*point\.x,\s*y:\s*point\.y,\s*layer:\s*"draft",\s*status:\s*"available",\s*zone,\s*department:\s*null,\s*is_custom:\s*true/s);
   assert.doesNotMatch(createAction[0], /publishSeatMapAction|publish_seat_map|\.eq\("layer", "published"\)/);
-});
-
-test("move-seat action updates one draft seat without publishing", async () => {
-  const source = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
-  const moveAction = source.match(/export async function moveSeatAction[\s\S]*?export async function updateSeatAction/);
-
-  assert.ok(moveAction, "moveSeatAction should remain source-visible.");
-  assert.match(moveAction[0], /const supabase = await requireAdmin\(\)/);
-  assert.match(moveAction[0], /validateSeatCoordinates\(input\.x, input\.y\)/);
-  assert.match(moveAction[0], /\.from\("seats"\)[\s\S]*\.update\(\{ x: point\.x, y: point\.y \}\)[\s\S]*\.eq\("id", input\.seatId\)[\s\S]*\.eq\("layer", "draft"\)/);
-  assert.match(moveAction[0], /return \{ ok: true, seat: await getDraftSeatById\(supabase, input\.seatId\) \}/);
-  assert.doesNotMatch(moveAction[0], /\.eq\("layer", "published"\)|publishSeatMapAction|publish_seat_map|revalidatePath\("\/"\)/);
 });
 
 test("custom-seat delete flow is draft-only and clearly guarded", async () => {

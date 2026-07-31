@@ -24,7 +24,6 @@ export type PublishChangeSummary = {
   removedSeats: PublishChangeItem[];
   assignmentChanges: PublishChangeItem[];
   vacatedSeats: PublishChangeItem[];
-  seatMoves: PublishChangeItem[];
   statusChanges: PublishChangeItem[];
   otherChanges: PublishChangeItem[];
   employeeDetailChanges: PublishChangeItem[];
@@ -163,7 +162,6 @@ export function buildPublishChangeSummary(
   const removedSeats: PublishChangeItem[] = [];
   const assignmentChanges: PublishChangeItem[] = [];
   const vacatedSeats: PublishChangeItem[] = [];
-  const seatMoves: PublishChangeItem[] = [];
   const statusChanges: PublishChangeItem[] = [];
   const otherChanges: PublishChangeItem[] = [];
   const updatedSeatKeys = new Set<string>();
@@ -186,8 +184,11 @@ export function buildPublishChangeSummary(
     }
 
     if (hasSeatMoved(draftSeat, publishedSeat)) {
+      // The geometry-move UI is retired (2026-07-30), but snapshot restore and
+      // legacy JSON snapshots can still shift coordinates — surface the drift
+      // rather than silently publishing it.
       updatedSeatKeys.add(key);
-      seatMoves.push({ label: draftSeat.label, detail: `${formatPoint(publishedSeat)} -> ${formatPoint(draftSeat)}` });
+      otherChanges.push({ label: draftSeat.label, detail: `position ${formatPoint(publishedSeat)} -> ${formatPoint(draftSeat)}` });
     }
 
     if (!employeeChanged && publishedSeat.status !== draftSeat.status) {
@@ -219,7 +220,6 @@ export function buildPublishChangeSummary(
     removedSeats: sortItems(removedSeats),
     assignmentChanges: sortItems(assignmentChanges),
     vacatedSeats: sortItems(vacatedSeats),
-    seatMoves: sortItems(seatMoves),
     statusChanges: sortItems(statusChanges),
     otherChanges: sortItems(otherChanges),
     employeeDetailChanges: sortItems(employeeDetailChanges),

@@ -121,16 +121,25 @@ test("a viewer sees no edit affordances in the inspector", async ({ page }) => {
   await clickMarker(page, "S01");
   await expect(page.locator('[aria-label="Close inspector"]')).toBeAttached();
   await expect(page.locator('[aria-label^="Delete"]')).toHaveCount(0);
-  await expect(page.locator('[aria-label^="Move seat"]')).toHaveCount(0);
-  await expect(page.locator('[aria-label^="Swap seat"]')).toHaveCount(0);
+  // SeatActionBar renders only for canEdit admins (SeatMap gates it on
+  // `canEdit && floor === "3"`), so a viewer should never even mount it —
+  // asserting the bar's own attribute is a stronger claim than asserting
+  // individual verb labels, and it doesn't go stale as verbs are renamed.
+  await expect(page.locator('[data-seat-action-bar]')).toHaveCount(0);
 });
 
+// `custom` (S01) is an OPEN seat (status "available", no employee_id), so the
+// bar's occupied-only verbs (Move, Vacate) don't apply here — it renders
+// Assign… · Swap. These `Move seat`/`Swap seat` asserts were already stale
+// before this branch: MOVE_UI_ENABLED=false (6c87acf) had already removed the
+// inspector's "Move seat" label, and the inspector never had a "Swap seat"
+// label — both verbs live on SeatActionBar now, with person-centric aria text.
 test("an admin sees the edit affordances for a custom draft seat", async ({ page }) => {
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
   await clickMarker(page, "S01");
   await expect(page.locator('[aria-label^="Delete custom seat"]')).toBeAttached();
-  await expect(page.locator('[aria-label^="Move seat"]')).toBeAttached();
-  await expect(page.locator('[aria-label^="Swap seat"]')).toBeAttached();
+  await expect(page.locator('[aria-label^="Assign an employee to"]')).toBeAttached();
+  await expect(page.locator('[aria-label^="Swap "]')).toBeAttached();
 });
 
 // Edit the notes field through React's controlled-input path so the inspector

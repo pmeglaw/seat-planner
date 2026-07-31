@@ -9,10 +9,12 @@ import { loadComponent, renderElement, React, configureContext, fireEvent, act, 
 let SeatMarker;
 let MapZoomControl;
 let FloorSelector;
+let SeatActionBar;
 before(async () => {
   ({ SeatMarker } = await loadComponent("@/components/seat-map/SeatMarker"));
   ({ MapZoomControl } = await loadComponent("@/components/seat-map/MapZoomControl"));
   ({ FloorSelector } = await loadComponent("@/components/seat-map/FloorSelector"));
+  ({ SeatActionBar } = await loadComponent("@/components/seat-map/SeatActionBar"));
 });
 beforeEach(() => configureContext({}));
 afterEach(() => cleanup());
@@ -61,19 +63,18 @@ function markerProps(seat, overrides = {}) {
     showNames: true,
     searchResult: false,
     compactNameLabel: false,
-    moveSeatMode: false,
     swapMode: false,
     swapSource: false,
     swapTarget: false,
+    moveEmployeeMode: false,
+    moveEmployeeSource: false,
     highlighted: false,
-    dragging: false,
     addSeatMode: false,
     viewportEdge: "none",
     viewportEdgeOffsetPx: 0,
     variant: "viewer",
     tabIndex: 0,
     onSelect() {},
-    onMovePointerDown() {},
     ...overrides
   };
 }
@@ -178,19 +179,6 @@ test("plate token honors the room offset and width props", async () => {
   assert.match(token.getAttribute("style") ?? "", /width: 120px/, "room-fitted width applied");
 });
 
-test("move mode snaps the plate back to the true anchor (offset dropped, width kept)", async () => {
-  const officeSeat = makeSeat({ id: "s7", seat_key: "s01", label: "S01", zone: "South Offices" });
-  await renderElement(React.createElement(SeatMarker, markerProps(officeSeat, {
-    moveSeatMode: true,
-    officePlateOffsetXPx: 20,
-    officePlateOffsetYPx: -10,
-    officePlateWidthPx: 120
-  })));
-  const token = document.querySelector("button > span");
-  assert.ok(!/calc\(50% \+ 20px\)/.test(token.getAttribute("style") ?? ""), "offset dropped in move mode");
-  assert.match(token.getAttribute("style") ?? "", /width: 120px/, "width still room-fitted");
-});
-
 // 2026-07-24 extension: a seat placed INSIDE a measured office room renders
 // the plate regardless of zone — N13 carries the pod zone "North Pod" (zone
 // inference has no room concept), so the gate must be geometry-based.
@@ -201,6 +189,27 @@ test("a pod-zoned seat inside an office room still renders the plate", async () 
   assert.match(text, /N13/);
   assert.match(text, /Alice S\./, "plate name renders from geometry gate alone");
   assert.match(text, /Analyst/);
+});
+
+test("move-employee mode snaps the plate back to the true anchor", async () => {
+  const officeSeat = makeSeat({ id: "s7", seat_key: "s01", label: "S01", zone: "South Offices" });
+  await renderElement(React.createElement(SeatMarker, markerProps(officeSeat, {
+    moveEmployeeMode: true,
+    officePlateOffsetXPx: 20,
+    officePlateOffsetYPx: -10,
+    officePlateWidthPx: 120
+  })));
+  const token = document.querySelector("button > span");
+  assert.ok(!/calc\(50% \+ 20px\)/.test(token.getAttribute("style") ?? ""), "offset dropped in move mode");
+  assert.match(token.getAttribute("style") ?? "", /width: 120px/, "width still room-fitted");
+});
+
+test("move-employee source and candidates announce themselves", async () => {
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { canEdit: true, moveEmployeeMode: true, moveEmployeeSource: true })));
+  assert.match(document.querySelector("button").getAttribute("aria-label") ?? "", / Move source\./);
+  cleanup();
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { canEdit: true, moveEmployeeMode: true })));
+  assert.match(document.querySelector("button").getAttribute("aria-label") ?? "", / Valid destination seat\./);
 });
 
 // --- MapZoomControl --------------------------------------------------------
@@ -243,4 +252,18 @@ test("FloorSelector renders a floor control", async () => {
   await renderElement(React.createElement(FloorSelector, { floor: "3", onChange() {} }));
   const trigger = document.querySelector('[aria-label^="Change floor"]');
   assert.ok(trigger, "floor control renders");
+});
+
+// --- SeatActionBar -----------------------------------------------------
+
+test("occupied seats expose Move · Swap · Vacate on the canvas bar", async () => {
+  const seat = makeSeat({ status: "assigned", employee_id: "e1", employee: { id: "e1", full_name: "Alice Example" } });
+  let moved = 0;
+  await renderElement(React.createElement(SeatActionBar, { seat, onAssign() {}, onSwap() {}, onVacate() {}, onMove: () => (moved += 1) }));
+  const move = document.querySelector('[aria-label="Move Alice Example to another seat"]');
+  assert.ok(move, "person-centric Move present");
+  assert.ok(document.querySelector(`[aria-label="Swap ${seat.label}"]`));
+  assert.ok(document.querySelector(`[aria-label="Vacate ${seat.label}"]`));
+  await act(async () => fireEvent.click(move));
+  assert.equal(moved, 1);
 });

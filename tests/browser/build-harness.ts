@@ -19,7 +19,6 @@ export const HARNESS_HTML = path.join(HARNESS_DIR, "harness.html");
 const ACTION_EXPORTS = [
   "updateSeatAction",
   "createSeatAction",
-  "moveSeatAction",
   "deleteSeatAction",
   "swapSeatAssignmentsAction",
   "publishSeatMapAction",

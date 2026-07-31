@@ -11,7 +11,7 @@ import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { buildContactRows, employeeAssignmentFields, type ContactFactRow } from "@/lib/employeeAssignment";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
-import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { CloseIcon } from "@/components/ui/CloseIcon";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
@@ -33,17 +33,15 @@ type SeatInspectorProps = {
   onToggleCollapse: () => void;
   // Edit callbacks are optional so the read-only viewer can render the same
   // inspector without wiring any draft machinery (canEdit=false never calls them).
-  onStartSwapSeat?: () => void;
-  onStartMoveSeat?: () => void;
-  moveMode?: boolean;
-  // True when the seat sits away from its published position — enables the
-  // Seat section's "Reset position" escape hatch for mis-dragged markers.
-  canResetPosition?: boolean;
-  onResetPosition?: () => void;
   onDeleteSeat?: () => void;
   onExplainSeat?: (seat: SeatWithEmployee) => void;
   onBeforeSeatUpdate?: () => DraftSnapshot;
-  onSeatUpdated?: (seat: SeatWithEmployee, beforeSnapshot: DraftSnapshot) => void;
+  // `freshDraftPayload` is only ever passed for a force_move commit — it also
+  // vacates the mover's OTHER draft seat server-side, so the parent needs the
+  // fresh full draft state (not just this seat) to reconcile it without
+  // baking a stale updated_at into local state. See SeatMap.tsx's
+  // applySeatUpdated for the full rationale.
+  onSeatUpdated?: (seat: SeatWithEmployee, beforeSnapshot: DraftSnapshot, freshDraftPayload?: { seats: SeatWithEmployee[]; employees: Employee[] }) => void;
   onError?: (message: string | null) => void;
   // The draft-concurrency fence fired: the seat changed in another admin
   // session. The parent owns recovery (reload draft, reset history).
@@ -51,6 +49,13 @@ type SeatInspectorProps = {
   onDirtyChange?: (dirty: boolean) => void;
   onSubmitBlocked?: () => void;
   resetSignal?: number;
+  /**
+   * Bumped by the canvas action bar's Assign… to open the progressive editor
+   * from outside this component. Assignment needs a searchable combobox, which
+   * cannot live on a 40px floating bar — so the bar discloses and this panel
+   * still owns the editor. Same signal idiom as resetSignal.
+   */
+  startAssignmentSignal?: number;
   // Session-local edit log for the selected seat (admin Activity section).
   // Read-only labels derived from the parent's undo history — no server data.
   activityEntries?: string[];
@@ -229,11 +234,6 @@ export function SeatInspector({
   onClose,
   onClearSearchContext,
   onToggleCollapse,
-  onStartSwapSeat = noopCallback,
-  onStartMoveSeat = noopCallback,
-  moveMode = false,
-  canResetPosition = false,
-  onResetPosition = noopCallback,
   onDeleteSeat = noopCallback,
   onExplainSeat,
   onBeforeSeatUpdate = emptyDraftSnapshot,
@@ -243,6 +243,7 @@ export function SeatInspector({
   onDirtyChange = noopCallback,
   onSubmitBlocked,
   resetSignal = 0,
+  startAssignmentSignal = 0,
   activityEntries = []
 }: SeatInspectorProps) {
   const [pending, startTransition] = useTransition();
@@ -256,7 +257,6 @@ export function SeatInspector({
   const [editingAssignment, setEditingAssignment] = useState(false);
   const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
   const [activeEmployeeIndex, setActiveEmployeeIndex] = useState(0);
-  const [vacateConfirmOpen, setVacateConfirmOpen] = useState(false);
   const [moveConflict, setMoveConflict] = useState<{
     employeeName: string;
     currentSeatLabel: string;
@@ -266,6 +266,7 @@ export function SeatInspector({
   const activeSeatIdRef = useRef<string | null>(null);
   const activeSeatSnapshotRef = useRef(formSnapshot(emptyForm));
   const resetSignalRef = useRef(resetSignal);
+  const startAssignmentSignalRef = useRef(startAssignmentSignal);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const primaryActionRef = useRef<HTMLButtonElement | null>(null);
   const collapseRailRef = useRef<HTMLButtonElement | null>(null);
@@ -275,7 +276,6 @@ export function SeatInspector({
   const focusPanelAfterExpandRef = useRef(false);
   const prevCollapsedRef = useRef(collapsed);
   const assignmentSectionRef = useRef<HTMLElement | null>(null);
-  const vacateDialogFocusRef = useDialogFocus<HTMLElement>();
   const moveConflictDialogFocusRef = useDialogFocus<HTMLElement>();
   const employeeInputRef = useRef<HTMLInputElement | null>(null);
   const employeePositionRef = useRef<HTMLInputElement | null>(null);
@@ -349,7 +349,6 @@ export function SeatInspector({
     setEditingAssignment(false);
     setEmployeeComboboxOpen(false);
     setActiveEmployeeIndex(0);
-    setVacateConfirmOpen(false);
     setMoveConflict(null);
     onError(null);
     onDirtyChange(false);
@@ -367,7 +366,6 @@ export function SeatInspector({
       setEditingAssignment(false);
       setEmployeeComboboxOpen(false);
       setActiveEmployeeIndex(0);
-      setVacateConfirmOpen(false);
       setMoveConflict(null);
       onDirtyChange(false);
       return;
@@ -391,6 +389,19 @@ export function SeatInspector({
     activeSeatIdRef.current = seat.id;
     resetInspectorDraftForm(formFromSeat(seat));
   }, [resetSignal, seat, resetInspectorDraftForm]);
+
+  // Assign… on the canvas bar opens this panel's editor. Guarded on the signal
+  // so a re-render never re-opens an editor the user just closed.
+  useEffect(() => {
+    if (startAssignmentSignalRef.current === startAssignmentSignal) return;
+    startAssignmentSignalRef.current = startAssignmentSignal;
+    if (!seat) return;
+    startAssignmentEditing();
+    // startAssignmentEditing is re-created every render; the ref guard above is
+    // what makes this fire once per signal, so depending on it would only add
+    // no-op runs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startAssignmentSignal, seat]);
 
   // Hand focus across explicit collapse/expand transitions — the clicked
   // toggle unmounts with its panel (2026-07-16 critique, action 5).
@@ -489,8 +500,6 @@ export function SeatInspector({
   // inspector surfaces (spec §6 — the panel wears the chrome, not the canvas).
   const footerNeutralButtonClass =
     "!border-white/20 !bg-[var(--admin-chrome-raised)] !text-[var(--admin-chrome-text)] hover:!border-white/30 hover:!bg-[var(--admin-chrome-raised-hover)] hover:!text-white disabled:!border-white/10 disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)]";
-  const footerDangerButtonClass =
-    "!border-transparent !bg-[rgb(var(--admin-status-bad-rgb)/0.15)] !text-[var(--admin-chrome-danger-text)] hover:!border-[var(--admin-status-bad)] hover:!bg-[var(--admin-status-bad)] hover:!text-white disabled:!border-transparent disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)]";
   const fieldErrorClassName = "border-[var(--admin-status-bad)] focus:border-[var(--admin-status-bad)] focus:ring-[rgb(var(--admin-status-bad-rgb)/0.40)]";
   const warningSurfaceClassName = "border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] text-[var(--admin-status-warn)]";
   const neutralPillClassName = "bg-white/10 text-[var(--admin-chrome-text-soft)] ring-white/15";
@@ -756,7 +765,10 @@ export function SeatInspector({
         setEditingAssignment(false);
         onDirtyChange(false);
         setSaveFeedback(input.forceMove ? `Moved to ${updated.label}` : "Saved to draft");
-        onSeatUpdated(updated, beforeSnapshot);
+        // force_move vacated another seat server-side; hand the parent the
+        // fresh draft payload it needs to reconcile that seat's bumped
+        // updated_at instead of reconstructing it from a stale local copy.
+        onSeatUpdated(updated, beforeSnapshot, input.forceMove ? { seats: result.seats, employees: result.employees } : undefined);
         focusPrimaryActionSoon();
       } catch (error) {
         // Only genuinely unexpected failures (network/auth) reach here now.
@@ -819,82 +831,6 @@ export function SeatInspector({
     });
   }
 
-  function handleStartSwapSeat() {
-    if (pending) return;
-    onStartSwapSeat();
-  }
-
-  function handleStartMoveSeat() {
-    if (pending) return;
-    onStartMoveSeat();
-  }
-
-  function handleVacateSeat() {
-    if (!hasCurrentAssignment || pending) return;
-    // 3b T1: vacate is a draft-only seat op — it runs immediately with the
-    // toast + Undo as the safety net (the publish review is the real gate).
-    // The dialog only guards unsaved inspector edits, which Undo can't restore.
-    if (isDirty) {
-      setVacateConfirmOpen(true);
-      return;
-    }
-    confirmVacateSeat();
-  }
-
-  function confirmVacateSeat() {
-    if (!hasCurrentAssignment || pending) return;
-
-    const beforeSnapshot = onBeforeSeatUpdate();
-    setVacateConfirmOpen(false);
-
-    startTransition(async () => {
-      try {
-        setLocalError(null);
-        setFieldErrors([]);
-        setSaveFeedback(null);
-        onError(null);
-        const result = await updateSeatAction({
-          seatId: selectedSeat.id,
-          label: selectedSeat.label,
-          status: "available",
-          employeeId: null,
-          employeeName: null,
-          employeePosition: null,
-          department: null,
-          zone: selectedSeat.zone ?? selectedSeat.department ?? null,
-          notes: selectedSeat.notes?.trim() || null,
-          expectedUpdatedAt: selectedSeat.updated_at
-        });
-        if (!result.ok) {
-          if (result.code === "STALE_DRAFT") {
-            onDirtyChange(false);
-            onStaleDraft(result.message);
-            return;
-          }
-          setLocalError(result.message);
-          setSaveFeedback(null);
-          onError(result.message);
-          focusErrorSummary();
-          return;
-        }
-        const updated = result.seat;
-        const nextForm = formFromSeat(updated);
-        activeSeatSnapshotRef.current = formSnapshot(nextForm);
-        setForm(nextForm);
-        setInitialForm(nextForm);
-        onDirtyChange(false);
-        setSaveFeedback("Saved to draft");
-        onSeatUpdated(updated, beforeSnapshot);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Could not vacate seat.";
-        setLocalError(message);
-        setSaveFeedback(null);
-        onError(message);
-        focusErrorSummary();
-      }
-    });
-  }
-
   function handleDeleteSeat() {
     if (!selectedSeatCanDelete || pending) return;
     onDeleteSeat();
@@ -922,7 +858,7 @@ export function SeatInspector({
     // Collapsed = the thin 44px dark rail on the right edge (spec §6); below
     // the panel tier it stays a bottom pill so it never covers the map.
     return (
-      <aside className="fixed inset-x-3 bottom-3 z-[80] panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-9 panel:z-40">
+      <aside className="fixed inset-x-3 bottom-3 z-[80] panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-[var(--admin-chrome-h)] panel:z-40">
         <button
           ref={collapseRailRef}
           type="button"
@@ -948,7 +884,7 @@ export function SeatInspector({
       tabIndex={-1}
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/10 bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-elevation-4 panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-9 panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] panel:border-0 panel:border-l panel:border-white/10 panel:shadow-none"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/10 bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-elevation-4 panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-[var(--admin-chrome-h)] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] panel:border-0 panel:border-l panel:border-white/10 panel:shadow-none"
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-white/10 bg-[var(--admin-chrome-bg)] px-4 pb-3 pt-3.5">
         <div className="flex items-start gap-2.5">
@@ -1240,15 +1176,14 @@ export function SeatInspector({
               )}
             </div>
 
-            {/* Seat actions — moved from the panel's end to directly under the
-                assignment CTA (owner call 2026-07-23, superseding the
-                2026-07-16 end-of-panel call): Change/Move/Swap/Vacate are one
-                re-seat workflow, so the verbs cluster within one glance of the
-                header instead of splitting across 460px of reference rows.
-                Still never collapsible. Status rides here for OPEN seats — it
-                is an action, not a fact (its one-home rule intact: occupied
-                seats derive "assigned" from the occupant and show no control,
-                the chip carries the tag). */}
+            {/* Seat actions — the assignment CTA, Status for OPEN seats (it is
+                an action, not a fact: occupied seats derive "assigned" from
+                the occupant and show no control, the chip carries the tag),
+                and Delete live here. The reseat verbs — Move (person-centric),
+                Swap, Vacate — live on the canvas SeatActionBar instead, so
+                they survive the panel being collapsed, which is the state the
+                map is widest in and reseating actually happens. Still never
+                collapsible. */}
             <div role="group" aria-labelledby="seat-actions-heading" className="px-4 pb-1 pt-3">
               <div className="flex items-center gap-2">
                 <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[#E7E1D8]">Seat actions</h3>
@@ -1271,37 +1206,6 @@ export function SeatInspector({
                   </select>
                   {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.status}</p>}
                 </label>
-              )}
-              <div className="mt-2.5 flex min-w-0 gap-2">
-                <Button type="button" onClick={handleStartMoveSeat} disabled={pending} aria-pressed={moveMode} aria-label={moveMode ? `Exit move mode for ${selectedSeat.label}` : `Move seat ${selectedSeat.label} on the map`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
-                  {moveMode ? "Exit move" : "Move"}
-                </Button>
-                <Button type="button" onClick={handleStartSwapSeat} disabled={pending} aria-label={`Swap seat ${selectedSeat.label} with another draft seat`} className={`min-w-0 flex-1 rounded-[10px] ${footerNeutralButtonClass}`}>
-                  Swap
-                </Button>
-                {hasCurrentAssignment && (
-                  <Button type="button" onClick={handleVacateSeat} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`} className={`min-w-0 flex-1 rounded-[10px] ${footerDangerButtonClass}`}>
-                    Vacate
-                  </Button>
-                )}
-              </div>
-              {/* 3b INV-4: move-mode microcopy lives in the occupant (the inspector). */}
-              {moveMode && (
-                <p role="status" className="mt-2 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-3 py-2 text-[12px] font-medium leading-4 text-[var(--admin-chrome-text-soft)]">
-                  Drag the seat marker to its new spot. Esc exits move.
-                </p>
-              )}
-              {canResetPosition && (
-                <Button
-                  type="button"
-                  onClick={onResetPosition}
-                  disabled={pending}
-                  aria-label={`Reset ${selectedSeat.label} to its published position`}
-                  title="Move this seat marker back to where it sits on the published map"
-                  className={`mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight ${footerNeutralButtonClass}`}
-                >
-                  Reset position to published
-                </Button>
               )}
               {/* Figma delete treatment: full-width low-emphasis button + visible
                   helper line. Rendered only for deletable-class seats: custom
@@ -1465,62 +1369,9 @@ export function SeatInspector({
       )}
     </aside>
 
-    {vacateConfirmOpen && (
-      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
-        <section
-          ref={vacateDialogFocusRef}
-          tabIndex={-1}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="vacate-seat-confirm-title"
-          aria-describedby="vacate-seat-confirm-description"
-          onKeyDown={event => {
-            if (event.key === "Escape") {
-              event.stopPropagation();
-              setVacateConfirmOpen(false);
-            }
-          }}
-          className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 id="vacate-seat-confirm-title" className="text-base font-black">Vacate {formatSeatCode(selectedSeat.label)}?</h2>
-              <p id="vacate-seat-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
-                This clears {formatDisplayName(selectedSeatEmployeeName)} from this draft seat.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setVacateConfirmOpen(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
-              aria-label="Cancel vacating seat"
-            >
-              <CloseIcon />
-            </button>
-          </div>
-
-          <div className="mt-4 grid gap-2">
-            {isDirty && (
-              <div className="rounded-xl border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-dirty-text)]">
-                Any unsaved inspector edits will be discarded.
-              </div>
-            )}
-            <div className="rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-viewer-impact-text)]">
-              {PUBLISH_IMPACT_NOTE}
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <Button type="button" onClick={() => setVacateConfirmOpen(false)} disabled={pending} className="w-full">
-              Cancel
-            </Button>
-            <Button type="button" variant="danger" onClick={confirmVacateSeat} disabled={pending} className={`w-full ${adminDangerButtonClassName}`}>
-              Vacate seat
-            </Button>
-          </div>
-        </section>
-      </div>
-    )}
+    {/* The vacate confirm moved to SeatMap with the verb itself — the canvas
+        bar raises it, and it confirms EVERY time rather than only on unsaved
+        edits, because a transient surface earns less trust than this panel. */}
 
     {moveConflict && (
       <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">

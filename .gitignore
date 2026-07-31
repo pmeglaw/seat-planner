@@ -24,6 +24,10 @@ tsconfig.tsbuildinfo
 .env*
 !.env.local.example
 
+# Design handoff bundles are local reference material (prototype HTML + specs),
+# not shipped source. Read them, don't commit them.
+/design_handoff_shell_v12/
+
 # Production dumps carry the whole employee directory. scripts/backup-prod.mjs
 # already refuses to write inside the repo; this is the second line of defence
 # for a dump copied here by hand. Deliberately narrow so supabase/migrations

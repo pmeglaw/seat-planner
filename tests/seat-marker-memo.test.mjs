@@ -76,9 +76,7 @@ test("both maps pass identity-stable callbacks, or the memo is inert", () => {
   // An inline arrow or a re-created function declaration here hands every
   // marker a new prop on every render and silently undoes the memo.
   assert.match(adminMapSource, /onSelect=\{stableSelectSeat\}/);
-  assert.match(adminMapSource, /onMovePointerDown=\{stableMovePointerDown\}/);
   assert.match(viewerSource, /onSelect=\{stableSelectSeat\}/);
-  assert.match(viewerSource, /onMovePointerDown=\{NOOP_MOVE_POINTER_DOWN\}/);
 
   for (const [name, source] of [["SeatMap", adminMapSource], ["ViewerSeatFinder", viewerSource]]) {
     assert.doesNotMatch(
@@ -86,18 +84,13 @@ test("both maps pass identity-stable callbacks, or the memo is inert", () => {
       /onSelect=\{\([^)]*\)\s*=>/,
       `${name} must not pass an inline arrow to SeatMarker's onSelect — it disables the memo.`
     );
-    assert.doesNotMatch(
-      source,
-      /onMovePointerDown=\{\([^)]*\)\s*=>/,
-      `${name} must not pass an inline arrow to SeatMarker's onMovePointerDown — it disables the memo.`
-    );
   }
 });
 
 test("the stable wrappers read through a ref, so no closure goes stale", () => {
   // Stability without freshness would be worse than no memo: the marker would
   // call yesterday's handler. The ref assignment is what prevents that.
-  assert.match(adminMapSource, /latestSeatHandlers\.current = \{ selectSeat, handleMovePointerDown \}/);
+  assert.match(adminMapSource, /latestSeatHandlers\.current = \{ selectSeat \}/);
   assert.match(adminMapSource, /latestSeatHandlers\.current\.selectSeat\(seatId\)/);
   assert.match(viewerSource, /latestSelectSeat\.current = selectSeat/);
   assert.match(viewerSource, /latestSelectSeat\.current\(seatId\)/);

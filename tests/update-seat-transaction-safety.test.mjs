@@ -181,8 +181,15 @@ test("server draft seat update action delegates dependent writes to the transact
   assert.match(updateSeatActionSource, /expected_updated_at: input\.expectedUpdatedAt \?\? null/);
   // Success path now wraps the seat in a discriminated result; failures are returned
   // (via mapUpdateSeatError) rather than thrown so the friendly RPC message survives.
+  // Fix round 1 (2026-07-30): the ok result also carries the fresh full draft
+  // payload (getDraftMapPayload, same helper swapSeatAssignmentsAction uses),
+  // not just the one seat — a force_move vacates a SECOND draft seat
+  // server-side, and a caller that only had the one seat could only
+  // reconstruct that second seat from its own stale copy, which baked a
+  // stale updated_at into local state and failed the next Undo's per-row
+  // concurrency fence (MLS02, reproduced live).
   assert.match(updateSeatActionSource, /const seat = await getDraftSeatById\(supabase, input\.seatId\)/);
-  assert.match(updateSeatActionSource, /return \{ ok: true, seat \}/);
+  assert.match(updateSeatActionSource, /return \{ ok: true, seat, \.\.\.\(await getDraftMapPayload\(supabase\)\) \}/);
   assert.match(updateSeatActionSource, /return mapUpdateSeatError\(error\)/);
   assert.doesNotMatch(updateSeatActionSource, /throw new Error\(error\.message\)/);
 

@@ -16,7 +16,7 @@ test("viewer route renders the published map as read-only", async () => {
   assert.doesNotMatch(viewerSource, /<SeatMap/);
   assert.match(viewerFinderSource, /Read-only/);
   assert.match(viewerFinderSource, /Published/);
-  assert.doesNotMatch(viewerFinderSource, /createSeatAction|deleteSeatAction|moveSeatAction|publishSeatMapAction|restoreDraftSnapshotAction|swapSeatAssignmentsAction/);
+  assert.doesNotMatch(viewerFinderSource, /createSeatAction|deleteSeatAction|publishSeatMapAction|restoreDraftSnapshotAction|swapSeatAssignmentsAction/);
   assert.match(adminSource, /\.eq\("layer", "draft"\)/);
   assert.match(adminSource, /\.eq\("layer", "published"\)/);
   // Guards that the published layer is plumbed into SeatMap as read-only
@@ -72,14 +72,14 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
 test("active modes exit after dialogs and keep visible exit controls", async () => {
   const source = await readSource("../components/seat-map/SeatMap.tsx");
   const publishDialogIndex = source.indexOf("if (publishReviewOpen)");
-  const activeModeIndex = source.indexOf("if (addSeatMode || moveSeatMode || swapSourceSeatId)");
+  const activeModeIndex = source.indexOf("if (addSeatMode || swapSourceSeatId || moveEmployeeSourceSeatId)");
 
   assert.ok(publishDialogIndex >= 0, "Escape handler should check publish review.");
   assert.ok(activeModeIndex >= 0, "Escape handler should check active map modes.");
   assert.ok(publishDialogIndex < activeModeIndex, "Dialogs should receive Escape before active map modes.");
   assert.match(source, /label: "Add seat"[\s\S]*exitLabel: "Exit add seat"/);
-  assert.match(source, /label: "Move seat"[\s\S]*exitLabel: "Exit move seat"/);
   assert.match(source, /label: "Swap seats"[\s\S]*exitLabel: "Exit swap seats"/);
+  assert.match(source, /label: "Move employee"[\s\S]*exitLabel: "Exit move employee"/);
 });
 
 test("viewer rendering path stays isolated from admin-only draft and delete controls", async () => {
@@ -96,7 +96,15 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*draftStatusLabel/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AskPlannerDrawer/);
-  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Swap seat/);
+  // The anchor has moved twice: Swap left for the canvas action bar, then Move
+  // was hidden behind MOVE_UI_ENABLED (2026-07-30). Delete is the surviving
+  // admin-only control in the panel. The guarantee is unchanged — admin-only
+  // affordances must sit inside the canEdit branch — only its anchor moved.
+  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete custom seat/);
+  // ...and the same guarantee, followed to where the verbs actually went: the
+  // action bar is admin-gated at its render site, so a viewer never gets Swap
+  // or Vacate on the canvas either.
+  assert.match(seatMapSource, /\{canEdit && floor === "3" && \([\s\S]*<SeatActionBar/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Vacate/);
 });
@@ -216,7 +224,6 @@ test("publish review summarizes draft changes before publish", async () => {
   assert.match(source, /Removed seats/);
   assert.match(source, /Assignment changes/);
   assert.match(source, /Vacated seats/);
-  assert.match(source, /Seat moves\/layout changes/);
   assert.match(source, /Status changes/);
   assert.match(source, /Other draft changes/);
   assert.match(source, /Publish review blocked: Save or discard the selected seat edits before publishing/);
@@ -370,8 +377,8 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /requestInspectorGuard\(\{ kind: "select-seat", seatId, center: true, sourceLabel \}\)/);
   assert.match(source, /requestInspectorGuard\(\{ kind: "close-inspector" \}\)/);
   assert.match(source, /requestInspectorGuard\(\{ kind: "start-add-seat" \}\)/);
-  assert.match(source, /requestInspectorGuard\(\{ kind: "start-move-seat" \}\)/);
   assert.match(source, /requestInspectorGuard\(\{ kind: "start-swap-seat" \}\)/);
+  assert.match(source, /requestInspectorGuard\(\{ kind: "start-move-employee" \}\)/);
   // Navigation guards carry their destination: Save/Discard must land the
   // user on the page they actually clicked (Management OR Settings), and the
   // dialog copy must name it.

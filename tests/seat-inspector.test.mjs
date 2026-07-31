@@ -95,21 +95,29 @@ test("viewer mode exposes no edit affordances (viewer/admin isolation)", async (
 });
 
 test("admin mode exposes the edit affordances", async () => {
-  await renderInspector(makeSeat(), { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {}, onStartSwapSeat() {} });
+  await renderInspector(makeSeat(), { canEdit: true, onDeleteSeat() {} });
   assert.ok(byLabelPrefix("Delete custom seat"), "delete control present");
-  assert.ok(byLabelPrefix("Move seat"), "move control present");
-  assert.ok(byLabelPrefix("Swap seat"), "swap control present");
   assert.ok(byLabelPrefix("Assign an employee"), "assign control present");
+  // Swap and Vacate are deliberately NOT here any more: they moved to the
+  // canvas action bar so they survive the panel being collapsed, which is the
+  // state the map is widest in and reseating actually happens. Asserting their
+  // absence is what stops them drifting back and duplicating the bar.
+  assert.equal(byLabelPrefix("Swap seat"), null, "swap lives on the canvas bar, not this panel");
+  assert.equal(byLabelPrefix("Vacate"), null, "vacate lives on the canvas bar, not this panel");
+  // Geometry move is RETIRED (owner call, 2026-07-30): seats never move,
+  // people do. The person-centric Move lives on the canvas action bar.
+  assert.equal(byLabelPrefix("Move seat"), null, "geometry move is retired");
+  assert.equal(byLabelPrefix("Reset"), null, "reset-position went with it");
 });
 
 test("an occupied seat's CTA reads Edit assignment (it opens a form, never acts)", async () => {
-  await renderInspector(assignedSeat, { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {}, onStartSwapSeat() {} });
+  await renderInspector(assignedSeat, { canEdit: true, onDeleteSeat() {} });
   assert.ok(byLabelPrefix("Edit assignment"), "occupied-seat CTA is an edit verb");
   assert.equal(byLabelPrefix("Change assignment"), null, "old ambiguous label retired");
 });
 
 test("Contact section never repeats Department — the header role line carries it", async () => {
-  await renderInspector(assignedSeat, { canEdit: true, onDeleteSeat() {}, onStartMoveSeat() {}, onStartSwapSeat() {} });
+  await renderInspector(assignedSeat, { canEdit: true, onDeleteSeat() {} });
   const factLabels = [...document.querySelectorAll("dt")].map(dt => dt.textContent);
   assert.ok(!factLabels.includes("Department"), "no duplicate Department fact row");
 });

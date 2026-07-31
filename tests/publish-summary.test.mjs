@@ -85,9 +85,8 @@ test("publish summary classifies reliable draft-vs-published categories", () => 
 
   assert.deepEqual(summary.assignmentChanges.map(item => item.label), ["W01", "W06"]);
   assert.deepEqual(summary.vacatedSeats.map(item => item.label), ["W02"]);
-  assert.deepEqual(summary.seatMoves.map(item => item.label), ["W03"]);
   assert.deepEqual(summary.statusChanges.map(item => item.label), ["W04"]);
-  assert.deepEqual(summary.otherChanges.map(item => item.label), ["W05"]);
+  assert.deepEqual(summary.otherChanges.map(item => item.label), ["W03", "W05"]);
   assert.equal(summary.updatedSeatCount, 6);
 });
 

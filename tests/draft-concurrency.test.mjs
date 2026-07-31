@@ -84,45 +84,29 @@ test("SeatMap threads the fence through undo/redo restore and swap", async () =>
   assert.doesNotMatch(staleHandler[0], /setActionError\(`/);
 });
 
-test("moveSeatAction fences the position write and SeatMap threads it on both move paths", async () => {
-  const actionSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
-  const moveAction = actionSource.match(/export async function moveSeatAction[\s\S]*?export async function updateSeatAction/);
-
-  assert.ok(moveAction, "moveSeatAction should remain source-visible");
-  // Compare-and-swap in the UPDATE's own WHERE clause: the check and the write
-  // are one statement, so they cannot straddle a concurrent commit. Position is
-  // the only per-seat draft write that does not go through an RPC, so the fence
-  // has to live in the query itself or not at all.
-  assert.match(moveAction[0], /\.eq\("updated_at", input\.expectedUpdatedAt\)/);
-  assert.match(moveAction[0], /code: "STALE_DRAFT"/);
-  // Timestamps go back verbatim — re-serializing through Date drops the
-  // microseconds Postgres stored and trips the fence on a false positive.
-  assert.doesNotMatch(moveAction[0], /new Date\(\s*input\.expectedUpdatedAt/);
-
-  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
-  const moveCalls = seatMapSource.match(/moveSeatAction\(\{[\s\S]*?\}\)/g) ?? [];
-  assert.equal(moveCalls.length, 2, "drag-commit and reset-to-published are the only move callers");
-  for (const call of moveCalls) {
-    assert.match(call, /expectedUpdatedAt/, `move call should thread the fence: ${call}`);
-  }
-
-  // Drag fences on the PRE-drag snapshot: pointermove rewrites x/y locally but
-  // never updated_at, so the snapshot is what this client believes is current.
-  assert.match(seatMapSource, /const expectedUpdatedAt = beforeSnapshot\.seats\.find\(seat => seat\.id === seatId\)\?\.updated_at \?\? null/);
-  assert.match(seatMapSource, /const expectedUpdatedAt = selectedSeat\.updated_at \?\? null/);
-  // A rejected move must reach the shared stale recovery, not the generic
-  // action-error line, or the history baselines are left pointing at a draft
-  // the database no longer has.
-  assert.match(seatMapSource, /if \(!result\.ok\) \{\s*applyRestoredDraftPayload\(beforeSnapshot\);\s*handleStaleDraft\(result\.message\);/);
-});
-
-test("SeatInspector threads the per-seat fence and routes STALE_DRAFT to the parent", async () => {
+test("the save and vacate paths both thread the per-seat fence and route STALE_DRAFT to the parent", async () => {
   const source = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
+  const vacateSource = await readFile(new URL("../lib/seatDraftActions.ts", import.meta.url), "utf8");
+  const hookSource = await readFile(new URL("../components/seat-map/useSeatDraftActions.ts", import.meta.url), "utf8");
 
-  const fenceInputs = source.match(/expectedUpdatedAt: selectedSeat\.updated_at/g) ?? [];
-  assert.ok(fenceInputs.length >= 2, "both the save and vacate paths should pass the seat's updated_at");
+  // This used to count two `expectedUpdatedAt: selectedSeat.updated_at` inputs
+  // in one file, because the inspector was the only surface that wrote a seat.
+  // Vacate moved out so the canvas action bar shares one path with it, so the
+  // guarantee is now checked where each half actually lives. Same two rules,
+  // and one more file's worth of them — do not collapse this back to a count.
+
+  // Save path: still builds its own input inline in the inspector.
+  assert.match(source, /expectedUpdatedAt: selectedSeat\.updated_at/);
   assert.match(source, /result\.code === "STALE_DRAFT"/);
   assert.match(source, /onStaleDraft\(result\.message\)/);
+
+  // Vacate path: the payload carries the fence through verbatim...
+  assert.match(vacateSource, /expectedUpdatedAt: seat\.updated_at/);
+  assert.match(vacateSource, /result\.code === "STALE_DRAFT"/);
+  // ...and a rejected write reaches the parent's stale recovery rather than
+  // being surfaced as a generic error the user can only retry into.
+  assert.match(hookSource, /outcome\.kind === "stale"/);
+  assert.match(hookSource, /onStaleDraft\(outcome\.message\)/);
 });
 
 test("settings JSON restore fences on the draft the page loaded", async () => {
@@ -130,4 +114,36 @@ test("settings JSON restore fences on the draft the page loaded", async () => {
 
   assert.match(source, /restoreDraftSnapshotAction\(review\.snapshot, listDraftSeatExpectations\(seats\)\)/);
   assert.match(source, /router\.refresh\(\)/);
+});
+
+test("force-move outcomes ingest the fresh draft payload instead of a stale client-side vacate", async () => {
+  // Fix round 1 (2026-07-30): a force_move also vacates the mover's OTHER
+  // draft seat server-side, bumping its updated_at. Reconstructing that seat
+  // by spreading the client's stale pre-mutation copy (the original
+  // vacateOtherSeatsForEmployee approach) baked a stale timestamp into
+  // localSeats and made the next Undo bounce off the per-row concurrency
+  // fence (MLS02) — reproduced live. Both force_move commit paths must
+  // instead ingest the fresh `seats`/`employees` updateSeatAction now returns
+  // (same helper swap already uses), so both consumers must NOT reconstruct
+  // the vacated seat from a client-side spread.
+  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
+  const inspectorSource = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
+
+  assert.doesNotMatch(seatMapSource, /vacateOtherSeatsForEmployee/);
+
+  // updateSeatAction's success result carries the fresh full draft payload.
+  assert.match(actionsSource, /return \{ ok: true, seat, \.\.\.\(await getDraftMapPayload\(supabase\)\) \}/);
+
+  // Bar Move (confirmMoveEmployeeToOpenSeat): ingests result.seats/employees wholesale.
+  assert.match(seatMapSource, /const afterSeats = normalizeSeats\(result\.seats\);\s*\n\s*const afterEmployees = result\.employees;/);
+
+  // applySeatUpdated: ingests the fresh payload wholesale when the caller (a
+  // force_move) hands one in, falling back to the plain spread otherwise.
+  assert.match(seatMapSource, /freshDraftPayload \? normalizeSeats\(freshDraftPayload\.seats\) : replaceSeat\(beforeSnapshot\.seats, seat\)/);
+  assert.match(seatMapSource, /freshDraftPayload \? freshDraftPayload\.employees : replaceEmployee\(beforeSnapshot\.employees, seat\)/);
+
+  // SeatInspector's "Move them?" retry hands applySeatUpdated the fresh
+  // payload exactly when it force_moved, never otherwise.
+  assert.match(inspectorSource, /onSeatUpdated\(updated, beforeSnapshot, input\.forceMove \? \{ seats: result\.seats, employees: result\.employees \} : undefined\)/);
 });
