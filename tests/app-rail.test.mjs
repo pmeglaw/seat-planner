@@ -101,6 +101,27 @@ test("without onNavigate, items navigate plainly via router.push", async () => {
   assert.deepEqual(pushed, ["/admin", "/admin/management", "/admin/settings"]);
 });
 
+// The map header's own accessibility-source test (#197, "narrow widths keep
+// the viewer switch reachable") defers this control's presence and guard
+// wiring to AppRail's own suite rather than re-asserting it via source-text
+// grep — this is that coverage. Accessible name is the explicit aria-label
+// ("Open viewer surface"), not the visible "Viewer" text content.
+test("the Viewer item is reachable and routes through onNavigate", async () => {
+  const calls = [];
+  await renderRail({
+    onNavigate: (href, label) => {
+      calls.push([href, label]);
+      return true;
+    }
+  });
+  const viewerButton = screen.getByRole("button", { name: "Open viewer surface" });
+
+  await act(async () => fireEvent.click(viewerButton));
+
+  assert.deepEqual(calls, [["/", "the viewer"]]);
+  assert.deepEqual(pushed, ["/"]);
+});
+
 test("Escape collapses an expanded rail and returns focus to the hamburger", async () => {
   await renderRail();
   const button = hamburger();

@@ -2777,11 +2777,12 @@ export function SeatMap({
           )}
         </div>
 
-        {/* Search owns its own field, sized MEDIUM: the cap rises 340 -> 420px
-            on lg — the bottom of the refinement brief's 420-560 range, so it
+        {/* Search owns its own field, sized MEDIUM: the cap rises 340 -> 460px
+            on lg, per the v12 target-bar spec — up from the pre-v12 420 (the
+            bottom of the original refinement brief's 420-560 range), so it
             still clears the old cramped shared box without dominating the bar
             the way 480 did. */}
-        <div role="search" aria-label="Command search" className="hidden h-6 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:block lg:max-w-[420px]">
+        <div role="search" aria-label="Command search" className="hidden h-6 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:block lg:max-w-[460px]">
           <label className="relative flex h-full w-full min-w-0 items-center">
             <span className="sr-only">Search employee, seat, job title, department, or zone</span>
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
@@ -2915,9 +2916,18 @@ export function SeatMap({
                       }}
                       className={chromeMenuItem}
                     >
-                      Show names
+                      Show occupant names
                       {showNames && (
-                        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-status-ok)]">
+                        // #24A148 (bright fill, --admin-status-ok-rgb's hex):
+                        // 4.92:1 on this menu's #1f1f1f, 4.52:1 on #262626 —
+                        // clears the 3:1 graphics floor (WCAG 1.4.11).
+                        // --admin-status-ok itself (#1D6E41) measures only
+                        // 2.64:1 / 2.42:1 here — too dim on dark chrome, fine
+                        // only on the light-surface status dot/pill it was
+                        // tuned for. The prototype's #42be65
+                        // (--admin-chrome-success-text) is a retired hex —
+                        // not reintroduced here.
+                        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[#24A148]">
                           <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
@@ -2937,13 +2947,22 @@ export function SeatMap({
                     </button>
                     <div className="mx-0 my-1 h-px bg-white/10" />
                     {/* Danger text #ff8389 (Carbon red-30, --admin-chrome-danger-text):
-                        6.38:1 measured on this menu's #1f1f1f background — well
-                        past the 4.5:1 floor (Step 3 contrast gate). Disabled when
-                        there is nothing to discard: a no-op destructive control
-                        reads as broken, not as safe. Relocated here from the
+                        6.95:1 measured on this menu's own #1f1f1f
+                        (--admin-chrome-elevated) background, 6.38:1 on
+                        #262626 (--admin-chrome-hover, in case this class ever
+                        rides a hover surface) — both well past the 4.5:1
+                        floor (Step 3 contrast gate). Disabled when there is
+                        nothing to discard: a no-op destructive control reads
+                        as broken, not as safe. Relocated here from the
                         publish review dialog (v12) — resetDraftToPublishedAction
                         keeps its one call site inside confirmDiscardDraftChanges;
-                        only this trigger moved. */}
+                        only this trigger moved. No focus restore here: the
+                        confirm dialog takes focus itself (useDialogFocus's
+                        ref-callback focuses it synchronously on mount) — a
+                        deferred returnFocusAfterClose would land AFTER that
+                        and yank focus back outside the open aria-modal
+                        dialog, breaking its own Tab trap. useDialogFocus
+                        restores focus to this button on close instead. */}
                     <button
                       type="button"
                       disabled={!publishSummary.hasChanges}
@@ -2951,7 +2970,6 @@ export function SeatMap({
                       onClick={() => {
                         setChromeMenuOpen(false);
                         setDiscardDraftConfirmOpen(true);
-                        returnFocusAfterClose(chromeMenuButtonRef);
                       }}
                       className={[chromeMenuItem, "text-[var(--admin-chrome-danger-text)] disabled:cursor-not-allowed disabled:text-[var(--admin-chrome-disabled)] disabled:hover:bg-transparent"].join(" ")}
                     >

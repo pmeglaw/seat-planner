@@ -53,6 +53,11 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   // Settings — like every other in-app destination — cannot bypass the
   // unsaved-edits guard, whichever rail item reaches it.
   assert.match(source, /<AppRail[\s\S]{0,220}onNavigate=\{\(href, label\) => beforeGuardedNavigation\(href as GuardedNavigationHref, label\)\}/);
+  // Settings must never appear as an unguarded peer link on the map surface
+  // itself — the rail (a different file, its own guard-respecting contract)
+  // plus the wiring above own it. A bare href here would bypass the guard
+  // AppRail's onNavigate can't reach.
+  assert.doesNotMatch(source, /href="\/admin\/settings"/);
   assert.match(source, /aria-controls="ask-planner-drawer"/);
   assert.match(source, /aria-haspopup="dialog"/);
   assert.match(source, /No map changes to undo/);
@@ -639,8 +644,13 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   // means menuitemcheckbox + aria-checked — and note that changing the role also
   // breaks any [role="menuitem"] selector driving that menu's keyboard roving.
   assert.doesNotMatch(seatMapSource, /role="menuitem"[\s\S]{0,120}aria-pressed=/);
-  assert.doesNotMatch(seatMapSource, /Hide names/);
-  assert.match(seatMapSource, /Show names\s*\{showNames && \(/);
+  // v12: the kebab item's label is "Show occupant names" (contract #12,
+  // matching the prototype's dc.html line 103 copy exactly) — the inverse-
+  // verb guard must track the CURRENT label, not the retired "Show names"
+  // one, or a regression to "Hide occupant names" would slip past a stale
+  // "Hide names" substring check.
+  assert.doesNotMatch(seatMapSource, /Hide occupant names/);
+  assert.match(seatMapSource, /Show occupant names\s*\{showNames && \(/);
 
   // A skip link is the first focusable on both map surfaces, targeting a
   // focusable map region — the chrome gauntlet is 8+ tab stops otherwise.
@@ -685,14 +695,22 @@ test("narrow widths keep the viewer switch and people directory reachable", asyn
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
   // v12: the old sub-sm-only "Viewer" menu-fallback link is retired — AppRail
-  // is position:fixed and mounted unconditionally (no breakpoint wrapper), so
-  // its own Viewer item is reachable at every width including phone, the
-  // original #197 concern. Its onNavigate is the SAME guard every other
-  // AppRail item shares, so Viewer navigation cannot bypass unsaved-edits
-  // protection either. AppRail's own component-level behavior (item presence,
-  // keyboard reachability at every width) is tests/app-rail.test.mjs's job,
-  // not this file's — this only pins that SeatMap mounts it unconditionally
-  // and wires the guard, and that the old per-width dead-end fallback is gone.
+  // is mounted directly on SeatMap's root (visible in the diff) and is itself
+  // position:fixed with no responsive-hiding class, so its own Viewer item is
+  // reachable at every width including phone, the original #197 concern.
+  // What THIS pin actually proves (be precise about what a bare
+  // /<AppRail\b/ match can and can't show): AppRail is present in this file
+  // at all, and the old per-width guarded literal
+  // (beforeGuardedNavigation("/", "the viewer")) is gone — not just renamed,
+  // since AppRail's Viewer item never hardcodes that call; it goes through
+  // the shared onNavigate wiring pinned above instead. It does NOT prove
+  // AppRail is mounted unconditionally (a regex can't rule out an enclosing
+  // conditional elsewhere in the file) — that property is a plain reading of
+  // the JSX, not something asserted here. AppRail's own behavior — the
+  // Viewer item's presence, its accessible name, and that activating it
+  // calls onNavigate("/", "the viewer") — is asserted in
+  // tests/app-rail.test.mjs ("the Viewer item is reachable and routes
+  // through onNavigate"), which is where that semantic actually lives.
   assert.match(seatMapSource, /<AppRail\b/);
   assert.doesNotMatch(seatMapSource, /beforeGuardedNavigation\("\/", "the viewer"\)\) event\.preventDefault\(\)/);
 
