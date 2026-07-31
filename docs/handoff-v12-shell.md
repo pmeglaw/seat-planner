@@ -45,7 +45,9 @@ This document goes stale; the code does not. Read, in order:
   `useEffect` and no warning. `handleResetEdits` is still unused — it was
   already unused at `f18efc1`, so it is left alone deliberately.
 - **The superseded mocks deleted** (`880d489`) — `app/concepts/action-bar/` and
-  `app/concepts/inspector/`. `nav-rail` and `login-v12` kept.
+  `app/concepts/inspector/`. `nav-rail` and `login-v12` kept at the time;
+  `nav-rail` was itself deleted later as superseded (v12 slice 2, 2026-07-31 —
+  see §1 below). `login-v12` remains.
 - **Geometry Move retired outright, 2026-07-30** — not hidden behind a flag.
   The prior entry here described `MOVE_UI_ENABLED` gating the JSX so the drag
   machinery stayed referenced and reversible by one boolean; the owner
@@ -94,6 +96,20 @@ This document goes stale; the code does not. Read, in order:
      only reach it through a client provider wrapping `{children}`.
    - `applyInspectorGuardAction` ends in `window.location.assign` — a full
      document load, which would remount the rail on every discard.
+
+   **SHIPPED 2026-07-31 (v12 slice 2).** Item 1's rail landed as
+   `components/ui/AppRail.tsx`, built to the Carbon v12 geometry the owner
+   ruled that day — a 48px collapsed column growing to a 208px overlay — not
+   the 36px/232px `app/concepts/nav-rail` mock this item originally pointed
+   at (that mock is now deleted; see `docs/DESIGN_DIRECTION.md` §3 and
+   `CLAUDE.md`'s concepts list). The `app/admin/layout.tsx` risks above were
+   **sidestepped, not solved**: no admin layout was created. The rail is
+   page-mounted instead — `SeatMap` renders it directly on `/admin` so
+   navigation still routes through the existing unsaved-edits guard
+   (`beforeGuardedNavigation`), and `app/admin/management/page.tsx` /
+   `app/admin/settings/page.tsx` render it directly beside a now
+   identity-only `AdminShellBar`. Account/sign-out moved into the rail's own
+   bottom cell.
 
 ## Settled — do not reopen
 

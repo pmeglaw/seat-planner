@@ -14,6 +14,8 @@ name: CI
 # If that convention slips, or if the repo moves to a plan with branch
 # protection and it is NOT configured, restore `push: branches: [main]`.
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
