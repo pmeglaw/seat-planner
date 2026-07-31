@@ -44,13 +44,15 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /Planning canvas/);
   assert.match(source, /aria-label="Seat status legend"/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
-  // Session layer (2026-07-16 detail critique): the identity chip is the
-  // ACCOUNT MENU — signed-in email + role + Sign out. Settings stays behind
-  // the chip on the map surface (owner preference, now as a labeled menu item)
-  // and MUST keep routing through the unsaved-edits guard. Settings still
-  // never appears as a peer nav item on the map bar.
-  assert.match(source, /<AccountMenu[\s\S]{0,600}beforeGuardedNavigation\("\/admin\/settings", "Settings"\)/);
-  assert.doesNotMatch(source, /className=\{chromeToolbarBtnCollapsibleXl\}[\s\S]{0,220}Settings\s*<\/Link>/);
+  // Session layer, v12 (2026-07-31 rail shell): identity + Settings moved off
+  // the header AccountMenu into AppRail (Task 1) — Settings is now a
+  // first-class rail nav item rather than tucked behind an identity chip (a
+  // deliberate reversal of the pre-v12 rule this test used to pin). The guard
+  // survives structurally: every AppRail item (map/management/settings/
+  // viewer) shares the SAME onNavigate wiring into beforeGuardedNavigation, so
+  // Settings — like every other in-app destination — cannot bypass the
+  // unsaved-edits guard, whichever rail item reaches it.
+  assert.match(source, /<AppRail[\s\S]{0,220}onNavigate=\{\(href, label\) => beforeGuardedNavigation\(href as GuardedNavigationHref, label\)\}/);
   assert.match(source, /aria-controls="ask-planner-drawer"/);
   assert.match(source, /aria-haspopup="dialog"/);
   assert.match(source, /No map changes to undo/);
@@ -59,12 +61,12 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /unpublished \$\{publishSummary\.totalChangeCount === 1 \? "change" : "changes"\}/);
   assert.match(source, /Esc exits/);
   assert.match(source, /Exit add seat/);
-  // Publish chip contract (2026-07-16 critique, fix 3): with changes it is the
-  // review entry point; idle it is a DISCLOSURE for the status popover — a
-  // status indicator must not launch the publish workflow modal.
-  assert.match(source, /\{canEdit && \([\s\S]*aria-label=\{publishSummary\.hasChanges \? `Review \$\{draftStatusLabel\.toLowerCase\(\)\}` : `Publish status: \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);
-  assert.match(source, /if \(publishSummary\.hasChanges\) \{\s*openPublishReview\(\);\s*return;\s*\}\s*setPublishStatusOpen\(current => !current\);/);
-  assert.match(source, /id="publish-status-popover"[\s\S]{0,300}aria-label="Publish status"/);
+  // Publish chip contract, v12 (contract #4): nothing renders without draft
+  // changes — no idle status chip, no publish-status-popover. The has-changes
+  // cluster is the ONLY publish control and it opens the review directly.
+  assert.match(source, /\{publishSummary\.hasChanges && \([\s\S]{0,500}onClick=\{openPublishReview\}/);
+  assert.doesNotMatch(source, /id="publish-status-popover"/);
+  assert.equal((source.match(/onClick=\{openPublishReview\}/g) ?? []).length, 1, "exactly one publish control opens the review");
   assert.match(source, /Undo \{lastUndoLabel\}/);
   assert.match(source, /onClick=\{undoDraftEdit\}/);
 });
@@ -395,17 +397,17 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /form\.requestSubmit\(\)/);
   assert.match(source, /onSubmitBlocked=\{cancelPendingInspectorGuardAction\}/);
   assert.match(source, /setPendingInspectorSaveAction\(null\)/);
-  assert.match(source, /href="\/admin\/management"[\s\S]{0,260}beforeGuardedNavigation\("\/admin\/management", "Management"\)\) event\.preventDefault\(\)/);
-  // The viewer surface link routes through the same guard (#194): a dirty
-  // inspector must intercept it instead of silently dropping the edits.
-  assert.match(source, /href="\/"[\s\S]{0,320}beforeGuardedNavigation\("\/", "the viewer"\)\) event\.preventDefault\(\)/);
+  // v12: Management, Viewer, and Settings navigation all moved off individual
+  // per-link handlers (each used to hardcode its own beforeGuardedNavigation
+  // call) into AppRail's rail items, which share ONE generic callback. A
+  // dirty inspector must intercept every destination uniformly, and routing
+  // all of them through the same onNavigate wiring guarantees that by
+  // construction — there is no longer a per-link call site to individually
+  // forget the guard on.
+  assert.match(source, /<AppRail[\s\S]{0,220}onNavigate=\{\(href, label\) => beforeGuardedNavigation\(href as GuardedNavigationHref, label\)\}/);
   // And the browser-owned path (tab close / hard navigation) arms beforeunload
   // while the inspector is dirty.
   assert.match(source, /window\.addEventListener\("beforeunload", warnBeforeUnload\)/);
-  // Settings moved off a Link into the account menu (2026-07-16 session
-  // layer): the menu item still routes through the same guard and only
-  // navigates when the guard allows it.
-  assert.match(source, /if \(beforeGuardedNavigation\("\/admin\/settings", "Settings"\)\) window\.location\.assign\("\/admin\/settings"\)/);
   assert.doesNotMatch(source, /You have unsaved seat edits\. Discard them\?/);
 });
 
@@ -682,14 +684,17 @@ test("narrow widths keep the viewer switch and people directory reachable", asyn
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
-  // Below sm the bar's Viewer/Admin shortcuts hide, so the overflow menu must
-  // carry a Viewer item — routed through the same unsaved-edits guard as every
-  // other in-app navigation (#197). Without it the admin surface is a dead end
-  // at phone widths.
-  assert.match(
-    seatMapSource,
-    /id="chrome-overflow-menu"[\s\S]{0,7000}beforeGuardedNavigation\("\/", "the viewer"\)\) event\.preventDefault\(\)/
-  );
+  // v12: the old sub-sm-only "Viewer" menu-fallback link is retired — AppRail
+  // is position:fixed and mounted unconditionally (no breakpoint wrapper), so
+  // its own Viewer item is reachable at every width including phone, the
+  // original #197 concern. Its onNavigate is the SAME guard every other
+  // AppRail item shares, so Viewer navigation cannot bypass unsaved-edits
+  // protection either. AppRail's own component-level behavior (item presence,
+  // keyboard reachability at every width) is tests/app-rail.test.mjs's job,
+  // not this file's — this only pins that SeatMap mounts it unconditionally
+  // and wires the guard, and that the old per-width dead-end fallback is gone.
+  assert.match(seatMapSource, /<AppRail\b/);
+  assert.doesNotMatch(seatMapSource, /beforeGuardedNavigation\("\/", "the viewer"\)\) event\.preventDefault\(\)/);
 
   // Below the panel breakpoint the docked People directory disappears, so a
   // panel:hidden toggle must open it as a sheet, and the sheet must offer its

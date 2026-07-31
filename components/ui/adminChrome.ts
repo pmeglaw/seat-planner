@@ -33,9 +33,14 @@
  * bars and the four panels that dock beneath them.
  */
 
-// Structure + focus ring, shared by every flat tool. MUST keep `inline-flex` as
-// its first token: SeatMap derives its below-lg / below-xl collapse variants by
-// string-replacing that word (chromeToolbarBtnCollapsible*).
+// Structure + focus ring, shared by every flat tool. Only AdminShellBar (the
+// sub-page bar) composes these three today — the map header's own row lost
+// its last flat-tool users in v12 (Show names, Management, and the flat-tool
+// Ask Planner all moved to the rail or the header kebab; see SeatMap.tsx's
+// header block). The `inline-flex`-first-token contract that used to matter
+// for SeatMap's now-retired chromeToolbarBtnCollapsible* string-replace
+// derivations is retired with them — nothing derives a collapse variant from
+// this string anymore.
 const chromeToolBase =
   "inline-flex h-[var(--admin-chrome-h)] shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12.5px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 

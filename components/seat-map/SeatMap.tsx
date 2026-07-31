@@ -82,14 +82,8 @@ import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
-import { AccountMenu } from "@/components/ui/AccountMenu";
-import {
-  adminChromeDividerRule,
-  adminChromeSurfaceShortcut,
-  adminChromeTool,
-  adminChromeToolActive,
-  adminChromeToolDisabled
-} from "@/components/ui/adminChrome";
+import { AppRail } from "@/components/ui/AppRail";
+import { adminChromeDividerRule } from "@/components/ui/adminChrome";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { CloseIcon } from "@/components/ui/CloseIcon";
 import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
@@ -148,8 +142,10 @@ type InspectorGuardAction =
   | { kind: "navigate-admin-page"; href: GuardedNavigationHref; destination: string };
 
 // Whitelisted in-app destinations for the unsaved-edits guard. Query-string
-// variants must be listed explicitly so the guard stays a closed set.
-type GuardedNavigationHref = "/" | "/admin/management" | "/admin/management?tab=publishHistory" | "/admin/settings";
+// variants must be listed explicitly so the guard stays a closed set. "/admin"
+// itself joined the union in v12: AppRail's "Seat map" item targets the
+// current page and routes through this same guard (a no-op when clean).
+type GuardedNavigationHref = "/" | "/admin" | "/admin/management" | "/admin/management?tab=publishHistory" | "/admin/settings";
 
 type MapViewMode = "overview" | "detail";
 
@@ -363,10 +359,6 @@ export function SeatMap({
   const chromeMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const mapMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const mapMenuRef = useRef<HTMLDivElement | null>(null);
-  // Idle publish chip discloses a status popover (2026-07-16 critique, fix 3);
-  // the review modal is reserved for the has-changes state.
-  const [publishStatusOpen, setPublishStatusOpen] = useState(false);
-  const publishStatusButtonRef = useRef<HTMLButtonElement | null>(null);
   // Whether the docked inspector was expanded when Ask Planner took the right
   // edge — closed drawers hand the slot back (2026-07-16 critique, minor 6).
   const inspectorExpandedBeforePlannerRef = useRef(false);
@@ -654,20 +646,7 @@ export function SeatMap({
     firstItem?.focus();
   }, [mapMenuOpen]);
 
-  // Same dismissal rule for the publish status popover.
-  useEffect(() => {
-    if (!publishStatusOpen) return;
-
-    function handleOutsidePointer(event: globalThis.PointerEvent) {
-      if (event.target instanceof Element && event.target.closest("[data-publish-status]")) return;
-      setPublishStatusOpen(false);
-    }
-
-    document.addEventListener("pointerdown", handleOutsidePointer);
-    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
-  }, [publishStatusOpen]);
-
-  // Same dismissal rule for the chrome-bar "More" menu (collapsed admin tools below lg).
+  // Same dismissal rule for the chrome-bar "More" menu (the v12 kebab).
   useEffect(() => {
     if (!chromeMenuOpen) return;
 
@@ -835,11 +814,6 @@ export function SeatMap({
         return;
       }
 
-      if (publishStatusOpen) {
-        setPublishStatusOpen(false);
-        return;
-      }
-
       if (mapMenuOpen) {
         setMapMenuOpen(false);
         return;
@@ -908,7 +882,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveEmployeeConfirm, moveEmployeeSourceSeatId, position, publishReviewOpen, publishStatusOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveEmployeeConfirm, moveEmployeeSourceSeatId, position, publishReviewOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
@@ -992,24 +966,6 @@ export function SeatMap({
     ...publishSummary.statusChanges,
     ...publishSummary.otherChanges
   ].map(item => item.label)), [publishSummary]);
-  // Changes appearing (a local edit or another session's refresh) retire the
-  // idle status popover — the chip morphs into the review entry point.
-  useEffect(() => {
-    if (publishSummary.hasChanges) setPublishStatusOpen(false);
-  }, [publishSummary.hasChanges]);
-  // Same derivation as app/page.tsx: publish_seat_map() re-inserts every
-  // published row, so the max updated_at over published seats IS the last
-  // publish time. Client-side formatting is hydration-safe here — the popover
-  // only ever renders after an interaction.
-  const lastPublishedLabel = useMemo(() => {
-    const lastPublishedAt = localPublishedSeats.reduce<string | null>(
-      (latest, seat) => (seat.updated_at && (!latest || seat.updated_at > latest) ? seat.updated_at : latest),
-      null
-    );
-    return lastPublishedAt
-      ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Los_Angeles" }).format(new Date(lastPublishedAt))
-      : null;
-  }, [localPublishedSeats]);
   // Legend counts follow the active constraints — the number row must not
   // contradict a filtered map (2026-07-16 regrade, review 4). matchesFilters
   // covers search + structured filters, exactly what the map dims by.
@@ -2681,16 +2637,6 @@ export function SeatMap({
     return { edge: "none", offsetPx: 0 };
   }
 
-  // Shell top bar: full-height quiet tools on the dark bar, height from
-  // --admin-chrome-h (36px — the top chrome keeps its original size). Active
-  // state is the Carbon-style 2px brand-orange underline (5.37:1 on #161616).
-  // Every full-height item tracks the bar through that token, or the underline
-  // stops landing on its bottom edge — which is exactly why the shared strings
-  // in components/ui/adminChrome.ts carry h-[var(--admin-chrome-h)] and not a
-  // literal. The sub-page bar (AdminShellBar) composes the same three.
-  const chromeToolbarBtn = `${adminChromeTool} ${adminChromeToolDisabled}`;
-  const chromeToolbarBtnActive = adminChromeToolActive;
-  const chromeSurfaceShortcut = adminChromeSurfaceShortcut;
   // Icon-only tools (undo/redo) sit as small squares beside the Filter/search
   // field pair (2026-07-23), not as full-height flat tools — they carry no
   // active-underline state, so nothing ties them to the bar's bottom edge.
@@ -2699,23 +2645,35 @@ export function SeatMap({
   // to claim 32px; the class has been h-7 = 28px throughout, so the number was
   // wrong, not the class.)
   const chromeIconBtn = "relative flex h-7 w-7 shrink-0 items-center justify-center text-[var(--admin-chrome-muted)] transition-colors duration-150 after:absolute after:-inset-1.5 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--admin-chrome-muted)]";
-  // Two collapse tiers keep the flexible search group usable at every width
-  // (the row is otherwise rigid, so search absorbs the whole deficit):
-  // page links (Management, Settings) fold into the "More" menu below xl,
-  // Ask Planner below lg. At xl and up nothing is collapsed, so the row reads
-  // exactly like the prototype — no overflow button in sight. Show names is
-  // not here at all: it is a map display option and lives in "More map
-  // actions" (2026-07-22). No horizontal scroll: a scroll container would clip
-  // the menu's absolute dropdown.
-  const chromeToolbarBtnCollapsible = chromeToolbarBtn.replace("inline-flex", "hidden lg:inline-flex");
-  const chromeToolbarBtnCollapsibleActive = chromeToolbarBtnActive.replace("inline-flex", "hidden lg:inline-flex");
-  const chromeToolbarBtnCollapsibleXl = chromeToolbarBtn.replace("inline-flex", "hidden xl:inline-flex");
+  // v12: the kebab is now the bar's ONLY overflow surface, visible at every
+  // width. The old below-lg/below-xl chromeToolbarBtnCollapsible* derivations
+  // (and the adminChromeTool/Active/Disabled imports that fed them) are
+  // retired along with the row controls they served — Show names, Management,
+  // and the flat-tool Ask Planner all moved to the rail or the kebab. See
+  // components/ui/adminChrome.ts's updated header comment. The kebab trigger
+  // gets its own fixed 32px-wide grid cell instead, since it is icon-only.
+  const chromeKebabBtn = "relative flex h-full w-8 shrink-0 items-center justify-center text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeKebabBtnActive = "relative flex h-full w-8 shrink-0 items-center justify-center bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
   const chromeMenuItem = "flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-chrome-text)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
-       which captures the sticky header so it never pins to the viewport. */
-    <div className="flex min-h-screen flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
+       which captures the sticky header so it never pins to the viewport.
+       pl-12 clears the v12 left rail, which is position:fixed and does not
+       participate in this flex column. */
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12 lg:h-screen lg:min-h-0 lg:overflow-hidden">
+      {/* onNavigate is veto-only (contract from AppRail's own interface):
+          true lets AppRail run its own router.push, false means a dirty
+          inspector intercepted it and the unsaved-edits guard dialog is now
+          driving (beforeGuardedNavigation), same as every other in-app link
+          on this surface. */}
+      <AppRail
+        active="map"
+        email={accountEmail ?? ""}
+        roleLabel={accountRoleLabel ?? "Admin"}
+        onNavigate={(href, label) => beforeGuardedNavigation(href as GuardedNavigationHref, label)}
+        onOpenAskPlanner={openAskPlannerDrawer}
+      />
       <a
         href="#planning-canvas"
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"
@@ -2855,341 +2813,199 @@ export function SeatMap({
           </label>
         </div>
 
+        {/* Rendered only when search/filter narrows the map — same source
+            counts FilterPanel's own matchSummary uses, so the two can never
+            disagree. lg-only: matches the desktop search field's own
+            breakpoint (mobile has no room and uses its own canvas search). */}
+        {legendFiltersActive && (
+          <span className="ml-2 hidden shrink-0 whitespace-nowrap text-[11.5px] font-semibold text-[var(--admin-primary)] lg:inline">
+            {legendSourceSeats.length} of {localSeats.length} match
+          </span>
+        )}
+
         {canEdit && (
-          /* No overflow-x scroll hack here: tools that don't fit below lg collapse
-             into the "More" menu instead, and a scroll container would clip the
-             menu's absolutely-positioned dropdown. */
-          /* div, not <nav>: role="group" is not an allowed role on nav (axe
-             aria-allowed-role), and this is a grouped tool cluster, not a
-             navigation landmark. */
-          <div role="group" aria-label="Admin command row" className="ml-1 flex min-w-0 flex-1 items-center lg:ml-0 lg:flex-none">
-            {/* One flat tool row, per the prototype (docs/ui/seat-planner-shell.html
-                lines 144-147): no bordered segment group, every tool at the same
-                weight. Undo/redo are icon-only by owner direction — ↺/↻ are
-                universally read, and the accessible name plus the keyboard-
-                shortcut explanation still ride on aria-label + title, which is
-                what assistive tech and hover actually consume. */}
-            <button
-              type="button"
-              onClick={undoDraftEdit}
-              disabled={mutationInFlight || inspectorDirty || !undoAvailable}
-              aria-label="Undo last map change"
-              title={undoTitle}
-              className={chromeIconBtn}
-            >
-              {/* Literal ↺ glyph (U+21BA) to match the owner's shell mockup exactly;
-                  sized to sit at the same weight as the SVG icons in the row. */}
-              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↺</span>
-            </button>
-            <button
-              type="button"
-              onClick={redoDraftEdit}
-              disabled={mutationInFlight || inspectorDirty || !redoAvailable}
-              aria-label="Redo last undone change"
-              title={redoTitle}
-              className={chromeIconBtn}
-            >
-              {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
-              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
-            </button>
-            {/* Text-only by owner direction: the prototype has no Show-names
-                tool, so there is no glyph to borrow, and inventing one would
-                read as a fifth icon language in a four-glyph row. On-state is
-                the orange underline (chromeToolbarBtnCollapsibleActive) plus
-                aria-pressed. The label must NOT flip to the inverse verb when
-                active: a flipping label with no pressed state is what left the
-                current view invisible to assistive tech before, and
-                accessibility-source pins that it never comes back. */}
-            <button
-              type="button"
-              onClick={() => setShowNames(current => !current)}
-              aria-pressed={showNames}
-              title="Show or hide occupant names on seat pills"
-              className={showNames ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
-            >
-              Show names
-            </button>
-            <Link
-              href="/admin/management"
-              onClick={event => {
-                if (!beforeGuardedNavigation("/admin/management", "Management")) event.preventDefault();
-              }}
-              className={chromeToolbarBtnCollapsibleXl}
-            >
-              {/* Literal ▤ glyph (U+25A4) — the prototype renders all four tools
-                  as <i> characters, not SVGs; see Undo/Redo above. */}
-              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">▤</span>
-              Management
-            </Link>
-            <button
-              ref={askPlannerButtonRef}
-              type="button"
-              aria-label={plannerHighlightedSeatIds.length > 0 ? `Open Ask Planner, ${plannerHighlightedSeatIds.length} seats highlighted` : "Open Ask Planner"}
-              aria-controls="ask-planner-drawer"
-              aria-expanded={askPlannerOpen}
-              aria-haspopup="dialog"
-              onClick={openAskPlannerDrawer}
-              className={askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? chromeToolbarBtnCollapsibleActive : chromeToolbarBtnCollapsible}
-            >
-              {/* Literal ✦ glyph (U+2726) — see Management above. */}
-              <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">✦</span>
-              Ask Planner
-              {plannerHighlightedSeatIds.length > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
-              )}
-            </button>
-            {/* Below-xl fallback only. At xl the whole tool row fits, so this
-                button is absent and the bar matches the prototype exactly. */}
-            <div data-chrome-menu className="relative flex h-full shrink-0 items-center xl:hidden">
+          <>
+            <span aria-hidden="true" className={`mx-2.5 hidden h-[26px] lg:block ${adminChromeDividerRule}`} />
+
+            {/* div, not <nav>: role="group" is not an allowed role on nav (axe
+                aria-allowed-role), and this is a grouped tool cluster, not a
+                navigation landmark. v12: Undo/Redo/kebab are the only
+                surviving row controls — Show names, Management, and the old
+                flat-tool Ask Planner moved to the rail or the kebab. */}
+            <div role="group" aria-label="Admin command row" className="flex h-full shrink-0 items-center">
               <button
-                ref={chromeMenuButtonRef}
                 type="button"
-                aria-haspopup="true"
-                aria-expanded={chromeMenuOpen}
-                aria-controls={chromeMenuOpen ? "chrome-overflow-menu" : undefined}
-                aria-label="More tools"
-                title="More tools"
-                onClick={() => setChromeMenuOpen(current => !current)}
-                className={chromeMenuOpen ? chromeToolbarBtnActive : chromeToolbarBtn}
+                onClick={undoDraftEdit}
+                disabled={mutationInFlight || inspectorDirty || !undoAvailable}
+                aria-label="Undo last map change"
+                title={undoTitle}
+                className={chromeIconBtn}
               >
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
-                  <circle cx="4.5" cy="10" r="1.5" />
-                  <circle cx="10" cy="10" r="1.5" />
-                  <circle cx="15.5" cy="10" r="1.5" />
-                </svg>
-                {/* Icon-only: the ⋯ glyph IS the overflow affordance, so the
-                    "More" label was the row's clearest icon+label doubling.
-                    aria-label + title still carry the name. */}
-                {/* Badge mirrors the collapsed Ask Planner state, so it only
-                    applies below lg where that tool lives in this menu. */}
-                {plannerHighlightedSeatIds.length > 0 && (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white lg:hidden">{plannerHighlightedSeatIds.length}</span>
-                )}
+                {/* Literal ↺ glyph (U+21BA) to match the owner's shell mockup exactly;
+                    sized to sit at the same weight as the SVG icons in the row. */}
+                <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↺</span>
               </button>
-              {chromeMenuOpen && (
-                <div
-                  id="chrome-overflow-menu"
-                  role="group"
+              <button
+                type="button"
+                onClick={redoDraftEdit}
+                disabled={mutationInFlight || inspectorDirty || !redoAvailable}
+                aria-label="Redo last undone change"
+                title={redoTitle}
+                className={chromeIconBtn}
+              >
+                {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
+                <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
+              </button>
+              {/* Kebab — v12 Menu subsystem. Items: names toggle (checkmark),
+                  reset view, divider, danger discard. Visible at EVERY width
+                  now (no more xl:hidden) — it is the bar's only surviving
+                  overflow surface. */}
+              <div data-chrome-menu className="relative flex h-full shrink-0 items-center">
+                <button
+                  ref={chromeMenuButtonRef}
+                  type="button"
+                  aria-haspopup="true"
+                  aria-expanded={chromeMenuOpen}
+                  aria-controls={chromeMenuOpen ? "chrome-kebab-menu" : undefined}
                   aria-label="More tools"
-                  onKeyDown={event => {
-                    if (event.key === "Escape") {
-                      event.stopPropagation();
-                      setChromeMenuOpen(false);
-                      returnFocusAfterClose(chromeMenuButtonRef);
-                    }
-                  }}
-                  className="absolute left-0 top-full z-50 min-w-[188px] border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] py-1 shadow-elevation-3"
+                  title="More tools"
+                  onClick={() => setChromeMenuOpen(current => !current)}
+                  className={chromeMenuOpen ? chromeKebabBtnActive : chromeKebabBtn}
                 >
-                  {/* Below-lg twin of the row button. Text-only like its row
-                      counterpart, but it KEEPS the trailing checkmark: that is a
-                      state cue, not an icon, and without it sighted users lose
-                      the current state in a menu that has no underline. */}
-                  <button
-                    type="button"
-                    aria-pressed={showNames}
-                    onClick={() => {
-                      setChromeMenuOpen(false);
-                      setShowNames(current => !current);
-                      // Activation unmounts the focused item — same stranded-
-                      // focus hazard as Escape.
-                      returnFocusAfterClose(chromeMenuButtonRef);
+                  <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">⋮</span>
+                </button>
+                {chromeMenuOpen && (
+                  <div
+                    id="chrome-kebab-menu"
+                    role="group"
+                    aria-label="More tools"
+                    onKeyDown={event => {
+                      if (event.key === "Escape") {
+                        event.stopPropagation();
+                        setChromeMenuOpen(false);
+                        returnFocusAfterClose(chromeMenuButtonRef);
+                      }
                     }}
-                    className={[chromeMenuItem, "lg:hidden"].join(" ")}
+                    className="absolute left-0 top-full z-50 w-[230px] border border-white/15 bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
                   >
-                    Show names
-                    {showNames && (
-                      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-primary)]">
-                        <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </button>
-                  <Link
-                    href="/admin/management"
-                    onClick={event => {
-                      if (!beforeGuardedNavigation("/admin/management", "Management")) event.preventDefault();
-                      setChromeMenuOpen(false);
-                      returnFocusAfterClose(chromeMenuButtonRef);
-                    }}
-                    className={chromeMenuItem}
-                  >
-                    <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">▤</span>
-                    Management
-                  </Link>
-                  {/* Below sm the bar's Viewer/Admin shortcuts hide, so the menu
-                      must keep the surface switch reachable (#197) — routed
-                      through the same unsaved-edits guard as the row link. */}
-                  <Link
-                    href="/"
-                    onClick={event => {
-                      if (!beforeGuardedNavigation("/", "the viewer")) event.preventDefault();
-                      setChromeMenuOpen(false);
-                      returnFocusAfterClose(chromeMenuButtonRef);
-                    }}
-                    className={[chromeMenuItem, "sm:hidden"].join(" ")}
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-                      <circle cx="12" cy="12" r="8.2" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                    Viewer
-                  </Link>
-                  <button
-                    type="button"
-                    aria-controls="ask-planner-drawer"
-                    aria-haspopup="dialog"
-                    onClick={() => {
-                      setChromeMenuOpen(false);
-                      // No focus restore here: the drawer takes focus itself,
-                      // and a deferred restore would steal it back.
-                      openAskPlannerDrawer();
-                    }}
-                    className={[chromeMenuItem, "lg:hidden"].join(" ")}
-                  >
-                    <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">✦</span>
-                    Ask Planner
-                    {plannerHighlightedSeatIds.length > 0 && (
-                      <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
-                    )}
-                  </button>
-                </div>
-              )}
+                    {/* The label must NOT flip to the inverse verb when active: a
+                        flipping label with no pressed state is what left the
+                        current view invisible to assistive tech before, and
+                        accessibility-source pins that it never comes back. */}
+                    <button
+                      type="button"
+                      aria-pressed={showNames}
+                      onClick={() => {
+                        setChromeMenuOpen(false);
+                        setShowNames(current => !current);
+                        // Activation unmounts the focused item — same stranded-
+                        // focus hazard as Escape.
+                        returnFocusAfterClose(chromeMenuButtonRef);
+                      }}
+                      className={chromeMenuItem}
+                    >
+                      Show names
+                      {showNames && (
+                        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-status-ok)]">
+                          <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setChromeMenuOpen(false);
+                        // Reuses the same reset the MapZoomControl fit button
+                        // calls — no new pan/zoom state this slice.
+                        fitMapToView();
+                        returnFocusAfterClose(chromeMenuButtonRef);
+                      }}
+                      className={chromeMenuItem}
+                    >
+                      Reset zoom &amp; position
+                    </button>
+                    <div className="mx-0 my-1 h-px bg-white/10" />
+                    {/* Danger text #ff8389 (Carbon red-30, --admin-chrome-danger-text):
+                        6.38:1 measured on this menu's #1f1f1f background — well
+                        past the 4.5:1 floor (Step 3 contrast gate). Disabled when
+                        there is nothing to discard: a no-op destructive control
+                        reads as broken, not as safe. Relocated here from the
+                        publish review dialog (v12) — resetDraftToPublishedAction
+                        keeps its one call site inside confirmDiscardDraftChanges;
+                        only this trigger moved. */}
+                    <button
+                      type="button"
+                      disabled={!publishSummary.hasChanges}
+                      title={publishSummary.hasChanges ? "Discard every draft change back to the published map" : "No draft changes to discard"}
+                      onClick={() => {
+                        setChromeMenuOpen(false);
+                        setDiscardDraftConfirmOpen(true);
+                        returnFocusAfterClose(chromeMenuButtonRef);
+                      }}
+                      className={[chromeMenuItem, "text-[var(--admin-chrome-danger-text)] disabled:cursor-not-allowed disabled:text-[var(--admin-chrome-disabled)] disabled:hover:bg-transparent"].join(" ")}
+                    >
+                      Discard draft changes
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         <div className="ml-auto flex h-full shrink-0 items-center">
-          {/* Surface shortcuts: the active surface carries the orange underline. */}
-          <div className="hidden h-full items-center sm:flex">
-            <Link
-              href="/"
-              aria-label="Open viewer surface"
-              title="Viewer — published map"
-              onClick={event => {
-                if (!beforeGuardedNavigation("/", "the viewer")) event.preventDefault();
-              }}
-              className={[chromeSurfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"].join(" ")}
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="8.2" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-              Viewer
-            </Link>
-            <span
-              aria-current="page"
-              title="Admin — draft planning"
-              className={[chromeSurfaceShortcut, "border-[var(--admin-primary)] text-white"].join(" ")}
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="9" cy="7" r="3.1" />
-                <path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6" />
-                <path d="M14.5 18.4l2 2 4.2-4.6" />
-              </svg>
-              Admin
-            </span>
-          </div>
           {canEdit && (
-            <div data-publish-status className="relative flex h-full shrink-0 items-center">
-              {/* With changes: the review entry point. Idle: a DISCLOSURE for the
-                  status popover — a status chip must not launch the publish
-                  workflow modal (2026-07-16 critique, fix 3). */}
+            <>
+              {/* Ask Planner — the ONLY AI-blue control on this bar (AI tokens
+                  never appear on a non-AI control). Active state is the bar's
+                  usual bg-hover PLUS a 2px AI-blue bottom border, distinct from
+                  the brand-orange underline every other active tool uses.
+                  #78a9ff: 7.68:1 on #161616, 6.43:1 on #262626 (measured
+                  2026-07-31, app/globals.css AI-family comment; re-confirmed
+                  Step 3 gate). */}
               <button
+                ref={askPlannerButtonRef}
                 type="button"
-                ref={publishStatusButtonRef}
-                onClick={() => {
-                  if (publishSummary.hasChanges) {
-                    openPublishReview();
-                    return;
-                  }
-                  setPublishStatusOpen(current => !current);
-                }}
-                aria-label={publishSummary.hasChanges ? `Review ${draftStatusLabel.toLowerCase()}` : `Publish status: ${draftStatusLabel.toLowerCase()}`}
-                aria-haspopup={publishSummary.hasChanges ? undefined : "true"}
-                aria-expanded={publishSummary.hasChanges ? undefined : publishStatusOpen}
-                aria-controls={!publishSummary.hasChanges && publishStatusOpen ? "publish-status-popover" : undefined}
-                title={draftStatusTitle}
+                aria-label={plannerHighlightedSeatIds.length > 0 ? `Open Ask Planner, ${plannerHighlightedSeatIds.length} seats highlighted` : "Open Ask Planner"}
+                aria-controls="ask-planner-drawer"
+                aria-expanded={askPlannerOpen}
+                aria-haspopup="dialog"
+                onClick={openAskPlannerDrawer}
                 className={[
-                  "inline-flex h-[var(--admin-chrome-h)] shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
-                  publishSummary.hasChanges
-                    ? "bg-[var(--admin-primary-cta)] text-white hover:bg-[var(--admin-primary-cta-hover)] focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
-                    : publishStatusOpen
-                      ? "bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)] focus-visible:ring-[var(--admin-primary)]"
-                      : "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:ring-[var(--admin-primary)]"
+                  "inline-flex h-full shrink-0 items-center gap-1.5 border-b-2 px-3 text-[12.5px] font-medium leading-none text-[var(--admin-ai-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+                  askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? "border-[var(--admin-ai-chrome-border)] bg-[var(--admin-chrome-hover)]" : "border-transparent"
                 ].join(" ")}
               >
-                {publishSummary.hasChanges ? (
-                  <>
-                    <span>Publish</span>
-                    <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold tabular-nums text-[var(--admin-primary-ink)]">{publishSummary.totalChangeCount}</span>
-                  </>
-                ) : (
-                  <>
-                    <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[var(--admin-status-ok)]" />
-                    {/* Label from 480px up — only true phone widths get the dot alone. */}
-                    <span className="hidden min-[480px]:inline">Published</span>
-                  </>
+                <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">✦</span>
+                Ask Planner
+                <span aria-hidden="true" className="border border-[var(--admin-ai-chrome-border)] px-[3px] text-[9px] font-bold leading-none text-[var(--admin-ai-chrome-text)]">AI</span>
+                {plannerHighlightedSeatIds.length > 0 && (
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
                 )}
               </button>
-              {publishStatusOpen && !publishSummary.hasChanges && (
-                <div
-                  id="publish-status-popover"
-                  role="group"
-                  aria-label="Publish status"
-                  onKeyDown={event => {
-                    if (event.key === "Escape") {
-                      event.stopPropagation();
-                      setPublishStatusOpen(false);
-                      returnFocusAfterClose(publishStatusButtonRef);
-                    }
-                  }}
-                  className="absolute right-0 top-full z-50 w-[264px] border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] p-3 text-left shadow-elevation-3"
-                >
-                  <p className="flex items-center gap-1.5 text-[12.5px] font-semibold leading-none text-[var(--admin-chrome-text)]">
-                    <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--admin-status-ok)]" />
-                    Draft matches the published map
-                  </p>
-                  <p className="mt-1.5 text-[11.5px] leading-4 text-[var(--admin-chrome-muted)]">
-                    {lastPublishedLabel ? `Viewers see the map published ${lastPublishedLabel}.` : "Viewers see the currently published map."}
-                  </p>
-                  <Link
-                    href="/admin/management?tab=publishHistory"
-                    onClick={event => {
-                      if (!beforeGuardedNavigation("/admin/management?tab=publishHistory", "Management")) {
-                        event.preventDefault();
-                        return;
-                      }
-                      setPublishStatusOpen(false);
-                    }}
-                    className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[var(--admin-chrome-text)] underline decoration-[var(--admin-chrome-muted)] underline-offset-2 transition hover:decoration-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+
+              {/* Conditional publish cluster (contract #4): nothing renders here
+                  without draft changes — no idle status chip, no
+                  publish-status-popover. The has-changes styling is unchanged
+                  from slice 1. */}
+              {publishSummary.hasChanges && (
+                <div className="flex h-full shrink-0 items-center gap-2.5 pl-3">
+                  <span className="text-[12px] text-[var(--admin-chrome-muted)]">
+                    Draft · {publishSummary.totalChangeCount} {publishSummary.totalChangeCount === 1 ? "change" : "changes"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={openPublishReview}
+                    aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
+                    title={draftStatusTitle}
+                    className="inline-flex h-full shrink-0 items-center gap-1.5 bg-[var(--admin-primary-cta)] px-[15px] text-[12.5px] font-semibold leading-none text-white transition hover:bg-[var(--admin-primary-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
                   >
-                    View publish history
-                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3" fill="none">
-                      <path d="M7 5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </Link>
+                    <span>Publish</span>
+                    <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold tabular-nums text-[var(--admin-primary-ink)]">{publishSummary.totalChangeCount}</span>
+                  </button>
                 </div>
               )}
-            </div>
-          )}
-          {/* The identity chip is the account menu (signed-in email + role +
-              Sign out). Settings stays behind this chip on the map surface
-              (owner preference) as a labeled menu item that still routes
-              through the unsaved-edits guard. Prototype routes render without
-              an authenticated user, so the chip falls back to decorative. */}
-          {accountEmail ? (
-            <AccountMenu
-              email={accountEmail}
-              roleLabel={accountRoleLabel ?? (canEdit ? "Admin" : "Viewer")}
-              onSelectSettings={
-                canEdit
-                  ? () => {
-                      if (beforeGuardedNavigation("/admin/settings", "Settings")) window.location.assign("/admin/settings");
-                    }
-                  : undefined
-              }
-            />
-          ) : (
-            <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-brand)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">A</span>
+            </>
           )}
         </div>
       </header>
@@ -3823,23 +3639,10 @@ export function SeatMap({
               )}
             </div>
 
-            {publishSummary.hasChanges && (
-              <div className="flex items-center justify-between gap-3 border-t border-[var(--admin-border)] py-2.5">
-                <p className="text-xs font-semibold leading-4 text-[var(--admin-text-muted)]">
-                  Changed your mind entirely? Reset the draft so it matches the published map again.
-                </p>
-                <Button
-                  type="button"
-                  variant="danger"
-                  onClick={() => setDiscardDraftConfirmOpen(true)}
-                  disabled={pending}
-                  className={["shrink-0", focusRingClass].join(" ")}
-                >
-                  Discard all draft changes
-                </Button>
-              </div>
-            )}
-
+            {/* Discard trigger relocated to the header kebab in v12 (Menu:
+                "Discard draft changes") — this dialog and
+                confirmDiscardDraftChanges (the one resetDraftToPublishedAction
+                call site) are unchanged, only the opening control moved. */}
             <div className="grid grid-cols-2 gap-2 border-t border-[var(--admin-border)] pt-3">
               <Button type="button" onClick={() => {
                 setActionError(null);
