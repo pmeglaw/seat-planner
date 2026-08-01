@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   DRAFT_HISTORY_STORAGE_KEY,
@@ -539,12 +538,21 @@ export function SeatMap({
   // ?ask-planner=open contract (v12): a sub-page's AI rail item falls back to
   // <Link href="/admin?ask-planner=open"> when onOpenAskPlanner is absent
   // (AppRail's own interface — see Task 1). Landing here opens the drawer in
-  // place and strips the param so it doesn't reopen on refresh/back.
+  // place and strips ONLY the ask-planner key — not a `replaceState(null, "",
+  // "/admin")` rewrite, which would both null out Next App Router's history
+  // state (the seat deep-link write effect below passes `window.history.state`
+  // verbatim for exactly this reason) and drop every other query param, e.g.
+  // the ?seat= deep link (#196), out of a combined
+  // /admin?seat=<label>&ask-planner=open URL.
   useEffect(() => {
     if (!canEdit) return;
     if (!window.location.search.includes("ask-planner=open")) return;
     openAskPlannerDrawer();
-    window.history.replaceState(null, "", "/admin");
+    const params = new URLSearchParams(window.location.search);
+    params.delete("ask-planner");
+    const query = params.toString();
+    const next = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+    window.history.replaceState(window.history.state, "", next);
   }, [canEdit, openAskPlannerDrawer]);
 
   useEffect(() => setLocalSeats(normalizeSeats(seats)), [seats]);
@@ -2384,13 +2392,13 @@ export function SeatMap({
     publishSummary.removedSeats.length ? `${publishSummary.removedSeats.length} removed` : null
   ].filter(Boolean).join(", ");
   // 3b fact ownership: draft-sync has ONE owner — the chrome chip (sole draft
-  // display and the publish-review entry point).
-  const draftStatusLabel = publishSummary.hasChanges
-    ? `${publishSummary.totalChangeCount} unpublished ${publishSummary.totalChangeCount === 1 ? "change" : "changes"}`
-    : "Draft matches published";
-  const draftStatusTitle = publishSummary.hasChanges
-    ? `Review draft changes: ${draftChangeBreakdown || `${publishSummary.totalChangeCount} total`}`
-    : "Draft and published maps currently match";
+  // display and the publish-review entry point). Both strings are computed
+  // unconditionally but only ever READ inside the `publishSummary.hasChanges
+  // &&` cluster below (contract #4: no idle status chip renders when the
+  // draft matches published), so the has-changes branch is the only reachable
+  // one — no dead "matches published" arm to keep in sync.
+  const draftStatusLabel = `${publishSummary.totalChangeCount} unpublished ${publishSummary.totalChangeCount === 1 ? "change" : "changes"}`;
+  const draftStatusTitle = `Review draft changes: ${draftChangeBreakdown || `${publishSummary.totalChangeCount} total`}`;
   const publishPeopleChangeCount = publishSummary.assignmentChanges.length + publishSummary.vacatedSeats.length + publishSummary.employeeDetailChanges.length;
   const publishSeatInventoryChangeCount = publishSummary.addedSeats.length + publishSummary.removedSeats.length;
   const publishMetadataChangeCount = publishSummary.statusChanges.length + publishSummary.otherChanges.length;

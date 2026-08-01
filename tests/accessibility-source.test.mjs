@@ -62,7 +62,6 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /aria-haspopup="dialog"/);
   assert.match(source, /No map changes to undo/);
   assert.match(source, /No undone map changes to redo/);
-  assert.match(source, /Draft matches published/);
   assert.match(source, /unpublished \$\{publishSummary\.totalChangeCount === 1 \? "change" : "changes"\}/);
   assert.match(source, /Esc exits/);
   assert.match(source, /Exit add seat/);
@@ -74,6 +73,57 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.equal((source.match(/onClick=\{openPublishReview\}/g) ?? []).length, 1, "exactly one publish control opens the review");
   assert.match(source, /Undo \{lastUndoLabel\}/);
   assert.match(source, /onClick=\{undoDraftEdit\}/);
+});
+
+test("Carbon-for-AI tokens (--admin-ai-*) stay exclusive to Ask Planner surfaces (contract #9)", async () => {
+  // Guarded semantic: AI blue is reserved EXCLUSIVELY for AI presence — no
+  // non-AI control may ever paint itself with an --admin-ai- token.
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const railSource = await readSource("../components/ui/AppRail.tsx");
+  const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
+  const AI_TOKEN = "--admin-ai-";
+
+  function countOccurrences(text, needle) {
+    return text.split(needle).length - 1;
+  }
+
+  // SeatMap: the Ask Planner tool button (ref={askPlannerButtonRef} through
+  // its own closing </button>) is the ONLY control allowed to use the token.
+  const seatMapTotal = countOccurrences(seatMapSource, AI_TOKEN);
+  const askPlannerStart = seatMapSource.indexOf("ref={askPlannerButtonRef}");
+  assert.ok(askPlannerStart >= 0, "Ask Planner button anchor must exist in SeatMap.tsx");
+  const askPlannerEnd = seatMapSource.indexOf("</button>", askPlannerStart);
+  assert.ok(askPlannerEnd > askPlannerStart);
+  const askPlannerBlock = seatMapSource.slice(askPlannerStart, askPlannerEnd);
+  assert.ok(seatMapTotal > 0, "sanity: SeatMap.tsx should still consume the AI token somewhere");
+  assert.equal(
+    countOccurrences(askPlannerBlock, AI_TOKEN),
+    seatMapTotal,
+    "every --admin-ai- occurrence in SeatMap.tsx must live inside the Ask Planner tool button"
+  );
+
+  // AppRail: the token may only appear on the AI nav item (both branches of
+  // the onOpenAskPlanner ternary) and the AiCell() it renders.
+  const railTotal = countOccurrences(railSource, AI_TOKEN);
+  const aiItemStart = railSource.indexOf("{/* Ask Planner — the AI entry");
+  assert.ok(aiItemStart >= 0, "AI rail item anchor must exist in AppRail.tsx");
+  const aiItemEnd = railSource.indexOf('title="Viewer — published map"', aiItemStart);
+  assert.ok(aiItemEnd > aiItemStart);
+  const aiItemBlock = railSource.slice(aiItemStart, aiItemEnd);
+  const aiCellStart = railSource.indexOf("function AiCell(");
+  assert.ok(aiCellStart >= 0, "AiCell() must exist in AppRail.tsx");
+  const aiCellBlock = railSource.slice(aiCellStart);
+  assert.ok(railTotal > 0, "sanity: AppRail.tsx should still consume the AI token somewhere");
+  assert.equal(
+    countOccurrences(aiItemBlock, AI_TOKEN) + countOccurrences(aiCellBlock, AI_TOKEN),
+    railTotal,
+    "every --admin-ai- occurrence in AppRail.tsx must live inside the AI nav item or AiCell()"
+  );
+
+  // Non-AI surfaces: zero AI-blue tokens, ever.
+  assert.doesNotMatch(viewerFinderSource, /--admin-ai-/);
+  assert.doesNotMatch(shellBarSource, /--admin-ai-/);
 });
 
 test("active modes exit after dialogs and keep visible exit controls", async () => {
