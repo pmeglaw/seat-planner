@@ -113,7 +113,14 @@ test("Carbon-for-AI tokens (--admin-ai-*) stay exclusive to Ask Planner surfaces
   const aiItemBlock = railSource.slice(aiItemStart, aiItemEnd);
   const aiCellStart = railSource.indexOf("function AiCell(");
   assert.ok(aiCellStart >= 0, "AiCell() must exist in AppRail.tsx");
-  const aiCellBlock = railSource.slice(aiCellStart);
+  // Bounded at the next top-level declaration (or EOF), never bare EOF: an
+  // unbounded slice would absorb any declaration appended after AiCell into
+  // "the AI cell", letting a new non-AI consumer slip past this pin.
+  const nextTopLevelDecl = railSource
+    .slice(aiCellStart + 1)
+    .search(/\n(?:export |function |const |let |var |class |type |interface )/);
+  const aiCellEnd = nextTopLevelDecl === -1 ? railSource.length : aiCellStart + 1 + nextTopLevelDecl;
+  const aiCellBlock = railSource.slice(aiCellStart, aiCellEnd);
   assert.ok(railTotal > 0, "sanity: AppRail.tsx should still consume the AI token somewhere");
   assert.equal(
     countOccurrences(aiItemBlock, AI_TOKEN) + countOccurrences(aiCellBlock, AI_TOKEN),
