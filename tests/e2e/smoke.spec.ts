@@ -16,20 +16,23 @@ test.describe("smoke: routes boot and auth guards redirect", () => {
     await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
   });
 
+  // Since the route-level loading.tsx boundaries landed (UX-01 / #276), the
+  // server streams a 200 with the skeleton first and delivers the page's
+  // redirect() in-stream (NEXT_REDIRECT directive plus a <meta http-equiv=
+  // "refresh"> no-JS fallback), so the URL at `goto` resolution is still the
+  // protected route. Wait for the redirect to execute instead of reading
+  // page.url() synchronously — the guard being asserted is unchanged: an
+  // unauthenticated visit must END at /login.
   test("viewer / redirects an unauthenticated user to /login", async ({ page }) => {
     await page.goto("/");
 
-    const url = new URL(page.url());
-    expect(url.pathname).toBe("/login");
-    expect(url.searchParams.get("next")).toBe("/");
+    await page.waitForURL(url => url.pathname === "/login" && url.searchParams.get("next") === "/");
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   });
 
   test("admin /admin redirects an unauthenticated user to /login", async ({ page }) => {
     await page.goto("/admin");
 
-    const url = new URL(page.url());
-    expect(url.pathname).toBe("/login");
-    expect(url.searchParams.get("next")).toBe("/admin");
+    await page.waitForURL(url => url.pathname === "/login" && url.searchParams.get("next") === "/admin");
   });
 });
