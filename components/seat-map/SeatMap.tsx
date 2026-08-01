@@ -2692,13 +2692,8 @@ export function SeatMap({
         roleLabel={accountRoleLabel ?? "Admin"}
         onNavigate={(href, label) => beforeGuardedNavigation(href as GuardedNavigationHref, label)}
         onOpenAskPlanner={openAskPlannerDrawer}
+        skipLink={{ href: "#planning-canvas", label: "Skip to seat map" }}
       />
-      <a
-        href="#planning-canvas"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"
-      >
-        Skip to seat map
-      </a>
       {/* z-50, not z-40: once sticky, the header's z-index is live and must
           outrank the z-40 canvas overlays (toasts, map menu) that follow it
           in DOM order, or they paint over the pinned bar and its menus. */}

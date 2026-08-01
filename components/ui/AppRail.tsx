@@ -31,10 +31,18 @@ export type AppRailProps = {
   /** Map surface: open the Ask Planner drawer in place. Sub-pages omit it and
    *  the AI item navigates to /admin?ask-planner=open instead. */
   onOpenAskPlanner?: () => void;
+  /** Rendered as the rail's first child, before the hamburger — makes the
+   *  skip link the FIRST focusable on the page instead of the 8th (after
+   *  all 7 rail controls), which defeated its purpose. Each mounting
+   *  surface owns its own target id/copy; AppRail only positions it. */
+  skipLink?: { href: string; label: string };
 };
 
+// overflow-hidden here (not on <nav>, see the nav className comment): each
+// item's own box is what needs to clip its whitespace-nowrap label while the
+// rail animates between 48px and 208px.
 const ITEM =
-  "relative flex h-11 w-full items-center text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  "relative flex h-11 w-full items-center overflow-hidden text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 const ITEM_IDLE = "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-white";
 // Active: #262626 surface + inset 3px #FF5715 left edge (contract #3).
 const ITEM_ACTIVE = "bg-[var(--admin-chrome-hover)] text-white shadow-[inset_3px_0_0_var(--admin-primary)]";
@@ -54,7 +62,7 @@ const NAV_ITEMS: NavItem[] = [
   // People item lands with the People panel slice (owner ruling 2026-07-31, deliberately omitted here).
 ];
 
-export function AppRail({ active, email, roleLabel, onNavigate, onOpenAskPlanner }: AppRailProps) {
+export function AppRail({ active, email, roleLabel, onNavigate, onOpenAskPlanner, skipLink }: AppRailProps) {
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement | null>(null);
@@ -168,10 +176,25 @@ export function AppRail({ active, email, roleLabel, onNavigate, onOpenAskPlanner
         aria-label="Admin sections"
         data-expanded={open}
         className={[
-          "fixed bottom-0 left-0 top-0 z-[80] flex flex-col overflow-hidden border-r border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] transition-[width] duration-150 ease-out",
+          // NOT overflow-hidden: the account popup below is an absolutely
+          // positioned descendant that renders outside this box (left-full),
+          // and an ancestor's overflow-hidden clips positioned descendants
+          // too, not just in-flow ones — it doesn't matter that the popup is
+          // itself positioned against a nearer ancestor. Each item that needs
+          // to clip its own label during the width transition carries its own
+          // overflow-hidden instead (see ITEM), scoped to that item's box.
+          "fixed bottom-0 left-0 top-0 z-[80] flex flex-col border-r border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] transition-[width] duration-150 ease-out",
           open ? "w-[208px] shadow-[8px_0_24px_rgba(0,0,0,.35)]" : "w-12"
         ].join(" ")}
       >
+        {skipLink && (
+          <a
+            href={skipLink.href}
+            className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"
+          >
+            {skipLink.label}
+          </a>
+        )}
         <button
           ref={hamburgerRef}
           type="button"

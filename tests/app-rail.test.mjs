@@ -45,6 +45,24 @@ test("renders Admin sections nav with the three items, aria-current only on the 
   assert.equal(settings.getAttribute("aria-current"), null);
 });
 
+test("with skipLink provided, it renders as the rail's first focusable element, before the hamburger", async () => {
+  await renderRail({ skipLink: { href: "#planning-canvas", label: "Skip to seat map" } });
+  const skipLink = screen.getByRole("link", { name: "Skip to seat map" });
+  assert.equal(skipLink.getAttribute("href"), "#planning-canvas");
+
+  // Visual-pass fix: the skip link used to render outside the rail, after
+  // all 7 rail controls (8th tab stop). It must now be the rail's first
+  // focusable descendant, ahead of the hamburger and everything else.
+  const focusable = nav().querySelectorAll('a[href], button:not([tabindex="-1"])');
+  assert.equal(focusable[0], skipLink, "the skip link must be the first focusable element inside the rail");
+  assert.equal(focusable[1], hamburger(), "the hamburger must be the next focusable element after the skip link");
+});
+
+test("without skipLink, no skip anchor renders", async () => {
+  await renderRail();
+  assert.equal(screen.queryByRole("link", { name: /Skip to/ }), null);
+});
+
 test("hamburger toggles aria-expanded and flips the rail width class w-12 <-> w-[208px]", async () => {
   await renderRail();
   const button = hamburger();

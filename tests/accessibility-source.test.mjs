@@ -718,10 +718,26 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
 
   // A skip link is the first focusable on both map surfaces, targeting a
   // focusable map region — the chrome gauntlet is 8+ tab stops otherwise.
-  assert.match(seatMapSource, /href="#planning-canvas"[\s\S]{0,420}Skip to seat map/);
+  // The admin map's skip link is no longer a standalone anchor in this file
+  // (visual-pass fix: that placement put it AFTER AppRail's 7 controls in
+  // DOM order, making it the 8th tab stop) — it's passed to AppRail, which
+  // renders it as the rail's first child, before the hamburger. See
+  // AppRail.tsx's ordering pin below and app-rail.test.mjs's ct assertion
+  // for the actual first-focusable guarantee.
+  assert.match(seatMapSource, /skipLink=\{\{ href: "#planning-canvas", label: "Skip to seat map" \}\}/);
+  assert.doesNotMatch(seatMapSource, /<a\s+href="#planning-canvas"/);
   assert.match(seatMapSource, /id="planning-canvas" tabIndex=\{-1\}/);
   assert.match(viewerSource, /href="#viewer-seat-map"[\s\S]{0,420}Skip to seat map/);
   assert.match(viewerSource, /id="viewer-seat-map"/);
+
+  // AppRail itself must render skipLink before the hamburger button — the
+  // concrete anchor for "first child of the rail" (source-text can't observe
+  // actual tab order; app-rail.test.mjs's ct test does).
+  const railSourceForSkip = await readSource("../components/ui/AppRail.tsx");
+  const skipLinkIndex = railSourceForSkip.indexOf("{skipLink && (");
+  const hamburgerIndex = railSourceForSkip.indexOf("ref={hamburgerRef}");
+  assert.ok(skipLinkIndex >= 0 && hamburgerIndex >= 0, "AppRail must still define both skipLink and the hamburger button");
+  assert.ok(skipLinkIndex < hamburgerIndex, "skipLink must render before the hamburger, so it is the rail's first focusable");
 });
 
 test("admin search clear controls use one clear path with distinct accessible names", async () => {
@@ -943,10 +959,14 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   assert.doesNotMatch(loginPageSource, /You&apos;re/);
   assert.match(loginPageSource, /You’re/);
 
-  // The admin sub-pages get the same skip affordance the maps have: the shell
-  // bar's first focusable jumps past the chrome to the page content.
-  assert.match(shellBarSource, /href="#admin-subpage-main"[\s\S]{0,420}Skip to content/);
+  // The admin sub-pages get the same skip affordance the maps have, via
+  // AppRail's skipLink prop (not the shell bar — visual-pass fix: the shell
+  // bar's copy put the skip link behind all 7 rail controls, making it the
+  // 8th tab stop instead of the 1st).
+  assert.doesNotMatch(shellBarSource, /Skip to content/);
+  assert.match(managementPageSource, /skipLink=\{\{ href: "#admin-subpage-main", label: "Skip to content" \}\}/);
   assert.match(managementPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
+  assert.match(settingsPageSource, /skipLink=\{\{ href: "#admin-subpage-main", label: "Skip to content" \}\}/);
   assert.match(settingsPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
 });
 
