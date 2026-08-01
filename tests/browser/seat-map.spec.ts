@@ -138,7 +138,12 @@ test("an admin sees the edit affordances for a custom draft seat", async ({ page
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
   await clickMarker(page, "S01");
   await expect(page.locator('[aria-label^="Delete custom seat"]')).toBeAttached();
-  await expect(page.locator('[aria-label^="Assign an employee to"]')).toBeAttached();
+  // The assign affordance intentionally exists twice for an open seat — the
+  // canvas action bar's "Assign…" and the inspector's "Assign employee" share
+  // the same accessible name (both open the inspector's editor), so a strict
+  // locator resolves to 2 elements. `.first()` keeps the claim "the affordance
+  // exists" without pinning how many surfaces offer it.
+  await expect(page.locator('[aria-label^="Assign an employee to"]').first()).toBeAttached();
   await expect(page.locator('[aria-label^="Swap "]')).toBeAttached();
 });
 
