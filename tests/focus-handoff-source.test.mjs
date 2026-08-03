@@ -20,16 +20,6 @@ test("inspector commit bar hands focus to the pinned primary action when the edi
   assert.ok(handoffs.length >= 3, `expected >=3 focusPrimaryActionSoon() call sites, saw ${handoffs.length}`);
 });
 
-test("inspector collapse/expand hands focus across the transition — but only for explicit toggles", async () => {
-  const source = await readSource("../components/seat-map/SeatInspector.tsx");
-
-  // Explicit toggle clicks set a flag; the auto-collapse-on-search path sets
-  // none, so typing in search never loses focus to the rail.
-  assert.match(source, /focusRailAfterCollapseRef/);
-  assert.match(source, /focusPanelAfterExpandRef/);
-  assert.match(source, /collapseRailRef/);
-});
-
 test("Escape-deselect restores focus to the seat marker on both surfaces", async () => {
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
   assert.match(seatMap, /focusSeatMarker\(escDeselectSeatId\)/);

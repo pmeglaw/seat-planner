@@ -9,12 +9,10 @@ import { loadComponent, renderElement, React, configureContext, fireEvent, act, 
 let SeatMarker;
 let MapZoomControl;
 let FloorSelector;
-let SeatActionBar;
 before(async () => {
   ({ SeatMarker } = await loadComponent("@/components/seat-map/SeatMarker"));
   ({ MapZoomControl } = await loadComponent("@/components/seat-map/MapZoomControl"));
   ({ FloorSelector } = await loadComponent("@/components/seat-map/FloorSelector"));
-  ({ SeatActionBar } = await loadComponent("@/components/seat-map/SeatActionBar"));
 });
 beforeEach(() => configureContext({}));
 afterEach(() => cleanup());
@@ -252,18 +250,4 @@ test("FloorSelector renders a floor control", async () => {
   await renderElement(React.createElement(FloorSelector, { floor: "3", onChange() {} }));
   const trigger = document.querySelector('[aria-label^="Change floor"]');
   assert.ok(trigger, "floor control renders");
-});
-
-// --- SeatActionBar -----------------------------------------------------
-
-test("occupied seats expose Move · Swap · Vacate on the canvas bar", async () => {
-  const seat = makeSeat({ status: "assigned", employee_id: "e1", employee: { id: "e1", full_name: "Alice Example" } });
-  let moved = 0;
-  await renderElement(React.createElement(SeatActionBar, { seat, onAssign() {}, onSwap() {}, onVacate() {}, onMove: () => (moved += 1) }));
-  const move = document.querySelector('[aria-label="Move Alice Example to another seat"]');
-  assert.ok(move, "person-centric Move present");
-  assert.ok(document.querySelector(`[aria-label="Swap ${seat.label}"]`));
-  assert.ok(document.querySelector(`[aria-label="Vacate ${seat.label}"]`));
-  await act(async () => fireEvent.click(move));
-  assert.equal(moved, 1);
 });

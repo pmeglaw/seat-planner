@@ -137,6 +137,23 @@ test("Carbon-for-AI tokens (--admin-ai-*) stay exclusive to Ask Planner surfaces
     "every --admin-ai- occurrence in AppRail.tsx must live inside the AI nav item or AiCell()"
   );
 
+  // SeatInspector: v12 slice 4 factors the Ask Planner row into
+  // AskPlannerSeatRow() so the AI token stays provably confined the same way
+  // AppRail's AiCell() does — same bounded-slice technique as above.
+  const inspectorSourceForAiTokens = await readSource("../components/seat-map/SeatInspector.tsx");
+  const inspectorTotal = countOccurrences(inspectorSourceForAiTokens, AI_TOKEN);
+  const inspectorAiStart = inspectorSourceForAiTokens.indexOf("function AskPlannerSeatRow(");
+  assert.notEqual(inspectorAiStart, -1, "SeatInspector must isolate AI styling in AskPlannerSeatRow()");
+  const inspectorAiEnd = inspectorSourceForAiTokens.slice(inspectorAiStart).search(/\n(?:export |function |const |let |var |class |type |interface )/);
+  const inspectorAiEndAbs = inspectorAiEnd === -1 ? inspectorSourceForAiTokens.length : inspectorAiStart + inspectorAiEnd;
+  const inspectorAiBlock = inspectorSourceForAiTokens.slice(inspectorAiStart, inspectorAiEndAbs);
+  assert.ok(inspectorTotal > 0, "sanity: SeatInspector.tsx should still consume the AI token somewhere");
+  assert.equal(
+    countOccurrences(inspectorAiBlock, AI_TOKEN),
+    inspectorTotal,
+    "every --admin-ai- occurrence in SeatInspector.tsx must live inside AskPlannerSeatRow()"
+  );
+
   // Non-AI surfaces: zero AI-blue tokens, ever.
   assert.doesNotMatch(viewerFinderSource, /--admin-ai-/);
   assert.doesNotMatch(shellBarSource, /--admin-ai-/);
@@ -174,10 +191,13 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   // admin-only control in the panel. The guarantee is unchanged — admin-only
   // affordances must sit inside the canEdit branch — only its anchor moved.
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete custom seat/);
-  // ...and the same guarantee, followed to where the verbs actually went: the
-  // action bar is admin-gated at its render site, so a viewer never gets Swap
-  // or Vacate on the canvas either.
-  assert.match(seatMapSource, /\{canEdit && floor === "3" && \([\s\S]*<SeatActionBar/);
+  // The reseat verbs live in the inspector's icon action row now (v12 slice 4).
+  // The row itself is canEdit-gated in SeatInspector; here we pin that only the
+  // ADMIN mount wires the verb handlers, so a viewer inspector can never grow
+  // Move/Swap/Vacate even if the internal gate regressed.
+  assert.match(seatMapSource, /<SeatInspector[\s\S]{0,2400}onVacate=\{requestVacateFromBar\}/);
+  assert.doesNotMatch(viewerFinderSource, /onMove=|onSwap=|onVacate=/);
+  assert.match(inspectorSource, /\{canEdit && !editingAssignment && \(onMove \|\| onSwap \|\| onVacate\) && \(/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Vacate/);
 });
@@ -358,9 +378,15 @@ test("inspector sections, validation, and actions retain accessible confidence c
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
   const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");
 
-  assert.match(inspectorSource, /aria-label=\{`View details for \$\{selectedSeat\.label\}`\}/);
-  assert.match(inspectorSource, /aria-label=\{`Back to map from \$\{selectedSeat\.label\} details`\}/);
   assert.match(inspectorSource, /aria-label=\{`Ask Planner about \$\{selectedSeat\.label\}`\}/);
+  // v12 slice 4: the inspector is tabbed (APG tabs pattern) and close-only —
+  // the collapse rail/pill is retired, so no "VIEW DETAILS" affordance may return.
+  assert.match(inspectorSource, /role="tablist"/);
+  assert.match(inspectorSource, /role="tab"[\s\S]{0,200}aria-selected/);
+  assert.match(inspectorSource, /role="tabpanel"/);
+  assert.match(inspectorSource, /ArrowRight|ArrowLeft/);
+  assert.doesNotMatch(inspectorSource, /VIEW DETAILS/);
+  assert.doesNotMatch(inspectorSource, /Collapse inspector/);
   assert.match(inspectorSource, /z-\[80\][\s\S]*panel:z-40/);
   assert.match(inspectorSource, /z-\[90\][\s\S]*sm:z-\[70\]/);
   assert.match(inspectorSource, /hasCurrentAssignment \? "Assignment" : "Assign this seat"/);
@@ -395,13 +421,18 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // An open seat has no occupant — the Contact section exists only when
   // someone is assigned (admin and viewer variants alike). Department stays
   // out of it: the header role line already carries it (dedup 2026-07-23).
-  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,200}title="Contact"/);
+  // v12 slice 4: the <details>-based InspectorSection title prop retired
+  // with the flat eyebrow-heading sections — the CONTACT heading text is the
+  // new anchor for the same "only when assigned" guarantee.
+  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,200}CONTACT/);
   assert.doesNotMatch(inspectorSource, /FactRow label="Department"/);
   // The occupied-seat CTA reads as an edit verb — it opens a form, it does
   // not act; "Change assignment" collided with Move/Swap/Vacate (2026-07-23).
   assert.match(inspectorSource, /Edit assignment for \$\{selectedSeat\.label\}/);
   assert.doesNotMatch(inspectorSource, /Change assignment/);
-  assert.match(inspectorSource, /title="Notes" headingId="seat-notes-heading"/);
+  // v12 slice 4: Notes moved from an InspectorSection title prop into its own
+  // APG tabpanel — the tabpanel id/aria-labelledby pair is the new anchor.
+  assert.match(inspectorSource, /id="seat-inspector-tabpanel-notes" role="tabpanel" aria-labelledby="seat-inspector-tab-notes"/);
   // The solid Assigned status tag pairs WHITE text with the deep green — the
   // 2026-07-23 harmonization darkened --admin-status-ok (#24a148 → #1D6E41)
   // and dark #161616 text on it fails AA at 2.89:1 (axe, prod 2026-07-24).
@@ -427,7 +458,10 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /getSeatDeleteBlockReason/);
   assert.match(inspectorSource, /Delete seat/);
   assert.match(inspectorSource, /aria-describedby="seat-inspector-delete-help"/);
-  assert.match(inspectorSource, /whitespace-normal rounded-\[10px\] leading-tight/);
+  // v12 slice 4: rounded-[10px] button overrides retired everywhere in this
+  // file (flat 0 radius); the layout guarantee (no-wrap-collapse of the
+  // helper line) is what this pin protects, not the corner radius.
+  assert.match(inspectorSource, /whitespace-normal leading-tight/);
   // Figma delete treatment: the block reason is a visible helper line, not sr-only.
   // (Class content deliberately unpinned — type-scale values are free to evolve;
   // the guardrail is the visible element carrying the aria-describedby id.)

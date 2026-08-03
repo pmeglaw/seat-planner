@@ -78,9 +78,9 @@ import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat
 import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
-import { SeatActionBar } from "@/components/seat-map/SeatActionBar";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
+import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { AppRail } from "@/components/ui/AppRail";
@@ -122,10 +122,11 @@ type DeleteSeatConfirmState = {
 } | null;
 
 /**
- * The action bar's vacate ALWAYS confirms, dirty or not — it is a transient
- * surface that appears and disappears with the selection, so it earns less
- * trust than a control inside a panel the user deliberately opened. The rule
- * itself lives in lib/seatDraftActions (vacateNeedsConfirmation).
+ * Vacate here ALWAYS confirms, dirty or not — the rule inherited from the
+ * now-retired canvas action bar (v12 slice 4): a transient surface that
+ * appears and disappears with the selection earns less trust than a control
+ * inside a panel the user deliberately opened. The rule itself lives in
+ * lib/seatDraftActions (vacateNeedsConfirmation).
  */
 type VacateConfirmState = {
   seatId: string;
@@ -179,6 +180,22 @@ const SEAT_CENTER_PANEL_BREAKPOINT_PX = 900;
 // center a selected seat below the panel breakpoint, so the seat lands in the
 // visible strip above the 60vh bottom sheet instead of underneath it.
 const SEAT_CENTER_SHEET_ANCHOR = 0.28;
+// Keys the browser translates into native scrolling of the focused viewport
+// (per its own aria-label: "wheel, trackpad, touch, or arrow keys to pan").
+// Native scroll fights an in-flight inspector nudge the same way wheel scroll
+// does, so the viewport's onKeyDown cancels the tween for these — it never
+// preventDefaults, so the native scroll/navigation itself is untouched.
+const VIEWPORT_NATIVE_SCROLL_KEYS: ReadonlySet<string> = new Set([
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "PageUp",
+  "PageDown",
+  "Home",
+  "End",
+  " "
+]);
 
 function replaceSeat(seats: SeatWithEmployee[], nextSeat: SeatWithEmployee) {
   const normalizedSeat = normalizeSeat(nextSeat);
@@ -382,10 +399,6 @@ export function SeatMap({
   const [moveEmployeeConfirm, setMoveEmployeeConfirm] = useState<MoveEmployeeConfirmState>(null);
   const [deleteSeatConfirm, setDeleteSeatConfirm] = useState<DeleteSeatConfirmState>(null);
   const [vacateConfirm, setVacateConfirm] = useState<VacateConfirmState>(null);
-  // Mirrors inspectorResetSignal: the bar's Assign… has to reach into the
-  // inspector's progressive editor, and a bumped signal is how this file
-  // already talks to that component without owning its internals.
-  const [assignmentRequestSignal, setAssignmentRequestSignal] = useState(0);
   const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
   // Last keyboard-visited seat (roving tabindex anchor). The derived tab stop
   // also prefers the selected seat — see mapRovingSeatId.
@@ -456,29 +469,41 @@ export function SeatMap({
     if (!focusInspectorAfterSelectRef.current) return;
     focusInspectorAfterSelectRef.current = false;
     if (!selectedSeatId) return;
+    // Keyboard selection lands on something ACTIONABLE — the floating
+    // inspector panel itself now that it owns the reseat verbs directly
+    // (v12 slice 4 retired the canvas action bar that used to be the target).
     window.requestAnimationFrame(() => {
-      // Keyboard selection lands on something ACTIONABLE. That used to mean the
-      // inspector panel, because the panel owned the verbs; the canvas action
-      // bar owns them now, so its first verb is the target. The panel stays the
-      // fallback for surfaces that render no bar (the read-only viewer), which
-      // is also why the getElementById line below must not be deleted.
-      const barAction = seatActionBarFirstActionRef.current;
-      if (barAction) {
-        barAction.focus();
-        return;
-      }
       document.getElementById("seat-inspector-panel")?.focus();
     });
   }, [selectedSeatId]);
 
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
+
+  // v12 slice 4 nudge (interaction contract #1): keeps the selected seat clear
+  // of the floating inspector at the panel tier. Pan/zoom/wheel/programmatic
+  // scroll paths below call cancelNudge() so a user- or code-initiated
+  // scroll-position change always wins over an in-flight nudge tween.
+  const { cancelNudge, skipNextNudge } = useInspectorNudge({
+    viewportRef: mapViewportRef,
+    frameRef: mapRef,
+    selectedSeatId,
+    inspectorHidden: inspectorCollapsed,
+    panelBreakpointPx: SEAT_CENTER_PANEL_BREAKPOINT_PX,
+    resolveSeatVisualX: seatId => {
+      const seat = localSeats.find(item => item.id === seatId);
+      if (!seat) return null;
+      return savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat).x;
+    }
+  });
+
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
-  const seatActionBarFirstActionRef = useRef<HTMLButtonElement | null>(null);
-  // The bar and the inspector run ONE vacate path — same payload, same undo
-  // snapshot, same stale-draft fence. Both commit through applySeatUpdated
-  // below, so a seat vacated from the canvas records history identically to one
-  // vacated from the panel and Undo cannot tell them apart.
+  // barSeatActions and the inspector's save run ONE commit path — same
+  // payload, same undo snapshot, same stale-draft fence. Both commit through
+  // applySeatUpdated below, so a seat vacated via the icon row (this hook
+  // keeps its pre-slice-4 "bar" name from the now-retired canvas action bar
+  // it originally served) records history identically to a save made in the
+  // panel, and Undo cannot tell them apart.
   const barSeatActions = useSeatDraftActions({
     onBeforeSeatUpdate: captureDraftSnapshot,
     onSeatUpdated: applySeatUpdated,
@@ -902,7 +927,19 @@ export function SeatMap({
     const seatId = findSeatIdByParam(localSeats, readSeatParam(window.location.search));
     seatParamAppliedRef.current = true;
     if (!seatId) return;
-    if (commitSeatSelection(seatId)) queueCenterSeatInMap(seatId);
+    if (commitSeatSelection(seatId)) {
+      // Finding 1 (v12 slice 4 final review): this selection also queues a
+      // programmatic center below — arm the skip in the same commit so the
+      // nudge trigger effect (scheduled by the selectedSeatId change just
+      // made) never races the center's native smooth scrollTo. Only arm it
+      // when the selection is actually changing: if seatId was already
+      // selected, commitSeatSelection made no state change, so the trigger
+      // effect's deps never move to consume the flag — arming it
+      // unconditionally would leave it stuck, silently skipping some later,
+      // unrelated selection's legitimate nudge.
+      if (selectedSeatId !== seatId) skipNextNudge();
+      queueCenterSeatInMap(seatId);
+    }
     // Mount-only by design: replaceState fires no events, and re-running on
     // seat updates would fight the user's live selection.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1212,9 +1249,15 @@ export function SeatMap({
 
   function applyInspectorGuardAction(action: InspectorGuardAction) {
     if (action.kind === "select-seat") {
+      const isNewSelection = selectedSeatId !== action.seatId;
       commitSeatSelection(action.seatId);
       if (action.center) {
         setFilterCollapsed(true);
+        // Finding 1: same race as openSeatFromResults — this is its
+        // dirty-guard-deferred continuation, so it arms the skip too (only
+        // when the selection is actually changing — see the deep-link
+        // effect above for why an unconditional arm would go stale).
+        if (isNewSelection) skipNextNudge();
         queueCenterSeatInMap(action.seatId);
       }
       return;
@@ -1308,11 +1351,12 @@ export function SeatMap({
   }
 
   /**
-   * The single commit path for a saved seat, shared by the inspector's form and
-   * the canvas action bar. Extracted from the inspector's inline prop so both
-   * surfaces record undo history the same way — a vacate from the bar must be
-   * indistinguishable from one made in the panel, or Undo starts behaving
-   * differently depending on where the user clicked.
+   * The single commit path for a saved seat, shared by the inspector's form
+   * and its icon-row Vacate (v12 slice 4 retired the canvas action bar those
+   * verbs used to live on). Extracted from the inspector's inline prop so
+   * both paths record undo history the same way — a vacate must be
+   * indistinguishable from a save made in the panel, or Undo starts behaving
+   * differently depending on which control the user clicked.
    *
    * `freshDraftPayload` is only ever passed for a force_move commit (inspector
    * "Move them?" retry). force_move also vacates the mover's OTHER draft seat
@@ -1322,8 +1366,8 @@ export function SeatMap({
    * spreading the stale copy bakes a stale updated_at into localSeats that
    * fails the next Undo's per-row concurrency fence (MLS02, fix round 1,
    * 2026-07-30 — reproduced live). Ingest the fresh payload wholesale instead,
-   * same as swap. Ordinary saves and the bar's vacate never touch a second
-   * row, so they keep the plain spread-and-replace path.
+   * same as swap. Ordinary saves and Vacate never touch a second row, so they
+   * keep the plain spread-and-replace path.
    */
   function applySeatUpdated(
     seat: SeatWithEmployee,
@@ -1346,17 +1390,10 @@ export function SeatMap({
     }
   }
 
-  // Assign… on the bar discloses rather than acts: assignment needs a person,
-  // which needs the inspector's combobox. Expand the panel and bump the signal
-  // the inspector watches — the same idiom inspectorResetSignal already uses.
-  function requestAssignFromBar() {
-    if (!selectedSeat) return;
-    setInspectorCollapsed(false);
-    setAssignmentRequestSignal(current => current + 1);
-  }
-
-  // The bar never vacates directly. It always raises the confirm first, because
-  // it is a transient surface (lib/seatDraftActions: vacateNeedsConfirmation).
+  // Named for the now-retired canvas action bar this used to sit on (v12
+  // slice 4 moved it to the inspector's icon row). Never vacates directly —
+  // it always raises the confirm first, because it is a transient surface
+  // (lib/seatDraftActions: vacateNeedsConfirmation).
   function requestVacateFromBar() {
     if (!selectedSeat || !canVacateSeat(selectedSeat)) return;
     setActionError(null);
@@ -1557,13 +1594,15 @@ export function SeatMap({
   }
 
   const scrollMapToPoint = useCallback((x: number, y: number, options?: { verticalViewportAnchor?: number }) => {
+    // A programmatic center supersedes any in-flight inspector nudge.
+    cancelNudge();
     const viewport = mapViewportRef.current;
     const map = mapRef.current;
     if (!viewport || !map) return;
 
     const target = scrollTargetForPoint({ x, y }, map, viewport, options?.verticalViewportAnchor ?? 0.5);
     viewport.scrollTo({ ...target, behavior: "smooth" });
-  }, []);
+  }, [cancelNudge]);
 
   const centerMapViewport = useCallback((behavior: ScrollBehavior = "smooth") => {
     const viewport = mapViewportRef.current;
@@ -1597,6 +1636,7 @@ export function SeatMap({
   // viewport on the point that was previously centered. Stored coordinates and
   // the calibration transform are untouched (spec §9).
   function applyMapZoom(nextZoom: number) {
+    cancelNudge();
     const clamped = clampZoom(nextZoom);
 
     if (mapViewMode !== "detail") {
@@ -1630,6 +1670,7 @@ export function SeatMap({
   }, [zoomFactor]);
 
   function fitMapToView() {
+    cancelNudge();
     setZoomFactor(1);
     if (mapViewMode !== "overview") changeMapViewMode("overview");
   }
@@ -1643,6 +1684,7 @@ export function SeatMap({
   }
 
   function handleViewportPointerDown(event: PointerEvent<HTMLDivElement>) {
+    cancelNudge();
     if (mapViewMode !== "detail" || floor !== "3") return;
     if (event.button !== 0) return;
     if (canEdit && addSeatMode) return;
@@ -1868,9 +1910,19 @@ export function SeatMap({
       return;
     }
 
+    const isNewSelection = selectedSeatId !== seatId;
     if (!selectSeat(seatId)) return;
 
     setFilterCollapsed(true);
+    // Finding 1 (v12 slice 4 final review): arm the skip in the same commit
+    // as this selection so the nudge trigger effect never races this queued
+    // center's native smooth scrollTo (see useInspectorNudge's skipNextNudge).
+    // Only when the selection is actually changing — reselecting the already-
+    // selected seat (e.g. re-opening its own results row) leaves selectedSeatId
+    // unchanged, so the trigger effect's deps never move to consume the flag;
+    // arming it anyway would leave it stuck and silently skip a later,
+    // unrelated selection's legitimate nudge.
+    if (isNewSelection) skipNextNudge();
     queueCenterSeatInMap(seatId);
   }
 
@@ -2418,28 +2470,20 @@ export function SeatMap({
   // 3b MODE CARD: while a mode runs without an expanded inspector, the mode
   // owns the panel slot (its microcopy lives in the occupant, INV-4).
   const modeCardOpen = canEdit && Boolean(activeMode) && (!selectedSeat || inspectorCollapsed);
-  // Prototype "stage": at the panel tier the inspector RESERVES layout width
-  // instead of overlaying the canvas — expanded takes the 320px column, the
-  // collapsed rail takes 44px, and the content wrapper pads right to match.
-  // Mirrors SeatInspector's own render rules (rail hidden while another panel
-  // owns the slot) so the reservation never outlives the panel.
-  const inspectorPillSuppressed = resultsPanelOpen || modeCardOpen || askPlannerOpen;
-  const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
-    ? !inspectorCollapsed
-      ? "expanded"
-      : swapSourceSeatId || moveEmployeeSourceSeatId || inspectorPillSuppressed
-        ? "none"
-        : "rail"
-    : "none";
-  // Whatever occupies the right slot reserves the column — expanded inspector,
-  // results panel, or mode card — so nothing renders hidden behind a panel.
-  const rightSlotTier: "expanded" | "rail" | "none" =
-    inspectorDockTier === "expanded" || resultsPanelOpen || modeCardOpen ? "expanded" : inspectorDockTier;
-  const stageReservedClassName = rightSlotTier === "expanded"
-    ? "panel:pr-[332px]"
-    : rightSlotTier === "rail"
-      ? "panel:pr-[56px]"
-      : "";
+  // v12 slice 4: the inspector FLOATS (contract #1) — only the docking
+  // occupants reserve stage width now (results panel / mode card, contract #2).
+  const rightSlotTier: "expanded" | "none" = resultsPanelOpen || modeCardOpen ? "expanded" : "none";
+  const stageReservedClassName = rightSlotTier === "expanded" ? "panel:pr-[332px]" : "";
+
+  // The collapse rail is retired (v12 slice 4): `inspectorCollapsed` is now
+  // purely the auto-yield flag. Whenever nothing owns the right region anymore
+  // and a seat is still selected, the inspector returns on its own — there is
+  // no rail left for the user to click.
+  useEffect(() => {
+    if (!inspectorCollapsed || !selectedSeatId) return;
+    if (resultsPanelOpen || modeCardOpen || askPlannerOpen || swapSourceSeatId || moveEmployeeSourceSeatId) return;
+    setInspectorCollapsed(false);
+  }, [inspectorCollapsed, selectedSeatId, resultsPanelOpen, modeCardOpen, askPlannerOpen, swapSourceSeatId, moveEmployeeSourceSeatId]);
   // No mode/zoom change on select or deselect: in the fit view the reserved
   // column resizes the viewport and the overview ResizeObserver re-fits the
   // frame width automatically; a zoomed (detail) view keeps its zoom.
@@ -3241,6 +3285,10 @@ export function SeatMap({
               onPointerMove={handleViewportPointerMove}
               onPointerUp={handleViewportPointerEnd}
               onPointerCancel={handleViewportPointerEnd}
+              onWheel={cancelNudge}
+              onKeyDown={event => {
+                if (VIEWPORT_NATIVE_SCROLL_KEYS.has(event.key)) cancelNudge();
+              }}
             >
               {floor === "2" && <FloorPlaceholder />}
               {floor === "3" && (
@@ -3355,12 +3403,15 @@ export function SeatMap({
                 />
               </div>
             )}
-            {/* Legend card, bottom-left against the map stage (same reason as
-                the action bar below: it re-centres with the narrowed map when
-                a panel reserves its column). Counts come from legendCounts,
-                which follows the active filters — the number row must never
-                contradict a filtered map. Hidden below md, where the card
-                would cover more plan than it explains, and gated to Floor 3:
+            {/* Legend card, bottom-left against the map stage (it re-centres
+                with the narrowed map for the same reason the header does: a
+                docking panel — results panel or mode card, v12 slice 4 —
+                reserves its column via stageReservedClassName; the canvas
+                action bar this comment used to point to is retired). Counts
+                come from legendCounts, which follows the active filters — the
+                number row must never contradict a filtered map. Hidden below
+                md, where the card would cover more plan than it explains,
+                and gated to Floor 3:
                 Floor 2 shows the placeholder, where whole-map counts would
                 read as a bug. In the 768–899 band the md floor lets this card
                 render while the inspector/results/filter surfaces are still
@@ -3401,20 +3452,6 @@ export function SeatMap({
                 ) : null}
               />
             </div>
-            )}
-            {/* Positioned against the map stage, NOT the viewport: that is what
-                makes it re-centre on the narrowed map when the inspector
-                reserves its column instead of drifting underneath it. */}
-            {canEdit && floor === "3" && (
-              <SeatActionBar
-                seat={selectedSeat}
-                busy={mutationInFlight || barSeatActions.pending}
-                onAssign={requestAssignFromBar}
-                onMove={() => startMoveEmployeeMode()}
-                onSwap={() => startSwapSeatMode()}
-                onVacate={requestVacateFromBar}
-                firstActionRef={seatActionBarFirstActionRef}
-              />
             )}
           </div>
         </section>
@@ -3752,8 +3789,6 @@ export function SeatMap({
         departmentOptions={localDepartmentOptions}
         canEdit={canEdit}
         collapsed={inspectorCollapsed}
-        pillSuppressed={inspectorPillSuppressed}
-        swapMode={Boolean(swapSourceSeatId || moveEmployeeSourceSeatId)}
         searchMismatchNotice={selectedSeatMismatchNotice}
         searchMismatchClearLabel={clearSearchContextLabel}
         onClose={() => {
@@ -3764,7 +3799,15 @@ export function SeatMap({
           applyCloseInspectorAction();
         }}
         onClearSearchContext={searchActive ? clearSearch : clearStructuredFilters}
-        onToggleCollapse={() => setInspectorCollapsed(current => !current)}
+        onMove={() => startMoveEmployeeMode()}
+        onSwap={() => startSwapSeatMode()}
+        onVacate={requestVacateFromBar}
+        // Finding 2 (v12 slice 4 final review): parity with the retired
+        // canvas action bar's busy gate — a mutation in flight from ANY
+        // source (undo/redo, the vacate confirm dialog's own transition, not
+        // just this inspector instance's local `pending`) must still block
+        // Move/Swap/Vacate here.
+        busy={mutationInFlight || barSeatActions.pending}
         onDeleteSeat={deleteSelectedSeat}
         onExplainSeat={explainSeatWithPlanner}
         onBeforeSeatUpdate={captureDraftSnapshot}
@@ -3777,7 +3820,6 @@ export function SeatMap({
         onDirtyChange={setInspectorDirty}
         onSubmitBlocked={cancelPendingInspectorGuardAction}
         resetSignal={inspectorResetSignal}
-        startAssignmentSignal={assignmentRequestSignal}
         activityEntries={selectedSeatActivity}
       />
 

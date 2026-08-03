@@ -22,7 +22,8 @@ import type { SeatWithEmployee } from "@/lib/types";
  *
  * Everything surface-local — the inspector's form reset, its error summary, its
  * save feedback — stays with the caller, because those genuinely differ: the
- * canvas action bar has no form to settle.
+ * inspector's icon-row Vacate (v12 slice 4; formerly the canvas action bar)
+ * has no form to settle.
  */
 
 type SeatDraftActionCallbacks = {

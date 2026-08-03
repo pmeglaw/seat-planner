@@ -37,6 +37,7 @@ import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
+import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 
@@ -71,6 +72,28 @@ const KIND_LABELS: Record<ViewerSearchResult["kind"], string> = {
   department: "Department",
   zone: "Zone"
 };
+
+// v12 slice 4 nudge (interaction contract #1): the `panel` tier minimum width
+// (tailwind.config.ts) — the float exists only there. The viewer has no
+// SeatMap-style seat-centering breakpoint constant of its own to reuse.
+const VIEWER_PANEL_BREAKPOINT_PX = 900;
+
+// Keys the browser translates into native scrolling of the focused viewport
+// (mirrors SeatMap.tsx's VIEWPORT_NATIVE_SCROLL_KEYS, fix commit 49dc74f).
+// Native scroll fights an in-flight inspector nudge the same way wheel scroll
+// does, so the viewport's onKeyDown cancels the tween for these — it never
+// preventDefaults, so the native scroll/navigation itself is untouched.
+const VIEWPORT_NATIVE_SCROLL_KEYS: ReadonlySet<string> = new Set([
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "PageUp",
+  "PageDown",
+  "Home",
+  "End",
+  " "
+]);
 
 // Result title/subtitle identity segments (person names, seat codes) are
 // already formatted for display by lib/viewerSeatSearch.ts at composition
@@ -206,6 +229,22 @@ export function ViewerSeatFinder({
   const [filterOpen, setFilterOpen] = useState(false);
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
+
+  // v12 slice 4 nudge (interaction contract #1): keeps the selected seat clear
+  // of the floating inspector at the panel tier. Pan/zoom/wheel/programmatic
+  // scroll paths below call cancelNudge() so a user- or code-initiated
+  // scroll-position change always wins over an in-flight nudge tween. The
+  // resolver reads visualSeatById via closure — safe even though that const is
+  // declared further down, because the hook only ever invokes it from a
+  // deferred rAF callback, well after this render has finished.
+  const { cancelNudge, skipNextNudge } = useInspectorNudge({
+    viewportRef: mapViewportRef,
+    frameRef: mapRef,
+    selectedSeatId,
+    inspectorHidden: inspectorCollapsed,
+    panelBreakpointPx: VIEWER_PANEL_BREAKPOINT_PX,
+    resolveSeatVisualX: seatId => visualSeatById.get(seatId)?.x ?? null
+  });
   const panStateRef = useRef<ViewerPanState>(null);
   const filterRootRef = useRef<HTMLDivElement | null>(null);
   const filterTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -509,6 +548,8 @@ export function ViewerSeatFinder({
   }, [floor]);
 
   const scrollMapToPoint = useCallback((x: number, y: number, behavior: ScrollBehavior = "smooth") => {
+    // A programmatic center supersedes any in-flight inspector nudge.
+    cancelNudge();
     const viewport = mapViewportRef.current;
     const map = mapRef.current;
     if (!viewport || !map) return;
@@ -517,7 +558,7 @@ export function ViewerSeatFinder({
     const left = clampScrollPosition((x * map.offsetWidth) - (viewport.clientWidth / 2), viewport.scrollWidth - viewport.clientWidth);
     const top = clampScrollPosition((y * map.offsetHeight) - (viewport.clientHeight / 2), viewport.scrollHeight - viewport.clientHeight);
     viewport.scrollTo({ left, top, behavior });
-  }, []);
+  }, [cancelNudge]);
 
   const centerSeatInMap = useCallback((seatId: string, behavior: ScrollBehavior = "smooth") => {
     const visualSeat = visualSeatById.get(seatId);
@@ -546,10 +587,12 @@ export function ViewerSeatFinder({
   }, [centerSeatInMap, scrollMapToPoint, visualSeatById]);
 
   function applyMapZoom(nextZoom: number) {
+    cancelNudge();
     setZoomFactor(clampZoom(nextZoom));
   }
 
   function fitMapToView() {
+    cancelNudge();
     setZoomFactor(null);
     window.requestAnimationFrame(() => {
       mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
@@ -561,6 +604,7 @@ export function ViewerSeatFinder({
   }
 
   function handleViewportPointerDown(event: PointerEvent<HTMLDivElement>) {
+    cancelNudge();
     if (floor !== "3" || event.button !== 0) return;
     if (isPanBlockedTarget(event.target)) return;
     const viewport = mapViewportRef.current;
@@ -651,9 +695,19 @@ export function ViewerSeatFinder({
   }, []);
 
   function selectSeat(seatId: string) {
+    // Finding 1 (v12 slice 4 final review): only arm the skip when the
+    // selection is actually changing — reselecting the already-selected seat
+    // leaves selectedSeatId unchanged, so the trigger effect's deps never
+    // move to consume the flag; arming it anyway would leave it stuck and
+    // silently skip a later, unrelated selection's legitimate nudge.
+    const isNewSelection = selectedSeatId !== seatId;
     setSelectedSeatId(seatId);
     setActiveResultId(null);
     setInspectorCollapsed(false);
+    // This selection also queues a programmatic center below — arm the skip
+    // in the same commit so the nudge trigger effect never races the
+    // center's native smooth scrollTo.
+    if (isNewSelection) skipNextNudge();
     centerSeatInMap(seatId);
   }
 
@@ -716,8 +770,13 @@ export function ViewerSeatFinder({
   function openResult(result: ViewerSearchResult) {
     setActiveResultId(result.id);
     if (result.seatId) {
+      // Finding 1: same race as selectSeat above, same "only if actually
+      // changing" guard (re-opening the currently selected seat's own
+      // result row must not arm a flag no future effect run will consume).
+      const isNewSelection = selectedSeatId !== result.seatId;
       setSelectedSeatId(result.seatId);
       setInspectorCollapsed(false);
+      if (isNewSelection) skipNextNudge();
       centerSeatInMap(result.seatId);
       return;
     }
@@ -790,24 +849,27 @@ export function ViewerSeatFinder({
   // comes back on dismiss. At >=900 these become side panels and never
   // overlap, so the legend keeps rendering.
   const bottomSheetOwnsBottom = resultsPanelOpen || mobileDirectorySheetOpen || Boolean(selectedSeat);
-  // Prototype "stage": at the panel tier the inspector reserves layout width
-  // (320px expanded, 44px rail) instead of overlaying the map.
-  const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
-    ? !inspectorCollapsed
-      ? "expanded"
-      : resultsPanelOpen
-        ? "none"
-        : "rail"
-    : "none";
-  // Whatever occupies the right slot reserves the column — expanded inspector
-  // or results panel — so nothing renders hidden behind a panel.
+  // v12 slice 4: the inspector FLOATS (contract #1) — only the docking
+  // occupants reserve stage width now (results panel / People directory,
+  // contract #2). Whatever occupies the right slot reserves the column, so
+  // nothing renders hidden behind a panel.
   const rightSlotTier: "expanded" | "rail" | "none" =
-    inspectorDockTier === "expanded" || resultsPanelOpen || directoryOpen ? "expanded" : directoryRail ? "rail" : inspectorDockTier;
+    resultsPanelOpen || directoryOpen ? "expanded" : directoryRail ? "rail" : "none";
   const stageReservedClassName = rightSlotTier === "expanded"
     ? "panel:pr-[332px]"
     : rightSlotTier === "rail"
       ? "panel:pr-[56px]"
       : "";
+
+  // Collapse rail retired (v12 slice 4): `inspectorCollapsed` is now purely
+  // the auto-yield flag. Whenever nothing owns the right region anymore and a
+  // seat is still selected, the inspector returns on its own — the viewer's
+  // only holder is its results panel (no modes/drawer here).
+  useEffect(() => {
+    if (!inspectorCollapsed || !selectedSeatId) return;
+    if (resultsPanelOpen) return;
+    setInspectorCollapsed(false);
+  }, [inspectorCollapsed, selectedSeatId, resultsPanelOpen]);
 
   // No zoom change on select/deselect: the fit view (zoomFactor null) sizes the
   // frame to the container at lg, so the reserved column re-fits it automatically;
@@ -1099,6 +1161,10 @@ export function ViewerSeatFinder({
               onPointerMove={handleViewportPointerMove}
               onPointerUp={handleViewportPointerEnd}
               onPointerCancel={handleViewportPointerEnd}
+              onWheel={cancelNudge}
+              onKeyDown={event => {
+                if (VIEWPORT_NATIVE_SCROLL_KEYS.has(event.key)) cancelNudge();
+              }}
             >
               {floor === "2" && <FloorPlaceholder />}
               {floor === "3" && (
@@ -1427,14 +1493,11 @@ export function ViewerSeatFinder({
         departmentOptions={departmentOptions}
         canEdit={false}
         collapsed={inspectorCollapsed}
-        pillSuppressed={resultsPanelOpen}
-        swapMode={false}
         onClose={() => {
           focusViewerSeatMarker(selectedSeatId);
           setSelectedSeatId(null);
           setInspectorCollapsed(false);
         }}
-        onToggleCollapse={() => setInspectorCollapsed(current => !current)}
       />
     </div>
   );

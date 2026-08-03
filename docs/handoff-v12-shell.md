@@ -14,9 +14,11 @@ This document goes stale; the code does not. Read, in order:
 
 1. `git log -1 044dff4` — the action-bar commit message carries the design
    rationale and the reasoning behind each call.
-2. `lib/seatDraftActions.ts` and `components/seat-map/SeatActionBar.tsx` —
-   their docstrings explain the load-bearing details, including the ones that
-   look like tidy-up targets and are not.
+2. `lib/seatDraftActions.ts`'s docstrings explain the load-bearing details,
+   including the ones that look like tidy-up targets and are not.
+   `components/seat-map/SeatActionBar.tsx` carried the canvas half of this
+   until v12 slice 4 retired it (see the shipped note below) and moved the
+   seat verbs into `SeatInspector`'s icon row.
 
 ## What shipped
 
@@ -33,7 +35,9 @@ This document goes stale; the code does not. Read, in order:
   `coverage:check`'s scope); React half in `components/` because a hook cannot
   be exercised by the plain `node --test` tier and would have sunk the floors.
 - **`components/seat-map/SeatActionBar.tsx`** — the canvas action bar, wired
-  into `SeatMap`, with the seat verbs removed from `SeatInspector`.
+  into `SeatMap`, with the seat verbs removed from `SeatInspector`. (Retired
+  in v12 slice 4 — the verbs moved back into `SeatInspector`'s icon row and
+  this file no longer exists; see the shipped note below.)
 - **The dead code the verb move left behind** (`763420d`) — `onStartSwapSeat`
   and `SeatMap`'s pass-through, the `adminDangerButtonClassName` import,
   `vacateConfirmOpen` + its two resets, `vacateDialogFocusRef`,
@@ -61,9 +65,11 @@ This document goes stale; the code does not. Read, in order:
   and undo/redo still restores them; position drift is still detectable, just
   folded into `publishSummary`'s `otherChanges` instead of its own category.
   In its place, **Move now means relocating the occupant**: a verb on the
-  canvas `SeatActionBar` for occupied seats (bar reads Move · Swap · Vacate),
-  mirroring Swap's architecture — click a destination seat on the map; an open
-  destination offers a relocate confirm, an occupied one offers a swap
+  canvas `SeatActionBar` for occupied seats (bar reads Move · Swap · Vacate;
+  the bar itself was later retired in v12 slice 4 and the same verbs moved to
+  `SeatInspector`'s icon row), mirroring Swap's architecture — click a
+  destination seat on the map; an open destination offers a relocate confirm,
+  an occupied one offers a swap
   (backed by the same existing `update_draft_seat`/`force_move` and
   `swap_draft_seat_assignments` RPCs Swap already used — no new RPCs, no
   migrations). Full rationale and edge-case handling:
@@ -150,6 +156,25 @@ This document goes stale; the code does not. Read, in order:
    wraps to two rows at 1440 and three rows at ≤1024, reaching into the
    `top-14` toast band that carries Undo at the deeper wrap.
 
+3. **The floating inspector — SHIPPED 2026-08-03 (v12 slice 4).**
+   `SeatInspector.tsx` floats as a tabbed panel on both surfaces now instead
+   of docking in flow: chips, icon-row verbs, tabs, an AI row, and a 48px
+   CTA-ladder footer (`cd31118`). `SeatActionBar.tsx` and the canvas collapse
+   rail are retired outright, not hidden — the seat verbs that lived on the
+   bar (Move · Swap · Vacate) moved into the inspector's icon row, and
+   `inspectorCollapsed` is now purely an auto-yield flag with no rail left to
+   click (`6bb163e`). Selecting a seat nudges it clear of the floating panel
+   with a hybrid scroll+translate tween: a pure planner + injectable rAF
+   tween (`lib/animateValue.ts`, `lib/mapViewport.ts`, `636a5fb`) wired
+   through the shared `components/seat-map/useInspectorNudge.ts` hook on both
+   admin (`da5d3cc`) and viewer (`046d161`); wheel cancels an in-flight nudge
+   on both surfaces (`da5d3cc` admin, `046d161` viewer), and native keyboard
+   scroll does too — shipped on admin first (`49dc74f`), then mirrored on
+   viewer within `046d161` itself. The inspector no longer
+   reserves stage width itself — the only occupants that reserve the right
+   column via `stageReservedClassName` are now the results panel / mode card
+   on admin and the People directory on viewer.
+
 ## Settled — do not reopen
 
 These were decided deliberately, several against the handoff's own text. A fresh
@@ -157,12 +182,12 @@ reader will otherwise helpfully re-propose them.
 
 | Decision | Note |
 | --- | --- |
-| Inspector docks in flow at **288px**, never overlays | The Carbon-v12 prediction argues for a 400px floating panel. Rejected. |
+| Inspector docks in flow at **288px**, never overlays | The Carbon-v12 prediction argues for a 400px floating panel. Rejected. **Reversed in v12 slice 4** — see the shipped note below: the inspector now floats as a tabbed panel on both surfaces. |
 | Chrome bar stays its **original 36px** | A 48px experiment was built and reverted. The token makes revisiting it one line. |
 | Match the **live greige palette** | Not the handoff's IBM ramp (`#f4f4f4`, `#e0e0e0`, `#6f6f6f`). |
-| Seat verbs live on the **canvas bar**, not the panel | Because the panel keeps a collapse rail, and collapsed is when the map is widest. |
-| The bar **confirms vacate every time** | The inspector's straight-through vacate is gone with its button. |
-| Geometry Move is **retired outright**; Move now relocates the occupant | Owner-confirmed on 2026-07-30: "seats never move, people do." The drag/geometry machinery, `moveSeatAction`, and `publishSummary`'s `seatMoves` category are deleted, not flagged off. Person-centric Move shipped on the canvas `SeatActionBar` instead — see `docs/superpowers/specs/2026-07-30-person-move-design.md`. Don't re-propose a geometry drag affordance. |
+| Seat verbs live on the **canvas bar**, not the panel | Because the panel keeps a collapse rail, and collapsed is when the map is widest. **Reversed in v12 slice 4** — see the shipped note below: the bar and the collapse rail are both retired, and the verbs now live in the panel's icon row. |
+| The bar **confirms vacate every time** | The inspector's straight-through vacate is gone with its button. (The bar itself is retired in v12 slice 4; the same always-confirm rule now backs the inspector's icon-row Vacate — see `requestVacateFromBar` in `SeatMap.tsx`.) |
+| Geometry Move is **retired outright**; Move now relocates the occupant | Owner-confirmed on 2026-07-30: "seats never move, people do." The drag/geometry machinery, `moveSeatAction`, and `publishSummary`'s `seatMoves` category are deleted, not flagged off. Person-centric Move shipped on the canvas `SeatActionBar` instead (that bar was itself retired in v12 slice 4 — the verb now lives on `SeatInspector`'s icon row) — see `docs/superpowers/specs/2026-07-30-person-move-design.md`. Don't re-propose a geometry drag affordance. |
 | Force-move reconciliation uses **fresh-payload ingestion**, not a client-side vacate helper | Fix round 1, 2026-07-30 (commit `e5c4262`): the original `vacateOtherSeatsForEmployee` helper spread a stale pre-mutation copy of the seat a force-move vacated, and the stale `updated_at` it baked into local state broke the next Undo with `MLS02` — reproduced live against the production draft. `updateSeatAction` now returns the fresh draft payload (`getDraftMapPayload`); both force-move consumers (bar Move, inspector "Move them?") ingest `result.seats`/`result.employees` wholesale instead. The helper is deleted; `tests/draft-concurrency.test.mjs` pins its absence. Don't rebuild it. |
 
 ## Traps that cost real time

@@ -121,29 +121,25 @@ test("a viewer sees no edit affordances in the inspector", async ({ page }) => {
   await clickMarker(page, "S01");
   await expect(page.locator('[aria-label="Close inspector"]')).toBeAttached();
   await expect(page.locator('[aria-label^="Delete"]')).toHaveCount(0);
-  // SeatActionBar renders only for canEdit admins (SeatMap gates it on
-  // `canEdit && floor === "3"`), so a viewer should never even mount it —
-  // asserting the bar's own attribute is a stronger claim than asserting
-  // individual verb labels, and it doesn't go stale as verbs are renamed.
+  // The canvas action bar (and its `data-seat-action-bar` attribute) is gone
+  // from the codebase entirely (v12 slice 4) — the reseat verbs live in the
+  // inspector's icon action row now, canEdit-gated internally. Nothing can
+  // ever match this selector again; the assertion just guards against the
+  // attribute being reintroduced.
   await expect(page.locator('[data-seat-action-bar]')).toHaveCount(0);
 });
 
 // `custom` (S01) is an OPEN seat (status "available", no employee_id), so the
-// bar's occupied-only verbs (Move, Vacate) don't apply here — it renders
-// Assign… · Swap. These `Move seat`/`Swap seat` asserts were already stale
-// before this branch: MOVE_UI_ENABLED=false (6c87acf) had already removed the
-// inspector's "Move seat" label, and the inspector never had a "Swap seat"
-// label — both verbs live on SeatActionBar now, with person-centric aria text.
+// icon action row's occupied-only verbs (Move, Vacate) don't apply here — only
+// the footer's assignment CTA and the row's Swap button render.
 test("an admin sees the edit affordances for a custom draft seat", async ({ page }) => {
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
   await clickMarker(page, "S01");
   await expect(page.locator('[aria-label^="Delete custom seat"]')).toBeAttached();
-  // The assign affordance intentionally exists twice for an open seat — the
-  // canvas action bar's "Assign…" and the inspector's "Assign employee" share
-  // the same accessible name (both open the inspector's editor), so a strict
-  // locator resolves to 2 elements. `.first()` keeps the claim "the affordance
-  // exists" without pinning how many surfaces offer it.
-  await expect(page.locator('[aria-label^="Assign an employee to"]').first()).toBeAttached();
+  // The assign affordance now has a single source (the inspector's footer
+  // CTA) — the canvas bar that duplicated it is retired, so the name is
+  // unique and the locator no longer needs `.first()`.
+  await expect(page.locator('[aria-label^="Assign an employee to"]')).toBeAttached();
   await expect(page.locator('[aria-label^="Swap "]')).toBeAttached();
 });
 
@@ -151,6 +147,11 @@ test("an admin sees the edit affordances for a custom draft seat", async ({ page
 // reports dirty (native setter + bubbling input, per the harness's no-CSS rules).
 async function dirtyInspectorNotes(page: Page) {
   await clickMarker(page, "S01");
+  // v12 slice 4: the notes textarea lives in the Notes tab, and selection
+  // lands on Overview — activate the tab before reaching for the field.
+  const notesTab = page.locator('[role="tab"]', { hasText: "Notes" });
+  await expect(notesTab).toBeAttached();
+  await notesTab.dispatchEvent("click");
   await expect(page.locator("textarea").first()).toBeAttached();
   await page.evaluate(() => {
     const field = document.querySelector("textarea");

@@ -1,8 +1,9 @@
 import type { SeatStatus, SeatWithEmployee } from "@/lib/types";
 
 /**
- * The pure core of the seat-draft actions, extracted from SeatInspector so the
- * docked inspector and the canvas action bar run ONE path instead of two.
+ * The pure core of the seat-draft actions, extracted from SeatInspector so its
+ * form and its icon-row Vacate (the canvas action bar this once lived on was
+ * retired in v12 slice 4) settle through ONE path instead of two.
  *
  * Only the parts worth testing live here: the exact payload a vacate writes, and
  * how a server-action result is classified. The React wrapper
@@ -44,8 +45,8 @@ export type SeatDraftOutcome =
 
 /**
  * Whether a seat can be vacated at all. A seat with nobody in it has nothing to
- * clear, which is why the canvas action bar hides Vacate rather than showing it
- * greyed out.
+ * clear, which is why the inspector's icon row hides Vacate rather than
+ * showing it greyed out.
  */
 export function canVacateSeat(seat: Pick<SeatWithEmployee, "employee_id"> | null | undefined): boolean {
   return Boolean(seat?.employee_id);
@@ -114,16 +115,17 @@ export function classifySeatUpdateResult(result: SeatUpdateResultLike): SeatDraf
  * straight through — EXCEPT when the inspector holds unsaved edits, which Undo
  * cannot restore because they were never committed.
  *
- * `fromTransientSurface` is the canvas action bar, and the answer there is
- * SETTLED (owner call, 2026-07-30): the bar confirms EVERY time, dirty or not.
- * A small target that appears and disappears with the selection earns less
- * trust than a 44px cell inside a panel the user deliberately opened — so the
- * bar passes `fromTransientSurface: true` and the inspector does not.
+ * `fromTransientSurface` names the inspector's icon-row Vacate (formerly the
+ * canvas action bar, retired in v12 slice 4), and the answer there is SETTLED
+ * (owner call, 2026-07-30): it confirms EVERY time, dirty or not. A small
+ * target that appears and disappears with the selection earns less trust than
+ * a 44px cell inside a panel the user deliberately opened — so the icon row
+ * passes `fromTransientSurface: true` and the rest of the inspector does not.
  *
  * The asymmetry is the point: do not "simplify" this to a single rule. Making
  * the inspector confirm every time adds a dialog to a flow that already has
- * Undo behind it; dropping the bar's confirm puts an unguarded destructive
- * action on a transient surface.
+ * Undo behind it; dropping the icon row's confirm puts an unguarded
+ * destructive action on a transient surface.
  */
 export function vacateNeedsConfirmation({
   hasUnsavedEdits,
