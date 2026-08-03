@@ -89,7 +89,7 @@ export function FloorSelector({ floor, onChange }: FloorSelectorProps) {
             setOpen(true);
           }
         }}
-        className="flex items-center gap-2 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+        className="flex items-center gap-2 border border-[var(--admin-border)] bg-white px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--admin-text-primary)] shadow-elevation-3 transition hover:bg-[var(--sp-color-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
       >
         {FLOOR_LABELS[floor]}
         <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--admin-text-muted)]">
@@ -117,7 +117,7 @@ export function FloorSelector({ floor, onChange }: FloorSelectorProps) {
               moveOptionFocus(-1);
             }
           }}
-          className="absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--admin-border)] bg-[var(--admin-surface)] py-1 shadow-elevation-3"
+          className="absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--admin-border)] bg-white py-1 shadow-elevation-3"
         >
           {FLOORS.map(option => (
             <button

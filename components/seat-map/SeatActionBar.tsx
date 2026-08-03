@@ -100,7 +100,11 @@ export function SeatActionBar({ seat, busy = false, onAssign, onMove, onSwap, on
       aria-hidden={!visible}
       data-seat-action-bar
       className={[
-        "absolute bottom-3 left-1/2 z-30 flex h-10 items-center gap-2 bg-[var(--admin-chrome-bg)] pl-3 pr-1 text-[var(--admin-chrome-text)]",
+        // bottom-14, not bottom-3: the full-bleed canvas (v12 slice 3) parks a
+        // legend card bottom-left and the zoom stack bottom-right at bottom-3,
+        // and at narrow stage widths the centered bar would overlap them. One
+        // card row up clears both at every width.
+        "absolute bottom-14 left-1/2 z-30 flex h-10 items-center gap-2 bg-[var(--admin-chrome-bg)] pl-3 pr-1 text-[var(--admin-chrome-text)]",
         "shadow-[0_4px_14px_rgba(0,0,0,.28),0_0_0_1px_rgba(255,255,255,.12)]",
         "transition-[translate,opacity] duration-[240ms] ease-[cubic-bezier(0,0,.38,.9)] motion-reduce:transition-none",
         visible ? "[translate:-50%_0px] opacity-100" : "pointer-events-none [translate:-50%_8px] opacity-0"

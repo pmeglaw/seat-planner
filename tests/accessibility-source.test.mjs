@@ -557,27 +557,11 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /\{resultsPanelOpen && !modeCardOpen && \(/);
   assert.match(seatMapSource, /onOpen=\{selectSeatResult\}/);
   assert.match(seatMapSource, /onShowOnMap=\{queueCenterSeatInMap\}/);
-  // Map ⋯ overflow is a real menu: ARIA role/haspopup semantics plus
-  // roving keyboard support, not a plain button group.
-  assert.match(seatMapSource, /id="seat-map-overflow-menu"[\s\S]{0,160}role="menu"/);
-  // Pin role="menuitem" as a real JSX attribute on both items specifically
-  // (not just satisfied by the querySelector string above).
-  assert.match(seatMapSource, /role="menuitem"[\s\S]{0,800}Fit map to view/);
-  assert.match(seatMapSource, /role="menuitem"[\s\S]{0,800}Zoom to 100%/);
-  assert.match(seatMapSource, /aria-haspopup="menu"/);
-  // Roving tabindex (APG menu-button pattern): items sit out of the native
-  // tab order — reachable only via the focus-on-open effect and the
-  // Arrow/Home/End cycling below, not by Tab.
-  assert.match(seatMapSource, /role="menuitem"[\s\S]{0,40}tabIndex=\{-1\}[\s\S]{0,800}Fit map to view/);
-  assert.match(seatMapSource, /role="menuitem"[\s\S]{0,40}tabIndex=\{-1\}[\s\S]{0,800}Zoom to 100%/);
-  // Tab (and Shift+Tab) must close the menu and hand focus back to the
-  // trigger synchronously — preventDefault() stops the native focus hop and
-  // the trigger is focused immediately (not via the deferred
-  // returnFocusAfterClose helper), avoiding a double focus move.
-  assert.match(seatMapSource, /event\.key === "Tab"[\s\S]{0,450}event\.preventDefault\(\);[\s\S]{0,120}setMapMenuOpen\(false\);[\s\S]{0,90}mapMenuButtonRef\.current\?\.focus\(\)/);
-  // The Arrow/Home/End branch must stopPropagation like the adjacent
-  // Escape branch, for consistency and to avoid latent bubbling conflicts.
-  assert.match(seatMapSource, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp"[\s\S]{0,120}event\.preventDefault\(\);\s*event\.stopPropagation\(\);/);
+  // The map ⋯ overflow menu was retired in v12 slice 3 (its two items live on
+  // the zoom stack's fit button and the chrome kebab's reset-zoom), so its
+  // APG menu pins moved out with it. The menu-pattern invariant is still
+  // enforced on the surviving menus: the chrome kebab below and the
+  // FloorSelector's menuitemradio list.
 });
 
 test("popovers restore trigger focus when a close unmounts the focused element", async () => {
@@ -601,12 +585,9 @@ test("popovers restore trigger focus when a close unmounts the focused element",
     assert.match(source, /returnFocusRef=\{filterTriggerRef\}/);
   }
 
-  // The chrome ⋯ More menu and the map ⋯ actions menu return focus to their
-  // triggers on Escape.
+  // The chrome ⋯ More menu returns focus to its trigger on Escape.
   assert.match(seatMapSource, /ref=\{chromeMenuButtonRef\}/);
   assert.match(seatMapSource, /setChromeMenuOpen\(false\);[\s\S]{0,90}returnFocusAfterClose\(chromeMenuButtonRef\)/);
-  assert.match(seatMapSource, /ref=\{mapMenuButtonRef\}/);
-  assert.match(seatMapSource, /setMapMenuOpen\(false\);[\s\S]{0,90}returnFocusAfterClose\(mapMenuButtonRef\)/);
 });
 
 test("chrome bars stay pinned and the filter menu precedes search in the tab order", async () => {
