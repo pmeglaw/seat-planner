@@ -80,6 +80,7 @@ import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
+import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { AppRail } from "@/components/ui/AppRail";
@@ -461,6 +462,24 @@ export function SeatMap({
 
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
+
+  // v12 slice 4 nudge (interaction contract #1): keeps the selected seat clear
+  // of the floating inspector at the panel tier. Pan/zoom/wheel/programmatic
+  // scroll paths below call cancelNudge() so a user- or code-initiated
+  // scroll-position change always wins over an in-flight nudge tween.
+  const { cancelNudge } = useInspectorNudge({
+    viewportRef: mapViewportRef,
+    frameRef: mapRef,
+    selectedSeatId,
+    inspectorHidden: inspectorCollapsed,
+    panelBreakpointPx: SEAT_CENTER_PANEL_BREAKPOINT_PX,
+    resolveSeatVisualX: seatId => {
+      const seat = localSeats.find(item => item.id === seatId);
+      if (!seat) return null;
+      return savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat).x;
+    }
+  });
+
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
   // The bar and the inspector run ONE vacate path — same payload, same undo
   // snapshot, same stale-draft fence. Both commit through applySeatUpdated
@@ -1535,13 +1554,15 @@ export function SeatMap({
   }
 
   const scrollMapToPoint = useCallback((x: number, y: number, options?: { verticalViewportAnchor?: number }) => {
+    // A programmatic center supersedes any in-flight inspector nudge.
+    cancelNudge();
     const viewport = mapViewportRef.current;
     const map = mapRef.current;
     if (!viewport || !map) return;
 
     const target = scrollTargetForPoint({ x, y }, map, viewport, options?.verticalViewportAnchor ?? 0.5);
     viewport.scrollTo({ ...target, behavior: "smooth" });
-  }, []);
+  }, [cancelNudge]);
 
   const centerMapViewport = useCallback((behavior: ScrollBehavior = "smooth") => {
     const viewport = mapViewportRef.current;
@@ -1575,6 +1596,7 @@ export function SeatMap({
   // viewport on the point that was previously centered. Stored coordinates and
   // the calibration transform are untouched (spec §9).
   function applyMapZoom(nextZoom: number) {
+    cancelNudge();
     const clamped = clampZoom(nextZoom);
 
     if (mapViewMode !== "detail") {
@@ -1608,6 +1630,7 @@ export function SeatMap({
   }, [zoomFactor]);
 
   function fitMapToView() {
+    cancelNudge();
     setZoomFactor(1);
     if (mapViewMode !== "overview") changeMapViewMode("overview");
   }
@@ -1621,6 +1644,7 @@ export function SeatMap({
   }
 
   function handleViewportPointerDown(event: PointerEvent<HTMLDivElement>) {
+    cancelNudge();
     if (mapViewMode !== "detail" || floor !== "3") return;
     if (event.button !== 0) return;
     if (canEdit && addSeatMode) return;
@@ -3211,6 +3235,7 @@ export function SeatMap({
               onPointerMove={handleViewportPointerMove}
               onPointerUp={handleViewportPointerEnd}
               onPointerCancel={handleViewportPointerEnd}
+              onWheel={cancelNudge}
             >
               {floor === "2" && <FloorPlaceholder />}
               {floor === "3" && (
