@@ -136,14 +136,19 @@ This document goes stale; the code does not. Read, in order:
    `svh` and the root could still stretch ~56–110px below the map. A follow-up
    fix matched the root to `min-h-[100svh]`, so the dead band stays closed for
    the dynamic-toolbar case too. **Agent-verified only on the viewer, via
-   Playwright** — nothing here is owner-verified; the owner's role-flip pass on
-   admin is still pending, and the two items most likely to need a follow-up
-   there are the same dead band below lg (admin keeps a content-sized
-   `sm:min-h-[480px]` overview viewport plus an in-flow search row, so it was
-   not fixed with the viewer's) and the top-left chip rail, which — with all
-   four filters plus a search term active (six chips, counting the floor pill
-   and crumb) — wraps to two rows at 1440 and three rows at ≤1024, reaching
-   into the `top-14` toast band that carries Undo at the deeper wrap.
+   Playwright.** The owner's role-flip pass on admin then found the same dead
+   band there, in two forms the viewer's fix did not reach: a content-sized
+   `sm:min-h-[480px]` overview viewport below lg (249px of bare page at
+   860×809), and the `lg:aspect-[1911/867]` stage lock the viewer had dropped,
+   which ended the viewport at the aspect height on tall lg windows (~190px at
+   1440×849). Both are closed now — the stage carries `lg:flex-1` in both
+   modes and the sub-lg viewport takes `100svh` minus an 80px chrome budget
+   (36px bar + the 44px in-flow canvas search row, `h-9` + `pb-2`); the admin
+   root moved to `min-h-[100svh]` for the same lvh/svh reason the viewer's did.
+   Still open on admin: the top-left chip rail, which — with all four filters
+   plus a search term active (six chips, counting the floor pill and crumb) —
+   wraps to two rows at 1440 and three rows at ≤1024, reaching into the
+   `top-14` toast band that carries Undo at the deeper wrap.
 
 ## Settled — do not reopen
 
