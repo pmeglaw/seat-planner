@@ -2512,9 +2512,14 @@ export function SeatMap({
     canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
   const actionNoticeBannerClassName = [
-    // Overlay, not layout: the toast floats above the floor-selector row so
-    // its 6s lifetime never shifts the map column height mid-session.
-    "absolute left-0.5 right-0.5 top-0.5 z-40 shadow-elevation-3",
+    // Overlay, not layout: the toast's 6s lifetime must never shift the map
+    // column height mid-session. top-14 for the same reason the error overlay
+    // uses it — the floating top clusters own the first 44px of the stage, and
+    // at top-0.5 this toast rendered UNDER them in paint order (they are z-40
+    // and later in the DOM). That put the Add seat button on top of the
+    // toast's right-aligned Undo, hit-blocking the recovery path for the whole
+    // 6s after every draft mutation.
+    "absolute left-0.5 right-0.5 top-14 z-40 shadow-elevation-3",
     "flex min-w-0 flex-col gap-2 rounded-xl border px-3 py-2 text-sm font-semibold sm:flex-row sm:items-center sm:justify-between",
     actionNoticeTone === "neutral"
       ? "border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)]"
