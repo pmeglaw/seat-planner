@@ -147,6 +147,11 @@ test("an admin sees the edit affordances for a custom draft seat", async ({ page
 // reports dirty (native setter + bubbling input, per the harness's no-CSS rules).
 async function dirtyInspectorNotes(page: Page) {
   await clickMarker(page, "S01");
+  // v12 slice 4: the notes textarea lives in the Notes tab, and selection
+  // lands on Overview — activate the tab before reaching for the field.
+  const notesTab = page.locator('[role="tab"]', { hasText: "Notes" });
+  await expect(notesTab).toBeAttached();
+  await notesTab.dispatchEvent("click");
   await expect(page.locator("textarea").first()).toBeAttached();
   await page.evaluate(() => {
     const field = document.querySelector("textarea");
