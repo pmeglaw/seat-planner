@@ -19,7 +19,13 @@ import {
   seatsToVisualSeats
 } from "@/lib/mapLayoutTransform";
 // Aliased: `fitMapWidth` is already this component's state for the resolved width.
-import { fitMapWidth as computeFitMapWidth } from "@/lib/mapViewport";
+import {
+  MAP_ZOOM_MAX,
+  MAP_ZOOM_MIN,
+  MAP_ZOOM_STEP,
+  clampZoom,
+  fitMapWidth as computeFitMapWidth
+} from "@/lib/mapViewport";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { buildViewerDirectory, buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { buildInitials } from "@/lib/validators";
@@ -74,9 +80,8 @@ const KIND_LABELS: Record<ViewerSearchResult["kind"], string> = {
 
 // View-transform zoom (same rule as the admin map): scales the rendered frame
 // width only — never the stored coordinates or the calibration transform.
-const MAP_ZOOM_MIN = 0.6;
-const MAP_ZOOM_MAX = 2;
-const MAP_ZOOM_STEP = 0.2;
+// MAP_ZOOM_MIN/MAX/STEP are imported from lib/mapViewport, single-sourced
+// with the admin map's clamp bounds.
 
 function getSeatZone(seat: SeatWithEmployee) {
   return seat.zone ?? seat.department ?? "No zone";
@@ -540,8 +545,7 @@ export function ViewerSeatFinder({
   }, [centerSeatInMap, scrollMapToPoint, visualSeatById]);
 
   function applyMapZoom(nextZoom: number) {
-    const clamped = Math.min(MAP_ZOOM_MAX, Math.max(MAP_ZOOM_MIN, Math.round(nextZoom * 100) / 100));
-    setZoomFactor(clamped);
+    setZoomFactor(clampZoom(nextZoom));
   }
 
   function fitMapToView() {

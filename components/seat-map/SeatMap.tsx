@@ -38,6 +38,7 @@ import {
 import {
   MAP_ZOOM_MAX,
   MAP_ZOOM_MIN,
+  MAP_ZOOM_STEP,
   boundingBoxCenter,
   centerScrollTarget,
   clampZoom,
@@ -167,7 +168,8 @@ const INSPECTOR_FORM_ID = "seat-inspector-form";
 const EMPTY_SEAT_ID_SET: ReadonlySet<string> = new Set<string>();
 // Map zoom is a view transform on the scroll container only (spec §9): it
 // scales the rendered frame width and never touches stored seat coordinates.
-const MAP_ZOOM_STEP = 0.2;
+// MAP_ZOOM_STEP itself is imported from lib/mapViewport, single-sourced with
+// the admin/viewer clamp bounds.
 // Below this width the inspector overlays as a fixed bottom sheet (max-h 60vh,
 // SeatInspector.tsx) instead of docking as a width-reserving side panel — the
 // `panel` breakpoint referenced throughout the seat-centering logic below.
