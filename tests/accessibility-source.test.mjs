@@ -42,18 +42,16 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /aria-label="Undo last map change"/);
   assert.match(source, /aria-label="Redo last undone change"/);
   assert.match(source, /Planning canvas/);
-  // The legend's accessible name. Either spelling counts: the admin used to
-  // write the attribute inline on its own <ul>, and since v12 slice 3 it hands
-  // the same string to MapStatusLegend's `ariaLabel` prop, which renders it as
-  // the <ul>'s aria-label. What is pinned is the NAME, not where it is spelled
-  // — that the rendered element really is a labelled list is enforced at
-  // runtime by tests/map-status-legend.test.mjs.
-  assert.match(source, /aria-?[lL]abel="Seat status legend"/);
   // v12 slice 3: the docked status strip is gone and the legend floats as a
-  // layer-01 card, but it must still BE a legend — the shared MapStatusLegend
-  // owns the <ul aria-label={ariaLabel}> so the status counts stay a labelled
-  // list rather than decorative text painted over the map.
-  assert.match(source, /<MapStatusLegend/);
+  // layer-01 card, but it must still BE a legend AND still carry the same
+  // accessible name. One assertion binds the two halves: a lone
+  // /Seat status legend/ pin would keep passing if the string drifted onto a
+  // title tooltip, and a lone /<MapStatusLegend/ pin would keep passing if the
+  // name vanished. MapStatusLegend owns the <ul aria-label={ariaLabel}>, so
+  // the status counts stay a labelled list rather than decorative text
+  // painted over the map (the rendered semantics — that it really is a
+  // labelled list — are verified at runtime by tests/map-status-legend.test.mjs).
+  assert.match(source, /<MapStatusLegend[\s\S]{0,200}ariaLabel="Seat status legend"/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
   // Session layer, v12 (2026-07-31 rail shell): identity + Settings moved off
   // the header AccountMenu into AppRail (Task 1) — Settings is now a
@@ -559,9 +557,13 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /onShowOnMap=\{queueCenterSeatInMap\}/);
   // The map ⋯ overflow menu was retired in v12 slice 3 (its two items live on
   // the zoom stack's fit button and the chrome kebab's reset-zoom), so its
-  // APG menu pins moved out with it. The menu-pattern invariant is still
-  // enforced on the surviving menus: the chrome kebab below and the
-  // FloorSelector's menuitemradio list.
+  // APG menu pins moved out with it. What survives here is narrower than the
+  // retired block: the popover focus-restore test below still pins that the
+  // chrome ⋯ trigger gets focus back when its popover closes. Nothing in this
+  // file pins the chrome ⋯ as a role="menu" (it is a role="group"), and
+  // FloorSelector's menuitemradio roving is unpinned too — if either grows an
+  // APG contract worth keeping, add the assertion rather than assuming this
+  // comment covers it.
 });
 
 test("popovers restore trigger focus when a close unmounts the focused element", async () => {
@@ -931,6 +933,13 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   assert.doesNotMatch(viewerSource, /type="button"\s+role="listitem"/);
   assert.doesNotMatch(viewerSource, /role="listitem"[\s\S]{0,80}onClick/);
   assert.ok((viewerSource.match(/<div role="listitem"/g) ?? []).length >= 2, "viewer lists wrap buttons in listitem divs");
+
+  // Same list-semantics guarantee for the viewer's status counts. v12 slice 3
+  // floated them off the docked footer strip onto a layer-01 card over the
+  // full-bleed plan; the shared MapStatusLegend keeps them a labelled <ul>
+  // instead of decorative text painted on the map. Bound to its accessible
+  // name in one assertion for the same reason as the admin pin above.
+  assert.match(viewerSource, /<MapStatusLegend[\s\S]{0,200}ariaLabel="Seat status summary"/);
 
   // Brand and seat-code tokens are identifiers — never machine-translated.
   for (const [name, source] of [["SeatMap", seatMapSource], ["Viewer", viewerSource], ["ShellBar", shellBarSource]]) {
