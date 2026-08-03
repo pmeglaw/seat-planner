@@ -1427,14 +1427,11 @@ export function ViewerSeatFinder({
         departmentOptions={departmentOptions}
         canEdit={false}
         collapsed={inspectorCollapsed}
-        pillSuppressed={resultsPanelOpen}
-        swapMode={false}
         onClose={() => {
           focusViewerSeatMarker(selectedSeatId);
           setSelectedSeatId(null);
           setInspectorCollapsed(false);
         }}
-        onToggleCollapse={() => setInspectorCollapsed(current => !current)}
       />
     </div>
   );

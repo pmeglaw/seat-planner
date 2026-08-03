@@ -22,15 +22,16 @@ type SeatInspectorProps = {
   departmentOptions: DepartmentOption[];
   canEdit: boolean;
   collapsed: boolean;
-  // While the results panel occupies the slot it hosts the collapsed-seat row,
-  // so the standalone pill stays hidden instead of overlapping the panel.
-  pillSuppressed?: boolean;
-  swapMode: boolean;
   searchMismatchNotice?: string | null;
   searchMismatchClearLabel?: string;
   onClose: () => void;
   onClearSearchContext?: () => void;
-  onToggleCollapse: () => void;
+  // Icon action row verbs (v12 slice 4): hide-not-disable — the row and each
+  // button render only when canEdit AND the matching handler is supplied.
+  // SeatMap keeps owning move/swap modes and the always-confirm vacate dialog.
+  onMove?: () => void;
+  onSwap?: () => void;
+  onVacate?: () => void;
   // Edit callbacks are optional so the read-only viewer can render the same
   // inspector without wiring any draft machinery (canEdit=false never calls them).
   onDeleteSeat?: () => void;
@@ -123,14 +124,6 @@ function formsEqual(left: SeatInspectorForm, right: SeatInspectorForm) {
   });
 }
 
-function CollapseIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
-      <path d="M5 10h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function ChevronDownIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
@@ -147,9 +140,39 @@ function ChevronRightIcon() {
   );
 }
 
-// Shell inspector (redesign spec §6): dark #161616 panel, seamless with the
-// top bar. Sections are native collapsible <details> groups split by hairline
-// dividers, with key/value fact rows (mono values) inside.
+// Icon action row glyphs (v12 slice 4, prototype "Seat Planner v12
+// Prototype.dc.html" lines 218-220): ~15px, 1.5 stroke, aria-hidden.
+function MoveGlyph() {
+  return (
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M10 3v14M3 10h14" strokeLinecap="round" />
+      <path d="m7.5 5.5 2.5-2.5 2.5 2.5M7.5 14.5l2.5 2.5 2.5-2.5M5.5 7.5 3 10l2.5 2.5M14.5 7.5 17 10l-2.5 2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SwapGlyph() {
+  return (
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7h11l-3-3M16 13H5l3 3" />
+    </svg>
+  );
+}
+
+function VacateGlyph() {
+  return (
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <circle cx="8" cy="7" r="2.8" />
+      <path d="M3.5 16.5v-1a4 4 0 0 1 4-4h1.5" />
+      <path d="M12.5 13.5h5" />
+    </svg>
+  );
+}
+
+// Heading row used inside the progressive assignment editor. The <details>-
+// based section styling this used to share with is retired (v12 slice 4) —
+// see the Overview tabpanel below for the flat eyebrow-heading style that
+// replaced it.
 function SectionHeading({ id, title }: { id?: string; title: string }) {
   return (
     <div className="flex items-center gap-2">
@@ -190,33 +213,29 @@ function ContactFacts({ rows, canEdit }: { rows: ContactFactRow[]; canEdit: bool
   );
 }
 
-function InspectorSection({
-  title,
-  headingId,
-  defaultOpen = false,
-  children
-}: {
-  title: ReactNode;
-  headingId?: string;
-  defaultOpen?: boolean;
-  children: ReactNode;
-}) {
+// AI entry row (v12 slice 4, prototype "Seat Planner v12 Prototype.dc.html"
+// line 264-265): factored into its own component so the AI-blue chrome token
+// stays provably confined here — the accessibility-source guardrail counts
+// every occurrence of that token in this file and asserts they all fall
+// inside this function (the same technique AppRail's AiCell() uses for the
+// rail's AI nav item). The prop is named `seat` per that contract; it is
+// aliased to `selectedSeat` locally so the aria-label/title text stays
+// byte-identical to this row's pre-extraction form.
+function AskPlannerSeatRow({ seat: selectedSeat, onExplainSeat }: { seat: SeatWithEmployee; onExplainSeat: (seat: SeatWithEmployee) => void }) {
   return (
-    // Hover/active affordance (owner ask, 2026-07-16): hovering a section
-    // header steps the row surface up and brightens the label; the OPEN
-    // section carries a primary-orange left rail plus a warm title glow so
-    // "which section am I in" reads at a glance on the dark panel.
-    <details open={defaultOpen} className="group border-b border-l-2 border-white/10 border-l-transparent transition-colors open:border-l-[var(--admin-primary)]">
-      <summary
-        className="flex cursor-pointer select-none list-none items-center px-4 py-2.5 text-[12px] font-medium text-[#E7E1D8] transition-colors hover:bg-[var(--admin-chrome-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] [&::-webkit-details-marker]:hidden"
-      >
-        <span id={headingId} className="transition group-open:text-white group-open:[text-shadow:0_0_10px_rgba(255,87,21,0.45)]">{title}</span>
-        <svg aria-hidden="true" viewBox="0 0 20 20" className="ml-auto h-3.5 w-3.5 text-[var(--admin-chrome-muted)] transition-transform duration-150 group-hover:text-[var(--admin-chrome-text)] group-open:rotate-90 group-open:text-[var(--admin-primary)]">
-          <path d="m8 5.5 4.5 4.5L8 14.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </summary>
-      <div className="px-4 pb-3">{children}</div>
-    </details>
+    <button
+      type="button"
+      onClick={() => onExplainSeat(selectedSeat)}
+      aria-label={`Ask Planner about ${selectedSeat.label}`}
+      title={`Ask Planner about ${selectedSeat.label}`}
+      className="mx-4 mb-3 flex w-auto items-center justify-between gap-3 bg-[var(--admin-chrome-raised)] px-3 py-2.5 text-left text-[12px] font-semibold text-[#F4F4F4] transition hover:bg-white/[0.10] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+    >
+      <span className="flex items-center gap-2">
+        <span className="border border-[var(--admin-ai-chrome-border)] px-1 text-[9.5px] font-bold tracking-[0.04em] text-[var(--admin-ai-chrome-text)]">AI</span>
+        Ask Planner about this seat
+      </span>
+      <span aria-hidden="true" className="shrink-0 leading-none"><ChevronRightIcon /></span>
+    </button>
   );
 }
 
@@ -227,13 +246,13 @@ export function SeatInspector({
   departmentOptions,
   canEdit,
   collapsed,
-  pillSuppressed = false,
-  swapMode,
   searchMismatchNotice = null,
   searchMismatchClearLabel = "Clear search",
   onClose,
   onClearSearchContext,
-  onToggleCollapse,
+  onMove,
+  onSwap,
+  onVacate,
   onDeleteSeat = noopCallback,
   onExplainSeat,
   onBeforeSeatUpdate = emptyDraftSnapshot,
@@ -257,6 +276,11 @@ export function SeatInspector({
   const [editingAssignment, setEditingAssignment] = useState(false);
   const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
   const [activeEmployeeIndex, setActiveEmployeeIndex] = useState(0);
+  // v12 slice 4: Overview/Notes/Activity APG tabs. Resets to "overview"
+  // whenever the seat changes or the draft form resets — see
+  // resetInspectorDraftForm, which every reset path (seat change, resetSignal,
+  // Cancel-discard) funnels through.
+  const [activeTab, setActiveTab] = useState<"overview" | "notes" | "activity">("overview");
   const [moveConflict, setMoveConflict] = useState<{
     employeeName: string;
     currentSeatLabel: string;
@@ -269,12 +293,6 @@ export function SeatInspector({
   const startAssignmentSignalRef = useRef(startAssignmentSignal);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const primaryActionRef = useRef<HTMLButtonElement | null>(null);
-  const collapseRailRef = useRef<HTMLButtonElement | null>(null);
-  // Explicit collapse/expand toggles request a focus handoff; the search
-  // auto-collapse (INV-1) sets no flag, so typing never loses focus.
-  const focusRailAfterCollapseRef = useRef(false);
-  const focusPanelAfterExpandRef = useRef(false);
-  const prevCollapsedRef = useRef(collapsed);
   const assignmentSectionRef = useRef<HTMLElement | null>(null);
   const moveConflictDialogFocusRef = useDialogFocus<HTMLElement>();
   const employeeInputRef = useRef<HTMLInputElement | null>(null);
@@ -349,6 +367,7 @@ export function SeatInspector({
     setEditingAssignment(false);
     setEmployeeComboboxOpen(false);
     setActiveEmployeeIndex(0);
+    setActiveTab("overview");
     setMoveConflict(null);
     onError(null);
     onDirtyChange(false);
@@ -402,20 +421,6 @@ export function SeatInspector({
     // no-op runs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startAssignmentSignal, seat]);
-
-  // Hand focus across explicit collapse/expand transitions — the clicked
-  // toggle unmounts with its panel (2026-07-16 critique, action 5).
-  useEffect(() => {
-    if (prevCollapsedRef.current === collapsed) return;
-    prevCollapsedRef.current = collapsed;
-    if (collapsed && focusRailAfterCollapseRef.current) {
-      focusRailAfterCollapseRef.current = false;
-      window.requestAnimationFrame(() => collapseRailRef.current?.focus());
-    } else if (!collapsed && focusPanelAfterExpandRef.current) {
-      focusPanelAfterExpandRef.current = false;
-      window.requestAnimationFrame(() => document.getElementById("seat-inspector-panel")?.focus());
-    }
-  }, [collapsed]);
 
   if (!seat) return null;
 
@@ -533,12 +538,12 @@ export function SeatInspector({
       status: statusRef,
       notes: notesRef
     }[field];
-    const element = target.current;
-    if (!element) return;
-    // Fields may sit inside a collapsed <details> section — reveal before focusing.
-    const parentDetails = element.closest("details");
-    if (parentDetails && !parentDetails.open) parentDetails.open = true;
-    element.focus();
+    // The notes field lives in the Notes tabpanel, which is only mounted
+    // while that tab is active — switch first, then focus on the next frame
+    // so the target has mounted. rAF is harmless for the always-mounted
+    // editor fields too (no <details> reveal remains to replace).
+    if (field === "notes") setActiveTab("notes");
+    window.requestAnimationFrame(() => target.current?.focus());
   }
 
   function focusErrorSummary() {
@@ -836,6 +841,23 @@ export function SeatInspector({
     onDeleteSeat();
   }
 
+  // APG tabs pattern roving tabindex: Left/Right cycle (wrap), Home/End jump
+  // to the ends. Activation moves focus with the selection (single-select tabs).
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    const order = ["overview", "notes", "activity"] as const;
+    const currentIndex = order.indexOf(activeTab);
+    let nextIndex = currentIndex;
+    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % order.length;
+    else if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + order.length) % order.length;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = order.length - 1;
+    else return;
+    event.preventDefault();
+    const next = order[nextIndex];
+    setActiveTab(next);
+    document.getElementById(`seat-inspector-tab-${next}`)?.focus();
+  }
+
   // [&>option] colors: native select popups ignore the control's own classes,
   // so without these Windows dark mode paints OS-colored options against the
   // dark panel (#200) — same pattern as FilterPanel's selectClassName.
@@ -852,30 +874,7 @@ export function SeatInspector({
   // confirmation lives in the parent's toast; the sr-only region announces it.
   const showCommitBar = canEdit && (editingAssignment || isDirty || pending || Boolean(localError));
 
-  if (collapsed && (swapMode || pillSuppressed)) return null;
-
-  if (collapsed) {
-    // Collapsed = the thin 44px dark rail on the right edge (spec §6); below
-    // the panel tier it stays a bottom pill so it never covers the map.
-    return (
-      <aside className="fixed inset-x-3 bottom-3 z-[80] panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-[var(--admin-chrome-h)] panel:z-40">
-        <button
-          ref={collapseRailRef}
-          type="button"
-          onClick={() => {
-            focusPanelAfterExpandRef.current = true;
-            onToggleCollapse();
-          }}
-          aria-label={`View details for ${selectedSeat.label}`}
-          title={`View details for ${selectedSeat.label}`}
-          className="flex min-h-12 w-full items-center justify-center gap-2 border border-white/10 bg-[var(--admin-chrome-bg)] px-4 py-2 text-[var(--admin-chrome-text-soft)] shadow-elevation-3 transition hover:bg-[var(--admin-chrome-elevated)] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] panel:h-full panel:min-h-full panel:w-11 panel:flex-col panel:border-0 panel:border-l panel:border-white/10 panel:px-2 panel:py-4 panel:shadow-none"
-        >
-          <span className="text-[10px] font-medium tracking-[0.14em] panel:rotate-180 panel:[writing-mode:vertical-rl]">VIEW DETAILS</span>
-          <span className="rounded-full bg-[var(--admin-primary-soft)] px-2 py-1 text-[10px] font-bold text-[var(--admin-primary)] ring-1 ring-[var(--admin-primary-border)] panel:mt-2 panel:rotate-180 panel:bg-transparent panel:px-0 panel:py-0 panel:font-mono panel:text-white/60 panel:ring-0 panel:[writing-mode:vertical-rl]">{selectedSeat.label}</span>
-        </button>
-      </aside>
-    );
-  }
+  if (collapsed) return null;
 
   return (
     <>
@@ -884,7 +883,7 @@ export function SeatInspector({
       tabIndex={-1}
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/10 bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-elevation-4 panel:inset-x-auto panel:bottom-0 panel:right-0 panel:top-[var(--admin-chrome-h)] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)] panel:border-0 panel:border-l panel:border-white/10 panel:shadow-none"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/[0.14] bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-elevation-4 panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[calc(var(--admin-chrome-h)+0.75rem)] panel:z-40 panel:max-h-none panel:w-[332px] panel:max-w-[calc(100vw-1.5rem)]"
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-white/10 bg-[var(--admin-chrome-bg)] px-4 pb-3 pt-3.5">
         <div className="flex items-start gap-2.5">
@@ -898,19 +897,6 @@ export function SeatInspector({
             <div className="truncate text-[12px] leading-4 text-[var(--admin-chrome-muted)]">{occupantRoleLabel}</div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <button
-              type="button"
-              onClick={() => {
-                focusRailAfterCollapseRef.current = true;
-                onToggleCollapse();
-              }}
-              aria-label={`Back to map from ${selectedSeat.label} details`}
-              title="Back to map"
-              className="inline-flex h-7 items-center justify-center border border-white/15 px-2.5 text-[11px] font-medium text-[var(--admin-chrome-text-soft)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] panel:hidden"
-            >
-              Back to map
-            </button>
-            <button type="button" onClick={() => { focusRailAfterCollapseRef.current = true; onToggleCollapse(); }} aria-label="Collapse inspector" title="Collapse inspector" className="hidden h-7 w-7 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] panel:inline-flex"><CollapseIcon /></button>
             <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"><CloseIcon /></button>
           </div>
         </div>
@@ -920,6 +906,7 @@ export function SeatInspector({
             {currentStatusLabel}
           </span>
           <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[11px] font-medium text-[#E7E1D8] ring-1 ring-white/15">{selectedSeat.label}</span>
+          <span className="min-w-0 truncate rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[#E7E1D8] ring-1 ring-white/15">{currentZone}</span>
           {!canEdit && (
             <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] ring-1 ring-white/15">Published seat</span>
           )}
@@ -928,9 +915,49 @@ export function SeatInspector({
 
       {canEdit ? (
         <form id="seat-inspector-form" onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
+          {canEdit && !editingAssignment && (onMove || onSwap || onVacate) && (
+            <div role="group" aria-label={`Actions for seat ${selectedSeat.label}`} className="flex gap-px px-4 pb-3.5">
+              {hasCurrentAssignment && onMove && (
+                <button type="button" onClick={onMove} disabled={pending}
+                  aria-label={selectedSeat.employee?.full_name ? `Move ${selectedSeat.employee.full_name} to another seat` : `Move ${selectedSeat.label}`}
+                  className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[#F4F4F4] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                  <MoveGlyph />Move
+                </button>
+              )}
+              {onSwap && (
+                <button type="button" onClick={onSwap} disabled={pending} aria-label={`Swap ${selectedSeat.label}`} className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[#F4F4F4] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                  <SwapGlyph />Swap
+                </button>
+              )}
+              {hasCurrentAssignment && onVacate && (
+                <button type="button" onClick={onVacate} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`}
+                  className="flex flex-1 flex-col items-center gap-1 bg-[#2b1a1b] py-2 text-[11px] font-semibold text-[var(--admin-chrome-danger-text)] transition hover:bg-[rgb(var(--admin-status-bad-rgb)/0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                  <VacateGlyph />Vacate
+                </button>
+              )}
+            </div>
+          )}
+
+          {!editingAssignment && (
+            <div role="tablist" aria-label="Seat details sections" className="mx-4 flex bg-[var(--admin-chrome-raised)]">
+              {(["overview", "notes", "activity"] as const).map(tab => (
+                <button key={tab} id={`seat-inspector-tab-${tab}`} type="button" role="tab"
+                  aria-selected={activeTab === tab} aria-controls={`seat-inspector-tabpanel-${tab}`}
+                  tabIndex={activeTab === tab ? 0 : -1}
+                  onClick={() => setActiveTab(tab)}
+                  onKeyDown={handleTabKeyDown}
+                  className={["flex-1 border-t-2 py-2 text-center text-[12px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+                    activeTab === tab ? "border-t-[var(--admin-primary)] bg-[var(--admin-chrome-bg)] text-white" : "border-t-transparent text-[var(--admin-chrome-muted)] hover:text-white"].join(" ")}>
+                  {tab === "overview" ? "Overview" : tab === "notes" ? "Notes" : "Activity"}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            {/* Save-state announcements sit outside the collapsible sections:
-                content inside a closed <details> is display:none and never read. */}
+            {/* Save-state announcements sit outside the tabpanels: content
+                inside an inactive (unmounted) tab is never read by assistive
+                tech. */}
             <div role="status" aria-live="polite" className="sr-only">
               {inspectorStateLabel}
             </div>
@@ -986,325 +1013,307 @@ export function SeatInspector({
               </section>
             )}
 
-            {/* Primary assignment action — pinned above the fact sections so
-                the most likely task for THIS seat can never be scrolled away
-                or collapsed (2026-07-16 reorg). The editor opens here, directly
-                under the identity it edits; Save/Cancel live in the commit bar. */}
-            <div className="border-b border-white/10 px-4 pb-3 pt-3">
-              {!editingAssignment && !hasCurrentAssignment && (
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={startAssignmentEditing}
-                  disabled={pending}
-                  aria-expanded={editingAssignment}
-                  aria-controls="seat-inspector-form"
-                  ref={primaryActionRef}
-                  aria-label={`Assign an employee to ${selectedSeat.label}`}
-                  className="min-w-0 w-full rounded-[10px] !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)]"
-                >
-                  Assign employee
-                </Button>
-              )}
-              {!editingAssignment && hasCurrentAssignment && (
-                <Button
-                  type="button"
-                  onClick={startAssignmentEditing}
-                  disabled={pending}
-                  aria-expanded={editingAssignment}
-                  aria-controls="seat-inspector-form"
-                  ref={primaryActionRef}
-                  aria-label={`Edit assignment for ${selectedSeat.label}`}
-                  className={`min-w-0 w-full rounded-[10px] ${footerNeutralButtonClass}`}
-                >
-                  Edit assignment
-                </Button>
-              )}
-              {editingAssignment && (
-              <section ref={assignmentSectionRef} aria-labelledby="seat-assignment-heading">
-              <SectionHeading id="seat-assignment-heading" title={hasCurrentAssignment ? "Assignment" : "Assign this seat"} />
-              <p id={employeeHelpId} className="mt-1.5 text-xs leading-5 text-[var(--admin-chrome-muted)]">{hasCurrentAssignment ? "Change or clear the draft assignment below." : "Search an existing employee or type a new name."}</p>
+            {/* Editor for the progressive assignment flow (v12 slice 4): the
+                footer CTA below (Assign employee / Edit assignment) opens
+                this; Save/Cancel live in the commit bar. The icon action row
+                and tabs above hide while this is open. */}
+            {editingAssignment ? (
+              <div className="border-b border-white/10 px-4 pb-3 pt-3">
+                <section ref={assignmentSectionRef} aria-labelledby="seat-assignment-heading">
+                <SectionHeading id="seat-assignment-heading" title={hasCurrentAssignment ? "Assignment" : "Assign this seat"} />
+                <p id={employeeHelpId} className="mt-1.5 text-xs leading-5 text-[var(--admin-chrome-muted)]">{hasCurrentAssignment ? "Change or clear the draft assignment below." : "Search an existing employee or type a new name."}</p>
 
-              <label className="mt-3 block">
-                <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Employee name</span>
-                <div className="relative">
-                  <input
-                    ref={employeeInputRef}
-                    name="employeeName"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={form.employeeName}
-                    onChange={handleEmployeeNameChange}
-                    onFocus={() => setEmployeeComboboxOpen(true)}
-                    onBlur={() => window.setTimeout(() => setEmployeeComboboxOpen(false), 120)}
-                    onKeyDown={handleEmployeeNameKeyDown}
-                    placeholder="Search or enter employee name…"
-                    role="combobox"
-                    aria-expanded={employeeComboboxOpen}
-                    aria-controls="seat-inspector-employee-listbox"
-                    aria-autocomplete="list"
-                    aria-activedescendant={employeeComboboxOpen && filteredEmployeeOptions[activeEmployeeIndex] ? `seat-inspector-employee-option-${filteredEmployeeOptions[activeEmployeeIndex].employee.id}` : undefined}
-                    aria-invalid={Boolean(fieldErrorMap.employeeName)}
-                    aria-describedby={employeeNameDescribedBy}
-                    className={`${fieldClassName} pr-10 ${fieldErrorMap.employeeName ? fieldErrorClassName : ""}`}
-                  />
-                  <button
-                    type="button"
-                    aria-label="Show employee options"
-                    title="Show employee options"
-                    onMouseDown={event => event.preventDefault()}
-                    onClick={() => {
-                      setEmployeeComboboxOpen(current => !current);
-                      employeeInputRef.current?.focus();
-                    }}
-                    className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-xs text-[var(--admin-chrome-muted)] transition hover:bg-white/10 hover:text-white active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
-                  >
-                    <ChevronDownIcon />
-                  </button>
-                  {employeeComboboxOpen && (
-                    <div
-                      id="seat-inspector-employee-listbox"
-                      role="listbox"
-                      className="absolute z-50 mt-1 max-h-[min(16rem,40vh)] w-full overflow-auto border border-white/15 bg-[var(--admin-chrome-raised)] p-1 shadow-elevation-3"
+                <label className="mt-3 block">
+                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Employee name</span>
+                  <div className="relative">
+                    <input
+                      ref={employeeInputRef}
+                      name="employeeName"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={form.employeeName}
+                      onChange={handleEmployeeNameChange}
+                      onFocus={() => setEmployeeComboboxOpen(true)}
+                      onBlur={() => window.setTimeout(() => setEmployeeComboboxOpen(false), 120)}
+                      onKeyDown={handleEmployeeNameKeyDown}
+                      placeholder="Search or enter employee name…"
+                      role="combobox"
+                      aria-expanded={employeeComboboxOpen}
+                      aria-controls="seat-inspector-employee-listbox"
+                      aria-autocomplete="list"
+                      aria-activedescendant={employeeComboboxOpen && filteredEmployeeOptions[activeEmployeeIndex] ? `seat-inspector-employee-option-${filteredEmployeeOptions[activeEmployeeIndex].employee.id}` : undefined}
+                      aria-invalid={Boolean(fieldErrorMap.employeeName)}
+                      aria-describedby={employeeNameDescribedBy}
+                      className={`${fieldClassName} pr-10 ${fieldErrorMap.employeeName ? fieldErrorClassName : ""}`}
+                    />
+                    <button
+                      type="button"
+                      aria-label="Show employee options"
+                      title="Show employee options"
+                      onMouseDown={event => event.preventDefault()}
+                      onClick={() => {
+                        setEmployeeComboboxOpen(current => !current);
+                        employeeInputRef.current?.focus();
+                      }}
+                      className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-xs text-[var(--admin-chrome-muted)] transition hover:bg-white/10 hover:text-white active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
                     >
-                      {filteredEmployeeOptions.length > 0 ? filteredEmployeeOptions.map((option, index) => (
-                        <button
-                          key={option.employee.id}
-                          id={`seat-inspector-employee-option-${option.employee.id}`}
-                          type="button"
-                          role="option"
-                          aria-selected={form.employeeId === option.employee.id}
-                          onMouseDown={event => event.preventDefault()}
-                          onMouseEnter={() => setActiveEmployeeIndex(index)}
-                          onClick={() => selectEmployee(option.employee)}
-                          className={[
-                            "flex w-full items-start gap-3 px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
-                            index === activeEmployeeIndex ? "bg-white/10 text-white" : "text-[#D8D0C5] hover:bg-white/5"
-                          ].join(" ")}
-                        >
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[var(--admin-primary-cta)]">
-                            {buildInitials(option.employee.full_name) || "?"}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-semibold">{formatDisplayName(option.employee.full_name)}</span>
-                            <span className="block truncate text-xs text-[var(--admin-chrome-muted)]">{option.meta}</span>
-                          </span>
-                          <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 font-mono text-[10px] font-semibold tracking-normal text-[var(--admin-chrome-text-soft)] ring-1 ring-white/15">
-                            {option.assignedSeatLabel}
-                          </span>
-                        </button>
-                      )) : (
-                        <div className={["border border-dashed p-3 text-xs leading-5", warningSurfaceClassName].join(" ")}>
-                          <div className="font-bold">No existing employee match</div>
-                          <div>Saving will create a new employee record if you keep this name.</div>
-                        </div>
+                      <ChevronDownIcon />
+                    </button>
+                    {employeeComboboxOpen && (
+                      <div
+                        id="seat-inspector-employee-listbox"
+                        role="listbox"
+                        className="absolute z-50 mt-1 max-h-[min(16rem,40vh)] w-full overflow-auto border border-white/15 bg-[var(--admin-chrome-raised)] p-1 shadow-elevation-3"
+                      >
+                        {filteredEmployeeOptions.length > 0 ? filteredEmployeeOptions.map((option, index) => (
+                          <button
+                            key={option.employee.id}
+                            id={`seat-inspector-employee-option-${option.employee.id}`}
+                            type="button"
+                            role="option"
+                            aria-selected={form.employeeId === option.employee.id}
+                            onMouseDown={event => event.preventDefault()}
+                            onMouseEnter={() => setActiveEmployeeIndex(index)}
+                            onClick={() => selectEmployee(option.employee)}
+                            className={[
+                              "flex w-full items-start gap-3 px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+                              index === activeEmployeeIndex ? "bg-white/10 text-white" : "text-[#D8D0C5] hover:bg-white/5"
+                            ].join(" ")}
+                          >
+                            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[var(--admin-primary-cta)]">
+                              {buildInitials(option.employee.full_name) || "?"}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-semibold">{formatDisplayName(option.employee.full_name)}</span>
+                              <span className="block truncate text-xs text-[var(--admin-chrome-muted)]">{option.meta}</span>
+                            </span>
+                            <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 font-mono text-[10px] font-semibold tracking-normal text-[var(--admin-chrome-text-soft)] ring-1 ring-white/15">
+                              {option.assignedSeatLabel}
+                            </span>
+                          </button>
+                        )) : (
+                          <div className={["border border-dashed p-3 text-xs leading-5", warningSurfaceClassName].join(" ")}>
+                            <div className="font-bold">No existing employee match</div>
+                            <div>Saving will create a new employee record if you keep this name.</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {fieldErrorMap.employeeName && (
+                    <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.employeeName}</p>
+                  )}
+                  <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold tracking-normal ring-1", employeeNameValue ? matchedEmployee ? successPillClassName : "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]" : neutralPillClassName].join(" ")}>
+                    {assignmentStateText}
+                  </span>
+                </label>
+
+                {showNewEmployeeNotice && (
+                  <div id="seat-inspector-new-employee-notice" role="note" className={["mt-2 border p-3 text-xs leading-5", warningSurfaceClassName].join(" ")}>
+                    <div className="font-bold">No existing employee match</div>
+                    <p className="mt-1 font-medium">
+                      Saving will create a new employee record named <span className="font-bold">{employeeNameValue}</span> and assign this draft seat. Viewers see it only after publish.
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Job title</span>
+                    <input
+                      ref={employeePositionRef}
+                      name="employeePosition"
+                      autoComplete="off"
+                      value={form.employeePosition}
+                      onChange={event => handleTextChange("employeePosition", event)}
+                      placeholder="e.g. Case Manager…"
+                      aria-invalid={Boolean(fieldErrorMap.employeePosition)}
+                      aria-describedby={fieldDescribedBy("employeePosition")}
+                      className={fieldClassName}
+                    />
+                    {fieldErrorMap.employeePosition && <p id={fieldErrorId("employeePosition")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.employeePosition}</p>}
+                  </label>
+
+                  <label className="block">
+                    <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Phone extension</span>
+                    <input
+                      ref={phoneExtensionRef}
+                      name="phoneExtension"
+                      type="tel"
+                      autoComplete="off"
+                      value={form.phoneExtension}
+                      onChange={event => handleTextChange("phoneExtension", event)}
+                      placeholder="e.g. 202…"
+                      className={fieldClassName}
+                      inputMode="numeric"
+                      aria-invalid={Boolean(fieldErrorMap.phoneExtension)}
+                      aria-describedby={fieldDescribedBy("phoneExtension")}
+                    />
+                    {fieldErrorMap.phoneExtension && <p id={fieldErrorId("phoneExtension")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.phoneExtension}</p>}
+                  </label>
+                </div>
+
+                <label className="mt-3 block">
+                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Department</span>
+                  <select
+                    ref={departmentRef}
+                    value={form.department}
+                    onChange={handleDepartmentChange}
+                    aria-invalid={Boolean(fieldErrorMap.department)}
+                    aria-describedby={fieldDescribedBy("department")}
+                    className={fieldClassName}
+                  >
+                    <option value="">No department</option>
+                    {departments.map(department => (
+                      <option key={department} value={department}>{department}</option>
+                    ))}
+                  </select>
+                  {fieldErrorMap.department && <p id={fieldErrorId("department")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.department}</p>}
+                </label>
+                </section>
+              </div>
+            ) : (
+              <div key={`seat-inspector-sections-${selectedSeat.id}`}>
+                {activeTab === "overview" && (
+                  <div id="seat-inspector-tabpanel-overview" role="tabpanel" aria-labelledby="seat-inspector-tab-overview" className="px-4 pb-4 pt-3.5">
+                    {/* Contact, not "Occupant": the sticky header already carries
+                        the identity (name, position · department) — this section
+                        holds only the reach-them facts, so Department never
+                        renders twice. */}
+                    {hasCurrentAssignment && (
+                      <section aria-labelledby="seat-contact-heading">
+                        <h3 id="seat-contact-heading" className="text-[10px] font-bold tracking-[0.12em] text-[#8E8276]">CONTACT</h3>
+                        <ContactFacts
+                          canEdit
+                          rows={buildContactRows({
+                            email: (matchedEmployee ?? selectedSeat.employee)?.email,
+                            extension: form.phoneExtension
+                          })}
+                        />
+                      </section>
+                    )}
+
+                    {/* Code and Status rows retired 2026-07-23: the header chips
+                        carry both at a glance, and the Status CONTROL for open
+                        seats lives in the Seat-actions zone below (it is an
+                        action, not a fact). */}
+                    <section aria-labelledby="seat-details-heading" className={hasCurrentAssignment ? "mt-3" : ""}>
+                      <h3 id="seat-details-heading" className="text-[10px] font-bold tracking-[0.12em] text-[#8E8276]">SEAT</h3>
+                      <dl>
+                        <FactRow label="Zone" value={currentZone} mono={false} />
+                        <FactRow label="Seat type" value={seatTypeLabel} mono={false} />
+                      </dl>
+                    </section>
+
+                    {/* Seat actions — Status for OPEN seats (it is an action,
+                        not a fact: occupied seats derive "assigned" from the
+                        occupant and show no control, the chip carries the
+                        tag), and Delete live here. The reseat verbs — Move
+                        (person-centric), Swap, Vacate — live in the icon
+                        action row above (v12 slice 4); the canvas
+                        SeatActionBar they used to live on retires in the next
+                        task. Still never collapsible. */}
+                    <div role="group" aria-labelledby="seat-actions-heading" className="mt-4">
+                      <div className="flex items-center gap-2">
+                        <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[#E7E1D8]">Seat actions</h3>
+                        <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-white/10" />
+                      </div>
+                      {!hasAssignedPerson && (
+                        <label className="mt-2 block">
+                          <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Status</span>
+                          <select
+                            ref={statusRef}
+                            value={effectiveStatus}
+                            onChange={handleStatusChange}
+                            aria-invalid={Boolean(fieldErrorMap.status)}
+                            aria-describedby={fieldDescribedBy("status")}
+                            className={fieldClassName}
+                          >
+                            <option value="available">{STATUS_LABELS.available}</option>
+                            <option value="reserved">{STATUS_LABELS.reserved}</option>
+                            <option value="unavailable">{STATUS_LABELS.unavailable}</option>
+                          </select>
+                          {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.status}</p>}
+                        </label>
+                      )}
+                      {/* Figma delete treatment: full-width low-emphasis button +
+                          visible helper line. Rendered only for deletable-class
+                          seats: custom AND not a protected-original label — the
+                          label guard makes the gate immune to is_custom data
+                          drift on original seats. */}
+                      {selectedSeat.is_custom && !isProtectedOriginalSeatLabel(selectedSeat.label) && (
+                        <>
+                          <Button
+                            type="button"
+                            onClick={handleDeleteSeat}
+                            disabled={pending || !selectedSeatCanDelete}
+                            aria-label={`Delete custom seat ${selectedSeat.label}`}
+                            aria-describedby="seat-inspector-delete-help"
+                            title={deleteHelpText}
+                            className="mt-2 min-w-0 w-full whitespace-normal leading-tight !border-transparent !bg-[var(--admin-chrome-raised)] !text-[var(--admin-chrome-danger-text)] !shadow-none hover:!border-transparent hover:!bg-[rgb(var(--admin-status-bad-rgb)/0.20)] disabled:!border-transparent disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)] disabled:hover:!bg-[var(--admin-chrome-elevated)]"
+                          >
+                            Delete seat
+                          </Button>
+                          <p id="seat-inspector-delete-help" className="mt-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)]">{deleteHelpText}</p>
+                        </>
                       )}
                     </div>
-                  )}
-                </div>
-                {fieldErrorMap.employeeName && (
-                  <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.employeeName}</p>
+                  </div>
                 )}
-                <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold tracking-normal ring-1", employeeNameValue ? matchedEmployee ? successPillClassName : "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]" : neutralPillClassName].join(" ")}>
-                  {assignmentStateText}
-                </span>
-              </label>
 
-              {showNewEmployeeNotice && (
-                <div id="seat-inspector-new-employee-notice" role="note" className={["mt-2 border p-3 text-xs leading-5", warningSurfaceClassName].join(" ")}>
-                  <div className="font-bold">No existing employee match</div>
-                  <p className="mt-1 font-medium">
-                    Saving will create a new employee record named <span className="font-bold">{employeeNameValue}</span> and assign this draft seat. Viewers see it only after publish.
-                  </p>
-                </div>
-              )}
+                {activeTab === "notes" && (
+                  <div id="seat-inspector-tabpanel-notes" role="tabpanel" aria-labelledby="seat-inspector-tab-notes" className="px-4 pb-4 pt-3.5">
+                    <label className="block">
+                      <span className="sr-only">Seat note</span>
+                      <textarea
+                        ref={notesRef}
+                        name="seatNote"
+                        value={form.notes}
+                        onChange={event => handleTextChange("notes", event)}
+                        placeholder="Add a seat note…"
+                        aria-invalid={Boolean(fieldErrorMap.notes)}
+                        aria-describedby={fieldDescribedBy("notes")}
+                        className={`${fieldClassName} min-h-20`}
+                      />
+                      {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.notes}</p>}
+                    </label>
+                  </div>
+                )}
 
-              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label className="block">
-                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Job title</span>
-                  <input
-                    ref={employeePositionRef}
-                    name="employeePosition"
-                    autoComplete="off"
-                    value={form.employeePosition}
-                    onChange={event => handleTextChange("employeePosition", event)}
-                    placeholder="e.g. Case Manager…"
-                    aria-invalid={Boolean(fieldErrorMap.employeePosition)}
-                    aria-describedby={fieldDescribedBy("employeePosition")}
-                    className={fieldClassName}
-                  />
-                  {fieldErrorMap.employeePosition && <p id={fieldErrorId("employeePosition")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.employeePosition}</p>}
-                </label>
-
-                <label className="block">
-                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Phone extension</span>
-                  <input
-                    ref={phoneExtensionRef}
-                    name="phoneExtension"
-                    type="tel"
-                    autoComplete="off"
-                    value={form.phoneExtension}
-                    onChange={event => handleTextChange("phoneExtension", event)}
-                    placeholder="e.g. 202…"
-                    className={fieldClassName}
-                    inputMode="numeric"
-                    aria-invalid={Boolean(fieldErrorMap.phoneExtension)}
-                    aria-describedby={fieldDescribedBy("phoneExtension")}
-                  />
-                  {fieldErrorMap.phoneExtension && <p id={fieldErrorId("phoneExtension")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.phoneExtension}</p>}
-                </label>
+                {activeTab === "activity" && (
+                  <div id="seat-inspector-tabpanel-activity" role="tabpanel" aria-labelledby="seat-inspector-tab-activity" className="px-4 pb-4 pt-3.5">
+                    {activityEntries.length > 0 ? (
+                      <ul>
+                        {activityEntries.map((entry, index) => (
+                          <li key={`${entry}-${index}`} className="border-b border-white/5 py-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)] last:border-b-0">
+                            <span className="font-medium text-[#D8D0C5]">{entry}</span>
+                            <span className="ml-1.5">· this session</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-[12px] leading-4 text-[var(--admin-chrome-muted)]">No draft edits to this seat in this session. Saved changes appear here until publish.</p>
+                    )}
+                  </div>
+                )}
               </div>
-
-              <label className="mt-3 block">
-                <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Department</span>
-                <select
-                  ref={departmentRef}
-                  value={form.department}
-                  onChange={handleDepartmentChange}
-                  aria-invalid={Boolean(fieldErrorMap.department)}
-                  aria-describedby={fieldDescribedBy("department")}
-                  className={fieldClassName}
-                >
-                  <option value="">No department</option>
-                  {departments.map(department => (
-                    <option key={department} value={department}>{department}</option>
-                  ))}
-                </select>
-                {fieldErrorMap.department && <p id={fieldErrorId("department")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.department}</p>}
-              </label>
-              </section>
-              )}
-            </div>
-
-            {/* Seat actions — the assignment CTA, Status for OPEN seats (it is
-                an action, not a fact: occupied seats derive "assigned" from
-                the occupant and show no control, the chip carries the tag),
-                and Delete live here. The reseat verbs — Move (person-centric),
-                Swap, Vacate — live on the canvas SeatActionBar instead, so
-                they survive the panel being collapsed, which is the state the
-                map is widest in and reseating actually happens. Still never
-                collapsible. */}
-            <div role="group" aria-labelledby="seat-actions-heading" className="px-4 pb-1 pt-3">
-              <div className="flex items-center gap-2">
-                <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[#E7E1D8]">Seat actions</h3>
-                <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-white/10" />
-              </div>
-              {!hasAssignedPerson && (
-                <label className="mt-2 block">
-                  <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Status</span>
-                  <select
-                    ref={statusRef}
-                    value={effectiveStatus}
-                    onChange={handleStatusChange}
-                    aria-invalid={Boolean(fieldErrorMap.status)}
-                    aria-describedby={fieldDescribedBy("status")}
-                    className={fieldClassName}
-                  >
-                    <option value="available">{STATUS_LABELS.available}</option>
-                    <option value="reserved">{STATUS_LABELS.reserved}</option>
-                    <option value="unavailable">{STATUS_LABELS.unavailable}</option>
-                  </select>
-                  {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.status}</p>}
-                </label>
-              )}
-              {/* Figma delete treatment: full-width low-emphasis button + visible
-                  helper line. Rendered only for deletable-class seats: custom
-                  AND not a protected-original label — the label guard makes the
-                  gate immune to is_custom data drift on original seats. */}
-              {selectedSeat.is_custom && !isProtectedOriginalSeatLabel(selectedSeat.label) && (
-                <>
-                  <Button
-                    type="button"
-                    onClick={handleDeleteSeat}
-                    disabled={pending || !selectedSeatCanDelete}
-                    aria-label={`Delete custom seat ${selectedSeat.label}`}
-                    aria-describedby="seat-inspector-delete-help"
-                    title={deleteHelpText}
-                    className="mt-2 min-w-0 w-full whitespace-normal rounded-[10px] leading-tight !border-transparent !bg-[var(--admin-chrome-raised)] !text-[var(--admin-chrome-danger-text)] !shadow-none hover:!border-transparent hover:!bg-[rgb(var(--admin-status-bad-rgb)/0.20)] disabled:!border-transparent disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)] disabled:hover:!bg-[var(--admin-chrome-elevated)]"
-                  >
-                    Delete seat
-                  </Button>
-                  <p id="seat-inspector-delete-help" className="mt-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)]">{deleteHelpText}</p>
-                </>
-              )}
-            </div>
-
-            <div key={`seat-inspector-sections-${selectedSeat.id}`}>
-              {/* Contact, not "Occupant": the sticky header already carries the
-                  identity (name, position · department) — this section holds only
-                  the reach-them facts, so Department never renders twice. */}
-              {hasCurrentAssignment && (
-              <InspectorSection title="Contact" headingId="seat-contact-heading" defaultOpen>
-                <ContactFacts
-                  canEdit
-                  rows={buildContactRows({
-                    email: (matchedEmployee ?? selectedSeat.employee)?.email,
-                    extension: form.phoneExtension
-                  })}
-                />
-              </InspectorSection>
-              )}
-
-            {/* Code and Status rows retired 2026-07-23: the header chips carry
-                both at a glance, and the Status CONTROL for open seats moved
-                into the Seat-actions zone above (it is an action, not a fact). */}
-            <InspectorSection title="Seat" headingId="seat-details-heading" defaultOpen>
-              <dl>
-                <FactRow label="Zone" value={currentZone} mono={false} />
-                <FactRow label="Seat type" value={seatTypeLabel} mono={false} />
-              </dl>
-            </InspectorSection>
-
-            <InspectorSection title="Notes" headingId="seat-notes-heading">
-              <label className="block">
-                <span className="sr-only">Seat note</span>
-                <textarea
-                  ref={notesRef}
-                  name="seatNote"
-                  value={form.notes}
-                  onChange={event => handleTextChange("notes", event)}
-                  placeholder="Add a seat note…"
-                  aria-invalid={Boolean(fieldErrorMap.notes)}
-                  aria-describedby={fieldDescribedBy("notes")}
-                  className={`${fieldClassName} min-h-20`}
-                />
-                {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.notes}</p>}
-              </label>
-            </InspectorSection>
-
-            <InspectorSection title="Activity" headingId="seat-activity-heading">
-              {activityEntries.length > 0 ? (
-                <ul>
-                  {activityEntries.map((entry, index) => (
-                    <li key={`${entry}-${index}`} className="border-b border-white/5 py-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)] last:border-b-0">
-                      <span className="font-medium text-[#D8D0C5]">{entry}</span>
-                      <span className="ml-1.5">· this session</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-[12px] leading-4 text-[var(--admin-chrome-muted)]">No draft edits to this seat in this session. Saved changes appear here until publish.</p>
-              )}
-            </InspectorSection>
-            </div>
-
-            {/* Ask Planner stays the panel's last word — tertiary, after the
-                reference sections; the verbs live in the action zone above. */}
-            <div className="px-4 pb-4 pt-1">
-              {onExplainSeat && (
-                <button
-                  type="button"
-                  onClick={() => onExplainSeat(selectedSeat)}
-                  aria-label={`Ask Planner about ${selectedSeat.label}`}
-                  title={`Ask Planner about ${selectedSeat.label}`}
-                  className="mt-2 flex w-full cursor-pointer items-center justify-between gap-3 border border-white/15 bg-white/[0.06] px-3 py-2 text-left text-xs font-semibold text-[#D8D0C5] transition hover:bg-white/[0.10] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
-                >
-                  <span>Ask Planner about this seat</span>
-                  <span aria-hidden="true" className="shrink-0 leading-none"><ChevronRightIcon /></span>
-                </button>
-              )}
-            </div>
+            )}
           </div>
+
+          {/* Ask Planner stays the panel's last word — tertiary, after the
+              scroll area; the verbs live in the action zone above. */}
+          {onExplainSeat && <AskPlannerSeatRow seat={selectedSeat} onExplainSeat={onExplainSeat} />}
+
+          {canEdit && !showCommitBar && (
+            <div className="border-t border-white/10">
+              <button type="button" onClick={startAssignmentEditing} disabled={pending} ref={primaryActionRef}
+                aria-expanded={editingAssignment} aria-controls="seat-inspector-form"
+                aria-label={hasCurrentAssignment ? `Edit assignment for ${selectedSeat.label}` : `Assign an employee to ${selectedSeat.label}`}
+                className="h-12 w-full bg-[var(--admin-primary-cta)] text-[14px] font-semibold text-white transition hover:bg-[var(--admin-primary-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white disabled:opacity-40">
+                {hasCurrentAssignment ? "Edit assignment" : "Assign employee"}
+              </button>
+            </div>
+          )}
 
           {showCommitBar && (
             <div id="seat-inspector-commit-bar" className="border-t border-white/10 bg-[#1c1c1c] px-4 py-3">
@@ -1319,7 +1328,7 @@ export function SeatInspector({
                     {saveDisabledReason}
                   </span>
                 )}
-                <Button type="button" onClick={handleCancelEditing} aria-label={`Cancel editing ${selectedSeat.label}`} className={`min-w-0 rounded-[10px] px-4 ${footerNeutralButtonClass}`}>
+                <Button type="button" onClick={handleCancelEditing} aria-label={`Cancel editing ${selectedSeat.label}`} className={`min-w-0 px-4 ${footerNeutralButtonClass}`}>
                   Cancel
                 </Button>
                 <Button
@@ -1329,7 +1338,7 @@ export function SeatInspector({
                   aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
                   aria-describedby={saveDisabledReason ? "seat-inspector-save-help" : undefined}
                   title={saveDisabledReason ?? `${primaryActionLabel} for ${selectedSeat.label}`}
-                  className="min-w-0 w-full whitespace-normal rounded-[10px] !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:shadow-none disabled:hover:!border-[var(--admin-state-neutral-border)] disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
+                  className="min-w-0 w-full whitespace-normal !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:shadow-none disabled:hover:!border-[var(--admin-state-neutral-border)] disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
                 >
                   {primaryActionLabel}
                 </Button>
@@ -1338,23 +1347,26 @@ export function SeatInspector({
           )}
         </form>
       ) : (
-        // Viewer inspector (spec §7): Contact + Seat only — no Actions, Notes,
-        // or Activity. The data is the published assignment snapshot.
+        // Viewer inspector: Contact + Seat only — no Actions, Notes,
+        // Activity, tabs, action row, AI row, or footer. The data is the
+        // published assignment snapshot.
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div key={`seat-inspector-sections-${selectedSeat.id}`}>
+          <div key={`seat-inspector-sections-${selectedSeat.id}`} className="px-4 pb-4 pt-3.5">
             {hasCurrentAssignment && (
-            <InspectorSection title="Contact" headingId="published-contact-heading" defaultOpen>
-              <p className="sr-only">Published assignment</p>
-              <ContactFacts
-                canEdit={false}
-                rows={buildContactRows({
-                  email: selectedSeat.employee?.email,
-                  extension: selectedSeat.employee?.phone_extension
-                })}
-              />
-            </InspectorSection>
+              <section aria-labelledby="published-contact-heading">
+                <h3 id="published-contact-heading" className="text-[10px] font-bold tracking-[0.12em] text-[#8E8276]">CONTACT</h3>
+                <p className="sr-only">Published assignment</p>
+                <ContactFacts
+                  canEdit={false}
+                  rows={buildContactRows({
+                    email: selectedSeat.employee?.email,
+                    extension: selectedSeat.employee?.phone_extension
+                  })}
+                />
+              </section>
             )}
-            <InspectorSection title="Seat" headingId="published-details-heading" defaultOpen>
+            <section aria-labelledby="published-details-heading" className={hasCurrentAssignment ? "mt-3" : ""}>
+              <h3 id="published-details-heading" className="text-[10px] font-bold tracking-[0.12em] text-[#8E8276]">SEAT</h3>
               <dl>
                 <FactRow label="Code" value={selectedSeat.label} />
                 <FactRow label="Zone" value={currentZone} mono={false} />
@@ -1363,7 +1375,7 @@ export function SeatInspector({
                   <dd><span className={["inline-block px-2 py-0.5 text-[10px] font-semibold", statusTagClass].join(" ")}>{currentStatusLabel}</span></dd>
                 </div>
               </dl>
-            </InspectorSection>
+            </section>
           </div>
         </div>
       )}

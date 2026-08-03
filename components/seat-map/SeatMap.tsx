@@ -3752,8 +3752,6 @@ export function SeatMap({
         departmentOptions={localDepartmentOptions}
         canEdit={canEdit}
         collapsed={inspectorCollapsed}
-        pillSuppressed={inspectorPillSuppressed}
-        swapMode={Boolean(swapSourceSeatId || moveEmployeeSourceSeatId)}
         searchMismatchNotice={selectedSeatMismatchNotice}
         searchMismatchClearLabel={clearSearchContextLabel}
         onClose={() => {
@@ -3764,7 +3762,6 @@ export function SeatMap({
           applyCloseInspectorAction();
         }}
         onClearSearchContext={searchActive ? clearSearch : clearStructuredFilters}
-        onToggleCollapse={() => setInspectorCollapsed(current => !current)}
         onDeleteSeat={deleteSelectedSeat}
         onExplainSeat={explainSeatWithPlanner}
         onBeforeSeatUpdate={captureDraftSnapshot}
