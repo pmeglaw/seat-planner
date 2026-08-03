@@ -927,19 +927,28 @@ export function SeatMap({
     const seatId = findSeatIdByParam(localSeats, readSeatParam(window.location.search));
     seatParamAppliedRef.current = true;
     if (!seatId) return;
-    if (commitSeatSelection(seatId)) {
-      // Finding 1 (v12 slice 4 final review): this selection also queues a
-      // programmatic center below — arm the skip in the same commit so the
-      // nudge trigger effect (scheduled by the selectedSeatId change just
-      // made) never races the center's native smooth scrollTo. Only arm it
-      // when the selection is actually changing: if seatId was already
-      // selected, commitSeatSelection made no state change, so the trigger
-      // effect's deps never move to consume the flag — arming it
-      // unconditionally would leave it stuck, silently skipping some later,
-      // unrelated selection's legitimate nudge.
-      if (selectedSeatId !== seatId) skipNextNudge();
-      queueCenterSeatInMap(seatId);
-    }
+    // Deferred a frame, same as the viewer's twin effect: a sync setState in
+    // this hydration-time mount effect can bail the Suspense boundary into a
+    // client re-render that discards this mount — and by then the write
+    // effect below has already stripped the param, so the remount finds
+    // nothing to select. Observed live on /admin?seat=… (v1.25.0 QA); the
+    // rAF lands the selection after hydration settles.
+    const frame = window.requestAnimationFrame(() => {
+      if (commitSeatSelection(seatId)) {
+        // Finding 1 (v12 slice 4 final review): this selection also queues a
+        // programmatic center below — arm the skip in the same commit so the
+        // nudge trigger effect (scheduled by the selectedSeatId change just
+        // made) never races the center's native smooth scrollTo. Only arm it
+        // when the selection is actually changing: if seatId was already
+        // selected, commitSeatSelection made no state change, so the trigger
+        // effect's deps never move to consume the flag — arming it
+        // unconditionally would leave it stuck, silently skipping some later,
+        // unrelated selection's legitimate nudge.
+        if (selectedSeatId !== seatId) skipNextNudge();
+        queueCenterSeatInMap(seatId);
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
     // Mount-only by design: replaceState fires no events, and re-running on
     // seat updates would fight the user's live selection.
     // eslint-disable-next-line react-hooks/exhaustive-deps

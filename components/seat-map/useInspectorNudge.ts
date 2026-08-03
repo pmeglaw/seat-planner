@@ -76,19 +76,25 @@ export function useInspectorNudge({
     if (!window.matchMedia(`(min-width: ${panelBreakpointPx}px)`).matches) return;
     const first = requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        // Finding 1: a same-commit programmatic center armed this — neither
-        // plan nor tween. Checked-and-cleared first, before any other work.
+        const viewport = viewportRef.current;
+        const frame = frameRef.current;
+        if (!viewport || !frame) return;
+        // Finding 1: a same-commit programmatic center armed this — but the
+        // skip is honored ONLY while the viewport has horizontal scroll room.
+        // With room, the center's smooth scrollTo really moves the seat to
+        // mid-viewport (clear of the panel) and a tween would race it. At fit
+        // view there is no scroll room: the center is a no-op, there is
+        // nothing to race, and the translate channel below is the only way an
+        // under-panel seat can clear (contract #1) — skipping there left
+        // viewer fit-view selections covered (v1.25.0 live QA).
         if (skipNextRef.current) {
           skipNextRef.current = false;
-          return;
+          if (viewport.scrollWidth - viewport.clientWidth > 1) return;
         }
         // Finding 3: cancel any stale tween from a superseded selection
         // unconditionally, before (re)planning — otherwise a null plan below
         // leaves that stale tween running instead of leaving the map at rest.
         cancelNudge();
-        const viewport = viewportRef.current;
-        const frame = frameRef.current;
-        if (!viewport || !frame) return;
         const seatVisualX = resolveRef.current(selectedSeatId);
         if (seatVisualX === null) return;
         const plan = planInspectorNudge({
