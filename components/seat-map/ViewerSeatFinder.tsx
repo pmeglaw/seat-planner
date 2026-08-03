@@ -780,6 +780,16 @@ export function ViewerSeatFinder({
   // Narrow-width sheet: same search/selection yielding rules as the docked
   // panel, driven by its own toggle instead of the persisted collapse pref.
   const mobileDirectorySheetOpen = mobileDirectoryOpen && !searchActive && !selectedSeat;
+  // Below the panel tier (<900) results, the directory sheet and the inspector
+  // all render as full-width `fixed inset-x-3 bottom-3 z-[80]` sheets, which
+  // paint straight over the z-30 floating legend in the 768–899 band where the
+  // legend's own md floor lets it render (measured 2026-08-03: the sheet
+  // covered the whole 246px status row). Lifting the legend clear is not an
+  // option — the map viewport is ~520px there and a 50–60vh sheet would push
+  // it into the top-left floor cluster — so it yields the bottom instead and
+  // comes back on dismiss. At >=900 these become side panels and never
+  // overlap, so the legend keeps rendering.
+  const bottomSheetOwnsBottom = resultsPanelOpen || mobileDirectorySheetOpen || Boolean(selectedSeat);
   // Prototype "stage": at the panel tier the inspector reserves layout width
   // (320px expanded, 44px rail) instead of overlaying the map.
   const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
@@ -1196,7 +1206,7 @@ export function ViewerSeatFinder({
                 draft entry (the published layer has no draft seats) and no
                 actions — this surface offers no verbs. */}
             {floor === "3" && (
-            <div className="absolute bottom-3 left-3 z-30 hidden md:block">
+            <div className={cx("absolute bottom-3 left-3 z-30 hidden", bottomSheetOwnsBottom ? "panel:block" : "md:block")}>
               <MapStatusLegend
                 ariaLabel="Seat status summary"
                 totalLabel={`${statusCountSeats.length} ${statusCountSeats.length === 1 ? "seat" : "seats"}`}

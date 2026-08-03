@@ -2457,6 +2457,12 @@ export function SeatMap({
     Boolean(moveEmployeeConfirm)
   );
   const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;
+  // Which surfaces own the bottom of the screen below the panel tier, where
+  // they are full-width sheets rather than side docks. Wider than
+  // mobileMapInteractionSurfaceOpen on purpose: that one is canEdit-gated
+  // (it guards edit affordances), while a sheet covers the legend whether or
+  // not this session can edit, and the results panel is a sheet down there too.
+  const bottomSheetOwnsBottom = mobileMapInteractionSurfaceOpen || resultsPanelOpen || Boolean(selectedSeat);
   const mapViewportClassName = [
     // v12 slice 3: the mounted-sheet treatment (hairline border + elevation +
     // matting padding) is gone. The plan is layer-00 now — it runs edge to
@@ -3322,9 +3328,14 @@ export function SeatMap({
                 contradict a filtered map. Hidden below md, where the card
                 would cover more plan than it explains, and gated to Floor 3:
                 Floor 2 shows the placeholder, where whole-map counts would
-                read as a bug. */}
+                read as a bug. In the 768–899 band the md floor lets this card
+                render while the inspector/results/filter surfaces are still
+                full-width `fixed inset-x-3 bottom-3 z-[80]` sheets, which
+                paint straight over it (measured on the viewer's identical
+                stack, 2026-08-03). It yields the bottom to them and returns on
+                dismiss; at >=900 those dock to the side and never overlap. */}
             {floor === "3" && (
-            <div className="absolute bottom-3 left-3 z-30 hidden md:block">
+            <div className={["absolute bottom-3 left-3 z-30 hidden", bottomSheetOwnsBottom ? "panel:block" : "md:block"].join(" ")}>
               <MapStatusLegend
                 ariaLabel="Seat status legend"
                 totalLabel={`${stats.total} ${stats.total === 1 ? "seat" : "seats"}`}
