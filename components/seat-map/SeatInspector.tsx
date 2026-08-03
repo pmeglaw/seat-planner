@@ -50,13 +50,6 @@ type SeatInspectorProps = {
   onDirtyChange?: (dirty: boolean) => void;
   onSubmitBlocked?: () => void;
   resetSignal?: number;
-  /**
-   * Bumped by the canvas action bar's Assign… to open the progressive editor
-   * from outside this component. Assignment needs a searchable combobox, which
-   * cannot live on a 40px floating bar — so the bar discloses and this panel
-   * still owns the editor. Same signal idiom as resetSignal.
-   */
-  startAssignmentSignal?: number;
   // Session-local edit log for the selected seat (admin Activity section).
   // Read-only labels derived from the parent's undo history — no server data.
   activityEntries?: string[];
@@ -262,7 +255,6 @@ export function SeatInspector({
   onDirtyChange = noopCallback,
   onSubmitBlocked,
   resetSignal = 0,
-  startAssignmentSignal = 0,
   activityEntries = []
 }: SeatInspectorProps) {
   const [pending, startTransition] = useTransition();
@@ -290,7 +282,6 @@ export function SeatInspector({
   const activeSeatIdRef = useRef<string | null>(null);
   const activeSeatSnapshotRef = useRef(formSnapshot(emptyForm));
   const resetSignalRef = useRef(resetSignal);
-  const startAssignmentSignalRef = useRef(startAssignmentSignal);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const primaryActionRef = useRef<HTMLButtonElement | null>(null);
   const assignmentSectionRef = useRef<HTMLElement | null>(null);
@@ -408,19 +399,6 @@ export function SeatInspector({
     activeSeatIdRef.current = seat.id;
     resetInspectorDraftForm(formFromSeat(seat));
   }, [resetSignal, seat, resetInspectorDraftForm]);
-
-  // Assign… on the canvas bar opens this panel's editor. Guarded on the signal
-  // so a re-render never re-opens an editor the user just closed.
-  useEffect(() => {
-    if (startAssignmentSignalRef.current === startAssignmentSignal) return;
-    startAssignmentSignalRef.current = startAssignmentSignal;
-    if (!seat) return;
-    startAssignmentEditing();
-    // startAssignmentEditing is re-created every render; the ref guard above is
-    // what makes this fire once per signal, so depending on it would only add
-    // no-op runs.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startAssignmentSignal, seat]);
 
   if (!seat) return null;
 
@@ -1210,9 +1188,9 @@ export function SeatInspector({
                         occupant and show no control, the chip carries the
                         tag), and Delete live here. The reseat verbs — Move
                         (person-centric), Swap, Vacate — live in the icon
-                        action row above (v12 slice 4); the canvas
-                        SeatActionBar they used to live on retires in the next
-                        task. Still never collapsible. */}
+                        action row above (v12 slice 4); the canvas action bar
+                        they used to live on is retired. Still never
+                        collapsible. */}
                     <div role="group" aria-labelledby="seat-actions-heading" className="mt-4">
                       <div className="flex items-center gap-2">
                         <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[#E7E1D8]">Seat actions</h3>

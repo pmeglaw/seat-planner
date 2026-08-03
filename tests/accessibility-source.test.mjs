@@ -191,10 +191,13 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   // admin-only control in the panel. The guarantee is unchanged — admin-only
   // affordances must sit inside the canEdit branch — only its anchor moved.
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete custom seat/);
-  // ...and the same guarantee, followed to where the verbs actually went: the
-  // action bar is admin-gated at its render site, so a viewer never gets Swap
-  // or Vacate on the canvas either.
-  assert.match(seatMapSource, /\{canEdit && floor === "3" && \([\s\S]*<SeatActionBar/);
+  // The reseat verbs live in the inspector's icon action row now (v12 slice 4).
+  // The row itself is canEdit-gated in SeatInspector; here we pin that only the
+  // ADMIN mount wires the verb handlers, so a viewer inspector can never grow
+  // Move/Swap/Vacate even if the internal gate regressed.
+  assert.match(seatMapSource, /<SeatInspector[\s\S]{0,2400}onVacate=\{requestVacateFromBar\}/);
+  assert.doesNotMatch(viewerFinderSource, /onMove=|onSwap=|onVacate=/);
+  assert.match(inspectorSource, /\{canEdit && !editingAssignment && \(onMove \|\| onSwap \|\| onVacate\) && \(/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Vacate/);
 });

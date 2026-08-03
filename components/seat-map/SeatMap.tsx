@@ -78,7 +78,6 @@ import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat
 import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
-import { SeatActionBar } from "@/components/seat-map/SeatActionBar";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
@@ -382,10 +381,6 @@ export function SeatMap({
   const [moveEmployeeConfirm, setMoveEmployeeConfirm] = useState<MoveEmployeeConfirmState>(null);
   const [deleteSeatConfirm, setDeleteSeatConfirm] = useState<DeleteSeatConfirmState>(null);
   const [vacateConfirm, setVacateConfirm] = useState<VacateConfirmState>(null);
-  // Mirrors inspectorResetSignal: the bar's Assign… has to reach into the
-  // inspector's progressive editor, and a bumped signal is how this file
-  // already talks to that component without owning its internals.
-  const [assignmentRequestSignal, setAssignmentRequestSignal] = useState(0);
   const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
   // Last keyboard-visited seat (roving tabindex anchor). The derived tab stop
   // also prefers the selected seat — see mapRovingSeatId.
@@ -456,17 +451,10 @@ export function SeatMap({
     if (!focusInspectorAfterSelectRef.current) return;
     focusInspectorAfterSelectRef.current = false;
     if (!selectedSeatId) return;
+    // Keyboard selection lands on something ACTIONABLE — the floating
+    // inspector panel itself now that it owns the reseat verbs directly
+    // (v12 slice 4 retired the canvas action bar that used to be the target).
     window.requestAnimationFrame(() => {
-      // Keyboard selection lands on something ACTIONABLE. That used to mean the
-      // inspector panel, because the panel owned the verbs; the canvas action
-      // bar owns them now, so its first verb is the target. The panel stays the
-      // fallback for surfaces that render no bar (the read-only viewer), which
-      // is also why the getElementById line below must not be deleted.
-      const barAction = seatActionBarFirstActionRef.current;
-      if (barAction) {
-        barAction.focus();
-        return;
-      }
       document.getElementById("seat-inspector-panel")?.focus();
     });
   }, [selectedSeatId]);
@@ -474,7 +462,6 @@ export function SeatMap({
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
-  const seatActionBarFirstActionRef = useRef<HTMLButtonElement | null>(null);
   // The bar and the inspector run ONE vacate path — same payload, same undo
   // snapshot, same stale-draft fence. Both commit through applySeatUpdated
   // below, so a seat vacated from the canvas records history identically to one
@@ -1344,15 +1331,6 @@ export function SeatMap({
       setPendingInspectorSaveAction(null);
       window.requestAnimationFrame(() => applyInspectorGuardAction(action));
     }
-  }
-
-  // Assign… on the bar discloses rather than acts: assignment needs a person,
-  // which needs the inspector's combobox. Expand the panel and bump the signal
-  // the inspector watches — the same idiom inspectorResetSignal already uses.
-  function requestAssignFromBar() {
-    if (!selectedSeat) return;
-    setInspectorCollapsed(false);
-    setAssignmentRequestSignal(current => current + 1);
   }
 
   // The bar never vacates directly. It always raises the confirm first, because
@@ -2418,28 +2396,20 @@ export function SeatMap({
   // 3b MODE CARD: while a mode runs without an expanded inspector, the mode
   // owns the panel slot (its microcopy lives in the occupant, INV-4).
   const modeCardOpen = canEdit && Boolean(activeMode) && (!selectedSeat || inspectorCollapsed);
-  // Prototype "stage": at the panel tier the inspector RESERVES layout width
-  // instead of overlaying the canvas — expanded takes the 320px column, the
-  // collapsed rail takes 44px, and the content wrapper pads right to match.
-  // Mirrors SeatInspector's own render rules (rail hidden while another panel
-  // owns the slot) so the reservation never outlives the panel.
-  const inspectorPillSuppressed = resultsPanelOpen || modeCardOpen || askPlannerOpen;
-  const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
-    ? !inspectorCollapsed
-      ? "expanded"
-      : swapSourceSeatId || moveEmployeeSourceSeatId || inspectorPillSuppressed
-        ? "none"
-        : "rail"
-    : "none";
-  // Whatever occupies the right slot reserves the column — expanded inspector,
-  // results panel, or mode card — so nothing renders hidden behind a panel.
-  const rightSlotTier: "expanded" | "rail" | "none" =
-    inspectorDockTier === "expanded" || resultsPanelOpen || modeCardOpen ? "expanded" : inspectorDockTier;
-  const stageReservedClassName = rightSlotTier === "expanded"
-    ? "panel:pr-[332px]"
-    : rightSlotTier === "rail"
-      ? "panel:pr-[56px]"
-      : "";
+  // v12 slice 4: the inspector FLOATS (contract #1) — only the docking
+  // occupants reserve stage width now (results panel / mode card, contract #2).
+  const rightSlotTier: "expanded" | "none" = resultsPanelOpen || modeCardOpen ? "expanded" : "none";
+  const stageReservedClassName = rightSlotTier === "expanded" ? "panel:pr-[332px]" : "";
+
+  // The collapse rail is retired (v12 slice 4): `inspectorCollapsed` is now
+  // purely the auto-yield flag. Whenever nothing owns the right region anymore
+  // and a seat is still selected, the inspector returns on its own — there is
+  // no rail left for the user to click.
+  useEffect(() => {
+    if (!inspectorCollapsed || !selectedSeatId) return;
+    if (resultsPanelOpen || modeCardOpen || askPlannerOpen || swapSourceSeatId || moveEmployeeSourceSeatId) return;
+    setInspectorCollapsed(false);
+  }, [inspectorCollapsed, selectedSeatId, resultsPanelOpen, modeCardOpen, askPlannerOpen, swapSourceSeatId, moveEmployeeSourceSeatId]);
   // No mode/zoom change on select or deselect: in the fit view the reserved
   // column resizes the viewport and the overview ResizeObserver re-fits the
   // frame width automatically; a zoomed (detail) view keeps its zoom.
@@ -3402,20 +3372,6 @@ export function SeatMap({
               />
             </div>
             )}
-            {/* Positioned against the map stage, NOT the viewport: that is what
-                makes it re-centre on the narrowed map when the inspector
-                reserves its column instead of drifting underneath it. */}
-            {canEdit && floor === "3" && (
-              <SeatActionBar
-                seat={selectedSeat}
-                busy={mutationInFlight || barSeatActions.pending}
-                onAssign={requestAssignFromBar}
-                onMove={() => startMoveEmployeeMode()}
-                onSwap={() => startSwapSeatMode()}
-                onVacate={requestVacateFromBar}
-                firstActionRef={seatActionBarFirstActionRef}
-              />
-            )}
           </div>
         </section>
       </main>
@@ -3762,6 +3718,9 @@ export function SeatMap({
           applyCloseInspectorAction();
         }}
         onClearSearchContext={searchActive ? clearSearch : clearStructuredFilters}
+        onMove={() => startMoveEmployeeMode()}
+        onSwap={() => startSwapSeatMode()}
+        onVacate={requestVacateFromBar}
         onDeleteSeat={deleteSelectedSeat}
         onExplainSeat={explainSeatWithPlanner}
         onBeforeSeatUpdate={captureDraftSnapshot}
@@ -3774,7 +3733,6 @@ export function SeatMap({
         onDirtyChange={setInspectorDirty}
         onSubmitBlocked={cancelPendingInspectorGuardAction}
         resetSignal={inspectorResetSignal}
-        startAssignmentSignal={assignmentRequestSignal}
         activityEntries={selectedSeatActivity}
       />
 
