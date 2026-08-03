@@ -820,11 +820,19 @@ export function ViewerSeatFinder({
     // through around it, so there is no card edge left to draw and everything
     // that reads over the map floats as a layer-01 white card instead.
     "relative mx-auto w-full max-w-full overflow-auto overscroll-contain bg-[var(--admin-map-workspace)]",
-    // The sm cap is gone with the matting: nothing is in flow above or below
-    // the map any more (the toolbar row and status footer both float now), so
-    // below lg the map viewport is the one vertical scroll owner and the 82svh
-    // ceiling alone budgets the sticky 36px bar.
-    "min-h-[360px] max-h-[82svh] sm:min-h-[520px] lg:h-full lg:min-h-0 lg:max-h-none lg:flex-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+    // Below lg the viewport takes the whole screen under the 36px bar, rather
+    // than the old content-driven min-h/82svh pair. That pair sized the box to
+    // the plan (472px at the mobile frame width), which was fine while a
+    // toolbar row and a status footer sat in flow around it and a hairline
+    // border drew the sheet's edge. Slice 3 floated both and dropped the
+    // border, so the leftover column showed as 192-424px of bare page below a
+    // hard seam — measured 2026-08-03 at every width below lg, and the two
+    // greiges differ (workspace #ECE8E0 against page #F7F6F2), so it read as
+    // the page running out rather than as workspace. Filling the column keeps
+    // the plan on an unbroken workspace band to the bottom of the screen, and
+    // an exact height keeps this the one vertical scroll owner (#197) — the
+    // job the 82svh ceiling used to do.
+    "h-[calc(100svh-36px)] lg:h-full lg:min-h-0 lg:max-h-none lg:flex-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     zoomFactor === null ? "sm:flex sm:items-center sm:justify-center" : "",
     floor === "3" ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]"
@@ -1183,8 +1191,16 @@ export function ViewerSeatFinder({
                 the announcement has to survive a floor switch (it still counts
                 the loaded seats on the placeholder floor). */}
             <p className="sr-only" aria-live="polite">{mapAnnouncement}</p>
+            {/* Below the panel tier the fixed PEOPLE pill owns the same
+                bottom-right corner (it is the only route to the directory down
+                there), so the stack clears its 35px + the 12px inset and
+                matches its safe-area handling. Both are bottom-anchored to the
+                same screen edge now that the viewport fills the column, so at a
+                flat bottom-3 the pill covered the fit button exactly — measured
+                34x34 at every width below 900. At >=900 the pill is
+                `panel:hidden` and the stack takes the corner back. */}
             {floor === "3" && (
-              <div className="absolute bottom-3 right-3 z-30">
+              <div className="absolute right-3 z-30 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] panel:bottom-3">
                 <MapZoomControl
                   label={mapZoomLabel}
                   onZoomIn={() => applyMapZoom(zoomFactor === null ? 1 : zoomFactor + MAP_ZOOM_STEP)}
