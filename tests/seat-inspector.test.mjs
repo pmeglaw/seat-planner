@@ -73,7 +73,6 @@ function renderInspector(seat, extra = {}) {
       departmentOptions: [{ id: "d1", name: "Intake", active: true }],
       canEdit: false,
       collapsed: false,
-      swapMode: false,
       onClose() {},
       ...extra
     })
@@ -151,8 +150,8 @@ test("admin tabs switch panels and reset to Overview when the seat changes", asy
   assert.equal(overviewTab.getAttribute("aria-selected"), "true");
 });
 
-test("viewer mode renders no tabs, no action row, no footer CTA", () => {
-  renderInspector(assignedSeat());
+test("viewer mode renders no tabs, no action row, no footer CTA", async () => {
+  await renderInspector(assignedSeat());
   assert.equal(document.querySelector('[role="tablist"]'), null);
   assert.equal(byLabelPrefix("Move "), null);
   assert.equal(byLabelPrefix("Vacate "), null);
@@ -160,8 +159,8 @@ test("viewer mode renders no tabs, no action row, no footer CTA", () => {
   assert.equal(byLabelPrefix("Assign an employee to"), null);
 });
 
-test("collapsed renders nothing at all (the rail and pill are retired)", () => {
-  renderInspector(assignedSeat(), { canEdit: true, collapsed: true });
+test("collapsed renders nothing at all (the rail and pill are retired)", async () => {
+  await renderInspector(assignedSeat(), { canEdit: true, collapsed: true });
   assert.equal(document.getElementById("seat-inspector-panel"), null);
   assert.equal(document.body.textContent.includes("VIEW DETAILS"), false);
 });
