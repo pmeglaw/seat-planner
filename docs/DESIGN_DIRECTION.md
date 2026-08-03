@@ -76,6 +76,21 @@ later chose the tighter 36px instead — see #216/#221.) Left → right:
 5. **Two surface shortcuts on the right: Viewer · Admin.** Admin uses the **user-with-checkmark icon** (see prototype SVG / the owner's reference image), Viewer uses an eye/target glyph. The active surface shows the orange underline.
 6. **Publish** button (orange, **admin-only**), then avatar.
 
+> **Correction 2026-07-31 — v12 slice 2: a left rail replaces the bar's admin
+> nav.** Item 3's **Management** tool and item 5's **Viewer/Admin surface
+> shortcuts** no longer live in this bar — both moved into a left rail
+> (`components/ui/AppRail.tsx`, 48px collapsed column / 208px overlay,
+> Carbon-v12 geometry per owner ruling 2026-07-31), which now owns all admin
+> navigation on `/admin`, `/admin/management`, and `/admin/settings`. Item 6's
+> **avatar** moved with them, into the rail's own bottom cell — `AccountMenu`
+> no longer renders in either admin bar. A **People** rail item is
+> deliberately absent until the People panel slice exists; this is a
+> breadcrumb, not an oversight — don't add it early. The idle **"Published"**
+> status affordance this section implied alongside item 6 is gone too (v12
+> contract #4): the bar renders nothing when the draft has no changes, and
+> reaching publish history no longer happens from the map bar — it's
+> **Management → Publish History tab**.
+
 ---
 
 ## 4. Workspace (the map)

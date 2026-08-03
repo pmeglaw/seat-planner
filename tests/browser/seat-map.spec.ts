@@ -165,7 +165,9 @@ test("a dirty inspector intercepts the viewer link with the unsaved-edits dialog
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
   await dirtyInspectorNotes(page);
 
-  await page.locator('a[aria-label="Open viewer surface"]').dispatchEvent("click");
+  // v12: AppRail's Viewer item is a <button> (never a <Link>), so the same
+  // onNavigate guard can intercept every rail item uniformly.
+  await page.locator('button[aria-label="Open viewer surface"]').dispatchEvent("click");
   await expect(page.locator("#inspector-unsaved-title")).toBeAttached();
   // The click must not have navigated the harness away.
   expect(page.url()).toContain("harness.html");
@@ -216,11 +218,12 @@ test("a failed discard surfaces its error inside the discard dialog (002)", asyn
     responses: { "action:resetDraftToPublishedAction": () => { throw new Error("Server error"); } }
   });
 
-  // custom has no published counterpart, so it reads as an "added" draft
-  // change and the publish-review entry point ("Review N unpublished
-  // change(s)") becomes reachable.
-  await page.getByRole("button", { name: /unpublished change/ }).dispatchEvent("click");
-  await page.getByRole("button", { name: "Discard all draft changes" }).dispatchEvent("click");
+  // v12: the discard trigger lives in the header kebab, not the publish
+  // review dialog. custom has no published counterpart, so it reads as an
+  // "added" draft change (hasChanges true) and the kebab's "Discard draft
+  // changes" item is enabled.
+  await page.getByRole("button", { name: "More tools" }).dispatchEvent("click");
+  await page.getByRole("button", { name: "Discard draft changes" }).dispatchEvent("click");
   await page.getByRole("button", { name: "Discard everything" }).dispatchEvent("click");
 
   const dialog = page.getByRole("dialog", { name: /Discard all draft changes/ });

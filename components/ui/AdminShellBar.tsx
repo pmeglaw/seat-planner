@@ -1,45 +1,25 @@
 import Image from "next/image";
-import Link from "next/link";
-import { AccountMenu } from "@/components/ui/AccountMenu";
-// Aliased on import so every call site below reads unchanged. The three class
-// strings used to be private copies here, byte-identical to the map header's
-// until they drifted (this bar's divider stayed tuned for a 40px bar while the
-// map's was retuned) — components/ui/adminChrome.ts now owns them.
-import {
-  adminChromeDividerRule,
-  adminChromeSurfaceShortcut as surfaceShortcut,
-  adminChromeTool as toolLink,
-  adminChromeToolActive as toolLinkActive
-} from "@/components/ui/adminChrome";
 
 /**
- * The Shell chrome bar for admin sub-pages (Management, Settings).
+ * Identity-only chrome bar for the admin sub-pages (Management, Settings).
  *
- * Mirrors the seat-map header (components/seat-map/SeatMap.tsx) — same dark bar
- * (height from --admin-chrome-h), brand chip, and tool styling — so /admin,
- * /admin/management, and /admin/settings read as one continuous surface. Unlike
- * the map header it carries only the Viewer cross-surface exit: the section
- * nav's underline already answers "where am I", and an active Admin tab would
- * duplicate the "Seat map" link's destination.
- * Stateless on purpose: map-only tools (search, undo/redo, publish) stay in
- * the map header; this bar only carries identity and navigation.
+ * v12 (2026-07-31 rail shell, Task 3): navigation and the account menu moved
+ * to the left rail (components/ui/AppRail.tsx), which every /admin* page now
+ * mounts directly. This bar's whole job is the brand block that anchors
+ * every admin surface — no section nav, no Viewer shortcut, no account menu.
+ * Stateless on purpose, same as before: it takes no props.
+ *
+ * The skip link moved to AppRail's `skipLink` prop (visual-pass fix,
+ * 2026-07-31): it rendered here as this header's first child, which put it
+ * behind all 7 rail controls in tab order — 8th stop instead of 1st,
+ * defeating the point of a skip link. AppRail renders it before its own
+ * hamburger, so it's the first focusable on the page.
  */
-
-type AdminShellPage = "management" | "settings";
-
-export function AdminShellBar({ page, email, roleLabel }: { page: AdminShellPage; email: string; roleLabel: string }) {
+export function AdminShellBar() {
   return (
-    /* z-50 matches the seat-map bar: the chrome tier sits above z-40 page
-       overlays so scrolled content never paints over the pinned bar. */
+    /* z-50 matches the seat-map bar and the rail: the chrome tier sits above
+       z-40 page overlays so scrolled content never paints over the pinned bar. */
     <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
-      {/* Same skip affordance as the map surfaces: first focusable jumps the
-          chrome straight to the page content (#202). */}
-      <a
-        href="#admin-subpage-main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-11 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-surface)] focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--admin-text-primary)]"
-      >
-        Skip to content
-      </a>
       <div className="flex min-w-0 shrink-0 items-center gap-2">
         <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
           <Image src="/images/megeredchian-mark.png?v=ma-2026" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
@@ -48,64 +28,6 @@ export function AdminShellBar({ page, email, roleLabel }: { page: AdminShellPage
         <div translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
           Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
         </div>
-      </div>
-
-      <span aria-hidden="true" className={`mx-2.5 h-[22px] ${adminChromeDividerRule}`} />
-
-      <nav aria-label="Admin sections" className="flex h-full min-w-0 items-center">
-        <Link href="/admin" className={toolLink}>
-          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-            <path d="M3 5.5 8 3.5v11L3 16.5v-11ZM8 3.5l4 2v11l-4-2M12 5.5l5-2v11l-5 2" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-          </svg>
-          Seat map
-        </Link>
-        <Link
-          href="/admin/management"
-          aria-current={page === "management" ? "page" : undefined}
-          className={page === "management" ? toolLinkActive : toolLink}
-        >
-          {/* Literal ▤ glyph (U+25A4), matching the map bar — Management is one
-              nav item and must carry one identity across both admin bars. */}
-          <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">▤</span>
-          Management
-        </Link>
-        {/* Settings surfaces plainly in the management/data context (unlike the
-            map header, where it's tucked behind the identity chip). */}
-        <Link
-          href="/admin/settings"
-          aria-current={page === "settings" ? "page" : undefined}
-          className={page === "settings" ? toolLinkActive : toolLink}
-        >
-          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-            <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          Settings
-        </Link>
-      </nav>
-
-      <div className="ml-auto flex h-full shrink-0 items-center">
-        {/* One cross-surface exit, one underline per bar (2026-07-16 regrade,
-            review 2): the old active "Admin" tab duplicated the "Seat map"
-            link's destination and fought the section nav's underline. */}
-        <div className="hidden h-full items-center sm:flex">
-          <Link
-            href="/"
-            aria-label="Open viewer surface"
-            title="Viewer — published map"
-            className={[surfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"].join(" ")}
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="8.2" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-            Viewer
-          </Link>
-        </div>
-        {/* Account menu (identity + sign out). Settings is the visible nav
-            item on this bar, so the menu deliberately carries no settings
-            entry — the chip must not double as a second settings control. */}
-        <AccountMenu email={email} roleLabel={roleLabel} />
       </div>
     </header>
   );

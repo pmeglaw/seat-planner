@@ -1,5 +1,6 @@
 import { AdminManagementPanel } from "@/components/admin-management/AdminManagementPanel";
 import { AdminShellBar } from "@/components/ui/AdminShellBar";
+import { AppRail } from "@/components/ui/AppRail";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
@@ -78,8 +79,16 @@ export default async function AdminManagementPage({
   }
 
   return (
-    <div className="admin-theme flex min-h-screen flex-col bg-[var(--admin-bg)]">
-      <AdminShellBar page="management" email={user.email ?? ""} roleLabel="Admin" />
+    // pl-12 clears the v12 left rail, which is position:fixed and does not
+    // participate in this flex column (mirrors SeatMap.tsx's root).
+    <div className="admin-theme flex min-h-screen flex-col bg-[var(--admin-bg)] pl-12">
+      <AppRail
+        active="management"
+        email={user.email ?? ""}
+        roleLabel="Admin"
+        skipLink={{ href: "#admin-subpage-main", label: "Skip to content" }}
+      />
+      <AdminShellBar />
       {/* Skip-link landing: focusable zero-height marker; the next Tab enters
           the panel content. */}
       <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />

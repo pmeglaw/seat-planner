@@ -1,5 +1,6 @@
 import { DataUtilitiesPanel } from "@/components/admin-settings/DataUtilitiesPanel";
 import { AdminShellBar } from "@/components/ui/AdminShellBar";
+import { AppRail } from "@/components/ui/AppRail";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
@@ -63,8 +64,16 @@ export default async function AdminSettingsPage() {
   );
 
   return (
-    <main className="admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text-primary)]">
-      <AdminShellBar page="settings" email={user.email ?? ""} roleLabel="Admin" />
+    // pl-12 clears the v12 left rail, which is position:fixed and does not
+    // participate in this layout (mirrors SeatMap.tsx's root).
+    <main className="admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12">
+      <AppRail
+        active="settings"
+        email={user.email ?? ""}
+        roleLabel="Admin"
+        skipLink={{ href: "#admin-subpage-main", label: "Skip to content" }}
+      />
+      <AdminShellBar />
       {/* Skip-link landing: focusable zero-height marker; the next Tab enters
           the panel content. */}
       <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />

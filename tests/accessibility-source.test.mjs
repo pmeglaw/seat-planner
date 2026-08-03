@@ -44,29 +44,93 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /Planning canvas/);
   assert.match(source, /aria-label="Seat status legend"/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
-  // Session layer (2026-07-16 detail critique): the identity chip is the
-  // ACCOUNT MENU — signed-in email + role + Sign out. Settings stays behind
-  // the chip on the map surface (owner preference, now as a labeled menu item)
-  // and MUST keep routing through the unsaved-edits guard. Settings still
-  // never appears as a peer nav item on the map bar.
-  assert.match(source, /<AccountMenu[\s\S]{0,600}beforeGuardedNavigation\("\/admin\/settings", "Settings"\)/);
-  assert.doesNotMatch(source, /className=\{chromeToolbarBtnCollapsibleXl\}[\s\S]{0,220}Settings\s*<\/Link>/);
+  // Session layer, v12 (2026-07-31 rail shell): identity + Settings moved off
+  // the header AccountMenu into AppRail (Task 1) — Settings is now a
+  // first-class rail nav item rather than tucked behind an identity chip (a
+  // deliberate reversal of the pre-v12 rule this test used to pin). The guard
+  // survives structurally: every AppRail item (map/management/settings/
+  // viewer) shares the SAME onNavigate wiring into beforeGuardedNavigation, so
+  // Settings — like every other in-app destination — cannot bypass the
+  // unsaved-edits guard, whichever rail item reaches it.
+  assert.match(source, /<AppRail[\s\S]{0,220}onNavigate=\{\(href, label\) => beforeGuardedNavigation\(href as GuardedNavigationHref, label\)\}/);
+  // Settings must never appear as an unguarded peer link on the map surface
+  // itself — the rail (a different file, its own guard-respecting contract)
+  // plus the wiring above own it. A bare href here would bypass the guard
+  // AppRail's onNavigate can't reach.
+  assert.doesNotMatch(source, /href="\/admin\/settings"/);
   assert.match(source, /aria-controls="ask-planner-drawer"/);
   assert.match(source, /aria-haspopup="dialog"/);
   assert.match(source, /No map changes to undo/);
   assert.match(source, /No undone map changes to redo/);
-  assert.match(source, /Draft matches published/);
   assert.match(source, /unpublished \$\{publishSummary\.totalChangeCount === 1 \? "change" : "changes"\}/);
   assert.match(source, /Esc exits/);
   assert.match(source, /Exit add seat/);
-  // Publish chip contract (2026-07-16 critique, fix 3): with changes it is the
-  // review entry point; idle it is a DISCLOSURE for the status popover — a
-  // status indicator must not launch the publish workflow modal.
-  assert.match(source, /\{canEdit && \([\s\S]*aria-label=\{publishSummary\.hasChanges \? `Review \$\{draftStatusLabel\.toLowerCase\(\)\}` : `Publish status: \$\{draftStatusLabel\.toLowerCase\(\)\}`\}/);
-  assert.match(source, /if \(publishSummary\.hasChanges\) \{\s*openPublishReview\(\);\s*return;\s*\}\s*setPublishStatusOpen\(current => !current\);/);
-  assert.match(source, /id="publish-status-popover"[\s\S]{0,300}aria-label="Publish status"/);
+  // Publish chip contract, v12 (contract #4): nothing renders without draft
+  // changes — no idle status chip, no publish-status-popover. The has-changes
+  // cluster is the ONLY publish control and it opens the review directly.
+  assert.match(source, /\{publishSummary\.hasChanges && \([\s\S]{0,500}onClick=\{openPublishReview\}/);
+  assert.doesNotMatch(source, /id="publish-status-popover"/);
+  assert.equal((source.match(/onClick=\{openPublishReview\}/g) ?? []).length, 1, "exactly one publish control opens the review");
   assert.match(source, /Undo \{lastUndoLabel\}/);
   assert.match(source, /onClick=\{undoDraftEdit\}/);
+});
+
+test("Carbon-for-AI tokens (--admin-ai-*) stay exclusive to Ask Planner surfaces (contract #9)", async () => {
+  // Guarded semantic: AI blue is reserved EXCLUSIVELY for AI presence — no
+  // non-AI control may ever paint itself with an --admin-ai- token.
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const railSource = await readSource("../components/ui/AppRail.tsx");
+  const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
+  const AI_TOKEN = "--admin-ai-";
+
+  function countOccurrences(text, needle) {
+    return text.split(needle).length - 1;
+  }
+
+  // SeatMap: the Ask Planner tool button (ref={askPlannerButtonRef} through
+  // its own closing </button>) is the ONLY control allowed to use the token.
+  const seatMapTotal = countOccurrences(seatMapSource, AI_TOKEN);
+  const askPlannerStart = seatMapSource.indexOf("ref={askPlannerButtonRef}");
+  assert.ok(askPlannerStart >= 0, "Ask Planner button anchor must exist in SeatMap.tsx");
+  const askPlannerEnd = seatMapSource.indexOf("</button>", askPlannerStart);
+  assert.ok(askPlannerEnd > askPlannerStart);
+  const askPlannerBlock = seatMapSource.slice(askPlannerStart, askPlannerEnd);
+  assert.ok(seatMapTotal > 0, "sanity: SeatMap.tsx should still consume the AI token somewhere");
+  assert.equal(
+    countOccurrences(askPlannerBlock, AI_TOKEN),
+    seatMapTotal,
+    "every --admin-ai- occurrence in SeatMap.tsx must live inside the Ask Planner tool button"
+  );
+
+  // AppRail: the token may only appear on the AI nav item (both branches of
+  // the onOpenAskPlanner ternary) and the AiCell() it renders.
+  const railTotal = countOccurrences(railSource, AI_TOKEN);
+  const aiItemStart = railSource.indexOf("{/* Ask Planner — the AI entry");
+  assert.ok(aiItemStart >= 0, "AI rail item anchor must exist in AppRail.tsx");
+  const aiItemEnd = railSource.indexOf('title="Viewer — published map"', aiItemStart);
+  assert.ok(aiItemEnd > aiItemStart);
+  const aiItemBlock = railSource.slice(aiItemStart, aiItemEnd);
+  const aiCellStart = railSource.indexOf("function AiCell(");
+  assert.ok(aiCellStart >= 0, "AiCell() must exist in AppRail.tsx");
+  // Bounded at the next top-level declaration (or EOF), never bare EOF: an
+  // unbounded slice would absorb any declaration appended after AiCell into
+  // "the AI cell", letting a new non-AI consumer slip past this pin.
+  const nextTopLevelDecl = railSource
+    .slice(aiCellStart + 1)
+    .search(/\n(?:export |function |const |let |var |class |type |interface )/);
+  const aiCellEnd = nextTopLevelDecl === -1 ? railSource.length : aiCellStart + 1 + nextTopLevelDecl;
+  const aiCellBlock = railSource.slice(aiCellStart, aiCellEnd);
+  assert.ok(railTotal > 0, "sanity: AppRail.tsx should still consume the AI token somewhere");
+  assert.equal(
+    countOccurrences(aiItemBlock, AI_TOKEN) + countOccurrences(aiCellBlock, AI_TOKEN),
+    railTotal,
+    "every --admin-ai- occurrence in AppRail.tsx must live inside the AI nav item or AiCell()"
+  );
+
+  // Non-AI surfaces: zero AI-blue tokens, ever.
+  assert.doesNotMatch(viewerFinderSource, /--admin-ai-/);
+  assert.doesNotMatch(shellBarSource, /--admin-ai-/);
 });
 
 test("active modes exit after dialogs and keep visible exit controls", async () => {
@@ -395,17 +459,17 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /form\.requestSubmit\(\)/);
   assert.match(source, /onSubmitBlocked=\{cancelPendingInspectorGuardAction\}/);
   assert.match(source, /setPendingInspectorSaveAction\(null\)/);
-  assert.match(source, /href="\/admin\/management"[\s\S]{0,260}beforeGuardedNavigation\("\/admin\/management", "Management"\)\) event\.preventDefault\(\)/);
-  // The viewer surface link routes through the same guard (#194): a dirty
-  // inspector must intercept it instead of silently dropping the edits.
-  assert.match(source, /href="\/"[\s\S]{0,320}beforeGuardedNavigation\("\/", "the viewer"\)\) event\.preventDefault\(\)/);
+  // v12: Management, Viewer, and Settings navigation all moved off individual
+  // per-link handlers (each used to hardcode its own beforeGuardedNavigation
+  // call) into AppRail's rail items, which share ONE generic callback. A
+  // dirty inspector must intercept every destination uniformly, and routing
+  // all of them through the same onNavigate wiring guarantees that by
+  // construction — there is no longer a per-link call site to individually
+  // forget the guard on.
+  assert.match(source, /<AppRail[\s\S]{0,220}onNavigate=\{\(href, label\) => beforeGuardedNavigation\(href as GuardedNavigationHref, label\)\}/);
   // And the browser-owned path (tab close / hard navigation) arms beforeunload
   // while the inspector is dirty.
   assert.match(source, /window\.addEventListener\("beforeunload", warnBeforeUnload\)/);
-  // Settings moved off a Link into the account menu (2026-07-16 session
-  // layer): the menu item still routes through the same guard and only
-  // navigates when the guard allows it.
-  assert.match(source, /if \(beforeGuardedNavigation\("\/admin\/settings", "Settings"\)\) window\.location\.assign\("\/admin\/settings"\)/);
   assert.doesNotMatch(source, /You have unsaved seat edits\. Discard them\?/);
 });
 
@@ -577,17 +641,24 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   assert.ok(viewerPanelIndex < viewerSearchIndex, "viewer filter panel must precede the search in DOM order");
 });
 
-test("the admin sub-page bar surfaces Settings clearly in the management context", async () => {
+test("the admin account menu surfaces identity and sign-out from the rail on every sub-page", async () => {
+  const railSource = await readSource("../components/ui/AppRail.tsx");
   const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
 
-  // On the map header Settings is tucked behind the identity chip (clean map
-  // bar), but in the management/data context — the sub-page bar — it surfaces
-  // as a plain, labeled, current-aware nav item next to Management.
-  assert.match(shellBarSource, /href="\/admin\/settings"\s+aria-current=\{page === "settings" \? "page" : undefined\}[\s\S]{0,500}Settings\s*<\/Link>/);
-  // With Settings visible in the nav, the identity chip here must NOT double
-  // as a second settings control — it is the account menu (identity +
-  // sign-out) with NO settings item on this surface (2026-07-16 session layer).
-  assert.match(shellBarSource, /<AccountMenu/);
+  // v12 (2026-07-31 rail shell, Task 3): Settings is no longer specially
+  // promoted in the sub-page bar — it's just one of AppRail's three nav items,
+  // present identically on every admin surface (map included). The
+  // AccountMenu-in-shell-bar pin moves here: identity + sign-out now live in
+  // AppRail's own account cell (menu role + sign-out form), not a shared
+  // <AccountMenu> mounted in the sub-page bar.
+  assert.match(railSource, /role="menu"/);
+  assert.match(railSource, /role="menuitem"/);
+  assert.match(railSource, /<form action="\/auth\/signout" method="post"/);
+  assert.match(railSource, /Sign out/);
+  // With identity + sign-out in the rail, the sub-page bar itself must NOT
+  // double as a second account or settings control (2026-07-16 session layer,
+  // still true, just relocated).
+  assert.doesNotMatch(shellBarSource, /<AccountMenu/);
   assert.doesNotMatch(shellBarSource, /onSelectSettings/);
   assert.doesNotMatch(shellBarSource, /<Link[^>]*aria-label="Open settings"/);
 });
@@ -637,15 +708,36 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   // means menuitemcheckbox + aria-checked — and note that changing the role also
   // breaks any [role="menuitem"] selector driving that menu's keyboard roving.
   assert.doesNotMatch(seatMapSource, /role="menuitem"[\s\S]{0,120}aria-pressed=/);
-  assert.doesNotMatch(seatMapSource, /Hide names/);
-  assert.match(seatMapSource, /Show names\s*\{showNames && \(/);
+  // v12: the kebab item's label is "Show occupant names" (contract #12,
+  // matching the prototype's dc.html line 103 copy exactly) — the inverse-
+  // verb guard must track the CURRENT label, not the retired "Show names"
+  // one, or a regression to "Hide occupant names" would slip past a stale
+  // "Hide names" substring check.
+  assert.doesNotMatch(seatMapSource, /Hide occupant names/);
+  assert.match(seatMapSource, /Show occupant names\s*\{showNames && \(/);
 
   // A skip link is the first focusable on both map surfaces, targeting a
   // focusable map region — the chrome gauntlet is 8+ tab stops otherwise.
-  assert.match(seatMapSource, /href="#planning-canvas"[\s\S]{0,420}Skip to seat map/);
+  // The admin map's skip link is no longer a standalone anchor in this file
+  // (visual-pass fix: that placement put it AFTER AppRail's 7 controls in
+  // DOM order, making it the 8th tab stop) — it's passed to AppRail, which
+  // renders it as the rail's first child, before the hamburger. See
+  // AppRail.tsx's ordering pin below and app-rail.test.mjs's ct assertion
+  // for the actual first-focusable guarantee.
+  assert.match(seatMapSource, /skipLink=\{\{ href: "#planning-canvas", label: "Skip to seat map" \}\}/);
+  assert.doesNotMatch(seatMapSource, /<a\s+href="#planning-canvas"/);
   assert.match(seatMapSource, /id="planning-canvas" tabIndex=\{-1\}/);
   assert.match(viewerSource, /href="#viewer-seat-map"[\s\S]{0,420}Skip to seat map/);
   assert.match(viewerSource, /id="viewer-seat-map"/);
+
+  // AppRail itself must render skipLink before the hamburger button — the
+  // concrete anchor for "first child of the rail" (source-text can't observe
+  // actual tab order; app-rail.test.mjs's ct test does).
+  const railSourceForSkip = await readSource("../components/ui/AppRail.tsx");
+  const skipLinkIndex = railSourceForSkip.indexOf("{skipLink && (");
+  const hamburgerIndex = railSourceForSkip.indexOf("ref={hamburgerRef}");
+  assert.ok(skipLinkIndex >= 0 && hamburgerIndex >= 0, "AppRail must still define both skipLink and the hamburger button");
+  assert.ok(skipLinkIndex < hamburgerIndex, "skipLink must render before the hamburger, so it is the rail's first focusable");
 });
 
 test("admin search clear controls use one clear path with distinct accessible names", async () => {
@@ -682,14 +774,25 @@ test("narrow widths keep the viewer switch and people directory reachable", asyn
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
-  // Below sm the bar's Viewer/Admin shortcuts hide, so the overflow menu must
-  // carry a Viewer item — routed through the same unsaved-edits guard as every
-  // other in-app navigation (#197). Without it the admin surface is a dead end
-  // at phone widths.
-  assert.match(
-    seatMapSource,
-    /id="chrome-overflow-menu"[\s\S]{0,7000}beforeGuardedNavigation\("\/", "the viewer"\)\) event\.preventDefault\(\)/
-  );
+  // v12: the old sub-sm-only "Viewer" menu-fallback link is retired — AppRail
+  // is mounted directly on SeatMap's root (visible in the diff) and is itself
+  // position:fixed with no responsive-hiding class, so its own Viewer item is
+  // reachable at every width including phone, the original #197 concern.
+  // What THIS pin actually proves (be precise about what a bare
+  // /<AppRail\b/ match can and can't show): AppRail is present in this file
+  // at all, and the old per-width guarded literal
+  // (beforeGuardedNavigation("/", "the viewer")) is gone — not just renamed,
+  // since AppRail's Viewer item never hardcodes that call; it goes through
+  // the shared onNavigate wiring pinned above instead. It does NOT prove
+  // AppRail is mounted unconditionally (a regex can't rule out an enclosing
+  // conditional elsewhere in the file) — that property is a plain reading of
+  // the JSX, not something asserted here. AppRail's own behavior — the
+  // Viewer item's presence, its accessible name, and that activating it
+  // calls onNavigate("/", "the viewer") — is asserted in
+  // tests/app-rail.test.mjs ("the Viewer item is reachable and routes
+  // through onNavigate"), which is where that semantic actually lives.
+  assert.match(seatMapSource, /<AppRail\b/);
+  assert.doesNotMatch(seatMapSource, /beforeGuardedNavigation\("\/", "the viewer"\)\) event\.preventDefault\(\)/);
 
   // Below the panel breakpoint the docked People directory disappears, so a
   // panel:hidden toggle must open it as a sheet, and the sheet must offer its
@@ -856,10 +959,14 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   assert.doesNotMatch(loginPageSource, /You&apos;re/);
   assert.match(loginPageSource, /You’re/);
 
-  // The admin sub-pages get the same skip affordance the maps have: the shell
-  // bar's first focusable jumps past the chrome to the page content.
-  assert.match(shellBarSource, /href="#admin-subpage-main"[\s\S]{0,420}Skip to content/);
+  // The admin sub-pages get the same skip affordance the maps have, via
+  // AppRail's skipLink prop (not the shell bar — visual-pass fix: the shell
+  // bar's copy put the skip link behind all 7 rail controls, making it the
+  // 8th tab stop instead of the 1st).
+  assert.doesNotMatch(shellBarSource, /Skip to content/);
+  assert.match(managementPageSource, /skipLink=\{\{ href: "#admin-subpage-main", label: "Skip to content" \}\}/);
   assert.match(managementPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
+  assert.match(settingsPageSource, /skipLink=\{\{ href: "#admin-subpage-main", label: "Skip to content" \}\}/);
   assert.match(settingsPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
 });
 
