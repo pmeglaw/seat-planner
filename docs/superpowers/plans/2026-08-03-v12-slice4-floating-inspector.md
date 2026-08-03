@@ -593,119 +593,161 @@ git commit -m "feat(map): retire SeatActionBar — verbs move into the floating 
 
 ---
 
-### Task 4: Admin nudge wiring (scroll + translate hybrid, one tween)
+### Task 4: Nudge hook + admin wiring (scroll + translate hybrid, one tween)
 
 **Files:**
+- Create: `components/seat-map/useInspectorNudge.ts`
 - Modify: `components/seat-map/SeatMap.tsx`
-- Test: covered by Task 1's pure tests + existing suites; this task is wiring only.
+- Test: covered by Task 1's pure tests + existing suites; the hook is DOM/ref glue by design — its arithmetic lives in `lib/` (already tested), so it needs no jsdom suite.
 
 **Interfaces:**
-- Consumes: `planInspectorNudge` + constants (Task 1, from `@/lib/mapViewport`), `animateValue` (Task 1, from `@/lib/animateValue`), `SEAT_CENTER_PANEL_BREAKPOINT_PX` (existing), `savedPointToVisualPoint` (existing).
-- Produces: `mapRef.current.style.translate` is owned exclusively by the nudge (nothing else may write it).
+- Consumes: `planInspectorNudge` (Task 1, from `@/lib/mapViewport`), `animateValue` (Task 1, from `@/lib/animateValue`), `savedPointToVisualPoint` (existing, per surface), `SEAT_CENTER_PANEL_BREAKPOINT_PX` (existing SeatMap module const, value 900 — the hook takes it as a parameter so the viewer can pass the same tier).
+- Produces (Task 5 consumes this EXACT signature): `useInspectorNudge(options: { viewportRef: RefObject<HTMLDivElement | null>; frameRef: RefObject<HTMLDivElement | null>; selectedSeatId: string | null; inspectorHidden: boolean; panelBreakpointPx: number; resolveSeatVisualX: (seatId: string) => number | null }): { cancelNudge: () => void }` — the hook owns the trigger effect, the restore effect, and `frameRef.current.style.translate` exclusively; parents call `cancelNudge` from their pan/zoom/wheel/programmatic-scroll paths.
 
-- [ ] **Step 1: Add the nudge machinery**
+- [ ] **Step 1: Create the shared hook**
 
-In `SeatMap.tsx`, near the scroll helpers (~`:1559`):
-
-```tsx
-// v12 slice 4 nudge (contract #1). One rAF tween drives BOTH channels —
-// scrollLeft while there is scroll room, then a leftward frame translate for
-// the remainder (fit view has no scroll room; the frame translate is the
-// scroll-engine equivalent of the prototype's free-pan overscroll). The
-// translate is a view transform on the frame element only: seat coordinates,
-// marker styles, and the calibration transform are untouched.
-const nudgeCancelRef = useRef<(() => void) | null>(null);
-const frameTranslateRef = useRef(0);
-
-const cancelInspectorNudge = useCallback(() => {
-  nudgeCancelRef.current?.();
-  nudgeCancelRef.current = null;
-}, []);
-
-const setFrameTranslate = useCallback((px: number) => {
-  frameTranslateRef.current = px;
-  const frame = mapRef.current;
-  if (frame) frame.style.translate = px > 0 ? `${-px}px 0px` : "";
-}, []);
-
-const runInspectorNudge = useCallback(() => {
-  const viewport = mapViewportRef.current;
-  const frame = mapRef.current;
-  const seat = selectedSeatId ? localSeats.find(item => item.id === selectedSeatId) : null;
-  if (!viewport || !frame || !seat) return;
-  if (!window.matchMedia(`(min-width: ${SEAT_CENTER_PANEL_BREAKPOINT_PX}px)`).matches) return;
-  const point = savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat);
-  const plan = planInspectorNudge({
-    seatVisualX: point.x,
-    map: frame,
-    viewport,
-    currentTranslatePx: frameTranslateRef.current
-  });
-  if (!plan) return;
-  cancelInspectorNudge();
-  const startScroll = viewport.scrollLeft;
-  const startTranslate = frameTranslateRef.current;
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  nudgeCancelRef.current = animateValue({
-    from: 0,
-    to: 1,
-    durationMs: 250,
-    reducedMotion,
-    onUpdate: t => {
-      viewport.scrollLeft = startScroll + plan.scrollDelta * t;
-      if (plan.translateDelta !== 0) setFrameTranslate(startTranslate + plan.translateDelta * t);
-    },
-    onDone: () => {
-      nudgeCancelRef.current = null;
-    }
-  });
-}, [selectedSeatId, localSeats, cancelInspectorNudge, setFrameTranslate]);
-```
-
-(`savedPointToVisualPoint` may need pulling into the callback deps or resolving inside — mirror how `centerSeatInMap` `:1708` handles the same inputs.)
-
-- [ ] **Step 2: Trigger, cancel, and restore**
-
-1. **Trigger:** add an effect next to the existing sub-900 centering effect (`:1752`), firing on selection at the panel tier (double-rAF like `queueCenterSeatInMap` so layout settles first):
+Create `components/seat-map/useInspectorNudge.ts`:
 
 ```tsx
-useEffect(() => {
-  if (!selectedSeatId) return;
-  if (!window.matchMedia(`(min-width: ${SEAT_CENTER_PANEL_BREAKPOINT_PX}px)`).matches) return;
-  const frame = requestAnimationFrame(() => {
-    window.requestAnimationFrame(() => runInspectorNudge());
-  });
-  return () => cancelAnimationFrame(frame);
-  // Same dependency discipline as the sheet-tier centering effect above:
-  // runInspectorNudge re-resolves the seat by id at fire time.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [selectedSeatId]);
+"use client";
+
+import { useCallback, useEffect, useRef } from "react";
+import type { RefObject } from "react";
+import { planInspectorNudge } from "@/lib/mapViewport";
+import { animateValue } from "@/lib/animateValue";
+
+/**
+ * v12 slice 4 nudge (interaction contract #1), shared by both map surfaces.
+ * One rAF tween drives BOTH channels — scrollLeft while there is scroll room,
+ * then a leftward frame translate for the remainder (fit view has no scroll
+ * room; the frame translate is the scroll-engine equivalent of the
+ * prototype's free-pan overscroll). The translate is a view transform on the
+ * frame element only: seat coordinates, marker styles, and the calibration
+ * transform are untouched. This hook is the translate's sole owner — nothing
+ * else may write `frameRef.current.style.translate`.
+ */
+export function useInspectorNudge({
+  viewportRef,
+  frameRef,
+  selectedSeatId,
+  inspectorHidden,
+  panelBreakpointPx,
+  resolveSeatVisualX
+}: {
+  viewportRef: RefObject<HTMLDivElement | null>;
+  frameRef: RefObject<HTMLDivElement | null>;
+  selectedSeatId: string | null;
+  /** True while the inspector is not on screen (auto-yielded). */
+  inspectorHidden: boolean;
+  /** The `panel` tier minimum width — the float exists only there. */
+  panelBreakpointPx: number;
+  /** Selected seat's normalized VISUAL x (calibrated), or null if unknown. */
+  resolveSeatVisualX: (seatId: string) => number | null;
+}): { cancelNudge: () => void } {
+  const nudgeCancelRef = useRef<(() => void) | null>(null);
+  const frameTranslateRef = useRef(0);
+  // Resolver identity churns with parent renders; the effects below re-run on
+  // selection change only, reading the latest resolver through this ref.
+  const resolveRef = useRef(resolveSeatVisualX);
+  resolveRef.current = resolveSeatVisualX;
+
+  const cancelNudge = useCallback(() => {
+    nudgeCancelRef.current?.();
+    nudgeCancelRef.current = null;
+  }, []);
+
+  const setFrameTranslate = useCallback((px: number) => {
+    frameTranslateRef.current = px;
+    const frame = frameRef.current;
+    if (frame) frame.style.translate = px > 0 ? `${-px}px 0px` : "";
+  }, [frameRef]);
+
+  // Trigger: on selection at the panel tier, double-rAF so layout settles
+  // (same discipline as the surfaces' queued centering helpers).
+  useEffect(() => {
+    if (!selectedSeatId || inspectorHidden) return;
+    if (!window.matchMedia(`(min-width: ${panelBreakpointPx}px)`).matches) return;
+    const first = requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const viewport = viewportRef.current;
+        const frame = frameRef.current;
+        if (!viewport || !frame) return;
+        const seatVisualX = resolveRef.current(selectedSeatId);
+        if (seatVisualX === null) return;
+        const plan = planInspectorNudge({
+          seatVisualX,
+          map: frame,
+          viewport,
+          currentTranslatePx: frameTranslateRef.current
+        });
+        if (!plan) return;
+        cancelNudge();
+        const startScroll = viewport.scrollLeft;
+        const startTranslate = frameTranslateRef.current;
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        nudgeCancelRef.current = animateValue({
+          from: 0,
+          to: 1,
+          durationMs: 250,
+          reducedMotion,
+          onUpdate: t => {
+            viewport.scrollLeft = startScroll + plan.scrollDelta * t;
+            if (plan.translateDelta !== 0) setFrameTranslate(startTranslate + plan.translateDelta * t);
+          },
+          onDone: () => {
+            nudgeCancelRef.current = null;
+          }
+        });
+      });
+    });
+    return () => cancelAnimationFrame(first);
+  }, [selectedSeatId, inspectorHidden, panelBreakpointPx, viewportRef, frameRef, cancelNudge, setFrameTranslate]);
+
+  // Restore: the frame translate unwinds when nothing is selected anymore (or
+  // the inspector auto-yielded) — the map returns to its true scroll position.
+  useEffect(() => {
+    const shouldRest = !selectedSeatId || inspectorHidden;
+    if (!shouldRest || frameTranslateRef.current === 0) return;
+    cancelNudge();
+    const startTranslate = frameTranslateRef.current;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    nudgeCancelRef.current = animateValue({
+      from: startTranslate,
+      to: 0,
+      durationMs: 200,
+      reducedMotion,
+      onUpdate: setFrameTranslate,
+      onDone: () => {
+        nudgeCancelRef.current = null;
+      }
+    });
+  }, [selectedSeatId, inspectorHidden, cancelNudge, setFrameTranslate]);
+
+  return { cancelNudge };
+}
 ```
 
-2. **Cancel on user interaction:** call `cancelInspectorNudge()` at the top of the viewport's pan `pointerdown` handler, the zoom in/out/fit handlers, and `scrollMapToPoint` (a programmatic center supersedes a nudge). Find each via `git grep -n "onPointerDown\|zoomIn\|zoomOut\|fitMapToView\|scrollMapToPoint" components/seat-map/SeatMap.tsx` and add the single call at the top of each handler body. Native wheel scrolling also fights an in-flight tween (both write `scrollLeft`): add `onWheel={cancelInspectorNudge}` to the viewport element (passive listener semantics are fine — the handler only cancels, never preventDefaults).
-3. **Restore:** when the selection clears OR the inspector auto-yields, tween the translate back to 0:
+- [ ] **Step 2: Wire it into SeatMap**
+
+1. **Mount** (near the other viewport callbacks, after `mapViewportRef`/`mapRef`/`selectedSeatId`/`inspectorCollapsed` all exist):
 
 ```tsx
-// Frame translate unwinds when nothing is selected anymore (or the inspector
-// auto-yielded): the map returns to its true scroll-only position.
-useEffect(() => {
-  const shouldRest = !selectedSeatId || inspectorCollapsed;
-  if (!shouldRest || frameTranslateRef.current === 0) return;
-  cancelInspectorNudge();
-  const startTranslate = frameTranslateRef.current;
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  nudgeCancelRef.current = animateValue({
-    from: startTranslate,
-    to: 0,
-    durationMs: 200,
-    reducedMotion,
-    onUpdate: setFrameTranslate,
-    onDone: () => { nudgeCancelRef.current = null; }
-  });
-}, [selectedSeatId, inspectorCollapsed, cancelInspectorNudge, setFrameTranslate]);
+const { cancelNudge } = useInspectorNudge({
+  viewportRef: mapViewportRef,
+  frameRef: mapRef,
+  selectedSeatId,
+  inspectorHidden: inspectorCollapsed,
+  panelBreakpointPx: SEAT_CENTER_PANEL_BREAKPOINT_PX,
+  resolveSeatVisualX: seatId => {
+    const seat = localSeats.find(item => item.id === seatId);
+    if (!seat) return null;
+    return savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat).x;
+  }
+});
 ```
 
-4. Add imports: `planInspectorNudge` (extend the existing `@/lib/mapViewport` import) and `animateValue` from `@/lib/animateValue`.
+2. **Cancel on user interaction:** call `cancelNudge()` at the top of the viewport's pan `pointerdown` handler, the zoom in/out/fit handlers, and `scrollMapToPoint` (a programmatic center supersedes a nudge). Find each via `git grep -n "onPointerDown\|zoomIn\|zoomOut\|fitMapToView\|scrollMapToPoint" components/seat-map/SeatMap.tsx` and add the single call at the top of each handler body. Native wheel scrolling also fights an in-flight tween (both write `scrollLeft`): add `onWheel={cancelNudge}` to the viewport element (the handler only cancels, never preventDefaults, so passive semantics are fine).
+3. Add the import: `import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";`.
 
 - [ ] **Step 3: Verify the frozen-guardrail suites specifically**
 
@@ -747,9 +789,9 @@ useEffect(() => {
 }, [inspectorCollapsed, selectedSeatId, resultsPanelOpen]);
 ```
 
-- [ ] **Step 2: Nudge (same recipe as Task 4, viewer refs)**
+- [ ] **Step 2: Nudge (consume Task 4's shared hook)**
 
-Mirror Task 4's machinery verbatim against the viewer's own `mapViewportRef`/`mapRef`/`selectedSeatId`/`publishedSeats` (check whether `savedPointToVisualPoint` is already imported on this surface — it is used for marker layout; reuse the same call the viewer's `centerSeatInMap` `:522` makes), with the same 900px matchMedia gate (the viewer uses the same `panel` tier — its breakpoint constant may have a different name; find the viewer's own sheet/panel gate first and reuse it), the same double-rAF trigger effect, `cancelInspectorNudge()` at the top of the viewer's pan `pointerdown` + zoom handlers + `scrollMapToPoint` (`:511-520`), and the same restore effect keyed on `!selectedSeatId || inspectorCollapsed`. The viewer's inspector is read-only but floats identically — contract #1 applies to both surfaces.
+Mount `useInspectorNudge` (from `@/components/seat-map/useInspectorNudge` — signature in Task 4's Interfaces block) against the viewer's own `mapViewportRef`/`mapRef`/`selectedSeatId`, `inspectorHidden: inspectorCollapsed`, `panelBreakpointPx: 900` (the viewer uses the same `panel` tier — if it already has its own breakpoint constant for the sheet/panel split, pass that instead), and a `resolveSeatVisualX` that resolves the seat from the viewer's published seats and applies the same visual-point call the viewer's `centerSeatInMap` (`:522`) makes. Call the returned `cancelNudge()` at the top of the viewer's pan `pointerdown` handler, its zoom handlers, and its `scrollMapToPoint` (`:511-520`), and add `onWheel={cancelNudge}` to the viewer's viewport element. The viewer's inspector is read-only but floats identically — contract #1 applies to both surfaces.
 
 - [ ] **Step 3: Run the tiers**
 
