@@ -122,10 +122,11 @@ type DeleteSeatConfirmState = {
 } | null;
 
 /**
- * The action bar's vacate ALWAYS confirms, dirty or not — it is a transient
- * surface that appears and disappears with the selection, so it earns less
- * trust than a control inside a panel the user deliberately opened. The rule
- * itself lives in lib/seatDraftActions (vacateNeedsConfirmation).
+ * Vacate here ALWAYS confirms, dirty or not — the rule inherited from the
+ * now-retired canvas action bar (v12 slice 4): a transient surface that
+ * appears and disappears with the selection earns less trust than a control
+ * inside a panel the user deliberately opened. The rule itself lives in
+ * lib/seatDraftActions (vacateNeedsConfirmation).
  */
 type VacateConfirmState = {
   seatId: string;
@@ -497,10 +498,12 @@ export function SeatMap({
   });
 
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
-  // The bar and the inspector run ONE vacate path — same payload, same undo
-  // snapshot, same stale-draft fence. Both commit through applySeatUpdated
-  // below, so a seat vacated from the canvas records history identically to one
-  // vacated from the panel and Undo cannot tell them apart.
+  // barSeatActions and the inspector's save run ONE commit path — same
+  // payload, same undo snapshot, same stale-draft fence. Both commit through
+  // applySeatUpdated below, so a seat vacated via the icon row (this hook
+  // keeps its pre-slice-4 "bar" name from the now-retired canvas action bar
+  // it originally served) records history identically to a save made in the
+  // panel, and Undo cannot tell them apart.
   const barSeatActions = useSeatDraftActions({
     onBeforeSeatUpdate: captureDraftSnapshot,
     onSeatUpdated: applySeatUpdated,
@@ -1330,11 +1333,12 @@ export function SeatMap({
   }
 
   /**
-   * The single commit path for a saved seat, shared by the inspector's form and
-   * the canvas action bar. Extracted from the inspector's inline prop so both
-   * surfaces record undo history the same way — a vacate from the bar must be
-   * indistinguishable from one made in the panel, or Undo starts behaving
-   * differently depending on where the user clicked.
+   * The single commit path for a saved seat, shared by the inspector's form
+   * and its icon-row Vacate (v12 slice 4 retired the canvas action bar those
+   * verbs used to live on). Extracted from the inspector's inline prop so
+   * both paths record undo history the same way — a vacate must be
+   * indistinguishable from a save made in the panel, or Undo starts behaving
+   * differently depending on which control the user clicked.
    *
    * `freshDraftPayload` is only ever passed for a force_move commit (inspector
    * "Move them?" retry). force_move also vacates the mover's OTHER draft seat
@@ -1344,8 +1348,8 @@ export function SeatMap({
    * spreading the stale copy bakes a stale updated_at into localSeats that
    * fails the next Undo's per-row concurrency fence (MLS02, fix round 1,
    * 2026-07-30 — reproduced live). Ingest the fresh payload wholesale instead,
-   * same as swap. Ordinary saves and the bar's vacate never touch a second
-   * row, so they keep the plain spread-and-replace path.
+   * same as swap. Ordinary saves and Vacate never touch a second row, so they
+   * keep the plain spread-and-replace path.
    */
   function applySeatUpdated(
     seat: SeatWithEmployee,
@@ -1368,8 +1372,10 @@ export function SeatMap({
     }
   }
 
-  // The bar never vacates directly. It always raises the confirm first, because
-  // it is a transient surface (lib/seatDraftActions: vacateNeedsConfirmation).
+  // Named for the now-retired canvas action bar this used to sit on (v12
+  // slice 4 moved it to the inspector's icon row). Never vacates directly —
+  // it always raises the confirm first, because it is a transient surface
+  // (lib/seatDraftActions: vacateNeedsConfirmation).
   function requestVacateFromBar() {
     if (!selectedSeat || !canVacateSeat(selectedSeat)) return;
     setActionError(null);
@@ -3369,12 +3375,15 @@ export function SeatMap({
                 />
               </div>
             )}
-            {/* Legend card, bottom-left against the map stage (same reason as
-                the action bar below: it re-centres with the narrowed map when
-                a panel reserves its column). Counts come from legendCounts,
-                which follows the active filters — the number row must never
-                contradict a filtered map. Hidden below md, where the card
-                would cover more plan than it explains, and gated to Floor 3:
+            {/* Legend card, bottom-left against the map stage (it re-centres
+                with the narrowed map for the same reason the header does: a
+                docking panel — results panel or mode card, v12 slice 4 —
+                reserves its column via stageReservedClassName; the canvas
+                action bar this comment used to point to is retired). Counts
+                come from legendCounts, which follows the active filters — the
+                number row must never contradict a filtered map. Hidden below
+                md, where the card would cover more plan than it explains,
+                and gated to Floor 3:
                 Floor 2 shows the placeholder, where whole-map counts would
                 read as a bug. In the 768–899 band the md floor lets this card
                 render while the inspector/results/filter surfaces are still
