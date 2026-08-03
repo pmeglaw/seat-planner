@@ -42,7 +42,18 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /aria-label="Undo last map change"/);
   assert.match(source, /aria-label="Redo last undone change"/);
   assert.match(source, /Planning canvas/);
-  assert.match(source, /aria-label="Seat status legend"/);
+  // The legend's accessible name. Either spelling counts: the admin used to
+  // write the attribute inline on its own <ul>, and since v12 slice 3 it hands
+  // the same string to MapStatusLegend's `ariaLabel` prop, which renders it as
+  // the <ul>'s aria-label. What is pinned is the NAME, not where it is spelled
+  // — that the rendered element really is a labelled list is enforced at
+  // runtime by tests/map-status-legend.test.mjs.
+  assert.match(source, /aria-?[lL]abel="Seat status legend"/);
+  // v12 slice 3: the docked status strip is gone and the legend floats as a
+  // layer-01 card, but it must still BE a legend — the shared MapStatusLegend
+  // owns the <ul aria-label={ariaLabel}> so the status counts stay a labelled
+  // list rather than decorative text painted over the map.
+  assert.match(source, /<MapStatusLegend/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
   // Session layer, v12 (2026-07-31 rail shell): identity + Settings moved off
   // the header AccountMenu into AppRail (Task 1) — Settings is now a
