@@ -862,7 +862,7 @@ export function ViewerSeatFinder({
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
        which captures the sticky header so it never pins to the viewport. */
-    <div className="shell-theme flex min-h-screen flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
+    <div className="shell-theme flex min-h-[100svh] flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
       <a
         href="#viewer-seat-map"
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"

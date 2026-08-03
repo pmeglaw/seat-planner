@@ -130,13 +130,20 @@ This document goes stale; the code does not. Read, in order:
    floating what used to be in flow — see `git log 71de420 36bcbaa`: bottom
    sheets painting over the legend at 768–899, a 192–424px band of bare page
    below the map at every width under lg, and the zoom stack landing under the
-   fixed PEOPLE pill once the map filled that column. **Still owner-verified
-   only on the viewer** — the admin surface needs the role-flip pass, and the
-   two items most likely to need a follow-up there are the same dead band below
-   lg (admin keeps a content-sized `sm:min-h-[480px]` overview viewport plus an
-   in-flow search row, so it was not fixed with the viewer's) and the top-left
-   chip rail, which wraps to three rows with four filters active and then
-   reaches into the `top-14` toast band that carries Undo.
+   fixed PEOPLE pill once the map filled that column. The bare-page fix sized
+   the map viewport to `100svh` but left the page root at `min-h-screen`
+   (100lvh); on a mobile browser with a collapsing URL bar, `lvh` runs past
+   `svh` and the root could still stretch ~56–110px below the map. A follow-up
+   fix matched the root to `min-h-[100svh]`, so the dead band stays closed for
+   the dynamic-toolbar case too. **Agent-verified only on the viewer, via
+   Playwright** — nothing here is owner-verified; the owner's role-flip pass on
+   admin is still pending, and the two items most likely to need a follow-up
+   there are the same dead band below lg (admin keeps a content-sized
+   `sm:min-h-[480px]` overview viewport plus an in-flow search row, so it was
+   not fixed with the viewer's) and the top-left chip rail, which — with all
+   four filters plus a search term active (six chips, counting the floor pill
+   and crumb) — wraps to two rows at 1440 and three rows at ≤1024, reaching
+   into the `top-14` toast band that carries Undo at the deeper wrap.
 
 ## Settled — do not reopen
 
