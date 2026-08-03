@@ -167,8 +167,10 @@ This document goes stale; the code does not. Read, in order:
    with a hybrid scroll+translate tween: a pure planner + injectable rAF
    tween (`lib/animateValue.ts`, `lib/mapViewport.ts`, `636a5fb`) wired
    through the shared `components/seat-map/useInspectorNudge.ts` hook on both
-   admin (`da5d3cc`) and viewer (`046d161`); wheel and native keyboard scroll
-   both cancel an in-flight nudge (`49dc74f`). The inspector no longer
+   admin (`da5d3cc`) and viewer (`046d161`); wheel cancels an in-flight nudge
+   on both surfaces (`da5d3cc` admin, `046d161` viewer), and native keyboard
+   scroll does too — shipped on admin first (`49dc74f`), then mirrored on
+   viewer within `046d161` itself. The inspector no longer
    reserves stage width itself — the only occupants that reserve the right
    column via `stageReservedClassName` are now the results panel / mode card
    on admin and the People directory on viewer.
