@@ -42,7 +42,16 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /aria-label="Undo last map change"/);
   assert.match(source, /aria-label="Redo last undone change"/);
   assert.match(source, /Planning canvas/);
-  assert.match(source, /aria-label="Seat status legend"/);
+  // v12 slice 3: the docked status strip is gone and the legend floats as a
+  // layer-01 card, but it must still BE a legend AND still carry the same
+  // accessible name. One assertion binds the two halves: a lone
+  // /Seat status legend/ pin would keep passing if the string drifted onto a
+  // title tooltip, and a lone /<MapStatusLegend/ pin would keep passing if the
+  // name vanished. MapStatusLegend owns the <ul aria-label={ariaLabel}>, so
+  // the status counts stay a labelled list rather than decorative text
+  // painted over the map (the rendered semantics — that it really is a
+  // labelled list — are verified at runtime by tests/map-status-legend.test.mjs).
+  assert.match(source, /<MapStatusLegend[\s\S]{0,200}ariaLabel="Seat status legend"/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
   // Session layer, v12 (2026-07-31 rail shell): identity + Settings moved off
   // the header AccountMenu into AppRail (Task 1) — Settings is now a
@@ -546,27 +555,22 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /\{resultsPanelOpen && !modeCardOpen && \(/);
   assert.match(seatMapSource, /onOpen=\{selectSeatResult\}/);
   assert.match(seatMapSource, /onShowOnMap=\{queueCenterSeatInMap\}/);
-  // Map ⋯ overflow is a real menu: ARIA role/haspopup semantics plus
-  // roving keyboard support, not a plain button group.
-  assert.match(seatMapSource, /id="seat-map-overflow-menu"[\s\S]{0,160}role="menu"/);
-  // Pin role="menuitem" as a real JSX attribute on both items specifically
-  // (not just satisfied by the querySelector string above).
-  assert.match(seatMapSource, /role="menuitem"[\s\S]{0,800}Fit map to view/);
-  assert.match(seatMapSource, /role="menuitem"[\s\S]{0,800}Zoom to 100%/);
-  assert.match(seatMapSource, /aria-haspopup="menu"/);
-  // Roving tabindex (APG menu-button pattern): items sit out of the native
-  // tab order — reachable only via the focus-on-open effect and the
-  // Arrow/Home/End cycling below, not by Tab.
-  assert.match(seatMapSource, /role="menuitem"[\s\S]{0,40}tabIndex=\{-1\}[\s\S]{0,800}Fit map to view/);
-  assert.match(seatMapSource, /role="menuitem"[\s\S]{0,40}tabIndex=\{-1\}[\s\S]{0,800}Zoom to 100%/);
-  // Tab (and Shift+Tab) must close the menu and hand focus back to the
-  // trigger synchronously — preventDefault() stops the native focus hop and
-  // the trigger is focused immediately (not via the deferred
-  // returnFocusAfterClose helper), avoiding a double focus move.
-  assert.match(seatMapSource, /event\.key === "Tab"[\s\S]{0,450}event\.preventDefault\(\);[\s\S]{0,120}setMapMenuOpen\(false\);[\s\S]{0,90}mapMenuButtonRef\.current\?\.focus\(\)/);
-  // The Arrow/Home/End branch must stopPropagation like the adjacent
-  // Escape branch, for consistency and to avoid latent bubbling conflicts.
-  assert.match(seatMapSource, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp"[\s\S]{0,120}event\.preventDefault\(\);\s*event\.stopPropagation\(\);/);
+  // The map ⋯ overflow menu was retired in v12 slice 3 (its two items live on
+  // the zoom stack's fit button and the chrome kebab's reset-zoom), so its
+  // APG menu pins moved out with it. What survives here is narrower than the
+  // retired block: the popover focus-restore test below still pins that the
+  // chrome ⋯ trigger gets focus back when its popover closes. Nothing in this
+  // file pins the chrome ⋯ as a role="menu" (it is a role="group") —
+  // FloorSelector is now the repo's only APG menu, and its pattern is pinned
+  // below: role="menu" + menuitemradio items with aria-checked, an
+  // ArrowDown-opens handler on the trigger, and Escape-close-refocus.
+  const floorSelectorSource = await readSource("../components/seat-map/FloorSelector.tsx");
+  assert.match(floorSelectorSource, /role="menu"/);
+  assert.match(floorSelectorSource, /role="menuitemradio"/);
+  assert.match(floorSelectorSource, /aria-checked=\{option\.id === floor\}/);
+  assert.match(floorSelectorSource, /event\.key === "ArrowDown" && !open\) \{\s*event\.preventDefault\(\);\s*setOpen\(true\);/);
+  assert.match(floorSelectorSource, /event\.key === "Escape"\) \{\s*event\.stopPropagation\(\);\s*closeAndRefocus\(\);/);
+  assert.match(floorSelectorSource, /function closeAndRefocus\(\) \{\s*setOpen\(false\);\s*triggerRef\.current\?\.focus\(\);/);
 });
 
 test("popovers restore trigger focus when a close unmounts the focused element", async () => {
@@ -590,12 +594,9 @@ test("popovers restore trigger focus when a close unmounts the focused element",
     assert.match(source, /returnFocusRef=\{filterTriggerRef\}/);
   }
 
-  // The chrome ⋯ More menu and the map ⋯ actions menu return focus to their
-  // triggers on Escape.
+  // The chrome ⋯ More menu returns focus to its trigger on Escape.
   assert.match(seatMapSource, /ref=\{chromeMenuButtonRef\}/);
   assert.match(seatMapSource, /setChromeMenuOpen\(false\);[\s\S]{0,90}returnFocusAfterClose\(chromeMenuButtonRef\)/);
-  assert.match(seatMapSource, /ref=\{mapMenuButtonRef\}/);
-  assert.match(seatMapSource, /setMapMenuOpen\(false\);[\s\S]{0,90}returnFocusAfterClose\(mapMenuButtonRef\)/);
 });
 
 test("chrome bars stay pinned and the filter menu precedes search in the tab order", async () => {
@@ -939,6 +940,13 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   assert.doesNotMatch(viewerSource, /type="button"\s+role="listitem"/);
   assert.doesNotMatch(viewerSource, /role="listitem"[\s\S]{0,80}onClick/);
   assert.ok((viewerSource.match(/<div role="listitem"/g) ?? []).length >= 2, "viewer lists wrap buttons in listitem divs");
+
+  // Same list-semantics guarantee for the viewer's status counts. v12 slice 3
+  // floated them off the docked footer strip onto a layer-01 card over the
+  // full-bleed plan; the shared MapStatusLegend keeps them a labelled <ul>
+  // instead of decorative text painted on the map. Bound to its accessible
+  // name in one assertion for the same reason as the admin pin above.
+  assert.match(viewerSource, /<MapStatusLegend[\s\S]{0,200}ariaLabel="Seat status summary"/);
 
   // Brand and seat-code tokens are identifiers — never machine-translated.
   for (const [name, source] of [["SeatMap", seatMapSource], ["Viewer", viewerSource], ["ShellBar", shellBarSource]]) {

@@ -19,7 +19,13 @@ import {
   seatsToVisualSeats
 } from "@/lib/mapLayoutTransform";
 // Aliased: `fitMapWidth` is already this component's state for the resolved width.
-import { fitMapWidth as computeFitMapWidth } from "@/lib/mapViewport";
+import {
+  MAP_ZOOM_MAX,
+  MAP_ZOOM_MIN,
+  MAP_ZOOM_STEP,
+  clampZoom,
+  fitMapWidth as computeFitMapWidth
+} from "@/lib/mapViewport";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { buildViewerDirectory, buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { buildInitials } from "@/lib/validators";
@@ -27,6 +33,7 @@ import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
+import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
@@ -74,9 +81,8 @@ const KIND_LABELS: Record<ViewerSearchResult["kind"], string> = {
 
 // View-transform zoom (same rule as the admin map): scales the rendered frame
 // width only — never the stored coordinates or the calibration transform.
-const MAP_ZOOM_MIN = 0.6;
-const MAP_ZOOM_MAX = 2;
-const MAP_ZOOM_STEP = 0.2;
+// MAP_ZOOM_MIN/MAX/STEP are imported from lib/mapViewport, single-sourced
+// with the admin map's clamp bounds.
 
 function getSeatZone(seat: SeatWithEmployee) {
   return seat.zone ?? seat.department ?? "No zone";
@@ -540,8 +546,7 @@ export function ViewerSeatFinder({
   }, [centerSeatInMap, scrollMapToPoint, visualSeatById]);
 
   function applyMapZoom(nextZoom: number) {
-    const clamped = Math.min(MAP_ZOOM_MAX, Math.max(MAP_ZOOM_MIN, Math.round(nextZoom * 100) / 100));
-    setZoomFactor(clamped);
+    setZoomFactor(clampZoom(nextZoom));
   }
 
   function fitMapToView() {
@@ -775,6 +780,16 @@ export function ViewerSeatFinder({
   // Narrow-width sheet: same search/selection yielding rules as the docked
   // panel, driven by its own toggle instead of the persisted collapse pref.
   const mobileDirectorySheetOpen = mobileDirectoryOpen && !searchActive && !selectedSeat;
+  // Below the panel tier (<900) results, the directory sheet and the inspector
+  // all render as full-width `fixed inset-x-3 bottom-3 z-[80]` sheets, which
+  // paint straight over the z-30 floating legend in the 768–899 band where the
+  // legend's own md floor lets it render (measured 2026-08-03: the sheet
+  // covered the whole 246px status row). Lifting the legend clear is not an
+  // option — the map viewport is ~520px there and a 50–60vh sheet would push
+  // it into the top-left floor cluster — so it yields the bottom instead and
+  // comes back on dismiss. At >=900 these become side panels and never
+  // overlap, so the legend keeps rendering.
+  const bottomSheetOwnsBottom = resultsPanelOpen || mobileDirectorySheetOpen || Boolean(selectedSeat);
   // Prototype "stage": at the panel tier the inspector reserves layout width
   // (320px expanded, 44px rail) instead of overlaying the map.
   const inspectorDockTier: "expanded" | "rail" | "none" = selectedSeat
@@ -799,9 +814,25 @@ export function ViewerSeatFinder({
   // a zoomed view keeps its zoom.
 
   const mapViewportClassName = cx(
-    // Mounted-sheet treatment (2026-07-16 regrade, review 3) — see SeatMap.
-    "relative mx-auto w-full max-w-full overflow-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--sp-color-canvas)] shadow-elevation-2",
-    "min-h-[360px] max-h-[82svh] sm:min-h-[520px] sm:max-h-[calc(100svh-62px)] lg:h-full lg:min-h-0 lg:max-h-none lg:flex-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+    // v12 slice 3: the mounted-sheet treatment (hairline border + elevation +
+    // matting padding) is gone here too — same move the admin map made. The
+    // plan is layer-00: it runs edge to edge and the workspace band shows
+    // through around it, so there is no card edge left to draw and everything
+    // that reads over the map floats as a layer-01 white card instead.
+    "relative mx-auto w-full max-w-full overflow-auto overscroll-contain bg-[var(--admin-map-workspace)]",
+    // Below lg the viewport takes the whole screen under the 36px bar, rather
+    // than the old content-driven min-h/82svh pair. That pair sized the box to
+    // the plan (472px at the mobile frame width), which was fine while a
+    // toolbar row and a status footer sat in flow around it and a hairline
+    // border drew the sheet's edge. Slice 3 floated both and dropped the
+    // border, so the leftover column showed as 192-424px of bare page below a
+    // hard seam — measured 2026-08-03 at every width below lg, and the two
+    // greiges differ (workspace #ECE8E0 against page #F7F6F2), so it read as
+    // the page running out rather than as workspace. Filling the column keeps
+    // the plan on an unbroken workspace band to the bottom of the screen, and
+    // an exact height keeps this the one vertical scroll owner (#197) — the
+    // job the 82svh ceiling used to do.
+    "h-[calc(100svh-36px)] lg:h-full lg:min-h-0 lg:max-h-none lg:flex-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     zoomFactor === null ? "sm:flex sm:items-center sm:justify-center" : "",
     floor === "3" ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]"
@@ -815,25 +846,23 @@ export function ViewerSeatFinder({
   const mapFrameStyle = zoomFactor === null
     ? (fitMapWidth ? { width: `${fitMapWidth}px` } : undefined)
     : { width: `calc(var(--map-detail-base) * ${zoomFactor})` };
-  // Fit view hugs the floor plan's aspect ratio at lg instead of stretching to
-  // fill the leftover column height — the old flex-1 stage letterboxed the
-  // plan between dead beige bands (54% of the map viewport at ~1084px with the
-  // panel open; 2026-07-16 critique, fix 4). 1911/867 mirrors
-  // MAP_IMAGE_WIDTH/MAP_IMAGE_HEIGHT (Tailwind arbitrary values must be
-  // static). flex-shrink + lg:min-h-0 still cap the stage when height is the
-  // binding dimension — exactly the old contain-fit outcome. Detail zoom keeps
-  // flex-1: panning wants the full column.
-  const mapStageClassName = cx(
-    "relative min-w-0 lg:flex lg:min-h-0",
-    zoomFactor === null ? "lg:aspect-[1911/867]" : "lg:flex-1"
-  );
+  // One stage in both states (v12 slice 3). The old fit branch pinned the
+  // stage to the plan's 1911/867 aspect so the leftover column height could
+  // not letterbox the plan between dead beige bands — but that fix was for a
+  // MATTED sheet, where the bands read as broken card. Full-bleed, the band
+  // around the plan IS the workspace surface, so the stage takes the whole
+  // column and the contain-fit inside it centres the plan on that surface.
+  // Removing the aspect branch cannot start a fit feedback loop: at lg the
+  // stage height comes from the screen (root lg:h-screen → main flex column),
+  // never from the frame width the fit effect computes.
+  const mapStageClassName = "relative min-w-0 lg:flex lg:min-h-0 lg:flex-1";
 
   const chromeSurfaceShortcut = "flex h-9 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
        which captures the sticky header so it never pins to the viewport. */
-    <div className="shell-theme flex min-h-screen flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
+    <div className="shell-theme flex min-h-[100svh] flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
       <a
         href="#viewer-seat-map"
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"
@@ -1025,28 +1054,41 @@ export function ViewerSeatFinder({
         </div>
       </header>
 
-      <div className={["mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
+      {/* No matting: the stage column runs to the window edges (v12 slice 3).
+          stageReservedClassName still reserves the right slot — that is the
+          People-directory hydration guarantee, not decoration. */}
+      <div className={["flex w-full flex-1 flex-col lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
         <main className="flex min-w-0 flex-1 flex-col lg:min-h-0 lg:overflow-hidden">
           {/* Inside <main>, not above the header: page content outside every
               landmark trips axe's region rule. */}
           <h1 className="sr-only">Seat Planner — office map</h1>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-0.5 pb-2">
-            <FloorSelector floor={floor} onChange={setFloor} />
-            <span className="text-[12px] text-[var(--admin-text-secondary)]">{mapCrumbLabel}</span>
-            {/* Viewers don't need the layer model ("Published" / "Read-only"
-                badges) — a last-publish date answers the question they have. */}
-            {lastPublishedLabel && floor === "3" && (
-              <span
-                title={`The map everyone sees — last updated ${lastPublishedLabel}`}
-                className="rounded-full bg-[var(--admin-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--admin-text-secondary)] ring-1 ring-[var(--admin-border)]"
-              >
-                Updated {lastPublishedLabel}
-              </span>
-            )}
-            <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} />
-          </div>
 
           <div className={mapStageClassName}>
+            {/* Top-left cluster (v12 slice 3): floor, crumb, last-publish date,
+                and active filter chips float over the full-bleed plan as
+                layer-01 cards. Nothing above the map is in flow any more, so a
+                chip arriving mid-session can no longer resize the map column
+                and re-run the fit. pointer-events-none on the rail with each
+                card opting itself back in keeps the gaps between cards
+                draggable map. Ungated by floor on purpose — the floor pill IS
+                how you leave the Floor 2 placeholder. */}
+            <div className="pointer-events-none absolute left-3 top-3 z-40 flex flex-wrap items-center gap-2">
+              <div className="pointer-events-auto">
+                <FloorSelector floor={floor} onChange={setFloor} />
+              </div>
+              <span className="pointer-events-auto border border-[var(--admin-border)] bg-white px-2.5 py-1.5 text-[12px] text-[var(--sp-color-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
+              {/* Viewers don't need the layer model ("Published" / "Read-only"
+                  badges) — a last-publish date answers the question they have. */}
+              {lastPublishedLabel && floor === "3" && (
+                <span
+                  title={`The map everyone sees — last updated ${lastPublishedLabel}`}
+                  className="pointer-events-auto rounded-full bg-[var(--admin-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--admin-text-secondary)] shadow-elevation-3 ring-1 ring-[var(--admin-border)]"
+                >
+                  Updated {lastPublishedLabel}
+                </span>
+              )}
+              <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="pointer-events-auto" />
+            </div>
             <div
               ref={mapViewportRef}
               id="viewer-seat-map"
@@ -1144,8 +1186,21 @@ export function ViewerSeatFinder({
                 </div>
               )}
             </div>
+            {/* Lives beside the marker layer now that the status footer it used
+                to follow is gone. Stage-level, not inside the Floor 3 branch:
+                the announcement has to survive a floor switch (it still counts
+                the loaded seats on the placeholder floor). */}
+            <p className="sr-only" aria-live="polite">{mapAnnouncement}</p>
+            {/* Below the panel tier the fixed PEOPLE pill owns the same
+                bottom-right corner (it is the only route to the directory down
+                there), so the stack clears its 35px + the 12px inset and
+                matches its safe-area handling. Both are bottom-anchored to the
+                same screen edge now that the viewport fills the column, so at a
+                flat bottom-3 the pill covered the fit button exactly — measured
+                34x34 at every width below 900. At >=900 the pill is
+                `panel:hidden` and the stack takes the corner back. */}
             {floor === "3" && (
-              <div className="absolute bottom-3 right-3 z-30">
+              <div className="absolute right-3 z-30 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] panel:bottom-3">
                 <MapZoomControl
                   label={mapZoomLabel}
                   onZoomIn={() => applyMapZoom(zoomFactor === null ? 1 : zoomFactor + MAP_ZOOM_STEP)}
@@ -1156,33 +1211,37 @@ export function ViewerSeatFinder({
                 />
               </div>
             )}
+            {/* Status counts, floated bottom-left against the map stage (same
+                reason as the zoom stack: it re-centres with the narrowed map
+                when a panel reserves the right column). Counts still come from
+                statusCountSeats, which follows the active filters — the one
+                number row everyone reads must never contradict a filtered map.
+                Hidden below md, where the card would cover more plan than it
+                explains, and gated to Floor 3: Floor 2 is the placeholder,
+                where whole-map counts would read as a bug. Viewer-shaped: no
+                draft entry (the published layer has no draft seats) and no
+                actions — this surface offers no verbs. */}
+            {floor === "3" && (
+            <div className={cx("absolute bottom-3 left-3 z-30 hidden", bottomSheetOwnsBottom ? "panel:block" : "md:block")}>
+              <MapStatusLegend
+                ariaLabel="Seat status summary"
+                totalLabel={`${statusCountSeats.length} ${statusCountSeats.length === 1 ? "seat" : "seats"}`}
+                entries={[
+                  { key: "assigned", label: STATUS_LABELS.assigned, dotClassName: "bg-[var(--admin-status-ok)]", count: assignedCount },
+                  { key: "available", label: STATUS_LABELS.available, dotClassName: "bg-[var(--admin-status-neutral)]", count: openCount },
+                  { key: "reserved", label: STATUS_LABELS.reserved, dotClassName: "bg-[var(--admin-status-warn)]", count: reservedCount }
+                ]}
+                summary={searchActive
+                  ? `${resultCountLabel} · ${searchResults.resultSeatIds.length} mapped`
+                  : structuredFiltersActive
+                    // Filters got no match count while search did (2026-07-16
+                    // critique, minor 8) — same status-line home for both.
+                    ? `${highlightedSeatIdSet.size} of ${publishedSeats.length} seats ${highlightedSeatIdSet.size === 1 ? "matches" : "match"} filters`
+                    : "Seating across people, seats, departments, and zones."}
+              />
+            </div>
+            )}
           </div>
-
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2">
-            <p className="min-w-0 truncate text-xs font-medium text-[var(--admin-text-muted)]">
-              {searchActive
-                ? `${resultCountLabel} · ${searchResults.resultSeatIds.length} mapped`
-                : structuredFiltersActive
-                  // Filters got no match count while search did (2026-07-16
-                  // critique, minor 8) — same status-line home for both.
-                  ? `${highlightedSeatIdSet.size} of ${publishedSeats.length} seats ${highlightedSeatIdSet.size === 1 ? "matches" : "match"} filters`
-                  : "Seating across people, seats, departments, and zones."}
-            </p>
-            <ul aria-label="Seat status summary" className="flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--admin-text-secondary)]">
-              {[
-                { label: "Assigned", value: assignedCount, dotClass: "bg-[var(--admin-status-ok)]" },
-                { label: "Open", value: openCount, dotClass: "bg-[var(--admin-status-neutral)]" },
-                { label: "Reserved", value: reservedCount, dotClass: "bg-[var(--admin-status-warn)]" }
-              ].map(item => (
-                <li key={item.label} className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-2.5 py-1">
-                  <span className={cx("h-2 w-2 shrink-0 rounded-full", item.dotClass)} aria-hidden="true" />
-                  {item.label}
-                  <span className="font-semibold text-[var(--admin-text-primary)]">{item.value}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <p className="sr-only" aria-live="polite">{mapAnnouncement}</p>
         </main>
       </div>
 

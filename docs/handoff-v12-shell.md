@@ -111,6 +111,40 @@ This document goes stale; the code does not. Read, in order:
    identity-only `AdminShellBar`. Account/sign-out moved into the rail's own
    bottom cell.
 
+2. **The full-bleed map (§2) — SHIPPED 2026-08-03 (v12 slice 3).** The mounted
+   sheet is gone on both surfaces: no hairline border, no elevation, no matting
+   padding, and no in-flow chrome around the plan. The plan is layer-00 running
+   edge to edge on the `--admin-map-workspace` band, and everything that reads
+   over it floats as a layer-01 card — the floor pill + crumb + filter chips
+   top-left, `MapStatusLegend` (new, shared by both surfaces) bottom-left, the
+   zoom stack bottom-right, Add seat top-right on admin. The zoom contract is
+   single-sourced in `lib/mapViewport.ts` (step 0.25, clamp 0.5–2.5) and the
+   canvas header, status strip, footer and overflow kebab are deleted, not
+   hidden. Two consequences are deliberate and will read as bugs: the beige
+   band around the plan at lg is the workspace surface, not a broken card — it
+   is what the floating controls sit on, and it grows when the People directory
+   reserves its column (collapse the directory and the plan gets wider); and
+   below 768 the persistent match-count readout is gone with the legend, so a
+   phone gets the Filter button's badge and the results-sheet header instead.
+   The fix wave that closed the slice found three real collisions, all from
+   floating what used to be in flow — see `git log 71de420 36bcbaa`: bottom
+   sheets painting over the legend at 768–899, a 192–424px band of bare page
+   below the map at every width under lg, and the zoom stack landing under the
+   fixed PEOPLE pill once the map filled that column. The bare-page fix sized
+   the map viewport to `100svh` but left the page root at `min-h-screen`
+   (100lvh); on a mobile browser with a collapsing URL bar, `lvh` runs past
+   `svh` and the root could still stretch ~56–110px below the map. A follow-up
+   fix matched the root to `min-h-[100svh]`, so the dead band stays closed for
+   the dynamic-toolbar case too. **Agent-verified only on the viewer, via
+   Playwright** — nothing here is owner-verified; the owner's role-flip pass on
+   admin is still pending, and the two items most likely to need a follow-up
+   there are the same dead band below lg (admin keeps a content-sized
+   `sm:min-h-[480px]` overview viewport plus an in-flow search row, so it was
+   not fixed with the viewer's) and the top-left chip rail, which — with all
+   four filters plus a search term active (six chips, counting the floor pill
+   and crumb) — wraps to two rows at 1440 and three rows at ≤1024, reaching
+   into the `top-14` toast band that carries Undo at the deeper wrap.
+
 ## Settled — do not reopen
 
 These were decided deliberately, several against the handoff's own text. A fresh

@@ -203,8 +203,15 @@
   /* Light workspace behind the map (shell spec: #F7F6F2). The light-surface
      admin tokens alias the two :root neutrals (--sp-color-canvas /
      --sp-color-surface) — exactly ONE canvas tone and ONE panel tone exist,
-     so a stray third background can't creep back in per-component. */
+     so a stray third background can't creep back in per-component. The one
+     sanctioned exception is --admin-map-workspace below: it is not a surface
+     tone but the band behind a full-bleed raster, and it is decorative only. */
   --admin-bg: var(--sp-color-canvas);
+
+  /* v12 layer-00 workspace: the band behind the full-bleed floor plan raster.
+     Decorative only (no text sits directly on it), so it carries no contrast
+     obligation — every label over the map rides a layer-01 white card. */
+  --admin-map-workspace: #ECE8E0;
 
   /* Dark chrome (#161616): top bar + inspector read as one continuous dark
      surface. Text #F7F6F2 (16.45:1), muted #B8AEA2 (6.43:1) — both AA. */

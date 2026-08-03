@@ -38,6 +38,7 @@ import {
 import {
   MAP_ZOOM_MAX,
   MAP_ZOOM_MIN,
+  MAP_ZOOM_STEP,
   boundingBoxCenter,
   centerScrollTarget,
   clampZoom,
@@ -74,6 +75,7 @@ import {
   type ResultStatusBreakdown
 } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
+import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
 import { SeatActionBar } from "@/components/seat-map/SeatActionBar";
@@ -167,7 +169,8 @@ const INSPECTOR_FORM_ID = "seat-inspector-form";
 const EMPTY_SEAT_ID_SET: ReadonlySet<string> = new Set<string>();
 // Map zoom is a view transform on the scroll container only (spec §9): it
 // scales the rendered frame width and never touches stored seat coordinates.
-const MAP_ZOOM_STEP = 0.2;
+// MAP_ZOOM_STEP itself is imported from lib/mapViewport, single-sourced with
+// the admin/viewer clamp bounds.
 // Below this width the inspector overlays as a fixed bottom sheet (max-h 60vh,
 // SeatInspector.tsx) instead of docking as a width-reserving side panel — the
 // `panel` breakpoint referenced throughout the seat-centering logic below.
@@ -348,7 +351,6 @@ export function SeatMap({
   const [zone, setZone] = useState("all");
   const [status, setStatus] = useState("all");
   const [filterCollapsed, setFilterCollapsed] = useState(true);
-  const [mapMenuOpen, setMapMenuOpen] = useState(false);
   const [chromeMenuOpen, setChromeMenuOpen] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
@@ -356,8 +358,6 @@ export function SeatMap({
   const canvasSearchInputRef = useRef<HTMLInputElement | null>(null);
   const filterTriggerRef = useRef<HTMLButtonElement | null>(null);
   const chromeMenuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const mapMenuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const mapMenuRef = useRef<HTMLDivElement | null>(null);
   // Whether the docked inspector was expanded when Ask Planner took the right
   // edge — closed drawers hand the slot back (2026-07-16 critique, minor 6).
   const inspectorExpandedBeforePlannerRef = useRef(false);
@@ -644,27 +644,6 @@ export function SeatMap({
     return () => document.removeEventListener("pointerdown", handleOutsidePointer);
   }, [filterCollapsed]);
 
-  // Same dismissal rule for the map-corner overflow (kebab) menu.
-  useEffect(() => {
-    if (!mapMenuOpen) return;
-
-    function handleOutsidePointer(event: globalThis.PointerEvent) {
-      if (event.target instanceof Element && event.target.closest("[data-map-menu]")) return;
-      setMapMenuOpen(false);
-    }
-
-    document.addEventListener("pointerdown", handleOutsidePointer);
-    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
-  }, [mapMenuOpen]);
-
-  // Menus open with focus on the first item (WAI-ARIA menu button pattern),
-  // not left behind on the trigger.
-  useEffect(() => {
-    if (!mapMenuOpen) return;
-    const firstItem = mapMenuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
-    firstItem?.focus();
-  }, [mapMenuOpen]);
-
   // Same dismissal rule for the chrome-bar "More" menu (the v12 kebab).
   useEffect(() => {
     if (!chromeMenuOpen) return;
@@ -708,8 +687,11 @@ export function SeatMap({
         setOverviewMapWidth(null);
         return;
       }
-      const availableWidth = Math.max(1, viewportElement.clientWidth - 12);
-      const availableHeight = Math.max(1, viewportElement.clientHeight - 12);
+      // The inset used to cancel the viewport's matting padding; with the
+      // matting gone it is the prototype's breathing margin instead, so the
+      // fitted plan never butts flush against the rail or the window edge.
+      const availableWidth = Math.max(1, viewportElement.clientWidth - 16);
+      const availableHeight = Math.max(1, viewportElement.clientHeight - 16);
       const desktopOverview = window.matchMedia("(min-width: 1024px)").matches;
       const nextWidth = desktopOverview
         ? Math.min(MAP_IMAGE_WIDTH, availableWidth, availableHeight * (MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT))
@@ -833,11 +815,6 @@ export function SeatMap({
         return;
       }
 
-      if (mapMenuOpen) {
-        setMapMenuOpen(false);
-        return;
-      }
-
       if (chromeMenuOpen) {
         setChromeMenuOpen(false);
         return;
@@ -901,7 +878,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, mapMenuOpen, moveEmployeeConfirm, moveEmployeeSourceSeatId, position, publishReviewOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, position, publishReviewOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
@@ -1902,7 +1879,6 @@ export function SeatMap({
   }
 
   function startAddSeatMode() {
-    setMapMenuOpen(false);
     if (selectedSeatId && inspectorDirty) {
       requestInspectorGuard({ kind: "start-add-seat" });
       return;
@@ -1911,7 +1887,6 @@ export function SeatMap({
   }
 
   function cancelAddSeatMode() {
-    setMapMenuOpen(false);
     setAddSeatMode(false);
   }
 
@@ -2482,20 +2457,28 @@ export function SeatMap({
     Boolean(moveEmployeeConfirm)
   );
   const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;
+  // Which surfaces own the bottom of the screen below the panel tier, where
+  // they are full-width sheets rather than side docks. Wider than
+  // mobileMapInteractionSurfaceOpen on purpose: that one is canEdit-gated
+  // (it guards edit affordances), while a sheet covers the legend whether or
+  // not this session can edit, and the results panel is a sheet down there too.
+  const bottomSheetOwnsBottom = mobileMapInteractionSurfaceOpen || resultsPanelOpen || Boolean(selectedSeat);
   const mapViewportClassName = [
-    // Mounted-sheet treatment (2026-07-16 regrade, review 3): the hairline +
-    // elevation make the beige stage read as a drawing mounted on the desk,
-    // so the gray/beige/plan-edge seams become designed edges.
-    "relative mx-auto w-full max-w-full overscroll-contain border border-[var(--admin-border)] bg-[var(--sp-color-canvas)] shadow-elevation-2 lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
+    // v12 slice 3: the mounted-sheet treatment (hairline border + elevation +
+    // matting padding) is gone. The plan is layer-00 now — it runs edge to
+    // edge and the workspace band shows through around it, so there is no
+    // card edge left to draw. Everything that reads over the map floats as a
+    // layer-01 white card instead.
+    "relative mx-auto w-full max-w-full overscroll-contain bg-[var(--admin-map-workspace)] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
     mapViewMode === "overview"
-      ? "min-h-[300px] max-h-[82svh] overflow-auto p-1.5 sm:max-h-none sm:min-h-[480px] sm:overflow-hidden sm:p-2 lg:flex lg:min-h-0 lg:items-center lg:justify-center"
-      // The sm cap budgets the FULL stacked chrome above/below the map (top
-      // bar + search row + canvas header + status footer + gaps ≈ 300px,
-      // measured live at 876px), so the page itself doesn't grow a second
-      // scrollbar next to the pan viewport — below lg the map viewport is the
-      // one vertical scroll owner (#197). On short windows the min-h floor
-      // wins and the page scrolls a little; that beats an unusably short map.
-      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px] sm:max-h-[calc(100svh-300px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+      ? "min-h-[300px] max-h-[82svh] overflow-auto sm:max-h-none sm:min-h-[480px] sm:overflow-hidden lg:flex lg:min-h-0 lg:items-center lg:justify-center"
+      // The sm cap budgets the stacked chrome above the map. With the canvas
+      // header and status footer deleted that budget collapses to the 36px
+      // bar + the mobile search row ≈ 88px, so the page itself doesn't grow a
+      // second scrollbar next to the pan viewport — below lg the map viewport
+      // is the one vertical scroll owner (#197). On short windows the min-h
+      // floor wins and the page scrolls a little; that beats a stub of a map.
+      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px] sm:max-h-[calc(100svh-88px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     mapViewMode === "detail" && floor === "3" && !addSeatMode ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]" : ""
   ].join(" ");
@@ -2529,13 +2512,20 @@ export function SeatMap({
     mobileMapControlsHidden ? "hidden sm:block" : ""
   ].filter(Boolean).join(" ");
   const actionErrorBannerClassName = [
-    "min-w-0 whitespace-pre-wrap break-words rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-error-text)]",
+    // pointer-events-auto: the alerts now sit in a pointer-events-none overlay
+    // layer above the canvas, so each banner has to opt its own box back in.
+    "pointer-events-auto min-w-0 whitespace-pre-wrap break-words rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] px-3 py-2 text-sm font-semibold text-[var(--admin-state-error-text)]",
     canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
   const actionNoticeBannerClassName = [
-    // Overlay, not layout: the toast floats above the floor-selector row so
-    // its 6s lifetime never shifts the map column height mid-session.
-    "absolute left-0.5 right-0.5 top-0.5 z-40 shadow-elevation-3",
+    // Overlay, not layout: the toast's 6s lifetime must never shift the map
+    // column height mid-session. top-14 for the same reason the error overlay
+    // uses it — the floating top clusters own the first 44px of the stage, and
+    // at top-0.5 this toast rendered UNDER them in paint order (they are z-40
+    // and later in the DOM). That put the Add seat button on top of the
+    // toast's right-aligned Undo, hit-blocking the recovery path for the whole
+    // 6s after every draft mutation.
+    "absolute left-0.5 right-0.5 top-14 z-50 shadow-elevation-3",
     "flex min-w-0 flex-col gap-2 rounded-xl border px-3 py-2 text-sm font-semibold sm:flex-row sm:items-center sm:justify-between",
     actionNoticeTone === "neutral"
       ? "border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)]"
@@ -2948,6 +2938,23 @@ export function SeatMap({
                     >
                       Reset zoom &amp; position
                     </button>
+                    {/* Zoom to 100% moved here verbatim when the floating map ⋯
+                        kebab retired (v12 slice 3). It is NOT the same action as
+                        the reset above: fit/overview scales the plan to the
+                        viewport, this one lands on exact 1:1 detail zoom. The
+                        kebab's other item (fit) already lives on the zoom
+                        stack's fit button, so nothing was dropped. */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setChromeMenuOpen(false);
+                        applyMapZoom(1);
+                        returnFocusAfterClose(chromeMenuButtonRef);
+                      }}
+                      className={chromeMenuItem}
+                    >
+                      Zoom to 100%
+                    </button>
                     <div className="mx-0 my-1 h-px bg-white/10" />
                     {/* Danger text #ff8389 (Carbon red-30, --admin-chrome-danger-text):
                         6.95:1 measured on this menu's own #1f1f1f
@@ -3042,7 +3049,10 @@ export function SeatMap({
         </div>
       </header>
 
-      <div className={["mx-auto flex w-full max-w-[1920px] flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3 lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
+      {/* v12 slice 3: no width cap and no padding — the floor plan is layer-00
+          and runs edge to edge below the bar. stageReservedClassName stays:
+          it is the reserved right padding the inspector/results panels ride. */}
+      <div className={["flex w-full flex-1 flex-col lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
         
 
         {/* lg:flex-1 keeps the height chain rigid: without it the fit-view
@@ -3090,28 +3100,45 @@ export function SeatMap({
             </label>
           </div>
 
-      <main className={["grid grid-cols-1 gap-2 p-2 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
-        <section id="planning-canvas" tabIndex={-1} aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden relative p-0.5 lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
-          {staleDraftNotice && (
-            <div role="alert" className={actionErrorBannerClassName}>
-              {staleDraftNotice}
-            </div>
-          )}
+      <main className={["grid grid-cols-1 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
+        <section id="planning-canvas" tabIndex={-1} aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden relative lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
+          {/* The status strip that used to carry this heading is gone (v12
+              slice 3). The heading stays as the canvas section's accessible
+              name — aria-labelledby above points at this id — and is now
+              ungated, so the read-only admin view keeps a named region too. */}
+          <h2 id="admin-planning-canvas-title" className="sr-only">
+            {filtersActive ? searchStatusTitle : "Planning canvas"}
+          </h2>
 
-          {sessionExpired && actionError && (
-            <div role="alert" className={actionErrorBannerClassName}>
-              Your session expired — sign in again to keep editing. Unsaved changes stay in this tab until you leave.{" "}
-              <a href="/login?next=/admin" className="font-semibold underline underline-offset-2">
-                Sign in
-              </a>
-            </div>
-          )}
+          {/* Alerts overlay the canvas instead of pushing the map down: a
+              banner arriving mid-session must not resize the map and re-run
+              the overview fit. pointer-events-auto per alert so the layer
+              itself never eats map drags. top-14 (not top-3) clears the
+              floating top clusters below — they occupy 12px + a 32px card
+              row, so 56px lands the first banner just under them instead of
+              on top of the floor pill. */}
+          <div className="pointer-events-none absolute inset-x-3 top-14 z-50 flex flex-col gap-2">
+            {staleDraftNotice && (
+              <div role="alert" className={actionErrorBannerClassName}>
+                {staleDraftNotice}
+              </div>
+            )}
 
-          {actionError && !sessionExpired && (
-            <div role="alert" className={actionErrorBannerClassName}>
-              {actionError}
-            </div>
-          )}
+            {sessionExpired && actionError && (
+              <div role="alert" className={actionErrorBannerClassName}>
+                Your session expired — sign in again to keep editing. Unsaved changes stay in this tab until you leave.{" "}
+                <a href="/login?next=/admin" className="font-semibold underline underline-offset-2">
+                  Sign in
+                </a>
+              </div>
+            )}
+
+            {actionError && !sessionExpired && (
+              <div role="alert" className={actionErrorBannerClassName}>
+                {actionError}
+              </div>
+            )}
+          </div>
 
           {actionNotice && !swapSourceSeatId && !moveEmployeeSourceSeatId && (
             <div role="status" aria-live="polite" className={actionNoticeBannerClassName}>
@@ -3133,21 +3160,35 @@ export function SeatMap({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-0.5 pb-2 lg:pb-0">
-            <FloorSelector floor={floor} onChange={setFloor} />
-            <span className="text-[12px] text-[var(--admin-text-secondary)]">{mapCrumbLabel}</span>
-            <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} />
-            <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
-              {canEdit && floor === "3" && (
+          <div className={mapStageClassName}>
+            {/* Top-left cluster (v12 slice 3): floor, crumb, and active filter
+                chips float over the full-bleed plan as layer-01 white cards.
+                Nothing above the map is in flow any more, so a chip arriving
+                mid-session can no longer resize the map column and re-run the
+                overview fit. pointer-events-none on the rail with each card
+                opting itself back in keeps the gaps between cards draggable
+                map. Ungated by floor on purpose — the floor pill IS how you
+                leave the Floor 2 placeholder. */}
+            <div className="pointer-events-none absolute left-3 top-3 z-40 flex flex-wrap items-center gap-2">
+              <div className="pointer-events-auto">
+                <FloorSelector floor={floor} onChange={setFloor} />
+              </div>
+              <span className="pointer-events-auto border border-[var(--admin-border)] bg-white px-2.5 py-1.5 text-[12px] text-[var(--sp-color-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
+              <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="pointer-events-auto" />
+            </div>
+            {/* Top-right cluster: Add seat. It rides the stage, so the reserved
+                inspector column slides it inboard automatically. */}
+            {canEdit && floor === "3" && (
+              <div className="pointer-events-none absolute right-3 top-3 z-40">
                 <button
                   type="button"
                   aria-pressed={addSeatMode}
                   onClick={addSeatMode ? cancelAddSeatMode : startAddSeatMode}
                   className={[
-                    "inline-flex h-[30px] items-center gap-1.5 border px-2.5 text-[12px] font-medium transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]",
+                    "pointer-events-auto flex h-8 items-center gap-1.5 border px-3 text-[12.5px] font-semibold shadow-elevation-3 transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]",
                     addSeatMode
                       ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-on-soft)]"
-                      : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)]"
+                      : "border-[var(--admin-border)] bg-white text-[var(--sp-color-text-secondary)] hover:bg-[var(--sp-color-canvas)] hover:text-[var(--admin-text-primary)]"
                   ].join(" ")}
                 >
                   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none">
@@ -3155,110 +3196,8 @@ export function SeatMap({
                   </svg>
                   {addSeatMode ? "Exit add seat" : "Add seat"}
                 </button>
-              )}
-              {canEdit && floor === "3" && (
-                <div data-map-menu className="relative">
-                  <button
-                    ref={mapMenuButtonRef}
-                    type="button"
-                    aria-haspopup="menu"
-                    aria-expanded={mapMenuOpen}
-                    aria-controls={mapMenuOpen ? "seat-map-overflow-menu" : undefined}
-                    aria-label="More map actions"
-                    title="More map actions"
-                    onClick={() => setMapMenuOpen(current => !current)}
-                    className={[
-                      "inline-flex h-[30px] w-8 items-center justify-center border transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]",
-                      mapMenuOpen
-                        ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-on-soft)]"
-                        : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)]"
-                    ].join(" ")}
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
-                      <circle cx="10" cy="4.5" r="1.5" />
-                      <circle cx="10" cy="10" r="1.5" />
-                      <circle cx="10" cy="15.5" r="1.5" />
-                    </svg>
-                  </button>
-                  {mapMenuOpen && (
-                    <div
-                      id="seat-map-overflow-menu"
-                      ref={mapMenuRef}
-                      role="menu"
-                      aria-label="Map actions"
-                      onKeyDown={event => {
-                        if (event.key === "Escape") {
-                          event.stopPropagation();
-                          setMapMenuOpen(false);
-                          returnFocusAfterClose(mapMenuButtonRef);
-                          return;
-                        }
-                        if (event.key === "Tab") {
-                          // Tab closes and refocuses the trigger synchronously: preventDefault()
-                          // stops the native focus hop, and focusing the trigger immediately
-                          // (not via the deferred returnFocusAfterClose) avoids a double focus
-                          // move — the user's next Tab then proceeds from the trigger.
-                          event.preventDefault();
-                          event.stopPropagation();
-                          setMapMenuOpen(false);
-                          mapMenuButtonRef.current?.focus();
-                          return;
-                        }
-                        if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'));
-                          if (items.length === 0) return;
-                          const currentIndex = items.indexOf(document.activeElement as HTMLElement);
-                          let nextIndex: number;
-                          if (event.key === "Home") {
-                            nextIndex = 0;
-                          } else if (event.key === "End") {
-                            nextIndex = items.length - 1;
-                          } else if (event.key === "ArrowDown") {
-                            nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
-                          } else {
-                            nextIndex = currentIndex < 0 ? items.length - 1 : (currentIndex - 1 + items.length) % items.length;
-                          }
-                          items[nextIndex]?.focus();
-                        }
-                      }}
-                      className="absolute right-0 top-full z-40 min-w-[176px] border border-[var(--admin-border)] bg-[var(--admin-surface)] py-1 shadow-elevation-3"
-                    >
-                      <button
-                        type="button"
-                        role="menuitem"
-                        tabIndex={-1}
-                        onClick={() => {
-                          setMapMenuOpen(false);
-                          fitMapToView();
-                          returnFocusAfterClose(mapMenuButtonRef);
-                        }}
-                        className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
-                      >
-                        Fit map to view
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        tabIndex={-1}
-                        onClick={() => {
-                          setMapMenuOpen(false);
-                          applyMapZoom(1);
-                          returnFocusAfterClose(mapMenuButtonRef);
-                        }}
-                        className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
-                      >
-                        Zoom to 100%
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className={mapStageClassName}>
+              </div>
+            )}
             <div
               ref={mapViewportRef}
               className={mapViewportClassName}
@@ -3382,56 +3321,29 @@ export function SeatMap({
                 />
               </div>
             )}
-            {/* Positioned against the map stage, NOT the viewport: that is what
-                makes it re-centre on the narrowed map when the inspector
-                reserves its column instead of drifting underneath it. */}
-            {canEdit && floor === "3" && (
-              <SeatActionBar
-                seat={selectedSeat}
-                busy={mutationInFlight || barSeatActions.pending}
-                onAssign={requestAssignFromBar}
-                onMove={() => startMoveEmployeeMode()}
-                onSwap={() => startSwapSeatMode()}
-                onVacate={requestVacateFromBar}
-                firstActionRef={seatActionBarFirstActionRef}
-              />
-            )}
-          </div>
-
-          {canEdit && (
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 lg:mt-0">
-              <div className="min-w-0">
-                <h2 id="admin-planning-canvas-title" className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">
-                  {filtersActive ? searchStatusTitle : "Planning canvas"}
-                </h2>
-                <p aria-label="Seat inventory summary" className="text-xs font-medium text-[var(--admin-text-muted)] sm:truncate">
-                  {filtersActive ? searchStatusSummary : (
-                    <>
-                      {stats.total} seats
-                      <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                      {stats.assigned} assigned
-                      <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                      {stats.available} open
-                      <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                      {stats.reserved} reserved
-                      <span className="mx-1 text-[var(--admin-text-subtle)]">·</span>
-                      {stats.unavailable} unavailable
-                    </>
-                  )}
-                </p>
-              </div>
-              <div className="flex min-w-0 shrink-0 items-center gap-3">
-                <ul aria-label="Seat status legend" className="hidden flex-wrap items-center gap-2 text-xs font-medium text-[var(--admin-text-secondary)] md:flex">
-                  {SEAT_STATUS_LEGEND.filter(item => !item.draftOnly || legendCounts[item.key] > 0).map(item => (
-                    <li key={item.key} className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-2.5 py-1">
-                      <span className={["h-2 w-2 shrink-0 rounded-full", item.accentClass].join(" ")} aria-hidden="true" />
-                      {item.label}
-                      <span className="text-[var(--admin-text-subtle)]" aria-hidden="true">·</span>
-                      <span className="font-semibold text-[var(--admin-text-primary)]">{legendCounts[item.key]}</span>
-                    </li>
-                  ))}
-                </ul>
-                {filtersActive && (
+            {/* Legend card, bottom-left against the map stage (same reason as
+                the action bar below: it re-centres with the narrowed map when
+                a panel reserves its column). Counts come from legendCounts,
+                which follows the active filters — the number row must never
+                contradict a filtered map. Hidden below md, where the card
+                would cover more plan than it explains, and gated to Floor 3:
+                Floor 2 shows the placeholder, where whole-map counts would
+                read as a bug. In the 768–899 band the md floor lets this card
+                render while the inspector/results/filter surfaces are still
+                full-width `fixed inset-x-3 bottom-3 z-[80]` sheets, which
+                paint straight over it (measured on the viewer's identical
+                stack, 2026-08-03). It yields the bottom to them and returns on
+                dismiss; at >=900 those dock to the side and never overlap. */}
+            {floor === "3" && (
+            <div className={["absolute bottom-3 left-3 z-30 hidden", bottomSheetOwnsBottom ? "panel:block" : "md:block"].join(" ")}>
+              <MapStatusLegend
+                ariaLabel="Seat status legend"
+                totalLabel={`${stats.total} ${stats.total === 1 ? "seat" : "seats"}`}
+                entries={SEAT_STATUS_LEGEND
+                  .filter(item => !item.draftOnly || legendCounts[item.key] > 0)
+                  .map(item => ({ key: item.key, label: item.label, dotClassName: item.accentClass, count: legendCounts[item.key] }))}
+                summary={filtersActive ? searchStatusSummary : null}
+                actions={filtersActive ? (
                   <div className="flex shrink-0 items-center gap-1.5">
                     <button
                       type="button"
@@ -3452,10 +3364,25 @@ export function SeatMap({
                       Clear
                     </button>
                   </div>
-                )}
-              </div>
+                ) : null}
+              />
             </div>
-          )}
+            )}
+            {/* Positioned against the map stage, NOT the viewport: that is what
+                makes it re-centre on the narrowed map when the inspector
+                reserves its column instead of drifting underneath it. */}
+            {canEdit && floor === "3" && (
+              <SeatActionBar
+                seat={selectedSeat}
+                busy={mutationInFlight || barSeatActions.pending}
+                onAssign={requestAssignFromBar}
+                onMove={() => startMoveEmployeeMode()}
+                onSwap={() => startSwapSeatMode()}
+                onVacate={requestVacateFromBar}
+                firstActionRef={seatActionBarFirstActionRef}
+              />
+            )}
+          </div>
         </section>
       </main>
       </div>

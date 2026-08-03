@@ -15,6 +15,7 @@ const {
   fitMapWidth,
   MAP_ZOOM_MIN,
   MAP_ZOOM_MAX,
+  MAP_ZOOM_STEP,
   MAP_MARKER_EDGE_GUTTER_PX
 } = await importTsModule("lib/mapViewport.ts");
 
@@ -86,8 +87,17 @@ test("clampZoom holds the configured range", () => {
   assert.equal(clampZoom(1.25), 1.25);
   assert.equal(clampZoom(0.1), MAP_ZOOM_MIN);
   assert.equal(clampZoom(99), MAP_ZOOM_MAX);
-  assert.equal(MAP_ZOOM_MIN, 0.6);
-  assert.equal(MAP_ZOOM_MAX, 2);
+  assert.equal(MAP_ZOOM_MIN, 0.5);
+  assert.equal(MAP_ZOOM_MAX, 2.5);
+});
+
+test("zoom step matches v12 contract #15", () => {
+  assert.equal(MAP_ZOOM_STEP, 0.25);
+});
+test("clampZoom holds the v12 bounds", () => {
+  assert.equal(clampZoom(0.4), 0.5);
+  assert.equal(clampZoom(3), 2.5);
+  assert.equal(clampZoom(1.25), 1.25);
 });
 
 test("clampZoom rounds to whole percentage points so repeated steps cannot drift", () => {

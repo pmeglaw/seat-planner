@@ -34,8 +34,10 @@ export type MapMetrics = {
 export type ScrollTarget = { left: number; top: number };
 export type NormalizedPoint = { x: number; y: number };
 
-export const MAP_ZOOM_MIN = 0.6;
-export const MAP_ZOOM_MAX = 2;
+export const MAP_ZOOM_MIN = 0.5;
+export const MAP_ZOOM_MAX = 2.5;
+/** v12 contract #15: one zoom click = 25 percentage points. */
+export const MAP_ZOOM_STEP = 0.25;
 
 /** Pan is only treated as a drag once the pointer clears this many pixels. */
 export const PAN_DRAG_THRESHOLD_PX = 4;
