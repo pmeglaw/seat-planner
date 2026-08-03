@@ -2471,14 +2471,38 @@ export function SeatMap({
     // layer-01 white card instead.
     "relative mx-auto w-full max-w-full overscroll-contain bg-[var(--admin-map-workspace)] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
     mapViewMode === "overview"
-      ? "min-h-[300px] max-h-[82svh] overflow-auto sm:max-h-none sm:min-h-[480px] sm:overflow-hidden lg:flex lg:min-h-0 lg:items-center lg:justify-center"
-      // The sm cap budgets the stacked chrome above the map. With the canvas
-      // header and status footer deleted that budget collapses to the 36px
-      // bar + the mobile search row ≈ 88px, so the page itself doesn't grow a
-      // second scrollbar next to the pan viewport — below lg the map viewport
-      // is the one vertical scroll owner (#197). On short windows the min-h
-      // floor wins and the page scrolls a little; that beats a stub of a map.
-      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px] sm:max-h-[calc(100svh-88px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+      // Below lg the viewport fills the screen under the chrome instead of
+      // sizing itself to the plan. The old `sm:min-h-[480px] sm:max-h-none`
+      // pair was content-driven, which was fine while a toolbar row and a
+      // status footer sat in flow around the map and a hairline border drew
+      // the sheet's edge — slice 3 floated both and dropped the border, so the
+      // leftover column showed as bare page below a hard seam (measured 249px
+      // at 860x809: 809 window − 36px bar − 44px search row − 480px viewport).
+      // The two greiges differ — workspace #ECE8E0 against page #F7F6F2 — so
+      // it read as the page running out rather than as workspace. 80px is the
+      // exact sub-lg chrome above the map, derived from the classes: the 36px
+      // bar (--admin-chrome-h) plus the 44px in-flow canvas search row
+      // (`lg:hidden`, h-9 input = 36px + pb-2 = 8px; its `block` label
+      // collapses to the input, so there is no extra baseline strut — measured
+      // in Chromium at 360/390/430/640/860/1023). An exact height also keeps
+      // this the one vertical scroll owner (#197), the job the 82svh ceiling
+      // used to do. The min-h-[300px] floor still wins on very short windows
+      // and the page scrolls a little; that beats a stub of a map.
+      // Centring moves up to sm from lg: with the aspect lock gone the
+      // letterbox band lands INSIDE the viewport on the workspace tone at
+      // every width, and the viewer centres its fit view from sm up — leaving
+      // this lg-only would top-align the plan and pile the whole band under it
+      // at 640-1023, splitting the two surfaces at the same widths.
+      ? "min-h-[300px] h-[calc(100svh-80px)] overflow-auto sm:flex sm:items-center sm:justify-center sm:overflow-hidden"
+      // The sm cap budgets the stacked chrome above the map, and it is the
+      // same 80px: 36px bar + 44px canvas search row. It read 88 while the
+      // search row was an estimate (36 + ~52); the row measures 44, so 88 left
+      // an 8px sliver of page below the map — the small version of the band
+      // the overview branch above exists to close. Below lg the pan viewport
+      // is the one vertical scroll owner (#197), so the page itself doesn't
+      // grow a second scrollbar next to it. On short windows the min-h floor
+      // wins and the page scrolls a little; that beats a stub of a map.
+      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px] sm:max-h-[calc(100svh-80px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     mapViewMode === "detail" && floor === "3" && !addSeatMode ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]" : ""
   ].join(" ");
@@ -2494,18 +2518,19 @@ export function SeatMap({
     ? (overviewMapWidth ? { width: `${overviewMapWidth}px` } : undefined)
     : { width: `calc(var(--map-detail-base) * ${zoomFactor})` };
   const mapZoomLabel = mapViewMode === "overview" ? "Fit" : `${Math.round(zoomFactor * 100)}%`;
-  // Overview (fit) hugs the floor plan's aspect ratio at lg instead of
-  // stretching to fill leftover column height — same fix as the viewer's
-  // 2026-07-16 letterbox change (PR #144); 1911/867 mirrors MAP_IMAGE_*
-  // (Tailwind arbitrary values must be static). flex-shrink + lg:min-h-0 keep
-  // the height-bound contain behavior, and the aspect height derives from the
-  // stage WIDTH only, so the overview ResizeObserver's inputs stay rigid (no
-  // fit-calc feedback — the trap the outer column's lg:flex-1 comment warns
-  // about). Detail zoom keeps flex-1: panning wants the full column.
-  const mapStageClassName = [
-    "relative min-w-0 lg:flex lg:min-h-0",
-    mapViewMode === "overview" ? "lg:aspect-[1911/867]" : "lg:flex-1"
-  ].join(" ");
+  // One stage class in both states. Overview used to pin the stage to the
+  // plan's 1911/867 aspect so leftover column height could not letterbox the
+  // plan between dead beige bands — but that fix (PR #144) was for a MATTED
+  // sheet, where those bands read as broken card. Full-bleed, the band around
+  // the plan IS the workspace surface, so the stage takes the whole column and
+  // the contain-fit inside it centres the plan on that surface. The aspect pin
+  // had also become the defect: it ended the viewport at the aspect height and
+  // left the rest of a tall window as bare page (measured ~190px at 1440x849).
+  // Dropping it cannot start a fit-calc feedback loop either — that loop needs
+  // a CONTENT-derived stage height, and at lg the height comes from the screen
+  // (root lg:h-screen down the lg:flex-1 / lg:min-h-0 chain), never from the
+  // frame width the overview ResizeObserver computes.
+  const mapStageClassName = "relative min-w-0 lg:flex lg:min-h-0 lg:flex-1";
   const mapCrumbLabel = floor === "2" ? "Not yet mapped" : `Draft map · ${stats.total} ${stats.total === 1 ? "seat" : "seats"}`;
   const mapMarkerLayerClassName = [
     "absolute inset-0",
@@ -2669,8 +2694,12 @@ export function SeatMap({
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
        which captures the sticky header so it never pins to the viewport.
        pl-12 clears the v12 left rail, which is position:fixed and does not
-       participate in this flex column. */
-    <div className="flex min-h-screen flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12 lg:h-screen lg:min-h-0 lg:overflow-hidden">
+       participate in this flex column.
+       min-h in svh, not min-h-screen (100lvh): below lg the map viewport is
+       sized in svh, and on a mobile browser with a collapsing URL bar lvh runs
+       past svh — the root would stretch below the map's bottom edge and reopen
+       the dead band that height exists to close. */
+    <div className="flex min-h-[100svh] flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12 lg:h-screen lg:min-h-0 lg:overflow-hidden">
       {/* onNavigate is veto-only (contract from AppRail's own interface):
           true lets AppRail run its own router.push, false means a dirty
           inspector intercepted it and the unsaved-edits guard dialog is now
@@ -3057,7 +3086,12 @@ export function SeatMap({
 
         {/* lg:flex-1 keeps the height chain rigid: without it the fit-view
             width/height calculation feeds back on itself after the reserved
-            inspector column opens and closes, sticking the map small. */}
+            inspector column opens and closes, sticking the map small. Now that
+            the stage is lg:flex-1 in overview too (the 1911/867 aspect pin is
+            gone), this unbroken lg:flex-1 / lg:min-h-0 chain from the root's
+            lg:h-screen is the only thing keeping the stage height
+            SCREEN-derived rather than content-derived — break a link and the
+            feedback loop the aspect pin used to fence off comes back. */}
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0 lg:flex-1">
           <div role="search" aria-label="Canvas search" className="z-30 px-0.5 pb-2 lg:hidden">
             <label className="relative block w-full min-w-0">
