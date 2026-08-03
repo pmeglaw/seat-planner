@@ -179,6 +179,22 @@ const SEAT_CENTER_PANEL_BREAKPOINT_PX = 900;
 // center a selected seat below the panel breakpoint, so the seat lands in the
 // visible strip above the 60vh bottom sheet instead of underneath it.
 const SEAT_CENTER_SHEET_ANCHOR = 0.28;
+// Keys the browser translates into native scrolling of the focused viewport
+// (per its own aria-label: "wheel, trackpad, touch, or arrow keys to pan").
+// Native scroll fights an in-flight inspector nudge the same way wheel scroll
+// does, so the viewport's onKeyDown cancels the tween for these — it never
+// preventDefaults, so the native scroll/navigation itself is untouched.
+const VIEWPORT_NATIVE_SCROLL_KEYS: ReadonlySet<string> = new Set([
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "PageUp",
+  "PageDown",
+  "Home",
+  "End",
+  " "
+]);
 
 function replaceSeat(seats: SeatWithEmployee[], nextSeat: SeatWithEmployee) {
   const normalizedSeat = normalizeSeat(nextSeat);
@@ -3236,6 +3252,9 @@ export function SeatMap({
               onPointerUp={handleViewportPointerEnd}
               onPointerCancel={handleViewportPointerEnd}
               onWheel={cancelNudge}
+              onKeyDown={event => {
+                if (VIEWPORT_NATIVE_SCROLL_KEYS.has(event.key)) cancelNudge();
+              }}
             >
               {floor === "2" && <FloorPlaceholder />}
               {floor === "3" && (
