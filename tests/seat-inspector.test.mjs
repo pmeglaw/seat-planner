@@ -131,6 +131,18 @@ test("an open seat's action row offers Swap only (Move and Vacate hide, not disa
   assert.equal(byLabelPrefix("Vacate "), null);
 });
 
+// Finding 2 (v12 slice 4 final review): the retired canvas action bar
+// disabled its verbs on `mutationInFlight || barSeatActions.pending` — a
+// mutation started elsewhere (not this inspector instance's own `pending`,
+// which is false here) must still block Move/Swap/Vacate.
+test("busy disables the icon action row even while this inspector's own pending is false", async () => {
+  const seat = assignedSeat();
+  await renderInspector(seat, { canEdit: true, onMove() {}, onSwap() {}, onVacate() {}, busy: true });
+  assert.equal(document.querySelector('[aria-label="Move Alice Example to another seat"]').disabled, true);
+  assert.equal(document.querySelector(`[aria-label="Swap ${seat.label}"]`).disabled, true);
+  assert.equal(document.querySelector(`[aria-label="Vacate ${seat.label}"]`).disabled, true);
+});
+
 test("admin tabs switch panels and reset to Overview when the seat changes", async () => {
   const first = assignedSeat();
   const { rerender } = await renderInspector(first, { canEdit: true });

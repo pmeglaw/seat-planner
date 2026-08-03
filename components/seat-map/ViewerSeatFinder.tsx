@@ -237,7 +237,7 @@ export function ViewerSeatFinder({
   // resolver reads visualSeatById via closure — safe even though that const is
   // declared further down, because the hook only ever invokes it from a
   // deferred rAF callback, well after this render has finished.
-  const { cancelNudge } = useInspectorNudge({
+  const { cancelNudge, skipNextNudge } = useInspectorNudge({
     viewportRef: mapViewportRef,
     frameRef: mapRef,
     selectedSeatId,
@@ -695,9 +695,19 @@ export function ViewerSeatFinder({
   }, []);
 
   function selectSeat(seatId: string) {
+    // Finding 1 (v12 slice 4 final review): only arm the skip when the
+    // selection is actually changing — reselecting the already-selected seat
+    // leaves selectedSeatId unchanged, so the trigger effect's deps never
+    // move to consume the flag; arming it anyway would leave it stuck and
+    // silently skip a later, unrelated selection's legitimate nudge.
+    const isNewSelection = selectedSeatId !== seatId;
     setSelectedSeatId(seatId);
     setActiveResultId(null);
     setInspectorCollapsed(false);
+    // This selection also queues a programmatic center below — arm the skip
+    // in the same commit so the nudge trigger effect never races the
+    // center's native smooth scrollTo.
+    if (isNewSelection) skipNextNudge();
     centerSeatInMap(seatId);
   }
 
@@ -760,8 +770,13 @@ export function ViewerSeatFinder({
   function openResult(result: ViewerSearchResult) {
     setActiveResultId(result.id);
     if (result.seatId) {
+      // Finding 1: same race as selectSeat above, same "only if actually
+      // changing" guard (re-opening the currently selected seat's own
+      // result row must not arm a flag no future effect run will consume).
+      const isNewSelection = selectedSeatId !== result.seatId;
       setSelectedSeatId(result.seatId);
       setInspectorCollapsed(false);
+      if (isNewSelection) skipNextNudge();
       centerSeatInMap(result.seatId);
       return;
     }

@@ -484,7 +484,7 @@ export function SeatMap({
   // of the floating inspector at the panel tier. Pan/zoom/wheel/programmatic
   // scroll paths below call cancelNudge() so a user- or code-initiated
   // scroll-position change always wins over an in-flight nudge tween.
-  const { cancelNudge } = useInspectorNudge({
+  const { cancelNudge, skipNextNudge } = useInspectorNudge({
     viewportRef: mapViewportRef,
     frameRef: mapRef,
     selectedSeatId,
@@ -927,7 +927,19 @@ export function SeatMap({
     const seatId = findSeatIdByParam(localSeats, readSeatParam(window.location.search));
     seatParamAppliedRef.current = true;
     if (!seatId) return;
-    if (commitSeatSelection(seatId)) queueCenterSeatInMap(seatId);
+    if (commitSeatSelection(seatId)) {
+      // Finding 1 (v12 slice 4 final review): this selection also queues a
+      // programmatic center below — arm the skip in the same commit so the
+      // nudge trigger effect (scheduled by the selectedSeatId change just
+      // made) never races the center's native smooth scrollTo. Only arm it
+      // when the selection is actually changing: if seatId was already
+      // selected, commitSeatSelection made no state change, so the trigger
+      // effect's deps never move to consume the flag — arming it
+      // unconditionally would leave it stuck, silently skipping some later,
+      // unrelated selection's legitimate nudge.
+      if (selectedSeatId !== seatId) skipNextNudge();
+      queueCenterSeatInMap(seatId);
+    }
     // Mount-only by design: replaceState fires no events, and re-running on
     // seat updates would fight the user's live selection.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1237,9 +1249,15 @@ export function SeatMap({
 
   function applyInspectorGuardAction(action: InspectorGuardAction) {
     if (action.kind === "select-seat") {
+      const isNewSelection = selectedSeatId !== action.seatId;
       commitSeatSelection(action.seatId);
       if (action.center) {
         setFilterCollapsed(true);
+        // Finding 1: same race as openSeatFromResults — this is its
+        // dirty-guard-deferred continuation, so it arms the skip too (only
+        // when the selection is actually changing — see the deep-link
+        // effect above for why an unconditional arm would go stale).
+        if (isNewSelection) skipNextNudge();
         queueCenterSeatInMap(action.seatId);
       }
       return;
@@ -1892,9 +1910,19 @@ export function SeatMap({
       return;
     }
 
+    const isNewSelection = selectedSeatId !== seatId;
     if (!selectSeat(seatId)) return;
 
     setFilterCollapsed(true);
+    // Finding 1 (v12 slice 4 final review): arm the skip in the same commit
+    // as this selection so the nudge trigger effect never races this queued
+    // center's native smooth scrollTo (see useInspectorNudge's skipNextNudge).
+    // Only when the selection is actually changing — reselecting the already-
+    // selected seat (e.g. re-opening its own results row) leaves selectedSeatId
+    // unchanged, so the trigger effect's deps never move to consume the flag;
+    // arming it anyway would leave it stuck and silently skip a later,
+    // unrelated selection's legitimate nudge.
+    if (isNewSelection) skipNextNudge();
     queueCenterSeatInMap(seatId);
   }
 
@@ -3774,6 +3802,12 @@ export function SeatMap({
         onMove={() => startMoveEmployeeMode()}
         onSwap={() => startSwapSeatMode()}
         onVacate={requestVacateFromBar}
+        // Finding 2 (v12 slice 4 final review): parity with the retired
+        // canvas action bar's busy gate — a mutation in flight from ANY
+        // source (undo/redo, the vacate confirm dialog's own transition, not
+        // just this inspector instance's local `pending`) must still block
+        // Move/Swap/Vacate here.
+        busy={mutationInFlight || barSeatActions.pending}
         onDeleteSeat={deleteSelectedSeat}
         onExplainSeat={explainSeatWithPlanner}
         onBeforeSeatUpdate={captureDraftSnapshot}

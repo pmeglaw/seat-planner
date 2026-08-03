@@ -32,6 +32,14 @@ type SeatInspectorProps = {
   onMove?: () => void;
   onSwap?: () => void;
   onVacate?: () => void;
+  // Finding 2 (v12 slice 4 final review): the retired canvas action bar
+  // disabled its verbs on `mutationInFlight || barSeatActions.pending` — a
+  // mutation started elsewhere (e.g. the vacate confirm dialog) still had to
+  // block Move/Swap/Vacate here. `pending` alone only covers a mutation this
+  // inspector instance itself started (its own save/assign transition), so
+  // the parent passes its own in-flight signal through this prop. Viewer
+  // never passes it (read-only, no icon row rendered anyway).
+  busy?: boolean;
   // Edit callbacks are optional so the read-only viewer can render the same
   // inspector without wiring any draft machinery (canEdit=false never calls them).
   onDeleteSeat?: () => void;
@@ -246,6 +254,7 @@ export function SeatInspector({
   onMove,
   onSwap,
   onVacate,
+  busy = false,
   onDeleteSeat = noopCallback,
   onExplainSeat,
   onBeforeSeatUpdate = emptyDraftSnapshot,
@@ -896,19 +905,19 @@ export function SeatInspector({
           {canEdit && !editingAssignment && (onMove || onSwap || onVacate) && (
             <div role="group" aria-label={`Actions for seat ${selectedSeat.label}`} className="flex gap-px px-4 pb-3.5">
               {hasCurrentAssignment && onMove && (
-                <button type="button" onClick={onMove} disabled={pending}
+                <button type="button" onClick={onMove} disabled={pending || busy}
                   aria-label={selectedSeat.employee?.full_name ? `Move ${selectedSeat.employee.full_name} to another seat` : `Move ${selectedSeat.label}`}
                   className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[#F4F4F4] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
                   <MoveGlyph />Move
                 </button>
               )}
               {onSwap && (
-                <button type="button" onClick={onSwap} disabled={pending} aria-label={`Swap ${selectedSeat.label}`} className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[#F4F4F4] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                <button type="button" onClick={onSwap} disabled={pending || busy} aria-label={`Swap ${selectedSeat.label}`} className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[#F4F4F4] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
                   <SwapGlyph />Swap
                 </button>
               )}
               {hasCurrentAssignment && onVacate && (
-                <button type="button" onClick={onVacate} disabled={pending} aria-label={`Vacate ${selectedSeat.label}`}
+                <button type="button" onClick={onVacate} disabled={pending || busy} aria-label={`Vacate ${selectedSeat.label}`}
                   className="flex flex-1 flex-col items-center gap-1 bg-[#2b1a1b] py-2 text-[11px] font-semibold text-[var(--admin-chrome-danger-text)] transition hover:bg-[rgb(var(--admin-status-bad-rgb)/0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
                   <VacateGlyph />Vacate
                 </button>

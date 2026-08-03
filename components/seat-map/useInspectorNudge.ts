@@ -32,9 +32,18 @@ export function useInspectorNudge({
   panelBreakpointPx: number;
   /** Selected seat's normalized VISUAL x (calibrated), or null if unknown. */
   resolveSeatVisualX: (seatId: string) => number | null;
-}): { cancelNudge: () => void } {
+}): { cancelNudge: () => void; skipNextNudge: () => void } {
   const nudgeCancelRef = useRef<(() => void) | null>(null);
   const frameTranslateRef = useRef(0);
+  // Finding 1 (v12 slice 4 final review): set by a caller that is ALSO
+  // queueing a programmatic center in the same commit as this selection
+  // change (e.g. admin queueCenterSeatInMap, viewer selectSeat/openResult).
+  // Consumed (checked-and-cleared) at the top of the trigger effect's inner
+  // rAF below — a centered seat always lands left of the panel threshold, so
+  // skipping the nudge for it is correct, not a workaround. Callers must call
+  // skipNextNudge() synchronously, before any rAF of their own, so the flag
+  // is armed no matter which side's rAF chain resolves first.
+  const skipNextRef = useRef(false);
   // Resolver identity churns with parent renders; the effects below re-run on
   // selection change only, reading the latest resolver through this ref. The
   // mirror runs in its own no-deps effect (not synchronously during render)
@@ -50,6 +59,10 @@ export function useInspectorNudge({
     nudgeCancelRef.current = null;
   }, []);
 
+  const skipNextNudge = useCallback(() => {
+    skipNextRef.current = true;
+  }, []);
+
   const setFrameTranslate = useCallback((px: number) => {
     frameTranslateRef.current = px;
     const frame = frameRef.current;
@@ -63,6 +76,16 @@ export function useInspectorNudge({
     if (!window.matchMedia(`(min-width: ${panelBreakpointPx}px)`).matches) return;
     const first = requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
+        // Finding 1: a same-commit programmatic center armed this — neither
+        // plan nor tween. Checked-and-cleared first, before any other work.
+        if (skipNextRef.current) {
+          skipNextRef.current = false;
+          return;
+        }
+        // Finding 3: cancel any stale tween from a superseded selection
+        // unconditionally, before (re)planning — otherwise a null plan below
+        // leaves that stale tween running instead of leaving the map at rest.
+        cancelNudge();
         const viewport = viewportRef.current;
         const frame = frameRef.current;
         if (!viewport || !frame) return;
@@ -75,7 +98,6 @@ export function useInspectorNudge({
           currentTranslatePx: frameTranslateRef.current
         });
         if (!plan) return;
-        cancelNudge();
         const startScroll = viewport.scrollLeft;
         const startTranslate = frameTranslateRef.current;
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -117,5 +139,5 @@ export function useInspectorNudge({
     });
   }, [selectedSeatId, inspectorHidden, cancelNudge, setFrameTranslate]);
 
-  return { cancelNudge };
+  return { cancelNudge, skipNextNudge };
 }
