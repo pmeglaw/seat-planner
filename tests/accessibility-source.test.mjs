@@ -560,10 +560,17 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   // APG menu pins moved out with it. What survives here is narrower than the
   // retired block: the popover focus-restore test below still pins that the
   // chrome ⋯ trigger gets focus back when its popover closes. Nothing in this
-  // file pins the chrome ⋯ as a role="menu" (it is a role="group"), and
-  // FloorSelector's menuitemradio roving is unpinned too — if either grows an
-  // APG contract worth keeping, add the assertion rather than assuming this
-  // comment covers it.
+  // file pins the chrome ⋯ as a role="menu" (it is a role="group") —
+  // FloorSelector is now the repo's only APG menu, and its pattern is pinned
+  // below: role="menu" + menuitemradio items with aria-checked, an
+  // ArrowDown-opens handler on the trigger, and Escape-close-refocus.
+  const floorSelectorSource = await readSource("../components/seat-map/FloorSelector.tsx");
+  assert.match(floorSelectorSource, /role="menu"/);
+  assert.match(floorSelectorSource, /role="menuitemradio"/);
+  assert.match(floorSelectorSource, /aria-checked=\{option\.id === floor\}/);
+  assert.match(floorSelectorSource, /event\.key === "ArrowDown" && !open\) \{\s*event\.preventDefault\(\);\s*setOpen\(true\);/);
+  assert.match(floorSelectorSource, /event\.key === "Escape"\) \{\s*event\.stopPropagation\(\);\s*closeAndRefocus\(\);/);
+  assert.match(floorSelectorSource, /function closeAndRefocus\(\) \{\s*setOpen\(false\);\s*triggerRef\.current\?\.focus\(\);/);
 });
 
 test("popovers restore trigger focus when a close unmounts the focused element", async () => {
