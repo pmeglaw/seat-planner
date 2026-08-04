@@ -368,6 +368,19 @@
   --admin-publish-viewer-impact-border: rgba(141, 141, 141, 0.34);
   --admin-publish-viewer-impact-text: var(--admin-info);
 
+  /* Publish diff tags (v12 slice 5). Text-on-bg contrast, measured:
+     #284C3B on #DEF3E4 = 8.3:1 · #B3232C on #FBE9EA = 5.6:1 ·
+     #6D4712 on #FCF4D6 = 7.4:1 — all ≥ 4.5:1 body-text floor. */
+  --admin-diff-assigned-bg: #DEF3E4;
+  --admin-diff-assigned-border: #A9D7B8;
+  --admin-diff-assigned-text: #284C3B;
+  --admin-diff-vacated-bg: #FBE9EA;
+  --admin-diff-vacated-border: #E8A5A9;
+  --admin-diff-vacated-text: #B3232C;
+  --admin-diff-reassigned-bg: #FCF4D6;
+  --admin-diff-reassigned-border: #E0C46E;
+  --admin-diff-reassigned-text: #6D4712;
+
   /* Marker-legend tokens. The map pills themselves render via SeatMarker's
      protected viewer-variant hex values; these tokens only color the legend
      chips and result-row dots, so they mirror the marker hues. Do not point
