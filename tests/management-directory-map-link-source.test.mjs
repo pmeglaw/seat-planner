@@ -32,7 +32,9 @@ test("the edit path stays reachable and keeps handing focus to the name field", 
   // The kebab is the explicit edit affordance now that the name navigates.
   assert.match(source, /aria-label=\{`Edit \$\{displayName\}`\}/);
   assert.match(source, /event\.stopPropagation\(\);\s*editEmployee\(employee\);/);
-  // Row activation (click, Enter, Space) still opens the same form.
+  // Clicking the row still opens the same form. It is a mouse shortcut only —
+  // the keyboard path is the kebab, see the tab-stop test in
+  // accessibility-source (v12 slice 9).
   assert.match(source, /onClick=\{\(\) => editEmployee\(employee\)\}/);
   assert.match(source, /employeeNameInputRef\.current\?\.focus\(\)/);
 });

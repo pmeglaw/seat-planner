@@ -765,7 +765,9 @@ export function AdminManagementPanel({
                 type="button"
                 onClick={openAddEmployee}
                 disabled={pending}
-                className="shrink-0 bg-[var(--admin-primary-cta)] px-[18px] text-[13.5px] font-semibold text-[var(--admin-text-inverse)] transition-colors hover:bg-[var(--admin-primary-cta-hover)] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-text-inverse)]"
+                /* White, not text-inverse: #F7F6F2 on #D23F0A is 4.35:1 and axe
+                   fails it. The CTA ladder is specified as white (4.71:1). */
+                className="shrink-0 bg-[var(--admin-primary-cta)] px-[18px] text-[13.5px] font-semibold text-white transition-colors hover:bg-[var(--admin-primary-cta-hover)] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
               >
                 Add employee ＋
               </button>
@@ -829,14 +831,14 @@ export function AdminManagementPanel({
                             data-directory-row
                             aria-selected={isSelected}
                             onClick={() => editEmployee(employee)}
-                            tabIndex={0}
-                            onKeyDown={event => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                editEmployee(employee);
-                              }
-                            }}
-                            className="group/row cursor-pointer border-b border-[var(--admin-table-row-border)] outline-none transition last:border-b-0 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                            /* The row is a mouse shortcut only. It used to be a
+                               tab stop too, which put THREE stops on every
+                               employee — the row, the name link, the kebab —
+                               and the row stop announced the whole row while
+                               offering nothing the other two don't. Keyboard
+                               users reach the map through the name link and the
+                               form through the kebab (v12 slice 9). */
+                            className="group/row cursor-pointer border-b border-[var(--admin-table-row-border)] transition last:border-b-0"
                           >
                             <td className={[cellClass, "pl-4"].join(" ")}>
                               <div className="flex items-center gap-2.5">

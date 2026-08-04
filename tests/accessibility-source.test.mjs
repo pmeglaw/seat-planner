@@ -1039,3 +1039,46 @@ test("axe findings stay fixed: allowed roles, single main landmark, marker name 
   assert.match(markerSource, /\{employeeName && " "\}/);
   assert.match(markerSource, /\{showInlineName && " "\}/);
 });
+
+// v12 slice 9 (a11y pass). Both of these were found by running axe and a tab
+// sweep against the real surfaces, not by reading source — pinning them here
+// so the next redesign cannot reintroduce them silently.
+test("CTA labels sit on the ladder's white, not the off-white inverse token", async () => {
+  // #F7F6F2 on #D23F0A is 4.35:1 and axe fails it as a serious violation;
+  // white is 4.71:1, which is what the CTA ladder in globals.css specifies.
+  // Checked across every surface that paints the CTA background.
+  for (const file of [
+    "../components/admin-management/AdminManagementPanel.tsx",
+    "../components/admin-settings/DataUtilitiesPanel.tsx",
+    "../components/seat-map/SeatMap.tsx",
+    "../components/seat-map/SeatInspector.tsx",
+    "../app/login/page.tsx",
+    "../app/admin/page.tsx"
+  ]) {
+    const source = await readSource(file);
+    for (const match of source.match(/bg-\[var\(--admin-primary-cta\)\][^"']*/g) ?? []) {
+      assert.doesNotMatch(
+        match,
+        /text-\[var\(--admin-text-inverse\)\]/,
+        `${file}: CTA labels must be white (4.71:1), not --admin-text-inverse (4.35:1)`
+      );
+    }
+  }
+});
+
+test("directory rows are a mouse shortcut, not a third tab stop per employee", async () => {
+  const managementSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+
+  // Each row already exposes two real controls — the name link (to the map)
+  // and the kebab (to the edit form). Making the <tr> focusable as well put
+  // three stops on every employee and announced the entire row for a stop that
+  // offered nothing extra, which at production scale buries everything below
+  // the table. Keep the row click; do not give it back a tabIndex.
+  const rowTag = managementSource.match(/<tr\s+key=\{employee\.id\}[\s\S]*?>/);
+  assert.ok(rowTag, "the directory row element should be source-visible");
+  assert.doesNotMatch(rowTag[0], /tabIndex/);
+  assert.doesNotMatch(rowTag[0], /onKeyDown/);
+  // The keyboard path must still exist through the two labelled controls.
+  assert.match(managementSource, /aria-label=\{`Edit \$\{displayName\}`\}/);
+  assert.match(managementSource, /href=\{`\/admin\$\{withSeatParam\("", seatLabel\)\}`\}/);
+});
