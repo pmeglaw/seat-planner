@@ -40,6 +40,7 @@ import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
+import { buildZoneWash } from "@/lib/zoneWash";
 
 type ViewerSeatFinderProps = {
   seats: SeatWithEmployee[];
@@ -225,6 +226,9 @@ export function ViewerSeatFinder({
   const [department, setDepartment] = useState("all");
   const [position, setPosition] = useState("all");
   const [zone, setZone] = useState("all");
+  // Zone chip preview (v12 contract #8) — parity with the admin map. Purely a
+  // display cue: it decides what the map washes, never what is filtered.
+  const [hoverZone, setHoverZone] = useState<string | null>(null);
   const [status, setStatus] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
@@ -369,6 +373,13 @@ export function ViewerSeatFinder({
       searchActiveSeatIds: filtersActive ? highlightedSeatIdSet : undefined
     });
   }, [filtersActive, highlightedSeatIdSet, selectedSeatId, visualSeats]);
+  // Zone hover-wash: the hovered chip wins over the pinned zone filter, so
+  // running along the chip row previews each zone without changing what is
+  // filtered. Visual seats — the box must frame the markers as rendered.
+  const zoneWash = useMemo(
+    () => buildZoneWash(hoverZone ?? (zone !== "all" ? zone : null), visualSeats),
+    [hoverZone, visualSeats, zone]
+  );
   // Name-label collision nudges (render-layer only): viewers have no
   // Show-names toggle, so the only tokens that leave the anchor row are the
   // prominent ones — nudged at the same live zoom-aware clearance as the
@@ -999,6 +1010,7 @@ export function ViewerSeatFinder({
                 onDepartmentChange={setDepartment}
                 onPositionChange={setPosition}
                 onZoneChange={setZone}
+                onZoneHoverChange={setHoverZone}
                 onStatusChange={setStatus}
                 matchSummary={`${statusCountSeats.length} of ${publishedSeats.length} seats match`}
                 onRemoveActiveChip={removeActiveFilterChip}
@@ -1185,6 +1197,28 @@ export function ViewerSeatFinder({
                   {/* Room washes between the floor-plan image and the marker
                       layer — decorative occupancy reinforcement; the plate
                       carries the fact in text (WCAG 1.4.1 via redundancy). */}
+                  {/* Zone wash frames an area, so it renders under the room
+                      washes and the markers alike — inert to pointers (panning
+                      must cross it) and absent from the accessibility tree
+                      (the chip states the zone and count in text). */}
+                  {zoneWash && (
+                    <div
+                      aria-hidden="true"
+                      data-zone-wash={zoneWash.zone}
+                      className="pointer-events-none absolute z-[5] border-[1.5px] border-[rgba(210,63,10,0.55)] bg-[rgba(255,87,21,0.09)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)]"
+                      style={{
+                        left: `${zoneWash.xMin * 100}%`,
+                        top: `${zoneWash.yMin * 100}%`,
+                        width: `${(zoneWash.xMax - zoneWash.xMin) * 100}%`,
+                        height: `${(zoneWash.yMax - zoneWash.yMin) * 100}%`
+                      }}
+                    >
+                      <span className="absolute -top-[11px] left-2.5 whitespace-nowrap rounded-full bg-[var(--admin-primary-cta)] px-2 py-0.5 text-[10px] font-bold tracking-[0.04em] text-white">
+                        {zoneWash.zone} · {zoneWash.seatCount} seats
+                      </span>
+                    </div>
+                  )}
+
                   {officeRoomWashes.map(wash => (
                     <div
                       key={wash.key}

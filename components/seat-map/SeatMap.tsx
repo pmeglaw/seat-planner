@@ -83,6 +83,7 @@ import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
+import { buildZoneWash } from "@/lib/zoneWash";
 import { AppRail } from "@/components/ui/AppRail";
 import { adminChromeDividerRule } from "@/components/ui/adminChrome";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
@@ -338,6 +339,9 @@ export function SeatMap({
   const [department, setDepartment] = useState("all");
   const [position, setPosition] = useState("all");
   const [zone, setZone] = useState("all");
+  // Transient preview of a zone chip under the pointer/focus (v12 contract
+  // #8). Never a filter — it only decides which zone the map washes.
+  const [hoverZone, setHoverZone] = useState<string | null>(null);
   const [status, setStatus] = useState("all");
   const [filterCollapsed, setFilterCollapsed] = useState(true);
   const [chromeMenuOpen, setChromeMenuOpen] = useState(false);
@@ -2665,6 +2669,14 @@ export function SeatMap({
     swapMode: Boolean(swapSourceSeatId || moveEmployeeSourceSeatId),
     draggingSeatId: null
   });
+  // Zone hover-wash (v12 contract #8): the hovered chip wins over the pinned
+  // zone filter, so moving along the chip row previews each zone in turn
+  // without disturbing what is actually filtered. Seats come from the visual
+  // set — the wash box must land in the same space as the markers it frames.
+  const zoneWash = useMemo(
+    () => buildZoneWash(hoverZone ?? (zone !== "all" ? zone : null), visualLocalSeats),
+    [hoverZone, visualLocalSeats, zone]
+  );
   const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;
   const markerEdgeThreshold = mapViewMode === "detail"
@@ -2818,6 +2830,7 @@ export function SeatMap({
                 onDepartmentChange={setDepartment}
                 onPositionChange={setPosition}
                 onZoneChange={setZone}
+                onZoneHoverChange={setHoverZone}
                 onStatusChange={setStatus}
                 matchSummary={`${legendSourceSeats.length} of ${localSeats.length} seats match`}
                 onRemoveActiveChip={removeActiveFilterChip}
@@ -3299,6 +3312,30 @@ export function SeatMap({
                     marker layer: purely decorative occupancy reinforcement
                     (the plate carries the fact in text — WCAG 1.4.1 stays
                     satisfied by redundancy, never by the wash alone). */}
+                {/* Zone wash frames an area; it never labels a seat, so it
+                    renders under both the room washes and the markers. Inert
+                    in both senses — no pointer events (drag-panning must
+                    still work across it) and no accessibility-tree presence
+                    (the chip that summons it already says the zone and its
+                    seat count in text). */}
+                {zoneWash && (
+                  <div
+                    aria-hidden="true"
+                    data-zone-wash={zoneWash.zone}
+                    className="pointer-events-none absolute z-[5] border-[1.5px] border-[rgba(210,63,10,0.55)] bg-[rgba(255,87,21,0.09)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)]"
+                    style={{
+                      left: `${zoneWash.xMin * 100}%`,
+                      top: `${zoneWash.yMin * 100}%`,
+                      width: `${(zoneWash.xMax - zoneWash.xMin) * 100}%`,
+                      height: `${(zoneWash.yMax - zoneWash.yMin) * 100}%`
+                    }}
+                  >
+                    <span className="absolute -top-[11px] left-2.5 whitespace-nowrap rounded-full bg-[var(--admin-primary-cta)] px-2 py-0.5 text-[10px] font-bold tracking-[0.04em] text-white">
+                      {zoneWash.zone} · {zoneWash.seatCount} seats
+                    </span>
+                  </div>
+                )}
+
                 {officeRoomWashes.map(wash => (
                   <div
                     key={wash.key}
