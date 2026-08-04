@@ -77,11 +77,11 @@ export default async function AdminSettingsPage() {
       {/* Skip-link landing: focusable zero-height marker; the next Tab enters
           the panel content. */}
       <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />
-      <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
-        <header className="mb-6 border-b border-[var(--admin-border)] pb-4">
-          <h1 className="text-xl font-semibold text-[var(--admin-text-primary)]">Settings</h1>
-          <p className="mt-1 text-sm leading-5 text-[var(--admin-text-muted)]">
-            Import, export, and draft snapshots. Everything here changes the draft only — the published map is never touched until you publish.
+      <div className="mx-auto w-full max-w-[760px] px-6 pb-12 pt-6">
+        <header className="mb-4">
+          <h1 className="text-[22px] font-semibold leading-tight text-[var(--admin-text-primary)]">Settings</h1>
+          <p className="mt-1 text-[13.5px] leading-5 text-[var(--admin-text-secondary)]">
+            Import, export, and recovery tools. Everything here changes the draft only.
           </p>
         </header>
 
