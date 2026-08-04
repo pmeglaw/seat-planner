@@ -172,3 +172,121 @@ test("publish summary stays backward compatible without employee inputs", () => 
   assert.deepEqual(summary.employeeDetailChanges, []);
   assert.equal(summary.hasChanges, false);
 });
+
+test("diff rows: assigned, vacated, and reassigned occupant changes", () => {
+  const alice = employee("emp-1", "Alice Smith");
+  const ben = employee("emp-2", "Ben Ito");
+  const rows = publishSummary.buildPublishDiffRows(
+    [
+      seat({ label: "W01", employee: alice, status: "assigned" }),
+      seat({ label: "W02", status: "available" }),
+      seat({ label: "W03", employee: ben })
+    ],
+    [
+      seat({ label: "W01", layer: "published", status: "available" }),
+      seat({ label: "W02", layer: "published", employee: alice, status: "assigned" }),
+      seat({ label: "W03", layer: "published", employee: alice, status: "assigned" })
+    ]
+  );
+
+  assert.deepEqual(rows.map(r => [r.label, r.kind, r.from, r.to]), [
+    ["W01", "assigned", "Open seat", "Alice Smith"],
+    ["W02", "vacated", "Alice Smith", "Open seat"],
+    ["W03", "reassigned", "Alice Smith", "Ben Ito"]
+  ]);
+  // The occupant tag already implies the status flip — no Status noise.
+  assert.deepEqual(rows.map(r => r.detail), [null, null, null]);
+});
+
+test("diff rows: added and removed seats use the absent marker", () => {
+  const alice = employee("emp-1", "Alice Smith");
+  const rows = publishSummary.buildPublishDiffRows(
+    [seat({ label: "S01", is_custom: true }), seat({ label: "S02", is_custom: true, employee: alice })],
+    [seat({ label: "N09", layer: "published", employee: alice })]
+  );
+
+  assert.deepEqual(rows.map(r => [r.label, r.kind, r.from, r.to]), [
+    ["N09", "removed", "Alice Smith", "—"],
+    ["S01", "added", "—", "Open seat"],
+    ["S02", "added", "—", "Alice Smith"]
+  ]);
+  assert.equal(rows[0].detail, "Seat removed from the map");
+  assert.equal(rows[1].detail, "West Pod");
+});
+
+test("diff rows: metadata-only change is one updated row with combined detail", () => {
+  const alice = employee("emp-1", "Alice Smith");
+  const rows = publishSummary.buildPublishDiffRows(
+    [seat({ label: "W01", employee: alice, status: "reserved", notes: "hot desk" })],
+    [seat({ label: "W01", layer: "published", employee: alice, status: "assigned" })]
+  );
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].kind, "updated");
+  assert.equal(rows[0].from, "Alice Smith");
+  assert.equal(rows[0].to, "Alice Smith");
+  assert.equal(rows[0].detail, "Status assigned -> reserved; Notes changed");
+});
+
+test("diff rows: occupant change wins over metadata, which rides along in detail", () => {
+  const alice = employee("emp-1", "Alice Smith");
+  const rows = publishSummary.buildPublishDiffRows(
+    [seat({ label: "W01", employee: alice, zone: "East Pod" })],
+    [seat({ label: "W01", layer: "published", zone: "West Pod" })]
+  );
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].kind, "assigned");
+  assert.equal(rows[0].detail, "Zone West Pod -> East Pod");
+});
+
+test("diff rows: position drift surfaces on an otherwise-unchanged seat", () => {
+  const alice = employee("emp-1", "Alice Smith");
+  const rows = publishSummary.buildPublishDiffRows(
+    [seat({ label: "W01", employee: alice, x: 0.5, y: 0.5 })],
+    [seat({ label: "W01", layer: "published", employee: alice, x: 0.1, y: 0.2 })]
+  );
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].kind, "updated");
+  assert.equal(rows[0].detail, "position 10%, 20% -> 50%, 50%");
+});
+
+test("diff rows: a seat restored to its baseline occupant drops out entirely", () => {
+  const alice = employee("emp-1", "Alice Smith");
+  const rows = publishSummary.buildPublishDiffRows(
+    [seat({ label: "W01", employee: alice }), seat({ label: "W02" })],
+    [seat({ label: "W01", layer: "published", employee: alice }), seat({ label: "W02", layer: "published" })]
+  );
+
+  assert.deepEqual(rows, []);
+});
+
+test("diff rows: sorted numeric-aware by label", () => {
+  const rows = publishSummary.buildPublishDiffRows(
+    [
+      seat({ label: "W10", is_custom: true }),
+      seat({ label: "W2", is_custom: true }),
+      seat({ label: "N1", is_custom: true })
+    ],
+    []
+  );
+
+  assert.deepEqual(rows.map(r => r.label), ["N1", "W2", "W10"]);
+});
+
+test("diff rows: people-only changes yield no rows while the summary still reports changes", () => {
+  const alice = employee("emp-1", "Alice Smith");
+  const renamed = { ...employee("emp-1", "Alicia Smith"), position: "Senior Analyst" };
+  const draftSeats = [seat({ label: "W01", employee: alice })];
+  const publishedSeats = [seat({ label: "W01", layer: "published", employee: alice })];
+
+  const rows = publishSummary.buildPublishDiffRows(draftSeats, publishedSeats);
+  const summary = publishSummary.buildPublishChangeSummary(draftSeats, publishedSeats, {
+    employees: [renamed],
+    publishedEmployees: [alice]
+  });
+
+  assert.deepEqual(rows, []);
+  assert.equal(summary.hasChanges, true);
+});

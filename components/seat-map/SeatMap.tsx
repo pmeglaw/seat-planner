@@ -65,7 +65,7 @@ import {
   seatsToVisualSeats,
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
-import { buildPublishChangeSummary, type PublishChangeItem } from "@/lib/publishSummary";
+import { buildPublishChangeSummary, buildPublishDiffRows, type PublishDiffRowKind } from "@/lib/publishSummary";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import {
@@ -216,58 +216,30 @@ function getSeatZone(seat: SeatWithEmployee) {
   return seat.zone ?? seat.department ?? "";
 }
 
-function PublishCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
+const PUBLISH_DIFF_TAG_STYLES: Record<PublishDiffRowKind, { label: string; className: string }> = {
+  assigned: { label: "Assigned", className: "border-[var(--admin-diff-assigned-border)] bg-[var(--admin-diff-assigned-bg)] text-[var(--admin-diff-assigned-text)]" },
+  added: { label: "Added", className: "border-[var(--admin-diff-assigned-border)] bg-[var(--admin-diff-assigned-bg)] text-[var(--admin-diff-assigned-text)]" },
+  vacated: { label: "Vacated", className: "border-[var(--admin-diff-vacated-border)] bg-[var(--admin-diff-vacated-bg)] text-[var(--admin-diff-vacated-text)]" },
+  removed: { label: "Removed", className: "border-[var(--admin-diff-vacated-border)] bg-[var(--admin-diff-vacated-bg)] text-[var(--admin-diff-vacated-text)]" },
+  reassigned: { label: "Reassigned", className: "border-[var(--admin-diff-reassigned-border)] bg-[var(--admin-diff-reassigned-bg)] text-[var(--admin-diff-reassigned-text)]" },
+  updated: { label: "Updated", className: "border-[var(--admin-state-neutral-border)] bg-[var(--admin-state-neutral-bg)] text-[var(--admin-text-muted)]" }
+};
+
+function PublishDiffTag({ kind }: { kind: PublishDiffRowKind }) {
+  const style = PUBLISH_DIFF_TAG_STYLES[kind];
   return (
-    <div className={["rounded-xl border p-3", tone === "warn" ? "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)]" : "border-[var(--admin-state-neutral-border)] bg-[var(--admin-state-neutral-bg)]"].join(" ")}>
-      <div className={["text-[11px] font-semibold", tone === "warn" ? "text-[var(--admin-state-dirty-text)]" : "text-[var(--admin-text-muted)]"].join(" ")}>{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-[var(--admin-text-primary)]">{value}</div>
-    </div>
+    <span className={["inline-flex rounded-full border px-2 py-0.5 text-[10.5px] font-semibold", style.className].join(" ")}>
+      {style.label}
+    </span>
   );
 }
 
-function formatPublishChangeUnit(value: number) {
-  return value === 1 ? "change" : "changes";
-}
-
-function PublishImpactCard({ label, value, description, tone = "default" }: { label: string; value: number; description: string; tone?: "default" | "warn" }) {
+function PublishDiffChip({ kind, count }: { kind: PublishDiffRowKind; count: number }) {
+  const style = PUBLISH_DIFF_TAG_STYLES[kind];
   return (
-    <div className={["rounded-xl border p-3", tone === "warn" ? "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)]" : "border-[var(--admin-state-neutral-border)] bg-[var(--admin-surface)]/80"].join(" ")}>
-      <div className={["text-[11px] font-semibold", tone === "warn" ? "text-[var(--admin-state-dirty-text)]" : "text-[var(--admin-text-muted)]"].join(" ")}>{label}</div>
-      <div className="mt-1 flex items-end gap-2">
-        <span className="text-2xl font-semibold text-[var(--admin-text-primary)]">{value}</span>
-        <span className="pb-1 text-xs font-bold text-[var(--admin-text-muted)]">{formatPublishChangeUnit(value)}</span>
-      </div>
-      <p className="mt-1 text-xs font-semibold leading-4 text-[var(--admin-text-muted)]">{description}</p>
-    </div>
-  );
-}
-
-function PublishChangeList({ title, items, emptyLabel }: { title: string; items: PublishChangeItem[]; emptyLabel: string }) {
-  const visibleItems = items.slice(0, 5);
-  const remainingCount = Math.max(items.length - visibleItems.length, 0);
-
-  return (
-    <div className="rounded-xl border border-[var(--admin-state-neutral-border)] bg-[var(--admin-surface)]/80 p-3">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-[var(--admin-text-primary)]">{title}</h3>
-        <span className="rounded-full bg-[var(--admin-state-neutral-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-state-neutral-border)]">{items.length}</span>
-      </div>
-      {items.length > 0 ? (
-        <ul className="mt-2 space-y-1.5 text-xs leading-5 text-[var(--admin-text-muted)]">
-          {visibleItems.map(item => (
-            <li key={`${title}-${item.label}-${item.detail}`}>
-              <span className="font-semibold text-[var(--admin-text-primary)]">{item.label}</span>
-              {item.detail && <span> · {item.detail}</span>}
-            </li>
-          ))}
-          {remainingCount > 0 && (
-            <li className="font-bold text-[var(--admin-text-muted)]">+ {remainingCount} more</li>
-          )}
-        </ul>
-      ) : (
-        <p className="mt-2 text-xs font-semibold text-[var(--admin-text-muted)]">{emptyLabel}</p>
-      )}
-    </div>
+    <span className={["inline-flex items-center rounded-full border px-2 py-0.5 text-[10.5px] font-semibold", style.className].join(" ")}>
+      {count} {style.label.toLowerCase()}
+    </span>
   );
 }
 
@@ -1001,6 +973,15 @@ export function SeatMap({
     }),
     [localSeats, localPublishedSeats, localEmployees, localPublishedEmployees]
   );
+  const publishDiffRows = useMemo(
+    () => buildPublishDiffRows(localSeats, localPublishedSeats),
+    [localSeats, localPublishedSeats]
+  );
+  const publishDiffCounts = useMemo(() => {
+    const counts: Record<PublishDiffRowKind, number> = { added: 0, removed: 0, assigned: 0, vacated: 0, reassigned: 0, updated: 0 };
+    publishDiffRows.forEach(row => { counts[row.kind] += 1; });
+    return counts;
+  }, [publishDiffRows]);
   const draftChangedSeatLabelSet = useMemo(() => new Set([
     ...publishSummary.addedSeats,
     ...publishSummary.assignmentChanges,
@@ -2435,13 +2416,7 @@ export function SeatMap({
   // one — no dead "matches published" arm to keep in sync.
   const draftStatusLabel = `${publishSummary.totalChangeCount} unpublished ${publishSummary.totalChangeCount === 1 ? "change" : "changes"}`;
   const draftStatusTitle = `Review draft changes: ${draftChangeBreakdown || `${publishSummary.totalChangeCount} total`}`;
-  const publishPeopleChangeCount = publishSummary.assignmentChanges.length + publishSummary.vacatedSeats.length + publishSummary.employeeDetailChanges.length;
-  const publishSeatInventoryChangeCount = publishSummary.addedSeats.length + publishSummary.removedSeats.length;
-  const publishMetadataChangeCount = publishSummary.statusChanges.length + publishSummary.otherChanges.length;
   const publishReadinessTitle = publishSummary.hasChanges ? "Ready to publish reviewed changes" : "Draft and viewer map are in sync";
-  const publishReadinessDescription = publishSummary.hasChanges
-    ? "This review includes saved draft changes only. Unsaved inspector edits must be saved or discarded before this review opens."
-    : "No saved draft changes are waiting. The viewer map already matches this draft.";
   const publishReadinessBadgeTone = publishSummary.hasChanges ? "draft" : "published";
   const publishReadinessBadgeLabel = publishSummary.hasChanges ? "Ready" : "No changes";
   const activeMode = addSeatMode
@@ -3570,7 +3545,7 @@ export function SeatMap({
             aria-modal="true"
             aria-labelledby="publish-review-title"
             aria-describedby="publish-review-description"
-            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[0_30px_90px_rgba(23,26,29,0.34)] backdrop-blur-2xl focus-visible:outline-none"
+            className="flex max-h-[92vh] w-full sm:max-w-[560px] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[0_30px_90px_rgba(23,26,29,0.34)] backdrop-blur-2xl focus-visible:outline-none"
           >
             <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
               <div>
@@ -3602,78 +3577,97 @@ export function SeatMap({
 
               {publishSummary.hasChanges && (
               <>
-              <div className={["rounded-xl border p-3", publishSummary.hasChanges ? "border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] text-[var(--admin-publish-ready-text)]" : "border-[var(--admin-publish-no-change-border)] bg-[var(--admin-publish-no-change-bg)] text-[var(--admin-publish-no-change-text)]"].join(" ")}>
-                <StatusBadge tone={publishReadinessBadgeTone} className={["!min-h-0 !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide", publishSummary.hasChanges ? "!bg-[var(--admin-surface)]/80 !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]" : "!bg-[var(--admin-surface)]/80 !text-[var(--admin-publish-no-change-text)] !ring-[var(--admin-publish-no-change-border)]"].join(" ")}>
+              <div className="rounded-xl border border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] p-3 text-[var(--admin-publish-ready-text)]">
+                <StatusBadge tone={publishReadinessBadgeTone} className="!min-h-0 !bg-[var(--admin-surface)]/80 !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]">
                   {publishReadinessBadgeLabel}
                 </StatusBadge>
                 <h3 className="mt-2 text-sm font-semibold text-[var(--admin-text-primary)]">{publishReadinessTitle}</h3>
-                <p className="mt-1 text-sm font-semibold leading-5">{publishReadinessDescription}</p>
-              </div>
-
-              <div className="mt-3 rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-[var(--admin-publish-viewer-impact-text)]">
-                <div className="text-[11px] font-semibold">Viewer impact</div>
-                <p className="mt-1 text-sm font-semibold leading-5 text-[var(--admin-text-secondary)]">
-                  Publishing copies the saved draft map to the read-only viewer. Until you publish, viewers keep seeing the currently published map.
-                </p>
+                <p className="mt-1 text-xs font-semibold leading-4">Saved draft changes only — unsaved inspector edits are excluded.</p>
               </div>
 
               {actionError && !pending && (
                 <div role="alert" className="mt-3 rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-error-text)]">
-                  <StatusBadge tone="danger" className="!min-h-0 !bg-[var(--admin-surface)]/80 !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--admin-state-error-text)] !ring-[var(--admin-state-error-border)]">Error</StatusBadge>
-                  <p className="mt-2">
-                    <span className="font-semibold">Publish did not complete.</span> {actionError}
-                  </p>
+                  <span className="font-semibold">Publish did not complete.</span> {actionError}
                 </div>
               )}
 
               {pending && (
                 <div role="status" aria-live="polite" className="mt-3 rounded-xl border border-[var(--admin-state-saving-border)] bg-[var(--admin-state-saving-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-saving-text)]">
-                  <StatusBadge tone="pending" className="!min-h-0 !bg-[var(--admin-surface)]/80 !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--admin-state-saving-text)] !ring-[var(--admin-state-saving-border)]">Publishing</StatusBadge>
-                  <p className="mt-2">Publishing reviewed draft changes. Viewer map stays unchanged until publish finishes.</p>
+                  Publishing reviewed draft changes. Viewer map stays unchanged until publish finishes.
                 </div>
               )}
 
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                <PublishImpactCard label="People affected" value={publishPeopleChangeCount} description="Assignments, vacated seats, and people details." tone={publishPeopleChangeCount > 0 ? "warn" : "default"} />
-                <PublishImpactCard label="Seat inventory" value={publishSeatInventoryChangeCount} description="Added and removed seats." tone={publishSeatInventoryChangeCount > 0 ? "warn" : "default"} />
-                <PublishImpactCard label="Metadata" value={publishMetadataChangeCount} description="Status, zone, label, notes, or custom flags." tone={publishMetadataChangeCount > 0 ? "warn" : "default"} />
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-[var(--admin-text-primary)]">
+                  {publishDiffRows.length} seat {publishDiffRows.length === 1 ? "change" : "changes"}
+                </span>
+                <PublishDiffChip kind="assigned" count={publishDiffCounts.assigned} />
+                <PublishDiffChip kind="vacated" count={publishDiffCounts.vacated} />
+                <PublishDiffChip kind="reassigned" count={publishDiffCounts.reassigned} />
+                {publishDiffCounts.added > 0 && <PublishDiffChip kind="added" count={publishDiffCounts.added} />}
+                {publishDiffCounts.removed > 0 && <PublishDiffChip kind="removed" count={publishDiffCounts.removed} />}
+                {publishDiffCounts.updated > 0 && <PublishDiffChip kind="updated" count={publishDiffCounts.updated} />}
               </div>
 
-              <div className="mt-2 rounded-xl border border-[var(--admin-state-neutral-border)] bg-[var(--admin-surface)]/75 p-3 text-xs font-semibold leading-5 text-[var(--admin-text-muted)]">
-                <span className="font-semibold text-[var(--admin-text-primary)]">Count note:</span> Impact groups can overlap. Use Total publish changes below as the unique publish-summary total.
-              </div>
-
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <PublishCountCard label="Added" value={publishSummary.addedSeats.length} tone={publishSummary.addedSeats.length > 0 ? "warn" : "default"} />
-                <PublishCountCard label="Updated" value={publishSummary.updatedSeatCount} tone={publishSummary.updatedSeatCount > 0 ? "warn" : "default"} />
-                <PublishCountCard label="Removed" value={publishSummary.removedSeats.length} tone={publishSummary.removedSeats.length > 0 ? "warn" : "default"} />
-              </div>
-
-              <div className="mt-3 rounded-xl border border-[var(--admin-state-neutral-border)] bg-[var(--admin-state-neutral-bg)] p-3 text-xs font-semibold leading-5 text-[var(--admin-text-muted)]">
-                <span className="font-semibold text-[var(--admin-text-primary)]">Draft:</span> {publishSummary.draftSeatCount} seats
-                <span className="mx-2 text-[var(--admin-text-subtle)]">|</span>
-                <span className="font-semibold text-[var(--admin-text-primary)]">Currently published:</span> {publishSummary.publishedSeatCount} seats
-                <span className="mx-2 text-[var(--admin-text-subtle)]">|</span>
-                <span className="font-semibold text-[var(--admin-text-primary)]">Total publish changes:</span> {publishSummary.totalChangeCount}
-              </div>
-
-              <div className="mt-3 grid gap-2 md:grid-cols-2">
-                <PublishChangeList title="Added seats" items={publishSummary.addedSeats} emptyLabel="No added seats detected." />
-                <PublishChangeList title="Removed seats" items={publishSummary.removedSeats} emptyLabel="No removed seats detected." />
-                <PublishChangeList title="Assignment changes" items={publishSummary.assignmentChanges} emptyLabel="No assignment changes detected." />
-                <PublishChangeList title="Vacated seats" items={publishSummary.vacatedSeats} emptyLabel="No vacated seats detected." />
-                <PublishChangeList title="Status changes" items={publishSummary.statusChanges} emptyLabel="No status-only changes detected." />
-                <div className="md:col-span-2">
-                  <PublishChangeList title="People details (names, titles, departments, extensions)" items={publishSummary.employeeDetailChanges} emptyLabel="No people-detail changes detected." />
+              {publishDiffRows.length > 0 ? (
+                <div className="mt-2 overflow-x-auto border border-[var(--admin-border)]">
+                  <div role="table" aria-label="Per-seat draft changes" className="max-h-56 min-w-[480px] overflow-y-auto">
+                    <div role="row" className="sticky top-0 z-10 grid grid-cols-[64px_1fr_1fr_96px] border-b border-[var(--admin-border)] bg-[var(--admin-state-neutral-bg)]">
+                      <span role="columnheader" className="px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Seat</span>
+                      <span role="columnheader" className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Published now</span>
+                      <span role="columnheader" className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">After publish</span>
+                      <span role="columnheader" className="px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Change</span>
+                    </div>
+                    {publishDiffRows.map(row => (
+                      <div key={row.key} role="rowgroup" className="border-b border-[var(--admin-border)]/60 last:border-b-0">
+                        <div role="row" className="grid grid-cols-[64px_1fr_1fr_96px] items-center">
+                          <span role="cell" translate="no" className="px-3 py-2 font-mono text-xs font-semibold text-[var(--admin-text-primary)]">{row.label}</span>
+                          <span role="cell" className="flex min-w-0 items-center gap-1.5 px-2.5 py-2 text-[12.5px] text-[var(--admin-text-muted)]">
+                            <span className="truncate">{row.from}</span>
+                            <span className="sr-only">changes to</span>
+                            <span aria-hidden="true" className="flex-shrink-0 text-[var(--admin-text-subtle)]">→</span>
+                          </span>
+                          <span role="cell" className="truncate px-2.5 py-2 text-[12.5px] font-semibold text-[var(--admin-text-primary)]">{row.to}</span>
+                          <span role="cell" className="px-3 py-2"><PublishDiffTag kind={row.kind} /></span>
+                        </div>
+                        {row.detail && (
+                          <div role="row" className="grid grid-cols-[64px_1fr]">
+                            <span role="cell" aria-hidden="true" />
+                            <span role="cell" aria-colspan={3} className="px-2.5 pb-2 text-[11px] leading-4 text-[var(--admin-text-muted)]">{row.detail}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="md:col-span-2">
-                  <PublishChangeList title="Other draft changes" items={publishSummary.otherChanges} emptyLabel="No other draft changes detected." />
-                </div>
-              </div>
+              ) : (
+                <p className="mt-2 border border-[var(--admin-border)] p-3 text-xs font-semibold leading-5 text-[var(--admin-text-muted)]">
+                  No seat changes — only people details changed.
+                </p>
+              )}
 
-              <div className="mt-3 rounded-xl border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-dirty-text)]">
-                Publishing updates the viewer map and clears Undo/Redo history after success. Use Cancel if you need to review, undo, or save more draft changes first.
-              </div>
+              {publishSummary.employeeDetailChanges.length > 0 && (
+                <div className="mt-3 border border-[var(--admin-border)] p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-[var(--admin-text-primary)]">People details</h3>
+                    <span className="rounded-full bg-[var(--admin-state-neutral-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-state-neutral-border)]">{publishSummary.employeeDetailChanges.length}</span>
+                  </div>
+                  <ul className="mt-2 space-y-1.5 text-xs leading-5 text-[var(--admin-text-muted)]">
+                    {publishSummary.employeeDetailChanges.map(item => (
+                      <li key={`${item.label}-${item.detail}`}>
+                        <span className="font-semibold text-[var(--admin-text-primary)]">{item.label}</span> — {item.detail}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <p className="mt-3 text-[11.5px] font-semibold text-[var(--admin-text-muted)]">
+                Draft: {publishSummary.draftSeatCount} seats · Currently published: {publishSummary.publishedSeatCount} seats · Total publish changes: {publishSummary.totalChangeCount}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-[var(--admin-text-secondary)]">
+                Publishing copies the saved draft map to the read-only viewer and clears Undo/Redo history after success. Until you publish, viewers keep seeing the currently published map.
+              </p>
               </>
               )}
             </div>
@@ -3682,11 +3676,11 @@ export function SeatMap({
                 "Discard draft changes") — this dialog and
                 confirmDiscardDraftChanges (the one resetDraftToPublishedAction
                 call site) are unchanged, only the opening control moved. */}
-            <div className="grid grid-cols-2 gap-2 border-t border-[var(--admin-border)] pt-3">
+            <div className="grid grid-cols-[1fr_1.4fr] gap-2 border-t border-[var(--admin-border)] pt-3">
               <Button type="button" onClick={() => {
                 setActionError(null);
                 setPublishReviewOpen(false);
-              }} disabled={pending} className={["w-full", focusRingClass].join(" ")}>
+              }} disabled={pending} className={["w-full h-12", focusRingClass].join(" ")}>
                 Cancel
               </Button>
               <Button
@@ -3695,7 +3689,7 @@ export function SeatMap({
                 onClick={confirmPublishDraftMap}
                 disabled={pending || !publishSummary.hasChanges}
                 title={publishSummary.hasChanges ? "Publish reviewed draft changes" : "No draft changes to publish"}
-                className={["w-full !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)]", focusRingClass].join(" ")}
+                className={["w-full h-12 !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)]", focusRingClass].join(" ")}
               >
                 {pending ? "Publishing…" : actionError && publishSummary.hasChanges ? "Retry publish" : publishSummary.hasChanges ? (
                   <>

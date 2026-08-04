@@ -292,33 +292,31 @@ test("publish review summarizes draft changes before publish", async () => {
   // The summary must also diff live employee details against the viewer
   // snapshot so pending people edits are reviewable before they publish.
   assert.match(source, /buildPublishChangeSummary\(localSeats, localPublishedSeats, \{\s+employees: localEmployees,\s+publishedEmployees: localPublishedEmployees\s+\}\)/);
+  // v12 slice 5: the modal body is one unified per-seat diff table derived
+  // against the published baseline — same drop-out semantics as the summary.
+  assert.match(source, /buildPublishDiffRows\(localSeats, localPublishedSeats\)/);
   assert.match(source, /aria-labelledby="publish-review-title"/);
   assert.match(source, /Review draft before publishing/);
   assert.match(source, /Confirm the saved draft changes before they become visible in the read-only viewer/);
   assert.match(source, /Ready to publish reviewed changes/);
+  assert.match(source, /Saved draft changes only — unsaved inspector edits are excluded\./);
   assert.match(source, /Draft and viewer map are in sync/);
-  assert.match(source, /Publishing copies the saved draft map to the read-only viewer/);
-  assert.match(source, /Until you publish, viewers keep seeing the currently published map/);
+  // Viewer-impact + undo-history warnings folded into one caution line —
+  // both sentences must survive verbatim.
+  assert.match(source, /Publishing copies the saved draft map to the read-only viewer and clears Undo\/Redo history after success\. Until you publish, viewers keep seeing the currently published map\./);
   assert.match(source, /Publish did not complete/);
   assert.match(source, /Publishing reviewed draft changes/);
-  assert.match(source, /formatPublishChangeUnit\(value\)/);
-  assert.match(source, /value === 1 \? "change" : "changes"/);
   assert.match(source, /\{actionError && !pending && \(/);
   assert.match(source, /Retry publish/);
-  assert.match(source, /Count note:/);
-  assert.match(source, /Impact groups can overlap/);
-  assert.match(source, /Use Total publish changes below as the unique publish-summary total/);
   assert.match(source, /No draft changes to publish/);
   assert.match(source, /disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
-  assert.match(source, /People affected/);
-  assert.match(source, /Seat inventory/);
-  assert.match(source, /Metadata/);
-  assert.match(source, /Added seats/);
-  assert.match(source, /Removed seats/);
-  assert.match(source, /Assignment changes/);
-  assert.match(source, /Vacated seats/);
-  assert.match(source, /Status changes/);
-  assert.match(source, /Other draft changes/);
+  // The diff table's column contract and kind-tag tokens.
+  assert.match(source, /Published now/);
+  assert.match(source, /After publish/);
+  assert.match(source, /--admin-diff-assigned-/);
+  assert.match(source, /--admin-diff-vacated-/);
+  assert.match(source, /--admin-diff-reassigned-/);
+  assert.match(source, /People details/);
   assert.match(source, /Publish review blocked: Save or discard the selected seat edits before publishing/);
   assert.match(source, /Save or discard the selected seat edits before publishing/);
   assert.doesNotMatch(source, /Publish draft map to the viewer-facing seat map\?/);

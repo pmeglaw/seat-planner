@@ -228,3 +228,100 @@ export function buildPublishChangeSummary(
     hasChanges: totalChangeCount > 0
   };
 }
+
+export type PublishDiffRowKind = "added" | "removed" | "assigned" | "vacated" | "reassigned" | "updated";
+
+export type PublishDiffRow = {
+  key: string;
+  label: string;
+  kind: PublishDiffRowKind;
+  from: string;
+  to: string;
+  detail: string | null;
+};
+
+const DIFF_ABSENT = "—";
+
+function getDiffOccupantLabel(seat: SeatWithEmployee) {
+  return normalizeText(seat.employee_id) ? getSeatPersonLabel(seat) : "Open seat";
+}
+
+/**
+ * One row per changed seat for the publish review's diff table (v12 contract
+ * #5), diffed against the published baseline with the same key/occupant
+ * semantics as buildPublishChangeSummary — so a seat undone back to its
+ * baseline occupant drops out of both in lockstep. `from`/`to` are always
+ * occupant-state; metadata (status/zone/label/notes/custom/position) rides in
+ * `detail`, and the Status segment is suppressed on occupant-change rows
+ * because the tag already implies it (mirrors the summary's !employeeChanged
+ * guard on statusChanges).
+ */
+export function buildPublishDiffRows(
+  draftSeats: SeatWithEmployee[],
+  publishedSeats: SeatWithEmployee[]
+): PublishDiffRow[] {
+  const draftByKey = buildSeatMap(draftSeats);
+  const publishedByKey = buildSeatMap(publishedSeats);
+  const rows: PublishDiffRow[] = [];
+
+  draftByKey.forEach((draftSeat, key) => {
+    const publishedSeat = publishedByKey.get(key);
+    if (!publishedSeat) {
+      rows.push({
+        key,
+        label: draftSeat.label,
+        kind: "added",
+        from: DIFF_ABSENT,
+        to: getDiffOccupantLabel(draftSeat),
+        detail: getSeatZone(draftSeat)
+      });
+      return;
+    }
+
+    const employeeChanged = normalizeText(publishedSeat.employee_id) !== normalizeText(draftSeat.employee_id);
+    const metadataParts: string[] = [];
+    if (!employeeChanged && publishedSeat.status !== draftSeat.status) {
+      metadataParts.push(`Status ${publishedSeat.status} -> ${draftSeat.status}`);
+    }
+    const otherDetail = buildOtherChangeDetail(draftSeat, publishedSeat);
+    if (otherDetail) metadataParts.push(otherDetail);
+    if (hasSeatMoved(draftSeat, publishedSeat)) {
+      metadataParts.push(`position ${formatPoint(publishedSeat)} -> ${formatPoint(draftSeat)}`);
+    }
+    const metadataDetail = metadataParts.length ? metadataParts.join("; ") : null;
+
+    if (employeeChanged) {
+      const fromOpen = !normalizeText(publishedSeat.employee_id);
+      const toOpen = !normalizeText(draftSeat.employee_id);
+      rows.push({
+        key,
+        label: draftSeat.label,
+        kind: fromOpen ? "assigned" : toOpen ? "vacated" : "reassigned",
+        from: getDiffOccupantLabel(publishedSeat),
+        to: getDiffOccupantLabel(draftSeat),
+        detail: metadataDetail
+      });
+      return;
+    }
+
+    if (metadataDetail) {
+      const occupant = getDiffOccupantLabel(draftSeat);
+      rows.push({ key, label: draftSeat.label, kind: "updated", from: occupant, to: occupant, detail: metadataDetail });
+    }
+  });
+
+  publishedByKey.forEach((publishedSeat, key) => {
+    if (!draftByKey.has(key)) {
+      rows.push({
+        key,
+        label: publishedSeat.label,
+        kind: "removed",
+        from: getDiffOccupantLabel(publishedSeat),
+        to: DIFF_ABSENT,
+        detail: "Seat removed from the map"
+      });
+    }
+  });
+
+  return rows.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+}
