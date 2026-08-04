@@ -339,6 +339,7 @@ test.describe("admin map editor has no WCAG A/AA violations", () => {
     );
     await expectNoAxeViolations(page);
     await page.getByRole("button", { name: "More tools", exact: true }).click();
+    await expect(page.getByRole("group", { name: "More tools" })).toBeHidden();
 
     await page.getByRole("button", { name: /^Change floor\./ }).click();
     await expect(page.getByRole("menu", { name: "Floors" })).toBeVisible();
