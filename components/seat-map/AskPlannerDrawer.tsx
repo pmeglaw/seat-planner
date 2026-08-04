@@ -121,6 +121,9 @@ export function AskPlannerDrawer({
     return () => window.cancelAnimationFrame(frame);
   }, []);
   const [error, setError] = useState<DrawerError | null>(null);
+  // Provenance disclosure, collapsed by default and re-collapsed for every new
+  // answer — leaving it open would attach one answer's explanation to the next.
+  const [explainOpen, setExplainOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const questionRef = useRef<HTMLTextAreaElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -174,6 +177,7 @@ export function AskPlannerDrawer({
       try {
         setError(null);
         setResponse(null);
+        setExplainOpen(false);
         onHighlightSeats([]);
         const payload = await askPlannerAction({ question: cleanQuestion, seatId: seatId ?? null });
         if (isAskPlannerError(payload)) {
@@ -229,6 +233,10 @@ export function AskPlannerDrawer({
         onClick={onClose}
       />
 
+      {/* Carbon for AI gives an AI surface its own luminance: the panel edge
+          shifts to AI blue and a glow falls from the top edge, so the drawer
+          reads as a different KIND of surface than the chrome around it. That
+          legibility is the point — AI blue appears here and nowhere non-AI. */}
       <aside
         ref={drawerDialogFocusRef}
         tabIndex={-1}
@@ -237,12 +245,20 @@ export function AskPlannerDrawer({
         aria-modal="true"
         aria-labelledby="ask-planner-title"
         aria-describedby="ask-planner-description"
-        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-panel motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[calc(var(--admin-chrome-h)_+_12px)] sm:z-50 sm:max-h-[calc(100vh_-_var(--admin-chrome-h)_-_20px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
+        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden border border-[var(--admin-ai-panel-border)] bg-[var(--admin-chrome-bg)] bg-[image:var(--admin-ai-glow)] bg-no-repeat text-[var(--admin-chrome-text)] shadow-panel motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[calc(var(--admin-chrome-h)_+_12px)] sm:z-50 sm:max-h-[calc(100vh_-_var(--admin-chrome-h)_-_20px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
       >
         <div className="shrink-0 border-b border-[var(--admin-chrome-border)] px-4 py-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 id="ask-planner-title" className="text-base font-semibold">Ask Planner</h2>
+              {/* The AI label sits WITH the title, not in a corner: Carbon for
+                  AI asks that a user never read AI output without first seeing
+                  what produced it. aria-hidden because the heading text and the
+                  disclosure below already carry that fact for screen readers,
+                  and a bare "AI" would just interrupt the title. */}
+              <h2 id="ask-planner-title" className="flex items-center gap-2 text-base font-semibold">
+                Ask Planner
+                <span aria-hidden="true" className="border border-[var(--admin-ai-chrome-border)] px-[5px] py-px text-[10px] font-bold tracking-[0.04em] text-[var(--admin-ai-chrome-text)]">AI</span>
+              </h2>
               <p id="ask-planner-description" className="mt-1 text-xs leading-5 text-[var(--admin-chrome-muted)]">Read-only answers from saved draft map data.</p>
             </div>
             <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] transition hover:bg-white/10 hover:text-[var(--admin-chrome-text-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
@@ -319,12 +335,14 @@ export function AskPlannerDrawer({
             </section>
           )}
 
+          {/* Thinking is AI presence, so it wears AI blue. It used to borrow
+              the firm's orange, which read as an ordinary app-busy state. */}
           {pending && (
-            <section role="status" aria-live="polite" className="rounded-xl border border-[var(--admin-primary)]/40 bg-[var(--admin-primary)]/10 p-3">
+            <section role="status" aria-live="polite" className="rounded-xl border border-[var(--admin-ai-panel-border)] bg-[var(--admin-ai-row)] p-3">
               <div className="flex items-center gap-3">
-                <span className="h-3 w-3 shrink-0 motion-safe:animate-pulse rounded-full bg-[var(--admin-primary)]" />
+                <span className="h-3 w-3 shrink-0 motion-safe:animate-pulse rounded-full bg-[var(--admin-ai-chrome-text)]" />
                 <div>
-                  <div className="text-sm font-semibold text-[var(--admin-primary)]">Checking saved draft map data</div>
+                  <div className="text-sm font-semibold text-[var(--admin-ai-chrome-text)]">Checking saved draft map data</div>
                   <p className="mt-1 text-xs leading-5 text-[var(--admin-chrome-text-soft)]">Ask Planner is using read-only lookups. No seats or assignments will be changed.</p>
                 </div>
               </div>
@@ -340,7 +358,9 @@ export function AskPlannerDrawer({
 
           {response && (
             <div className="space-y-3">
-              <section className="rounded-xl border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-hover)] p-3">
+              {/* The answer itself sits on the luminous AI layer, so generated
+                  text is never mistaken for the app's own stated facts. */}
+              <section className="rounded-xl border border-[var(--admin-ai-panel-border)] bg-[image:var(--admin-ai-aura)] bg-[var(--admin-chrome-hover)] bg-no-repeat p-3">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span className={["rounded-full px-2 py-1 text-[10px] font-semibold ring-1", statusClassName(response.status)].join(" ")}>
                     {statusLabel(response.status)}
@@ -348,10 +368,37 @@ export function AskPlannerDrawer({
                   <span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold text-[var(--admin-chrome-muted)] ring-1 ring-[var(--admin-chrome-border)]">
                     {response.confidence} confidence
                   </span>
+                  {/* Carbon for AI requires the provenance of an answer to be
+                      reachable from the answer — a disclosure button, not a
+                      tooltip, so keyboard and touch users get it too. */}
+                  <button
+                    type="button"
+                    onClick={() => setExplainOpen(current => !current)}
+                    aria-expanded={explainOpen}
+                    aria-controls="ask-planner-explain"
+                    className="ml-auto border border-[var(--admin-ai-chrome-border)] px-[5px] py-px text-[10px] font-bold tracking-[0.04em] text-[var(--admin-ai-chrome-text)] transition hover:bg-[var(--admin-ai-row)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                  >
+                    AI {explainOpen ? "▴" : "▾"}
+                  </button>
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-6 text-[var(--admin-chrome-text-soft)]">{response.answer}</p>
                 {response.summary && (
                   <p className="mt-3 border-t border-[var(--admin-chrome-border)] pt-2 text-xs font-medium leading-5 text-[var(--admin-chrome-muted)]">{response.summary}</p>
+                )}
+
+                {explainOpen && (
+                  <div id="ask-planner-explain" className="mt-3 border border-[rgb(var(--admin-ai-rgb)/0.40)] bg-[var(--admin-chrome-bg)] p-3">
+                    <div className="text-[11.5px] font-semibold text-[var(--admin-ai-chrome-text)]">How this answer was made</div>
+                    <p className="mt-1.5 text-xs leading-5 text-[var(--admin-chrome-text-soft)]">
+                      Generated from the <b className="font-semibold text-[var(--admin-chrome-text)]">saved draft layer only</b> — seats, directory, zones. The model reads the map; it cannot modify it. Unsaved inspector edits are excluded.
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-text-soft)]">Sources: draft seats · directory</span>
+                      <span className={["rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1", statusClassName(response.status)].join(" ")}>
+                        {response.confidence} confidence
+                      </span>
+                    </div>
+                  </div>
                 )}
               </section>
 
@@ -395,13 +442,13 @@ export function AskPlannerDrawer({
                         key={highlight.seatId}
                         type="button"
                         onClick={() => onSelectSeat(highlight.seatId)}
-                        className="flex w-full items-start justify-between gap-3 rounded-lg border border-[var(--admin-primary)]/40 bg-[var(--admin-primary)]/10 p-2 text-left transition hover:bg-[var(--admin-primary)]/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                        className="flex w-full items-start justify-between gap-3 rounded-lg border border-[var(--admin-ai-panel-border)] bg-[var(--admin-ai-row)] p-2 text-left transition hover:bg-[rgb(var(--admin-ai-rgb)/0.16)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                       >
                         <span className="min-w-0">
                           <span className="block text-sm font-semibold text-[var(--admin-chrome-text)]">{highlight.label}</span>
                           <span className="mt-0.5 block text-xs leading-5 text-[var(--admin-chrome-text-soft)]">{highlight.reason}</span>
                         </span>
-                        <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold text-[var(--admin-primary)] ring-1 ring-white/15">
+                        <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold text-[var(--admin-ai-chrome-text)] ring-1 ring-white/15">
                           Select
                         </span>
                       </button>

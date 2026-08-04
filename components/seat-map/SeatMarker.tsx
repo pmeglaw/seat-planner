@@ -330,7 +330,11 @@ function SeatMarkerComponent({
     highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-ring)]" : "outline outline-2 outline-offset-2 outline-[#1D6E41]/70" : "",
     swapSource || moveEmployeeSource ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B] ring-4 ring-[#A9D7B8]/80" : "",
     swapTarget ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#6E655A] bg-[#F1ECE4] text-[#353532] ring-4 ring-[#D8D0C5]/85" : "",
-    plannerHighlighted ? adminMarker ? "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)] ring-2 ring-[var(--admin-border)] shadow-[0_6px_14px_rgba(140,102,69,0.18),inset_0_1px_0_rgba(255,255,255,0.72)]" : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B] ring-2 ring-[#1D6E41]/55 shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
+    // v12 slice 7: on ADMIN this state means "Ask Planner chose this seat", so
+    // it wears the AI aura — the only place AI blue touches a pill. The viewer
+    // branch keeps its green: there `highlighted` means a search hit or a
+    // people-list hover, which is not AI presence and must never look like it.
+    plannerHighlighted ? adminMarker ? "border-[var(--admin-ai-border)] bg-white bg-[image:var(--admin-ai-marker-aura)] bg-no-repeat text-[var(--admin-ai-text)] shadow-marker-ai" : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B] ring-2 ring-[#1D6E41]/55 shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
     (swapMode && !swapSource) || (moveEmployeeMode && !moveEmployeeSource) ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--admin-marker-search-ring)]" : "group-hover:ring-4 group-hover:ring-[#A9D7B8]/80" : ""
   ].join(" ");
   const markerFocusClass = adminMarker
@@ -473,6 +477,18 @@ function SeatMarkerComponent({
         {draftChanged && !selected && !searchProminent && (
           <span className={["pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 text-[8px] font-black leading-none text-white", draftBadgeClass].join(" ")} aria-hidden="true">
             D
+          </span>
+        )}
+        {/* AI provenance on the seat itself: the aura says "something picked
+            this", the chip says WHAT picked it. aria-hidden because the
+            marker's accessible name already carries the highlight reason
+            (highlightedDescription) — the chip would only repeat it. */}
+        {plannerHighlighted && adminMarker && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-2 -top-[7px] rounded-[2px] border border-[var(--admin-ai-border)] bg-white px-[3px] text-[7.5px] font-bold leading-[1.4] tracking-[0.04em] text-[var(--admin-ai-text)]"
+          >
+            AI
           </span>
         )}
         {officePlate ? (
