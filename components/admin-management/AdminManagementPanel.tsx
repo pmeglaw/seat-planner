@@ -20,8 +20,9 @@ import {
   renameZoneAction,
   updateEmployeeAction
 } from "@/app/actions";
+import Link from "next/link";
 import { buildDepartmentRoster, departmentKey } from "@/lib/departments";
-import { withTabParam } from "@/lib/deepLink";
+import { withSeatParam, withTabParam } from "@/lib/deepLink";
 import { computeVirtualWindow } from "@/lib/virtualizedList";
 import { formatDisplayName } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
@@ -150,6 +151,16 @@ function TrashIcon() {
   );
 }
 
+// v12 stat tiles carry the same "opens elsewhere" arrow the Settings tiles use,
+// drawn on the house 20-viewBox grid at the 12px stroke tier (1.6).
+function TileArrowIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2.5 top-2.5 h-3 w-3 text-[var(--admin-status-neutral)]">
+      <path d="M6 14 14 6M8 6h6v6" />
+    </svg>
+  );
+}
+
 export function AdminManagementPanel({
   employees,
   seats,
@@ -158,6 +169,10 @@ export function AdminManagementPanel({
   initialTab
 }: AdminManagementPanelProps) {
   const managementConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
+  // v12 (#13): the directory card is full-width, so the add/edit form that used
+  // to sit in a right-hand aside is now one dialog both entry points open.
+  const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
+  const employeeDialogFocusRef = useDialogFocus<HTMLElement>();
   const [localEmployees, setLocalEmployees] = useState(employees);
   const [localDepartmentOptions, setLocalDepartmentOptions] = useState(departmentOptions);
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
@@ -280,8 +295,8 @@ export function AdminManagementPanel({
   const managementSummaryCards = [
     { label: "Draft seats", value: localSeats.length },
     { label: "Active employees", value: activeEmployees.length },
-    { label: "Assigned employees", value: assignedEmployees },
-    { label: "Unassigned employees", value: unassignedEmployees },
+    { label: "Assigned", value: assignedEmployees },
+    { label: "Unassigned", value: unassignedEmployees },
     { label: "Active zones", value: zoneNames.length }
   ];
   const fieldClassName = "w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]";
@@ -396,11 +411,17 @@ export function AdminManagementPanel({
     setError(errorValue instanceof Error ? errorValue.message : fallback);
   }
 
-  function startNewEmployee() {
+  function openAddEmployee() {
     setSelectedEmployeeId("");
     setEmployeeForm(emptyEmployeeForm);
     setMessage(null);
     setError(null);
+    setEmployeeDialogOpen(true);
+    window.requestAnimationFrame(() => employeeNameInputRef.current?.focus());
+  }
+
+  function closeEmployeeDialog() {
+    setEmployeeDialogOpen(false);
   }
 
   function editEmployee(employee: Employee) {
@@ -409,6 +430,7 @@ export function AdminManagementPanel({
     setActiveTab("employees");
     setMessage(null);
     setError(null);
+    setEmployeeDialogOpen(true);
     // Hand focus to the form the row just populated (critique action 8).
     window.requestAnimationFrame(() => employeeNameInputRef.current?.focus());
   }
@@ -444,6 +466,9 @@ export function AdminManagementPanel({
         });
         setSelectedEmployeeId(employee.id);
         setEmployeeForm(formFromEmployee(employee));
+        // Close on success so the confirmation banner behind the dialog is the
+        // thing the admin sees next.
+        setEmployeeDialogOpen(false);
         showSuccess(`${formatDisplayName(employee.full_name)} saved.`);
       } catch (errorValue) {
         showError(errorValue, "Could not save employee.");
@@ -456,6 +481,8 @@ export function AdminManagementPanel({
 
     setMessage(null);
     setError(null);
+    // One dialog at a time: hand the focus trap to the confirmation.
+    setEmployeeDialogOpen(false);
     setManagementConfirm({ kind: "employee", employee: selectedEmployee, assignedSeatLabel: selectedEmployeeSeatLabel });
   }
 
@@ -662,11 +689,11 @@ export function AdminManagementPanel({
   }
 
   return (
-    <main className="admin-theme flex-1 bg-[var(--admin-bg)] px-3 py-5 text-[var(--admin-text-primary)] sm:px-6 sm:py-6">
-      <div className="mx-auto max-w-7xl space-y-4">
-        <header className="border-b border-[var(--admin-border)] pb-4">
-          <h1 className="text-xl font-semibold text-[var(--admin-text-primary)]">Management</h1>
-          <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--admin-text-muted)]">
+    <main className="admin-theme flex-1 bg-[var(--admin-bg)] px-4 pb-12 pt-6 text-[var(--admin-text-primary)] sm:px-8">
+      <div className="mx-auto max-w-[1240px] space-y-4">
+        <header className="pb-1">
+          <h1 className="text-[22px] font-semibold leading-tight text-[var(--admin-text-primary)]">Management</h1>
+          <p className="mt-1 max-w-2xl text-[13px] leading-5 text-[var(--admin-text-muted)]">
             People, departments, zones, and publish history.
           </p>
         </header>
@@ -681,69 +708,78 @@ export function AdminManagementPanel({
           </div>
         )}
 
-        <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        {/* Hairline tile grid: the 1px gaps over a stone background draw the
+            rules, so the tiles themselves stay borderless. */}
+        <section className="grid gap-px border border-[var(--admin-border)] bg-[var(--admin-border)] [grid-template-columns:repeat(auto-fit,minmax(160px,1fr))]">
           {managementSummaryCards.map(card => (
-            <div key={card.label} className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
-              <div className="text-2xl font-semibold text-[var(--admin-text-primary)]">{card.value.toLocaleString()}</div>
-              <div className="mt-1 text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">{card.label}</div>
+            <div key={card.label} className="relative bg-[var(--admin-surface)] p-4">
+              <div className="text-2xl font-semibold leading-none text-[var(--admin-text-primary)]">{card.value.toLocaleString()}</div>
+              <div className="mt-2 text-xs text-[var(--admin-text-muted)]">{card.label}</div>
+              <TileArrowIcon />
             </div>
           ))}
         </section>
 
-        <nav aria-label="Management sections" className="flex flex-wrap border-b border-[var(--admin-border)]">
-          {managementTabs.map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={[
-                "-mb-px border-b-2 px-4 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
-                activeTab === tab.id
-                  ? "border-[var(--admin-primary)] font-semibold text-[var(--admin-text-primary)]"
-                  : "border-transparent font-medium text-[var(--admin-text-secondary)] hover:border-[var(--admin-border)] hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)]"
-              ].join(" ")}
-              aria-current={activeTab === tab.id ? "page" : undefined}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+        <div>
+          <nav aria-label="Management sections" className="flex">
+            {managementTabs.map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={[
+                  "px-4 py-[9px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+                  activeTab === tab.id
+                    ? "border border-b-2 border-[var(--admin-border)] border-b-[var(--admin-primary-cta)] bg-[var(--admin-surface)] font-semibold text-[var(--admin-text-primary)]"
+                    : "border-b border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)]"
+                ].join(" ")}
+                aria-current={activeTab === tab.id ? "page" : undefined}
+              >
+                {tab.label}
+              </button>
+            ))}
+            <span aria-hidden="true" className="flex-1 border-b border-[var(--admin-border)]" />
+          </nav>
 
         {activeTab === "employees" && (
-          <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
-            <div className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Employees</h2>
-                  <p className="text-sm text-[var(--admin-text-secondary)]">Search, edit, and deactivate employees. Seat placement happens on the map.</p>
-                </div>
-                <label className="relative block w-full md:w-80">
-                  <span className="sr-only">Search employees</span>
-                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-text-muted)]">
-                    <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
-                    <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                  </svg>
-                  <input
-                    value={search}
-                    onChange={event => setSearch(event.target.value)}
-                    placeholder="Search employees…"
-                    className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] py-2 pl-8 pr-3 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]"
-                  />
-                </label>
-              </div>
-              <p aria-live="polite" className="mt-3 text-xs font-medium text-[var(--admin-text-secondary)]">
-                {pluralize(sortedEmployees.length, "employee")} of {activeEmployees.length.toLocaleString()} shown
-              </p>
+          <section className="border border-t-0 border-[var(--admin-border)] bg-[var(--admin-surface)]">
+            <h2 className="sr-only">Employees</h2>
+            {/* 44px toolbar: the search is bare inline chrome (its own border
+                would fight the card edge it sits inside) and the CTA fills the
+                strip's full height. */}
+            <div className="flex h-11 items-stretch border-b border-[var(--admin-border)]">
+              <label className="relative flex min-w-0 flex-1 items-center">
+                <span className="sr-only">Search employees</span>
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-4 h-3.5 w-3.5 text-[var(--admin-status-neutral)]">
+                  <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
+                  <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                </svg>
+                <input
+                  value={search}
+                  onChange={event => setSearch(event.target.value)}
+                  placeholder="Search employees…"
+                  className="h-full w-full min-w-0 border-0 bg-transparent pl-10 pr-4 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={openAddEmployee}
+                disabled={pending}
+                className="shrink-0 bg-[var(--admin-primary-cta)] px-[18px] text-[13.5px] font-semibold text-[var(--admin-text-inverse)] transition-colors hover:bg-[var(--admin-primary-cta-hover)] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-text-inverse)]"
+              >
+                Add employee ＋
+              </button>
+            </div>
               {sortedEmployees.length === 0 ? (
-                <div className="mt-2 border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface-alt)] p-5 text-sm text-[var(--admin-text-secondary)]">
+                <div className="p-6 text-sm text-[var(--admin-text-secondary)]">
                   <div className="font-semibold text-[var(--admin-text-primary)]">No employees match this search</div>
                   <p className="mt-1">Try a different name, department, position, or seat label.</p>
                 </div>
               ) : (
-                <div className="mt-2 overflow-x-auto border border-[var(--admin-border)]">
-                  <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[760px] border-collapse text-left text-[13px]">
                     <thead>
-                      <tr className="border-b border-[var(--admin-border-subtle,var(--admin-border))] bg-[var(--admin-surface-alt)] text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">
+                      <tr className="border-b border-[var(--admin-border)] bg-[var(--admin-table-header-bg)] text-xs text-[var(--admin-text-secondary)]">
                         {employeeColumns.map(column => {
                           const isSorted = sortKey === column.key;
                           return (
@@ -751,7 +787,7 @@ export function AdminManagementPanel({
                               key={column.key}
                               scope="col"
                               aria-sort={isSorted ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
-                              className="px-3 py-2 font-medium"
+                              className="px-3 py-[9px] font-semibold first:pl-4"
                             >
                               <button
                                 type="button"
@@ -768,21 +804,25 @@ export function AdminManagementPanel({
                             </th>
                           );
                         })}
+                        <th scope="col" className="w-10 px-2 py-[9px]">
+                          <span className="sr-only">Row actions</span>
+                        </th>
                       </tr>
                     </thead>
                     <tbody ref={employeeGridRef}>
                       {employeeWindow.topPadding > 0 && (
                         <tr aria-hidden="true">
-                          <td colSpan={employeeColumns.length} style={{ height: employeeWindow.topPadding, padding: 0 }} />
+                          <td colSpan={employeeColumns.length + 1} style={{ height: employeeWindow.topPadding, padding: 0 }} />
                         </tr>
                       )}
                       {visibleEmployees.map(employee => {
-                        const seatLabel = seatLabelByEmployeeId.get(employee.id) ?? "Unassigned";
+                        const seatLabel = seatLabelByEmployeeId.get(employee.id) ?? "";
                         const isAssigned = seatLabelByEmployeeId.has(employee.id);
                         const isSelected = selectedEmployeeId === employee.id;
+                        const displayName = formatDisplayName(employee.full_name);
                         // Background lives on the cells (not the <tr>) so it paints
                         // reliably under border-collapse in every browser.
-                        const cellBg = isSelected ? "bg-[var(--admin-primary-soft)]" : "group-hover/row:bg-[var(--admin-surface-alt)]";
+                        const cellClass = ["px-3 py-2 align-middle transition-colors", isSelected ? "bg-[var(--admin-primary-soft)]" : "group-hover/row:bg-[var(--admin-surface-alt)]"].join(" ");
                         return (
                           <tr
                             key={employee.id}
@@ -796,94 +836,73 @@ export function AdminManagementPanel({
                                 editEmployee(employee);
                               }
                             }}
-                            className="group/row cursor-pointer border-b border-[var(--admin-border-subtle,var(--admin-border))] outline-none transition last:border-b-0 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                            className="group/row cursor-pointer border-b border-[var(--admin-table-row-border)] outline-none transition last:border-b-0 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                           >
-                            <td className={["px-3 py-2 transition-colors", cellBg, isSelected ? "border-l-2 border-l-[var(--admin-primary-border)]" : "border-l-2 border-l-transparent"].join(" ")}>
-                              <div className="flex items-center gap-3">
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary-soft)] text-xs font-semibold text-[var(--admin-primary-on-soft)]">{getInitials(employee.full_name)}</div>
-                                <span className="truncate font-semibold text-[var(--admin-text-primary)]">{formatDisplayName(employee.full_name)}</span>
+                            <td className={[cellClass, "pl-4"].join(" ")}>
+                              <div className="flex items-center gap-2.5">
+                                <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--admin-paper)] text-[9px] font-bold text-[var(--admin-primary-on-soft)]">{getInitials(employee.full_name)}</span>
+                                {/* Contract #13: the name is the map affordance —
+                                    a real link so it is shareable and middle-clickable.
+                                    Unseated people have nothing to show, so they stay text. */}
+                                {isAssigned ? (
+                                  <Link
+                                    href={`/admin${withSeatParam("", seatLabel)}`}
+                                    onClick={event => event.stopPropagation()}
+                                    className="truncate font-semibold text-[var(--admin-text-primary)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                                  >
+                                    {displayName}
+                                  </Link>
+                                ) : (
+                                  <span className="truncate font-semibold text-[var(--admin-text-primary)]">{displayName}</span>
+                                )}
                               </div>
                             </td>
-                            <td className={["px-3 py-2 transition-colors text-[var(--admin-text-secondary)]", cellBg].join(" ")}>{employee.department || "—"}</td>
-                            <td className={["px-3 py-2 transition-colors text-[var(--admin-text-secondary)]", cellBg].join(" ")}>{employee.position || "—"}</td>
-                            <td className={["px-3 py-2 transition-colors text-[var(--admin-text-secondary)]", cellBg].join(" ")}>{employee.phone_extension || "—"}</td>
-                            <td className={["px-3 py-2 transition-colors font-medium text-[var(--admin-text-primary)]", cellBg].join(" ")}>{seatLabel}</td>
-                            <td className={["px-3 py-2 transition-colors", cellBg].join(" ")}>
+                            <td className={[cellClass, "text-[12.5px] text-[var(--admin-text-secondary)]"].join(" ")}>{employee.department || "—"}</td>
+                            <td className={[cellClass, "text-[12.5px] text-[var(--admin-text-secondary)]"].join(" ")}>{employee.position || "—"}</td>
+                            <td className={[cellClass, "text-[12.5px] text-[var(--admin-text-secondary)]"].join(" ")}>{employee.phone_extension || "—"}</td>
+                            <td className={[cellClass, "font-mono text-xs font-semibold text-[var(--admin-text-primary)]"].join(" ")}>{seatLabel || "—"}</td>
+                            <td className={cellClass}>
                               {/* Assigned mirrors the map legend's green chip — the
                                   orange-soft family reads as a warning here. */}
-                              <span className={["inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium", isAssigned ? "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-1 ring-[var(--admin-success)]/30" : "bg-[var(--admin-surface-alt)] text-[var(--admin-text-secondary)]"].join(" ")}>
-                                {isAssigned && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />}
+                              <span className={["inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium", isAssigned ? "border-[var(--sp-color-state-success-border)] bg-[var(--admin-success-soft)] text-[var(--sp-color-state-success-on-soft)]" : "border-[var(--admin-border)] bg-[var(--admin-surface-alt)] text-[var(--admin-text-secondary)]"].join(" ")}>
+                                <span aria-hidden="true" className={["h-1.5 w-1.5 shrink-0 rounded-full", isAssigned ? "bg-[var(--admin-success)]" : "bg-[var(--admin-status-neutral)]"].join(" ")} />
                                 {isAssigned ? "Assigned" : "Unassigned"}
                               </span>
+                            </td>
+                            <td className={[cellClass, "px-2 text-right"].join(" ")}>
+                              <button
+                                type="button"
+                                onClick={event => {
+                                  event.stopPropagation();
+                                  editEmployee(employee);
+                                }}
+                                aria-label={`Edit ${displayName}`}
+                                className="inline-flex h-7 w-7 items-center justify-center text-[var(--admin-status-neutral)] transition-colors hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                              >
+                                <span aria-hidden="true" className="text-base leading-none">⋮</span>
+                              </button>
                             </td>
                           </tr>
                         );
                       })}
                       {employeeWindow.bottomPadding > 0 && (
                         <tr aria-hidden="true">
-                          <td colSpan={employeeColumns.length} style={{ height: employeeWindow.bottomPadding, padding: 0 }} />
+                          <td colSpan={employeeColumns.length + 1} style={{ height: employeeWindow.bottomPadding, padding: 0 }} />
                         </tr>
                       )}
                     </tbody>
                   </table>
                 </div>
               )}
-            </div>
+            <p aria-live="polite" className="border-t border-[var(--admin-border)] px-4 py-[9px] text-xs text-[var(--admin-text-muted)]">
+              {pluralize(sortedEmployees.length, "employee")} of {activeEmployees.length.toLocaleString()} shown — click a name to show them on the map
+            </p>
 
-            <aside className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">{selectedEmployee ? "Edit employee" : "Add employee"}</h2>
-                  <p className="text-sm text-[var(--admin-text-secondary)]">Changes update the employee directory and draft seat references.</p>
-                </div>
-                <Button type="button" onClick={startNewEmployee} disabled={pending}>New</Button>
-              </div>
-
-              <div className="mt-4 space-y-3">
-                <label className="block">
-                  <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Name</span>
-                  <input ref={employeeNameInputRef} value={employeeForm.fullName} onChange={event => setEmployeeForm(current => ({ ...current, fullName: event.target.value }))} className={fieldClassName} />
-                </label>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <label className="block">
-                    <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Position</span>
-                    <input value={employeeForm.position} onChange={event => setEmployeeForm(current => ({ ...current, position: event.target.value }))} className={fieldClassName} />
-                  </label>
-                  <label className="block">
-                    <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Phone Ext.</span>
-                    <input type="tel" value={employeeForm.phoneExtension} onChange={event => setEmployeeForm(current => ({ ...current, phoneExtension: event.target.value }))} className={fieldClassName} inputMode="numeric" />
-                  </label>
-                </div>
-                <label className="block">
-                  <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Email</span>
-                  <input type="email" spellCheck={false} value={employeeForm.email} onChange={event => setEmployeeForm(current => ({ ...current, email: event.target.value }))} placeholder="Optional" className={fieldClassName} inputMode="email" autoComplete="off" />
-                </label>
-                <label className="block">
-                  <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Department</span>
-                  <input list="management-department-options" value={employeeForm.department} onChange={event => setEmployeeForm(current => ({ ...current, department: event.target.value }))} className={fieldClassName} />
-                </label>
-              </div>
-              {selectedEmployee && (
-                <div className="mt-4 border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-3 text-xs leading-5 text-[var(--admin-state-dirty-text)]">
-                  <div className="font-semibold tracking-normal">Deactivation impact</div>
-                  <div className="mt-1">
-                    Current draft seat: <span className="font-bold">{selectedEmployeeSeatLabel}</span>.
-                    {selectedEmployeeSeatLabel === "Unassigned"
-                      ? " Deactivation removes this employee from the active directory."
-                      : " Deactivation clears this draft assignment. The published map everyone sees won't change until you publish again."}
-                  </div>
-                </div>
-              )}
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button type="button" variant="primary" onClick={saveEmployee} disabled={pending || !employeeForm.fullName.trim()}>{selectedEmployee ? "Save employee" : "Add employee"}</Button>
-                {selectedEmployee && <Button type="button" variant="danger" onClick={deleteEmployee} disabled={pending}>Deactivate</Button>}
-              </div>
-            </aside>
           </section>
         )}
 
         {activeTab === "departments" && (
-          <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
+          <section className="border border-t-0 border-[var(--admin-border)] bg-[var(--admin-surface)] p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Departments</h2>
@@ -942,7 +961,7 @@ export function AdminManagementPanel({
         )}
 
         {activeTab === "zones" && (
-          <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
+          <section className="border border-t-0 border-[var(--admin-border)] bg-[var(--admin-surface)] p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Zones</h2>
@@ -993,7 +1012,7 @@ export function AdminManagementPanel({
         )}
 
         {activeTab === "publishHistory" && (
-          <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2 sm:p-5">
+          <section className="border border-t-0 border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 sm:p-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="max-w-2xl">
                 <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Publish History</h2>
@@ -1141,10 +1160,91 @@ export function AdminManagementPanel({
           </section>
         )}
 
+        </div>
+
         <datalist id="management-department-options">
           {departmentNames.map(name => <option key={name} value={name} />)}
         </datalist>
       </div>
+
+      {employeeDialogOpen && (
+        <div className="fixed inset-0 z-[65] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">
+          <section
+            ref={employeeDialogFocusRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="management-employee-title"
+            aria-describedby="management-employee-description"
+            onKeyDown={event => {
+              if (event.key === "Escape" && !pending) {
+                event.stopPropagation();
+                closeEmployeeDialog();
+              }
+            }}
+            className="max-h-[90vh] w-full max-w-[560px] overflow-y-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 id="management-employee-title" className="text-base font-semibold">{selectedEmployee ? "Edit employee" : "Add employee"}</h2>
+                <p id="management-employee-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-secondary)]">
+                  Changes update the employee directory and draft seat references.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeEmployeeDialog}
+                disabled={pending}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                aria-label="Close employee form"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <label className="block">
+                <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Name</span>
+                <input ref={employeeNameInputRef} value={employeeForm.fullName} onChange={event => setEmployeeForm(current => ({ ...current, fullName: event.target.value }))} className={fieldClassName} />
+              </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Position</span>
+                  <input value={employeeForm.position} onChange={event => setEmployeeForm(current => ({ ...current, position: event.target.value }))} className={fieldClassName} />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Phone Ext.</span>
+                  <input type="tel" value={employeeForm.phoneExtension} onChange={event => setEmployeeForm(current => ({ ...current, phoneExtension: event.target.value }))} className={fieldClassName} inputMode="numeric" />
+                </label>
+              </div>
+              <label className="block">
+                <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Email</span>
+                <input type="email" spellCheck={false} value={employeeForm.email} onChange={event => setEmployeeForm(current => ({ ...current, email: event.target.value }))} placeholder="Optional" className={fieldClassName} inputMode="email" autoComplete="off" />
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Department</span>
+                <input list="management-department-options" value={employeeForm.department} onChange={event => setEmployeeForm(current => ({ ...current, department: event.target.value }))} className={fieldClassName} />
+              </label>
+            </div>
+            {selectedEmployee && (
+              <div className="mt-4 border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-3 text-xs leading-5 text-[var(--admin-state-dirty-text)]">
+                <div className="font-semibold tracking-normal">Deactivation impact</div>
+                <div className="mt-1">
+                  Current draft seat: <span className="font-bold">{selectedEmployeeSeatLabel}</span>.
+                  {selectedEmployeeSeatLabel === "Unassigned"
+                    ? " Deactivation removes this employee from the active directory."
+                    : " Deactivation clears this draft assignment. The published map everyone sees won't change until you publish again."}
+                </div>
+              </div>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button type="button" variant="primary" onClick={saveEmployee} disabled={pending || !employeeForm.fullName.trim()}>{selectedEmployee ? "Save employee" : "Add employee"}</Button>
+              <Button type="button" onClick={closeEmployeeDialog} disabled={pending}>Cancel</Button>
+              {selectedEmployee && <Button type="button" variant="danger" onClick={deleteEmployee} disabled={pending}>Deactivate</Button>}
+            </div>
+          </section>
+        </div>
+      )}
 
       {managementConfirm && (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">
