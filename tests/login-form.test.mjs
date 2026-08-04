@@ -79,13 +79,37 @@ test("hydration enables the submit button and restores its label", async () => {
   assert.doesNotMatch(document.body.innerHTML, /Starting up…/);
 });
 
-test("renders the sign-in form with both auth modes", async () => {
+// v12 slice 8 (owner ruling 2026-08-04): the Password / Magic-link mode tabs
+// became two actions in one row. Both credentials are always on screen, and
+// asking for a link is a single click instead of switch-then-submit — so there
+// is no mode to announce and no aria-pressed pair to assert.
+test("renders the sign-in form with both auth actions", async () => {
   await mountLogin();
   assert.equal(screen.getByRole("heading", { name: "Sign in" }).tagName, "H1");
   assert.ok(document.querySelector('input[type="email"]'));
   assert.ok(document.querySelector('input[type="password"]'));
-  assert.equal(screen.getByRole("button", { name: /^Password/ }).getAttribute("aria-pressed"), "true");
-  assert.equal(screen.getByRole("button", { name: /Magic link/ }).getAttribute("aria-pressed"), "false");
+  assert.equal(screen.getByRole("button", { name: "Sign in" }).getAttribute("type"), "submit");
+  // The link request must never be a submit: it would race the password path.
+  assert.equal(screen.getByRole("button", { name: /Magic link/ }).getAttribute("type"), "button");
+});
+
+// tests/e2e-auth/auth-helpers.ts signs in with button:text-is("Sign in") — the
+// heading is also "Sign in", which is why it uses text-is rather than has-text.
+// Playwright binds that engine to the SMALLEST element containing the text, so
+// wrapping the label in a span (for a label-left/arrow-right split, say) makes
+// the span capture it and the button stop matching, and every authenticated e2e
+// test loses its sign-in step. Keep the label a direct text child.
+test("the submit label is a direct text child so the e2e sign-in locator still binds", async () => {
+  await mountLogin();
+  const submitButton = screen.getByRole("button", { name: "Sign in" });
+  const ownText = Array.from(submitButton.childNodes)
+    .filter(node => node.nodeType === 3)
+    .map(node => node.textContent)
+    .join("")
+    .trim();
+
+  assert.equal(ownText, "Sign in");
+  assert.equal(submitButton.textContent.trim(), "Sign in", "decoration must not add text");
 });
 
 test("submitting with no email shows a validation alert and makes no auth call", async () => {
@@ -134,17 +158,28 @@ test("a Supabase error is mapped to friendly guidance and blocks redirect", asyn
   assert.deepEqual(pushed, []);
 });
 
-test("magic-link mode sends an OTP without creating a user", async () => {
+test("the magic-link button sends an OTP without creating a user", async () => {
   const { calls } = await mountLogin();
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: /Magic link/ })));
   await type('input[type="email"]', "person@example.com");
-  await submit();
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: /Magic link/ })));
   await flush();
 
   assert.equal(calls.otp.length, 1);
   assert.equal(calls.otp[0].email, "person@example.com");
   assert.equal(calls.otp[0].options.shouldCreateUser, false);
   assert.match(screen.getByRole("status").textContent, /Check your email/);
+});
+
+// The button no longer passes through handleSubmit, so it needs its own guard —
+// otherwise a stray click would ask Supabase to mail a link to "".
+test("the magic-link button refuses to send without an email", async () => {
+  const { calls } = await mountLogin();
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: /Magic link/ })));
+  await flush();
+
+  assert.match(screen.getByRole("alert").textContent, /Enter your work email/);
+  assert.equal(calls.otp.length, 0);
+  assert.equal(document.activeElement, document.querySelector('input[type="email"]'));
 });
 
 test("forgot-password requires an email before sending a reset", async () => {

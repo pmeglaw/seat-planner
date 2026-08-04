@@ -231,6 +231,12 @@
   --admin-rail-muted: var(--admin-chrome-muted);
   --admin-surface: var(--sp-color-surface);
   --admin-surface-hover: #FBFAF8;
+  /* v12 filled field (Carbon Field-01). Neutral rather than the warm
+     surface-alt so the input reads as a well, not as a tinted panel. The rule
+     measures 3.02:1 on the fill — clearing WCAG 1.4.11's 3:1 for an essential
+     UI boundary, which is the whole reason this pair is specified together. */
+  --admin-field-fill: #F4F4F4;
+  --admin-field-rule: #8d8d8d;
   --admin-surface-alt: var(--sp-color-canvas);
   --admin-surface-muted: var(--sp-color-canvas);
   --admin-border: #E7E1D8;
