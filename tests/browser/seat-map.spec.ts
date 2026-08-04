@@ -239,3 +239,20 @@ test("a failed discard surfaces its error inside the discard dialog (002)", asyn
   // the relabel is verified by prod QA + source). We assert 002's core:
   // the error surfaces inside the discard dialog rather than behind it.
 });
+
+// v12 slice 5: the publish review is a unified per-seat diff table. `custom`
+// with an empty published layer reads as one Added change, which renders the
+// contract-#4 publish cluster whose entry button opens the review.
+test("the publish review lists per-seat diff rows with change tags", async ({ page }) => {
+  await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true, publishedSeats: [] });
+
+  await page.getByRole("button", { name: /unpublished change/ }).dispatchEvent("click");
+
+  const dialog = page.getByRole("dialog", { name: "Review draft before publishing" });
+  await expect(dialog).toBeAttached();
+  await expect(dialog.getByText("Published now")).toBeAttached();
+  await expect(dialog.getByText("After publish")).toBeAttached();
+  await expect(dialog.getByText("S01", { exact: true })).toBeAttached();
+  await expect(dialog.getByText("Added", { exact: true })).toBeAttached();
+  await expect(dialog.getByText("1 seat change", { exact: true })).toBeAttached();
+});

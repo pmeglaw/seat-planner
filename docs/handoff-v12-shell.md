@@ -175,6 +175,9 @@ This document goes stale; the code does not. Read, in order:
    column via `stageReservedClassName` are now the results panel / mode card
    on admin and the People directory on viewer.
 
+4. **The publish diff table — SHIPPED 2026-08-03 (v12 slice 5).**
+   The publish review now renders a unified per-seat diff table with `Published now` and `After publish` headers (contract #5), a lean modal, and the `--admin-diff-*` CSS token family, superseding the prior card/list review layout.
+
 ## Settled — do not reopen
 
 These were decided deliberately, several against the handoff's own text. A fresh
