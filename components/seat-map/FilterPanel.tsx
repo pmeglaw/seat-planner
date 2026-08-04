@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 import type { SeatStatus } from "@/lib/types";
@@ -30,6 +31,12 @@ type FilterPanelProps = {
   onDepartmentChange: (value: string) => void;
   onPositionChange: (value: string) => void;
   onZoneChange: (value: string) => void;
+  /**
+   * Hover/focus preview for the zone chips (v12 contract #8). Optional: a
+   * caller with no map to wash simply omits it and the chips stay a plain
+   * filter control.
+   */
+  onZoneHoverChange?: (zone: string | null) => void;
   onStatusChange: (value: string) => void;
   onRemoveActiveChip: (chipId: string) => void;
   onClearFilters: () => void;
@@ -104,12 +111,25 @@ export function FilterPanel({
   onDepartmentChange,
   onPositionChange,
   onZoneChange,
+  onZoneHoverChange,
   onStatusChange,
   onRemoveActiveChip,
   onClearFilters,
   matchSummary
 }: FilterPanelProps) {
   const activeStructuredChips = activeChips.filter(chip => chip.id !== "search");
+  // "All zones" clears the facet and previews nothing — only real zones wash.
+  const zoneChoices = [{ value: "all", label: "All zones" }, ...zones.map(value => ({ value, label: value }))];
+
+  // Closing the panel while a chip is hovered or focused unmounts it without
+  // ever firing mouseleave/blur, which would strand the preview wash on the
+  // map. One unmount cleanup covers every close path (Escape, outside click,
+  // trigger toggle).
+  const zoneHoverRef = useRef(onZoneHoverChange);
+  useEffect(() => {
+    zoneHoverRef.current = onZoneHoverChange;
+  }, [onZoneHoverChange]);
+  useEffect(() => () => zoneHoverRef.current?.(null), []);
 
   return (
     // The trigger button already says "Filter", so the menu carries no repeated
@@ -156,15 +176,41 @@ export function FilterPanel({
           </select>
         </label>
 
-        <label className="block">
-          <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Zone</span>
-          <select value={zone} onChange={event => onZoneChange(event.target.value)} className={darkSelectClassName}>
-            <option value="all">All zones</option>
-            {zones.map(value => (
-              <option key={value} value={value}>{value}</option>
-            ))}
-          </select>
-        </label>
+        {/* Zone is a chip list, not a select (v12 contract #8): the chips
+            preview their zone on the map on hover AND on keyboard focus, so
+            the preview is not a pointer-only affordance. aria-pressed carries
+            the pinned state — the chips toggle a filter, they are not tabs. */}
+        <div role="group" aria-label="Zone" onMouseLeave={() => onZoneHoverChange?.(null)}>
+          <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">
+            Zone{onZoneHoverChange ? " — hover to preview on the map" : ""}
+          </span>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {zoneChoices.map(choice => {
+              const active = zone === choice.value;
+              const previewZone = choice.value === "all" ? null : choice.value;
+              return (
+                <button
+                  key={choice.value}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => onZoneChange(active && choice.value !== "all" ? "all" : choice.value)}
+                  onMouseEnter={() => onZoneHoverChange?.(previewZone)}
+                  onMouseLeave={() => onZoneHoverChange?.(null)}
+                  onFocus={() => onZoneHoverChange?.(previewZone)}
+                  onBlur={() => onZoneHoverChange?.(null)}
+                  className={[
+                    "max-w-full truncate rounded-full border px-2.5 py-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]",
+                    active
+                      ? "border-[var(--admin-primary)] bg-[rgba(255,87,21,0.15)] text-[var(--admin-primary)]"
+                      : "border-white/20 bg-white/[0.06] text-[var(--admin-chrome-text)] hover:border-[var(--admin-primary)]"
+                  ].join(" ")}
+                >
+                  {choice.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <label className="block">
           <span className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Status</span>
