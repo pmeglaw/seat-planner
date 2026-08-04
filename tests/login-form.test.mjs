@@ -93,6 +93,25 @@ test("renders the sign-in form with both auth actions", async () => {
   assert.equal(screen.getByRole("button", { name: /Magic link/ }).getAttribute("type"), "button");
 });
 
+// tests/e2e-auth/auth-helpers.ts signs in with button:text-is("Sign in") — the
+// heading is also "Sign in", which is why it uses text-is rather than has-text.
+// Playwright binds that engine to the SMALLEST element containing the text, so
+// wrapping the label in a span (for a label-left/arrow-right split, say) makes
+// the span capture it and the button stop matching, and every authenticated e2e
+// test loses its sign-in step. Keep the label a direct text child.
+test("the submit label is a direct text child so the e2e sign-in locator still binds", async () => {
+  await mountLogin();
+  const submitButton = screen.getByRole("button", { name: "Sign in" });
+  const ownText = Array.from(submitButton.childNodes)
+    .filter(node => node.nodeType === 3)
+    .map(node => node.textContent)
+    .join("")
+    .trim();
+
+  assert.equal(ownText, "Sign in");
+  assert.equal(submitButton.textContent.trim(), "Sign in", "decoration must not add text");
+});
+
 test("submitting with no email shows a validation alert and makes no auth call", async () => {
   const { calls } = await mountLogin();
   await submit();

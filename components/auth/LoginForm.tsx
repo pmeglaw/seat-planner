@@ -5,8 +5,7 @@ import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyAuthMessage, safeNextPath } from "@/lib/authMessages";
-import { Button } from "@/components/ui/Button";
-import { cx } from "@/components/ui/design-system";
+import { cx, focusRingClass } from "@/components/ui/design-system";
 
 export function LoginForm() {
   const router = useRouter();
@@ -242,18 +241,30 @@ export function LoginForm() {
             for a link are both one click from here. The 1px gap keeps them a
             single control block rather than two floating buttons. */}
         <div className="mt-6 flex gap-px">
-          {/* The inner row does the label-left / arrow-right split: Button's own
-              justify-center would otherwise fight a justify-between here. */}
-          <Button type="submit" className="h-12 flex-[1.4] px-4" variant="primary" disabled={busy || !hydrated}>
-            <span className="flex w-full items-center justify-between gap-3">
-              <span>{!hydrated ? "Starting up…" : busy ? "Signing in…" : "Sign in"}</span>
-              {hydrated && !busy && (
-                <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
-                  <path d="M4 10h11m0 0-4-4m4 4-4 4" />
-                </svg>
-              )}
-            </span>
-          </Button>
+          {/* Not the shared Button primitive, and the label is a DIRECT text
+              child on purpose. Button centres its content, and wrapping the
+              label in a span to get the label-left / arrow-right split made
+              `button:text-is("Sign in")` stop matching — Playwright's text
+              engine binds to the smallest element containing the text, so the
+              span captured it and every authenticated e2e test lost its
+              sign-in step (tests/e2e-auth/auth-helpers.ts). */}
+          <button
+            type="submit"
+            disabled={busy || !hydrated}
+            className={cx(
+              "flex h-12 flex-[1.4] items-center justify-between gap-3 border border-[var(--sp-color-action-primary)] bg-[var(--sp-color-action-primary)] px-4 text-sm font-semibold leading-none text-white transition-colors",
+              "hover:border-[var(--sp-color-action-primary-hover)] hover:bg-[var(--sp-color-action-primary-hover)]",
+              focusRingClass,
+              "disabled:cursor-not-allowed disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-state-disabled)] disabled:text-[var(--sp-color-text-muted)]"
+            )}
+          >
+            {!hydrated ? "Starting up…" : busy ? "Signing in…" : "Sign in"}
+            {hydrated && !busy && (
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
+                <path d="M4 10h11m0 0-4-4m4 4-4 4" />
+              </svg>
+            )}
+          </button>
           <button
             type="button"
             onClick={sendMagicLink}
