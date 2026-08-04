@@ -14,8 +14,9 @@ import { formatAxeViolations, WCAG_A_AA_TAGS } from "./axe-helpers";
 // boots the app with dummy Supabase env), so /login is the only fully rendered
 // surface reachable without a session — `/` and `/admin` redirect to it. The
 // map surfaces are scanned structurally in tests/browser/accessibility.spec.ts,
-// which mounts the real SeatMap. Authenticated a11y coverage stays manual until
-// the smoke tier gets a seeded project.
+// which mounts the real SeatMap. The ADMIN surfaces are scanned with a real
+// session in tests/e2e-auth/accessibility.spec.ts, which has the disposable
+// local stack this tier deliberately does without.
 
 test("the sign-in page has no WCAG A/AA violations", async ({ page }) => {
   await page.goto("/login");
