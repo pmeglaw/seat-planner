@@ -12,14 +12,15 @@ export const SEEDED_VIEWER_EMAIL = "e2e-viewer@example.test";
  *
  * Two traps this works around, both documented in the run-seat-planner skill:
  *
- * 1. The form is NOT a <form>. Submit is a plain onClick button, so there is no
- *    button[type=submit] and Enter does not submit.
- * 2. Filling races hydration. The Sign in button stays disabled until React
- *    state holds both fields; a fill that lands before onChange attaches sets
- *    the DOM value without React ever seeing it, and the button never enables.
- *    So: fill, then wait for enabled, and only then click.
- *
- * The heading is also "Sign in", hence :text-is on the button.
+ * 1. Filling races hydration. The Sign in button server-renders disabled with a
+ *    "Starting up…" label and only becomes a live "Sign in" once React mounts
+ *    (UX-01, #276), so a fill-then-click right after domcontentloaded finds a
+ *    dead control. Fill, wait for enabled, and only then click.
+ * 2. The heading is also "Sign in", hence :text-is rather than :has-text on the
+ *    button. :text-is binds to the SMALLEST element containing the text, so the
+ *    button's label must stay a direct text child — wrapping it in a span for
+ *    layout silently drops this locator to zero matches and every spec in this
+ *    directory loses its sign-in step. tests/login-form.test.mjs pins that.
  */
 export async function signIn(page: Page, email: string) {
   await page.goto("/login");
