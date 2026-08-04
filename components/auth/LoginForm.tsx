@@ -252,7 +252,11 @@ export function LoginForm() {
             type="submit"
             disabled={busy || !hydrated}
             className={cx(
-              "flex h-12 flex-[1.4] items-center justify-between gap-3 border border-[var(--sp-color-action-primary)] bg-[var(--sp-color-action-primary)] px-4 text-sm font-semibold leading-none text-white transition-colors",
+              // No colour transition: hydration flips this button from disabled
+              // to enabled on every load, and a 150ms tween made it fade up
+              // through a washed-out orange with a barely legible label.
+              // Hover still reads fine as an instant change.
+              "flex h-12 flex-[1.4] items-center justify-between gap-3 border border-[var(--sp-color-action-primary)] bg-[var(--sp-color-action-primary)] px-4 text-sm font-semibold leading-none text-white",
               "hover:border-[var(--sp-color-action-primary-hover)] hover:bg-[var(--sp-color-action-primary-hover)]",
               focusRingClass,
               "disabled:cursor-not-allowed disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-state-disabled)] disabled:text-[var(--sp-color-text-muted)]"
