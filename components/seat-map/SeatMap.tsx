@@ -3609,35 +3609,42 @@ export function SeatMap({
                 {publishDiffCounts.updated > 0 && <PublishDiffChip kind="updated" count={publishDiffCounts.updated} />}
               </div>
 
-              <div className="mt-2 overflow-x-auto border border-[var(--admin-border)]">
-                <div className="max-h-56 min-w-[480px] overflow-y-auto">
-                  <div className="sticky top-0 z-10 grid grid-cols-[64px_1fr_1fr_96px] border-b border-[var(--admin-border)] bg-[var(--admin-state-neutral-bg)]">
-                    <span className="px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Seat</span>
-                    <span className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Published now</span>
-                    <span className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">After publish</span>
-                    <span className="px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Change</span>
-                  </div>
-                  {publishDiffRows.map(row => (
-                    <div key={row.key} className="border-b border-[var(--admin-border)]/60 last:border-b-0">
-                      <div className="grid grid-cols-[64px_1fr_1fr_96px] items-center">
-                        <span className="px-3 py-2 font-mono text-xs font-semibold text-[var(--admin-text-primary)]">{row.label}</span>
-                        <span className="flex min-w-0 items-center gap-1.5 px-2.5 py-2 text-[12.5px] text-[var(--admin-text-muted)]">
-                          <span className="truncate">{row.from}</span>
-                          <span aria-hidden="true" className="flex-shrink-0 text-[var(--admin-text-subtle)]">→</span>
-                        </span>
-                        <span className="truncate px-2.5 py-2 text-[12.5px] font-semibold text-[var(--admin-text-primary)]">{row.to}</span>
-                        <span className="px-3 py-2"><PublishDiffTag kind={row.kind} /></span>
-                      </div>
-                      {row.detail && (
-                        <div className="grid grid-cols-[64px_1fr]">
-                          <span />
-                          <span className="px-2.5 pb-2 text-[11px] leading-4 text-[var(--admin-text-muted)]">{row.detail}</span>
-                        </div>
-                      )}
+              {publishDiffRows.length > 0 ? (
+                <div className="mt-2 overflow-x-auto border border-[var(--admin-border)]">
+                  <div role="table" aria-label="Per-seat draft changes" className="max-h-56 min-w-[480px] overflow-y-auto">
+                    <div role="row" className="sticky top-0 z-10 grid grid-cols-[64px_1fr_1fr_96px] border-b border-[var(--admin-border)] bg-[var(--admin-state-neutral-bg)]">
+                      <span role="columnheader" className="px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Seat</span>
+                      <span role="columnheader" className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Published now</span>
+                      <span role="columnheader" className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">After publish</span>
+                      <span role="columnheader" className="px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Change</span>
                     </div>
-                  ))}
+                    {publishDiffRows.map(row => (
+                      <div key={row.key} role="rowgroup" className="border-b border-[var(--admin-border)]/60 last:border-b-0">
+                        <div role="row" className="grid grid-cols-[64px_1fr_1fr_96px] items-center">
+                          <span role="cell" translate="no" className="px-3 py-2 font-mono text-xs font-semibold text-[var(--admin-text-primary)]">{row.label}</span>
+                          <span role="cell" className="flex min-w-0 items-center gap-1.5 px-2.5 py-2 text-[12.5px] text-[var(--admin-text-muted)]">
+                            <span className="truncate">{row.from}</span>
+                            <span className="sr-only">changes to</span>
+                            <span aria-hidden="true" className="flex-shrink-0 text-[var(--admin-text-subtle)]">→</span>
+                          </span>
+                          <span role="cell" className="truncate px-2.5 py-2 text-[12.5px] font-semibold text-[var(--admin-text-primary)]">{row.to}</span>
+                          <span role="cell" className="px-3 py-2"><PublishDiffTag kind={row.kind} /></span>
+                        </div>
+                        {row.detail && (
+                          <div role="row" className="grid grid-cols-[64px_1fr]">
+                            <span role="cell" aria-hidden="true" />
+                            <span role="cell" aria-colspan={3} className="px-2.5 pb-2 text-[11px] leading-4 text-[var(--admin-text-muted)]">{row.detail}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <p className="mt-2 border border-[var(--admin-border)] p-3 text-xs font-semibold leading-5 text-[var(--admin-text-muted)]">
+                  No seat changes — only people details changed.
+                </p>
+              )}
 
               {publishSummary.employeeDetailChanges.length > 0 && (
                 <div className="mt-3 border border-[var(--admin-border)] p-3">
@@ -3656,7 +3663,7 @@ export function SeatMap({
               )}
 
               <p className="mt-3 text-[11.5px] font-semibold text-[var(--admin-text-muted)]">
-                Draft: {publishSummary.draftSeatCount} seats · Currently published: {publishSummary.publishedSeatCount} seats
+                Draft: {publishSummary.draftSeatCount} seats · Currently published: {publishSummary.publishedSeatCount} seats · Total publish changes: {publishSummary.totalChangeCount}
               </p>
               <p className="mt-2 text-xs leading-5 text-[var(--admin-text-secondary)]">
                 Publishing copies the saved draft map to the read-only viewer and clears Undo/Redo history after success. Until you publish, viewers keep seeing the currently published map.

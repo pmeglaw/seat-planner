@@ -178,14 +178,14 @@ test("diff rows: assigned, vacated, and reassigned occupant changes", () => {
   const ben = employee("emp-2", "Ben Ito");
   const rows = publishSummary.buildPublishDiffRows(
     [
-      seat({ label: "W01", employee: alice }),
-      seat({ label: "W02" }),
+      seat({ label: "W01", employee: alice, status: "assigned" }),
+      seat({ label: "W02", status: "available" }),
       seat({ label: "W03", employee: ben })
     ],
     [
-      seat({ label: "W01", layer: "published" }),
-      seat({ label: "W02", layer: "published", employee: alice }),
-      seat({ label: "W03", layer: "published", employee: alice })
+      seat({ label: "W01", layer: "published", status: "available" }),
+      seat({ label: "W02", layer: "published", employee: alice, status: "assigned" }),
+      seat({ label: "W03", layer: "published", employee: alice, status: "assigned" })
     ]
   );
 
@@ -273,4 +273,20 @@ test("diff rows: sorted numeric-aware by label", () => {
   );
 
   assert.deepEqual(rows.map(r => r.label), ["N1", "W2", "W10"]);
+});
+
+test("diff rows: people-only changes yield no rows while the summary still reports changes", () => {
+  const alice = employee("emp-1", "Alice Smith");
+  const renamed = { ...employee("emp-1", "Alicia Smith"), position: "Senior Analyst" };
+  const draftSeats = [seat({ label: "W01", employee: alice })];
+  const publishedSeats = [seat({ label: "W01", layer: "published", employee: alice })];
+
+  const rows = publishSummary.buildPublishDiffRows(draftSeats, publishedSeats);
+  const summary = publishSummary.buildPublishChangeSummary(draftSeats, publishedSeats, {
+    employees: [renamed],
+    publishedEmployees: [alice]
+  });
+
+  assert.deepEqual(rows, []);
+  assert.equal(summary.hasChanges, true);
 });
