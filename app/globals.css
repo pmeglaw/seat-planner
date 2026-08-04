@@ -234,6 +234,12 @@
   --admin-surface-muted: var(--sp-color-canvas);
   --admin-border: #E7E1D8;
   --admin-border-strong: #D8D0C5;
+  /* v12 data-table pair: a warmer header fill than surface-alt (#F7F6F2) so the
+     column head reads as chrome, and a hairline one step lighter than the card
+     border so 40px rows stripe without boxing every cell. Neither carries text
+     — #161616 on #F0EDE7 is ~15.6:1. */
+  --admin-table-header-bg: #F0EDE7;
+  --admin-table-row-border: #F0ECE5;
 
   --admin-text-primary: #161616;
   --admin-text-secondary: #55504A;
