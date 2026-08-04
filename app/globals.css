@@ -230,6 +230,7 @@
   --admin-rail-border: var(--admin-chrome-border);
   --admin-rail-muted: var(--admin-chrome-muted);
   --admin-surface: var(--sp-color-surface);
+  --admin-surface-hover: #FBFAF8;
   --admin-surface-alt: var(--sp-color-canvas);
   --admin-surface-muted: var(--sp-color-canvas);
   --admin-border: #E7E1D8;
@@ -336,6 +337,10 @@
   --admin-error: #B3232C;
   --admin-danger: #B3232C;
   --admin-danger-soft: #FBE9EA;
+  /* v12 tile hovers. A tile is a large click target, so its hover is one step
+     off its own resting fill rather than the surface-alt jump rows use.
+     #B3232C on #F8DEE0 = 5.2:1; #161616 on #FBFAF8 = 16.2:1. */
+  --admin-danger-soft-hover: #F8DEE0;
   /* Neutral, matching --sp-color-state-info above — see the note there. */
   --admin-info: #55504A;
   --admin-info-soft: #F7F6F2;

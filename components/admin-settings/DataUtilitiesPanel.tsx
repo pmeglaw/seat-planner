@@ -65,11 +65,11 @@ function ReviewCountCard({ label, value, tone = "default" }: { label: string; va
   );
 }
 
-function UtilityButton({ label, description, tone = "default", affordance = "review", disabled, onClick }: { label: string; description: string; tone?: "default" | "danger"; affordance?: "download" | "review"; disabled?: boolean; onClick: () => void }) {
-  const toneClassName = tone === "danger"
-    ? "border-[var(--admin-state-danger-border)] bg-[var(--admin-state-danger-bg)] text-[var(--admin-state-danger-text)] hover:border-[var(--admin-danger)] hover:bg-[var(--admin-danger-soft)]"
-    : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-surface-alt)]";
-  const descriptionClassName = tone === "danger" ? "text-[var(--admin-state-danger-text)]" : "text-[var(--admin-text-muted)]";
+// v12 (#14): the utility rows became tiles. The affordance mark still carries
+// the honesty rule from the 2026-07-16 critique — a download arrow means the
+// file lands immediately, the ↗ means a review dialog opens first.
+function UtilityTile({ label, description, tone = "default", affordance = "review", wide = false, disabled, onClick }: { label: string; description: string; tone?: "default" | "danger"; affordance?: "download" | "review"; wide?: boolean; disabled?: boolean; onClick: () => void }) {
+  const isDanger = tone === "danger";
 
   return (
     <button
@@ -79,23 +79,23 @@ function UtilityButton({ label, description, tone = "default", affordance = "rev
       onClick={onClick}
       disabled={disabled}
       className={[
-        "flex min-h-[50px] w-full items-center justify-between gap-3 border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50",
-        toneClassName
+        "relative min-h-[96px] p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50",
+        wide ? "sm:col-span-full" : "",
+        isDanger
+          ? "bg-[var(--admin-danger-soft)] hover:bg-[var(--admin-danger-soft-hover)]"
+          : "bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)]"
       ].join(" ")}
     >
-      <span className="min-w-0">
-        <span className="block truncate text-sm font-semibold">{label}</span>
-        <span className={["mt-0.5 block truncate text-xs font-medium", descriptionClassName].join(" ")}>{description}</span>
-      </span>
-      <span aria-hidden="true" className="shrink-0 opacity-40">
+      <span className={["block text-[13.5px] font-semibold", isDanger ? "text-[var(--admin-danger)]" : "text-[var(--admin-text-primary)]"].join(" ")}>{label}</span>
+      <span className={["mt-1 block max-w-[38ch] pr-6 text-[12.5px] leading-5", isDanger ? "text-[var(--sp-color-state-danger-on-soft)]" : "text-[var(--admin-text-muted)]"].join(" ")}>{description}</span>
+      <span aria-hidden="true" className={["absolute bottom-3 right-3", isDanger ? "text-[var(--admin-danger)]" : "text-[var(--admin-status-neutral)]"].join(" ")}>
         {affordance === "download" ? (
-          <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-            <path d="M10 3.5v8m0 0 3.2-3.2M10 11.5 6.8 8.3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M4 13.5v1.7c0 .7.6 1.3 1.3 1.3h9.4c.7 0 1.3-.6 1.3-1.3v-1.7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+            <path d="M10 3v9M6.5 9 10 12.5 13.5 9M4 16.5h12" />
           </svg>
         ) : (
-          <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-            <path d="m8 5.5 4.5 4.5L8 14.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+            <path d="M6 14 14 6M8 6h6v6" />
           </svg>
         )}
       </span>
@@ -303,30 +303,42 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
         </div>
       )}
 
-      <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
-        <h2 className="text-sm font-semibold text-[var(--admin-text-primary)]">CSV assignments</h2>
-        <p className="mt-1 text-xs leading-5 text-[var(--admin-text-muted)]">
+      {/* White fill, not an amber wash: this is standing guidance, and a tinted
+          banner would read as an active warning every time the page loads. */}
+      <div className="flex items-start gap-2.5 border-l-[3px] border-[var(--sp-color-state-warning)] bg-[var(--admin-surface)] px-3.5 py-3 shadow-[0_1px_2px_rgba(22,22,22,0.06)]">
+        <span aria-hidden="true" className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--admin-status-warn)] text-[10px] font-bold leading-none text-[var(--admin-text-primary)]">!</span>
+        <p className="text-[12.5px] leading-5 text-[var(--admin-text-primary)]">
+          <strong className="font-semibold">The published map is never touched until you publish.</strong>{" "}
+          Restores replace the entire draft — review before confirming.
+        </p>
+      </div>
+
+      <section>
+        {/* Uppercased in CSS, not in the string: the source keeps the honest
+            scope names the INFRA-02 guardrail (#277) pinned. */}
+        <h2 className="text-xs font-semibold uppercase tracking-[0.04em] text-[var(--admin-text-secondary)]">CSV assignments</h2>
+        <p className="mb-2 mt-1 text-xs leading-5 text-[var(--admin-text-muted)]">
           Imports update draft assignments; seat positions don&apos;t move.
         </p>
-        <div className="mt-3 space-y-2">
-          <UtilityButton label="Download CSV template" description="A blank assignment sheet to fill in" affordance="download" onClick={downloadTemplate} disabled={busy} />
-          <UtilityButton label="Export CSV" description="Download draft assignments" affordance="download" onClick={exportCsv} disabled={busy} />
+        <div className="grid gap-px border border-[var(--admin-border)] bg-[var(--admin-border)] [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+          <UtilityTile label="Download CSV template" description="A blank assignment sheet to fill in" affordance="download" onClick={downloadTemplate} disabled={busy} />
+          <UtilityTile label="Export CSV" description="Download draft assignments" affordance="download" onClick={exportCsv} disabled={busy} />
           <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={event => importCsv(event.target.files?.[0])} />
-          <UtilityButton label="Import CSV" description="Review parsed rows before applying" onClick={() => fileInputRef.current?.click()} disabled={busy} />
+          <UtilityTile label="Import CSV" description="Review parsed rows before applying — nothing writes until you confirm" wide onClick={() => fileInputRef.current?.click()} disabled={busy} />
         </div>
       </section>
 
-      <section className="border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-4 shadow-elevation-2">
-        <h2 className="text-sm font-semibold text-[var(--admin-state-dirty-text)]">Draft working-copy snapshots</h2>
-        <p className="mt-1 text-xs leading-5 text-[var(--admin-state-dirty-text)]">
+      <section>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.04em] text-[var(--admin-danger)]">Draft working-copy snapshots</h2>
+        <p className="mb-2 mt-1 text-xs leading-5 text-[var(--admin-text-muted)]">
           Draft seats and employees only. Restoring replaces the entire draft map, so review carefully before confirming.
           These snapshots are not a database backup: they do not include the published map, publish history, or user accounts.
         </p>
-        <div className="mt-3 space-y-2">
-          <UtilityButton label="Export draft snapshot" description="Download draft seats and employees as JSON" affordance="download" onClick={exportDraftSnapshot} disabled={busy} />
+        <div className="grid gap-px border border-[var(--admin-border)] bg-[var(--admin-border)] [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+          <UtilityTile label="Export draft snapshot" description="Download draft seats and employees as JSON" affordance="download" onClick={exportDraftSnapshot} disabled={busy} />
           <input ref={jsonInputRef} type="file" accept=".json,application/json" className="hidden" onChange={event => importJson(event.target.files?.[0])} />
-          <UtilityButton label="Restore draft snapshot" description="Review a draft snapshot before restoring" onClick={() => jsonInputRef.current?.click()} disabled={busy} />
-          <UtilityButton label="Reset draft to published" description="Discard every draft seat change; people edits are kept" tone="danger" onClick={openResetReview} disabled={busy} />
+          <UtilityTile label="Restore draft snapshot" description="Review a draft snapshot before restoring" onClick={() => jsonInputRef.current?.click()} disabled={busy} />
+          <UtilityTile label="Reset draft to published" description="Discard every draft seat change; people edits are kept" tone="danger" wide onClick={openResetReview} disabled={busy} />
         </div>
       </section>
 
