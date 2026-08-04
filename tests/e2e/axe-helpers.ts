@@ -1,3 +1,6 @@
+import type { Page } from "@playwright/test";
+import { expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import type { Result } from "axe-core";
 
 /**
@@ -17,6 +20,46 @@ export const WCAG_A_AA_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
  * report names the rule and the offending selector directly rather than saying
  * "expected 3 to equal 0" and leaving the reader to open a trace.
  */
+/**
+ * Wait until an element's computed text/background colors hold still across
+ * two samples. Buttons that MOUNT disabled and then flip enabled (the Settings
+ * review dialogs open inside a useTransition, so their footers render disabled
+ * first) animate their palette for ~150ms via the Button primitive's
+ * transition-colors. The disabled attribute drops instantly — toBeEnabled()
+ * resolves — but the paint lags, and axe sampling mid-animation reads blend
+ * colors that can dip below AA even though both endpoints pass (observed:
+ * #f3f3f2 on #d44c1a, 3.9:1, halfway between the disabled palette and the
+ * 4.71:1 primary). Await this on one footer button before scanning such a
+ * dialog; every button in it animates in the same window.
+ */
+export async function waitForColorSettle(locator: ReturnType<Page["locator"]>) {
+  await locator.evaluate(
+    element =>
+      new Promise<void>(resolve => {
+        let previous = "";
+        const check = () => {
+          const style = getComputedStyle(element);
+          const current = `${style.backgroundColor}/${style.color}`;
+          if (current === previous) return resolve();
+          previous = current;
+          setTimeout(check, 120);
+        };
+        check();
+      })
+  );
+}
+
+/**
+ * Run the standard WCAG A/AA scan against the page's CURRENT state and assert
+ * zero violations. Callers are responsible for settling the UI first — axe
+ * scans whatever is on screen, so a scan fired mid-transition or mid-animation
+ * reports that transient paint, not the surface under test.
+ */
+export async function expectNoAxeViolations(page: Page) {
+  const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
+  expect(formatAxeViolations(violations)).toEqual([]);
+}
+
 export function formatAxeViolations(violations: Result[]): string[] {
   return violations.map(violation => {
     const targets = violation.nodes

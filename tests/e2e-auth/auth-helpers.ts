@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 // Credentials seeded by supabase/seed.sql into the disposable local stack.
 // Local-only: this database is a Docker container that `supabase stop`
@@ -22,6 +22,25 @@ export const SEEDED_VIEWER_EMAIL = "e2e-viewer@example.test";
  *    layout silently drops this locator to zero matches and every spec in this
  *    directory loses its sign-in step. tests/login-form.test.mjs pins that.
  */
+/**
+ * Retry an action until its expected effect renders.
+ *
+ * The first interaction on a freshly-loaded page races React hydration: every
+ * admin control is in the server HTML, but a click (or dispatched event)
+ * delivered before React attaches its listeners is silently dropped. The login
+ * form ships a disabled "Starting up…" state for exactly this (UX-01, #276);
+ * nothing else does, so first clicks go through this loop instead. The
+ * effect-visible guard also makes retries idempotent for toggle-style targets:
+ * once the effect is up, the action never fires again.
+ */
+export async function retryUntilVisible(action: () => Promise<void>, effect: Locator, timeout = 20_000) {
+  await expect(async () => {
+    if (await effect.isVisible()) return;
+    await action();
+    await expect(effect).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout });
+}
+
 export async function signIn(page: Page, email: string) {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
