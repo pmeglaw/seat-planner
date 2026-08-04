@@ -67,6 +67,7 @@ import {
 } from "@/lib/mapLayoutTransform";
 import { buildPublishChangeSummary, buildPublishDiffRows, type PublishDiffRowKind } from "@/lib/publishSummary";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
+import { AiHighlightChip } from "@/components/seat-map/AiHighlightChip";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import {
   ActiveFilterChips,
@@ -3250,6 +3251,12 @@ export function SeatMap({
               </div>
               <span className="pointer-events-auto border border-[var(--admin-border)] bg-white px-2.5 py-1.5 text-[12px] text-[var(--sp-color-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
               <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="pointer-events-auto" />
+              {canEdit && (
+                <AiHighlightChip
+                  seatCount={plannerHighlightedSeatIds.length}
+                  onClear={() => setPlannerHighlightedSeatIds([])}
+                />
+              )}
             </div>
             {/* Top-right cluster: Add seat. It rides the stage, so the reserved
                 inspector column slides it inboard automatically. */}
@@ -3295,6 +3302,10 @@ export function SeatMap({
                 style={mapFrameStyle}
                 onPointerDown={handleMapPointerDown}
               >
+                {/* While Ask Planner has seats highlighted the plan itself
+                    steps back a little, so the aura'd seats carry the eye.
+                    Slight and reversible — it rides the same live highlight
+                    set as the dimming, so nothing can latch it on. */}
                 <Image
                   src={MAP_IMAGE_SRC}
                   alt="Office floor plan"
@@ -3304,7 +3315,10 @@ export function SeatMap({
                   unoptimized
                   placeholder="blur"
                   blurDataURL={MAP_IMAGE_BLUR_DATA_URL}
-                  className="block h-auto w-full select-none"
+                  className={[
+                    "block h-auto w-full select-none transition-[filter] duration-200",
+                    plannerHighlightedSeatIds.length > 0 ? "[filter:saturate(0.8)]" : ""
+                  ].join(" ")}
                   draggable={false}
                 />
 
