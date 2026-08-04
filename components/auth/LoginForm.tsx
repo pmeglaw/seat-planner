@@ -217,10 +217,10 @@ export function LoginForm() {
             <button
               type="button"
               onClick={sendPasswordReset}
-              disabled={resetBusy}
+              disabled={resetBusy || !hydrated}
               className="shrink-0 text-[12px] font-medium text-[var(--admin-primary-on-soft)] underline-offset-2 transition hover:underline disabled:cursor-not-allowed disabled:text-[var(--admin-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
             >
-              {resetBusy ? "Sending reset email…" : "Forgot password?"}
+              {!hydrated ? "Starting up…" : resetBusy ? "Sending reset email…" : "Forgot password?"}
             </button>
           </div>
           <div className={fieldShellClass}>
