@@ -339,6 +339,10 @@ test.describe("admin map editor has no WCAG A/AA violations", () => {
     );
     await expectNoAxeViolations(page);
     await page.getByRole("button", { name: "More tools", exact: true }).click();
+    // The toggle-close is a React state flip; clicking the floor trigger
+    // before the kebab unmounts can be swallowed by the still-open menu's
+    // dismissal handling instead of opening the floor menu. (The group IS the
+    // menu container — the trigger button shares the label but not the role.)
     await expect(page.getByRole("group", { name: "More tools" })).toBeHidden();
 
     await page.getByRole("button", { name: /^Change floor\./ }).click();
