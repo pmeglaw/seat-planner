@@ -101,6 +101,11 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
     []
   );
   function armNavWatchdog(href: string) {
+    // Pathname-only on purpose, not an oversight: pages shallow-rewrite the
+    // query after commit (SeatMap strips ?ask-planner=open and re-mirrors
+    // ?seat= via replaceState), so comparing search would read a legitimate
+    // post-commit rewrite as "stalled" and fire a state-destroying reload.
+    // Every rail nav is cross-path, where pathname alone detects commit.
     const targetPath = href.split("?")[0];
     if (navWatchdogRef.current !== null) window.clearTimeout(navWatchdogRef.current);
     navWatchdogRef.current = window.setTimeout(() => {
@@ -318,10 +323,12 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
             href="/admin?ask-planner=open"
             prefetch={false}
             title="Ask Planner (AI)"
-            onClick={() => {
-              collapse(false);
-              armNavWatchdog("/admin?ask-planner=open");
-            }}
+            // handleNavClick, not a bare collapse: the modifier guard must
+            // run first, or a ctrl-click (new tab) would still arm the
+            // watchdog and hijack THIS page into /admin 4s later. The
+            // onNavigate veto inside is a no-op here — sub-pages don't
+            // pass it.
+            onClick={event => handleNavClick(event, "/admin?ask-planner=open", "Ask Planner")}
             className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)]"].join(" ")}
           >
             <AiCell open={open} />
