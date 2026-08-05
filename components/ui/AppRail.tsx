@@ -9,7 +9,8 @@ import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 // v12 left rail (design_handoff_carbon_v12 §structural move 1, prototype lines
 // 25-60). 48px collapsed column, full viewport height, 208px overlay when
 // expanded; item click / outside click / Escape collapse it. Nav items are
-// <Link>s so they prefetch and work before hydration — see handleNavClick
+// <Link>s (prefetch deliberately OFF — see the prefetch={false} note below)
+// so they navigate natively before hydration — see handleNavClick
 // for how the onNavigate veto rides preventDefault. Owner rulings
 // 2026-07-31: this geometry (not concepts/nav-rail's 36px), account lives in
 // the rail bottom cell. People item lands with the People panel slice — see
@@ -93,10 +94,11 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, collapse]);
 
-  // Nav items are real <Link>s (not buttons + router.push) so they prefetch,
-  // navigate natively before hydration, and get the loading boundary's
-  // instant feedback. The veto contract survives as preventDefault: Link's
-  // own click handler bails when default is prevented. Modified clicks
+  // Nav items are real <Link>s (not buttons + router.push) so they navigate
+  // natively before hydration and stream the loading boundary on click.
+  // Prefetch is deliberately disabled — see the prefetch={false} note on the
+  // nav items. The veto contract survives as preventDefault: Link's own
+  // click handler bails when default is prevented. Modified clicks
   // (new tab/window) bypass both the collapse and the guard — the current
   // page, and any unsaved edits, stay put.
   function handleNavClick(event: ReactMouseEvent<HTMLAnchorElement>, href: string, label: string) {
@@ -246,6 +248,15 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
           <Link
             key={item.key}
             href={item.href}
+            // prefetch={false} is load-bearing, not a missed optimization:
+            // with default prefetch every page load fired 2 dynamic RSC
+            // prefetches per rail item (8+ lambda invocations), and clicking
+            // while the target's prefetch was still in flight intermittently
+            // wedged the client router — the nav's RSC 200 arrived and never
+            // committed (reproduced on prod 2026-08-05; Vercel logs show the
+            // response, the router sat 45s+). Fresh-fetch nav costs ~1s with
+            // the pages' parallel queries; useLinkStatus pulses immediately.
+            prefetch={false}
             title={item.label}
             aria-current={item.key === active ? "page" : undefined}
             onClick={event => handleNavClick(event, item.href, item.label)}
@@ -278,6 +289,7 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
         ) : (
           <Link
             href="/admin?ask-planner=open"
+            prefetch={false}
             title="Ask Planner (AI)"
             onClick={() => collapse(false)}
             className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)]"].join(" ")}
@@ -287,6 +299,7 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
         )}
         <Link
           href="/"
+          prefetch={false}
           title="Viewer — published map"
           aria-label="Open viewer surface"
           onClick={event => handleNavClick(event, "/", "the viewer")}

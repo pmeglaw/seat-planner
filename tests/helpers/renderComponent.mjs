@@ -99,7 +99,7 @@ const STANDARD_MOCKS = {
     // user onClick runs first; a modified click (new tab) or preventDefault
     // suppresses client navigation; otherwise the click routes through the
     // test router double so suites can assert on router.push.
-    export default function Link({ href, children, onClick, ...rest }) {
+    export default function Link({ href, children, onClick, prefetch, ...rest }) {
       return React.createElement("a", {
         href,
         ...rest,
