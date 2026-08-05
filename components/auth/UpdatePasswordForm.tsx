@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { friendlyAuthMessage } from "@/lib/authMessages";
+import { assignLocation } from "@/lib/fullNavigation";
 import { createClient } from "@/lib/supabase/client";
 
 export function UpdatePasswordForm() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -43,8 +42,9 @@ export function UpdatePasswordForm() {
 
     setMessage("Password updated. Redirecting…");
     setMessageType("success");
-    router.push("/");
-    router.refresh();
+    // Full document load — the session credential just changed; see
+    // lib/fullNavigation.ts for why this must not be router.push + refresh.
+    assignLocation("/");
   }
 
   return (

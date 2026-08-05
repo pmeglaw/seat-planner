@@ -2,13 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyAuthMessage, safeNextPath } from "@/lib/authMessages";
+import { assignLocation } from "@/lib/fullNavigation";
 import { cx, focusRingClass } from "@/components/ui/design-system";
 
 export function LoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nextPath, setNextPath] = useState("/");
@@ -36,8 +35,11 @@ export function LoginForm() {
   }, []);
 
   function redirectAfterLogin() {
-    router.push(nextPath);
-    router.refresh();
+    // Full document load, deliberately not router.push + router.refresh — the
+    // session cookie just changed, and that pair raced two client transitions
+    // that could wedge the router on the destination's loading skeleton.
+    // Rationale lives with assignLocation (lib/fullNavigation.ts).
+    assignLocation(nextPath);
   }
 
   async function signInWithPassword() {

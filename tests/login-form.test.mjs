@@ -14,8 +14,9 @@ import {
 } from "./helpers/renderComponent.mjs";
 
 // Interaction tests for the real LoginForm component: rendered in jsdom with the
-// router and Supabase client replaced by controllable doubles, so we assert on
-// validation, trimming, the auth calls it makes, and the post-login redirect.
+// Supabase client and the full-navigation seam (@/lib/fullNavigation) replaced
+// by controllable doubles, so we assert on validation, trimming, the auth calls
+// it makes, and the post-login redirect.
 let LoginForm;
 before(async () => {
   ({ LoginForm } = await loadComponent("@/components/auth/LoginForm"));
@@ -46,11 +47,13 @@ function makeSupabase(results = {}) {
 
 async function mountLogin({ url = "/login", results = {} } = {}) {
   setUrl(url);
-  const pushed = [];
+  // Post-login redirects are full document loads (lib/fullNavigation.ts), so
+  // the assertion target is the navigation double, not router.push.
+  const assigned = [];
   const { supabase, calls } = makeSupabase(results);
-  configureContext({ router: { push: p => pushed.push(p) }, supabase });
+  configureContext({ navigation: { assign: href => assigned.push(href) }, supabase });
   await renderElement(React.createElement(LoginForm));
-  return { calls, pushed };
+  return { calls, assigned };
 }
 
 const type = (selector, value) => act(async () => fireEvent.change(document.querySelector(selector), { target: { value } }));
@@ -64,7 +67,7 @@ const flush = () => act(async () => {});
 // label must say why rather than leaving a silently dead control.
 test("server-rendered markup ships the submit button disabled and says why", async () => {
   const { supabase } = makeSupabase();
-  configureContext({ router: { push: () => {} }, supabase });
+  configureContext({ supabase });
   const html = renderToStaticMarkup(React.createElement(LoginForm));
 
   assert.match(html, /Starting up…/, "pre-hydration label explains the disabled state");
@@ -128,7 +131,7 @@ test("password mode requires a password", async () => {
 });
 
 test("successful sign-in calls Supabase with the credentials and redirects to ?next", async () => {
-  const { calls, pushed } = await mountLogin({ url: "/login?next=/admin" });
+  const { calls, assigned } = await mountLogin({ url: "/login?next=/admin" });
   await type('input[type="email"]', "person@example.com");
   await type('input[type="password"]', "hunter2");
   await submit();
@@ -136,26 +139,26 @@ test("successful sign-in calls Supabase with the credentials and redirects to ?n
 
   assert.deepEqual(calls.password, [{ email: "person@example.com", password: "hunter2" }]);
   assert.match(screen.getByRole("status").textContent, /Redirecting/);
-  assert.deepEqual(pushed, ["/admin"]);
+  assert.deepEqual(assigned, ["/admin"]);
 });
 
 test("an open-redirect ?next is ignored in favor of '/'", async () => {
-  const { pushed } = await mountLogin({ url: "/login?next=https://evil.example" });
+  const { assigned } = await mountLogin({ url: "/login?next=https://evil.example" });
   await type('input[type="email"]', "person@example.com");
   await type('input[type="password"]', "hunter2");
   await submit();
   await flush();
-  assert.deepEqual(pushed, ["/"]);
+  assert.deepEqual(assigned, ["/"]);
 });
 
 test("a Supabase error is mapped to friendly guidance and blocks redirect", async () => {
-  const { pushed } = await mountLogin({ results: { password: { error: { message: "Email rate limit exceeded" } } } });
+  const { assigned } = await mountLogin({ results: { password: { error: { message: "Email rate limit exceeded" } } } });
   await type('input[type="email"]', "person@example.com");
   await type('input[type="password"]', "hunter2");
   await submit();
   await flush();
   assert.match(screen.getByRole("alert").textContent, /Please wait 60 seconds/);
-  assert.deepEqual(pushed, []);
+  assert.deepEqual(assigned, []);
 });
 
 test("the magic-link button sends an OTP without creating a user", async () => {

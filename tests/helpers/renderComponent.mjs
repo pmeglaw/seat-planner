@@ -61,11 +61,14 @@ export function setUrl(path) {
 }
 
 // Set the test doubles the mocked modules delegate to. Called from beforeEach.
-export function configureContext({ router, supabase, actions } = {}) {
+export function configureContext({ router, supabase, actions, navigation } = {}) {
   globalThis.__ct = {
     router: { push() {}, replace() {}, refresh() {}, back() {}, prefetch() {}, ...router },
     supabase: supabase ?? { auth: {} },
-    actions: actions ?? {}
+    actions: actions ?? {},
+    // Full-document navigation double (@/lib/fullNavigation) — mocked because
+    // jsdom's Location is unforgeable, so the real assign can't be stubbed.
+    navigation: { assign() {}, ...navigation }
   };
 }
 
@@ -129,6 +132,7 @@ const STANDARD_MOCKS = {
     }
   `,
   "@/lib/supabase/client": `export const createClient = () => globalThis.__ct.supabase;`,
+  "@/lib/fullNavigation": `export const assignLocation = href => globalThis.__ct.navigation.assign(href);`,
   "@/app/actions": ACTION_EXPORTS.map(
     name => `export const ${name} = (...args) => (globalThis.__ct.actions[${JSON.stringify(name)}] ?? (async () => ({})))(...args);`
   ).join("\n")
