@@ -166,9 +166,9 @@ test("a dirty inspector intercepts the viewer link with the unsaved-edits dialog
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
   await dirtyInspectorNotes(page);
 
-  // v12: AppRail's Viewer item is a <button> (never a <Link>), so the same
-  // onNavigate guard can intercept every rail item uniformly.
-  await page.locator('button[aria-label="Open viewer surface"]').dispatchEvent("click");
+  // AppRail's Viewer item is a <Link> (prefetch + pre-hydration nav); the
+  // onNavigate guard intercepts it via preventDefault in the item's onClick.
+  await page.locator('a[aria-label="Open viewer surface"]').dispatchEvent("click");
   await expect(page.locator("#inspector-unsaved-title")).toBeAttached();
   // The click must not have navigated the harness away.
   expect(page.url()).toContain("harness.html");

@@ -49,62 +49,58 @@ export default async function AdminPage() {
   // codebase, and it is asserted by grepping this file
   // (tests/accessibility-source.test.mjs). A `layer` variable would satisfy the
   // compiler and quietly destroy that check.
-  const seats = await fetchAllRows<SeatWithEmployee>(
-    (from, to) =>
-      supabase
-        .from("seats")
-        .select("*, employee:employees(*)", { count: "exact" })
-        .eq("layer", "draft")
-        .order("label")
-        .range(from, to),
-    { label: "draft seats" }
-  );
+  // All six queries are independent, so they fire together: awaited one by
+  // one they serialized ~6 database round-trips into the blocking render of
+  // a force-dynamic page, which read as seconds of dead time after a rail
+  // click. publishedEmployees is the viewer-facing snapshot, loaded so the
+  // publish review can diff live employee details against what viewers
+  // currently see.
+  const [seats, publishedSeats, employees, publishedEmployees, departmentsResult, zonesResult] = await Promise.all([
+    fetchAllRows<SeatWithEmployee>(
+      (from, to) =>
+        supabase
+          .from("seats")
+          .select("*, employee:employees(*)", { count: "exact" })
+          .eq("layer", "draft")
+          .order("label")
+          .range(from, to),
+      { label: "draft seats" }
+    ),
+    fetchAllRows<SeatWithEmployee>(
+      (from, to) =>
+        supabase
+          .from("seats")
+          .select("*, employee:employees(*)", { count: "exact" })
+          .eq("layer", "published")
+          .order("label")
+          .range(from, to),
+      { label: "published seats" }
+    ),
+    fetchAllRows<Employee>(
+      (from, to) =>
+        supabase
+          .from("employees")
+          .select("*", { count: "exact" })
+          .eq("active", true)
+          .order("full_name")
+          .range(from, to),
+      { label: "employees" }
+    ),
+    fetchAllRows<Employee>(
+      (from, to) =>
+        supabase
+          .from("published_employees")
+          .select("*", { count: "exact" })
+          .order("full_name")
+          .range(from, to),
+      { label: "published employees" }
+    ),
+    supabase.from("department_options").select("*").eq("active", true).order("name"),
+    supabase.from("zone_options").select("*").eq("active", true).order("name")
+  ]);
 
-  const publishedSeats = await fetchAllRows<SeatWithEmployee>(
-    (from, to) =>
-      supabase
-        .from("seats")
-        .select("*, employee:employees(*)", { count: "exact" })
-        .eq("layer", "published")
-        .order("label")
-        .range(from, to),
-    { label: "published seats" }
-  );
-
-  const employees = await fetchAllRows<Employee>(
-    (from, to) =>
-      supabase
-        .from("employees")
-        .select("*", { count: "exact" })
-        .eq("active", true)
-        .order("full_name")
-        .range(from, to),
-    { label: "employees" }
-  );
-
-  // Viewer-facing snapshot, loaded so the publish review can diff live
-  // employee details against what viewers currently see.
-  const publishedEmployees = await fetchAllRows<Employee>(
-    (from, to) =>
-      supabase
-        .from("published_employees")
-        .select("*", { count: "exact" })
-        .order("full_name")
-        .range(from, to),
-    { label: "published employees" }
-  );
-
-  const { data: departments, error: departmentsError } = await supabase
-    .from("department_options")
-    .select("*")
-    .eq("active", true)
-    .order("name");
-
-  const { data: zones, error: zonesError } = await supabase
-    .from("zone_options")
-    .select("*")
-    .eq("active", true)
-    .order("name");
+  const { data: departments, error: departmentsError } = departmentsResult;
+  const { data: zones, error: zonesError } = zonesResult;
 
   // Seat and employee failures already threw inside fetchAllRows.
   if (departmentsError || zonesError) {

@@ -49,7 +49,20 @@ const MOCKS: Record<string, string> = {
     export const redirect = () => {};
   `,
   "next/link": `import React from "react";
-    export default function Link({ href, children, ...rest }) { return React.createElement("a", { href, ...rest }, children); }`,
+    // Real-Link-ish double: user onClick first; modified clicks and
+    // preventDefault suppress navigation; otherwise route through the
+    // harness router so specs assert on router.push instead of the
+    // browser actually leaving harness.html.
+    export default function Link({ href, children, onClick, ...rest }) {
+      return React.createElement("a", { href, ...rest, onClick: event => {
+        onClick?.(event);
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+        if (event.defaultPrevented) return;
+        event.preventDefault();
+        window.__ctCall("router.push", [href]);
+      } }, children);
+    }
+    export function useLinkStatus() { return { pending: false }; }`,
   "next/image": `import React from "react";
     export default function Image({ src, alt = "" }) {
       const resolved = typeof src === "object" && src ? (src.src ?? "") : src;

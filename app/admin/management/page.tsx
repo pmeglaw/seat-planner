@@ -39,39 +39,35 @@ export default async function AdminManagementPage({
 
   // Paged: an unbounded select is silently truncated at the project row cap,
   // which here would hide people from the directory with no indication.
-  const seats = await fetchAllRows<SeatWithEmployee>(
-    (from, to) =>
-      supabase
-        .from("seats")
-        .select("*, employee:employees(*)", { count: "exact" })
-        .eq("layer", "draft")
-        .order("label")
-        .range(from, to),
-    { label: "draft seats" }
-  );
+  // Independent queries fire together — serial awaits stacked round-trips
+  // into this force-dynamic render (seconds of dead time after a rail click).
+  const [seats, employees, departmentsResult, zonesResult] = await Promise.all([
+    fetchAllRows<SeatWithEmployee>(
+      (from, to) =>
+        supabase
+          .from("seats")
+          .select("*, employee:employees(*)", { count: "exact" })
+          .eq("layer", "draft")
+          .order("label")
+          .range(from, to),
+      { label: "draft seats" }
+    ),
+    fetchAllRows<Employee>(
+      (from, to) =>
+        supabase
+          .from("employees")
+          .select("*", { count: "exact" })
+          .eq("active", true)
+          .order("full_name")
+          .range(from, to),
+      { label: "employees" }
+    ),
+    supabase.from("department_options").select("*").eq("active", true).order("name"),
+    supabase.from("zone_options").select("*").eq("active", true).order("name")
+  ]);
 
-  const employees = await fetchAllRows<Employee>(
-    (from, to) =>
-      supabase
-        .from("employees")
-        .select("*", { count: "exact" })
-        .eq("active", true)
-        .order("full_name")
-        .range(from, to),
-    { label: "employees" }
-  );
-
-  const { data: departments, error: departmentsError } = await supabase
-    .from("department_options")
-    .select("*")
-    .eq("active", true)
-    .order("name");
-
-  const { data: zones, error: zonesError } = await supabase
-    .from("zone_options")
-    .select("*")
-    .eq("active", true)
-    .order("name");
+  const { data: departments, error: departmentsError } = departmentsResult;
+  const { data: zones, error: zonesError } = zonesResult;
 
   // Seat and employee failures already threw inside fetchAllRows.
   if (departmentsError || zonesError) {

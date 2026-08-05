@@ -30,38 +30,40 @@ export default async function AdminSettingsPage() {
   // Two explicit queries, not one parameterised helper: which layer a surface
   // reads is the invariant this codebase is built on, and it is verified by
   // grepping these files. A `layer` variable would hide it.
-  const seats = await fetchAllRows<SeatWithEmployee>(
-    (from, to) =>
-      supabase
-        .from("seats")
-        .select("*, employee:employees(*)", { count: "exact" })
-        .eq("layer", "draft")
-        .order("label")
-        .range(from, to),
-    { label: "draft seats" }
-  );
-
-  const publishedSeats = await fetchAllRows<SeatWithEmployee>(
-    (from, to) =>
-      supabase
-        .from("seats")
-        .select("*, employee:employees(*)", { count: "exact" })
-        .eq("layer", "published")
-        .order("label")
-        .range(from, to),
-    { label: "published seats" }
-  );
-
-  const employees = await fetchAllRows<Employee>(
-    (from, to) =>
-      supabase
-        .from("employees")
-        .select("*", { count: "exact" })
-        .eq("active", true)
-        .order("full_name")
-        .range(from, to),
-    { label: "employees" }
-  );
+  // Independent queries fire together — serial awaits stacked round-trips
+  // into this force-dynamic render (seconds of dead time after a rail click).
+  const [seats, publishedSeats, employees] = await Promise.all([
+    fetchAllRows<SeatWithEmployee>(
+      (from, to) =>
+        supabase
+          .from("seats")
+          .select("*, employee:employees(*)", { count: "exact" })
+          .eq("layer", "draft")
+          .order("label")
+          .range(from, to),
+      { label: "draft seats" }
+    ),
+    fetchAllRows<SeatWithEmployee>(
+      (from, to) =>
+        supabase
+          .from("seats")
+          .select("*, employee:employees(*)", { count: "exact" })
+          .eq("layer", "published")
+          .order("label")
+          .range(from, to),
+      { label: "published seats" }
+    ),
+    fetchAllRows<Employee>(
+      (from, to) =>
+        supabase
+          .from("employees")
+          .select("*", { count: "exact" })
+          .eq("active", true)
+          .order("full_name")
+          .range(from, to),
+      { label: "employees" }
+    )
+  ]);
 
   return (
     // pl-12 clears the v12 left rail, which is position:fixed and does not

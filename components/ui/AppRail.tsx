@@ -1,15 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
+import Link, { useLinkStatus } from "next/link";
+import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 
 // v12 left rail (design_handoff_carbon_v12 §structural move 1, prototype lines
 // 25-60). 48px collapsed column, full viewport height, 208px overlay when
-// expanded; item click / outside click / Escape collapse it. Owner rulings
+// expanded; item click / outside click / Escape collapse it. Nav items are
+// <Link>s so they prefetch and work before hydration — see handleNavClick
+// for how the onNavigate veto rides preventDefault. Owner rulings
 // 2026-07-31: this geometry (not concepts/nav-rail's 36px), account lives in
 // the rail bottom cell. People item lands with the People panel slice — see
 // the breadcrumb on NAV_ITEMS below.
@@ -76,7 +77,6 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
   const accountTriggerRef = useRef<HTMLButtonElement | null>(null);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const accountMenuId = useId();
-  const router = useRouter();
   const initial = (email.trim()[0] ?? "?").toUpperCase();
 
   const collapse = useCallback((refocus: boolean) => {
@@ -93,10 +93,16 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, collapse]);
 
-  function navigate(href: string, label: string) {
+  // Nav items are real <Link>s (not buttons + router.push) so they prefetch,
+  // navigate natively before hydration, and get the loading boundary's
+  // instant feedback. The veto contract survives as preventDefault: Link's
+  // own click handler bails when default is prevented. Modified clicks
+  // (new tab/window) bypass both the collapse and the guard — the current
+  // page, and any unsaved edits, stay put.
+  function handleNavClick(event: ReactMouseEvent<HTMLAnchorElement>, href: string, label: string) {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
     collapse(false);
-    if (onNavigate && !onNavigate(href, label)) return;
-    router.push(href);
+    if (onNavigate && !onNavigate(href, label)) event.preventDefault();
   }
 
   // --- Account menu: keyboard/scrim contract copied from AccountMenu.tsx,
@@ -237,24 +243,20 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
           </span>
         </button>
         {NAV_ITEMS.filter(item => railMode === "admin" || item.key === "reception").map(item => (
-          <button
+          <Link
             key={item.key}
-            type="button"
+            href={item.href}
             title={item.label}
             aria-current={item.key === active ? "page" : undefined}
-            onClick={() => navigate(item.href, item.label)}
+            onClick={event => handleNavClick(event, item.href, item.label)}
             className={[
               ITEM,
               item.key === active ? ITEM_ACTIVE : ITEM_IDLE,
               item.key === active ? "font-semibold" : "font-medium"
             ].join(" ")}
           >
-            <span className={CELL}>{item.icon}</span>
-            {/* NOT aria-hidden: this text is the button's only accessible
-                name, and must stay mounted (opacity swap) so a collapsed
-                rail is still announced correctly. */}
-            <span className={[LABEL_BASE, open ? "opacity-100" : "opacity-0"].join(" ")}>{item.label}</span>
-          </button>
+            <NavItemBody icon={item.icon} label={item.label} open={open} />
+          </Link>
         ))}
         <div className="flex-1" />
         {/* Ask Planner — the AI entry. AI blue (--admin-ai-chrome-text /
@@ -283,18 +285,15 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
             <AiCell open={open} />
           </Link>
         )}
-        <button
-          type="button"
+        <Link
+          href="/"
           title="Viewer — published map"
           aria-label="Open viewer surface"
-          onClick={() => navigate("/", "the viewer")}
+          onClick={event => handleNavClick(event, "/", "the viewer")}
           className={[ITEM, ITEM_IDLE, "mb-0.5"].join(" ")}
         >
-          <span className={CELL}>
-            <ViewerIcon />
-          </span>
-          <span className={[LABEL_BASE, open ? "opacity-100" : "opacity-0"].join(" ")}>Viewer</span>
-        </button>
+          <NavItemBody icon={<ViewerIcon />} label="Viewer" open={open} />
+        </Link>
         {/* Account cell: menu, not a bare sign-out (approved deviation #2,
             plan §Global Constraints). Keyboard/scrim contract copied from
             components/ui/AccountMenu.tsx — focus-first-item on open, arrow
@@ -357,6 +356,24 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
           )}
         </div>
       </nav>
+    </>
+  );
+}
+
+// Shared body for the Link-based rail items. useLinkStatus must be called
+// from a component rendered INSIDE the Link, so this can't inline into
+// AppRail. While the navigation is pending (dynamic admin routes block on
+// auth + data before the loading boundary paints), the icon cell pulses so
+// the click visibly landed.
+function NavItemBody({ icon, label, open }: { icon: ReactNode; label: string; open: boolean }) {
+  const { pending } = useLinkStatus();
+  return (
+    <>
+      <span className={[CELL, pending ? "animate-pulse motion-reduce:animate-none" : ""].join(" ")}>{icon}</span>
+      {/* NOT aria-hidden: this text is the item's only accessible name, and
+          must stay mounted (opacity swap) so a collapsed rail is still
+          announced correctly. */}
+      <span className={[LABEL_BASE, open ? "opacity-100" : "opacity-0"].join(" ")}>{label}</span>
     </>
   );
 }

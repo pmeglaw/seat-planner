@@ -30,34 +30,33 @@ export default async function ReceptionPage() {
 
   // UX-only role lookup: picks the rail flavor (admins get the full admin
   // nav, viewers a role-safe rail). RLS stays the enforced boundary.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  // All three queries only need user.id, so they fire together — serial
+  // awaits stacked round-trips into this force-dynamic render.
+  const [profileResult, seats, employees] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
+    fetchAllRows<Seat>(
+      (from, to) =>
+        supabase
+          .from("seats")
+          .select("*", { count: "exact" })
+          .eq("layer", "published")
+          .order("label")
+          .range(from, to),
+      { label: "published seats" }
+    ),
+    fetchAllRows<Employee>(
+      (from, to) =>
+        supabase
+          .from("published_employees")
+          .select("*", { count: "exact" })
+          .eq("active", true)
+          .order("full_name")
+          .range(from, to),
+      { label: "published employees" }
+    )
+  ]);
+  const { data: profile } = profileResult;
   const isAdmin = profile?.role === "admin";
-
-  const seats = await fetchAllRows<Seat>(
-    (from, to) =>
-      supabase
-        .from("seats")
-        .select("*", { count: "exact" })
-        .eq("layer", "published")
-        .order("label")
-        .range(from, to),
-    { label: "published seats" }
-  );
-
-  const employees = await fetchAllRows<Employee>(
-    (from, to) =>
-      supabase
-        .from("published_employees")
-        .select("*", { count: "exact" })
-        .eq("active", true)
-        .order("full_name")
-        .range(from, to),
-    { label: "published employees" }
-  );
 
   const people = buildReceptionDirectory(employees, seats);
 
