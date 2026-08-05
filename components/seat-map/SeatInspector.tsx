@@ -1337,7 +1337,19 @@ export function SeatInspector({
         // Viewer inspector: Contact + Seat only — no Actions, Notes,
         // Activity, tabs, action row, AI row, or footer. The data is the
         // published assignment snapshot.
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        //
+        // tabIndex: the region must stay keyboard-scrollable on its own (axe
+        // scrollable-region-focusable) — unlike the admin form above, this
+        // read-only branch has no focusable descendant guaranteed (an open
+        // seat renders facts only), so an overflowing panel would otherwise
+        // be unreachable by keyboard. Same contract as the viewer lists in
+        // ViewerSeatFinder.
+        <div
+          role="region"
+          aria-label="Published seat details"
+          tabIndex={0}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
+        >
           <div key={`seat-inspector-sections-${selectedSeat.id}`} className="px-4 pb-4 pt-3.5">
             {hasCurrentAssignment && (
               <section aria-labelledby="published-contact-heading">

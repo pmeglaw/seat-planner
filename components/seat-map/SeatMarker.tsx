@@ -506,7 +506,10 @@ function SeatMarkerComponent({
         )}
         {officePlate ? (
           <span className="relative z-10 flex w-full min-w-0 flex-col items-start gap-0.5 text-left">
-            <span translate="no" className="whitespace-nowrap text-[8.5px] font-extrabold tracking-[0.09em] opacity-70">{seat.label}</span>
+            {/* Same surface-conditional opacity as codeTextClass above: an
+                office seat armed as swap/move source wears the light green
+                tint too, where a 70% eyebrow dips under AA. */}
+            <span translate="no" className={`whitespace-nowrap text-[8.5px] font-extrabold tracking-[0.09em] ${lightProminentSurface ? "opacity-90" : "opacity-70"}`}>{seat.label}</span>
             {/* Literal space text nodes between the plate's lines — same axe
                 4.10 subtree-serialization contract as the pill branches. */}
             {hasEmployee ? (
