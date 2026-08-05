@@ -259,3 +259,43 @@ test("without onOpenAskPlanner, the AI item is a plain link to /admin?ask-planne
   const aiLink = screen.getByRole("link", { name: /Ask Planner/ });
   assert.equal(aiLink.getAttribute("href"), "/admin?ask-planner=open");
 });
+
+// The nav watchdog (stalled-transition fallback) must never arm on a modified
+// click: the browser opens a new tab, and a 4s window.location.assign on the
+// ORIGINAL page would hijack it into a navigation the user never made. The
+// early return also skips collapse, so the rail visibly stays open.
+test("a ctrl-click on the AI link arms no watchdog, keeps the rail open, and navigates nothing", async () => {
+  await renderRail();
+  await act(async () => fireEvent.click(hamburger()));
+  const scheduled = [];
+  const originalSetTimeout = window.setTimeout;
+  window.setTimeout = (fn, ms, ...rest) => {
+    scheduled.push(ms);
+    return originalSetTimeout(fn, ms, ...rest);
+  };
+  try {
+    await act(async () => fireEvent.click(screen.getByRole("link", { name: /Ask Planner/ }), { ctrlKey: true }));
+  } finally {
+    window.setTimeout = originalSetTimeout;
+  }
+  assert.ok(!scheduled.includes(4000), "modified click must not arm the 4s nav watchdog");
+  assert.equal(hamburger().getAttribute("aria-expanded"), "true", "modified click must not collapse the rail");
+  assert.deepEqual(pushed, []);
+});
+
+test("a plain click on the AI link arms the 4s nav watchdog and navigates", async () => {
+  await renderRail();
+  const scheduled = [];
+  const originalSetTimeout = window.setTimeout;
+  window.setTimeout = (fn, ms, ...rest) => {
+    scheduled.push(ms);
+    return originalSetTimeout(fn, ms, ...rest);
+  };
+  try {
+    await act(async () => fireEvent.click(screen.getByRole("link", { name: /Ask Planner/ })));
+  } finally {
+    window.setTimeout = originalSetTimeout;
+  }
+  assert.ok(scheduled.includes(4000), "allowed click must arm the 4s nav watchdog");
+  assert.deepEqual(pushed, ["/admin?ask-planner=open"]);
+});
