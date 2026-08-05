@@ -1357,8 +1357,12 @@ export function ViewerSeatFinder({
             </span>
           </div>
 
+          {/* List tabIndex: the region must stay keyboard-scrollable on its
+              own (axe scrollable-region-focusable) — every row is a <button>,
+              but rows for unseated people render disabled, and a list where
+              ALL rows are disabled otherwise has no tab stop at all. */}
           {searchResults.results.length > 0 ? (
-            <div role="list" aria-label="Viewer search results" onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2">
+            <div role="list" aria-label="Viewer search results" tabIndex={0} onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]">
               {searchResults.results.map(result => {
                 const selected = result.id === activeResultId || Boolean(result.seatId && result.seatId === selectedSeatId);
                 return (
@@ -1452,7 +1456,10 @@ export function ViewerSeatFinder({
               )}
             </div>
           </div>
-          <div role="list" aria-label="People directory" onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2">
+          {/* tabIndex: same scrollable-region-focusable contract as the search
+              results list above — with nobody seated, every row is a disabled
+              <button> and the scrollable region loses keyboard access. */}
+          <div role="list" aria-label="People directory" tabIndex={0} onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]">
             {directory.rows.map(row => (
               <div role="listitem" key={row.id}>
               <button

@@ -294,12 +294,19 @@ function SeatMarkerComponent({
         ? "border-[var(--admin-marker-draft-border)] bg-[var(--admin-marker-draft-surface)] text-[var(--admin-marker-draft-text)] ring-1 ring-[var(--admin-marker-draft-border)] shadow-[0_4px_12px_rgba(212,154,6,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
         : "border-[#8A6116]/70 bg-[#FCF4D6]/95 text-[#6D4712] ring-1 ring-[#E0C46E]/55 shadow-[0_4px_12px_rgba(162,110,35,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
       : "",
-    searchSelected
+    // Same source-state exclusion as the selected entry below — this is the
+    // other dark-pill state that would collide with the green source tint.
+    searchSelected && !swapSource && !moveEmployeeSource
       ? adminMarker
         ? "border-[var(--admin-marker-selected-border)] bg-[var(--admin-marker-selected-surface)] text-[var(--admin-marker-selected-text)] ring-2 ring-[var(--admin-marker-selected-border)] outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-border)] shadow-[0_12px_28px_rgba(16,17,20,0.34),0_0_0_5px_var(--admin-marker-search-halo),inset_0_1px_0_rgba(255,255,255,0.14)]"
         : "border-[#D46A24] bg-[#15181B] text-white ring-2 ring-[#D46A24]/90 outline outline-2 outline-offset-2 outline-[#D46A24]/75 shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_rgba(255,87,21,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
       : "",
-    tokenMode === "selected"
+    // Arming swap/move keeps the seat SELECTED (applyStartSwapSeatAction never
+    // clears selection), so without the source-state exclusion this dark pill
+    // and the green source tint below land on the same token and CSS order —
+    // not JSX order — picks per property: bg-[#DEF3E4] beats bg-[#171A1D] but
+    // text-white beats text-[#284C3B], rendering white-on-mint (~1.1:1).
+    tokenMode === "selected" && !swapSource && !moveEmployeeSource
       ? searchSelected
         ? ""
         : adminMarker
@@ -354,8 +361,14 @@ function SeatMarkerComponent({
   // the seat code demotes to a small muted eyebrow so the occupant name below
   // it is the card's primary line. Code-only selected/prominent pills (open
   // seats) keep the larger code — it is the only content there.
+  // The muted-eyebrow opacity is surface-dependent: 70% white on the dark
+  // selected pill holds 9.0:1, but 70% of the ink on the LIGHT prominent
+  // surfaces dips under AA (#284C3B@70 on the #DEF3E4 source/highlight tint =
+  // 3.84:1, #9E2F06@70 on the #FBEAE1 search tint = 3.51:1); 90% keeps the
+  // demoted look while measuring 6.35:1 / 5.22:1 there.
+  const lightProminentSurface = swapSource || moveEmployeeSource || plannerHighlighted || (searchProminent && !selected);
   const codeTextClass = expandedNameBadge
-    ? "text-[8.5px] tracking-[0.04em] opacity-70"
+    ? `text-[8.5px] tracking-[0.04em] ${lightProminentSurface ? "opacity-90" : "opacity-70"}`
     : tokenMode === "selected" || tokenMode === "prominent"
       ? "text-[10px]"
       : "text-[9.5px]";
