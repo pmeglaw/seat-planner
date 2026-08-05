@@ -152,7 +152,16 @@ test("db() surfaces a 500 the same way as a 4xx failure", async () => {
     () => new Response("internal error", { status: 500 }),
     {},
     async () => {
-      await assert.rejects(() => db("rpc/publish_seat_map", { method: "POST" }), /^500 rpc\/publish_seat_map: internal error$/);
+      // Assert on error.message via a callback, like the 409 test above — a
+      // bare regex given to assert.rejects is matched against String(error)
+      // ("Error: 500 …"), which the ^ anchor can never match.
+      await assert.rejects(
+        () => db("rpc/publish_seat_map", { method: "POST" }),
+        error => {
+          assert.match(error.message, /^500 rpc\/publish_seat_map: internal error$/);
+          return true;
+        }
+      );
     }
   );
 });

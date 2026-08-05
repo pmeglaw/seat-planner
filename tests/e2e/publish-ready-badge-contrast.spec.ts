@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { formatAxeViolations, WCAG_A_AA_TAGS } from "./axe-helpers";
@@ -15,7 +16,10 @@ import { formatAxeViolations, WCAG_A_AA_TAGS } from "./axe-helpers";
 // regression here) and asserts on the resolved values and on contrast.
 test.describe("--admin-publish-ready-text token", () => {
   test("resolves to --admin-primary-on-soft, not the cta fill", async ({ page }) => {
-    const globalsCss = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+    // process.cwd() (the project root Playwright runs from), not import.meta.url:
+    // Playwright transpiles specs to CJS, where import.meta is a load-time
+    // SyntaxError — same constraint documented in tests/browser/build-harness.ts.
+    const globalsCss = await readFile(path.join(process.cwd(), "app", "globals.css"), "utf8");
 
     await page.setContent(`
       <!DOCTYPE html>
@@ -53,7 +57,10 @@ test.describe("--admin-publish-ready-text token", () => {
   });
 
   test("the rendered publish-ready banner has no WCAG A/AA color-contrast violation", async ({ page }) => {
-    const globalsCss = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+    // process.cwd() (the project root Playwright runs from), not import.meta.url:
+    // Playwright transpiles specs to CJS, where import.meta is a load-time
+    // SyntaxError — same constraint documented in tests/browser/build-harness.ts.
+    const globalsCss = await readFile(path.join(process.cwd(), "app", "globals.css"), "utf8");
 
     // Same markup shape as AdminManagementPanel.tsx's confirm-dialog notice:
     // border + bg + text all sourced from the publish-ready tokens, text-sm
