@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
+import { listDraftSeatExpectations, type DraftSeatExpectation } from "@/lib/draftConcurrency";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
@@ -34,6 +34,11 @@ function downloadJson(filename: string, payload: unknown) {
 
 type CsvImportReview = {
   text: string;
+  /**
+   * Concurrency fence: the draft as this page held it when the CSV was parsed
+   * for review — the state the admin is actually looking at while confirming.
+   */
+  expectedSeats: DraftSeatExpectation[];
   rowCount: number;
   assignedCount: number;
   clearCount: number;
@@ -170,6 +175,9 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
 
         setCsvReview({
           text,
+          // Fence captured at parse time: confirming applies the CSV against
+          // the draft the admin reviewed, not whatever the draft becomes.
+          expectedSeats: listDraftSeatExpectations(seats),
           rowCount: parsed.rows.length,
           assignedCount,
           clearCount,
@@ -192,8 +200,14 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
     startTransition(async () => {
       try {
         resetMessages();
-        const payload = await importAssignmentsCsvAction(review.text);
+        const payload = await importAssignmentsCsvAction(review.text, review.expectedSeats);
         setCsvReview(null);
+        if (!payload.ok) {
+          setNotice(null);
+          setError(`${payload.message} This page has been refreshed with the latest draft — review it and try the import again if it is still what you want.`);
+          router.refresh();
+          return;
+        }
         setNotice(`CSV import applied. ${payload.count.toLocaleString()} rows updated in the draft.`);
         router.refresh();
       } catch (caught) {
