@@ -53,7 +53,7 @@ const MOCKS: Record<string, string> = {
     // preventDefault suppress navigation; otherwise route through the
     // harness router so specs assert on router.push instead of the
     // browser actually leaving harness.html.
-    export default function Link({ href, children, onClick, ...rest }) {
+    export default function Link({ href, children, onClick, prefetch, ...rest }) {
       return React.createElement("a", { href, ...rest, onClick: event => {
         onClick?.(event);
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;

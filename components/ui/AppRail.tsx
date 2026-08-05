@@ -246,6 +246,15 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
           <Link
             key={item.key}
             href={item.href}
+            // prefetch={false} is load-bearing, not a missed optimization:
+            // with default prefetch every page load fired 2 dynamic RSC
+            // prefetches per rail item (8+ lambda invocations), and clicking
+            // while the target's prefetch was still in flight intermittently
+            // wedged the client router — the nav's RSC 200 arrived and never
+            // committed (reproduced on prod 2026-08-05; Vercel logs show the
+            // response, the router sat 45s+). Fresh-fetch nav costs ~1s with
+            // the pages' parallel queries; useLinkStatus pulses immediately.
+            prefetch={false}
             title={item.label}
             aria-current={item.key === active ? "page" : undefined}
             onClick={event => handleNavClick(event, item.href, item.label)}
@@ -278,6 +287,7 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
         ) : (
           <Link
             href="/admin?ask-planner=open"
+            prefetch={false}
             title="Ask Planner (AI)"
             onClick={() => collapse(false)}
             className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)]"].join(" ")}
@@ -287,6 +297,7 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
         )}
         <Link
           href="/"
+          prefetch={false}
           title="Viewer — published map"
           aria-label="Open viewer surface"
           onClick={event => handleNavClick(event, "/", "the viewer")}
