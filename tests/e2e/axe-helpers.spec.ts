@@ -10,30 +10,33 @@ test.describe("waitForColorSettle", () => {
     page
   }) => {
     // Mirrors the Button primitive's disabled->enabled flip this helper exists
-    // for: colors start at one value, then change after a short delay, then
-    // transition to their final value over 300ms.
+    // for: colors start at one value, then transition to their final value over
+    // 300ms once triggered.
     await page.setContent(`
       <button
         id="target"
         style="background-color: rgb(200, 200, 200); color: rgb(0, 0, 0); transition: background-color 300ms linear, color 300ms linear;"
       >Target</button>
-      <script>
-        setTimeout(() => {
-          const el = document.getElementById("target");
-          el.style.backgroundColor = "rgb(20, 20, 20)";
-          el.style.color = "rgb(255, 255, 255)";
-        }, 50);
-      </script>
     `);
 
     const locator = page.locator("#target");
+    // Start the settle poll loop without awaiting it yet, so its first check()
+    // sample captures the pre-transition colors as the baseline.
+    const settlePromise = waitForColorSettle(locator);
+
+    // Now trigger the style mutation and capture start time from this point.
+    await locator.evaluate(el => {
+      (el as HTMLElement).style.backgroundColor = "rgb(20, 20, 20)";
+      (el as HTMLElement).style.color = "rgb(255, 255, 255)";
+    });
     const start = Date.now();
-    await waitForColorSettle(locator);
+
+    await settlePromise;
     const elapsed = Date.now() - start;
 
-    // The transition starts ~50ms in and runs 300ms, and resolving requires
-    // two 120ms-apart samples reading the SAME color — so this cannot resolve
-    // before the transition's own end, which is the whole point of the helper.
+    // The transition runs for 300ms, and resolving requires two 120ms-apart
+    // samples reading the SAME color — so this cannot resolve before the
+    // transition's own end, which is the whole point of the helper.
     expect(elapsed).toBeGreaterThanOrEqual(300);
     await expect(locator).toHaveCSS("background-color", "rgb(20, 20, 20)");
     await expect(locator).toHaveCSS("color", "rgb(255, 255, 255)");
