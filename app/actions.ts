@@ -708,7 +708,22 @@ export async function deleteSeatAction(seatId: string) {
   return { seatId };
 }
 
-export async function importAssignmentsCsvAction(csvText: string) {
+export type ImportAssignmentsCsvResult =
+  | { ok: true; seats: SeatWithEmployee[]; employees: Employee[]; count: number }
+  | { ok: false; code: "STALE_DRAFT"; message: string };
+
+export async function importAssignmentsCsvAction(
+  csvText: string,
+  /**
+   * Concurrency fence: exact (id, updated_at) of every draft seat the client
+   * held when the CSV was parsed for review (lib/draftConcurrency
+   * listDraftSeatExpectations — timestamps verbatim, never through Date). The
+   * RPC rejects with STALE_DRAFT if any CSV-targeted seat differs, so an
+   * import confirmed against stale data cannot silently overwrite another
+   * admin's edits.
+   */
+  expectedSeats?: DraftSeatExpectation[]
+): Promise<ImportAssignmentsCsvResult> {
   const supabase = await requireAdmin();
   const parsed = parseAssignmentCsv(csvText);
   if (parsed.issues.length > 0) {
@@ -719,15 +734,23 @@ export async function importAssignmentsCsvAction(csvText: string) {
     assignment_rows: parsed.rows.map((row, index) => ({
       ...row,
       row_number: index + 2
-    }))
+    })),
+    expected_seats: expectedSeats ?? null
   });
 
-  if (importError) throw new Error(importError.message);
+  if (importError) {
+    // Returned (not thrown) so the fence message survives production's digest
+    // stripping and the client can reload instead of showing a dead-end error.
+    if (isStaleDraftErrorCode((importError as SupabaseMutationError).code)) {
+      return { ok: false, code: "STALE_DRAFT", message: importError.message };
+    }
+    throw new Error(importError.message);
+  }
 
   const { seats, employees } = await getDraftMapPayload(supabase, "Could not reload imported data.");
 
   revalidatePath("/admin");
-  return { seats, employees, count: parsed.rows.length };
+  return { ok: true, seats, employees, count: parsed.rows.length };
 }
 
 export type RestoreDraftSnapshotResult =

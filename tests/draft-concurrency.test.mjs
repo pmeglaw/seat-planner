@@ -116,6 +116,21 @@ test("settings JSON restore fences on the draft the page loaded", async () => {
   assert.match(source, /router\.refresh\(\)/);
 });
 
+test("settings CSV import fences on the draft captured when the CSV was parsed", async () => {
+  const source = await readFile(new URL("../components/admin-settings/DataUtilitiesPanel.tsx", import.meta.url), "utf8");
+  const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
+
+  // Captured at parse time (into the review state), not re-read at confirm
+  // time: the fence must describe the draft the admin actually reviewed.
+  assert.match(source, /expectedSeats: listDraftSeatExpectations\(seats\)/);
+  assert.match(source, /importAssignmentsCsvAction\(review\.text, review\.expectedSeats\)/);
+
+  // The action forwards the expectations verbatim (never through Date) and
+  // returns MLS02 as STALE_DRAFT so the client can reload and retry.
+  assert.match(actionsSource, /expected_seats: expectedSeats \?\? null/);
+  assert.match(actionsSource, /isStaleDraftErrorCode\(\(importError as SupabaseMutationError\)\.code\)/);
+});
+
 test("force-move outcomes ingest the fresh draft payload instead of a stale client-side vacate", async () => {
   // Fix round 1 (2026-07-30): a force_move also vacates the mover's OTHER
   // draft seat server-side, bumping its updated_at. Reconstructing that seat

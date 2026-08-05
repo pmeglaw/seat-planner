@@ -334,6 +334,46 @@ test("import: requires admin", async () => {
   });
 });
 
+// updated_at as Postgres text, not the driver's Date: the fence compares the
+// value byte-for-byte after a ::timestamptz cast, and Date drops microseconds.
+async function seatExpectation(seatId) {
+  const { rows } = await db.query("select id, updated_at::text as updated_at from public.seats where id = $1", [seatId]);
+  return rows[0];
+}
+
+test("import: enforces the concurrency fence when a targeted seat changed out-of-band (MLS02)", async () => {
+  const n01 = await db.seedSeat({ label: "N01", status: "available" });
+  const expectation = await seatExpectation(n01.id);
+
+  // Another session's committed edit: touch trigger bumps updated_at.
+  await db.query("update public.seats set notes = 'foreign edit' where id = $1", [n01.id]);
+
+  const rows = [{ seat_label: "N01", employee_name: "X", employee_email: "", position: "", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  await expectThrow(
+    db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb)", [JSON.stringify(rows), JSON.stringify([expectation])]),
+    { code: "MLS02", match: /changed in another session/ }
+  );
+
+  const [seat] = await db.draftSeats();
+  assert.equal(seat.status, "available", "a fenced-off import must not mutate the draft");
+  assert.equal(seat.employee_id, null);
+});
+
+test("import: passes the fence when expectations match the locked rows", async () => {
+  const n01 = await db.seedSeat({ label: "N01", status: "available" });
+  const expectation = await seatExpectation(n01.id);
+
+  const rows = [{ seat_label: "N01", employee_name: "Fresh Person", employee_email: "", position: "", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  const res = await db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb) as count", [
+    JSON.stringify(rows),
+    JSON.stringify([expectation])
+  ]);
+  assert.equal(res.rows[0].count, 1);
+
+  const [seat] = await db.draftSeats();
+  assert.equal(seat.status, "assigned");
+});
+
 // ---------------------------------------------------------------------------
 // deactivate_employee
 // ---------------------------------------------------------------------------

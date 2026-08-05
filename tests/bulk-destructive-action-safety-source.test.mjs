@@ -20,7 +20,7 @@ test("settings data utilities review CSV imports in-app before calling the mutat
   assert.match(source, /setCsvReview\(\{[\s\S]*text,[\s\S]*rowCount: parsed\.rows\.length/);
   assert.doesNotMatch(importCsvFunction[0], /importAssignmentsCsvAction/);
   assert.match(confirmCsvFunction[0], /if \(!csvReview \|\| csvReview\.issues\.length > 0\) return/);
-  assert.match(confirmCsvFunction[0], /importAssignmentsCsvAction\(review\.text\)/);
+  assert.match(confirmCsvFunction[0], /importAssignmentsCsvAction\(review\.text, review\.expectedSeats\)/);
   assert.match(closeCsvFunction[0], /setCsvReview\(null\)/);
   assert.match(source, /Review CSV import/);
   assert.match(source, /CSV import has blocking errors/);
