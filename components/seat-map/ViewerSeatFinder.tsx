@@ -38,6 +38,7 @@ import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
+import { useVirtualListWindow } from "@/components/seat-map/useVirtualListWindow";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { buildZoneWash } from "@/lib/zoneWash";
@@ -283,6 +284,15 @@ export function ViewerSeatFinder({
   );
   const activeResult = searchResults.results.find(result => result.id === activeResultId) ?? null;
   const directory = useMemo(() => buildViewerDirectory({ seats: publishedSeats, employees }), [employees, publishedSeats]);
+  // Windowed People directory (the Management table's computeVirtualWindow
+  // math via the shared hook, with simpler viewer wiring): only rows near the
+  // viewport render and spacers preserve the scrollbar, so a 1,000-person
+  // directory doesn't mount 1,000 buttons at rest.
+  const { setListElement: setDirectoryListElement, window: directoryWindow } = useVirtualListWindow(directory.rows.length, { defaultRowHeight: 64 });
+  const visibleDirectoryRows = useMemo(
+    () => directory.rows.slice(directoryWindow.startIndex, directoryWindow.endIndex),
+    [directory.rows, directoryWindow]
+  );
 
   // Keyboard activation of a seat hands focus into the details panel once the
   // selection commits; pointer interactions cancel the handoff.
@@ -1483,8 +1493,9 @@ export function ViewerSeatFinder({
           {/* tabIndex: same scrollable-region-focusable contract as the search
               results list above — with nobody seated, every row is a disabled
               <button> and the scrollable region loses keyboard access. */}
-          <div role="list" aria-label="People directory" tabIndex={0} onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]">
-            {directory.rows.map(row => (
+          <div ref={setDirectoryListElement} role="list" aria-label="People directory" tabIndex={0} onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]">
+            {directoryWindow.topPadding > 0 && <div aria-hidden="true" style={{ height: directoryWindow.topPadding }} />}
+            {visibleDirectoryRows.map(row => (
               <div role="listitem" key={row.id}>
               <button
                 type="button"
@@ -1512,6 +1523,7 @@ export function ViewerSeatFinder({
               </button>
               </div>
             ))}
+            {directoryWindow.bottomPadding > 0 && <div aria-hidden="true" style={{ height: directoryWindow.bottomPadding }} />}
           </div>
           <div className="border-t border-[var(--admin-border)] px-4 py-2 text-[11px] font-medium text-[var(--admin-text-subtle)]">
             {directory.totalCount} {directory.totalCount === 1 ? "person" : "people"} · {directory.seatedCount} seated

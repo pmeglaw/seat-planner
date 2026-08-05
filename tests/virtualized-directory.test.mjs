@@ -90,3 +90,27 @@ test("management directory is windowed with an indexed seat lookup, look unchang
   // Results stay countable at scale (Figma: "results capped with counts").
   assert.match(source, /of \{activeEmployees\.length\.toLocaleString\(\)\} shown/);
 });
+
+test("viewer directory and admin results panel window through the shared hook", async () => {
+  const hookSource = await readFile(new URL("../components/seat-map/useVirtualListWindow.ts", import.meta.url), "utf8");
+  const viewerSource = await readFile(new URL("../components/seat-map/ViewerSeatFinder.tsx", import.meta.url), "utf8");
+  const resultsSource = await readFile(new URL("../components/seat-map/ResultsPanel.tsx", import.meta.url), "utf8");
+
+  // The hook delegates the math to the unit-tested lib module.
+  assert.match(hookSource, /from "@\/lib\/virtualizedList"/);
+  assert.match(hookSource, /computeVirtualWindow\(\{/);
+
+  // Viewer People directory: windowed slice + spacers preserve the scrollbar.
+  assert.match(viewerSource, /useVirtualListWindow\(directory\.rows\.length/);
+  assert.match(viewerSource, /visibleDirectoryRows\.map\(row =>/);
+  assert.match(viewerSource, /height: directoryWindow\.topPadding/);
+  assert.match(viewerSource, /height: directoryWindow\.bottomPadding/);
+
+  // Admin results panel: same pattern, keyboard roving untouched.
+  assert.match(resultsSource, /useVirtualListWindow\(results\.length/);
+  assert.match(resultsSource, /visibleResults\.map\(result =>/);
+  assert.match(resultsSource, /height: resultsWindow\.topPadding/);
+  assert.match(resultsSource, /height: resultsWindow\.bottomPadding/);
+  assert.match(resultsSource, /ArrowDown/);
+  assert.match(resultsSource, /ArrowUp/);
+});
