@@ -23,15 +23,11 @@ export const SEEDED_VIEWER_EMAIL = "e2e-viewer@example.test";
  *    directory loses its sign-in step. tests/login-form.test.mjs pins that.
  */
 /**
- * Retry an action until its expected effect renders.
+ * Repeatedly performs an action until its expected effect becomes visible.
  *
- * The first interaction on a freshly-loaded page races React hydration: every
- * admin control is in the server HTML, but a click (or dispatched event)
- * delivered before React attaches its listeners is silently dropped. The login
- * form ships a disabled "Starting up…" state for exactly this (UX-01, #276);
- * nothing else does, so first clicks go through this loop instead. The
- * effect-visible guard also makes retries idempotent for toggle-style targets:
- * once the effect is up, the action never fires again.
+ * @param action - The action to perform
+ * @param effect - The locator whose visibility indicates completion
+ * @param timeout - The maximum time to retry the action
  */
 export async function retryUntilVisible(action: () => Promise<void>, effect: Locator, timeout = 20_000) {
   await expect(async () => {
@@ -41,6 +37,12 @@ export async function retryUntilVisible(action: () => Promise<void>, effect: Loc
   }).toPass({ timeout });
 }
 
+/**
+ * Signs in through the login page using the supplied email and seeded password.
+ *
+ * @param page - The page on which to perform the sign-in flow
+ * @param email - The email address to authenticate
+ */
 export async function signIn(page: Page, email: string) {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();

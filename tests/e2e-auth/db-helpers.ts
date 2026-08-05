@@ -6,7 +6,14 @@
 // and its own test agree with each other and both be wrong.
 //
 // The env vars are republished onto process.env by playwright-auth.config.ts
-// (localStackEnv) before workers spawn.
+/**
+ * Sends an authenticated request to a Supabase REST endpoint.
+ *
+ * @param path - The REST endpoint path relative to `/rest/v1/`
+ * @param init - Request options to apply to the request
+ * @returns The parsed JSON response, or `null` for a 204 response
+ * @throws An error containing the response status, path, and body when the request fails
+ */
 
 export async function db(path: string, init: RequestInit = {}) {
   const supabaseUrl = process.env.E2E_SUPABASE_URL!;
