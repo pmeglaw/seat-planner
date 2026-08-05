@@ -88,6 +88,10 @@ type FieldError = {
 const noopCallback = () => undefined;
 const emptyDraftSnapshot = (): DraftSnapshot => ({ seats: [], employees: [] });
 
+// Shared eyebrow-heading style for the CONTACT/SEAT section labels (admin and
+// published variants), factored so the four headings can't drift apart.
+const eyebrowHeadingClass = "text-[10px] font-bold tracking-[0.12em] text-[var(--admin-chrome-label)]";
+
 const emptyForm: SeatInspectorForm = {
   label: "",
   employeeId: "",
@@ -177,7 +181,7 @@ function VacateGlyph() {
 function SectionHeading({ id, title }: { id?: string; title: string }) {
   return (
     <div className="flex items-center gap-2">
-      <h3 id={id} className="shrink-0 text-[12px] font-semibold text-[#E7E1D8]">{title}</h3>
+      <h3 id={id} className="shrink-0 text-[12px] font-semibold text-[var(--admin-chrome-heading)]">{title}</h3>
       <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-white/10" />
     </div>
   );
@@ -187,7 +191,7 @@ function FactRow({ label, value, mono = true }: { label: string; value: string; 
   return (
     <div className="flex items-center justify-between gap-2.5 border-b border-white/5 py-1.5 last:border-b-0">
       <dt className="shrink-0 text-[12.5px] text-[var(--admin-chrome-muted)]">{label}</dt>
-      <dd className={["min-w-0 truncate text-right text-[12.5px] font-medium text-[#eeeeee]", mono ? "font-mono" : ""].filter(Boolean).join(" ")}>{value}</dd>
+      <dd className={["min-w-0 truncate text-right text-[12.5px] font-medium text-[var(--admin-chrome-value-text)]", mono ? "font-mono" : ""].filter(Boolean).join(" ")}>{value}</dd>
     </div>
   );
 }
@@ -229,7 +233,7 @@ function AskPlannerSeatRow({ seat: selectedSeat, onExplainSeat }: { seat: SeatWi
       onClick={() => onExplainSeat(selectedSeat)}
       aria-label={`Ask Planner about ${selectedSeat.label}`}
       title={`Ask Planner about ${selectedSeat.label}`}
-      className="mx-4 mb-3 flex w-auto items-center justify-between gap-3 bg-[var(--admin-chrome-raised)] px-3 py-2.5 text-left text-[12px] font-semibold text-[#F4F4F4] transition hover:bg-white/[0.10] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+      className="mx-4 mb-3 flex w-auto items-center justify-between gap-3 bg-[var(--admin-chrome-raised)] px-3 py-2.5 text-left text-[12px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-white/[0.10] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
     >
       <span className="flex items-center gap-2">
         <span className="border border-[var(--admin-ai-chrome-border)] px-1 text-[9.5px] font-bold tracking-[0.04em] text-[var(--admin-ai-chrome-text)]">AI</span>
@@ -874,7 +878,7 @@ export function SeatInspector({
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-white/10 bg-[var(--admin-chrome-bg)] px-4 pb-3 pt-3.5">
         <div className="flex items-start gap-2.5">
-          <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#FF5715,#8a3a1a)] text-[11px] font-bold text-white">
+          <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[image:var(--admin-avatar-gradient)] text-[11px] font-bold text-white">
             {occupantInitials}
           </span>
           <div className="min-w-0 flex-1">
@@ -888,12 +892,12 @@ export function SeatInspector({
           </div>
         </div>
         <div className="flex min-w-0 items-center gap-2">
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[#E7E1D8] ring-1 ring-white/15">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-heading)] ring-1 ring-white/15">
             <span aria-hidden="true" className={["h-2 w-2 rounded-full", headerStatusDotClass].join(" ")} />
             {currentStatusLabel}
           </span>
-          <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[11px] font-medium text-[#E7E1D8] ring-1 ring-white/15">{selectedSeat.label}</span>
-          <span className="min-w-0 truncate rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[#E7E1D8] ring-1 ring-white/15">{currentZone}</span>
+          <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[11px] font-medium text-[var(--admin-chrome-heading)] ring-1 ring-white/15">{selectedSeat.label}</span>
+          <span className="min-w-0 truncate rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-heading)] ring-1 ring-white/15">{currentZone}</span>
           {!canEdit && (
             <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] ring-1 ring-white/15">Published seat</span>
           )}
@@ -907,18 +911,18 @@ export function SeatInspector({
               {hasCurrentAssignment && onMove && (
                 <button type="button" onClick={onMove} disabled={pending || busy}
                   aria-label={selectedSeat.employee?.full_name ? `Move ${selectedSeat.employee.full_name} to another seat` : `Move ${selectedSeat.label}`}
-                  className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[#F4F4F4] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                  className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
                   <MoveGlyph />Move
                 </button>
               )}
               {onSwap && (
-                <button type="button" onClick={onSwap} disabled={pending || busy} aria-label={`Swap ${selectedSeat.label}`} className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[#F4F4F4] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                <button type="button" onClick={onSwap} disabled={pending || busy} aria-label={`Swap ${selectedSeat.label}`} className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
                   <SwapGlyph />Swap
                 </button>
               )}
               {hasCurrentAssignment && onVacate && (
                 <button type="button" onClick={onVacate} disabled={pending || busy} aria-label={`Vacate ${selectedSeat.label}`}
-                  className="flex flex-1 flex-col items-center gap-1 bg-[#2b1a1b] py-2 text-[11px] font-semibold text-[var(--admin-chrome-danger-text)] transition hover:bg-[rgb(var(--admin-status-bad-rgb)/0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                  className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-danger-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-danger-text)] transition hover:bg-[rgb(var(--admin-status-bad-rgb)/0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
                   <VacateGlyph />Vacate
                 </button>
               )}
@@ -1064,7 +1068,7 @@ export function SeatInspector({
                             onClick={() => selectEmployee(option.employee)}
                             className={[
                               "flex w-full items-start gap-3 px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
-                              index === activeEmployeeIndex ? "bg-white/10 text-white" : "text-[#D8D0C5] hover:bg-white/5"
+                              index === activeEmployeeIndex ? "bg-white/10 text-white" : "text-[var(--admin-chrome-text-soft)] hover:bg-white/5"
                             ].join(" ")}
                           >
                             <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[var(--admin-primary-cta)]">
@@ -1169,7 +1173,7 @@ export function SeatInspector({
                         renders twice. */}
                     {hasCurrentAssignment && (
                       <section aria-labelledby="seat-contact-heading">
-                        <h3 id="seat-contact-heading" className="text-[10px] font-bold tracking-[0.12em] text-[#8E8276]">CONTACT</h3>
+                        <h3 id="seat-contact-heading" className={eyebrowHeadingClass}>CONTACT</h3>
                         <ContactFacts
                           canEdit
                           rows={buildContactRows({
@@ -1185,7 +1189,7 @@ export function SeatInspector({
                         seats lives in the Seat-actions zone below (it is an
                         action, not a fact). */}
                     <section aria-labelledby="seat-details-heading" className={hasCurrentAssignment ? "mt-3" : ""}>
-                      <h3 id="seat-details-heading" className="text-[10px] font-bold tracking-[0.12em] text-[#8E8276]">SEAT</h3>
+                      <h3 id="seat-details-heading" className={eyebrowHeadingClass}>SEAT</h3>
                       <dl>
                         <FactRow label="Zone" value={currentZone} mono={false} />
                         <FactRow label="Seat type" value={seatTypeLabel} mono={false} />
@@ -1202,7 +1206,7 @@ export function SeatInspector({
                         collapsible. */}
                     <div role="group" aria-labelledby="seat-actions-heading" className="mt-4">
                       <div className="flex items-center gap-2">
-                        <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[#E7E1D8]">Seat actions</h3>
+                        <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[var(--admin-chrome-heading)]">Seat actions</h3>
                         <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-white/10" />
                       </div>
                       {!hasAssignedPerson && (
@@ -1273,7 +1277,7 @@ export function SeatInspector({
                       <ul>
                         {activityEntries.map((entry, index) => (
                           <li key={`${entry}-${index}`} className="border-b border-white/5 py-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)] last:border-b-0">
-                            <span className="font-medium text-[#D8D0C5]">{entry}</span>
+                            <span className="font-medium text-[var(--admin-chrome-text-soft)]">{entry}</span>
                             <span className="ml-1.5">· this session</span>
                           </li>
                         ))}
@@ -1303,7 +1307,7 @@ export function SeatInspector({
           )}
 
           {showCommitBar && (
-            <div id="seat-inspector-commit-bar" className="border-t border-white/10 bg-[#1c1c1c] px-4 py-3">
+            <div id="seat-inspector-commit-bar" className="border-t border-white/10 bg-[var(--admin-chrome-commit-bg)] px-4 py-3">
               {/* Draft-impact pill (announced via the sr-only live region at the top of the form). */}
               <div aria-hidden="true" className={["flex items-center gap-2 px-3 py-2 text-xs font-medium", inspectorStatePillClassName].join(" ")}>
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
@@ -1353,7 +1357,7 @@ export function SeatInspector({
           <div key={`seat-inspector-sections-${selectedSeat.id}`} className="px-4 pb-4 pt-3.5">
             {hasCurrentAssignment && (
               <section aria-labelledby="published-contact-heading">
-                <h3 id="published-contact-heading" className="text-[10px] font-bold tracking-[0.12em] text-[#8E8276]">CONTACT</h3>
+                <h3 id="published-contact-heading" className={eyebrowHeadingClass}>CONTACT</h3>
                 <p className="sr-only">Published assignment</p>
                 <ContactFacts
                   canEdit={false}
@@ -1365,7 +1369,7 @@ export function SeatInspector({
               </section>
             )}
             <section aria-labelledby="published-details-heading" className={hasCurrentAssignment ? "mt-3" : ""}>
-              <h3 id="published-details-heading" className="text-[10px] font-bold tracking-[0.12em] text-[#8E8276]">SEAT</h3>
+              <h3 id="published-details-heading" className={eyebrowHeadingClass}>SEAT</h3>
               <dl>
                 <FactRow label="Code" value={selectedSeat.label} />
                 <FactRow label="Zone" value={currentZone} mono={false} />

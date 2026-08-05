@@ -231,12 +231,12 @@ function SeatMarkerComponent({
             ? "border-[var(--admin-marker-unavailable-border)] bg-[var(--admin-marker-unavailable-surface)] text-[var(--admin-marker-unavailable-text)]"
             : "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)]"
       : seat.status === "assigned"
-        ? "border-[#1D6E41]/55 bg-white/95 text-[#284C3B]"
+        ? "border-[var(--admin-marker-live-assigned-border)] bg-white/95 text-[var(--admin-marker-live-assigned-text)]"
         : seat.status === "reserved"
-          ? "border-[#8A6116]/55 bg-[#FCF4D6]/95 text-[#6D4712]"
+          ? "border-[var(--admin-marker-live-reserved-border)] bg-[var(--admin-marker-live-reserved-surface)] text-[var(--admin-marker-live-reserved-text)]"
           : seat.status === "unavailable"
-            ? "border-[#BEB4A8]/90 bg-[#E7E1D8]/[0.92] text-[#696159]"
-            : "border-[#B8AEA2] bg-white/95 text-[#453D33]";
+            ? "border-[var(--admin-marker-live-unavailable-border)] bg-[var(--admin-marker-live-unavailable-surface)] text-[var(--admin-marker-live-unavailable-text)]"
+            : "border-[var(--admin-marker-live-available-border)] bg-white/95 text-[var(--admin-marker-live-ink)]";
   // Search/planner emphasis keeps visual priority over the passive valid-target tint.
   const validTargetTone = (swapCandidate || moveCandidate) && !searchProminent && !plannerHighlighted;
   const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent" || validTargetTone || invalidTarget) ? "" : baseStatusToneClass;
@@ -292,36 +292,37 @@ function SeatMarkerComponent({
     draftChanged && !selected && !searchProminent
       ? adminMarker
         ? "border-[var(--admin-marker-draft-border)] bg-[var(--admin-marker-draft-surface)] text-[var(--admin-marker-draft-text)] ring-1 ring-[var(--admin-marker-draft-border)] shadow-[0_4px_12px_rgba(212,154,6,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
-        : "border-[#8A6116]/70 bg-[#FCF4D6]/95 text-[#6D4712] ring-1 ring-[#E0C46E]/55 shadow-[0_4px_12px_rgba(162,110,35,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
+        : "border-[var(--admin-marker-live-draft-border)] bg-[var(--admin-marker-live-draft-surface)] text-[var(--admin-marker-live-draft-text)] ring-1 ring-[var(--admin-marker-live-draft-ring)] shadow-[0_4px_12px_rgba(162,110,35,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
       : "",
     // Same source-state exclusion as the selected entry below — this is the
     // other dark-pill state that would collide with the green source tint.
     searchSelected && !swapSource && !moveEmployeeSource
       ? adminMarker
         ? "border-[var(--admin-marker-selected-border)] bg-[var(--admin-marker-selected-surface)] text-[var(--admin-marker-selected-text)] ring-2 ring-[var(--admin-marker-selected-border)] outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-border)] shadow-[0_12px_28px_rgba(16,17,20,0.34),0_0_0_5px_var(--admin-marker-search-halo),inset_0_1px_0_rgba(255,255,255,0.14)]"
-        : "border-[#D46A24] bg-[#15181B] text-white ring-2 ring-[#D46A24]/90 outline outline-2 outline-offset-2 outline-[#D46A24]/75 shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_rgba(255,87,21,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
+        : "border-[var(--admin-marker-live-active-edge)] bg-[var(--admin-marker-live-search-selected-surface)] text-white ring-2 ring-[var(--admin-marker-live-active-edge-strong)] outline outline-2 outline-offset-2 outline-[var(--admin-marker-live-active-edge-soft)] shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_rgba(255,87,21,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
       : "",
     // Arming swap/move keeps the seat SELECTED (applyStartSwapSeatAction never
     // clears selection), so without the source-state exclusion this dark pill
     // and the green source tint below land on the same token and CSS order —
-    // not JSX order — picks per property: bg-[#DEF3E4] beats bg-[#171A1D] but
-    // text-white beats text-[#284C3B], rendering white-on-mint (~1.1:1).
+    // not JSX order — picks per property: the positive-surface bg (mint) beats
+    // the dark selected surface but text-white beats the positive text,
+    // rendering white-on-mint (~1.1:1).
     tokenMode === "selected" && !swapSource && !moveEmployeeSource
       ? searchSelected
         ? ""
         : adminMarker
           ? "border-[var(--admin-marker-selected-border)] bg-[var(--admin-marker-selected-surface)] text-[var(--admin-marker-selected-text)] ring-2 ring-[var(--admin-marker-selected-border)] shadow-marker-selected"
-          : "border-[#D46A24] bg-[#171A1D] text-white ring-2 ring-[#D46A24]/90 shadow-[0_10px_24px_rgba(31,35,39,0.30),inset_0_1px_0_rgba(255,255,255,0.16)]"
+          : "border-[var(--admin-marker-live-active-edge)] bg-[var(--admin-marker-live-selected-surface)] text-white ring-2 ring-[var(--admin-marker-live-active-edge-strong)] shadow-[0_10px_24px_rgba(31,35,39,0.30),inset_0_1px_0_rgba(255,255,255,0.16)]"
       : "",
     validTargetTone
       ? adminMarker
         ? "border-[var(--admin-marker-target-valid-border)] bg-[var(--admin-marker-target-valid-surface)] text-[var(--admin-marker-target-valid-text)]"
-        : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B]"
+        : "border-[var(--admin-marker-live-positive-border)] bg-[var(--admin-marker-live-positive-surface)] text-[var(--admin-marker-live-positive-text)]"
       : "",
     invalidTarget
       ? adminMarker
         ? "border-[var(--admin-marker-target-invalid-border)] bg-[var(--admin-marker-target-invalid-surface)] text-[var(--admin-marker-target-invalid-text)]"
-        : "border-[#B3232C] bg-[#FBE9EA] text-[#7E2F24]"
+        : "border-[var(--admin-marker-live-invalid-border)] bg-[var(--admin-marker-live-invalid-surface)] text-[var(--admin-marker-live-invalid-text)]"
       : "",
     searchProminent && !selected
       ? adminMarker
@@ -332,29 +333,29 @@ function SeatMarkerComponent({
         // against both the cream floor plan and its own surface. The bright
         // #FF5715 stays in the outer glow only — at 2.71:1 on the fill it is
         // decoration, never the boundary that identifies the match.
-        : "border-[#D23F0A] bg-[#FBEAE1] text-[#9E2F06] ring-2 ring-[#D23F0A]/55 shadow-[0_0_0_4px_rgba(255,87,21,0.20),0_10px_20px_-4px_rgba(210,63,10,0.35),inset_0_1px_0_rgba(255,255,255,0.78)]"
+        : "border-[var(--admin-marker-live-search-border)] bg-[var(--admin-marker-live-search-surface)] text-[var(--admin-marker-live-search-text)] ring-2 ring-[var(--admin-marker-live-search-ring)] shadow-[0_0_0_4px_rgba(255,87,21,0.20),0_10px_20px_-4px_rgba(210,63,10,0.35),inset_0_1px_0_rgba(255,255,255,0.78)]"
       : "",
-    highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-ring)]" : "outline outline-2 outline-offset-2 outline-[#1D6E41]/70" : "",
-    swapSource || moveEmployeeSource ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B] ring-4 ring-[#A9D7B8]/80" : "",
-    swapTarget ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[#6E655A] bg-[#F1ECE4] text-[#353532] ring-4 ring-[#D8D0C5]/85" : "",
+    highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-ring)]" : "outline outline-2 outline-offset-2 outline-[var(--admin-marker-live-positive-outline)]" : "",
+    swapSource || moveEmployeeSource ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[var(--admin-marker-live-positive-border)] bg-[var(--admin-marker-live-positive-surface)] text-[var(--admin-marker-live-positive-text)] ring-4 ring-[var(--admin-marker-live-positive-ring)]" : "",
+    swapTarget ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[var(--admin-marker-live-neutral-border)] bg-[var(--admin-marker-live-neutral-surface)] text-[var(--admin-marker-live-neutral-text)] ring-4 ring-[var(--admin-marker-live-neutral-ring)]" : "",
     // v12 slice 7: on ADMIN this state means "Ask Planner chose this seat", so
     // it wears the AI aura — the only place AI blue touches a pill. The viewer
     // branch keeps its green: there `highlighted` means a search hit or a
     // people-list hover, which is not AI presence and must never look like it.
-    plannerHighlighted ? adminMarker ? "border-[var(--admin-ai-border)] bg-white bg-[image:var(--admin-ai-marker-aura)] bg-no-repeat text-[var(--admin-ai-text)] shadow-marker-ai" : "border-[#1D6E41] bg-[#DEF3E4] text-[#284C3B] ring-2 ring-[#1D6E41]/55 shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
-    (swapMode && !swapSource) || (moveEmployeeMode && !moveEmployeeSource) ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--admin-marker-search-ring)]" : "group-hover:ring-4 group-hover:ring-[#A9D7B8]/80" : ""
+    plannerHighlighted ? adminMarker ? "border-[var(--admin-ai-border)] bg-white bg-[image:var(--admin-ai-marker-aura)] bg-no-repeat text-[var(--admin-ai-text)] shadow-marker-ai" : "border-[var(--admin-marker-live-positive-border)] bg-[var(--admin-marker-live-positive-surface)] text-[var(--admin-marker-live-positive-text)] ring-2 ring-[var(--admin-marker-live-planner-ring)] shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
+    (swapMode && !swapSource) || (moveEmployeeMode && !moveEmployeeSource) ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--admin-marker-search-ring)]" : "group-hover:ring-4 group-hover:ring-[var(--admin-marker-live-positive-ring)]" : ""
   ].join(" ");
   const markerFocusClass = adminMarker
     ? "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-marker-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-marker-focus-offset)]"
-    : "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#D46A24]/75 focus-visible:ring-offset-2 focus-visible:ring-offset-white/70";
+    : "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-marker-live-active-edge-soft)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/70";
   // Hover is a transient cue: it must never repaint a committed (selected) seat's
   // orange ring, so the hover border applies only to unselected markers.
   const tokenInteractionClass = adminMarker
     ? `transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out ${selected ? "" : "group-hover:border-[var(--admin-marker-hover-border)] "}group-hover:brightness-105 group-hover:shadow-marker-hover group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--admin-marker-focus-ring)] motion-reduce:transition-none`
-    : "transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out group-hover:border-[#D46A24] group-hover:brightness-105 group-hover:shadow-[0_6px_14px_rgba(23,26,29,0.20),inset_0_1px_0_rgba(255,255,255,0.82)] group-active:shadow-[0_2px_6px_rgba(23,26,29,0.16),inset_0_2px_4px_rgba(23,26,29,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[#D46A24]/75 motion-reduce:transition-none";
+    : "transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out group-hover:border-[var(--admin-marker-live-active-edge)] group-hover:brightness-105 group-hover:shadow-[0_6px_14px_rgba(23,26,29,0.20),inset_0_1px_0_rgba(255,255,255,0.82)] group-active:shadow-[0_2px_6px_rgba(23,26,29,0.16),inset_0_2px_4px_rgba(23,26,29,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--admin-marker-live-active-edge-soft)] motion-reduce:transition-none";
   const draftBadgeClass = adminMarker
     ? "bg-[var(--admin-marker-draft-accent)] shadow-[0_2px_5px_rgba(16,17,20,0.24)]"
-    : "bg-[#8A6116] shadow-[0_2px_5px_rgba(23,26,29,0.24)]";
+    : "bg-[var(--admin-marker-live-draft-badge)] shadow-[0_2px_5px_rgba(23,26,29,0.24)]";
 
   const hitTargetSizeClass = tokenMode === "selected" ? "h-10 w-10" : tokenMode === "prominent" ? "h-9 w-9" : "h-8 w-8";
   // Person-first hierarchy on the expanded name badge (2026-07-16 critique):
@@ -453,7 +454,7 @@ function SeatMarkerComponent({
       aria-pressed={selected}
       title={`${seat.label} · ${displayName} · ${STATUS_LABELS[seat.status]}`}
       className={[
-        "group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-manipulation select-none items-center justify-center overflow-visible rounded-full border-0 bg-transparent p-0 font-extrabold leading-none text-[#453D33]",
+        "group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-manipulation select-none items-center justify-center overflow-visible rounded-full border-0 bg-transparent p-0 font-extrabold leading-none text-[var(--admin-marker-live-ink)]",
         "transition-[transform,opacity,filter] duration-150 ease-out hover:z-30 active:scale-[0.96] active:duration-75 motion-reduce:transition-none",
         markerFocusClass,
         hitTargetSizeClass,
@@ -483,7 +484,7 @@ function SeatMarkerComponent({
             colorblind-legibility intent survives the redesign. */}
         {seat.status === "assigned" && !invalidTarget && (
           <span
-            className="pointer-events-none absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#1D6E41] ring-[1.5px] ring-white/90"
+            className="pointer-events-none absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[var(--admin-marker-live-positive-border)] ring-[1.5px] ring-white/90"
             aria-hidden="true"
           />
         )}
