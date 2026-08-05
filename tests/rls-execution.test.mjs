@@ -103,6 +103,38 @@ test("RLS: viewer cannot write published_employees", async () => {
   });
 });
 
+test("RLS: even an admin, as authenticated, cannot insert/update/delete published_employees directly", async () => {
+  // The snapshot's only writer is the SECURITY DEFINER publish RPC
+  // (20260708230000 RLS + 20260805140000 grant narrowing). The admin identity
+  // matters: seats policies DO admit admins, so passing here proves the
+  // denial comes from this table's select-only posture, not from the role
+  // switch failing generally.
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+  await db.query("select public.publish_seat_map()");
+
+  await db.asRole("authenticated", async () => {
+    await expectThrow(
+      db.query("insert into public.published_employees(id, full_name) values (gen_random_uuid(), $1)", [
+        "Backdoor Person"
+      ]),
+      { match: /row-level security|permission denied/i }
+    );
+    await expectThrow(
+      db.query("update public.published_employees set full_name = 'Renamed' where id = $1", [alice]),
+      { match: /row-level security|permission denied/i }
+    );
+    await expectThrow(
+      db.query("delete from public.published_employees where id = $1", [alice]),
+      { match: /row-level security|permission denied/i }
+    );
+  });
+
+  // And the snapshot row is untouched.
+  const snap = await db.query("select full_name from public.published_employees where id = $1", [alice]);
+  assert.equal(snap.rows[0]?.full_name, "Alice");
+});
+
 // ---------------------------------------------------------------------------
 // app_private.prevent_original_draft_seat_delete (trigger, not RLS)
 // ---------------------------------------------------------------------------

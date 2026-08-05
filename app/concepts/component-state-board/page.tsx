@@ -4,7 +4,10 @@ import { ComponentStateBoard } from "./ComponentStateBoard";
 
 export const metadata: Metadata = {
   title: "Seat Planner Component State Board v1",
-  description: "Prototype-only component state board for Seat Planner design-system exploration"
+  description: "Prototype-only component state board for Seat Planner design-system exploration",
+  // Belt-and-suspenders alongside the prototypesEnabled() 404 gate: even when
+  // the flag exposes this route, it must never be indexed.
+  robots: { index: false, follow: false }
 };
 
 function prototypesEnabled() {

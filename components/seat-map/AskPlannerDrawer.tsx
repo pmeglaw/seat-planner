@@ -68,6 +68,14 @@ function friendlyDrawerError(message: string): DrawerError {
       message: "Check OPENAI_MODEL and project model access, then try again."
     };
   }
+  if (lowerMessage.includes("rate limited for your account")) {
+    // The app's own per-admin throttle (app/actions.ts), not OpenAI's — keep
+    // the server message, it names how long to wait.
+    return {
+      title: "Ask Planner needs a short break",
+      message
+    };
+  }
   if (lowerMessage.includes("rate limited")) {
     return {
       title: "Ask Planner is rate limited",
