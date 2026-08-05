@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit config. Docstring-coverage pre-merge check is OFF: this repo's
+# convention (CLAUDE.md/AGENTS.md) is sparse, constraint-only comments — a
+# JSDoc block on every component/handler is exactly the boilerplate the house
+# style forbids, so the 80% threshold flags every PR as a false positive
+# (first hit: PR #312). All other checks keep their defaults.
+reviews:
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
