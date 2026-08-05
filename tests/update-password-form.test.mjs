@@ -22,8 +22,9 @@ before(async () => {
 afterEach(() => cleanup());
 
 async function mountForm({ results = {} } = {}) {
-  const pushed = [];
-  const refreshes = [];
+  // Post-update redirect is a full document load (lib/fullNavigation.ts), so
+  // the assertion target is the navigation double, not router.push + refresh.
+  const assigned = [];
   const updates = [];
   const supabase = {
     auth: {
@@ -33,9 +34,9 @@ async function mountForm({ results = {} } = {}) {
       }
     }
   };
-  configureContext({ router: { push: p => pushed.push(p), refresh: () => refreshes.push(true) }, supabase });
+  configureContext({ navigation: { assign: href => assigned.push(href) }, supabase });
   await renderElement(React.createElement(UpdatePasswordForm));
-  return { pushed, refreshes, updates };
+  return { assigned, updates };
 }
 
 const type = (selector, value) => act(async () => fireEvent.change(document.querySelector(selector), { target: { value } }));
@@ -68,7 +69,7 @@ test("mismatched passwords are announced as an alert and make no auth call", asy
 });
 
 test("submitting the form updates the password, announces status, and redirects home", async () => {
-  const { pushed, refreshes, updates } = await mountForm();
+  const { assigned, updates } = await mountForm();
   await type('input[name="password"]', "long-enough-password");
   await type('input[name="confirmPassword"]', "long-enough-password");
   await submitForm();
@@ -76,16 +77,15 @@ test("submitting the form updates the password, announces status, and redirects 
 
   assert.deepEqual(updates, [{ password: "long-enough-password" }]);
   assert.match(screen.getByRole("status").textContent, /Password updated/);
-  assert.deepEqual(pushed, ["/"]);
-  assert.equal(refreshes.length, 1);
+  assert.deepEqual(assigned, ["/"]);
 });
 
 test("a Supabase error is announced as an alert and blocks the redirect", async () => {
-  const { pushed } = await mountForm({ results: { update: { error: { message: "New password should be different" } } } });
+  const { assigned } = await mountForm({ results: { update: { error: { message: "New password should be different" } } } });
   await type('input[name="password"]', "long-enough-password");
   await type('input[name="confirmPassword"]', "long-enough-password");
   await submitForm();
   await flush();
   assert.ok(screen.getByRole("alert").textContent.length > 0);
-  assert.deepEqual(pushed, []);
+  assert.deepEqual(assigned, []);
 });
