@@ -85,6 +85,29 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
     if (refocus) hamburgerRef.current?.focus();
   }, []);
 
+  // Navigation watchdog. Prod probes (2026-08-05) caught the App Router
+  // client stalling on a rail navigation: the RSC response arrived (Vercel
+  // logs show the 200) but the transition never committed — URL frozen,
+  // second click deduped onto the stuck nav, main thread idle. A full
+  // document navigation always recovered. So: if the URL hasn't moved 4s
+  // after an allowed click, do the full navigation. Successful transitions
+  // unmount this rail (each page mounts its own), and the cleanup clears
+  // the timer, so the fallback only ever fires on a genuinely stuck nav.
+  const navWatchdogRef = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (navWatchdogRef.current !== null) window.clearTimeout(navWatchdogRef.current);
+    },
+    []
+  );
+  function armNavWatchdog(href: string) {
+    const targetPath = href.split("?")[0];
+    if (navWatchdogRef.current !== null) window.clearTimeout(navWatchdogRef.current);
+    navWatchdogRef.current = window.setTimeout(() => {
+      if (window.location.pathname !== targetPath) window.location.assign(href);
+    }, 4000);
+  }
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -104,7 +127,11 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
   function handleNavClick(event: ReactMouseEvent<HTMLAnchorElement>, href: string, label: string) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
     collapse(false);
-    if (onNavigate && !onNavigate(href, label)) event.preventDefault();
+    if (onNavigate && !onNavigate(href, label)) {
+      event.preventDefault();
+      return;
+    }
+    armNavWatchdog(href);
   }
 
   // --- Account menu: keyboard/scrim contract copied from AccountMenu.tsx,
@@ -291,7 +318,10 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
             href="/admin?ask-planner=open"
             prefetch={false}
             title="Ask Planner (AI)"
-            onClick={() => collapse(false)}
+            onClick={() => {
+              collapse(false);
+              armNavWatchdog("/admin?ask-planner=open");
+            }}
             className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)]"].join(" ")}
           >
             <AiCell open={open} />
