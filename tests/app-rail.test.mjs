@@ -34,13 +34,19 @@ function renderRail(overrides = {}) {
 const nav = () => screen.getByRole("navigation", { name: "Admin sections" });
 const hamburger = () => screen.getByRole("button", { name: /(Expand|Collapse) navigation/ });
 
+// Nav items are <Link>s (role link), not buttons — they must prefetch and
+// navigate natively before hydration; the veto contract rides preventDefault.
 test("renders Admin sections nav with the four items, aria-current only on the active one", async () => {
   await renderRail({ active: "management" });
   assert.ok(nav());
-  const map = screen.getByRole("button", { name: "Seat map" });
-  const management = screen.getByRole("button", { name: "Management" });
-  const settings = screen.getByRole("button", { name: "Settings" });
-  const reception = screen.getByRole("button", { name: "Reception" });
+  const map = screen.getByRole("link", { name: "Seat map" });
+  const management = screen.getByRole("link", { name: "Management" });
+  const settings = screen.getByRole("link", { name: "Settings" });
+  const reception = screen.getByRole("link", { name: "Reception" });
+  assert.equal(map.getAttribute("href"), "/admin");
+  assert.equal(management.getAttribute("href"), "/admin/management");
+  assert.equal(settings.getAttribute("href"), "/admin/settings");
+  assert.equal(reception.getAttribute("href"), "/reception");
   assert.equal(map.getAttribute("aria-current"), null);
   assert.equal(management.getAttribute("aria-current"), "page");
   assert.equal(settings.getAttribute("aria-current"), null);
@@ -49,8 +55,8 @@ test("renders Admin sections nav with the four items, aria-current only on the a
 
 test("Reception sits after Settings in the nav order (reception handoff placement)", async () => {
   await renderRail();
-  const labels = Array.from(nav().querySelectorAll("button"))
-    .map(button => button.textContent ?? "")
+  const labels = Array.from(nav().querySelectorAll("a, button"))
+    .map(item => item.textContent ?? "")
     .filter(text => /Seat map|Management|Settings|Reception/.test(text));
   assert.ok(
     labels.findIndex(text => text.includes("Settings")) < labels.findIndex(text => text.includes("Reception")),
@@ -64,14 +70,14 @@ test("railMode viewer hides the admin nav items and Ask Planner, keeps Reception
   await renderRail({ railMode: "viewer", active: "reception", roleLabel: "Viewer" });
   const viewerNav = screen.getByRole("navigation", { name: "Sections" });
   assert.ok(viewerNav);
-  assert.equal(screen.queryByRole("button", { name: "Seat map" }), null);
-  assert.equal(screen.queryByRole("button", { name: "Management" }), null);
-  assert.equal(screen.queryByRole("button", { name: "Settings" }), null);
+  assert.equal(screen.queryByRole("link", { name: "Seat map" }), null);
+  assert.equal(screen.queryByRole("link", { name: "Management" }), null);
+  assert.equal(screen.queryByRole("link", { name: "Settings" }), null);
   assert.equal(screen.queryByRole("button", { name: /Ask Planner/ }), null);
   assert.equal(screen.queryByRole("link", { name: /Ask Planner/ }), null);
-  const reception = screen.getByRole("button", { name: "Reception" });
+  const reception = screen.getByRole("link", { name: "Reception" });
   assert.equal(reception.getAttribute("aria-current"), "page");
-  assert.ok(screen.getByRole("button", { name: "Open viewer surface" }));
+  assert.ok(screen.getByRole("link", { name: "Open viewer surface" }));
   assert.ok(screen.getByRole("button", { name: "Account — jane@example.com" }));
 });
 
@@ -110,7 +116,7 @@ test("hamburger toggles aria-expanded and flips the rail width class w-12 <-> w-
 
 test("item labels stay mounted (opacity swap, not conditional render) across collapse state", async () => {
   await renderRail();
-  const management = screen.getByRole("button", { name: "Management" });
+  const management = screen.getByRole("link", { name: "Management" });
   // Findable by accessible name while collapsed proves the label text node is
   // still in the DOM/AX tree, not removed — the opacity class is what changes.
   assert.match(management.textContent ?? "", /Management/);
@@ -130,24 +136,34 @@ test("clicking a nav item calls onNavigate with the href + label, then navigates
       return true;
     }
   });
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Management" })));
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" })));
   assert.deepEqual(calls, [["/admin/management", "Management"]]);
   assert.deepEqual(pushed, ["/admin/management"]);
 });
 
 test("returning false from onNavigate vetoes the navigation", async () => {
   await renderRail({ onNavigate: () => false });
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Settings" })));
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: "Settings" })));
   assert.deepEqual(pushed, []);
 });
 
-test("without onNavigate, items navigate plainly via router.push", async () => {
+test("without onNavigate, items navigate plainly", async () => {
   await renderRail();
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Seat map" })));
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Management" })));
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Settings" })));
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Reception" })));
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: "Seat map" })));
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" })));
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: "Settings" })));
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: "Reception" })));
   assert.deepEqual(pushed, ["/admin", "/admin/management", "/admin/settings", "/reception"]);
+});
+
+// Modified clicks (new tab) must bypass the guard entirely — the current page
+// keeps its unsaved edits, so onNavigate must not fire and nothing pushes.
+test("a ctrl-click on a nav item skips onNavigate and client navigation", async () => {
+  const calls = [];
+  await renderRail({ onNavigate: (...args) => (calls.push(args), true) });
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" }), { ctrlKey: true }));
+  assert.deepEqual(calls, []);
+  assert.deepEqual(pushed, []);
 });
 
 // The map header's own accessibility-source test (#197, "narrow widths keep
@@ -163,9 +179,9 @@ test("the Viewer item is reachable and routes through onNavigate", async () => {
       return true;
     }
   });
-  const viewerButton = screen.getByRole("button", { name: "Open viewer surface" });
+  const viewerLink = screen.getByRole("link", { name: "Open viewer surface" });
 
-  await act(async () => fireEvent.click(viewerButton));
+  await act(async () => fireEvent.click(viewerLink));
 
   assert.deepEqual(calls, [["/", "the viewer"]]);
   assert.deepEqual(pushed, ["/"]);

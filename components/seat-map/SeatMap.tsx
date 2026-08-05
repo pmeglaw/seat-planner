@@ -149,7 +149,13 @@ type InspectorGuardAction =
 // variants must be listed explicitly so the guard stays a closed set. "/admin"
 // itself joined the union in v12: AppRail's "Seat map" item targets the
 // current page and routes through this same guard (a no-op when clean).
-type GuardedNavigationHref = "/" | "/admin" | "/admin/management" | "/admin/management?tab=publishHistory" | "/admin/settings";
+type GuardedNavigationHref =
+  | "/"
+  | "/admin"
+  | "/admin/management"
+  | "/admin/management?tab=publishHistory"
+  | "/admin/settings"
+  | "/reception";
 
 type MapViewMode = "overview" | "detail";
 

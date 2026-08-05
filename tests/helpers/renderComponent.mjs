@@ -95,8 +95,30 @@ const STANDARD_MOCKS = {
   `,
   "next/link": `
     import React from "react";
-    export default function Link({ href, children, ...rest }) {
-      return React.createElement("a", { href, ...rest }, children);
+    // Mirrors real App Router Link semantics closely enough for tests: the
+    // user onClick runs first; a modified click (new tab) or preventDefault
+    // suppresses client navigation; otherwise the click routes through the
+    // test router double so suites can assert on router.push.
+    export default function Link({ href, children, onClick, ...rest }) {
+      return React.createElement("a", {
+        href,
+        ...rest,
+        onClick: event => {
+          onClick?.(event);
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+            // Real Link would let the browser open a new tab; jsdom can't
+            // navigate, so swallow the default to keep test output clean.
+            event.preventDefault();
+            return;
+          }
+          if (event.defaultPrevented) return;
+          event.preventDefault();
+          globalThis.__ct.router.push(href);
+        }
+      }, children);
+    }
+    export function useLinkStatus() {
+      return { pending: false };
     }
   `,
   "next/image": `
