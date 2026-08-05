@@ -1,10 +1,174 @@
-# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
-# CodeRabbit config. Docstring-coverage pre-merge check is OFF: this repo's
-# convention (CLAUDE.md/AGENTS.md) is sparse, constraint-only comments — a
-# JSDoc block on every component/handler is exactly the boilerplate the house
-# style forbids, so the 80% threshold flags every PR as a false positive
-# (first hit: PR #312). All other checks keep their defaults.
+# CodeRabbit configuration for seat-planner
+# Schema: https://docs.coderabbit.ai/reference/configuration
+#
+# CodeRabbit also auto-ingests CLAUDE.md and AGENTS.md as coding guidelines.
+# This file adds path-scoped review instructions that encode the invariants
+# most bugs in this codebase come from violating. The companion review brief
+# lives at docs/coderabbit-review-context.md — reference it in review prompts
+# and planning issues.
+
+language: "en-US"
+
+tone_instructions: >-
+  Be direct and specific. Prioritize findings in this order: (1) data-integrity
+  and correctness bugs, especially draft/published layer violations and
+  concurrency-fence gaps; (2) security boundary issues; (3) performance;
+  (4) design/UX and accessibility. For each finding, name the invariant at
+  risk, cite the file/line, and propose a concrete fix including which test
+  should cover it. Skip style nits that ESLint/TypeScript already catch.
+
 reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+
+  # Docstring-coverage pre-merge check stays OFF: this repo's convention
+  # (CLAUDE.md/AGENTS.md) is sparse, constraint-only comments — a JSDoc block
+  # on every component/handler is exactly the boilerplate the house style
+  # forbids, so the 80% threshold flags every PR as a false positive (first
+  # hit: PR #312). Carried over from the pre-rewrite config; do not drop.
   pre_merge_checks:
     docstrings:
       mode: "off"
+
+  path_filters:
+    - "!**/.agents/**"
+    - "!**/node_modules/**"
+    - "!coverage/**"
+    - "!docs/design_handoff_*/**"
+    - "!tools/seat-planner-improvement-loop/output/**"
+    - "!supabase/reference/**"
+    - "!**/*.webp"
+    - "!**/*.png"
+
+  path_instructions:
+    - path: "app/actions.ts"
+      instructions: >-
+        All mutations live here as server actions. Flag any exported action
+        that does not call requireAdmin() before touching data. Any operation
+        that writes multiple rows atomically (swap, import, restore, publish,
+        rename/delete department or zone, force-move) must go through a
+        Postgres RPC via supabase.rpc(), never sequential query-builder calls
+        — sequential writes here are a transaction-safety bug. When an action's
+        logic changes, the matching SQL function usually needs a new migration
+        in the same PR; flag TS/SQL drift. Draft mutations must thread the
+        draft concurrency fence (lib/draftConcurrency.ts): the client's
+        expected state is passed to the RPC, which rejects stale writes with
+        SQLSTATE 'MLS02'. A new draft mutation that skips the fence can
+        silently revert another admin's edits. Never let an action write the
+        published layer or published_employees directly — only the
+        publish_seat_map() RPC may do that.
+
+    - path: "app/page.tsx"
+      instructions: >-
+        This is the viewer. It must only read seats with layer = 'published'
+        and join employees exclusively from the published_employees snapshot.
+        Flag ANY read of layer = 'draft', the live employees table,
+        department_options, or zone_options from this file or anything it
+        imports. The viewer must stay strictly read-only: no mutations, no
+        admin-only data, no draft leakage. This is the single most important
+        boundary in the codebase.
+
+    - path: "app/admin/**"
+      instructions: >-
+        Admin surfaces edit the draft layer only; published data is read-only
+        context. Flag direct writes to layer = 'published'. Client-side role
+        checks and lib/adminPageGuard.ts are UX-layer only — never accept them
+        as the security boundary; the real enforcement is requireAdmin() in
+        server actions plus Postgres RLS. Undo/redo and snapshot restore
+        intentionally never delete employees created during assignment
+        (owner-confirmed behavior) — do not suggest adding deletes there.
+        Ask Planner (AskPlannerDrawer → askPlannerAction →
+        lib/mapOperationsAgent.ts) must remain strictly read-only; flag any
+        mutation path added to it.
+
+    - path: "lib/**"
+      instructions: >-
+        lib/ is the tested business core. New or changed logic here needs a
+        matching tests/*.test.mjs change — flag untested additions. Specific
+        contracts: seatProtection — original seats can never be deleted, only
+        is_custom seats; flag any bypass. seatMath/mapLayoutTransform — seat
+        coordinates are already normalized to [0,1] in the DB; flag any code
+        that re-normalizes, or that treats the 3822×1734 image constants as a
+        coordinate space. If MAP_IMAGE_SRC's underlying pixels change, both
+        the ?v= cache-buster and MAP_IMAGE_BLUR_DATA_URL must be regenerated
+        together. draftConcurrency — the per-row (id, updated_at) map and the
+        verbatim (never Date-re-parsed) timestamps are deliberate and
+        load-bearing; flag any "simplification" of either, and read the
+        module's header comment before proposing changes.
+
+    - path: "supabase/migrations/**"
+      instructions: >-
+        New work must be a NEW timestamped (YYYYMMDDHHMMSS_*) migration —
+        flag edits to existing migration files. The directory's dual numbering
+        (legacy 00N_* plus timestamped, some placeholders) is intentional.
+        Review SECURITY DEFINER functions for privilege escalation and for
+        re-checking admin role server-side. published_employees is
+        select-only under RLS and may only be written by publish_seat_map()
+        or migrations — flag any other write path. Multi-row operations must
+        stay in single transactions. RPCs taking client state must keep the
+        stale-draft rejection (SQLSTATE 'MLS02'). Watch for RLS policies that
+        subquery per-row without caching auth.uid() (performance), and for
+        new columns used in filters without supporting indexes.
+
+    - path: "tests/**"
+      instructions: >-
+        *-source.test.mjs files assert against source text as guardrails for
+        accessibility, destructive-action safety, and data integrity — not
+        visual style. If a PR loosens or deletes one of these assertions to
+        make a change pass, treat that as crossing a real guardrail and flag
+        it prominently; the fix is to change the code, not the test.
+        Transaction-safety tests (*-transaction-safety.test.mjs) pin TS
+        actions and SQL functions in lockstep; rpc-execution.test.mjs runs
+        real migrations against in-process Postgres. Flag PRs that change RPC
+        behavior without updating these tiers. Coverage floors: lines 90 /
+        functions 95 / branches 80, scoped to lib/**.
+
+    - path: "components/**"
+      instructions: >-
+        Styling uses semantic tokens (--sp-color-* in app/globals.css via
+        tailwind.config.ts) and shared primitives in components/ui/. Visual
+        changes are welcome; the hard rules are accessibility only: keyboard
+        operability, visible focus rings, correct dialog semantics
+        (role/aria-modal/focus trap), and body-text contrast ≥ 4.5:1. Flag
+        raw hex colors that bypass tokens, removed focus styles, click-only
+        interactions without keyboard equivalents, and any viewer component
+        importing admin-only data or actions. For destructive or bulk actions
+        (delete, import, restore, publish), a review/confirm step before
+        mutation is mandatory — flag its removal.
+
+    - path: "app/globals.css"
+      instructions: >-
+        Contrast ratios are documented in comments here. When colors change,
+        verify body text stays ≥ 4.5:1 against its background and the
+        measured-ratio comments are updated to match. Token values are free
+        to evolve; silently stale contrast comments are a bug.
+
+    - path: "middleware.ts"
+      instructions: >-
+        Session refresh must keep running on every matched request. Flag
+        matcher changes that exclude /admin routes or auth callback routes.
+
+    - path: "lib/supabase/**"
+      instructions: >-
+        Only NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are
+        client-safe. Flag any service-role key or OPENAI_API_KEY reaching
+        client-accessible code or gaining a NEXT_PUBLIC_ prefix. Magic-link
+        sign-in must keep shouldCreateUser: false (no self-provisioning).
+
+    - path: "app/concepts/**"
+      instructions: >-
+        Prototype-only surfaces. Each page must keep its prototypesEnabled()
+        gate returning 404 in production. Flag any import from concepts into
+        shipped viewer/admin code, and any real Supabase mutation added to a
+        prototype.
+
+  auto_review:
+    enabled: true
+    drafts: false
+
+chat:
+  auto_reply: true
