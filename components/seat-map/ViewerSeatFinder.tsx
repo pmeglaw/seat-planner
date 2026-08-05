@@ -1093,6 +1093,10 @@ export function ViewerSeatFinder({
           {accountEmail && (
             <Link
               href="/reception"
+              // prefetch off on force-dynamic targets, same rationale as
+              // AppRail's prefetch={false} note: dynamic prefetches are pure
+              // serverless flood and collided with in-flight navigations.
+              prefetch={false}
               aria-label="Open reception directory"
               title="Reception — front-desk call routing"
               className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]")}
@@ -1124,6 +1128,7 @@ export function ViewerSeatFinder({
               </span>
               <Link
                 href="/admin"
+                prefetch={false}
                 aria-label="Open admin surface"
                 title="Admin — draft editing surface"
                 className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]")}
