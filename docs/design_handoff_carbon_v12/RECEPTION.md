@@ -24,11 +24,11 @@ New rail item **Reception** (headset icon), after Settings. Available in both ad
 | Route | NEW `app/reception/page.tsx` (behind existing auth) |
 | Directory list + search + detail cards | NEW `components/reception/` — plain components, no map/viewport dependencies |
 | Rail item | The rail component from the main handoff (`AppRail.tsx`) — same active treatment (`#262626` bg + inset 3px `#FF5715`) |
-| Data | Same roster the map and People panel use: assigned occupants + unassigned people (name, initials, position, dept, seat label ∥ null, zone) — **plus extension, which does not exist yet** (see Data contract) |
+| Data | Same roster the map and People panel use: assigned occupants + unassigned people (name, initials, position, dept, seat label ∥ null, zone) — **plus extension, backed by the existing `employees.phone_extension` field** (see Data contract) |
 
 ## Data contract — extensions
 
-The prototype fabricates extensions (4101, 4102, … assigned per person at runtime). These are placeholders, as are the ones in the map inspector's Contact section. The real app needs `extension` as a first-class field on the person record before this screen ships. Source of truth is the phone system (GoTo) — manual entry now, directory sync later (see Future). Unassigned-seat people still have extensions; the UI already handles them (seat chip "—", voicemail note).
+The prototype fabricates extensions (4101, 4102, … assigned per person at runtime). These are placeholders, as are the ones in the map inspector's Contact section. In the real app the field already exists: `employees.phone_extension` is first-class on the person record (types, publish snapshot, Management add/edit form) and Reception reads it from the `published_employees` snapshot — the directory's `extension` property is only a display mapping of that column. Source of truth is the phone system (GoTo) — manual entry now, directory sync later (see Future). Unassigned-seat people still have extensions; the UI already handles them (seat chip "—", voicemail note).
 
 ## Design tokens (`--r-*` family)
 
@@ -41,7 +41,7 @@ The prototype fabricates extensions (4101, 4102, … assigned per person at runt
 | Text | `#161616` | `#F4F4F4` |
 | Secondary | `#55504A` | `#D8D0C5` |
 | Muted | `#6E655A` | `#B8AEA2` |
-| Micro-labels | `#8E8276` | `#8E8276` |
+| Micro-labels | `#6E655A` | `#B8AEA2` |
 | Initials chip | `#F0EDE7` on `#55504A` | `rgba(255,255,255,.10)` on `#D8D0C5` |
 | Row hover | `#F7F4EE` | `#282828` |
 | Selected row | `#FBF1E9` | `#332018` |

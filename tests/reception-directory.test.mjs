@@ -121,6 +121,19 @@ test("same-department fallback: excludes self and extension-less colleagues, cap
   assert.deepEqual(sameDepartmentFallback(people, noDept), []);
 });
 
+test("same-department fallback sorts alphabetically even from unsorted input, then caps", () => {
+  const zed = employee({ id: "emp-zed", full_name: "Zed Last", department: "Litigation", phone_extension: "4120" });
+  const unsorted = buildReceptionDirectory([dana, alex, unseated, zed], [])
+    // Deliberately scramble: the cap must select by name order, not input order.
+    .reverse();
+  const danaRow = unsorted.find(person => person.id === "emp-dana");
+  const fallback = sameDepartmentFallback(unsorted, danaRow);
+  assert.deepEqual(
+    fallback.map(person => person.name),
+    ["Alex Rivera", "Remy Park", "Zed Last"]
+  );
+});
+
 test("personInitials: first+last, single-name fallback", () => {
   assert.equal(personInitials("Dana Reyes"), "DR");
   assert.equal(personInitials("Alex Q. Rivera"), "AR");

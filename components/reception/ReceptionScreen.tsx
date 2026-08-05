@@ -92,7 +92,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
 
   const fallback = detail ? sameDepartmentFallback(people, detail) : [];
   const recentPeople = recents
-    .filter(id => id !== (searching ? null : selectedId))
+    .filter(id => id !== selectedId)
     .map(id => byId.get(id))
     .filter((person): person is ReceptionPerson => Boolean(person))
     .slice(0, RECENTS_DISPLAY_MAX);

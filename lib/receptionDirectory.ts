@@ -107,5 +107,8 @@ export function sameDepartmentFallback(
       candidate =>
         candidate.id !== person.id && candidate.department === person.department && Boolean(candidate.extension)
     )
+    // Explicit sort: buildReceptionDirectory output is already alphabetical,
+    // but the cap below must never depend on the caller's ordering.
+    .sort((a, b) => a.name.localeCompare(b.name))
     .slice(0, max);
 }
