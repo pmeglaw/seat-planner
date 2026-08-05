@@ -1337,7 +1337,17 @@ export function SeatInspector({
         // Viewer inspector: Contact + Seat only — no Actions, Notes,
         // Activity, tabs, action row, AI row, or footer. The data is the
         // published assignment snapshot.
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        //
+        // tabIndex 0 + role="region": this scroll container has no other
+        // focusable descendant guaranteed to make it reachable by keyboard
+        // (the admin variant above always has tabs/inputs inside it), so
+        // axe's scrollable-region-focusable rule catches it here first.
+        <div
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          tabIndex={0}
+          role="region"
+          aria-label={`${selectedSeat.label} details`}
+        >
           <div key={`seat-inspector-sections-${selectedSeat.id}`} className="px-4 pb-4 pt-3.5">
             {hasCurrentAssignment && (
               <section aria-labelledby="published-contact-heading">

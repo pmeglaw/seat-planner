@@ -161,6 +161,17 @@ test("vacate, swap, and move confirm dialogs", async ({ page }) => {
 
   await expect(inspector).toBeVisible();
   await page.getByRole("button", { name: "Swap N01" }).click();
+  // Starting swap mode mounts the mode card fresh (sp-panel-in, 200ms
+  // opacity/transform entrance). Unlike the Settings dialogs' disabled→enabled
+  // color flip, this is an opacity animation — getComputedStyle().color never
+  // changes, so waitForColorSettle can't see it — but its CTA-orange label is
+  // still mid-fade if a scan lands inside that window, which axe reads as a
+  // sub-AA blend of an endpoint that actually passes (4.71:1 on white). Wait
+  // for the card's own entrance animation to finish before driving the swap
+  // further.
+  await page
+    .getByRole("status", { name: "Swap seats mode" })
+    .evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
   await clickSeat(page, targetId);
   await expect(page.getByRole("heading", { name: "Confirm seat swap" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Confirm swap" })).toBeEnabled();

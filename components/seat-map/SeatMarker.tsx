@@ -355,7 +355,12 @@ function SeatMarkerComponent({
   // it is the card's primary line. Code-only selected/prominent pills (open
   // seats) keep the larger code — it is the only content there.
   const codeTextClass = expandedNameBadge
-    ? "text-[8.5px] tracking-[0.04em] opacity-70"
+    // opacity-90, not -70: the tinted swap/search/target palettes color this
+    // text with the on-soft ink (#9E2F06 on #FBEAE1, 6.27:1 at full opacity —
+    // see the on-soft comment above), and -70 blends that down to 3.51:1,
+    // under AA. -90 holds 5.22:1 for that pairing while the default palette
+    // (near-black on near-white) stays comfortably passing either way.
+    ? "text-[8.5px] tracking-[0.04em] opacity-90"
     : tokenMode === "selected" || tokenMode === "prominent"
       ? "text-[10px]"
       : "text-[9.5px]";
@@ -493,7 +498,9 @@ function SeatMarkerComponent({
         )}
         {officePlate ? (
           <span className="relative z-10 flex w-full min-w-0 flex-col items-start gap-0.5 text-left">
-            <span translate="no" className="whitespace-nowrap text-[8.5px] font-extrabold tracking-[0.09em] opacity-70">{seat.label}</span>
+            {/* opacity-90, not -70 — see the codeTextClass comment above: the
+                tinted swap/search/target palettes need the extra margin. */}
+            <span translate="no" className="whitespace-nowrap text-[8.5px] font-extrabold tracking-[0.09em] opacity-90">{seat.label}</span>
             {/* Literal space text nodes between the plate's lines — same axe
                 4.10 subtree-serialization contract as the pill branches. */}
             {hasEmployee ? (
@@ -537,7 +544,13 @@ function SeatMarkerComponent({
                 comment in the hover-disclosure branch above. */}
             {showInlineName && " "}
             {showInlineName && (
-              <span className={["block min-w-0 truncate font-bold leading-[1.08] opacity-95", nameTextClass].join(" ")}>
+              // Full opacity, not -95: on the tinted swap/search palettes this
+              // line already carries the on-soft ink at its documented
+              // 6.27:1 (see the comment above); any dimming eats into that
+              // margin for no visual benefit at this size, so it stays undimmed
+              // — see the codeTextClass comment for the sibling eyebrow line's
+              // matching AA fix.
+              <span className={["block min-w-0 truncate font-bold leading-[1.08]", nameTextClass].join(" ")}>
                 {inlineNameLabel}
               </span>
             )}
