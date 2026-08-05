@@ -3004,7 +3004,7 @@ export function SeatMap({
                         // tuned for. The prototype's #42be65
                         // (--admin-chrome-success-text) is a retired hex —
                         // not reintroduced here.
-                        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[#24A148]">
+                        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[rgb(var(--admin-status-ok-rgb))]">
                           <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
@@ -3368,7 +3368,7 @@ export function SeatMap({
                     key={wash.key}
                     aria-hidden="true"
                     data-office-wash={wash.key}
-                    className="pointer-events-none absolute rounded-lg bg-[#1D6E41]/[0.10] shadow-[inset_0_0_0_1.5px_rgba(29,110,65,0.22)]"
+                    className="pointer-events-none absolute rounded-lg bg-[var(--admin-zone-wash-fill)] shadow-[inset_0_0_0_1.5px_rgba(29,110,65,0.22)]"
                     style={{
                       left: `${wash.rect.xMin * 100}%`,
                       top: `${wash.rect.yMin * 100}%`,

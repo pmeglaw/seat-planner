@@ -405,10 +405,11 @@
   --admin-diff-reassigned-border: #E0C46E;
   --admin-diff-reassigned-text: #6D4712;
 
-  /* Marker-legend tokens. The map pills themselves render via SeatMarker's
-     protected viewer-variant hex values; these tokens only color the legend
-     chips and result-row dots, so they mirror the marker hues. Do not point
-     the markers at these. */
+  /* Marker-legend tokens. The map pills themselves render via the
+     --admin-marker-live-* family below (formerly raw viewer-variant hex in
+     SeatMarker.tsx); these legend tokens only color the legend chips and
+     result-row dots, so they mirror the marker hues. Do not point the
+     markers at these. */
   --admin-marker-assigned-surface: rgba(255, 255, 255, 0.96);
   --admin-marker-assigned-border: rgba(29, 110, 65, 0.5);
   --admin-marker-assigned-text: #1D6E41;
@@ -458,6 +459,69 @@
   --admin-marker-target-invalid-border: #8E8276;
   --admin-marker-target-invalid-text: #6E655A;
   --admin-marker-target-invalid-accent: #B3232C;
+
+  /* Live seat-pill palette — the values SeatMarker's shipped (viewer-variant)
+     branch actually renders, promoted 2026-08-05 from raw hex in
+     SeatMarker.tsx (same move the dark-panel chrome ladder made 2026-07-19).
+     Naming/aliasing ONLY: every value is pixel-identical to the literal it
+     replaced — full-strength colors alias the --sp-color-* ramps, alpha
+     variants derive from the same ramps via color-mix, and the handful of
+     marker-only inks/surfaces below carry their old literal values under a
+     name. Distinct from the --admin-marker-* legend mirrors above, which
+     stay legend-only. Contrast notes live at the use sites in
+     SeatMarker.tsx. */
+  --admin-marker-live-ink: #453D33;
+  --admin-marker-live-assigned-border: color-mix(in srgb, var(--sp-color-state-success) 55%, transparent);
+  --admin-marker-live-assigned-text: var(--sp-color-state-success-on-soft);
+  --admin-marker-live-available-border: var(--sp-color-stone-muted);
+  --admin-marker-live-reserved-border: color-mix(in srgb, var(--sp-color-state-warning) 55%, transparent);
+  --admin-marker-live-reserved-surface: color-mix(in srgb, var(--sp-color-state-warning-surface) 95%, transparent);
+  --admin-marker-live-reserved-text: var(--sp-color-state-warning-on-soft);
+  --admin-marker-live-unavailable-border: color-mix(in srgb, var(--sp-color-stone-muted) 90%, transparent);
+  --admin-marker-live-unavailable-surface: color-mix(in srgb, var(--sp-color-stone) 92%, transparent);
+  --admin-marker-live-unavailable-text: #696159;
+  --admin-marker-live-draft-border: color-mix(in srgb, var(--sp-color-state-warning) 70%, transparent);
+  --admin-marker-live-draft-surface: color-mix(in srgb, var(--sp-color-state-warning-surface) 95%, transparent);
+  --admin-marker-live-draft-text: var(--sp-color-state-warning-on-soft);
+  --admin-marker-live-draft-ring: color-mix(in srgb, var(--sp-color-state-warning-border) 55%, transparent);
+  --admin-marker-live-draft-badge: var(--sp-color-state-warning);
+  --admin-marker-live-active-edge: #D46A24;
+  --admin-marker-live-active-edge-strong: color-mix(in srgb, var(--admin-marker-live-active-edge) 90%, transparent);
+  --admin-marker-live-active-edge-soft: color-mix(in srgb, var(--admin-marker-live-active-edge) 75%, transparent);
+  --admin-marker-live-selected-surface: #171A1D;
+  --admin-marker-live-search-selected-surface: #15181B;
+  --admin-marker-live-search-border: var(--sp-color-state-search-border);
+  --admin-marker-live-search-surface: var(--sp-color-state-search-surface);
+  --admin-marker-live-search-text: var(--sp-color-state-search);
+  --admin-marker-live-search-ring: color-mix(in srgb, var(--sp-color-state-search-border) 55%, transparent);
+  --admin-marker-live-positive-border: var(--sp-color-state-success);
+  --admin-marker-live-positive-surface: var(--sp-color-state-success-surface);
+  --admin-marker-live-positive-text: var(--sp-color-state-success-on-soft);
+  --admin-marker-live-positive-ring: color-mix(in srgb, var(--sp-color-state-success-border) 80%, transparent);
+  --admin-marker-live-positive-outline: color-mix(in srgb, var(--sp-color-state-success) 70%, transparent);
+  --admin-marker-live-planner-ring: color-mix(in srgb, var(--sp-color-state-success) 55%, transparent);
+  --admin-marker-live-invalid-border: var(--sp-color-state-danger);
+  --admin-marker-live-invalid-surface: var(--sp-color-state-danger-surface);
+  --admin-marker-live-invalid-text: var(--sp-color-state-danger-on-soft);
+  --admin-marker-live-neutral-border: var(--sp-color-text-muted);
+  --admin-marker-live-neutral-surface: #F1ECE4;
+  --admin-marker-live-neutral-text: #353532;
+  --admin-marker-live-neutral-ring: color-mix(in srgb, var(--sp-color-border-strong) 85%, transparent);
+
+  /* Zone-wash overlay fill (SeatMap): success green at wash strength. */
+  --admin-zone-wash-fill: color-mix(in srgb, var(--admin-status-ok) 10%, transparent);
+
+  /* Dark-panel additions promoted from SeatInspector's raw hex 2026-08-05
+     (values unchanged; see the chrome ladder comment above for the pattern).
+     heading #E7E1D8 shares stone's value but is a TEXT role on #161616
+     (12.9:1), so it gets its own name rather than aliasing a border token. */
+  --admin-chrome-heading: #E7E1D8;
+  --admin-chrome-value-text: #eeeeee;
+  --admin-chrome-action-text: #F4F4F4;
+  --admin-chrome-label: #8E8276;
+  --admin-chrome-commit-bg: #1c1c1c;
+  --admin-chrome-danger-raised: #2b1a1b;
+  --admin-avatar-gradient: linear-gradient(135deg, var(--admin-primary), #8a3a1a);
 
   /* Elevation flattened to the shell language: hairline borders carry most of
      the separation; shadows are quiet and reserved for overlays/menus. */
