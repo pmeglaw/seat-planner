@@ -28,7 +28,7 @@ import { STATUS_LABELS } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, publishSeatMapAction, resetDraftToPublishedAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction, updateSeatAction } from "@/app/actions";
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
-import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
+import { listDraftSeatExpectations, type DraftSeatExpectation } from "@/lib/draftConcurrency";
 import {
   hasActiveConstraints,
   seatMatchesFilters,
@@ -335,6 +335,10 @@ export function SeatMap({
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [addSeatMode, setAddSeatMode] = useState(false);
   const [publishReviewOpen, setPublishReviewOpen] = useState(false);
+  // Concurrency fence for publish: the draft exactly as the review dialog
+  // rendered it. Captured when the dialog opens so confirm publishes what the
+  // admin approved, not whatever the draft has become since.
+  const [publishReviewExpectations, setPublishReviewExpectations] = useState<DraftSeatExpectation[]>([]);
   // Second confirm layer for "discard all draft changes" — the publish review
   // dialog is the change-by-change review; this is the explicit destructive
   // confirmation on top of it (#reset, owner request 2026-07-23).
@@ -2327,6 +2331,7 @@ export function SeatMap({
 
     setActionError(null);
     setActionNotice(null);
+    setPublishReviewExpectations(listDraftSeatExpectations(localSeats));
     setPublishReviewOpen(true);
   }
 
@@ -2340,7 +2345,12 @@ export function SeatMap({
     startTransition(async () => {
       setMutationInFlight(true);
       try {
-        await publishSeatMapAction();
+        const result = await publishSeatMapAction(publishReviewExpectations);
+        if (!result.ok) {
+          setPublishReviewOpen(false);
+          handleStaleDraft(result.message);
+          return;
+        }
         setLocalPublishedSeats(nextPublishedSeats);
         setLocalPublishedEmployees(nextPublishedEmployees);
         setDraftHistory(clearDraftHistory());

@@ -327,7 +327,8 @@ test("publish workflow stays server-action gated and clears review history state
   const actionSource = await readSource("../app/actions.ts");
   const openPublishFunction = seatMapSource.match(/function openPublishReview\(\) \{[\s\S]*?function confirmPublishDraftMap/);
   const confirmPublishFunction = seatMapSource.match(/function confirmPublishDraftMap\(\) \{[\s\S]*?\n  \}/);
-  const publishAction = actionSource.match(/export async function publishSeatMapAction\(\) \{[\s\S]*?\n\}/);
+  // Signature carries the expected_draft_seats concurrency fence (20260805130000).
+  const publishAction = actionSource.match(/export async function publishSeatMapAction\([\s\S]*?\n\}/);
 
   assert.ok(openPublishFunction, "openPublishReview should remain source-visible.");
   assert.ok(confirmPublishFunction, "confirmPublishDraftMap should remain source-visible.");
@@ -336,7 +337,7 @@ test("publish workflow stays server-action gated and clears review history state
   assert.match(openPublishFunction[0], /if \(inspectorDirty\) \{[\s\S]*Publish review blocked: Save or discard the selected seat edits before publishing/);
   assert.match(seatMapSource, /function confirmPublishDraftMap\(\) \{[\s\S]*setActionError\(null\);\s*setActionNotice\(null\);\s*startTransition/);
   assert.match(seatMapSource, /onClick=\{confirmPublishDraftMap\}[\s\S]*disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
-  assert.match(confirmPublishFunction[0], /await publishSeatMapAction\(\)/);
+  assert.match(confirmPublishFunction[0], /await publishSeatMapAction\(publishReviewExpectations\)/);
   assert.match(confirmPublishFunction[0], /setLocalPublishedSeats\(nextPublishedSeats\)/);
   assert.match(confirmPublishFunction[0], /setDraftHistory\(clearDraftHistory\(\)\)/);
   assert.match(confirmPublishFunction[0], /setPublishReviewOpen\(false\)/);
@@ -344,7 +345,7 @@ test("publish workflow stays server-action gated and clears review history state
   assert.doesNotMatch(confirmPublishFunction[0], /supabase|\.from\("seats"\)|publish_seat_map/);
 
   assert.match(publishAction[0], /const supabase = await requireAdmin\(\)/);
-  assert.match(publishAction[0], /\.rpc\("publish_seat_map"\)/);
+  assert.match(publishAction[0], /\.rpc\("publish_seat_map", \{/);
   assert.match(publishAction[0], /revalidatePath\("\/"\)/);
   assert.match(publishAction[0], /revalidatePath\("\/admin"\)/);
   assert.doesNotMatch(publishAction[0], /\.from\("seats"\)|\.insert\(|\.update\(|\.delete\(|\.upsert\(/);

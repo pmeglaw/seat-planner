@@ -18,7 +18,10 @@ const adminSource = await readFile(new URL("../app/admin/page.tsx", import.meta.
 const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
 
 function extractPublishFunction(sql) {
-  const match = sql.match(/create or replace function app_private\.publish_seat_map\(\)[\s\S]+?\$\$;/);
+  // `[^)]*` (not `\(\)`): 20260805130000 added the expected_draft_seats fence
+  // parameter, and the guardrail must keep pinning the LATEST definition
+  // rather than silently sticking to the last zero-arg one.
+  const match = sql.match(/create or replace function app_private\.publish_seat_map\([^)]*\)[\s\S]+?\$\$;/);
   return match ? match[0] : null;
 }
 

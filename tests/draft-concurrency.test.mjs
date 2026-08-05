@@ -147,3 +147,22 @@ test("force-move outcomes ingest the fresh draft payload instead of a stale clie
   // payload exactly when it force_moved, never otherwise.
   assert.match(inspectorSource, /onSeatUpdated\(updated, beforeSnapshot, input\.forceMove \? \{ seats: result\.seats, employees: result\.employees \} : undefined\)/);
 });
+
+test("publish captures the fence when the review opens and threads it to the RPC", async () => {
+  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
+
+  // Captured when the review dialog opens — publish ships what the admin
+  // approved, not whatever the draft becomes while the dialog sits open.
+  assert.match(seatMapSource, /setPublishReviewExpectations\(listDraftSeatExpectations\(localSeats\)\)/);
+  assert.match(seatMapSource, /publishSeatMapAction\(publishReviewExpectations\)/);
+
+  // A fenced-off publish routes through the shared stale-draft recovery.
+  const confirmPublish = seatMapSource.match(/function confirmPublishDraftMap\(\) \{[\s\S]*?\n  \}/);
+  assert.ok(confirmPublish, "publish confirm handler should be source-visible");
+  assert.match(confirmPublish[0], /handleStaleDraft\(result\.message\)/);
+
+  // The action forwards the expectations verbatim (never through Date) and
+  // returns MLS02 as STALE_DRAFT so the client can reload and retry.
+  assert.match(actionsSource, /expected_draft_seats: expectedDraftSeats \?\? null/);
+});
