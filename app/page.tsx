@@ -20,12 +20,7 @@ export default async function HomePage() {
 
   // UX-only role lookup: viewers should not see an Admin shortcut that always
   // fails for them. RLS + requireAdmin() stay the enforced boundary.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
+  //
   // Viewer people data comes ONLY from the published_employees snapshot
   // (replaced atomically at publish time) — never the live employees table,
   // which is the admins' draft-side working set. Employee edits therefore
@@ -33,27 +28,35 @@ export default async function HomePage() {
   // here because seats' FK points at employees, not the snapshot.
   // Paged, not a bare select: PostgREST truncates at the project row cap and
   // says nothing, which would render a partial floor plan that looks whole.
-  const seatRows = await fetchAllRows<SeatWithEmployee>(
-    (from, to) =>
-      supabase
-        .from("seats")
-        .select("*", { count: "exact" })
-        .eq("layer", "published")
-        .order("label")
-        .range(from, to),
-    { label: "published seats" }
-  );
-
-  const employees = await fetchAllRows<Employee>(
-    (from, to) =>
-      supabase
-        .from("published_employees")
-        .select("*", { count: "exact" })
-        .eq("active", true)
-        .order("full_name")
-        .range(from, to),
-    { label: "published employees" }
-  );
+  //
+  // Everything below only needs user.id, so it all fires together — serial
+  // awaits stacked round-trips into this force-dynamic render.
+  const [profileResult, seatRows, employees, departmentsResult, zonesResult] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
+    fetchAllRows<SeatWithEmployee>(
+      (from, to) =>
+        supabase
+          .from("seats")
+          .select("*", { count: "exact" })
+          .eq("layer", "published")
+          .order("label")
+          .range(from, to),
+      { label: "published seats" }
+    ),
+    fetchAllRows<Employee>(
+      (from, to) =>
+        supabase
+          .from("published_employees")
+          .select("*", { count: "exact" })
+          .eq("active", true)
+          .order("full_name")
+          .range(from, to),
+      { label: "published employees" }
+    ),
+    supabase.from("department_options").select("*").eq("active", true).order("name"),
+    supabase.from("zone_options").select("*").eq("active", true).order("name")
+  ]);
+  const { data: profile } = profileResult;
 
   const employeesById = new Map(employees.map(employee => [employee.id, employee]));
   const seats = seatRows.map(seat => ({
@@ -61,17 +64,8 @@ export default async function HomePage() {
     employee: seat.employee_id ? employeesById.get(seat.employee_id) ?? null : null
   }));
 
-  const { data: departments } = await supabase
-    .from("department_options")
-    .select("*")
-    .eq("active", true)
-    .order("name");
-
-  const { data: zones } = await supabase
-    .from("zone_options")
-    .select("*")
-    .eq("active", true)
-    .order("name");
+  const { data: departments } = departmentsResult;
+  const { data: zones } = zonesResult;
 
   // publish_seat_map() re-inserts every published row, so updated_at defaults
   // to the publish moment — the max over published seats IS the last publish
