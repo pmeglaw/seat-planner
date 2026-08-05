@@ -849,6 +849,8 @@ export function AdminManagementPanel({
                                 {isAssigned ? (
                                   <Link
                                     href={`/admin${withSeatParam("", seatLabel)}`}
+                                    // prefetch off — see AppRail's note.
+                                    prefetch={false}
                                     onClick={event => event.stopPropagation()}
                                     className="truncate font-semibold text-[var(--admin-text-primary)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                                   >

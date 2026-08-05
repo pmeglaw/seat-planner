@@ -1944,7 +1944,14 @@ export function SeatMap({
   }
 
   function beforeGuardedNavigation(href: GuardedNavigationHref, destination: string) {
-    if (!inspectorDirty) return true;
+    // selectedSeatId is part of the condition, not just inspectorDirty, and
+    // that is load-bearing: the guard dialog below only renders when a seat
+    // is selected (`inspectorGuardAction && selectedSeat`), so vetoing on a
+    // dirty-with-no-selection state would silently eat the click — no
+    // navigation, no dialog, nothing. Every other guard call site already
+    // pairs the two checks; this one swallowed rail clicks when dirty went
+    // transiently true without a selection.
+    if (!selectedSeatId || !inspectorDirty) return true;
     requestInspectorGuard({ kind: "navigate-admin-page", href, destination });
     return false;
   }
