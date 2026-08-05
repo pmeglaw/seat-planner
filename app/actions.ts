@@ -874,12 +874,33 @@ export async function getPublishHistoryAction(limit = 10) {
   return resolvePublishHistoryProfiles(events, (profiles ?? []) as Array<{ id: string; email: string | null }>);
 }
 
-export async function publishSeatMapAction() {
+export type PublishSeatMapResult =
+  | { ok: true }
+  | { ok: false; code: "STALE_DRAFT"; message: string };
+
+export async function publishSeatMapAction(
+  /**
+   * Concurrency fence: exact (id, updated_at) of every draft seat as the
+   * publish review rendered it (timestamps verbatim, never through Date). The
+   * RPC rejects with STALE_DRAFT if the draft advanced since, so a publish
+   * cannot ship changes the reviewing admin never saw.
+   */
+  expectedDraftSeats?: DraftSeatExpectation[]
+): Promise<PublishSeatMapResult> {
   const supabase = await requireAdmin();
 
-  const { error } = await supabase.rpc("publish_seat_map");
+  const { error } = await supabase.rpc("publish_seat_map", {
+    expected_draft_seats: expectedDraftSeats ?? null
+  });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Returned (not thrown) so the fence message survives production's digest
+    // stripping and the client can reload instead of showing a dead-end error.
+    if (isStaleDraftErrorCode((error as SupabaseMutationError).code)) {
+      return { ok: false, code: "STALE_DRAFT", message: error.message };
+    }
+    throw new Error(error.message);
+  }
   revalidatePath("/");
   revalidatePath("/admin");
   return { ok: true };

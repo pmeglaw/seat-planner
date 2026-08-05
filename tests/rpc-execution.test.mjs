@@ -240,6 +240,57 @@ test("publish: requires admin", async () => {
   await expectThrow(db.query("select public.publish_seat_map()"), { match: /Admin permission required/ });
 });
 
+test("publish: enforces the concurrency fence when a draft seat changed out-of-band (MLS02)", async () => {
+  const n01 = await db.seedSeat({ label: "N01", status: "available" });
+  // updated_at as Postgres text, not the driver's Date: the fence compares the
+  // value byte-for-byte after a ::timestamptz cast, and Date drops microseconds.
+  const { rows: expectations } = await db.query(
+    "select id, updated_at::text as updated_at from public.seats where layer = 'draft'"
+  );
+
+  // Another session's committed edit after the review opened: the touch
+  // trigger bumps updated_at, so the reviewed expectation no longer matches.
+  await db.query("update public.seats set notes = 'foreign edit' where id = $1", [n01.id]);
+
+  await expectThrow(
+    db.query("select public.publish_seat_map($1::jsonb)", [JSON.stringify(expectations)]),
+    { code: "MLS02", match: /changed in another session/ }
+  );
+
+  const published = await db.query("select count(*)::int as n from public.seats where layer = 'published'");
+  assert.equal(published.rows[0].n, 0, "a fenced-off publish must not touch the published layer");
+  const events = await db.query("select count(*)::int as n from public.publish_events");
+  assert.equal(events.rows[0].n, 0, "a fenced-off publish must not record an audit event");
+});
+
+test("publish: fences on a draft seat added after the review opened (count mismatch)", async () => {
+  await db.seedSeat({ label: "N01", status: "available" });
+  const { rows: expectations } = await db.query(
+    "select id, updated_at::text as updated_at from public.seats where layer = 'draft'"
+  );
+
+  await db.seedSeat({ label: "N02", status: "available" });
+
+  await expectThrow(
+    db.query("select public.publish_seat_map($1::jsonb)", [JSON.stringify(expectations)]),
+    { code: "MLS02", match: /changed in another session/ }
+  );
+});
+
+test("publish: passes the fence when expectations exactly match the draft", async () => {
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+  const { rows: expectations } = await db.query(
+    "select id, updated_at::text as updated_at from public.seats where layer = 'draft'"
+  );
+
+  await db.query("select public.publish_seat_map($1::jsonb)", [JSON.stringify(expectations)]);
+
+  const published = await db.query("select label, employee_id from public.seats where layer = 'published'");
+  assert.equal(published.rows.length, 1);
+  assert.equal(published.rows[0].employee_id, alice);
+});
+
 test("publish: change_summary counts every change kind the client review dialog shows (Plan 005 parity)", async () => {
   // Baseline employees. Alice/Erin swap N01 (assignment change); Frank gets
   // edited between publishes; Bob is deactivated between publishes (removed);
