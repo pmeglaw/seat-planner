@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo } from "react";
 import type { SeatStatus } from "@/lib/types";
 import { formatDisplayName } from "@/lib/formatName";
+import { useVirtualListWindow } from "@/components/seat-map/useVirtualListWindow";
 
 export type AdminResultCard = {
   key: string;
@@ -56,10 +57,18 @@ export function ResultsPanel({
   collapsedSeatLabel = null,
   onExpandCollapsedSeat
 }: ResultsPanelProps) {
-  const listRef = useRef<HTMLDivElement | null>(null);
+  // Windowed rendering (the Management directory's computeVirtualWindow math
+  // via the shared hook): only rows near the viewport render and spacers
+  // preserve the scrollbar. Keyboard roving below is untouched — it walks the
+  // rendered slice, and the overscan rows keep the next arrow target mounted.
+  const { setListElement, listElement, window: resultsWindow } = useVirtualListWindow(results.length, { defaultRowHeight: 54 });
+  const visibleResults = useMemo(
+    () => results.slice(resultsWindow.startIndex, resultsWindow.endIndex),
+    [results, resultsWindow]
+  );
 
   function moveFocus(direction: 1 | -1) {
-    const list = listRef.current;
+    const list = listElement;
     if (!list) return;
     const items = Array.from(list.querySelectorAll<HTMLButtonElement>("button[data-result-card]"));
     if (!items.length) return;
@@ -105,13 +114,14 @@ export function ResultsPanel({
 
       {results.length > 0 ? (
         <div
-          ref={listRef}
+          ref={setListElement}
           role="list"
           aria-label="Admin search results"
           onKeyDown={handleListKeyDown}
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2"
         >
-          {results.map(result => (
+          {resultsWindow.topPadding > 0 && <div aria-hidden="true" style={{ height: resultsWindow.topPadding }} />}
+          {visibleResults.map(result => (
             <div role="listitem" key={result.key} className="group flex items-stretch gap-1 border border-transparent transition hover:border-[var(--admin-border)] hover:bg-[var(--admin-paper)]">
               <button
                 type="button"
@@ -146,6 +156,7 @@ export function ResultsPanel({
               )}
             </div>
           ))}
+          {resultsWindow.bottomPadding > 0 && <div aria-hidden="true" style={{ height: resultsWindow.bottomPadding }} />}
         </div>
       ) : (
         <div className="p-4">
