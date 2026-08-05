@@ -1086,6 +1086,25 @@ export function ViewerSeatFinder({
         </div>
 
         <div className="ml-auto flex h-full shrink-0 items-center">
+          {/* Reception is NOT admin equipment (unlike the surface tabs below):
+              the front-desk directory is read-only and role-safe, so every
+              signed-in user gets the shortcut (owner ruling 2026-08-05 —
+              viewers have no rail, this is their entry point). */}
+          {accountEmail && (
+            <Link
+              href="/reception"
+              aria-label="Open reception directory"
+              title="Reception — front-desk call routing"
+              className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]")}
+            >
+              <svg aria-hidden="true" viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 11V9.5a6 6 0 0 1 12 0V11" />
+                <path d="M4 11h2v3.5H4.6A.6.6 0 0 1 4 13.9V11ZM16 11h-2v3.5h1.4a.6.6 0 0 0 .6-.6V11Z" />
+                <path d="M16 14.5v1a2 2 0 0 1-2 2h-2.5" />
+              </svg>
+              Reception
+            </Link>
+          )}
           {/* Surface tabs are admin equipment (2026-07-16 regrade, review 2):
               non-admin staff would otherwise see one dead "tab" implying a
               missing sibling. Their chrome ends at the account chip; surface
