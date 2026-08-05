@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { parseAssignmentCsv } from "@/lib/csv";
 import { isStaleDraftErrorCode, type DraftSeatExpectation } from "@/lib/draftConcurrency";
+import { applyFixedWindow, type RateLimitWindow } from "@/lib/rateLimit";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import { answerMapOperationsQuestion } from "@/lib/mapOperationsAgent";
 import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/publishHistory";
@@ -103,10 +104,28 @@ export type AskPlannerActionError = {
 
 export type AskPlannerActionResult = AskPlannerResponse | AskPlannerActionError;
 
+// Ask Planner throttle: per-admin fixed window, in-memory per server instance
+// (resets on redeploy — a friendly cost/abuse brake on the OpenAI-backed
+// action, not a security boundary; requireAdmin is the gate). Kept outside
+// askPlannerAction so the read-only source guardrail extraction is unchanged.
+const ASK_PLANNER_RATE_LIMIT = { limit: 10, windowMs: 60_000 };
+const askPlannerRateWindows = new Map<string, RateLimitWindow>();
+
 export async function askPlannerAction(input: AskPlannerRequest): Promise<AskPlannerActionResult> {
   // requireAdmin stays outside the try so auth failures still hard-fail
   // (the read-only guarantee and admin gate must never degrade to a soft error).
   const supabase = await requireAdmin();
+
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  const decision = applyFixedWindow(askPlannerRateWindows, user?.id ?? "unknown", Date.now(), ASK_PLANNER_RATE_LIMIT);
+  if (!decision.allowed) {
+    const retrySeconds = Math.max(1, Math.ceil(decision.retryAfterMs / 1000));
+    // "rate limited for your account" is the drawer's friendly-title key —
+    // distinct from OpenAI's own rate-limit wording, which it also maps.
+    return { error: `Ask Planner is rate limited for your account. Try again in about ${retrySeconds} seconds.` };
+  }
 
   try {
     const question = typeof input?.question === "string" ? input.question : "";

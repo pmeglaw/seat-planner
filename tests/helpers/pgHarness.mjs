@@ -174,9 +174,11 @@ export async function createSeatPlannerDb() {
     grant usage on schema public to authenticated, anon;
     grant select, insert, update, delete on all tables in schema public to authenticated;
     grant usage, select on all sequences in schema public to authenticated;
-    -- published_employees is select-only for authenticated in prod
-    -- (20260708230000); keep the harness faithful so a viewer write is denied
-    -- by the missing grant AND the missing RLS write-policy, as in prod.
+    -- published_employees is select-only for authenticated in prod at both
+    -- layers: no RLS write policy (20260708230000) and no table-level write
+    -- grant (20260805140000). The broad grant above would mask the latter, so
+    -- re-apply the revoke to keep the harness faithful — a client write is
+    -- denied by the missing grant AND the missing policy, as in prod.
     revoke insert, update, delete on public.published_employees from authenticated;
   `);
 

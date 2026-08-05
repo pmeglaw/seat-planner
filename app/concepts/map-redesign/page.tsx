@@ -4,7 +4,10 @@ import { MapRedesignPreview } from "./MapRedesignPreview";
 
 export const metadata: Metadata = {
   title: "Seat Planner · Map Redesign Preview (Counsel Ink)",
-  description: "Prototype-only Counsel Ink map redesign preview: seat markers, docked inspector, and filter bar against real published seat data"
+  description: "Prototype-only Counsel Ink map redesign preview: seat markers, docked inspector, and filter bar against real published seat data",
+  // Belt-and-suspenders alongside the prototypesEnabled() 404 gate: even when
+  // the flag exposes this route, it must never be indexed.
+  robots: { index: false, follow: false }
 };
 
 function prototypesEnabled() {
