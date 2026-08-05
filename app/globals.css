@@ -377,7 +377,14 @@
 
   --admin-publish-ready-bg: var(--admin-primary-soft);
   --admin-publish-ready-border: var(--admin-primary-border);
-  --admin-publish-ready-text: var(--admin-primary-cta);
+  /* on-soft ink, NOT the cta fill: every use of this token is TEXT on the
+     soft/tinted ready surfaces, where the cta orange #D23F0A measures only
+     4.18:1 (on #FFEEE8) / 4.27:1 (on the badge's blended #FCF4D6) — both
+     under AA. #9E2F06 measures 6.52:1 / 6.66:1 there. Caught by the
+     e2e-auth publish-review axe scan 2026-08-04; the cta hex is fine on
+     white (4.71:1) which is how it slipped through the button-focused
+     v12 slice-9 pass. */
+  --admin-publish-ready-text: var(--admin-primary-on-soft);
   --admin-publish-no-change-bg: var(--admin-state-clean-bg);
   --admin-publish-no-change-border: var(--admin-state-clean-border);
   --admin-publish-no-change-text: var(--admin-state-clean-text);

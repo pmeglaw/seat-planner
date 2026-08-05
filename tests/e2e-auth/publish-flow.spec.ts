@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { signIn, SEEDED_ADMIN_EMAIL, SEEDED_VIEWER_EMAIL } from "./auth-helpers";
+import { db } from "./db-helpers";
 
 // The coverage the backend-free smoke tier structurally cannot reach: a real
 // session, the admin role gate, and a real publish. Publish had ZERO automated
@@ -9,32 +10,9 @@ import { signIn, SEEDED_ADMIN_EMAIL, SEEDED_VIEWER_EMAIL } from "./auth-helpers"
 // Everything runs against the disposable local stack, so these specs are free
 // to mutate seats and to publish for real.
 
-const supabaseUrl = process.env.E2E_SUPABASE_URL!;
-const serviceRoleKey = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY!;
-
-/**
- * Service-role REST call against the local stack.
- *
- * Used for setup and for assertions the UI cannot show (publish_events rows,
- * the published layer). Deliberately raw fetch rather than a Supabase client:
- * this tier should not depend on the same library the app uses, or a client
- * bug could make the app and its own test agree with each other and both be
- * wrong.
- */
-async function db(path: string, init: RequestInit = {}) {
-  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
-    ...init,
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      "Content-Type": "application/json",
-      Prefer: "return=representation",
-      ...(init.headers ?? {})
-    }
-  });
-  if (!response.ok) throw new Error(`${response.status} ${path}: ${await response.text()}`);
-  return response.status === 204 ? null : await response.json();
-}
+// Service-role REST access (setup, and assertions the UI cannot show —
+// publish_events rows, the published layer) lives in db-helpers.ts, shared
+// with draft-dialogs.spec.ts.
 
 test("a viewer signs in and sees the published map with its occupants", async ({ page }) => {
   await signIn(page, SEEDED_VIEWER_EMAIL);
@@ -67,7 +45,15 @@ test("an admin publishes a draft change and it reaches the published layer", asy
   // may not register, which would make this spec fail for the wrong reason.
   const [draftSeat] = await db("seats?layer=eq.draft&label=eq.N01&select=id,label,x,y");
   expect(draftSeat, "seed should provide draft seat N01").toBeTruthy();
-  const movedX = Number((draftSeat.x + 0.02).toFixed(4));
+  // Anchor the delta to the PUBLISHED row, not the current draft. A
+  // draft-anchored +0.02 walks x monotonically on a persistent stack (the
+  // [0,1] check constraint is a hard ceiling), and once draft-dialogs'
+  // oscillation crossed 0.5 it cancelled the +0.02 exactly — draft == published,
+  // no publish pill, tier wedged. Published-anchored, the diff is a full 0.02
+  // in every starting state and stays bounded forever.
+  const [publishedSeat0] = await db("seats?layer=eq.published&label=eq.N01&select=x");
+  expect(publishedSeat0, "seed should provide published seat N01").toBeTruthy();
+  const movedX = Number((publishedSeat0.x < 0.5 ? publishedSeat0.x + 0.02 : publishedSeat0.x - 0.02).toFixed(4));
   await db(`seats?id=eq.${draftSeat.id}`, {
     method: "PATCH",
     body: JSON.stringify({ x: movedX })
