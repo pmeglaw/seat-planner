@@ -123,7 +123,10 @@ test("same-department fallback: excludes self and extension-less colleagues, cap
 
 test("same-department fallback sorts alphabetically even from unsorted input, then caps", () => {
   const zed = employee({ id: "emp-zed", full_name: "Zed Last", department: "Litigation", phone_extension: "4120" });
-  const unsorted = buildReceptionDirectory([dana, alex, unseated, zed], [])
+  // Four eligible colleagues against a cap of three: Zoltan sorts last, so a
+  // slice-before-sort implementation would keep him and drop Alex.
+  const zoltan = employee({ id: "emp-zoltan", full_name: "Zoltan Ash", department: "Litigation", phone_extension: "4121" });
+  const unsorted = buildReceptionDirectory([dana, alex, unseated, zed, zoltan], [])
     // Deliberately scramble: the cap must select by name order, not input order.
     .reverse();
   const danaRow = unsorted.find(person => person.id === "emp-dana");
