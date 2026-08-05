@@ -34,8 +34,9 @@ function renderRail(overrides = {}) {
 const nav = () => screen.getByRole("navigation", { name: "Admin sections" });
 const hamburger = () => screen.getByRole("button", { name: /(Expand|Collapse) navigation/ });
 
-// Nav items are <Link>s (role link), not buttons — they must prefetch and
-// navigate natively before hydration; the veto contract rides preventDefault.
+// Nav items are <Link>s (role link), not buttons — they navigate natively
+// before hydration (prefetch deliberately off; see AppRail's prefetch={false}
+// note); the veto contract rides preventDefault.
 test("renders Admin sections nav with the four items, aria-current only on the active one", async () => {
   await renderRail({ active: "management" });
   assert.ok(nav());

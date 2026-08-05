@@ -9,7 +9,8 @@ import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 // v12 left rail (design_handoff_carbon_v12 §structural move 1, prototype lines
 // 25-60). 48px collapsed column, full viewport height, 208px overlay when
 // expanded; item click / outside click / Escape collapse it. Nav items are
-// <Link>s so they prefetch and work before hydration — see handleNavClick
+// <Link>s (prefetch deliberately OFF — see the prefetch={false} note below)
+// so they navigate natively before hydration — see handleNavClick
 // for how the onNavigate veto rides preventDefault. Owner rulings
 // 2026-07-31: this geometry (not concepts/nav-rail's 36px), account lives in
 // the rail bottom cell. People item lands with the People panel slice — see
@@ -93,10 +94,11 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, collapse]);
 
-  // Nav items are real <Link>s (not buttons + router.push) so they prefetch,
-  // navigate natively before hydration, and get the loading boundary's
-  // instant feedback. The veto contract survives as preventDefault: Link's
-  // own click handler bails when default is prevented. Modified clicks
+  // Nav items are real <Link>s (not buttons + router.push) so they navigate
+  // natively before hydration and stream the loading boundary on click.
+  // Prefetch is deliberately disabled — see the prefetch={false} note on the
+  // nav items. The veto contract survives as preventDefault: Link's own
+  // click handler bails when default is prevented. Modified clicks
   // (new tab/window) bypass both the collapse and the guard — the current
   // page, and any unsaved edits, stay put.
   function handleNavClick(event: ReactMouseEvent<HTMLAnchorElement>, href: string, label: string) {
