@@ -19,12 +19,16 @@ import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 // the hamburger and 1.8 stroke for the viewer glyph specifically — the plan
 // text is the authoritative "exact values" source for this task.
 
-export type AppRailActive = "map" | "management" | "settings";
+export type AppRailActive = "map" | "management" | "settings" | "reception";
 
 export type AppRailProps = {
   active: AppRailActive;
   email: string;
   roleLabel: string;
+  /** "admin" (default) shows the full admin nav + Ask Planner. "viewer" is
+   *  the /reception-for-viewers shell: only role-safe items (Reception,
+   *  Viewer, account) — admin routes would bounce a viewer at the guard. */
+  railMode?: "admin" | "viewer";
   /** Return false to veto a navigation (unsaved-edits guard). When omitted,
    *  items navigate plainly. Receives the target href + human label. */
   onNavigate?: (href: string, label: string) => boolean;
@@ -58,11 +62,14 @@ type NavItem = { key: AppRailActive; label: string; href: string; icon: ReactNod
 const NAV_ITEMS: NavItem[] = [
   { key: "map", label: "Seat map", href: "/admin", icon: <MapIcon /> },
   { key: "management", label: "Management", href: "/admin/management", icon: <ManagementIcon /> },
-  { key: "settings", label: "Settings", href: "/admin/settings", icon: <SettingsIcon /> }
+  { key: "settings", label: "Settings", href: "/admin/settings", icon: <SettingsIcon /> },
   // People item lands with the People panel slice (owner ruling 2026-07-31, deliberately omitted here).
+  // Reception sits last, after Settings (reception handoff; open question #4
+  // notes it may move first if a dedicated front-desk role lands).
+  { key: "reception", label: "Reception", href: "/reception", icon: <ReceptionIcon /> }
 ];
 
-export function AppRail({ active, email, roleLabel, onNavigate, onOpenAskPlanner, skipLink }: AppRailProps) {
+export function AppRail({ active, email, roleLabel, railMode = "admin", onNavigate, onOpenAskPlanner, skipLink }: AppRailProps) {
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement | null>(null);
@@ -173,7 +180,7 @@ export function AppRail({ active, email, roleLabel, onNavigate, onOpenAskPlanner
       )}
       <nav
         id="app-rail"
-        aria-label="Admin sections"
+        aria-label={railMode === "admin" ? "Admin sections" : "Sections"}
         data-expanded={open}
         className={[
           // NOT overflow-hidden: the account popup below is an absolutely
@@ -229,7 +236,7 @@ export function AppRail({ active, email, roleLabel, onNavigate, onOpenAskPlanner
             Seat Planner
           </span>
         </button>
-        {NAV_ITEMS.map(item => (
+        {NAV_ITEMS.filter(item => railMode === "admin" || item.key === "reception").map(item => (
           <button
             key={item.key}
             type="button"
@@ -252,8 +259,9 @@ export function AppRail({ active, email, roleLabel, onNavigate, onOpenAskPlanner
         <div className="flex-1" />
         {/* Ask Planner — the AI entry. AI blue (--admin-ai-chrome-text /
             --admin-ai-chrome-border) is reserved for AI presence and must not
-            appear on any non-AI control in this component. */}
-        {onOpenAskPlanner ? (
+            appear on any non-AI control in this component. Admin rail only:
+            Ask Planner is an admin surface, so the viewer-mode rail hides it. */}
+        {railMode !== "admin" ? null : onOpenAskPlanner ? (
           <button
             type="button"
             title="Ask Planner (AI)"
@@ -398,6 +406,18 @@ function SettingsIcon() {
         strokeWidth="1.5"
         strokeLinecap="round"
       />
+    </svg>
+  );
+}
+
+function ReceptionIcon() {
+  // Headset (reception handoff): band + two earcups + mic boom, 17px/1.5 like
+  // the other rail glyphs.
+  return (
+    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 11V9.5a6 6 0 0 1 12 0V11" />
+      <path d="M4 11h2v3.5H4.6A.6.6 0 0 1 4 13.9V11ZM16 11h-2v3.5h1.4a.6.6 0 0 0 .6-.6V11Z" />
+      <path d="M16 14.5v1a2 2 0 0 1-2 2h-2.5" />
     </svg>
   );
 }

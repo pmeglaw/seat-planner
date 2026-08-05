@@ -34,15 +34,45 @@ function renderRail(overrides = {}) {
 const nav = () => screen.getByRole("navigation", { name: "Admin sections" });
 const hamburger = () => screen.getByRole("button", { name: /(Expand|Collapse) navigation/ });
 
-test("renders Admin sections nav with the three items, aria-current only on the active one", async () => {
+test("renders Admin sections nav with the four items, aria-current only on the active one", async () => {
   await renderRail({ active: "management" });
   assert.ok(nav());
   const map = screen.getByRole("button", { name: "Seat map" });
   const management = screen.getByRole("button", { name: "Management" });
   const settings = screen.getByRole("button", { name: "Settings" });
+  const reception = screen.getByRole("button", { name: "Reception" });
   assert.equal(map.getAttribute("aria-current"), null);
   assert.equal(management.getAttribute("aria-current"), "page");
   assert.equal(settings.getAttribute("aria-current"), null);
+  assert.equal(reception.getAttribute("aria-current"), null);
+});
+
+test("Reception sits after Settings in the nav order (reception handoff placement)", async () => {
+  await renderRail();
+  const labels = Array.from(nav().querySelectorAll("button"))
+    .map(button => button.textContent ?? "")
+    .filter(text => /Seat map|Management|Settings|Reception/.test(text));
+  assert.ok(
+    labels.findIndex(text => text.includes("Settings")) < labels.findIndex(text => text.includes("Reception")),
+    "Reception must render after Settings"
+  );
+});
+
+// Viewer-mode rail (/reception for non-admins): admin routes would bounce a
+// viewer at the guard, so only role-safe items render.
+test("railMode viewer hides the admin nav items and Ask Planner, keeps Reception + Viewer + account", async () => {
+  await renderRail({ railMode: "viewer", active: "reception", roleLabel: "Viewer" });
+  const viewerNav = screen.getByRole("navigation", { name: "Sections" });
+  assert.ok(viewerNav);
+  assert.equal(screen.queryByRole("button", { name: "Seat map" }), null);
+  assert.equal(screen.queryByRole("button", { name: "Management" }), null);
+  assert.equal(screen.queryByRole("button", { name: "Settings" }), null);
+  assert.equal(screen.queryByRole("button", { name: /Ask Planner/ }), null);
+  assert.equal(screen.queryByRole("link", { name: /Ask Planner/ }), null);
+  const reception = screen.getByRole("button", { name: "Reception" });
+  assert.equal(reception.getAttribute("aria-current"), "page");
+  assert.ok(screen.getByRole("button", { name: "Open viewer surface" }));
+  assert.ok(screen.getByRole("button", { name: "Account — jane@example.com" }));
 });
 
 test("with skipLink provided, it renders as the rail's first focusable element, before the hamburger", async () => {
@@ -116,7 +146,8 @@ test("without onNavigate, items navigate plainly via router.push", async () => {
   await act(async () => fireEvent.click(screen.getByRole("button", { name: "Seat map" })));
   await act(async () => fireEvent.click(screen.getByRole("button", { name: "Management" })));
   await act(async () => fireEvent.click(screen.getByRole("button", { name: "Settings" })));
-  assert.deepEqual(pushed, ["/admin", "/admin/management", "/admin/settings"]);
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Reception" })));
+  assert.deepEqual(pushed, ["/admin", "/admin/management", "/admin/settings", "/reception"]);
 });
 
 // The map header's own accessibility-source test (#197, "narrow widths keep
