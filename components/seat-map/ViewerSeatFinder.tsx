@@ -39,6 +39,7 @@ import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { useVirtualListWindow } from "@/components/seat-map/useVirtualListWindow";
+import { stepFocusIndex } from "@/lib/virtualizedList";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { buildZoneWash } from "@/lib/zoneWash";
@@ -285,14 +286,18 @@ export function ViewerSeatFinder({
   const activeResult = searchResults.results.find(result => result.id === activeResultId) ?? null;
   const directory = useMemo(() => buildViewerDirectory({ seats: publishedSeats, employees }), [employees, publishedSeats]);
   // Windowed People directory (the Management table's computeVirtualWindow
-  // math via the shared hook, with simpler viewer wiring): only rows near the
-  // viewport render and spacers preserve the scrollbar, so a 1,000-person
-  // directory doesn't mount 1,000 buttons at rest.
-  const { setListElement: setDirectoryListElement, window: directoryWindow } = useVirtualListWindow(directory.rows.length, { defaultRowHeight: 64 });
-  const visibleDirectoryRows = useMemo(
-    () => directory.rows.slice(directoryWindow.startIndex, directoryWindow.endIndex),
-    [directory.rows, directoryWindow]
-  );
+  // math via the shared hook, with simpler viewer wiring): the hook's segments
+  // render only rows near the viewport plus the focused row (pinned so
+  // scrolling never unmounts it and drops focus to <body>), with spacers
+  // preserving the scrollbar — a 1,000-person directory doesn't mount 1,000
+  // buttons at rest.
+  const {
+    setListElement: setDirectoryListElement,
+    listElement: directoryListElement,
+    window: directoryWindow,
+    segments: directorySegments,
+    focusRow: focusDirectoryRow
+  } = useVirtualListWindow(directory.rows.length, { defaultRowHeight: 64 });
 
   // Keyboard activation of a seat hands focus into the details panel once the
   // selection commits; pointer interactions cancel the handoff.
@@ -308,7 +313,11 @@ export function ViewerSeatFinder({
 
   // Arrow-key roving over result cards — parity with the admin ResultsPanel
   // (critique action 6). ArrowUp from the first card returns focus to the
-  // search input the cards came from.
+  // search input the cards came from. This DOM-walking form is only safe
+  // because the search results list renders EVERY row — on the windowed
+  // People directory it read the first RENDERED row as "first" and warped
+  // mid-list ArrowUp into the search input, so the directory uses the
+  // absolute-index handler below instead.
   function handleResultsKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="listitem"] button:not([disabled])'));
@@ -324,6 +333,31 @@ export function ViewerSeatFinder({
       return;
     }
     items[activeIndex - 1]?.focus();
+  }
+
+  // Windowed-list roving for the People directory: absolute indices via
+  // stepFocusIndex (lib/virtualizedList), because only a slice of rows is
+  // mounted. ArrowUp with nothing above still exits to the search input.
+  function handleDirectoryKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const rows = directory.rows;
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    if (rows.length === 0) return;
+    event.preventDefault();
+    const direction = event.key === "ArrowDown" ? 1 : -1;
+    const activeRow = document.activeElement instanceof HTMLElement ? document.activeElement.closest("[data-vindex]") : null;
+    const rawIndex = activeRow && directoryListElement?.contains(activeRow) ? Number(activeRow.getAttribute("data-vindex")) : NaN;
+    const target = stepFocusIndex({
+      itemCount: rows.length,
+      currentIndex: Number.isInteger(rawIndex) ? rawIndex : null,
+      direction,
+      isDisabled: index => Boolean(rows[index]?.disabled),
+      fallbackIndex: directoryWindow.startIndex
+    });
+    if (target === null) {
+      if (direction === -1) searchInputRef.current?.focus();
+      return;
+    }
+    focusDirectoryRow(target);
   }
   const searchActive = Boolean(searchResults.query);
   const structuredFiltersActive = department !== "all" || position !== "all" || zone !== "all" || status !== "all";
@@ -1493,10 +1527,15 @@ export function ViewerSeatFinder({
           {/* tabIndex: same scrollable-region-focusable contract as the search
               results list above — with nobody seated, every row is a disabled
               <button> and the scrollable region loses keyboard access. */}
-          <div ref={setDirectoryListElement} role="list" aria-label="People directory" tabIndex={0} onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]">
-            {directoryWindow.topPadding > 0 && <div aria-hidden="true" style={{ height: directoryWindow.topPadding }} />}
-            {visibleDirectoryRows.map(row => (
-              <div role="listitem" key={row.id}>
+          <div ref={setDirectoryListElement} role="list" aria-label="People directory" tabIndex={0} onKeyDown={handleDirectoryKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]">
+            {directorySegments.map((segment, segmentPosition) => {
+              if (segment.kind === "spacer") {
+                return <div aria-hidden="true" key={`spacer-${segmentPosition}`} style={{ height: segment.height }} />;
+              }
+              const row = directory.rows[segment.index];
+              if (!row) return null;
+              return (
+              <div role="listitem" key={row.id} data-vindex={segment.index} data-vpinned={segment.pinned ? "" : undefined}>
               <button
                 type="button"
                 disabled={row.disabled}
@@ -1522,8 +1561,8 @@ export function ViewerSeatFinder({
                 )}
               </button>
               </div>
-            ))}
-            {directoryWindow.bottomPadding > 0 && <div aria-hidden="true" style={{ height: directoryWindow.bottomPadding }} />}
+              );
+            })}
           </div>
           <div className="border-t border-[var(--admin-border)] px-4 py-2 text-[11px] font-medium text-[var(--admin-text-subtle)]">
             {directory.totalCount} {directory.totalCount === 1 ? "person" : "people"} · {directory.seatedCount} seated
