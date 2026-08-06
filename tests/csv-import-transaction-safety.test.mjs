@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-// 20260805120000 supersedes 20260616000100, re-creating the function with the
-// trailing expected_seats concurrency-fence parameter; the lockstep checks
-// must read the definition that is actually live.
+// 20260806120000 supersedes 20260805120000 (which superseded 20260616000100),
+// widening the expected_seats concurrency fence from CSV-targeted seats to the
+// whole draft; the lockstep checks must read the definition that is actually
+// live.
 const migrationSql = await readFile(
-  new URL("../supabase/migrations/20260805120000_import_assignments_csv_fence.sql", import.meta.url),
+  new URL("../supabase/migrations/20260806120000_import_assignments_csv_whole_draft_fence.sql", import.meta.url),
   "utf8"
 );
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
@@ -82,12 +83,21 @@ test("CSV import RPC validates unsafe rows before mutating draft data", () => {
 
 test("CSV import RPC checks the concurrency fence after locking and before mutating", () => {
   // Row-by-row `is distinct from` against the client's (id, updated_at) map —
-  // never an aggregate (see 20260708120000_draft_concurrency_fence.sql).
+  // never a timestamp aggregate (see 20260708120000_draft_concurrency_fence.sql).
   assert.match(functionSql, /expected_seats is not null/);
   assert.match(functionSql, /seat\.updated_at is distinct from/);
   assert.match(functionSql, /errcode = 'MLS02'/);
   assert.doesNotMatch(functionSql, /max\(\s*updated_at\s*\)/i);
-  assert.doesNotMatch(functionSql, /count\(\*\)[\s\S]{0,80}expected_seats/);
+  assert.doesNotMatch(functionSql, /max\(\s*seat\.updated_at\s*\)/i);
+
+  // The fence covers the WHOLE draft, not just CSV-targeted seats: the
+  // unassign-elsewhere update can vacate any draft seat holding a re-assigned
+  // employee (20260806120000). The per-row scan must not be narrowed back to
+  // an `incoming` join, and the count check (which catches rows deleted since
+  // the review — absent rows escape the per-row scan) must stay.
+  const perRowFence = functionSql.match(/select seat\.label\s+into invalid_value\s+from public\.seats as seat\s+where seat\.layer = 'draft'::public\.seat_layer\s+and seat\.updated_at is distinct from/);
+  assert.ok(perRowFence, "the per-row fence should scan every draft seat without an incoming join");
+  assert.match(functionSql, /<> jsonb_array_length\(expected_seats\)/);
 
   const lockCheck = functionSql.indexOf("locked_seat_count <> expected_row_count");
   const fence = functionSql.indexOf("errcode = 'MLS02'");
@@ -106,8 +116,12 @@ test("CSV import RPC checks the concurrency fence after locking and before mutat
   assert.ok(fence < firstMutation, "fence must run before any mutation");
 });
 
-test("CSV import RPC locks target draft seats and keeps all writes inside one function transaction", () => {
-  assert.match(functionSql, /order by seat\.id\s+for update of seat/);
+test("CSV import RPC locks the whole draft and keeps all writes inside one function transaction", () => {
+  // Whole-draft lock in the shared stable order (id), same as publish_seat_map
+  // and restore_draft_snapshot — the unassign-elsewhere update's footprint is
+  // the whole draft, so a targeted-only lock would leave its collateral rows
+  // unlocked.
+  assert.match(functionSql, /perform seat\.id\s+from public\.seats as seat\s+where seat\.layer = 'draft'::public\.seat_layer\s+order by seat\.id\s+for update of seat;/);
   assert.match(functionSql, /where seat\.layer = 'draft'::public\.seat_layer/);
   assert.match(functionSql, /get diagnostics affected_count = row_count/);
   assert.match(functionSql, /raise exception 'Row %: Could not update draft seat/);

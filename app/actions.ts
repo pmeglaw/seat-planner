@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { parseAssignmentCsv } from "@/lib/csv";
-import { isStaleDraftErrorCode, type DraftSeatExpectation } from "@/lib/draftConcurrency";
+import { isStaleDraftErrorCode, type DraftSeatExpectation, type EmployeeExpectation } from "@/lib/draftConcurrency";
 import { applyFixedWindow, type RateLimitWindow } from "@/lib/rateLimit";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import { answerMapOperationsQuestion } from "@/lib/mapOperationsAgent";
@@ -737,9 +737,10 @@ export async function importAssignmentsCsvAction(
    * Concurrency fence: exact (id, updated_at) of every draft seat the client
    * held when the CSV was parsed for review (lib/draftConcurrency
    * listDraftSeatExpectations — timestamps verbatim, never through Date). The
-   * RPC rejects with STALE_DRAFT if any CSV-targeted seat differs, so an
-   * import confirmed against stale data cannot silently overwrite another
-   * admin's edits.
+   * RPC rejects with STALE_DRAFT if ANY draft seat differs — not just
+   * CSV-targeted ones, because assigning an employee also vacates their other
+   * draft seat — so an import confirmed against stale data cannot silently
+   * overwrite another admin's edits (20260806120000).
    */
   expectedSeats?: DraftSeatExpectation[]
 ): Promise<ImportAssignmentsCsvResult> {
@@ -904,12 +905,22 @@ export async function publishSeatMapAction(
    * RPC rejects with STALE_DRAFT if the draft advanced since, so a publish
    * cannot ship changes the reviewing admin never saw.
    */
-  expectedDraftSeats?: DraftSeatExpectation[]
+  expectedDraftSeats?: DraftSeatExpectation[],
+  /**
+   * Employee-directory fence: exact (id, updated_at) of every ACTIVE employee
+   * as the review rendered it (lib/draftConcurrency
+   * listActiveEmployeeExpectations). Publish replaces the published_employees
+   * snapshot from the live active directory in the same transaction, so people
+   * edits are part of the reviewed state too; the RPC rejects with STALE_DRAFT
+   * if the active directory advanced since (20260806121000).
+   */
+  expectedEmployees?: EmployeeExpectation[]
 ): Promise<PublishSeatMapResult> {
   const supabase = await requireAdmin();
 
   const { error } = await supabase.rpc("publish_seat_map", {
-    expected_draft_seats: expectedDraftSeats ?? null
+    expected_draft_seats: expectedDraftSeats ?? null,
+    expected_employees: expectedEmployees ?? null
   });
 
   if (error) {
