@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import "./globals.css";
 
 const plexSans = IBM_Plex_Sans({
@@ -44,6 +45,7 @@ export default function RootLayout({
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
