@@ -20,7 +20,9 @@ test("settings data utilities review CSV imports in-app before calling the mutat
   assert.match(source, /setCsvReview\(\{[\s\S]*text,[\s\S]*rowCount: parsed\.rows\.length/);
   assert.doesNotMatch(importCsvFunction[0], /importAssignmentsCsvAction/);
   assert.match(confirmCsvFunction[0], /if \(!csvReview \|\| csvReview\.issues\.length > 0\) return/);
-  assert.match(confirmCsvFunction[0], /importAssignmentsCsvAction\(review\.text, review\.expectedSeats\)/);
+  // The confirm call carries BOTH parse-time fences (seats + the active
+  // employee directory, 20260806140000) — the review state, never re-read.
+  assert.match(confirmCsvFunction[0], /importAssignmentsCsvAction\(review\.text, review\.expectedSeats, review\.expectedEmployees\)/);
   assert.match(closeCsvFunction[0], /setCsvReview\(null\)/);
   assert.match(source, /Review CSV import/);
   assert.match(source, /CSV import has blocking errors/);

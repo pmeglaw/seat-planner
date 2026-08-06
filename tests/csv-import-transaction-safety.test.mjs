@@ -2,12 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-// 20260806120000 supersedes 20260805120000 (which superseded 20260616000100),
-// widening the expected_seats concurrency fence from CSV-targeted seats to the
-// whole draft; the lockstep checks must read the definition that is actually
-// live.
+// 20260806140000 supersedes 20260806120000 (whole-draft seat fence), adding
+// the trailing expected_employees active-directory fence (issue #328); the
+// lockstep checks must read the definition that is actually live.
 const migrationSql = await readFile(
-  new URL("../supabase/migrations/20260806120000_import_assignments_csv_whole_draft_fence.sql", import.meta.url),
+  new URL("../supabase/migrations/20260806140000_import_assignments_csv_employee_fence.sql", import.meta.url),
   "utf8"
 );
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
@@ -30,15 +29,16 @@ const functionSql = extractFunctionSql(migrationSql);
 const importActionSource = extractCsvImportAction(actionsSource);
 
 test("CSV import migration creates an authenticated admin-only RPC", () => {
-  assert.match(functionSql, /create or replace function public\.import_assignments_csv\(\s*assignment_rows jsonb,\s*expected_seats jsonb default null\s*\)/);
+  assert.match(functionSql, /create or replace function public\.import_assignments_csv\(\s*assignment_rows jsonb,\s*expected_seats jsonb default null,\s*expected_employees jsonb default null\s*\)/);
   assert.match(functionSql, /returns integer/);
   assert.match(functionSql, /security invoker/);
   assert.doesNotMatch(functionSql, /security definer/i);
   assert.match(functionSql, /if not app_private\.is_admin\(\) then/);
-  // The old 1-arg overload must be dropped, or PostgREST calls turn ambiguous.
+  // Old overloads must be dropped, or PostgREST calls turn ambiguous.
   assert.match(migrationSql, /drop function if exists public\.import_assignments_csv\(jsonb\);/);
-  assert.match(migrationSql, /revoke all on function public\.import_assignments_csv\(jsonb, jsonb\) from public, anon, authenticated;/);
-  assert.match(migrationSql, /grant execute on function public\.import_assignments_csv\(jsonb, jsonb\) to authenticated;/);
+  assert.match(migrationSql, /drop function if exists public\.import_assignments_csv\(jsonb, jsonb\);/);
+  assert.match(migrationSql, /revoke all on function public\.import_assignments_csv\(jsonb, jsonb, jsonb\) from public, anon, authenticated;/);
+  assert.match(migrationSql, /grant execute on function public\.import_assignments_csv\(jsonb, jsonb, jsonb\) to authenticated;/);
 });
 
 test("CSV import RPC validates unsafe rows before mutating draft data", () => {
@@ -98,6 +98,21 @@ test("CSV import RPC checks the concurrency fence after locking and before mutat
   const perRowFence = functionSql.match(/select seat\.label\s+into invalid_value\s+from public\.seats as seat\s+where seat\.layer = 'draft'::public\.seat_layer\s+and seat\.updated_at is distinct from/);
   assert.ok(perRowFence, "the per-row fence should scan every draft seat without an incoming join");
   assert.match(functionSql, /<> jsonb_array_length\(expected_seats\)/);
+
+  // Employee-directory fence (issue #328, mirrors 20260806121000): active
+  // rows locked in the shared order, then exact-match against the parse-time
+  // expectations — an aggregate-free per-row check plus the count check.
+  assert.match(functionSql, /perform employee\.id\s+from public\.employees as employee\s+where employee\.active\s+order by employee\.id\s+for update of employee;/);
+  assert.match(functionSql, /expected_employees is not null/);
+  assert.match(functionSql, /expected\.updated_at = employee\.updated_at/);
+  assert.match(functionSql, /<> jsonb_array_length\(expected_employees\)/);
+  assert.match(functionSql, /employee directory changed in another session/);
+
+  // Both fences run before any mutation.
+  const employeeFence = functionSql.indexOf("expected_employees is not null");
+  const firstEmployeeWrite = functionSql.indexOf("update public.employees");
+  assert.ok(employeeFence !== -1 && firstEmployeeWrite !== -1);
+  assert.ok(employeeFence < firstEmployeeWrite, "employee fence must run before employee writes");
 
   const lockCheck = functionSql.indexOf("locked_seat_count <> expected_row_count");
   const fence = functionSql.indexOf("errcode = 'MLS02'");

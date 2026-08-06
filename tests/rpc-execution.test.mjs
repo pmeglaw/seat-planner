@@ -617,6 +617,112 @@ test("import: passes when whole-draft expectations match, non-targeted seats inc
   assert.equal(byLabel.N02.status, "available", "the untouched non-targeted seat stays as reviewed");
 });
 
+test("import: fences when a matched employee was edited after the CSV was parsed (MLS02)", async () => {
+  // Issue #328: the import overwrites matched employee rows (name/position/
+  // department, active=true) — a rename or detail edit committed by another
+  // admin while the review sat open must not be silently overwritten.
+  const alice = await db.seedEmployee({ fullName: "Alice", position: "Analyst" });
+  await db.seedSeat({ label: "N01", status: "available" });
+  const seatExpectations = await draftSeatExpectations();
+  const employeeExpectations = await activeEmployeeExpectations();
+
+  await db.query("update public.employees set position = 'Manager' where id = $1", [alice]);
+
+  const rows = [{ seat_label: "N01", employee_name: "Alice", employee_email: "", position: "Analyst", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  await expectThrow(
+    db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb, $3::jsonb)", [
+      JSON.stringify(rows),
+      JSON.stringify(seatExpectations),
+      JSON.stringify(employeeExpectations)
+    ]),
+    { code: "MLS02", match: /employee directory changed in another session/ }
+  );
+
+  const employee = await db.query("select position from public.employees where id = $1", [alice]);
+  assert.equal(employee.rows[0].position, "Manager", "the other admin's edit must survive the fenced-off import");
+  const [seat] = await db.draftSeats();
+  assert.equal(seat.employee_id, null, "a fenced-off import must not mutate the draft");
+});
+
+test("import: fences when an employee was deactivated after the CSV was parsed (count mismatch)", async () => {
+  await db.seedEmployee({ fullName: "Alice" });
+  const bob = await db.seedEmployee({ fullName: "Bob" });
+  await db.seedSeat({ label: "N01", status: "available" });
+  const seatExpectations = await draftSeatExpectations();
+  const employeeExpectations = await activeEmployeeExpectations();
+
+  await db.query("update public.employees set active = false where id = $1", [bob]);
+
+  const rows = [{ seat_label: "N01", employee_name: "Alice", employee_email: "", position: "", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  await expectThrow(
+    db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb, $3::jsonb)", [
+      JSON.stringify(rows),
+      JSON.stringify(seatExpectations),
+      JSON.stringify(employeeExpectations)
+    ]),
+    { code: "MLS02", match: /employee directory changed in another session/ }
+  );
+});
+
+test("import: fences when an employee was created after the CSV was parsed", async () => {
+  await db.seedEmployee({ fullName: "Alice" });
+  await db.seedSeat({ label: "N01", status: "available" });
+  const seatExpectations = await draftSeatExpectations();
+  const employeeExpectations = await activeEmployeeExpectations();
+
+  await db.seedEmployee({ fullName: "Grace" });
+
+  const rows = [{ seat_label: "N01", employee_name: "Alice", employee_email: "", position: "", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  await expectThrow(
+    db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb, $3::jsonb)", [
+      JSON.stringify(rows),
+      JSON.stringify(seatExpectations),
+      JSON.stringify(employeeExpectations)
+    ]),
+    { code: "MLS02", match: /employee directory changed in another session/ }
+  );
+});
+
+test("import: passes when both fences match, and inactive edits don't fence", async () => {
+  await db.seedEmployee({ fullName: "Alice" });
+  const ghost = await db.seedEmployee({ fullName: "Ghost", active: false });
+  await db.seedSeat({ label: "N01", status: "available" });
+  const seatExpectations = await draftSeatExpectations();
+  const employeeExpectations = await activeEmployeeExpectations();
+
+  // Inactive rows are outside the fence's active-only scope (documented in
+  // 20260806140000) — editing one must not produce a false MLS02.
+  await db.query("update public.employees set position = 'Emeritus' where id = $1", [ghost]);
+
+  const rows = [{ seat_label: "N01", employee_name: "Alice", employee_email: "", position: "", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  const res = await db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb, $3::jsonb) as count", [
+    JSON.stringify(rows),
+    JSON.stringify(seatExpectations),
+    JSON.stringify(employeeExpectations)
+  ]);
+  assert.equal(res.rows[0].count, 1);
+
+  const [seat] = await db.draftSeats();
+  assert.equal(seat.status, "assigned");
+});
+
+test("import: omitting employee expectations skips that fence (rollout back-compat)", async () => {
+  // Already-deployed application code sends (assignment_rows, expected_seats);
+  // the default-null employee parameter must keep that call working unfenced.
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  await db.seedSeat({ label: "N01", status: "available" });
+  const seatExpectations = await draftSeatExpectations();
+
+  await db.query("update public.employees set position = 'Manager' where id = $1", [alice]);
+
+  const rows = [{ seat_label: "N01", employee_name: "Alice", employee_email: "", position: "", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  const res = await db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb) as count", [
+    JSON.stringify(rows),
+    JSON.stringify(seatExpectations)
+  ]);
+  assert.equal(res.rows[0].count, 1);
+});
+
 // ---------------------------------------------------------------------------
 // deactivate_employee
 // ---------------------------------------------------------------------------
