@@ -19,7 +19,13 @@
 
 export const BUILD_ID_ENDPOINT = "/api/build-id";
 
-export const CLIENT_BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "dev";
+// The typeof guard is for non-Next bundles of this module (the browser test
+// harness esbuilds SeatMap → AppRail → here into a bare-browser IIFE where
+// `process` doesn't exist, and a bare reference throws at module eval). Next
+// itself still inlines the exact `process.env.NEXT_PUBLIC_BUILD_ID` text, so
+// production behavior is unchanged.
+export const CLIENT_BUILD_ID =
+  (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_BUILD_ID : undefined) ?? "dev";
 
 export type SkewComparison = "match" | "skewed" | "unknown";
 
