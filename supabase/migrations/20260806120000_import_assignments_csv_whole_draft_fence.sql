@@ -453,6 +453,9 @@ begin
     normalized_status := lower(trim(coalesce(import_row.status, '')));
     target_employee_id := null;
 
+    -- The FOR UPDATE here is a defensive no-op: every draft row is already
+    -- locked by the whole-draft lock above. Kept so this lookup stays safe on
+    -- its own terms if the upfront lock is ever narrowed.
     select seat.id
     into target_seat_id
     from public.seats as seat

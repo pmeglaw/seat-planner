@@ -578,6 +578,27 @@ test("import: fences on a draft seat added after the CSV was parsed (count misma
   );
 });
 
+test("import: fences on a draft seat deleted after the CSV was parsed (count check only)", async () => {
+  await db.seedSeat({ label: "N01", status: "available" });
+  // Custom seat: seatProtection's trigger blocks deleting original draft
+  // seats, and deletion is the scenario under test.
+  const cx01 = await db.seedSeat({ label: "CX01", key: "cx01", status: "available", isCustom: true });
+  const expectations = await draftSeatExpectations();
+
+  // A deleted row is absent from the per-row scan, so the count check is the
+  // only guard that can catch it (20260806120000).
+  await db.query("delete from public.seats where id = $1", [cx01.id]);
+
+  const rows = [{ seat_label: "N01", employee_name: "X", employee_email: "", position: "", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  await expectThrow(
+    db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb)", [JSON.stringify(rows), JSON.stringify(expectations)]),
+    { code: "MLS02", match: /draft map changed in another session/ }
+  );
+
+  const [seat] = await db.draftSeats();
+  assert.equal(seat.employee_id, null, "a fenced-off import must not mutate the remaining draft");
+});
+
 test("import: passes when whole-draft expectations match, non-targeted seats included", async () => {
   await db.seedSeat({ label: "N01", status: "available" });
   await db.seedSeat({ label: "N02", status: "available" });

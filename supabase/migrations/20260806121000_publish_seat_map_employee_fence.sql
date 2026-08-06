@@ -95,6 +95,14 @@ begin
   -- Publish also replaces the published_employees snapshot from the live
   -- ACTIVE directory (below), so active employee rows are part of the
   -- mutation footprint. Lock them the same way before checking their fence.
+  --
+  -- Known residual, shared with the seat fences (see 20260708120000): row
+  -- locks cannot block a concurrent INSERT — or a reactivation of an inactive
+  -- row, which these active-only locks never held — that commits between this
+  -- fence statement and the snapshot copy below (READ COMMITTED gives each
+  -- statement a fresh snapshot). Accepted here for the same reason it is
+  -- accepted there; closing it would require a table or advisory lock
+  -- serializing every employee writer, a deliberate cross-fence change.
   perform employee.id
   from public.employees as employee
   where employee.active
