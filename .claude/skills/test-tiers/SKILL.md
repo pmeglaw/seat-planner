@@ -17,16 +17,25 @@ The **full SeatMap** is instead exercised in a **real browser** by a separate Pl
 
 ## End-to-end smoke suite — `npm run test:e2e`
 
-A separate **end-to-end tier** lives in `tests/e2e/` (Playwright, config in `playwright.config.ts`). It is a **backend-free smoke suite**: it builds the app, boots it with only *dummy* Supabase env, and asserts the app starts, `/login` renders the sign-in form, and the auth middleware redirects unauthenticated `/` and `/admin` to `/login`. Authenticated flows would need a seeded test project + CI secrets (tracked as a follow-up).
+A separate **end-to-end tier** lives in `tests/e2e/` (Playwright, config in `playwright.config.ts`). It is a **backend-free smoke suite**: it builds the app, boots it with only *dummy* Supabase env, and asserts the app starts, `/login` renders the sign-in form, and unauthenticated `/` and `/admin` end at `/login` (the redirect streams from the page guards — since #333 the middleware never redirects, it only refreshes cookies on its allowlisted routes). Authenticated flows live in the e2e-auth tier below, which runs in CI.
 
 ## Authenticated e2e tier — `npm run test:e2e:auth`
 
-Real sign-in, the admin role gate, and a real **publish**, driven against a
-disposable local Supabase stack (`npm run db:start` → `supabase start`, Docker).
-Config `playwright-auth.config.ts`, specs in `tests/e2e-auth/`. Credentials are
-seeded by `supabase/seed.sql` and are local-only. Because the stack dies with
-`npm run db:stop`, these specs are free to mutate seats and publish for real —
-coverage the hosted-production setup could never safely have.
+Real sign-in, the admin role gate, a real **publish**, and the persistent-shell
+**nav regression** (`nav-shell.spec.ts`: zero full-document requests across all
+four rail sections, the rail stays ONE mounted DOM node, the expanded drawer
+closes on navigation — the #333 blank-flash bug, pinned end to end), driven
+against a disposable local Supabase stack (`npm run db:start` →
+`supabase start`, Docker). Config `playwright-auth.config.ts`, specs in
+`tests/e2e-auth/`. Credentials are seeded by `supabase/seed.sql` and are
+local-only. Because the stack dies with `npm run db:stop`, these specs are free
+to mutate seats and publish for real — coverage the hosted-production setup
+could never safely have. Two nav-shell-specific notes: the spec's hamburger
+expand doubles as its hydration gate (a pre-hydration click on a rail `<Link>`
+navigates natively as a full document — a harness artifact that would fail the
+zero-documents assertion for the wrong reason), and its section probes are the
+pages' zero-height skip-link markers, so they use `state: "attached"`, never
+visibility.
 
 Three traps, each of which costs an hour if rediscovered:
 

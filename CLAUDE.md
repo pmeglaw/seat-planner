@@ -47,11 +47,19 @@ Keep this separation absolute: never let a viewer path read draft, never let an 
 
 1. **Server actions** — all mutations live in `app/actions.ts` (`"use server"`). Every exported action calls `requireAdmin()` first, which re-checks `profiles.role === 'admin'` against the authenticated Supabase user.
 2. **Postgres RLS + SECURITY DEFINER RPCs** — the database independently enforces admin. Client-side guards are UX only.
-3. **`middleware.ts`** → `lib/supabase/middleware.ts` refreshes the auth session cookie on every matched request.
+3. **`middleware.ts`** → `lib/supabase/middleware.ts` refreshes the auth session cookie — and is deliberately NOT a security layer (layers 1–2 enforce). Its matcher is an **explicit allowlist** (`/`, `/admin/*`, `/reception`, `/login`, `/auth/*` — never `/api/build-id` or static assets; `tests/auth-session-source.test.mjs` pins the list, so dropping a route silently kills session refresh there). It validates JWTs **locally** (`getClaims` + a module-memoized JWKS with failure backoff), skips requests carrying no `sb-*` cookie, and races a 5s fail-open timeout — a per-request `getUser()` network call or an unbounded await here is a regression (the pre-#333 middleware hung into Vercel's 25s kill).
 
-`lib/adminPageGuard.ts` (`getAdminPageContext`) is the shared prologue for the `/admin*` pages (login redirect + `profiles.role` check). It is UX-layer gating only — **not** a substitute for layers 1–2.
+`lib/adminPageGuard.ts` (`getAdminPageContext`) is the shared prologue for the `/admin*` pages (login redirect + `profiles.role` check). It is UX-layer gating only — **not** a substitute for layers 1–2. Both it and the `(shell)` layout read auth through `lib/serverAuth.ts` (`getSessionContext`, React-`cache()`d), so layout chrome + page guard cost ONE auth probe and ONE role lookup per server render — don't add a second `getUser()` on a server surface, reuse the context.
 
 Never bypass admin checks with client-only guards, and never expose the service-role key to the browser (only `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` are client-safe). Auth is email/password-primary with magic-link fallback; magic-link sign-in passes `shouldCreateUser: false`, so it never self-provisions accounts. The callback routes (`app/auth/confirm`, `app/auth/callback`, `app/auth/update-password`) accept PKCE `code` / `token_hash` links and store the session in server cookies. Auth-facing copy lives in `lib/authMessages.ts`.
+
+## The persistent app shell (navigation is client-side by contract)
+
+`/admin`, `/admin/management`, `/admin/settings`, and `/reception` live in the `app/(shell)/` route group (URLs unchanged). Its layout mounts the chrome **once per document load** — `components/ui/AppShell.tsx` renders the fixed `AppRail` plus (on sub-pages) `AdminShellBar` — and client-side navigation swaps only the content pane below, streaming each section's own `loading.tsx` skeleton. Pages must NOT mount a second rail or bar (`tests/auth-session-source.test.mjs` pins this); they own their content pane, theme class, `pl-12` rail offset, and skip-link landing marker, while AppShell owns the route→active-item and route→skip-link maps.
+
+Surface-owned behavior reaches the persistent rail through registration, not props: SeatMap plugs its unsaved-edits veto + in-place Ask Planner opener in via `useAppShellNavigation` (registered on mount, cleared on unmount — the veto contract from `tests/app-rail.test.mjs` is unchanged). Full-document navigation stays an escape hatch with exactly the sanctioned callers listed in `lib/fullNavigation.ts`: post-auth redirects, the deploy-skew fallback (`assignLocation` fires ONLY when `isBuildSkewed` is true), and the 4s stalled-router watchdog — which now disarms on route commit via `usePathname` (a stale timer must never hijack back/forward). Anything else that turns a rail click into a document load — a bare `<a href>`, `window.location`, an unconditional `router.refresh()` — reintroduces the blank-flash bug #333 removed; `tests/app-shell.test.mjs` and the e2e-auth `nav-shell` spec (zero document requests, one persistent rail node) guard it.
+
+Client Router Cache: `staleTimes.dynamic = 120` in `next.config.js`. Freshness scope is deliberate and documented there — `revalidatePath`/`router.refresh()` cover the acting tab only; OTHER browsers may show a revisited route up to 120s stale (accepted display lag; the MLS02 fence owns write integrity regardless). Mutating server actions must keep calling `revalidatePath`, or the acting tab goes stale too.
 
 ## Mutations go through RPCs for transaction safety
 
@@ -77,7 +85,7 @@ Two kinds of *source-facing* tests coexist within `tests/*.test.mjs`. Behavior t
 
 Three further tiers are framework-coupled and have their own harnesses: jsdom **component tests** (`npm run test:ct`), a **real-browser** Playwright tier for the full SeatMap (`npm run test:browser`), and a **backend-free e2e smoke suite** (`npm run test:e2e`). How each is wired — and why `SeatMap` can't be unit-rendered in jsdom — is in the `test-tiers` skill; invoke it before writing or debugging tests in those tiers.
 
-The e2e tier deliberately does **not** cover authenticated flows (publish, seat edits), so **keep verifying those manually**. CI enforces the coverage floors on every PR — see `.github/workflows/ci.yml`.
+Authenticated flows run in CI's **e2e-auth** job (`npm run test:e2e:auth`, Docker + a disposable local Supabase stack): real sign-in, the admin role gate, a real publish, and the persistent-shell nav regression (`nav-shell.spec.ts`). The backend-free `test:e2e` smoke tier stays Docker-free by design. Passing tests are still **not** visual verification — for UI work, look at the real app (`run-seat-planner` skill). CI enforces the coverage floors on every PR — see `.github/workflows/ci.yml`.
 
 ## Design system (semantic CSS tokens)
 
