@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
 import type { SeatStatus } from "@/lib/types";
 import { formatDisplayName } from "@/lib/formatName";
+import { stepFocusIndex } from "@/lib/virtualizedList";
 import { useVirtualListWindow } from "@/components/seat-map/useVirtualListWindow";
 
 export type AdminResultCard = {
@@ -58,33 +58,27 @@ export function ResultsPanel({
   onExpandCollapsedSeat
 }: ResultsPanelProps) {
   // Windowed rendering (the Management directory's computeVirtualWindow math
-  // via the shared hook): only rows near the viewport render and spacers
-  // preserve the scrollbar. Keyboard roving below is untouched — it walks the
-  // rendered slice, and the overscan rows keep the next arrow target mounted.
-  const { setListElement, listElement, window: resultsWindow } = useVirtualListWindow(results.length, { defaultRowHeight: 54 });
-  const visibleResults = useMemo(
-    () => results.slice(resultsWindow.startIndex, resultsWindow.endIndex),
-    [results, resultsWindow]
-  );
-
-  function moveFocus(direction: 1 | -1) {
-    const list = listElement;
-    if (!list) return;
-    const items = Array.from(list.querySelectorAll<HTMLButtonElement>("button[data-result-card]"));
-    if (!items.length) return;
-    const activeIndex = items.findIndex(item => item === document.activeElement);
-    const nextIndex = activeIndex === -1 ? 0 : Math.min(items.length - 1, Math.max(0, activeIndex + direction));
-    items[nextIndex]?.focus();
-  }
+  // via the shared hook): the hook's segments render only rows near the
+  // viewport plus the focused row (pinned so scrolling never unmounts it and
+  // drops focus to <body>), with spacers preserving the scrollbar. Keyboard
+  // roving moves by ABSOLUTE index (stepFocusIndex) — walking the rendered
+  // slice reads a mid-window row as "first" once the list has scrolled.
+  const { setListElement, listElement, window: resultsWindow, segments, focusRow } = useVirtualListWindow(results.length, { defaultRowHeight: 54 });
 
   function handleListKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      moveFocus(1);
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      moveFocus(-1);
-    }
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    event.preventDefault();
+    const direction = event.key === "ArrowDown" ? 1 : -1;
+    const activeRow = document.activeElement instanceof HTMLElement ? document.activeElement.closest("[data-vindex]") : null;
+    const rawIndex = activeRow && listElement?.contains(activeRow) ? Number(activeRow.getAttribute("data-vindex")) : NaN;
+    const target = stepFocusIndex({
+      itemCount: results.length,
+      currentIndex: Number.isInteger(rawIndex) ? rawIndex : null,
+      direction,
+      isDisabled: index => Boolean(results[index]?.disabled),
+      fallbackIndex: resultsWindow.startIndex
+    });
+    if (target !== null) focusRow(target);
   }
 
   const matchSummary = matchCount === 1 ? "1 match" : `${matchCount} matches`;
@@ -120,9 +114,20 @@ export function ResultsPanel({
           onKeyDown={handleListKeyDown}
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2"
         >
-          {resultsWindow.topPadding > 0 && <div aria-hidden="true" style={{ height: resultsWindow.topPadding }} />}
-          {visibleResults.map(result => (
-            <div role="listitem" key={result.key} className="group flex items-stretch gap-1 border border-transparent transition hover:border-[var(--admin-border)] hover:bg-[var(--admin-paper)]">
+          {segments.map((segment, segmentPosition) => {
+            if (segment.kind === "spacer") {
+              return <div aria-hidden="true" key={`spacer-${segmentPosition}`} style={{ height: segment.height }} />;
+            }
+            const result = results[segment.index];
+            if (!result) return null;
+            return (
+            <div
+              role="listitem"
+              key={result.key}
+              data-vindex={segment.index}
+              data-vpinned={segment.pinned ? "" : undefined}
+              className="group flex items-stretch gap-1 border border-transparent transition hover:border-[var(--admin-border)] hover:bg-[var(--admin-paper)]"
+            >
               <button
                 type="button"
                 data-result-card
@@ -155,8 +160,8 @@ export function ResultsPanel({
                 </button>
               )}
             </div>
-          ))}
-          {resultsWindow.bottomPadding > 0 && <div aria-hidden="true" style={{ height: resultsWindow.bottomPadding }} />}
+            );
+          })}
         </div>
       ) : (
         <div className="p-4">
