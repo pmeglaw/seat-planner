@@ -291,6 +291,119 @@ test("publish: passes the fence when expectations exactly match the draft", asyn
   assert.equal(published.rows[0].employee_id, alice);
 });
 
+// updated_at as Postgres text, not the driver's Date: the fence compares the
+// value byte-for-byte after a ::timestamptz cast, and Date drops microseconds.
+async function activeEmployeeExpectations() {
+  const { rows } = await db.query(
+    "select id, updated_at::text as updated_at from public.employees where active"
+  );
+  return rows;
+}
+
+async function draftSeatExpectations() {
+  const { rows } = await db.query(
+    "select id, updated_at::text as updated_at from public.seats where layer = 'draft'"
+  );
+  return rows;
+}
+
+test("publish: fences when an active employee was edited after the review opened (MLS02)", async () => {
+  // Publish replaces the published_employees snapshot from the live ACTIVE
+  // directory in the same transaction, so people edits are reviewed state too
+  // (20260806121000): a rename/phone edit committed by another admin after
+  // the review opened must not ship silently just because no seat row moved.
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+  const seatExpectations = await draftSeatExpectations();
+  const employeeExpectations = await activeEmployeeExpectations();
+
+  // Another session's Management edit: touches employees only, no seat row.
+  await db.query("update public.employees set position = 'Manager' where id = $1", [alice]);
+
+  await expectThrow(
+    db.query("select public.publish_seat_map($1::jsonb, $2::jsonb)", [
+      JSON.stringify(seatExpectations),
+      JSON.stringify(employeeExpectations)
+    ]),
+    { code: "MLS02", match: /employee directory changed in another session/ }
+  );
+
+  const snap = await db.query("select count(*)::int as n from public.published_employees");
+  assert.equal(snap.rows[0].n, 0, "a fenced-off publish must not replace the employee snapshot");
+  const events = await db.query("select count(*)::int as n from public.publish_events");
+  assert.equal(events.rows[0].n, 0, "a fenced-off publish must not record an audit event");
+});
+
+test("publish: fences when an employee was deactivated after the review opened (count mismatch)", async () => {
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  const bob = await db.seedEmployee({ fullName: "Bob" });
+  await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+  const seatExpectations = await draftSeatExpectations();
+  const employeeExpectations = await activeEmployeeExpectations();
+
+  await db.query("update public.employees set active = false where id = $1", [bob]);
+
+  await expectThrow(
+    db.query("select public.publish_seat_map($1::jsonb, $2::jsonb)", [
+      JSON.stringify(seatExpectations),
+      JSON.stringify(employeeExpectations)
+    ]),
+    { code: "MLS02", match: /employee directory changed in another session/ }
+  );
+});
+
+test("publish: fences when an employee was created after the review opened", async () => {
+  await db.seedEmployee({ fullName: "Alice" });
+  await db.seedSeat({ label: "N01", status: "available" });
+  const seatExpectations = await draftSeatExpectations();
+  const employeeExpectations = await activeEmployeeExpectations();
+
+  await db.seedEmployee({ fullName: "Grace" });
+
+  await expectThrow(
+    db.query("select public.publish_seat_map($1::jsonb, $2::jsonb)", [
+      JSON.stringify(seatExpectations),
+      JSON.stringify(employeeExpectations)
+    ]),
+    { code: "MLS02", match: /employee directory changed in another session/ }
+  );
+});
+
+test("publish: passes when seat and employee expectations both match, and inactive edits don't fence", async () => {
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  const ghost = await db.seedEmployee({ fullName: "Ghost", active: false });
+  await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+  const seatExpectations = await draftSeatExpectations();
+  const employeeExpectations = await activeEmployeeExpectations();
+
+  // Inactive rows never reach the snapshot, so editing one is deliberately
+  // outside the fence — it cannot ship unreviewed changes.
+  await db.query("update public.employees set position = 'Emeritus' where id = $1", [ghost]);
+
+  await db.query("select public.publish_seat_map($1::jsonb, $2::jsonb)", [
+    JSON.stringify(seatExpectations),
+    JSON.stringify(employeeExpectations)
+  ]);
+
+  const snap = await db.query("select full_name from public.published_employees order by full_name");
+  assert.deepEqual(snap.rows.map(r => r.full_name), ["Alice"]);
+});
+
+test("publish: null employee expectations skips the employee fence (rollout back-compat)", async () => {
+  // Already-deployed application code sends only expected_draft_seats; the
+  // default-null employee parameter must keep that call working unfenced.
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
+  const seatExpectations = await draftSeatExpectations();
+
+  await db.query("update public.employees set position = 'Manager' where id = $1", [alice]);
+
+  await db.query("select public.publish_seat_map($1::jsonb)", [JSON.stringify(seatExpectations)]);
+
+  const snap = await db.query("select count(*)::int as n from public.published_employees");
+  assert.equal(snap.rows[0].n, 1);
+});
+
 test("publish: change_summary counts every change kind the client review dialog shows (Plan 005 parity)", async () => {
   // Baseline employees. Alice/Erin swap N01 (assignment change); Frank gets
   // edited between publishes; Bob is deactivated between publishes (removed);
@@ -423,6 +536,85 @@ test("import: passes the fence when expectations match the locked rows", async (
 
   const [seat] = await db.draftSeats();
   assert.equal(seat.status, "assigned");
+});
+
+test("import: fences when a NON-targeted draft seat changed out-of-band (vacate collateral, MLS02)", async () => {
+  // The regression 20260806120000 closes: assigning an employee also vacates
+  // their OTHER draft seat, so a non-targeted seat that changed since the
+  // review is exactly as stale as a targeted one. Admin B assigns Alice to
+  // N05 while admin A's import review (CSV assigning Alice to N01) is open;
+  // the old targeted-only fence passed and the import silently vacated N05.
+  const alice = await db.seedEmployee({ fullName: "Alice" });
+  await db.seedSeat({ label: "N01", status: "available" });
+  const n05 = await db.seedSeat({ label: "N05", status: "available" });
+  const expectations = await draftSeatExpectations();
+
+  // Another session's committed assignment after the CSV was parsed.
+  await db.query("update public.seats set employee_id = $1, status = 'assigned' where id = $2", [alice, n05.id]);
+
+  const rows = [{ seat_label: "N01", employee_name: "Alice", employee_email: "", position: "", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  await expectThrow(
+    db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb)", [JSON.stringify(rows), JSON.stringify(expectations)]),
+    { code: "MLS02", match: /changed in another session/ }
+  );
+
+  const seats = await db.draftSeats();
+  const byLabel = Object.fromEntries(seats.map(s => [s.label, s]));
+  assert.equal(byLabel.N05.employee_id, alice, "the other admin's assignment must survive the fenced-off import");
+  assert.equal(byLabel.N05.status, "assigned");
+  assert.equal(byLabel.N01.employee_id, null, "a fenced-off import must not mutate the targeted seat either");
+});
+
+test("import: fences on a draft seat added after the CSV was parsed (count mismatch)", async () => {
+  await db.seedSeat({ label: "N01", status: "available" });
+  const expectations = await draftSeatExpectations();
+
+  await db.seedSeat({ label: "N02", status: "available" });
+
+  const rows = [{ seat_label: "N01", employee_name: "X", employee_email: "", position: "", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  await expectThrow(
+    db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb)", [JSON.stringify(rows), JSON.stringify(expectations)]),
+    { code: "MLS02", match: /changed in another session/ }
+  );
+});
+
+test("import: fences on a draft seat deleted after the CSV was parsed (count check only)", async () => {
+  await db.seedSeat({ label: "N01", status: "available" });
+  // Custom seat: seatProtection's trigger blocks deleting original draft
+  // seats, and deletion is the scenario under test.
+  const cx01 = await db.seedSeat({ label: "CX01", key: "cx01", status: "available", isCustom: true });
+  const expectations = await draftSeatExpectations();
+
+  // A deleted row is absent from the per-row scan, so the count check is the
+  // only guard that can catch it (20260806120000).
+  await db.query("delete from public.seats where id = $1", [cx01.id]);
+
+  const rows = [{ seat_label: "N01", employee_name: "X", employee_email: "", position: "", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  await expectThrow(
+    db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb)", [JSON.stringify(rows), JSON.stringify(expectations)]),
+    { code: "MLS02", match: /draft map changed in another session/ }
+  );
+
+  const [seat] = await db.draftSeats();
+  assert.equal(seat.employee_id, null, "a fenced-off import must not mutate the remaining draft");
+});
+
+test("import: passes when whole-draft expectations match, non-targeted seats included", async () => {
+  await db.seedSeat({ label: "N01", status: "available" });
+  await db.seedSeat({ label: "N02", status: "available" });
+  const expectations = await draftSeatExpectations();
+
+  const rows = [{ seat_label: "N01", employee_name: "Fresh Person", employee_email: "", position: "", department: "", zone: "", status: "assigned", notes: "", row_number: 2 }];
+  const res = await db.query("select public.import_assignments_csv($1::jsonb, $2::jsonb) as count", [
+    JSON.stringify(rows),
+    JSON.stringify(expectations)
+  ]);
+  assert.equal(res.rows[0].count, 1);
+
+  const seats = await db.draftSeats();
+  const byLabel = Object.fromEntries(seats.map(s => [s.label, s]));
+  assert.equal(byLabel.N01.status, "assigned");
+  assert.equal(byLabel.N02.status, "available", "the untouched non-targeted seat stays as reviewed");
 });
 
 // ---------------------------------------------------------------------------

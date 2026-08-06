@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 # CodeRabbit configuration for seat-planner
 # Schema: https://docs.coderabbit.ai/reference/configuration
 #
@@ -9,13 +10,14 @@
 
 language: "en-US"
 
+# Hard limit: 250 characters after folding, or CodeRabbit rejects the WHOLE
+# file and reviews with defaults (first hit: PR #327). Longer review guidance
+# belongs in path_instructions below or docs/coderabbit-review-context.md.
 tone_instructions: >-
-  Be direct and specific. Prioritize findings in this order: (1) data-integrity
-  and correctness bugs, especially draft/published layer violations and
-  concurrency-fence gaps; (2) security boundary issues; (3) performance;
-  (4) design/UX and accessibility. For each finding, name the invariant at
-  risk, cite the file/line, and propose a concrete fix including which test
-  should cover it. Skip style nits that ESLint/TypeScript already catch.
+  Be direct. Priority: (1) data-integrity/correctness - draft/published-layer
+  violations, concurrency-fence gaps; (2) security; (3) performance;
+  (4) UX/accessibility. Name the invariant, cite file:line, propose a fix and
+  test. Skip lint-level nits.
 
 reviews:
   profile: assertive

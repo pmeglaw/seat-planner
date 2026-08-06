@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-const { listDraftSeatExpectations, isStaleDraftErrorCode, STALE_DRAFT_SQLSTATE } = await importTsModule("lib/draftConcurrency.ts");
+const { listDraftSeatExpectations, listActiveEmployeeExpectations, isStaleDraftErrorCode, STALE_DRAFT_SQLSTATE } = await importTsModule("lib/draftConcurrency.ts");
 
 function seat(id, updatedAt) {
   return { id, updated_at: updatedAt };
@@ -40,6 +40,28 @@ test("listDraftSeatExpectations tolerates seats missing updated_at", () => {
       { id: "c", updated_at: null }
     ]
   );
+});
+
+test("listActiveEmployeeExpectations fences the ship-set: active rows only, timestamps verbatim", () => {
+  // Publish snapshots only ACTIVE employees into published_employees, and the
+  // server fence count-checks the active directory — an inactive row in the
+  // payload would be a guaranteed false MLS02. The filter therefore lives in
+  // the helper, not at call sites.
+  const expectations = listActiveEmployeeExpectations([
+    { id: "a", updated_at: "2026-08-06T10:00:00.123456+00:00", active: true },
+    { id: "b", updated_at: "2026-08-06T11:00:00.000001+00:00", active: false },
+    { id: "c", updated_at: "2026-08-05T23:59:59.999999+00:00", active: true }
+  ]);
+
+  assert.deepEqual(expectations, [
+    { id: "a", updated_at: "2026-08-06T10:00:00.123456+00:00" },
+    { id: "c", updated_at: "2026-08-05T23:59:59.999999+00:00" }
+  ]);
+});
+
+test("listActiveEmployeeExpectations reports an empty or all-inactive directory as an empty list", () => {
+  assert.deepEqual(listActiveEmployeeExpectations([]), []);
+  assert.deepEqual(listActiveEmployeeExpectations([{ id: "a", updated_at: "2026-08-06T10:00:00+00:00", active: false }]), []);
 });
 
 test("isStaleDraftErrorCode matches only the fence SQLSTATE", () => {
@@ -168,9 +190,13 @@ test("publish captures the fence when the review opens and threads it to the RPC
   const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
 
   // Captured when the review dialog opens — publish ships what the admin
-  // approved, not whatever the draft becomes while the dialog sits open.
+  // approved, not whatever the draft becomes while the dialog sits open. The
+  // employee directory is fenced alongside the seats: publish replaces the
+  // published_employees snapshot in the same transaction, so people edits are
+  // reviewed state too (20260806121000).
   assert.match(seatMapSource, /setPublishReviewExpectations\(listDraftSeatExpectations\(localSeats\)\)/);
-  assert.match(seatMapSource, /publishSeatMapAction\(publishReviewExpectations\)/);
+  assert.match(seatMapSource, /setPublishReviewEmployeeExpectations\(listActiveEmployeeExpectations\(localEmployees\)\)/);
+  assert.match(seatMapSource, /publishSeatMapAction\(publishReviewExpectations, publishReviewEmployeeExpectations\)/);
 
   // A fenced-off publish routes through the shared stale-draft recovery.
   const confirmPublish = seatMapSource.match(/function confirmPublishDraftMap\(\) \{[\s\S]*?\n  \}/);
@@ -180,4 +206,5 @@ test("publish captures the fence when the review opens and threads it to the RPC
   // The action forwards the expectations verbatim (never through Date) and
   // returns MLS02 as STALE_DRAFT so the client can reload and retry.
   assert.match(actionsSource, /expected_draft_seats: expectedDraftSeats \?\? null/);
+  assert.match(actionsSource, /expected_employees: expectedEmployees \?\? null/);
 });

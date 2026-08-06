@@ -17,7 +17,7 @@
 // allow different-seat edits through, so the client's own edit becomes the
 // max and the earlier foreign edit hides beneath it).
 
-import type { Seat } from "@/lib/types";
+import type { Employee, Seat } from "@/lib/types";
 
 /** Custom SQLSTATE raised by draft RPCs when the fence detects a stale client. */
 export const STALE_DRAFT_SQLSTATE = "MLS02";
@@ -27,7 +27,12 @@ export type DraftSeatExpectation = {
   updated_at: string | null;
 };
 
+/** Same (id, updated_at) shape, checked against public.employees by publish. */
+export type EmployeeExpectation = DraftSeatExpectation;
+
 type ExpectationSource = Pick<Seat, "id" | "updated_at">;
+
+type EmployeeExpectationSource = Pick<Employee, "id" | "updated_at" | "active">;
 
 /**
  * List the (id, updated_at) pairs of the draft as the client currently holds
@@ -37,6 +42,22 @@ type ExpectationSource = Pick<Seat, "id" | "updated_at">;
  */
 export function listDraftSeatExpectations(seats: readonly ExpectationSource[]): DraftSeatExpectation[] {
   return seats.map(seat => ({ id: seat.id, updated_at: seat.updated_at ?? null }));
+}
+
+/**
+ * List the (id, updated_at) pairs of the ACTIVE employee directory as the
+ * client currently holds it — the exact set publish ships into
+ * published_employees. The active filter lives here, not at call sites, so
+ * every caller fences the ship-set: an inactive row in the payload would trip
+ * the server's active-only count check as a false positive. Timestamps are
+ * passed back verbatim, same as listDraftSeatExpectations.
+ */
+export function listActiveEmployeeExpectations(
+  employees: readonly EmployeeExpectationSource[]
+): EmployeeExpectation[] {
+  return employees
+    .filter(employee => employee.active)
+    .map(employee => ({ id: employee.id, updated_at: employee.updated_at ?? null }));
 }
 
 /** True when a Supabase/Postgres error is the draft-concurrency fence firing. */

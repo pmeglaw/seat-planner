@@ -337,7 +337,7 @@ test("publish workflow stays server-action gated and clears review history state
   assert.match(openPublishFunction[0], /if \(inspectorDirty\) \{[\s\S]*Publish review blocked: Save or discard the selected seat edits before publishing/);
   assert.match(seatMapSource, /function confirmPublishDraftMap\(\) \{[\s\S]*setActionError\(null\);\s*setActionNotice\(null\);\s*startTransition/);
   assert.match(seatMapSource, /onClick=\{confirmPublishDraftMap\}[\s\S]*disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
-  assert.match(confirmPublishFunction[0], /await publishSeatMapAction\(publishReviewExpectations\)/);
+  assert.match(confirmPublishFunction[0], /await publishSeatMapAction\(publishReviewExpectations, publishReviewEmployeeExpectations\)/);
   assert.match(confirmPublishFunction[0], /setLocalPublishedSeats\(nextPublishedSeats\)/);
   assert.match(confirmPublishFunction[0], /setDraftHistory\(clearDraftHistory\(\)\)/);
   assert.match(confirmPublishFunction[0], /setPublishReviewOpen\(false\)/);
