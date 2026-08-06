@@ -35,13 +35,22 @@ const AUTH_STEP_TIMEOUT_MS = 5_000;
 // (it must — cookies are request-bound), so the client's own JWKS cache never
 // survives to the next request. This one does (per warm runtime instance).
 // A miss or fetch failure degrades to getClaims' internal fallbacks, never to
-// an error.
+// an error — and failures back off too (the attempt stamp below), so a JWKS
+// outage costs at most one outbound fetch per retry window per instance
+// instead of quietly restoring the per-request fetch this memo exists to
+// remove. The short failure window keeps recovery fast once the endpoint
+// heals.
 const JWKS_TTL_MS = 10 * 60_000;
+const JWKS_FAILURE_RETRY_MS = 60_000;
 let cachedJwks: { keys: JWK[] } | null = null;
 let cachedJwksAt = 0;
+let lastJwksAttemptAt = 0;
 
 async function fetchProjectJwks(supabaseUrl: string): Promise<{ keys: JWK[] } | undefined> {
-  if (cachedJwks && Date.now() - cachedJwksAt < JWKS_TTL_MS) return cachedJwks;
+  const now = Date.now();
+  if (cachedJwks && now - cachedJwksAt < JWKS_TTL_MS) return cachedJwks;
+  if (now - lastJwksAttemptAt < JWKS_FAILURE_RETRY_MS) return cachedJwks ?? undefined;
+  lastJwksAttemptAt = now;
   try {
     const response = await fetch(`${supabaseUrl}/auth/v1/.well-known/jwks.json`);
     if (!response.ok) return cachedJwks ?? undefined;
@@ -101,22 +110,28 @@ export async function updateSession(request: NextRequest) {
     return response;
   }
 
-  try {
-    await Promise.race([
-      (async () => {
-        const jwks = await fetchProjectJwks(url);
-        // Valid token → local verify, no network. Expired token → getClaims
-        // refreshes the session, which rewrites the cookie via setAll above.
-        await supabase.auth.getClaims(undefined, jwks ? { jwks } : undefined);
-      })(),
-      new Promise<void>(resolve => {
-        setTimeout(resolve, AUTH_STEP_TIMEOUT_MS);
-      })
-    ]);
-  } catch {
-    // Fail open: an auth hiccup must never take the request down — the pages
-    // and server actions re-check auth themselves (layers 1–2).
-  }
+  // Fail open: an auth hiccup must never take the request down — the pages
+  // and server actions re-check auth themselves (layers 1–2). The catch is
+  // attached to the auth promise ITSELF, not to the race: when the timeout
+  // wins, the auth step is still pending, and a rejection landing after that
+  // point would otherwise have no handler and surface as a platform
+  // unhandled-rejection event — the exact hang-then-fail case the timeout
+  // exists for. The timer is cleared in both outcomes so a fast auth step
+  // doesn't leave a 5s timer keeping the invocation alive.
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const authStep = (async () => {
+    const jwks = await fetchProjectJwks(url);
+    // Valid token → local verify, no network. Expired token → getClaims
+    // refreshes the session, which rewrites the cookie via setAll above.
+    await supabase.auth.getClaims(undefined, jwks ? { jwks } : undefined);
+  })().catch(() => {});
+  await Promise.race([
+    authStep,
+    new Promise<void>(resolve => {
+      timeoutId = setTimeout(resolve, AUTH_STEP_TIMEOUT_MS);
+    })
+  ]);
+  if (timeoutId !== undefined) clearTimeout(timeoutId);
 
   return response;
 }

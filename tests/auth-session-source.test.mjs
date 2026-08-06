@@ -47,6 +47,7 @@ test("every signed-in surface mounts an identity + sign-out affordance", async (
   const shellLayout = await readSource("../app/(shell)/layout.tsx");
   const appShell = await readSource("../components/ui/AppShell.tsx");
   const rail = await readSource("../components/ui/AppRail.tsx");
+  const mapPage = await readSource("../app/(shell)/admin/page.tsx");
   const managementPage = await readSource("../app/(shell)/admin/management/page.tsx");
   const settingsPage = await readSource("../app/(shell)/admin/settings/page.tsx");
   const receptionPage = await readSource("../app/(shell)/reception/page.tsx");
@@ -66,11 +67,28 @@ test("every signed-in surface mounts an identity + sign-out affordance", async (
   assert.match(shellLayout, /<AppShell/);
   assert.match(appShell, /<AppRail/);
   assert.match(rail, /<form action="\/auth\/signout" method="post"/);
-  for (const page of [managementPage, settingsPage, receptionPage]) {
+  for (const page of [mapPage, managementPage, settingsPage, receptionPage]) {
     assert.doesNotMatch(page, /<AppRail/);
   }
   assert.doesNotMatch(seatMap, /<AppRail/);
   assert.match(viewer, /<AccountMenu/);
+});
+
+test("the middleware matcher covers every auth-bearing route", async () => {
+  const source = await readSource("../middleware.ts");
+
+  // The matcher is an explicit allowlist now (nav-lag fix): dropping a route
+  // from it silently stops session-cookie refresh there — sessions would
+  // quietly expire mid-use with no other failing test. Pin each surface the
+  // session layer serves. (/api/build-id and static assets are deliberately
+  // NOT matched — the deploy-skew probe is unauthenticated and data-free.)
+  const matcherArray = source.match(/matcher: \[([^\]]*)\]/)?.[1] ?? "";
+  for (const route of ['"/"', '"/admin/:path*"', '"/reception"', '"/login"', '"/auth/:path*"']) {
+    assert.ok(matcherArray.includes(route), `middleware matcher must include ${route}`);
+  }
+  // The deploy-skew probe stays out: auth work on /api/build-id was pure
+  // latency on a data-free, unauthenticated endpoint.
+  assert.ok(!matcherArray.includes("build-id"), "matcher must not cover /api/build-id");
 });
 
 test("the login page recognizes an existing session instead of re-asking for credentials", async () => {

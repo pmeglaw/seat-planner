@@ -143,17 +143,30 @@ type InspectorGuardAction =
   | { kind: "start-move-employee" }
   | { kind: "navigate-admin-page"; href: GuardedNavigationHref; destination: string };
 
-// Whitelisted in-app destinations for the unsaved-edits guard. Query-string
-// variants must be listed explicitly so the guard stays a closed set. "/admin"
-// itself joined the union in v12: AppRail's "Seat map" item targets the
-// current page and routes through this same guard (a no-op when clean).
-type GuardedNavigationHref =
-  | "/"
-  | "/admin"
-  | "/admin/management"
-  | "/admin/management?tab=publishHistory"
-  | "/admin/settings"
-  | "/reception";
+// Whitelisted in-app destinations for the unsaved-edits guard — the closed
+// set of every href the rail can emit (query-string variants listed
+// explicitly). "/admin" itself joined in v12: AppRail's "Seat map" item
+// targets the current page and routes through this same guard (a no-op when
+// clean). The Ask Planner fallback href is a member too: the rail renders
+// that <Link> only when no opener (and therefore no guard) is registered, so
+// the guard never actually receives it today — but the type must not depend
+// on that non-local coincidence, which is also why registration narrows via
+// isGuardedNavigationHref instead of asserting.
+const GUARDED_NAVIGATION_HREFS = [
+  "/",
+  "/admin",
+  "/admin?ask-planner=open",
+  "/admin/management",
+  "/admin/management?tab=publishHistory",
+  "/admin/settings",
+  "/reception"
+] as const;
+
+type GuardedNavigationHref = (typeof GUARDED_NAVIGATION_HREFS)[number];
+
+function isGuardedNavigationHref(href: string): href is GuardedNavigationHref {
+  return (GUARDED_NAVIGATION_HREFS as readonly string[]).includes(href);
+}
 
 type MapViewMode = "overview" | "detail";
 
@@ -551,7 +564,12 @@ export function SeatMap({
   // Both closures are read fresh via the hook's ref, and the registration
   // clears itself when this page unmounts.
   useAppShellNavigation({
-    guard: (href, label) => beforeGuardedNavigation(href as GuardedNavigationHref, label),
+    // The rail's contract is `string`; narrow instead of asserting. An href
+    // outside the closed set is not a guarded admin destination and navigates
+    // without the veto — today the set mirrors everything the rail can emit,
+    // so this branch only exists for hrefs a future rail adds before this
+    // list learns about them.
+    guard: (href, label) => (isGuardedNavigationHref(href) ? beforeGuardedNavigation(href, label) : true),
     openAskPlanner: openAskPlannerDrawer
   });
 

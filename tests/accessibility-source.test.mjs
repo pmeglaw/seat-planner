@@ -28,9 +28,12 @@ test("viewer route renders the published map as read-only", async () => {
   assert.match(adminSource, /publishedSeats=\{publishedSeats\}/);
   // canEdit stays the literal flag (never an expression). Identity moved off
   // this component entirely — the persistent shell's rail owns the account
-  // cell now — so the flag stands alone on its line.
+  // cell now — so the flag stands alone on its line, and the identity props
+  // this migration removed must not quietly return as a second identity
+  // surface outside AppShell.
   assert.match(adminSource, /\n\s*canEdit\s*\n/);
   assert.doesNotMatch(adminSource, /canEdit=\{/);
+  assert.doesNotMatch(adminSource, /accountEmail|accountRoleLabel/);
 });
 
 test("admin planning shell exposes status, panel relationships, and undo redo explanations", async () => {
@@ -64,7 +67,7 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   // AppShell hands the registered guard to AppRail — so Settings, like every
   // other in-app destination, cannot bypass the unsaved-edits guard,
   // whichever rail item reaches it.
-  assert.match(source, /useAppShellNavigation\(\{\s*guard: \(href, label\) => beforeGuardedNavigation\(href as GuardedNavigationHref, label\)/);
+  assert.match(source, /useAppShellNavigation\(\{[\s\S]{0,420}guard: \(href, label\) => \(isGuardedNavigationHref\(href\) \? beforeGuardedNavigation\(href, label\) : true\)/);
   const appShellSourceForGuard = await readSource("../components/ui/AppShell.tsx");
   assert.match(appShellSourceForGuard, /<AppRail[\s\S]{0,400}onNavigate=\{handlers\?\.guard\}/);
   // Settings must never appear as an unguarded peer link on the map surface
@@ -521,7 +524,7 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   // on. (The rail mounts in the persistent AppShell now; SeatMap registers
   // the guard via useAppShellNavigation, and AppShell's own suite +
   // app-rail.test.mjs verify the rail honors it.)
-  assert.match(source, /useAppShellNavigation\(\{\s*guard: \(href, label\) => beforeGuardedNavigation\(href as GuardedNavigationHref, label\)/);
+  assert.match(source, /useAppShellNavigation\(\{[\s\S]{0,420}guard: \(href, label\) => \(isGuardedNavigationHref\(href\) \? beforeGuardedNavigation\(href, label\) : true\)/);
   // And the browser-owned path (tab close / hard navigation) arms beforeunload
   // while the inspector is dirty.
   assert.match(source, /window\.addEventListener\("beforeunload", warnBeforeUnload\)/);

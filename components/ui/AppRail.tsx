@@ -135,22 +135,39 @@ export function AppRail({
   // Adjust-state-during-render on purpose, not an effect: React re-renders
   // immediately with the closed state, so the stale overlay never paints.
   const [lastPathname, setLastPathname] = useState(pathname);
+  const accountOpenLastCommitRef = useRef(false);
   if (lastPathname !== pathname) {
     setLastPathname(pathname);
     setOpen(false);
     setAccountOpen(false);
   }
   // Route committed, part 2 — the client router is provably alive: disarm the
-  // watchdog. Also re-probe deploy skew on every route change: the detector
-  // throttles itself to one fetch/min, so this keeps the pre-shell "probe on
-  // page mount" cadence without per-navigation cost.
+  // watchdog. Restore keyboard focus if closing the account menu stranded it:
+  // the menu's focused menuitem unmounts with the menu (back/forward while it
+  // is open), dropping focus to <body> with no way back — every other
+  // dismissal path refocuses the trigger, so this one must too. The ref reads
+  // the PREVIOUS commit's open state (see the mirror effect below), and the
+  // <body> check keeps a click-driven navigation from having its focus yanked
+  // off the clicked rail item. Also re-probe deploy skew on every route
+  // change: the detector throttles itself to one fetch/min, so this keeps
+  // the pre-shell "probe on page mount" cadence without per-navigation cost.
   useEffect(() => {
     if (navWatchdogRef.current !== null) {
       window.clearTimeout(navWatchdogRef.current);
       navWatchdogRef.current = null;
     }
+    if (accountOpenLastCommitRef.current && document.activeElement === document.body) {
+      accountTriggerRef.current?.focus();
+    }
     void skewDetector.check();
   }, [pathname, skewDetector]);
+  // Mirror accountOpen into the ref AFTER the pathname effect — declaration
+  // order is load-bearing: same-commit effects run top-down, so on the commit
+  // that closes the menu the pathname effect still sees the pre-navigation
+  // value (true) before this line overwrites it with the closed state.
+  useEffect(() => {
+    accountOpenLastCommitRef.current = accountOpen;
+  });
   // Deploy-skew probes: merging to main flips the prod alias under open tabs,
   // after which soft navigations fetch RSC from the NEW build and the router
   // falls back with a dead-feeling click + late full reload (2026-08-05

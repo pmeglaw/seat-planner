@@ -260,6 +260,23 @@ test("without onOpenAskPlanner, the AI item is a plain link to /admin?ask-planne
   assert.equal(aiLink.getAttribute("href"), "/admin?ask-planner=open");
 });
 
+// The AI fallback link goes through the SAME onNavigate wiring as the nav
+// items, so its query href is part of the guard's contract — SeatMap's
+// GUARDED_NAVIGATION_HREFS closed set must include it (the registration
+// narrows with isGuardedNavigationHref rather than asserting a union).
+test("the AI link routes its query href through onNavigate", async () => {
+  const calls = [];
+  await renderRail({
+    onNavigate: (href, label) => {
+      calls.push([href, label]);
+      return true;
+    }
+  });
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: /Ask Planner/ })));
+  assert.deepEqual(calls, [["/admin?ask-planner=open", "Ask Planner"]]);
+  assert.deepEqual(pushed, ["/admin?ask-planner=open"]);
+});
+
 // The nav watchdog (stalled-transition fallback) must never arm on a modified
 // click: the browser opens a new tab, and a 4s window.location.assign on the
 // ORIGINAL page would hijack it into a navigation the user never made. The
@@ -435,6 +452,26 @@ test("a committed route change disarms the pending nav watchdog", async () => {
     window.clearTimeout = originalClearTimeout;
   }
   assert.ok(cleared.includes(armed[0]), "the committed navigation must clear the armed watchdog timer");
+});
+
+// A route commit (back/forward with the menu open) unmounts the account
+// menu's focused menuitem. Every other dismissal restores focus to the
+// trigger; this path must too, or keyboard focus falls to <body>.
+test("a route commit that closes the account menu returns focus to the trigger", async () => {
+  configureContext({ router: { push: href => pushed.push(href) }, pathname: "/admin" });
+  const props = { active: "map", email: "jane@example.com", roleLabel: "Admin" };
+  const utils = await renderElement(React.createElement(AppRail, props));
+
+  const trigger = screen.getByRole("button", { name: "Account — jane@example.com" });
+  await act(async () => fireEvent.click(trigger));
+  const menu = screen.getByRole("menu", { name: "Account" });
+  assert.equal(document.activeElement, within(menu).getAllByRole("menuitem")[0]);
+
+  setPathname("/admin/management");
+  await act(async () => utils.rerender(React.createElement(AppRail, props)));
+
+  assert.equal(screen.queryByRole("menu", { name: "Account" }), null, "the route commit must close the menu");
+  assert.equal(document.activeElement, trigger, "focus must land back on the account trigger, not <body>");
 });
 
 // The firing path — previously untestable: the watchdog called bare
