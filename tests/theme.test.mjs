@@ -26,9 +26,15 @@ test("the boot script and the toggle both build from lib/theme, never raw litera
   assert.match(layoutSource, /from "@\/lib\/theme"/);
   assert.match(layoutSource, /\$\{THEME_STORAGE_KEY\}/);
   assert.match(layoutSource, /\$\{THEME_DARK\}/);
-  assert.doesNotMatch(layoutSource, /['"]sp-theme['"]/);
+  // No raw copies of ANY shared value — a quoted "dark" that drifts past a
+  // lib/theme.ts change is exactly the bug this file exists to prevent.
+  // (Scans raw source, comments included: keep prose free of quoted values.)
+  assert.doesNotMatch(layoutSource, /(['"`])(?:sp-theme|dark|light)\1/);
 
-  // The toggle imports the same constants; no private copies.
+  // The toggle imports and uses the same constants; no private copies.
   assert.match(toggleSource, /from "@\/lib\/theme"/);
-  assert.doesNotMatch(toggleSource, /['"]sp-theme['"]/);
+  assert.match(toggleSource, /\bTHEME_STORAGE_KEY\b/);
+  assert.match(toggleSource, /\bTHEME_DARK\b/);
+  assert.match(toggleSource, /\bTHEME_LIGHT\b/);
+  assert.doesNotMatch(toggleSource, /(['"`])(?:sp-theme|dark|light)\1/);
 });

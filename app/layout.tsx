@@ -18,8 +18,8 @@ const plexMono = IBM_Plex_Mono({
   display: "swap"
 });
 
-// App-wide theme boot (Reception handoff): html[data-theme="dark"] is THE
-// global theme switch — today only Reception's --r-* tokens react to it, so
+// App-wide theme boot (Reception handoff): html[data-theme] set to THEME_DARK
+// is THE global theme switch — today only Reception's --r-* tokens react, so
 // every other surface renders identically until it grows dark tokens. Runs
 // synchronously before paint to avoid a light flash; suppressHydrationWarning
 // on <html> covers the server-markup mismatch this deliberately creates. The
