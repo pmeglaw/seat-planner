@@ -118,3 +118,14 @@ test("server-side secure detection reads the forwarded scheme", () => {
   assert.match(middlewareClient, /x-forwarded-proto/);
   assert.doesNotMatch(withoutComments(middlewareClient), /nextUrl\.protocol/);
 });
+
+test("the middleware anonymous-skip matches the documented Supabase cookie name", () => {
+  // The nav-lag fix skips the auth step for requests carrying no Supabase
+  // cookie. That skip keys on the `sb-` prefix of the default
+  // `sb-<project>-auth-token` cookie cookieOptions.ts documents. If the
+  // cookie is ever renamed (a custom storageKey), this guard would silently
+  // skip session refresh for EVERY user — sessions would just expire mid-use
+  // — so pin the two files' shared assumption to each other.
+  assert.match(cookieOptions, /sb-<project>-auth-token/);
+  assert.match(middlewareClient, /startsWith\("sb-"\)/);
+});

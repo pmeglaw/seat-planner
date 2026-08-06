@@ -48,7 +48,7 @@ test("desktop marker redesign stays clear of data auth publish and route boundar
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../app/page.tsx");
   const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
-  const managementSource = await readSource("../app/admin/management/page.tsx");
+  const managementSource = await readSource("../app/(shell)/admin/management/page.tsx");
 
   assert.match(viewerSource, /\.eq\("layer", "published"\)/);
   assert.match(viewerSource, /<ViewerSeatFinder/);

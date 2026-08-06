@@ -61,15 +61,25 @@ export function setUrl(path) {
 }
 
 // Set the test doubles the mocked modules delegate to. Called from beforeEach.
-export function configureContext({ router, supabase, actions, navigation } = {}) {
+export function configureContext({ router, supabase, actions, navigation, pathname } = {}) {
   globalThis.__ct = {
     router: { push() {}, replace() {}, refresh() {}, back() {}, prefetch() {}, ...router },
     supabase: supabase ?? { auth: {} },
     actions: actions ?? {},
     // Full-document navigation double (@/lib/fullNavigation) — mocked because
     // jsdom's Location is unforgeable, so the real assign can't be stubbed.
-    navigation: { assign() {}, ...navigation }
+    navigation: { assign() {}, ...navigation },
+    // What the next/navigation usePathname mock returns. Components only see
+    // a change on their next render — pair setPathname() with a rerender to
+    // simulate a route commit.
+    pathname: pathname ?? "/"
   };
+}
+
+// Simulate the router committing a navigation: the next render observes the
+// new pathname (usePathname is read-per-render, exactly like the real hook).
+export function setPathname(pathname) {
+  globalThis.__ct.pathname = pathname;
 }
 
 // Server/framework boundaries replaced at bundle time. All delegate to
@@ -92,7 +102,7 @@ const ACTION_EXPORTS = [
 const STANDARD_MOCKS = {
   "next/navigation": `
     export const useRouter = () => globalThis.__ct.router;
-    export const usePathname = () => "/";
+    export const usePathname = () => globalThis.__ct.pathname ?? "/";
     export const useSearchParams = () => new URLSearchParams(window.location.search);
     export const redirect = () => {};
   `,

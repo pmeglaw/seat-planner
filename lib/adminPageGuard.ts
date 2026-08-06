@@ -1,25 +1,18 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionContext } from "@/lib/serverAuth";
 
 // Shared prologue for the /admin* pages: refresh-safe client, login redirect,
 // and the profiles.role check. This is UX-layer gating only — RLS and the
 // per-action requireAdmin() remain the enforced boundary (CLAUDE.md).
+// The auth probe + role lookup live in getSessionContext (React-cache()d), so
+// the (shell) layout's rail chrome and this per-page guard share ONE pair of
+// Supabase round-trips per server render.
 export async function getAdminPageContext(nextPath: string) {
   await connection();
-  const supabase = await createClient();
-
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const { supabase, user, role } = await getSessionContext();
 
   if (!user) redirect(`/login?next=${nextPath}`);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  return { supabase, isAdmin: profile?.role === "admin", user };
+  return { supabase, isAdmin: role === "admin", user };
 }

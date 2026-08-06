@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { ReceptionScreen } from "@/components/reception/ReceptionScreen";
-import { AdminShellBar } from "@/components/ui/AdminShellBar";
-import { AppRail } from "@/components/ui/AppRail";
 import { buildReceptionDirectory } from "@/lib/receptionDirectory";
 import { fetchAllRows } from "@/lib/fetchAllRows";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionContext } from "@/lib/serverAuth";
 import type { Employee, Seat } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -18,22 +16,20 @@ export const revalidate = 0;
 // snapshot) + layer='published' seats. Never the live employees table, never
 // draft seats — extension/directory edits reach this screen at the next
 // publish, exactly like seat edits reach the viewer map.
+//
+// The rail + brand bar come from the (shell) layout's persistent AppShell
+// (which also owns the rail flavor: admins get the full nav, viewers the
+// role-safe rail). getSessionContext is React-cache()d, so this page's user
+// check shares the layout's single auth probe.
 export default async function ReceptionPage() {
   await connection();
-  const supabase = await createClient();
-
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSessionContext();
 
   if (!user) redirect("/login?next=/reception");
 
-  // UX-only role lookup: picks the rail flavor (admins get the full admin
-  // nav, viewers a role-safe rail). RLS stays the enforced boundary.
-  // All three queries only need user.id, so they fire together — serial
+  // Both queries only need the session, so they fire together — serial
   // awaits stacked round-trips into this force-dynamic render.
-  const [profileResult, seats, employees] = await Promise.all([
-    supabase.from("profiles").select("role").eq("id", user.id).single(),
+  const [seats, employees] = await Promise.all([
     fetchAllRows<Seat>(
       (from, to) =>
         supabase
@@ -55,24 +51,16 @@ export default async function ReceptionPage() {
       { label: "published employees" }
     )
   ]);
-  const { data: profile } = profileResult;
-  const isAdmin = profile?.role === "admin";
 
   const people = buildReceptionDirectory(employees, seats);
 
   return (
-    // pl-12 clears the fixed v12 left rail (mirrors the admin sub-pages).
-    <main className="reception-theme min-h-screen bg-[var(--r-bg)] pl-12 text-[var(--r-text)]">
-      <AppRail
-        active="reception"
-        railMode={isAdmin ? "admin" : "viewer"}
-        email={user.email ?? ""}
-        roleLabel={isAdmin ? "Admin" : "Viewer"}
-        skipLink={{ href: "#reception-main", label: "Skip to content" }}
-      />
-      <AdminShellBar />
-      {/* Skip-link landing: focusable zero-height marker (same pattern as the
-          admin sub-pages). */}
+    // pl-12 clears the fixed rail; the svh calc offsets the AdminShellBar the
+    // shell renders above this pane (both live in the (shell) layout now).
+    <main className="reception-theme min-h-[calc(100svh-var(--admin-chrome-h))] bg-[var(--r-bg)] pl-12 text-[var(--r-text)]">
+      {/* Skip-link landing: focusable zero-height marker (the link itself is
+          the persistent rail's first focusable — AppShell maps this route to
+          #reception-main). */}
       <div id="reception-main" tabIndex={-1} className="outline-none" />
       <ReceptionScreen people={people} />
     </main>

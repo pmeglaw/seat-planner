@@ -59,6 +59,23 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: __dirname,
+  experimental: {
+    // Client Router Cache for the force-dynamic sections: a section visited in
+    // the last 2 minutes re-renders instantly from the cached RSC payload
+    // instead of re-running auth + queries on every rail click.
+    //
+    // Freshness scope — be precise, because none of these mechanisms crosses
+    // browsers: revalidatePath purges the router cache of the tab that ran
+    // the action, router.refresh() runs in the tab that hit the stale-draft
+    // fence, and OTHER users' browsers keep their own in-memory cache for up
+    // to these 120 seconds. That cross-browser staleness is an accepted
+    // product tradeoff: reads between browsers were never live (they always
+    // waited for the next document load or navigation), and the MLS02
+    // concurrency fence rejects writes from genuinely stale drafts regardless
+    // of what was displayed — so the window costs at most two minutes of
+    // display lag on revisited routes, never data integrity.
+    staleTimes: { dynamic: 120 }
+  },
   // Deploy-skew detection (lib/deploySkew.ts): bake the deployment's commit
   // sha into both bundles at build time. Vercel exposes VERCEL_GIT_COMMIT_SHA
   // during builds; locally it is absent and both sides fall back to "dev",

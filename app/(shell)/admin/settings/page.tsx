@@ -1,6 +1,4 @@
 import { DataUtilitiesPanel } from "@/components/admin-settings/DataUtilitiesPanel";
-import { AdminShellBar } from "@/components/ui/AdminShellBar";
-import { AppRail } from "@/components/ui/AppRail";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
@@ -9,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AdminSettingsPage() {
-  const { supabase, isAdmin, user } = await getAdminPageContext("/admin/settings");
+  const { supabase, isAdmin } = await getAdminPageContext("/admin/settings");
 
   if (!isAdmin) {
     return (
@@ -66,16 +64,12 @@ export default async function AdminSettingsPage() {
   ]);
 
   return (
-    // pl-12 clears the v12 left rail, which is position:fixed and does not
-    // participate in this layout (mirrors SeatMap.tsx's root).
-    <main className="admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12">
-      <AppRail
-        active="settings"
-        email={user.email ?? ""}
-        roleLabel="Admin"
-        skipLink={{ href: "#admin-subpage-main", label: "Skip to content" }}
-      />
-      <AdminShellBar />
+    // pl-12 clears the v12 left rail — position:fixed, mounted by the (shell)
+    // layout's persistent AppShell along with the AdminShellBar above this
+    // pane (hence the svh calc: bar height comes off the pane's min-height).
+    // The skip link itself lives in the rail (AppShell maps this route to
+    // #admin-subpage-main); this page owns the landing marker below.
+    <main className="admin-theme min-h-[calc(100svh-var(--admin-chrome-h))] bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12">
       {/* Skip-link landing: focusable zero-height marker; the next Tab enters
           the panel content. */}
       <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />

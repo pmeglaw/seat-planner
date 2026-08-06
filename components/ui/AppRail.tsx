@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link, { useLinkStatus } from "next/link";
+import { usePathname } from "next/navigation";
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
@@ -11,12 +12,20 @@ import { assignLocation } from "@/lib/fullNavigation";
 // v12 left rail (design_handoff_carbon_v12 §structural move 1, prototype lines
 // 25-60). 48px collapsed column, full viewport height, 208px overlay when
 // expanded; item click / outside click / Escape collapse it. Nav items are
-// <Link>s (prefetch deliberately OFF — see the prefetch={false} note below)
-// so they navigate natively before hydration — see handleNavClick
+// <Link>s with default (auto) prefetch — see the prefetch note on the nav
+// items — so they navigate natively before hydration; see handleNavClick
 // for how the onNavigate veto rides preventDefault. Owner rulings
 // 2026-07-31: this geometry (not concepts/nav-rail's 36px), account lives in
 // the rail bottom cell. People item lands with the People panel slice — see
 // the breadcrumb on NAV_ITEMS below.
+//
+// Since the persistent shell (components/ui/AppShell.tsx, mounted by
+// app/(shell)/layout.tsx) this rail is created ONCE per document load and
+// SURVIVES client-side navigation — pages no longer mount their own copies.
+// Everything keyed to "the rail unmounts on a successful nav" moved to the
+// pathname effect below: it disarms the stalled-nav watchdog, collapses the
+// overlay drawer so it can't linger over the incoming page, and closes the
+// account menu.
 //
 // Icon sizing follows the plan's restated constraint (17px, stroke 1.5,
 // hamburger 1.6) rather than the raw prototype markup, which used 16px for
@@ -87,6 +96,7 @@ export function AppRail({
   skipLink,
   skewDetector = deploySkewMonitor
 }: AppRailProps) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement | null>(null);
@@ -105,9 +115,13 @@ export function AppRail({
   // logs show the 200) but the transition never committed — URL frozen,
   // second click deduped onto the stuck nav, main thread idle. A full
   // document navigation always recovered. So: if the URL hasn't moved 4s
-  // after an allowed click, do the full navigation. Successful transitions
-  // unmount this rail (each page mounts its own), and the cleanup clears
-  // the timer, so the fallback only ever fires on a genuinely stuck nav.
+  // after an allowed click, do the full navigation. This rail now PERSISTS
+  // across navigations (AppShell), so unmount cleanup can't be the disarm
+  // anymore — the pathname effect below clears the timer the moment ANY
+  // route commits (the router is provably alive, including back/forward,
+  // which must never be hijacked by a stale timer), leaving the fallback to
+  // fire only on a genuinely stuck nav. The unmount cleanup stays for the
+  // document-load / test teardown cases.
   const navWatchdogRef = useRef<number | null>(null);
   useEffect(
     () => () => {
@@ -115,14 +129,54 @@ export function AppRail({
     },
     []
   );
+  // Route committed, part 1 — transient chrome. Close the overlay drawer +
+  // account menu the moment the pathname changes so neither lingers over the
+  // incoming page (the pre-shell rail got this for free by unmounting).
+  // Adjust-state-during-render on purpose, not an effect: React re-renders
+  // immediately with the closed state, so the stale overlay never paints.
+  const [lastPathname, setLastPathname] = useState(pathname);
+  const accountOpenLastCommitRef = useRef(false);
+  if (lastPathname !== pathname) {
+    setLastPathname(pathname);
+    setOpen(false);
+    setAccountOpen(false);
+  }
+  // Route committed, part 2 — the client router is provably alive: disarm the
+  // watchdog. Restore keyboard focus if closing the account menu stranded it:
+  // the menu's focused menuitem unmounts with the menu (back/forward while it
+  // is open), dropping focus to <body> with no way back — every other
+  // dismissal path refocuses the trigger, so this one must too. The ref reads
+  // the PREVIOUS commit's open state (see the mirror effect below), and the
+  // <body> check keeps a click-driven navigation from having its focus yanked
+  // off the clicked rail item. Also re-probe deploy skew on every route
+  // change: the detector throttles itself to one fetch/min, so this keeps
+  // the pre-shell "probe on page mount" cadence without per-navigation cost.
+  useEffect(() => {
+    if (navWatchdogRef.current !== null) {
+      window.clearTimeout(navWatchdogRef.current);
+      navWatchdogRef.current = null;
+    }
+    if (accountOpenLastCommitRef.current && document.activeElement === document.body) {
+      accountTriggerRef.current?.focus();
+    }
+    void skewDetector.check();
+  }, [pathname, skewDetector]);
+  // Mirror accountOpen into the ref AFTER the pathname effect — declaration
+  // order is load-bearing: same-commit effects run top-down, so on the commit
+  // that closes the menu the pathname effect still sees the pre-navigation
+  // value (true) before this line overwrites it with the closed state.
+  useEffect(() => {
+    accountOpenLastCommitRef.current = accountOpen;
+  });
   // Deploy-skew probes: merging to main flips the prod alias under open tabs,
   // after which soft navigations fetch RSC from the NEW build and the router
   // falls back with a dead-feeling click + late full reload (2026-08-05
   // incident; Vercel Skew Protection would cover this but needs Pro). Probe on
-  // mount (every page mounts its own rail, so this also covers "arrived on a
-  // fresh page"), on tab focus/visibility (deploys land while the tab is
-  // backgrounded), and on a slow interval for always-focused tabs. The
-  // detector throttles to one fetch/min and goes quiet once skew is known.
+  // mount (once per document load now that the rail persists in AppShell), on
+  // every route commit (the pathname effect above), on tab focus/visibility
+  // (deploys land while the tab is backgrounded), and on a slow interval for
+  // always-focused tabs. The detector throttles to one fetch/min and goes
+  // quiet once skew is known.
   useEffect(() => {
     const check = () => {
       void skewDetector.check();
@@ -164,12 +218,12 @@ export function AppRail({
   }, [open, collapse]);
 
   // Nav items are real <Link>s (not buttons + router.push) so they navigate
-  // natively before hydration and stream the loading boundary on click.
-  // Prefetch is deliberately disabled — see the prefetch={false} note on the
-  // nav items. The veto contract survives as preventDefault: Link's own
-  // click handler bails when default is prevented. Modified clicks
-  // (new tab/window) bypass both the collapse and the guard — the current
-  // page, and any unsaved edits, stay put.
+  // natively before hydration and stream the loading boundary on click, with
+  // default (auto) prefetch — see the prefetch note on the nav items. The
+  // veto contract survives as preventDefault: Link's own click handler bails
+  // when default is prevented. Modified clicks (new tab/window) bypass both
+  // the collapse and the guard — the current page, and any unsaved edits,
+  // stay put.
   function handleNavClick(event: ReactMouseEvent<HTMLAnchorElement>, href: string, label: string) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
     collapse(false);
@@ -330,15 +384,16 @@ export function AppRail({
           <Link
             key={item.key}
             href={item.href}
-            // prefetch={false} is load-bearing, not a missed optimization:
-            // with default prefetch every page load fired 2 dynamic RSC
-            // prefetches per rail item (8+ lambda invocations), and clicking
-            // while the target's prefetch was still in flight intermittently
-            // wedged the client router — the nav's RSC 200 arrived and never
-            // committed (reproduced on prod 2026-08-05; Vercel logs show the
-            // response, the router sat 45s+). Fresh-fetch nav costs ~1s with
-            // the pages' parallel queries; useLinkStatus pulses immediately.
-            prefetch={false}
+            // Default (auto) prefetch, restored deliberately: the old
+            // prefetch={false} existed because every PAGE remounted its own
+            // rail, so each navigation refired 2 dynamic RSC prefetches per
+            // item (8+ lambda invocations/page), and clicking mid-prefetch
+            // intermittently wedged the router (prod 2026-08-05 — the 4s nav
+            // watchdog above still backstops that). With the rail persistent
+            // in AppShell it mounts once per document load, and auto prefetch
+            // for these dynamic routes fetches only down to each section's
+            // loading boundary — a handful of tiny requests per session that
+            // make the click paint its skeleton instantly.
             title={item.label}
             aria-current={item.key === active ? "page" : undefined}
             onClick={event => handleNavClick(event, item.href, item.label)}
@@ -371,7 +426,6 @@ export function AppRail({
         ) : (
           <Link
             href="/admin?ask-planner=open"
-            prefetch={false}
             title="Ask Planner (AI)"
             // handleNavClick, not a bare collapse: the modifier guard must
             // run first, or a ctrl-click (new tab) would still arm the
@@ -386,7 +440,6 @@ export function AppRail({
         )}
         <Link
           href="/"
-          prefetch={false}
           title="Viewer — published map"
           aria-label="Open viewer surface"
           onClick={event => handleNavClick(event, "/", "the viewer")}

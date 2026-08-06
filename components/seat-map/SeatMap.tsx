@@ -85,7 +85,7 @@ import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { buildZoneWash } from "@/lib/zoneWash";
-import { AppRail } from "@/components/ui/AppRail";
+import { useAppShellNavigation } from "@/components/ui/AppShell";
 import { adminChromeDividerRule } from "@/components/ui/adminChrome";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
 import { CloseIcon } from "@/components/ui/CloseIcon";
@@ -94,6 +94,8 @@ import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 import { SEAT_SEARCH_PLACEHOLDER, searchHandsPanelToResults } from "@/lib/viewerSeatSearch";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
+import { deploySkewMonitor } from "@/lib/deploySkew";
+import { assignLocation } from "@/lib/fullNavigation";
 
 type SeatMapProps = {
   seats: SeatWithEmployee[];
@@ -105,10 +107,6 @@ type SeatMapProps = {
   departmentOptions?: DepartmentOption[];
   zoneOptions?: ZoneOption[];
   canEdit: boolean;
-  // Signed-in identity for the account menu; absent on unauthenticated
-  // prototype routes, which keep the decorative chip instead.
-  accountEmail?: string | null;
-  accountRoleLabel?: string;
 };
 
 type SwapConfirmState = {
@@ -145,17 +143,30 @@ type InspectorGuardAction =
   | { kind: "start-move-employee" }
   | { kind: "navigate-admin-page"; href: GuardedNavigationHref; destination: string };
 
-// Whitelisted in-app destinations for the unsaved-edits guard. Query-string
-// variants must be listed explicitly so the guard stays a closed set. "/admin"
-// itself joined the union in v12: AppRail's "Seat map" item targets the
-// current page and routes through this same guard (a no-op when clean).
-type GuardedNavigationHref =
-  | "/"
-  | "/admin"
-  | "/admin/management"
-  | "/admin/management?tab=publishHistory"
-  | "/admin/settings"
-  | "/reception";
+// Whitelisted in-app destinations for the unsaved-edits guard — the closed
+// set of every href the rail can emit (query-string variants listed
+// explicitly). "/admin" itself joined in v12: AppRail's "Seat map" item
+// targets the current page and routes through this same guard (a no-op when
+// clean). The Ask Planner fallback href is a member too: the rail renders
+// that <Link> only when no opener (and therefore no guard) is registered, so
+// the guard never actually receives it today — but the type must not depend
+// on that non-local coincidence, which is also why registration narrows via
+// isGuardedNavigationHref instead of asserting.
+const GUARDED_NAVIGATION_HREFS = [
+  "/",
+  "/admin",
+  "/admin?ask-planner=open",
+  "/admin/management",
+  "/admin/management?tab=publishHistory",
+  "/admin/settings",
+  "/reception"
+] as const;
+
+type GuardedNavigationHref = (typeof GUARDED_NAVIGATION_HREFS)[number];
+
+function isGuardedNavigationHref(href: string): href is GuardedNavigationHref {
+  return (GUARDED_NAVIGATION_HREFS as readonly string[]).includes(href);
+}
 
 type MapViewMode = "overview" | "detail";
 
@@ -302,9 +313,7 @@ export function SeatMap({
   publishedEmployees = DEFAULT_PUBLISHED_EMPLOYEES,
   departmentOptions = [],
   zoneOptions = [],
-  canEdit,
-  accountEmail = null,
-  accountRoleLabel
+  canEdit
 }: SeatMapProps) {
   const router = useRouter();
   const [localSeats, setLocalSeats] = useState(() => normalizeSeats(seats));
@@ -547,6 +556,22 @@ export function SeatMap({
     setInspectorCollapsed(true);
     setAskPlannerOpen(true);
   }, [inspectorCollapsed, selectedSeatId]);
+
+  // Plug this surface into the persistent rail (AppShell, mounted by the
+  // (shell) layout): the unsaved-edits veto covers EVERY rail destination
+  // through one generic callback — there is no per-link call site to forget
+  // the guard on — and Ask Planner opens in place instead of navigating.
+  // Both closures are read fresh via the hook's ref, and the registration
+  // clears itself when this page unmounts.
+  useAppShellNavigation({
+    // The rail's contract is `string`; narrow instead of asserting. An href
+    // outside the closed set is not a guarded admin destination and navigates
+    // without the veto — today the set mirrors everything the rail can emit,
+    // so this branch only exists for hrefs a future rail adds before this
+    // list learns about them.
+    guard: (href, label) => (isGuardedNavigationHref(href) ? beforeGuardedNavigation(href, label) : true),
+    openAskPlanner: openAskPlannerDrawer
+  });
 
   // ?ask-planner=open contract (v12): a sub-page's AI rail item falls back to
   // <Link href="/admin?ask-planner=open"> when onOpenAskPlanner is absent
@@ -1294,7 +1319,15 @@ export function SeatMap({
       return;
     }
 
-    window.location.assign(action.href);
+    // Guarded navigation, resumed after save/discard. Soft on purpose — the
+    // persistent rail stays mounted and the destination streams its skeleton
+    // — with the same deliberate full-document downgrade AppRail applies when
+    // this tab's bundle no longer matches the live deployment.
+    if (deploySkewMonitor.isSkewed()) {
+      assignLocation(action.href);
+      return;
+    }
+    router.push(action.href);
   }
 
   function requestInspectorGuard(action: InspectorGuardAction) {
@@ -2768,19 +2801,11 @@ export function SeatMap({
        past svh — the root would stretch below the map's bottom edge and reopen
        the dead band that height exists to close. */
     <div className="flex min-h-[100svh] flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12 lg:h-screen lg:min-h-0 lg:overflow-hidden">
-      {/* onNavigate is veto-only (contract from AppRail's own interface):
-          true lets AppRail run its own router.push, false means a dirty
-          inspector intercepted it and the unsaved-edits guard dialog is now
-          driving (beforeGuardedNavigation), same as every other in-app link
-          on this surface. */}
-      <AppRail
-        active="map"
-        email={accountEmail ?? ""}
-        roleLabel={accountRoleLabel ?? "Admin"}
-        onNavigate={(href, label) => beforeGuardedNavigation(href as GuardedNavigationHref, label)}
-        onOpenAskPlanner={openAskPlannerDrawer}
-        skipLink={{ href: "#planning-canvas", label: "Skip to seat map" }}
-      />
+      {/* The left rail is the (shell) layout's persistent AppShell — this
+          surface plugs its unsaved-edits veto and Ask Planner opener into it
+          via useAppShellNavigation (see the registration near the drawer
+          logic above); the veto contract is unchanged (true lets the rail
+          navigate, false means the guard dialog is driving). */}
       {/* z-50, not z-40: once sticky, the header's z-index is live and must
           outrank the z-40 canvas overlays (toasts, map menu) that follow it
           in DOM order, or they paint over the pinned bar and its menus. */}

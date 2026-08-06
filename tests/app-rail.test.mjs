@@ -1,6 +1,6 @@
 import test, { before, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { loadComponent, renderElement, React, configureContext, fireEvent, act, cleanup, screen, within } from "./helpers/renderComponent.mjs";
+import { loadComponent, renderElement, React, configureContext, setPathname, fireEvent, act, cleanup, screen, within } from "./helpers/renderComponent.mjs";
 
 // Interaction tests for the v12 left rail (docs/superpowers/plans/2026-07-31-v12-slice2-rail-shell.md
 // Task 1). Nothing mounts AppRail yet — this component is standalone this
@@ -35,8 +35,8 @@ const nav = () => screen.getByRole("navigation", { name: "Admin sections" });
 const hamburger = () => screen.getByRole("button", { name: /(Expand|Collapse) navigation/ });
 
 // Nav items are <Link>s (role link), not buttons — they navigate natively
-// before hydration (prefetch deliberately off; see AppRail's prefetch={false}
-// note); the veto contract rides preventDefault.
+// before hydration (default auto prefetch; see AppRail's prefetch note);
+// the veto contract rides preventDefault.
 test("renders Admin sections nav with the four items, aria-current only on the active one", async () => {
   await renderRail({ active: "management" });
   assert.ok(nav());
@@ -260,6 +260,23 @@ test("without onOpenAskPlanner, the AI item is a plain link to /admin?ask-planne
   assert.equal(aiLink.getAttribute("href"), "/admin?ask-planner=open");
 });
 
+// The AI fallback link goes through the SAME onNavigate wiring as the nav
+// items, so its query href is part of the guard's contract — SeatMap's
+// GUARDED_NAVIGATION_HREFS closed set must include it (the registration
+// narrows with isGuardedNavigationHref rather than asserting a union).
+test("the AI link routes its query href through onNavigate", async () => {
+  const calls = [];
+  await renderRail({
+    onNavigate: (href, label) => {
+      calls.push([href, label]);
+      return true;
+    }
+  });
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: /Ask Planner/ })));
+  assert.deepEqual(calls, [["/admin?ask-planner=open", "Ask Planner"]]);
+  assert.deepEqual(pushed, ["/admin?ask-planner=open"]);
+});
+
 // The nav watchdog (stalled-transition fallback) must never arm on a modified
 // click: the browser opens a new tab, and a 4s window.location.assign on the
 // ORIGINAL page would hijack it into a navigation the user never made. The
@@ -390,6 +407,71 @@ test("a plain click on the AI link arms the 4s nav watchdog and navigates", asyn
   }
   assert.ok(scheduled.includes(4000), "allowed click must arm the 4s nav watchdog");
   assert.deepEqual(pushed, ["/admin?ask-planner=open"]);
+});
+
+// The rail persists across navigations now (AppShell) — unmount cleanup can
+// no longer disarm the watchdog on a successful transition. A committed
+// pathname change must clear the pending timer instead, or a stale timer
+// could hijack the NEXT location (e.g. browser back within 4s of a click)
+// into a navigation the user already superseded.
+test("a committed route change disarms the pending nav watchdog", async () => {
+  configureContext({ router: { push: href => pushed.push(href) }, pathname: "/admin" });
+  const props = { active: "map", email: "jane@example.com", roleLabel: "Admin" };
+  const utils = await renderElement(React.createElement(AppRail, props));
+
+  const armed = [];
+  const cleared = [];
+  const originalSetTimeout = window.setTimeout;
+  const originalClearTimeout = window.clearTimeout;
+  // Intercept setTimeout only across the click (to learn the watchdog's
+  // timer id — parked so it can't really fire); clearTimeout stays
+  // intercepted through the rerender, where the disarm must happen.
+  window.setTimeout = (fn, ms, ...rest) => {
+    const id = originalSetTimeout(() => {}, ms, ...rest);
+    if (ms === 4000) armed.push(id);
+    return id;
+  };
+  window.clearTimeout = id => {
+    cleared.push(id);
+    return originalClearTimeout(id);
+  };
+  try {
+    try {
+      await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" })));
+    } finally {
+      window.setTimeout = originalSetTimeout;
+    }
+    assert.equal(armed.length, 1, "the click must arm exactly one 4s watchdog");
+
+    // The router commits: the persistent rail re-renders with the new
+    // pathname (usePathname), which must clear the armed timer.
+    setPathname("/admin/management");
+    await act(async () => utils.rerender(React.createElement(AppRail, props)));
+  } finally {
+    window.setTimeout = originalSetTimeout;
+    window.clearTimeout = originalClearTimeout;
+  }
+  assert.ok(cleared.includes(armed[0]), "the committed navigation must clear the armed watchdog timer");
+});
+
+// A route commit (back/forward with the menu open) unmounts the account
+// menu's focused menuitem. Every other dismissal restores focus to the
+// trigger; this path must too, or keyboard focus falls to <body>.
+test("a route commit that closes the account menu returns focus to the trigger", async () => {
+  configureContext({ router: { push: href => pushed.push(href) }, pathname: "/admin" });
+  const props = { active: "map", email: "jane@example.com", roleLabel: "Admin" };
+  const utils = await renderElement(React.createElement(AppRail, props));
+
+  const trigger = screen.getByRole("button", { name: "Account — jane@example.com" });
+  await act(async () => fireEvent.click(trigger));
+  const menu = screen.getByRole("menu", { name: "Account" });
+  assert.equal(document.activeElement, within(menu).getAllByRole("menuitem")[0]);
+
+  setPathname("/admin/management");
+  await act(async () => utils.rerender(React.createElement(AppRail, props)));
+
+  assert.equal(screen.queryByRole("menu", { name: "Account" }), null, "the route commit must close the menu");
+  assert.equal(document.activeElement, trigger, "focus must land back on the account trigger, not <body>");
 });
 
 // The firing path — previously untestable: the watchdog called bare
