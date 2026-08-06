@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+// Shared with app/layout.tsx's boot script — the two halves of the theme
+// switch must agree on these strings (see lib/theme.ts).
+import { THEME_DARK, THEME_LIGHT, THEME_STORAGE_KEY } from "@/lib/theme";
 
 // App-wide light/dark switch (reception handoff): flips html[data-theme] and
-// persists to localStorage("sp-theme"); app/layout.tsx's boot script replays
-// the stored value before paint on the next load. Shell chrome stays dark in
-// both themes — today only Reception's --r-* tokens respond.
-const THEME_STORAGE_KEY = "sp-theme";
+// persists to localStorage; app/layout.tsx's boot script replays the stored
+// value before paint on the next load. Shell chrome stays dark in both themes
+// — today only Reception's --r-* tokens respond.
 
 export function ThemeToggle() {
   // Server renders the light-mode label; the effect syncs to the real
@@ -14,16 +16,16 @@ export function ThemeToggle() {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    setDark(document.documentElement.dataset.theme === "dark");
+    setDark(document.documentElement.dataset.theme === THEME_DARK);
   }, []);
 
   function toggle() {
     const next = !dark;
     setDark(next);
-    if (next) document.documentElement.dataset.theme = "dark";
+    if (next) document.documentElement.dataset.theme = THEME_DARK;
     else delete document.documentElement.dataset.theme;
     try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, next ? "dark" : "light");
+      window.localStorage.setItem(THEME_STORAGE_KEY, next ? THEME_DARK : THEME_LIGHT);
     } catch {
       // Storage unavailable (private mode) — the in-page toggle still works.
     }

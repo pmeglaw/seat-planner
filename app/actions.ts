@@ -26,7 +26,7 @@ type SupabaseMutationError = {
   message?: string | null;
 };
 
-async function requireAdmin() {
+async function requireAdminContext() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -45,7 +45,14 @@ async function requireAdmin() {
     throw new Error("Admin permission required.");
   }
 
-  return supabase;
+  return { supabase, user };
+}
+
+// Most actions only need the client; callers that also need the authed user
+// (e.g. askPlannerAction's per-admin rate-limit key) use requireAdminContext
+// directly instead of paying a second auth.getUser() network round-trip.
+async function requireAdmin() {
+  return (await requireAdminContext()).supabase;
 }
 
 async function getDraftSeatById(supabase: Awaited<ReturnType<typeof requireAdmin>>, seatId: string) {
@@ -100,6 +107,12 @@ async function getDraftMapPayload(
 
 export type AskPlannerActionError = {
   error: string;
+  /**
+   * Structured discriminant for app-imposed outcomes (mirrors the
+   * STALE_DRAFT pattern): the drawer dispatches on this, never on message
+   * text — rewording the copy must not change which branch handles it.
+   */
+  code?: "RATE_LIMITED";
 };
 
 export type AskPlannerActionResult = AskPlannerResponse | AskPlannerActionError;
@@ -112,19 +125,18 @@ const ASK_PLANNER_RATE_LIMIT = { limit: 10, windowMs: 60_000 };
 const askPlannerRateWindows = new Map<string, RateLimitWindow>();
 
 export async function askPlannerAction(input: AskPlannerRequest): Promise<AskPlannerActionResult> {
-  // requireAdmin stays outside the try so auth failures still hard-fail
-  // (the read-only guarantee and admin gate must never degrade to a soft error).
-  const supabase = await requireAdmin();
+  // The admin gate stays outside the try so auth failures still hard-fail
+  // (the read-only guarantee and admin gate must never degrade to a soft
+  // error). requireAdminContext also hands back the authed user, so the rate
+  // limiter keys on it without a second auth round-trip.
+  const { supabase, user } = await requireAdminContext();
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-  const decision = applyFixedWindow(askPlannerRateWindows, user?.id ?? "unknown", Date.now(), ASK_PLANNER_RATE_LIMIT);
+  const decision = applyFixedWindow(askPlannerRateWindows, user.id, Date.now(), ASK_PLANNER_RATE_LIMIT);
   if (!decision.allowed) {
     const retrySeconds = Math.max(1, Math.ceil(decision.retryAfterMs / 1000));
-    // "rate limited for your account" is the drawer's friendly-title key —
-    // distinct from OpenAI's own rate-limit wording, which it also maps.
-    return { error: `Ask Planner is rate limited for your account. Try again in about ${retrySeconds} seconds.` };
+    // code, not message text, is the drawer's dispatch key — the copy here is
+    // free to change.
+    return { code: "RATE_LIMITED", error: `Ask Planner is rate limited for your account. Try again in about ${retrySeconds} seconds.` };
   }
 
   try {

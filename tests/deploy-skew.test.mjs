@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 
-const { compareBuildIds, createSkewDetector, BUILD_ID_ENDPOINT } = await importTsModule("lib/deploySkew.ts");
+const { isBuildSkewed, createSkewDetector, BUILD_ID_ENDPOINT } = await importTsModule("lib/deploySkew.ts");
 
 // Deploy-skew detection (2026-08-05 incident): a merge to main flips the prod
 // alias mid-session, the open tab's rail clicks then fetch RSC from the NEW
@@ -11,20 +11,22 @@ const { compareBuildIds, createSkewDetector, BUILD_ID_ENDPOINT } = await importT
 // against /api/build-id (served by whatever deployment is live) so AppRail
 // can turn the NEXT click into a deliberate full document navigation instead.
 
-test("compareBuildIds: equal ids match", () => {
-  assert.equal(compareBuildIds("abc123", "abc123"), "match");
-  assert.equal(compareBuildIds("dev", "dev"), "match");
+test("isBuildSkewed: equal ids are not skewed", () => {
+  assert.equal(isBuildSkewed("abc123", "abc123"), false);
+  assert.equal(isBuildSkewed("dev", "dev"), false);
 });
 
-test("compareBuildIds: different non-empty ids are skewed", () => {
-  assert.equal(compareBuildIds("abc123", "def456"), "skewed");
+test("isBuildSkewed: different non-empty ids are skewed", () => {
+  assert.equal(isBuildSkewed("abc123", "def456"), true);
 });
 
-test("compareBuildIds: a missing side is unknown, never skewed", () => {
-  assert.equal(compareBuildIds("", "abc123"), "unknown");
-  assert.equal(compareBuildIds("abc123", ""), "unknown");
-  assert.equal(compareBuildIds(undefined, "abc123"), "unknown");
-  assert.equal(compareBuildIds("abc123", null), "unknown");
+test("isBuildSkewed: a missing side is NEVER skew — absent evidence must not trigger a reload", () => {
+  // The invariant the old three-state union guarded ("unknown" ≠ "skewed")
+  // survives as: missing evidence is falsy, full stop.
+  assert.equal(isBuildSkewed("", "abc123"), false);
+  assert.equal(isBuildSkewed("abc123", ""), false);
+  assert.equal(isBuildSkewed(undefined, "abc123"), false);
+  assert.equal(isBuildSkewed("abc123", null), false);
 });
 
 function detectorWith({ clientBuildId = "sha-old", responses, now }) {

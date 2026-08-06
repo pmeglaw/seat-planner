@@ -147,7 +147,10 @@ export function AppRail({
     const targetPath = href.split("?")[0];
     if (navWatchdogRef.current !== null) window.clearTimeout(navWatchdogRef.current);
     navWatchdogRef.current = window.setTimeout(() => {
-      if (window.location.pathname !== targetPath) window.location.assign(href);
+      // assignLocation, not bare window.location.assign: same escape hatch as
+      // the skew path below, and the only form the jsdom tier can stub (its
+      // Location is unforgeable), so the firing path stays testable.
+      if (window.location.pathname !== targetPath) assignLocation(href);
     }, 4000);
   }
 

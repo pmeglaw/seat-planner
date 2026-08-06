@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { THEME_DARK, THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
 const plexSans = IBM_Plex_Sans({
@@ -21,9 +22,11 @@ const plexMono = IBM_Plex_Mono({
 // global theme switch — today only Reception's --r-* tokens react to it, so
 // every other surface renders identically until it grows dark tokens. Runs
 // synchronously before paint to avoid a light flash; suppressHydrationWarning
-// on <html> covers the server-markup mismatch this deliberately creates.
+// on <html> covers the server-markup mismatch this deliberately creates. The
+// key/value literals are interpolated from lib/theme.ts at build time so the
+// boot replay and ThemeToggle can never disagree.
 const THEME_BOOT_SCRIPT =
-  "try{if(localStorage.getItem('sp-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}";
+  `try{if(localStorage.getItem('${THEME_STORAGE_KEY}')==='${THEME_DARK}')document.documentElement.dataset.theme='${THEME_DARK}'}catch(e){}`;
 
 export const metadata: Metadata = {
   title: "Seat Planner",
