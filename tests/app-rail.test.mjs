@@ -2,9 +2,9 @@ import test, { before, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { loadComponent, renderElement, React, configureContext, setPathname, fireEvent, act, cleanup, screen, within } from "./helpers/renderComponent.mjs";
 
-// Interaction tests for the v12 left rail (docs/superpowers/plans/2026-07-31-v12-slice2-rail-shell.md
-// Task 1). Nothing mounts AppRail yet — this component is standalone this
-// slice. Covers: nav items + aria-current, hamburger expand/collapse geometry,
+// Interaction tests for the v12 left rail, exercised standalone (the persistent
+// AppShell mounts it in production — tests/app-shell.test.mjs covers that side).
+// Covers: nav items + aria-current, hamburger expand/collapse geometry,
 // the onNavigate veto contract, Escape/scrim collapse + focus return, the
 // account menu (email/role/sign-out form), and the AI item's dual mode
 // (in-place open vs plain link).

@@ -41,7 +41,6 @@ reviews:
     - "!**/node_modules/**"
     - "!coverage/**"
     - "!docs/design_handoff_*/**"
-    - "!tools/seat-planner-improvement-loop/output/**"
     - "!supabase/reference/**"
     - "!**/*.webp"
     - "!**/*.png"

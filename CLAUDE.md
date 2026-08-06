@@ -69,7 +69,7 @@ When changing this kind of logic you usually edit **both** the TypeScript action
 
 ## Coordinates and the map calibration transform
 
-Seats store **normalized `x`/`y` in `[0,1]`** (already normalized in the DB — do not re-run any normalization pass; see `BASELINE_NOTES.md`). `lib/seatMath.ts` clamps/rounds and converts to CSS percentages. `lib/mapLayoutTransform.ts` applies a per-area linear calibration between *saved* coordinates and *visual* on-image coordinates. When adding/moving seats, keep saved coordinates normalized and let the transform handle display.
+Seats store **normalized `x`/`y` in `[0,1]`** (already normalized in the DB and CHECK-constrained there — do not re-run any normalization pass). `lib/seatMath.ts` clamps/rounds and converts to CSS percentages. `lib/mapLayoutTransform.ts` applies a per-area linear calibration between *saved* coordinates and *visual* on-image coordinates. When adding/moving seats, keep saved coordinates normalized and let the transform handle display.
 
 `MAP_IMAGE_WIDTH`/`MAP_IMAGE_HEIGHT` are **3822×1734** — the shipped webp is a 2x upscale (#124) of the 1911×867 master PNG, which is still the canonical source. The display cap stays 1911px, and because calibration is normalized and the upscale kept the same framing, the 2x swap changed no constants. Don't read 3822 as a coordinate space: saved and visual coordinates are both in `[0,1]`.
 

@@ -14,7 +14,7 @@ Three structural moves define the redesign, all combined in the interactive prot
 
 ## About the design files
 
-The `.dc.html` files are **design references built in HTML** — they show intended look and behavior; they are **not production code to copy**. The task is to recreate them in the existing stack (Next.js App Router + Tailwind + the current bespoke components), following the repo's own conventions (`docs/DESIGN_DIRECTION.md`, `CLAUDE.md`, `AGENTS.md`). **Do not install `@carbon/react`** — the repo deliberately borrows Carbon's visual language without adopting the library.
+The `.dc.html` files are **design references built in HTML** — they show intended look and behavior; they are **not production code to copy**. The task is to recreate them in the existing stack (Next.js App Router + Tailwind + the current bespoke components), following the repo's own conventions (`CLAUDE.md`, `AGENTS.md`). **Do not install `@carbon/react`** — the repo deliberately borrows Carbon's visual language without adopting the library.
 
 The HTML files may not render standalone outside their original workspace; the `screenshots/` folder is the authoritative offline visual reference.
 

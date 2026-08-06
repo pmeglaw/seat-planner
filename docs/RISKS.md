@@ -1,6 +1,6 @@
 # Risks & Recommendations — Office Seat Planner
 
-**Date:** 2026-07-08 · **Companion to:** `docs/ARCHITECTURE_REVIEW.md` (which holds the verified system description this document assumes)
+**Date:** 2026-07-08 · **Companion to:** `docs/audits/2026-07-09-architecture-review.md` (which holds the verified system description this document assumes)
 
 Findings are ordered by impact. Every finding cites at least one concrete location. "Effort" is a rough engineering estimate assuming familiarity with the codebase. Context matters for calibration: this is an internal, admin-gated tool at office scale — several items that would be High in a public SaaS are Medium here, and that is stated where it applies.
 

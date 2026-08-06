@@ -10,8 +10,6 @@ Package manager: npm. Use the existing `package-lock.json`. The script names are
 
 `npm test` runs `node --test tests/*.test.mjs`. It requires installed dependencies because some tests import `typescript`, and `tests/rpc-execution.test.mjs` (`npm run test:db`) applies the real `supabase/migrations` to an in-process Postgres (`@electric-sql/pglite`) to exercise the atomic RPCs.
 
-`npm run qa:handoff` writes `tools/seat-planner-improvement-loop/output/codex_handoff.md` — the QA handoff document assembled from that folder's latest-findings, known-regressions, and QA-matrix files.
-
 ## Supabase And Env
 
 - Copy `.env.local.example` to `.env.local`.
