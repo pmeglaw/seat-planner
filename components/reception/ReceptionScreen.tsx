@@ -3,12 +3,15 @@
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  personInitials,
   pushRecentLookup,
   sameDepartmentFallback,
   searchReceptionDirectory,
   type ReceptionPerson
 } from "@/lib/receptionDirectory";
+// The shared initials rule every avatar surface uses (inspector, viewer
+// finder, Management) — Reception must not grow its own variant, or the same
+// person shows different initials at the front desk.
+import { buildInitials } from "@/lib/validators";
 import { ThemeToggle } from "@/components/reception/ThemeToggle";
 
 // Reception — front-desk call routing (reception handoff). Read-only: renders
@@ -181,7 +184,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                       aria-hidden="true"
                       className="flex h-[34px] w-[34px] shrink-0 items-center justify-center bg-[var(--r-chip-bg)] text-[12px] font-semibold text-[var(--r-chip-fg)]"
                     >
-                      {personInitials(person.name)}
+                      {buildInitials(person.name) || "?"}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[14.5px] font-semibold leading-tight text-[var(--r-text)]">
@@ -213,7 +216,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                   aria-hidden="true"
                   className="flex h-[46px] w-[46px] shrink-0 items-center justify-center bg-[var(--r-avatar-bg)] text-[16px] font-semibold text-[var(--r-avatar-fg)]"
                 >
-                  {personInitials(detail.name)}
+                  {buildInitials(detail.name) || "?"}
                 </span>
                 <div className="min-w-0">
                   <h2 className="truncate text-[18px] font-semibold leading-tight text-[var(--r-text)]">{detail.name}</h2>
@@ -305,7 +308,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                         aria-hidden="true"
                         className="flex h-[26px] w-[26px] shrink-0 items-center justify-center bg-[var(--r-chip-bg)] text-[10.5px] font-semibold text-[var(--r-chip-fg)]"
                       >
-                        {personInitials(person.name)}
+                        {buildInitials(person.name) || "?"}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--r-text)]">{person.name}</span>
                       <span className="shrink-0 font-mono text-[14px] font-semibold text-[var(--r-text)]">

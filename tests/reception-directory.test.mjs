@@ -4,7 +4,6 @@ import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 
 const {
   buildReceptionDirectory,
-  personInitials,
   pushRecentLookup,
   sameDepartmentFallback,
   searchReceptionDirectory
@@ -137,9 +136,36 @@ test("same-department fallback sorts alphabetically even from unsorted input, th
   );
 });
 
-test("personInitials: first+last, single-name fallback", () => {
-  assert.equal(personInitials("Dana Reyes"), "DR");
-  assert.equal(personInitials("Alex Q. Rivera"), "AR");
-  assert.equal(personInitials("Cher"), "CH");
-  assert.equal(personInitials("  "), "?");
+// Initials come from the shared lib/validators buildInitials (rendered as
+// `buildInitials(name) || "?"` in ReceptionScreen, the same as the viewer
+// finder) — Reception deliberately has no initials rule of its own, so the
+// same person can never show different initials at the front desk than on
+// every other avatar surface.
+
+test("names and seat codes are display-formatted like every other surface", () => {
+  // The documented legacy case (lib/formatName): ALL-CAPS records must not
+  // shout at the front desk, while intentional casings stay untouched.
+  const shouty = employee({ id: "emp-caps", full_name: "ALEX MEGERDCHIAN", department: "Litigation", phone_extension: "4200" });
+  const natural = employee({ id: "emp-nat", full_name: "Rio van der Berg", phone_extension: "4201" });
+  const formatted = buildReceptionDirectory(
+    [shouty, natural],
+    [{ label: "cw01", employee_id: "emp-caps", zone: "West" }]
+  );
+
+  const alexRow = formatted.find(person => person.id === "emp-caps");
+  assert.equal(alexRow.name, "Alex Megerdchian");
+  // Seat codes are identifiers: canonical uppercase regardless of entry casing.
+  assert.equal(alexRow.seatLabel, "CW01");
+  assert.equal(formatted.find(person => person.id === "emp-nat").name, "Rio van der Berg");
+});
+
+test("display formatting is case-only, so contract #1 matching is unchanged", () => {
+  const shouty = employee({ id: "emp-caps", full_name: "ALEX MEGERDCHIAN", phone_extension: "4200" });
+  const formatted = buildReceptionDirectory([shouty], [{ label: "cw01", employee_id: "emp-caps", zone: null }]);
+
+  // Queries in any casing keep matching the same person, name-prefix ranked.
+  assert.equal(searchReceptionDirectory(formatted, "alex")[0].id, "emp-caps");
+  assert.equal(searchReceptionDirectory(formatted, "ALEX")[0].id, "emp-caps");
+  assert.equal(searchReceptionDirectory(formatted, "cw01")[0].id, "emp-caps");
+  assert.equal(searchReceptionDirectory(formatted, "CW01")[0].id, "emp-caps");
 });
