@@ -14,7 +14,7 @@ const migrationSql = await readFile(
   "utf8"
 );
 const viewerSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
-const adminSource = await readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8");
+const adminSource = await readFile(new URL("../app/(shell)/admin/page.tsx", import.meta.url), "utf8");
 const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
 
 function extractPublishFunction(sql) {

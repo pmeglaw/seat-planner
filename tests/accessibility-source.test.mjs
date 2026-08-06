@@ -8,7 +8,7 @@ async function readSource(path) {
 
 test("viewer route renders the published map as read-only", async () => {
   const viewerSource = await readSource("../app/page.tsx");
-  const adminSource = await readSource("../app/admin/page.tsx");
+  const adminSource = await readSource("../app/(shell)/admin/page.tsx");
   const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
   assert.match(viewerSource, /\.eq\("layer", "published"\)/);
@@ -26,9 +26,11 @@ test("viewer route renders the published map as read-only", async () => {
   // publishedSeats prop, fed by the published-layer query asserted above — is
   // unchanged.
   assert.match(adminSource, /publishedSeats=\{publishedSeats\}/);
-  // canEdit stays the literal flag (never an expression); the identity props
-  // that follow it feed the account menu, not the edit gate.
-  assert.match(adminSource, /canEdit\s+accountEmail=/);
+  // canEdit stays the literal flag (never an expression). Identity moved off
+  // this component entirely — the persistent shell's rail owns the account
+  // cell now — so the flag stands alone on its line.
+  assert.match(adminSource, /\n\s*canEdit\s*\n/);
+  assert.doesNotMatch(adminSource, /canEdit=\{/);
 });
 
 test("admin planning shell exposes status, panel relationships, and undo redo explanations", async () => {
@@ -54,14 +56,17 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /<MapStatusLegend[\s\S]{0,200}ariaLabel="Seat status legend"/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
   // Session layer, v12 (2026-07-31 rail shell): identity + Settings moved off
-  // the header AccountMenu into AppRail (Task 1) — Settings is now a
-  // first-class rail nav item rather than tucked behind an identity chip (a
-  // deliberate reversal of the pre-v12 rule this test used to pin). The guard
-  // survives structurally: every AppRail item (map/management/settings/
-  // viewer) shares the SAME onNavigate wiring into beforeGuardedNavigation, so
-  // Settings — like every other in-app destination — cannot bypass the
-  // unsaved-edits guard, whichever rail item reaches it.
-  assert.match(source, /<AppRail[\s\S]{0,220}onNavigate=\{\(href, label\) => beforeGuardedNavigation\(href as GuardedNavigationHref, label\)\}/);
+  // the header AccountMenu into AppRail (Task 1), and the rail itself now
+  // lives in the persistent AppShell (nav-lag fix) — SeatMap plugs its guard
+  // in through useAppShellNavigation instead of mounting the rail. The guard
+  // survives structurally: every rail item (map/management/settings/viewer)
+  // still shares the SAME onNavigate wiring into beforeGuardedNavigation —
+  // AppShell hands the registered guard to AppRail — so Settings, like every
+  // other in-app destination, cannot bypass the unsaved-edits guard,
+  // whichever rail item reaches it.
+  assert.match(source, /useAppShellNavigation\(\{\s*guard: \(href, label\) => beforeGuardedNavigation\(href as GuardedNavigationHref, label\)/);
+  const appShellSourceForGuard = await readSource("../components/ui/AppShell.tsx");
+  assert.match(appShellSourceForGuard, /<AppRail[\s\S]{0,400}onNavigate=\{handlers\?\.guard\}/);
   // Settings must never appear as an unguarded peer link on the map surface
   // itself — the rail (a different file, its own guard-respecting contract)
   // plus the wiring above own it. A bare href here would bypass the guard
@@ -489,7 +494,13 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   // user on the page they actually clicked (Management OR Settings), and the
   // dialog copy must name it.
   assert.match(source, /requestInspectorGuard\(\{ kind: "navigate-admin-page", href, destination \}\)/);
-  assert.match(source, /window\.location\.assign\(action\.href\)/);
+  // The resumed navigation stays on the client router (the persistent rail
+  // must not blank into a document load) — except on a deploy-skewed tab,
+  // where a soft nav would dead-end and the full load is the deliberate
+  // recovery, exactly like AppRail's own click path.
+  assert.match(source, /deploySkewMonitor\.isSkewed\(\)[\s\S]{0,120}assignLocation\(action\.href\)/);
+  assert.match(source, /router\.push\(action\.href\)/);
+  assert.doesNotMatch(source, /window\.location\.assign\(action\.href\)/);
   assert.match(source, /return `opening \$\{action\.destination\}\.`/);
   assert.match(source, /queueCenterSeatInMap\(action\.seatId\)/);
   assert.match(source, /Save or discard the selected seat edits before publishing/);
@@ -503,12 +514,14 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /setPendingInspectorSaveAction\(null\)/);
   // v12: Management, Viewer, and Settings navigation all moved off individual
   // per-link handlers (each used to hardcode its own beforeGuardedNavigation
-  // call) into AppRail's rail items, which share ONE generic callback. A
-  // dirty inspector must intercept every destination uniformly, and routing
-  // all of them through the same onNavigate wiring guarantees that by
-  // construction — there is no longer a per-link call site to individually
-  // forget the guard on.
-  assert.match(source, /<AppRail[\s\S]{0,220}onNavigate=\{\(href, label\) => beforeGuardedNavigation\(href as GuardedNavigationHref, label\)\}/);
+  // call) into the rail's items, which share ONE generic callback. A dirty
+  // inspector must intercept every destination uniformly, and routing all of
+  // them through the same registered guard guarantees that by construction —
+  // there is no longer a per-link call site to individually forget the guard
+  // on. (The rail mounts in the persistent AppShell now; SeatMap registers
+  // the guard via useAppShellNavigation, and AppShell's own suite +
+  // app-rail.test.mjs verify the rail honors it.)
+  assert.match(source, /useAppShellNavigation\(\{\s*guard: \(href, label\) => beforeGuardedNavigation\(href as GuardedNavigationHref, label\)/);
   // And the browser-owned path (tab close / hard navigation) arms beforeunload
   // while the inspector is dirty.
   assert.match(source, /window\.addEventListener\("beforeunload", warnBeforeUnload\)/);
@@ -754,11 +767,13 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   // focusable map region — the chrome gauntlet is 8+ tab stops otherwise.
   // The admin map's skip link is no longer a standalone anchor in this file
   // (visual-pass fix: that placement put it AFTER AppRail's 7 controls in
-  // DOM order, making it the 8th tab stop) — it's passed to AppRail, which
-  // renders it as the rail's first child, before the hamburger. See
-  // AppRail.tsx's ordering pin below and app-rail.test.mjs's ct assertion
-  // for the actual first-focusable guarantee.
-  assert.match(seatMapSource, /skipLink=\{\{ href: "#planning-canvas", label: "Skip to seat map" \}\}/);
+  // DOM order, making it the 8th tab stop) — the persistent AppShell maps
+  // the route to it and AppRail renders it as the rail's first child, before
+  // the hamburger. See AppRail.tsx's ordering pin below and
+  // app-rail.test.mjs's ct assertion for the actual first-focusable
+  // guarantee.
+  const appShellSourceForSkip = await readSource("../components/ui/AppShell.tsx");
+  assert.match(appShellSourceForSkip, /map: \{ href: "#planning-canvas", label: "Skip to seat map" \}/);
   assert.doesNotMatch(seatMapSource, /<a\s+href="#planning-canvas"/);
   assert.match(seatMapSource, /id="planning-canvas" tabIndex=\{-1\}/);
   assert.match(viewerSource, /href="#viewer-seat-map"[\s\S]{0,420}Skip to seat map/);
@@ -808,24 +823,23 @@ test("narrow widths keep the viewer switch and people directory reachable", asyn
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
-  // v12: the old sub-sm-only "Viewer" menu-fallback link is retired — AppRail
-  // is mounted directly on SeatMap's root (visible in the diff) and is itself
-  // position:fixed with no responsive-hiding class, so its own Viewer item is
-  // reachable at every width including phone, the original #197 concern.
-  // What THIS pin actually proves (be precise about what a bare
-  // /<AppRail\b/ match can and can't show): AppRail is present in this file
-  // at all, and the old per-width guarded literal
-  // (beforeGuardedNavigation("/", "the viewer")) is gone — not just renamed,
-  // since AppRail's Viewer item never hardcodes that call; it goes through
-  // the shared onNavigate wiring pinned above instead. It does NOT prove
-  // AppRail is mounted unconditionally (a regex can't rule out an enclosing
-  // conditional elsewhere in the file) — that property is a plain reading of
-  // the JSX, not something asserted here. AppRail's own behavior — the
-  // Viewer item's presence, its accessible name, and that activating it
+  // v12: the old sub-sm-only "Viewer" menu-fallback link is retired — the
+  // rail (position:fixed, no responsive-hiding class) carries the Viewer
+  // item at every width including phone, the original #197 concern. Since
+  // the nav-lag fix the rail mounts in the persistent AppShell
+  // (app/(shell)/layout.tsx) rather than inside SeatMap; SeatMap's part of
+  // the contract is registering its guard via useAppShellNavigation, and
+  // the old per-width guarded literal (beforeGuardedNavigation("/", "the
+  // viewer")) stays gone — the Viewer item goes through the shared
+  // registered-guard wiring pinned above instead. AppRail's own behavior —
+  // the Viewer item's presence, accessible name, and that activating it
   // calls onNavigate("/", "the viewer") — is asserted in
   // tests/app-rail.test.mjs ("the Viewer item is reachable and routes
-  // through onNavigate"), which is where that semantic actually lives.
-  assert.match(seatMapSource, /<AppRail\b/);
+  // through onNavigate"), which is where that semantic actually lives; the
+  // shell mounting AppRail unconditionally is pinned here.
+  const appShellSourceForViewer = await readSource("../components/ui/AppShell.tsx");
+  assert.match(appShellSourceForViewer, /<AppRail\b/);
+  assert.match(seatMapSource, /useAppShellNavigation\(/);
   assert.doesNotMatch(seatMapSource, /beforeGuardedNavigation\("\/", "the viewer"\)\) event\.preventDefault\(\)/);
 
   // Below the panel breakpoint the docked People directory disappears, so a
@@ -963,8 +977,8 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
   const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
   const managementSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
-  const managementPageSource = await readSource("../app/admin/management/page.tsx");
-  const settingsPageSource = await readSource("../app/admin/settings/page.tsx");
+  const managementPageSource = await readSource("../app/(shell)/admin/management/page.tsx");
+  const settingsPageSource = await readSource("../app/(shell)/admin/settings/page.tsx");
   const loginPageSource = await readSource("../app/login/page.tsx");
 
   // role="listitem" directly on a <button> overrides the native button role
@@ -1003,18 +1017,22 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   // The admin sub-pages get the same skip affordance the maps have, via
   // AppRail's skipLink prop (not the shell bar — visual-pass fix: the shell
   // bar's copy put the skip link behind all 7 rail controls, making it the
-  // 8th tab stop instead of the 1st).
+  // 8th tab stop instead of the 1st). The persistent AppShell owns the
+  // route → skip-target mapping now; each page still owns its landing
+  // marker.
   assert.doesNotMatch(shellBarSource, /Skip to content/);
-  assert.match(managementPageSource, /skipLink=\{\{ href: "#admin-subpage-main", label: "Skip to content" \}\}/);
+  const appShellSource = await readSource("../components/ui/AppShell.tsx");
+  assert.match(appShellSource, /management: \{ href: "#admin-subpage-main", label: "Skip to content" \}/);
+  assert.match(appShellSource, /settings: \{ href: "#admin-subpage-main", label: "Skip to content" \}/);
+  assert.match(appShellSource, /reception: \{ href: "#reception-main", label: "Skip to content" \}/);
   assert.match(managementPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
-  assert.match(settingsPageSource, /skipLink=\{\{ href: "#admin-subpage-main", label: "Skip to content" \}\}/);
   assert.match(settingsPageSource, /id="admin-subpage-main" tabIndex=\{-1\}/);
 });
 
 test("axe findings stay fixed: allowed roles, single main landmark, marker name containment", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
-  const adminPageSource = await readSource("../app/admin/page.tsx");
+  const adminPageSource = await readSource("../app/(shell)/admin/page.tsx");
 
   // role="group" is not an allowed role on <nav> (axe aria-allowed-role); the
   // command row is a grouped toolbar cluster, not a nav landmark.
@@ -1054,7 +1072,7 @@ test("CTA labels sit on the ladder's white, not the off-white inverse token", as
     "../components/seat-map/SeatMap.tsx",
     "../components/seat-map/SeatInspector.tsx",
     "../app/login/page.tsx",
-    "../app/admin/page.tsx"
+    "../app/(shell)/admin/page.tsx"
   ]) {
     const source = await readSource(file);
     for (const match of source.match(/bg-\[var\(--admin-primary-cta\)\][^"']*/g) ?? []) {

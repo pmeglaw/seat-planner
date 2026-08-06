@@ -59,6 +59,16 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: __dirname,
+  experimental: {
+    // Client Router Cache for the force-dynamic sections: a section visited in
+    // the last 2 minutes re-renders instantly from the cached RSC payload
+    // instead of re-running auth + queries on every rail click. Freshness is
+    // preserved where it matters: every mutating server action calls
+    // revalidatePath (purging this cache), SeatMap's stale-draft recovery
+    // calls router.refresh(), and the MLS02 concurrency fence rejects writes
+    // from genuinely stale drafts regardless of what was displayed.
+    staleTimes: { dynamic: 120 }
+  },
   // Deploy-skew detection (lib/deploySkew.ts): bake the deployment's commit
   // sha into both bundles at build time. Vercel exposes VERCEL_GIT_COMMIT_SHA
   // during builds; locally it is absent and both sides fall back to "dev",

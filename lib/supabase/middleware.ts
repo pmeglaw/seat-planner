@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import type { JWK } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { isSecureForwardedProto, supabaseCookieOptions } from "@/lib/supabase/cookieOptions";
 
@@ -7,6 +8,52 @@ type CookieToSet = {
   value: string;
   options?: CookieOptions;
 };
+
+// The middleware's whole job is keeping the session cookie fresh; it is NOT a
+// security layer (server actions re-check requireAdmin(), RLS enforces in the
+// database — CLAUDE.md). Two consequences drive the shape below:
+//
+// 1. No per-request auth-server round-trip. getClaims() verifies the JWT
+//    LOCALLY (WebCrypto against the project's JWKS) when the token is valid,
+//    and only touches the network to refresh an expired session — unlike the
+//    getUser() call this replaced, which phoned the Supabase auth server on
+//    every matched request. The JWKS itself is memoized per runtime instance
+//    (below) so steady-state requests do zero fetches. Legacy HS256 projects
+//    can't verify locally; getClaims falls back to getUser internally, which
+//    the timeout still bounds.
+//
+// 2. A hard time budget. Production logs (2026-07-24..30) show middleware
+//    hitting Vercel's 25s no-response kill when the auth call hung — which
+//    took the whole request (and the page behind it) down. The race below
+//    fails OPEN after AUTH_STEP_TIMEOUT_MS: the request proceeds with the
+//    cookies it already has, pages still enforce auth themselves, and an
+//    expired session simply lands on the login redirect instead of a dead
+//    tab.
+const AUTH_STEP_TIMEOUT_MS = 5_000;
+
+// Module-scope JWKS memo: middleware builds a NEW Supabase client per request
+// (it must — cookies are request-bound), so the client's own JWKS cache never
+// survives to the next request. This one does (per warm runtime instance).
+// A miss or fetch failure degrades to getClaims' internal fallbacks, never to
+// an error.
+const JWKS_TTL_MS = 10 * 60_000;
+let cachedJwks: { keys: JWK[] } | null = null;
+let cachedJwksAt = 0;
+
+async function fetchProjectJwks(supabaseUrl: string): Promise<{ keys: JWK[] } | undefined> {
+  if (cachedJwks && Date.now() - cachedJwksAt < JWKS_TTL_MS) return cachedJwks;
+  try {
+    const response = await fetch(`${supabaseUrl}/auth/v1/.well-known/jwks.json`);
+    if (!response.ok) return cachedJwks ?? undefined;
+    const body = (await response.json()) as { keys?: JWK[] };
+    if (!Array.isArray(body?.keys)) return cachedJwks ?? undefined;
+    cachedJwks = { keys: body.keys };
+    cachedJwksAt = Date.now();
+    return cachedJwks;
+  } catch {
+    return cachedJwks ?? undefined;
+  }
+}
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -46,7 +93,30 @@ export async function updateSession(request: NextRequest) {
     }
   });
 
-  await supabase.auth.getUser();
+  // Skip the auth step entirely for requests that carry no Supabase cookies —
+  // an anonymous document fetch has nothing to validate OR refresh, and the
+  // pages' own guards handle the login redirect.
+  const hasAuthCookie = request.cookies.getAll().some(cookie => cookie.name.startsWith("sb-"));
+  if (!hasAuthCookie) {
+    return response;
+  }
+
+  try {
+    await Promise.race([
+      (async () => {
+        const jwks = await fetchProjectJwks(url);
+        // Valid token → local verify, no network. Expired token → getClaims
+        // refreshes the session, which rewrites the cookie via setAll above.
+        await supabase.auth.getClaims(undefined, jwks ? { jwks } : undefined);
+      })(),
+      new Promise<void>(resolve => {
+        setTimeout(resolve, AUTH_STEP_TIMEOUT_MS);
+      })
+    ]);
+  } catch {
+    // Fail open: an auth hiccup must never take the request down — the pages
+    // and server actions re-check auth themselves (layers 1–2).
+  }
 
   return response;
 }

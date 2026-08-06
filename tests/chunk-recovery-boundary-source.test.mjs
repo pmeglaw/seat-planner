@@ -12,7 +12,7 @@ async function readSource(relativePath) {
   return readFile(new URL(relativePath, import.meta.url), "utf8");
 }
 
-for (const boundary of ["../app/error.tsx", "../app/admin/error.tsx"]) {
+for (const boundary of ["../app/error.tsx", "../app/(shell)/admin/error.tsx"]) {
   test(`${boundary} self-heals a stale-chunk error with a document reload`, async () => {
     const source = await readSource(boundary);
 

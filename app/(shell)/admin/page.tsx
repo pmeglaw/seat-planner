@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AdminPage() {
-  const { supabase, isAdmin, user } = await getAdminPageContext("/admin");
+  const { supabase, isAdmin } = await getAdminPageContext("/admin");
 
   if (!isAdmin) {
     // Deep links can still land viewers here (the in-app Admin shortcut is
@@ -119,8 +119,6 @@ export default async function AdminPage() {
         departmentOptions={(departments ?? []) as DepartmentOption[]}
         zoneOptions={(zones ?? []) as ZoneOption[]}
         canEdit
-        accountEmail={user.email ?? ""}
-        accountRoleLabel="Admin"
       />
     </div>
   );

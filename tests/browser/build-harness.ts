@@ -44,7 +44,11 @@ const MOCKS: Record<string, string> = {
       refresh: () => window.__ctCall("router.refresh", []),
       back() {}, forward() {}, prefetch() {}
     });
-    export const usePathname = () => "/";
+    // "/admin": the harness mounts SeatMap inside the real AppShell (see
+    // ENTRY), and the shell derives the rail's active item + whether the
+    // sub-page brand bar renders from the pathname — the map surface is what
+    // these specs exercise.
+    export const usePathname = () => "/admin";
     export const useSearchParams = () => new URLSearchParams("");
     export const redirect = () => {};
   `,
@@ -92,11 +96,22 @@ function mockPlugin(): esbuild.Plugin {
 const ENTRY = `
   import React from "react";
   import { createRoot } from "react-dom/client";
+  import { AppShell } from "@/components/ui/AppShell";
   import { SeatMap } from "@/components/seat-map/SeatMap";
   let root;
+  // The rail lives in the persistent AppShell now (app/(shell)/layout.tsx),
+  // so the harness composes the same pair production does — the specs that
+  // drive rail items (the guarded Viewer link) exercise the real
+  // SeatMap -> useAppShellNavigation -> AppRail wiring.
   window.__mountSeatMap = props => {
     root = root ?? createRoot(document.getElementById("root"));
-    root.render(React.createElement(SeatMap, props));
+    root.render(
+      React.createElement(
+        AppShell,
+        { email: "harness@example.com", isAdmin: true },
+        React.createElement(SeatMap, props)
+      )
+    );
   };
 `;
 

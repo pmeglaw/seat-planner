@@ -44,27 +44,32 @@ test("the account menu shows identity and hosts a no-JS sign-out form", async ()
 });
 
 test("every signed-in surface mounts an identity + sign-out affordance", async () => {
+  const shellLayout = await readSource("../app/(shell)/layout.tsx");
+  const appShell = await readSource("../components/ui/AppShell.tsx");
+  const rail = await readSource("../components/ui/AppRail.tsx");
+  const managementPage = await readSource("../app/(shell)/admin/management/page.tsx");
+  const settingsPage = await readSource("../app/(shell)/admin/settings/page.tsx");
+  const receptionPage = await readSource("../app/(shell)/reception/page.tsx");
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
-  const managementPage = await readSource("../app/admin/management/page.tsx");
-  const settingsPage = await readSource("../app/admin/settings/page.tsx");
   const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
-  // v12 (2026-07-31 rail shell, Task 2 + Task 3): every admin surface — the
-  // map and both sub-pages — now mounts AppRail directly, which carries its
-  // own identity + sign-out cell (same real
-  // <form action="/auth/signout" method="post"> contract as the old shared
-  // AccountMenu). AppRail's own test suite (tests/app-rail.test.mjs) is the
-  // source of truth for that cell's shape; this file only pins that SOME
-  // identity + sign-out affordance is mounted on every signed-in surface,
-  // which is the semantic this test has always guarded. AdminShellBar (Task
-  // 3) is identity-only chrome now and mounts no account affordance at all —
-  // the rail is the one place sign-out lives on admin surfaces, so the
-  // pin moved from that component to the pages that mount the rail. The
-  // viewer surface is untouched by this task and still mounts the shared
-  // component directly.
-  assert.match(seatMap, /<AppRail/);
-  assert.match(managementPage, /<AppRail/);
-  assert.match(settingsPage, /<AppRail/);
+  // Nav-lag fix (persistent shell): the rail — which carries the identity +
+  // sign-out cell (same real <form action="/auth/signout" method="post">
+  // contract as the old shared AccountMenu; tests/app-rail.test.mjs is the
+  // source of truth for the cell's shape) — mounts ONCE in the (shell)
+  // layout's AppShell and covers every railed surface: the map, both admin
+  // sub-pages, and reception. The semantic this test has always guarded is
+  // unchanged: SOME identity + sign-out affordance on every signed-in
+  // surface. The pages must NOT mount a second rail of their own (that
+  // per-page mounting was the blank-flash bug), and the viewer surface still
+  // mounts the shared AccountMenu directly.
+  assert.match(shellLayout, /<AppShell/);
+  assert.match(appShell, /<AppRail/);
+  assert.match(rail, /<form action="\/auth\/signout" method="post"/);
+  for (const page of [managementPage, settingsPage, receptionPage]) {
+    assert.doesNotMatch(page, /<AppRail/);
+  }
+  assert.doesNotMatch(seatMap, /<AppRail/);
   assert.match(viewer, /<AccountMenu/);
 });
 

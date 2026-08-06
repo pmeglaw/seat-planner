@@ -7,7 +7,7 @@ import { test } from "node:test";
 // surface, keyboard/listbox semantics, live extension readout — not the
 // screen's styling. Colors/spacing/tokens are free to evolve.
 
-const pageSource = () => readFile(new URL("../app/reception/page.tsx", import.meta.url), "utf8");
+const pageSource = () => readFile(new URL("../app/(shell)/reception/page.tsx", import.meta.url), "utf8");
 const screenSource = () => readFile(new URL("../components/reception/ReceptionScreen.tsx", import.meta.url), "utf8");
 
 test("the reception page reads ONLY the published layer — snapshot employees + published seats", async () => {

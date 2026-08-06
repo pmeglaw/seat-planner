@@ -18,8 +18,12 @@ import Image from "next/image";
 export function AdminShellBar() {
   return (
     /* z-50 matches the seat-map bar and the rail: the chrome tier sits above
-       z-40 page overlays so scrolled content never paints over the pinned bar. */
-    <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+       z-40 page overlays so scrolled content never paints over the pinned bar.
+       pl-[3.75rem] = the fixed 3rem rail + the original 0.75rem inset: since
+       the persistent shell, this bar is a full-width SIBLING of the rail
+       (AppShell) rather than a child of a pl-12 page root, so it must clear
+       the rail itself or the brand block renders underneath it. */
+    <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-[3.75rem] text-[var(--admin-chrome-text)]">
       <div className="flex min-w-0 shrink-0 items-center gap-2">
         <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
           <Image src="/images/megeredchian-mark.png?v=ma-2026" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />

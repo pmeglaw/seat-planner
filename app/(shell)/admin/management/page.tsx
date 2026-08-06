@@ -1,6 +1,4 @@
 import { AdminManagementPanel } from "@/components/admin-management/AdminManagementPanel";
-import { AdminShellBar } from "@/components/ui/AdminShellBar";
-import { AppRail } from "@/components/ui/AppRail";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
@@ -21,7 +19,7 @@ export default async function AdminManagementPage({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { supabase, isAdmin, user } = await getAdminPageContext("/admin/management");
+  const { supabase, isAdmin } = await getAdminPageContext("/admin/management");
   const initialTab = parseTabParam((await searchParams)?.tab);
 
   if (!isAdmin) {
@@ -75,16 +73,12 @@ export default async function AdminManagementPage({
   }
 
   return (
-    // pl-12 clears the v12 left rail, which is position:fixed and does not
-    // participate in this flex column (mirrors SeatMap.tsx's root).
-    <div className="admin-theme flex min-h-screen flex-col bg-[var(--admin-bg)] pl-12">
-      <AppRail
-        active="management"
-        email={user.email ?? ""}
-        roleLabel="Admin"
-        skipLink={{ href: "#admin-subpage-main", label: "Skip to content" }}
-      />
-      <AdminShellBar />
+    // pl-12 clears the v12 left rail — position:fixed, mounted by the (shell)
+    // layout's persistent AppShell along with the AdminShellBar above this
+    // pane (hence the svh calc: bar height comes off the pane's min-height).
+    // The skip link itself lives in the rail (AppShell maps this route to
+    // #admin-subpage-main); this page owns the landing marker below.
+    <div className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] flex-col bg-[var(--admin-bg)] pl-12">
       {/* Skip-link landing: focusable zero-height marker; the next Tab enters
           the panel content. */}
       <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />
