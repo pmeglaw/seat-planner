@@ -391,3 +391,38 @@ test("a plain click on the AI link arms the 4s nav watchdog and navigates", asyn
   assert.ok(scheduled.includes(4000), "allowed click must arm the 4s nav watchdog");
   assert.deepEqual(pushed, ["/admin?ask-planner=open"]);
 });
+
+// The firing path — previously untestable: the watchdog called bare
+// window.location.assign, which jsdom's unforgeable Location cannot stub, so
+// tests could only assert the timer was scheduled. It now routes through
+// assignLocation (lib/fullNavigation, sanctioned caller #3), the same seam
+// the skew fallback uses.
+test("a stalled navigation fires the watchdog as a full document load", async () => {
+  const assigned = [];
+  configureContext({
+    router: { push: href => pushed.push(href) },
+    navigation: { assign: href => assigned.push(href) }
+  });
+  await renderRail();
+
+  const timers = [];
+  const originalSetTimeout = window.setTimeout;
+  window.setTimeout = (fn, ms, ...rest) => {
+    timers.push({ fn, ms });
+    // Park a no-op on the real timer so the captured callback only ever runs
+    // via the explicit invocation below.
+    return originalSetTimeout(() => {}, ms, ...rest);
+  };
+  try {
+    await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" })));
+  } finally {
+    window.setTimeout = originalSetTimeout;
+  }
+
+  const watchdog = timers.find(timer => timer.ms === 4000);
+  assert.ok(watchdog, "allowed click must arm the 4s nav watchdog");
+  // jsdom's pathname never commits to /admin/management, so firing the
+  // watchdog must restart the navigation as a full document load.
+  await act(async () => watchdog.fn());
+  assert.deepEqual(assigned, ["/admin/management"]);
+});

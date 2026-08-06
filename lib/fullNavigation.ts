@@ -1,4 +1,4 @@
-// Full-document navigation escape hatch. Two sanctioned callers, both cases
+// Full-document navigation escape hatch. Three sanctioned callers, all cases
 // where the client router is the wrong tool — this is still not a pattern for
 // general in-app navigation (the rail's <Link> transitions stay soft):
 //
@@ -7,6 +7,9 @@
 //    navigation would fetch RSC from a newer deployment and dead-end into the
 //    router's own delayed full-reload fallback, so the rail takes the full
 //    load deliberately on the first click instead.
+// 3. The rail's stalled-navigation watchdog (AppRail, #316): a soft nav whose
+//    pathname hasn't committed after 4s is restarted as a full document load
+//    — the same stall class as the auth racing pair below.
 //
 // LoginForm and UpdatePasswordForm land the user via window.location.assign,
 // NOT router.push + router.refresh (the pair this replaced). Both reasons are

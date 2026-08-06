@@ -68,11 +68,14 @@ reviews:
       instructions: >-
         This is the viewer. It must only read seats with layer = 'published'
         and join employees exclusively from the published_employees snapshot.
-        Flag ANY read of layer = 'draft', the live employees table,
-        department_options, or zone_options from this file or anything it
-        imports. The viewer must stay strictly read-only: no mutations, no
-        admin-only data, no draft leakage. This is the single most important
-        boundary in the codebase.
+        Flag ANY read of layer = 'draft' or the live employees table from this
+        file or anything it imports. Known exception (do not re-flag, do not
+        widen): the existing live department_options/zone_options reads feed
+        the filter chips with option NAMES only and predate the snapshot
+        model — flag any NEW live-table read or any use of those options
+        beyond filter labels. The viewer must stay strictly read-only: no
+        mutations, no admin-only data, no draft leakage. This is the single
+        most important boundary in the codebase.
 
     - path: "app/admin/**"
       instructions: >-

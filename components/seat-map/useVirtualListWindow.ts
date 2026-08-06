@@ -11,8 +11,12 @@ import { computeVirtualSegments, computeVirtualWindow, type VirtualSegment, type
 // lib/virtualizedList.ts where it is unit-tested.
 //
 // Keyboard contract: consumers render `segments` (spacers + rows) and stamp
-// each row wrapper with data-vindex={index} (and data-vpinned when
-// segment.pinned). The hook then keeps the FOCUSED row mounted even after it
+// each row wrapper with an EXPLICIT role="listitem" attribute plus
+// data-vindex={index} (and data-vpinned when segment.pinned). The explicit
+// role is load-bearing, not just a11y garnish: row measurement queries
+// [role="listitem"], and querySelectorAll never matches implicit ARIA roles —
+// semantic <ul>/<li> markup would measure zero rows and silently pin the
+// geometry to defaultRowHeight forever. The hook then keeps the FOCUSED row mounted even after it
 // scrolls out of the window — unmounting the focused element drops focus to
 // <body>, killing the container's keydown handler — and `focusRow` moves focus
 // by absolute index, mounting + scrolling the target first when the window

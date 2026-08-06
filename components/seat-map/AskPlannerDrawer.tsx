@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { askPlannerAction, type AskPlannerActionResult } from "@/app/actions";
+import { askPlannerAction, type AskPlannerActionError, type AskPlannerActionResult } from "@/app/actions";
 import type { AskPlannerResponse } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
@@ -37,7 +37,7 @@ const emptyResponse: AskPlannerResponse | null = null;
 const BROAD_ANSWER_EMPTY_HIGHLIGHT_WARNING =
   "No seats highlighted for this broad answer. Ask for a specific zone, department, or smaller group to highlight seats.";
 
-function isAskPlannerError(result: AskPlannerActionResult): result is { error: string } {
+function isAskPlannerError(result: AskPlannerActionResult): result is AskPlannerActionError {
   return "error" in result;
 }
 
@@ -54,7 +54,17 @@ function statusClassName(status: AskPlannerResponse["status"]) {
   return "bg-[rgb(var(--admin-status-ok-rgb)/0.15)] text-[var(--admin-chrome-success-text)] ring-[rgb(var(--admin-status-ok-rgb)/0.40)]";
 }
 
-function friendlyDrawerError(message: string): DrawerError {
+function friendlyDrawerError(message: string, code?: "RATE_LIMITED"): DrawerError {
+  // Structured codes first (the STALE_DRAFT pattern): the app's own throttle
+  // arrives as code: "RATE_LIMITED", never matched from message text — the
+  // server copy can be reworded without silently landing in the OpenAI
+  // rate-limit branch below.
+  if (code === "RATE_LIMITED") {
+    return {
+      title: "Ask Planner needs a short break",
+      message
+    };
+  }
   const lowerMessage = message.toLowerCase();
   if (lowerMessage.includes("not configured") || lowerMessage.includes("openai_api_key")) {
     return {
@@ -66,14 +76,6 @@ function friendlyDrawerError(message: string): DrawerError {
     return {
       title: "OpenAI model unavailable",
       message: "Check OPENAI_MODEL and project model access, then try again."
-    };
-  }
-  if (lowerMessage.includes("rate limited for your account")) {
-    // The app's own per-admin throttle (app/actions.ts), not OpenAI's — keep
-    // the server message, it names how long to wait.
-    return {
-      title: "Ask Planner needs a short break",
-      message
     };
   }
   if (lowerMessage.includes("rate limited")) {
@@ -191,7 +193,7 @@ export function AskPlannerDrawer({
         if (isAskPlannerError(payload)) {
           setResponse(null);
           onHighlightSeats([]);
-          setError(friendlyDrawerError(payload.error));
+          setError(friendlyDrawerError(payload.error, payload.code));
           return;
         }
         setResponse(payload);

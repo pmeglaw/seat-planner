@@ -64,10 +64,18 @@ function findFirstAwait(body) {
   return found;
 }
 
-function callsRequireAdmin(body) {
+// The admin gate is a two-name family: requireAdminContext() is the
+// implementation (getUser + profiles.role check, returns { supabase, user })
+// and requireAdmin() is the supabase-only delegate most actions use. An
+// action may await either — the "guards the guard" test below pins that BOTH
+// names resolve to the real profiles check, so neither can be stubbed into a
+// no-op to sneak past this suite.
+const ADMIN_GATE_NAMES = new Set(["requireAdmin", "requireAdminContext"]);
+
+function callsAdminGate(body) {
   let calls = 0;
   const visit = node => {
-    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "requireAdmin") {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && ADMIN_GATE_NAMES.has(node.expression.text)) {
       calls += 1;
     }
     ts.forEachChild(node, visit);
@@ -76,13 +84,13 @@ function callsRequireAdmin(body) {
   return calls;
 }
 
-function isRequireAdminAwait(awaitExpression) {
+function isAdminGateAwait(awaitExpression) {
   const expression = awaitExpression?.expression;
   return (
     !!expression &&
     ts.isCallExpression(expression) &&
     ts.isIdentifier(expression.expression) &&
-    expression.expression.text === "requireAdmin"
+    ADMIN_GATE_NAMES.has(expression.expression.text)
   );
 }
 
@@ -112,32 +120,40 @@ test("the AST enumerator actually discovers the server actions", () => {
   }
 });
 
-test("every exported server action calls requireAdmin()", () => {
+test("every exported server action calls the admin gate", () => {
   for (const action of actions) {
-    assert.ok(callsRequireAdmin(action.body) >= 1, `${action.name} must call requireAdmin()`);
+    assert.ok(callsAdminGate(action.body) >= 1, `${action.name} must call requireAdmin() or requireAdminContext()`);
   }
 });
 
-test("requireAdmin() is the first awaited call in every action (no work before the gate)", () => {
+test("the admin gate is the first awaited call in every action (no work before the gate)", () => {
   for (const action of actions) {
     const firstAwait = findFirstAwait(action.body);
-    assert.ok(firstAwait, `${action.name} must await requireAdmin() before any other async work`);
+    assert.ok(firstAwait, `${action.name} must await the admin gate before any other async work`);
     assert.ok(
-      isRequireAdminAwait(firstAwait),
-      `${action.name} awaits ${describeAwait(firstAwait)} before requireAdmin() — the admin gate must run first`
+      isAdminGateAwait(firstAwait),
+      `${action.name} awaits ${describeAwait(firstAwait)} before the admin gate — the gate must run first`
     );
   }
 });
 
-test("requireAdmin itself still enforces the admin role", () => {
+test("the admin gate itself still enforces the admin role, under both names", () => {
   // Guards the guard: a passing suite must not be reachable by stubbing
-  // requireAdmin into a no-op. The definition must re-check profiles.role.
-  const requireAdminFn = sourceFile.statements.find(
-    statement => ts.isFunctionDeclaration(statement) && statement.name?.text === "requireAdmin"
-  );
+  // either gate name into a no-op. requireAdminContext must hold the real
+  // profiles.role check, and requireAdmin must be nothing but a delegate to
+  // it — so both entries in ADMIN_GATE_NAMES resolve to the same enforcement.
+  const findFn = name =>
+    sourceFile.statements.find(statement => ts.isFunctionDeclaration(statement) && statement.name?.text === name);
+
+  const contextFn = findFn("requireAdminContext");
+  assert.ok(contextFn, "requireAdminContext() must be defined in app/actions.ts");
+  const contextDefinition = contextFn.getText(sourceFile);
+  assert.match(contextDefinition, /\.from\(\s*["']profiles["']\s*\)/, "requireAdminContext must read the profiles table");
+  assert.match(contextDefinition, /role\s*!==\s*["']admin["']/, "requireAdminContext must reject non-admin roles");
+  assert.match(contextDefinition, /Admin permission required\./, "requireAdminContext must throw the admin-required error");
+
+  const requireAdminFn = findFn("requireAdmin");
   assert.ok(requireAdminFn, "requireAdmin() must be defined in app/actions.ts");
-  const definition = requireAdminFn.getText(sourceFile);
-  assert.match(definition, /\.from\(\s*["']profiles["']\s*\)/, "requireAdmin must read the profiles table");
-  assert.match(definition, /role\s*!==\s*["']admin["']/, "requireAdmin must reject non-admin roles");
-  assert.match(definition, /Admin permission required\./, "requireAdmin must throw the admin-required error");
+  const adminDefinition = requireAdminFn.getText(sourceFile);
+  assert.match(adminDefinition, /await requireAdminContext\(\)/, "requireAdmin must delegate to requireAdminContext");
 });

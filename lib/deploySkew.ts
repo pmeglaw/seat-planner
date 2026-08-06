@@ -27,17 +27,19 @@ export const BUILD_ID_ENDPOINT = "/api/build-id";
 export const CLIENT_BUILD_ID =
   (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_BUILD_ID : undefined) ?? "dev";
 
-export type SkewComparison = "match" | "skewed" | "unknown";
-
-export function compareBuildIds(
+export function isBuildSkewed(
   clientId: string | null | undefined,
   serverId: string | null | undefined
-): SkewComparison {
+): boolean {
   // A missing side means the probe (or the env wiring) failed, not that the
   // deployment changed — never report skew on absent evidence, because the
   // consequence is a state-destroying full reload on the user's next click.
-  if (!clientId || !serverId) return "unknown";
-  return clientId === serverId ? "match" : "skewed";
+  // Deliberately a boolean, not a match/skewed/unknown union: nothing ever
+  // distinguished "match" from "unknown" (both mean "leave the rail soft"),
+  // and an exported three-state invited callers to build on a distinction the
+  // module never acts on.
+  if (!clientId || !serverId) return false;
+  return clientId !== serverId;
 }
 
 type SkewDetectorOptions = {
@@ -71,9 +73,9 @@ export function createSkewDetector({
   async function probe(): Promise<boolean> {
     try {
       const serverId = await fetchServerBuildId();
-      if (compareBuildIds(clientBuildId, serverId) === "skewed") skewed = true;
+      if (isBuildSkewed(clientBuildId, serverId)) skewed = true;
     } catch {
-      // Offline / transient failure: no evidence, no skew (see compareBuildIds).
+      // Offline / transient failure: no evidence, no skew (see isBuildSkewed).
     }
     return skewed;
   }
