@@ -59,6 +59,13 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: __dirname,
+  // Deploy-skew detection (lib/deploySkew.ts): bake the deployment's commit
+  // sha into both bundles at build time. Vercel exposes VERCEL_GIT_COMMIT_SHA
+  // during builds; locally it is absent and both sides fall back to "dev",
+  // which compares equal — skew can never trigger outside Vercel.
+  env: {
+    NEXT_PUBLIC_BUILD_ID: process.env.VERCEL_GIT_COMMIT_SHA ?? "dev"
+  },
   // Production currently advertises `X-Powered-By: Next.js`. Suppress it:
   // naming the framework and its presence tells an attacker where to aim
   // version-specific probes and buys nothing in return.

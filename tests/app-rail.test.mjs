@@ -283,6 +283,98 @@ test("a ctrl-click on the AI link arms no watchdog, keeps the rail open, and nav
   assert.deepEqual(pushed, []);
 });
 
+// --- Deploy-skew fallback (lib/deploySkew.ts) -------------------------------
+// When the live deployment no longer matches this tab's bundle, a soft
+// navigation dead-ends into the router's delayed full-reload fallback; the
+// rail instead takes the full document load (assignLocation) on the first
+// click. Fakes are injected via the skewDetector test seam so cases stay
+// order-independent (the real singleton is deliberately sticky).
+
+const skewedDetector = { check: async () => true, isSkewed: () => true };
+
+test("a skewed tab navigates via full document load, not the client router", async () => {
+  const assigned = [];
+  configureContext({
+    router: { push: href => pushed.push(href) },
+    navigation: { assign: href => assigned.push(href) }
+  });
+  await renderRail({ skewDetector: skewedDetector });
+
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" })));
+
+  assert.deepEqual(assigned, ["/admin/management"]);
+  assert.deepEqual(pushed, [], "a skewed tab must not soft-navigate");
+});
+
+test("the unsaved-edits veto still wins over the skew fallback", async () => {
+  const assigned = [];
+  configureContext({
+    router: { push: href => pushed.push(href) },
+    navigation: { assign: href => assigned.push(href) }
+  });
+  await renderRail({ skewDetector: skewedDetector, onNavigate: () => false });
+
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: "Settings" })));
+
+  assert.deepEqual(assigned, []);
+  assert.deepEqual(pushed, []);
+});
+
+test("a ctrl-click on a skewed tab is left to the browser (no assign, no push)", async () => {
+  const assigned = [];
+  configureContext({
+    router: { push: href => pushed.push(href) },
+    navigation: { assign: href => assigned.push(href) }
+  });
+  await renderRail({ skewDetector: skewedDetector });
+
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" }), { ctrlKey: true }));
+
+  assert.deepEqual(assigned, []);
+  assert.deepEqual(pushed, []);
+});
+
+test("a skewed tab arms no nav watchdog on click (the document load replaces it)", async () => {
+  await renderRail({ skewDetector: skewedDetector });
+  const scheduled = [];
+  const originalSetTimeout = window.setTimeout;
+  window.setTimeout = (fn, ms, ...rest) => {
+    scheduled.push(ms);
+    return originalSetTimeout(fn, ms, ...rest);
+  };
+  try {
+    await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" })));
+  } finally {
+    window.setTimeout = originalSetTimeout;
+  }
+  assert.ok(!scheduled.includes(4000), "skewed navigation must not arm the 4s watchdog");
+});
+
+test("an un-skewed detector leaves rail navigation soft", async () => {
+  const assigned = [];
+  configureContext({
+    router: { push: href => pushed.push(href) },
+    navigation: { assign: href => assigned.push(href) }
+  });
+  await renderRail({ skewDetector: { check: async () => false, isSkewed: () => false } });
+
+  await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" })));
+
+  assert.deepEqual(assigned, []);
+  assert.deepEqual(pushed, ["/admin/management"]);
+});
+
+test("mounting the rail probes the detector (deploys land while tabs sit open)", async () => {
+  let checks = 0;
+  await renderRail({
+    skewDetector: {
+      check: async () => ((checks += 1), false),
+      isSkewed: () => false
+    }
+  });
+  assert.ok(checks >= 1, "the rail must probe on mount");
+});
+
 test("a plain click on the AI link arms the 4s nav watchdog and navigates", async () => {
   await renderRail();
   const scheduled = [];

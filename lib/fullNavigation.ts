@@ -1,9 +1,16 @@
-// Full-document navigation for post-auth redirects.
+// Full-document navigation escape hatch. Two sanctioned callers, both cases
+// where the client router is the wrong tool — this is still not a pattern for
+// general in-app navigation (the rail's <Link> transitions stay soft):
+//
+// 1. Post-auth redirects (LoginForm, UpdatePasswordForm).
+// 2. Deploy-skew fallback (AppRail via lib/deploySkew.ts): a stale tab's soft
+//    navigation would fetch RSC from a newer deployment and dead-end into the
+//    router's own delayed full-reload fallback, so the rail takes the full
+//    load deliberately on the first click instead.
 //
 // LoginForm and UpdatePasswordForm land the user via window.location.assign,
 // NOT router.push + router.refresh (the pair this replaced). Both reasons are
-// auth-specific — this is not a pattern for general in-app navigation (the
-// rail's <Link> transitions in components/ui/AppRail.tsx stay soft):
+// auth-specific:
 //
 // - The session cookie just changed. A document load is the one navigation
 //   that guarantees every layout and page re-renders against the new session;
