@@ -5,6 +5,8 @@ import Link, { useLinkStatus } from "next/link";
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
+import { deploySkewMonitor, type SkewDetector } from "@/lib/deploySkew";
+import { assignLocation } from "@/lib/fullNavigation";
 
 // v12 left rail (design_handoff_carbon_v12 §structural move 1, prototype lines
 // 25-60). 48px collapsed column, full viewport height, 208px overlay when
@@ -42,6 +44,10 @@ export type AppRailProps = {
    *  all 7 rail controls), which defeated its purpose. Each mounting
    *  surface owns its own target id/copy; AppRail only positions it. */
   skipLink?: { href: string; label: string };
+  /** Test seam only — the deploy-skew detector (lib/deploySkew.ts). Defaults
+   *  to the module singleton, which is sticky across soft navigations; jsdom
+   *  suites inject a fake so cases stay order-independent. */
+  skewDetector?: SkewDetector;
 };
 
 // overflow-hidden here (not on <nav>, see the nav className comment): each
@@ -71,7 +77,16 @@ const NAV_ITEMS: NavItem[] = [
   { key: "reception", label: "Reception", href: "/reception", icon: <ReceptionIcon /> }
 ];
 
-export function AppRail({ active, email, roleLabel, railMode = "admin", onNavigate, onOpenAskPlanner, skipLink }: AppRailProps) {
+export function AppRail({
+  active,
+  email,
+  roleLabel,
+  railMode = "admin",
+  onNavigate,
+  onOpenAskPlanner,
+  skipLink,
+  skewDetector = deploySkewMonitor
+}: AppRailProps) {
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement | null>(null);
@@ -100,6 +115,29 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
     },
     []
   );
+  // Deploy-skew probes: merging to main flips the prod alias under open tabs,
+  // after which soft navigations fetch RSC from the NEW build and the router
+  // falls back with a dead-feeling click + late full reload (2026-08-05
+  // incident; Vercel Skew Protection would cover this but needs Pro). Probe on
+  // mount (every page mounts its own rail, so this also covers "arrived on a
+  // fresh page"), on tab focus/visibility (deploys land while the tab is
+  // backgrounded), and on a slow interval for always-focused tabs. The
+  // detector throttles to one fetch/min and goes quiet once skew is known.
+  useEffect(() => {
+    const check = () => {
+      void skewDetector.check();
+    };
+    check();
+    window.addEventListener("focus", check);
+    document.addEventListener("visibilitychange", check);
+    const interval = window.setInterval(check, 5 * 60_000);
+    return () => {
+      window.removeEventListener("focus", check);
+      document.removeEventListener("visibilitychange", check);
+      window.clearInterval(interval);
+    };
+  }, [skewDetector]);
+
   function armNavWatchdog(href: string) {
     // Pathname-only on purpose, not an oversight: pages shallow-rewrite the
     // query after commit (SeatMap strips ?ask-planner=open and re-mirrors
@@ -134,6 +172,15 @@ export function AppRail({ active, email, roleLabel, railMode = "admin", onNaviga
     collapse(false);
     if (onNavigate && !onNavigate(href, label)) {
       event.preventDefault();
+      return;
+    }
+    // Stale tab (the live deployment no longer matches this bundle): a soft
+    // navigation would only dead-end into the router's own full-reload
+    // fallback after a confusing pause, so take the full document load NOW,
+    // deliberately. Runs after the veto — unsaved edits still win.
+    if (skewDetector.isSkewed()) {
+      event.preventDefault();
+      assignLocation(href);
       return;
     }
     armNavWatchdog(href);
