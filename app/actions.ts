@@ -742,7 +742,16 @@ export async function importAssignmentsCsvAction(
    * draft seat — so an import confirmed against stale data cannot silently
    * overwrite another admin's edits (20260806120000).
    */
-  expectedSeats?: DraftSeatExpectation[]
+  expectedSeats?: DraftSeatExpectation[],
+  /**
+   * Employee-directory fence: exact (id, updated_at) of every ACTIVE employee
+   * as the client held it at parse time (lib/draftConcurrency
+   * listActiveEmployeeExpectations). The import overwrites matched employee
+   * rows, so people data is reviewed state too; the RPC rejects with
+   * STALE_DRAFT if the active directory advanced since (20260806140000,
+   * issue #328).
+   */
+  expectedEmployees?: EmployeeExpectation[]
 ): Promise<ImportAssignmentsCsvResult> {
   const supabase = await requireAdmin();
   const parsed = parseAssignmentCsv(csvText);
@@ -755,7 +764,8 @@ export async function importAssignmentsCsvAction(
       ...row,
       row_number: index + 2
     })),
-    expected_seats: expectedSeats ?? null
+    expected_seats: expectedSeats ?? null,
+    expected_employees: expectedEmployees ?? null
   });
 
   if (importError) {

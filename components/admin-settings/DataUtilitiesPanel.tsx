@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { listDraftSeatExpectations, type DraftSeatExpectation } from "@/lib/draftConcurrency";
+import { listActiveEmployeeExpectations, listDraftSeatExpectations, type DraftSeatExpectation, type EmployeeExpectation } from "@/lib/draftConcurrency";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
@@ -39,6 +39,12 @@ type CsvImportReview = {
    * for review — the state the admin is actually looking at while confirming.
    */
   expectedSeats: DraftSeatExpectation[];
+  /**
+   * Employee-directory fence: the ACTIVE directory as held at parse time —
+   * the import overwrites matched employee rows, so people data is reviewed
+   * state too (20260806140000, issue #328).
+   */
+  expectedEmployees: EmployeeExpectation[];
   rowCount: number;
   assignedCount: number;
   clearCount: number;
@@ -175,9 +181,11 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
 
         setCsvReview({
           text,
-          // Fence captured at parse time: confirming applies the CSV against
-          // the draft the admin reviewed, not whatever the draft becomes.
+          // Fences captured at parse time: confirming applies the CSV against
+          // the draft AND the employee directory the admin reviewed, not
+          // whatever either becomes while the review sits open.
           expectedSeats: listDraftSeatExpectations(seats),
+          expectedEmployees: listActiveEmployeeExpectations(employees),
           rowCount: parsed.rows.length,
           assignedCount,
           clearCount,
@@ -200,7 +208,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
     startTransition(async () => {
       try {
         resetMessages();
-        const payload = await importAssignmentsCsvAction(review.text, review.expectedSeats);
+        const payload = await importAssignmentsCsvAction(review.text, review.expectedSeats, review.expectedEmployees);
         setCsvReview(null);
         if (!payload.ok) {
           setNotice(null);

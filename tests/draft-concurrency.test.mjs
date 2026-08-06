@@ -143,13 +143,17 @@ test("settings CSV import fences on the draft captured when the CSV was parsed",
   const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
 
   // Captured at parse time (into the review state), not re-read at confirm
-  // time: the fence must describe the draft the admin actually reviewed.
+  // time: the fences must describe the draft AND the employee directory the
+  // admin actually reviewed (the import overwrites matched employee rows —
+  // 20260806140000, issue #328).
   assert.match(source, /expectedSeats: listDraftSeatExpectations\(seats\)/);
-  assert.match(source, /importAssignmentsCsvAction\(review\.text, review\.expectedSeats\)/);
+  assert.match(source, /expectedEmployees: listActiveEmployeeExpectations\(employees\)/);
+  assert.match(source, /importAssignmentsCsvAction\(review\.text, review\.expectedSeats, review\.expectedEmployees\)/);
 
   // The action forwards the expectations verbatim (never through Date) and
   // returns MLS02 as STALE_DRAFT so the client can reload and retry.
   assert.match(actionsSource, /expected_seats: expectedSeats \?\? null/);
+  assert.match(actionsSource, /expected_employees: expectedEmployees \?\? null/);
   assert.match(actionsSource, /isStaleDraftErrorCode\(\(importError as SupabaseMutationError\)\.code\)/);
 });
 
