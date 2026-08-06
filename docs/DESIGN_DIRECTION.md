@@ -2,7 +2,7 @@
 
 **Status:** Design locked with the owner via an interactive prototype. This document supersedes all earlier design directions (Counsel Ink, Ember Studio, etc.) — ignore those. The build implements *this* spec.
 
-**Visual source of truth:** the interactive prototype `docs/ui/seat-planner-shell.html` (commit it into the repo). Where prose here and the prototype disagree, ask; don't guess.
+**Visual source of truth:** the shipped Carbon v12 handoff (`docs/design_handoff_carbon_v12/`, README = spec). The interactive shell prototype this doc originally pointed at was removed in the 2026-08-06 docs sweep (git history has it). Where prose here and the v12 handoff disagree, the handoff wins.
 
 ---
 
@@ -199,7 +199,7 @@ Implement viewer/admin as one component set with the admin-only pieces condition
 ## 10. How to build it
 
 * Work on a **branch**; this touches shipped surfaces, so keep changes small and reviewable, one area at a time (shell/top bar → inspector → map pan/zoom/floor/highlight → viewer/admin mode → per-screen: viewer `/`, admin `/admin`; then Management, Settings, Publish review, Login restyled to match).
-* **Reuse the prototype** `docs/ui/seat-planner-shell.html` as the visual reference for layout, spacing, and interaction.
+* **Reuse the v12 handoff** (`docs/design_handoff_carbon_v12/`) as the visual reference for layout, spacing, and interaction.
 * Restyle **token-first**: define the `--sp-*` tokens (§2), then the shared primitives, then per-screen layout. Prefer token/primitive changes over scattered edits.
 * **Verify before "done":** `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e` all green; plus a visual pass against the prototype and a keyboard/contrast a11y pass. Behavior QA: publish, seat edit/create/move, CSV/restore, and Ask Planner read-only all unchanged.
 * Do not open a PR unless asked.

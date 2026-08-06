@@ -24,9 +24,8 @@ the dev-server start/stop block is the only platform-specific part.
 >   Treat any local publish as a production deploy: get the owner's explicit
 >   go-ahead, record the target row's full baseline first, and restore it after.
 >
-> Two docs claim a local "draft → edit → publish cycle **without touching prod
-> data**" (`docs/CLAUDE-CODE-HANDOFF-ux-review.md`,
-> `docs/ux-review-plan-critique.md`). That is false — do not act on it.
+> Any doc or note claiming a local "draft → edit → publish cycle without
+> touching prod data" is false — there is no non-production database.
 
 ## Prerequisites
 
