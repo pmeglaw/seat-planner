@@ -1,4 +1,5 @@
 import type { Employee, Seat } from "@/lib/types";
+import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 
 // Reception front-desk directory (handoff: reception view). Pure helpers so
 // the ranking/recents contracts are testable without a DOM. The roster is
@@ -16,23 +17,17 @@ export type ReceptionPerson = {
   zone: string | null;
 };
 
-/** Two-letter person initials ("Dana Reyes" → "DR"); single names fall back
- *  to the first two characters ("Cher" → "CH"). */
-export function personInitials(name: string): string {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-}
-
 /**
  * Roster = every active person in the published snapshot, seated or not
  * (contract #7: never hide someone for lacking a seat). Seat join reverses
  * the seats→employee FK; if someone somehow holds two published seats the
  * lowest label wins, which keeps the readout deterministic.
+ *
+ * Names and seat codes are display-formatted HERE (lib/formatName, the same
+ * helpers every other surface renders through), so legacy ALL-CAPS records
+ * don't shout at the front desk and lowercase-entered seat labels read
+ * canonically. Both transforms are case-only, and contract #1 matching
+ * lowercases everything, so search behavior is unchanged.
  */
 export function buildReceptionDirectory(
   employees: Pick<Employee, "id" | "full_name" | "position" | "department" | "phone_extension">[],
@@ -41,14 +36,14 @@ export function buildReceptionDirectory(
   const seatByEmployee = new Map<string, { label: string; zone: string | null }>();
   for (const seat of [...seats].sort((a, b) => a.label.localeCompare(b.label))) {
     if (!seat.employee_id || seatByEmployee.has(seat.employee_id)) continue;
-    seatByEmployee.set(seat.employee_id, { label: seat.label, zone: seat.zone ?? null });
+    seatByEmployee.set(seat.employee_id, { label: formatSeatCode(seat.label), zone: seat.zone ?? null });
   }
   return employees
     .map(employee => {
       const seat = seatByEmployee.get(employee.id) ?? null;
       return {
         id: employee.id,
-        name: employee.full_name,
+        name: formatDisplayName(employee.full_name),
         position: employee.position,
         department: employee.department,
         extension: employee.phone_extension,
