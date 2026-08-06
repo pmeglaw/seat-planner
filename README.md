@@ -73,7 +73,6 @@ Restart the dev server after editing `.env.local`, `tailwind.config.ts`, or Supa
 | `npm run db:seed` | Seed local-only admin + viewer accounts |
 | `npm run db:stop` | Stop and remove the local Supabase stack |
 | `npm run backup:prod` | Manual production backup — needs `SUPABASE_DB_URL`; writes outside the repo |
-| `npm run qa:handoff` | Regenerate the improvement-loop QA handoff |
 
 Run a single test file with `node --test tests/seat-swap.test.mjs`.
 
