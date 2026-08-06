@@ -88,7 +88,7 @@ Key concepts in brief:
 
 - **Draft vs. published layers.** Every seat row has a `layer` of `'draft'` or `'published'`. Viewers only ever read published; admins edit draft; `publishSeatMapAction` atomically copies draft over published. Keep the two layers strictly separate.
 - **Security boundary.** Admin access is enforced in three independent places — server actions (`requireAdmin()` in `app/actions.ts`), Postgres RLS + `SECURITY DEFINER` RPCs, and the auth-session middleware. Client-side guards are UX only.
-- **Coordinates.** Seats store normalized `x`/`y` in `[0,1]`; they are already normalized in the database — do not re-run any normalization pass (see `BASELINE_NOTES.md`).
+- **Coordinates.** Seats store normalized `x`/`y` in `[0,1]`; they are already normalized in the database (and CHECK-constrained there) — do not re-run any normalization pass.
 - **Business logic lives in `lib/`** and is covered by matching tests in `tests/`.
 
 ## Authentication
