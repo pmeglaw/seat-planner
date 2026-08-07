@@ -23,7 +23,7 @@ import {
 import Link from "next/link";
 import { buildDepartmentRoster, departmentKey } from "@/lib/departments";
 import { withSeatParam, withTabParam } from "@/lib/deepLink";
-import { computeVirtualWindow } from "@/lib/virtualizedList";
+import { computeVirtualSegments, computeVirtualWindow } from "@/lib/virtualizedList";
 import { formatDisplayName } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
 import { Button } from "@/components/ui/Button";
@@ -312,6 +312,14 @@ export function AdminManagementPanel({
     columns: 1,
     rowHeight: 52
   });
+  // Focused row kept mounted across window moves, pinned by EMPLOYEE ID (not
+  // index) so a re-sort/reorder follows the person, not the position — an
+  // index-based pin would silently point at whichever row now sits there.
+  // Set from focusin (any row gaining focus), cleared on focusout only when
+  // focus provably moved OUTSIDE the tbody (relatedTarget elsewhere) — an
+  // unmount-blur reports relatedTarget null, and clearing on it would defeat
+  // the pin.
+  const [pinnedEmployeeId, setPinnedEmployeeId] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab !== "employees") return;
@@ -323,7 +331,9 @@ export function AdminManagementPanel({
       if (!grid) return;
       // Single-column table: one employee per row.
       const columns = 1;
-      const firstRow = grid.querySelector<HTMLElement>("[data-directory-row]");
+      // Pinned rows sit against a split spacer, not their real neighbors, so
+      // measuring one reads the gap, not the row.
+      const firstRow = grid.querySelector<HTMLElement>("[data-directory-row]:not([data-vpinned])");
       // Fall back to the default before the first row renders.
       const rowHeight = firstRow ? firstRow.offsetHeight : 52;
       // Quantize to row steps so scrolling only re-renders when the window moves.
@@ -361,10 +371,64 @@ export function AdminManagementPanel({
     scrollOffset: employeeGridGeometry.scrollOffset,
     overscanRows: 4
   }), [sortedEmployees.length, employeeGridGeometry]);
-  const visibleEmployees = useMemo(
-    () => sortedEmployees.slice(employeeWindow.startIndex, employeeWindow.endIndex),
-    [sortedEmployees, employeeWindow]
-  );
+  // Derive the pinned row's current absolute index from its stable id every
+  // render, so a re-sort/reorder (same or different count) still finds the
+  // pinned employee at its new position instead of stranding the pin on a
+  // stale index.
+  const pinnedEmployeeIndex = useMemo(() => {
+    if (!pinnedEmployeeId) return null;
+    const index = sortedEmployees.findIndex(employee => employee.id === pinnedEmployeeId);
+    return index === -1 ? null : index;
+  }, [pinnedEmployeeId, sortedEmployees]);
+  const employeeSegments = useMemo(() => computeVirtualSegments({
+    window: employeeWindow,
+    itemCount: sortedEmployees.length,
+    rowHeight: employeeGridGeometry.rowHeight,
+    pinnedIndex: pinnedEmployeeIndex
+  }), [employeeWindow, sortedEmployees.length, employeeGridGeometry.rowHeight, pinnedEmployeeIndex]);
+
+  // Keyboard focus on the name link or kebab button must survive the window
+  // moving out from under it (scroll/resize) — an unmount-blur would
+  // otherwise drop focus to <body> and restart Tab from the top of the page.
+  useEffect(() => {
+    if (activeTab !== "employees") return;
+    const grid = employeeGridRef.current;
+    if (!grid) return;
+
+    const handleFocusIn = (event: FocusEvent) => {
+      const target = event.target instanceof HTMLElement ? event.target : null;
+      const row = target?.closest("[data-vindex]");
+      if (!row || !grid.contains(row)) return;
+      // Read the id from the DOM attribute, not from sortedEmployees[index] —
+      // this handler's closure can go stale, but the attribute cannot.
+      const employeeId = row.getAttribute("data-employee-id");
+      if (employeeId) setPinnedEmployeeId(employeeId);
+    };
+    const handleFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget instanceof Node ? event.relatedTarget : null;
+      if (next && !grid.contains(next)) setPinnedEmployeeId(null);
+    };
+
+    grid.addEventListener("focusin", handleFocusIn);
+    grid.addEventListener("focusout", handleFocusOut);
+    return () => {
+      grid.removeEventListener("focusin", handleFocusIn);
+      grid.removeEventListener("focusout", handleFocusOut);
+    };
+    // sortedEmployees.length is load-bearing, not incidental: the table only
+    // renders when sortedEmployees.length !== 0 (empty-search branch below),
+    // so the tbody unmounts/remounts across that boundary and this effect
+    // must re-run to re-attach the listeners to the new node.
+  }, [activeTab, sortedEmployees.length]);
+
+  // A departed employee (deactivated/deleted) invalidates the pin; a
+  // same-count reorder must also be able to clear it, so this depends on
+  // sortedEmployees identity, not just its length.
+  useEffect(() => {
+    setPinnedEmployeeId(current => (
+      current !== null && !sortedEmployees.some(employee => employee.id === current) ? null : current
+    ));
+  }, [sortedEmployees]);
 
   const loadPublishHistory = useCallback(async () => {
     setPublishHistoryState(current => ({
@@ -812,12 +876,16 @@ export function AdminManagementPanel({
                       </tr>
                     </thead>
                     <tbody ref={employeeGridRef}>
-                      {employeeWindow.topPadding > 0 && (
-                        <tr aria-hidden="true">
-                          <td colSpan={employeeColumns.length + 1} style={{ height: employeeWindow.topPadding, padding: 0 }} />
-                        </tr>
-                      )}
-                      {visibleEmployees.map(employee => {
+                      {employeeSegments.map((segment, segmentIndex) => {
+                        if (segment.kind === "spacer") {
+                          return segment.height > 0 ? (
+                            <tr key={`spacer-${segmentIndex}`} aria-hidden="true">
+                              <td colSpan={employeeColumns.length + 1} style={{ height: segment.height, padding: 0 }} />
+                            </tr>
+                          ) : null;
+                        }
+                        const employee = sortedEmployees[segment.index];
+                        if (!employee) return null;
                         const seatLabel = seatLabelByEmployeeId.get(employee.id) ?? "";
                         const isAssigned = seatLabelByEmployeeId.has(employee.id);
                         const isSelected = selectedEmployeeId === employee.id;
@@ -829,6 +897,9 @@ export function AdminManagementPanel({
                           <tr
                             key={employee.id}
                             data-directory-row
+                            data-vindex={segment.index}
+                            data-vpinned={segment.pinned ? "" : undefined}
+                            data-employee-id={employee.id}
                             aria-selected={isSelected}
                             onClick={() => editEmployee(employee)}
                             /* The row is a mouse shortcut only. It used to be a
@@ -889,11 +960,6 @@ export function AdminManagementPanel({
                           </tr>
                         );
                       })}
-                      {employeeWindow.bottomPadding > 0 && (
-                        <tr aria-hidden="true">
-                          <td colSpan={employeeColumns.length + 1} style={{ height: employeeWindow.bottomPadding, padding: 0 }} />
-                        </tr>
-                      )}
                     </tbody>
                   </table>
                 </div>
