@@ -175,15 +175,23 @@ test("management directory is windowed with an indexed seat lookup, look unchang
 
   assert.match(source, /from "@\/lib\/virtualizedList"/);
   assert.match(source, /computeVirtualWindow\(\{/);
-  // Only the windowed slice renders; padding preserves the page scroll height.
-  assert.match(source, /visibleEmployees\.map\(employee =>/);
-  // Design change: the 2-column card grid became a sortable table (a11y + scale).
-  // Windowing still holds — but the padding that preserves scroll height now
-  // lives in spacer <tr> rows sized by employeeWindow.top/bottomPadding.
-  assert.match(source, /height: employeeWindow\.topPadding/);
-  assert.match(source, /height: employeeWindow\.bottomPadding/);
+  // Only the windowed slice renders; spacer + row segments preserve the page
+  // scroll height. Padding lives in split spacers around any pinned row (not
+  // a flat top/bottom pad), so a focused row keeps its true scroll offset
+  // even after it scrolls out of the window.
+  assert.match(source, /computeVirtualSegments\(\{/);
+  assert.match(source, /employeeSegments\.map\(/);
+  assert.match(source, /segment\.kind === "spacer"/);
+  assert.match(source, /height: segment\.height/);
   // Directory rows are now table rows, not cards.
   assert.match(source, /data-directory-row/);
+  // Pinned rows are marked so row-height measurement can exclude them (they
+  // sit against a split spacer, not real neighbors) and so the focused row
+  // can be identified in the DOM. An unmount-blur reports relatedTarget
+  // null, so only a focusout that provably left the tbody may clear the pin.
+  assert.match(source, /data-vpinned/);
+  assert.match(source, /:not\(\[data-vpinned\]\)/);
+  assert.match(source, /if \(next && !grid\.contains\(next\)\) setPinnedEmployeeIndex\(null\)/);
   // The directory is a real semantic table with a header and body.
   assert.match(source, /<table\b/);
   assert.match(source, /<thead>/);

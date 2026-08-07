@@ -23,7 +23,7 @@ import {
 import Link from "next/link";
 import { buildDepartmentRoster, departmentKey } from "@/lib/departments";
 import { withSeatParam, withTabParam } from "@/lib/deepLink";
-import { computeVirtualWindow } from "@/lib/virtualizedList";
+import { computeVirtualSegments, computeVirtualWindow } from "@/lib/virtualizedList";
 import { formatDisplayName } from "@/lib/formatName";
 import { buildInitials } from "@/lib/validators";
 import { Button } from "@/components/ui/Button";
@@ -312,6 +312,11 @@ export function AdminManagementPanel({
     columns: 1,
     rowHeight: 52
   });
+  // Focused row kept mounted across window moves. Set from focusin (any row
+  // gaining focus), cleared on focusout only when focus provably moved
+  // OUTSIDE the tbody (relatedTarget elsewhere) — an unmount-blur reports
+  // relatedTarget null, and clearing on it would defeat the pin.
+  const [pinnedEmployeeIndex, setPinnedEmployeeIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (activeTab !== "employees") return;
@@ -323,7 +328,9 @@ export function AdminManagementPanel({
       if (!grid) return;
       // Single-column table: one employee per row.
       const columns = 1;
-      const firstRow = grid.querySelector<HTMLElement>("[data-directory-row]");
+      // Pinned rows sit against a split spacer, not their real neighbors, so
+      // measuring one reads the gap, not the row.
+      const firstRow = grid.querySelector<HTMLElement>("[data-directory-row]:not([data-vpinned])");
       // Fall back to the default before the first row renders.
       const rowHeight = firstRow ? firstRow.offsetHeight : 52;
       // Quantize to row steps so scrolling only re-renders when the window moves.
@@ -361,10 +368,46 @@ export function AdminManagementPanel({
     scrollOffset: employeeGridGeometry.scrollOffset,
     overscanRows: 4
   }), [sortedEmployees.length, employeeGridGeometry]);
-  const visibleEmployees = useMemo(
-    () => sortedEmployees.slice(employeeWindow.startIndex, employeeWindow.endIndex),
-    [sortedEmployees, employeeWindow]
-  );
+  const employeeSegments = useMemo(() => computeVirtualSegments({
+    window: employeeWindow,
+    itemCount: sortedEmployees.length,
+    rowHeight: employeeGridGeometry.rowHeight,
+    pinnedIndex: pinnedEmployeeIndex
+  }), [employeeWindow, sortedEmployees.length, employeeGridGeometry.rowHeight, pinnedEmployeeIndex]);
+
+  // Keyboard focus on the name link or kebab button must survive the window
+  // moving out from under it (scroll/resize) — an unmount-blur would
+  // otherwise drop focus to <body> and restart Tab from the top of the page.
+  useEffect(() => {
+    if (activeTab !== "employees") return;
+    const grid = employeeGridRef.current;
+    if (!grid) return;
+
+    const handleFocusIn = (event: FocusEvent) => {
+      const target = event.target instanceof HTMLElement ? event.target : null;
+      const row = target?.closest("[data-vindex]");
+      if (!row || !grid.contains(row)) return;
+      const index = Number(row.getAttribute("data-vindex"));
+      if (Number.isInteger(index)) setPinnedEmployeeIndex(index);
+    };
+    const handleFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget instanceof Node ? event.relatedTarget : null;
+      if (next && !grid.contains(next)) setPinnedEmployeeIndex(null);
+    };
+
+    grid.addEventListener("focusin", handleFocusIn);
+    grid.addEventListener("focusout", handleFocusOut);
+    return () => {
+      grid.removeEventListener("focusin", handleFocusIn);
+      grid.removeEventListener("focusout", handleFocusOut);
+    };
+  }, [activeTab, sortedEmployees.length]);
+
+  // A re-filtered/re-sorted list invalidates absolute indices; drop a
+  // now-out-of-range pin.
+  useEffect(() => {
+    setPinnedEmployeeIndex(current => (current !== null && current >= sortedEmployees.length ? null : current));
+  }, [sortedEmployees.length]);
 
   const loadPublishHistory = useCallback(async () => {
     setPublishHistoryState(current => ({
@@ -812,12 +855,16 @@ export function AdminManagementPanel({
                       </tr>
                     </thead>
                     <tbody ref={employeeGridRef}>
-                      {employeeWindow.topPadding > 0 && (
-                        <tr aria-hidden="true">
-                          <td colSpan={employeeColumns.length + 1} style={{ height: employeeWindow.topPadding, padding: 0 }} />
-                        </tr>
-                      )}
-                      {visibleEmployees.map(employee => {
+                      {employeeSegments.map((segment, segmentIndex) => {
+                        if (segment.kind === "spacer") {
+                          return segment.height > 0 ? (
+                            <tr key={`spacer-${segmentIndex}`} aria-hidden="true">
+                              <td colSpan={employeeColumns.length + 1} style={{ height: segment.height, padding: 0 }} />
+                            </tr>
+                          ) : null;
+                        }
+                        const employee = sortedEmployees[segment.index];
+                        if (!employee) return null;
                         const seatLabel = seatLabelByEmployeeId.get(employee.id) ?? "";
                         const isAssigned = seatLabelByEmployeeId.has(employee.id);
                         const isSelected = selectedEmployeeId === employee.id;
@@ -829,6 +876,8 @@ export function AdminManagementPanel({
                           <tr
                             key={employee.id}
                             data-directory-row
+                            data-vindex={segment.index}
+                            data-vpinned={segment.pinned ? "" : undefined}
                             aria-selected={isSelected}
                             onClick={() => editEmployee(employee)}
                             /* The row is a mouse shortcut only. It used to be a
@@ -889,11 +938,6 @@ export function AdminManagementPanel({
                           </tr>
                         );
                       })}
-                      {employeeWindow.bottomPadding > 0 && (
-                        <tr aria-hidden="true">
-                          <td colSpan={employeeColumns.length + 1} style={{ height: employeeWindow.bottomPadding, padding: 0 }} />
-                        </tr>
-                      )}
                     </tbody>
                   </table>
                 </div>
