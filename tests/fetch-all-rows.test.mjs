@@ -124,5 +124,5 @@ test("without a total order, LIMIT/OFFSET paging can skip a row and duplicate an
   const rows = await fetchAllRows(unordered, { pageSize: 2 });
   assert.equal(rows.length, 4, "the length check alone does not catch this");
   const ids = rows.map(r => r.id).sort();
-  assert.notDeepEqual(ids, ["A", "B", "C", "D"], "B is duplicated and C is missing");
+  assert.deepEqual(ids, ["A", "B", "B", "D"], "B is duplicated and C is missing");
 });
