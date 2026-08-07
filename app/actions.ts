@@ -93,6 +93,7 @@ async function getDraftMapPayload(
           .select("*", { count: "exact" })
           .eq("active", true)
           .order("full_name")
+          .order("id")
           .range(from, to),
       { label: "employees" }
     );
@@ -201,12 +202,18 @@ async function getDraftSeatZoneSources(supabase: Awaited<ReturnType<typeof requi
   // it looks: these rows are the reference set for detecting which zone a new
   // seat falls into, and for generating its next label. A truncated read would
   // put a seat in the wrong zone or reuse a label that already exists.
+  // .order("label") makes the LIMIT/OFFSET paging deterministic: labels are
+  // unique per layer (seats_unique_label_per_layer), so this is a total
+  // order — without one, Postgres can return rows in a different order
+  // across page requests and silently skip/duplicate a row at a page
+  // boundary.
   return fetchAllRows<DraftSeatZoneSource>(
     (from, to) =>
       supabase
         .from("seats")
         .select("label,zone,department,x,y", { count: "exact" })
         .eq("layer", "draft")
+        .order("label")
         .range(from, to),
     { label: "draft seats" }
   );

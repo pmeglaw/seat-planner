@@ -50,6 +50,7 @@ export default async function HomePage() {
           .select("*", { count: "exact" })
           .eq("active", true)
           .order("full_name")
+          .order("id")
           .range(from, to),
       { label: "published employees" }
     ),
