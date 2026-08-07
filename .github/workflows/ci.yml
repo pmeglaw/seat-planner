@@ -64,8 +64,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Cache the browser download (~170MB). The uncached path has stalled on
+      # CDN/apt slowness for 10+ minutes; on a hit only the apt deps install
+      # runs, which is seconds when mirrors are healthy.
+      - name: Resolve Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browser
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
       - name: Install Playwright browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       - name: SeatMap component tests
         run: npm run test:browser
@@ -102,15 +121,38 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Same browser cache as the e2e job (see comment there).
+      - name: Resolve Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browser
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
       - name: Install Playwright browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       # Applies supabase/migrations/* then supabase/seed.sql. Deliberately
       # `start` and never `db reset`: a reset gives the containers new IPs while
       # Kong keeps the old ones cached, which surfaces as a 502 from the auth
       # endpoint and looks like a broken login rather than stale routing.
+      # Only the containers the auth suite touches: db, gotrue (auth), kong
+      # (API gateway), postgrest, mailpit (SMTP is configured, so gotrue's
+      # email paths need a sink). Everything else — studio, analytics
+      # (logflare+vector, the slowest to boot), storage, realtime,
+      # edge-runtime, imgproxy, postgres-meta, supavisor — is excluded; the
+      # app uses none of them (no .storage/.channel/functions.invoke calls).
       - name: Start local Supabase stack
-        run: npx supabase start
+        run: npx supabase start -x studio,postgres-meta,realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor
 
       - name: Wait for the auth endpoint
         run: |
