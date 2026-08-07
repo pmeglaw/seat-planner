@@ -894,6 +894,100 @@ test("restore_draft_snapshot: requires admin", async () => {
   );
 });
 
+async function residueCount() {
+  const { rows } = await db.query(
+    "select count(*)::int as count from public.seats where label like '~restore~%' or seat_key like '~restore~%'"
+  );
+  return rows[0].count;
+}
+
+// Permuted-snapshot cases (Plan 012): before the staged-writes migration, the
+// restore loop's per-row UPDATE ran one row at a time in id order and
+// collided with itself mid-loop on the non-deferrable
+// seats_unique_label_per_layer / seats_unique_key_per_layer indexes whenever
+// the snapshot being restored permuted a label or seat_key relative to the
+// live draft. These reproduce that class (mirrors the "reset: survives a ..."
+// permutation tests above for reset_draft_seats_to_published).
+
+test("restore_draft_snapshot: survives a label permutation between two draft seats", async () => {
+  const n01 = await db.seedSeat({ label: "N01", key: "k-n01", status: "available" });
+  const n02 = await db.seedSeat({ label: "N02", key: "k-n02", status: "available" });
+
+  // Permute the labels in the snapshot payload only — the live draft still
+  // holds N01/N02, so restoring collides mid-loop without staged parking.
+  const snapshotSeats = [toSnapshotSeat(n01, { label: "N02" }), toSnapshotSeat(n02, { label: "N01" })];
+
+  await db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb)", [
+    JSON.stringify(snapshotSeats),
+    JSON.stringify([])
+  ]);
+
+  const { rows } = await db.query("select id, label from public.seats where layer = 'draft'");
+  const byId = Object.fromEntries(rows.map(r => [r.id, r.label]));
+  assert.equal(byId[n01.id], "N02", "seat n01's row now carries the snapshot's swapped label, keeping its id");
+  assert.equal(byId[n02.id], "N01", "seat n02's row now carries the snapshot's swapped label, keeping its id");
+  assert.equal(await residueCount(), 0, "no parked residue survives the transaction");
+});
+
+test("restore_draft_snapshot: survives a seat_key permutation between two draft seats", async () => {
+  const n01 = await db.seedSeat({ label: "N01", key: "k-n01", status: "available" });
+  const n02 = await db.seedSeat({ label: "N02", key: "k-n02", status: "available" });
+
+  // Permute the seat_keys in the snapshot payload only — labels stay put, but
+  // restoring the live rows to their snapshot seat_key still collides
+  // mid-loop without staged parking (seats_unique_key_per_layer).
+  const snapshotSeats = [toSnapshotSeat(n01, { seat_key: "k-n02" }), toSnapshotSeat(n02, { seat_key: "k-n01" })];
+
+  await db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb)", [
+    JSON.stringify(snapshotSeats),
+    JSON.stringify([])
+  ]);
+
+  const { rows } = await db.query("select id, seat_key from public.seats where layer = 'draft'");
+  const byId = Object.fromEntries(rows.map(r => [r.id, r.seat_key]));
+  assert.equal(byId[n01.id], "k-n02", "seat n01's row now carries the snapshot's swapped seat_key, keeping its id");
+  assert.equal(byId[n02.id], "k-n01", "seat n02's row now carries the snapshot's swapped seat_key, keeping its id");
+  assert.equal(await residueCount(), 0, "no parked residue survives the transaction");
+});
+
+test("restore_draft_snapshot: re-inserts a deleted custom seat whose snapshot label the live draft currently holds", async () => {
+  // The restore loop processes rows in `order by source.id`, so this only
+  // reliably reproduces the collision (insert of X02 racing X01's still-live
+  // row, which currently holds label X02) when X02's id sorts BEFORE X01's —
+  // seedSeat's random gen_random_uuid() id can't guarantee that, so both ids
+  // are pinned explicitly.
+  const { rows: seeded } = await db.query(
+    `insert into public.seats (id, seat_key, label, x, y, status, layer, is_custom)
+     values
+       ('00000000-0000-0000-0000-000000000002', 'k-x01', 'X01', 0.5, 0.5, 'available', 'draft', true),
+       ('00000000-0000-0000-0000-000000000001', 'k-x02', 'X02', 0.5, 0.5, 'available', 'draft', true)
+     returning *`
+  );
+  const x01 = seeded.find(s => s.label === "X01");
+  const x02 = seeded.find(s => s.label === "X02");
+  assert.ok(x02.id < x01.id, "test setup: X02's id must sort before X01's to reproduce the collision");
+  const snapshotSeats = [toSnapshotSeat(x01), toSnapshotSeat(x02)];
+
+  // Diverge the live draft: delete X02 entirely, then relabel X01 onto X02's
+  // old label/seat_key. The insert branch must re-create X02 (its row no
+  // longer exists) while X01's surviving row currently squats on the label
+  // X02 is about to reclaim.
+  await db.query("delete from public.seats where id = $1", [x02.id]);
+  await db.query("update public.seats set label = 'X02', seat_key = 'k-x02' where id = $1", [x01.id]);
+
+  await db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb)", [
+    JSON.stringify(snapshotSeats),
+    JSON.stringify([])
+  ]);
+
+  const seats = await db.draftSeats();
+  const byLabel = Object.fromEntries(seats.map(s => [s.label, s]));
+  assert.deepEqual(Object.keys(byLabel).sort(), ["X01", "X02"]);
+  assert.equal(byLabel.X01.id, x01.id, "the surviving custom seat keeps its id and reverts to its snapshot label");
+  assert.equal(byLabel.X02.id, x02.id, "X02 is re-created with the id captured in the snapshot before it was deleted");
+  assert.equal(await residueCount(), 0, "no parked residue survives the transaction");
+});
+
 // ---------------------------------------------------------------------------
 // rename_department
 // ---------------------------------------------------------------------------

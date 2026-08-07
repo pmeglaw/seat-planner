@@ -2,11 +2,15 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-// The draft-concurrency-fence migration drops the original 2-arg overload and
-// recreates the RPC with trailing whole-draft fence parameters, so it holds
-// the live definition.
+// 20260807120000_restore_draft_snapshot_staged_writes.sql redefines the RPC
+// again (stages label/seat_key writes so a permuted snapshot restores
+// cleanly), so it now holds the live definition — see that migration's
+// header for why.
 const migrationSql = await readFile(
-  new URL("../supabase/migrations/20260708120000_draft_concurrency_fence.sql", import.meta.url),
+  new URL(
+    "../supabase/migrations/20260807120000_restore_draft_snapshot_staged_writes.sql",
+    import.meta.url
+  ),
   "utf8"
 );
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
@@ -32,7 +36,11 @@ test("draft snapshot restore migration creates an authenticated admin-only RPC",
   assert.match(functionSql, /security invoker/);
   assert.doesNotMatch(functionSql, /security definer/i);
   assert.match(functionSql, /if not app_private\.is_admin\(\) then/);
-  assert.match(migrationSql, /drop function if exists public\.restore_draft_snapshot\(jsonb, jsonb\);/);
+  // No drop-function statement here: this migration redefines the RPC with
+  // the SAME signature (jsonb, jsonb, jsonb) as 20260708120000, so
+  // `create or replace` is sufficient — the drop-old-overload dance in that
+  // migration was only needed there because it changed the signature
+  // (2-arg -> 3-arg).
   assert.match(migrationSql, /revoke all on function public\.restore_draft_snapshot\(jsonb, jsonb, jsonb\) from public, anon, authenticated;/);
   assert.match(migrationSql, /grant execute on function public\.restore_draft_snapshot\(jsonb, jsonb, jsonb\) to authenticated;/);
 });
@@ -98,11 +106,33 @@ test("draft snapshot restore RPC keeps all seat mutations draft-scoped", () => {
   assert.match(functionSql, /order by seat\.id\s+for update of seat/);
   assert.doesNotMatch(functionSql, /published/);
 
+  // 3 UPDATEs: vacate-assigned, the staged label/seat_key park, and the
+  // per-row restore loop update.
   const seatUpdates = functionSql.match(/update public\.seats[\s\S]+?;/g) ?? [];
-  assert.equal(seatUpdates.length, 2);
+  assert.equal(seatUpdates.length, 3);
   for (const statement of seatUpdates) {
     assert.match(statement, /layer = 'draft'::public\.seat_layer|seat\.layer = 'draft'::public\.seat_layer/);
   }
+
+  // Staged label/seat_key parking: both non-deferrable unique indexes
+  // (seats_unique_label_per_layer, seats_unique_key_per_layer) must be
+  // parked together, joined by id (the restore loop's own match key), before
+  // the restore loop runs — otherwise a permuted snapshot's first UPDATE
+  // collides with a not-yet-updated row and the RPC aborts with 23505.
+  const parkStatement = seatUpdates.find(statement => statement.includes("~restore~"));
+  assert.ok(parkStatement, "a staged parking UPDATE should exist");
+  assert.match(parkStatement, /label = '~restore~' \|\| d\.id::text/);
+  assert.match(parkStatement, /seat_key = '~restore~' \|\| d\.id::text/);
+  assert.match(parkStatement, /d\.id = source\.id/);
+  // "for restore_row in" also opens the earlier lock-only loop; the restore
+  // loop proper is the one that selects the full per-seat column list.
+  const loopIndex = functionSql.indexOf("for restore_row in\n    select\n      source.id,");
+  const parkIndex = functionSql.indexOf(parkStatement);
+  assert.ok(parkIndex < loopIndex, "parking must run before the restore loop");
+  const deleteGuardIndex = functionSql.indexOf(
+    "Could not remove every eligible custom draft seat missing from the snapshot"
+  );
+  assert.ok(deleteGuardIndex < parkIndex, "parking must run after the custom-seat delete guard");
 
   const seatDeletes = functionSql.match(/delete from public\.seats[\s\S]+?;/g) ?? [];
   assert.equal(seatDeletes.length, 1);
