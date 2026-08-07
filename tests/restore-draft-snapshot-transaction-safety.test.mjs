@@ -127,11 +127,13 @@ test("draft snapshot restore RPC keeps all seat mutations draft-scoped", () => {
   // "for restore_row in" also opens the earlier lock-only loop; the restore
   // loop proper is the one that selects the full per-seat column list.
   const loopIndex = functionSql.indexOf("for restore_row in\n    select\n      source.id,");
+  assert.ok(loopIndex >= 0, "restore-loop anchor not found in the migration SQL");
   const parkIndex = functionSql.indexOf(parkStatement);
   assert.ok(parkIndex < loopIndex, "parking must run before the restore loop");
   const deleteGuardIndex = functionSql.indexOf(
     "Could not remove every eligible custom draft seat missing from the snapshot"
   );
+  assert.ok(deleteGuardIndex >= 0, "custom-seat delete-guard anchor not found in the migration SQL");
   assert.ok(deleteGuardIndex < parkIndex, "parking must run after the custom-seat delete guard");
 
   const seatDeletes = functionSql.match(/delete from public\.seats[\s\S]+?;/g) ?? [];

@@ -917,9 +917,18 @@ test("restore_draft_snapshot: survives a label permutation between two draft sea
   // holds N01/N02, so restoring collides mid-loop without staged parking.
   const snapshotSeats = [toSnapshotSeat(n01, { label: "N02" }), toSnapshotSeat(n02, { label: "N01" })];
 
-  await db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb)", [
+  // Also thread the whole-draft concurrency fence, so the permutation fix is
+  // proven under the same expected_draft_seats path the client actually
+  // uses. updated_at is read as Postgres text (not the driver's Date) and
+  // passed back verbatim, per the draftConcurrency contract.
+  const expectedDraftSeats = await db.query(
+    "select id, updated_at::text as updated_at from public.seats where layer = 'draft'"
+  );
+
+  await db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb, $3::jsonb)", [
     JSON.stringify(snapshotSeats),
-    JSON.stringify([])
+    JSON.stringify([]),
+    JSON.stringify(expectedDraftSeats.rows)
   ]);
 
   const { rows } = await db.query("select id, label from public.seats where layer = 'draft'");

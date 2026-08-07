@@ -360,6 +360,10 @@ begin
   -- seats_unique_key_per_layer) are non-deferrable, so a permuted snapshot
   -- would collide with a not-yet-updated row mid-loop. Parking on the row id
   -- is collision-free against real labels and against other parked rows.
+  -- Joining on snapshot ids is complete coverage: by this point every
+  -- surviving draft row is present in snapshot_seats — rows absent from the
+  -- snapshot were either deleted just above (eligible custom seats) or
+  -- already rejected by the missing-protected-seats validation.
   -- Mirrors 20260724150000_reset_draft_staged_writes.sql step 3.
   update public.seats as d
   set label = '~restore~' || d.id::text,
