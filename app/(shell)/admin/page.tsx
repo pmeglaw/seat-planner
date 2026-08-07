@@ -83,6 +83,7 @@ export default async function AdminPage() {
           .select("*", { count: "exact" })
           .eq("active", true)
           .order("full_name")
+          .order("id")
           .range(from, to),
       { label: "employees" }
     ),
@@ -92,6 +93,7 @@ export default async function AdminPage() {
           .from("published_employees")
           .select("*", { count: "exact" })
           .order("full_name")
+          .order("id")
           .range(from, to),
       { label: "published employees" }
     ),

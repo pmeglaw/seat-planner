@@ -98,3 +98,31 @@ test("rejects a nonsensical page size rather than looping forever", async () => 
   const { request } = fakeTable(10);
   await assert.rejects(() => fetchAllRows(request, { pageSize: 0 }), /pageSize must be at least 1/);
 });
+
+// Characterizes WHY callers must page on a total order (a unique column, or a
+// unique-prefixed chain) — this is not a bug in fetchAllRows to fix. Without
+// ORDER BY, Postgres is free to return LIMIT/OFFSET pages in a different row
+// order on each request, so a multi-page read can skip one row and duplicate
+// another. The length check nets to zero on a skip+duplicate pair, so it is
+// undetectable from the row count alone — the multiset of ids is wrong even
+// though `rows.length === total`.
+test("without a total order, LIMIT/OFFSET paging can skip a row and duplicate another undetected", async () => {
+  // 4 logical rows (A-D), page size 2. The first page is served in one
+  // ordering; the second page is served as though the table's row order
+  // shifted between requests (no ORDER BY pins it) — B reappears, C never
+  // appears. This is the exact drop that ordered reads (this plan's fix) close.
+  const pages = [
+    [{ id: "A" }, { id: "B" }],
+    [{ id: "B" }, { id: "D" }]
+  ];
+  let call = 0;
+  const unordered = () => {
+    const data = pages[call];
+    call += 1;
+    return Promise.resolve({ data, error: null, count: 4 });
+  };
+  const rows = await fetchAllRows(unordered, { pageSize: 2 });
+  assert.equal(rows.length, 4, "the length check alone does not catch this");
+  const ids = rows.map(r => r.id).sort();
+  assert.notDeepEqual(ids, ["A", "B", "C", "D"], "B is duplicated and C is missing");
+});

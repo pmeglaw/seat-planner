@@ -58,6 +58,7 @@ export default async function AdminSettingsPage() {
           .select("*", { count: "exact" })
           .eq("active", true)
           .order("full_name")
+          .order("id")
           .range(from, to),
       { label: "employees" }
     )
