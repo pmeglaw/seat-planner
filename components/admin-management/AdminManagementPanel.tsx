@@ -415,7 +415,11 @@ export function AdminManagementPanel({
       grid.removeEventListener("focusin", handleFocusIn);
       grid.removeEventListener("focusout", handleFocusOut);
     };
-  }, [activeTab]);
+    // sortedEmployees.length is load-bearing, not incidental: the table only
+    // renders when sortedEmployees.length !== 0 (empty-search branch below),
+    // so the tbody unmounts/remounts across that boundary and this effect
+    // must re-run to re-attach the listeners to the new node.
+  }, [activeTab, sortedEmployees.length]);
 
   // A departed employee (deactivated/deleted) invalidates the pin; a
   // same-count reorder must also be able to clear it, so this depends on
