@@ -1678,6 +1678,11 @@ export function SeatMap({
     cancelNudge();
     const clamped = clampZoom(nextZoom);
 
+    // A no-op zoom must not arm pendingZoomCenterRef: setZoomFactor bails on
+    // an unchanged value, the [zoomFactor] effect never consumes the anchor,
+    // and the stale anchor hijacks the next zoom change from any other path.
+    if (mapViewMode === "detail" && clamped === zoomFactor) return;
+
     if (mapViewMode !== "detail") {
       setMapViewMode("detail");
       setZoomFactor(clamped);
