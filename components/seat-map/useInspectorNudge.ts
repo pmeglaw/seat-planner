@@ -74,8 +74,9 @@ export function useInspectorNudge({
   useEffect(() => {
     if (!selectedSeatId || inspectorHidden) return;
     if (!window.matchMedia(`(min-width: ${panelBreakpointPx}px)`).matches) return;
+    let second = 0;
     const first = requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
+      second = window.requestAnimationFrame(() => {
         const viewport = viewportRef.current;
         const frame = frameRef.current;
         if (!viewport || !frame) return;
@@ -122,7 +123,11 @@ export function useInspectorNudge({
         });
       });
     });
-    return () => cancelAnimationFrame(first);
+    return () => {
+      cancelAnimationFrame(first);
+      if (second) window.cancelAnimationFrame(second);
+      cancelNudge();
+    };
   }, [selectedSeatId, inspectorHidden, panelBreakpointPx, viewportRef, frameRef, cancelNudge, setFrameTranslate]);
 
   // Restore: the frame translate unwinds when nothing is selected anymore (or
@@ -143,6 +148,7 @@ export function useInspectorNudge({
         nudgeCancelRef.current = null;
       }
     });
+    return () => cancelNudge();
   }, [selectedSeatId, inspectorHidden, cancelNudge, setFrameTranslate]);
 
   return { cancelNudge, skipNextNudge };
