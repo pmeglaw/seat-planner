@@ -312,11 +312,14 @@ export function AdminManagementPanel({
     columns: 1,
     rowHeight: 52
   });
-  // Focused row kept mounted across window moves. Set from focusin (any row
-  // gaining focus), cleared on focusout only when focus provably moved
-  // OUTSIDE the tbody (relatedTarget elsewhere) — an unmount-blur reports
-  // relatedTarget null, and clearing on it would defeat the pin.
-  const [pinnedEmployeeIndex, setPinnedEmployeeIndex] = useState<number | null>(null);
+  // Focused row kept mounted across window moves, pinned by EMPLOYEE ID (not
+  // index) so a re-sort/reorder follows the person, not the position — an
+  // index-based pin would silently point at whichever row now sits there.
+  // Set from focusin (any row gaining focus), cleared on focusout only when
+  // focus provably moved OUTSIDE the tbody (relatedTarget elsewhere) — an
+  // unmount-blur reports relatedTarget null, and clearing on it would defeat
+  // the pin.
+  const [pinnedEmployeeId, setPinnedEmployeeId] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab !== "employees") return;
@@ -368,6 +371,15 @@ export function AdminManagementPanel({
     scrollOffset: employeeGridGeometry.scrollOffset,
     overscanRows: 4
   }), [sortedEmployees.length, employeeGridGeometry]);
+  // Derive the pinned row's current absolute index from its stable id every
+  // render, so a re-sort/reorder (same or different count) still finds the
+  // pinned employee at its new position instead of stranding the pin on a
+  // stale index.
+  const pinnedEmployeeIndex = useMemo(() => {
+    if (!pinnedEmployeeId) return null;
+    const index = sortedEmployees.findIndex(employee => employee.id === pinnedEmployeeId);
+    return index === -1 ? null : index;
+  }, [pinnedEmployeeId, sortedEmployees]);
   const employeeSegments = useMemo(() => computeVirtualSegments({
     window: employeeWindow,
     itemCount: sortedEmployees.length,
@@ -387,12 +399,14 @@ export function AdminManagementPanel({
       const target = event.target instanceof HTMLElement ? event.target : null;
       const row = target?.closest("[data-vindex]");
       if (!row || !grid.contains(row)) return;
-      const index = Number(row.getAttribute("data-vindex"));
-      if (Number.isInteger(index)) setPinnedEmployeeIndex(index);
+      // Read the id from the DOM attribute, not from sortedEmployees[index] —
+      // this handler's closure can go stale, but the attribute cannot.
+      const employeeId = row.getAttribute("data-employee-id");
+      if (employeeId) setPinnedEmployeeId(employeeId);
     };
     const handleFocusOut = (event: FocusEvent) => {
       const next = event.relatedTarget instanceof Node ? event.relatedTarget : null;
-      if (next && !grid.contains(next)) setPinnedEmployeeIndex(null);
+      if (next && !grid.contains(next)) setPinnedEmployeeId(null);
     };
 
     grid.addEventListener("focusin", handleFocusIn);
@@ -401,13 +415,16 @@ export function AdminManagementPanel({
       grid.removeEventListener("focusin", handleFocusIn);
       grid.removeEventListener("focusout", handleFocusOut);
     };
-  }, [activeTab, sortedEmployees.length]);
+  }, [activeTab]);
 
-  // A re-filtered/re-sorted list invalidates absolute indices; drop a
-  // now-out-of-range pin.
+  // A departed employee (deactivated/deleted) invalidates the pin; a
+  // same-count reorder must also be able to clear it, so this depends on
+  // sortedEmployees identity, not just its length.
   useEffect(() => {
-    setPinnedEmployeeIndex(current => (current !== null && current >= sortedEmployees.length ? null : current));
-  }, [sortedEmployees.length]);
+    setPinnedEmployeeId(current => (
+      current !== null && !sortedEmployees.some(employee => employee.id === current) ? null : current
+    ));
+  }, [sortedEmployees]);
 
   const loadPublishHistory = useCallback(async () => {
     setPublishHistoryState(current => ({
@@ -878,6 +895,7 @@ export function AdminManagementPanel({
                             data-directory-row
                             data-vindex={segment.index}
                             data-vpinned={segment.pinned ? "" : undefined}
+                            data-employee-id={employee.id}
                             aria-selected={isSelected}
                             onClick={() => editEmployee(employee)}
                             /* The row is a mouse shortcut only. It used to be a

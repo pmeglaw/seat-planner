@@ -191,7 +191,18 @@ test("management directory is windowed with an indexed seat lookup, look unchang
   // null, so only a focusout that provably left the tbody may clear the pin.
   assert.match(source, /data-vpinned/);
   assert.match(source, /:not\(\[data-vpinned\]\)/);
-  assert.match(source, /if \(next && !grid\.contains\(next\)\) setPinnedEmployeeIndex\(null\)/);
+  assert.match(source, /if \(next && !grid\.contains\(next\)\) setPinnedEmployeeId\(null\)/);
+  // The pin is identity-based (employee id), not index-based: the focusin
+  // handler reads the id from the DOM attribute (never a stale closure over
+  // sortedEmployees), and the rendered index is derived from that id every
+  // render — so a same-count re-sort/reorder (e.g. another admin's edit
+  // revalidating while focus sits in a row) still follows the focused
+  // employee instead of stranding the pin on their old position. No mounted
+  // regression test exists for this yet (component tier gap); this source
+  // pin is the guardrail until one lands.
+  assert.match(source, /data-employee-id=\{employee\.id\}/);
+  assert.match(source, /row\.getAttribute\("data-employee-id"\)/);
+  assert.match(source, /sortedEmployees\.findIndex\(employee => employee\.id === pinnedEmployeeId\)/);
   // The directory is a real semantic table with a header and body.
   assert.match(source, /<table\b/);
   assert.match(source, /<thead>/);
