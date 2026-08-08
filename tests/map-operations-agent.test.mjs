@@ -1009,3 +1009,50 @@ test("map operations agent helper has no Supabase write calls or publish hooks",
   assert.match(source, /AbortController/);
   assert.match(source, /OPENAI_TIMEOUT_MS/);
 });
+
+test("an empty or whitespace-only question is rejected before any OpenAI traffic", async () => {
+  await withMockedOpenAI([], async requests => {
+    await assert.rejects(
+      () => agent.answerMapOperationsQuestion(askPlannerPayload({ question: "   " })),
+      /Ask Planner needs a question\./
+    );
+    assert.equal(requests.length, 0);
+  });
+});
+
+test("an over-long question is rejected with the limit named, before any OpenAI traffic", async () => {
+  await withMockedOpenAI([], async requests => {
+    await assert.rejects(
+      () => agent.answerMapOperationsQuestion(askPlannerPayload({ question: `Which seats are open? ${"x".repeat(801)}` })),
+      /limited to 800 characters\./
+    );
+    assert.equal(requests.length, 0);
+  });
+});
+
+test("a tool-call response missing its response id fails closed with a friendly retry error", async () => {
+  // The Responses loop continues a tool round via previous_response_id — a
+  // response that asks for tool output but carries no id cannot be continued.
+  const noIdResponse = openAIResponse({
+    output: [
+      {
+        type: "function_call",
+        name: "search_seats",
+        call_id: "call_no_id",
+        arguments: JSON.stringify({ query: "", status: "available", zone: "North Pod", department: "", occupied: false, customOnly: null, limit: 10 })
+      }
+    ]
+  });
+
+  await withMockedOpenAI([noIdResponse], async requests => {
+    await assert.rejects(
+      () => agent.answerMapOperationsQuestion(askPlannerPayload()),
+      error => {
+        assert.match(error.message, /could not continue a tool response/i);
+        assert.doesNotMatch(error.message, /test-openai-key|Authorization|Bearer/);
+        return true;
+      }
+    );
+    assert.equal(requests.length, 1);
+  });
+});

@@ -78,3 +78,63 @@ test("seatsToVisualSeats maps every seat", () => {
   assert.deepEqual(visual[0], seatToVisualSeat(northSeat));
   assert.deepEqual(visual[1], seatToVisualSeat(other));
 });
+
+// ---- Fallback area selection (a seat that matches no calibration area exactly)
+
+// A seat whose zone/label say "north pod" but whose coordinates have drifted
+// outside every saved bounds. Area selection must stay with the zone's
+// calibration (affinity beats proximity) — silently switching transforms is
+// how a drifted seat renders in the wrong pod.
+const strayNorthSeat = { id: "s-n99", label: "N99", zone: "north pod", x: 0.6, y: 0.55 };
+const probePoint = { x: 0.45, y: 0.15 };
+
+test("fallback: an out-of-bounds seat with a matching zone keeps that zone's calibration", () => {
+  const exact = savedPointToVisualPoint(probePoint, northSeat);
+  const viaFallback = savedPointToVisualPoint(probePoint, strayNorthSeat);
+  assert.deepEqual(viaFallback, exact);
+});
+
+test("fallback: label-prefix affinity alone still selects the zone's calibration", () => {
+  const exact = savedPointToVisualPoint(probePoint, northSeat);
+  const viaLabel = savedPointToVisualPoint(probePoint, { label: "N77", zone: "mystery pod", x: 0.6, y: 0.55 });
+  assert.deepEqual(viaLabel, exact);
+});
+
+test("fallback: zone affinity outranks label-prefix affinity when they disagree", () => {
+  const westSeat = { id: "s-w01", label: "W01", zone: "west pod", x: 0.1, y: 0.5 };
+  const exactWest = savedPointToVisualPoint(probePoint, westSeat);
+  // Label says north ("N"), zone says west — the zone must win.
+  const conflicted = savedPointToVisualPoint(probePoint, { label: "N05", zone: "west pod", x: 0.6, y: 0.9 });
+  assert.deepEqual(conflicted, exactWest);
+});
+
+test("fallback: with no zone or label affinity, the nearest saved bounds win", () => {
+  const westSeat = { id: "s-w01", label: "W01", zone: "west pod", x: 0.1, y: 0.5 };
+  const exactWest = savedPointToVisualPoint(probePoint, westSeat);
+  // Unknown zone and prefix; the point sits inside west-pod's saved bounds.
+  const unknown = savedPointToVisualPoint(probePoint, { label: "X01", zone: "annex", x: 0.05, y: 0.4 });
+  assert.deepEqual(unknown, exactWest);
+});
+
+// ---- Visual-side selection (inspector nudges: no saved source, only context)
+
+test("visual selection: zone context with an in-bounds point matches the source-based inverse", () => {
+  const visualPoint = { x: 0.4, y: 0.1 }; // inside north-pod's visual bounds
+  const bySource = visualPointToSavedPoint(visualPoint, { source: northSeat });
+  const byContext = visualPointToSavedPoint(visualPoint, { zone: "north pod", label: "N01" });
+  assert.deepEqual(byContext, bySource);
+});
+
+test("visual selection: an out-of-visual-bounds point still follows zone affinity", () => {
+  const farPoint = { x: 0.95, y: 0.95 };
+  const bySource = visualPointToSavedPoint(farPoint, { source: northSeat });
+  const byContext = visualPointToSavedPoint(farPoint, { zone: "north pod", label: null });
+  assert.deepEqual(byContext, bySource);
+});
+
+test("visual selection: no source, zone, or label falls back to the default preview transform", () => {
+  const visual = savedPointToVisualPoint({ x: 0.5, y: 0.5 });
+  const restored = visualPointToSavedPoint(visual, {});
+  assert.ok(Math.abs(restored.x - 0.5) < 1e-5);
+  assert.ok(Math.abs(restored.y - 0.5) < 1e-5);
+});

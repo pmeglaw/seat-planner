@@ -162,3 +162,27 @@ test("CSV parser preserves a leading apostrophe that isn't guarding a formula tr
   assert.deepEqual(result.issues, []);
   assert.equal(result.rows[0].employee_name, "'Tis Studios");
 });
+
+test("parseCsv unescapes doubled quotes inside quoted cells", () => {
+  // `""` is the CSV escape for a literal quote. Both loops must handle it:
+  // parseCsvLine turns it into one quote in the cell value, and parseCsv's
+  // line splitter must not let the pair toggle quote state (or a following
+  // comma/newline would split the cell apart).
+  const rows = parseCsv('a,"He said ""hi"", twice",c\n"""quoted""",plain');
+  assert.deepEqual(rows, [
+    ["a", 'He said "hi", twice', "c"],
+    ['"quoted"', "plain"]
+  ]);
+});
+
+test("parseCsv keeps escaped quotes intact across quoted newlines", () => {
+  const rows = parseCsv('a,"line ""one""\nline two",z');
+  assert.deepEqual(rows, [["a", 'line "one"\nline two', "z"]]);
+});
+
+test("CSV parser requires seat_label on every data row", () => {
+  const result = parseAssignmentCsv(`${HEADER_ROW}\n,Jane Doe,jane@example.com,,,,assigned,\nN02,,,,,,available,\n`);
+  assert.ok(messages(result).some(message => message === "Seat label is required."));
+  // The issue points at the spreadsheet row number (header is row 1).
+  assert.ok(result.issues.some(issue => issue.row === 2));
+});
