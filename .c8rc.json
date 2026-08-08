@@ -1,7 +1,7 @@
 {
-  "all": false,
+  "all": true,
   "include": ["lib/**/*.ts"],
-  "exclude": ["**/*.d.ts", "lib/types.ts"],
+  "exclude": ["**/*.d.ts", "lib/types.ts", "lib/supabase/client.ts", "lib/supabase/server.ts"],
   "exclude-after-remap": true,
   "reporter": ["text", "html"],
   "reports-dir": "coverage",

@@ -103,3 +103,64 @@ test("detector: concurrent checks share one in-flight probe", async () => {
 test("the probe endpoint constant is the API route the client fetches", () => {
   assert.equal(BUILD_ID_ENDPOINT, "/api/build-id");
 });
+
+// ---- The real probe behind the module singleton (fetchLiveBuildId) ----
+// The singleton wires fetchLiveBuildId + CLIENT_BUILD_ID ("dev" under tests).
+// Each scenario imports a FRESH module instance so the singleton's sticky
+// flag and probe throttle reset, and stubs global fetch.
+
+async function freshMonitor(t, fetchImpl) {
+  const original = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = (...args) => {
+    calls.push(args);
+    return fetchImpl(...args);
+  };
+  t.after(() => {
+    globalThis.fetch = original;
+  });
+  const { deploySkewMonitor } = await importTsModule("lib/deploySkew.ts", { fresh: true });
+  return { monitor: deploySkewMonitor, calls };
+}
+
+test("singleton probe: a matching live build id reports no skew", async (t) => {
+  const { monitor, calls } = await freshMonitor(t, async () => ({
+    ok: true,
+    json: async () => ({ buildId: "dev" })
+  }));
+
+  assert.equal(await monitor.check(), false);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], BUILD_ID_ENDPOINT);
+  // Deploy skew MUST bypass every cache — a cached build id defeats the probe.
+  assert.deepEqual(calls[0][1], { cache: "no-store" });
+});
+
+test("singleton probe: a different live build id flags skew", async (t) => {
+  const { monitor } = await freshMonitor(t, async () => ({
+    ok: true,
+    json: async () => ({ buildId: "deploy-2" })
+  }));
+
+  assert.equal(await monitor.check(), true);
+  assert.equal(monitor.isSkewed(), true);
+});
+
+test("singleton probe: a non-ok response is absent evidence, never skew", async (t) => {
+  const { monitor } = await freshMonitor(t, async () => ({
+    ok: false,
+    json: async () => ({ buildId: "deploy-2" })
+  }));
+
+  assert.equal(await monitor.check(), false);
+});
+
+test("singleton probe: a malformed payload (non-string buildId) is absent evidence, never skew", async (t) => {
+  const { monitor } = await freshMonitor(t, async () => ({
+    ok: true,
+    json: async () => ({ buildId: 12345 })
+  }));
+
+  assert.equal(await monitor.check(), false);
+  assert.equal(monitor.isSkewed(), false);
+});

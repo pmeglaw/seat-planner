@@ -82,3 +82,58 @@ test("generated labels remain unique within the target zone", () => {
 test("unknown helper-level zones derive a safe prefix", () => {
   assert.equal(buildNextSeatLabel([], "Quiet Area"), "QA01");
 });
+
+test("pattern tie-break: equal counts fall to the earlier-seen prefix; higher counts always win", () => {
+  // Two prefixes with one seat each — the first one encountered wins the tie.
+  assert.equal(buildNextSeatLabel([seat("A01", "Mixed Pod"), seat("B01", "Mixed Pod")], "Mixed Pod"), "A02");
+  // A prefix with more seats beats an earlier-seen but rarer one.
+  assert.equal(
+    buildNextSeatLabel([seat("A01", "Mixed Pod"), seat("B01", "Mixed Pod"), seat("B02", "Mixed Pod")], "Mixed Pod"),
+    "B03"
+  );
+});
+
+test("collision fallback: when 1000 sequential candidates are taken, labels degrade to PREFIX-N", () => {
+  // The zone owns one numbered seat (Z5), so candidates start at Z6 — but a
+  // thousand OTHER-zone seats already hold exactly the labels the sequential
+  // generator would mint. The generator must still terminate with a unique
+  // label rather than loop or return a duplicate.
+  const zoneSeats = [seat("Z5", "Zulu Pod")];
+  const digitWidth = 2; // max(pattern width 1, floor 2)
+  const blockers = [];
+  for (let n = 6; n <= 1005; n += 1) {
+    blockers.push(seat(`Z${String(n).padStart(digitWidth, "0")}`, "Other Pod"));
+  }
+
+  assert.equal(buildNextSeatLabel([...zoneSeats, ...blockers], "Zulu Pod"), "Z-1");
+
+  // And the dashed fallback itself skips values that are already taken.
+  const withDashTaken = [...zoneSeats, ...blockers, seat("Z-1", "Other Pod")];
+  assert.equal(buildNextSeatLabel(withDashTaken, "Zulu Pod"), "Z-2");
+});
+
+test("inferSeatPrefixFromZone covers every directional prefix, initials, and the S fallback", () => {
+  assert.equal(inferSeatPrefixFromZone("Northeast Pod"), "NE");
+  assert.equal(inferSeatPrefixFromZone("south east wing"), "SE");
+  assert.equal(inferSeatPrefixFromZone("Southwest Corner"), "SW");
+  assert.equal(inferSeatPrefixFromZone("north west annex"), "NW");
+  assert.equal(inferSeatPrefixFromZone("Center West"), "CW");
+  assert.equal(inferSeatPrefixFromZone("central east"), "CE");
+  assert.equal(inferSeatPrefixFromZone("Center Desks"), "C");
+  assert.equal(inferSeatPrefixFromZone("West Pod"), "W");
+  assert.equal(inferSeatPrefixFromZone("East Pod"), "E");
+  assert.equal(inferSeatPrefixFromZone("North Pod"), "N");
+  assert.equal(inferSeatPrefixFromZone("South Lounge"), "S");
+  // No directional keyword → initials of the words, capped at three.
+  assert.equal(inferSeatPrefixFromZone("Quiet Focus Room Annex"), "QFR");
+  // Nothing usable at all → the generic "S" seat prefix.
+  assert.equal(inferSeatPrefixFromZone(""), "S");
+  assert.equal(inferSeatPrefixFromZone("---"), "S");
+  assert.equal(inferSeatPrefixFromZone(null), "S");
+});
+
+test("labels that do not parse as PREFIX+digits are ignored by pattern detection", () => {
+  // "Desk 1" and "Z-9" carry no usable pattern; the zone falls back to the
+  // inferred prefix with the 2-digit floor.
+  assert.equal(buildNextSeatLabel([seat("Desk 1", "West Pod"), seat("Z-9", "West Pod")], "West Pod"), "W01");
+});

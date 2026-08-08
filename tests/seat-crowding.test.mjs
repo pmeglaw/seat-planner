@@ -501,3 +501,64 @@ test("computeCodePillNudges is input-order invariant and does not mutate its inp
     "expected identical nudge assignment regardless of input array order"
   );
 });
+
+test("seats at identical coordinates fall back to id order, so input order never changes nudges", () => {
+  const clearance = { x: 0.04, y: 0.05 };
+  const seats = [
+    { id: "b", x: 0.5, y: 0.5 },
+    { id: "a", x: 0.5, y: 0.5 }
+  ];
+  const named = new Set(["a", "b"]);
+
+  const forward = computeNameLabelNudges(seats, named, clearance);
+  const reversed = computeNameLabelNudges([...seats].reverse(), named, clearance);
+
+  assert.deepEqual(Object.fromEntries(forward), Object.fromEntries(reversed));
+  assert.notEqual(forward.get("a"), forward.get("b"));
+  // "a" sorts first on the id tiebreaker, so it takes the anchor row.
+  assert.equal(forward.get("a"), 0);
+});
+
+test("a 4-clique of named seats exhausts the palette and falls back to the least-used row", () => {
+  const clearance = { x: 0.1, y: 0.1 };
+  const seats = [
+    { id: "n1", x: 0.5, y: 0.5 },
+    { id: "n2", x: 0.51, y: 0.5 },
+    { id: "n3", x: 0.52, y: 0.5 },
+    { id: "n4", x: 0.53, y: 0.5 }
+  ];
+  const named = new Set(["n1", "n2", "n3", "n4"]);
+
+  const nudges = computeNameLabelNudges(seats, named, clearance);
+
+  // The first three exhaust [0, -1, 1]; each value used exactly once.
+  assert.deepEqual(new Set([nudges.get("n1"), nudges.get("n2"), nudges.get("n3")]), new Set([0, -1, 1]));
+  // The fourth seat has no free value left — best-effort least-used, tie
+  // broken by palette order for determinism.
+  assert.equal(nudges.get("n4"), 0);
+});
+
+test("an uncrowded unnamed neighbour joins the code-pill graph as a resting obstacle that steers nudges", () => {
+  const clearance = CODE_PILL_DEFAULT_CLEARANCE;
+  const pair = [
+    { id: "p1", x: 0.5, y: 0.5 },
+    { id: "p2", x: 0.53, y: 0.5 } // collides with p1 (0.03 < 0.044)
+  ];
+  // 27.5px below p1: outside the clearance box (never crowded itself), but a
+  // pill nudged DOWN from p2's row would land on it.
+  const rest = { id: "rest", x: 0.5, y: 0.555 };
+
+  const withoutRest = computeCodePillNudges(pair, clearance);
+  const withRest = computeCodePillNudges([...pair, rest], clearance);
+
+  // Alone, the pair diverges to the outer rows.
+  assert.equal(withoutRest.get("p1"), -1);
+  assert.equal(withoutRest.get("p2"), 1);
+  // The resting pill's footprint makes +1 the worse row for p2, so the scorer
+  // steers it to the anchor instead — dropping the obstacle handling would
+  // leave p2 at +1 and fail here.
+  assert.equal(withRest.get("p1"), -1);
+  assert.equal(withRest.get("p2"), 0);
+  // The resting seat is an obstacle, never a participant — no nudge of its own.
+  assert.equal(withRest.has("rest"), false);
+});

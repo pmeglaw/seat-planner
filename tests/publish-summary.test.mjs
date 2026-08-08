@@ -29,7 +29,7 @@ function seat(overrides) {
     layer: overrides.layer ?? "draft",
     employee_id: overrides.employee_id ?? assignedEmployee?.id ?? null,
     employee: assignedEmployee,
-    zone: overrides.zone ?? "West Pod",
+    zone: "zone" in overrides ? overrides.zone : "West Pod",
     department: overrides.department ?? null,
     notes: overrides.notes ?? null,
     is_custom: overrides.is_custom ?? false,
@@ -288,5 +288,80 @@ test("diff rows: people-only changes yield no rows while the summary still repor
   });
 
   assert.deepEqual(rows, []);
+  assert.equal(summary.hasChanges, true);
+});
+
+test("seat detail falls back through department, employee id, status, and Open seat", () => {
+  // These strings are what the publish review shows for added/removed seats —
+  // each fallback is a distinct way the dialog describes a seat.
+  const summary = publishSummary.buildPublishChangeSummary(
+    [
+      seat({ label: "A01", zone: null, department: "Operations" }),
+      seat({ label: "A02", zone: null, employee_id: "emp-ghost" }),
+      seat({ label: "A03", zone: null }),
+      seat({ label: "A04", status: "reserved" })
+    ],
+    []
+  );
+
+  const detailByLabel = new Map(summary.addedSeats.map(item => [item.label, item.detail]));
+  // zone is null → the zone slot falls back to the department name.
+  assert.equal(detailByLabel.get("A01"), "Operations");
+  // employee_id with no joined employee row still names the occupant.
+  assert.equal(detailByLabel.get("A02"), "Employee emp-ghost");
+  // Nothing to say → the explicit "Open seat" placeholder, never "".
+  assert.equal(detailByLabel.get("A03"), "Open seat");
+  // Non-available status is part of the seat's description.
+  assert.equal(detailByLabel.get("A04"), "West Pod · reserved");
+});
+
+test("metadata diffs name zone, department, and custom-flag changes", () => {
+  const summary = publishSummary.buildPublishChangeSummary(
+    [
+      seat({ label: "B01", zone: "North Pod" }),
+      seat({ label: "B02", zone: "Same Pod", department: "New Dept" }),
+      seat({ label: "B03", is_custom: true })
+    ],
+    [
+      seat({ label: "B01", layer: "published", zone: "West Pod" }),
+      seat({ label: "B02", layer: "published", zone: "Same Pod", department: "Old Dept" }),
+      seat({ label: "B03", layer: "published", is_custom: false })
+    ]
+  );
+
+  const detailByLabel = new Map(summary.otherChanges.map(item => [item.label, item.detail]));
+  assert.equal(detailByLabel.get("B01"), "Zone West Pod -> North Pod");
+  // Zone unchanged (zone wins the zone slot), so only the department diff fires.
+  assert.equal(detailByLabel.get("B02"), "Department Old Dept -> New Dept");
+  assert.equal(detailByLabel.get("B03"), "Custom flag no -> yes");
+  assert.equal(summary.updatedSeatCount, 3);
+});
+
+test("employee detail diffs cover title, department, extension, and email", () => {
+  const published = {
+    ...employee("emp-1", "Pat Person"),
+    position: "Clerk",
+    department: "Ops",
+    phone_extension: "101",
+    email: "old@example.test"
+  };
+  const live = {
+    ...employee("emp-1", "Pat Person"),
+    position: "Senior Clerk",
+    department: "Legal",
+    phone_extension: "202",
+    email: "new@example.test"
+  };
+
+  const summary = publishSummary.buildPublishChangeSummary([], [], {
+    employees: [live],
+    publishedEmployees: [published]
+  });
+
+  assert.equal(summary.employeeDetailChanges.length, 1);
+  assert.equal(
+    summary.employeeDetailChanges[0].detail,
+    "Title Clerk -> Senior Clerk; Department Ops -> Legal; Ext. 101 -> 202; Email old@example.test -> new@example.test"
+  );
   assert.equal(summary.hasChanges, true);
 });
