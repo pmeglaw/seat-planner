@@ -334,8 +334,10 @@ export function AdminManagementPanel({
       // Pinned rows sit against a split spacer, not their real neighbors, so
       // measuring one reads the gap, not the row.
       const firstRow = grid.querySelector<HTMLElement>("[data-directory-row]:not([data-vpinned])");
-      // Fall back to the default before the first row renders.
-      const rowHeight = firstRow ? firstRow.offsetHeight : 52;
+      // Fall back to the default before the first row renders — and on a
+      // zero-height measurement (hidden table, no layout): dividing by it
+      // below would NaN the scroll offset and blank the whole window.
+      const rowHeight = firstRow && firstRow.offsetHeight > 0 ? firstRow.offsetHeight : 52;
       // Quantize to row steps so scrolling only re-renders when the window moves.
       const rawOffset = Math.max(0, -grid.getBoundingClientRect().top);
       const scrollOffset = Math.floor(rawOffset / rowHeight) * rowHeight;

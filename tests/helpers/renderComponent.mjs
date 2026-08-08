@@ -96,7 +96,15 @@ const ACTION_EXPORTS = [
   "askPlannerAction",
   "createEmployeeAction",
   "updateEmployeeAction",
-  "deleteEmployeeAction"
+  "deleteEmployeeAction",
+  "importAssignmentsCsvAction",
+  "resetDraftToPublishedAction",
+  "createDepartmentAction",
+  "renameDepartmentAction",
+  "deleteDepartmentAction",
+  "createZoneAction",
+  "renameZoneAction",
+  "deleteZoneAction"
 ];
 
 const STANDARD_MOCKS = {
