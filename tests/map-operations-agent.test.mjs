@@ -1020,13 +1020,22 @@ test("an empty or whitespace-only question is rejected before any OpenAI traffic
   });
 });
 
-test("an over-long question is rejected with the limit named, before any OpenAI traffic", async () => {
+test("the question length limit rejects exactly 801 characters, before any OpenAI traffic", async () => {
   await withMockedOpenAI([], async requests => {
     await assert.rejects(
-      () => agent.answerMapOperationsQuestion(askPlannerPayload({ question: `Which seats are open? ${"x".repeat(801)}` })),
+      () => agent.answerMapOperationsQuestion(askPlannerPayload({ question: "x".repeat(801) })),
       /limited to 800 characters\./
     );
     assert.equal(requests.length, 0);
+  });
+});
+
+test("a question of exactly 800 characters is still accepted", async () => {
+  await withMockedOpenAI([finalResponse()], async () => {
+    const question = "x".repeat(800);
+    assert.equal(question.length, 800);
+    const result = await agent.answerMapOperationsQuestion(askPlannerPayload({ question }));
+    assert.equal(result.status, "answered");
   });
 });
 

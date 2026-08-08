@@ -227,10 +227,20 @@ test("fail-open: a hung auth step releases the request at the 5s budget, and a l
   t.mock.timers.enable({ apis: ["setTimeout"] });
   const updateSession = await freshMiddleware();
 
-  const pending = updateSession(makeRequest({ cookies: [AUTH_COOKIE] }));
-  // Let the auth step start and arm the timeout, then advance past the budget.
+  let settled = false;
+  const pending = updateSession(makeRequest({ cookies: [AUTH_COOKIE] })).then((response) => {
+    settled = true;
+    return response;
+  });
+  // Let the auth step start and arm the timeout.
   await new Promise((resolve) => setImmediate(resolve));
-  t.mock.timers.tick(5_000);
+  // One millisecond short of the budget the request must still be held —
+  // failing open EARLIER than 5s would skip session refreshes that were
+  // merely slow, not hung.
+  t.mock.timers.tick(4_999);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(settled, false, "request must remain pending before the 5s budget elapses");
+  t.mock.timers.tick(1);
   const response = await pending;
 
   assert.ok(response, "request must proceed once the timeout wins the race");

@@ -122,10 +122,12 @@ const adminPageGuardStubs = {
   "next/server": `
     export async function connection() {
       globalThis.__adminGuardConnectionCalls = (globalThis.__adminGuardConnectionCalls ?? 0) + 1;
+      (globalThis.__adminGuardEvents ??= []).push("connection");
     }
   `,
   "@/lib/serverAuth": `
     export async function getSessionContext() {
+      (globalThis.__adminGuardEvents ??= []).push("getSessionContext");
       return globalThis.__adminGuardSession;
     }
   `
@@ -151,12 +153,15 @@ test("getAdminPageContext: admin session yields isAdmin true and the shared clie
   const user = { id: "admin-1" };
   globalThis.__adminGuardSession = { supabase, user, role: "admin" };
   const connectionCallsBefore = globalThis.__adminGuardConnectionCalls ?? 0;
+  globalThis.__adminGuardEvents = [];
 
   const context = await getAdminPageContext("/admin");
 
   assert.deepEqual(context, { supabase, isAdmin: true, user });
-  // connection() opts the page out of static prerender BEFORE any auth read.
   assert.equal(globalThis.__adminGuardConnectionCalls, connectionCallsBefore + 1);
+  // connection() opts the page out of static prerender BEFORE any auth read —
+  // the order, not just the count, is the contract.
+  assert.deepEqual(globalThis.__adminGuardEvents, ["connection", "getSessionContext"]);
 });
 
 test("getAdminPageContext: signed-in viewer passes the login gate but is not admin", async () => {

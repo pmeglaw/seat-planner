@@ -31,10 +31,13 @@ test("the sanctioned-caller list stays accurate: only the documented modules imp
   // deliberate decision, so this enumerates the real import sites.
   const { execFile } = await import("node:child_process");
   const { promisify } = await import("node:util");
+  // Quote-style-agnostic: a single-quoted or reformatted import must not
+  // slip past the guardrail. The specifier always sits on one line after
+  // `from`, whatever the surrounding import layout.
   const { stdout } = await promisify(execFile)("git", [
     "grep",
-    "-l",
-    "from \"@/lib/fullNavigation\"",
+    "-lE",
+    "from ['\"]@/lib/fullNavigation['\"]",
     "--",
     "app",
     "components",
@@ -55,8 +58,13 @@ test("copy contract: the shared publish-impact note reassures about the draft/pu
   // their own wording (pinned by the destructive-action safety tests).
   const { PUBLISH_IMPACT_NOTE } = await importTsModule("lib/copy.ts");
   assert.equal(typeof PUBLISH_IMPACT_NOTE, "string");
-  assert.match(PUBLISH_IMPACT_NOTE, /publish/i);
+  // The sentence must carry the actual two-layer reassurance — who is
+  // shielded (viewers, on the published layer) and what is pending (this
+  // draft) — not merely mention publishing.
   assert.match(PUBLISH_IMPACT_NOTE, /viewers/i);
+  assert.match(PUBLISH_IMPACT_NOTE, /published/i);
+  assert.match(PUBLISH_IMPACT_NOTE, /draft/i);
+  assert.match(PUBLISH_IMPACT_NOTE, /until you publish/i);
   const source = await readFile(new URL("../lib/copy.ts", import.meta.url), "utf8");
   assert.match(source, /export const PUBLISH_IMPACT_NOTE/);
 });

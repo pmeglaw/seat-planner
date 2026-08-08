@@ -538,18 +538,27 @@ test("a 4-clique of named seats exhausts the palette and falls back to the least
   assert.equal(nudges.get("n4"), 0);
 });
 
-test("an uncrowded unnamed neighbour joins the code-pill graph as a resting obstacle", () => {
+test("an uncrowded unnamed neighbour joins the code-pill graph as a resting obstacle that steers nudges", () => {
   const clearance = CODE_PILL_DEFAULT_CLEARANCE;
-  const seats = [
+  const pair = [
     { id: "p1", x: 0.5, y: 0.5 },
-    { id: "p2", x: 0.53, y: 0.5 }, // collides with p1 (0.03 < 0.044)
-    { id: "rest", x: 0.585, y: 0.5 } // 0.055 from p2: outside the 0.044 clearance, inside the ~0.075 obstacle reach
+    { id: "p2", x: 0.53, y: 0.5 } // collides with p1 (0.03 < 0.044)
   ];
+  // 27.5px below p1: outside the clearance box (never crowded itself), but a
+  // pill nudged DOWN from p2's row would land on it.
+  const rest = { id: "rest", x: 0.5, y: 0.555 };
 
-  const nudges = computeCodePillNudges(seats, clearance);
+  const withoutRest = computeCodePillNudges(pair, clearance);
+  const withRest = computeCodePillNudges([...pair, rest], clearance);
 
-  // The colliding pair diverges; the resting seat is an obstacle, never a
-  // participant — it must not receive a nudge of its own.
-  assert.notEqual(nudges.get("p1"), nudges.get("p2"));
-  assert.equal(nudges.has("rest"), false);
+  // Alone, the pair diverges to the outer rows.
+  assert.equal(withoutRest.get("p1"), -1);
+  assert.equal(withoutRest.get("p2"), 1);
+  // The resting pill's footprint makes +1 the worse row for p2, so the scorer
+  // steers it to the anchor instead — dropping the obstacle handling would
+  // leave p2 at +1 and fail here.
+  assert.equal(withRest.get("p1"), -1);
+  assert.equal(withRest.get("p2"), 0);
+  // The resting seat is an obstacle, never a participant — no nudge of its own.
+  assert.equal(withRest.has("rest"), false);
 });
