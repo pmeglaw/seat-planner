@@ -31,6 +31,25 @@ test("rail navigation is client-side: zero document loads, one persistent rail",
   // signIn lands on "/" (the login form's default next path); the hop to
   // /admin is ordinary setup navigation — recording starts after it.
   await signIn(page, SEEDED_ADMIN_EMAIL);
+
+  // Warm every route the measured pass will visit. AppRail arms a 4s
+  // stalled-navigation watchdog on each rail click (AppRail.tsx: armNavWatchdog)
+  // that deliberately falls back to a FULL document load if the soft nav has
+  // not committed in time. That is correct product behavior (#316) — but a
+  // first, cold hit on a route compiles and streams it, and this job also boots
+  // a Docker Supabase stack on the same runner, so a cold cross-route fetch can
+  // lose that race. The watchdog then replaces the rail node and fails
+  // invariants 1 and 2 for LATENCY reasons rather than product ones (observed
+  // on #348: railTag null, both attempts, ~8.2s).
+  //
+  // These are ordinary document navigations and every one happens BEFORE the
+  // recorder starts below, so they cannot pollute the zero-documents assertion.
+  // What is under test is that RAIL navigation stays client-side, not that a
+  // cold route compiles inside 4 seconds.
+  for (const path of ["/admin/management", "/admin/settings", "/reception"]) {
+    await page.goto(path);
+  }
+
   await page.goto("/admin");
   await expect(page.locator("#app-rail")).toBeVisible();
 
