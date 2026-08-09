@@ -42,6 +42,41 @@ test.describe("waitForColorSettle", () => {
     await expect(locator).toHaveCSS("color", "rgb(255, 255, 255)");
   });
 
+  test("does not resolve mid-transition when ONLY opacity is animating", async ({ page }) => {
+    // Regression for SeatMap's swap/move mode card, which fades in via
+    // sp-panel-in (opacity 0 -> 1, 200ms). An opacity transition changes
+    // neither `color` nor `backgroundColor`, so a helper sampling only those
+    // saw two identical samples and resolved after a single 120ms tick while
+    // the element was still translucent. axe computes contrast from the
+    // EFFECTIVE blended color, so it then reported violations against nodes
+    // that pass at rest (#348: 4.71:1 and 5.29:1 both flagged mid-fade).
+    //
+    // This test fails if `opacity` is dropped from the sampled key: without it
+    // the helper resolves in ~120ms, well under the 300ms transition.
+    await page.setContent(`
+      <div
+        id="target"
+        style="opacity: 0; background-color: rgb(255, 255, 255); color: rgb(22, 22, 22); transition: opacity 300ms linear;"
+      >Fading in</div>
+    `);
+
+    const locator = page.locator("#target");
+    // Same shape as the color test above: start the poll loop first so its
+    // baseline sample is taken before the style mutation.
+    const settlePromise = waitForColorSettle(locator);
+
+    await locator.evaluate(el => {
+      (el as HTMLElement).style.opacity = "1";
+    });
+    const start = Date.now();
+
+    await settlePromise;
+    const elapsed = Date.now() - start;
+
+    expect(elapsed).toBeGreaterThanOrEqual(300);
+    await expect(locator).toHaveCSS("opacity", "1");
+  });
+
   test("resolves for a static element with no transition at all", async ({ page }) => {
     await page.setContent(
       `<div id="target" style="background-color: rgb(255, 255, 255); color: rgb(22, 22, 22);">Static</div>`

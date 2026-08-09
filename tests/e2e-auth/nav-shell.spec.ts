@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { retryUntilVisible, SEEDED_ADMIN_EMAIL, signIn } from "./auth-helpers";
 
 // Regression guard for the nav-lag fix (#333): rail navigation must be
@@ -29,12 +29,31 @@ import { retryUntilVisible, SEEDED_ADMIN_EMAIL, signIn } from "./auth-helpers";
 // page's skip-link landing marker (zero-height, hence attached rather than
 // visible). The lap ends on "Seat map" so it returns to /admin, leaving the
 // measured pass starting from the same place the warm lap did.
+//
+// `heading` exists because the probe alone cannot fence a route commit on the
+// two admin subpages: BOTH render id="admin-subpage-main" (management/page.tsx,
+// settings/page.tsx), so waiting for it attached on the Management -> Settings
+// hop can be satisfied by the page being navigated AWAY from, and the loop then
+// races ahead of a navigation that has not committed. Their <h1> is
+// route-unique and only exists once the target page is on screen. Reception and
+// Seat map need no heading — their probes are already unique to one route.
 const SECTIONS = [
-  { title: "Management", path: "/admin/management", probe: "#admin-subpage-main" },
-  { title: "Settings", path: "/admin/settings", probe: "#admin-subpage-main" },
-  { title: "Reception", path: "/reception", probe: "#reception-main" },
-  { title: "Seat map", path: "/admin", probe: "#planning-canvas" }
+  { title: "Management", path: "/admin/management", probe: "#admin-subpage-main", heading: "Management" },
+  { title: "Settings", path: "/admin/settings", probe: "#admin-subpage-main", heading: "Settings" },
+  { title: "Reception", path: "/reception", probe: "#reception-main", heading: null },
+  { title: "Seat map", path: "/admin", probe: "#planning-canvas", heading: null }
 ];
+
+// Click a rail section and wait until it has actually COMMITTED — URL, then the
+// landing marker, then (where the marker is ambiguous) route-unique content.
+async function navigateToSection(page: Page, section: (typeof SECTIONS)[number]) {
+  await page.locator(`#app-rail a[title="${section.title}"]`).click();
+  await page.waitForURL(url => url.pathname === section.path);
+  await page.waitForSelector(section.probe, { state: "attached" });
+  if (section.heading) {
+    await expect(page.getByRole("heading", { level: 1, name: section.heading })).toBeVisible();
+  }
+}
 
 test("rail navigation is client-side: zero document loads, one persistent rail", async ({ page }) => {
   test.setTimeout(120_000);
@@ -72,14 +91,24 @@ test("rail navigation is client-side: zero document loads, one persistent rail",
   // exactly why the first attempt at this fix (#349, page.goto lap) did not
   // change the outcome. Do not "simplify" this back into page.goto calls.
   //
-  // This lap runs before the recorder starts, so it cannot pollute the
-  // zero-documents assertion, and the rail is tagged after it, so a watchdog
-  // firing here cannot fake a pass either.
+  // The recorder starts BEFORE this lap on purpose. The lap can itself trip the
+  // watchdog, and if it does, the replacement document drops the Client Router
+  // Cache entries the lap had already filled — leaving the measured pass cold
+  // for routes it believes are warm. Recording across both phases turns that
+  // into something the failure message can show instead of a silent hole.
+  const documentRequests: string[] = [];
+  page.on("request", request => {
+    if (request.resourceType() === "document") documentRequests.push(request.url());
+  });
+
   for (const section of SECTIONS) {
-    await page.locator(`#app-rail a[title="${section.title}"]`).click();
-    await page.waitForURL(url => url.pathname === section.path);
-    await page.waitForSelector(section.probe, { state: "attached" });
+    await navigateToSection(page, section);
   }
+
+  // Everything recorded so far belongs to the warm lap, not the measured pass.
+  // Keep it for diagnostics, then reset so invariant 1 measures only the pass.
+  const warmLapDocumentRequests = [...documentRequests];
+  documentRequests.length = 0;
 
   // The warm lap collapsed the drawer on its first click; re-open it so the
   // measured pass still stages invariant 3 (drawer open at first transition).
@@ -88,27 +117,20 @@ test("rail navigation is client-side: zero document loads, one persistent rail",
     page.locator('#app-rail[data-expanded="true"]')
   );
 
-  // Tag the rail node and start the document-request recorder.
+  // Tag the rail node. The recorder is already running — it was started before
+  // the warm lap and reset just above, so from here it measures only this pass.
   await page.evaluate(() => {
     (document.getElementById("app-rail") as HTMLElement & { __persistTag?: string }).__persistTag = "rail-1";
   });
-  const documentRequests: string[] = [];
-  page.on("request", request => {
-    if (request.resourceType() === "document") documentRequests.push(request.url());
-  });
 
   // First transition happens with the drawer open (invariant 3).
-  await page.locator('#app-rail a[title="Management"]').click();
-  await page.waitForURL(url => url.pathname === "/admin/management");
-  await page.waitForSelector("#admin-subpage-main", { state: "attached" });
+  await navigateToSection(page, SECTIONS[0]);
   await expect(page.locator("#app-rail")).toHaveAttribute("data-expanded", "false");
   await expect(page.locator("[data-rail-scrim]")).toHaveCount(0);
 
   // Remaining sections (Management was the drawer-open transition above).
   for (const section of SECTIONS.slice(1)) {
-    await page.locator(`#app-rail a[title="${section.title}"]`).click();
-    await page.waitForURL(url => url.pathname === section.path);
-    await page.waitForSelector(section.probe, { state: "attached" });
+    await navigateToSection(page, section);
   }
 
   // Invariant 2: same mounted node the whole way through.
@@ -124,7 +146,9 @@ test("rail navigation is client-side: zero document loads, one persistent rail",
   // load at all, which would be a genuine persistent-shell regression.
   expect(
     railTag,
-    `the rail must be the SAME mounted DOM node across all navigations (document requests recorded: ${JSON.stringify(documentRequests)})`
+    `the rail must be the SAME mounted DOM node across all navigations` +
+      ` (measured-pass document requests: ${JSON.stringify(documentRequests)};` +
+      ` warm-lap document requests: ${JSON.stringify(warmLapDocumentRequests)})`
   ).toBe("rail-1");
 
   // Invariant 1: nothing above was a document load.
