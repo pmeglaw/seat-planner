@@ -70,20 +70,30 @@ test("undo-redo restore deletes only eligible custom draft seats", async () => {
 
 test("redo of an added seat reselects the restored seat", async () => {
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
-  const redoFunction = seatMapSource.match(/function redoDraftEdit\(\) \{[\s\S]*?\n  \}/);
-  const restoreFunction = seatMapSource.match(/function restoreHistorySnapshot\([\s\S]*?function undoDraftEdit/);
+  const historySource = await readFile(new URL("../components/seat-map/useDraftHistory.ts", import.meta.url), "utf8");
+  // Redo and the fenced restore call moved into useDraftHistory; SeatMap kept
+  // the half that touches the surface (which seat ends up selected).
+  const redoFunction = historySource.match(/const redoDraftEdit = useCallback\(\(\) => \{[\s\S]*?\n  \}, \[/);
+  const restoreFunction = historySource.match(/const restoreHistorySnapshot = useCallback\([\s\S]*?const historyAdjacencyBroken/);
+  const applyRestore = seatMapSource.match(/function applyHistoryRestore\([\s\S]*?\n  \}/);
 
   assert.ok(redoFunction, "redoDraftEdit should remain source-visible.");
   assert.ok(restoreFunction, "restoreHistorySnapshot should remain source-visible.");
+  assert.ok(applyRestore, "the restore's reselect half should remain source-visible in SeatMap.");
   // The label parse moved into lib/draftHistory.ts, where addedSeatHistoryLabel
   // and parseAddedSeatLabel are round-tripped by tests/draft-history.test.mjs —
   // builder and parser can no longer drift apart. The contract this line
   // guards is unchanged: redo must still derive the added seat's label from
   // the entry so restoreHistorySnapshot can reselect it.
   assert.match(redoFunction[0], /parseAddedSeatLabel\(result\.entry\.label\)/);
-  assert.match(redoFunction[0], /restoreHistorySnapshot\(result\.snapshot, result\.history, "Redo", `Redid \$\{result\.entry\.label\}\.`, addSeatLabel\)/);
-  assert.match(restoreFunction[0], /setSelectedSeatId\(restoredSeat\.id\)/);
-  assert.match(restoreFunction[0], /setInspectorCollapsed\(false\)/);
+  assert.match(
+    redoFunction[0],
+    /restoreHistorySnapshot\(\s*result\.snapshot,\s*result\.history,\s*"Redo",\s*`Redid \$\{result\.entry\.label\}\.`,\s*addSeatLabel\s*\)/
+  );
+  // ...and the label must travel to the parent, which does the reselecting.
+  assert.match(restoreFunction[0], /selectRestoredSeatLabel \? \{ selectSeatLabel: selectRestoredSeatLabel \} : undefined/);
+  assert.match(applyRestore[0], /setSelectedSeatId\(restoredSeat\.id\)/);
+  assert.match(applyRestore[0], /setInspectorCollapsed\(false\)/);
 });
 
 test("admin names visibility preference persists locally without server storage", async () => {

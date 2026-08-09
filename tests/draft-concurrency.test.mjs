@@ -77,28 +77,38 @@ test("isStaleDraftErrorCode matches only the fence SQLSTATE", () => {
 // admin's draft edits must thread the fence, and the stale recovery must drop
 // the now-invalid undo/redo baselines before re-seeding from the server.
 
+// The undo/redo half of this now lives in components/seat-map/useDraftHistory.ts
+// (extracted from SeatMap, behavior unchanged). The fence is the same fence —
+// only the file it is asserted against moved, so this test reads both.
 test("SeatMap threads the fence through undo/redo restore and swap", async () => {
   const source = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  const historySource = await readFile(new URL("../components/seat-map/useDraftHistory.ts", import.meta.url), "utf8");
 
-  assert.match(source, /restoreDraftSnapshotAction\(snapshot, listDraftSeatExpectations\(localSeats\)\)/);
+  assert.match(historySource, /restoreDraftSnapshotAction\(\s*snapshot,\s*listDraftSeatExpectations\(localSeats\)\s*\)/);
   assert.match(source, /sourceExpectedUpdatedAt: sourceSeat\.updated_at/);
   assert.match(source, /targetExpectedUpdatedAt: targetSeat\.updated_at/);
 
   const staleHandler = source.match(/function handleStaleDraft\(message: string\) \{[\s\S]*?\n  \}/);
   assert.ok(staleHandler, "stale-draft recovery handler should be source-visible");
-  assert.match(staleHandler[0], /setDraftHistory\(clearDraftHistory\(\)\)/);
+  // Drops the now-invalid undo/redo baselines; the stacks themselves (and the
+  // sessionStorage mirror that has to be cleared with them) belong to the hook.
+  assert.match(staleHandler[0], /clearHistory\(\)/);
   assert.match(staleHandler[0], /router\.refresh\(\)/);
 
   // Client-side adjacency guard: the server fence only proves the VIEW is
   // fresh; a foreign edit that reached this client via a server-action refresh
   // makes the history SNAPSHOT stale while the view is current. Undo/redo must
   // value-compare the live draft against the entry state before restoring.
-  const undoHandler = source.match(/function undoDraftEdit\(\) \{[\s\S]*?\n  \}/);
-  const redoHandler = source.match(/function redoDraftEdit\(\) \{[\s\S]*?\n  \}/);
+  const undoHandler = historySource.match(/const undoDraftEdit = useCallback\(\(\) => \{[\s\S]*?\n  \}, \[/);
+  const redoHandler = historySource.match(/const redoDraftEdit = useCallback\(\(\) => \{[\s\S]*?\n  \}, \[/);
   assert.ok(undoHandler && redoHandler, "undo/redo handlers should be source-visible");
   assert.match(undoHandler[0], /historyAdjacencyBroken\(result\.entry\.after\)/);
   assert.match(redoHandler[0], /historyAdjacencyBroken\(result\.entry\.before\)/);
-  assert.match(source, /draftStatesEquivalent\(createDraftSnapshot\(localSeats, localEmployees\), expectedCurrent\)/);
+  assert.match(historySource, /draftStatesEquivalent\(createDraftSnapshot\(localSeats, localEmployees\), expectedCurrent\)/);
+  // The hook must reach the parent's recovery rather than surfacing a generic
+  // error: a broken adjacency is the same fence failure as an MLS02 reject.
+  assert.match(undoHandler[0], /onStaleDraft\(/);
+  assert.match(redoHandler[0], /onStaleDraft\(/);
   // The user-facing explanation must live in dedicated state: the inspector's
   // reset/seat-sync paths call onError(null), which wipes actionError in the
   // same render cycle the fence fires (found live on the PR #99 preview).

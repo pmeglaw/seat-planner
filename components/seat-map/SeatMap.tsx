@@ -5,27 +5,13 @@ import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  DRAFT_HISTORY_STORAGE_KEY,
   addedSeatHistoryLabel,
-  canAdoptPersistedHistory,
-  canRedoDraftHistory,
-  canUndoDraftHistory,
-  clearDraftHistory,
-  createDraftHistory,
-  createDraftSnapshot,
   describeSeatUpdate,
-  deserializeDraftHistory,
-  draftStatesEquivalent,
-  parseAddedSeatLabel,
-  pushDraftHistory,
-  redoDraftHistory,
-  serializeDraftHistory,
-  undoDraftHistory,
   type DraftSnapshot
 } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
-import { createSeatAction, deleteSeatAction, publishSeatMapAction, resetDraftToPublishedAction, restoreDraftSnapshotAction, swapSeatAssignmentsAction, updateSeatAction } from "@/app/actions";
+import { createSeatAction, deleteSeatAction, publishSeatMapAction, resetDraftToPublishedAction, swapSeatAssignmentsAction, updateSeatAction } from "@/app/actions";
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
 import { listActiveEmployeeExpectations, listDraftSeatExpectations, type DraftSeatExpectation, type EmployeeExpectation } from "@/lib/draftConcurrency";
@@ -81,6 +67,7 @@ import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
+import { useDraftHistory } from "@/components/seat-map/useDraftHistory";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
@@ -396,18 +383,44 @@ export function SeatMap({
   const [moveEmployeeConfirm, setMoveEmployeeConfirm] = useState<MoveEmployeeConfirmState>(null);
   const [deleteSeatConfirm, setDeleteSeatConfirm] = useState<DeleteSeatConfirmState>(null);
   const [vacateConfirm, setVacateConfirm] = useState<VacateConfirmState>(null);
-  const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
   // Last keyboard-visited seat (roving tabindex anchor). The derived tab stop
   // also prefers the selected seat — see mapRovingSeatId.
   const [rovingSeatId, setRovingSeatId] = useState<string | null>(null);
   const focusInspectorAfterSelectRef = useRef(false);
   const [pending, startTransition] = useTransition();
-  // `pending` outlives the server action: revalidatePath("/admin") keeps the
-  // transition busy through the RSC refresh for seconds after a mutation
-  // committed. Undo/Redo gate on this narrower flag instead, so they enable
-  // together with the success banner (the refresh only refreshes props that
-  // local state already reflects).
-  const [mutationInFlight, setMutationInFlight] = useState(false);
+  // Draft undo/redo lives in its own hook: the stacks, their per-tab
+  // sessionStorage persistence, the client-side adjacency guard and the
+  // fenced restore path all move together, while this component keeps the
+  // live draft (localSeats/localEmployees) and the mode/selection state the
+  // restore has to clean up. `mutationInFlight` rides along because the
+  // restore path owns it: `pending` outlives the server action
+  // (revalidatePath("/admin") keeps the transition busy through the RSC
+  // refresh for seconds after a mutation committed), so Undo/Redo gate on
+  // this narrower flag instead and enable together with the success banner
+  // (the refresh only refreshes props that local state already reflects).
+  const {
+    undoAvailable,
+    redoAvailable,
+    lastUndoLabel,
+    nextRedoLabel,
+    mutationInFlight,
+    setMutationInFlight,
+    captureDraftSnapshot,
+    recordDraftHistory,
+    undoDraftEdit,
+    redoDraftEdit,
+    clearHistory,
+    activityForSeat
+  } = useDraftHistory({
+    canEdit,
+    localSeats,
+    localEmployees,
+    inspectorDirty,
+    onRestored: applyHistoryRestore,
+    onStaleDraft: handleStaleDraft,
+    onNotice: setActionNotice,
+    onError: setHistoryError
+  });
   const deleteSeatDialogFocusRef = useDialogFocus<HTMLElement>();
   const vacateConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   const publishReviewDialogFocusRef = useDialogFocus<HTMLElement>();
@@ -415,49 +428,6 @@ export function SeatMap({
   const inspectorGuardDialogFocusRef = useDialogFocus<HTMLElement>();
   const swapConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   const moveEmployeeConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
-
-  // Reload persistence, adopt half. On mount, take over the per-tab stacks the
-  // effect below saved — but only while the live draft still matches the state
-  // the stacks left it in (the same adjacency rule that guards every undo
-  // click). Anything else (another session's edit, a publish, an import while
-  // this tab was gone) makes the stored stacks unsafe, so they're dropped.
-  // Declared BEFORE the save effect: on first commit this reads storage before
-  // the save effect sees the still-empty stacks and clears the key.
-  useEffect(() => {
-    if (!canEdit) return;
-    let stored: string | null = null;
-    try {
-      stored = window.sessionStorage.getItem(DRAFT_HISTORY_STORAGE_KEY);
-    } catch {
-      return;
-    }
-    const persisted = deserializeDraftHistory(stored);
-    if (!persisted) return;
-    setDraftHistory(current => {
-      if (canUndoDraftHistory(current) || canRedoDraftHistory(current)) return current;
-      return canAdoptPersistedHistory(persisted, createDraftSnapshot(localSeats, localEmployees)) ? persisted : current;
-    });
-    // Mount-only (localSeats/localEmployees still hold the server-loaded
-    // draft); re-running later could clobber in-session stacks.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canEdit]);
-
-  // Reload persistence, save half. Every history change mirrors to
-  // sessionStorage (per-tab, so parallel admin tabs never share stacks);
-  // cleared stacks (publish, stale-draft reset) also clear the key.
-  useEffect(() => {
-    if (!canEdit) return;
-    try {
-      if (canUndoDraftHistory(draftHistory) || canRedoDraftHistory(draftHistory)) {
-        window.sessionStorage.setItem(DRAFT_HISTORY_STORAGE_KEY, serializeDraftHistory(draftHistory));
-      } else {
-        window.sessionStorage.removeItem(DRAFT_HISTORY_STORAGE_KEY);
-      }
-    } catch {
-      // Storage unavailable or over quota: reload persistence degrades to the
-      // old in-memory behavior instead of breaking edits.
-    }
-  }, [canEdit, draftHistory]);
 
   // Keyboard activation of a seat hands focus into the inspector panel once
   // the selection commits (mouse users keep their pointer focus — the flag is
@@ -1128,20 +1098,12 @@ export function SeatMap({
     return [...seatCards, ...unassignedPeople].slice(0, 60);
   }, [localEmployees, localSeats, matchingSeats, searchQuery]);
   const selectedSeatMatchesFilters = selectedSeat ? matchesFilters(selectedSeat) : true;
-  const undoAvailable = canUndoDraftHistory(draftHistory);
-  const redoAvailable = canRedoDraftHistory(draftHistory);
   // Session-local activity for the inspector's Activity section: undo-history
   // labels that name the selected seat (newest first). Client-side only.
-  const selectedSeatActivity = useMemo(() => {
-    if (!selectedSeat) return [];
-    return draftHistory.undoStack
-      .filter(entry => entry.label.split(/\s+/).includes(selectedSeat.label))
-      .slice(-5)
-      .reverse()
-      .map(entry => entry.label);
-  }, [draftHistory, selectedSeat]);
-  const lastUndoLabel = draftHistory.undoStack.at(-1)?.label ?? null;
-  const nextRedoLabel = draftHistory.redoStack.at(-1)?.label ?? null;
+  const selectedSeatActivity = useMemo(
+    () => activityForSeat(selectedSeat?.label),
+    [activityForSeat, selectedSeat]
+  );
 
   function eventToPoint(event: Pick<PointerEvent<HTMLElement>, "clientX" | "clientY">) {
     const rect = mapRef.current?.getBoundingClientRect();
@@ -1385,10 +1347,6 @@ export function SeatMap({
     return `opening ${action.destination}.`;
   }
 
-  function captureDraftSnapshot() {
-    return createDraftSnapshot(localSeats, localEmployees);
-  }
-
   /**
    * The single commit path for a saved seat, shared by the inspector's form
    * and its icon-row Vacate (v12 slice 4 retired the canvas action bar those
@@ -1484,9 +1442,30 @@ export function SeatMap({
     setMoveEmployeeConfirm(null);
   }
 
-  function recordDraftHistory(label: string, before: DraftSnapshot, afterSeats: SeatWithEmployee[], afterEmployees: Employee[]) {
-    const after = createDraftSnapshot(afterSeats, afterEmployees);
-    setDraftHistory(current => pushDraftHistory(current, { label, before, after }));
+  // Undo/Redo restore half: useDraftHistory owns the fenced server call and
+  // hands back the fresh draft, this component owns what the restored state
+  // does to the surface. `selectSeatLabel` only arrives when redoing an "Add
+  // …" entry, so the re-created seat lands selected in an open inspector.
+  function applyHistoryRestore(
+    payload: { seats: SeatWithEmployee[]; employees: Employee[] },
+    options?: { selectSeatLabel?: string }
+  ) {
+    applyRestoredDraftPayload(payload);
+    const selectLabel = options?.selectSeatLabel;
+    if (!selectLabel) return;
+    const restoredSeat = payload.seats.find(seat => seat.label === selectLabel);
+    if (!restoredSeat) return;
+    setSelectedSeatId(restoredSeat.id);
+    setInspectorCollapsed(false);
+  }
+
+  // Error sink for useDraftHistory. Clearing the error also clears the
+  // stale-draft banner, because the hook clears the transient banners in one
+  // breath before it commits a restore and staleDraftNotice is banner state
+  // too (it is deliberately NOT part of actionError — see its declaration).
+  function setHistoryError(message: string | null) {
+    setActionError(message);
+    if (message === null) setStaleDraftNotice(null);
   }
 
   // The draft-concurrency fence fired: another admin session changed the draft
@@ -1497,7 +1476,7 @@ export function SeatMap({
     setActionNotice(null);
     setActionError(null);
     setStaleDraftNotice(`${message} This page has been refreshed with the latest draft.`);
-    setDraftHistory(clearDraftHistory());
+    clearHistory();
     setInspectorDirty(false);
     setInspectorResetSignal(current => current + 1);
     setAddSeatMode(false);
@@ -1506,77 +1485,6 @@ export function SeatMap({
     setMoveEmployeeSourceSeatId(null);
     setMoveEmployeeConfirm(null);
     router.refresh();
-  }
-
-  function restoreHistorySnapshot(snapshot: DraftSnapshot, nextHistory: typeof draftHistory, actionLabel: string, notice: string, selectRestoredSeatLabel?: string) {
-    if (inspectorDirty) {
-      setActionNotice(null);
-      setActionError("Save or discard the selected seat edits before using Undo or Redo.");
-      return;
-    }
-
-    startTransition(async () => {
-      setMutationInFlight(true);
-      try {
-        setActionError(null);
-        setActionNotice(null);
-        setStaleDraftNotice(null);
-        // Fence on the draft this page currently holds (NOT the snapshot being
-        // restored): if another session advanced the draft, restoring would
-        // silently revert their edits, so the server rejects and we reload.
-        const result = await restoreDraftSnapshotAction(snapshot, listDraftSeatExpectations(localSeats));
-        if (!result.ok) {
-          handleStaleDraft(result.message);
-          return;
-        }
-        applyRestoredDraftPayload(result);
-        if (selectRestoredSeatLabel) {
-          const restoredSeat = result.seats.find(seat => seat.label === selectRestoredSeatLabel);
-          if (restoredSeat) {
-            setSelectedSeatId(restoredSeat.id);
-            setInspectorCollapsed(false);
-          }
-        }
-        setDraftHistory(nextHistory);
-        setActionNotice(notice);
-      } catch (error) {
-        setActionNotice(null);
-        setActionError(error instanceof Error ? error.message : `Could not ${actionLabel.toLowerCase()} draft edit.`);
-      } finally {
-        setMutationInFlight(false);
-      }
-    });
-  }
-
-  // Undo/redo restore the WHOLE draft from a history snapshot, so they are
-  // only safe while the live draft still equals the state the entry left it in
-  // (`after` for undo, `before` for redo). A concurrent edit by another admin
-  // can reach this client through a server-action refresh, making the VIEW
-  // fresh (so the server-side fence passes) while the SNAPSHOT is stale —
-  // restoring it would silently revert that admin's edit. Reject here instead.
-  function historyAdjacencyBroken(expectedCurrent: DraftSnapshot) {
-    return !draftStatesEquivalent(createDraftSnapshot(localSeats, localEmployees), expectedCurrent);
-  }
-
-  function undoDraftEdit() {
-    const result = undoDraftHistory(draftHistory);
-    if (!result) return;
-    if (historyAdjacencyBroken(result.entry.after)) {
-      handleStaleDraft("The draft changed in another session after this edit was made, so undoing it is no longer safe.");
-      return;
-    }
-    restoreHistorySnapshot(result.snapshot, result.history, "Undo", `Undid ${result.entry.label}.`);
-  }
-
-  function redoDraftEdit() {
-    const result = redoDraftHistory(draftHistory);
-    if (!result) return;
-    if (historyAdjacencyBroken(result.entry.before)) {
-      handleStaleDraft("The draft changed in another session after this edit was undone, so redoing it is no longer safe.");
-      return;
-    }
-    const addSeatLabel = parseAddedSeatLabel(result.entry.label) ?? undefined;
-    restoreHistorySnapshot(result.snapshot, result.history, "Redo", `Redid ${result.entry.label}.`, addSeatLabel);
   }
 
   function clearStructuredFilters() {
@@ -2395,7 +2303,7 @@ export function SeatMap({
         }
         setLocalPublishedSeats(nextPublishedSeats);
         setLocalPublishedEmployees(nextPublishedEmployees);
-        setDraftHistory(clearDraftHistory());
+        clearHistory();
         setPublishReviewOpen(false);
         setActionNotice("Draft map published. Undo/Redo history was cleared.");
       } catch (error) {
@@ -2424,7 +2332,7 @@ export function SeatMap({
           return;
         }
         applyRestoredDraftPayload(result);
-        setDraftHistory(clearDraftHistory());
+        clearHistory();
         setDiscardDraftConfirmOpen(false);
         setPublishReviewOpen(false);
         setActionNotice("All draft changes discarded — the draft matches the published map again. Undo/Redo history was cleared.");
