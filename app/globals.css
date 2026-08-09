@@ -250,7 +250,12 @@
 
   --admin-text-primary: #161616;
   --admin-text-secondary: #55504A;
-  /* Muted 4.57:1 on #F7F6F2, 5.00:1 on white — AA body text. */
+  /* Muted 5.29:1 on #F7F6F2, 5.72:1 on white — AA body text. Same hex, so the
+     same pair covers --admin-text-subtle below. Re-measured 2026-08-09: this
+     note previously read 4.57:1 / 5.00:1, which was never right for #6E655A
+     (introduced at this value in b6eea1e, unchanged since). Both figures were
+     UNDERstated, so nothing was failing — but a wrong number here is worse than
+     no number, since these notes get trusted instead of recomputed. */
   --admin-text-muted: #6E655A;
   --admin-text-subtle: #6E655A;
   --admin-text-inverse: #F7F6F2;
