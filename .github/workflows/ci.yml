@@ -23,14 +23,27 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Every `uses:` is pinned to a full-length commit SHA with the human-readable
+# version in a trailing comment. Repo Actions policy requires it ("Require
+# actions to be pinned to a full-length commit SHA"), and a tag pin is mutable
+# — `@v7` can be repointed at new code by the action's owner, so a SHA is what
+# actually fixes what runs here. Tag pins fail at workflow STARTUP under this
+# policy: the run is rejected before any job is scheduled, which shows up as a
+# `startup_failure` with zero jobs and no logs rather than a normal red job
+# (2026-08-09, run #529 on main).
+#
+# To bump one: resolve the tag to its commit and update BOTH the SHA and the
+# comment — `git ls-remote https://github.com/actions/checkout 'refs/tags/v7^{}'`
+# (the `^{}` matters; without it an annotated tag gives you the tag object's
+# SHA, not the commit's, and the policy check rejects it).
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
@@ -53,10 +66,10 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
@@ -73,7 +86,7 @@ jobs:
 
       - name: Cache Playwright browser
         id: playwright-cache
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -97,7 +110,7 @@ jobs:
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-report
           path: playwright-report/
@@ -110,10 +123,10 @@ jobs:
   e2e-auth:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
@@ -128,7 +141,7 @@ jobs:
 
       - name: Cache Playwright browser
         id: playwright-cache
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -172,7 +185,7 @@ jobs:
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-report-auth
           path: playwright-report/
