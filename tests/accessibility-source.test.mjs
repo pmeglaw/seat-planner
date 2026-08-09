@@ -347,7 +347,9 @@ test("publish workflow stays server-action gated and clears review history state
   assert.match(seatMapSource, /onClick=\{confirmPublishDraftMap\}[\s\S]*disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
   assert.match(confirmPublishFunction[0], /await publishSeatMapAction\(publishReviewExpectations, publishReviewEmployeeExpectations\)/);
   assert.match(confirmPublishFunction[0], /setLocalPublishedSeats\(nextPublishedSeats\)/);
-  assert.match(confirmPublishFunction[0], /setDraftHistory\(clearDraftHistory\(\)\)/);
+  // Publish still drops the undo/redo stacks; they live in useDraftHistory now,
+  // so the clear goes through the hook's own reset instead of a local setState.
+  assert.match(confirmPublishFunction[0], /clearHistory\(\)/);
   assert.match(confirmPublishFunction[0], /setPublishReviewOpen\(false\)/);
   assert.match(confirmPublishFunction[0], /Draft map published\. Undo\/Redo history was cleared\./);
   assert.doesNotMatch(confirmPublishFunction[0], /supabase|\.from\("seats"\)|publish_seat_map/);
