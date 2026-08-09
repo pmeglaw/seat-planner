@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { expectNoAxeViolations, formatAxeViolations, waitForColorSettle, WCAG_A_AA_TAGS } from "../e2e/axe-helpers";
 import { retryUntilVisible, SEEDED_ADMIN_EMAIL, signIn } from "./auth-helpers";
@@ -19,6 +19,12 @@ import { db } from "./db-helpers";
 // here. Every dialog below is opened, scanned, and CANCELLED; the only
 // committed mutation is deleting X99, which is this file cleaning up after
 // itself.
+
+// SeatMap's swap/move mode card (SeatMap.tsx: role="status", aria-label
+// "<Mode> mode"). Named by its label suffix rather than a fixed string so one
+// locator serves both modes; the notice strip is also role="status", which is
+// why the accessible name is part of the query rather than the role alone.
+const modeCard = (page: Page) => page.getByRole("status", { name: /\bmode$/ });
 
 // Captured by beforeAll. The local dataset is LARGE (thousands of seats, most
 // employees pre-assigned), so nothing here may assume a given seat is empty —
@@ -164,6 +170,11 @@ test("vacate, swap, and move confirm dialogs", async ({ page }) => {
   await clickSeat(page, targetId);
   await expect(page.getByRole("heading", { name: "Confirm seat swap" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Confirm swap" })).toBeEnabled();
+  // Arming swap MODE mounts SeatMap's mode card alongside the dialog, and it
+  // fades in over 200ms (sp-panel-in). The dialog assertions above say nothing
+  // about that card, so an unsettled scan here reports blend colors for its
+  // label and "Esc exits" chip — both of which pass at rest.
+  await waitForColorSettle(modeCard(page));
   await expectNoAxeViolations(page);
   await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
   // Cancelling the dialog deliberately keeps swap MODE armed; Escape exits it.
@@ -174,6 +185,8 @@ test("vacate, swap, and move confirm dialogs", async ({ page }) => {
   await clickSeat(page, targetId);
   await expect(page.getByRole("heading", { name: `Move Alex Shabazian to ${targetLabel}?` })).toBeVisible();
   await expect(page.getByRole("button", { name: "Move them" })).toBeEnabled();
+  // Move mode mounts the same fading card as swap above.
+  await waitForColorSettle(modeCard(page));
   await expectNoAxeViolations(page);
   await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
   await page.keyboard.press("Escape");
