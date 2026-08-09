@@ -25,31 +25,23 @@ import { retryUntilVisible, SEEDED_ADMIN_EMAIL, signIn } from "./auth-helpers";
 // hits are timing-dependent and belong to next.config.js, not to the shell
 // contract — and skew behavior, which is driven through the injected detector
 // seam in tests/app-rail.test.mjs / tests/app-shell.test.mjs.
+// Every rail section, in the order both laps walk them. Each probe is the
+// page's skip-link landing marker (zero-height, hence attached rather than
+// visible). The lap ends on "Seat map" so it returns to /admin, leaving the
+// measured pass starting from the same place the warm lap did.
+const SECTIONS = [
+  { title: "Management", path: "/admin/management", probe: "#admin-subpage-main" },
+  { title: "Settings", path: "/admin/settings", probe: "#admin-subpage-main" },
+  { title: "Reception", path: "/reception", probe: "#reception-main" },
+  { title: "Seat map", path: "/admin", probe: "#planning-canvas" }
+];
+
 test("rail navigation is client-side: zero document loads, one persistent rail", async ({ page }) => {
   test.setTimeout(120_000);
 
   // signIn lands on "/" (the login form's default next path); the hop to
   // /admin is ordinary setup navigation — recording starts after it.
   await signIn(page, SEEDED_ADMIN_EMAIL);
-
-  // Warm every route the measured pass will visit. AppRail arms a 4s
-  // stalled-navigation watchdog on each rail click (AppRail.tsx: armNavWatchdog)
-  // that deliberately falls back to a FULL document load if the soft nav has
-  // not committed in time. That is correct product behavior (#316) — but a
-  // first, cold hit on a route compiles and streams it, and this job also boots
-  // a Docker Supabase stack on the same runner, so a cold cross-route fetch can
-  // lose that race. The watchdog then replaces the rail node and fails
-  // invariants 1 and 2 for LATENCY reasons rather than product ones (observed
-  // on #348: railTag null, both attempts, ~8.2s).
-  //
-  // These are ordinary document navigations and every one happens BEFORE the
-  // recorder starts below, so they cannot pollute the zero-documents assertion.
-  // What is under test is that RAIL navigation stays client-side, not that a
-  // cold route compiles inside 4 seconds.
-  for (const path of ["/admin/management", "/admin/settings", "/reception"]) {
-    await page.goto(path);
-  }
-
   await page.goto("/admin");
   await expect(page.locator("#app-rail")).toBeVisible();
 
@@ -60,6 +52,37 @@ test("rail navigation is client-side: zero document loads, one persistent rail",
   // document, failing invariant 1 for harness reasons rather than product
   // reasons. It also stages invariant 3: the drawer is open when the first
   // navigation happens.
+  await retryUntilVisible(
+    () => page.locator('#app-rail button[aria-label="Expand navigation"]').click(),
+    page.locator('#app-rail[data-expanded="true"]')
+  );
+
+  // Warm lap. The measured pass below must not be the FIRST client-side visit
+  // to each route. Every rail click arms a 4s stalled-navigation watchdog
+  // (AppRail.tsx: armNavWatchdog) that deliberately falls back to a full
+  // document load if the soft nav has not committed — correct product behavior
+  // (#316), but an uncached RSC fetch on a runner that is also hosting a Docker
+  // Supabase stack can lose that race, replacing the rail node and failing
+  // invariants 1 and 2 for LATENCY reasons rather than product ones.
+  //
+  // In-document (rail clicks), NOT page.goto, and that distinction is the whole
+  // point: what makes a repeat navigation fast is the Client Router Cache,
+  // which is per-DOCUMENT. A page.goto lap warms the server and then discards
+  // the cache it just filled, so the measured pass is still cold — which is
+  // exactly why the first attempt at this fix (#349, page.goto lap) did not
+  // change the outcome. Do not "simplify" this back into page.goto calls.
+  //
+  // This lap runs before the recorder starts, so it cannot pollute the
+  // zero-documents assertion, and the rail is tagged after it, so a watchdog
+  // firing here cannot fake a pass either.
+  for (const section of SECTIONS) {
+    await page.locator(`#app-rail a[title="${section.title}"]`).click();
+    await page.waitForURL(url => url.pathname === section.path);
+    await page.waitForSelector(section.probe, { state: "attached" });
+  }
+
+  // The warm lap collapsed the drawer on its first click; re-open it so the
+  // measured pass still stages invariant 3 (drawer open at first transition).
   await retryUntilVisible(
     () => page.locator('#app-rail button[aria-label="Expand navigation"]').click(),
     page.locator('#app-rail[data-expanded="true"]')
@@ -81,14 +104,8 @@ test("rail navigation is client-side: zero document loads, one persistent rail",
   await expect(page.locator("#app-rail")).toHaveAttribute("data-expanded", "false");
   await expect(page.locator("[data-rail-scrim]")).toHaveCount(0);
 
-  // Remaining sections; each probe is the page's skip-link landing marker
-  // (zero-height, hence attached rather than visible).
-  const remaining = [
-    { title: "Settings", path: "/admin/settings", probe: "#admin-subpage-main" },
-    { title: "Reception", path: "/reception", probe: "#reception-main" },
-    { title: "Seat map", path: "/admin", probe: "#planning-canvas" }
-  ];
-  for (const section of remaining) {
+  // Remaining sections (Management was the drawer-open transition above).
+  for (const section of SECTIONS.slice(1)) {
     await page.locator(`#app-rail a[title="${section.title}"]`).click();
     await page.waitForURL(url => url.pathname === section.path);
     await page.waitForSelector(section.probe, { state: "attached" });
@@ -98,7 +115,17 @@ test("rail navigation is client-side: zero document loads, one persistent rail",
   const railTag = await page.evaluate(
     () => (document.getElementById("app-rail") as HTMLElement & { __persistTag?: string })?.__persistTag ?? null
   );
-  expect(railTag, "the rail must be the SAME mounted DOM node across all navigations").toBe("rail-1");
+  // The recorded document requests ride along in the message on purpose. This
+  // assertion fires BEFORE invariant 1 below, so a bare "expected rail-1,
+  // received null" used to say only that the rail was replaced, never why —
+  // and the two causes need opposite fixes. A non-empty list means a real
+  // full-document navigation happened (the watchdog above, or the deploy-skew
+  // fallback); an EMPTY list means the rail node was remounted with no document
+  // load at all, which would be a genuine persistent-shell regression.
+  expect(
+    railTag,
+    `the rail must be the SAME mounted DOM node across all navigations (document requests recorded: ${JSON.stringify(documentRequests)})`
+  ).toBe("rail-1");
 
   // Invariant 1: nothing above was a document load.
   expect(documentRequests, "rail navigation must never issue a full-document request").toEqual([]);
