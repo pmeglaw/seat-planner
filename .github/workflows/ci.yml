@@ -36,11 +36,22 @@ concurrency:
 # comment — `git ls-remote https://github.com/actions/checkout 'refs/tags/v7^{}'`
 # (the `^{}` matters; without it an annotated tag gives you the tag object's
 # SHA, not the commit's, and the policy check rejects it).
+#
+# Every checkout also sets `persist-credentials: false`. Checkout otherwise
+# leaves GITHUB_TOKEN in git config for the rest of the job, and all three jobs
+# then run `npm ci`, which executes dependency lifecycle scripts — a
+# compromised one could run authenticated git commands against this repo. No
+# job here needs git after checkout (no pushes, no tags, no submodules, and no
+# git-sourced npm dependencies), so nothing pays for the hardening. Adding a
+# step that DOES need git auth means opting that one job back in, not dropping
+# this line everywhere.
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -67,6 +78,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -124,6 +137,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
