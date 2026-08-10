@@ -1,5 +1,14 @@
 const GENERIC_AUTH_MESSAGE = "Something went wrong. Please try again.";
 
+/**
+ * Shortest password the app accepts, enforced in the browser by
+ * UpdatePasswordForm and independently by GoTrue via
+ * `minimum_password_length` in supabase/config.toml — the browser check is
+ * bypassable by anything calling supabase.auth.updateUser directly, so the two
+ * have to agree. tests/auth-config-source.test.mjs fails if they drift.
+ */
+export const MIN_PASSWORD_LENGTH = 12;
+
 // Returns our own copy for a recognized failure, or null when the text matches
 // nothing we know. Split out so the two callers can differ on ONE point: what
 // to do with text we don't recognize.

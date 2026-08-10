@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { friendlyAuthMessage } from "@/lib/authMessages";
+import { friendlyAuthMessage, MIN_PASSWORD_LENGTH } from "@/lib/authMessages";
 import { assignLocation } from "@/lib/fullNavigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -17,8 +17,8 @@ export function UpdatePasswordForm() {
     event.preventDefault();
     setMessage(null);
 
-    if (password.length < 12) {
-      setMessage("Use at least 12 characters for the new password.");
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setMessage(`Use at least ${MIN_PASSWORD_LENGTH} characters for the new password.`);
       setMessageType("error");
       return;
     }
