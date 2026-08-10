@@ -91,12 +91,6 @@ not re-audit from zero.
   only (`tests/map-calibration.test.mjs:76-118`); the test's own header
   documents that the #178/#179 vertical bug would have stayed green, and
   documents the re-fixture recipe. M. (Prior TEST-05.)
-- **T-04 seatProtection↔SQL divergence** —
-  `20260724100000_repair_original_is_custom.sql:14` regex requires
-  zero-padded 2-digit labels; `lib/seatProtection.ts:15-24` compares
-  numerically (accepts `W8`). Two hand-maintained copies, zero linking tests.
-  Fix: PGlite agreement test generating labels from
-  `ORIGINAL_SEAT_LABEL_MAX_BY_PREFIX`. S. (Prior TEST-07.)
 
 **Tech debt / architecture:**
 - **D-01 SeatMap.tsx** — 4,064 lines / 138 hooks (50 useState) / 7 inline
@@ -195,6 +189,22 @@ Owner previously chose "none for now"; still current:
 
 ## Verified-closed since the 2026-07-24 record (fresh at `89a8fea` — do not re-report)
 
+- **T-04 seatProtection↔SQL divergence** — CLOSED 2026-08-10, with the framing
+  corrected: there are THREE copies of the protected-label ranges, not two, and
+  the divergent one is not live. The zero-padded regex the entry cites
+  (`20260724100000_repair_original_is_custom.sql:14`, rejects `W8`) belongs to a
+  one-time data repair that has already run and cannot run again — an applied
+  migration must not be edited, so it stays as-is. The copy that actually
+  executes is `restore_draft_snapshot`'s `protected_original_label` CASE
+  (`20260807120000:226-242`), and it already agreed with
+  `lib/seatProtection.ts`: same numeric comparison, same acceptance of bare
+  `W8`. The real gap was the missing link, now closed by
+  `tests/seat-protection-sql-agreement.test.mjs` (44 cases): it generates the
+  matrix from the exported `ORIGINAL_SEAT_LABEL_MAX_BY_PREFIX` and asserts
+  agreement end to end against the REAL RPC — seed one custom, unoccupied draft
+  seat, restore a snapshot omitting it, see whether the database refuses —
+  rather than comparing regexes. Proven sensitive by mutation: narrowing the TS
+  `W` range to 8 turns the suite red on `W09`.
 - **T-05 browser-harness `pending` never settles** — CLOSED 2026-08-10, and it
   was **not a harness limitation**. The recorded cause (SeatMap's CSS-less
   layout effects never converging) was wrong, and the prescribed harness-CSS
