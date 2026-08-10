@@ -103,16 +103,6 @@ not re-audit from zero.
 - **T-06 `test:ct` lists 5 of 7 jsdom files** — `package.json:14` misses
   `app-shell.test.mjs` (the #333 nav pin) and `map-status-legend.test.mjs`.
   Fix: naming convention or add the two. S.
-- **T-07 (2026-08-07, rate WORSENING) flaky PGlite fence test** — `tests/rpc-execution.test.mjs`
-  "fences when a NON-targeted draft seat changed out-of-band (vacate
-  collateral, MLS02)". First recorded as one failure in each of TWO separate
-  full-suite runs (plan 013 review round and plan 015 execution). **Re-measured
-  2026-08-10 during #354: 2 failures in 6 consecutive full-suite runs** — same
-  test, same signature, on a branch touching no SQL at all. Passes in isolation
-  every time (66/66) and on immediate rerun. Pattern still points at PGlite
-  resource contention under full-suite parallelism, not product logic, but at
-  ~1-in-3 it is now likely to redden CI. Fix likely lives in
-  `tests/helpers/pgHarness.mjs` isolation, not the RPC. S-M to investigate.
 
 **Tech debt / architecture:**
 - **D-01 SeatMap.tsx** — 4,064 lines / 138 hooks (50 useState) / 7 inline
@@ -211,6 +201,20 @@ Owner previously chose "none for now"; still current:
 
 ## Verified-closed since the 2026-07-24 record (fresh at `89a8fea` — do not re-report)
 
+- **T-07 flaky PGlite fence test** — CLOSED 2026-08-10, root-caused. Every
+  earlier note on this entry guessed wrong, so the correction is worth keeping:
+  it was never PGlite contention, never suite parallelism, and `pgHarness.mjs`
+  needed no change. **PGlite's `now()` ticks in whole milliseconds** (its
+  `gettimeofday` is a JS millisecond clock) where real Postgres carries
+  microseconds, so when the review snapshot and the test's simulated
+  other-session write landed in the same millisecond, the touch trigger wrote
+  back the exact value the expectation held — the fence had nothing to detect
+  and the RPC resolved instead of raising MLS02. Measured: a standalone probe
+  replaying the scenario resolved 58 of 300 times, and `updated_at` was
+  byte-identical in **all 58**. The "passes in isolation every time" claim was
+  luck: re-measured at 6 failures in 20 isolation runs. Fix: every expectation
+  capture in `tests/rpc-execution.test.mjs` now waits for the clock to tick, so
+  a later write always lands on a later millisecond, as against a real server.
 - **CORRECTNESS-05 (fence completion)** — CLOSED: CSV import + publish +
   employee-directory fences shipped (#319/#320/#327/#331 and migrations
   `20260805120000`→`20260806140000`); superseded unfenced RPC overloads
