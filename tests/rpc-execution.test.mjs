@@ -29,6 +29,21 @@ async function expectThrow(promise, { code, match } = {}) {
   assert.fail("expected the RPC to throw, but it resolved");
 }
 
+// PGlite's now() ticks in WHOLE MILLISECONDS — its gettimeofday is a JS
+// millisecond clock — where real Postgres timestamps carry microseconds. So a
+// simulated other-session write landing in the same millisecond as the review
+// snapshot leaves updated_at byte-identical, the fence has nothing to detect,
+// and the RPC resolves: the fenced-off write is expected to raise MLS02 and
+// simply doesn't. Every expectation capture below ends here, so anything a test
+// does afterwards is guaranteed a strictly later updated_at, exactly as it
+// would be against a real server. Without this the "NON-targeted draft seat
+// changed out-of-band" test failed ~20-30% of runs (T-07) — reproduced
+// standalone, so it was never the suite-parallelism contention it looked like.
+async function awaitClockTick() {
+  const start = Date.now();
+  while (Date.now() === start) await new Promise(resolve => setTimeout(resolve, 0));
+}
+
 function callUpdateDraftSeat(handle, opts) {
   const {
     seatId,
@@ -242,11 +257,7 @@ test("publish: requires admin", async () => {
 
 test("publish: enforces the concurrency fence when a draft seat changed out-of-band (MLS02)", async () => {
   const n01 = await db.seedSeat({ label: "N01", status: "available" });
-  // updated_at as Postgres text, not the driver's Date: the fence compares the
-  // value byte-for-byte after a ::timestamptz cast, and Date drops microseconds.
-  const { rows: expectations } = await db.query(
-    "select id, updated_at::text as updated_at from public.seats where layer = 'draft'"
-  );
+  const expectations = await draftSeatExpectations();
 
   // Another session's committed edit after the review opened: the touch
   // trigger bumps updated_at, so the reviewed expectation no longer matches.
@@ -265,9 +276,7 @@ test("publish: enforces the concurrency fence when a draft seat changed out-of-b
 
 test("publish: fences on a draft seat added after the review opened (count mismatch)", async () => {
   await db.seedSeat({ label: "N01", status: "available" });
-  const { rows: expectations } = await db.query(
-    "select id, updated_at::text as updated_at from public.seats where layer = 'draft'"
-  );
+  const expectations = await draftSeatExpectations();
 
   await db.seedSeat({ label: "N02", status: "available" });
 
@@ -280,9 +289,7 @@ test("publish: fences on a draft seat added after the review opened (count misma
 test("publish: passes the fence when expectations exactly match the draft", async () => {
   const alice = await db.seedEmployee({ fullName: "Alice" });
   await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice });
-  const { rows: expectations } = await db.query(
-    "select id, updated_at::text as updated_at from public.seats where layer = 'draft'"
-  );
+  const expectations = await draftSeatExpectations();
 
   await db.query("select public.publish_seat_map($1::jsonb)", [JSON.stringify(expectations)]);
 
@@ -297,6 +304,7 @@ async function activeEmployeeExpectations() {
   const { rows } = await db.query(
     "select id, updated_at::text as updated_at from public.employees where active"
   );
+  await awaitClockTick();
   return rows;
 }
 
@@ -304,6 +312,7 @@ async function draftSeatExpectations() {
   const { rows } = await db.query(
     "select id, updated_at::text as updated_at from public.seats where layer = 'draft'"
   );
+  await awaitClockTick();
   return rows;
 }
 
@@ -502,6 +511,7 @@ test("import: requires admin", async () => {
 // value byte-for-byte after a ::timestamptz cast, and Date drops microseconds.
 async function seatExpectation(seatId) {
   const { rows } = await db.query("select id, updated_at::text as updated_at from public.seats where id = $1", [seatId]);
+  await awaitClockTick();
   return rows[0];
 }
 
@@ -921,14 +931,12 @@ test("restore_draft_snapshot: survives a label permutation between two draft sea
   // proven under the same expected_draft_seats path the client actually
   // uses. updated_at is read as Postgres text (not the driver's Date) and
   // passed back verbatim, per the draftConcurrency contract.
-  const expectedDraftSeats = await db.query(
-    "select id, updated_at::text as updated_at from public.seats where layer = 'draft'"
-  );
+  const expectedDraftSeats = await draftSeatExpectations();
 
   await db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb, $3::jsonb)", [
     JSON.stringify(snapshotSeats),
     JSON.stringify([]),
-    JSON.stringify(expectedDraftSeats.rows)
+    JSON.stringify(expectedDraftSeats)
   ]);
 
   const { rows } = await db.query("select id, label from public.seats where layer = 'draft'");
