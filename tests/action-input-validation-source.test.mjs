@@ -3,11 +3,12 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 // CODE-01 (#275): a server action's parameter type is erased at build time, so
-// the employee actions must parse what actually arrived before they write. This
-// is an ordering guardrail, not a style rule — `public.employees` has no CHECK
-// constraint on any text column, so a parse that runs after the insert (or not
-// at all) means unvalidated input lands in the directory. The behaviour of the
-// parser itself is covered by tests/schemas.test.mjs.
+// the actions must parse what actually arrived before they write. This is an
+// ordering guardrail, not a style rule: a parse that runs after the insert (or
+// not at all) means unvalidated input lands in the directory, and the length
+// CHECKs added for S-01 (20260810120000) only reject it — they cannot tell the
+// admin which field was wrong. The parser's behaviour is covered by
+// tests/schemas.test.mjs.
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
 
 function extractAction(name, nextName) {
@@ -124,6 +125,81 @@ test("option actions parse their name before writing, and return the failure", (
     assert.ok(source.indexOf("await requireAdmin()") < guardIndex, `${action.name} must authorize before validating`);
     assert.match(source, /return \{ ok: false, code: "VALIDATION", message: parsed(From|To)?\.message \};/);
   }
+});
+
+// S-01: updateSeatAction writes employees.full_name, .position,
+// .phone_extension and .department through update_draft_seat — the same columns
+// the employee actions bound — but reached them with a trim-only helper, so the
+// bound depended on which action the caller invoked. Ordering guardrail, same as
+// the employee actions above; parseSeatTextInput's behaviour is covered by
+// tests/schemas.test.mjs.
+test("updateSeatAction parses its text before calling the RPC", () => {
+  const source = extractAction("updateSeatAction", "SwapSeatAssignmentsResult");
+
+  const guardIndex = source.indexOf("parseSeatTextInput(input)");
+  const rpcIndex = source.indexOf('.rpc("update_draft_seat"');
+
+  assert.notEqual(guardIndex, -1, "updateSeatAction should parse its text input");
+  assert.notEqual(rpcIndex, -1, "updateSeatAction should call update_draft_seat");
+  assert.ok(guardIndex < rpcIndex, "the parse must run before the write");
+  assert.ok(source.indexOf("await requireAdmin()") < guardIndex, "authorize before validating");
+
+  // Returned, not thrown: production strips a thrown error to a digest, so the
+  // admin who typed the over-long value would see nothing useful.
+  assert.match(
+    source,
+    /if \(!parsed\.ok\) return \{ ok: false, code: "VALIDATION", message: parsed\.message \};/,
+    "a bound failure should be returned as a VALIDATION result"
+  );
+});
+
+test("updateSeatAction forwards the PARSED values, not the raw input", () => {
+  const source = extractAction("updateSeatAction", "SwapSeatAssignmentsResult");
+  // A parse whose result is discarded is decoration. Every text argument the RPC
+  // receives must come off the parsed object.
+  for (const argument of [
+    "seat_label: label",
+    "employee_name: employeeName",
+    "employee_position: employeePosition ?? null",
+    "employee_phone_extension: phoneExtension ?? null",
+    "employee_department: department",
+    "seat_zone: zone",
+    "seat_notes: notes"
+  ]) {
+    assert.ok(source.includes(argument), `${argument} should be passed to the RPC`);
+  }
+  assert.doesNotMatch(source, /normalizeOptionalText\(input\./, "no trim-only helper should survive here");
+  assert.doesNotMatch(source, /assertNonEmpty\(input\.label/, "the label goes through the bounded parser");
+});
+
+// The *_provided flags tell the RPC "the caller sent this key", which is how a
+// seat edit avoids blanking a person's position. They must be derived from the
+// parsed object, or the flag and the value can disagree.
+test("updateSeatAction keeps the absent-versus-null distinction after parsing", () => {
+  const source = extractAction("updateSeatAction", "SwapSeatAssignmentsResult");
+  assert.match(source, /employee_position_provided: employeePosition !== undefined/);
+  assert.match(source, /employee_phone_extension_provided: phoneExtension !== undefined/);
+});
+
+// Snapshot restore rewrites the whole draft from client-held JSON, so the
+// snapshot is wire input like any other. It threw for a missing id already; it
+// stored any length of text.
+test("snapshot restore normalizers bound the text they rewrite", () => {
+  const seatNormalizer = actionsSource.match(/function normalizeRestoreSeat\([\s\S]+?\r?\n}/)?.[0];
+  const employeeNormalizer = actionsSource.match(/function normalizeRestoreEmployee\([\s\S]+?\r?\n}/)?.[0];
+  assert.ok(seatNormalizer && employeeNormalizer, "both normalizers should be present");
+
+  for (const [name, source] of [
+    ["normalizeRestoreSeat", seatNormalizer],
+    ["normalizeRestoreEmployee", employeeNormalizer]
+  ]) {
+    assert.doesNotMatch(source, /normalizeOptionalText\(/, `${name} should not use the trim-only helper`);
+    assert.match(source, /boundedOptional\(|boundedRequired\(/, `${name} should bound its text`);
+  }
+
+  assert.ok(seatNormalizer.includes("MAX_SEAT_LABEL_LENGTH"), "the restored label is bounded");
+  assert.ok(seatNormalizer.includes("MAX_SEAT_NOTES_LENGTH"), "the restored note is bounded");
+  assert.ok(employeeNormalizer.includes("MAX_EMPLOYEE_NAME_LENGTH"), "the restored name is bounded");
 });
 
 test("deleteEmployeeAction validates the id it deactivates", () => {

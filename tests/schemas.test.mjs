@@ -2,18 +2,25 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 
-// Exercises the REAL lib/schemas.ts. This module is the trust boundary for the
-// employee server actions (CODE-01): `public.employees` has no CHECK constraint
-// on any text column, so every bound asserted here is the only one that exists.
+// Exercises the REAL lib/schemas.ts, the trust boundary for the server actions
+// (CODE-01). Since 20260810120000 the length bounds are mirrored by Postgres
+// CHECK constraints (tests/text-length-constraints.test.mjs probes those), but
+// the type check, the control-character rule and the field-level message exist
+// only here — the database can reject a value, not explain which field it was.
 const {
   parseEmployeeInput,
   parseRequiredText,
   parseOptionalText,
+  parseOptionalMultilineText,
   parseOptionalEmail,
+  parseSeatTextInput,
   parseUuid,
   MAX_EMPLOYEE_NAME_LENGTH,
   MAX_PHONE_EXTENSION_LENGTH,
-  MAX_EMAIL_LENGTH
+  MAX_EMAIL_LENGTH,
+  MAX_OPTION_NAME_LENGTH,
+  MAX_SEAT_LABEL_LENGTH,
+  MAX_SEAT_NOTES_LENGTH
 } = await importTsModule("lib/schemas.ts");
 
 // Built with fromCharCode so no raw control byte is ever embedded in this file,
@@ -104,6 +111,140 @@ test("email is format-checked, which the database never does", () => {
     ok: false,
     message: "Email must be 254 characters or fewer."
   });
+});
+
+// Seat notes are typed into a TEXTAREA (SeatInspector), and the CSV round-trip
+// quotes them, so an embedded newline is ordinary input here — unlike every
+// other text field, where a control byte can only be junk. This parser is the
+// one exception, and it is deliberately narrow: newline and tab, nothing else.
+test("multiline text keeps newlines and tabs but still rejects other control bytes", () => {
+  assert.deepEqual(parseOptionalMultilineText("Window seat.\nQuiet corner.", "Notes", MAX_SEAT_NOTES_LENGTH), {
+    ok: true,
+    value: "Window seat.\nQuiet corner."
+  });
+  assert.deepEqual(parseOptionalMultilineText("Row\tone", "Notes", MAX_SEAT_NOTES_LENGTH), {
+    ok: true,
+    value: "Row\tone"
+  });
+  assert.deepEqual(parseOptionalMultilineText(`Quiet${BELL}corner`, "Notes", MAX_SEAT_NOTES_LENGTH), {
+    ok: false,
+    message: "Notes contains characters that are not allowed."
+  });
+  assert.deepEqual(parseOptionalMultilineText(`Quiet${DELETE_CHAR}corner`, "Notes", MAX_SEAT_NOTES_LENGTH), {
+    ok: false,
+    message: "Notes contains characters that are not allowed."
+  });
+});
+
+test("multiline text still normalizes blanks and enforces its bound", () => {
+  for (const value of [undefined, null, "", "   "]) {
+    assert.deepEqual(parseOptionalMultilineText(value, "Notes", MAX_SEAT_NOTES_LENGTH), { ok: true, value: null });
+  }
+  assert.deepEqual(parseOptionalMultilineText(7, "Notes", MAX_SEAT_NOTES_LENGTH), {
+    ok: false,
+    message: "Notes must be text."
+  });
+  assert.deepEqual(parseOptionalMultilineText("a".repeat(MAX_SEAT_NOTES_LENGTH + 1), "Notes", MAX_SEAT_NOTES_LENGTH), {
+    ok: false,
+    message: "Notes must be 1000 characters or fewer."
+  });
+});
+
+// updateSeatAction writes the same employees columns as the employee actions —
+// full_name, position, phone_extension, department — through the
+// update_draft_seat RPC. Before this parser it bounded none of them, so one
+// column had two different bounds depending on which action you called.
+test("seat text input parses a full payload and normalizes optional fields", () => {
+  const result = parseSeatTextInput({
+    label: "  W11 ",
+    employeeName: "  Ada Lovelace  ",
+    employeePosition: "  Partner ",
+    phoneExtension: " 204 ",
+    department: "",
+    zone: "  Corner Offices  ",
+    notes: "  Prefers the window.  "
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    value: {
+      label: "W11",
+      employeeName: "Ada Lovelace",
+      employeePosition: "Partner",
+      phoneExtension: "204",
+      department: null,
+      zone: "Corner Offices",
+      notes: "Prefers the window."
+    }
+  });
+});
+
+test("seat text input requires a label and bounds it", () => {
+  assert.deepEqual(parseSeatTextInput({ label: "   " }), { ok: false, message: "Seat label is required." });
+  assert.deepEqual(parseSeatTextInput({ label: 42 }), { ok: false, message: "Seat label must be text." });
+  assert.equal(parseSeatTextInput({ label: "a".repeat(MAX_SEAT_LABEL_LENGTH) }).ok, true);
+  assert.deepEqual(parseSeatTextInput({ label: "a".repeat(MAX_SEAT_LABEL_LENGTH + 1) }), {
+    ok: false,
+    message: `Seat label must be ${MAX_SEAT_LABEL_LENGTH} characters or fewer.`
+  });
+});
+
+test("seat text input bounds every field it forwards to the database", () => {
+  const cases = [
+    ["employeeName", MAX_EMPLOYEE_NAME_LENGTH, "Employee name"],
+    ["employeePosition", 120, "Position"],
+    ["phoneExtension", MAX_PHONE_EXTENSION_LENGTH, "Phone extension"],
+    ["department", MAX_OPTION_NAME_LENGTH, "Department"],
+    ["zone", MAX_OPTION_NAME_LENGTH, "Zone"],
+    ["notes", MAX_SEAT_NOTES_LENGTH, "Notes"]
+  ];
+
+  for (const [field, maxLength, label] of cases) {
+    assert.deepEqual(
+      parseSeatTextInput({ label: "W11", [field]: "a".repeat(maxLength + 1) }),
+      { ok: false, message: `${label} must be ${maxLength} characters or fewer.` },
+      field
+    );
+    assert.equal(parseSeatTextInput({ label: "W11", [field]: "a".repeat(maxLength) }).ok, true, field);
+    assert.deepEqual(
+      parseSeatTextInput({ label: "W11", [field]: `bad${BELL}value` }),
+      { ok: false, message: `${label} contains characters that are not allowed.` },
+      field
+    );
+  }
+});
+
+// updateSeatAction distinguishes an absent key ("leave the stored value alone")
+// from an explicit null ("clear it") for position and phone extension, and
+// passes a *_provided flag to the RPC based on that. Flattening the two here
+// would let any seat edit silently blank a person's position.
+test("seat text input preserves absent-versus-null for position and phone extension", () => {
+  const absent = parseSeatTextInput({ label: "W11" });
+  assert.equal(absent.ok, true);
+  assert.equal("employeePosition" in absent.value, false);
+  assert.equal("phoneExtension" in absent.value, false);
+
+  const explicit = parseSeatTextInput({ label: "W11", employeePosition: null, phoneExtension: "  " });
+  assert.equal(explicit.value.employeePosition, null);
+  assert.equal(explicit.value.phoneExtension, null);
+  assert.equal("employeePosition" in explicit.value, true);
+  assert.equal("phoneExtension" in explicit.value, true);
+});
+
+test("seat text input keeps a multiline note but rejects control bytes elsewhere", () => {
+  const multiline = parseSeatTextInput({ label: "W11", notes: "Line one\nLine two" });
+  assert.equal(multiline.value.notes, "Line one\nLine two");
+
+  assert.deepEqual(parseSeatTextInput({ label: "W11", zone: "Corner\nOffices" }), {
+    ok: false,
+    message: "Zone contains characters that are not allowed."
+  });
+});
+
+test("seat text input rejects a non-object payload", () => {
+  for (const value of [null, undefined, "label", 5]) {
+    assert.deepEqual(parseSeatTextInput(value), { ok: false, message: "Seat details are missing." }, String(value));
+  }
 });
 
 test("uuid parsing rejects anything that is not a uuid", () => {

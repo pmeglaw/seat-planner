@@ -14,7 +14,23 @@ import { canDeleteDraftSeat, getSeatDeleteBlockReason } from "@/lib/seatProtecti
 import { buildSeatSwapPlan, type SeatSwapPlan } from "@/lib/seatSwap";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { savedPointToVisualPoint, seatsToVisualSeats } from "@/lib/mapLayoutTransform";
-import { MAX_OPTION_NAME_LENGTH, parseEmployeeInput, parseRequiredText, parseUuid } from "@/lib/schemas";
+import {
+  MAX_AVATAR_URL_LENGTH,
+  MAX_EMAIL_LENGTH,
+  MAX_EMPLOYEE_NAME_LENGTH,
+  MAX_EMPLOYEE_TEXT_LENGTH,
+  MAX_OPTION_NAME_LENGTH,
+  MAX_PHONE_EXTENSION_LENGTH,
+  MAX_SEAT_KEY_LENGTH,
+  MAX_SEAT_LABEL_LENGTH,
+  MAX_SEAT_NOTES_LENGTH,
+  parseEmployeeInput,
+  parseOptionalMultilineText,
+  parseOptionalText,
+  parseRequiredText,
+  parseSeatTextInput,
+  parseUuid
+} from "@/lib/schemas";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
 import { SEAT_STATUSES, type AskPlannerRequest, type AskPlannerResponse, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type UpdateSeatResult, type ZoneOption } from "@/lib/types";
 
@@ -188,8 +204,23 @@ function buildSeatKey(label: string) {
     .replace(/^-+|-+$/g, "") || `seat-${Date.now()}`;
 }
 
-function normalizeOptionalText(value?: string | null) {
-  return value?.trim() || null;
+// Snapshot restore and the seat normalizers below run over client-held JSON, and
+// they already signalled a malformed snapshot by throwing (restoreDraftSnapshotAction
+// has no validation-failure arm — a snapshot the app itself built cannot fail
+// these, so a failure means tampering or corruption). These wrappers keep that
+// contract while adding the bounds from lib/schemas.ts (S-01).
+function boundedRequired(value: unknown, field: string, maxLength: number) {
+  const parsed = parseRequiredText(value, field, maxLength);
+  if (!parsed.ok) throw new Error(parsed.message);
+  return parsed.value;
+}
+
+function boundedOptional(value: unknown, field: string, maxLength: number, multiline = false) {
+  const parsed = multiline
+    ? parseOptionalMultilineText(value, field, maxLength)
+    : parseOptionalText(value, field, maxLength);
+  if (!parsed.ok) throw new Error(parsed.message);
+  return parsed.value;
 }
 
 function isUniqueLabelViolation(error: SupabaseMutationError | null) {
@@ -225,8 +256,8 @@ function normalizeRestoreSeat(seat: SeatWithEmployee): DraftSeatRestoreRecord {
   }
 
   const id = assertNonEmpty(seat.id, "Seat id");
-  const seatKey = assertNonEmpty(seat.seat_key, "Seat key");
-  const label = assertNonEmpty(seat.label, "Seat label");
+  const seatKey = boundedRequired(seat.seat_key, "Seat key", MAX_SEAT_KEY_LENGTH);
+  const label = boundedRequired(seat.label, "Seat label", MAX_SEAT_LABEL_LENGTH);
   const point = validateSeatCoordinates(Number(seat.x), Number(seat.y));
 
   if (!SEAT_STATUSES.includes(seat.status)) {
@@ -242,9 +273,9 @@ function normalizeRestoreSeat(seat: SeatWithEmployee): DraftSeatRestoreRecord {
     status: normalizeSeatStatus(seat.status, Boolean(seat.employee_id)),
     layer: "draft",
     employee_id: seat.employee_id || null,
-    zone: normalizeOptionalText(seat.zone ?? null),
-    department: normalizeOptionalText(seat.department ?? null),
-    notes: normalizeOptionalText(seat.notes ?? null),
+    zone: boundedOptional(seat.zone ?? null, "Zone", MAX_OPTION_NAME_LENGTH),
+    department: boundedOptional(seat.department ?? null, "Department", MAX_OPTION_NAME_LENGTH),
+    notes: boundedOptional(seat.notes ?? null, "Notes", MAX_SEAT_NOTES_LENGTH, true),
     is_custom: Boolean(seat.is_custom),
     created_at: seat.created_at,
     updated_at: seat.updated_at
@@ -254,14 +285,16 @@ function normalizeRestoreSeat(seat: SeatWithEmployee): DraftSeatRestoreRecord {
 function normalizeRestoreEmployee(employee: Employee): DraftEmployeeRestoreRecord {
   return {
     id: assertNonEmpty(employee.id, "Employee id"),
-    full_name: assertNonEmpty(employee.full_name, "Employee name"),
-    position: normalizeOptionalText(employee.position ?? null),
-    department: normalizeOptionalText(employee.department ?? null),
-    phone_extension: normalizeOptionalText(employee.phone_extension ?? null),
+    full_name: boundedRequired(employee.full_name, "Employee name", MAX_EMPLOYEE_NAME_LENGTH),
+    position: boundedOptional(employee.position ?? null, "Position", MAX_EMPLOYEE_TEXT_LENGTH),
+    department: boundedOptional(employee.department ?? null, "Department", MAX_EMPLOYEE_TEXT_LENGTH),
+    phone_extension: boundedOptional(employee.phone_extension ?? null, "Phone extension", MAX_PHONE_EXTENSION_LENGTH),
     // Carried for type completeness; the restore RPC only writes the columns
-    // it names, so snapshot restores never touch stored emails.
-    email: normalizeOptionalText(employee.email ?? null),
-    avatar_url: normalizeOptionalText(employee.avatar_url ?? null),
+    // it names, so snapshot restores never touch stored emails. Length-bounded
+    // rather than format-checked for that reason: this value is never written,
+    // and an old row with an odd address must not make Undo throw.
+    email: boundedOptional(employee.email ?? null, "Email", MAX_EMAIL_LENGTH),
+    avatar_url: boundedOptional(employee.avatar_url ?? null, "Avatar URL", MAX_AVATAR_URL_LENGTH),
     active: employee.active !== false,
     created_at: employee.created_at,
     updated_at: employee.updated_at
@@ -365,14 +398,17 @@ export async function updateSeatAction(input: {
 }): Promise<UpdateSeatResult> {
   const supabase = await requireAdmin();
 
-  const label = assertNonEmpty(input.label, "Seat label");
+  // S-01: these fields reach `employees` (full_name, position, phone_extension,
+  // department) through the RPC, so they get the same bounds the employee
+  // actions apply. parseSeatTextInput preserves the absent-vs-null distinction
+  // the *_provided flags below depend on.
+  const parsed = parseSeatTextInput(input);
+  if (!parsed.ok) return { ok: false, code: "VALIDATION", message: parsed.message };
+
+  const { label, employeeName, department, zone, notes } = parsed.value;
+  const employeePosition = parsed.value.employeePosition;
+  const phoneExtension = parsed.value.phoneExtension;
   const employeeId = input.employeeId || null;
-  const employeeName = input.employeeName?.trim() ?? "";
-  const employeePosition = "employeePosition" in input ? normalizeOptionalText(input.employeePosition) : undefined;
-  const phoneExtension = "phoneExtension" in input ? normalizeOptionalText(input.phoneExtension) : undefined;
-  const department = normalizeOptionalText(input.department);
-  const zone = normalizeOptionalText(input.zone);
-  const notes = normalizeOptionalText(input.notes);
 
   if (!employeeId && input.status === "assigned" && !employeeName) {
     return { ok: false, code: "VALIDATION", message: "Assigned seats require an employee name or selected employee." };
@@ -383,7 +419,7 @@ export async function updateSeatAction(input: {
     seat_label: label,
     requested_status: input.status,
     selected_employee_id: employeeId,
-    employee_name: employeeName || null,
+    employee_name: employeeName,
     employee_position: employeePosition ?? null,
     employee_position_provided: employeePosition !== undefined,
     employee_phone_extension: phoneExtension ?? null,
@@ -420,6 +456,14 @@ function mapUpdateSeatError(error: SupabaseMutationError): UpdateSeatResult {
   // The RPC guards double-booking with a friendly message and (once the Phase 2
   // migration lands) the custom SQLSTATE 'MLS01'. Match either so the conflict is
   // recognised whether or not that migration has been applied yet.
+  // SQLSTATE 23514 is a CHECK violation, which for these tables means a length
+  // bound (20260810120000). lib/schemas.ts should have caught it first with a
+  // field-level message, so getting here means a write path skipped the parser —
+  // still, the admin reads this, not the raw 'violates check constraint
+  // "employees_full_name_length"' text Postgres produces.
+  if (error.code === "23514") {
+    return { ok: false, code: "VALIDATION", message: "One of those values is too long to save. Shorten it and try again." };
+  }
   const isAlreadyAssigned = error.code === "MLS01" || /already assigned to/i.test(message);
   if (isAlreadyAssigned) {
     const currentSeatLabel = message.match(/already assigned to\s+(.+?)\.?\s*$/i)?.[1] ?? "another seat";

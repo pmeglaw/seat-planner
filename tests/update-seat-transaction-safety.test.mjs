@@ -164,14 +164,21 @@ test("draft seat update RPC preserves inspector employee and option behavior", (
 });
 
 test("server draft seat update action delegates dependent writes to the transaction-safe RPC", () => {
-  assert.match(updateSeatActionSource, /const label = assertNonEmpty\(input\.label, "Seat label"\)/);
+  // The label used to be validated with assertNonEmpty (non-empty only). It now
+  // comes off parseSeatTextInput, which bounds it and every other text field the
+  // RPC forwards into `employees` (S-01); the ordering guardrail lives in
+  // tests/action-input-validation-source.test.mjs.
+  assert.match(updateSeatActionSource, /const parsed = parseSeatTextInput\(input\);/);
+  assert.match(updateSeatActionSource, /const \{ label, employeeName, department, zone, notes \} = parsed\.value;/);
   assert.match(updateSeatActionSource, /Assigned seats require an employee name or selected employee/);
   assert.match(updateSeatActionSource, /\.rpc\("update_draft_seat", \{/);
   assert.match(updateSeatActionSource, /draft_seat_id: input\.seatId/);
   assert.match(updateSeatActionSource, /seat_label: label/);
   assert.match(updateSeatActionSource, /requested_status: input\.status/);
   assert.match(updateSeatActionSource, /selected_employee_id: employeeId/);
-  assert.match(updateSeatActionSource, /employee_name: employeeName \|\| null/);
+  // parseSeatTextInput already normalizes blank to null, so the `|| null` this
+  // used to carry would be dead code.
+  assert.match(updateSeatActionSource, /employee_name: employeeName,/);
   assert.match(updateSeatActionSource, /employee_position_provided: employeePosition !== undefined/);
   assert.match(updateSeatActionSource, /employee_phone_extension_provided: phoneExtension !== undefined/);
   assert.match(updateSeatActionSource, /employee_department: department/);
@@ -239,4 +246,22 @@ test("updateSeatAction returns the double-booking conflict as data instead of th
   // The action wires the RPC error straight through the mapper and never throws it.
   assert.match(updateSeatActionSource, /return mapUpdateSeatError\(error\)/);
   assert.doesNotMatch(updateSeatActionSource, /throw new Error\(error\.message\)/);
+});
+
+// S-01: the length CHECK constraints (20260810120000) are a backstop for a write
+// path that skipped lib/schemas.ts. Reaching one means a bug, but the admin who
+// hit it should still read something other than raw Postgres constraint text.
+test("a length-constraint violation surfaces as a readable validation failure", () => {
+  const mapUpdateSeatError = loadMapUpdateSeatError(actionsSource);
+
+  const result = mapUpdateSeatError({
+    code: "23514",
+    message:
+      'new row for relation "employees" violates check constraint "employees_full_name_length"'
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.code, "VALIDATION");
+  assert.doesNotMatch(result.message, /check constraint/, "raw constraint text must not reach the inspector");
+  assert.match(result.message, /too long/i);
 });
