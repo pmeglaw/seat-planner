@@ -14,8 +14,35 @@ const {
   exportSeatsToAssignmentCsv
 } = await importTsModule("lib/csv.ts");
 
+const {
+  MAX_EMPLOYEE_NAME_LENGTH,
+  MAX_EMPLOYEE_TEXT_LENGTH,
+  MAX_EMAIL_LENGTH,
+  MAX_OPTION_NAME_LENGTH,
+  MAX_SEAT_LABEL_LENGTH,
+  MAX_SEAT_NOTES_LENGTH
+} = await importTsModule("lib/schemas.ts");
+
 const HEADER_ROW = ASSIGNMENT_CSV_HEADERS.join(",");
 const messages = result => result.issues.map(issue => issue.message);
+const BELL = String.fromCharCode(7);
+
+// One data row with a single column overridden, so a bound can be probed without
+// restating the other seven cells.
+const rowWith = (overrides = {}) => {
+  const cells = {
+    seat_label: "N01",
+    employee_name: "Jane Doe",
+    employee_email: "jane@example.com",
+    position: "Case Manager",
+    department: "Intake",
+    zone: "North Pod",
+    status: "assigned",
+    notes: "",
+    ...overrides
+  };
+  return `${HEADER_ROW}\n${ASSIGNMENT_CSV_HEADERS.map(header => `"${cells[header]}"`).join(",")}\n`;
+};
 
 test("CSV parser accepts assignment rows", () => {
   const result = parseAssignmentCsv(
@@ -178,6 +205,52 @@ test("parseCsv unescapes doubled quotes inside quoted cells", () => {
 test("parseCsv keeps escaped quotes intact across quoted newlines", () => {
   const rows = parseCsv('a,"line ""one""\nline two",z');
   assert.deepEqual(rows, [["a", 'line "one"\nline two', "z"]]);
+});
+
+// S-01: import_assignments_csv writes seats and employees straight from these
+// rows, so until now a CSV was a way to put unbounded text into columns the
+// employee actions bound to 120 characters. The bounds are the shared ones from
+// lib/schemas.ts — a CSV must not be able to store what the form refuses.
+test("CSV parser bounds every text column it imports", () => {
+  const cases = [
+    ["seat_label", MAX_SEAT_LABEL_LENGTH, "Seat label"],
+    ["employee_name", MAX_EMPLOYEE_NAME_LENGTH, "Employee name"],
+    ["employee_email", MAX_EMAIL_LENGTH, "Email"],
+    ["position", MAX_EMPLOYEE_TEXT_LENGTH, "Position"],
+    ["department", MAX_OPTION_NAME_LENGTH, "Department"],
+    ["zone", MAX_OPTION_NAME_LENGTH, "Zone"],
+    ["notes", MAX_SEAT_NOTES_LENGTH, "Notes"]
+  ];
+
+  for (const [column, maxLength, field] of cases) {
+    const over = parseAssignmentCsv(rowWith({ [column]: "a".repeat(maxLength + 1) }));
+    assert.deepEqual(
+      messages(over),
+      [`${field} must be ${maxLength} characters or fewer.`],
+      `${column} should be bounded`
+    );
+    assert.equal(over.issues[0].row, 2, `${column} issue should point at the spreadsheet row`);
+
+    const atLimit = parseAssignmentCsv(rowWith({ [column]: "a".repeat(maxLength) }));
+    assert.deepEqual(messages(atLimit), [], `${column} at the limit should import`);
+  }
+});
+
+test("CSV parser rejects control characters in imported cells", () => {
+  const result = parseAssignmentCsv(rowWith({ employee_name: `Jane${BELL}Doe` }));
+  assert.deepEqual(messages(result), ["Employee name contains characters that are not allowed."]);
+});
+
+// The export quotes notes, and parseCsv keeps newlines inside quoted cells, so a
+// multi-line note must survive export → import. It is the only column where a
+// line break is content rather than junk (lib/schemas parseOptionalMultilineText).
+test("CSV parser keeps a multi-line note but not a multi-line zone", () => {
+  const multilineNote = parseAssignmentCsv(rowWith({ notes: "Line one\nLine two" }));
+  assert.deepEqual(messages(multilineNote), []);
+  assert.equal(multilineNote.rows[0].notes, "Line one\nLine two");
+
+  const multilineZone = parseAssignmentCsv(rowWith({ zone: "North\nPod" }));
+  assert.deepEqual(messages(multilineZone), ["Zone contains characters that are not allowed."]);
 });
 
 test("CSV parser requires seat_label on every data row", () => {

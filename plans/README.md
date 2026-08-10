@@ -38,14 +38,30 @@ verified at `89a8fea` with fresh evidence; candidates for a future cycle — do
 not re-audit from zero.
 
 **Security (all verified by reading the full path):**
-- **S-01 input-bound bypass** — `lib/schemas.ts` is the only text bound in the
-  system (no DB CHECK on any text column), and three write paths skip it:
-  `updateSeatAction` (`app/actions.ts:361-368`, trim-only), CSV import
-  (`lib/csv.ts:137-169`, no length/control-char bound), snapshot restore
-  normalizers (`app/actions.ts:215-262`). Admin-authenticated only — data
-  integrity, not access control. Fix: route all three through
-  `parseRequiredText`/`parseOptionalText`-style bounds; optionally add
-  `char_length` CHECKs in their own migration. S-M effort.
+- **S-01 input-bound bypass** — **DONE (2026-08-10).** All three recorded paths
+  confirmed unbounded and now routed through `lib/schemas.ts`; the optional
+  `char_length` CHECKs were taken too (owner ruling), so both layers hold.
+  New `parseSeatTextInput` (the seat-edit counterpart to `parseEmployeeInput`)
+  backs `updateSeatAction`; `lib/csv.ts` bounds every imported cell as a
+  per-row review issue; the restore normalizers bound through throwing
+  wrappers, keeping their existing "a malformed snapshot throws" contract.
+  Migration `20260810120000_text_length_bounds.sql` adds
+  `char_length(trim(...)) <= N` to `seats`, `employees`, `published_employees`
+  and both option tables, and `mapUpdateSeatError` maps SQLSTATE 23514 to a
+  readable message so a backstop trip is not raw constraint text.
+  **Two findings worth keeping.** (1) The sharpest framing was not "unbounded
+  text" but *inconsistent* bound: `updateSeatAction` writes the same
+  `employees` columns as `createEmployeeAction` through the RPC, so one column
+  had two different bounds depending on which action you called. (2) Seat notes
+  had to become the one field that permits line breaks
+  (`parseOptionalMultilineText`) — it is a textarea in `SeatInspector` and the
+  CSV export quotes it, so a blanket control-character rule would have broken
+  both the inspector and the export→import round-trip. Bounds are length-only
+  in SQL for the same reason: that split does not express well as a constraint.
+  Notes cap is 1000 (owner ruling); everything else mirrors the existing MAX_*
+  values. Not done, deliberately: CSV `employee_email` is length-bounded but
+  still not format-checked (`parseOptionalEmail` is only on the employee
+  actions), and `updateSeatAction` still does not `parseUuid` its `seatId`.
 - **S-02 `/login` double-decode** — **DONE (2026-08-10).** Recorded cause
   confirmed exactly as written, at both ends: `decodeURIComponent` on an
   already-decoded `URLSearchParams` value threw `URIError: URI malformed` from

@@ -1,5 +1,15 @@
 import type { CsvAssignmentRow, SeatStatus, SeatWithEmployee } from "@/lib/types";
 import { SEAT_STATUSES } from "@/lib/types";
+import {
+  MAX_EMAIL_LENGTH,
+  MAX_EMPLOYEE_NAME_LENGTH,
+  MAX_EMPLOYEE_TEXT_LENGTH,
+  MAX_OPTION_NAME_LENGTH,
+  MAX_SEAT_LABEL_LENGTH,
+  MAX_SEAT_NOTES_LENGTH,
+  parseOptionalMultilineText,
+  parseOptionalText
+} from "@/lib/schemas";
 
 export const ASSIGNMENT_CSV_HEADERS = [
   "seat_label",
@@ -121,6 +131,35 @@ export function createAssignmentCsvTemplate() {
   return stringifyCsv([]);
 }
 
+// Column → (display field, bound). `notes` is the one cell allowed to hold a
+// line break: the export quotes it and parseCsv keeps newlines inside quoted
+// cells, so rejecting them would break the export → import round-trip.
+const BOUNDED_CSV_CELLS: ReadonlyArray<{
+  column: AssignmentCsvHeader;
+  field: string;
+  maxLength: number;
+  multiline?: boolean;
+}> = [
+  { column: "seat_label", field: "Seat label", maxLength: MAX_SEAT_LABEL_LENGTH },
+  { column: "employee_name", field: "Employee name", maxLength: MAX_EMPLOYEE_NAME_LENGTH },
+  { column: "employee_email", field: "Email", maxLength: MAX_EMAIL_LENGTH },
+  { column: "position", field: "Position", maxLength: MAX_EMPLOYEE_TEXT_LENGTH },
+  { column: "department", field: "Department", maxLength: MAX_OPTION_NAME_LENGTH },
+  { column: "zone", field: "Zone", maxLength: MAX_OPTION_NAME_LENGTH },
+  { column: "notes", field: "Notes", maxLength: MAX_SEAT_NOTES_LENGTH, multiline: true }
+];
+
+function boundCellIssues(row: CsvAssignmentRow) {
+  const messages: string[] = [];
+  for (const cell of BOUNDED_CSV_CELLS) {
+    const parsed = cell.multiline
+      ? parseOptionalMultilineText(row[cell.column], cell.field, cell.maxLength)
+      : parseOptionalText(row[cell.column], cell.field, cell.maxLength);
+    if (!parsed.ok) messages.push(parsed.message);
+  }
+  return messages;
+}
+
 export function parseAssignmentCsv(text: string): CsvValidationResult {
   const rawRows = parseCsv(text);
   if (rawRows.length === 0) {
@@ -144,6 +183,14 @@ export function parseAssignmentCsv(text: string): CsvValidationResult {
 
     if (!row.seat_label) {
       issues.push({ row: rowIndex + 2, message: "Seat label is required." });
+    }
+
+    // S-01: import_assignments_csv writes these cells straight into `seats` and
+    // `employees`, so the CSV needs the same bounds the employee and option
+    // actions apply — otherwise a spreadsheet is a way around them. Shared
+    // constants, not local numbers, so the two paths cannot drift.
+    for (const issue of boundCellIssues(row)) {
+      issues.push({ row: rowIndex + 2, message: issue });
     }
 
     if (row.status && !SEAT_STATUSES.includes(row.status.toLowerCase() as SeatStatus)) {
