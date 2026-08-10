@@ -103,13 +103,15 @@ not re-audit from zero.
 - **T-06 `test:ct` lists 5 of 7 jsdom files** — `package.json:14` misses
   `app-shell.test.mjs` (the #333 nav pin) and `map-status-legend.test.mjs`.
   Fix: naming convention or add the two. S.
-- **T-07 (NEW, 2026-08-07) flaky PGlite fence test** — `tests/rpc-execution.test.mjs`
+- **T-07 (2026-08-07, rate WORSENING) flaky PGlite fence test** — `tests/rpc-execution.test.mjs`
   "fences when a NON-targeted draft seat changed out-of-band (vacate
-  collateral, MLS02)" failed once in each of TWO separate full-suite runs
-  (plan 013 review round and plan 015 execution), passing in isolation and on
-  immediate rerun both times — including on code that touches no SQL. Pattern
-  points at PGlite resource contention under full-suite parallelism, not
-  product logic. If it appears in CI, prioritize; fix likely lives in
+  collateral, MLS02)". First recorded as one failure in each of TWO separate
+  full-suite runs (plan 013 review round and plan 015 execution). **Re-measured
+  2026-08-10 during #354: 2 failures in 6 consecutive full-suite runs** — same
+  test, same signature, on a branch touching no SQL at all. Passes in isolation
+  every time (66/66) and on immediate rerun. Pattern still points at PGlite
+  resource contention under full-suite parallelism, not product logic, but at
+  ~1-in-3 it is now likely to redden CI. Fix likely lives in
   `tests/helpers/pgHarness.mjs` isolation, not the RPC. S-M to investigate.
 
 **Tech debt / architecture:**
