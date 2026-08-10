@@ -232,12 +232,10 @@ test("a failed discard surfaces its error inside the discard dialog (002)", asyn
   await expect(dialog.getByRole("alert")).toBeAttached();          // the error renders INSIDE the dialog — plan 002's core fix
   await expect(dialog.getByText(/Server error/)).toBeAttached();   // ...carrying the action's error text
 
-  // The confirm button's "Retry discard" relabel is gated on useTransition's
-  // `pending`, which never settles in this CSS-less harness (SeatMap's
-  // ResizeObserver layout effects never converge, causing a continuous
-  // re-render — a pre-existing harness limitation, not a 002 regression;
-  // the relabel is verified by prod QA + source). We assert 002's core:
-  // the error surfaces inside the discard dialog rather than behind it.
+  // The confirm button relabels to "Retry discard" once useTransition's
+  // `pending` clears — which it now does: SeatMap no longer re-renders forever
+  // when the option props are omitted (T-05).
+  await expect(dialog.getByRole("button", { name: "Retry discard" })).toBeAttached();
 });
 
 // v12 slice 5: the publish review is a unified per-seat diff table. `custom`
