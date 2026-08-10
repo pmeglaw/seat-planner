@@ -16,6 +16,15 @@ coverage
 # TypeScript incremental build cache
 tsconfig.tsbuildinfo
 
+# next-env.d.ts is generated, and `next dev` and `next build`/`next typegen`
+# generate DIFFERENT versions of it — dev points its imports at .next/dev/types,
+# build at .next/types — so a committed copy is dirty the moment you run the
+# other command. `npm run typecheck` regenerates it (see the typegen step in
+# package.json), which is also what makes those imports resolve at all: .next is
+# ignored, so on a clean checkout the route declarations do not exist, and
+# skipLibCheck lets tsc pass over the missing imports in silence.
+next-env.d.ts
+
 # Local Claude Code plugin-enablement config (per-machine)
 .claude/settings.json
 
