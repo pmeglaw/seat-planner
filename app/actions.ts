@@ -453,17 +453,27 @@ function mapUpdateSeatError(error: SupabaseMutationError): UpdateSeatResult {
   if (error.code === "MLS02") {
     return { ok: false, code: "STALE_DRAFT", message };
   }
+  // SQLSTATE 23514 is any CHECK violation, and these tables carry two kinds: the
+  // length bounds from 20260810120000 (named *_length) and the non-blank /
+  // coordinate-range checks from 001_initial_schema. Only the first kind is a
+  // "too long" problem — telling an admin to shorten a value that is actually
+  // empty or out of range sends them the wrong way. Either way the raw
+  // 'violates check constraint "…"' text Postgres produces never reaches the
+  // inspector; lib/schemas.ts is what should have caught this first with a
+  // field-level message.
+  if (error.code === "23514") {
+    const isLengthBound = /check constraint "[^"]*_length"/.test(message);
+    return {
+      ok: false,
+      code: "VALIDATION",
+      message: isLengthBound
+        ? "One of those values is too long to save. Shorten it and try again."
+        : "One of those values is not valid. Check the seat details and try again."
+    };
+  }
   // The RPC guards double-booking with a friendly message and (once the Phase 2
   // migration lands) the custom SQLSTATE 'MLS01'. Match either so the conflict is
   // recognised whether or not that migration has been applied yet.
-  // SQLSTATE 23514 is a CHECK violation, which for these tables means a length
-  // bound (20260810120000). lib/schemas.ts should have caught it first with a
-  // field-level message, so getting here means a write path skipped the parser —
-  // still, the admin reads this, not the raw 'violates check constraint
-  // "employees_full_name_length"' text Postgres produces.
-  if (error.code === "23514") {
-    return { ok: false, code: "VALIDATION", message: "One of those values is too long to save. Shorten it and try again." };
-  }
   const isAlreadyAssigned = error.code === "MLS01" || /already assigned to/i.test(message);
   if (isAlreadyAssigned) {
     const currentSeatLabel = message.match(/already assigned to\s+(.+?)\.?\s*$/i)?.[1] ?? "another seat";

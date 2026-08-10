@@ -265,3 +265,24 @@ test("a length-constraint violation surfaces as a readable validation failure", 
   assert.doesNotMatch(result.message, /check constraint/, "raw constraint text must not reach the inspector");
   assert.match(result.message, /too long/i);
 });
+
+// 23514 is not only the length bounds. 001_initial_schema.sql already checks
+// that full_name, seat_key and label are non-blank and that x/y stay inside
+// [0,1], so treating every CHECK violation as "too long" would tell an admin to
+// shorten a value that is empty or out of range. Only the *_length constraints
+// added by 20260810120000 get that message.
+test("a non-length CHECK violation is not reported as a length problem", () => {
+  const mapUpdateSeatError = loadMapUpdateSeatError(actionsSource);
+
+  for (const constraint of ["seats_label_check", "seats_x_check", "employees_full_name_check"]) {
+    const result = mapUpdateSeatError({
+      code: "23514",
+      message: `new row for relation "seats" violates check constraint "${constraint}"`
+    });
+
+    assert.equal(result.ok, false, constraint);
+    assert.equal(result.code, "VALIDATION", constraint);
+    assert.doesNotMatch(result.message, /too long/i, `${constraint} is not a length problem`);
+    assert.doesNotMatch(result.message, /check constraint/, `${constraint} must not leak raw constraint text`);
+  }
+});

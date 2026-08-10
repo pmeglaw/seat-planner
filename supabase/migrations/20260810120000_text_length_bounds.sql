@@ -29,6 +29,15 @@
 -- full_name 21, email 34, department_options.name 33, seats.zone 16,
 -- seats.notes 22 — roughly 3.5x below the tightest bound here, so this applies
 -- without touching a row.
+--
+-- Validated immediately rather than NOT VALID + a follow-up VALIDATE CONSTRAINT.
+-- That pattern exists to keep a long scan from holding a lock on a large table;
+-- these five tables hold 209 rows in total (seats 136, employees 31,
+-- department_options 18, published_employees 16, zone_options 8), so the scan is
+-- the cheap part and NOT VALID would still take the same ACCESS EXCLUSIVE lock
+-- to add the constraint. Splitting it would only ship a window where the
+-- constraint exists but guarantees nothing. Revisit if any of these tables ever
+-- reaches a scale where the scan is measurable.
 
 alter table public.seats
   add constraint seats_seat_key_length check (char_length(trim(seat_key)) <= 80),
