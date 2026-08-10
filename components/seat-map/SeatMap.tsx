@@ -167,8 +167,15 @@ type MapPanState = {
 } | null;
 
 const ADMIN_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:names-visible";
+// Module constants, never inline `= []` defaults: an inline default builds a
+// NEW array on every render, and the option props feed effects keyed on their
+// identity (see the setLocal*Options effects), so an omitted prop would put the
+// component in a permanent render→setState→render loop. Same reason the
+// published defaults are hoisted.
 const DEFAULT_PUBLISHED_SEATS: SeatWithEmployee[] = [];
 const DEFAULT_PUBLISHED_EMPLOYEES: Employee[] = [];
+const DEFAULT_DEPARTMENT_OPTIONS: DepartmentOption[] = [];
+const DEFAULT_ZONE_OPTIONS: ZoneOption[] = [];
 const INSPECTOR_FORM_ID = "seat-inspector-form";
 
 // Stable identity for the Show-names-off branch of namedSeatIdSet — a fresh
@@ -298,8 +305,8 @@ export function SeatMap({
   publishedSeats = DEFAULT_PUBLISHED_SEATS,
   employees,
   publishedEmployees = DEFAULT_PUBLISHED_EMPLOYEES,
-  departmentOptions = [],
-  zoneOptions = [],
+  departmentOptions = DEFAULT_DEPARTMENT_OPTIONS,
+  zoneOptions = DEFAULT_ZONE_OPTIONS,
   canEdit
 }: SeatMapProps) {
   const router = useRouter();

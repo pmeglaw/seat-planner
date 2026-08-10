@@ -97,9 +97,6 @@ not re-audit from zero.
   numerically (accepts `W8`). Two hand-maintained copies, zero linking tests.
   Fix: PGlite agreement test generating labels from
   `ORIGINAL_SEAT_LABEL_MAX_BY_PREFIX`. S. (Prior TEST-07.)
-- **T-05 browser-harness `pending` never settles** — unchanged from prior
-  record (see `tests/browser/seat-map.spec.ts:235-241`); both fix routes
-  scoped there. Prefer the harness-CSS route.
 
 **Tech debt / architecture:**
 - **D-01 SeatMap.tsx** — 4,064 lines / 138 hooks (50 useState) / 7 inline
@@ -198,6 +195,25 @@ Owner previously chose "none for now"; still current:
 
 ## Verified-closed since the 2026-07-24 record (fresh at `89a8fea` — do not re-report)
 
+- **T-05 browser-harness `pending` never settles** — CLOSED 2026-08-10, and it
+  was **not a harness limitation**. The recorded cause (SeatMap's CSS-less
+  layout effects never converging) was wrong, and the prescribed harness-CSS
+  route would not have fixed it. Measured: the harness committed ~28,000 renders
+  per SECOND while idle, with ResizeObserver and rAF disabled making no
+  difference. A DevTools-hook probe over SeatMap's own hook list found two state
+  hooks taking a new identity on every single commit — `localDepartmentOptions`
+  and `localZoneOptions`. Cause: `departmentOptions = []` / `zoneOptions = []`
+  were INLINE default parameters, so an omitted prop built a fresh array each
+  render, and the identity-keyed sync effects (now `SeatMap.tsx:591-592`) set
+  state every render forever. Hoisted to module constants, matching
+  `DEFAULT_PUBLISHED_SEATS` which already existed for this exact reason.
+  `/admin` passes both props, so production was never in the loop — but any
+  caller taking the documented defaults would have been. The browser tier now
+  asserts the `Retry discard` relabel that was previously unassertable.
+  Residual (not blocking): `overviewMapWidth` still oscillates 50↔165 px at
+  ~31/s in the CSS-less harness — the real ResizeObserver feedback, harmless to
+  assertions now that the render storm is gone. That is the piece the
+  harness-CSS route would address, if it ever needs addressing.
 - **T-06 `test:ct` under-reported the jsdom tier** — CLOSED 2026-08-10: the
   script listed 7 of 9 files, missing `app-shell.test.mjs` (the #333 nav pin)
   and `map-status-legend.test.mjs`. Both were always run in CI — the verify job
