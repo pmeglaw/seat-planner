@@ -46,12 +46,20 @@ not re-audit from zero.
   integrity, not access control. Fix: route all three through
   `parseRequiredText`/`parseOptionalText`-style bounds; optionally add
   `char_length` CHECKs in their own migration. S-M effort.
-- **S-02 `/login` double-decode** — `components/auth/LoginForm.tsx:32` calls
-  `decodeURIComponent` on an already-decoded `URLSearchParams` value: a lone
-  `%` throws `URIError` in an uncaught effect (one-click login-page DoS), and
-  unrecognized text falls through `friendlyAuthMessage` and renders verbatim
-  in the trusted error banner (content spoofing; React escapes, no XSS). Fix:
-  drop the decode, allow-list the display. S effort.
+- **S-02 `/login` double-decode** — **DONE (2026-08-10).** Recorded cause
+  confirmed exactly as written, at both ends: `decodeURIComponent` on an
+  already-decoded `URLSearchParams` value threw `URIError: URI malformed` from
+  the mount effect, and unmapped text rendered verbatim in the `role="alert"`
+  banner. Fixed by dropping the decode and splitting `lib/authMessages.ts` into
+  a shared `classifyAuthMessage` plus two wrappers: `friendlyAuthMessage`
+  (SDK errors — still echoes unmapped text, the only clue for a failure we
+  have not mapped) and `friendlyAuthMessageFromQuery` (`?error=` — maps or
+  returns the generic message, never echoes). **Worth knowing: the crash was
+  not only hand-reachable.** `lib/supabase/authRedirect.ts` encodes a message
+  ONCE, so any provider `error_description` containing a literal `%` — "100%
+  down" — came back through `URLSearchParams` as `100% down` and killed the
+  page on arrival. Covered by 3 jsdom tests in `tests/login-form.test.mjs` and
+  2 in `tests/auth-messages.test.mjs`; live-verified at `/login?error=%`.
 - **S-03 auth-config posture** — `supabase/config.toml:186,192` declares
   `enable_signup = true` and `minimum_password_length = 6`; the client's
   12-char minimum (`UpdatePasswordForm.tsx:20`) is browser-only;

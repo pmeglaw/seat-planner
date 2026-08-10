@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { friendlyAuthMessage, safeNextPath } from "@/lib/authMessages";
+import { friendlyAuthMessage, friendlyAuthMessageFromQuery, safeNextPath } from "@/lib/authMessages";
 import { assignLocation } from "@/lib/fullNavigation";
 import { cx, focusRingClass } from "@/components/ui/design-system";
 
@@ -28,8 +28,13 @@ export function LoginForm() {
     const error = params.get("error");
     const next = safeNextPath(params.get("next"));
     setNextPath(next);
+    // No decodeURIComponent here: URLSearchParams has already percent-decoded
+    // the value, and decoding it a second time threw URIError on any surviving
+    // "%" — from this effect, which takes the whole login page down (S-02).
+    // friendlyAuthMessageFromQuery, not friendlyAuthMessage: this text is
+    // attacker-writable and must not reach the banner unmapped.
     if (error) {
-      setMessage(friendlyAuthMessage(decodeURIComponent(error)));
+      setMessage(friendlyAuthMessageFromQuery(error));
       setMessageType("error");
     }
   }, []);
