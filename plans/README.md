@@ -100,9 +100,6 @@ not re-audit from zero.
 - **T-05 browser-harness `pending` never settles** — unchanged from prior
   record (see `tests/browser/seat-map.spec.ts:235-241`); both fix routes
   scoped there. Prefer the harness-CSS route.
-- **T-06 `test:ct` lists 5 of 7 jsdom files** — `package.json:14` misses
-  `app-shell.test.mjs` (the #333 nav pin) and `map-status-legend.test.mjs`.
-  Fix: naming convention or add the two. S.
 
 **Tech debt / architecture:**
 - **D-01 SeatMap.tsx** — 4,064 lines / 138 hooks (50 useState) / 7 inline
@@ -201,6 +198,14 @@ Owner previously chose "none for now"; still current:
 
 ## Verified-closed since the 2026-07-24 record (fresh at `89a8fea` — do not re-report)
 
+- **T-06 `test:ct` under-reported the jsdom tier** — CLOSED 2026-08-10: the
+  script listed 7 of 9 files, missing `app-shell.test.mjs` (the #333 nav pin)
+  and `map-status-legend.test.mjs`. Both were always run in CI — the verify job
+  runs `coverage:check`, which globs `tests/*.test.mjs` — so this was a local
+  under-report, not a CI hole. All 9 now listed (107 tests), and
+  `tests/test-tier-scripts-source.test.mjs` derives each tier's membership from
+  the harness a file imports and fails when `test:ct` or `test:db` drifts from
+  it, so the list cannot silently fall behind again.
 - **T-07 flaky PGlite fence test** — CLOSED 2026-08-10, root-caused. Every
   earlier note on this entry guessed wrong, so the correction is worth keeping:
   it was never PGlite contention, never suite parallelism, and `pgHarness.mjs`
