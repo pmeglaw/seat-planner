@@ -60,7 +60,7 @@ Restart the dev server after editing `.env.local`, `tailwind.config.ts`, or Supa
 | `npm run build` | Production build |
 | `npm start` | Serve a production build |
 | `npm run lint` | ESLint |
-| `npm run typecheck` | `tsc --noEmit` |
+| `npm run typecheck` | `next typegen && tsc --noEmit` — typegen first, because `next-env.d.ts` and the route declarations it imports are generated and gitignored |
 | `npm test` | Node test runner over `tests/*.test.mjs` (requires installed deps) |
 | `npm run test:db` | SQL tier — applies the real migrations to in-process Postgres (PGlite) and calls the RPCs |
 | `npm run test:ct` | jsdom component tests |
