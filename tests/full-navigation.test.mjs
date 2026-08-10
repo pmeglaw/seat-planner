@@ -59,6 +59,21 @@ test("the import matcher catches every formatting a caller could use", () => {
   assert.doesNotMatch('// see @/lib/fullNavigation for the contract', FULL_NAVIGATION_IMPORT);
 });
 
+test("the import matcher rejects a backtracking near-miss in bounded time", () => {
+  // The failure path the unrolled comment arm exists for: a long run of
+  // unterminated `/*//*` that clears `from` and then never reaches a
+  // specifier. Under the old lazy-body form each run had many possible splits,
+  // so rejecting this cost exponential time — measured 42ms at n=24, 111ms at
+  // n=28, 430ms at n=30. n=34 sits around 7s there and stays flat (~0.05ms)
+  // here, so the budget below separates the two shapes by three orders of
+  // magnitude and is not a timing-sensitive assertion.
+  const nearMiss = `from ${"/*//*".repeat(34)}X`;
+  const startedAt = process.hrtime.bigint();
+  assert.doesNotMatch(nearMiss, FULL_NAVIGATION_IMPORT);
+  const elapsedMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
+  assert.ok(elapsedMs < 1000, `matcher backtracked: rejecting the near-miss took ${elapsedMs.toFixed(1)}ms`);
+});
+
 test("the sanctioned-caller list stays accurate: only the documented modules import assignLocation", async () => {
   // The module comment names the sanctioned callers (auth landings + AppRail's
   // skew fallback and stalled-nav watchdog). A new importer is a new
