@@ -203,6 +203,39 @@ test("an ?error query param is surfaced through friendlyAuthMessage on load", as
   assert.match(screen.getByRole("alert").textContent, /Email or password is incorrect/);
 });
 
+// S-02. URLSearchParams already percent-decodes, so a second decodeURIComponent
+// on the result threw URIError on any surviving "%" — inside a mount effect,
+// which takes the whole login page down. Reachable by hand ("/login?error=%")
+// and by our own redirect helper, which encodes a message once
+// (lib/supabase/authRedirect.ts): "100% down" round-trips back to "100% down"
+// and blew up the same way.
+test("a stray percent in ?error does not take the login page down", async () => {
+  await mountLogin({ url: "/login?error=%" });
+  assert.ok(screen.getByRole("button", { name: "Sign in" }), "the form still renders");
+  assert.match(screen.getByRole("alert").textContent, /Something went wrong/);
+});
+
+test("a singly-encoded ?error is read once, not twice", async () => {
+  // %2541 is the encoding of the literal text "%41". Decoding twice turns it
+  // into "A" — the payload the sender wrote is not what the page shows.
+  await mountLogin({ url: `/login?error=${encodeURIComponent("Invalid login credentials %41")}` });
+  assert.match(screen.getByRole("alert").textContent, /Email or password is incorrect/);
+
+  cleanup();
+  await mountLogin({ url: "/login?error=%2541" });
+  assert.doesNotMatch(screen.getByRole("alert").textContent, /A/, "no second decode pass");
+});
+
+// The banner carries role="alert" and the app's error styling, so text that
+// reaches it reads as coming from us. ?error= is attacker-writable.
+test("an unmapped ?error is not rendered verbatim in the error banner", async () => {
+  const injected = "Your account is suspended. Call 555-0100 to restore access.";
+  await mountLogin({ url: `/login?error=${encodeURIComponent(injected)}` });
+  const alert = screen.getByRole("alert");
+  assert.doesNotMatch(alert.textContent, /555-0100/);
+  assert.match(alert.textContent, /Something went wrong/);
+});
+
 test("the email input disables spellcheck", async () => {
   await mountLogin();
   assert.equal(document.querySelector('input[type="email"]').getAttribute("spellcheck"), "false");

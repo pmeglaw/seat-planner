@@ -1,4 +1,9 @@
-export function friendlyAuthMessage(message: string) {
+const GENERIC_AUTH_MESSAGE = "Something went wrong. Please try again.";
+
+// Returns our own copy for a recognized failure, or null when the text matches
+// nothing we know. Split out so the two callers can differ on ONE point: what
+// to do with text we don't recognize.
+function classifyAuthMessage(message: string): string | null {
   const normalized = message.toLowerCase();
 
   if (
@@ -36,7 +41,24 @@ export function friendlyAuthMessage(message: string) {
     return "This sign-in link has expired. Request a new link and use the newest email.";
   }
 
-  return message || "Something went wrong. Please try again.";
+  return null;
+}
+
+// For an error the browser just got back from Supabase: unrecognized text is
+// echoed, because it is the only clue the user (or a support screenshot) has
+// about a failure we have not mapped yet.
+export function friendlyAuthMessage(message: string) {
+  return classifyAuthMessage(message) ?? (message || GENERIC_AUTH_MESSAGE);
+}
+
+// For `?error=` on /login: same mapping, but unrecognized text is DROPPED, not
+// echoed. The query param is writable by anyone who can get a link clicked, and
+// it lands in a role="alert" banner styled as the app's own error voice — so
+// echoing it hands an attacker a page that says whatever they wrote ("Call
+// 555-0100 to restore access"). Mapped messages are ours; the rest is theirs.
+export function friendlyAuthMessageFromQuery(message: string | null) {
+  if (!message) return GENERIC_AUTH_MESSAGE;
+  return classifyAuthMessage(message) ?? GENERIC_AUTH_MESSAGE;
 }
 
 export function safeNextPath(value: string | null) {
