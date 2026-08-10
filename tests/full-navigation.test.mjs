@@ -29,7 +29,16 @@ test("assignLocation performs a full document load via window.location.assign", 
 // comments between `from` and the specifier) or a dynamic
 // `import("@/lib/fullNavigation")`. \s spans newlines, so multiline import
 // layouts cannot slip past a line-based scan.
-const FULL_NAVIGATION_IMPORT = /\bfrom\s*(?:\/\*[\s\S]*?\*\/\s*)*(['"])@\/lib\/fullNavigation\1|\bimport\s*\(\s*(['"])@\/lib\/fullNavigation\2\s*\)/;
+//
+// The comment arm is the unrolled `/* ... */` form, not the obvious
+// `(?:\/\*[\s\S]*?\*\/\s*)*`. A lazy `[\s\S]*?` inside an outer `*` lets one
+// run of comments be split many ways, so a near-miss input like `/*//*//*…`
+// backtracks exponentially before failing (CodeQL js/redos, alert #7). Here
+// each comment has exactly one parse: body chars, then stars, then any
+// `non-slash + more stars` continuation, then the closing `/`. Unbounded
+// repetition of whole comments is kept — that is what the two-comment fixture
+// below pins.
+const FULL_NAVIGATION_IMPORT = /\bfrom\s*(?:\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/\s*)*(['"])@\/lib\/fullNavigation\1|\bimport\s*\(\s*(['"])@\/lib\/fullNavigation\2\s*\)/;
 
 test("the import matcher catches every formatting a caller could use", () => {
   const fixtures = [
@@ -38,6 +47,8 @@ test("the import matcher catches every formatting a caller could use", () => {
     'import {\n  assignLocation\n} from "@/lib/fullNavigation";',
     'import { assignLocation }\n  from\n  "@/lib/fullNavigation";',
     'import { assignLocation } from /* legacy seam */ "@/lib/fullNavigation";',
+    'import { assignLocation } from /* one */ /* two */ "@/lib/fullNavigation";',
+    'import { assignLocation } from /* star * inside */ "@/lib/fullNavigation";',
     'export { assignLocation } from "@/lib/fullNavigation";',
     'const nav = await import("@/lib/fullNavigation");'
   ];

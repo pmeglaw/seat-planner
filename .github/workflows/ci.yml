@@ -23,6 +23,19 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege GITHUB_TOKEN, declared once at the top level so every job
+# inherits it (CodeQL's actions/missing-workflow-permissions flagged all three
+# separately). Without a block, the token carries whatever the repo's default
+# workflow permission is — a repo-settings value that can be widened later
+# without touching this file, so the scope every run gets is pinned here
+# instead. Nothing here needs more: the jobs check out, install, test, and
+# upload artifacts (upload-artifact uses its own API, not repo contents), and
+# no job pushes, comments, or publishes. A step that genuinely needs write
+# opts THAT job back in with its own `permissions:` block rather than widening
+# this one.
+permissions:
+  contents: read
+
 # Every `uses:` is pinned to a full-length commit SHA with the human-readable
 # version in a trailing comment. Repo Actions policy requires it ("Require
 # actions to be pinned to a full-length commit SHA"), and a tag pin is mutable
