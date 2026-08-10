@@ -4,6 +4,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import sharp from "sharp";
 import ts from "typescript";
@@ -190,7 +191,7 @@ const REPO_ROOT = new URL("../", import.meta.url);
 async function runGenerator(assetPath) {
   const args = [join("scripts", "measure-chair-centres.mjs"), "--json"];
   if (assetPath) args.push("--asset", assetPath);
-  const { stdout } = await execFileAsync(process.execPath, args, { cwd: REPO_ROOT });
+  const { stdout } = await execFileAsync(process.execPath, args, { cwd: fileURLToPath(REPO_ROOT) });
   return JSON.parse(stdout);
 }
 
@@ -217,7 +218,7 @@ test("the generator measures the same chairs at a different plan resolution", as
   const directory = await mkdtemp(join(tmpdir(), "seat-planner-plan-"));
   try {
     const rescaled = join(directory, "plan-1x.webp");
-    await sharp(new URL("public/images/office-floor-plan.webp", REPO_ROOT).pathname.slice(1))
+    await sharp(fileURLToPath(new URL("public/images/office-floor-plan.webp", REPO_ROOT)))
       .resize(PLAN_WIDTH_PX, PLAN_HEIGHT_PX)
       .toFile(rescaled);
 
