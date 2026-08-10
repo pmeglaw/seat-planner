@@ -75,8 +75,8 @@ not re-audit from zero.
   `trim(seat_key)` (no lower() — the key index is case-sensitive) + a PGlite
   test with keys like `"A"` vs `" A "`. CodeRabbit finding, reviewer-skipped
   in PR #339 as scope expansion. S.
-- **T-02 source-text-only big surfaces** — MOSTLY DONE; only `ReceptionScreen`
-  is left. S.
+- **T-02 source-text-only big surfaces** — **DONE (2026-08-10, v1.37.11 +
+  v1.37.12).** Every component it named is now mounted by a jsdom tier test.
   **Recorded scope was stale on 3 of its 4 components — re-verified 2026-08-10:**
   `AdminManagementPanel.tsx` and `DataUtilitiesPanel.tsx` already had full
   jsdom mounting tests (`tests/{admin-management-panel,data-utilities-panel}.test.mjs`,
@@ -94,8 +94,20 @@ not re-audit from zero.
   `tests/helpers/renderComponent.mjs` for every component test:
   `requestAnimationFrame` (needs `pretendToBeVisual`), `matchMedia` +
   `ResizeObserver` (jsdom implements neither), and `Element.scrollTo`.
-  Remaining: `ReceptionScreen.tsx` still has only `reception-source` (regex)
-  plus `reception-directory` (a `lib/` behavior test) — no tier mounts it.
+  `ReceptionScreen.tsx` (327 lines — the entry implied a far bigger surface)
+  is now mounted by `tests/reception-screen.test.mjs` (23 tests, all 14
+  mutations killed). It has no layout measurement at all, so it mounted
+  cleanly on the harness fixes above; its real cost was the keyboard loop
+  (↑↓ highlight → Enter locks → focus never leaves the input) and the recents
+  contract, none of which regex could see.
+  **Finding worth keeping: `RECENTS_DISPLAY_MAX` (4) in `ReceptionScreen.tsx`
+  is unreachable as a constraint.** `lock()` pushes the same id it selects, so
+  the store always contains the current selection and
+  `.filter(id => id !== selectedId)` already yields ≤ 4 of `RECENTS_STORED_MAX`
+  (5). The visible cap of 4 is enforced by the STORE cap minus the selection;
+  the display slice is defensive and can never bind. Harmless — left in place
+  deliberately, and the test says so rather than pretending to guard it. Don't
+  "fix" a failing display-cap test by widening the store.
 
 **Tech debt / architecture:**
 - **D-01 SeatMap.tsx** — 4,064 lines / 138 hooks (50 useState) / 7 inline
