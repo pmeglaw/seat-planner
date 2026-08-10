@@ -87,10 +87,6 @@ not re-audit from zero.
   `AdminManagementPanel.tsx`, `DataUtilitiesPanel.tsx`, `ReceptionScreen.tsx`:
   regex-over-source tests only; no tier mounts them. jsdom harness plumbing
   exists (`tests/helpers/renderComponent.mjs`). Start with ViewerSeatFinder. L.
-- **T-03 calibration breadth** — behaviorally pinned for 1 of 10 areas, X axis
-  only (`tests/map-calibration.test.mjs:76-118`); the test's own header
-  documents that the #178/#179 vertical bug would have stayed green, and
-  documents the re-fixture recipe. M. (Prior TEST-05.)
 
 **Tech debt / architecture:**
 - **D-01 SeatMap.tsx** — 4,064 lines / 138 hooks (50 useState) / 7 inline
@@ -189,6 +185,27 @@ Owner previously chose "none for now"; still current:
 
 ## Verified-closed since the 2026-07-24 record (fresh at `89a8fea` — do not re-report)
 
+- **T-03 calibration breadth** — CLOSED 2026-08-10 on the axis that mattered.
+  The file now asserts **Y as well as X** for the Northeast pod, which is the
+  part its own header called worth more than adding seats: #178/#179 was a
+  VERTICAL error and every existing assertion stayed green throughout it.
+  Proven, not assumed — shifting the NE left quad down 12px (that bug's
+  magnitude) turns 5 assertions red while all 8 X assertions stay green.
+  `scripts/measure-chair-centres.mjs` is the committed generator the header
+  asked for: it measures each chair pad's centroid from the shipped webp, states
+  its method precisely enough to re-run, and fails loudly rather than drifting
+  when a pad is not where it expects. The test suite runs the generator and
+  fails if it stops reproducing the committed fixture, at the shipped
+  resolution and at 1x — its size bounds are in master-plan pixels, so a
+  re-rendered plan at another scale still measures the same chairs. `sharp` is now a declared devDependency
+  instead of a transitive one. Y tolerance is 5px, above its own noise floor,
+  against a current worst-case error of 2.9px. Two things deliberately NOT done:
+  the other 9 areas remain unpinned (same generator would extend to them, but
+  each needs its own seed row), and CHAIR_CENTRE_X is untouched — the generator
+  disagrees with it by up to 6.5px because it measures the pad centroid while
+  the lost script measured something slightly left of it, and the calibration
+  was fit to the committed numbers, so "correcting" them would break a fit
+  that is good to 0.8px. The test header now says this explicitly.
 - **T-04 seatProtection↔SQL divergence** — CLOSED 2026-08-10, with the framing
   corrected: there are THREE copies of the protected-label ranges, not two, and
   the divergent one is not live. The zero-padded regex the entry cites

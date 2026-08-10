@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+import sharp from "sharp";
 import ts from "typescript";
+
+const execFileAsync = promisify(execFile);
 
 // Behavioural calibration coverage. The sibling *-source test pins the transform
 // constants as literal text; this file instead asserts what those constants are
@@ -27,18 +35,26 @@ import ts from "typescript";
 // The refit harness's other detector — a down-biased darkness-weighted
 // centroid — disagrees by up to 7px and finds nothing at all for NE03.)
 //
-// Consequences, if you are extending this file:
-//   1. Budget for it. The 2px tolerance here is roughly the measurement noise
-//      floor, so a re-measured fixture cannot be told apart from real drift.
-//      Set any new tolerance above that floor; ~4-5px still catches the
-//      failure mode this file exists for (#178/#179 were 10-17px).
-//   2. Commit the generator before adding seats. Ground truth for the other 52
-//      seats should come from a script in the repo, not another scratch file,
-//      or this gap is simply reproduced at scale. `sharp` can read the asset
-//      but is only a transitive dependency today — declare it first.
-//   3. This file asserts X only. #178/#179 fixed a VERTICAL error, which means
-//      these assertions would have stayed green throughout that bug. Adding a
-//      Y assertion is worth more than adding seats on X.
+// The three consequences that header used to list have now been acted on, and
+// the Y assertions below are the result:
+//   1. Budget for it — the 2px X tolerance is roughly the measurement noise
+//      floor, so Y is asserted at 5px instead: comfortably above the floor and
+//      still decisive against the failure mode this file exists for (#178/#179
+//      were 10-17px, and the current transform's worst Y error is 2.9px).
+//   2. Commit the generator first — done. `scripts/measure-chair-centres.mjs`
+//      produces CHAIR_CENTRE_Y below and documents its method precisely enough
+//      to re-run; `sharp` is now a declared devDependency rather than a
+//      transitive one. Re-run it if the floor-plan artwork is re-rendered.
+//   3. Assert Y — done below, which is what closes the #178/#179 blind spot.
+//
+// CHAIR_CENTRE_X and CHAIR_CENTRE_Y come from DIFFERENT measurement methods, and
+// that is deliberate. The generator's X output disagrees with the committed
+// CHAIR_CENTRE_X by up to 6.5px (NE05), because it reports the seat pad's
+// centroid while the lost script reported something slightly left of it. The
+// calibration was FIT to the X numbers below, so replacing them with the
+// generator's would not improve alignment — it would just move the target and
+// break a fit that is demonstrably good to 0.8px. Keep X as the historical
+// baseline; do NOT "correct" it from the generator's output.
 //
 // SAVED_X are the coordinates in the live published layer. They differ from
 // supabase/migrations/002_seed_initial_data.sql for the NE right quad, whose
@@ -83,6 +99,23 @@ const CHAIR_CENTRE_X = {
   NE08: 0.8744
 };
 
+// Normalized y of each chair pad's centre, measured by
+// scripts/measure-chair-centres.mjs (run it to reproduce these exactly). Each
+// row is internally consistent to 0.4px, which is the check that the detector
+// is measuring the pads and not something adjacent: the four chairs in a row are
+// physically aligned, so a detector that wandered onto a desk or an armrest
+// would not return four matching values.
+const CHAIR_CENTRE_Y = {
+  NE01: 0.0819,
+  NE02: 0.0823,
+  NE03: 0.0820,
+  NE04: 0.0822,
+  NE05: 0.1576,
+  NE06: 0.1573,
+  NE07: 0.1578,
+  NE08: 0.1574
+};
+
 // Saved coordinates in the live published layer.
 const SAVED = {
   NE01: { x: 0.771941, y: 0.06746 },
@@ -98,12 +131,22 @@ const SAVED = {
 // The canonical plan master is 1911px wide; express tolerances in those pixels
 // so a failure reads as a visible distance rather than a normalized fraction.
 const PLAN_WIDTH_PX = 1911;
+const PLAN_HEIGHT_PX = 867;
 const TOLERANCE_PX = 2;
+// Y sits above the noise floor of its own measurement — see the header.
+const TOLERANCE_Y_PX = 5;
+
+function visualPoint(label) {
+  const seat = { ...SAVED[label], label, zone: "Northeast Pod" };
+  return savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat);
+}
 
 function offsetPx(label) {
-  const seat = { ...SAVED[label], label, zone: "Northeast Pod" };
-  const visual = savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat);
-  return (visual.x - CHAIR_CENTRE_X[label]) * PLAN_WIDTH_PX;
+  return (visualPoint(label).x - CHAIR_CENTRE_X[label]) * PLAN_WIDTH_PX;
+}
+
+function offsetYPx(label) {
+  return (visualPoint(label).y - CHAIR_CENTRE_Y[label]) * PLAN_HEIGHT_PX;
 }
 
 for (const label of Object.keys(SAVED)) {
@@ -115,6 +158,83 @@ for (const label of Object.keys(SAVED)) {
     );
   });
 }
+
+// The assertions #178/#179 needed. That bug moved seats VERTICALLY by 10-17px
+// while every X assertion above stayed green.
+for (const label of Object.keys(SAVED)) {
+  test(`${label} projects onto its chair within ${TOLERANCE_Y_PX}px vertically`, () => {
+    const offset = offsetYPx(label);
+    assert.ok(
+      Math.abs(offset) <= TOLERANCE_Y_PX,
+      `${label} renders ${offset.toFixed(1)}px above/below its chair centre (limit ${TOLERANCE_Y_PX}px)`
+    );
+  });
+}
+
+test("both Northeast chair rows stay level", () => {
+  // A per-area calibration that tilted would keep each seat inside the vertical
+  // tolerance for a while but pull the row apart. The chairs are physically in
+  // line, so their projections must be too.
+  for (const row of [["NE01", "NE02", "NE03", "NE04"], ["NE05", "NE06", "NE07", "NE08"]]) {
+    const projected = row.map(label => visualPoint(label).y * PLAN_HEIGHT_PX);
+    const spread = Math.max(...projected) - Math.min(...projected);
+    assert.ok(spread <= TOLERANCE_Y_PX, `${row[0]}-${row[3]} project across ${spread.toFixed(1)}px of vertical spread`);
+  }
+});
+
+// The fixture above is only trustworthy if the committed generator still
+// produces it. These two tests are about the GENERATOR, not the transform — the
+// projection assertions above stay separate so they keep covering transform
+// behaviour on their own.
+const REPO_ROOT = new URL("../", import.meta.url);
+
+async function runGenerator(assetPath) {
+  const args = [join("scripts", "measure-chair-centres.mjs"), "--json"];
+  if (assetPath) args.push("--asset", assetPath);
+  const { stdout } = await execFileAsync(process.execPath, args, { cwd: fileURLToPath(REPO_ROOT) });
+  return JSON.parse(stdout);
+}
+
+test("the committed generator still reproduces CHAIR_CENTRE_Y", async () => {
+  const measured = await runGenerator();
+
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(measured).map(([label, result]) => [label, Number(result.y.toFixed(4))])),
+    CHAIR_CENTRE_Y,
+    "scripts/measure-chair-centres.mjs no longer produces the committed Y fixture — re-run it and review the diff before updating the numbers"
+  );
+});
+
+test("the generator measures the same chairs at a different plan resolution", async () => {
+  // The area bounds inside the generator are quoted in master-plan pixels and
+  // converted at run time. Before that, they were raw asset-pixel counts: at 1x
+  // every real pad fell under the minimum and the oversize trigger that splits
+  // NE05's pad off its desk stopped firing, so a merged blob would have been
+  // accepted as a pad. This test is what pins that.
+  //
+  // Tolerance rather than equality is deliberate: rescaling resamples the
+  // pixels, so sub-pixel centroid differences are expected. 1px is far below
+  // the 5px the Y assertions allow, and far above the 0.6px actually observed.
+  const directory = await mkdtemp(join(tmpdir(), "seat-planner-plan-"));
+  try {
+    const rescaled = join(directory, "plan-1x.webp");
+    await sharp(fileURLToPath(new URL("public/images/office-floor-plan.webp", REPO_ROOT)))
+      .resize(PLAN_WIDTH_PX, PLAN_HEIGHT_PX)
+      .toFile(rescaled);
+
+    const measured = await runGenerator(rescaled);
+
+    for (const [label, centre] of Object.entries(CHAIR_CENTRE_Y)) {
+      const offsetY = (measured[label].y - centre) * PLAN_HEIGHT_PX;
+      assert.ok(
+        Math.abs(offsetY) <= 1,
+        `${label} measures ${offsetY.toFixed(2)}px from the committed centre when the plan is rescaled to ${PLAN_WIDTH_PX}x${PLAN_HEIGHT_PX}`
+      );
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
 
 test("both Northeast quads agree on chair spacing", () => {
   // The pod repeats the same desk unit twice. If the two per-quad fits disagree,
