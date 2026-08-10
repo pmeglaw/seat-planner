@@ -23,6 +23,19 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege GITHUB_TOKEN, declared once at the top level so every job
+# inherits it (CodeQL's actions/missing-workflow-permissions flagged all three
+# separately). Without a block, the token carries whatever the repo's default
+# workflow permission is — a repo-settings value that can be widened later
+# without touching this file, so the scope every run gets is pinned here
+# instead. Nothing here needs more: the jobs check out, install, test, and
+# upload artifacts (upload-artifact uses its own API, not repo contents), and
+# no job pushes, comments, or publishes. A step that genuinely needs write
+# opts THAT job back in with its own `permissions:` block rather than widening
+# this one.
+permissions:
+  contents: read
+
 # Every `uses:` is pinned to a full-length commit SHA with the human-readable
 # version in a trailing comment. Repo Actions policy requires it ("Require
 # actions to be pinned to a full-length commit SHA"), and a tag pin is mutable
@@ -99,7 +112,7 @@ jobs:
 
       - name: Cache Playwright browser
         id: playwright-cache
-        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -156,7 +169,7 @@ jobs:
 
       - name: Cache Playwright browser
         id: playwright-cache
-        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
