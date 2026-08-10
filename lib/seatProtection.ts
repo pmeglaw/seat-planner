@@ -2,7 +2,11 @@ import type { SeatWithEmployee } from "@/lib/types";
 
 type SeatProtectionInput = Pick<SeatWithEmployee, "label" | "layer" | "is_custom" | "employee_id" | "status"> | null | undefined;
 
-const ORIGINAL_SEAT_LABEL_MAX_BY_PREFIX: Record<string, number> = {
+// Exported so the SQL-agreement test can generate its label matrix from this
+// map rather than hand-listing labels: the same ranges are re-implemented in
+// restore_draft_snapshot's protected-label classification, and nothing else
+// links the two copies (see tests/seat-protection-sql-agreement.test.mjs).
+export const ORIGINAL_SEAT_LABEL_MAX_BY_PREFIX: Record<string, number> = {
   C: 8,
   CW: 8,
   E: 8,
