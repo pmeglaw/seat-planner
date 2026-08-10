@@ -184,10 +184,10 @@ Owner previously chose "none for now"; still current:
   2026-08-10 rather than assumed: `.c8rc.json` has `"all": true`, all five files
   the entry names — `adminPageGuard`, `fullNavigation`, `serverAuth`,
   `authRedirect`, `middleware` — report 100% lines/branches/functions, no
-  `lib/**` file sits below the 90% line floor, and the only exclusions are the
-  three documented ones (`lib/types.ts` plus the two thin Supabase client
-  factories). It was carrying an M effort estimate against work that did not
-  exist.
+  `lib/**` file sits below the 90% line floor, and the only runtime exclusions
+  are the three documented ones (`lib/types.ts` plus the two thin Supabase
+  client factories) alongside the blanket `**/*.d.ts` type-declaration filter.
+  It was carrying an M effort estimate against work that did not exist.
 - **T-03 calibration breadth** — CLOSED 2026-08-10 on the axis that mattered.
   The file now asserts **Y as well as X** for the Northeast pod, which is the
   part its own header called worth more than adding seats: #178/#179 was a
