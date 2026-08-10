@@ -13,7 +13,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
     "test:db": "node --test tests/rpc-execution.test.mjs tests/rls-execution.test.mjs tests/seat-protection-sql-agreement.test.mjs",
-    "test:ct": "node --test tests/login-form.test.mjs tests/update-password-form.test.mjs tests/seat-inspector.test.mjs tests/seat-map-components.test.mjs tests/map-status-legend.test.mjs tests/app-rail.test.mjs tests/app-shell.test.mjs tests/admin-management-panel.test.mjs tests/data-utilities-panel.test.mjs",
+    "test:ct": "node --test tests/login-form.test.mjs tests/update-password-form.test.mjs tests/seat-inspector.test.mjs tests/seat-map-components.test.mjs tests/map-status-legend.test.mjs tests/app-rail.test.mjs tests/app-shell.test.mjs tests/admin-management-panel.test.mjs tests/data-utilities-panel.test.mjs tests/viewer-seat-finder.test.mjs",
     "test:browser": "playwright test -c playwright-ct.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:auth": "playwright test -c playwright-auth.config.ts",

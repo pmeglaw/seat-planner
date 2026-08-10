@@ -75,11 +75,27 @@ not re-audit from zero.
   `trim(seat_key)` (no lower() — the key index is case-sensitive) + a PGlite
   test with keys like `"A"` vs `" A "`. CodeRabbit finding, reviewer-skipped
   in PR #339 as scope expansion. S.
-- **T-02 source-text-only big surfaces** — `ViewerSeatFinder.tsx` (1,620 lines,
-  2nd-highest churn, the surface non-admins actually use),
-  `AdminManagementPanel.tsx`, `DataUtilitiesPanel.tsx`, `ReceptionScreen.tsx`:
-  regex-over-source tests only; no tier mounts them. jsdom harness plumbing
-  exists (`tests/helpers/renderComponent.mjs`). Start with ViewerSeatFinder. L.
+- **T-02 source-text-only big surfaces** — MOSTLY DONE; only `ReceptionScreen`
+  is left. S.
+  **Recorded scope was stale on 3 of its 4 components — re-verified 2026-08-10:**
+  `AdminManagementPanel.tsx` and `DataUtilitiesPanel.tsx` already had full
+  jsdom mounting tests (`tests/{admin-management-panel,data-utilities-panel}.test.mjs`,
+  added 2026-08-08 in `0d3f47f` — i.e. *after* this entry was written), so
+  those two were never open work. `ViewerSeatFinder.tsx` was genuinely
+  source-text-only and is now mounted by `tests/viewer-seat-finder.test.mjs`
+  (14 tests, all 8 mutations killed).
+  Verified along the way, because it decided the tier: **ViewerSeatFinder does
+  NOT share SeatMap's jsdom problem.** Its crowding nudges are pure
+  `lib/seatCrowding` calls over a measured scale, not an iterative
+  de-collision pass, and every measurement site is guarded (`offsetWidth ||
+  null`, `Math.max(1, ...)`), so jsdom's zero-size geometry gives one stable
+  pass instead of never converging. The real-browser fallback was not needed.
+  What actually blocked it was three jsdom environment gaps, now fixed once in
+  `tests/helpers/renderComponent.mjs` for every component test:
+  `requestAnimationFrame` (needs `pretendToBeVisual`), `matchMedia` +
+  `ResizeObserver` (jsdom implements neither), and `Element.scrollTo`.
+  Remaining: `ReceptionScreen.tsx` still has only `reception-source` (regex)
+  plus `reception-directory` (a `lib/` behavior test) — no tier mounts it.
 
 **Tech debt / architecture:**
 - **D-01 SeatMap.tsx** — 4,064 lines / 138 hooks (50 useState) / 7 inline
