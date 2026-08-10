@@ -19,7 +19,11 @@ const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const CACHE_DIR = `${ROOT}node_modules/.cache/ct`;
 
 // --- jsdom as the global environment (must run before RTL is imported) -------
-const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/" });
+// pretendToBeVisual gives jsdom a requestAnimationFrame/cancelAnimationFrame
+// pair. Without it jsdom defines neither, the copy loop below skips them
+// silently, and any component that schedules a frame in an effect dies with
+// "window.requestAnimationFrame is not a function" at mount.
+const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/", pretendToBeVisual: true });
 function setGlobal(key, value) {
   try {
     globalThis[key] = value;
@@ -47,6 +51,74 @@ for (const key of [
   if (dom.window[key] !== undefined) setGlobal(key, dom.window[key]);
 }
 setGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+
+// --- APIs jsdom does not implement at all -----------------------------------
+// jsdom ships neither matchMedia nor ResizeObserver, so any responsive surface
+// throws at mount. Both are supplied here rather than per-test: they are
+// environment gaps, not component behavior.
+
+// Breakpoint state driving the matchMedia double. Tests set this with
+// setViewportWidth() BEFORE rendering to choose which responsive branch of a
+// component mounts (the viewer map, for example, only computes a fit-to-width
+// on the >=1024px branch).
+let viewportWidth = 1280;
+
+// Parses just the (min-width: Npx) / (max-width: Npx) forms this codebase
+// queries. An unrecognized query reports no match rather than guessing.
+function evaluateMediaQuery(query) {
+  const min = /\(\s*min-width\s*:\s*(\d+)px\s*\)/.exec(query);
+  if (min && viewportWidth < Number(min[1])) return false;
+  const max = /\(\s*max-width\s*:\s*(\d+)px\s*\)/.exec(query);
+  if (max && viewportWidth > Number(max[1])) return false;
+  return Boolean(min || max);
+}
+
+setGlobal("matchMedia", query => ({
+  media: query,
+  get matches() {
+    return evaluateMediaQuery(query);
+  },
+  onchange: null,
+  addEventListener() {},
+  removeEventListener() {},
+  addListener() {},
+  removeListener() {},
+  dispatchEvent: () => false
+}));
+dom.window.matchMedia = globalThis.matchMedia;
+
+// Set the viewport width the matchMedia double reports against. Call before
+// renderElement — components read breakpoints in mount effects.
+export function setViewportWidth(width) {
+  viewportWidth = width;
+}
+
+// jsdom never lays out, so nothing can ever fire a resize. Components call
+// their measure function directly before observing (that first synchronous
+// call is what actually runs under test); this records observers only so
+// disconnect() in a cleanup path stays a no-op instead of a crash.
+class ResizeObserverStub {
+  constructor(callback) {
+    this.callback = callback;
+  }
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+setGlobal("ResizeObserver", ResizeObserverStub);
+dom.window.ResizeObserver = ResizeObserverStub;
+
+// jsdom implements no scrolling API on elements at all — it has no layout, so
+// scrollTo/scrollIntoView are simply absent and calling one throws. Map
+// surfaces scroll a viewport to centre a selected seat, so without these a
+// plain seat click dies inside an animation frame. No-ops are the honest
+// stand-in: with zero-size geometry there is nothing to scroll, and tests
+// assert on selection state rather than scroll offsets.
+for (const method of ["scrollTo", "scrollBy", "scrollIntoView"]) {
+  if (typeof dom.window.Element.prototype[method] !== "function") {
+    dom.window.Element.prototype[method] = function noopScroll() {};
+  }
+}
 
 const rtl = await import("@testing-library/react");
 const React = (await import("react")).default;
@@ -201,4 +273,15 @@ export async function renderElement(element) {
     utils = rtl.render(element);
   });
   return utils;
+}
+
+// Flush pending animation frames inside act(). jsdom's pretendToBeVisual rAF is
+// timer-backed, so a callback scheduled during mount lands ~16ms later —
+// outside the render's act() scope, which React reports as an "update was not
+// wrapped in act(...)" warning. Await this after rendering a component that
+// schedules state in a frame.
+export async function flushFrames() {
+  await act(async () => {
+    await new Promise(resolve => setTimeout(resolve, 32));
+  });
 }
