@@ -29,7 +29,16 @@ test("assignLocation performs a full document load via window.location.assign", 
 // comments between `from` and the specifier) or a dynamic
 // `import("@/lib/fullNavigation")`. \s spans newlines, so multiline import
 // layouts cannot slip past a line-based scan.
-const FULL_NAVIGATION_IMPORT = /\bfrom\s*(?:\/\*[\s\S]*?\*\/\s*)*(['"])@\/lib\/fullNavigation\1|\bimport\s*\(\s*(['"])@\/lib\/fullNavigation\2\s*\)/;
+//
+// The comment arm is the unrolled `/* ... */` form, not the obvious
+// `(?:\/\*[\s\S]*?\*\/\s*)*`. A lazy `[\s\S]*?` inside an outer `*` lets one
+// run of comments be split many ways, so a near-miss input like `/*//*//*…`
+// backtracks exponentially before failing (CodeQL js/redos, alert #7). Here
+// each comment has exactly one parse: body chars, then stars, then any
+// `non-slash + more stars` continuation, then the closing `/`. Unbounded
+// repetition of whole comments is kept — that is what the two-comment fixture
+// below pins.
+const FULL_NAVIGATION_IMPORT = /\bfrom\s*(?:\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/\s*)*(['"])@\/lib\/fullNavigation\1|\bimport\s*\(\s*(['"])@\/lib\/fullNavigation\2\s*\)/;
 
 test("the import matcher catches every formatting a caller could use", () => {
   const fixtures = [
@@ -38,6 +47,8 @@ test("the import matcher catches every formatting a caller could use", () => {
     'import {\n  assignLocation\n} from "@/lib/fullNavigation";',
     'import { assignLocation }\n  from\n  "@/lib/fullNavigation";',
     'import { assignLocation } from /* legacy seam */ "@/lib/fullNavigation";',
+    'import { assignLocation } from /* one */ /* two */ "@/lib/fullNavigation";',
+    'import { assignLocation } from /* star * inside */ "@/lib/fullNavigation";',
     'export { assignLocation } from "@/lib/fullNavigation";',
     'const nav = await import("@/lib/fullNavigation");'
   ];
@@ -46,6 +57,21 @@ test("the import matcher catches every formatting a caller could use", () => {
   }
   // Prose mentions of the path are not imports and must not count.
   assert.doesNotMatch('// see @/lib/fullNavigation for the contract', FULL_NAVIGATION_IMPORT);
+});
+
+test("the import matcher rejects a backtracking near-miss in bounded time", () => {
+  // The failure path the unrolled comment arm exists for: a long run of
+  // unterminated `/*//*` that clears `from` and then never reaches a
+  // specifier. Under the old lazy-body form each run had many possible splits,
+  // so rejecting this cost exponential time — measured 42ms at n=24, 111ms at
+  // n=28, 430ms at n=30. n=34 sits around 7s there and stays flat (~0.05ms)
+  // here, so the budget below separates the two shapes by three orders of
+  // magnitude and is not a timing-sensitive assertion.
+  const nearMiss = `from ${"/*//*".repeat(34)}X`;
+  const startedAt = process.hrtime.bigint();
+  assert.doesNotMatch(nearMiss, FULL_NAVIGATION_IMPORT);
+  const elapsedMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
+  assert.ok(elapsedMs < 1000, `matcher backtracked: rejecting the near-miss took ${elapsedMs.toFixed(1)}ms`);
 });
 
 test("the sanctioned-caller list stays accurate: only the documented modules import assignLocation", async () => {
