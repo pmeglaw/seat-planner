@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
+import { promisify } from "node:util";
+import sharp from "sharp";
 import ts from "typescript";
+
+const execFileAsync = promisify(execFile);
 
 // Behavioural calibration coverage. The sibling *-source test pins the transform
 // constants as literal text; this file instead asserts what those constants are
@@ -171,6 +178,60 @@ test("both Northeast chair rows stay level", () => {
     const projected = row.map(label => visualPoint(label).y * PLAN_HEIGHT_PX);
     const spread = Math.max(...projected) - Math.min(...projected);
     assert.ok(spread <= TOLERANCE_Y_PX, `${row[0]}-${row[3]} project across ${spread.toFixed(1)}px of vertical spread`);
+  }
+});
+
+// The fixture above is only trustworthy if the committed generator still
+// produces it. These two tests are about the GENERATOR, not the transform — the
+// projection assertions above stay separate so they keep covering transform
+// behaviour on their own.
+const REPO_ROOT = new URL("../", import.meta.url);
+
+async function runGenerator(assetPath) {
+  const args = [join("scripts", "measure-chair-centres.mjs"), "--json"];
+  if (assetPath) args.push("--asset", assetPath);
+  const { stdout } = await execFileAsync(process.execPath, args, { cwd: REPO_ROOT });
+  return JSON.parse(stdout);
+}
+
+test("the committed generator still reproduces CHAIR_CENTRE_Y", async () => {
+  const measured = await runGenerator();
+
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(measured).map(([label, result]) => [label, Number(result.y.toFixed(4))])),
+    CHAIR_CENTRE_Y,
+    "scripts/measure-chair-centres.mjs no longer produces the committed Y fixture — re-run it and review the diff before updating the numbers"
+  );
+});
+
+test("the generator measures the same chairs at a different plan resolution", async () => {
+  // The area bounds inside the generator are quoted in master-plan pixels and
+  // converted at run time. Before that, they were raw asset-pixel counts: at 1x
+  // every real pad fell under the minimum and the oversize trigger that splits
+  // NE05's pad off its desk stopped firing, so a merged blob would have been
+  // accepted as a pad. This test is what pins that.
+  //
+  // Tolerance rather than equality is deliberate: rescaling resamples the
+  // pixels, so sub-pixel centroid differences are expected. 1px is far below
+  // the 5px the Y assertions allow, and far above the 0.6px actually observed.
+  const directory = await mkdtemp(join(tmpdir(), "seat-planner-plan-"));
+  try {
+    const rescaled = join(directory, "plan-1x.webp");
+    await sharp(new URL("public/images/office-floor-plan.webp", REPO_ROOT).pathname.slice(1))
+      .resize(PLAN_WIDTH_PX, PLAN_HEIGHT_PX)
+      .toFile(rescaled);
+
+    const measured = await runGenerator(rescaled);
+
+    for (const [label, centre] of Object.entries(CHAIR_CENTRE_Y)) {
+      const offsetY = (measured[label].y - centre) * PLAN_HEIGHT_PX;
+      assert.ok(
+        Math.abs(offsetY) <= 1,
+        `${label} measures ${offsetY.toFixed(2)}px from the committed centre when the plan is rescaled to ${PLAN_WIDTH_PX}x${PLAN_HEIGHT_PX}`
+      );
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true });
   }
 });
 

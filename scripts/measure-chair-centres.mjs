@@ -8,7 +8,8 @@
 // 1082 parameter combinations of its described method never reproduced them
 // closer than 0.84px mean / 2.15px worst case). This script exists so the Y
 // fixture added alongside it does not repeat that mistake: run it, and you get
-// the committed numbers back.
+// the committed numbers back — tests/map-calibration.test.mjs runs this script
+// and fails if it stops reproducing them, at the shipped resolution and at 1x.
 //
 // USAGE: node scripts/measure-chair-centres.mjs [--json]
 //
@@ -39,7 +40,10 @@
 
 import sharp from "sharp";
 
-const ASSET = "public/images/office-floor-plan.webp";
+// --asset exists so the test suite can re-run this against a rescaled copy of
+// the plan and prove the measurement is resolution-independent.
+const assetFlag = process.argv.indexOf("--asset");
+const ASSET = assetFlag === -1 ? "public/images/office-floor-plan.webp" : process.argv[assetFlag + 1];
 
 const WARMTH_MIN = 12;
 // Master-plan pixels (1911x867); the shipped asset is a 2x upscale of it.
@@ -47,8 +51,14 @@ const PLAN_WIDTH_PX = 1911;
 const PLAN_HEIGHT_PX = 867;
 const WINDOW_HALF_X_PX = 23;
 const WINDOW_HALF_Y_PX = 17;
-const MIN_PAD_AREA = 400;
-const MAX_PAD_AREA = 2200;
+// Areas, like the window and the side bounds, are quoted in MASTER-plan pixels
+// and converted to asset pixels at run time. Quoting them in raw asset pixels
+// would silently break the moment the plan is re-rendered at another scale: at
+// 1x every real pad falls under a 2x-derived minimum, and the oversize trigger
+// that separates NE05's pad from its desk stops firing, so a merged blob is
+// accepted as a pad instead of being split.
+const MIN_PAD_AREA = 100;
+const MAX_PAD_AREA = 550;
 const MAX_SPLIT_PASSES = 4;
 const MIN_PAD_SIDE_PX = 12;
 const MAX_PAD_SIDE_PX = 30;
@@ -141,6 +151,9 @@ async function measure() {
   // re-rendering the asset at a different scale does not change the method.
   const halfWindowX = Math.round((WINDOW_HALF_X_PX / PLAN_WIDTH_PX) * imageWidth);
   const halfWindowY = Math.round((WINDOW_HALF_Y_PX / PLAN_HEIGHT_PX) * imageHeight);
+  // Asset pixel count -> master-plan pixel area, so the area bounds above mean
+  // the same thing whatever resolution the plan ships at.
+  const toMasterArea = count => count * (PLAN_WIDTH_PX / imageWidth) * (PLAN_HEIGHT_PX / imageHeight);
 
   const results = {};
   for (const [label, seed] of Object.entries(SEEDS)) {
@@ -170,8 +183,8 @@ async function measure() {
       }
     }
 
-    if (warmLuminance.length < MIN_PAD_AREA) {
-      throw new Error(`${label}: only ${warmLuminance.length} warm pixels in the search window — the artwork or the seed moved`);
+    if (toMasterArea(warmLuminance.length) < MIN_PAD_AREA) {
+      throw new Error(`${label}: only ${toMasterArea(warmLuminance.length).toFixed(0)} master px of warm pixels in the search window — the artwork or the seed moved`);
     }
 
     let blob = largestComponent(warm, windowWidth, windowHeight);
@@ -196,16 +209,17 @@ async function measure() {
       passes++;
       if (split.count === blob.count) break;
       blob = split;
-      if (blob.count <= MAX_PAD_AREA) break;
+      if (toMasterArea(blob.count) <= MAX_PAD_AREA) break;
     }
-    if (blob.count > MAX_PAD_AREA) {
-      throw new Error(`${label}: still ${blob.count}px after ${passes} luminance splits — the pad never separated from its surroundings`);
+    if (toMasterArea(blob.count) > MAX_PAD_AREA) {
+      throw new Error(`${label}: still ${toMasterArea(blob.count).toFixed(0)} master px after ${passes} luminance splits — the pad never separated from its surroundings`);
     }
 
     const padWidthPx = ((blob.maxX - blob.minX + 1) / imageWidth) * PLAN_WIDTH_PX;
     const padHeightPx = ((blob.maxY - blob.minY + 1) / imageHeight) * PLAN_HEIGHT_PX;
-    if (blob.count < MIN_PAD_AREA || blob.count > MAX_PAD_AREA) {
-      throw new Error(`${label}: pad area ${blob.count}px is outside [${MIN_PAD_AREA}, ${MAX_PAD_AREA}] — thresholding failed`);
+    const padAreaPx = toMasterArea(blob.count);
+    if (padAreaPx < MIN_PAD_AREA || padAreaPx > MAX_PAD_AREA) {
+      throw new Error(`${label}: pad area ${padAreaPx.toFixed(0)} master px is outside [${MIN_PAD_AREA}, ${MAX_PAD_AREA}] — thresholding failed`);
     }
     if (padWidthPx < MIN_PAD_SIDE_PX || padWidthPx > MAX_PAD_SIDE_PX || padHeightPx < MIN_PAD_SIDE_PX || padHeightPx > MAX_PAD_SIDE_PX) {
       throw new Error(`${label}: pad measures ${padWidthPx.toFixed(1)}x${padHeightPx.toFixed(1)} master px, outside the expected pad size`);
@@ -217,7 +231,7 @@ async function measure() {
     results[label] = {
       x: Number(((x0 + blob.sumX / blob.count) / imageWidth).toFixed(4)),
       y: Number(((y0 + blob.sumY / blob.count) / imageHeight).toFixed(4)),
-      areaPx: blob.count,
+      areaPx: Number(padAreaPx.toFixed(1)),
       padWidthPx: Number(padWidthPx.toFixed(1)),
       padHeightPx: Number(padHeightPx.toFixed(1))
     };

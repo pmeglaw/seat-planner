@@ -194,7 +194,10 @@ Owner previously chose "none for now"; still current:
   `scripts/measure-chair-centres.mjs` is the committed generator the header
   asked for: it measures each chair pad's centroid from the shipped webp, states
   its method precisely enough to re-run, and fails loudly rather than drifting
-  when a pad is not where it expects. `sharp` is now a declared devDependency
+  when a pad is not where it expects. The test suite runs the generator and
+  fails if it stops reproducing the committed fixture, at the shipped
+  resolution and at 1x — its size bounds are in master-plan pixels, so a
+  re-rendered plan at another scale still measures the same chairs. `sharp` is now a declared devDependency
   instead of a transitive one. Y tolerance is 5px, above its own noise floor,
   against a current worst-case error of 2.9px. Two things deliberately NOT done:
   the other 9 areas remain unpinned (same generator would extend to them, but
