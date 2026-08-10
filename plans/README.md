@@ -75,13 +75,6 @@ not re-audit from zero.
   `trim(seat_key)` (no lower() — the key index is case-sensitive) + a PGlite
   test with keys like `"A"` vs `" A "`. CodeRabbit finding, reviewer-skipped
   in PR #339 as scope expansion. S.
-- **T-01 coverage floor blind** — `.c8rc.json` `"all": false`: 9 never-imported
-  `lib/**` files invisible to the 90/95/80 floors, including the whole
-  Supabase auth surface (`lib/supabase/authRedirect.ts`, `middleware.ts`,
-  `serverAuth.ts`, `adminPageGuard.ts`, `fullNavigation.ts` — the last is
-  stubbed by the jsdom harness so never executed). Fix: `"all": true` +
-  cover-or-exclude-with-reason; `completeAuthRedirect` is directly
-  unit-testable. M effort. (Prior TEST-03, wider than previously scoped.)
 - **T-02 source-text-only big surfaces** — `ViewerSeatFinder.tsx` (1,620 lines,
   2nd-highest churn, the surface non-admins actually use),
   `AdminManagementPanel.tsx`, `DataUtilitiesPanel.tsx`, `ReceptionScreen.tsx`:
@@ -185,6 +178,16 @@ Owner previously chose "none for now"; still current:
 
 ## Verified-closed since the 2026-07-24 record (fresh at `89a8fea` — do not re-report)
 
+- **T-01 coverage floor blind** — CLOSED, and it was **already closed when this
+  entry was written**: #345 landed `"all": true` on 2026-08-08, one day after
+  the 2026-08-07 audit that recorded it, and nobody retired the entry. Verified
+  2026-08-10 rather than assumed: `.c8rc.json` has `"all": true`, all five files
+  the entry names — `adminPageGuard`, `fullNavigation`, `serverAuth`,
+  `authRedirect`, `middleware` — report 100% lines/branches/functions, no
+  `lib/**` file sits below the 90% line floor, and the only runtime exclusions
+  are the three documented ones (`lib/types.ts` plus the two thin Supabase
+  client factories) alongside the blanket `**/*.d.ts` type-declaration filter.
+  It was carrying an M effort estimate against work that did not exist.
 - **T-03 calibration breadth** — CLOSED 2026-08-10 on the axis that mattered.
   The file now asserts **Y as well as X** for the Northeast pod, which is the
   part its own header called worth more than adding seats: #178/#179 was a
