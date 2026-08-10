@@ -376,7 +376,17 @@ export function SeatMap({
   const panStateRef = useRef<MapPanState>(null);
   const pendingZoomCenterRef = useRef<{ x: number; y: number } | null>(null);
   const [overviewMapWidth, setOverviewMapWidth] = useState<number | null>(null);
-  const [mapVisibleRange, setMapVisibleRange] = useState({ left: 0, right: 1, viewportWidth: 0 });
+  // The visible range is three NUMBERS, not one object, and that is the whole
+  // point — see updateMapVisibleRange for the failure it fixes. Consumers still
+  // read `mapVisibleRange.left/right/viewportWidth`, so the object is rebuilt
+  // here and only changes identity when a component number actually moves.
+  const [mapVisibleLeft, setMapVisibleLeft] = useState(0);
+  const [mapVisibleRight, setMapVisibleRight] = useState(1);
+  const [mapVisibleViewportWidth, setMapVisibleViewportWidth] = useState(0);
+  const mapVisibleRange = useMemo(
+    () => ({ left: mapVisibleLeft, right: mapVisibleRight, viewportWidth: mapVisibleViewportWidth }),
+    [mapVisibleLeft, mapVisibleRight, mapVisibleViewportWidth]
+  );
   const [swapSourceSeatId, setSwapSourceSeatId] = useState<string | null>(null);
   const [swapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
   const [moveEmployeeSourceSeatId, setMoveEmployeeSourceSeatId] = useState<string | null>(null);
@@ -489,11 +499,19 @@ export function SeatMap({
 
     const viewportWidth = viewport.clientWidth;
 
-    setMapVisibleRange(current => (
-      Math.abs(current.left - left) < 0.002 && Math.abs(current.right - right) < 0.002 && Math.abs(current.viewportWidth - viewportWidth) < 1
-        ? current
-        : { left, right, viewportWidth }
-    ));
+    // Three primitive updaters, NOT one `setState({ left, right, viewportWidth })`.
+    // React may re-run an updater against the BASE state several times while it
+    // processes the queue, and it bails out only when the result is Object.is-equal
+    // to what it already has. An object updater fails that test forever: replayed
+    // from the base ({left:0,right:1,viewportWidth:0}) it allocates a fresh object
+    // every pass, each one "new", so every pass scheduled another render. Measured
+    // on /admin with no seat selected: 200 updater runs across 45 renders from a
+    // single mount, with the map geometry completely static — then React gave up
+    // with "Maximum update depth exceeded". Numbers compare by value, so a replay
+    // returns an identical result and the bailout works on the second pass.
+    setMapVisibleLeft(current => (Math.abs(current - left) < 0.002 ? current : left));
+    setMapVisibleRight(current => (Math.abs(current - right) < 0.002 ? current : right));
+    setMapVisibleViewportWidth(current => (Math.abs(current - viewportWidth) < 1 ? current : viewportWidth));
   }, []);
 
   const focusAskPlannerButton = useCallback(() => {
