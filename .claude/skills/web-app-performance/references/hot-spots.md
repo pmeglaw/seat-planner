@@ -47,7 +47,11 @@ remembering before optimising for scale that isn't hurting.
 
 **Interaction**, `measure-interaction.mjs`, 2026-08-11. Production build served
 on `:3100`, viewer route `/` against the live map (68 markers), median of 3 runs,
-1440×900. Every gesture verified to actually move the surface, not just run:
+1440×900. Only `pan` asserts a postcondition in the script (scroll offset moved,
+or it throws). `zoom` and `hover` were confirmed by hand when these numbers were
+taken — the zoom moved a marker's box from x 478 to x 836, and the hover left
+`[data-seat-id]:hover` matching — but the script does not re-check either, so a
+future regression there would go quiet:
 
 | Gesture | CPU | Frames | Missed | Stutters | Median | p95 | Worst |
 | --- | --- | --- | --- | --- | --- | --- | --- |

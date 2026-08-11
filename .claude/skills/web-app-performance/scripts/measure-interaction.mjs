@@ -188,17 +188,27 @@ function findPanAnchor() {
   if (!viewport || viewport === document.body) return null;
 
   const rect = viewport.getBoundingClientRect();
-  // Start from the middle and work outward: the centre of the plan is the
-  // densest with markers, the edges are where empty canvas reliably is.
-  for (let dy = 0.5; dy > 0.1; dy -= 0.05) {
-    for (let dx = 0.5; dx > 0.1; dx -= 0.05) {
-      const x = Math.round(rect.x + rect.width * dx);
-      const y = Math.round(rect.y + rect.height * dy);
-      const element = document.elementFromPoint(x, y);
-      if (!element || !viewport.contains(element)) continue;
-      if (element.closest("button, a, input, select, textarea, [data-seat-id]")) continue;
-      return { x, y };
+  // Walk the whole inset grid, nearest-to-centre first. Scanning only one
+  // quadrant would report "no empty canvas" on a plan whose free space happens
+  // to sit right or below the centre.
+  const fractions = [];
+  for (let f = 0.1; f <= 0.9001; f += 0.05) fractions.push(Math.round(f * 100) / 100);
+
+  const candidates = [];
+  for (const dy of fractions) {
+    for (const dx of fractions) {
+      candidates.push({ dx, dy, distance: Math.hypot(dx - 0.5, dy - 0.5) });
     }
+  }
+  candidates.sort((a, b) => a.distance - b.distance);
+
+  for (const candidate of candidates) {
+    const x = Math.round(rect.x + rect.width * candidate.dx);
+    const y = Math.round(rect.y + rect.height * candidate.dy);
+    const element = document.elementFromPoint(x, y);
+    if (!element || !viewport.contains(element)) continue;
+    if (element.closest("button, a, input, select, textarea, [data-seat-id]")) continue;
+    return { x, y };
   }
   return null;
 }
@@ -258,7 +268,13 @@ async function performInteraction(page) {
     // 2. There must be somewhere to pan to. At the default zoom the plan is
     //    fitted to the viewport and has no overflow, so we zoom in first.
     const zoomIn = page.locator('button[aria-label="Zoom in"]');
-    for (let attempt = 0; attempt < 4; attempt++) {
+    // Bounded by the zoom range itself, not a round number: MAP_ZOOM_MIN 0.5 to
+    // MAP_ZOOM_MAX 2.5 in MAP_ZOOM_STEP 0.25 (lib/mapViewport.ts) is 8 clicks,
+    // plus one because the viewer's first click leaves fit mode by setting 1.
+    // The disabled check can't be the only exit: the admin control only computes
+    // zoomInDisabled in detail mode (SeatMap.tsx), so an unbounded loop would
+    // hang in overview instead of failing with a readable message.
+    for (let attempt = 0; attempt < 9; attempt++) {
       if (await page.evaluate(hasScrollRoom)) break;
       if ((await zoomIn.count()) === 0 || !(await zoomIn.isEnabled())) break;
       await zoomIn.click();
