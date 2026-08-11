@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 An `AGENTS.md` also exists with overlapping guidance (coding conventions, safe-change rules, "done means" checklist). Read it too; this file focuses on the architecture that only becomes clear after reading several files together.
 
-Repo-scoped skills live in `.claude/skills/` — `run-seat-planner` (boot and drive the app), `chrome-pixel-capture` (pixel-accurate screenshots), `test-tiers` (harness mechanics). Use `run-seat-planner` to check UI work in a real browser: build, typecheck and tests passing is **not** visual verification. When a convention or workflow needs repeating across sessions, add a `SKILL.md` there rather than growing this file — only a skill's one-line description stays resident, while everything here is loaded into every session.
+Repo-scoped skills live in `.claude/skills/` — `run-seat-planner` (boot and drive the app), `chrome-pixel-capture` (pixel-accurate screenshots), `test-tiers` (harness mechanics), `web-app-performance` (measure load/bundle/interaction cost before optimising). Use `run-seat-planner` to check UI work in a real browser: build, typecheck and tests passing is **not** visual verification. When a convention or workflow needs repeating across sessions, add a `SKILL.md` there rather than growing this file — only a skill's one-line description stays resident, while everything here is loaded into every session.
 
 ## Stack
 
