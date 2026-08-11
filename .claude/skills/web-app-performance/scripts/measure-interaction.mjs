@@ -6,9 +6,12 @@
 // interaction window, so "it feels janky" becomes a number you can re-measure
 // after a fix.
 //
-// The headline number is frames over budget. At 60 fps a frame has ~16.7 ms; a
-// frame that takes longer means the user saw a stutter. Median frame time hides
-// exactly the spikes people complain about, so p95 is reported alongside.
+// The headline number is missed frames — vsync slots that went by with nothing
+// new on screen, weighted by how long each stall lasted, so one long freeze
+// doesn't score the same as one brief hiccup. Stutter count is reported next to
+// it because 30 frames lost to 15 small stalls is a different problem from 30
+// lost to one. Median frame time hides exactly the spikes people complain
+// about, so p95 and worst are reported too.
 //
 // Usage (needs the app running and, for map gestures, a session):
 //   node .../measure-interaction.mjs --route /admin --interaction hover
@@ -28,6 +31,14 @@ import { chromium } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  FRAME_BUDGET_MS,
+  missedFrames,
+  numericFlag,
+  percentile,
+  samePath,
+  stutterIntervals
+} from "./measure-shared.mjs";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 const argv = process.argv.slice(2);
@@ -38,9 +49,19 @@ const flag = (name, fallback) => {
 
 const ROUTE = flag("--route", "/");
 const BASE = flag("--url", process.env.SEAT_PLANNER_URL || "http://localhost:3000");
-const RUNS = Number(flag("--runs", 3));
-const CPU = Number(flag("--cpu", 1));
-const STEPS = Number(flag("--steps", 25));
+// Validated before the browser launches: a bad --runs used to produce an
+// all-zero report that reads like a perfectly smooth interaction.
+let RUNS;
+let CPU;
+let STEPS;
+try {
+  RUNS = numericFlag(argv, "--runs", { fallback: 3, min: 1, integer: true });
+  CPU = numericFlag(argv, "--cpu", { fallback: 1, min: 1 });
+  STEPS = numericFlag(argv, "--steps", { fallback: 25, min: 1, integer: true });
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
 const INTERACTION = flag("--interaction", "hover");
 const SELECTOR = flag("--selector", null);
 const TEXT = flag("--text", "conference");
@@ -186,18 +207,6 @@ async function performInteraction(page) {
   throw new Error(`unknown --interaction ${INTERACTION} (hover | pan | zoom | type)`);
 }
 
-const percentile = (values, p) => {
-  if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  return sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))];
-};
-
-// A frame INTERVAL of ~16.7 ms is a healthy 60 fps, so counting everything above
-// the budget flags a perfectly smooth interaction as janky. What the user
-// actually sees as a stutter is a missed vsync: an interval of two frames or
-// more. Hence 2× budget.
-const BUDGET_MS = 1000 / 60;
-const DROPPED_MS = BUDGET_MS * 2;
 const samples = [];
 
 for (let run = 0; run < RUNS; run++) {
@@ -212,8 +221,16 @@ for (let run = 0; run < RUNS; run++) {
   await page.waitForTimeout(500);
 
   const landed = new URL(page.url()).pathname;
-  if (landed !== ROUTE && landed.startsWith("/login") && ROUTE !== "/login") {
-    console.error(`${ROUTE} redirected to ${landed} — no valid session, so this would measure the login page.`);
+  if (!samePath(landed, ROUTE)) {
+    console.error(
+      `${ROUTE} redirected to ${landed}, so this would report ${landed}'s numbers as ${ROUTE}.` +
+        (landed.startsWith("/login") && ROUTE !== "/login"
+          ? LOGIN
+            ? "\nThe sign-in succeeded but the session was rejected on this route — check the account's role."
+            : "\nDrop --no-login so the script signs in first."
+          : `\nMeasure ${landed} directly if that is the page you meant.`)
+    );
+    await context.close();
     await browser.close();
     process.exit(1);
   }
@@ -231,12 +248,18 @@ for (let run = 0; run < RUNS; run++) {
   await context.close();
 
   const frames = result.frames.filter(ms => ms > 0);
+  const missed = missedFrames(frames);
   samples.push({
     frames: frames.length,
+    missedFrames: missed,
+    // Denominator is what the compositor SHOULD have presented over the same
+    // span — presented plus missed. Dividing by presented alone would let the
+    // percentage exceed 100 during a bad stall.
+    missedPct: frames.length + missed > 0 ? (missed / (frames.length + missed)) * 100 : 0,
+    stutters: stutterIntervals(frames),
     medianFrameMs: percentile(frames, 50),
     p95FrameMs: percentile(frames, 95),
-    worstFrameMs: Math.max(0, ...frames),
-    droppedFrames: frames.filter(ms => ms >= DROPPED_MS).length,
+    worstFrameMs: frames.length ? Math.max(...frames) : 0,
     longTaskCount: result.longTasks.length,
     longTaskMs: result.longTasks.reduce((sum, ms) => sum + ms, 0)
   });
@@ -250,21 +273,21 @@ if (AS_JSON) {
   process.exit(0);
 }
 
-const dropped = median("droppedFrames");
-const frames = median("frames");
 console.log(`\n${BASE}${ROUTE} — "${INTERACTION}" × ${STEPS} steps, median of ${RUNS} runs${CPU > 1 ? `, CPU ${CPU}×` : ""}\n`);
-console.log(`  frames rendered        ${frames.toFixed(0)}`);
-console.log(`  dropped (≥33 ms)       ${dropped.toFixed(0)}  (${frames ? ((dropped / frames) * 100).toFixed(0) : 0}%)`);
+console.log(`  frames presented       ${median("frames").toFixed(0)}`);
+console.log(`  frames missed          ${median("missedFrames").toFixed(0)}  (${median("missedPct").toFixed(0)}% of expected)`);
+console.log(`  stutters               ${median("stutters").toFixed(0)}`);
 console.log(`  median frame           ${median("medianFrameMs").toFixed(1)} ms`);
 console.log(`  p95 frame              ${median("p95FrameMs").toFixed(1)} ms`);
 console.log(`  worst frame            ${median("worstFrameMs").toFixed(1)} ms`);
 console.log(`  long tasks             ${median("longTaskCount").toFixed(0)} totalling ${median("longTaskMs").toFixed(0)} ms`);
 console.log(
-  `\nA smooth interaction sits at a ~16.7 ms median with almost no dropped frames — that is 60 fps,\n` +
+  `\nA smooth interaction sits at a ~${FRAME_BUDGET_MS.toFixed(1)} ms median with almost no missed frames — that is 60 fps,\n` +
     `not a problem to fix. What matters is p95 and worst: a high p95 over a healthy median is the\n` +
     `signature of periodic expensive work, in this app usually the O(n²) de-collision pipeline\n` +
     `recomputing because a memo dependency stopped being identity-stable.\n` +
-    `See references/hot-spots.md, "Render and interaction cost".\n`
+    `Many missed frames across few stutters means one long stall; many stutters means steady\n` +
+    `per-frame cost. See references/hot-spots.md, "Render and interaction cost".\n`
 );
 
 await browser.close();

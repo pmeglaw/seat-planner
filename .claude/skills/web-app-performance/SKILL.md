@@ -110,9 +110,11 @@ Two notes that decide whether a result is trustworthy:
 - **Measure a production build when the number is going to be quoted.** `next dev`
   compiles on demand and ships unminified code; its numbers are fine for
   relative before/after on the same server, and misleading as absolutes.
-- **The script refuses to measure a redirect.** Without a valid session every
-  real route bounces to `/login`, and reporting the login page's numbers under
-  the route's name is a wrong answer that looks like a fast one.
+- **The script refuses to measure a redirect** — any redirect, not just the
+  `/login` bounce you get without a session. Reporting one page's numbers under
+  another page's name is a wrong answer that looks like a right one. A
+  trailing-slash normalisation (`/admin/` → `/admin`) is the one benign case and
+  is allowed through.
 
 Credentials come from `.env.local` (`SEAT_PLANNER_E2E_EMAIL` / `_PASSWORD`),
 same as the `run-seat-planner` driver. The seeded user is viewer-role, so
@@ -135,16 +137,25 @@ Interactions are `hover` (pointer across markers — memoization pressure), `pan
 (the scroll-through-ref path), `zoom` (re-runs the crowding pipeline), and `type`
 (`--selector`, `--text`; filter/search re-render cost).
 
-Read the result by shape, not by any single number:
+Read the result by shape, not by any single number. In particular **the median is
+close to useless on its own** — it sits at 16.7 ms even in badly janky runs,
+because most frames are still fine and the stalls hide in the tail:
 
-- A **~16.7 ms median with near-zero dropped frames is 60 fps** — smooth, and not
+- A **~16.7 ms median with near-zero missed frames is 60 fps** — smooth, and not
   something to "fix". Report it and stop.
 - A **high p95 or worst frame over a healthy median** is periodic expensive work.
   That is the shape that matches this app's known failure mode: the O(n²)
   de-collision pipeline recomputing because a memo dependency stopped being
   identity-stable.
-- A **raised median** is steady per-frame cost — too much work in the render path
-  generally, rather than one recomputation spiking.
+- **Missed frames against stutters** tells you the shape of the stall: many
+  missed frames over few stutters is one long freeze; roughly equal numbers means
+  lots of small hiccups, i.e. steady per-frame cost rather than one spike.
+- A **raised median** is steady per-frame cost affecting every frame — too much
+  work in the render path generally.
+
+Missed frames are severity-weighted: an interval spanning N vsync slots presented
+one frame and missed N−1. That matters because counting stalls instead of frames
+scores a 500 ms freeze the same as one brief hiccup.
 
 `--cpu 4` is worth using by default here. On an unthrottled machine almost
 everything looks smooth; a mid-range laptop is roughly where users actually are.

@@ -32,6 +32,7 @@ import { chromium } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { numericFlag, percentile, samePath } from "./measure-shared.mjs";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 
@@ -42,8 +43,17 @@ const flag = (name, fallback) => {
 };
 const routes = argv.reduce((acc, arg, i) => (arg === "--route" ? [...acc, argv[i + 1]] : acc), []);
 const ROUTES = routes.length ? routes : ["/"];
-const RUNS = Number(flag("--runs", 5));
-const CPU = Number(flag("--cpu", 1));
+// Validated before the browser launches: --runs 0 previously produced an empty
+// sample set and crashed on samples[0] after doing all the work.
+let RUNS;
+let CPU;
+try {
+  RUNS = numericFlag(argv, "--runs", { fallback: 5, min: 1, integer: true });
+  CPU = numericFlag(argv, "--cpu", { fallback: 1, min: 1 });
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
 const BASE = flag("--url", process.env.SEAT_PLANNER_URL || "http://localhost:3000");
 const LOGIN = !argv.includes("--no-login");
 const AS_JSON = argv.includes("--json");
@@ -121,11 +131,7 @@ if (LOGIN) {
   log(`signed in as ${email}`);
 }
 
-const median = values => {
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = sorted.length >> 1;
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-};
+const median = values => percentile(values, 50);
 
 const results = [];
 for (const route of ROUTES) {
@@ -146,22 +152,24 @@ for (const route of ROUTES) {
     await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
     await page.waitForTimeout(500);
 
-    // Every real route redirects to /login without a session. Measuring that
-    // redirect would quietly report the login page's numbers under the route's
-    // name — a wrong answer that looks like a fast one, so refuse it outright.
+    // Any redirect means the numbers below describe a different page than the
+    // one being reported, so refuse rather than mislabel. Trailing-slash
+    // normalisation is the one benign case and samePath absorbs it.
     const landed = new URL(page.url()).pathname;
-    if (landed !== route && landed.startsWith("/login") && route !== "/login") {
+    if (!samePath(landed, route)) {
+      const isLoginRedirect = landed.startsWith("/login") && route !== "/login";
       console.error(
-        `${route} redirected to ${landed}: no valid session, so this would measure the login page.\n` +
-          (LOGIN
-            ? "The sign-in succeeded but the session was rejected on this route — check the account's role."
-            : "Drop --no-login so the script signs in first.")
+        `${route} redirected to ${landed}, so this would report ${landed}'s numbers as ${route}.\n` +
+          (isLoginRedirect
+            ? LOGIN
+              ? "The sign-in succeeded but the session was rejected on this route — check the account's role."
+              : "Drop --no-login so the script signs in first."
+            : `Measure ${landed} directly if that is the page you meant.`)
       );
       await context.close();
       await browser.close();
       process.exit(1);
     }
-    if (landed !== route) log(`  note: ${route} landed on ${landed}`);
 
     samples.push(
       await page.evaluate(() => {
