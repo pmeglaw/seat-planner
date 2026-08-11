@@ -76,13 +76,37 @@ not re-audit from zero.
   down" — came back through `URLSearchParams` as `100% down` and killed the
   page on arrival. Covered by 3 jsdom tests in `tests/login-form.test.mjs` and
   2 in `tests/auth-messages.test.mjs`; live-verified at `/login?error=%`.
-- **S-03 auth-config posture** — `supabase/config.toml:186,192` declares
-  `enable_signup = true` and `minimum_password_length = 6`; the client's
-  12-char minimum (`UpdatePasswordForm.tsx:20`) is browser-only;
-  `handle_new_user()` (`001_initial_schema.sql:100-114`) provisions a working
-  viewer profile for ANY new auth user. Severity depends on unverified
-  dashboard state (prod signup setting, preview-branch integration). Fix:
-  flip config.toml, verify + record the prod dashboard values. S effort.
+- **S-03 auth-config posture** — **DONE in repo (2026-08-10); two items left
+  for the owner in the Supabase dashboard.** The recorded facts were right but
+  the *severity* was overstated, and the reason is worth keeping: **nothing in
+  CI pushes `supabase/config.toml` to the hosted project** (no `supabase config
+  push`, no `supabase link` in `.github/workflows/`), so that file governs the
+  LOCAL stack and preview branches only — it was never what protected
+  production. Live GoTrue settings (`GET /auth/v1/settings`, 2026-08-10) report
+  **`disable_signup: true`** on the hosted project, so self-service signup was
+  already off in prod.
+  What the divergence actually cost: the e2e-auth job's disposable stack ran
+  with signup ON and a 6-character minimum, i.e. the authenticated tests were
+  exercising a more permissive system than the real one. `config.toml` now sets
+  `enable_signup = false` and `minimum_password_length = 12`; the 12 comes from
+  the new `MIN_PASSWORD_LENGTH` in `lib/authMessages.ts`, which
+  `UpdatePasswordForm` now reads instead of a bare literal, and
+  `tests/auth-config-source.test.mjs` fails if the two drift. Seeded local users
+  are inserted straight into `auth.users` (`supabase/seed.sql`), so none of this
+  touches the e2e fixtures.
+  `handle_new_user()` is left alone deliberately: provisioning a viewer profile
+  for a new auth user is exactly right for an admin-created account, and it is
+  the mechanism magic-link sign-in depends on. With signup off and
+  `shouldCreateUser: false` on the magic-link path, no self-provisioning route
+  exists — the trigger is not the hole, the signup switch was.
+  **Owner, in the dashboard (not reachable from here):** (1) confirm
+  Authentication → Policies → minimum password length is 12, not the default 6
+  — the settings endpoint does not expose it, so it is the one value still
+  unverified; (2) **GitHub OAuth is enabled on the hosted project**
+  (`"github": true` in the same settings response) though the app only ever
+  uses email/password and magic links — unused sign-in surface, almost
+  certainly left over from the prototype phase. Disable it unless it is
+  wanted.
 - **S-04 backup argv exposure** — `scripts/backup-prod.mjs:110` passes the prod
   DB connection string on the child-process command line (world-readable in
   the process table for the dump's duration). Single-operator machine —
