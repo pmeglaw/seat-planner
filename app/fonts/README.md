@@ -58,9 +58,14 @@ To refresh:
 npm i -D @fontsource-variable/ibm-plex-sans @fontsource/ibm-plex-mono
 cp node_modules/@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2 app/fonts/
 cp node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-{400,500,600}-normal.woff2 app/fonts/
-cp node_modules/@fontsource-variable/ibm-plex-sans/LICENSE app/fonts/LICENSE
+cp node_modules/@fontsource-variable/ibm-plex-sans/LICENSE app/fonts/LICENSE-sans
+cp node_modules/@fontsource/ibm-plex-mono/LICENSE app/fonts/LICENSE-mono
 npm un @fontsource-variable/ibm-plex-sans @fontsource/ibm-plex-mono
 ```
+
+**Copy both licence files, not one.** Sans and Mono carry different copyright
+notices (2019 and 2017 respectively), and OFL 1.1 requires the notice to travel
+with the font it covers — a single shared `LICENSE` silently drops one of them.
 
 Then update the versions above, and **look at the app** — a missing or
 mis-mapped weight falls back silently instead of erroring. Reception's extension
@@ -68,5 +73,10 @@ readout (46px/600 mono) is the most exposed use.
 
 ## Licence
 
-IBM Plex is licensed under the SIL Open Font License 1.1. Full text in
-`LICENSE`, alongside the files it covers.
+IBM Plex is licensed under the SIL Open Font License 1.1. The two families carry
+separate copyright notices, so both are kept:
+
+| File | Covers | Notice |
+| --- | --- | --- |
+| `LICENSE-sans` | `ibm-plex-sans-latin-wght-normal.woff2` | Copyright 2019 IBM Corp. |
+| `LICENSE-mono` | the three `ibm-plex-mono-*` files | Copyright 2017 IBM Corp. |
