@@ -86,7 +86,7 @@ Two documents carry the detailed guidance; read them before non-trivial work:
 Key concepts in brief:
 
 - **Draft vs. published layers.** Every seat row has a `layer` of `'draft'` or `'published'`. Viewers only ever read published; admins edit draft; `publishSeatMapAction` atomically copies draft over published. Keep the two layers strictly separate.
-- **Security boundary.** Admin access is enforced in three independent places — server actions (`requireAdmin()` in `app/actions.ts`), Postgres RLS + `SECURITY DEFINER` RPCs, and the auth-session proxy (`proxy.ts`). Client-side guards are UX only.
+- **Security boundary.** Admin access is enforced in two independent places — server actions (`requireAdmin()` in `app/actions.ts`) and Postgres RLS + `SECURITY DEFINER` RPCs. The root `proxy.ts` only refreshes the auth session cookie and fails open; it is not an authorization layer. Client-side guards are UX only.
 - **Coordinates.** Seats store normalized `x`/`y` in `[0,1]`; they are already normalized in the database (and CHECK-constrained there) — do not re-run any normalization pass.
 - **Business logic lives in `lib/`** and is covered by matching tests in `tests/`.
 

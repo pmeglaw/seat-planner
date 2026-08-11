@@ -43,7 +43,7 @@ Keep this separation absolute: never let a viewer path read draft, never let an 
 
 **Thread the fence through any new draft mutation** — `tests/draft-concurrency.test.mjs` guards it. Two details there look like redundancy and are load-bearing (the per-row map instead of an aggregate; timestamps passed back verbatim, never re-parsed through `Date`); the header comment in `lib/draftConcurrency.ts` explains why before you "simplify" either.
 
-## Security boundary (three enforced layers, do not rely on any one alone)
+## Security boundary (two enforcing layers, do not rely on either alone; the third refreshes only)
 
 1. **Server actions** — all mutations live in `app/actions.ts` (`"use server"`). Every exported action calls `requireAdmin()` first, which re-checks `profiles.role === 'admin'` against the authenticated Supabase user.
 2. **Postgres RLS + SECURITY DEFINER RPCs** — the database independently enforces admin. Client-side guards are UX only.
