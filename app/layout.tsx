@@ -1,20 +1,34 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { THEME_DARK, THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
-const plexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+// The woff2 files are vendored in app/fonts (see its README for provenance).
+// next/font/google self-hosts too, but it downloads the binaries from
+// fonts.gstatic.com at BUILD time — so a CDN hiccup failed CI and would fail a
+// deploy. Reading them off disk removes that dependency. Output is otherwise
+// identical: same self-hosted files, same CSS variables, same swap behaviour.
+// Adding a weight here means adding its file; a weight that is declared but
+// missing falls back silently rather than erroring.
+const plexSans = localFont({
+  src: [
+    { path: "./fonts/ibm-plex-sans-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/ibm-plex-sans-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/ibm-plex-sans-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/ibm-plex-sans-latin-700-normal.woff2", weight: "700", style: "normal" }
+  ],
   variable: "--font-sans",
   display: "swap"
 });
 
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  // 600 exists for Reception's extension readout (46px/600 mono).
-  weight: ["400", "500", "600"],
+const plexMono = localFont({
+  src: [
+    { path: "./fonts/ibm-plex-mono-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/ibm-plex-mono-latin-500-normal.woff2", weight: "500", style: "normal" },
+    // 600 exists for Reception's extension readout (46px/600 mono).
+    { path: "./fonts/ibm-plex-mono-latin-600-normal.woff2", weight: "600", style: "normal" }
+  ],
   variable: "--font-mono",
   display: "swap"
 });
