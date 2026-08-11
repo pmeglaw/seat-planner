@@ -17,7 +17,7 @@ The **full SeatMap** is instead exercised in a **real browser** by a separate Pl
 
 ## End-to-end smoke suite — `npm run test:e2e`
 
-A separate **end-to-end tier** lives in `tests/e2e/` (Playwright, config in `playwright.config.ts`). It is a **backend-free smoke suite**: it builds the app, boots it with only *dummy* Supabase env, and asserts the app starts, `/login` renders the sign-in form, and unauthenticated `/` and `/admin` end at `/login` (the redirect streams from the page guards — since #333 the middleware never redirects, it only refreshes cookies on its allowlisted routes). Authenticated flows live in the e2e-auth tier below, which runs in CI.
+A separate **end-to-end tier** lives in `tests/e2e/` (Playwright, config in `playwright.config.ts`). It is a **backend-free smoke suite**: it builds the app, boots it with only *dummy* Supabase env, and asserts the app starts, `/login` renders the sign-in form, and unauthenticated `/` and `/admin` end at `/login` (the redirect streams from the page guards — since #333 the root proxy never redirects, it only refreshes cookies on its allowlisted routes). Authenticated flows live in the e2e-auth tier below, which runs in CI.
 
 ## Authenticated e2e tier — `npm run test:e2e:auth`
 

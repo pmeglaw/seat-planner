@@ -3,7 +3,8 @@ import { test, expect } from "@playwright/test";
 // These run against the built app with only dummy Supabase env (see
 // playwright.config.ts). With no session, both protected routes must redirect
 // to /login, and /login must render the sign-in form. This catches build
-// breakage, boot-time crashes, and broken auth-redirect middleware.
+// breakage, boot-time crashes, and broken auth-redirect wiring (the page
+// guards redirect; the root `proxy.ts` only refreshes the session cookie).
 
 test.describe("smoke: routes boot and auth guards redirect", () => {
   test("login page renders the sign-in form", async ({ page }) => {

@@ -74,8 +74,14 @@ test("every signed-in surface mounts an identity + sign-out affordance", async (
   assert.match(viewer, /<AccountMenu/);
 });
 
-test("the middleware matcher covers every auth-bearing route", async () => {
-  const source = await readSource("../middleware.ts");
+test("the proxy matcher covers every auth-bearing route", async () => {
+  const source = await readSource("../proxy.ts");
+
+  // Next 16 renamed the root `middleware.ts` convention to `proxy.ts`; the
+  // export is `proxy` and the old name only survives as a deprecation
+  // warning, so pin both or a half-done rename boots with no session layer
+  // at all (the file would simply never run).
+  assert.match(source, /export async function proxy\(/);
 
   // The matcher is an explicit allowlist now (nav-lag fix): dropping a route
   // from it silently stops session-cookie refresh there — sessions would
@@ -84,7 +90,7 @@ test("the middleware matcher covers every auth-bearing route", async () => {
   // NOT matched — the deploy-skew probe is unauthenticated and data-free.)
   const matcherArray = source.match(/matcher: \[([^\]]*)\]/)?.[1] ?? "";
   for (const route of ['"/"', '"/admin/:path*"', '"/reception"', '"/login"', '"/auth/:path*"']) {
-    assert.ok(matcherArray.includes(route), `middleware matcher must include ${route}`);
+    assert.ok(matcherArray.includes(route), `proxy matcher must include ${route}`);
   }
   // The deploy-skew probe stays out: auth work on /api/build-id was pure
   // latency on a data-free, unauthenticated endpoint.
