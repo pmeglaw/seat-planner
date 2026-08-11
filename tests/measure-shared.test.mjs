@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -157,4 +158,36 @@ test("numericFlag accepts valid values", () => {
   assert.equal(numericFlag(["--runs", "7"], "--runs", { fallback: 5, min: 1, integer: true }), 7);
   assert.equal(numericFlag(["--cpu", "4"], "--cpu", { fallback: 1, min: 1 }), 4);
   assert.equal(numericFlag(["--cpu", "1.5"], "--cpu", { fallback: 1, min: 1 }), 1.5);
+});
+
+test("the pan gesture can zoom across the whole zoom range before giving up", () => {
+  // The pan gesture zooms in until the viewport overflows, and its loop is
+  // bounded rather than unbounded on purpose: the admin control only computes
+  // zoomInDisabled in detail mode, so `while (enabled)` would hang in overview
+  // instead of failing with a readable message. The bound therefore has to stay
+  // at least as large as the zoom range, or a map needing the far end of the
+  // range fails with "no scroll room to pan into" when more clicks would have
+  // worked. This pins the two together, since the script cannot import the TS
+  // constants and a stale literal is silent.
+  const viewport = readFileSync(new URL("../lib/mapViewport.ts", import.meta.url), "utf8");
+  const constant = name => {
+    const match = viewport.match(new RegExp(`export const ${name} = ([\\d.]+);`));
+    assert.ok(match, `${name} not found in lib/mapViewport.ts`);
+    return Number(match[1]);
+  };
+  // +1: the viewer's first click leaves fit mode by setting zoom to 1 rather
+  // than stepping, so a full traverse costs one extra click.
+  const clicksToTraverseRange =
+    Math.round((constant("MAP_ZOOM_MAX") - constant("MAP_ZOOM_MIN")) / constant("MAP_ZOOM_STEP")) + 1;
+
+  const script = readFileSync(
+    new URL("../.claude/skills/web-app-performance/scripts/measure-interaction.mjs", import.meta.url),
+    "utf8"
+  );
+  const bound = script.match(/for \(let attempt = 0; attempt < (\d+); attempt\+\+\) \{\s*\n\s*if \(await page\.evaluate\(hasScrollRoom\)\)/);
+  assert.ok(bound, "the pan gesture's zoom-in loop was not found — did it change shape?");
+  assert.ok(
+    Number(bound[1]) >= clicksToTraverseRange,
+    `the zoom-in loop stops after ${bound[1]} clicks but the zoom range needs ${clicksToTraverseRange}`
+  );
 });

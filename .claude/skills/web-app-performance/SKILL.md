@@ -133,9 +133,19 @@ node .claude/skills/web-app-performance/scripts/measure-interaction.mjs \
   --route /admin --interaction hover --cpu 4
 ```
 
-Interactions are `hover` (pointer across markers — memoization pressure), `pan`
-(the scroll-through-ref path), `zoom` (re-runs the crowding pipeline), and `type`
-(`--selector`, `--text`; filter/search re-render cost).
+Interactions are `hover` (pointer across markers), `pan` (the scroll-through-ref
+path), `zoom` (re-runs the crowding pipeline), and `type` (`--selector`,
+`--text`; filter/search re-render cost).
+
+Two of them carry preconditions the script now enforces rather than silently
+skipping. **`pan` starts from empty canvas and zooms in first**: both map
+surfaces refuse to begin a drag that lands on a marker or any other interactive
+target (`isPanBlockedTarget`), and a map at default zoom is fitted to its
+viewport with nowhere to scroll — so it verifies the map actually moved and
+fails loudly if it didn't. **`hover` on the viewer is a style-and-paint
+measurement, not a memoization one**: `SeatMarker` hover is pure CSS
+(`group-hover:`), so no React state changes as the pointer crosses markers. The
+memoization question lives on `/admin`.
 
 Read the result by shape, not by any single number. In particular **the median is
 close to useless on its own** — it sits at 16.7 ms even in badly janky runs,
