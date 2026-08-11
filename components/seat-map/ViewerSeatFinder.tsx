@@ -34,6 +34,7 @@ import { AccountMenu } from "@/components/ui/AccountMenu";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
+import { MapWashLayer } from "@/components/seat-map/MapWashLayer";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
@@ -1262,45 +1263,11 @@ export function ViewerSeatFinder({
                     draggable={false}
                   />
 
-                  {/* Room washes between the floor-plan image and the marker
-                      layer — decorative occupancy reinforcement; the plate
-                      carries the fact in text (WCAG 1.4.1 via redundancy). */}
-                  {/* Zone wash frames an area, so it renders under the room
-                      washes and the markers alike — inert to pointers (panning
-                      must cross it) and absent from the accessibility tree
-                      (the chip states the zone and count in text). */}
-                  {zoneWash && (
-                    <div
-                      aria-hidden="true"
-                      data-zone-wash={zoneWash.zone}
-                      className="pointer-events-none absolute z-[5] border-[1.5px] border-[rgba(210,63,10,0.55)] bg-[rgba(255,87,21,0.09)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)]"
-                      style={{
-                        left: `${zoneWash.xMin * 100}%`,
-                        top: `${zoneWash.yMin * 100}%`,
-                        width: `${(zoneWash.xMax - zoneWash.xMin) * 100}%`,
-                        height: `${(zoneWash.yMax - zoneWash.yMin) * 100}%`
-                      }}
-                    >
-                      <span className="absolute -top-[11px] left-2.5 whitespace-nowrap rounded-full bg-[var(--admin-primary-cta)] px-2 py-0.5 text-[10px] font-bold tracking-[0.04em] text-white">
-                        {zoneWash.zone} · {zoneWash.seatCount} seats
-                      </span>
-                    </div>
-                  )}
-
-                  {officeRoomWashes.map(wash => (
-                    <div
-                      key={wash.key}
-                      aria-hidden="true"
-                      data-office-wash={wash.key}
-                      className="pointer-events-none absolute rounded-lg bg-[#1D6E41]/[0.10] shadow-[inset_0_0_0_1.5px_rgba(29,110,65,0.22)]"
-                      style={{
-                        left: `${wash.rect.xMin * 100}%`,
-                        top: `${wash.rect.yMin * 100}%`,
-                        width: `${(wash.rect.xMax - wash.rect.xMin) * 100}%`,
-                        height: `${(wash.rect.yMax - wash.rect.yMin) * 100}%`
-                      }}
-                    />
-                  ))}
+                  {/* Zone + room washes, between the floor-plan image and the
+                      marker layer. One implementation shared with the admin
+                      surface (MapWashLayer) — it documents the decorative /
+                      pointer-inert contract both surfaces rely on. */}
+                  <MapWashLayer zoneWash={zoneWash} officeRoomWashes={officeRoomWashes} />
 
                   <div
                     className="absolute inset-0"

@@ -165,11 +165,29 @@ not re-audit from zero.
 - **D-02 14 hand-rolled dialogs** (+2 since prior audit) sharing only
   `useDialogFocus` — a `ConfirmDialog` primitive with a required in-dialog
   `role="alert"` error slot would make plan-002's fix structural. M-L.
-- **D-03 wash-layer JSX drift** — ~30 identical lines in `SeatMap.tsx:3387-3417`
-  vs `ViewerSeatFinder.tsx:1272-1303`, EXCEPT #323 tokenized only the admin
-  copy: viewer still ships raw `#1D6E41` (`:1295`) where admin uses
-  `var(--admin-zone-wash-fill)` (`:3410`). Extract `MapWashLayer`, fix the hex
-  in the same change. S. **Already-drifted — cheapest high-value debt item.**
+- **D-03 wash-layer JSX drift** — **DONE (2026-08-10).** Extracted
+  `components/seat-map/MapWashLayer.tsx` (zone wash + room washes) and both
+  surfaces now mount it; the viewer's raw `#1D6E41` became
+  `var(--admin-zone-wash-fill)` in the same change.
+  *Corrections to the recorded entry:* the SeatMap line range was stale — the
+  block sat at **3315-3356**, not 3387-3417 (viewer 1265-1303 was right, hex at
+  `:1295`). And the fix is **pixel-neutral, not a visual repair**:
+  `--admin-zone-wash-fill` is `color-mix(in srgb, #1D6E41 10%, transparent)` =
+  `rgba(29,110,65,0.10)` — byte-for-byte the value the raw class produced
+  (confirmed live: computed `color(srgb 0.113725 0.431373 0.254902 / 0.1)`).
+  The token was also already in scope for the viewer: it is declared for
+  `.admin-theme, .shell-theme` (`globals.css:517`) and `ViewerSeatFinder:982`
+  carries `shell-theme`. So the value of the item was the de-duplication and
+  the removal of a future drift vector, not a wrong colour on screen.
+  *Test debt paid with it:* the two source pins that regex'd this JSX in BOTH
+  component files (`office-room-wash.test.mjs`, `zone-wash.test.mjs`) now assert
+  the mount + prop wiring per surface and the a11y/pointer-inert/tokenized-fill
+  anchors once, in `MapWashLayer.tsx`. Any future wash extraction has to move
+  those anchors, not delete them.
+  *Not touched (deliberate):* the inset ring `rgba(29,110,65,0.22)` is still a
+  raw value, but it was **identical on both copies** — never drifted — so
+  tokenizing it is a design decision, not debt cleanup. Left for whoever owns
+  the next token pass.
 - **D-04 results-list aria-label coupling** — focus handoff reaches into lists
   by hardcoded string in two places each (`SeatMap.tsx:899`,
   `ViewerSeatFinder.tsx:521,1098`); renaming an accessible name silently
