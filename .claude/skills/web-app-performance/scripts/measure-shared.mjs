@@ -56,11 +56,41 @@ export function samePath(a, b) {
   return strip(a) === strip(b);
 }
 
-/** Nearest-rank percentile. Returns 0 for an empty set rather than NaN. */
+/**
+ * Did the browser end up on the page we asked for — same origin AND same path?
+ *
+ * Path alone is not enough. An auth or SSO redirect can land on a different
+ * host at the same pathname, and comparing only the path would happily report
+ * a foreign page's numbers under this app's route name.
+ *
+ * Returns false rather than throwing on an unparseable URL, so a caller that
+ * cannot tell where it is refuses to publish a measurement.
+ */
+export function isExpectedTarget(currentUrl, baseUrl, route) {
+  try {
+    const current = new URL(currentUrl);
+    return current.origin === new URL(baseUrl).origin && samePath(current.pathname, route);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Nearest-rank percentile: the value at one-based rank ceil(p/100 × n).
+ *
+ * Flooring a zero-based index instead is the tempting shortcut and it is a
+ * different statistic — for ten samples at p50 it returns the 6th value where
+ * nearest rank returns the 5th, biasing every reported median upward on even
+ * run counts. Odd counts (the defaults) agree, which is exactly why the
+ * discrepancy would have gone unnoticed.
+ *
+ * Returns 0 for an empty set rather than NaN.
+ */
 export function percentile(values, p) {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
-  return sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))];
+  const rank = Math.ceil((p / 100) * sorted.length);
+  return sorted[Math.min(sorted.length - 1, Math.max(0, rank - 1))];
 }
 
 /**

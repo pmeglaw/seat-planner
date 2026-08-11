@@ -32,7 +32,7 @@ import { chromium } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { numericFlag, percentile, samePath } from "./measure-shared.mjs";
+import { isExpectedTarget, numericFlag, percentile } from "./measure-shared.mjs";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 
@@ -153,13 +153,14 @@ for (const route of ROUTES) {
     await page.waitForTimeout(500);
 
     // Any redirect means the numbers below describe a different page than the
-    // one being reported, so refuse rather than mislabel. Trailing-slash
-    // normalisation is the one benign case and samePath absorbs it.
+    // one being reported, so refuse rather than mislabel. Origin is checked as
+    // well as path — an auth redirect can land on another host at the same
+    // pathname. Trailing-slash normalisation is the one benign case.
     const landed = new URL(page.url()).pathname;
-    if (!samePath(landed, route)) {
+    if (!isExpectedTarget(page.url(), BASE, route)) {
       const isLoginRedirect = landed.startsWith("/login") && route !== "/login";
       console.error(
-        `${route} redirected to ${landed}, so this would report ${landed}'s numbers as ${route}.\n` +
+        `${route} redirected to ${page.url()}, so this would report that page's numbers as ${route}.\n` +
           (isLoginRedirect
             ? LOGIN
               ? "The sign-in succeeded but the session was rejected on this route — check the account's role."

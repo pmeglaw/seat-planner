@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   FRAME_BUDGET_MS,
+  isExpectedTarget,
   missedFrames,
   numericFlag,
   percentile,
@@ -76,10 +77,41 @@ test("percentile returns 0 for an empty set rather than NaN", () => {
 });
 
 test("percentile picks by nearest rank", () => {
+  // Nearest rank is the value at one-based ceil(p/100 × n). Flooring a
+  // zero-based index instead returns the 6th value here and biases every
+  // reported median upward on even run counts.
   const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  assert.equal(percentile(values, 50), 6);
+  assert.equal(percentile(values, 50), 5);
   assert.equal(percentile(values, 95), 10);
   assert.equal(percentile([42], 95), 42);
+  assert.equal(percentile([1, 2, 3, 4], 50), 2);
+  // Odd counts — the script defaults — are the true middle either way, which
+  // is why the even-count discrepancy stayed invisible.
+  assert.equal(percentile([1, 2, 3], 50), 2);
+  assert.equal(percentile([1, 2, 3, 4, 5], 50), 3);
+});
+
+test("isExpectedTarget accepts only the same origin AND path", () => {
+  const base = "http://localhost:3000";
+  assert.ok(isExpectedTarget("http://localhost:3000/admin", base, "/admin"));
+  assert.ok(isExpectedTarget("http://localhost:3000/admin/", base, "/admin"));
+  // Query strings and hashes don't change which page was measured.
+  assert.ok(isExpectedTarget("http://localhost:3000/admin?x=1#y", base, "/admin"));
+});
+
+test("isExpectedTarget rejects a cross-origin landing on the same path", () => {
+  // The mislabelling this closes: an auth/SSO redirect to another host at the
+  // same pathname would otherwise be reported as this app's /admin.
+  const base = "http://localhost:3000";
+  assert.ok(!isExpectedTarget("https://evil.example.com/admin", base, "/admin"));
+  assert.ok(!isExpectedTarget("http://localhost:3001/admin", base, "/admin"));
+  assert.ok(!isExpectedTarget("https://localhost:3000/admin", base, "/admin"), "scheme is part of origin");
+  assert.ok(!isExpectedTarget("http://localhost:3000/login", base, "/admin"));
+});
+
+test("isExpectedTarget refuses rather than throws on an unparseable URL", () => {
+  assert.equal(isExpectedTarget("not a url", "http://localhost:3000", "/"), false);
+  assert.equal(isExpectedTarget("http://localhost:3000/", "not a url", "/"), false);
 });
 
 test("numericFlag returns the fallback when the flag is absent", () => {

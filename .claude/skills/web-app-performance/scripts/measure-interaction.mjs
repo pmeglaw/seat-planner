@@ -33,10 +33,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   FRAME_BUDGET_MS,
+  isExpectedTarget,
   missedFrames,
   numericFlag,
   percentile,
-  samePath,
   stutterIntervals
 } from "./measure-shared.mjs";
 
@@ -221,9 +221,9 @@ for (let run = 0; run < RUNS; run++) {
   await page.waitForTimeout(500);
 
   const landed = new URL(page.url()).pathname;
-  if (!samePath(landed, ROUTE)) {
+  if (!isExpectedTarget(page.url(), BASE, ROUTE)) {
     console.error(
-      `${ROUTE} redirected to ${landed}, so this would report ${landed}'s numbers as ${ROUTE}.` +
+      `${ROUTE} redirected to ${page.url()}, so this would report that page's numbers as ${ROUTE}.` +
         (landed.startsWith("/login") && ROUTE !== "/login"
           ? LOGIN
             ? "\nThe sign-in succeeded but the session was rejected on this route — check the account's role."
