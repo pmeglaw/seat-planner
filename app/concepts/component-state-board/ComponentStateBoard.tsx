@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { Inter, Manrope } from "next/font/google";
+import localFont from "next/font/local";
 import {
   Button as DesignSystemButton,
   IconButton,
@@ -27,14 +27,28 @@ import {
   type SearchState
 } from "./componentStateBoardData";
 
-const inter = Inter({
-  subsets: ["latin"],
+// Vendored beside this prototype rather than fetched from Google at build time
+// (see ./fonts/README.md). A prototype page is still compiled on every build, so
+// a next/font/google import here would keep the whole build depending on a live
+// fonts.gstatic.com fetch — the dependency app/layout.tsx was pinned to remove.
+// Both are variable fonts, so one file covers the weight range this board uses
+// — but ONLY if the range is declared. Without `weight`, next/font/local emits
+// an @font-face with no font-weight descriptor, which CSS treats as 400: the
+// wght axis is never exercised and every font-semibold/bold/extrabold here
+// renders as synthetic bold over the 400 instance. The ranges below are the
+// axes the two files actually carry.
+const inter = localFont({
+  src: "./fonts/inter-latin-wght-normal.woff2",
+  weight: "100 900",
+  style: "normal",
   variable: "--font-component-board-ui",
   display: "swap"
 });
 
-const manrope = Manrope({
-  subsets: ["latin"],
+const manrope = localFont({
+  src: "./fonts/manrope-latin-wght-normal.woff2",
+  weight: "200 800",
+  style: "normal",
   variable: "--font-component-board-display",
   display: "swap"
 });
