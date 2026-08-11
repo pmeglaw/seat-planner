@@ -50,6 +50,14 @@ test("GoTrue's password minimum matches the one the form enforces", () => {
 });
 
 test("the password form enforces the shared constant, not its own number", () => {
+  // The name alone proves nothing: a file-local `const MIN_PASSWORD_LENGTH = 8`
+  // satisfies every assertion below while drifting from supabase/config.toml,
+  // which is the exact failure this file exists to catch. Pin where it comes from.
+  assert.match(
+    updatePasswordForm,
+    /import\s*\{[^}]*\bMIN_PASSWORD_LENGTH\b[^}]*\}\s*from\s*["']@\/lib\/authMessages["']/,
+    "the form should import MIN_PASSWORD_LENGTH from lib/authMessages"
+  );
   assert.match(updatePasswordForm, /MIN_PASSWORD_LENGTH/, "the form should use the shared constant");
   assert.match(
     updatePasswordForm,
