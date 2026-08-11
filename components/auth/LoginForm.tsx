@@ -51,6 +51,15 @@ function writeRememberedEmail(email: string | null) {
 // can never become an account oracle.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+type PendingAction = "password" | "link" | "reset" | null;
+
+// Any auth call can REJECT rather than resolve with an error: createClient()
+// throws on missing env, and fetch rejects outright on a network failure —
+// which the run-seat-planner skill has seen in the wild ("Failed to fetch" from
+// signInWithPassword). Every handler therefore clears its pending flag in a
+// finally, or the control it disabled stays dead for the rest of the session.
+const UNREACHABLE_MESSAGE = "Could not reach the sign-in service. Check your connection and try again.";
+
 type Notice = {
   text: string;
   tone: "error" | "success";
@@ -68,8 +77,10 @@ export function LoginForm() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [nextPath, setNextPath] = useState("/");
-  const [busy, setBusy] = useState(false);
-  const [resetBusy, setResetBusy] = useState(false);
+  // WHICH action is in flight, not merely that one is. A single boolean made
+  // the primary announce "Logging in…" while the user was waiting on a magic
+  // link, because both handlers shared the flag.
+  const [pending, setPending] = useState<PendingAction>(null);
   // False through SSR and the first client render, true once effects run — the
   // only reliable "React is listening now" signal. Drives the submit button's
   // pre-hydration state; see the note above handleSubmit.
@@ -156,31 +167,42 @@ export function LoginForm() {
     }
 
     setPasswordError(null);
-    setBusy(true);
+    setPending("password");
     setNotice(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password
-    });
+    // Stays true past the redirect so the primary is not re-enabled underneath
+    // a document load that has already been handed to the browser.
+    let redirecting = false;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password
+      });
 
-    setBusy(false);
+      if (error) {
+        // Password cleared, and the notification carries the magic link as its
+        // action. Focus goes to the password field rather than the email the
+        // pattern's single-step drawing names: on step 2 the email is a summary
+        // row, not a field, and the cleared password is what needs retyping —
+        // the way back to the email stays one tab away on Edit.
+        setNotice({ text: friendlyAuthMessage(error.message), tone: "error", offerMagicLink: true });
+        setPassword("");
+        passwordInputRef.current?.focus();
+        return;
+      }
 
-    if (error) {
-      // Password cleared, and the notification carries the magic link as its
-      // action. Focus goes to the password field rather than the email the
-      // pattern's single-step drawing names: on step 2 the email is a summary
-      // row, not a field, and the cleared password is what needs retyping —
-      // the way back to the email stays one tab away on Edit.
-      setNotice({ text: friendlyAuthMessage(error.message), tone: "error", offerMagicLink: true });
-      setPassword("");
-      passwordInputRef.current?.focus();
-      return;
+      redirecting = true;
+      setNotice({ text: "Signed in. Redirecting…", tone: "success" });
+      redirectAfterLogin();
+    } catch {
+      // Not friendlyAuthMessage: a rejection carries a transport message
+      // ("Failed to fetch"), not an auth one, and echoing it says nothing a
+      // user can act on.
+      setNotice({ text: UNREACHABLE_MESSAGE, tone: "error", offerMagicLink: true });
+    } finally {
+      if (!redirecting) setPending(null);
     }
-
-    setNotice({ text: "Signed in. Redirecting…", tone: "success" });
-    redirectAfterLogin();
   }
 
   // The alternative login, never a mode: one click sends the link instead of
@@ -194,31 +216,35 @@ export function LoginForm() {
       return;
     }
 
-    setBusy(true);
+    setPending("link");
     setNotice(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email: trimmed,
-      options: {
-        // Never mint a new auth user from the login page — magic links are for
-        // existing accounts only. Admins provision accounts.
-        shouldCreateUser: false,
-        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(nextPath)}`
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: trimmed,
+        options: {
+          // Never mint a new auth user from the login page — magic links are for
+          // existing accounts only. Admins provision accounts.
+          shouldCreateUser: false,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(nextPath)}`
+        }
+      });
+
+      if (error) {
+        setNotice({ text: friendlyAuthMessage(error.message), tone: "error" });
+        return;
       }
-    });
 
-    setBusy(false);
-
-    if (error) {
-      setNotice({ text: friendlyAuthMessage(error.message), tone: "error" });
-      return;
+      setNotice({
+        text: "Check your email for the sign-in link. Use the newest email if you requested more than one link.",
+        tone: "success"
+      });
+    } catch {
+      setNotice({ text: UNREACHABLE_MESSAGE, tone: "error" });
+    } finally {
+      setPending(null);
     }
-
-    setNotice({
-      text: "Check your email for the sign-in link. Use the newest email if you requested more than one link.",
-      tone: "success"
-    });
   }
 
   async function sendPasswordReset() {
@@ -228,22 +254,26 @@ export function LoginForm() {
       return;
     }
 
-    setResetBusy(true);
+    setPending("reset");
     setNotice(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
-      redirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent("/auth/update-password")}`
-    });
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+        redirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent("/auth/update-password")}`
+      });
 
-    setResetBusy(false);
+      if (error) {
+        setNotice({ text: friendlyAuthMessage(error.message), tone: "error" });
+        return;
+      }
 
-    if (error) {
-      setNotice({ text: friendlyAuthMessage(error.message), tone: "error" });
-      return;
+      setNotice({ text: "Password reset email sent. Open the newest email to set a new password.", tone: "success" });
+    } catch {
+      setNotice({ text: UNREACHABLE_MESSAGE, tone: "error" });
+    } finally {
+      setPending(null);
     }
-
-    setNotice({ text: "Password reset email sent. Open the newest email to set a new password.", tone: "success" });
   }
 
   function editEmail() {
@@ -264,7 +294,7 @@ export function LoginForm() {
   // the disabled state from being the silently dead button above — it says why.
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
+    if (pending) return;
     if (step === "email") continueToPassword();
     else void signInWithPassword();
   }
@@ -296,7 +326,7 @@ export function LoginForm() {
   const fieldLabelClass = "text-[12px] font-normal leading-[1.3] text-[var(--admin-text-muted)]";
   // outline-none is safe only because the shell above draws the focus rule.
   const fieldInputClass =
-    "w-full border-0 bg-transparent p-0 text-[15px] font-normal leading-[1.4] text-[var(--admin-text-primary)] outline-none placeholder:text-[var(--admin-status-neutral)]";
+    "w-full border-0 bg-transparent p-0 text-[15px] font-normal leading-[1.4] text-[var(--admin-text-primary)] outline-none placeholder:text-[var(--admin-text-muted)]";
   const fieldErrorClass = "mt-1.5 text-[12px] leading-[1.4] text-[var(--admin-error)]";
   const inlineLinkClass = cx(
     "text-[12.5px] font-medium text-[var(--admin-primary-cta-active)] underline underline-offset-2",
@@ -352,7 +382,7 @@ export function LoginForm() {
                 <button
                   type="button"
                   onClick={sendMagicLink}
-                  disabled={busy}
+                  disabled={pending !== null}
                   className={cx(inlineLinkClass, "mt-1.5 font-semibold")}
                 >
                   Email me a sign-in link instead
@@ -439,7 +469,7 @@ export function LoginForm() {
                 engine binds to the smallest element containing the text, so the
                 span captured it and every authenticated e2e test lost its
                 sign-in step (tests/e2e-auth/auth-helpers.ts). */}
-            <button type="submit" disabled={busy || !hydrated} className={primaryButtonClass}>
+            <button type="submit" disabled={pending !== null || !hydrated} className={primaryButtonClass}>
               {!hydrated ? "Starting up…" : "Continue"}
               {hydrated && (
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
@@ -458,7 +488,7 @@ export function LoginForm() {
                 <path d="m3.5 5.8 6.5 5 6.5-5" />
               </svg>
               <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--admin-text-primary)]">{email.trim()}</span>
-              <button type="button" onClick={editEmail} disabled={busy} className={cx(inlineLinkClass, "shrink-0 text-[12px]")}>
+              <button type="button" onClick={editEmail} disabled={pending !== null} className={cx(inlineLinkClass, "shrink-0 text-[12px]")}>
                 Edit
               </button>
             </div>
@@ -501,14 +531,14 @@ export function LoginForm() {
             {/* Reset belongs to the password field, so it sits with it rather
                 than competing with the buttons below. */}
             <div className="mt-2 flex justify-end">
-              <button type="button" onClick={sendPasswordReset} disabled={resetBusy || busy} className={inlineLinkClass}>
-                {resetBusy ? "Sending reset email…" : "Forgot password?"}
+              <button type="button" onClick={sendPasswordReset} disabled={pending !== null} className={inlineLinkClass}>
+                {pending === "reset" ? "Sending reset email…" : "Forgot password?"}
               </button>
             </div>
 
-            <button type="submit" disabled={busy || !hydrated} className={primaryButtonClass}>
-              {!hydrated ? "Starting up…" : busy ? "Logging in…" : "Log in"}
-              {hydrated && !busy && (
+            <button type="submit" disabled={pending !== null || !hydrated} className={primaryButtonClass}>
+              {!hydrated ? "Starting up…" : pending === "password" ? "Logging in…" : "Log in"}
+              {hydrated && pending !== "password" && (
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
                   <path d="M4 10h11m0 0-4-4m4 4-4 4" />
                 </svg>
@@ -516,16 +546,22 @@ export function LoginForm() {
             </button>
 
             {/* The alternative login sits BELOW the primary behind a divider —
-                never between the field and its primary button. */}
+                never between the field and its primary button.
+
+                The "or" label and the field placeholders take --admin-text-muted
+                (#6E655A, 5.7:1 on white / 5.2:1 on the field fill) rather than
+                the mock's #8E8276, which measures 3.75:1 and fails AA at 11px.
+                tests/e2e/accessibility.spec.ts catches this — it is what the
+                step-2 axe scan was added to see. */}
             <div className="mt-5 flex items-center gap-3">
               <span className="h-px flex-1 bg-[var(--admin-border)]" />
-              <span className="text-[11px] text-[var(--admin-status-neutral)]">or</span>
+              <span className="text-[11px] text-[var(--admin-text-muted)]">or</span>
               <span className="h-px flex-1 bg-[var(--admin-border)]" />
             </div>
             <button
               type="button"
               onClick={sendMagicLink}
-              disabled={busy}
+              disabled={pending !== null}
               className={cx(
                 "mt-5 flex min-h-12 w-full items-center px-[18px] text-[15px] font-medium leading-none",
                 "border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)]",

@@ -33,8 +33,15 @@ Not built, and still open questions for the owner:
 - The viewer Find palette (`1a–1f`) and the light-chrome token set.
 - `Viewer v12 Handoff.md` open questions 1–4 are untouched by this branch.
 
-Two deviations from the drawings, both deliberate and commented at the call site
+Three deviations from the drawings, all deliberate and commented at the call site
 in `LoginForm.tsx`:
+
+0. **The "or" divider label and the field placeholders do not use the mock's
+   `#8E8276`** — it measures 3.75:1 on white and fails AA at 11px. They take
+   `--admin-text-muted` (#6E655A, 5.7:1 on white / 5.2:1 on the field fill)
+   instead. Same call `app/concepts/login-v12` made about its footer line. The
+   step-2 axe scan in `tests/e2e/accessibility.spec.ts` is what caught it.
+
 
 1. **Focus after a failed password goes to the password field**, not the email.
    2c was drawn single-step; on 2b the email is a summary row, not a field.

@@ -26,21 +26,31 @@ afterEach(() => cleanup());
 const REMEMBERED_EMAIL_KEY = "seat-planner:login-email";
 
 // Build a Supabase auth double that records calls and returns the given results.
+//
+// A configured Error REJECTS instead of resolving. Auth calls really do reject
+// — createClient() throws on missing env and fetch rejects on a network drop —
+// and a double that only ever resolves cannot see a handler that leaves its
+// control disabled forever on that path.
+function settle(result) {
+  if (result instanceof Error) return Promise.reject(result);
+  return Promise.resolve(result ?? { error: null });
+}
+
 function makeSupabase(results = {}) {
   const calls = { password: [], otp: [], reset: [] };
   const supabase = {
     auth: {
-      signInWithPassword: async arg => {
+      signInWithPassword: arg => {
         calls.password.push(arg);
-        return results.password ?? { error: null };
+        return settle(results.password);
       },
-      signInWithOtp: async arg => {
+      signInWithOtp: arg => {
         calls.otp.push(arg);
-        return results.otp ?? { error: null };
+        return settle(results.otp);
       },
-      resetPasswordForEmail: async (email, options) => {
+      resetPasswordForEmail: (email, options) => {
         calls.reset.push({ email, options });
-        return results.reset ?? { error: null };
+        return settle(results.reset);
       }
     }
   };
@@ -277,6 +287,69 @@ test("a failed password attempt clears the password and offers the magic link in
   assert.equal(calls.otp.length, 1, "the notification action sends the link");
   assert.equal(calls.otp[0].email, "person@example.com", "with the email already entered");
   assert.equal(calls.otp[0].options.shouldCreateUser, false);
+});
+
+// A rejection skips every statement after the await. Without a finally the
+// pending flag stayed set, so the primary sat disabled reading "Logging in…"
+// for the rest of the session with no way to retry — the exact symptom the
+// run-seat-planner skill records as "button stuck on Signing in…".
+test("a rejected sign-in explains itself and leaves the primary usable", async () => {
+  const { assigned } = await mountLogin({ results: { password: new Error("Failed to fetch") } });
+  await advanceToPassword("person@example.com");
+  await type('input[type="password"]', "hunter2");
+  await submit();
+  await flush();
+
+  const alert = screen.getByRole("alert");
+  assert.match(alert.textContent, /Could not reach the sign-in service/);
+  // The transport message is not auth guidance and must not be echoed as if it were.
+  assert.doesNotMatch(alert.textContent, /Failed to fetch/);
+  assert.equal(screen.getByRole("button", { name: "Log in" }).disabled, false, "the primary recovers");
+  assert.deepEqual(assigned, []);
+  // Recovery is still offered where the failure happened.
+  assert.ok(alert.querySelector("button"), "the magic-link action survives a rejection");
+});
+
+test("a rejected magic-link send leaves its button usable", async () => {
+  await mountLogin({ results: { otp: new Error("Failed to fetch") } });
+  await advanceToPassword("person@example.com");
+  await click(/sign-in link/i);
+  await flush();
+
+  assert.match(screen.getByRole("alert").textContent, /Could not reach the sign-in service/);
+  assert.equal(screen.getByRole("button", { name: /sign-in link/i }).disabled, false);
+});
+
+// One shared boolean made the primary announce "Logging in…" while the user was
+// actually waiting on a magic link. The pending flag names WHICH action is in
+// flight so no control can narrate someone else's work.
+test("sending a magic link never makes the primary claim it is logging in", async () => {
+  let releaseOtp;
+  const gate = new Promise(resolve => {
+    releaseOtp = resolve;
+  });
+  const { supabase, calls } = makeSupabase();
+  supabase.auth.signInWithOtp = arg => {
+    calls.otp.push(arg);
+    return gate.then(() => ({ error: null }));
+  };
+  setUrl("/login");
+  window.localStorage.clear();
+  configureContext({ navigation: { assign: () => {} }, supabase });
+  await renderElement(React.createElement(LoginForm));
+  await advanceToPassword("person@example.com");
+
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: /sign-in link/i })));
+  const primary = screen.getByRole("button", { name: "Log in" });
+  assert.equal(primary.textContent.trim(), "Log in", "the primary does not narrate the link send");
+  assert.equal(primary.disabled, true, "but it is held while another action is in flight");
+
+  await act(async () => {
+    releaseOtp();
+    await gate;
+  });
+  await flush();
+  assert.match(screen.getByRole("status").textContent, /Check your email/);
 });
 
 test("the step-2 magic-link button sends an OTP without creating a user", async () => {
