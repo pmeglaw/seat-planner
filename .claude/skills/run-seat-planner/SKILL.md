@@ -176,8 +176,9 @@ need no auth at all.
 - **Console noise to ignore:** a hydration-mismatch warning on the search/login
   inputs (`caret-color: transparent`, injected by a browser extension — not in
   our source); after the bad-credentials check, one `Failed to load resource:
-  400`, which *is* Supabase rejecting the wrong password; and a deprecation
-  warning about the `middleware` file convention.
+  400`, which *is* Supabase rejecting the wrong password. (The `middleware`
+  file-convention deprecation warning is gone — the root file is `proxy.ts`
+  now; if you see that warning again, a stray `middleware.ts` came back.)
 - **`npm run dev` reports failure when it succeeded.** Under
   `run_in_background` the task is flagged exit 1 while the server runs fine.
   Trust the curl poll and the log's `- Local:` line, not the task status.

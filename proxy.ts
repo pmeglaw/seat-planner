@@ -1,12 +1,18 @@
 import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
-export async function middleware(request: NextRequest) {
+// Next 16 renamed the root `middleware.ts` convention to `proxy.ts` (the old
+// name still runs, but boots with a deprecation warning). Only the file and
+// export name changed — matcher semantics, the edge-ish runtime, and the
+// request/response contract are identical, and this file's job is unchanged:
+// keep the Supabase session cookie fresh. It is still NOT a security layer;
+// server actions (`requireAdmin()`) and Postgres RLS enforce access.
+export async function proxy(request: NextRequest) {
   return updateSession(request);
 }
 
 // Explicit allowlist, not the old "everything except static assets" negative
-// lookahead: middleware exists solely to keep the Supabase session cookie
+// lookahead: this file exists solely to keep the Supabase session cookie
 // fresh for the auth-bearing surfaces, so it runs ONLY where a session can
 // matter — the signed-in pages, login, and the auth callback routes. Notable
 // exclusions, all deliberate:
