@@ -55,7 +55,9 @@ are deliberately not dependencies.
 To refresh:
 
 ```bash
-npm i -D @fontsource-variable/ibm-plex-sans @fontsource/ibm-plex-mono
+# Pinned so a re-run reproduces the files above rather than silently newer ones.
+# Bumping is fine — change the version here AND in the table, together.
+npm i -D @fontsource-variable/ibm-plex-sans@5.3.0 @fontsource/ibm-plex-mono@5.3.0
 cp node_modules/@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2 app/fonts/
 cp node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-{400,500,600}-normal.woff2 app/fonts/
 cp node_modules/@fontsource-variable/ibm-plex-sans/LICENSE app/fonts/LICENSE-sans
