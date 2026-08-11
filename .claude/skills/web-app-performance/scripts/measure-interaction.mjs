@@ -20,8 +20,8 @@
 //        --selector "input[type=email]" --text "someone@example.com" --no-login
 //
 // Interactions:
-//   hover  move the pointer across seat markers (memoization pressure)
-//   pan    drag across the map viewport (scroll-through-ref path)
+//   hover  move the pointer across seat markers (style/paint; marker hover is CSS)
+//   pan    zoom in, then drag from empty canvas (scroll-through-ref path)
 //   zoom   click Zoom in / Zoom out alternately (re-runs the crowding pipeline)
 //   type   type into --selector (filter/search input re-render cost)
 //
@@ -149,6 +149,60 @@ const RECORDER = `
   };
 `;
 
+// These three run inside the page, so they can't close over anything here —
+// each re-finds the map viewport itself. It is the nearest scrollable ancestor
+// of a seat marker, which holds on both map surfaces without depending on a
+// class name or an id the admin viewport doesn't have.
+function hasScrollRoom() {
+  let node = document.querySelector("[data-seat-id]")?.parentElement ?? null;
+  while (node && node !== document.body) {
+    const style = getComputedStyle(node);
+    if (/(auto|scroll)/.test(style.overflowX) || /(auto|scroll)/.test(style.overflowY)) {
+      return node.scrollWidth > node.clientWidth + 4 || node.scrollHeight > node.clientHeight + 4;
+    }
+    node = node.parentElement;
+  }
+  return false;
+}
+
+function scrollOffset() {
+  let node = document.querySelector("[data-seat-id]")?.parentElement ?? null;
+  while (node && node !== document.body) {
+    const style = getComputedStyle(node);
+    if (/(auto|scroll)/.test(style.overflowX) || /(auto|scroll)/.test(style.overflowY)) {
+      return { left: Math.round(node.scrollLeft), top: Math.round(node.scrollTop) };
+    }
+    node = node.parentElement;
+  }
+  return { left: 0, top: 0 };
+}
+
+/** A point inside the viewport that the surface's pan block-list won't reject. */
+function findPanAnchor() {
+  let viewport = document.querySelector("[data-seat-id]")?.parentElement ?? null;
+  while (viewport && viewport !== document.body) {
+    const style = getComputedStyle(viewport);
+    if (/(auto|scroll)/.test(style.overflowX) || /(auto|scroll)/.test(style.overflowY)) break;
+    viewport = viewport.parentElement;
+  }
+  if (!viewport || viewport === document.body) return null;
+
+  const rect = viewport.getBoundingClientRect();
+  // Start from the middle and work outward: the centre of the plan is the
+  // densest with markers, the edges are where empty canvas reliably is.
+  for (let dy = 0.5; dy > 0.1; dy -= 0.05) {
+    for (let dx = 0.5; dx > 0.1; dx -= 0.05) {
+      const x = Math.round(rect.x + rect.width * dx);
+      const y = Math.round(rect.y + rect.height * dy);
+      const element = document.elementFromPoint(x, y);
+      if (!element || !viewport.contains(element)) continue;
+      if (element.closest("button, a, input, select, textarea, [data-seat-id]")) continue;
+      return { x, y };
+    }
+  }
+  return null;
+}
+
 /** Run the named gesture. Throws a readable error when the surface isn't there. */
 async function performInteraction(page) {
   if (INTERACTION === "type") {
@@ -192,15 +246,48 @@ async function performInteraction(page) {
   }
 
   if (INTERACTION === "pan") {
-    const box = await markers.first().boundingBox();
-    if (!box) throw new Error("could not locate a marker to anchor the pan gesture");
-    await page.mouse.move(box.x, box.y);
+    // Two preconditions decide whether a drag pans anything, and getting either
+    // wrong produces a run that reports 60 fps because nothing moved:
+    //
+    // 1. The press must start on empty canvas. Both map surfaces refuse to
+    //    start a pan when the press lands on an interactive target —
+    //    `isPanBlockedTarget` in ViewerSeatFinder/SeatMap blocks
+    //    `button, a, input, select, textarea, [data-seat-id]` so marker clicks
+    //    keep working. Anchoring on a marker, as this gesture used to, is a
+    //    guaranteed no-op on both surfaces.
+    // 2. There must be somewhere to pan to. At the default zoom the plan is
+    //    fitted to the viewport and has no overflow, so we zoom in first.
+    const zoomIn = page.locator('button[aria-label="Zoom in"]');
+    for (let attempt = 0; attempt < 4; attempt++) {
+      if (await page.evaluate(hasScrollRoom)) break;
+      if ((await zoomIn.count()) === 0 || !(await zoomIn.isEnabled())) break;
+      await zoomIn.click();
+      await page.waitForTimeout(300);
+    }
+    if (!(await page.evaluate(hasScrollRoom))) {
+      throw new Error(`the map on ${ROUTE} has no scroll room to pan into, even zoomed in`);
+    }
+
+    const anchor = await page.evaluate(findPanAnchor);
+    if (!anchor) throw new Error(`found no empty canvas on ${ROUTE} to start a pan from`);
+
+    const before = await page.evaluate(scrollOffset);
+    await page.mouse.move(anchor.x, anchor.y);
     await page.mouse.down();
+    // Drag up and left: the map starts at scroll origin, so dragging the canvas
+    // the other way would hit the scroll boundary and move nothing.
     for (let step = 0; step < STEPS; step++) {
-      await page.mouse.move(box.x + step * 6, box.y + step * 3);
+      await page.mouse.move(anchor.x - step * 6, anchor.y - step * 3);
       await page.waitForTimeout(16);
     }
     await page.mouse.up();
+
+    const after = await page.evaluate(scrollOffset);
+    if (after.left === before.left && after.top === before.top) {
+      throw new Error(
+        `the pan drag on ${ROUTE} did not move the map, so this run would report an idle main thread as a smooth pan`
+      );
+    }
     return;
   }
 

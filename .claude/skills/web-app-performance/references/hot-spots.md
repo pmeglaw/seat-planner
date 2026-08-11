@@ -45,6 +45,31 @@ Cost grew sub-linearly with dataset size (851 → 1,494 ms navigation for a 22×
 dataset), so **seat count has never been the load-time problem here** — worth
 remembering before optimising for scale that isn't hurting.
 
+**Interaction**, `measure-interaction.mjs`, 2026-08-11. Production build served
+on `:3100`, viewer route `/` against the live map (68 markers), median of 3 runs,
+1440×900. Every gesture verified to actually move the surface, not just run:
+
+| Gesture | CPU | Frames | Missed | Stutters | Median | p95 | Worst |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| hover | 1× | 52 | 0 | 0 | 16.7 ms | 16.8 ms | 16.8 ms |
+| hover | 4× | 77 | 0 | 0 | 16.7 ms | 16.8 ms | 16.8 ms |
+| zoom | 1× | 127 | 0 | 0 | 16.7 ms | 16.7 ms | 16.8 ms |
+| zoom | 4× | 216 | 2 (1%) | 2 | 16.7 ms | 16.8 ms | 33.3 ms |
+| pan | 1× | 79 | 0 | 0 | 16.7 ms | 16.8 ms | 16.8 ms |
+| pan | 4× | 99 | 1 (1%) | 1 | 16.7 ms | 16.8 ms | 33.4 ms |
+
+Read this as **the viewer map is at 60 fps and there is nothing here to fix**.
+The one thing 4× throttling surfaces is a single dropped frame in zoom and pan —
+the zoom re-runs the crowding pipeline and the pan writes `scrollLeft` per
+pointer move, so those are the two gestures that do real per-frame work. Hover is
+flat under throttling because marker hover is **pure CSS** (`group-hover:` on
+`SeatMarker`); no React state changes as the pointer crosses markers, so it
+exercises style and paint, not the memoization path. Hover on `/admin` is the
+run that would test memoization, and it has not been taken.
+
+Caveat worth carrying: prod currently holds ~68 markers. These numbers say the
+gestures are cheap **at this dataset size**; they are not a scale result.
+
 ## Server time (TTFB)
 
 Every real page is `export const dynamic = "force-dynamic"` with
