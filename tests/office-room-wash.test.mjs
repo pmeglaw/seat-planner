@@ -120,11 +120,22 @@ test("both map surfaces render washes and feed the plate layout", async () => {
   const { readFile } = await import("node:fs/promises");
   for (const file of ["components/seat-map/SeatMap.tsx", "components/seat-map/ViewerSeatFinder.tsx"]) {
     const source = await readFile(new URL(`../${file}`, import.meta.url), "utf8");
-    assert.match(source, /data-office-wash/, `${file} renders the wash layer`);
+    // The wash JSX itself now lives in the shared MapWashLayer (checked
+    // below); each surface still has to compute its own washes and mount it.
+    assert.match(source, /<MapWashLayer\b/, `${file} mounts the shared wash layer`);
+    assert.match(source, /officeRoomWashes=\{officeRoomWashes\}/, `${file} feeds it the room washes`);
     assert.match(source, /buildOfficeRoomWashes\(/, `${file} computes washes`);
     assert.match(source, /getOfficePlateLayout\(/, `${file} feeds the plate layout`);
     assert.match(source, /officePlateOffsetXPx=/, `${file} passes the plate offset`);
   }
+
+  // One wash implementation for both surfaces. #323 tokenized only the admin
+  // copy of these ~30 lines and the viewer kept a raw #1D6E41 hex for months;
+  // the extraction is what makes that class of drift unrepresentable.
+  const layer = await readFile(new URL("../components/seat-map/MapWashLayer.tsx", import.meta.url), "utf8");
+  assert.match(layer, /data-office-wash/, "MapWashLayer renders the room wash");
+  assert.match(layer, /bg-\[var\(--admin-zone-wash-fill\)\]/, "room wash fill stays tokenized");
+  assert.doesNotMatch(layer, /bg-\[#/, "no raw hex fill class in the wash layer");
 });
 
 test("isInsideOfficeRoom accepts office points and rejects pod points", () => {

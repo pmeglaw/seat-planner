@@ -72,8 +72,13 @@ test("both map surfaces render the wash as an inert decorative layer", async () 
   for (const path of ["../components/seat-map/SeatMap.tsx", "../components/seat-map/ViewerSeatFinder.tsx"]) {
     const source = await readSource(path);
     assert.match(source, /buildZoneWash/, `${path} should build the zone wash from lib/zoneWash`);
-    const openingTag = source.match(/aria-hidden="true"\s*\r?\n\s*data-zone-wash[\s\S]{0,300}?className="[^"]*"/);
-    assert.ok(openingTag, `${path} should render an aria-hidden data-zone-wash overlay`);
-    assert.match(openingTag[0], /pointer-events-none/, `${path} zone wash must not intercept map pointer events`);
+    assert.match(source, /<MapWashLayer\b[\s\S]{0,200}?zoneWash=\{zoneWash\}/, `${path} should hand its zone wash to the shared layer`);
   }
+
+  // The overlay markup itself is shared by both surfaces — assert the safety
+  // anchors once, where they now live.
+  const layer = await readSource("../components/seat-map/MapWashLayer.tsx");
+  const openingTag = layer.match(/aria-hidden="true"\s*\r?\n\s*data-zone-wash[\s\S]{0,300}?className="[^"]*"/);
+  assert.ok(openingTag, "MapWashLayer should render an aria-hidden data-zone-wash overlay");
+  assert.match(openingTag[0], /pointer-events-none/, "zone wash must not intercept map pointer events");
 });
