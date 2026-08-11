@@ -80,7 +80,7 @@ Run a single test file with `node --test tests/seat-swap.test.mjs`.
 
 Two documents carry the detailed guidance; read them before non-trivial work:
 
-- **`CLAUDE.md`** — the cross-file architecture: the draft/published two-layer model, the three-layer security boundary, RPC-based transaction safety, the coordinate calibration transform, the design-token system, and the migration numbering scheme.
+- **`CLAUDE.md`** — the cross-file architecture: the draft/published two-layer model, the security boundary (two enforcing layers plus session refresh), RPC-based transaction safety, the coordinate calibration transform, the design-token system, and the migration numbering scheme.
 - **`AGENTS.md`** — folder map, coding conventions, and the "done means" checklist.
 
 Key concepts in brief:
