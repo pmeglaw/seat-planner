@@ -27,7 +27,7 @@ test("legend counts follow the active constraints instead of contradicting the m
   assert.match(viewer, /structuredFiltersActive \? publishedSeats\.filter\(seatPassesStructuredFilters\) : publishedSeats/);
 
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
-  assert.match(seatMap, /legendFiltersActive \? localSeats\.filter\(matchesFilters\) : localSeats/);
+  assert.match(seatMap, /filtersActive \? localSeats\.filter\(matchesFilters\) : localSeats/);
 });
 
 test("active filter chips sit with the trigger's corner, not across the map", async () => {

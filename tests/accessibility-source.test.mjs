@@ -554,6 +554,9 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
 
 test("admin search and filter confidence controls stay accessible and admin-scoped", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  // Filter values, derived results, and their handlers live in
+  // useSeatFilters.ts since the R-02a extraction.
+  const filtersHookSource = await readSource("../components/seat-map/useSeatFilters.ts");
   const filterSource = await readSource("../components/seat-map/FilterPanel.tsx");
   const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");
 
@@ -570,7 +573,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(resultsPanelSource, /ArrowUp/);
   assert.match(resultsPanelSource, /Show on map/);
 
-  assert.match(seatMapSource, /function removeActiveFilterChip/);
+  assert.match(filtersHookSource, /function removeActiveFilterChip/);
   assert.match(seatMapSource, /aria-label="Admin command row"/);
   assert.match(seatMapSource, /role="search" aria-label="Command search"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Map tools"/);
@@ -595,8 +598,9 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /const resultsPanelOpen = canEdit && filtersActive && \(!selectedSeat \|\| inspectorCollapsed\)/);
   // INV-1 lives once in lib/viewerSeatSearch (searchHandsPanelToResults,
   // unit-tested) and BOTH maps call it — the admin passes its dirty guard, the
-  // read-only viewer passes false (2026-07-16 critique, fix 5).
-  assert.match(seatMapSource, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), inspectorDirty\)\) \{\s*setInspectorCollapsed\(true\);/);
+  // read-only viewer passes false (2026-07-16 critique, fix 5). The admin
+  // call site is in useSeatFilters.ts since the R-02a extraction.
+  assert.match(filtersHookSource, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), inspectorDirty\)\) \{\s*setInspectorCollapsed\(true\);/);
   const viewerFinderForInv1 = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   assert.match(viewerFinderForInv1, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), false\)\) \{\s*setInspectorCollapsed\(true\);/);
   assert.doesNotMatch(seatMapSource, /mapKeyPanelOpen|desktopInspectorReserveMarginClassName|dock:/);
@@ -621,7 +625,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.doesNotMatch(seatMapSource, /singleResultSeat|autoSelectedSearchKeyRef|Auto-selected/);
   // INV-1: typing a search evicts the open inspector (unsaved edits keep the
   // guard) — rule shared via lib/viewerSeatSearch.searchHandsPanelToResults.
-  assert.match(seatMapSource, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), inspectorDirty\)\) \{/);
+  assert.match(filtersHookSource, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), inspectorDirty\)\) \{/);
   assert.match(seatMapSource, /\{resultsPanelOpen && !modeCardOpen && \(/);
   assert.match(seatMapSource, /onOpen=\{selectSeatResult\}/);
   assert.match(seatMapSource, /onShowOnMap=\{queueCenterSeatInMap\}/);
@@ -816,7 +820,10 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
 test("admin search clear controls use one clear path with distinct accessible names", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");
-  const clearSearchFunction = seatMapSource.match(/function clearSearch\(\) \{[\s\S]*?\n  \}/);
+  // The clear handlers live in useSeatFilters.ts (R-02a extraction); the
+  // JSX call sites below stay in SeatMap.
+  const filtersHookForClear = await readSource("../components/seat-map/useSeatFilters.ts");
+  const clearSearchFunction = filtersHookForClear.match(/function clearSearch\(\) \{[\s\S]*?\n  \}/);
 
   assert.ok(clearSearchFunction, "clearSearch should remain source-visible.");
   assert.match(clearSearchFunction[0], /setSearch\(""\)/);
