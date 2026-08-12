@@ -1,23 +1,11 @@
 {
   "version": 1,
   "skills": {
-    "grill-me": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "skillPath": "skills/productivity/grill-me/SKILL.md",
-      "computedHash": "7edd436132b43ea2973710f0c28a9879c9b0910651eb89a991a7e98cb6dbbacb"
-    },
     "high-end-visual-design": {
       "source": "leonxlnx/taste-skill",
       "sourceType": "github",
       "skillPath": "skills/soft-skill/SKILL.md",
       "computedHash": "f730e4132775f13eea19e3dc39afc6bb453cfc0498872b127ad8f0d47cfd802d"
-    },
-    "nextjs-react-redux-typescript-cursor-rules": {
-      "source": "mindrally/skills",
-      "sourceType": "github",
-      "skillPath": "nextjs-react-redux-typescript-cursor-rules/SKILL.md",
-      "computedHash": "21843b9a7b3ce1146e3335e5faa0c4567d9e8586eb8c576489c70b1dcd519cbf"
     },
     "playwright-best-practices": {
       "source": "currents-dev/playwright-best-practices-skill",

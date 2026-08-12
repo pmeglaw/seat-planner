@@ -8,6 +8,7 @@ import { isStaleDraftErrorCode, type DraftSeatExpectation, type EmployeeExpectat
 import { applyFixedWindow, type RateLimitWindow } from "@/lib/rateLimit";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import { answerMapOperationsQuestion } from "@/lib/mapOperationsAgent";
+import { assessPublishEnvironment } from "@/lib/publishGuard";
 import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/publishHistory";
 import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { canDeleteDraftSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
@@ -1000,6 +1001,17 @@ export async function publishSeatMapAction(
   expectedEmployees?: EmployeeExpectation[]
 ): Promise<PublishSeatMapResult> {
   const supabase = await requireAdmin();
+
+  // Refuse to publish from a dev server pointed at the production database
+  // (lib/publishGuard.ts). Thrown, not returned: the guard can only fire when
+  // NODE_ENV !== "production", where digest stripping doesn't apply, so the
+  // message reaches the admin's error banner intact.
+  const environment = assessPublishEnvironment({
+    nodeEnv: process.env.NODE_ENV,
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    overrideValue: process.env.SEAT_PLANNER_ALLOW_PROD_PUBLISH
+  });
+  if (!environment.allowed) throw new Error(environment.message);
 
   const { error } = await supabase.rpc("publish_seat_map", {
     expected_draft_seats: expectedDraftSeats ?? null,

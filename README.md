@@ -38,6 +38,11 @@ a supported path, not a workaround.
 > any local publish as a production deploy. Prefer the local stack above for all
 > routine work; use the live project only when you specifically need production
 > data in front of you.
+>
+> Publish is also **guarded in code** (`lib/publishGuard.ts`): a dev server
+> pointed at a non-local database refuses to publish unless you set
+> `SEAT_PLANNER_ALLOW_PROD_PUBLISH=true`, so a routine local session can't
+> ship the live map by accident. Draft edits are deliberately not guarded.
 
 Required environment variables (`.env.local`):
 
