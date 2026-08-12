@@ -3,6 +3,9 @@
 **Status:** DONE (2026-08-12). Palette shipped, all four docked surfaces
 deleted, six test files reworked, full gate + real-browser parity pass green.
 **Branch:** `claude/viewer-palette-slice-1` (draft PR).
+**Spec:** `docs/design_handoff_login_v12/Viewer v12 Handoff.md` (contracts #1–#14)
+plus the settled decisions in `docs/design_handoff_login_v12/README.md`
+("Viewer palette — owner answers"). Read both before starting.
 
 ## Correction to this plan, recorded on closing
 
@@ -27,19 +30,42 @@ the `hoverZone` / `zone` state that already drives `buildZoneWash` and
 inert counts until slice 3. Slice 3 keeps the genuinely new work: the pinned
 chip restyle, department chips, and the Open/Occupied decision.
 
-## What the real browser caught that no test tier did
+## Three bugs a green local gate did not catch
 
-`type="search"` inputs **clear themselves on Escape natively**, and that clear
-fires an `input` event. With Esc newly meaning "close the palette" (contract #7
-puts the palette one layer above the query), the native default collapsed two
-layers into one keystroke: the first Esc closed the palette AND wiped the
-query, then `updateSearch` re-opened the palette on the way out. Fixed with
-`event.preventDefault()` ahead of the branch split, pinned in
-`viewer-keyboard-parity-source`. Nothing in the node, jsdom or e2e tiers models
-a native input default — this needed the app in Chromium.
-**Spec:** `docs/design_handoff_login_v12/Viewer v12 Handoff.md` (contracts #1–#14)
-plus the settled decisions in `docs/design_handoff_login_v12/README.md`
-("Viewer palette — owner answers"). Read both before starting.
+All three were in code written for this slice, and none was reachable from
+`npm test`. Read this before slice 2 — the third one is about the drawings.
+
+1. **Esc collapsed two layers into one.** `type="search"` inputs clear
+   themselves on Escape natively, and that clear fires an `input` event. With
+   Esc newly meaning "close the palette" (contract #7 puts the palette one
+   layer above the query), the native default made the first Esc close the
+   palette AND wipe the query, then `updateSearch` re-opened the palette on the
+   way out. Fixed with `event.preventDefault()` ahead of the branch split,
+   pinned in `viewer-keyboard-parity-source`. Nothing in the node, jsdom or e2e
+   tiers models a native input default — this needed the app in Chromium.
+2. **A dangling id reference.** `aria-controls` pointed at the palette
+   unconditionally, but the palette is UNMOUNTED when closed, so at rest the
+   field referenced nothing — `aria-valid-attr-value`, critical. Gated on
+   `paletteOpen`. Caught by CI's e2e-auth axe scan, the only tier that scans
+   this page signed in with the app's real CSS.
+3. **The zone-chip count failed AA.** `opacity: .75` came straight from the
+   mock; at 10px it measures 3.97:1 resting (`#55504A` over `#F7F6F2`) and
+   3.98:1 pinned (`#9E2F06` over primary-soft), and the cliff is at 81% in
+   both. Now `.90`, giving 5.71 and 5.40. Caught by the palette scan added
+   while fixing 2, on its first run.
+
+**Treat every opacity and grey in the `.dc.html` mocks as unverified.** The
+handoff README already recorded `#8E8276` failing at 11px; this slice found the
+same class of defect twice more in the same drawings. After 3, every remaining
+text pair in the palette was measured rather than assumed — the four
+query-mode kind badges (7.38 / 18.10 / 5.37 / 7.11), both seat pills
+(7.38 / 5.29), and the row subtitle, footer legend and eyebrows (5.72). Slice 2
+restyles those query rows, so it inherits that measuring job.
+
+The e2e-auth viewer scan now opens the palette and scans BOTH modes, and walks
+the first two Esc layers. That is where a slice-2 contrast regression will
+surface; it will not surface locally.
+
 
 This plan is a **handoff**, not an audit finding. It exists because the recon
 below is expensive to re-derive and cheap to write down, and because the
