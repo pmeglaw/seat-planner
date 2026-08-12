@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics="">
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script src="docs/design_handoff_carbon_v12/shared/seats.js"></script>
+<style>
+body{margin:0;background:#EDEBE6;font-family:"IBM Plex Sans",system-ui,sans-serif}
+a{color:#9E2F06;text-decoration:none}a:hover{color:#D23F0A}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px 'IBM Plex Mono',monospace;padding:3px 7px;background:#161616;color:#fff;text-decoration:none}
+.dv-tname{font:600 13px/1.2 "IBM Plex Sans",sans-serif;color:#161616}
+.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(0,0,0,.10);color:#161616;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.4 "IBM Plex Sans",sans-serif;color:rgba(0,0,0,.6);max-width:1240px}
+.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.10);box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden}
+.dv-opt:target .dv-oid{background:#D23F0A;color:#fff}
+.dv-next{margin:22px 0 0;font:12px/1.5 "IBM Plex Sans",sans-serif;color:rgba(0,0,0,.55)}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Admin — August v12 facts + Carbon button usage (carbondesignsystem.com/components/button/usage)</span></div>
+
+<div style="display:flex;gap:1px;background:#DDD8D0;border:1px solid #DDD8D0;margin:0 0 26px;max-width:1240px">
+  <div style="flex:1.2;background:#fff;padding:16px 18px">
+    <div style="font:600 10px 'IBM Plex Mono',monospace;color:#8d8d8d;letter-spacing:.06em">THE MOVE</div>
+    <p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#161616">The <b>Find palette replaces admin's docked People panel</b> — one find anatomy across both surfaces, with an UNSEATED section admins can assign from. The inspector keeps its shell but its actions follow Carbon: a same-width ghost pair, danger with a visible label, and everything past three actions in a <b>Menu</b>.</p>
+  </div>
+  <div style="flex:1;background:#fff;padding:16px 18px">
+    <div style="font:600 10px 'IBM Plex Mono',monospace;color:#8d8d8d;letter-spacing:.06em">BUTTON RULES APPLIED</div>
+    <p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#55504A">One primary per screen — <b>Publish</b> owns it (the inspector's pinned action is Carbon's sanctioned "temporary flow" primary). Labels left-aligned, 16px icons on the right. Icon-only = ghost + tooltip, never danger. Modal pair bleeds fluid, 50/50, 1px separator.</p>
+  </div>
+  <div style="flex:1;background:#fff;padding:16px 18px">
+    <div style="font:600 10px 'IBM Plex Mono',monospace;color:#8d8d8d;letter-spacing:.06em">HELD CONSTANT</div>
+    <p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#55504A">Ask Planner keeps the implemented Carbon-for-AI treatment (docked, reflows the map — the deliberate hybrid). Rail, seat pills, draft→publish model, 36px chrome, AI blue reserved for AI only.</p>
+  </div>
+</div>
+
+<div class="dv-opts">
+
+<div class="dv-opt" id="3a"><div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Admin map at rest — one draft change pending. Publish is the screen's single primary (count badge); undo and overflow are ghost icon-buttons with tooltips; Add seat floats as a tertiary.</div>
+<div class="dv-card" style="width:1240px;height:700px;position:relative;background:#ECE8E0" data-screen-label="3a Admin map (draft pending)">
+  <div style="position:absolute;top:0;left:0;bottom:0;width:48px;background:#161616;border-right:1px solid rgba(255,255,255,.10);display:flex;flex-direction:column;z-index:80">
+    <span style="height:44px;display:grid;place-items:center;color:#F7F6F2"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 5.5h14M3 10h14M3 14.5h14"></path></svg></span>
+    <span style="height:44px;display:grid;place-items:center;color:#fff;background:#262626;box-shadow:inset 3px 0 0 #FF5715"><svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M3 5.5 8 3.5v11L3 16.5v-11ZM8 3.5l4 2v11l-4-2M12 5.5l5-2v11l-5 2" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg></span>
+    <span style="height:44px;display:grid;place-items:center;color:#B8AEA2"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="2.6"></circle><path d="M2.5 16v-.8a4 4 0 0 1 4-4h1a4 4 0 0 1 4 4v.8"></path><circle cx="14" cy="7.5" r="2.1"></circle><path d="M13 11.6h.6a3.6 3.6 0 0 1 3.6 3.6v.8"></path></svg></span>
+    <span style="height:44px;display:grid;place-items:center;color:#B8AEA2"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h12v3.5H4zM4 9.5h12V13H4zM4 15h7.5v1.5H4z"></path></svg></span>
+    <span style="height:44px;display:grid;place-items:center;color:#B8AEA2"><svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.6" stroke="currentColor" stroke-width="1.5"></circle><path d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></span>
+    <span style="flex:1"></span>
+    <span style="height:44px;display:grid;place-items:center;color:#78a9ff;position:relative"><span style="font-size:15px">✦</span><span style="position:absolute;top:4px;right:7px;border:1px solid #78a9ff;color:#78a9ff;font-size:7.5px;font-weight:700;padding:0 2px">AI</span></span>
+    <span style="height:44px;display:grid;place-items:center;color:#B8AEA2"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.2"></circle><circle cx="12" cy="12" r="3"></circle></svg></span>
+    <span style="height:44px;margin-bottom:8px;display:grid;place-items:center"><span style="width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600">E</span></span>
+  </div>
+  <div style="position:absolute;top:0;left:48px;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:70">
+    <span style="font-size:12.5px;font-weight:600;white-space:nowrap">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></span>
+    <span style="margin:0 10px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:0 9px;flex:1;min-width:140px;max-width:380px">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none" style="color:#8f8f8f;flex-shrink:0"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="flex:1;font-size:12px;color:#8f8f8f;white-space:nowrap;overflow:hidden">Find people, seats, zones…</span>
+      <span style="font:600 9.5px 'IBM Plex Mono',monospace;background:#262626;border:1px solid rgba(255,255,255,.15);padding:1px 5px;color:#B8AEA2">Ctrl K</span>
+    </div>
+    <span title="Undo (⌘Z)" style="width:32px;height:32px;margin-left:8px;display:grid;place-items:center;color:#B8AEA2;font-size:14px">↺</span>
+    <span title="More options" style="width:32px;height:32px;display:grid;place-items:center;color:#B8AEA2;font-size:15px;font-weight:700">⋮</span>
+    <div style="flex:1"></div>
+    <span style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#F4F4F4"><span style="font-size:13px;color:#78a9ff">✦</span> Ask Planner <span style="border:1px solid #78a9ff;color:#78a9ff;font-size:9.5px;font-weight:700;padding:1px 4px;letter-spacing:.04em">AI</span></span>
+    <span style="font-size:12px;color:#B8AEA2;margin:0 12px;white-space:nowrap">Draft · 1 change</span>
+    <span style="display:flex;align-items:center;gap:7px;height:36px;padding:0 15px;background:#D23F0A;color:#fff;font-size:12.5px;font-weight:600">Publish<span style="background:#fff;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">1</span></span>
+  </div>
+  <div style="position:absolute;top:36px;left:48px;right:0;bottom:0;overflow:hidden">
+    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:1130px">
+      <img src="docs/design_handoff_carbon_v12/public/images/office-floor-plan.webp" alt="" draggable="false" style="display:block;width:100%">
+      <sc-for list="{{ arCodes }}" as="s" hint-placeholder-count="6">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:{{ s.h }};min-width:{{ s.w }};max-width:{{ s.maxw }};border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.shadow }};display:flex;flex-direction:column;align-items:{{ s.align }};justify-content:center;z-index:{{ s.z }};opacity:{{ s.op }};padding:{{ s.pad }}">
+          <span style="font-size:{{ s.codeSize }};font-weight:800;letter-spacing:.02em;line-height:1.05;white-space:nowrap;opacity:{{ s.codeOp }}">{{ s.label }}</span>
+          <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+          <sc-if value="{{ s.draftB }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:999px;background:#8A6116;border:1px solid rgba(255,255,255,.85);color:#fff;font-size:8px;font-weight:900;display:grid;place-items:center">D</span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ arPlates }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:150px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.shadow }};padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:{{ p.z }};opacity:{{ p.op }};text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.label }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+          <sc-if value="{{ p.title }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:600;line-height:1.2;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span></sc-if>
+          <sc-if value="{{ p.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+          <sc-if value="{{ p.draftB }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:999px;background:#8A6116;border:1px solid rgba(255,255,255,.85);color:#fff;font-size:8px;font-weight:900;display:grid;place-items:center">D</span></sc-if>
+        </span>
+      </sc-for>
+    </div>
+    <div style="position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;z-index:40">
+      <span style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12.5px;font-weight:600;color:#161616">Floor 3 · Pre-Litigation <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style="color:#6E655A"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
+      <span style="background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12px;color:#6E655A">Draft map · {{ totalSeats }} seats</span>
+    </div>
+    <div style="position:absolute;right:12px;top:12px;z-index:40">
+      <span style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #D23F0A;box-shadow:0 6px 16px rgba(22,22,22,.14);height:32px;padding:0 12px;font-size:12.5px;font-weight:600;color:#9E2F06">Add seat<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M10 4.5v11M4.5 10h11"></path></svg></span>
+    </div>
+    <div style="position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:8px 14px;z-index:40">
+      <span style="font-size:12px;font-weight:600;color:#161616">{{ totalSeats }} seats</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#1D6E41"></span>Assigned {{ nAssignedDraft }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8E8276"></span>Open {{ nOpenDraft }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8A6116"></span>Reserved {{ nReserved }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#D23F0A"></span>1 draft</span>
+    </div>
+    <div style="position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);z-index:40">
+      <span style="width:32px;padding:6px 0;text-align:center;font:500 10px 'IBM Plex Mono',monospace;color:#55504A;border-bottom:1px solid #E7E1D8">Fit</span>
+      <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">+</span>
+      <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">−</span>
+      <span style="width:32px;height:32px;display:grid;place-items:center;color:#161616"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M7 3.5H3.5V7M13 3.5h3.5V7M7 16.5H3.5V13M13 16.5h3.5V13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+    </div>
+  </div>
+</div></div>
+
+<div class="dv-opt" id="3b"><div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Inspector, evolved — same shell, Carbon actions: a same-width ghost pair (Swap / Vacate with its danger label), overflow past three in a Menu (icons, ⌘ hints, danger kind). Pinned primary = the temporary-flow primary.</div>
+<div class="dv-card" style="width:1240px;height:700px;position:relative;background:#ECE8E0" data-screen-label="3b Inspector + Menu">
+  <div style="position:absolute;top:0;left:0;bottom:0;width:48px;background:#161616;border-right:1px solid rgba(255,255,255,.10);z-index:80"></div>
+  <div style="position:absolute;top:0;left:48px;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:70">
+    <span style="font-size:12.5px;font-weight:600;white-space:nowrap">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></span>
+    <div style="flex:1"></div>
+    <span style="font-size:12px;color:#B8AEA2;margin:0 12px;white-space:nowrap">Draft · 1 change</span>
+    <span style="display:flex;align-items:center;gap:7px;height:36px;padding:0 15px;background:#D23F0A;color:#fff;font-size:12.5px;font-weight:600">Publish<span style="background:#fff;color:#161616;border-radius:999px;min-width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:600;padding:0 4px">1</span></span>
+  </div>
+  <div style="position:absolute;top:36px;left:48px;right:0;bottom:0;overflow:hidden">
+    <div style="position:absolute;left:44%;top:50%;transform:translate(-50%,-50%);width:1060px">
+      <img src="docs/design_handoff_carbon_v12/public/images/office-floor-plan.webp" alt="" draggable="false" style="display:block;width:100%">
+      <sc-for list="{{ asCodes }}" as="s" hint-placeholder-count="6">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:{{ s.h }};min-width:{{ s.w }};max-width:{{ s.maxw }};border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.shadow }};display:flex;flex-direction:column;align-items:{{ s.align }};justify-content:center;z-index:{{ s.z }};opacity:{{ s.op }};padding:{{ s.pad }}">
+          <span style="font-size:{{ s.codeSize }};font-weight:800;letter-spacing:.02em;line-height:1.05;white-space:nowrap;opacity:{{ s.codeOp }}">{{ s.label }}</span>
+          <sc-if value="{{ s.nameLine }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:700;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:104px">{{ s.name }}</span></sc-if>
+          <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+          <sc-if value="{{ s.draftB }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:999px;background:#8A6116;border:1px solid rgba(255,255,255,.85);color:#fff;font-size:8px;font-weight:900;display:grid;place-items:center">D</span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ asPlates }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:150px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.shadow }};padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:{{ p.z }};opacity:{{ p.op }};text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.label }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+          <sc-if value="{{ p.draftB }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:999px;background:#8A6116;border:1px solid rgba(255,255,255,.85);color:#fff;font-size:8px;font-weight:900;display:grid;place-items:center">D</span></sc-if>
+        </span>
+      </sc-for>
+    </div>
+    <div style="position:absolute;top:0;right:0;bottom:0;width:300px;background:#161616;border-left:1px solid rgba(255,255,255,.14);box-shadow:0 12px 40px rgba(22,22,22,.32);color:#F7F6F2;display:flex;flex-direction:column;z-index:60">
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:14px 16px 10px">
+        <span style="width:36px;height:36px;border-radius:999px;background:#FBEAE1;color:#9E2F06;display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0">AM</span>
+        <span style="min-width:0;flex:1"><span style="display:block;font-size:15px;font-weight:600;line-height:1.25">Aria Moretti</span><span style="display:block;font-size:12px;color:#B8AEA2;margin-top:1px">Associate Attorney</span></span>
+        <span style="color:#B8AEA2;font-size:14px;line-height:1;padding:4px 6px">✕</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:0 16px 12px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.10);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#D8D0C5"><span style="width:6px;height:6px;border-radius:999px;background:#42be65"></span>Assigned</span>
+        <span style="background:rgba(255,255,255,.10);padding:3px 8px;font:600 11px 'IBM Plex Mono',monospace;color:#D8D0C5">C05</span>
+        <span style="background:rgba(255,255,255,.10);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#D8D0C5">Center Desks</span>
+      </div>
+      <div style="display:flex;gap:1px;padding:0 16px 12px">
+        <span style="flex:1;display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 10px;background:#262626;font-size:12px;font-weight:600;color:#F4F4F4">Swap<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11l-3-3M16 13H5l3 3"></path></svg></span>
+        <span style="flex:1;display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 10px;background:#2b1a1b;font-size:12px;font-weight:600;color:#ff8389">Vacate<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="7" r="2.8"></circle><path d="M3.5 16.5v-1a4 4 0 0 1 4-4h1.5"></path><path d="M12.5 13.5h5"></path></svg></span>
+        <span title="More actions" style="width:32px;height:32px;display:grid;place-items:center;background:#262626;color:#B8AEA2;font-size:15px;font-weight:700;flex-shrink:0">⋮</span>
+      </div>
+      <div style="display:flex;background:#262626;margin:0 16px">
+        <span style="flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:600;background:#161616;border-top:2px solid #FF5715;color:#fff">Overview</span>
+        <span style="flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:600;border-top:2px solid transparent;color:#B8AEA2">Notes</span>
+        <span style="flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:600;border-top:2px solid transparent;color:#B8AEA2">Activity</span>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:12px 16px 0">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">CONTACT</div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0 4px;font-size:12px"><span style="color:#B8AEA2">Email</span><span style="color:#F7F6F2;max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">aria.moretti@megeredchianlaw.com</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.08)"><span style="color:#B8AEA2">Extension</span><span style="color:#F7F6F2;font-family:'IBM Plex Mono',monospace">2140</span></div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276;margin-top:12px">SEAT</div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0 4px;font-size:12px"><span style="color:#B8AEA2">Zone</span><span style="color:#F7F6F2;font-weight:600">Center Desks</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px"><span style="color:#B8AEA2">Department</span><span style="color:#F7F6F2;font-weight:600">Case Management</span></div>
+      </div>
+      <span style="display:flex;align-items:center;justify-content:space-between;margin:0 16px 12px;background:#262626;padding:10px 12px;font-size:12px;font-weight:600;color:#F4F4F4"><span style="display:flex;align-items:center;gap:8px"><span style="border:1px solid #78a9ff;color:#78a9ff;font-size:9.5px;font-weight:700;padding:1px 4px;letter-spacing:.04em">AI</span>Ask Planner about this seat</span><span style="color:#8E8276">›</span></span>
+      <span style="display:flex;align-items:center;justify-content:space-between;height:48px;background:#D23F0A;color:#fff;padding:0 16px;font-size:14px;font-weight:600">Move to another seat<svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h11m0 0-4-4m4 4-4 4"></path></svg></span>
+    </div>
+    <div style="position:absolute;top:138px;right:312px;width:230px;background:#262626;border:1px solid rgba(255,255,255,.15);box-shadow:0 6px 16px rgba(0,0,0,.4);z-index:65;padding:4px 0;color:#F4F4F4">
+      <span style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" style="color:#B8AEA2"><rect x="7" y="7" width="9" height="9"></rect><path d="M13 7V4H4v9h3"></path></svg>Copy email<span style="margin-left:auto;font:600 9.5px 'IBM Plex Mono',monospace;color:#8E8276">⌘C</span></span>
+      <span style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px;background:#333333"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" style="color:#B8AEA2"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>Show occupant in Find</span>
+      <span style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="color:#B8AEA2"><path d="M8 12l4-4M6.5 9.5 5 11a3 3 0 0 0 4 4l1.5-1.5M13.5 10.5 15 9a3 3 0 0 0-4-4L9.5 6.5"></path></svg>Copy map link</span>
+      <span style="display:block;height:1px;background:rgba(255,255,255,.12);margin:4px 0"></span>
+      <span style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px;color:#ff8389"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="7" r="2.8"></circle><path d="M3.5 16.5v-1a4 4 0 0 1 4-4h1.5"></path><path d="M12.5 13.5h5"></path></svg>Vacate seat<span style="margin-left:auto;font:600 9.5px 'IBM Plex Mono',monospace;color:#8E8276">⌘⌫</span></span>
+    </div>
+  </div>
+</div></div>
+
+<div class="dv-opt" id="3c"><div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>Find in admin — same palette, plus an UNSEATED section admins assign from. The docked People panel is retired here too; Ask Planner keeps its docked drawer (<a class="dv-oid" href="#3e">3e</a>).</div>
+<div class="dv-card" style="width:640px" data-screen-label="3c Admin Find palette">
+  <div style="background:#161616;padding:8px 10px;display:flex;align-items:center;gap:8px"><span style="width:28px"></span><div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 2px #FF5715;padding:0 9px;flex:1;max-width:380px"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" style="color:#B8AEA2"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="flex:1;font-size:12px;color:#F4F4F4">Find people, seats, zones…</span><span style="font-size:11px;color:#B8AEA2">Esc</span></div></div>
+  <div style="padding:12px 16px 10px;border-bottom:1px solid #F0ECE5">
+    <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">UNSEATED · 8 — CLICK TO START ASSIGNING</div>
+    <div style="padding-top:4px">
+      <span style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F7F4EF">
+        <span style="width:26px;height:26px;border-radius:999px;background:#FBEAE1;color:#9E2F06;display:grid;place-items:center;font-size:10px;font-weight:700">WT</span>
+        <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:#161616">Wes Tanaka</span><span style="display:block;font-size:11px;color:#6E655A">Paralegal · Litigation</span></span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#9E2F06">Assign to a seat<svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h11m0 0-4-4m4 4-4 4"></path></svg></span>
+      </span>
+      <span style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 0">
+        <span style="width:26px;height:26px;border-radius:999px;background:#FBEAE1;color:#9E2F06;display:grid;place-items:center;font-size:10px;font-weight:700">XP</span>
+        <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:#161616">Xenia Petrou</span><span style="display:block;font-size:11px;color:#6E655A">Intake Specialist · Intake</span></span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#9E2F06">Assign to a seat<svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h11m0 0-4-4m4 4-4 4"></path></svg></span>
+      </span>
+    </div>
+  </div>
+  <div style="padding:10px 16px 4px;display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">PEOPLE — A TO Z</span><span style="font-size:11px;color:#6E655A">{{ dirCount }} people · {{ dirSeated }} seated</span></div>
+  <div style="padding:0 16px 8px">
+    <sc-for list="{{ browseRows }}" as="r" hint-placeholder-count="3">
+      <span style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F7F4EF">
+        <span style="width:26px;height:26px;border-radius:999px;background:#F7F6F2;color:#55504A;display:grid;place-items:center;font-size:10px;font-weight:700">{{ r.initials }}</span>
+        <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:#161616;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span><span style="display:block;font-size:11px;color:#6E655A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.sub }}</span></span>
+        <span style="border:1px solid #E7E1D8;background:#F7F6F2;border-radius:999px;padding:2px 8px;font:600 10px 'IBM Plex Mono',monospace;color:#55504A">{{ r.seat }}</span>
+      </span>
+    </sc-for>
+  </div>
+  <div style="border-top:1px solid #E7E1D8;padding:8px 16px;font-size:11px;color:#8E8276">Drafting from here: pick an unseated person, then click any open seat — same flow the inspector's Assign uses.</div>
+</div></div>
+
+<div class="dv-opt" id="3d"><div class="dv-olabel"><a class="dv-oid" href="#3d">3d</a>Publish review — the diff table unchanged; the footer pair goes by the book: fluid, bleeding to the edges, 50/50 with the 1px separator, ghost Cancel + primary "Publish changes", labels left-aligned.</div>
+<div class="dv-card" style="width:1240px;height:700px;position:relative;background:#ECE8E0" data-screen-label="3d Publish review">
+  <div style="position:absolute;top:0;left:0;bottom:0;width:48px;background:#161616;z-index:20"></div>
+  <div style="position:absolute;top:0;left:48px;right:0;height:36px;background:#161616;z-index:20"></div>
+  <div style="position:absolute;inset:0;background:rgba(22,22,22,.45);z-index:30"></div>
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:560px;background:#fff;box-shadow:0 12px 40px rgba(22,22,22,.4);z-index:40">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:18px 20px 0">
+      <div><div style="font-size:16px;font-weight:600;color:#161616">Review draft before publishing</div><div style="font-size:13px;color:#55504A;margin-top:4px">Confirm the saved draft changes before viewers see them.</div></div>
+      <span style="color:#55504A;font-size:14px;padding:2px 4px">✕</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin:16px 20px 0;flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:600;color:#161616">1 change</span>
+      <span style="display:inline-flex;align-items:center;gap:5px;background:#FBE9EA;border:1px solid #E8A5A9;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:600;color:#B3232C">1 vacated</span>
+      <span style="display:inline-flex;align-items:center;gap:5px;background:#F7F6F2;border:1px solid #E7E1D8;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:600;color:#55504A">0 assigned · 0 reassigned</span>
+    </div>
+    <div style="margin:12px 20px 0;border:1px solid #E7E1D8">
+      <div style="display:grid;grid-template-columns:64px 1fr 1fr 96px;background:#F0EDE7;border-bottom:1px solid #E7E1D8">
+        <span style="padding:7px 12px;font-size:11px;font-weight:600;color:#55504A">Seat</span>
+        <span style="padding:7px 10px;font-size:11px;font-weight:600;color:#55504A">Published now</span>
+        <span style="padding:7px 10px;font-size:11px;font-weight:600;color:#55504A">After publish</span>
+        <span style="padding:7px 12px;font-size:11px;font-weight:600;color:#55504A">Change</span>
+      </div>
+      <div style="display:grid;grid-template-columns:64px 1fr 1fr 96px;align-items:center">
+        <span style="padding:8px 12px;font:600 12px 'IBM Plex Mono',monospace;color:#161616">OF01</span>
+        <span style="padding:8px 10px;font-size:12.5px;color:#6E655A;display:flex;align-items:center;gap:6px"><span>Priya Shah</span><span style="color:#B8AEA2">→</span></span>
+        <span style="padding:8px 10px;font-size:12.5px;font-weight:600;color:#161616">Open seat</span>
+        <span style="padding:8px 12px"><span style="display:inline-flex;background:#FBE9EA;border:1px solid #E8A5A9;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:600;color:#B3232C">Vacated</span></span>
+      </div>
+    </div>
+    <div style="font-size:11.5px;color:#6E655A;margin:10px 20px 16px">Draft: {{ totalSeats }} seats · Currently published: {{ totalSeats }} seats · People edits publish together with seats</div>
+    <div style="display:flex;border-top:1px solid #E7E1D8">
+      <span style="flex:1;display:flex;align-items:center;height:64px;padding:0 16px;font-size:14px;font-weight:500;color:#161616;border-right:1px solid #E7E1D8">Cancel</span>
+      <span style="flex:1;display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 16px;background:#D23F0A;color:#fff;font-size:14px;font-weight:600">Publish changes<svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h11m0 0-4-4m4 4-4 4"></path></svg></span>
+    </div>
+  </div>
+</div></div>
+
+<div class="dv-opt" id="3e"><div class="dv-olabel"><a class="dv-oid" href="#3e">3e</a>Ask Planner — as implemented (Carbon for AI): docked drawer reflows the map, answered state, explainability, blue aura + AI chips on supporting seats, everything else dims. AI blue appears nowhere else.</div>
+<div class="dv-card" style="width:1240px;height:700px;position:relative;background:#ECE8E0" data-screen-label="3e Ask Planner (AI)">
+  <div style="position:absolute;top:0;left:0;bottom:0;width:48px;background:#161616;border-right:1px solid rgba(255,255,255,.10);z-index:80"></div>
+  <div style="position:absolute;top:0;left:48px;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:70">
+    <span style="font-size:12.5px;font-weight:600;white-space:nowrap">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></span>
+    <div style="flex:1"></div>
+    <span style="display:flex;align-items:center;gap:6px;height:36px;padding:0 11px;font-size:12.5px;font-weight:500;color:#fff;background:#262626;border-bottom:2px solid #78a9ff"><span style="font-size:13px;color:#78a9ff">✦</span> Ask Planner <span style="border:1px solid #78a9ff;color:#78a9ff;font-size:9.5px;font-weight:700;padding:1px 4px;letter-spacing:.04em">AI</span></span>
+  </div>
+  <div style="position:absolute;top:36px;left:48px;right:436px;bottom:0;overflow:hidden">
+    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:800px">
+      <img src="docs/design_handoff_carbon_v12/public/images/office-floor-plan.webp" alt="" draggable="false" style="display:block;width:100%;filter:saturate(.85)">
+      <sc-for list="{{ aaCodes }}" as="s" hint-placeholder-count="6">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:{{ s.h }};min-width:{{ s.w }};max-width:{{ s.maxw }};border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.shadow }};display:flex;flex-direction:column;align-items:{{ s.align }};justify-content:center;z-index:{{ s.z }};opacity:{{ s.op }};padding:{{ s.pad }}">
+          <span style="font-size:{{ s.codeSize }};font-weight:800;letter-spacing:.02em;line-height:1.05;white-space:nowrap;opacity:{{ s.codeOp }}">{{ s.label }}</span>
+          <sc-if value="{{ s.aiChip }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-7px;right:-9px;border:1px solid #4589ff;background:#fff;color:#0043ce;font-size:7.5px;font-weight:700;padding:0 3px;letter-spacing:.04em;border-radius:2px">AI</span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ aaPlates }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:150px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.shadow }};padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:{{ p.z }};opacity:{{ p.op }};text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.label }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+        </span>
+      </sc-for>
+    </div>
+    <div style="position:absolute;left:12px;top:12px;z-index:40">
+      <span style="display:flex;align-items:center;gap:6px;background:linear-gradient(180deg,rgba(69,137,255,.12),rgba(255,255,255,0) 70%),#fff;border:1px solid #4589ff;box-shadow:0 6px 16px rgba(69,137,255,.2);padding:6px 11px;font-size:12px;font-weight:600;color:#0043ce"><span style="border:1px solid #4589ff;font-size:9px;font-weight:700;padding:0 3px">AI</span>4 seats highlighted <span style="color:#55504A;font-weight:500">· Clear</span></span>
+    </div>
+  </div>
+  <div style="position:absolute;top:48px;right:12px;bottom:12px;width:412px;background:#161616;border:1px solid rgba(120,169,255,.35);box-shadow:0 12px 48px rgba(22,22,22,.45);color:#F7F6F2;display:flex;flex-direction:column;z-index:60;background-image:linear-gradient(180deg,rgba(69,137,255,.10),rgba(22,22,22,0) 140px)">
+    <div style="padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:flex-start;gap:12px">
+      <div style="min-width:0;flex:1"><div style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600">Ask Planner <span style="border:1px solid #78a9ff;color:#78a9ff;font-size:10px;font-weight:700;padding:1px 5px;letter-spacing:.04em">AI</span></div><div style="font-size:12px;color:#B8AEA2;margin-top:3px">Read-only answers from saved draft map data.</div></div>
+      <span style="color:#B8AEA2;font-size:11px;font-weight:500;padding:4px 12px">Close</span>
+    </div>
+    <div style="flex:1;min-height:0;overflow:hidden;padding:12px 16px">
+      <div style="border:1px solid rgba(120,169,255,.35);background:linear-gradient(180deg,rgba(69,137,255,.12),rgba(38,38,38,0) 80px),#262626;padding:14px">
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+          <span style="background:rgba(66,190,101,.15);border:1px solid rgba(66,190,101,.4);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:600;color:#42be65">Answered</span>
+          <span style="background:rgba(255,255,255,.10);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:600;color:#B8AEA2">read-only</span>
+          <span style="margin-left:auto;border:1px solid #78a9ff;color:#78a9ff;font-size:9.5px;font-weight:700;padding:1px 5px;letter-spacing:.04em">AI ▾</span>
+        </div>
+        <p style="margin:0;font-size:13.5px;line-height:1.6;color:#F4F4F4">4 seats are open in North Pod: N09, N10, N11 and N12 — the whole back row. The nearest team member is Ivan Petrov (N01, Case Management).</p>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+        <span style="font-size:11px;font-weight:600;color:#B8AEA2">Highlighted seats · 4</span>
+        <span style="border:1px solid rgba(255,87,21,.5);background:rgba(255,87,21,.1);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#FF5715">Clear highlights</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+        <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(120,169,255,.3);background:rgba(69,137,255,.08);padding:9px 12px"><span><span style="display:block;font-size:13px;font-weight:600;color:#F4F4F4">N09 — Open seat</span><span style="display:block;font-size:11.5px;color:#B8AEA2;margin-top:1px">North Pod · back row</span></span><span style="background:rgba(255,255,255,.10);border-radius:999px;padding:3px 9px;font-size:10px;font-weight:600;color:#78a9ff">Select</span></span>
+        <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(120,169,255,.3);background:rgba(69,137,255,.08);padding:9px 12px"><span><span style="display:block;font-size:13px;font-weight:600;color:#F4F4F4">N10 — Open seat</span><span style="display:block;font-size:11.5px;color:#B8AEA2;margin-top:1px">North Pod · back row</span></span><span style="background:rgba(255,255,255,.10);border-radius:999px;padding:3px 9px;font-size:10px;font-weight:600;color:#78a9ff">Select</span></span>
+      </div>
+    </div>
+    <div style="padding:12px 16px 16px"><div style="display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);padding:9px 12px"><span style="flex:1;font-size:13px;color:#8f8f8f">Ask a follow-up…</span><span style="border-radius:999px;background:#D23F0A;color:#fff;padding:6px 14px;font-size:12.5px;font-weight:600;opacity:.5">Ask</span></div></div>
+  </div>
+</div></div>
+
+</div>
+<p class="dv-next">Try next: "swap <a class="dv-oid" href="#3b">3b</a>'s pinned primary for the assign flow" · "show swap mode on the map" · "light chrome admin like <a class="dv-oid" href="#1e">1e</a>"</p>
+</section>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Login — rebuilt on Carbon's login pattern (carbondesignsystem.com/patterns/login-pattern)</span></div>
+
+<div style="display:flex;gap:1px;background:#DDD8D0;border:1px solid #DDD8D0;margin:0 0 26px;max-width:1240px">
+  <div style="flex:1.2;background:#fff;padding:16px 18px">
+    <div style="font:600 10px 'IBM Plex Mono',monospace;color:#8d8d8d;letter-spacing:.06em">FROM THE PATTERN</div>
+    <p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#161616"><b>Progressive authentication</b>: email + Continue first, password disclosed on step 2 — one decision per screen. <b>Fluid inputs</b> (label inside, bottom rule, no box) are Carbon's ideal for login. Alternates sit <b>below</b> the primary action, never between it and the field. Title reads <b>“Log in”</b> — Carbon prescribes it over “Sign in”, so today's page copy changes.</p>
+  </div>
+  <div style="flex:1;background:#fff;padding:16px 18px">
+    <div style="font:600 10px 'IBM Plex Mono',monospace;color:#8d8d8d;letter-spacing:.06em">KEPT FROM THE APP</div>
+    <p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#55504A">Split-screen brand column (dark #161616, wordmark at display scale — per <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">app/concepts/login-v12</span>) · magic link as the alternative login · no create-account (admins provision) · CTA ladder #D23F0A, focus rule #FF5715 · error copy from the pattern's table.</p>
+  </div>
+</div>
+
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a"><div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Step 1 — email + Continue (progressive auth). Remember-email under the field; magic link below the primary, per the pattern's hierarchy rule.</div>
+<div class="dv-card" style="width:1240px;height:700px;display:flex;align-items:stretch" data-screen-label="2a Log in — step 1">
+  <div style="flex:1;min-width:0;background:#161616;display:flex;flex-direction:column;padding:56px 56px 44px">
+    <img src="docs/design_handoff_carbon_v12/public/images/megeredchian-mark.png" alt="" style="width:40px;height:40px;object-fit:contain">
+    <div style="margin-top:auto;font-size:44px;font-weight:400;line-height:1.08;letter-spacing:-.025em;color:#fff">Megeredchian&nbsp;Law<br>Seat Planner</div>
+    <p style="margin:18px 0 0;max-width:300px;font-size:14.5px;line-height:1.6;color:#B8AEA2">The internal seating map — who sits where, across every floor we occupy.</p>
+    <div style="margin-top:34px;font:400 12px 'IBM Plex Mono',monospace;color:#8E8276">seats.megeredchianlaw.com · internal use only</div>
+  </div>
+  <div style="width:400px;flex-shrink:0;background:#fff;display:flex;flex-direction:column;padding:44px 40px">
+    <div style="font-size:26px;font-weight:400;line-height:1.2;letter-spacing:-.015em;color:#161616">Log in</div>
+    <p style="margin:10px 0 0;font-size:13px;color:#55504A">Use your work email to access the internal seating map.</p>
+    <div style="margin-top:28px;display:flex;flex-direction:column;justify-content:center;height:56px;background:#F4F4F4;border-bottom:2px solid #FF5715;padding:0 16px">
+      <span style="font-size:12px;line-height:1.3;color:#6E655A">Work email</span>
+      <span style="font-size:15px;line-height:1.4;color:#161616">e.marchetti@megeredchianlaw.com<span style="display:inline-block;width:1px;height:14px;background:#161616;vertical-align:-2px;margin-left:1px"></span></span>
+    </div>
+    <label style="display:flex;align-items:center;gap:9px;margin-top:16px;font-size:13px;color:#161616"><span style="width:15px;height:15px;border:1px solid #161616;background:#161616;display:grid;place-items:center;flex-shrink:0"><svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M1.5 5.5 4 8l4.5-6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>Remember my work email on this device</label>
+    <div style="display:flex;align-items:center;min-height:48px;margin-top:24px;background:#D23F0A;color:#fff;padding:0 18px;font-size:15px;font-weight:600;line-height:1">Continue<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" style="margin-left:auto"><path d="M4 10h11m0 0-4-4m4 4-4 4" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+    
+    
+    <span style="flex:1"></span>
+    <p style="margin:0;font-size:12.5px;line-height:1.6;color:#6E655A">Need help? Accounts are provisioned by the firm — ask an office admin.</p>
+  </div>
+</div></div>
+
+<div class="dv-opt" id="2b"><div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Step 2 — password, progressively disclosed. The entered email becomes an editable summary row (the pattern's way back); Forgot password lives with the field. Spatial rhythm matches step 1 — nothing jumps.</div>
+<div class="dv-card" style="width:1240px;height:700px;display:flex;align-items:stretch" data-screen-label="2b Log in — step 2">
+  <div style="flex:1;min-width:0;background:#161616;display:flex;flex-direction:column;padding:56px 56px 44px">
+    <img src="docs/design_handoff_carbon_v12/public/images/megeredchian-mark.png" alt="" style="width:40px;height:40px;object-fit:contain">
+    <div style="margin-top:auto;font-size:44px;font-weight:400;line-height:1.08;letter-spacing:-.025em;color:#fff">Megeredchian&nbsp;Law<br>Seat Planner</div>
+    <p style="margin:18px 0 0;max-width:300px;font-size:14.5px;line-height:1.6;color:#B8AEA2">The internal seating map — who sits where, across every floor we occupy.</p>
+    <div style="margin-top:34px;font:400 12px 'IBM Plex Mono',monospace;color:#8E8276">seats.megeredchianlaw.com · internal use only</div>
+  </div>
+  <div style="width:400px;flex-shrink:0;background:#fff;display:flex;flex-direction:column;padding:44px 40px">
+    <div style="font-size:26px;font-weight:400;line-height:1.2;letter-spacing:-.015em;color:#161616">Log in</div>
+    <div style="margin-top:28px;display:flex;align-items:center;gap:10px;min-height:40px;border:1px solid #E7E1D8;background:#F7F6F2;padding:0 12px">
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#55504A" stroke-width="1.5"><rect x="3" y="5" width="14" height="10.5"></rect><path d="m3.5 5.8 6.5 5 6.5-5"></path></svg>
+      <span style="flex:1;min-width:0;font-size:13px;color:#161616;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">e.marchetti@megeredchianlaw.com</span>
+      <span style="font-size:12px;font-weight:500;color:#9E2F06;text-decoration:underline;text-underline-offset:2px">Edit</span>
+    </div>
+    <div style="margin-top:2px;display:flex;flex-direction:column;justify-content:center;height:56px;background:#F4F4F4;border-bottom:2px solid #FF5715;padding:0 16px">
+      <span style="font-size:12px;line-height:1.3;color:#6E655A">Password</span>
+      <span style="font:400 15px 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#161616">••••••••••<span style="display:inline-block;width:1px;height:14px;background:#161616;vertical-align:-2px;margin-left:1px"></span></span>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px"><span style="font-size:12.5px;font-weight:500;color:#9E2F06;text-decoration:underline;text-underline-offset:2px">Forgot password?</span></div>
+    <div style="display:flex;align-items:center;min-height:48px;margin-top:24px;background:#D23F0A;color:#fff;padding:0 18px;font-size:15px;font-weight:600;line-height:1">Log in<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" style="margin-left:auto"><path d="M4 10h11m0 0-4-4m4 4-4 4" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:20px"><span style="flex:1;height:1px;background:#E7E1D8"></span><span style="font-size:11px;color:#8E8276">or</span><span style="flex:1;height:1px;background:#E7E1D8"></span></div>
+    <div style="display:flex;align-items:center;min-height:48px;margin-top:20px;border:1px solid #D8D0C5;color:#161616;padding:0 18px;font-size:15px;font-weight:500;line-height:1">Email me a sign-in link instead</div>
+    <span style="flex:1"></span>
+    <p style="margin:0;font-size:12.5px;line-height:1.6;color:#6E655A">No “wrong email” error until Log in is pressed — valid addresses are never exposed by the form.</p>
+  </div>
+</div></div>
+
+<div class="dv-opt" id="2c"><div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Errors, straight from the pattern's tables — client-side inline on blur; server-side inline notification, password cleared, focus returned to email.</div>
+<div style="display:flex;gap:16px;align-items:flex-start">
+  <div class="dv-card" style="width:400px;padding:28px 40px 32px" data-screen-label="2c Client-side error">
+    <div style="font:600 10px 'IBM Plex Mono',monospace;color:#8d8d8d;letter-spacing:.06em">CLIENT-SIDE · ON BLUR / ON SUBMIT</div>
+    <div style="margin-top:16px;display:flex;flex-direction:column;justify-content:center;height:56px;background:#F4F4F4;border-bottom:2px solid #B3232C;padding:0 16px;position:relative">
+      <span style="font-size:12px;line-height:1.3;color:#6E655A">Work email</span>
+      <span style="font-size:15px;line-height:1.4;color:#8E8276">you@company.com</span>
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" style="position:absolute;right:14px;top:50%;transform:translateY(-50%)"><circle cx="10" cy="10" r="8" fill="#B3232C"></circle><path d="M10 5.5v5.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path><circle cx="10" cy="14" r="1.1" fill="#fff"></circle></svg>
+    </div>
+    <p style="margin:6px 0 0;font-size:12px;color:#B3232C">Email is required</p>
+    <div style="margin-top:18px;display:flex;flex-direction:column;justify-content:center;height:56px;background:#F4F4F4;border-bottom:2px solid #B3232C;padding:0 16px;position:relative">
+      <span style="font-size:12px;line-height:1.3;color:#6E655A">Password</span>
+      <span style="font-size:15px;line-height:1.4;color:#8E8276">Enter your password</span>
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" style="position:absolute;right:14px;top:50%;transform:translateY(-50%)"><circle cx="10" cy="10" r="8" fill="#B3232C"></circle><path d="M10 5.5v5.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path><circle cx="10" cy="14" r="1.1" fill="#fff"></circle></svg>
+    </div>
+    <p style="margin:6px 0 0;font-size:12px;color:#B3232C">Password is required</p>
+    <p style="margin:16px 0 0;font-size:11px;line-height:1.6;color:#8E8276">Copy verbatim from the pattern's message table; the message clears as soon as the field is filled.</p>
+  </div>
+  <div class="dv-card" style="width:400px;padding:28px 40px 32px" data-screen-label="2c Server-side error">
+    <div style="font:600 10px 'IBM Plex Mono',monospace;color:#8d8d8d;letter-spacing:.06em">SERVER-SIDE · AFTER SUBMIT</div>
+    <div style="margin-top:16px;display:flex;align-items:flex-start;gap:10px;background:#FBE9EA;border-left:3px solid #B3232C;padding:12px 14px">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="10" cy="10" r="8" fill="#B3232C"></circle><path d="m7 7 6 6m0-6-6 6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="font-size:12.5px;line-height:1.5;color:#161616"><b>Incorrect email or password. Try again.</b><br><span style="color:#55504A">The same message for either mistake — valid emails are never confirmed.</span><br><span style="display:inline-block;margin-top:6px;font-weight:600;color:#9E2F06;text-decoration:underline;text-underline-offset:2px">Email me a sign-in link instead</span></span>
+    </div>
+    <div style="margin-top:16px;display:flex;flex-direction:column;justify-content:center;height:56px;background:#F4F4F4;border-bottom:2px solid #FF5715;padding:0 16px">
+      <span style="font-size:12px;line-height:1.3;color:#6E655A">Work email</span>
+      <span style="font-size:15px;line-height:1.4;color:#161616">e.marchetti@megeredchianlaw.com</span>
+    </div>
+    <div style="margin-top:2px;display:flex;flex-direction:column;justify-content:center;height:56px;background:#F4F4F4;border-bottom:1px solid #8E8276;padding:0 16px">
+      <span style="font-size:12px;line-height:1.3;color:#6E655A">Password</span>
+      <span style="font-size:15px;line-height:1.4;color:#8E8276">Enter your password</span>
+    </div>
+    <p style="margin:16px 0 0;font-size:11px;line-height:1.6;color:#8E8276">Password cleared, focus returned to the email field; multiple server errors stack. The notification carries the magic link as its action — the recovery path is offered right where the failure happened.</p>
+  </div>
+</div></div>
+
+<div class="dv-opt" id="2d"><div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Centered layout — the pattern's simpler alternative, on the firm's light canvas. Pairs with the light chrome (<a class="dv-oid" href="#1e">1e</a>); same form, no marketing column.</div>
+<div class="dv-card" style="width:1240px;height:700px;position:relative;background:#F7F6F2;display:flex;flex-direction:column;align-items:center;justify-content:center" data-screen-label="2d Log in — centered light">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+    <img src="docs/design_handoff_carbon_v12/public/images/megeredchian-mark.png" alt="" style="width:32px;height:32px;object-fit:contain">
+    <span style="font-size:16px;font-weight:600;color:#161616">Megeredchian Law <span style="font-weight:400;color:#6E655A">· Seat Planner</span></span>
+  </div>
+  <div style="width:400px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 24px rgba(22,22,22,.08);padding:36px 40px 32px;display:flex;flex-direction:column">
+    <div style="font-size:26px;font-weight:400;line-height:1.2;letter-spacing:-.015em;color:#161616">Log in</div>
+    <p style="margin:10px 0 0;font-size:13px;color:#55504A">Use your work email to access the internal seating map.</p>
+    <div style="margin-top:24px;display:flex;flex-direction:column;justify-content:center;height:56px;background:#F4F4F4;border-bottom:1px solid #8E8276;padding:0 16px">
+      <span style="font-size:12px;line-height:1.3;color:#6E655A">Work email</span>
+      <span style="font-size:15px;line-height:1.4;color:#8E8276">you@megeredchianlaw.com</span>
+    </div>
+    <label style="display:flex;align-items:center;gap:9px;margin-top:16px;font-size:13px;color:#161616"><span style="width:15px;height:15px;border:1px solid #8d8d8d;background:#fff;flex-shrink:0"></span>Remember my work email on this device</label>
+    <div style="display:flex;align-items:center;min-height:48px;margin-top:24px;background:#D23F0A;color:#fff;padding:0 18px;font-size:15px;font-weight:600;line-height:1">Continue<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" style="margin-left:auto"><path d="M4 10h11m0 0-4-4m4 4-4 4" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:18px"><span style="flex:1;height:1px;background:#E7E1D8"></span><span style="font-size:11px;color:#8E8276">or</span><span style="flex:1;height:1px;background:#E7E1D8"></span></div>
+    <div style="display:flex;align-items:center;min-height:48px;margin-top:18px;border:1px solid #D8D0C5;color:#161616;padding:0 18px;font-size:15px;font-weight:500;line-height:1">Email me a sign-in link</div>
+  </div>
+  <p style="position:absolute;bottom:20px;left:0;right:0;text-align:center;margin:0;font:400 11px 'IBM Plex Mono',monospace;color:#8E8276">seats.megeredchianlaw.com · internal use only</p>
+</div></div>
+
+</div>
+<p class="dv-next">Try next: "make <a class="dv-oid" href="#2a">2a</a> single-step like today's form" · "show the already-signed-in card" · "brand texture behind <a class="dv-oid" href="#2d">2d</a>"</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Viewer on Carbon v12 — one refined direction, August 2026 facts</span></div>
+
+<div style="display:flex;gap:1px;background:#DDD8D0;border:1px solid #DDD8D0;margin:0 0 26px;max-width:1240px">
+  <div style="flex:1.3;background:#fff;padding:16px 18px">
+    <div style="font:600 10px 'IBM Plex Mono',monospace;color:#8d8d8d;letter-spacing:.06em">THE MOVE</div>
+    <p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#161616"><b>The docked People directory is retired</b> (the stated pain point). Search, the A→Z directory, and zone browsing merge into one <b>Find surface</b> — a palette anchored to the search field, riding v12's committed <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">dynamic-floating-styles</span> + Menu anatomy + <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">structured-list-visible-icons</span>. At rest the map owns 100% of the stage.</p>
+  </div>
+  <div style="flex:1;background:#fff;padding:16px 18px">
+    <div style="font:600 10px 'IBM Plex Mono',monospace;color:#8d8d8d;letter-spacing:.06em">HELD CONSTANT</div>
+    <p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#55504A">Seat pills (owner-locked look + protected coordinates) · published-layer reads only · read-only, no admin verbs · IBM Plex, flat/square, 36px chrome · firm orange indicator-only, <b>no AI blue anywhere</b> (viewer has no AI surface).</p>
+  </div>
+  <div style="flex:1;background:#fff;padding:16px 18px">
+    <div style="font:600 10px 'IBM Plex Mono',monospace;color:#8d8d8d;letter-spacing:.06em">VIEWER-SHAPED VERBS</div>
+    <p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#55504A">The seat card swaps admin actions for the two things a viewer actually does: <b>copy the email</b>, <b>copy a map link</b> (the existing <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">?seat=</span> deep link). Facts + evidence: <a href="Carbon v12 Brief (Aug 2026).dc.html">Aug 2026 brief</a>.</p>
+  </div>
+</div>
+
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a"><div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>At rest — nothing docked. Full-bleed map, floating floor/legend/zoom, dark chrome. The Find field is the only door to people, seats and zones.</div>
+<div class="dv-card" style="width:1240px;height:700px;position:relative;background:#ECE8E0" data-screen-label="1a Viewer at rest (dark)">
+  <div style="position:absolute;top:0;left:0;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:70">
+    <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;white-space:nowrap"><img src="docs/design_handoff_carbon_v12/public/images/megeredchian-mark.png" alt="" style="width:22px;height:22px;object-fit:contain">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></span>
+    <span style="margin:0 12px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:0 9px;flex:1;min-width:140px;max-width:440px">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none" style="color:#8f8f8f;flex-shrink:0"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="flex:1;font-size:12px;color:#8f8f8f;white-space:nowrap;overflow:hidden">Find people, seats, zones…</span>
+      <span style="font:600 9.5px 'IBM Plex Mono',monospace;background:#262626;border:1px solid rgba(255,255,255,.15);padding:1px 5px;color:#B8AEA2">Ctrl K</span>
+    </div>
+    <div style="flex:1"></div>
+    <span style="display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;font-size:11px;font-weight:500;color:#B8AEA2"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V9.5a6 6 0 0 1 12 0V11"></path><path d="M4 11h2v3.5H4.6A.6.6 0 0 1 4 13.9V11ZM16 11h-2v3.5h1.4a.6.6 0 0 0 .6-.6V11Z"></path></svg>Reception</span>
+    <span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#B8AEA2;border:1px solid rgba(255,255,255,.2);padding:3px 8px;white-space:nowrap">VIEWER · READ-ONLY</span>
+    <span style="margin:0 12px;width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;flex-shrink:0">V</span>
+  </div>
+  <div style="position:absolute;top:36px;left:0;right:0;bottom:0;overflow:hidden">
+    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:1180px">
+      <img src="docs/design_handoff_carbon_v12/public/images/office-floor-plan.webp" alt="" draggable="false" style="display:block;width:100%">
+      <sc-for list="{{ aCodes }}" as="s" hint-placeholder-count="6">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:{{ s.h }};min-width:{{ s.w }};max-width:{{ s.maxw }};border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.shadow }};display:flex;flex-direction:column;align-items:{{ s.align }};justify-content:center;z-index:{{ s.z }};opacity:{{ s.op }};padding:{{ s.pad }}">
+          <span style="font-size:{{ s.codeSize }};font-weight:800;letter-spacing:.02em;line-height:1.05;white-space:nowrap;opacity:{{ s.codeOp }}">{{ s.label }}</span>
+          <sc-if value="{{ s.nameLine }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:700;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:104px">{{ s.name }}</span></sc-if>
+          <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ aPlates }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:150px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.shadow }};padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:{{ p.z }};opacity:{{ p.op }};text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.label }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+          <sc-if value="{{ p.title }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:600;line-height:1.2;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span></sc-if>
+          <sc-if value="{{ p.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+    </div>
+    <div style="position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;z-index:40">
+      <span style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12.5px;font-weight:600;color:#161616">Floor 3 · Pre-Litigation <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style="color:#6E655A"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
+      <span style="background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12px;color:#6E655A">Office map · {{ totalSeats }} seats</span>
+      <span style="background:#fff;border-radius:999px;box-shadow:0 6px 16px rgba(22,22,22,.14),0 0 0 1px #E7E1D8;padding:6px 11px;font-size:11px;font-weight:600;color:#55504A">Updated Aug 8, 2026</span>
+    </div>
+    <div style="position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:8px 14px;z-index:40">
+      <span style="font-size:12px;font-weight:600;color:#161616">{{ totalSeats }} seats</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#1D6E41"></span>Assigned {{ nAssigned }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8E8276"></span>Open {{ nOpen }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8A6116"></span>Reserved {{ nReserved }}</span>
+    </div>
+    <div style="position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);z-index:40">
+      <span style="width:32px;padding:6px 0;text-align:center;font:500 10px 'IBM Plex Mono',monospace;color:#55504A;border-bottom:1px solid #E7E1D8">Fit</span>
+      <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">+</span>
+      <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">−</span>
+      <span style="width:32px;height:32px;display:grid;place-items:center;color:#161616"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M7 3.5H3.5V7M13 3.5h3.5V7M7 16.5H3.5V13M13 16.5h3.5V13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+    </div>
+  </div>
+</div></div>
+
+<div class="dv-opt" id="1b"><div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Find, browse mode — click the field or ⌘K with no query: zone chips (hover previews the wash) + the A→Z directory. This IS the directory now; nothing docks.</div>
+<div class="dv-card" style="width:1240px;height:700px;position:relative;background:#ECE8E0" data-screen-label="1b Find palette — browse">
+  <div style="position:absolute;top:0;left:0;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:70">
+    <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;white-space:nowrap"><img src="docs/design_handoff_carbon_v12/public/images/megeredchian-mark.png" alt="" style="width:22px;height:22px;object-fit:contain">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></span>
+    <span style="margin:0 12px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 2px #FF5715;padding:0 9px;flex:1;min-width:140px;max-width:440px">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none" style="color:#B8AEA2;flex-shrink:0"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="flex:1;font-size:12px;color:#F4F4F4;white-space:nowrap;overflow:hidden">Find people, seats, zones…<span style="display:inline-block;width:1px;height:12px;background:#F4F4F4;vertical-align:-2px;margin-left:1px"></span></span>
+      <span style="font-size:11px;color:#B8AEA2">Esc</span>
+    </div>
+    <div style="flex:1"></div>
+    <span style="display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;font-size:11px;font-weight:500;color:#B8AEA2"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V9.5a6 6 0 0 1 12 0V11"></path><path d="M4 11h2v3.5H4.6A.6.6 0 0 1 4 13.9V11ZM16 11h-2v3.5h1.4a.6.6 0 0 0 .6-.6V11Z"></path></svg>Reception</span>
+    <span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#B8AEA2;border:1px solid rgba(255,255,255,.2);padding:3px 8px;white-space:nowrap">VIEWER · READ-ONLY</span>
+    <span style="margin:0 12px;width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;flex-shrink:0">V</span>
+  </div>
+  <div style="position:absolute;top:36px;left:0;right:0;bottom:0;overflow:hidden">
+    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:1180px">
+      <img src="docs/design_handoff_carbon_v12/public/images/office-floor-plan.webp" alt="" draggable="false" style="display:block;width:100%">
+      <div style="position:absolute;left:{{ washLeft }};top:{{ washTop }};width:{{ washW }};height:{{ washH }};background:rgba(255,87,21,.09);border:1.5px solid rgba(210,63,10,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4);z-index:5">
+        <span style="position:absolute;top:-11px;left:10px;background:#D23F0A;color:#fff;font-size:10px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;white-space:nowrap">Southeast Office · {{ washCount }} seats</span>
+      </div>
+      <sc-for list="{{ aCodes }}" as="s" hint-placeholder-count="6">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:{{ s.h }};min-width:{{ s.w }};max-width:{{ s.maxw }};border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.shadow }};display:flex;flex-direction:column;align-items:{{ s.align }};justify-content:center;z-index:{{ s.z }};opacity:{{ s.op }};padding:{{ s.pad }}">
+          <span style="font-size:{{ s.codeSize }};font-weight:800;letter-spacing:.02em;line-height:1.05;white-space:nowrap;opacity:{{ s.codeOp }}">{{ s.label }}</span>
+          <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ aPlates }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:150px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.shadow }};padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:{{ p.z }};opacity:{{ p.op }};text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.label }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+          <sc-if value="{{ p.title }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:600;line-height:1.2;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span></sc-if>
+        </span>
+      </sc-for>
+    </div>
+    <div style="position:absolute;left:246px;top:6px;width:560px;max-height:560px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 16px 48px rgba(22,22,22,.28);z-index:60;display:flex;flex-direction:column">
+      <div style="padding:12px 16px 10px;border-bottom:1px solid #F0ECE5">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">ZONES — HOVER TO PREVIEW, ENTER TO FILTER</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+          <sc-for list="{{ zoneChips }}" as="zc" hint-placeholder-count="4">
+            <span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid {{ zc.bd }};background:{{ zc.bg }};color:{{ zc.fg }};padding:4px 10px;font-size:11px;font-weight:600;white-space:nowrap">{{ zc.label }} <span style="font:600 10px 'IBM Plex Mono',monospace;opacity:.75">{{ zc.count }}</span></span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="padding:10px 16px 4px;display:flex;align-items:baseline;justify-content:space-between">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">PEOPLE — A TO Z</span>
+        <span style="font-size:11px;color:#6E655A">{{ dirCount }} people · {{ dirSeated }} seated</span>
+      </div>
+      <div style="padding:0 8px 8px;overflow:hidden">
+        <sc-for list="{{ browseRows }}" as="r" hint-placeholder-count="6">
+          <span style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid #F7F4EF">
+            <span style="width:26px;height:26px;border-radius:999px;background:#F7F6F2;color:#55504A;display:grid;place-items:center;font-size:10px;font-weight:700">{{ r.initials }}</span>
+            <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:#161616;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span><span style="display:block;font-size:11px;color:#6E655A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.sub }}</span></span>
+            <span style="border:1px solid #E7E1D8;background:#F7F6F2;border-radius:999px;padding:2px 8px;font:600 10px 'IBM Plex Mono',monospace;color:#55504A">{{ r.seat }}</span>
+          </span>
+        </sc-for>
+        <span style="display:block;padding:9px 8px 2px;font-size:11.5px;color:#6E655A">{{ browseMore }} — keep typing to narrow, or scroll</span>
+      </div>
+      <div style="border-top:1px solid #E7E1D8;padding:8px 16px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:#8E8276"><kbd style="font:600 9.5px 'IBM Plex Mono',monospace;border:1px solid #D8D0C5;padding:1px 4px;color:#55504A">↑↓</kbd> move · <kbd style="font:600 9.5px 'IBM Plex Mono',monospace;border:1px solid #D8D0C5;padding:1px 4px;color:#55504A">Enter</kbd> opens · <kbd style="font:600 9.5px 'IBM Plex Mono',monospace;border:1px solid #D8D0C5;padding:1px 4px;color:#55504A">Esc</kbd> closes</span>
+        <span style="font-size:11px;color:#8E8276">Hovering a row lights its seat on the map</span>
+      </div>
+    </div>
+    <div style="position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:8px 14px;z-index:40">
+      <span style="font-size:12px;font-weight:600;color:#161616">{{ totalSeats }} seats</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#1D6E41"></span>Assigned {{ nAssigned }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8E8276"></span>Open {{ nOpen }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8A6116"></span>Reserved {{ nReserved }}</span>
+    </div>
+  </div>
+</div></div>
+
+<div class="dv-opt" id="1c"><div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Find, query mode — "paralegal": grouped results with kind icons; matched seats light up with the orange search treatment behind the palette, everything else dims to 35%.</div>
+<div class="dv-card" style="width:1240px;height:700px;position:relative;background:#ECE8E0" data-screen-label="1c Find palette — query">
+  <div style="position:absolute;top:0;left:0;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:70">
+    <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;white-space:nowrap"><img src="docs/design_handoff_carbon_v12/public/images/megeredchian-mark.png" alt="" style="width:22px;height:22px;object-fit:contain">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></span>
+    <span style="margin:0 12px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 2px #FF5715;padding:0 9px;flex:1;min-width:140px;max-width:440px">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none" style="color:#B8AEA2;flex-shrink:0"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="flex:1;font-size:12px;color:#F4F4F4;white-space:nowrap;overflow:hidden">paralegal<span style="display:inline-block;width:1px;height:12px;background:#F4F4F4;vertical-align:-2px;margin-left:1px"></span></span>
+      <span style="color:#B8AEA2;font-size:12px">✕</span>
+    </div>
+    <span style="margin-left:10px;font-size:11.5px;font-weight:600;color:#FF5715;white-space:nowrap">{{ matchLabel }}</span>
+    <div style="flex:1"></div>
+    <span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#B8AEA2;border:1px solid rgba(255,255,255,.2);padding:3px 8px;white-space:nowrap">VIEWER · READ-ONLY</span>
+    <span style="margin:0 12px;width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;flex-shrink:0">V</span>
+  </div>
+  <div style="position:absolute;top:36px;left:0;right:0;bottom:0;overflow:hidden">
+    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:1180px">
+      <img src="docs/design_handoff_carbon_v12/public/images/office-floor-plan.webp" alt="" draggable="false" style="display:block;width:100%;filter:saturate(.92)">
+      <sc-for list="{{ cCodes }}" as="s" hint-placeholder-count="6">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:{{ s.h }};min-width:{{ s.w }};max-width:{{ s.maxw }};border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.shadow }};display:flex;flex-direction:column;align-items:{{ s.align }};justify-content:center;z-index:{{ s.z }};opacity:{{ s.op }};padding:{{ s.pad }}">
+          <span style="font-size:{{ s.codeSize }};font-weight:800;letter-spacing:.02em;line-height:1.05;white-space:nowrap;opacity:{{ s.codeOp }}">{{ s.label }}</span>
+          <sc-if value="{{ s.nameLine }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:700;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:104px">{{ s.name }}</span></sc-if>
+          <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ cPlates }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:150px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.shadow }};padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:{{ p.z }};opacity:{{ p.op }};text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.label }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+          <sc-if value="{{ p.title }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:600;line-height:1.2;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span></sc-if>
+        </span>
+      </sc-for>
+    </div>
+    <div style="position:absolute;left:246px;top:6px;width:560px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 16px 48px rgba(22,22,22,.28);z-index:60;display:flex;flex-direction:column">
+      <div style="padding:10px 16px 4px;display:flex;align-items:baseline;justify-content:space-between">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">PEOPLE · {{ queryPeopleCount }}</span>
+        <span style="font-size:11px;color:#6E655A">{{ matchLabel }}</span>
+      </div>
+      <div style="padding:0 8px 4px">
+        <sc-for list="{{ queryRows }}" as="r" hint-placeholder-count="5">
+          <span style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid #F7F4EF;background:{{ r.bg }}">
+            <span style="width:26px;height:26px;border-radius:999px;background:#FBEAE1;color:#9E2F06;display:grid;place-items:center;font-size:10px;font-weight:700">{{ r.initials }}</span>
+            <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:#161616;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span><span style="display:block;font-size:11px;color:#6E655A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.sub }}</span></span>
+            <span style="border:1px solid #E7E1D8;background:#F7F6F2;border-radius:999px;padding:2px 8px;font:600 10px 'IBM Plex Mono',monospace;color:#55504A">{{ r.seat }}</span>
+          </span>
+        </sc-for>
+        <span style="display:block;padding:9px 8px;font-size:11.5px;color:#6E655A">{{ queryMore }}</span>
+      </div>
+      <div style="padding:4px 16px 10px;border-top:1px solid #F0ECE5">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">DEPARTMENTS · 0 &nbsp;·&nbsp; ZONES · 0 &nbsp;·&nbsp; SEATS · 0</span>
+      </div>
+      <div style="border-top:1px solid #E7E1D8;padding:8px 16px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:#8E8276"><kbd style="font:600 9.5px 'IBM Plex Mono',monospace;border:1px solid #D8D0C5;padding:1px 4px;color:#55504A">↑↓</kbd> move · <kbd style="font:600 9.5px 'IBM Plex Mono',monospace;border:1px solid #D8D0C5;padding:1px 4px;color:#55504A">Enter</kbd> opens · <kbd style="font:600 9.5px 'IBM Plex Mono',monospace;border:1px solid #D8D0C5;padding:1px 4px;color:#55504A">Esc</kbd> clears</span>
+        <span style="font-size:11px;font-weight:600;color:#9E2F06">{{ queryMapped }} seats lit on the map</span>
+      </div>
+    </div>
+    <div style="position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:8px 14px;z-index:40">
+      <span style="font-size:12px;font-weight:600;color:#161616">{{ totalSeats }} seats</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#1D6E41"></span>Assigned {{ nAssigned }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8E8276"></span>Open {{ nOpen }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8A6116"></span>Reserved {{ nReserved }}</span>
+      <span style="font-size:11.5px;color:#55504A;border-left:1px solid #E7E1D8;padding-left:14px">{{ matchLabel }}</span>
+    </div>
+  </div>
+</div></div>
+
+<div class="dv-opt" id="1d"><div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Seat selected — floating read-only card. No tabs, no admin verbs: contact facts plus the two viewer actions (copy email, copy map link). Selected pill keeps the owner-locked treatment.</div>
+<div class="dv-card" style="width:1240px;height:700px;position:relative;background:#ECE8E0" data-screen-label="1d Seat card (read-only)">
+  <div style="position:absolute;top:0;left:0;right:0;height:36px;background:#161616;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;padding-left:12px;color:#F7F6F2;z-index:70">
+    <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;white-space:nowrap"><img src="docs/design_handoff_carbon_v12/public/images/megeredchian-mark.png" alt="" style="width:22px;height:22px;object-fit:contain">Megeredchian Law <span style="font-weight:400;color:#B8AEA2">· Seat Planner</span></span>
+    <span style="margin:0 12px;width:1px;height:22px;background:rgba(255,255,255,.10)"></span>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:0 9px;flex:1;min-width:140px;max-width:440px">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none" style="color:#8f8f8f;flex-shrink:0"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="flex:1;font-size:12px;color:#8f8f8f;white-space:nowrap;overflow:hidden">Find people, seats, zones…</span>
+      <span style="font:600 9.5px 'IBM Plex Mono',monospace;background:#262626;border:1px solid rgba(255,255,255,.15);padding:1px 5px;color:#B8AEA2">Ctrl K</span>
+    </div>
+    <div style="flex:1"></div>
+    <span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#B8AEA2;border:1px solid rgba(255,255,255,.2);padding:3px 8px;white-space:nowrap">VIEWER · READ-ONLY</span>
+    <span style="margin:0 12px;width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;flex-shrink:0">V</span>
+  </div>
+  <div style="position:absolute;top:36px;left:0;right:0;bottom:0;overflow:hidden">
+    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:1180px">
+      <img src="docs/design_handoff_carbon_v12/public/images/office-floor-plan.webp" alt="" draggable="false" style="display:block;width:100%">
+      <sc-for list="{{ dCodes }}" as="s" hint-placeholder-count="6">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:{{ s.h }};min-width:{{ s.w }};max-width:{{ s.maxw }};border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.shadow }};display:flex;flex-direction:column;align-items:{{ s.align }};justify-content:center;z-index:{{ s.z }};opacity:{{ s.op }};padding:{{ s.pad }}">
+          <span style="font-size:{{ s.codeSize }};font-weight:800;letter-spacing:.02em;line-height:1.05;white-space:nowrap;opacity:{{ s.codeOp }}">{{ s.label }}</span>
+          <sc-if value="{{ s.nameLine }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:700;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:104px">{{ s.name }}</span></sc-if>
+          <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ dPlates }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:150px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.shadow }};padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:{{ p.z }};opacity:{{ p.op }};text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.label }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+          <sc-if value="{{ p.title }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:600;line-height:1.2;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span></sc-if>
+          <sc-if value="{{ p.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+    </div>
+    <div style="position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;z-index:40">
+      <span style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12.5px;font-weight:600;color:#161616">Floor 3 · Pre-Litigation <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style="color:#6E655A"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
+      <span style="background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12px;color:#6E655A">Office map · {{ totalSeats }} seats</span>
+    </div>
+    <div style="position:absolute;top:12px;right:12px;bottom:12px;width:300px;background:#161616;border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 40px rgba(22,22,22,.32);color:#F7F6F2;display:flex;flex-direction:column;z-index:60">
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:14px 16px 10px">
+        <span style="width:36px;height:36px;border-radius:999px;background:#FBEAE1;color:#9E2F06;display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0">AM</span>
+        <span style="min-width:0;flex:1"><span style="display:block;font-size:15px;font-weight:600;line-height:1.25">Aria Moretti</span><span style="display:block;font-size:12px;color:#B8AEA2;margin-top:1px">Associate Attorney</span></span>
+        <span style="color:#B8AEA2;font-size:14px;line-height:1;padding:4px 6px">✕</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:0 16px 12px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.10);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#D8D0C5"><span style="width:6px;height:6px;border-radius:999px;background:#42be65"></span>Assigned</span>
+        <span style="background:rgba(255,255,255,.10);padding:3px 8px;font:600 11px 'IBM Plex Mono',monospace;color:#D8D0C5">C05</span>
+        <span style="background:rgba(255,255,255,.10);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#D8D0C5">Center Desks</span>
+      </div>
+      <div style="flex:1;min-height:0;overflow:hidden;padding:6px 16px 0;border-top:1px solid rgba(255,255,255,.08)">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276;padding-top:8px">CONTACT</div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0 4px;font-size:12px"><span style="color:#B8AEA2">Email</span><span style="color:#F7F6F2;max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">aria.moretti@megeredchianlaw.com</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.08)"><span style="color:#B8AEA2">Extension</span><span style="color:#F7F6F2;font-family:'IBM Plex Mono',monospace">2140</span></div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276;margin-top:12px">SEAT</div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0 4px;font-size:12px"><span style="color:#B8AEA2">Zone</span><span style="color:#F7F6F2;font-weight:600">Center Desks</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px"><span style="color:#B8AEA2">Department</span><span style="color:#F7F6F2;font-weight:600">Case Management</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.08)"><span style="color:#B8AEA2">Neighbors</span><span style="color:#F7F6F2">Bodhi Rana · Brandon O.</span></div>
+      </div>
+      <div style="display:flex;gap:1px;padding:12px 16px 6px">
+        <span style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:#262626;padding:11px 0;font-size:12px;font-weight:600;color:#F4F4F4"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="7" y="7" width="9" height="9"></rect><path d="M13 7V4H4v9h3"></path></svg>Copy email</span>
+        <span style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:#262626;padding:11px 0;font-size:12px;font-weight:600;color:#F4F4F4"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 12l4-4M6.5 9.5 5 11a3 3 0 0 0 4 4l1.5-1.5M13.5 10.5 15 9a3 3 0 0 0-4-4L9.5 6.5"></path></svg>Copy map link</span>
+      </div>
+      <div style="padding:0 16px 12px;font-size:10.5px;color:#8E8276">Published map · read-only · link opens with this seat selected</div>
+    </div>
+    <div style="position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:8px 14px;z-index:40">
+      <span style="font-size:12px;font-weight:600;color:#161616">{{ totalSeats }} seats</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#1D6E41"></span>Assigned {{ nAssigned }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8E8276"></span>Open {{ nOpen }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8A6116"></span>Reserved {{ nReserved }}</span>
+    </div>
+  </div>
+</div></div>
+
+<div class="dv-opt" id="1e"><div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Light chrome variant — same anatomy on a white bar (Carbon light UI shell, firm neutrals). Everything else is identical; the choice is a one-token theme swap.</div>
+<div class="dv-card" style="width:1240px;height:700px;position:relative;background:#ECE8E0" data-screen-label="1e Light chrome">
+  <div style="position:absolute;top:0;left:0;right:0;height:36px;background:#FFFFFF;border-bottom:1px solid #E7E1D8;display:flex;align-items:center;padding-left:12px;color:#161616;z-index:70">
+    <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;white-space:nowrap"><img src="docs/design_handoff_carbon_v12/public/images/megeredchian-mark.png" alt="" style="width:22px;height:22px;object-fit:contain">Megeredchian Law <span style="font-weight:400;color:#6E655A">· Seat Planner</span></span>
+    <span style="margin:0 12px;width:1px;height:22px;background:#E7E1D8"></span>
+    <div style="display:flex;align-items:center;gap:7px;height:24px;background:#F7F6F2;border:1px solid #D8D0C5;padding:0 9px;flex:1;min-width:140px;max-width:440px">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="none" style="color:#6E655A;flex-shrink:0"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      <span style="flex:1;font-size:12px;color:#6E655A;white-space:nowrap;overflow:hidden">Find people, seats, zones…</span>
+      <span style="font:600 9.5px 'IBM Plex Mono',monospace;background:#fff;border:1px solid #D8D0C5;padding:1px 5px;color:#55504A">Ctrl K</span>
+    </div>
+    <div style="flex:1"></div>
+    <span style="display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;font-size:11px;font-weight:500;color:#55504A"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V9.5a6 6 0 0 1 12 0V11"></path><path d="M4 11h2v3.5H4.6A.6.6 0 0 1 4 13.9V11ZM16 11h-2v3.5h1.4a.6.6 0 0 0 .6-.6V11Z"></path></svg>Reception</span>
+    <span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#55504A;border:1px solid #D8D0C5;padding:3px 8px;white-space:nowrap">VIEWER · READ-ONLY</span>
+    <span style="margin:0 12px;width:26px;height:26px;border-radius:999px;background:#FC672A;color:#161616;display:grid;place-items:center;font-size:11px;font-weight:600;flex-shrink:0">V</span>
+  </div>
+  <div style="position:absolute;top:36px;left:0;right:0;bottom:0;overflow:hidden">
+    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:1180px">
+      <img src="docs/design_handoff_carbon_v12/public/images/office-floor-plan.webp" alt="" draggable="false" style="display:block;width:100%">
+      <sc-for list="{{ aCodes2 }}" as="s" hint-placeholder-count="6">
+        <span style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);height:{{ s.h }};min-width:{{ s.w }};max-width:{{ s.maxw }};border-radius:999px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.shadow }};display:flex;flex-direction:column;align-items:{{ s.align }};justify-content:center;z-index:{{ s.z }};opacity:{{ s.op }};padding:{{ s.pad }}">
+          <span style="font-size:{{ s.codeSize }};font-weight:800;letter-spacing:.02em;line-height:1.05;white-space:nowrap;opacity:{{ s.codeOp }}">{{ s.label }}</span>
+          <sc-if value="{{ s.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-2px;right:-2px;width:6px;height:6px;border-radius:999px;background:#1D6E41;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)"></span></sc-if>
+        </span>
+      </sc-for>
+      <sc-for list="{{ aPlates2 }}" as="p" hint-placeholder-count="2">
+        <span style="position:absolute;left:{{ p.left }};top:{{ p.top }};transform:translate(-50%,-50%);width:150px;border-radius:8px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.shadow }};padding:6px 14px;display:flex;flex-direction:column;gap:1px;z-index:{{ p.z }};opacity:{{ p.op }};text-align:left">
+          <span style="font-size:8.5px;font-weight:800;letter-spacing:.09em;opacity:.7">{{ p.label }}</span>
+          <span style="font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+          <sc-if value="{{ p.title }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:600;line-height:1.2;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span></sc-if>
+        </span>
+      </sc-for>
+    </div>
+    <div style="position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;z-index:40">
+      <span style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12.5px;font-weight:600;color:#161616">Floor 3 · Pre-Litigation <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style="color:#6E655A"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
+      <span style="background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12px;color:#6E655A">Office map · {{ totalSeats }} seats</span>
+      <span style="background:#fff;border-radius:999px;box-shadow:0 6px 16px rgba(22,22,22,.14),0 0 0 1px #E7E1D8;padding:6px 11px;font-size:11px;font-weight:600;color:#55504A">Updated Aug 8, 2026</span>
+    </div>
+    <div style="position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:8px 14px;z-index:40">
+      <span style="font-size:12px;font-weight:600;color:#161616">{{ totalSeats }} seats</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#1D6E41"></span>Assigned {{ nAssigned }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8E8276"></span>Open {{ nOpen }}</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#55504A"><span style="width:7px;height:7px;border-radius:999px;background:#8A6116"></span>Reserved {{ nReserved }}</span>
+    </div>
+    <div style="position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);z-index:40">
+      <span style="width:32px;padding:6px 0;text-align:center;font:500 10px 'IBM Plex Mono',monospace;color:#55504A;border-bottom:1px solid #E7E1D8">Fit</span>
+      <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">+</span>
+      <span style="width:32px;height:32px;display:grid;place-items:center;border-bottom:1px solid #E7E1D8;font-size:15px;color:#161616">−</span>
+      <span style="width:32px;height:32px;display:grid;place-items:center;color:#161616"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M7 3.5H3.5V7M13 3.5h3.5V7M7 16.5H3.5V13M13 16.5h3.5V13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+    </div>
+  </div>
+</div></div>
+
+<div class="dv-opt" id="1f"><div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Edge states — no results (with escape hatches), the unmapped Floor 2 placeholder, and how an unseated person reads in Find (disabled row, honest copy).</div>
+<div style="display:flex;gap:16px;align-items:flex-start">
+  <div class="dv-card" style="width:400px" data-screen-label="1f No results">
+    <div style="background:#161616;padding:8px 10px"><div style="display:flex;align-items:center;gap:7px;height:24px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 2px #FF5715;padding:0 9px"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" style="color:#B8AEA2"><circle cx="9" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"></circle><path d="m13 13 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg><span style="flex:1;font-size:12px;color:#F4F4F4">marissa</span><span style="color:#B8AEA2;font-size:12px">✕</span></div></div>
+    <div style="padding:16px">
+      <div style="font-size:13.5px;font-weight:600;color:#161616">No matches for “marissa”</div>
+      <p style="margin:6px 0 0;font-size:12px;line-height:1.55;color:#6E655A">People, seats, departments and zones were all checked against the published map.</p>
+      <div style="margin-top:12px;font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">TRY INSTEAD</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+        <span style="border:1px solid #D8D0C5;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:600;color:#55504A">A last name</span>
+        <span style="border:1px solid #D8D0C5;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:600;color:#55504A">A seat code · C05</span>
+        <span style="border:1px solid #D8D0C5;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:600;color:#55504A">A zone · North Pod</span>
+      </div>
+      <span style="display:inline-block;margin-top:14px;border:1px solid #E7E1D8;background:#fff;padding:7px 12px;font-size:11px;font-weight:600;color:#55504A">Clear search</span>
+      <p style="margin:12px 0 0;font-size:10.5px;color:#8E8276">New hires appear after the next publish — the map everyone sees updates only then.</p>
+    </div>
+  </div>
+  <div class="dv-card" style="width:400px;height:300px;position:relative;background:#ECE8E0" data-screen-label="1f Floor 2 placeholder">
+    <div style="position:absolute;left:10px;top:10px;z-index:40">
+      <span style="display:inline-flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.14);padding:7px 11px;font-size:12.5px;font-weight:600;color:#161616">Floor 2 · Litigation <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style="color:#6E655A"><path d="m5.5 8 4.5 4.5L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
+      <div style="margin-top:4px;min-width:230px;background:#fff;border:1px solid #E7E1D8;box-shadow:0 6px 16px rgba(22,22,22,.18);padding:4px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;font-size:12.5px;color:#161616"><span>Floor 3 · Pre-Litigation</span><span style="color:#1D6E41">✓</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;font-size:12.5px;font-weight:600;background:#F7F6F2;color:#161616"><span>Floor 2 · Litigation</span><span style="border:1px solid #E7E1D8;padding:0.5px 6px;font-size:9.5px;font-weight:500;color:#6E655A">SOON</span></div>
+      </div>
+    </div>
+    <div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px">
+      <div><div style="font-size:13.5px;font-weight:600;color:#161616">Floor 2 · Litigation</div><p style="margin:4px 0 0;font-size:11.5px;color:#6E655A">Not yet mapped — reserved for a future rollout.</p></div>
+    </div>
+  </div>
+  <div class="dv-card" style="width:400px" data-screen-label="1f Unseated person">
+    <div style="padding:10px 16px 4px"><span style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#8E8276">PEOPLE · 2</span></div>
+    <div style="padding:0 8px 6px">
+      <span style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid #F7F4EF">
+        <span style="width:26px;height:26px;border-radius:999px;background:#FBEAE1;color:#9E2F06;display:grid;place-items:center;font-size:10px;font-weight:700">TB</span>
+        <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:#161616">Tessa Boyd</span><span style="display:block;font-size:11px;color:#6E655A">SE02 · Records Manager</span></span>
+        <span style="border:1px solid #E7E1D8;background:#F7F6F2;border-radius:999px;padding:2px 8px;font:600 10px 'IBM Plex Mono',monospace;color:#55504A">SE02</span>
+      </span>
+      <span style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 8px;opacity:.6">
+        <span style="width:26px;height:26px;border-radius:999px;background:#F7F6F2;color:#8E8276;display:grid;place-items:center;font-size:10px;font-weight:700">WT</span>
+        <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:#161616">Wes Tanaka</span><span style="display:block;font-size:11px;color:#6E655A">Paralegal · Litigation</span></span>
+        <span style="font-size:10px;color:#8E8276">No seat on the published map</span>
+      </span>
+    </div>
+    <div style="border-top:1px solid #E7E1D8;padding:9px 16px 12px"><p style="margin:0;font-size:10.5px;line-height:1.5;color:#8E8276">Unseated people stay listed but can't be opened — there is no seat to select. The row is real data, not an error: seat assignments reach viewers at the next publish.</p></div>
+  </div>
+</div></div>
+
+</div>
+<p class="dv-next">Try next: "make the palette full-height like a drawer" · "show the dark seat card on the light chrome" · "swap the browse zones for departments" · "more riffs on <a class="dv-oid" href="#1b">1b</a>"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    if (!window.SEAT_DATA) {
+      this._t = setInterval(() => { if (window.SEAT_DATA) { clearInterval(this._t); this.forceUpdate(); } }, 80);
+    } else { this.forceUpdate(); }
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+  renderVals() {
+    const seats = (window.SEAT_DATA && window.SEAT_DATA.seats) || [];
+    const pct = v => (v * 100).toFixed(3) + "%";
+    const baseShadow = "0 3px 9px rgba(23,26,29,.16),inset 0 1px 0 rgba(255,255,255,.85),0 0 0 1px rgba(255,255,255,.45)";
+    const tone = s => {
+      if (s.status === "assigned") return { bd: "rgba(29,110,65,.55)", bg: "rgba(255,255,255,.95)", fg: "#284C3B" };
+      if (s.status === "reserved") return { bd: "rgba(138,97,22,.55)", bg: "rgba(252,244,214,.95)", fg: "#6D4712" };
+      if (s.status === "unavailable") return { bd: "rgba(190,180,168,.9)", bg: "rgba(231,225,216,.92)", fg: "#696159" };
+      return { bd: "#B8AEA2", bg: "rgba(255,255,255,.95)", fg: "#453D33" };
+    };
+    const mkCode = (s, o) => {
+      o = o || {};
+      const seld = o.sel === s.label;
+      const m = o.match ? o.match(s) : false;
+      const t = tone(s);
+      let bd = t.bd, bg = t.bg, fg = t.fg, sh = baseShadow, z = 10, op = 1;
+      const drafted = o.draft && o.draft[s.label];
+      if (drafted && !seld) { bd = "rgba(138,97,22,.7)"; bg = "rgba(252,244,214,.95)"; fg = "#6D4712"; }
+      if (m && !seld) { bd = "#D23F0A"; bg = "#FBEAE1"; fg = "#9E2F06"; sh = "0 0 0 2px rgba(210,63,10,.55),0 0 0 4px rgba(255,87,21,.20),0 10px 20px -4px rgba(210,63,10,.35),inset 0 1px 0 rgba(255,255,255,.78)"; z = 25; }
+      if (o.match && !m && !seld) op = 0.35;
+      const aied = o.ai && o.ai[s.label];
+      if (o.ai && !aied && !seld) op = 0.35;
+      if (aied && !seld) { bd = "#4589ff"; bg = "linear-gradient(180deg,rgba(69,137,255,.14),rgba(255,255,255,0) 60%),#fff"; fg = "#0043ce"; sh = "0 0 0 2px rgba(69,137,255,.45),0 0 0 6px rgba(69,137,255,.18),0 10px 22px rgba(69,137,255,.35)"; z = 30; op = 1; }
+      if (seld) { bd = "#D46A24"; bg = "#171A1D"; fg = "#fff"; sh = "0 10px 24px rgba(31,35,39,.30),0 0 0 2px rgba(212,106,36,.9),inset 0 1px 0 rgba(255,255,255,.16)"; z = 40; op = 1; }
+      const nm = (seld || (m && s.name)) ? s.shortName : "";
+      return {
+        label: s.label, left: pct(s.x), top: pct(s.y),
+        bd, bg, fg, shadow: sh, z: String(z), op: String(op),
+        h: seld ? "42px" : nm ? "34px" : "24px",
+        w: seld ? "118px" : nm ? "86px" : "46px",
+        maxw: seld ? "126px" : nm ? "104px" : "56px",
+        pad: nm || seld ? "5px 13px" : "0 6px",
+        align: nm || seld ? "flex-start" : "center",
+        codeSize: seld ? "8.5px" : "9.5px",
+        codeOp: nm || seld ? ".7" : "1",
+        nameLine: !!nm, name: nm || "",
+        dot: s.status === "assigned" && !seld && !aied,
+        draftB: !!drafted && !seld, aiChip: !!aied && !seld
+      };
+    };
+    const mkPlate = (s, o) => {
+      o = o || {};
+      const seld = o.sel === s.label;
+      const m = o.match ? o.match(s) : false;
+      const t = tone(s);
+      let bd = t.bd, bg = t.bg, fg = t.fg, sh = baseShadow, z = 11, op = 1;
+      const drafted = o.draft && o.draft[s.label];
+      if (drafted && !seld) { bd = "rgba(138,97,22,.7)"; bg = "rgba(252,244,214,.95)"; fg = "#6D4712"; }
+      if (m && !seld) { bd = "#D23F0A"; bg = "#FBEAE1"; fg = "#9E2F06"; z = 25; }
+      if (o.match && !m && !seld) op = 0.35;
+      if (o.ai && !seld) op = o.ai[s.label] ? 1 : 0.35;
+      if (seld) { bd = "#D46A24"; sh = "0 0 0 2px rgba(212,106,36,.9),0 10px 24px rgba(31,35,39,.30)"; z = 40; op = 1; }
+      return {
+        label: s.label, left: pct(s.x), top: pct(s.y), bd, bg, fg, shadow: sh, z: String(z), op: String(op),
+        name: drafted ? "Open office" : (s.shortName || "Open office"), title: drafted ? "" : (s.position || ""),
+        dot: s.status === "assigned" && !drafted,
+        draftB: !!drafted
+      };
+    };
+    const build = o => ({
+      codes: seats.filter(s => s.kind === "code").map(s => mkCode(s, o)),
+      plates: seats.filter(s => s.kind === "plate").map(s => mkPlate(s, o))
+    });
+    const A = build({});
+    const isPara = s => (s.position || "").toLowerCase().includes("paralegal");
+    const C = build({ match: isPara });
+    const D = build({ sel: "C05" });
+    const draftSet = { OF01: true };
+    const AR = build({ draft: draftSet });
+    const AS = build({ sel: "C05", draft: draftSet });
+    const aiSet = { N09: true, N10: true, N11: true, N12: true };
+    const AA = build({ draft: draftSet, ai: aiSet });
+    const north = seats.filter(s => s.zone === "Southeast Office");
+    let w = { minX: 1, maxX: 0, minY: 1, maxY: 0 };
+    north.forEach(s => { w = { minX: Math.min(w.minX, s.x), maxX: Math.max(w.maxX, s.x), minY: Math.min(w.minY, s.y), maxY: Math.max(w.maxY, s.y) }; });
+    const padX = 0.022, padY = 0.042;
+    const nAssigned = seats.filter(s => s.status === "assigned").length;
+    const nOpen = seats.filter(s => s.status === "available").length;
+    const nReserved = seats.filter(s => s.status === "reserved").length;
+    const zonesMap = {};
+    seats.forEach(s => { zonesMap[s.zone] = (zonesMap[s.zone] || 0) + 1; });
+    const zoneChips = Object.keys(zonesMap).sort().map(z => z === "Southeast Office"
+      ? { label: z, count: String(zonesMap[z]), bd: "#D23F0A", bg: "#FBEAE1", fg: "#9E2F06" }
+      : { label: z, count: String(zonesMap[z]), bd: "#D8D0C5", bg: "#fff", fg: "#55504A" });
+    const seated = seats.filter(s => s.name).sort((a, b) => a.name.localeCompare(b.name));
+    const browseRows = seated.slice(0, 6).map(s => ({
+      initials: s.initials, name: s.name, sub: s.label + " · " + (s.position || s.dept), seat: s.label
+    }));
+    const paras = seated.filter(isPara);
+    const queryRows = paras.slice(0, 6).map((s, i) => ({
+      initials: s.initials, name: s.name, sub: s.label + " · " + s.position, seat: s.label,
+      bg: i === 0 ? "#FBF7F2" : "transparent"
+    }));
+    return {
+      aCodes: A.codes, aPlates: A.plates,
+      arCodes: AR.codes, arPlates: AR.plates,
+      asCodes: AS.codes, asPlates: AS.plates,
+      aaCodes: AA.codes, aaPlates: AA.plates,
+      aCodes2: A.codes, aPlates2: A.plates,
+      cCodes: C.codes, cPlates: C.plates,
+      dCodes: D.codes, dPlates: D.plates,
+      totalSeats: seats.length || "", nAssigned, nOpen, nReserved,
+      nAssignedDraft: nAssigned - 1, nOpenDraft: nOpen + 1,
+      washLeft: pct(w.minX - padX), washTop: pct(w.minY - padY),
+      washW: pct(w.maxX - w.minX + padX * 2), washH: pct(w.maxY - w.minY + padY * 2),
+      washCount: north.length,
+      zoneChips,
+      dirCount: seated.length + 2, dirSeated: seated.length,
+      browseRows, browseMore: (seated.length - 6) + " more people",
+      queryRows, queryMore: Math.max(0, paras.length - 6) + " more people match",
+      queryPeopleCount: paras.length, queryMapped: paras.length,
+      matchLabel: paras.length + " of " + seats.length + " match"
+    };
+  }
+}
+</script>
+</body>
+</html>

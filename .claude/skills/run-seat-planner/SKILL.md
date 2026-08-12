@@ -66,9 +66,9 @@ survived — kill that PID before trusting anything you see.
 node .claude/skills/run-seat-planner/driver.mjs --smoke
 ```
 
-It verifies: `/login` renders the sign-in form; unauthenticated `/` redirects to
-`/login`; bad credentials round-trip to real Supabase Auth and surface the error
-alert; the seeded e2e user signs in and the published viewer map renders; the
+It verifies: `/login` renders step 1 of the log-in form (identity only — no
+password field yet); unauthenticated `/` redirects to `/login`; bad credentials
+round-trip to real Supabase Auth and surface the error alert; the seeded e2e user signs in and the published viewer map renders; the
 dev-only `/concepts/map-redesign` prototype renders. Expect `PASS` × 6.
 
 **REPL mode** — pipe commands on stdin for ad-hoc driving:
@@ -147,18 +147,23 @@ need no auth at all.
 
 ## Gotchas
 
-- **The login form is a real `<form onSubmit>`.** The submit is
-  `button[type=submit]` and Enter submits. Still target it with
-  `button:text-is("Sign in")` rather than a substring match — the page `<h1>` is
-  also "Sign in". (This bullet used to claim the opposite; the form was
-  converted before 2026-07-28.)
-- **The submit button is disabled until hydration.** It server-renders as
-  "Starting up…" and only becomes an enabled "Sign in" once React mounts (#282),
-  so a `fill` + `click` right after `domcontentloaded` finds a dead control —
-  and before that fix, a click in that window ran the browser's native GET and
-  silently reloaded the page, discarding what had been typed. The driver's
-  `login` fills-and-polls until the button is enabled; do the same in any
-  hand-rolled flow.
+- **Log in is two steps.** Progressive auth (canvas 2a/2b): step 1 is the work
+  email + **Continue**, step 2 discloses the password + **Log in**. There is no
+  password field on screen until Continue is pressed, so any hand-rolled flow is
+  fill → Continue → fill → Log in. The `<h1>` on step 2 is also "Log in", so
+  target buttons with `button:text-is("Continue")` / `button:text-is("Log in")`
+  rather than a substring match.
+- **The step-1 primary is disabled until hydration.** It server-renders as
+  "Starting up…" and only becomes an enabled "Continue" once React mounts
+  (#282), so a `fill` + `click` right after `domcontentloaded` finds a dead
+  control — and before that fix, a click in that window ran the browser's native
+  GET and silently reloaded the page, discarding what had been typed.
+  Playwright's `click()` auto-waits for enabled, which is exactly this fence, so
+  the driver just clicks; only a hand-rolled `dispatchEvent` needs its own poll.
+- **Step 2 is where the alternatives live.** "Email me a sign-in link instead"
+  (behind the "or" divider), "Forgot password?", and the **Edit** button that
+  walks back to step 1. None of them exist on step 1 — an owner decision, not an
+  oversight.
 - **`[role=alert]` matches Next's route announcer.** Next keeps an
   always-present, empty `[role=alert]` on `<body>`, so a bare alert wait
   succeeds instantly with empty text. Scope to `main [role=alert]`.

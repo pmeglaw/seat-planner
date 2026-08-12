@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ignore-pattern \"supabase/.temp/**\" --ignore-pattern \"supabase/.branches/**\" --ignore-pattern \"coverage/**\" --ignore-pattern \"design_handoff_*/**\" --ignore-pattern \"docs/design_handoff_carbon_v12/support.js\"",
+    "lint": "eslint . --ignore-pattern \"supabase/.temp/**\" --ignore-pattern \"supabase/.branches/**\" --ignore-pattern \"coverage/**\" --ignore-pattern \"design_handoff_*/**\" --ignore-pattern \"docs/design_handoff_*/**\"",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
     "test:db": "node --test tests/rpc-execution.test.mjs tests/rls-execution.test.mjs tests/seat-protection-sql-agreement.test.mjs tests/text-length-constraints.test.mjs",

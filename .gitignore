@@ -36,6 +36,11 @@ next-env.d.ts
 # Design handoff bundles are local reference material (prototype HTML + specs),
 # not shipped source. Read them, don't commit them.
 /design_handoff_shell_v12/
+# The login bundle arrived wrapped around a full copy of repo source
+# (components/, lib/, app/globals.css). The handoff docs themselves ARE tracked
+# one level up — see docs/design_handoff_login_v12/README.md; only the
+# duplicated tree is ignored, because it shadows real files in every search.
+/docs/design_handoff_login_v12/ibm-carbon-v12-seats-viewer/
 
 # Production dumps carry the whole employee directory. scripts/backup-prod.mjs
 # already refuses to write inside the repo; this is the second line of defence

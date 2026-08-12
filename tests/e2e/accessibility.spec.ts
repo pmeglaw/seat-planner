@@ -20,7 +20,7 @@ import { formatAxeViolations, WCAG_A_AA_TAGS } from "./axe-helpers";
 
 test("the sign-in page has no WCAG A/AA violations", async ({ page }) => {
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Log in" })).toBeVisible();
 
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
   expect(formatAxeViolations(violations)).toEqual([]);
@@ -31,7 +31,7 @@ test("the sign-in page has no WCAG A/AA violations", async ({ page }) => {
 // called out. A real scan of a real page passes many rules, so assert it did.
 test("the axe scan actually inspects the page", async ({ page }) => {
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Log in" })).toBeVisible();
 
   const results = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
   expect(results.passes.length).toBeGreaterThan(0);
@@ -46,6 +46,40 @@ test("the axe scan actually inspects the page", async ({ page }) => {
 test("the sign-in error state has no WCAG A/AA violations", async ({ page }) => {
   await page.goto("/login?error=Invalid%20login%20credentials");
   await expect(page.locator("main [role=alert]")).toBeVisible();
+
+  const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
+  expect(formatAxeViolations(violations)).toEqual([]);
+});
+
+// Progressive auth put half the login behind a button press. Step 2 is its own
+// rendered surface — the email summary row, the "or" divider, the secondary
+// link button, Forgot password — and scanning only step 1 left all of it
+// unmeasured, which is precisely the blindness this tier exists to remove.
+test("the log-in password step has no WCAG A/AA violations", async ({ page }) => {
+  await page.goto("/login");
+
+  // Enabled before filling: the primary ships disabled as "Starting up…", and a
+  // fill landing pre-hydration is discarded by the controlled input.
+  const advance = page.getByRole("button", { name: "Continue", exact: true });
+  await expect(advance).toBeEnabled();
+  await page.locator('input[type="email"]').fill("person@example.test");
+  await advance.click();
+  await expect(page.locator('input[type="password"]')).toBeVisible();
+
+  const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
+  expect(formatAxeViolations(violations)).toEqual([]);
+});
+
+// The inline field error is a third colour state — a red rule, a red icon and
+// red 12px copy on the field fill — and it is the one a user is most likely to
+// be looking at while stuck.
+test("the inline field error has no WCAG A/AA violations", async ({ page }) => {
+  await page.goto("/login");
+
+  const advance = page.getByRole("button", { name: "Continue", exact: true });
+  await expect(advance).toBeEnabled();
+  await advance.click();
+  await expect(page.getByText("Email is required")).toBeVisible();
 
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
   expect(formatAxeViolations(violations)).toEqual([]);

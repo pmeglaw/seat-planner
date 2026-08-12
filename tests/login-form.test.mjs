@@ -15,38 +15,55 @@ import {
 
 // Interaction tests for the real LoginForm component: rendered in jsdom with the
 // Supabase client and the full-navigation seam (@/lib/fullNavigation) replaced
-// by controllable doubles, so we assert on validation, trimming, the auth calls
-// it makes, and the post-login redirect.
+// by controllable doubles, so we assert on the two-step disclosure, validation,
+// the auth calls it makes, and the post-login redirect.
 let LoginForm;
 before(async () => {
   ({ LoginForm } = await loadComponent("@/components/auth/LoginForm"));
 });
 afterEach(() => cleanup());
 
+const REMEMBERED_EMAIL_KEY = "seat-planner:login-email";
+
 // Build a Supabase auth double that records calls and returns the given results.
+//
+// A configured Error REJECTS instead of resolving. Auth calls really do reject
+// — createClient() throws on missing env and fetch rejects on a network drop —
+// and a double that only ever resolves cannot see a handler that leaves its
+// control disabled forever on that path.
+function settle(result) {
+  if (result instanceof Error) return Promise.reject(result);
+  return Promise.resolve(result ?? { error: null });
+}
+
 function makeSupabase(results = {}) {
   const calls = { password: [], otp: [], reset: [] };
   const supabase = {
     auth: {
-      signInWithPassword: async arg => {
+      signInWithPassword: arg => {
         calls.password.push(arg);
-        return results.password ?? { error: null };
+        return settle(results.password);
       },
-      signInWithOtp: async arg => {
+      signInWithOtp: arg => {
         calls.otp.push(arg);
-        return results.otp ?? { error: null };
+        return settle(results.otp);
       },
-      resetPasswordForEmail: async (email, options) => {
+      resetPasswordForEmail: (email, options) => {
         calls.reset.push({ email, options });
-        return results.reset ?? { error: null };
+        return settle(results.reset);
       }
     }
   };
   return { supabase, calls };
 }
 
-async function mountLogin({ url = "/login", results = {} } = {}) {
+async function mountLogin({ url = "/login", results = {}, rememberedEmail = null } = {}) {
   setUrl(url);
+  // jsdom's localStorage is process-wide and survives cleanup(), so every mount
+  // states the remember-email precondition explicitly instead of inheriting the
+  // previous test's.
+  window.localStorage.clear();
+  if (rememberedEmail) window.localStorage.setItem(REMEMBERED_EMAIL_KEY, rememberedEmail);
   // Post-login redirects are full document loads (lib/fullNavigation.ts), so
   // the assertion target is the navigation double, not router.push.
   const assigned = [];
@@ -57,8 +74,16 @@ async function mountLogin({ url = "/login", results = {} } = {}) {
 }
 
 const type = (selector, value) => act(async () => fireEvent.change(document.querySelector(selector), { target: { value } }));
+const click = name => act(async () => fireEvent.click(screen.getByRole("button", { name })));
 const submit = () => act(async () => fireEvent.submit(document.querySelector("form")));
 const flush = () => act(async () => {});
+
+// Step 1 asks for identity, step 2 for the credential. Most tests want to be on
+// step 2, so this is the shared way in.
+async function advanceToPassword(email = "person@example.com") {
+  await type('input[type="email"]', email);
+  await submit();
+}
 
 // UX-01 (#276): before hydration there is no onSubmit handler, so an enabled
 // submit button ran the browser's NATIVE submit — a GET back to /login that
@@ -72,67 +97,145 @@ test("server-rendered markup ships the submit button disabled and says why", asy
 
   assert.match(html, /Starting up…/, "pre-hydration label explains the disabled state");
   assert.match(html, /disabled/, "pre-hydration submit is disabled");
-  assert.doesNotMatch(html, /Sign in<\/button>/, "the live label must not render before hydration");
+  assert.doesNotMatch(html, /Continue<\/button>/, "the live label must not render before hydration");
+});
+
+// Progressive auth's structural guarantee: there is no password input in the
+// server HTML at all, so the pre-hydration native GET has no credential to
+// serialize even if the disabled guard above were ever lost.
+test("the server-rendered step 1 contains no password field", async () => {
+  const { supabase } = makeSupabase();
+  configureContext({ supabase });
+  const html = renderToStaticMarkup(React.createElement(LoginForm));
+
+  assert.doesNotMatch(html, /type="password"/);
+  // Inputs stay name-less on every step for the same reason.
+  assert.doesNotMatch(html, /<input[^>]*\sname=/);
 });
 
 test("hydration enables the submit button and restores its label", async () => {
   await mountLogin();
-  const submitButton = screen.getByRole("button", { name: "Sign in" });
+  const submitButton = screen.getByRole("button", { name: "Continue" });
   assert.equal(submitButton.disabled, false, "hydrated submit is clickable");
   assert.doesNotMatch(document.body.innerHTML, /Starting up…/);
 });
 
-// v12 slice 8 (owner ruling 2026-08-04): the Password / Magic-link mode tabs
-// became two actions in one row. Both credentials are always on screen, and
-// asking for a link is a single click instead of switch-then-submit — so there
-// is no mode to announce and no aria-pressed pair to assert.
-test("renders the sign-in form with both auth actions", async () => {
+// Owner decision (Aug 11 2026): step 1 is single-purpose. The magic link is
+// offered on step 2 and inside the failed-login notification — never here, and
+// never between a field and its primary button (the pattern's hierarchy rule).
+test("step 1 asks only for identity and offers no alternate login", async () => {
   await mountLogin();
-  assert.equal(screen.getByRole("heading", { name: "Sign in" }).tagName, "H1");
+  assert.equal(screen.getByRole("heading", { name: "Log in" }).tagName, "H1");
   assert.ok(document.querySelector('input[type="email"]'));
-  assert.ok(document.querySelector('input[type="password"]'));
-  assert.equal(screen.getByRole("button", { name: "Sign in" }).getAttribute("type"), "submit");
-  // The link request must never be a submit: it would race the password path.
-  assert.equal(screen.getByRole("button", { name: /Magic link/ }).getAttribute("type"), "button");
+  assert.equal(document.querySelector('input[type="password"]'), null, "password is not disclosed yet");
+  assert.equal(screen.getByRole("button", { name: "Continue" }).getAttribute("type"), "submit");
+  assert.equal(screen.queryByRole("button", { name: /sign-in link/i }), null, "no magic link on step 1");
+  assert.equal(screen.queryByRole("button", { name: /Forgot password/ }), null, "no reset on step 1");
 });
 
-// tests/e2e-auth/auth-helpers.ts signs in with button:text-is("Sign in") — the
-// heading is also "Sign in", which is why it uses text-is rather than has-text.
-// Playwright binds that engine to the SMALLEST element containing the text, so
-// wrapping the label in a span (for a label-left/arrow-right split, say) makes
-// the span capture it and the button stop matching, and every authenticated e2e
-// test loses its sign-in step. Keep the label a direct text child.
-test("the submit label is a direct text child so the e2e sign-in locator still binds", async () => {
+test("Continue discloses the password step and carries the email into a summary row", async () => {
   await mountLogin();
-  const submitButton = screen.getByRole("button", { name: "Sign in" });
-  const ownText = Array.from(submitButton.childNodes)
-    .filter(node => node.nodeType === 3)
-    .map(node => node.textContent)
-    .join("")
-    .trim();
+  await advanceToPassword("person@example.com");
 
-  assert.equal(ownText, "Sign in");
-  assert.equal(submitButton.textContent.trim(), "Sign in", "decoration must not add text");
+  assert.ok(document.querySelector('input[type="password"]'), "password is disclosed");
+  assert.equal(document.querySelector('input[type="email"]'), null, "email becomes a summary row, not a second field");
+  assert.match(document.body.textContent, /person@example\.com/);
+  assert.equal(screen.getByRole("button", { name: "Log in" }).getAttribute("type"), "submit");
+  // The link request must never be a submit: it would race the password path.
+  assert.equal(screen.getByRole("button", { name: /sign-in link/i }).getAttribute("type"), "button");
+  assert.ok(screen.getByRole("button", { name: "Edit" }), "the way back");
+  assert.ok(screen.getByRole("button", { name: /Forgot password/ }));
 });
 
-test("submitting with no email shows a validation alert and makes no auth call", async () => {
+// tests/e2e-auth/auth-helpers.ts drives the flow with button:text-is("Continue")
+// then button:text-is("Log in") — and the step-2 heading is also "Log in", which
+// is why it uses text-is rather than has-text. Playwright binds that engine to
+// the SMALLEST element containing the text, so wrapping a label in a span (for a
+// label-left/arrow-right split, say) makes the span capture it and the button
+// stop matching, and every authenticated e2e test loses its sign-in step. Keep
+// both labels direct text children.
+test("both primary labels are direct text children so the e2e locators still bind", async () => {
+  await mountLogin();
+
+  const ownText = button =>
+    Array.from(button.childNodes)
+      .filter(node => node.nodeType === 3)
+      .map(node => node.textContent)
+      .join("")
+      .trim();
+
+  const advance = screen.getByRole("button", { name: "Continue" });
+  assert.equal(ownText(advance), "Continue");
+  assert.equal(advance.textContent.trim(), "Continue", "decoration must not add text");
+
+  await advanceToPassword();
+  const login = screen.getByRole("button", { name: "Log in" });
+  assert.equal(ownText(login), "Log in");
+  assert.equal(login.textContent.trim(), "Log in", "decoration must not add text");
+});
+
+test("Continue with no email shows the inline error and makes no auth call", async () => {
   const { calls } = await mountLogin();
   await submit();
-  assert.match(screen.getByRole("alert").textContent, /Enter your work email and password/);
+
+  assert.match(document.body.textContent, /Email is required/);
+  assert.ok(document.querySelector('input[type="email"]'), "the form stays on step 1");
   assert.equal(calls.password.length, 0);
+  assert.equal(document.activeElement, document.querySelector('input[type="email"]'));
 });
 
-test("password mode requires a password", async () => {
-  const { calls } = await mountLogin();
+// Format only — a well-formed address always advances, so the check can never
+// become an oracle for which accounts exist.
+test("Continue rejects a malformed address and accepts any well-formed one", async () => {
+  await mountLogin();
+  await type('input[type="email"]', "not-an-email");
+  await submit();
+  assert.match(document.body.textContent, /Enter a valid email address/);
+  assert.ok(document.querySelector('input[type="email"]'), "still on step 1");
+
+  await type('input[type="email"]', "nobody@example.com");
+  await submit();
+  assert.ok(document.querySelector('input[type="password"]'), "unknown addresses advance just the same");
+});
+
+test("the inline email error clears as soon as the field is corrected", async () => {
+  await mountLogin();
+  await submit();
+  assert.match(document.body.textContent, /Email is required/);
+
   await type('input[type="email"]', "person@example.com");
+  assert.doesNotMatch(document.body.textContent, /Email is required/);
+});
+
+test("step 2 requires a password", async () => {
+  const { calls } = await mountLogin();
+  await advanceToPassword();
   await submit();
-  assert.match(screen.getByRole("alert").textContent, /Enter your password/);
+
+  assert.match(document.body.textContent, /Password is required/);
   assert.equal(calls.password.length, 0);
+  assert.equal(document.activeElement, document.querySelector('input[type="password"]'));
+});
+
+test("Edit returns to step 1 with the email intact", async () => {
+  await mountLogin();
+  await advanceToPassword("person@example.com");
+  await type('input[type="password"]', "hunter2");
+  await click("Edit");
+
+  const emailInput = document.querySelector('input[type="email"]');
+  assert.ok(emailInput, "back on step 1");
+  assert.equal(emailInput.value, "person@example.com", "no retyping");
+  assert.equal(document.activeElement, emailInput);
+
+  // The password must not survive the round trip.
+  await advanceToPassword("person@example.com");
+  assert.equal(document.querySelector('input[type="password"]').value, "");
 });
 
 test("successful sign-in calls Supabase with the credentials and redirects to ?next", async () => {
   const { calls, assigned } = await mountLogin({ url: "/login?next=/admin" });
-  await type('input[type="email"]', "person@example.com");
+  await advanceToPassword("person@example.com");
   await type('input[type="password"]', "hunter2");
   await submit();
   await flush();
@@ -144,7 +247,7 @@ test("successful sign-in calls Supabase with the credentials and redirects to ?n
 
 test("an open-redirect ?next is ignored in favor of '/'", async () => {
   const { assigned } = await mountLogin({ url: "/login?next=https://evil.example" });
-  await type('input[type="email"]', "person@example.com");
+  await advanceToPassword("person@example.com");
   await type('input[type="password"]', "hunter2");
   await submit();
   await flush();
@@ -153,7 +256,7 @@ test("an open-redirect ?next is ignored in favor of '/'", async () => {
 
 test("a Supabase error is mapped to friendly guidance and blocks redirect", async () => {
   const { assigned } = await mountLogin({ results: { password: { error: { message: "Email rate limit exceeded" } } } });
-  await type('input[type="email"]', "person@example.com");
+  await advanceToPassword("person@example.com");
   await type('input[type="password"]', "hunter2");
   await submit();
   await flush();
@@ -161,10 +264,98 @@ test("a Supabase error is mapped to friendly guidance and blocks redirect", asyn
   assert.deepEqual(assigned, []);
 });
 
-test("the magic-link button sends an OTP without creating a user", async () => {
+// Canvas 2c: the failure notification clears the password and carries the magic
+// link as its action, so recovery is offered where the failure happened. Focus
+// goes to the password (the field that needs retyping) rather than the email of
+// the pattern's single-step drawing — on step 2 the email is a summary row.
+test("a failed password attempt clears the password and offers the magic link in place", async () => {
+  const { calls } = await mountLogin({ results: { password: { error: { message: "Invalid login credentials" } } } });
+  await advanceToPassword("person@example.com");
+  await type('input[type="password"]', "wrong-password");
+  await submit();
+  await flush();
+
+  assert.match(screen.getByRole("alert").textContent, /Email or password is incorrect/);
+  assert.equal(document.querySelector('input[type="password"]').value, "", "password cleared");
+  assert.equal(document.activeElement, document.querySelector('input[type="password"]'));
+
+  const recovery = screen.getByRole("alert").querySelector("button");
+  assert.match(recovery.textContent, /Email me a sign-in link instead/);
+  await act(async () => fireEvent.click(recovery));
+  await flush();
+
+  assert.equal(calls.otp.length, 1, "the notification action sends the link");
+  assert.equal(calls.otp[0].email, "person@example.com", "with the email already entered");
+  assert.equal(calls.otp[0].options.shouldCreateUser, false);
+});
+
+// A rejection skips every statement after the await. Without a finally the
+// pending flag stayed set, so the primary sat disabled reading "Logging in…"
+// for the rest of the session with no way to retry — the exact symptom the
+// run-seat-planner skill records as "button stuck on Signing in…".
+test("a rejected sign-in explains itself and leaves the primary usable", async () => {
+  const { assigned } = await mountLogin({ results: { password: new Error("Failed to fetch") } });
+  await advanceToPassword("person@example.com");
+  await type('input[type="password"]', "hunter2");
+  await submit();
+  await flush();
+
+  const alert = screen.getByRole("alert");
+  assert.match(alert.textContent, /Could not reach the sign-in service/);
+  // The transport message is not auth guidance and must not be echoed as if it were.
+  assert.doesNotMatch(alert.textContent, /Failed to fetch/);
+  assert.equal(screen.getByRole("button", { name: "Log in" }).disabled, false, "the primary recovers");
+  assert.deepEqual(assigned, []);
+  // Recovery is still offered where the failure happened.
+  assert.ok(alert.querySelector("button"), "the magic-link action survives a rejection");
+});
+
+test("a rejected magic-link send leaves its button usable", async () => {
+  await mountLogin({ results: { otp: new Error("Failed to fetch") } });
+  await advanceToPassword("person@example.com");
+  await click(/sign-in link/i);
+  await flush();
+
+  assert.match(screen.getByRole("alert").textContent, /Could not reach the sign-in service/);
+  assert.equal(screen.getByRole("button", { name: /sign-in link/i }).disabled, false);
+});
+
+// One shared boolean made the primary announce "Logging in…" while the user was
+// actually waiting on a magic link. The pending flag names WHICH action is in
+// flight so no control can narrate someone else's work.
+test("sending a magic link never makes the primary claim it is logging in", async () => {
+  let releaseOtp;
+  const gate = new Promise(resolve => {
+    releaseOtp = resolve;
+  });
+  const { supabase, calls } = makeSupabase();
+  supabase.auth.signInWithOtp = arg => {
+    calls.otp.push(arg);
+    return gate.then(() => ({ error: null }));
+  };
+  setUrl("/login");
+  window.localStorage.clear();
+  configureContext({ navigation: { assign: () => {} }, supabase });
+  await renderElement(React.createElement(LoginForm));
+  await advanceToPassword("person@example.com");
+
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: /sign-in link/i })));
+  const primary = screen.getByRole("button", { name: "Log in" });
+  assert.equal(primary.textContent.trim(), "Log in", "the primary does not narrate the link send");
+  assert.equal(primary.disabled, true, "but it is held while another action is in flight");
+
+  await act(async () => {
+    releaseOtp();
+    await gate;
+  });
+  await flush();
+  assert.match(screen.getByRole("status").textContent, /Check your email/);
+});
+
+test("the step-2 magic-link button sends an OTP without creating a user", async () => {
   const { calls } = await mountLogin();
-  await type('input[type="email"]', "person@example.com");
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: /Magic link/ })));
+  await advanceToPassword("person@example.com");
+  await click(/sign-in link/i);
   await flush();
 
   assert.equal(calls.otp.length, 1);
@@ -173,29 +364,49 @@ test("the magic-link button sends an OTP without creating a user", async () => {
   assert.match(screen.getByRole("status").textContent, /Check your email/);
 });
 
-// The button no longer passes through handleSubmit, so it needs its own guard —
-// otherwise a stray click would ask Supabase to mail a link to "".
-test("the magic-link button refuses to send without an email", async () => {
+test("forgot-password sends the reset for the email entered on step 1", async () => {
   const { calls } = await mountLogin();
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: /Magic link/ })));
+  await advanceToPassword("person@example.com");
+  await click(/Forgot password/);
   await flush();
 
-  assert.match(screen.getByRole("alert").textContent, /Enter your work email/);
-  assert.equal(calls.otp.length, 0);
-  assert.equal(document.activeElement, document.querySelector('input[type="email"]'));
-});
-
-test("forgot-password requires an email before sending a reset", async () => {
-  const { calls } = await mountLogin();
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: /Forgot password/ })));
-  assert.match(screen.getByRole("alert").textContent, /Enter your work email first/);
-  assert.equal(calls.reset.length, 0);
-
-  await type('input[type="email"]', "person@example.com");
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: /Forgot password/ })));
-  await flush();
   assert.equal(calls.reset.length, 1);
   assert.equal(calls.reset[0].email, "person@example.com");
+});
+
+// Owner ruling: a returning visitor is prefilled and re-checked but still lands
+// on step 1 — skipping straight to the password would hide the wrong-account
+// escape and make first paint depend on storage state.
+test("a remembered email prefills step 1 without skipping it", async () => {
+  await mountLogin({ rememberedEmail: "person@example.com" });
+
+  assert.equal(document.querySelector('input[type="email"]').value, "person@example.com");
+  assert.equal(document.querySelector('input[type="checkbox"]').checked, true);
+  assert.ok(document.querySelector('input[type="email"]'), "still step 1");
+  assert.equal(document.querySelector('input[type="password"]'), null);
+});
+
+test("Remember persists only the email, and unchecking clears it", async () => {
+  await mountLogin();
+  await type('input[type="email"]', "person@example.com");
+  await act(async () => fireEvent.click(document.querySelector('input[type="checkbox"]')));
+  await submit();
+  await type('input[type="password"]', "hunter2");
+  await flush();
+
+  const stored = JSON.stringify(window.localStorage);
+  assert.equal(window.localStorage.getItem(REMEMBERED_EMAIL_KEY), "person@example.com");
+  assert.doesNotMatch(stored, /hunter2/, "a password never reaches storage");
+
+  await click("Edit");
+  await act(async () => fireEvent.click(document.querySelector('input[type="checkbox"]')));
+  assert.equal(window.localStorage.getItem(REMEMBERED_EMAIL_KEY), null);
+});
+
+test("Continue does not store the email when Remember is unchecked", async () => {
+  await mountLogin();
+  await advanceToPassword("person@example.com");
+  assert.equal(window.localStorage.getItem(REMEMBERED_EMAIL_KEY), null);
 });
 
 test("an ?error query param is surfaced through friendlyAuthMessage on load", async () => {
@@ -211,7 +422,7 @@ test("an ?error query param is surfaced through friendlyAuthMessage on load", as
 // and blew up the same way.
 test("a stray percent in ?error does not take the login page down", async () => {
   await mountLogin({ url: "/login?error=%" });
-  assert.ok(screen.getByRole("button", { name: "Sign in" }), "the form still renders");
+  assert.ok(screen.getByRole("button", { name: "Continue" }), "the form still renders");
   assert.match(screen.getByRole("alert").textContent, /Something went wrong/);
 });
 
@@ -241,12 +452,13 @@ test("the email input disables spellcheck", async () => {
   assert.equal(document.querySelector('input[type="email"]').getAttribute("spellcheck"), "false");
 });
 
-test("a failed validation focuses the offending field", async () => {
+test("an invalid field is marked for assistive tech, not just coloured", async () => {
   await mountLogin();
   await submit();
-  assert.equal(document.activeElement, document.querySelector('input[type="email"]'), "empty submit focuses email");
 
-  await type('input[type="email"]', "person@example.com");
-  await submit();
-  assert.equal(document.activeElement, document.querySelector('input[type="password"]'), "missing password focuses password");
+  const emailInput = document.querySelector('input[type="email"]');
+  assert.equal(emailInput.getAttribute("aria-invalid"), "true");
+  const describedBy = emailInput.getAttribute("aria-describedby");
+  assert.ok(describedBy, "the error text is bound to the field");
+  assert.match(document.getElementById(describedBy).textContent, /Email is required/);
 });

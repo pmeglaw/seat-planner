@@ -51,26 +51,27 @@ async function ss(name) {
 async function login() {
   if (!E2E_EMAIL || !E2E_PASSWORD) throw new Error("SEAT_PLANNER_E2E_EMAIL/PASSWORD not set (env or .env.local)");
   await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
-  // The login page is a real <form> with an always-enabled submit, so the old
-  // button-disabled hydration fence is gone. Wait for hydration (networkidle),
-  // then fill+submit; an "Enter your ..." validation alert means the fill
-  // landed before React attached its handlers — re-fill and retry.
-  await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
-  await page.waitForTimeout(300);
-  const signIn = page.locator('button:text-is("Sign in")');
-  for (let attempt = 0; attempt < 4; attempt++) {
-    await page.locator("input[type=email]").fill(E2E_EMAIL);
-    await page.locator("input[type=password]").fill(E2E_PASSWORD);
-    await signIn.click();
-    try {
-      await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 15000 });
-      console.log(`logged in as ${E2E_EMAIL} — url: ${page.url()}`);
-      return;
-    } catch {}
+  // Progressive auth (canvas 2a/2b): step 1 takes the work email and Continue,
+  // step 2 discloses the password and the "Log in" primary.
+  //
+  // Wait for the "Continue" LABEL before filling anything. Pre-hydration the
+  // primary reads "Starting up…", so the label's existence is proof React has
+  // mounted — and a fill that lands before that is silently discarded when the
+  // controlled input snaps back to its (empty) state, which then fails the
+  // Continue press with "Email is required".
+  await page.locator('button:text-is("Continue")').waitFor({ timeout: 30000 });
+  await page.locator("input[type=email]").fill(E2E_EMAIL);
+  await page.locator('button:text-is("Continue")').click();
+  await page.locator("input[type=password]").waitFor({ timeout: 15000 });
+  await page.locator("input[type=password]").fill(E2E_PASSWORD);
+  await page.locator('button:text-is("Log in")').click();
+  try {
+    await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 20000 });
+  } catch {
     const alertText = await page.locator("main [role=alert]").innerText().catch(() => "");
-    if (!/enter your/i.test(alertText)) throw new Error(`login failed${alertText ? `: ${alertText}` : ": no navigation"}`);
+    throw new Error(`login failed${alertText ? `: ${alertText}` : ": no navigation"}`);
   }
-  throw new Error("login failed: form never accepted the filled credentials");
+  console.log(`logged in as ${E2E_EMAIL} — url: ${page.url()}`);
 }
 
 const commands = {
@@ -104,10 +105,11 @@ if (process.argv.includes("--smoke")) {
   let failed = false;
   const check = (label, ok) => { console.log(`${ok ? "PASS" : "FAIL"}: ${label}`); if (!ok) failed = true; };
 
-  // 1. Login page renders the sign-in form.
+  // 1. Login page renders step 1 of the log-in form — identity only, so the
+  //    password field must NOT be on screen yet.
   await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
   await page.locator("input[type=email]").waitFor({ timeout: 15000 });
-  check("/login renders the sign-in form", await page.locator("input[type=password]").isVisible());
+  check("/login renders step 1 of the log-in form", (await page.locator("input[type=password]").count()) === 0);
   await ss("smoke-login");
 
   // 2. Auth guard: unauthenticated / redirects to /login.
@@ -116,10 +118,15 @@ if (process.argv.includes("--smoke")) {
   check("unauthenticated / redirects to /login", page.url().includes("/login"));
 
   // 3. Real round-trip to Supabase Auth: bad credentials surface an alert.
+  // Same hydration fence as login(): wait for the live "Continue" label before
+  // filling. :text-is rather than :has-text because the step-2 heading is also
+  // "Log in" — the engine binds to the smallest element with the text.
+  await page.locator('button:text-is("Continue")').waitFor({ timeout: 30000 });
   await page.locator("input[type=email]").fill("smoke-test@example.com");
+  await page.locator('button:text-is("Continue")').click();
+  await page.locator("input[type=password]").waitFor({ timeout: 15000 });
   await page.locator("input[type=password]").fill("definitely-wrong-password");
-  // Not a <form>: the submit is a plain onClick Button, so target it by text.
-  await page.locator('button:text-is("Sign in")').click();
+  await page.locator('button:text-is("Log in")').click();
   // Scope to <main>: Next's route announcer is an always-present empty [role=alert] on <body>.
   await page.locator("main [role=alert]").waitFor({ timeout: 20000 });
   check("bad credentials show an error alert", (await page.locator("main [role=alert]").innerText()).length > 0);
