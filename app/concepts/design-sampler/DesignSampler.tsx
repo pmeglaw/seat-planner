@@ -281,6 +281,7 @@ function ArchetypeSection({ theme, index }: { theme: ArchetypeTheme; index: numb
                     alt=""
                     fill
                     sizes="(max-width: 768px) 100vw, 1152px"
+                    unoptimized
                     placeholder="blur"
                     blurDataURL={MAP_IMAGE_BLUR_DATA_URL}
                     className="object-cover"
