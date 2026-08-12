@@ -29,7 +29,7 @@ export default async function LoginPage() {
         {/* eslint-disable-next-line @next/next/no-img-element -- static brand
             mark, same intentional raw-img pattern as app/admin/page.tsx */}
         <img
-          src="/images/megeredchian-mark.png?v=ma-2026"
+          src="/images/megeredchian-mark.png?v=ma-2026-128"
           alt=""
           aria-hidden="true"
           width={40}

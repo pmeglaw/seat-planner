@@ -370,7 +370,7 @@ export function AppRail({
             ].join(" ")}
           >
             <Image
-              src="/images/megeredchian-mark.png?v=ma-2026"
+              src="/images/megeredchian-mark.png?v=ma-2026-128"
               alt=""
               width={20}
               height={20}

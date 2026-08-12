@@ -65,7 +65,7 @@ export function LoginV12Preview() {
         {/* Left — inverse background, brand at display scale. */}
         <div className="flex min-w-0 flex-1 flex-col bg-[var(--admin-chrome-bg)] px-14 pb-11 pt-14">
           <Image
-            src="/images/megeredchian-mark.png?v=ma-2026"
+            src="/images/megeredchian-mark.png?v=ma-2026-128"
             alt=""
             width={40}
             height={40}
