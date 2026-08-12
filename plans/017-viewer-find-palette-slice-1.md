@@ -1,7 +1,42 @@
 # 017 — Viewer Find palette, slice 1 (palette shell + browse mode)
 
-**Status:** IN PROGRESS — feed landed, swap not started.
+**Status:** DONE (2026-08-12). Palette shipped, all four docked surfaces
+deleted, six test files reworked, full gate + real-browser parity pass green.
 **Branch:** `claude/viewer-palette-slice-1` (draft PR).
+
+## Correction to this plan, recorded on closing
+
+The Sequence below was **internally inconsistent about the results panel**, and
+it cost an owner decision to resolve. Step 3 says "delete the three `<aside>`s"
+and "collapse the four state flags into `paletteOpen`" — both of which include
+the search-results panel — while the closing line says query mode is out of
+scope for this slice. Deleting the results panel without putting query results
+somewhere would have left search with no surface at all.
+
+**Owner ruling (2026-08-12): the palette owns both modes.** All four surfaces
+are deleted in this slice, and query mode is the EXISTING result rows relocated
+into the palette unchanged; slice 2 restyles them to the grouped/kind-icon
+design with the dim-to-35% map treatment. The deciding argument: contract #2
+opens the palette on field FOCUS, so any typing happens with the palette
+already open — keeping the docked results panel would put two contradictory
+surfaces on screen at once.
+
+Second ruling in the same pass: **the zone chips are live in slice 1**, wired to
+the `hoverZone` / `zone` state that already drives `buildZoneWash` and
+`ActiveFilterChips` (~5 lines, no new mechanism), rather than rendering as
+inert counts until slice 3. Slice 3 keeps the genuinely new work: the pinned
+chip restyle, department chips, and the Open/Occupied decision.
+
+## What the real browser caught that no test tier did
+
+`type="search"` inputs **clear themselves on Escape natively**, and that clear
+fires an `input` event. With Esc newly meaning "close the palette" (contract #7
+puts the palette one layer above the query), the native default collapsed two
+layers into one keystroke: the first Esc closed the palette AND wiped the
+query, then `updateSearch` re-opened the palette on the way out. Fixed with
+`event.preventDefault()` ahead of the branch split, pinned in
+`viewer-keyboard-parity-source`. Nothing in the node, jsdom or e2e tiers models
+a native input default — this needed the app in Chromium.
 **Spec:** `docs/design_handoff_login_v12/Viewer v12 Handoff.md` (contracts #1–#14)
 plus the settled decisions in `docs/design_handoff_login_v12/README.md`
 ("Viewer palette — owner answers"). Read both before starting.

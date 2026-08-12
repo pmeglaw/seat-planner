@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
 import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent } from "react";
@@ -27,8 +27,8 @@ import {
   fitMapWidth as computeFitMapWidth
 } from "@/lib/mapViewport";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
-import { buildViewerDirectory, buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
-import { buildInitials } from "@/lib/validators";
+import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
+import { buildViewerPaletteBrowse, getSeatZone } from "@/lib/viewerFindPalette";
 import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
@@ -38,9 +38,8 @@ import { MapWashLayer } from "@/components/seat-map/MapWashLayer";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
+import { ViewerFindPalette } from "@/components/seat-map/ViewerFindPalette";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
-import { useVirtualListWindow } from "@/components/seat-map/useVirtualListWindow";
-import { stepFocusIndex } from "@/lib/virtualizedList";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { buildZoneWash } from "@/lib/zoneWash";
@@ -69,13 +68,6 @@ type ViewerPanState = {
   startScrollTop: number;
   moved: boolean;
 } | null;
-
-const KIND_LABELS: Record<ViewerSearchResult["kind"], string> = {
-  person: "Person",
-  seat: "Seat",
-  department: "Department",
-  zone: "Zone"
-};
 
 // v12 slice 4 nudge (interaction contract #1): the `panel` tier minimum width
 // (tailwind.config.ts) — the float exists only there. The viewer has no
@@ -111,19 +103,12 @@ const VIEWPORT_NATIVE_SCROLL_KEYS: ReadonlySet<string> = new Set([
 // MAP_ZOOM_MIN/MAX/STEP are imported from lib/mapViewport, single-sourced
 // with the admin map's clamp bounds.
 
-function getSeatZone(seat: SeatWithEmployee) {
-  return seat.zone ?? seat.department ?? "No zone";
-}
+// getSeatZone is imported from lib/viewerFindPalette, where it is tested. It
+// used to be a private copy here; the palette's zone chips need the same
+// fallback chain, and two copies of it would drift the moment one changed.
 
 function getSeatDepartment(seat: SeatWithEmployee) {
   return seat.employee?.department ?? seat.department ?? "No department";
-}
-
-function resultKindClass(kind: ViewerSearchResult["kind"]) {
-  if (kind === "person") return "bg-[var(--admin-info-soft)] text-[var(--admin-info)] ring-[var(--admin-info)]/30";
-  if (kind === "seat") return "bg-[var(--admin-chrome-bg)] text-white ring-[var(--admin-chrome-bg)]";
-  if (kind === "department") return "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-[var(--admin-success)]/30";
-  return "bg-[var(--admin-warning-soft)] text-[var(--admin-warning-text)] ring-[var(--admin-warning-text)]/30";
 }
 
 function uniqueVisibleOptions(values: Array<string | null | undefined>) {
@@ -137,44 +122,11 @@ function uniqueVisibleOptions(values: Array<string | null | undefined>) {
   return Array.from(seen.values()).sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
 }
 
-// The People directory's collapse preference persists per browser, like the
-// admin names toggle.
-const VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY = "seat-planner:viewer-directory-collapsed";
-const VIEWER_DIRECTORY_PREF_EVENT = "seat-planner:viewer-directory-pref";
-
-// The collapse preference is read through useSyncExternalStore: the server
-// snapshot is the expanded default (so SSR markup reserves the directory
-// slot — see directoryOpen), and React swaps in the client snapshot
-// synchronously at hydration, BEFORE paint. A collapsed user therefore never
-// sees the populated panel flash open; an effect-based localStorage read
-// paints the default first and then snaps the canvas.
-function readDirectoryCollapsedPref(): boolean {
-  try {
-    return window.localStorage.getItem(VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY) === "true";
-  } catch {
-    // Storage unavailable (private mode) — default to expanded.
-    return false;
-  }
-}
-
-function subscribeToDirectoryCollapsedPref(onChange: () => void): () => void {
-  window.addEventListener("storage", onChange);
-  window.addEventListener(VIEWER_DIRECTORY_PREF_EVENT, onChange);
-  return () => {
-    window.removeEventListener("storage", onChange);
-    window.removeEventListener(VIEWER_DIRECTORY_PREF_EVENT, onChange);
-  };
-}
-
-function writeDirectoryCollapsedPref(collapsed: boolean) {
-  try {
-    window.localStorage.setItem(VIEWER_DIRECTORY_COLLAPSED_STORAGE_KEY, String(collapsed));
-  } catch {
-    // Preference just won't persist.
-  }
-  // Same-tab notification — the storage event only fires in OTHER tabs.
-  window.dispatchEvent(new Event(VIEWER_DIRECTORY_PREF_EVENT));
-}
+// The People directory's collapse preference is GONE with the panel it
+// described (v12 Find palette, owner answer 4): the palette has no collapsed
+// state to migrate it to, values already sitting in browsers are inert, and a
+// mount-time sweep would mean carrying cleanup code forever for one dead
+// boolean. Do not reintroduce `seat-planner:viewer-directory-collapsed`.
 
 // Marker focus restore for deselect paths — the details panel (which may
 // hold focus) unmounts with the selection (critique action 5).
@@ -197,20 +149,15 @@ export function ViewerSeatFinder({
 }: ViewerSeatFinderProps) {
   const [search, setSearch] = useState("");
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
-  // People directory (2026-07-16 regrade, review 5): occupies the right slot
-  // at rest. Server snapshot = expanded default, so SSR markup and the first
-  // paint reserve the slot; the persisted collapse preference lands
-  // synchronously at hydration (see the store helpers above the component).
-  const directoryCollapsed = useSyncExternalStore(
-    subscribeToDirectoryCollapsedPref,
-    readDirectoryCollapsedPref,
-    () => false
-  );
-  const [directoryHoverSeatId, setDirectoryHoverSeatId] = useState<string | null>(null);
-  // Below the panel breakpoint the docked directory has no home, so it opens
-  // as an on-demand bottom sheet instead (#197). Session-scoped, not a
-  // persisted pref — the desktop collapse pref stays separate.
-  const [mobileDirectoryOpen, setMobileDirectoryOpen] = useState(false);
+  // The ONE Find surface (v12 contract #2). It replaced four flags that used
+  // to fight over the right column — directoryOpen / directoryCollapsed /
+  // mobileDirectoryOpen / resultsPanelOpen — because it replaced the four
+  // surfaces those flags gated. At rest it is closed and nothing docks
+  // (contract #1); the field opens it, and its two modes (browse with an
+  // empty query, results with one) share the same slot instead of racing for
+  // it. Session-scoped by design: there is no persisted palette preference.
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [hoverSeatId, setHoverSeatId] = useState<string | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   // Roving tabindex anchor: the last keyboard-visited seat (see SeatMap for
   // the same pattern — the map is one tab stop, arrows walk between seats).
@@ -256,6 +203,11 @@ export function ViewerSeatFinder({
   const filterRootRef = useRef<HTMLDivElement | null>(null);
   const filterTriggerRef = useRef<HTMLButtonElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  // The field WRAPPER, not the input: the palette aligns its left edge to the
+  // field's box (contract #2), and outside-click dismissal has to treat the
+  // whole field — magnifier, clear button, kbd hint — as "inside".
+  const searchFieldRef = useRef<HTMLDivElement | null>(null);
+  const paletteRef = useRef<HTMLDivElement | null>(null);
 
   const publishedSeats = useMemo(() => seats.map(normalizeSeat), [seats]);
   const visualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
@@ -264,11 +216,13 @@ export function ViewerSeatFinder({
   // the admin map): code pills render at one uniform size, and the crowded
   // set feeds alternating vertical token nudges that keep tight pods from
   // overlapping (hover still discloses the full code + name). The clearance
-  // must track the actual frame width — the People directory keeps the
-  // at-rest stage narrower than the old full-bleed fit, and a static
-  // fit-zoom clearance under-flags exactly those pods (they rendered
-  // overlapping pills at rest). Before first measure (SSR/first paint) the
-  // helper falls back to the default fit-zoom clearance.
+  // must track the actual frame width: a static fit-zoom clearance under-flags
+  // exactly the pods that collide at any narrower scale, and they then render
+  // physically overlapping pills. That used to bite at REST, because the
+  // docked People directory held ~330px of the stage; the Find palette floats,
+  // so the viewer rests full-bleed now and the narrow scales are the small
+  // windows and the fixed-width mobile frame instead. Before first measure
+  // (SSR/first paint) the helper falls back to the default fit-zoom clearance.
   const seatDensityClearance = useMemo(
     () => clearanceFromScale(mapRenderedWidth ?? 0, (mapRenderedWidth ?? 0) * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH)),
     [mapRenderedWidth]
@@ -285,20 +239,15 @@ export function ViewerSeatFinder({
     [departmentOptions, employees, publishedSeats, search, zoneOptions]
   );
   const activeResult = searchResults.results.find(result => result.id === activeResultId) ?? null;
-  const directory = useMemo(() => buildViewerDirectory({ seats: publishedSeats, employees }), [employees, publishedSeats]);
-  // Windowed People directory (the Management table's computeVirtualWindow
-  // math via the shared hook, with simpler viewer wiring): the hook's segments
-  // render only rows near the viewport plus the focused row (pinned so
-  // scrolling never unmounts it and drops focus to <body>), with spacers
-  // preserving the scrollbar — a 1,000-person directory doesn't mount 1,000
-  // buttons at rest.
-  const {
-    setListElement: setDirectoryListElement,
-    listElement: directoryListElement,
-    window: directoryWindow,
-    segments: directorySegments,
-    focusRow: focusDirectoryRow
-  } = useVirtualListWindow(directory.rows.length, { defaultRowHeight: 64 });
+  // The palette's browse feed: zone chips with counts, the A→Z people list,
+  // and the "N people · M seated" line, assembled by the tested lib module
+  // from the SAME published snapshot the map reads. Computed whether or not
+  // the palette is open — it is a memo over props, and gating it on
+  // `paletteOpen` would only move the work into the frame that opens it.
+  const paletteBrowse = useMemo(
+    () => buildViewerPaletteBrowse({ seats: publishedSeats, employees, zoneOptions }),
+    [employees, publishedSeats, zoneOptions]
+  );
 
   // Keyboard activation of a seat hands focus into the details panel once the
   // selection commits; pointer interactions cancel the handoff.
@@ -312,54 +261,11 @@ export function ViewerSeatFinder({
   }, [selectedSeatId]);
   const selectedSeat = selectedSeatId ? seatById.get(selectedSeatId) ?? null : null;
 
-  // Arrow-key roving over result cards — parity with the admin ResultsPanel
-  // (critique action 6). ArrowUp from the first card returns focus to the
-  // search input the cards came from. This DOM-walking form is only safe
-  // because the search results list renders EVERY row — on the windowed
-  // People directory it read the first RENDERED row as "first" and warped
-  // mid-list ArrowUp into the search input, so the directory uses the
-  // absolute-index handler below instead.
-  function handleResultsKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="listitem"] button:not([disabled])'));
-    if (items.length === 0) return;
-    event.preventDefault();
-    const activeIndex = items.findIndex(item => item === document.activeElement);
-    if (event.key === "ArrowDown") {
-      items[activeIndex === -1 ? 0 : Math.min(items.length - 1, activeIndex + 1)]?.focus();
-      return;
-    }
-    if (activeIndex <= 0) {
-      searchInputRef.current?.focus();
-      return;
-    }
-    items[activeIndex - 1]?.focus();
-  }
+  // Arrow-key roving over the palette's rows lives in ViewerFindPalette: both
+  // handlers have to reach the list window's absolute indices, and the browse
+  // list owns that window. They still exit ArrowUp to searchInputRef, which is
+  // why the palette takes it as a prop.
 
-  // Windowed-list roving for the People directory: absolute indices via
-  // stepFocusIndex (lib/virtualizedList), because only a slice of rows is
-  // mounted. ArrowUp with nothing above still exits to the search input.
-  function handleDirectoryKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
-    const rows = directory.rows;
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    if (rows.length === 0) return;
-    event.preventDefault();
-    const direction = event.key === "ArrowDown" ? 1 : -1;
-    const activeRow = document.activeElement instanceof HTMLElement ? document.activeElement.closest("[data-vindex]") : null;
-    const rawIndex = activeRow && directoryListElement?.contains(activeRow) ? Number(activeRow.getAttribute("data-vindex")) : NaN;
-    const target = stepFocusIndex({
-      itemCount: rows.length,
-      currentIndex: Number.isInteger(rawIndex) ? rawIndex : null,
-      direction,
-      isDisabled: index => Boolean(rows[index]?.disabled),
-      fallbackIndex: directoryWindow.startIndex
-    });
-    if (target === null) {
-      if (direction === -1) searchInputRef.current?.focus();
-      return;
-    }
-    focusDirectoryRow(target);
-  }
   const searchActive = Boolean(searchResults.query);
   const structuredFiltersActive = department !== "all" || position !== "all" || zone !== "all" || status !== "all";
   const structuredFilterCount = [department !== "all", position !== "all", zone !== "all", status !== "all"].filter(Boolean).length;
@@ -395,7 +301,7 @@ export function ViewerSeatFinder({
   // codeNudge, not be modelled as phantom name obstacles). The selected seat
   // is excluded: active markers never nudge, so leaving it in would occupy a
   // palette slot/clique edge it never uses (the admin map's phantom-member
-  // fix). The transient directory-hover highlight is also excluded — it is
+  // fix). The transient palette-hover highlight is also excluded — it is
   // momentary and z-raised, and including it would re-solve both nudge
   // graphs on every list hover.
   const namedSeatIdSet = useMemo(() => {
@@ -482,9 +388,26 @@ export function ViewerSeatFinder({
     return () => document.removeEventListener("pointerdown", handleOutsidePointer);
   }, [filterOpen]);
 
-  // Ctrl/⌘+K focuses the search — the same muscle memory as the admin map
-  // (critique action 6). The hint renders a frame after mount so the server
-  // markup never guesses the platform.
+  // Outside click closes the palette (contract #2). The FIELD counts as
+  // inside: a press there is how you open it, so treating it as outside would
+  // make the pointerdown close what the click is about to reopen.
+  useEffect(() => {
+    if (!paletteOpen) return;
+
+    function handleOutsidePointer(event: globalThis.PointerEvent) {
+      const target = event.target as Node;
+      if (paletteRef.current?.contains(target)) return;
+      if (searchFieldRef.current?.contains(target)) return;
+      setPaletteOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [paletteOpen]);
+
+  // Ctrl/⌘+K focuses the search AND opens the palette (contract #2) — the same
+  // muscle memory as the admin map (critique action 6). The hint renders a
+  // frame after mount so the server markup never guesses the platform.
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       setSearchShortcutHint(/mac/i.test(window.navigator.platform) ? "⌘K" : "Ctrl K");
@@ -492,6 +415,7 @@ export function ViewerSeatFinder({
     const handleSearchShortcut = (event: globalThis.KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
+        setPaletteOpen(true);
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
       }
@@ -503,6 +427,14 @@ export function ViewerSeatFinder({
     };
   }, []);
 
+  // Esc peels ONE layer per press, in the order the v12 handoff specifies
+  // (contract #7): floor menu → palette → query → selection → pinned zone.
+  // Query moved AHEAD of selection here — under the retired design the panel
+  // and the inspector fought for one column, so dismissing the selection
+  // first was what gave the results room; the palette floats, so the honest
+  // order is now "put back the transient thing you typed, then the thing you
+  // picked". The floor menu owns its own Escape inside FloorSelector; the
+  // Filter popover is this surface's other menu and stays the first layer.
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
@@ -510,20 +442,26 @@ export function ViewerSeatFinder({
         setFilterOpen(false);
         return;
       }
+      const target = event.target;
+      if (paletteOpen) {
+        // Focus is about to be unmounted along with the palette if it was
+        // inside one of its rows — hand it back to the field rather than
+        // letting it fall to <body> (critique action 5).
+        if (target instanceof Node && paletteRef.current?.contains(target)) {
+          window.requestAnimationFrame(() => searchInputRef.current?.focus());
+        }
+        setPaletteOpen(false);
+        return;
+      }
+      const editable = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement;
+      if (!editable && search.trim()) {
+        setSearch("");
+        return;
+      }
       if (selectedSeatId) {
         focusViewerSeatMarker(selectedSeatId);
         setSelectedSeatId(null);
         setInspectorCollapsed(false);
-        return;
-      }
-      const target = event.target;
-      const editable = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement;
-      if (!editable && search.trim()) {
-        const fromResultsPanel = target instanceof Element && Boolean(target.closest('[aria-label="Viewer search results"]'));
-        setSearch("");
-        if (fromResultsPanel) {
-          window.requestAnimationFrame(() => searchInputRef.current?.focus());
-        }
         return;
       }
       if (!editable && structuredFiltersActive) {
@@ -535,7 +473,7 @@ export function ViewerSeatFinder({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [filterOpen, search, selectedSeatId, structuredFiltersActive]);
+  }, [filterOpen, paletteOpen, search, selectedSeatId, structuredFiltersActive]);
 
   // Contain-fit for the fit view, three tiers by viewport width:
   //  - >=1024 (lg): both-dimension contain-fit (same pattern as SeatMap's
@@ -725,6 +663,10 @@ export function ViewerSeatFinder({
   function updateSearch(value: string) {
     setSearch(value);
     setActiveResultId(null);
+    // Typing is the fourth door onto the palette, alongside click, focus and
+    // ⌘K (contract #2): a query with nowhere to show its results would be a
+    // field that swallows keystrokes.
+    setPaletteOpen(true);
     // INV-1 (same rule as the admin map): an active search hands the panel
     // slot to results, so matches are never invisible behind the inspector.
     // The viewer inspector is read-only, so it is never dirty.
@@ -733,9 +675,21 @@ export function ViewerSeatFinder({
     }
   }
 
+  // Zone chips (contract #4). Pinning is the existing `zone` filter — the
+  // chips are a second door onto the facet the map already washes and the
+  // legend already counts, not a second copy of it — and the palette closes so
+  // the pinned result is visible on the plan behind it. The hover preview is
+  // released explicitly: the pointer never leaves the chip, the chip leaves
+  // the pointer.
+  function pinZoneFromPalette(nextZone: string) {
+    setZone(nextZone);
+    setHoverZone(null);
+    setPaletteOpen(false);
+  }
+
   // Identity-stable handle for the memoized SeatMarker. selectSeat is
   // re-created every render, so passing it directly would give ~2000 markers a
-  // new prop whenever anything on this page changes — including directory
+  // new prop whenever anything on this page changes — including palette row
   // hover, which is exactly the interaction the memo is meant to make cheap.
   // The ref keeps the closure current, so nothing goes stale.
   const latestSelectSeat = useRef(selectSeat);
@@ -760,6 +714,10 @@ export function ViewerSeatFinder({
     setSelectedSeatId(seatId);
     setActiveResultId(null);
     setInspectorCollapsed(false);
+    // Picking a seat ends the finding (contract #5). Closing here as well as
+    // in openResult covers the marker-click path: the palette can be open over
+    // the plan while the pointer reaches a marker underneath it.
+    setPaletteOpen(false);
     // This selection also queues a programmatic center below — arm the skip
     // in the same commit so the nudge trigger effect never races the
     // center's native smooth scrollTo.
@@ -825,6 +783,10 @@ export function ViewerSeatFinder({
 
   function openResult(result: ViewerSearchResult) {
     setActiveResultId(result.id);
+    // Enter/click on a row selects, centers and closes the palette
+    // (contract #5) — including the department/zone rows below, which fit
+    // their whole match set into view instead of selecting one seat.
+    setPaletteOpen(false);
     if (result.seatId) {
       // Finding 1: same race as selectSeat above, same "only if actually
       // changing" guard (re-opening the currently selected seat's own
@@ -879,53 +841,37 @@ export function ViewerSeatFinder({
     ? "Not yet mapped"
     : `Office map · ${publishedSeats.length} ${publishedSeats.length === 1 ? "seat" : "seats"}`;
   const mapZoomLabel = zoomFactor === null ? "Fit" : `${Math.round(zoomFactor * 100)}%`;
-  const resultsPanelOpen = searchActive && (!selectedSeat || inspectorCollapsed);
-  // The directory holds the slot only at rest; results and the inspector
-  // always win it (the INV-1 handoff is untouched). Desktop-only — below the
-  // panel tier the map stays map-first and the directory renders nothing.
-  // Deliberately NOT hydration-gated: expanded is the default preference, so
-  // the server markup and first client paint reserve the right slot from the
-  // start — gating on hydration rendered every load full-bleed first and then
-  // snapped the canvas ~330px narrower when the persisted preference arrived
-  // (the map re-fit twice and everything derived from its width churned).
-  // Users who persisted a collapse still transition once, open → rail, when
-  // the preference effect lands — the same single transition they always had.
-  const directoryOpen = !searchActive && !selectedSeat && !directoryCollapsed;
-  const directoryRail = !searchActive && !selectedSeat && directoryCollapsed;
-  // Narrow-width sheet: same search/selection yielding rules as the docked
-  // panel, driven by its own toggle instead of the persisted collapse pref.
-  const mobileDirectorySheetOpen = mobileDirectoryOpen && !searchActive && !selectedSeat;
-  // Below the panel tier (<900) results, the directory sheet and the inspector
-  // all render as full-width `fixed inset-x-3 bottom-3 z-[80]` sheets, which
-  // paint straight over the z-30 floating legend in the 768–899 band where the
-  // legend's own md floor lets it render (measured 2026-08-03: the sheet
-  // covered the whole 246px status row). Lifting the legend clear is not an
-  // option — the map viewport is ~520px there and a 50–60vh sheet would push
-  // it into the top-left floor cluster — so it yields the bottom instead and
-  // comes back on dismiss. At >=900 these become side panels and never
-  // overlap, so the legend keeps rendering.
-  const bottomSheetOwnsBottom = resultsPanelOpen || mobileDirectorySheetOpen || Boolean(selectedSeat);
-  // v12 slice 4: the inspector FLOATS (contract #1) — only the docking
-  // occupants reserve stage width now (results panel / People directory,
-  // contract #2). Whatever occupies the right slot reserves the column, so
-  // nothing renders hidden behind a panel.
-  const rightSlotTier: "expanded" | "rail" | "none" =
-    resultsPanelOpen || directoryOpen ? "expanded" : directoryRail ? "rail" : "none";
-  const stageReservedClassName = rightSlotTier === "expanded"
-    ? "panel:pr-[332px]"
-    : rightSlotTier === "rail"
-      ? "panel:pr-[56px]"
-      : "";
+  // NOTHING reserves stage width any more (contract #1/#2): the results panel,
+  // the People directory, its collapse rail and the mobile PEOPLE pill are all
+  // gone, and the palette that replaced them FLOATS. So the hydration
+  // guarantee the old `directoryOpen` expression carried — reserve the right
+  // slot in the server markup, or every load renders full-bleed and then snaps
+  // ~330px narrower when the persisted preference arrives — is not merely
+  // preserved but retired: there is no reserved column left to snap, at any
+  // width, in any hydration state.
 
-  // Collapse rail retired (v12 slice 4): `inspectorCollapsed` is now purely
-  // the auto-yield flag. Whenever nothing owns the right region anymore and a
-  // seat is still selected, the inspector returns on its own — the viewer's
-  // only holder is its results panel (no modes/drawer here).
+  // Below the panel tier (<900) the inspector renders as a full-width
+  // `fixed inset-x-3 bottom-3` sheet, which paints straight over the z-30
+  // floating legend in the 768–899 band where the legend's own md floor lets
+  // it render (measured 2026-08-03: the sheet covered the whole 246px status
+  // row). Lifting the legend clear is not an option — the map viewport is
+  // ~520px there and a 50–60vh sheet would push it into the top-left floor
+  // cluster — so it yields the bottom instead and comes back on dismiss. At
+  // >=900 the inspector is a side panel and never overlaps, so the legend
+  // keeps rendering. The palette is not in this list: it hangs off the TOP of
+  // the screen under the bar, so it never contends for the bottom corners.
+  const bottomSheetOwnsBottom = Boolean(selectedSeat);
+
+  // `inspectorCollapsed` is purely the INV-1 auto-yield flag. An active query
+  // owns the transient surface; once the query clears, the inspector returns
+  // on its own. Keyed on the QUERY, not on the palette: the palette and the
+  // seat card no longer overlap, so the palette merely being open is not a
+  // reason to keep a selection hidden.
   useEffect(() => {
     if (!inspectorCollapsed || !selectedSeatId) return;
-    if (resultsPanelOpen) return;
+    if (searchActive) return;
     setInspectorCollapsed(false);
-  }, [inspectorCollapsed, selectedSeatId, resultsPanelOpen]);
+  }, [inspectorCollapsed, selectedSeatId, searchActive]);
 
   // No zoom change on select/deselect: the fit view (zoomFactor null) sizes the
   // frame to the container at lg, so the reserved column re-fits it automatically;
@@ -1068,7 +1014,19 @@ export function ViewerSeatFinder({
         {/* Medium cap, 340 -> 420px on lg — matching the admin bar so the two
             surfaces read as one shell. Finding your seat is still the paramount
             job here, but 480 made the field the loudest thing in the row. */}
-        <div role="search" aria-label="Viewer search" className="h-7 min-w-0 flex-1 border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:max-w-[420px]">
+        <div
+          ref={searchFieldRef}
+          role="search"
+          aria-label="Viewer search"
+          className={cx(
+            "h-7 min-w-0 flex-1 border bg-[var(--admin-chrome-field)] lg:max-w-[420px]",
+            // Open field: the 2px inset accent (both chrome themes) is what
+            // ties the palette below to the field it belongs to.
+            paletteOpen
+              ? "border-transparent shadow-[inset_0_0_0_2px_var(--admin-primary)]"
+              : "border-[var(--admin-chrome-border)]"
+          )}
+        >
           <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
             <span className="sr-only">Search office seating</span>
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
@@ -1079,31 +1037,57 @@ export function ViewerSeatFinder({
               id="viewer-seat-search"
               value={search}
               onChange={event => updateSearch(event.target.value)}
+              onFocus={() => setPaletteOpen(true)}
+              // Click as well as focus: pressing Esc leaves focus in the field,
+              // so without this a second click on an already-focused field
+              // could never reopen the palette (contract #2).
+              onClick={() => setPaletteOpen(true)}
               onKeyDown={event => {
-                if (event.key === "Escape" && search.trim()) {
-                  event.stopPropagation();
-                  // Layered dismissal (2026-07-16 critique, minor 10): the
-                  // first Esc only clears the query and returns the panel
-                  // slot to the pre-search state; a second Esc reaches the
-                  // global handler, which deselects the seat. The × button
+                if (event.key === "Escape") {
+                  // Layered dismissal (contract #7), handled here so the
+                  // keystroke never reaches the global handler twice: the
+                  // palette is the layer above the query, so the first Esc
+                  // closes it and the second clears what was typed. Anything
+                  // deeper (selection, pinned zone) bubbles. The × button
                   // keeps the full clearSearch reset.
-                  setSearch("");
-                  setActiveResultId(null);
-                  setInspectorCollapsed(false);
-                  return;
-                }
-                // Results are visually adjacent but far away in DOM order —
-                // ArrowDown hops focus straight into the results panel.
-                if (event.key === "ArrowDown" && resultsPanelOpen) {
+                  //
+                  // preventDefault is load-bearing on BOTH branches, not
+                  // defensive: `type="search"` inputs clear themselves on
+                  // Escape natively, and that clear fires an input event. Left
+                  // to run it collapsed two layers into one keystroke — the
+                  // first Esc closed the palette AND wiped the query, then
+                  // updateSearch re-opened the palette on the way out
+                  // (measured in Chromium, 2026-08-12).
                   event.preventDefault();
-                  document.querySelector<HTMLButtonElement>('[aria-label="Viewer search results"] button')?.focus();
+                  if (paletteOpen) {
+                    event.stopPropagation();
+                    setPaletteOpen(false);
+                    return;
+                  }
+                  if (search.trim()) {
+                    event.stopPropagation();
+                    setSearch("");
+                    setActiveResultId(null);
+                    setInspectorCollapsed(false);
+                  }
                   return;
                 }
-                // The panel's own legend promises "Enter opens" while focus is
-                // still here, so honour it against the top result rather than
-                // making the user arrow into the list first. With no results
-                // the keystroke stays unclaimed.
-                if (event.key === "Enter" && resultsPanelOpen) {
+                // The palette is visually adjacent but far away in DOM order —
+                // ArrowDown hops focus straight into whichever list it is
+                // showing. `:not([disabled])` matters in browse mode, where
+                // the first row alphabetically can be an unseated person.
+                if (event.key === "ArrowDown" && paletteOpen) {
+                  event.preventDefault();
+                  document.querySelector<HTMLButtonElement>(
+                    '[aria-label="Viewer search results"] button:not([disabled]), [aria-label="People directory"] button:not([disabled])'
+                  )?.focus();
+                  return;
+                }
+                // The palette's own legend promises "Enter opens" while focus
+                // is still here, so honour it against the top result rather
+                // than making the user arrow into the list first. With no
+                // results the keystroke stays unclaimed.
+                if (event.key === "Enter" && paletteOpen && searchActive) {
                   const [firstSearchResult] = searchResults.results;
                   if (!firstSearchResult) return;
                   event.preventDefault();
@@ -1111,6 +1095,13 @@ export function ViewerSeatFinder({
                 }
               }}
               ref={searchInputRef}
+              // aria-controls only, deliberately no aria-expanded: ARIA 1.2
+              // dropped aria-expanded from textbox/searchbox, and the valid
+              // way to carry it here would be role="combobox" — which commits
+              // to a listbox popup of role="option" children. The palette is a
+              // list of real buttons that focus moves into, so claiming
+              // combobox would describe a widget this is not.
+              aria-controls="viewer-find-palette"
               type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
               className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
             />
@@ -1124,8 +1115,10 @@ export function ViewerSeatFinder({
               >
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
-            ) : searchShortcutHint ? (
-              <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)]">{searchShortcutHint}</kbd>
+            ) : paletteOpen || searchShortcutHint ? (
+              // Open, the field advertises the way OUT rather than the way in —
+              // the shortcut that got you here is spent.
+              <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)]">{paletteOpen ? "Esc" : searchShortcutHint}</kbd>
             ) : null}
           </label>
         </div>
@@ -1197,10 +1190,10 @@ export function ViewerSeatFinder({
         </div>
       </header>
 
-      {/* No matting: the stage column runs to the window edges (v12 slice 3).
-          stageReservedClassName still reserves the right slot — that is the
-          People-directory hydration guarantee, not decoration. */}
-      <div className={["flex w-full flex-1 flex-col lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
+      {/* No matting, and no reserved gutter either (v12 Find palette): the
+          stage column runs to the window edges at every width now that nothing
+          docks beside it. */}
+      <div className="flex w-full flex-1 flex-col lg:min-h-0 lg:overflow-hidden">
         <main className="flex min-w-0 flex-1 flex-col lg:min-h-0 lg:overflow-hidden">
           {/* Inside <main>, not above the header: page content outside every
               landmark trips axe's region rule. */}
@@ -1283,9 +1276,11 @@ export function ViewerSeatFinder({
                       const officePlateLayout = getOfficePlateLayout(seat, mapRenderedWidth ?? 0);
                       // Two independent causes light a seat up, and neither may
                       // borrow the other's announcement: resting the pointer on a
-                      // people-list row is not a search result.
+                      // people-list row is not a search result. Only the
+                      // palette's BROWSE rows feed hoverSeatId, which is what
+                      // keeps the second description true.
                       const seatIsSearchHit = activeResultSeatIdSet.has(seat.id);
-                      const seatIsDirectoryHover = directoryOpen && seat.id === directoryHoverSeatId;
+                      const seatIsPaletteHover = paletteOpen && seat.id === hoverSeatId;
 
                       return (
                         <SeatMarker
@@ -1307,7 +1302,7 @@ export function ViewerSeatFinder({
                           swapSource={false}
                           swapTarget={false}
                           moveEmployeeSource={false}
-                          highlighted={seatIsSearchHit || seatIsDirectoryHover}
+                          highlighted={seatIsSearchHit || seatIsPaletteHover}
                           highlightedDescription={seatIsSearchHit ? "Highlighted search result" : "Highlighted from the people list"}
                           addSeatMode={false}
                           viewportEdge="none"
@@ -1326,16 +1321,16 @@ export function ViewerSeatFinder({
                 the announcement has to survive a floor switch (it still counts
                 the loaded seats on the placeholder floor). */}
             <p className="sr-only" aria-live="polite">{mapAnnouncement}</p>
-            {/* Below the panel tier the fixed PEOPLE pill owns the same
-                bottom-right corner (it is the only route to the directory down
-                there), so the stack clears its 35px + the 12px inset and
-                matches its safe-area handling. Both are bottom-anchored to the
-                same screen edge now that the viewport fills the column, so at a
-                flat bottom-3 the pill covered the fit button exactly — measured
-                34x34 at every width below 900. At >=900 the pill is
-                `panel:hidden` and the stack takes the corner back. */}
+            {/* Flat bottom-3 at the panel tier. This used to clear 3.5rem
+                below it, because the fixed PEOPLE pill owned the same
+                bottom-right corner there and covered the fit button exactly
+                (measured 34x34). The pill went with the directory it opened —
+                the palette is reachable from the field at every width — so the
+                stack has the corner back. The home-indicator inset stays: the
+                pill is what the 3.5rem cleared, the safe area is a different
+                obstruction and is still there (#198). */}
             {floor === "3" && (
-              <div className="absolute right-3 z-30 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] panel:bottom-3">
+              <div className="absolute right-3 z-30 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] panel:bottom-3">
                 <MapZoomControl
                   label={mapZoomLabel}
                   onZoomIn={() => applyMapZoom(zoomFactor === null ? 1 : zoomFactor + MAP_ZOOM_STEP)}
@@ -1380,193 +1375,35 @@ export function ViewerSeatFinder({
         </main>
       </div>
 
-      {resultsPanelOpen && (
-        <aside
-          aria-labelledby="viewer-results-title"
-          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3 panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[36px] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
-        >
-          <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
-            <h2 id="viewer-results-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">Results</h2>
-            <span aria-live="polite" className="text-xs font-medium text-[var(--admin-text-muted)]">
-              {resultCountLabel} · {searchResults.resultSeatIds.length} mapped
-            </span>
-          </div>
-
-          {/* List tabIndex: the region must stay keyboard-scrollable on its
-              own (axe scrollable-region-focusable) — every row is a <button>,
-              but rows for unseated people render disabled, and a list where
-              ALL rows are disabled otherwise has no tab stop at all. */}
-          {searchResults.results.length > 0 ? (
-            <div role="list" aria-label="Viewer search results" tabIndex={0} onKeyDown={handleResultsKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]">
-              {searchResults.results.map(result => {
-                const selected = result.id === activeResultId || Boolean(result.seatId && result.seatId === selectedSeatId);
-                return (
-                  <div role="listitem" key={result.id}>
-                  <button
-                    type="button"
-                    disabled={result.disabled}
-                    aria-current={selected ? "true" : undefined}
-                    aria-label={`${KIND_LABELS[result.kind]} result. ${result.title}. ${result.subtitle}. ${result.meta}.${selected ? " Selected." : ""}`}
-                    onClick={() => openResult(result)}
-                    className={cx(
-                      "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:opacity-60",
-                      selected ? "border-[var(--admin-primary-border)] bg-[var(--admin-paper)]" : "border-transparent"
-                    )}
-                  >
-                    <span className="min-w-0">
-                      <span className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">{result.title}</span>
-                        <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1", resultKindClass(result.kind))}>
-                          {KIND_LABELS[result.kind]}
-                        </span>
-                      </span>
-                      <span className="mt-1 block truncate text-xs font-medium text-[var(--admin-text-secondary)]">{result.subtitle}</span>
-                      <span className="mt-0.5 block truncate text-[11px] text-[var(--admin-text-muted)]">{result.meta}</span>
-                    </span>
-                    <span className="shrink-0 rounded-full bg-[var(--admin-surface-muted)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-border)]">
-                      {result.seatIds.length || "-"}
-                    </span>
-                  </button>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div role="status" aria-live="polite" className="p-4">
-              <div className="text-sm font-semibold text-[var(--admin-text-primary)]">No results for “{search.trim()}”</div>
-              <p className="mt-1 text-xs font-medium leading-5 text-[var(--admin-text-muted)]">
-                No matching people, seats, departments, or zones.
-              </p>
-              <button type="button" onClick={clearSearch} className="mt-3 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:text-[var(--admin-primary-cta)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]">
-                Clear search
-              </button>
-            </div>
-          )}
-
-          <div className="border-t border-[var(--admin-border)] px-4 py-2 text-[11px] font-medium text-[var(--admin-text-subtle)]">
-            ↑↓ to move · Enter opens · Esc clears
-          </div>
-        </aside>
-      )}
-
-      {(directoryOpen || mobileDirectorySheetOpen) && (
-        <aside
-          id="viewer-people-directory"
-          aria-labelledby="viewer-people-title"
-          className={cx(
-            "flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3",
-            // Docked panel at panel widths; below that it exists only as the
-            // toggled bottom sheet (#197).
-            mobileDirectorySheetOpen
-              ? "fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex max-h-[60svh] panel:inset-x-auto panel:bottom-3"
-              : "hidden",
-            directoryOpen && "panel:fixed panel:bottom-3 panel:right-3 panel:top-[36px] panel:z-40 panel:flex panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
-          )}
-        >
-          <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-4 py-3">
-            <h2 id="viewer-people-title" className="text-sm font-semibold text-[var(--admin-text-primary)]">People</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-[var(--admin-text-muted)]">{directory.totalCount}</span>
-              {directoryOpen && (
-                <button
-                  type="button"
-                  onClick={() => writeDirectoryCollapsedPref(true)}
-                  aria-label="Collapse the people list"
-                  title="Collapse"
-                  className="hidden h-6 w-6 items-center justify-center text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] panel:flex"
-                >
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4"><path d="M5 10h10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
-                </button>
-              )}
-              {mobileDirectorySheetOpen && (
-                <button
-                  type="button"
-                  onClick={() => setMobileDirectoryOpen(false)}
-                  aria-label="Close the people list"
-                  title="Close"
-                  className="flex h-6 w-6 items-center justify-center text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] panel:hidden"
-                >
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4"><path d="m5.5 5.5 9 9m0-9-9 9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
-                </button>
-              )}
-            </div>
-          </div>
-          {/* tabIndex: same scrollable-region-focusable contract as the search
-              results list above — with nobody seated, every row is a disabled
-              <button> and the scrollable region loses keyboard access. */}
-          <div ref={setDirectoryListElement} role="list" aria-label="People directory" tabIndex={0} onKeyDown={handleDirectoryKeyDown} className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]">
-            {directorySegments.map((segment, segmentPosition) => {
-              if (segment.kind === "spacer") {
-                return <div aria-hidden="true" key={`spacer-${segmentPosition}`} style={{ height: segment.height }} />;
-              }
-              const row = directory.rows[segment.index];
-              if (!row) return null;
-              return (
-              <div role="listitem" key={row.id} data-vindex={segment.index} data-vpinned={segment.pinned ? "" : undefined}>
-              <button
-                type="button"
-                disabled={row.disabled}
-                aria-label={`${row.title}. ${row.subtitle}.`}
-                onClick={() => openResult(row)}
-                onPointerEnter={() => setDirectoryHoverSeatId(row.seatId)}
-                onPointerLeave={() => setDirectoryHoverSeatId(null)}
-                className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border border-transparent p-2.5 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--admin-surface-alt)] text-[11px] font-bold text-[var(--admin-text-secondary)]">
-                  {buildInitials(row.title) || "?"}
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-[var(--admin-text-primary)]">{row.title}</span>
-                  <span className="mt-0.5 block truncate text-xs font-medium text-[var(--admin-text-secondary)]">{row.subtitle}</span>
-                </span>
-                {row.seatId ? (
-                  <span className="shrink-0 rounded-full bg-[var(--admin-surface-muted)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-border)]">
-                    {row.subtitle.split(" · ")[0]}
-                  </span>
-                ) : (
-                  <span className="shrink-0 text-[10px] font-medium text-[var(--admin-text-subtle)]">—</span>
-                )}
-              </button>
-              </div>
-              );
-            })}
-          </div>
-          <div className="border-t border-[var(--admin-border)] px-4 py-2 text-[11px] font-medium text-[var(--admin-text-subtle)]">
-            {directory.totalCount} {directory.totalCount === 1 ? "person" : "people"} · {directory.seatedCount} seated
-          </div>
-        </aside>
-      )}
-
-      {directoryRail && (
-        <aside className="hidden panel:block panel:fixed panel:bottom-0 panel:right-0 panel:top-9 panel:z-40">
-          <button
-            type="button"
-            onClick={() => writeDirectoryCollapsedPref(false)}
-            aria-label={`People · ${directory.totalCount} — show the people list`}
-            title="Show people"
-            className="flex h-full w-11 flex-col items-center justify-center gap-2 border-l border-[var(--admin-border)] bg-[var(--admin-surface)] px-2 py-4 text-[var(--admin-text-secondary)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
-          >
-            <span className="rotate-180 text-[10px] font-medium tracking-[0.14em] [writing-mode:vertical-rl]">PEOPLE · {directory.totalCount}</span>
-          </button>
-        </aside>
-      )}
-
-      {/* Narrow-width entry point to the directory: below the panel breakpoint
-          neither the docked panel nor the collapse rail renders, so this pill
-          is the only path to the people list (#197). Hidden while search
-          results or the inspector own the bottom of the screen. */}
-      {!mobileDirectorySheetOpen && !searchActive && !selectedSeat && (
-        <button
-          type="button"
-          onClick={() => setMobileDirectoryOpen(true)}
-          aria-controls="viewer-people-directory"
-          aria-expanded={false}
-          aria-label={`People · ${directory.totalCount} — show the people list`}
-          title="Show people"
-          className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] right-3 z-40 flex items-center gap-1.5 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-[11px] font-semibold tracking-wide text-[var(--admin-text-secondary)] shadow-elevation-2 transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] panel:hidden"
-        >
-          PEOPLE · {directory.totalCount}
-        </button>
+      {/* The ONE Find surface. It floats over the plan anchored to the field
+          it belongs to, so opening it reflows nothing (contract #2), and its
+          two modes share this single slot — browse with an empty query,
+          results with one. It replaced four docked surfaces: the search
+          results aside, the People directory aside, that directory's collapse
+          rail, and the mobile PEOPLE pill that was the only way to reach the
+          directory below 900px. */}
+      {paletteOpen && (
+        <ViewerFindPalette
+          anchorRef={searchFieldRef}
+          containerRef={paletteRef}
+          searchInputRef={searchInputRef}
+          // The user's own trimmed text, not the normalized search key: this
+          // is display copy ("No results for X") and a mode switch, and both
+          // want the casing that was typed.
+          query={search.trim()}
+          browse={paletteBrowse}
+          results={searchResults.results}
+          resultCountLabel={resultCountLabel}
+          mappedSeatCount={searchResults.resultSeatIds.length}
+          activeResultId={activeResultId}
+          selectedSeatId={selectedSeatId}
+          pinnedZone={zone}
+          onZoneHoverChange={setHoverZone}
+          onZonePin={pinZoneFromPalette}
+          onRowHoverChange={setHoverSeatId}
+          onOpenRow={openResult}
+          onClearSearch={clearSearch}
+        />
       )}
 
       <SeatInspector

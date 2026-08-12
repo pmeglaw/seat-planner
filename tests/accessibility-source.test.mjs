@@ -164,6 +164,7 @@ test("Carbon-for-AI tokens (--admin-ai-*) stay exclusive to Ask Planner surfaces
 
   // Non-AI surfaces: zero AI-blue tokens, ever.
   assert.doesNotMatch(viewerFinderSource, /--admin-ai-/);
+  assert.doesNotMatch(await readSource("../components/seat-map/ViewerFindPalette.tsx"), /--admin-ai-/);
   assert.doesNotMatch(shellBarSource, /--admin-ai-/);
 });
 
@@ -186,12 +187,19 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
 
+  const findPaletteSource = await readSource("../components/seat-map/ViewerFindPalette.tsx");
   assert.match(viewerSource, /ViewerSeatFinder/);
   assert.match(viewerFinderSource, /Search office seating/);
-  assert.match(viewerFinderSource, /aria-label="Viewer search results"/);
+  // The results list moved into the palette; the viewer keeps the pointer to
+  // it (the ArrowDown hop out of the search field), which is asserted with the
+  // rest of the roving contract below.
+  assert.match(findPaletteSource, /aria-label="Viewer search results"/);
   assert.match(viewerFinderSource, /aria-live="polite"/);
   assert.match(viewerFinderSource, /highlightedDescription=\{/);
-  assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
+  // The palette is a viewer surface too — it inherits the same isolation.
+  for (const source of [viewerFinderSource, findPaletteSource]) {
+    assert.doesNotMatch(source, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
+  }
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*draftStatusLabel/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AskPlannerDrawer/);
   // The anchor has moved twice: Swap left for the canvas action bar, then Move
@@ -218,8 +226,20 @@ test("a highlighted viewer seat announces which of the two causes lit it up", as
   const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
   assert.match(viewerFinderSource, /const seatIsSearchHit = activeResultSeatIdSet\.has\(seat\.id\)/);
-  assert.match(viewerFinderSource, /const seatIsDirectoryHover = directoryOpen && seat\.id === directoryHoverSeatId/);
-  assert.match(viewerFinderSource, /highlighted=\{seatIsSearchHit \|\| seatIsDirectoryHover\}/);
+  // Same two causes after the panel → palette move; the hover one is now the
+  // palette's browse rows, so it is gated on paletteOpen and reads
+  // hoverSeatId. Only BROWSE rows feed that state — the palette's query rows
+  // deliberately have no hover-locate, which is what keeps the second
+  // description ("from the people list") true rather than approximately true.
+  assert.match(viewerFinderSource, /const seatIsPaletteHover = paletteOpen && seat\.id === hoverSeatId/);
+  assert.match(viewerFinderSource, /highlighted=\{seatIsSearchHit \|\| seatIsPaletteHover\}/);
+  const paletteSource = await readSource("../components/seat-map/ViewerFindPalette.tsx");
+  const paletteResultsBlock = paletteSource.slice(
+    paletteSource.indexOf('aria-label="Viewer search results"'),
+    paletteSource.indexOf('aria-label="People directory"')
+  );
+  assert.ok(paletteResultsBlock.length > 0, "the palette must still render both lists");
+  assert.doesNotMatch(paletteResultsBlock, /onPointerEnter/);
   assert.match(
     viewerFinderSource,
     /highlightedDescription=\{seatIsSearchHit \? "Highlighted search result" : "Highlighted from the people list"\}/
@@ -688,7 +708,9 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   assert.ok(adminPanelIndex < adminSearchIndex, "admin filter panel must precede the command search in DOM order");
 
   const viewerPanelIndex = viewerSource.indexOf("{filterOpen && (");
-  const viewerSearchIndex = viewerSource.indexOf('role="search" aria-label="Viewer search"');
+  // Regex, not indexOf: the field wrapper carries a ref and spans several
+  // lines now, so the two attributes are no longer adjacent in the source.
+  const viewerSearchIndex = viewerSource.search(/role="search"\s+aria-label="Viewer search"/);
   assert.ok(viewerPanelIndex >= 0 && viewerSearchIndex >= 0, "viewer filter panel and search should remain source-visible");
   assert.ok(viewerPanelIndex < viewerSearchIndex, "viewer filter panel must precede the search in DOM order");
 });
@@ -847,15 +869,21 @@ test("narrow widths keep the viewer switch and people directory reachable", asyn
   assert.match(seatMapSource, /useAppShellNavigation\(/);
   assert.doesNotMatch(seatMapSource, /beforeGuardedNavigation\("\/", "the viewer"\)\) event\.preventDefault\(\)/);
 
-  // Below the panel breakpoint the docked People directory disappears, so a
-  // panel:hidden toggle must open it as a sheet, and the sheet must offer its
-  // own close control (the desktop collapse rail is panel-only) (#197).
-  assert.match(viewerSource, /id="viewer-people-directory"/);
-  assert.match(viewerSource, /aria-controls="viewer-people-directory"/);
-  // Label opens with the visible "People · N" text (axe visible-text
-  // containment — the rail and pill render that string).
-  assert.match(viewerSource, /aria-label=\{`People · \$\{directory\.totalCount\} — show the people list`\}[\s\S]{0,800}panel:hidden/);
-  assert.match(viewerSource, /aria-label="Close the people list"/);
+  // #197's guarantee — the people directory is reachable at EVERY width — no
+  // longer needs a width-specific entry point. It used to: the docked panel
+  // was panel-only, so below the breakpoint a `panel:hidden` PEOPLE pill
+  // opened it as a sheet with its own close control. The Find palette
+  // replaced all of that with ONE entry point, the search field, which is in
+  // the chrome at every width. So the pill, the sheet and the collapse rail
+  // are gone, and what is pinned instead is that the palette renders
+  // unconditionally on `paletteOpen` (no responsive gate could hide it from a
+  // phone) and that it lays itself out as a full-width sheet below the same
+  // 900px tier rather than trimming its content (owner answer 3).
+  const paletteSource = await readSource("../components/seat-map/ViewerFindPalette.tsx");
+  assert.match(viewerSource, /\{paletteOpen && \(\s*<ViewerFindPalette/);
+  assert.doesNotMatch(viewerSource, /viewer-people-directory|show the people list|Close the people list/);
+  assert.match(paletteSource, /viewportWidth < VIEWER_PANEL_BREAKPOINT_PX/);
+  assert.match(paletteSource, /const VIEWER_PANEL_BREAKPOINT_PX = 900/);
 });
 
 test("dark-panel selects style their options and the app declares a theme color", async () => {
@@ -960,7 +988,14 @@ test("touch devices get visible destructive affordances, contained modals, and s
 
   // Viewport-fixed bottom sheets respect the home-indicator inset (#198).
   assert.match(seatMapSource, /env\(safe-area-inset-bottom\)/);
-  assert.ok((viewerSource.match(/env\(safe-area-inset-bottom\)/g) ?? []).length >= 3, "viewer sheets and pill respect the bottom inset");
+  // The viewer used to need three: two bottom sheets and the PEOPLE pill. All
+  // three are retired, and the palette hangs off the TOP of the screen — so
+  // what has to clear the home indicator now is the bottom-anchored zoom
+  // float, plus the palette's own height cap, whose bottom edge is the only
+  // part of it that can reach the indicator.
+  const viewerPaletteSource = await readSource("../components/seat-map/ViewerFindPalette.tsx");
+  assert.match(viewerSource, /bottom-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\] panel:bottom-3/);
+  assert.match(viewerPaletteSource, /maxHeight: frame \? `calc\(\$\{frame\.maxHeight\}px - env\(safe-area-inset-bottom\)\)`/);
 
   // Tap ergonomics: interactive elements skip the double-tap zoom delay, and
   // the small chrome controls extend their hit area to ~44px without growing
@@ -989,9 +1024,14 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   // role="listitem" directly on a <button> overrides the native button role
   // for AT — items are wrapper divs with real buttons inside (#202, matching
   // ResultsPanel's pattern).
-  assert.doesNotMatch(viewerSource, /type="button"\s+role="listitem"/);
-  assert.doesNotMatch(viewerSource, /role="listitem"[\s\S]{0,80}onClick/);
-  assert.ok((viewerSource.match(/<div role="listitem"/g) ?? []).length >= 2, "viewer lists wrap buttons in listitem divs");
+  // Both viewer lists live in the Find palette now — same convention, same
+  // reason, one file further out.
+  const paletteSource = await readSource("../components/seat-map/ViewerFindPalette.tsx");
+  for (const [name, source] of [["Viewer", viewerSource], ["FindPalette", paletteSource]]) {
+    assert.doesNotMatch(source, /type="button"\s+role="listitem"/, `${name} must not put listitem on a button`);
+    assert.doesNotMatch(source, /role="listitem"[\s\S]{0,80}onClick/, `${name} must not make the listitem wrapper itself clickable`);
+  }
+  assert.ok((paletteSource.match(/role="listitem"/g) ?? []).length >= 2, "both palette lists wrap buttons in listitem divs");
 
   // Same list-semantics guarantee for the viewer's status counts. v12 slice 3
   // floated them off the docked footer strip onto a layer-01 card over the

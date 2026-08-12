@@ -7,10 +7,17 @@ import test from "node:test";
 // resolved by nudging — and the nudge graphs must be computed against the
 // LIVE rendered map scale, with the name-label rows fed into the code-pill
 // graph. When any of this regresses, dense pods render physically
-// overlapping pills at fit zoom — the People directory keeps the viewer's
-// at-rest stage narrower than the old full-bleed fit, so a static "fit-zoom"
-// clearance under-flags exactly the pods that collide, and two independent
-// nudge graphs converge pills onto the same row. This pins wiring, not look.
+// overlapping pills at fit zoom, and two independent nudge graphs converge
+// pills onto the same row. This pins wiring, not look.
+//
+// The original symptom came from the docked People directory, which kept the
+// viewer's at-rest stage ~330px narrower than a full-bleed fit, so a static
+// "fit-zoom" clearance under-flagged exactly the pods that collided. That
+// panel is gone — the Find palette floats and reserves nothing — so the
+// viewer now rests at the wider scale. The wiring still has to be live, for
+// the same reason at the other end of the range: detail zoom, the mobile
+// fixed-width frame, and every window size in between all render at scales a
+// constant cannot describe.
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 

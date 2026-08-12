@@ -38,7 +38,7 @@ sit outside the table above.
 
 | Plan | Title | Status |
 |------|-------|--------|
-| [017](017-viewer-find-palette-slice-1.md) | Viewer Find palette, slice 1 — palette shell + browse mode | IN PROGRESS — feed landed on `claude/viewer-palette-slice-1`; the swap (delete four docked surfaces, collapse four state flags, rework five test files) is not started. Read the plan's recon before touching `ViewerSeatFinder.tsx` |
+| [017](017-viewer-find-palette-slice-1.md) | Viewer Find palette, slice 1 — palette shell + browse mode | **DONE (2026-08-12)** on `claude/viewer-palette-slice-1`. Two owner rulings and one browser-only bug are recorded at the top of the plan — read them before starting slice 2, they change its scope: query mode already lives in the palette (slice 2 is the restyle, not the move) and the zone chips are already wired |
 
 ## 2026-08-07 findings recorded but NOT planned this cycle
 

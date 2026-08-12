@@ -323,18 +323,70 @@ test("selecting and clearing a seat writes the seat param back to the URL", asyn
   assert.doesNotMatch(window.location.search, /seat=/);
 });
 
-// --- People directory -------------------------------------------------------
+// --- The Find palette -------------------------------------------------------
+// The people directory is browse mode inside the palette now, so every
+// assertion about it has to open the palette first. Nothing docks at rest
+// (contract #1), which is itself the first thing worth pinning.
 
-test("the people directory lists the published employee snapshot", async () => {
+// Focusing the field is one of the four documented ways in (click, focus, ⌘K,
+// typing) and the one a test can drive without a keyboard shortcut.
+function openPalette() {
+  fireEvent.focus(screen.getByRole("searchbox"));
+}
+
+test("nothing docks at rest — the palette opens from the search field", async () => {
   await renderViewer();
+  assert.equal(screen.queryByRole("list", { name: "People directory" }), null);
+  assert.equal(screen.queryByRole("list", { name: "Viewer search results" }), null);
+
+  openPalette();
+  assert.ok(screen.getByRole("list", { name: "People directory" }));
+});
+
+test("the palette's people list is the published employee snapshot", async () => {
+  await renderViewer();
+  openPalette();
   const directory = screen.getByRole("list", { name: "People directory" });
   assert.match(directory.textContent, /Ada Lovelace/);
   assert.match(directory.textContent, /Grace Hopper/);
 });
 
-test("inactive employees stay out of the directory", async () => {
+test("inactive employees stay out of the palette's people list", async () => {
   await renderViewer({ employees: [ADA, { ...GRACE, active: false }] });
+  openPalette();
   const directory = screen.getByRole("list", { name: "People directory" });
   assert.match(directory.textContent, /Ada Lovelace/);
   assert.doesNotMatch(directory.textContent, /Grace Hopper/);
+});
+
+test("the palette browses zones with their published seat counts", async () => {
+  await renderViewer();
+  openPalette();
+  const zones = within(screen.getByRole("group", { name: "Zones" })).getAllByRole("button");
+  // North Offices holds A-01 and C-03; South Offices holds B-02 and D-04.
+  assert.deepEqual(zones.map(chip => chip.textContent), ["North Offices2", "South Offices2"]);
+});
+
+test("picking a zone chip pins the filter and closes the palette", async () => {
+  await renderViewer();
+  openPalette();
+  fireEvent.click(within(screen.getByRole("group", { name: "Zones" })).getAllByRole("button")[1]);
+  await flushFrames();
+
+  assert.equal(screen.queryByRole("list", { name: "People directory" }), null, "picking a zone ends the browse");
+  // The pin lands on the same facet the Filter popover drives, so the legend
+  // recounts against it: South Offices is B-02 (assigned) + D-04 (open).
+  assert.deepEqual(legendCounts(), { assigned: 1, open: 1, reserved: 0 });
+});
+
+test("opening a person from the palette selects their seat and closes the palette", async () => {
+  await renderViewer();
+  openPalette();
+  const directory = screen.getByRole("list", { name: "People directory" });
+  fireEvent.click(within(directory).getByRole("button", { name: /^Grace Hopper/ }));
+  await flushFrames();
+
+  assert.equal(inspectorMode(), READ_ONLY_INSPECTOR);
+  assert.match(openInspector().textContent, /B-02/);
+  assert.equal(screen.queryByRole("list", { name: "People directory" }), null);
 });
