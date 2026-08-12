@@ -11,6 +11,8 @@
  * walls, and the wash must hug the seats it lights (same split as
  * lib/officeRoomWash.ts documents for rooms).
  */
+import { zoneKey } from "@/lib/seatFilters";
+
 export type ZoneWashSeat = {
   x: number;
   y: number;
@@ -44,6 +46,10 @@ const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 export function buildZoneWash(zone: string | null | undefined, seats: ZoneWashSeat[]): ZoneWashRect | null {
   const washZone = zone?.trim();
   if (!washZone) return null;
+  // Matched on the filter's own comparison key, not on the display spelling:
+  // the pinned zone carries whatever casing the option list or the first seat
+  // used, so an exact compare could wash NOTHING while the filter kept seats.
+  const washKey = zoneKey(washZone);
 
   let xMin = Number.POSITIVE_INFINITY;
   let xMax = Number.NEGATIVE_INFINITY;
@@ -52,7 +58,7 @@ export function buildZoneWash(zone: string | null | undefined, seats: ZoneWashSe
   let seatCount = 0;
 
   for (const seat of seats) {
-    if ((seat.zone ?? seat.department ?? "").trim() !== washZone) continue;
+    if (zoneKey(seat.zone ?? seat.department) !== washKey) continue;
     const x = Number(seat.x);
     const y = Number(seat.y);
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;

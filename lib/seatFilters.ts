@@ -41,6 +41,19 @@ export function seatZoneValue(seat: SeatWithEmployee): string {
 }
 
 /**
+ * The comparison key for a zone name: trimmed and lowercased.
+ *
+ * The zone counterpart of `departmentKey`, and it exists for the same reason —
+ * a seat's stored spelling and the option list's spelling drift, and an exact
+ * compare turns that drift into seats silently missing from a filter. Every
+ * consumer that groups, counts, filters or washes by zone compares on THIS key,
+ * so a chip can never count a seat that its own pin then excludes.
+ */
+export function zoneKey(zone: string | null | undefined): string {
+  return (zone ?? "").trim().toLowerCase();
+}
+
+/**
  * The text a free-text search matches against.
  *
  * Includes the occupant's details, so searching a person's name finds their
@@ -74,7 +87,10 @@ export function seatMatchesFilters(seat: SeatWithEmployee, criteria: SeatFilterC
     criteria.department === FILTER_ALL ||
     departmentKey(seat.employee?.department ?? "") === departmentKey(criteria.department);
   const positionOk = seatMatchesPosition(seat.employee?.position, criteria.position);
-  const zoneOk = criteria.zone === FILTER_ALL || seatZoneValue(seat) === criteria.zone;
+  // Through zoneKey for the same reason department goes through departmentKey
+  // — and because the zone wash matches on that key too, so the previewed box
+  // and the filtered set cannot disagree.
+  const zoneOk = criteria.zone === FILTER_ALL || zoneKey(seatZoneValue(seat)) === zoneKey(criteria.zone);
   const statusOk = criteria.status === FILTER_ALL || seat.status === (criteria.status as SeatStatus);
 
   return searchOk && departmentOk && positionOk && zoneOk && statusOk;

@@ -1,3 +1,4 @@
+import { zoneKey } from "@/lib/seatFilters";
 import type { Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { buildViewerDirectory, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 
@@ -24,17 +25,14 @@ export function getSeatZone(seat: Pick<SeatWithEmployee, "zone" | "department">)
 }
 
 /**
- * The comparison key for a zone name: trimmed and lowercased.
- *
- * Chips AGGREGATE on this key (a zone option and a seat that disagree only in
- * case or padding are one zone), so anything that later acts on a chip must
- * compare on it too. The pinned-zone filter used raw `===` against the chip's
- * display name, which is the first spelling seen — so a chip could count seats
- * it then filtered out, showing "West Pod 3" and matching nothing.
+ * Chips AGGREGATE on the shared zoneKey (a zone option and a seat that disagree
+ * only in case or padding are ONE zone), which is why everything that later
+ * acts on a chip — the pinned filter, the map's wash — must compare on that
+ * same key. Re-exported so palette consumers read the key from the module they
+ * already import, while lib/seatFilters.ts stays its single definition: two
+ * spellings of "the zone key" is the very drift this exists to prevent.
  */
-export function getZoneKey(zone: string | null | undefined) {
-  return (zone ?? "").trim().toLowerCase();
-}
+export { zoneKey };
 
 export type ViewerZoneChip = {
   /** Display name, in the casing the first occurrence used. */
@@ -77,7 +75,7 @@ export function buildViewerZoneChips({
   const register = (rawName: string | null | undefined) => {
     const name = rawName?.trim();
     if (!name) return null;
-    const key = getZoneKey(name);
+    const key = zoneKey(name);
     const existing = chips.get(key);
     if (existing) return existing;
     const chip: ViewerZoneChip = { name, seatCount: 0 };

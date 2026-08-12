@@ -107,7 +107,7 @@ test("zone names de-duplicate case-insensitively, option spelling winning", () =
 
 // The counting key and the filtering key have to be the SAME key. A chip that
 // counts a seat it cannot then select is worse than a missing chip: it shows a
-// number and pins to nothing. This failed before getZoneKey existed — chips
+// number and pins to nothing. This failed before the shared zoneKey existed — chips
 // aggregated on a trimmed lowercase key while the viewer's pinned-zone filter
 // compared the chip's display name to the seat's raw zone with ===.
 test("every chip pins to the seats it counted, whatever their casing or padding", () => {
@@ -120,7 +120,7 @@ test("every chip pins to the seats it counted, whatever their casing or padding"
 
   for (const chip of chips) {
     const matched = seats.filter(
-      current => palette.getZoneKey(palette.getSeatZone(current)) === palette.getZoneKey(chip.name)
+      current => palette.zoneKey(palette.getSeatZone(current)) === palette.zoneKey(chip.name)
     );
     assert.equal(
       matched.length,

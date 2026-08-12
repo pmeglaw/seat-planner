@@ -5,6 +5,7 @@ import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 const {
   FILTER_ALL,
   seatZoneValue,
+  zoneKey,
   seatSearchHaystack,
   seatMatchesFilters,
   activeStructuredFilters,
@@ -80,6 +81,21 @@ test("zone filtering uses the department fallback", () => {
   const legacy = seat({ zone: null, department: "Legacy Pod" });
   assert.equal(seatMatchesFilters(legacy, criteria({ zone: "Legacy Pod" })), true);
   assert.equal(seatMatchesFilters(legacy, criteria({ zone: "North Pod" })), false);
+});
+
+// Same drift protection department has had, for the same reason: the pinned
+// value is a display spelling (an option name, or a chip built from the first
+// seat seen) and the seat carries whatever was stored. lib/zoneWash.ts matches
+// on this key too, so the previewed box and the filtered set stay the same set.
+test("zone filtering compares on the key, so casing and padding cannot hide a seat", () => {
+  const stored = seat({ zone: "  north pod  " });
+  assert.equal(seatMatchesFilters(stored, criteria({ zone: "North Pod" })), true);
+  assert.equal(seatMatchesFilters(seat({ zone: "North Pod" }), criteria({ zone: " NORTH POD " })), true);
+  assert.equal(seatMatchesFilters(stored, criteria({ zone: "North Pod Annex" })), false);
+
+  assert.equal(zoneKey("  North Pod  "), "north pod");
+  assert.equal(zoneKey(null), "");
+  assert.equal(zoneKey(undefined), "");
 });
 
 test("status filtering is exact", () => {

@@ -43,6 +43,27 @@ test("buildZoneWash falls back to department when a seat has no zone (facet pari
   assert.equal(wash.seatCount, 2);
 });
 
+// The pinned zone carries a DISPLAY spelling — the option list's, or whichever
+// seat was seen first — while the seats carry whatever was stored. Matching on
+// the display string washed nothing at all in exactly the case the filter still
+// kept seats: the map went blank behind a pinned chip reporting a live count.
+test("buildZoneWash matches on the filter's key, so casing and padding cannot blank the wash", () => {
+  const wash = buildZoneWash("North Pod", [
+    { x: 0.2, y: 0.2, zone: "north pod" },
+    { x: 0.4, y: 0.1, zone: "  North Pod  " },
+    { x: 0.8, y: 0.8, zone: "NORTH POD" },
+    { x: 0.9, y: 0.9, zone: "East Pod" }
+  ]);
+
+  assert.ok(wash, "a zone whose seats differ only in casing must still wash");
+  assert.equal(wash.seatCount, 3);
+  // The box frames all three spellings, and the East Pod seat stays outside it.
+  assert.ok(Math.abs(wash.xMax - (0.8 + ZONE_WASH_PAD_X)) < 1e-9);
+  // The rect still reports the DISPLAY spelling it was asked for — the key is
+  // a comparison detail, not something the caller renders.
+  assert.equal(wash.zone, "North Pod");
+});
+
 test("buildZoneWash clamps the padded box inside the [0,1] map frame", () => {
   const wash = buildZoneWash("Edge", [
     { x: 0.005, y: 0.995, zone: "Edge" },

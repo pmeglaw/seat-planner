@@ -28,7 +28,7 @@ import {
 } from "@/lib/mapViewport";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
-import { buildViewerPaletteBrowse, getSeatZone, getZoneKey } from "@/lib/viewerFindPalette";
+import { buildViewerPaletteBrowse, getSeatZone, zoneKey } from "@/lib/viewerFindPalette";
 import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
@@ -281,11 +281,11 @@ export function ViewerSeatFinder({
   const seatPassesStructuredFilters = useCallback((seat: SeatWithEmployee) => {
     const departmentOk = department === "all" || getSeatDepartment(seat).toLowerCase() === department.toLowerCase();
     const positionOk = seatMatchesPosition(seat.employee?.position, position);
-    // getZoneKey on BOTH sides, not raw ===: the palette's chips aggregate on
+    // zoneKey on BOTH sides, not raw ===: the palette's chips aggregate on
     // that key and render the first spelling seen, so a chip built from an
     // active zone option could count a seat whose own `zone` differs only in
     // case or padding — and then filter that same seat out when pinned.
-    const zoneOk = zone === "all" || getZoneKey(getSeatZone(seat)) === getZoneKey(zone);
+    const zoneOk = zone === "all" || zoneKey(getSeatZone(seat)) === zoneKey(zone);
     const statusOk = status === "all" || seat.status === (status as SeatStatus);
     return departmentOk && positionOk && zoneOk && statusOk;
   }, [department, position, status, zone]);
