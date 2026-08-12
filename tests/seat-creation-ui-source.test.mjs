@@ -36,6 +36,7 @@ test("add-seat action creates custom draft seats without publishing", async () =
 
 test("custom-seat delete flow is draft-only and clearly guarded", async () => {
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  const seatMapDialogsSource = await readFile(new URL("../components/seat-map/SeatMapDialogs.tsx", import.meta.url), "utf8");
   const inspectorDeleteSource = await readFile(new URL("../components/seat-map/SeatInspector.tsx", import.meta.url), "utf8");
   const actionSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
   const deleteAction = actionSource.match(/export async function deleteSeatAction[\s\S]*?export async function importAssignmentsCsvAction/);
@@ -43,8 +44,9 @@ test("custom-seat delete flow is draft-only and clearly guarded", async () => {
   assert.ok(deleteAction, "deleteSeatAction should remain source-visible.");
   assert.match(seatMapSource, /canDeleteSeat/);
   assert.match(seatMapSource, /getSeatDeleteBlockReason/);
-  assert.match(seatMapSource, /Only available custom draft seats can be deleted\. Original seats are protected\./);
-  assert.match(seatMapSource, /This removes custom draft seats only\. Published maps are unchanged until you publish\./);
+  // Confirm-dialog copy lives in the extracted dialogs file (R-02a).
+  assert.match(seatMapDialogsSource, /Only available custom draft seats can be deleted\. Original seats are protected\./);
+  assert.match(seatMapDialogsSource, /This removes custom draft seats only\. Published maps are unchanged until you publish\./);
   assert.match(inspectorDeleteSource, /Delete custom seat/);
   assert.match(inspectorDeleteSource, /deleteHelpText/);
   assert.match(deleteAction[0], /canDeleteDraftSeat/);

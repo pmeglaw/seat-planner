@@ -12,7 +12,6 @@ import {
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, publishSeatMapAction, resetDraftToPublishedAction, swapSeatAssignmentsAction, updateSeatAction } from "@/app/actions";
-import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
 import { listActiveEmployeeExpectations, listDraftSeatExpectations, type DraftSeatExpectation, type EmployeeExpectation } from "@/lib/draftConcurrency";
 import {
@@ -71,17 +70,25 @@ import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
 import { useDraftHistory } from "@/components/seat-map/useDraftHistory";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
+import {
+  DeleteSeatConfirmDialog,
+  DiscardDraftDialog,
+  InspectorGuardDialog,
+  MoveEmployeeConfirmDialog,
+  PublishReviewDialog,
+  SwapConfirmDialog,
+  VacateConfirmDialog,
+  buildSwapSummary,
+  seatPersonLabel
+} from "@/components/seat-map/SeatMapDialogs";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { buildZoneWash } from "@/lib/zoneWash";
 import { useAppShellNavigation } from "@/components/ui/AppShell";
 import { adminChromeDividerRule } from "@/components/ui/adminChrome";
-import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
-import { CloseIcon } from "@/components/ui/CloseIcon";
-import { StatusBadge, focusRingClass } from "@/components/ui/design-system";
+import { focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 import { SEAT_SEARCH_PLACEHOLDER, searchHandsPanelToResults } from "@/lib/viewerSeatSearch";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
-import { useDialogFocus } from "@/components/ui/useDialogFocus";
 import { deploySkewMonitor } from "@/lib/deploySkew";
 import { assignLocation } from "@/lib/fullNavigation";
 
@@ -228,33 +235,6 @@ function replaceEmployee(employees: Employee[], seat: SeatWithEmployee) {
 
 function getSeatZone(seat: SeatWithEmployee) {
   return seat.zone ?? seat.department ?? "";
-}
-
-const PUBLISH_DIFF_TAG_STYLES: Record<PublishDiffRowKind, { label: string; className: string }> = {
-  assigned: { label: "Assigned", className: "border-[var(--admin-diff-assigned-border)] bg-[var(--admin-diff-assigned-bg)] text-[var(--admin-diff-assigned-text)]" },
-  added: { label: "Added", className: "border-[var(--admin-diff-assigned-border)] bg-[var(--admin-diff-assigned-bg)] text-[var(--admin-diff-assigned-text)]" },
-  vacated: { label: "Vacated", className: "border-[var(--admin-diff-vacated-border)] bg-[var(--admin-diff-vacated-bg)] text-[var(--admin-diff-vacated-text)]" },
-  removed: { label: "Removed", className: "border-[var(--admin-diff-vacated-border)] bg-[var(--admin-diff-vacated-bg)] text-[var(--admin-diff-vacated-text)]" },
-  reassigned: { label: "Reassigned", className: "border-[var(--admin-diff-reassigned-border)] bg-[var(--admin-diff-reassigned-bg)] text-[var(--admin-diff-reassigned-text)]" },
-  updated: { label: "Updated", className: "border-[var(--admin-state-neutral-border)] bg-[var(--admin-state-neutral-bg)] text-[var(--admin-text-muted)]" }
-};
-
-function PublishDiffTag({ kind }: { kind: PublishDiffRowKind }) {
-  const style = PUBLISH_DIFF_TAG_STYLES[kind];
-  return (
-    <span className={["inline-flex rounded-full border px-2 py-0.5 text-[10.5px] font-semibold", style.className].join(" ")}>
-      {style.label}
-    </span>
-  );
-}
-
-function PublishDiffChip({ kind, count }: { kind: PublishDiffRowKind; count: number }) {
-  const style = PUBLISH_DIFF_TAG_STYLES[kind];
-  return (
-    <span className={["inline-flex items-center rounded-full border px-2 py-0.5 text-[10.5px] font-semibold", style.className].join(" ")}>
-      {count} {style.label.toLowerCase()}
-    </span>
-  );
 }
 
 type SeatStatusLegendItem = {
@@ -439,13 +419,6 @@ export function SeatMap({
     onNotice: setActionNotice,
     onError: setHistoryError
   });
-  const deleteSeatDialogFocusRef = useDialogFocus<HTMLElement>();
-  const vacateConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
-  const publishReviewDialogFocusRef = useDialogFocus<HTMLElement>();
-  const discardDraftDialogFocusRef = useDialogFocus<HTMLElement>();
-  const inspectorGuardDialogFocusRef = useDialogFocus<HTMLElement>();
-  const swapConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
-  const moveEmployeeConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
 
   // Keyboard activation of a seat hands focus into the inspector panel once
   // the selection commits (mouse users keep their pointer focus — the flag is
@@ -1785,14 +1758,6 @@ export function SeatMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSeatId]);
 
-  function seatPersonLabel(seat: SeatWithEmployee | null) {
-    return seat?.employee?.full_name ?? "Open";
-  }
-
-  function buildSwapSummary(sourceSeat: SeatWithEmployee, targetSeat: SeatWithEmployee) {
-    return `${sourceSeat.label} (${seatPersonLabel(sourceSeat)}) ↔ ${targetSeat.label} (${seatPersonLabel(targetSeat)})`;
-  }
-
   function requestSwapTarget(targetSeatId: string) {
     if (!swapSourceSeatId) return false;
     const sourceSeat = localSeats.find(seat => seat.id === swapSourceSeatId) ?? null;
@@ -2420,9 +2385,6 @@ export function SeatMap({
   // one — no dead "matches published" arm to keep in sync.
   const draftStatusLabel = `${publishSummary.totalChangeCount} unpublished ${publishSummary.totalChangeCount === 1 ? "change" : "changes"}`;
   const draftStatusTitle = `Review draft changes: ${draftChangeBreakdown || `${publishSummary.totalChangeCount} total`}`;
-  const publishReadinessTitle = publishSummary.hasChanges ? "Ready to publish reviewed changes" : "Draft and viewer map are in sync";
-  const publishReadinessBadgeTone = publishSummary.hasChanges ? "draft" : "published";
-  const publishReadinessBadgeLabel = publishSummary.hasChanges ? "Ready" : "No changes";
   const activeMode = addSeatMode
     ? {
       label: "Add seat",
@@ -3463,295 +3425,47 @@ export function SeatMap({
       )}
 
       {vacateConfirm && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
-          <section
-            ref={vacateConfirmDialogFocusRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="vacate-seat-confirm-title"
-            aria-describedby="vacate-seat-confirm-description"
-            className="w-full max-w-md border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel focus-visible:outline-none"
-          >
-            <h2 id="vacate-seat-confirm-title" className="text-base font-semibold">
-              Vacate {formatSeatCode(vacateConfirm.label)}?
-            </h2>
-            <p id="vacate-seat-confirm-description" className="mt-2 text-sm leading-5 text-[var(--admin-text-secondary)]">
-              This clears {formatDisplayName(vacateConfirm.occupantName)} from this draft seat. {PUBLISH_IMPACT_NOTE}
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button type="button" onClick={() => setVacateConfirm(null)} disabled={pending} className={["w-full", focusRingClass].join(" ")}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="danger"
-                onClick={confirmVacateFromBar}
-                disabled={pending}
-                className={["w-full", adminDangerButtonClassName, focusRingClass].join(" ")}
-              >
-                Vacate seat
-              </Button>
-            </div>
-          </section>
-        </div>
+        <VacateConfirmDialog
+          label={vacateConfirm.label}
+          occupantName={vacateConfirm.occupantName}
+          pending={pending}
+          onCancel={() => setVacateConfirm(null)}
+          onConfirm={confirmVacateFromBar}
+        />
       )}
 
       {deleteSeatConfirm && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
-          <section
-            ref={deleteSeatDialogFocusRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-seat-confirm-title"
-            aria-describedby="delete-seat-confirm-description"
-            className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 id="delete-seat-confirm-title" className="text-base font-semibold">Delete custom seat {deleteSeatConfirm.label}?</h2>
-                <p id="delete-seat-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
-                  Only available custom draft seats can be deleted. Original seats are protected.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setDeleteSeatConfirm(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
-                aria-label="Cancel custom seat deletion"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-
-            <div className="mt-4 rounded-xl border border-[var(--admin-state-danger-border)] bg-[var(--admin-state-danger-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-danger-text)]">
-              This removes custom draft seats only. Published maps are unchanged until you publish.
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button type="button" onClick={() => setDeleteSeatConfirm(null)} disabled={pending} className="w-full">
-                Cancel
-              </Button>
-              <Button type="button" variant="danger" onClick={confirmDeleteSelectedSeat} disabled={pending} className={`w-full ${adminDangerButtonClassName}`}>
-                Delete seat
-              </Button>
-            </div>
-          </section>
-        </div>
+        <DeleteSeatConfirmDialog
+          label={deleteSeatConfirm.label}
+          pending={pending}
+          onCancel={() => setDeleteSeatConfirm(null)}
+          onConfirm={confirmDeleteSelectedSeat}
+        />
       )}
 
       {publishReviewOpen && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--admin-rail-bg)]/48 p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
-          <section
-            ref={publishReviewDialogFocusRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="publish-review-title"
-            aria-describedby="publish-review-description"
-            className="flex max-h-[92vh] w-full sm:max-w-[560px] flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-[0_30px_90px_rgba(23,26,29,0.34)] backdrop-blur-2xl focus-visible:outline-none"
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
-              <div>
-                <h2 id="publish-review-title" className="text-base font-semibold">Review draft before publishing</h2>
-                <p id="publish-review-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-muted)]">
-                  Confirm the saved draft changes before they become visible in the read-only viewer.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setActionError(null);
-                  setPublishReviewOpen(false);
-                }}
-                disabled={pending}
-                className={["flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40", focusRingClass].join(" ")}
-                aria-label="Close publish review"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-
-            <div className="min-h-0 overflow-y-auto overscroll-contain py-4">
-              {!publishSummary.hasChanges && (
-                <p className="rounded-xl border border-[var(--admin-publish-no-change-border)] bg-[var(--admin-publish-no-change-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-no-change-text)]">
-                  No draft changes to publish. The saved draft already matches the currently published viewer map.
-                </p>
-              )}
-
-              {publishSummary.hasChanges && (
-              <>
-              <div className="rounded-xl border border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] p-3 text-[var(--admin-publish-ready-text)]">
-                <StatusBadge tone={publishReadinessBadgeTone} className="!min-h-0 !bg-[var(--admin-surface)]/80 !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]">
-                  {publishReadinessBadgeLabel}
-                </StatusBadge>
-                <h3 className="mt-2 text-sm font-semibold text-[var(--admin-text-primary)]">{publishReadinessTitle}</h3>
-                <p className="mt-1 text-xs font-semibold leading-4">Saved draft changes only — unsaved inspector edits are excluded.</p>
-              </div>
-
-              {actionError && !pending && (
-                <div role="alert" className="mt-3 rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-error-text)]">
-                  <span className="font-semibold">Publish did not complete.</span> {actionError}
-                </div>
-              )}
-
-              {pending && (
-                <div role="status" aria-live="polite" className="mt-3 rounded-xl border border-[var(--admin-state-saving-border)] bg-[var(--admin-state-saving-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-saving-text)]">
-                  Publishing reviewed draft changes. Viewer map stays unchanged until publish finishes.
-                </div>
-              )}
-
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-[var(--admin-text-primary)]">
-                  {publishDiffRows.length} seat {publishDiffRows.length === 1 ? "change" : "changes"}
-                </span>
-                <PublishDiffChip kind="assigned" count={publishDiffCounts.assigned} />
-                <PublishDiffChip kind="vacated" count={publishDiffCounts.vacated} />
-                <PublishDiffChip kind="reassigned" count={publishDiffCounts.reassigned} />
-                {publishDiffCounts.added > 0 && <PublishDiffChip kind="added" count={publishDiffCounts.added} />}
-                {publishDiffCounts.removed > 0 && <PublishDiffChip kind="removed" count={publishDiffCounts.removed} />}
-                {publishDiffCounts.updated > 0 && <PublishDiffChip kind="updated" count={publishDiffCounts.updated} />}
-              </div>
-
-              {publishDiffRows.length > 0 ? (
-                <div className="mt-2 overflow-x-auto border border-[var(--admin-border)]">
-                  <div role="table" aria-label="Per-seat draft changes" className="max-h-56 min-w-[480px] overflow-y-auto">
-                    <div role="row" className="sticky top-0 z-10 grid grid-cols-[64px_1fr_1fr_96px] border-b border-[var(--admin-border)] bg-[var(--admin-state-neutral-bg)]">
-                      <span role="columnheader" className="px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Seat</span>
-                      <span role="columnheader" className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Published now</span>
-                      <span role="columnheader" className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">After publish</span>
-                      <span role="columnheader" className="px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Change</span>
-                    </div>
-                    {publishDiffRows.map(row => (
-                      <div key={row.key} role="rowgroup" className="border-b border-[var(--admin-border)]/60 last:border-b-0">
-                        <div role="row" className="grid grid-cols-[64px_1fr_1fr_96px] items-center">
-                          <span role="cell" translate="no" className="px-3 py-2 font-mono text-xs font-semibold text-[var(--admin-text-primary)]">{row.label}</span>
-                          <span role="cell" className="flex min-w-0 items-center gap-1.5 px-2.5 py-2 text-[12.5px] text-[var(--admin-text-muted)]">
-                            <span className="truncate">{row.from}</span>
-                            <span className="sr-only">changes to</span>
-                            <span aria-hidden="true" className="flex-shrink-0 text-[var(--admin-text-subtle)]">→</span>
-                          </span>
-                          <span role="cell" className="truncate px-2.5 py-2 text-[12.5px] font-semibold text-[var(--admin-text-primary)]">{row.to}</span>
-                          <span role="cell" className="px-3 py-2"><PublishDiffTag kind={row.kind} /></span>
-                        </div>
-                        {row.detail && (
-                          <div role="row" className="grid grid-cols-[64px_1fr]">
-                            <span role="cell" aria-hidden="true" />
-                            <span role="cell" aria-colspan={3} className="px-2.5 pb-2 text-[11px] leading-4 text-[var(--admin-text-muted)]">{row.detail}</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <p className="mt-2 border border-[var(--admin-border)] p-3 text-xs font-semibold leading-5 text-[var(--admin-text-muted)]">
-                  No seat changes — only people details changed.
-                </p>
-              )}
-
-              {publishSummary.employeeDetailChanges.length > 0 && (
-                <div className="mt-3 border border-[var(--admin-border)] p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold text-[var(--admin-text-primary)]">People details</h3>
-                    <span className="rounded-full bg-[var(--admin-state-neutral-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-state-neutral-border)]">{publishSummary.employeeDetailChanges.length}</span>
-                  </div>
-                  <ul className="mt-2 space-y-1.5 text-xs leading-5 text-[var(--admin-text-muted)]">
-                    {publishSummary.employeeDetailChanges.map(item => (
-                      <li key={`${item.label}-${item.detail}`}>
-                        <span className="font-semibold text-[var(--admin-text-primary)]">{item.label}</span> — {item.detail}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <p className="mt-3 text-[11.5px] font-semibold text-[var(--admin-text-muted)]">
-                Draft: {publishSummary.draftSeatCount} seats · Currently published: {publishSummary.publishedSeatCount} seats · Total publish changes: {publishSummary.totalChangeCount}
-              </p>
-              <p className="mt-2 text-xs leading-5 text-[var(--admin-text-secondary)]">
-                Publishing copies the saved draft map to the read-only viewer and clears Undo/Redo history after success. Until you publish, viewers keep seeing the currently published map.
-              </p>
-              </>
-              )}
-            </div>
-
-            {/* Discard trigger relocated to the header kebab in v12 (Menu:
-                "Discard draft changes") — this dialog and
-                confirmDiscardDraftChanges (the one resetDraftToPublishedAction
-                call site) are unchanged, only the opening control moved. */}
-            <div className="grid grid-cols-[1fr_1.4fr] gap-2 border-t border-[var(--admin-border)] pt-3">
-              <Button type="button" onClick={() => {
-                setActionError(null);
-                setPublishReviewOpen(false);
-              }} disabled={pending} className={["w-full h-12", focusRingClass].join(" ")}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={confirmPublishDraftMap}
-                disabled={pending || !publishSummary.hasChanges}
-                title={publishSummary.hasChanges ? "Publish reviewed draft changes" : "No draft changes to publish"}
-                className={["w-full h-12 !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)]", focusRingClass].join(" ")}
-              >
-                {pending ? "Publishing…" : actionError && publishSummary.hasChanges ? "Retry publish" : publishSummary.hasChanges ? (
-                  <>
-                    <span className="sm:hidden">Publish changes</span>
-                    <span className="hidden sm:inline">Publish reviewed changes</span>
-                  </>
-                ) : "No changes to publish"}
-              </Button>
-            </div>
-          </section>
-        </div>
+        <PublishReviewDialog
+          publishSummary={publishSummary}
+          publishDiffRows={publishDiffRows}
+          publishDiffCounts={publishDiffCounts}
+          actionError={actionError}
+          pending={pending}
+          onClose={() => {
+            setActionError(null);
+            setPublishReviewOpen(false);
+          }}
+          onConfirm={confirmPublishDraftMap}
+        />
       )}
 
       {discardDraftConfirmOpen && (
-        <div className="fixed inset-0 z-[95] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">
-          <section
-            ref={discardDraftDialogFocusRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="discard-draft-title"
-            aria-describedby="discard-draft-description"
-            onKeyDown={event => {
-              if (event.key === "Escape" && !pending) {
-                event.stopPropagation();
-                setDiscardDraftConfirmOpen(false);
-              }
-            }}
-            className="w-full max-w-lg overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
-          >
-            <h2 id="discard-draft-title" className="text-base font-semibold">Discard all draft changes?</h2>
-            <p id="discard-draft-description" className="mt-2 text-sm leading-5 text-[var(--admin-text-secondary)]">
-              Every reviewed seat change ({publishSummary.totalChangeCount === 1 ? "1 change" : `${publishSummary.totalChangeCount} changes`}) is
-              erased and the draft goes back to exactly what viewers see today. People edits in Management are kept.
-              This cannot be undone — Undo/Redo history is cleared.
-            </p>
-            {actionError && (
-              <p role="alert" className="mt-3 rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-error-text)]">
-                {actionError}
-              </p>
-            )}
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button type="button" onClick={() => setDiscardDraftConfirmOpen(false)} disabled={pending} className={["w-full", focusRingClass].join(" ")}>
-                Keep draft changes
-              </Button>
-              <Button
-                type="button"
-                variant="danger"
-                onClick={confirmDiscardDraftChanges}
-                disabled={pending}
-                className={["w-full", adminDangerButtonClassName, focusRingClass].join(" ")}
-              >
-                {pending ? "Discarding…" : actionError ? "Retry discard" : "Discard everything"}
-              </Button>
-            </div>
-          </section>
-        </div>
+        <DiscardDraftDialog
+          totalChangeCount={publishSummary.totalChangeCount}
+          actionError={actionError}
+          pending={pending}
+          onCancel={() => setDiscardDraftConfirmOpen(false)}
+          onConfirm={confirmDiscardDraftChanges}
+        />
       )}
 
       {modeCardOpen && activeMode && (
@@ -3832,134 +3546,37 @@ export function SeatMap({
       />
 
       {inspectorGuardAction && selectedSeat && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[60] sm:items-center">
-          <section
-            ref={inspectorGuardDialogFocusRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="inspector-unsaved-title"
-            aria-describedby="inspector-unsaved-description"
-            className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
-          >
-            <div>
-              <h2 id="inspector-unsaved-title" className="text-base font-semibold">Unsaved seat edits</h2>
-              <p id="inspector-unsaved-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
-                Save or discard changes to {selectedSeat.label} before {describeInspectorGuardAction(inspectorGuardAction)}
-              </p>
-            </div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-3">
-              <Button type="button" onClick={keepEditingInspector} disabled={pending} className="w-full">
-                Keep editing
-              </Button>
-              <Button type="button" variant="danger" onClick={discardInspectorGuardEdits} disabled={pending} className="w-full">
-                Discard
-              </Button>
-              <Button type="button" variant="primary" onClick={requestInspectorGuardSave} disabled={pending} className="w-full">
-                Save changes
-              </Button>
-            </div>
-          </section>
-        </div>
+        <InspectorGuardDialog
+          seatLabel={selectedSeat.label}
+          actionDescription={describeInspectorGuardAction(inspectorGuardAction)}
+          pending={pending}
+          onKeepEditing={keepEditingInspector}
+          onDiscard={discardInspectorGuardEdits}
+          onSave={requestInspectorGuardSave}
+        />
       )}
 
       {swapConfirm && swapSourceSeat && swapTargetSeat && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
-          <section
-            ref={swapConfirmDialogFocusRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="swap-confirm-title"
-            className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 id="swap-confirm-title" className="text-base font-semibold">Confirm seat swap</h2>
-                <p className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">This updates draft seats only. {PUBLISH_IMPACT_NOTE}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSwapConfirm(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)]"
-                aria-label="Cancel swap confirmation"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-
-            <div className="mt-4 grid gap-2">
-              <div className="rounded-xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] p-3">
-                <div className="text-[11px] font-semibold text-[var(--sp-color-text-muted)]">Source</div>
-                <div className="mt-1 text-sm font-semibold text-[var(--sp-color-text-primary)]">{swapSourceSeat.label}</div>
-                <div className="text-sm text-[var(--sp-color-text-muted)]">{seatPersonLabel(swapSourceSeat)}</div>
-              </div>
-              <div className="rounded-xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] p-3">
-                <div className="text-[11px] font-semibold text-[var(--sp-color-text-muted)]">Target</div>
-                <div className="mt-1 text-sm font-semibold text-[var(--sp-color-text-primary)]">{swapTargetSeat.label}</div>
-                <div className="text-sm text-[var(--sp-color-text-muted)]">{seatPersonLabel(swapTargetSeat)}</div>
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold text-[var(--admin-publish-viewer-impact-text)]">
-              {buildSwapSummary(swapSourceSeat, swapTargetSeat)}
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button type="button" onClick={() => setSwapConfirm(null)} disabled={pending} className="w-full">
-                Cancel
-              </Button>
-              <Button type="button" variant="primary" onClick={confirmSwapSeats} disabled={pending} className="w-full">
-                Confirm swap
-              </Button>
-            </div>
-          </section>
-        </div>
+        <SwapConfirmDialog
+          swapSourceSeat={swapSourceSeat}
+          swapTargetSeat={swapTargetSeat}
+          pending={pending}
+          onCancel={() => setSwapConfirm(null)}
+          onConfirm={confirmSwapSeats}
+        />
       )}
 
       {moveEmployeeConfirm && moveEmployeeSourceSeat?.employee && moveEmployeeTargetSeat && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
-          <section
-            ref={moveEmployeeConfirmDialogFocusRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="move-employee-map-confirm-title"
-            aria-describedby="move-employee-map-confirm-description"
-            className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
-          >
-            {moveEmployeeConfirm.offerSwap ? (
-              <>
-                <h2 id="move-employee-map-confirm-title" className="text-base font-semibold">
-                  Swap {formatDisplayName(moveEmployeeSourceSeat.employee.full_name)} and {formatDisplayName(seatPersonLabel(moveEmployeeTargetSeat))}?
-                </h2>
-                <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
-                  {formatDisplayName(seatPersonLabel(moveEmployeeTargetSeat))} already sits at {formatSeatCode(moveEmployeeTargetSeat.label)}. Swapping moves them to {formatSeatCode(moveEmployeeSourceSeat.label)}. {PUBLISH_IMPACT_NOTE}
-                </p>
-                <div className="mt-4 rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold text-[var(--admin-publish-viewer-impact-text)]">
-                  {buildSwapSummary(moveEmployeeSourceSeat, moveEmployeeTargetSeat)}
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <Button type="button" onClick={() => setMoveEmployeeConfirm(null)} disabled={pending} className="w-full">Cancel</Button>
-                  <Button type="button" variant="primary" onClick={confirmMoveEmployeeAsSwap} disabled={pending} className="w-full">Swap them</Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h2 id="move-employee-map-confirm-title" className="text-base font-semibold">
-                  Move {formatDisplayName(moveEmployeeSourceSeat.employee.full_name)} to {formatSeatCode(moveEmployeeTargetSeat.label)}?
-                </h2>
-                <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
-                  They currently sit at {formatSeatCode(moveEmployeeSourceSeat.label)}. Moving frees {formatSeatCode(moveEmployeeSourceSeat.label)} (it becomes Open). {PUBLISH_IMPACT_NOTE}
-                </p>
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <Button type="button" onClick={() => setMoveEmployeeConfirm(null)} disabled={pending} className="w-full">Cancel</Button>
-                  <Button type="button" variant="primary" onClick={confirmMoveEmployeeToOpenSeat} disabled={pending} className="w-full">Move them</Button>
-                </div>
-              </>
-            )}
-          </section>
-        </div>
+        <MoveEmployeeConfirmDialog
+          offerSwap={moveEmployeeConfirm.offerSwap}
+          moveEmployeeSourceSeat={moveEmployeeSourceSeat}
+          moveEmployeeTargetSeat={moveEmployeeTargetSeat}
+          sourceEmployeeName={moveEmployeeSourceSeat.employee.full_name}
+          pending={pending}
+          onCancel={() => setMoveEmployeeConfirm(null)}
+          onConfirmSwap={confirmMoveEmployeeAsSwap}
+          onConfirmMove={confirmMoveEmployeeToOpenSeat}
+        />
       )}
     </div>
   );
