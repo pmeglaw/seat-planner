@@ -9,16 +9,10 @@ import {
   describeSeatUpdate,
   type DraftSnapshot
 } from "@/lib/draftHistory";
-import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
+import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, swapSeatAssignmentsAction, updateSeatAction } from "@/app/actions";
 import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
-import {
-  hasActiveConstraints,
-  seatMatchesFilters,
-  structuredFilterCount as countStructuredFilters,
-  type SeatFilterCriteria
-} from "@/lib/seatFilters";
 import {
   MAP_ZOOM_MAX,
   MAP_ZOOM_MIN,
@@ -39,7 +33,7 @@ import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } 
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { canVacateSeat } from "@/lib/seatDraftActions";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
-import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
+import { formatDisplayName } from "@/lib/formatName";
 import {
   MAP_IMAGE_BLUR_DATA_URL,
   MAP_IMAGE_HEIGHT,
@@ -52,21 +46,17 @@ import {
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { AiHighlightChip } from "@/components/seat-map/AiHighlightChip";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
-import {
-  ActiveFilterChips,
-  FilterPanel,
-  type ActiveFilterChip,
-  type ResultStatusBreakdown
-} from "@/components/seat-map/FilterPanel";
+import { ActiveFilterChips, FilterPanel } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
 import { MapWashLayer } from "@/components/seat-map/MapWashLayer";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
-import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/ResultsPanel";
+import { ResultsPanel } from "@/components/seat-map/ResultsPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
 import { useDraftHistory } from "@/components/seat-map/useDraftHistory";
 import { usePublishReview } from "@/components/seat-map/usePublishReview";
+import { getSeatZone, useSeatFilters } from "@/components/seat-map/useSeatFilters";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import {
@@ -86,7 +76,7 @@ import { useAppShellNavigation } from "@/components/ui/AppShell";
 import { adminChromeDividerRule } from "@/components/ui/adminChrome";
 import { focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
-import { SEAT_SEARCH_PLACEHOLDER, searchHandsPanelToResults } from "@/lib/viewerSeatSearch";
+import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { deploySkewMonitor } from "@/lib/deploySkew";
 import { assignLocation } from "@/lib/fullNavigation";
@@ -232,10 +222,6 @@ function replaceEmployee(employees: Employee[], seat: SeatWithEmployee) {
   return employees.map(employee => (employee.id === nextEmployee.id ? nextEmployee : employee));
 }
 
-function getSeatZone(seat: SeatWithEmployee) {
-  return seat.zone ?? seat.department ?? "";
-}
-
 type SeatStatusLegendItem = {
   key: string;
   label: string;
@@ -320,14 +306,9 @@ export function SeatMap({
   const [askPlannerOpen, setAskPlannerOpen] = useState(false);
   const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
   const [plannerHighlightedSeatIds, setPlannerHighlightedSeatIds] = useState<string[]>([]);
-  const [search, setSearch] = useState("");
-  const [department, setDepartment] = useState("all");
-  const [position, setPosition] = useState("all");
-  const [zone, setZone] = useState("all");
   // Transient preview of a zone chip under the pointer/focus (v12 contract
   // #8). Never a filter — it only decides which zone the map washes.
   const [hoverZone, setHoverZone] = useState<string | null>(null);
-  const [status, setStatus] = useState("all");
   const [filterCollapsed, setFilterCollapsed] = useState(true);
   const [chromeMenuOpen, setChromeMenuOpen] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
@@ -440,6 +421,45 @@ export function SeatMap({
     clearHistory,
     applyRestoredDraftPayload,
     handleStaleDraft
+  });
+
+  // Filter/search values, everything derived from them, and their handlers
+  // live in their own hook (M4 step 4). SeatMap keeps the panel-visibility
+  // chrome (filterCollapsed, whose outside-click effect needs this file's
+  // DOM refs) and the hoverZone wash preview, which is never a filter.
+  const {
+    search,
+    setSearch,
+    department,
+    setDepartment,
+    position,
+    setPosition,
+    zone,
+    setZone,
+    status,
+    setStatus,
+    filtersActive,
+    searchQuery,
+    searchActive,
+    structuredFiltersActive,
+    activeFilterChips,
+    structuredFilterCount,
+    activeFilterCount,
+    matchingSeats,
+    resultStatusBreakdown,
+    panelResults,
+    matchesFilters,
+    clearStructuredFilters,
+    clearAllConstraints,
+    clearSearch,
+    handleSearchInputChange,
+    removeActiveFilterChip
+  } = useSeatFilters({
+    localSeats,
+    localEmployees,
+    selectedSeatId,
+    inspectorDirty,
+    setInspectorCollapsed
   });
 
   // Keyboard activation of a seat hands focus into the inspector panel once
@@ -907,7 +927,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, position, publishReviewOpen, search, selectedSeatId, setActionNotice, setDiscardDraftConfirmOpen, setPublishReviewOpen, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, position, publishReviewOpen, search, selectedSeatId, setActionNotice, setDepartment, setDiscardDraftConfirmOpen, setPublishReviewOpen, setSearch, setStatus, setZone, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
@@ -1007,12 +1027,9 @@ export function SeatMap({
   ].map(item => item.label)), [publishSummary]);
   // Legend counts follow the active constraints — the number row must not
   // contradict a filtered map (2026-07-16 regrade, review 4). matchesFilters
-  // covers search + structured filters, exactly what the map dims by.
-  const filterCriteria: SeatFilterCriteria = { search, department, position, zone, status };
-  // One source for "is anything narrowing the map?". The legend and the result
-  // list used to derive this separately and agreed only by coincidence.
-  const legendFiltersActive = hasActiveConstraints(filterCriteria);
-  const legendSourceSeats = legendFiltersActive ? localSeats.filter(matchesFilters) : localSeats;
+  // covers search + structured filters, exactly what the map dims by, and
+  // filtersActive is the hook's single "is anything narrowing the map?" flag.
+  const legendSourceSeats = filtersActive ? localSeats.filter(matchesFilters) : localSeats;
   const legendCounts: Record<string, number> = {
     assigned: legendSourceSeats.filter(seat => seat.status === "assigned").length,
     available: legendSourceSeats.filter(seat => seat.status === "available").length,
@@ -1037,71 +1054,6 @@ export function SeatMap({
   );
   const mapRovingSeatId = resolveRovingSeatId(seatNavPoints, selectedSeatId ?? rovingSeatId);
   const plannerHighlightedSeatIdSet = useMemo(() => new Set(plannerHighlightedSeatIds), [plannerHighlightedSeatIds]);
-  const searchQuery = search.trim();
-  const searchActive = Boolean(searchQuery);
-  const structuredFiltersActive = countStructuredFilters(filterCriteria) > 0;
-  const activeFilterChips: ActiveFilterChip[] = [
-    searchActive ? { id: "search", label: "Search", value: searchQuery, removeLabel: `Remove search filter ${searchQuery}` } : null,
-    department !== "all" ? { id: "department", label: "Department", value: department, removeLabel: `Remove department filter ${department}` } : null,
-    position !== "all" ? { id: "position", label: "Position", value: position, removeLabel: `Remove position filter ${position}` } : null,
-    zone !== "all" ? { id: "zone", label: "Zone", value: zone, removeLabel: `Remove zone filter ${zone}` } : null,
-    status !== "all" ? { id: "status", label: "Status", value: STATUS_LABELS[status as SeatStatus] ?? status, removeLabel: `Remove status filter ${STATUS_LABELS[status as SeatStatus] ?? status}` } : null
-  ].filter(Boolean) as ActiveFilterChip[];
-  const structuredFilterCount = countStructuredFilters(filterCriteria);
-  const activeFilterCount = activeFilterChips.length;
-  const filtersActive = legendFiltersActive;
-  const matchingSeats = filtersActive ? localSeats.filter(seat => matchesFilters(seat)) : localSeats;
-  const resultStatusBreakdown = useMemo<ResultStatusBreakdown>(() => ({
-    available: matchingSeats.filter(seat => seat.status === "available").length,
-    assigned: matchingSeats.filter(seat => seat.status === "assigned").length,
-    reserved: matchingSeats.filter(seat => seat.status === "reserved").length,
-    unavailable: matchingSeats.filter(seat => seat.status === "unavailable").length
-  }), [matchingSeats]);
-  // Merged result cards: one card per entity (F1) — an assigned seat and its occupant
-  // are one card, never two rows. Unassigned people matching a text search appear as
-  // disabled cards so the person is findable without fabricating a seat.
-  const panelResults = useMemo<AdminResultCard[]>(() => {
-    const statusRank: Record<SeatStatus, number> = { assigned: 0, available: 1, reserved: 2, unavailable: 3 };
-    const seatCards = [...matchingSeats]
-      .sort((a, b) => statusRank[a.status] - statusRank[b.status] || a.label.localeCompare(b.label))
-      .map(seat => {
-        const zoneLabel = getSeatZone(seat) || "No zone";
-        if (seat.employee) {
-          return {
-            key: `seat-${seat.id}`,
-            seatId: seat.id,
-            title: `${formatDisplayName(seat.employee.full_name)} — ${formatSeatCode(seat.label)}`,
-            // Person rows already imply "assigned" (they're built from an
-            // employee-bearing seat) — the trailing status token is redundant
-            // here and was truncating to "Assi…" in the narrow panel.
-            subtitle: [seat.employee.department, zoneLabel].filter(Boolean).join(" · "),
-            status: seat.status
-          };
-        }
-        return {
-          key: `seat-${seat.id}`,
-          seatId: seat.id,
-          title: formatSeatCode(seat.label),
-          subtitle: [seat.status === "available" ? "Open seat" : STATUS_LABELS[seat.status], zoneLabel].join(" · "),
-          status: seat.status
-        };
-      });
-    if (!searchQuery) return seatCards.slice(0, 60);
-    const needle = searchQuery.toLowerCase();
-    const assignedEmployeeIds = new Set(localSeats.map(seat => seat.employee_id).filter(Boolean));
-    const unassignedPeople = localEmployees
-      .filter(employee => !assignedEmployeeIds.has(employee.id))
-      .filter(employee => [employee.full_name, employee.position, employee.department, employee.phone_extension].filter(Boolean).join(" ").toLowerCase().includes(needle))
-      .map(employee => ({
-        key: `person-${employee.id}`,
-        seatId: null,
-        title: formatDisplayName(employee.full_name),
-        subtitle: [employee.position, employee.department, "Unassigned"].filter(Boolean).join(" · "),
-        status: null,
-        disabled: true
-      }));
-    return [...seatCards, ...unassignedPeople].slice(0, 60);
-  }, [localEmployees, localSeats, matchingSeats, searchQuery]);
   const selectedSeatMatchesFilters = selectedSeat ? matchesFilters(selectedSeat) : true;
   // Session-local activity for the inspector's Activity section: undo-history
   // labels that name the selected seat (newest first). Client-side only.
@@ -1114,12 +1066,6 @@ export function SeatMap({
     const rect = mapRef.current?.getBoundingClientRect();
     if (!rect) return null;
     return clientPointToNormalized(event.clientX, event.clientY, rect);
-  }
-
-  // Kept as a local binding so every call site here reads the same, and so the
-  // predicate itself stays one tested definition in lib/seatFilters.ts.
-  function matchesFilters(seat: SeatWithEmployee) {
-    return seatMatchesFilters(seat, filterCriteria);
   }
 
   // Single source of truth for SeatMarker's `dimmed` prop: a seat dims when
@@ -1490,59 +1436,6 @@ export function SeatMap({
     setMoveEmployeeSourceSeatId(null);
     setMoveEmployeeConfirm(null);
     router.refresh();
-  }
-
-  function clearStructuredFilters() {
-    setDepartment("all");
-    setPosition("all");
-    setZone("all");
-    setStatus("all");
-  }
-
-  function clearAllConstraints() {
-    setSearch("");
-    clearStructuredFilters();
-  }
-
-  function clearSearch() {
-    setSearch("");
-  }
-
-  // Shared by the chrome search input (lg+) and the canvas search row below it.
-  function handleSearchInputChange(value: string) {
-    setSearch(value);
-    // INV-1 (owner-revised): search hands the panel slot to results — the
-    // inspector auto-collapses to its pill (selection retained; expand to
-    // return). Unsaved inspector edits stay put: no collapse until save/discard.
-    if (searchHandsPanelToResults(value, Boolean(selectedSeatId), inspectorDirty)) {
-      setInspectorCollapsed(true);
-    }
-  }
-
-  function removeActiveFilterChip(chipId: string) {
-    if (chipId === "search") {
-      clearSearch();
-      return;
-    }
-
-    if (chipId === "department") {
-      setDepartment("all");
-      return;
-    }
-
-    if (chipId === "position") {
-      setPosition("all");
-      return;
-    }
-
-    if (chipId === "zone") {
-      setZone("all");
-      return;
-    }
-
-    if (chipId === "status") {
-      setStatus("all");
-    }
   }
 
   const scrollMapToPoint = useCallback((x: number, y: number, options?: { verticalViewportAnchor?: number }) => {
@@ -2776,7 +2669,7 @@ export function SeatMap({
             counts FilterPanel's own matchSummary uses, so the two can never
             disagree. lg-only: matches the desktop search field's own
             breakpoint (mobile has no room and uses its own canvas search). */}
-        {legendFiltersActive && (
+        {filtersActive && (
           <span className="ml-2 hidden shrink-0 whitespace-nowrap text-[11.5px] font-semibold text-[var(--admin-primary)] lg:inline">
             {legendSourceSeats.length} of {localSeats.length} match
           </span>
