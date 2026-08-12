@@ -704,6 +704,22 @@ test("popovers restore trigger focus when a close unmounts the focused element",
   assert.match(seatMapSource, /setChromeMenuOpen\(false\);[\s\S]{0,90}returnFocusAfterClose\(chromeMenuButtonRef\)/);
 });
 
+// WCAG 2.5.3 Label in Name: a control's accessible name must contain its
+// VISIBLE text, so a speech-input user can say what they see. The Ask Planner
+// trigger renders "✦ Ask Planner AI" with the badge aria-hidden, and named
+// itself "Open Ask Planner" — dropping a word that is on screen. Lighthouse's
+// axe pass caught it (label-content-name-mismatch) while the accessibility
+// score still read 100, because that audit carries zero weight.
+test("the Ask Planner trigger's accessible name contains the badge it renders", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+
+  assert.match(seatMapSource, /"Open Ask Planner AI"/);
+  assert.match(seatMapSource, /`Open Ask Planner AI, \$\{plannerHighlightedSeatIds\.length\} seats highlighted`/);
+  // The badge stays aria-hidden — it is IN the name via the label, so exposing
+  // the span too would say "AI" twice.
+  assert.match(seatMapSource, /<span aria-hidden="true"[^>]*>\s*AI\s*<\/span>/);
+});
+
 test("chrome bars stay pinned and the filter menu precedes search in the tab order", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
