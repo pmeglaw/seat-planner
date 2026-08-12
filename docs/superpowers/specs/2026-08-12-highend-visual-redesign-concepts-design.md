@@ -99,7 +99,7 @@ Naming note: `-v13` continues the `login-v12` precedent; owner may rename at rev
 ## 8. Changelog
 
 - 2026-08-12 — Spec approved (S1–S5) in session; branch created.
-- Sampler ruling: _pending_.
-- viewer-v13 ruling: _pending_.
+- 2026-08-12 — Sampler ruling (owner, live review): **Soft Structuralism eliminated.** Finalists: **Ethereal Glass** (to be re-cut with the brand orange #FF5715 replacing the purple/emerald glow) and **Editorial Luxury**. Phase 1 amended: instead of one viewer-v13 language, build the viewer hero as **one page with a theme toggle** between the two finalists (`app/concepts/viewer-v13/`). The runoff winner becomes the language for the remaining Phase 2–3 prototypes (admin, login).
+- viewer-v13 ruling (runoff winner): _pending_.
 - admin-v13 ruling: _pending_.
 - login-v13 ruling: _pending_.
