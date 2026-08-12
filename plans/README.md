@@ -31,6 +31,15 @@ test files (`login-form`, `rpc-execution`, `seat-inspector`,
 drifts — reinstall before suspecting a change. Healthy baseline: ~600+ pass /
 0 fail.
 
+## Design-slice plans (not from an audit cycle)
+
+These execute a settled design handoff rather than an `improve` finding, so they
+sit outside the table above.
+
+| Plan | Title | Status |
+|------|-------|--------|
+| [017](017-viewer-find-palette-slice-1.md) | Viewer Find palette, slice 1 — palette shell + browse mode | IN PROGRESS — feed landed on `claude/viewer-palette-slice-1`; the swap (delete four docked surfaces, collapse four state flags, rework five test files) is not started. Read the plan's recon before touching `ViewerSeatFinder.tsx` |
+
 ## 2026-08-07 findings recorded but NOT planned this cycle
 
 The user scoped this cycle to the correctness backlog. Everything below was
