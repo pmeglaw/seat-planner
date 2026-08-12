@@ -189,8 +189,18 @@ loosening it.
    on close; INV-1 (an active query owns the transient surface) still holds even
    though palette and seat card no longer overlap.
 
-Slices 2–5 (query mode, zone chips + wash, seat card, chrome theme) are out of
-scope here and are listed in the handoff's own suggested order.
+Remaining scope, as it stands AFTER the two rulings at the top of this file —
+the handoff's own ordering is unchanged, but two of its items are now
+extensions rather than new functionality:
+
+- **Slice 2** restyles the query rows that already render in the palette
+  (grouped results, kind icons, dim-to-35%, "TRY INSTEAD" chips). It does not
+  move them; they were relocated here.
+- **Slice 3** extends the zone chips, which already preview on hover and pin on
+  click: the pinned-chip restyle, department chips, and the Open/Occupied
+  decision.
+- **Slices 4–5** (seat card, chrome theme) are untouched by this slice and are
+  new work in the handoff's stated order.
 
 ## STOP conditions
 
