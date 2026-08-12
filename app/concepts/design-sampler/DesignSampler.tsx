@@ -220,7 +220,15 @@ function useReveal() {
   return { ref, state };
 }
 
-function Reveal({ delayMs = 0, children }: { delayMs?: number; children: ReactNode }) {
+function Reveal({
+  delayMs = 0,
+  className,
+  children
+}: {
+  delayMs?: number;
+  className?: string;
+  children: ReactNode;
+}) {
   const { ref, state } = useReveal();
   const hidden = state === "pending";
   const style: CSSProperties =
@@ -233,7 +241,7 @@ function Reveal({ delayMs = 0, children }: { delayMs?: number; children: ReactNo
           filter: hidden ? "blur(12px)" : "blur(0)"
         };
   return (
-    <div ref={ref} style={style}>
+    <div ref={ref} className={className} style={style}>
       {children}
     </div>
   );
@@ -272,8 +280,8 @@ function ArchetypeSection({ theme, index }: { theme: ArchetypeTheme; index: numb
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
           {/* 2 — map crop with seat pills (asymmetric bento: wide card) */}
-          <Reveal delayMs={100}>
-            <div className={`${theme.shellClass} md:col-span-12`}>
+          <Reveal delayMs={100} className="md:col-span-12">
+            <div className={theme.shellClass}>
               <div className={`${theme.coreClass} relative overflow-hidden !p-0`}>
                 <div className="relative aspect-[16/7] w-full">
                   <Image
@@ -302,8 +310,8 @@ function ArchetypeSection({ theme, index }: { theme: ArchetypeTheme; index: numb
           </Reveal>
 
           {/* 3 — double-bezel employee card */}
-          <Reveal delayMs={150}>
-            <div className={`${theme.shellClass} h-full md:col-span-5`}>
+          <Reveal delayMs={150} className="h-full md:col-span-5">
+            <div className={`${theme.shellClass} h-full`}>
               <div className={`${theme.coreClass} flex h-full flex-col gap-4`}>
                 <p className={theme.eyebrowClass}>Seat 214 — Litigation</p>
                 <div>
@@ -320,8 +328,8 @@ function ArchetypeSection({ theme, index }: { theme: ArchetypeTheme; index: numb
           </Reveal>
 
           {/* 4 + 5 — CTA and login field */}
-          <Reveal delayMs={200}>
-            <div className={`${theme.shellClass} h-full md:col-span-7`}>
+          <Reveal delayMs={200} className="h-full md:col-span-7">
+            <div className={`${theme.shellClass} h-full`}>
               <div className={`${theme.coreClass} flex h-full flex-col justify-between gap-8`}>
                 <div className="flex flex-col gap-2">
                   <label htmlFor={`${theme.id}-email`} className={theme.fieldLabelClass}>
