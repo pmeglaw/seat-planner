@@ -16,6 +16,9 @@ const migrationSql = await readFile(
 const viewerSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 const adminSource = await readFile(new URL("../app/(shell)/admin/page.tsx", import.meta.url), "utf8");
 const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+// The publish-review dialog markup (R-02a extraction) — where the
+// employee-detail diff renders now.
+const seatMapDialogsSource = await readFile(new URL("../components/seat-map/SeatMapDialogs.tsx", import.meta.url), "utf8");
 
 function extractPublishFunction(sql) {
   // `[^)]*` (not `\(\)`): 20260805130000 added the expected_draft_seats fence
@@ -105,5 +108,5 @@ test("admin publish review diffs live employees against the viewer snapshot", ()
   // feeds it is still asserted on the line above.
   assert.match(adminSource, /publishedEmployees=\{publishedEmployees\}/);
   assert.match(seatMapSource, /employees: localEmployees,\s+publishedEmployees: localPublishedEmployees/);
-  assert.match(seatMapSource, /employeeDetailChanges/);
+  assert.match(seatMapDialogsSource, /employeeDetailChanges/);
 });

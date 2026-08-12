@@ -278,7 +278,7 @@ test("aria-modal dialogs take focus, trap Tab, and restore the opener", async ()
   // tabIndex={-1}); aria-modal without focus management tells assistive tech
   // the page is inert while the keyboard proves otherwise.
   const dialogFiles = [
-    "../components/seat-map/SeatMap.tsx",
+    "../components/seat-map/SeatMapDialogs.tsx",
     "../components/seat-map/SeatInspector.tsx",
     "../components/seat-map/AskPlannerDrawer.tsx",
     "../components/admin-settings/DataUtilitiesPanel.tsx",
@@ -295,7 +295,11 @@ test("aria-modal dialogs take focus, trap Tab, and restore the opener", async ()
 });
 
 test("publish review summarizes draft changes before publish", async () => {
+  // Since the R-02a extraction the review dialog's markup lives in
+  // SeatMapDialogs.tsx while the diff computation and the dirty-inspector
+  // gate stay in SeatMap.tsx — each anchor pins the file that owns it.
   const source = await readSource("../components/seat-map/SeatMap.tsx");
+  const dialogsSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
 
   // The summary must also diff live employee details against the viewer
   // snapshot so pending people edits are reviewable before they publish.
@@ -303,31 +307,32 @@ test("publish review summarizes draft changes before publish", async () => {
   // v12 slice 5: the modal body is one unified per-seat diff table derived
   // against the published baseline — same drop-out semantics as the summary.
   assert.match(source, /buildPublishDiffRows\(localSeats, localPublishedSeats\)/);
-  assert.match(source, /aria-labelledby="publish-review-title"/);
-  assert.match(source, /Review draft before publishing/);
-  assert.match(source, /Confirm the saved draft changes before they become visible in the read-only viewer/);
-  assert.match(source, /Ready to publish reviewed changes/);
-  assert.match(source, /Saved draft changes only — unsaved inspector edits are excluded\./);
-  assert.match(source, /Draft and viewer map are in sync/);
+  assert.match(dialogsSource, /aria-labelledby="publish-review-title"/);
+  assert.match(dialogsSource, /Review draft before publishing/);
+  assert.match(dialogsSource, /Confirm the saved draft changes before they become visible in the read-only viewer/);
+  assert.match(dialogsSource, /Ready to publish reviewed changes/);
+  assert.match(dialogsSource, /Saved draft changes only — unsaved inspector edits are excluded\./);
+  assert.match(dialogsSource, /Draft and viewer map are in sync/);
   // Viewer-impact + undo-history warnings folded into one caution line —
   // both sentences must survive verbatim.
-  assert.match(source, /Publishing copies the saved draft map to the read-only viewer and clears Undo\/Redo history after success\. Until you publish, viewers keep seeing the currently published map\./);
-  assert.match(source, /Publish did not complete/);
-  assert.match(source, /Publishing reviewed draft changes/);
-  assert.match(source, /\{actionError && !pending && \(/);
-  assert.match(source, /Retry publish/);
-  assert.match(source, /No draft changes to publish/);
-  assert.match(source, /disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
+  assert.match(dialogsSource, /Publishing copies the saved draft map to the read-only viewer and clears Undo\/Redo history after success\. Until you publish, viewers keep seeing the currently published map\./);
+  assert.match(dialogsSource, /Publish did not complete/);
+  assert.match(dialogsSource, /Publishing reviewed draft changes/);
+  assert.match(dialogsSource, /\{actionError && !pending && \(/);
+  assert.match(dialogsSource, /Retry publish/);
+  assert.match(dialogsSource, /No draft changes to publish/);
+  assert.match(dialogsSource, /disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
   // The diff table's column contract and kind-tag tokens.
-  assert.match(source, /Published now/);
-  assert.match(source, /After publish/);
-  assert.match(source, /--admin-diff-assigned-/);
-  assert.match(source, /--admin-diff-vacated-/);
-  assert.match(source, /--admin-diff-reassigned-/);
-  assert.match(source, /People details/);
+  assert.match(dialogsSource, /Published now/);
+  assert.match(dialogsSource, /After publish/);
+  assert.match(dialogsSource, /--admin-diff-assigned-/);
+  assert.match(dialogsSource, /--admin-diff-vacated-/);
+  assert.match(dialogsSource, /--admin-diff-reassigned-/);
+  assert.match(dialogsSource, /People details/);
   assert.match(source, /Publish review blocked: Save or discard the selected seat edits before publishing/);
   assert.match(source, /Save or discard the selected seat edits before publishing/);
   assert.doesNotMatch(source, /Publish draft map to the viewer-facing seat map\?/);
+  assert.doesNotMatch(dialogsSource, /Publish draft map to the viewer-facing seat map\?/);
 });
 
 test("publish workflow stays server-action gated and clears review history state", async () => {
@@ -344,7 +349,12 @@ test("publish workflow stays server-action gated and clears review history state
 
   assert.match(openPublishFunction[0], /if \(inspectorDirty\) \{[\s\S]*Publish review blocked: Save or discard the selected seat edits before publishing/);
   assert.match(seatMapSource, /function confirmPublishDraftMap\(\) \{[\s\S]*setActionError\(null\);\s*setActionNotice\(null\);\s*startTransition/);
-  assert.match(seatMapSource, /onClick=\{confirmPublishDraftMap\}[\s\S]*disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
+  // The confirm wiring crosses the extraction seam: SeatMap hands the
+  // transition-gated confirm to the dialog, whose publish button stays
+  // disabled without reviewed changes.
+  const dialogsSourceForPublish = await readSource("../components/seat-map/SeatMapDialogs.tsx");
+  assert.match(seatMapSource, /onConfirm=\{confirmPublishDraftMap\}/);
+  assert.match(dialogsSourceForPublish, /onClick=\{onConfirm\}[\s\S]*disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
   assert.match(confirmPublishFunction[0], /await publishSeatMapAction\(publishReviewExpectations, publishReviewEmployeeExpectations\)/);
   assert.match(confirmPublishFunction[0], /setLocalPublishedSeats\(nextPublishedSeats\)/);
   // Publish still drops the undo/redo stacks; they live in useDraftHistory now,
@@ -509,11 +519,14 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.match(source, /return `opening \$\{action\.destination\}\.`/);
   assert.match(source, /queueCenterSeatInMap\(action\.seatId\)/);
   assert.match(source, /Save or discard the selected seat edits before publishing/);
-  assert.match(source, /id="inspector-unsaved-title"/);
-  assert.match(source, /Unsaved seat edits/);
-  assert.match(source, /Save changes/);
-  assert.match(source, /Discard/);
-  assert.match(source, /Keep editing/);
+  // Guard-dialog markup lives in SeatMapDialogs.tsx (R-02a extraction); the
+  // guard state machine and its action descriptions stay in SeatMap.
+  const guardDialogSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
+  assert.match(guardDialogSource, /id="inspector-unsaved-title"/);
+  assert.match(guardDialogSource, /Unsaved seat edits/);
+  assert.match(guardDialogSource, /Save changes/);
+  assert.match(guardDialogSource, /Discard/);
+  assert.match(guardDialogSource, /Keep editing/);
   assert.match(source, /form\.requestSubmit\(\)/);
   assert.match(source, /onSubmitBlocked=\{cancelPendingInspectorGuardAction\}/);
   assert.match(source, /setPendingInspectorSaveAction\(null\)/);
@@ -820,8 +833,10 @@ test("custom seat deletion remains guarded by the parent map action", async () =
   assert.match(deleteFunction[0], /function confirmDeleteSelectedSeat\(\)/);
   assert.match(deleteFunction[0], /deleteSeatAction\(seatToDelete\.id\)/);
   assert.match(deleteFunction[0], /setActionNotice\(`Deleted custom seat \$\{deletedSeatLabel\}\. Undo is available until publish\.`\)/);
-  assert.match(source, /aria-labelledby="delete-seat-confirm-title"/);
-  assert.match(source, /Cancel custom seat deletion/);
+  // Confirm-dialog markup lives in SeatMapDialogs.tsx (R-02a extraction).
+  const deleteDialogSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
+  assert.match(deleteDialogSource, /aria-labelledby="delete-seat-confirm-title"/);
+  assert.match(deleteDialogSource, /Cancel custom seat deletion/);
 });
 
 test("narrow widths keep the viewer switch and people directory reachable", async () => {
@@ -955,7 +970,10 @@ test("touch devices get visible destructive affordances, contained modals, and s
   // chain to the page behind (#198).
   assert.match(askPlannerSource, /min-h-0 flex-1 overflow-y-auto overscroll-contain/);
   assert.equal((dataUtilitiesSource.match(/min-h-0 overflow-y-auto overscroll-contain/g) ?? []).length, 2);
-  assert.match(seatMapSource, /min-h-0 overflow-y-auto overscroll-contain/);
+  // The publish-review dialog's scroll region moved to SeatMapDialogs.tsx
+  // with the R-02a extraction.
+  const seatMapDialogsSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
+  assert.match(seatMapDialogsSource, /min-h-0 overflow-y-auto overscroll-contain/);
   assert.match(managementSource, /role="dialog"[\s\S]{0,600}overscroll-contain/);
 
   // Viewport-fixed bottom sheets respect the home-indicator inset (#198).

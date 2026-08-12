@@ -19,12 +19,14 @@ test("the shared CloseIcon exists and carries the canonical X path", async () =>
 });
 
 test("dialog closes use the shared icon — no literal 'x' text glyphs remain", async () => {
-  const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
+  // SeatMap's dialogs (and their close buttons) live in SeatMapDialogs.tsx
+  // since the R-02a extraction — that file carries the shared-icon contract.
+  const seatMapDialogs = await readSource("../components/seat-map/SeatMapDialogs.tsx");
   const management = await readSource("../components/admin-management/AdminManagementPanel.tsx");
   const settings = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
   const inspector = await readSource("../components/seat-map/SeatInspector.tsx");
 
-  for (const [name, source] of [["SeatMap", seatMap], ["AdminManagementPanel", management]]) {
+  for (const [name, source] of [["SeatMapDialogs", seatMapDialogs], ["AdminManagementPanel", management]]) {
     assert.doesNotMatch(source, /\n\s*x\s*\r?\n\s*<\/button>/, `${name} must not render a literal 'x' close`);
     assert.match(source, /from "@\/components\/ui\/CloseIcon"/, `${name} imports the shared CloseIcon`);
   }
