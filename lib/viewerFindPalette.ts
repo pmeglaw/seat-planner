@@ -23,6 +23,19 @@ export function getSeatZone(seat: Pick<SeatWithEmployee, "zone" | "department">)
   return seat.zone ?? seat.department ?? "No zone";
 }
 
+/**
+ * The comparison key for a zone name: trimmed and lowercased.
+ *
+ * Chips AGGREGATE on this key (a zone option and a seat that disagree only in
+ * case or padding are one zone), so anything that later acts on a chip must
+ * compare on it too. The pinned-zone filter used raw `===` against the chip's
+ * display name, which is the first spelling seen — so a chip could count seats
+ * it then filtered out, showing "West Pod 3" and matching nothing.
+ */
+export function getZoneKey(zone: string | null | undefined) {
+  return (zone ?? "").trim().toLowerCase();
+}
+
 export type ViewerZoneChip = {
   /** Display name, in the casing the first occurrence used. */
   name: string;
@@ -64,7 +77,7 @@ export function buildViewerZoneChips({
   const register = (rawName: string | null | undefined) => {
     const name = rawName?.trim();
     if (!name) return null;
-    const key = name.toLowerCase();
+    const key = getZoneKey(name);
     const existing = chips.get(key);
     if (existing) return existing;
     const chip: ViewerZoneChip = { name, seatCount: 0 };

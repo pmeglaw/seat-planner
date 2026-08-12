@@ -105,6 +105,32 @@ test("zone names de-duplicate case-insensitively, option spelling winning", () =
   assert.deepEqual(chips[0], { name: "North Pod", seatCount: 2 });
 });
 
+// The counting key and the filtering key have to be the SAME key. A chip that
+// counts a seat it cannot then select is worse than a missing chip: it shows a
+// number and pins to nothing. This failed before getZoneKey existed — chips
+// aggregated on a trimmed lowercase key while the viewer's pinned-zone filter
+// compared the chip's display name to the seat's raw zone with ===.
+test("every chip pins to the seats it counted, whatever their casing or padding", () => {
+  const seats = [
+    seat({ id: "s1", label: "N01", zone: "north pod" }),
+    seat({ id: "s2", label: "N02", zone: "  North Pod  " }),
+    seat({ id: "s3", label: "W01", zone: "West Pod" })
+  ];
+  const chips = palette.buildViewerZoneChips({ seats, zoneOptions: [zoneOption("North Pod")] });
+
+  for (const chip of chips) {
+    const matched = seats.filter(
+      current => palette.getZoneKey(palette.getSeatZone(current)) === palette.getZoneKey(chip.name)
+    );
+    assert.equal(
+      matched.length,
+      chip.seatCount,
+      `chip "${chip.name}" counts ${chip.seatCount} seats but its pinned filter selects ${matched.length}`
+    );
+    assert.ok(matched.length > 0, `chip "${chip.name}" would pin to an empty map`);
+  }
+});
+
 test("a seat with no zone falls back to its department, then to No zone", () => {
   const chips = palette.buildViewerZoneChips({
     seats: [
