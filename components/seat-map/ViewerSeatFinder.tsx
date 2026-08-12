@@ -28,7 +28,7 @@ import {
 } from "@/lib/mapViewport";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
 import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
-import { buildViewerPaletteBrowse, getSeatZone } from "@/lib/viewerFindPalette";
+import { buildViewerPaletteBrowse, getSeatZone, getZoneKey } from "@/lib/viewerFindPalette";
 import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
@@ -208,6 +208,13 @@ export function ViewerSeatFinder({
   // whole field — magnifier, clear button, kbd hint — as "inside".
   const searchFieldRef = useRef<HTMLDivElement | null>(null);
   const paletteRef = useRef<HTMLDivElement | null>(null);
+  // One-shot: set when Escape hands focus back to the field from inside the
+  // palette, consumed by the field's onFocus. Without it the hand-back is
+  // indistinguishable from a user focusing the field, so onFocus re-opened the
+  // palette in the same frame Escape closed it and Esc looked inert whenever
+  // focus was on a row. A ref, not state: it must be readable by the focus
+  // handler that `.focus()` dispatches synchronously, before any re-render.
+  const suppressPaletteReopenRef = useRef(false);
 
   const publishedSeats = useMemo(() => seats.map(normalizeSeat), [seats]);
   const visualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
@@ -274,7 +281,11 @@ export function ViewerSeatFinder({
   const seatPassesStructuredFilters = useCallback((seat: SeatWithEmployee) => {
     const departmentOk = department === "all" || getSeatDepartment(seat).toLowerCase() === department.toLowerCase();
     const positionOk = seatMatchesPosition(seat.employee?.position, position);
-    const zoneOk = zone === "all" || getSeatZone(seat) === zone;
+    // getZoneKey on BOTH sides, not raw ===: the palette's chips aggregate on
+    // that key and render the first spelling seen, so a chip built from an
+    // active zone option could count a seat whose own `zone` differs only in
+    // case or padding — and then filter that same seat out when pinned.
+    const zoneOk = zone === "all" || getZoneKey(getSeatZone(seat)) === getZoneKey(zone);
     const statusOk = status === "all" || seat.status === (status as SeatStatus);
     return departmentOk && positionOk && zoneOk && statusOk;
   }, [department, position, status, zone]);
@@ -448,7 +459,15 @@ export function ViewerSeatFinder({
         // inside one of its rows — hand it back to the field rather than
         // letting it fall to <body> (critique action 5).
         if (target instanceof Node && paletteRef.current?.contains(target)) {
-          window.requestAnimationFrame(() => searchInputRef.current?.focus());
+          suppressPaletteReopenRef.current = true;
+          window.requestAnimationFrame(() => {
+            searchInputRef.current?.focus();
+            // Cleared unconditionally: `.focus()` dispatches onFocus
+            // synchronously, so a consumer has already run by here, and if the
+            // field is gone the flag must not survive to swallow a later,
+            // unrelated focus.
+            suppressPaletteReopenRef.current = false;
+          });
         }
         setPaletteOpen(false);
         return;
@@ -1037,10 +1056,20 @@ export function ViewerSeatFinder({
               id="viewer-seat-search"
               value={search}
               onChange={event => updateSearch(event.target.value)}
-              onFocus={() => setPaletteOpen(true)}
+              onFocus={() => {
+                // Escape's hand-back from a palette row lands here one frame
+                // after the palette closed; it is the app returning focus, not
+                // the user reaching for the field, so it must not re-open.
+                if (suppressPaletteReopenRef.current) {
+                  suppressPaletteReopenRef.current = false;
+                  return;
+                }
+                setPaletteOpen(true);
+              }}
               // Click as well as focus: pressing Esc leaves focus in the field,
               // so without this a second click on an already-focused field
-              // could never reopen the palette (contract #2).
+              // could never reopen the palette (contract #2). Deliberately NOT
+              // suppressed — a click is always the user asking.
               onClick={() => setPaletteOpen(true)}
               onKeyDown={event => {
                 if (event.key === "Escape") {

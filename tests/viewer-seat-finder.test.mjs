@@ -379,6 +379,40 @@ test("picking a zone chip pins the filter and closes the palette", async () => {
   assert.deepEqual(legendCounts(), { assigned: 1, open: 1, reserved: 0 });
 });
 
+test("Escape from a palette row closes it and does not let the focus hand-back reopen it", async () => {
+  await renderViewer();
+  openPalette();
+  // Focus a row, so Escape has to hand focus back to the field on the way out —
+  // the row it was on is about to unmount. That hand-back reaches the field's
+  // onFocus, which is also the handler that OPENS the palette, so without a
+  // one-shot suppression Escape closed and re-opened it in the same frame and
+  // read as doing nothing at all.
+  const row = within(screen.getByRole("list", { name: "People directory" })).getByRole("button", { name: /^Ada Lovelace/ });
+  row.focus();
+  // Identity via assert.ok, never assert.equal, on DOM nodes: a failing
+  // assert.equal on two elements makes node's differ serialize both trees and
+  // it dies with "Array buffer allocation failed" after ~90s, hiding which
+  // assertion actually failed.
+  assert.ok(document.activeElement === row, "the row must take focus before Escape");
+
+  // Dispatched on the ROW, not on window: the handler listens on window but
+  // branches on event.target, and a keydown fired straight at window carries
+  // target=window — not a Node inside the palette — so it would silently skip
+  // the very hand-back this test exists to cover.
+  fireEvent.keyDown(row, { key: "Escape" });
+  await flushFrames();
+
+  assert.equal(screen.queryByRole("list", { name: "People directory" }), null, "Escape must leave the palette closed");
+  assert.ok(
+    document.activeElement === screen.getByRole("searchbox"),
+    "focus must land on the field, not <body>"
+  );
+
+  // …and a deliberate click still opens it, so the suppression is one-shot.
+  fireEvent.click(screen.getByRole("searchbox"));
+  assert.ok(screen.getByRole("list", { name: "People directory" }));
+});
+
 test("opening a person from the palette selects their seat and closes the palette", async () => {
   await renderViewer();
   openPalette();
