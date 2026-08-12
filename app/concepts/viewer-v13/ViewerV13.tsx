@@ -202,7 +202,22 @@ export function ViewerV13() {
   const [themeId, setThemeId] = useState<"glass" | "editorial">("glass");
   const theme = themeId === "glass" ? GLASS : EDITORIAL;
   const visualSeats = useMemo(() => seatsToVisualSeats(FIXTURE_SEATS), []);
-  // Task 3 adds: zone/status filter state + find query + filtering memo.
+
+  const [zoneFilter, setZoneFilter] = useState<string | null>(null);
+  const [openOnly, setOpenOnly] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const matchedSeatKeys = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    const keys = new Set<string>();
+    for (const seat of visualSeats) {
+      if (seatMatchesFilters(seat, zoneFilter, openOnly, normalizedQuery)) {
+        keys.add(seat.seat_key);
+      }
+    }
+    return keys;
+  }, [visualSeats, zoneFilter, openOnly, query]);
+  const matchedCount = matchedSeatKeys.size;
 
   return (
     <div
@@ -211,59 +226,120 @@ export function ViewerV13() {
     >
       {theme.backdrop}
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-12 md:px-10 md:py-16">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className={theme.eyebrowClass}>Viewer v13 — runoff prototype</p>
-            <h1 className={`mt-4 ${theme.headingClass}`} style={{ fontFamily: theme.displayFontVar }}>
-              Find anyone&apos;s seat in seconds.
-            </h1>
-          </div>
-          <div className="flex items-center gap-1 rounded-full border border-current/10 p-1" role="group" aria-label="Archetype">
-            {([GLASS, EDITORIAL] as const).map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                aria-pressed={themeId === t.id}
-                onClick={() => setThemeId(t.id)}
-                className={themeId === t.id ? theme.toggleActiveClass : theme.toggleClass}
-                style={{ transition: `transform 500ms ${EASE}` }}
-              >
-                {t.name}
-              </button>
-            ))}
-          </div>
-        </header>
-
-        {/* Task 3 inserts: chips row + find field here */}
-
-        <div className={theme.shellClass}>
-          <div className={theme.coreClass}>
-            <div className="relative w-full" style={{ aspectRatio: `${MAP_IMAGE_WIDTH} / ${MAP_IMAGE_HEIGHT}` }}>
-              <Image
-                src={MAP_IMAGE_SRC}
-                alt="Office floor plan"
-                fill
-                unoptimized
-                sizes="(max-width: 768px) 100vw, 1280px"
-                placeholder="blur"
-                blurDataURL={MAP_IMAGE_BLUR_DATA_URL}
-                className="object-contain"
-                draggable={false}
-              />
-              {visualSeats.map((seat) => (
+        <Reveal delayMs={0}>
+          <header className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className={theme.eyebrowClass}>Viewer v13 — runoff prototype</p>
+              <h1 className={`mt-4 ${theme.headingClass}`} style={{ fontFamily: theme.displayFontVar }}>
+                Find anyone&apos;s seat in seconds.
+              </h1>
+            </div>
+            <div className="flex items-center gap-1 rounded-full border border-current/10 p-1" role="group" aria-label="Archetype">
+              {([GLASS, EDITORIAL] as const).map((t) => (
                 <button
-                  key={seat.seat_key}
+                  key={t.id}
                   type="button"
-                  aria-label={seat.full_name ? `${seat.label} — ${seat.full_name}` : `${seat.label} — open seat`}
-                  className={`absolute -translate-x-1/2 -translate-y-1/2 ${seat.full_name ? theme.markerAssignedClass : theme.markerAvailableClass}`}
-                  style={{ ...pointToStyle(seat), transition: `transform 400ms ${EASE}` }}
+                  aria-pressed={themeId === t.id}
+                  onClick={() => setThemeId(t.id)}
+                  className={themeId === t.id ? theme.toggleActiveClass : theme.toggleClass}
+                  style={{ transition: `transform 500ms ${EASE}` }}
                 >
-                  {seat.full_name ? shortName(seat.full_name) : seat.label}
+                  {t.name}
                 </button>
               ))}
             </div>
+          </header>
+        </Reveal>
+
+        <Reveal delayMs={100} className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter seats">
+            <button
+              type="button"
+              aria-pressed={zoneFilter === null}
+              onClick={() => setZoneFilter(null)}
+              className={`active:scale-[0.98] ${zoneFilter === null ? theme.chipActiveClass : theme.chipClass}`}
+              style={{ transition: `transform 200ms ${EASE}` }}
+            >
+              All zones
+            </button>
+            {FIXTURE_ZONES.map((zone) => (
+              <button
+                key={zone}
+                type="button"
+                aria-pressed={zoneFilter === zone}
+                onClick={() => setZoneFilter((current) => (current === zone ? null : zone))}
+                className={`active:scale-[0.98] ${zoneFilter === zone ? theme.chipActiveClass : theme.chipClass}`}
+                style={{ transition: `transform 200ms ${EASE}` }}
+              >
+                {zone}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-pressed={openOnly}
+              onClick={() => setOpenOnly((current) => !current)}
+              className={`active:scale-[0.98] ${openOnly ? theme.chipActiveClass : theme.chipClass}`}
+              style={{ transition: `transform 200ms ${EASE}` }}
+            >
+              Open seats
+            </button>
           </div>
-        </div>
+
+          <div className="flex flex-col gap-2 md:max-w-sm">
+            <label htmlFor="viewer-v13-find" className={theme.fieldLabelClass}>
+              Find a person or seat
+            </label>
+            <input
+              id="viewer-v13-find"
+              type="text"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Type a name or seat label…"
+              autoComplete="off"
+              className={theme.fieldClass}
+              style={{ transition: `box-shadow 500ms ${EASE}, border-color 500ms ${EASE}` }}
+            />
+            <p aria-live="polite" className={`${theme.bodyClass} text-sm`}>
+              {matchedCount} of {visualSeats.length} seats
+            </p>
+          </div>
+        </Reveal>
+
+        <Reveal delayMs={200}>
+          <div className={theme.shellClass}>
+            <div className={theme.coreClass}>
+              <div className="relative w-full" style={{ aspectRatio: `${MAP_IMAGE_WIDTH} / ${MAP_IMAGE_HEIGHT}` }}>
+                <Image
+                  src={MAP_IMAGE_SRC}
+                  alt="Office floor plan"
+                  fill
+                  unoptimized
+                  sizes="(max-width: 768px) 100vw, 1280px"
+                  placeholder="blur"
+                  blurDataURL={MAP_IMAGE_BLUR_DATA_URL}
+                  className="object-contain"
+                  draggable={false}
+                />
+                {visualSeats.map((seat) => {
+                  const matched = matchedSeatKeys.has(seat.seat_key);
+                  const statusClass = seat.full_name ? theme.markerAssignedClass : theme.markerAvailableClass;
+                  return (
+                    <button
+                      key={seat.seat_key}
+                      type="button"
+                      aria-label={seat.full_name ? `${seat.label} — ${seat.full_name}` : `${seat.label} — open seat`}
+                      tabIndex={matched ? undefined : -1}
+                      className={`absolute -translate-x-1/2 -translate-y-1/2 hover:scale-110 ${statusClass}${matched ? "" : ` ${theme.markerDimmedClass}`}`}
+                      style={{ ...pointToStyle(seat), transition: `transform 400ms ${EASE}` }}
+                    >
+                      {seat.full_name ? shortName(seat.full_name) : seat.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </Reveal>
       </div>
     </div>
   );
@@ -272,4 +348,23 @@ export function ViewerV13() {
 function shortName(fullName: string) {
   const parts = fullName.trim().split(/\s+/);
   return parts.length > 1 ? `${parts[0][0]}. ${parts[parts.length - 1]}` : fullName;
+}
+
+// A seat is matched when it passes every active filter: zone, "open seats
+// only" (full_name === null), and the case-insensitive find query against
+// full_name OR label. normalizedQuery is expected pre-trimmed/lowercased.
+function seatMatchesFilters(
+  seat: FixtureSeat,
+  zoneFilter: string | null,
+  openOnly: boolean,
+  normalizedQuery: string
+): boolean {
+  if (zoneFilter !== null && seat.zone !== zoneFilter) return false;
+  if (openOnly && seat.full_name !== null) return false;
+  if (normalizedQuery) {
+    const nameMatch = seat.full_name !== null && seat.full_name.toLowerCase().includes(normalizedQuery);
+    const labelMatch = seat.label.toLowerCase().includes(normalizedQuery);
+    if (!nameMatch && !labelMatch) return false;
+  }
+  return true;
 }
