@@ -295,10 +295,10 @@ test("aria-modal dialogs take focus, trap Tab, and restore the opener", async ()
 });
 
 test("publish review summarizes draft changes before publish", async () => {
-  // Since the R-02a extraction the review dialog's markup lives in
-  // SeatMapDialogs.tsx while the diff computation and the dirty-inspector
-  // gate stay in SeatMap.tsx — each anchor pins the file that owns it.
-  const source = await readSource("../components/seat-map/SeatMap.tsx");
+  // R-02a extraction seams: the review dialog's markup lives in
+  // SeatMapDialogs.tsx and the diff memos + dirty-inspector gate live in
+  // usePublishReview.ts — each anchor pins the file that owns it.
+  const source = await readSource("../components/seat-map/usePublishReview.ts");
   const dialogsSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
 
   // The summary must also diff live employee details against the viewer
@@ -336,10 +336,13 @@ test("publish review summarizes draft changes before publish", async () => {
 });
 
 test("publish workflow stays server-action gated and clears review history state", async () => {
+  // The publish flow lives in usePublishReview.ts (R-02a extraction);
+  // SeatMap wires the hook's confirm into the extracted dialog.
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const hookSource = await readSource("../components/seat-map/usePublishReview.ts");
   const actionSource = await readSource("../app/actions.ts");
-  const openPublishFunction = seatMapSource.match(/function openPublishReview\(\) \{[\s\S]*?function confirmPublishDraftMap/);
-  const confirmPublishFunction = seatMapSource.match(/function confirmPublishDraftMap\(\) \{[\s\S]*?\n  \}/);
+  const openPublishFunction = hookSource.match(/function openPublishReview\(\) \{[\s\S]*?function confirmPublishDraftMap/);
+  const confirmPublishFunction = hookSource.match(/function confirmPublishDraftMap\(\) \{[\s\S]*?\n  \}/);
   // Signature carries the expected_draft_seats concurrency fence (20260805130000).
   const publishAction = actionSource.match(/export async function publishSeatMapAction\([\s\S]*?\n\}/);
 
@@ -348,7 +351,7 @@ test("publish workflow stays server-action gated and clears review history state
   assert.ok(publishAction, "publishSeatMapAction should remain source-visible.");
 
   assert.match(openPublishFunction[0], /if \(inspectorDirty\) \{[\s\S]*Publish review blocked: Save or discard the selected seat edits before publishing/);
-  assert.match(seatMapSource, /function confirmPublishDraftMap\(\) \{[\s\S]*setActionError\(null\);\s*setActionNotice\(null\);\s*startTransition/);
+  assert.match(hookSource, /function confirmPublishDraftMap\(\) \{[\s\S]*setActionError\(null\);\s*setActionNotice\(null\);\s*startTransition/);
   // The confirm wiring crosses the extraction seam: SeatMap hands the
   // transition-gated confirm to the dialog, whose publish button stays
   // disabled without reviewed changes.
@@ -518,7 +521,10 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   assert.doesNotMatch(source, /window\.location\.assign\(action\.href\)/);
   assert.match(source, /return `opening \$\{action\.destination\}\.`/);
   assert.match(source, /queueCenterSeatInMap\(action\.seatId\)/);
-  assert.match(source, /Save or discard the selected seat edits before publishing/);
+  // The dirty-inspector publish gate moved into usePublishReview.ts with the
+  // publish flow (R-02a extraction).
+  const publishHookSource = await readSource("../components/seat-map/usePublishReview.ts");
+  assert.match(publishHookSource, /Save or discard the selected seat edits before publishing/);
   // Guard-dialog markup lives in SeatMapDialogs.tsx (R-02a extraction); the
   // guard state machine and its action descriptions stay in SeatMap.
   const guardDialogSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
@@ -823,7 +829,10 @@ test("admin search clear controls use one clear path with distinct accessible na
 
 test("custom seat deletion remains guarded by the parent map action", async () => {
   const source = await readSource("../components/seat-map/SeatMap.tsx");
-  const deleteFunction = source.match(/function deleteSelectedSeat\(\) \{[\s\S]*?function openPublishReview/);
+  // Boundary: openPublishReview left for usePublishReview.ts (R-02a), so the
+  // extractor now ends at the derived-label block that follows the delete
+  // confirm.
+  const deleteFunction = source.match(/function deleteSelectedSeat\(\) \{[\s\S]*?const searchStatusTitle/);
 
   assert.ok(deleteFunction, "deleteSelectedSeat should remain source-visible.");
   assert.match(deleteFunction[0], /Save or discard the selected seat edits before deleting a custom seat\./);
