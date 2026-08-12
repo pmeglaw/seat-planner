@@ -2852,7 +2852,16 @@ export function SeatMap({
               <button
                 ref={askPlannerButtonRef}
                 type="button"
-                aria-label={plannerHighlightedSeatIds.length > 0 ? `Open Ask Planner, ${plannerHighlightedSeatIds.length} seats highlighted` : "Open Ask Planner"}
+                // "AI" is part of the label, not decoration: the badge below is
+                // aria-hidden but still VISIBLE, and WCAG 2.5.3 (Label in Name)
+                // asks that the accessible name contain the visible text — that
+                // is what lets a speech-input user say what they can see and
+                // have it activate. Lighthouse/axe flagged the mismatch.
+                aria-label={
+                  plannerHighlightedSeatIds.length > 0
+                    ? `Open Ask Planner AI, ${plannerHighlightedSeatIds.length} seats highlighted`
+                    : "Open Ask Planner AI"
+                }
                 aria-controls="ask-planner-drawer"
                 aria-expanded={askPlannerOpen}
                 aria-haspopup="dialog"
