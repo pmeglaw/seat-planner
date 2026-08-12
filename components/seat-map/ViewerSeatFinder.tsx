@@ -1101,7 +1101,13 @@ export function ViewerSeatFinder({
               // to a listbox popup of role="option" children. The palette is a
               // list of real buttons that focus moves into, so claiming
               // combobox would describe a widget this is not.
-              aria-controls="viewer-find-palette"
+              //
+              // Gated on paletteOpen because the palette is UNMOUNTED when
+              // closed: an id reference that resolves to nothing is an invalid
+              // attribute value, not a harmless one (axe aria-valid-attr-value,
+              // critical — caught by the e2e-auth viewer scan, which is the
+              // only tier that scans this surface signed in).
+              aria-controls={paletteOpen ? "viewer-find-palette" : undefined}
               type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
               className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
             />

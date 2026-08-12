@@ -881,6 +881,11 @@ test("narrow widths keep the viewer switch and people directory reachable", asyn
   // 900px tier rather than trimming its content (owner answer 3).
   const paletteSource = await readSource("../components/seat-map/ViewerFindPalette.tsx");
   assert.match(viewerSource, /\{paletteOpen && \(\s*<ViewerFindPalette/);
+  // …and because the palette is UNMOUNTED when closed, the field's reference
+  // to it has to come and go with it. A dangling id reference is a critical
+  // aria-valid-attr-value violation, not a harmless one (caught by the
+  // e2e-auth viewer scan, 2026-08-12).
+  assert.match(viewerSource, /aria-controls=\{paletteOpen \? "viewer-find-palette" : undefined\}/);
   assert.doesNotMatch(viewerSource, /viewer-people-directory|show the people list|Close the people list/);
   assert.match(paletteSource, /viewportWidth < VIEWER_PANEL_BREAKPOINT_PX/);
   assert.match(paletteSource, /const VIEWER_PANEL_BREAKPOINT_PX = 900/);
