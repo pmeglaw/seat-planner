@@ -1,6 +1,14 @@
 # Risks & Recommendations — Office Seat Planner
 
-**Date:** 2026-07-08 · **Companion to:** `docs/audits/2026-07-09-architecture-review.md` (which holds the verified system description this document assumes)
+**Date:** 2026-07-08 · **Status refreshed:** 2026-08-12 · **Companion to:** `docs/audits/2026-07-09-architecture-review.md` (which holds the verified system description this document assumes)
+
+> **2026-08-12 status refresh.** Most of this audit has since been addressed —
+> the Status column below records what was verified against the codebase on
+> that date. The finding details in Part 1 and the recommendations in Part 2
+> are the **original 2026-07-08 text**, kept as the historical record; line
+> numbers and metrics in them describe the July state, not today's. Read the
+> Status column first; read a detail paragraph only for the reasoning behind a
+> finding that is still open.
 
 Findings are ordered by impact. Every finding cites at least one concrete location. "Effort" is a rough engineering estimate assuming familiarity with the codebase. Context matters for calibration: this is an internal, admin-gated tool at office scale — several items that would be High in a public SaaS are Medium here, and that is stated where it applies.
 
@@ -10,25 +18,25 @@ Findings are ordered by impact. Every finding cites at least one concrete locati
 
 ### Summary table
 
-| ID | Finding | Impact | Effort |
-|----|---------|--------|--------|
-| R-01 | Zero runtime coverage of the entire mutation path (actions, RPCs, RLS, authenticated flows) | High | Large |
-| R-02 | `SeatMap.tsx` god component (2,684 lines, ~85 hooks) + unmemoized marker layer | High | Large (incremental) |
-| R-03 | `publish_seat_map` definition drift risk across nine migration files, unpinned by tests | High | Small |
-| R-04 | Five tests assert on stale inline copies of lib code, not the shipped modules | High | Small |
-| R-05 | Route protection is per-page copy-paste; middleware never authorizes | Medium-High | Small |
-| R-06 | `lib/mapLayoutTransform.ts`: 240 lines of calibration math with no behavior test | Medium | Small-Medium |
-| R-07 | Unfenced concurrent-write paths: CSV import, publish, seat create/delete | Medium | Medium |
-| R-08 | No `error.tsx`/`loading.tsx` anywhere; admin page runs 6 sequential awaited queries | Medium | Small |
-| R-09 | Documentation drift (Next 15→16, dead `permissions.ts` claim, phantom `formatName` test, stale `BASELINE_NOTES.md`) | Medium | Small |
-| R-10 | Dead code: `lib/permissions.ts`, token-based Button, `--admin-marker-*` branches | Medium | Small |
-| R-11 | No rate limiting on the OpenAI-billed `askPlannerAction` | Medium | Small |
-| R-12 | No documented local-database workflow; onboarding requires Supabase archaeology | Medium | Small-Medium |
-| R-13 | Departments/zones are free text with no FK to their option tables | Medium | Medium-Large |
-| R-14 | CSV export lacks formula-injection guarding | Low-Medium | Small |
-| R-15 | Brittle source-guardrail tests pin styling and copy, causing false failures on benign change | Low-Medium | Medium |
-| R-16 | Assorted UI-tier duplication and hygiene (two Buttons, duplicated filter logic, inline dialogs, hex bypasses, UUID leak in publish review) | Low | Medium (bundled) |
-| R-17 | `tools/seat-planner-improvement-loop` is ~7 weeks stale with an untracked leftover artifact | Low | Trivial |
+| ID | Finding | Impact | Effort | Status (2026-08-12) |
+|----|---------|--------|--------|---------------------|
+| R-01 | Zero runtime coverage of the entire mutation path (actions, RPCs, RLS, authenticated flows) | High | Large | **Resolved** — PGlite execution tiers run the real migrations (`rpc-execution` as owner, `rls-execution` as `authenticated`); jsdom component tier (`test:ct`), real-browser tier, and authenticated e2e (`test:e2e:auth`) all exist |
+| R-02 | `SeatMap.tsx` god component (2,684 lines, ~85 hooks) + unmemoized marker layer | High | Large (incremental) | **(a) Open, worse** — 3,966 lines despite `useDraftHistory`/`useSeatDraftActions`/`useInspectorNudge`/`MapWashLayer` extractions; dialogs still inline. **(b) Resolved** — `SeatMarker` memoized with a custom comparator (`seat-marker-memo` test); render loop fixed (#354) |
+| R-03 | `publish_seat_map` definition drift risk across nine migration files, unpinned by tests | High | Small | **Resolved** — the execution tier *runs* the live publish definition against the applied migration chain; drift now fails executing tests, not just greps |
+| R-04 | Five tests assert on stale inline copies of lib code, not the shipped modules | High | Small | **Resolved** — all five import the real modules via `importTsModule` |
+| R-05 | Route protection is per-page copy-paste; middleware never authorizes | Medium-High | Small | **Resolved** — `lib/adminPageGuard.ts` is the shared prologue; middleware stays refresh-only by design (its allowlist is test-pinned) |
+| R-06 | `lib/mapLayoutTransform.ts`: 240 lines of calibration math with no behavior test | Medium | Small-Medium | **Resolved** — `map-layout-transform` and `map-calibration` behavior tests (incl. vertical-axis assertion with committed generator, #360) |
+| R-07 | Unfenced concurrent-write paths: CSV import, publish, seat create/delete | Medium | Medium | **Mostly resolved** — import, publish, and restore are fenced (per-row, whole-draft, and employee-directory fences, Aug migrations); seat create/delete remain plain writes (low residual: create adds rows, delete is guarded by seat protection) |
+| R-08 | No `error.tsx`/`loading.tsx` anywhere; admin page runs 6 sequential awaited queries | Medium | Small | **Resolved** — error/loading/not-found/global-error boundaries exist; admin and viewer pages use `Promise.all` |
+| R-09 | Documentation drift (Next 15→16, dead `permissions.ts` claim, phantom `formatName` test, stale `BASELINE_NOTES.md`) | Medium | Small | **Resolved** — all four items fixed; `BASELINE_NOTES.md` deleted; docs actively maintained |
+| R-10 | Dead code: `lib/permissions.ts`, token-based Button, `--admin-marker-*` branches | Medium | Small | **Resolved** — `permissions.ts` deleted; one `Button` built on the design-system tokens; `--admin-marker-*` family is now the live tokenized path |
+| R-11 | No rate limiting on the OpenAI-billed `askPlannerAction` | Medium | Small | **Resolved** — `lib/rateLimit.ts` fixed-window limit, keyed per admin |
+| R-12 | No documented local-database workflow; onboarding requires Supabase archaeology | Medium | Small-Medium | **Resolved** — `supabase/config.toml`, `db:start`/`db:seed`/`db:stop`, README recipe, `seed-migration-replay` test |
+| R-13 | Departments/zones are free text with no FK to their option tables | Medium | Medium-Large | **Open** — deliberate staged debt; target design recorded in Appendix A-5 |
+| R-14 | CSV export lacks formula-injection guarding | Low-Medium | Small | **Resolved** — export-side guard with round-trip strip on import (`lib/csv.ts`) |
+| R-15 | Brittle source-guardrail tests pin styling and copy, causing false failures on benign change | Low-Medium | Medium | **Resolved by re-scoping** — source tests now pin a11y/safety/data-integrity guardrails only, never look (scope documented in CLAUDE.md) |
+| R-16 | Assorted UI-tier duplication and hygiene (two Buttons, duplicated filter logic, inline dialogs, hex bypasses, UUID leak in publish review) | Low | Medium (bundled) | **Partially resolved** — one Button; viewer shares `FilterPanel`; wash fills tokenized (#367). Still open: SeatMap's inline dialogs, the `Employee ${id}` UUID fallback in `lib/publishSummary.ts` |
+| R-17 | `tools/seat-planner-improvement-loop` is ~7 weeks stale with an untracked leftover artifact | Low | Trivial | **Resolved** — directory deleted |
 
 ### Details
 
@@ -86,6 +94,15 @@ Two Button primitives (R-10b); viewer re-implements filter/results inline (`View
 ---
 
 ## Part 2 — Recommendations
+
+> **2026-08-12 status:** Q1–Q7 all landed. M1, M2, M5, and M6 landed. M3/M4
+> are partial: the Button primitive is consolidated and several hooks were
+> extracted from SeatMap (`useDraftHistory`, `useSeatDraftActions`,
+> `useInspectorNudge`), but there is still no shared dialog primitive and the
+> SeatMap dialogs remain inline — and the file has *grown* since this audit.
+> L1 landed (the PGlite execution tiers plus the authenticated e2e job — a
+> different mechanism than proposed, same goal). L3 landed (import and publish
+> fences). **L2 remains open** and is the only larger initiative outstanding.
 
 Each recommendation states current approach → why improve → proposed alternative → benefit → complexity → migration risk. Grouped by horizon; ordering/dependency notes at the end.
 
@@ -155,6 +172,11 @@ Current: import/publish unfenced. Proposed: add `expected_draft_seats jsonb defa
 ---
 
 ## Three highest-impact findings (summary)
+
+> **2026-08-12:** items 1 and 3 are resolved (see the Status column). The one
+> live headline is **R-02a**: `SeatMap.tsx` has grown past its audited size
+> despite the extractions — continuing the M4 decomposition is the highest-value
+> outstanding work in this document.
 
 1. **R-01 — the entire runtime mutation path is unverified by automation.** The DB design is the best-engineered part of the system and the least-tested; the pg-safeupdate incident proves the failure mode is real. Fix foundation: M6 + L1.
 2. **R-02 — `SeatMap.tsx`** concentrates 2,684 lines, ~85 hooks, the concurrency contract, and a wholesale re-render hotspot in one file; every editor change pays its tax. Fix: M3 → M4 + M5, incrementally.
