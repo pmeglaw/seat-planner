@@ -369,7 +369,15 @@ export function ViewerFindPalette({
                       )}
                     >
                       {chip.name}
-                      <span className="font-mono text-[10px] font-semibold opacity-75">{chip.seatCount}</span>
+                      {/* opacity-90, not the mock's .75. The count inherits the
+                          chip's own text color so it works in both the resting
+                          and pinned palettes, but at 10px it needs AA: .75
+                          measures 3.97:1 resting (#55504A over #F7F6F2) and
+                          3.98:1 pinned (#9E2F06 over primary-soft) — both fail,
+                          and the cliff is at 81% in both. .90 gives 5.71 and
+                          5.40. Same call the eyebrows made about the mock's
+                          #8E8276; caught by the e2e-auth viewer scan. */}
+                      <span className="font-mono text-[10px] font-semibold opacity-90">{chip.seatCount}</span>
                     </button>
                   );
                 })}
