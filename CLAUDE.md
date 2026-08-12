@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 An `AGENTS.md` also exists with overlapping guidance (coding conventions, safe-change rules, "done means" checklist). Read it too; this file focuses on the architecture that only becomes clear after reading several files together.
 
+When you complete a task, end your reply with the line **"Done and house is clean."** — the owner's requested completion signal. Only say it when it's true: work finished and verified, nothing dangling (uncommitted files, unpushed work, failing checks, stray branches).
+
 Repo-authored skills live in `.claude/skills/` — `run-seat-planner` (boot and drive the app), `chrome-pixel-capture` (pixel-accurate screenshots), `test-tiers` (harness mechanics), `web-app-performance` (measure load/bundle/interaction cost before optimising). Imported third-party skills are tracked in `skills-lock.json` and live in **two** roots: `.claude/skills/` (`high-end-visual-design`) and `.agents/skills/` (the Playwright and Supabase reference skills) — don't hand-edit any of those, they're vendored. Use `run-seat-planner` to check UI work in a real browser: build, typecheck and tests passing is **not** visual verification. When a convention or workflow needs repeating across sessions, add a `SKILL.md` there rather than growing this file — only a skill's one-line description stays resident, while everything here is loaded into every session.
 
 ## Stack
