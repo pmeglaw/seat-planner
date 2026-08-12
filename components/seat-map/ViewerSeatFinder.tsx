@@ -484,9 +484,12 @@ export function ViewerSeatFinder({
         return;
       }
       if (!editable && structuredFiltersActive) {
-        setDepartment("all");
-        setZone("all");
-        setStatus("all");
+        // clearStructuredFilters(), not three hand-written setters: this branch
+        // fires when structuredFiltersActive is true, and that flag counts
+        // POSITION too — so the open-coded trio left a position-only filter
+        // pinned while Escape reported itself as having cleared the layer, and
+        // any future facet would have inherited the same silent gap.
+        clearStructuredFilters();
       }
     }
 

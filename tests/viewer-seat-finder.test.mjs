@@ -296,6 +296,42 @@ test("legend counts follow an active department filter", async () => {
   assert.deepEqual(legendCounts(), { assigned: 1, open: 1, reserved: 0 });
 });
 
+// Escape's last layer (contract #7) clears the structured filters, and it is
+// entered whenever structuredFiltersActive is true — which counts POSITION.
+// A branch that reset only department, zone and status therefore consumed the
+// press and left the map filtered, with nothing on screen having changed.
+test("Escape clears a position-only filter, not just department, zone and status", async () => {
+  await renderViewer();
+  fireEvent.click(screen.getByRole("button", { name: "Filter seating" }));
+  const group = screen.getByRole("group", { name: "Filter options" });
+  // Department is the first combobox, Position the second (they sit together
+  // because both describe the person).
+  fireEvent.change(within(group).getAllByRole("combobox")[1], { target: { value: "Paralegal" } });
+  await flushFrames();
+  // Grace's B-02 is the only Paralegal seat, and an unoccupied seat never
+  // matches a real position — so the open and reserved seats drop out.
+  assert.deepEqual(legendCounts(), { assigned: 1, open: 0, reserved: 0 });
+
+  // Two presses, because the Filter popover is the FIRST layer Escape peels
+  // and the structured filters are the last. Dispatched at <body>: the handler
+  // ignores presses whose target is an input or select, which is what keeps
+  // Escape inside the field a query-clear rather than a filter reset.
+  fireEvent.keyDown(document.body, { key: "Escape" });
+  await flushFrames();
+  fireEvent.keyDown(document.body, { key: "Escape" });
+  await flushFrames();
+
+  // assert.ok on the identity, not assert.equal against null: when this one
+  // fails it fails holding a DOM node, and letting node's differ render that
+  // node costs ~100s and reports "Array buffer allocation failed" instead of
+  // the message below.
+  assert.ok(
+    screen.queryByRole("button", { name: /Remove position filter/ }) === null,
+    "the position chip must be gone, not merely the department/zone/status ones"
+  );
+  assert.deepEqual(legendCounts(), { assigned: 2, open: 1, reserved: 1 });
+});
+
 // --- Deep links -------------------------------------------------------------
 
 test("a ?seat= deep link selects that seat at mount", async () => {
