@@ -200,7 +200,8 @@ test("force-move outcomes ingest the fresh draft payload instead of a stale clie
 });
 
 test("publish captures the fence when the review opens and threads it to the RPC", async () => {
-  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  // The publish flow lives in usePublishReview.ts (R-02a extraction).
+  const publishHookSource = await readFile(new URL("../components/seat-map/usePublishReview.ts", import.meta.url), "utf8");
   const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
 
   // Captured when the review dialog opens — publish ships what the admin
@@ -208,12 +209,12 @@ test("publish captures the fence when the review opens and threads it to the RPC
   // employee directory is fenced alongside the seats: publish replaces the
   // published_employees snapshot in the same transaction, so people edits are
   // reviewed state too (20260806121000).
-  assert.match(seatMapSource, /setPublishReviewExpectations\(listDraftSeatExpectations\(localSeats\)\)/);
-  assert.match(seatMapSource, /setPublishReviewEmployeeExpectations\(listActiveEmployeeExpectations\(localEmployees\)\)/);
-  assert.match(seatMapSource, /publishSeatMapAction\(publishReviewExpectations, publishReviewEmployeeExpectations\)/);
+  assert.match(publishHookSource, /setPublishReviewExpectations\(listDraftSeatExpectations\(localSeats\)\)/);
+  assert.match(publishHookSource, /setPublishReviewEmployeeExpectations\(listActiveEmployeeExpectations\(localEmployees\)\)/);
+  assert.match(publishHookSource, /publishSeatMapAction\(publishReviewExpectations, publishReviewEmployeeExpectations\)/);
 
   // A fenced-off publish routes through the shared stale-draft recovery.
-  const confirmPublish = seatMapSource.match(/function confirmPublishDraftMap\(\) \{[\s\S]*?\n  \}/);
+  const confirmPublish = publishHookSource.match(/function confirmPublishDraftMap\(\) \{[\s\S]*?\n  \}/);
   assert.ok(confirmPublish, "publish confirm handler should be source-visible");
   assert.match(confirmPublish[0], /handleStaleDraft\(result\.message\)/);
 

@@ -106,11 +106,13 @@ test("reset-to-published reviews in-app on both surfaces before calling the rese
 
   // Seat map: the publish review dialog's discard button opens a SECOND
   // explicit confirm dialog; only that confirm calls the fenced action.
-  // (The dialog markup lives in SeatMapDialogs.tsx since the R-02a
-  // extraction; the state and the single call site stay in SeatMap.)
+  // (R-02a extraction seams: dialog markup in SeatMapDialogs.tsx, the
+  // confirm handler in usePublishReview.ts, the opening control in SeatMap.)
   const seatMapDialogsSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
+  const publishHookSource = await readSource("../components/seat-map/usePublishReview.ts");
   assert.match(seatMapSource, /setDiscardDraftConfirmOpen\(true\)/);
   assert.match(seatMapDialogsSource, /aria-labelledby="discard-draft-title"/);
-  assert.match(seatMapSource, /function confirmDiscardDraftChanges\(\)[\s\S]{0,900}resetDraftToPublishedAction\(listDraftSeatExpectations\(localSeats\)\)/);
-  assert.equal((seatMapSource.match(/resetDraftToPublishedAction\(/g) ?? []).length, 1, "the map has exactly one reset call site, inside the confirm");
+  assert.match(publishHookSource, /function confirmDiscardDraftChanges\(\)[\s\S]{0,900}resetDraftToPublishedAction\(listDraftSeatExpectations\(localSeats\)\)/);
+  assert.equal((publishHookSource.match(/resetDraftToPublishedAction\(/g) ?? []).length, 1, "the hook has exactly one reset call site, inside the confirm");
+  assert.doesNotMatch(seatMapSource, /resetDraftToPublishedAction\(/);
 });

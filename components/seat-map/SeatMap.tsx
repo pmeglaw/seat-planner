@@ -11,9 +11,8 @@ import {
 } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
-import { createSeatAction, deleteSeatAction, publishSeatMapAction, resetDraftToPublishedAction, swapSeatAssignmentsAction, updateSeatAction } from "@/app/actions";
+import { createSeatAction, deleteSeatAction, swapSeatAssignmentsAction, updateSeatAction } from "@/app/actions";
 import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
-import { listActiveEmployeeExpectations, listDraftSeatExpectations, type DraftSeatExpectation, type EmployeeExpectation } from "@/lib/draftConcurrency";
 import {
   hasActiveConstraints,
   seatMatchesFilters,
@@ -50,7 +49,6 @@ import {
   seatsToVisualSeats,
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
-import { buildPublishChangeSummary, buildPublishDiffRows, type PublishDiffRowKind } from "@/lib/publishSummary";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { AiHighlightChip } from "@/components/seat-map/AiHighlightChip";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
@@ -68,6 +66,7 @@ import { ResultsPanel, type AdminResultCard } from "@/components/seat-map/Result
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
 import { useDraftHistory } from "@/components/seat-map/useDraftHistory";
+import { usePublishReview } from "@/components/seat-map/usePublishReview";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import {
@@ -318,16 +317,6 @@ export function SeatMap({
   const [staleDraftNotice, setStaleDraftNotice] = useState<string | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [addSeatMode, setAddSeatMode] = useState(false);
-  const [publishReviewOpen, setPublishReviewOpen] = useState(false);
-  // Concurrency fence for publish: the draft exactly as the review dialog
-  // rendered it. Captured when the dialog opens so confirm publishes what the
-  // admin approved, not whatever the draft has become since.
-  const [publishReviewExpectations, setPublishReviewExpectations] = useState<DraftSeatExpectation[]>([]);
-  const [publishReviewEmployeeExpectations, setPublishReviewEmployeeExpectations] = useState<EmployeeExpectation[]>([]);
-  // Second confirm layer for "discard all draft changes" — the publish review
-  // dialog is the change-by-change review; this is the explicit destructive
-  // confirmation on top of it (#reset, owner request 2026-07-23).
-  const [discardDraftConfirmOpen, setDiscardDraftConfirmOpen] = useState(false);
   const [askPlannerOpen, setAskPlannerOpen] = useState(false);
   const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
   const [plannerHighlightedSeatIds, setPlannerHighlightedSeatIds] = useState<string[]>([]);
@@ -418,6 +407,39 @@ export function SeatMap({
     onStaleDraft: handleStaleDraft,
     onNotice: setActionNotice,
     onError: setHistoryError
+  });
+
+  // Publish review + discard-all live in their own hook: the review-open
+  // state, the fence captured at open, the diff memos, and both confirm
+  // handlers move together, while this component keeps the draft mirrors and
+  // the shared pending/mutation gates the hook commits through.
+  const {
+    publishReviewOpen,
+    setPublishReviewOpen,
+    discardDraftConfirmOpen,
+    setDiscardDraftConfirmOpen,
+    publishSummary,
+    publishDiffRows,
+    publishDiffCounts,
+    openPublishReview,
+    confirmPublishDraftMap,
+    confirmDiscardDraftChanges
+  } = usePublishReview({
+    localSeats,
+    localEmployees,
+    localPublishedSeats,
+    localPublishedEmployees,
+    inspectorDirty,
+    startTransition,
+    setMutationInFlight,
+    setActionError,
+    setActionNotice,
+    setStaleDraftNotice,
+    setLocalPublishedSeats,
+    setLocalPublishedEmployees,
+    clearHistory,
+    applyRestoredDraftPayload,
+    handleStaleDraft
   });
 
   // Keyboard activation of a seat hands focus into the inspector panel once
@@ -885,7 +907,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, position, publishReviewOpen, search, selectedSeatId, setActionNotice, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, position, publishReviewOpen, search, selectedSeatId, setActionNotice, setDiscardDraftConfirmOpen, setPublishReviewOpen, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
@@ -976,22 +998,6 @@ export function SeatMap({
     reserved: localSeats.filter(seat => seat.status === "reserved").length,
     unavailable: localSeats.filter(seat => seat.status === "unavailable").length
   }), [localSeats]);
-  const publishSummary = useMemo(
-    () => buildPublishChangeSummary(localSeats, localPublishedSeats, {
-      employees: localEmployees,
-      publishedEmployees: localPublishedEmployees
-    }),
-    [localSeats, localPublishedSeats, localEmployees, localPublishedEmployees]
-  );
-  const publishDiffRows = useMemo(
-    () => buildPublishDiffRows(localSeats, localPublishedSeats),
-    [localSeats, localPublishedSeats]
-  );
-  const publishDiffCounts = useMemo(() => {
-    const counts: Record<PublishDiffRowKind, number> = { added: 0, removed: 0, assigned: 0, vacated: 0, reassigned: 0, updated: 0 };
-    publishDiffRows.forEach(row => { counts[row.kind] += 1; });
-    return counts;
-  }, [publishDiffRows]);
   const draftChangedSeatLabelSet = useMemo(() => new Set([
     ...publishSummary.addedSeats,
     ...publishSummary.assignmentChanges,
@@ -2254,82 +2260,6 @@ export function SeatMap({
       } catch (error) {
         setActionNotice(null);
         setActionError(error instanceof Error ? error.message : "Could not delete custom seat.");
-      } finally {
-        setMutationInFlight(false);
-      }
-    });
-  }
-
-  function openPublishReview() {
-    if (inspectorDirty) {
-      setActionNotice(null);
-      setActionError("Publish review blocked: Save or discard the selected seat edits before publishing. The publish review only includes saved draft changes.");
-      return;
-    }
-
-    setActionError(null);
-    setActionNotice(null);
-    setPublishReviewExpectations(listDraftSeatExpectations(localSeats));
-    // Publish also ships the ACTIVE employee directory into the viewer
-    // snapshot, so the review's fence covers people data too.
-    setPublishReviewEmployeeExpectations(listActiveEmployeeExpectations(localEmployees));
-    setPublishReviewOpen(true);
-  }
-
-  function confirmPublishDraftMap() {
-    const nextPublishedSeats = normalizeSeats(localSeats);
-    // Publish also replaces the viewer's employee snapshot with the active
-    // live directory; mirror that locally so the summary reads "in sync".
-    const nextPublishedEmployees = localEmployees.filter(employee => employee.active);
-    setActionError(null);
-    setActionNotice(null);
-    startTransition(async () => {
-      setMutationInFlight(true);
-      try {
-        const result = await publishSeatMapAction(publishReviewExpectations, publishReviewEmployeeExpectations);
-        if (!result.ok) {
-          setPublishReviewOpen(false);
-          handleStaleDraft(result.message);
-          return;
-        }
-        setLocalPublishedSeats(nextPublishedSeats);
-        setLocalPublishedEmployees(nextPublishedEmployees);
-        clearHistory();
-        setPublishReviewOpen(false);
-        setActionNotice("Draft map published. Undo/Redo history was cleared.");
-      } catch (error) {
-        setActionNotice(null);
-        setActionError(error instanceof Error ? error.message : "Could not publish seat map.");
-      } finally {
-        setMutationInFlight(false);
-      }
-    });
-  }
-
-  function confirmDiscardDraftChanges() {
-    setActionError(null);
-    setActionNotice(null);
-    startTransition(async () => {
-      setMutationInFlight(true);
-      try {
-        setStaleDraftNotice(null);
-        // Fence on the draft this page holds: if another session advanced the
-        // draft, discarding would silently erase their edits — reject + reload.
-        const result = await resetDraftToPublishedAction(listDraftSeatExpectations(localSeats));
-        if (!result.ok) {
-          setDiscardDraftConfirmOpen(false);
-          setPublishReviewOpen(false);
-          handleStaleDraft(result.message);
-          return;
-        }
-        applyRestoredDraftPayload(result);
-        clearHistory();
-        setDiscardDraftConfirmOpen(false);
-        setPublishReviewOpen(false);
-        setActionNotice("All draft changes discarded — the draft matches the published map again. Undo/Redo history was cleared.");
-      } catch (error) {
-        setActionNotice(null);
-        setActionError(error instanceof Error ? error.message : "Could not discard draft changes.");
       } finally {
         setMutationInFlight(false);
       }
