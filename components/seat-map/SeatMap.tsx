@@ -2872,7 +2872,14 @@ export function SeatMap({
                 ].join(" ")}
               >
                 <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">✦</span>
-                Ask Planner
+                {/* The {" "} is load-bearing, not formatting. axe compares the
+                    accessible name against the button's TEXT CONTENT, and JSX
+                    drops the newline between a string child and the next
+                    element — so without it the text reads "Ask PlannerAI",
+                    which no honest label contains, and Label in Name fails no
+                    matter what the aria-label says. It costs nothing visually:
+                    a whitespace-only run inside a flex line box collapses. */}
+                Ask Planner{" "}
                 <span aria-hidden="true" className="border border-[var(--admin-ai-chrome-border)] px-[3px] text-[9px] font-bold leading-none text-[var(--admin-ai-chrome-text)]">AI</span>
                 {plannerHighlightedSeatIds.length > 0 && (
                   <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
