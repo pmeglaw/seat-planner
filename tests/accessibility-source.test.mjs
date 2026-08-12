@@ -718,6 +718,13 @@ test("the Ask Planner trigger's accessible name contains the badge it renders", 
   // The badge stays aria-hidden — it is IN the name via the label, so exposing
   // the span too would say "AI" twice.
   assert.match(seatMapSource, /<span aria-hidden="true"[^>]*>\s*AI\s*<\/span>/);
+  // The explicit space is the half that actually decides the audit. axe
+  // compares the accessible name against the button's TEXT CONTENT, and JSX
+  // drops the newline between a string child and the following element — so
+  // "Ask Planner" + <span>AI</span> renders as "Ask PlannerAI" and Label in
+  // Name fails whatever the aria-label says. Verified against axe-core 4.12
+  // directly: same markup passes with the space, fails without it.
+  assert.match(seatMapSource, /Ask Planner\{" "\}/);
 });
 
 test("chrome bars stay pinned and the filter menu precedes search in the tab order", async () => {

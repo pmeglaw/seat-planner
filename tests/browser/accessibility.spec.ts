@@ -71,6 +71,15 @@ const n01 = seat({
 const n02 = seat({ id: "s2", seat_key: "n02", label: "N02", x: 0.5, y: 0.4 });
 const custom = seat({ id: "s3", seat_key: "s01", label: "S01", x: 0.6, y: 0.5, is_custom: true });
 
+// Not enabled here: label-content-name-mismatch (WCAG 2.5.3, Label in Name).
+// It ships EXPERIMENTAL in axe-core — `enabled: false`, so a tag filter alone
+// never runs it, which is why every axe tier stayed green while the Ask Planner
+// trigger shipped a real 2.5.3 violation that only Lighthouse caught. Turning
+// it on in THIS tier was tried and reverted: the harness ships no Tailwind, so
+// controls that production hides (rail labels at opacity-0) and glyph-only
+// controls (the account avatar's single initial) all read as visible label
+// text, and the rule fires on four elements that are fine in the real app.
+// It belongs in a tier with real CSS — see the note in the PR.
 const scan = (page: Page) =>
   new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).disableRules(CSS_DEPENDENT_RULES).analyze();
 
