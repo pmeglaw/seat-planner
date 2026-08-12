@@ -219,7 +219,11 @@ test("management directory is windowed with an indexed seat lookup, look unchang
 
 test("viewer directory and admin results panel window through the shared hook", async () => {
   const hookSource = await readFile(new URL("../components/seat-map/useVirtualListWindow.ts", import.meta.url), "utf8");
-  const viewerSource = await readFile(new URL("../components/seat-map/ViewerSeatFinder.tsx", import.meta.url), "utf8");
+  // The viewer's A→Z list moved from a docked panel into the Find palette's
+  // browse mode. It matters MORE there, not less: production's 16 people are
+  // placeholder data, and at launch the directory is 61+ rows, which is where
+  // the windowing stops being dormant.
+  const viewerSource = await readFile(new URL("../components/seat-map/ViewerFindPalette.tsx", import.meta.url), "utf8");
   const resultsSource = await readFile(new URL("../components/seat-map/ResultsPanel.tsx", import.meta.url), "utf8");
 
   // The hook delegates the math to the unit-tested lib module.
@@ -235,10 +239,10 @@ test("viewer directory and admin results panel window through the shared hook", 
 
   // Viewer People directory: segments render (spacers + absolute-indexed
   // rows), arrow keys navigate by absolute index via the unit-tested helper.
-  assert.match(viewerSource, /useVirtualListWindow\(directory\.rows\.length/);
-  assert.match(viewerSource, /directorySegments\.map\(/);
+  assert.match(viewerSource, /useVirtualListWindow\(browse\.people\.length/);
+  assert.match(viewerSource, /browseSegments\.map\(/);
   assert.match(viewerSource, /data-vindex=\{segment\.index\}/);
-  assert.match(viewerSource, /function handleDirectoryKeyDown/);
+  assert.match(viewerSource, /function handleBrowseKeyDown/);
   assert.match(viewerSource, /stepFocusIndex\(\{/);
   // ArrowUp with nothing above still exits to the search input — but only
   // through the absolute-index handler, never by walking the rendered slice.

@@ -36,6 +36,13 @@ setGlobal("document", dom.window.document);
 for (const key of [
   "HTMLElement",
   "HTMLInputElement",
+  // Select and textarea belong here for the same reason input does: the map
+  // surfaces decide whether a key press landed in an editable control with
+  // `target instanceof HTMLSelectElement`, and an absent global makes that a
+  // ReferenceError thrown inside a jsdom listener — which surfaces as an
+  // unrelated-looking test failure rather than as a missing environment API.
+  "HTMLSelectElement",
+  "HTMLTextAreaElement",
   "HTMLFormElement",
   "HTMLButtonElement",
   "Node",

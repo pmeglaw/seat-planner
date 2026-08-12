@@ -296,6 +296,42 @@ test("legend counts follow an active department filter", async () => {
   assert.deepEqual(legendCounts(), { assigned: 1, open: 1, reserved: 0 });
 });
 
+// Escape's last layer (contract #7) clears the structured filters, and it is
+// entered whenever structuredFiltersActive is true — which counts POSITION.
+// A branch that reset only department, zone and status therefore consumed the
+// press and left the map filtered, with nothing on screen having changed.
+test("Escape clears a position-only filter, not just department, zone and status", async () => {
+  await renderViewer();
+  fireEvent.click(screen.getByRole("button", { name: "Filter seating" }));
+  const group = screen.getByRole("group", { name: "Filter options" });
+  // Department is the first combobox, Position the second (they sit together
+  // because both describe the person).
+  fireEvent.change(within(group).getAllByRole("combobox")[1], { target: { value: "Paralegal" } });
+  await flushFrames();
+  // Grace's B-02 is the only Paralegal seat, and an unoccupied seat never
+  // matches a real position — so the open and reserved seats drop out.
+  assert.deepEqual(legendCounts(), { assigned: 1, open: 0, reserved: 0 });
+
+  // Two presses, because the Filter popover is the FIRST layer Escape peels
+  // and the structured filters are the last. Dispatched at <body>: the handler
+  // ignores presses whose target is an input or select, which is what keeps
+  // Escape inside the field a query-clear rather than a filter reset.
+  fireEvent.keyDown(document.body, { key: "Escape" });
+  await flushFrames();
+  fireEvent.keyDown(document.body, { key: "Escape" });
+  await flushFrames();
+
+  // assert.ok on the identity, not assert.equal against null: when this one
+  // fails it fails holding a DOM node, and letting node's differ render that
+  // node costs ~100s and reports "Array buffer allocation failed" instead of
+  // the message below.
+  assert.ok(
+    screen.queryByRole("button", { name: /Remove position filter/ }) === null,
+    "the position chip must be gone, not merely the department/zone/status ones"
+  );
+  assert.deepEqual(legendCounts(), { assigned: 2, open: 1, reserved: 1 });
+});
+
 // --- Deep links -------------------------------------------------------------
 
 test("a ?seat= deep link selects that seat at mount", async () => {
@@ -323,18 +359,104 @@ test("selecting and clearing a seat writes the seat param back to the URL", asyn
   assert.doesNotMatch(window.location.search, /seat=/);
 });
 
-// --- People directory -------------------------------------------------------
+// --- The Find palette -------------------------------------------------------
+// The people directory is browse mode inside the palette now, so every
+// assertion about it has to open the palette first. Nothing docks at rest
+// (contract #1), which is itself the first thing worth pinning.
 
-test("the people directory lists the published employee snapshot", async () => {
+// Focusing the field is one of the four documented ways in (click, focus, ⌘K,
+// typing) and the one a test can drive without a keyboard shortcut.
+function openPalette() {
+  fireEvent.focus(screen.getByRole("searchbox"));
+}
+
+test("nothing docks at rest — the palette opens from the search field", async () => {
   await renderViewer();
+  assert.equal(screen.queryByRole("list", { name: "People directory" }), null);
+  assert.equal(screen.queryByRole("list", { name: "Viewer search results" }), null);
+
+  openPalette();
+  assert.ok(screen.getByRole("list", { name: "People directory" }));
+});
+
+test("the palette's people list is the published employee snapshot", async () => {
+  await renderViewer();
+  openPalette();
   const directory = screen.getByRole("list", { name: "People directory" });
   assert.match(directory.textContent, /Ada Lovelace/);
   assert.match(directory.textContent, /Grace Hopper/);
 });
 
-test("inactive employees stay out of the directory", async () => {
+test("inactive employees stay out of the palette's people list", async () => {
   await renderViewer({ employees: [ADA, { ...GRACE, active: false }] });
+  openPalette();
   const directory = screen.getByRole("list", { name: "People directory" });
   assert.match(directory.textContent, /Ada Lovelace/);
   assert.doesNotMatch(directory.textContent, /Grace Hopper/);
+});
+
+test("the palette browses zones with their published seat counts", async () => {
+  await renderViewer();
+  openPalette();
+  const zones = within(screen.getByRole("group", { name: "Zones" })).getAllByRole("button");
+  // North Offices holds A-01 and C-03; South Offices holds B-02 and D-04.
+  assert.deepEqual(zones.map(chip => chip.textContent), ["North Offices2", "South Offices2"]);
+});
+
+test("picking a zone chip pins the filter and closes the palette", async () => {
+  await renderViewer();
+  openPalette();
+  fireEvent.click(within(screen.getByRole("group", { name: "Zones" })).getAllByRole("button")[1]);
+  await flushFrames();
+
+  assert.equal(screen.queryByRole("list", { name: "People directory" }), null, "picking a zone ends the browse");
+  // The pin lands on the same facet the Filter popover drives, so the legend
+  // recounts against it: South Offices is B-02 (assigned) + D-04 (open).
+  assert.deepEqual(legendCounts(), { assigned: 1, open: 1, reserved: 0 });
+});
+
+test("Escape from a palette row closes it and does not let the focus hand-back reopen it", async () => {
+  await renderViewer();
+  openPalette();
+  // Focus a row, so Escape has to hand focus back to the field on the way out —
+  // the row it was on is about to unmount. That hand-back reaches the field's
+  // onFocus, which is also the handler that OPENS the palette, so without a
+  // one-shot suppression Escape closed and re-opened it in the same frame and
+  // read as doing nothing at all.
+  const row = within(screen.getByRole("list", { name: "People directory" })).getByRole("button", { name: /^Ada Lovelace/ });
+  row.focus();
+  // Identity via assert.ok, never assert.equal, on DOM nodes: a failing
+  // assert.equal on two elements makes node's differ serialize both trees and
+  // it dies with "Array buffer allocation failed" after ~90s, hiding which
+  // assertion actually failed.
+  assert.ok(document.activeElement === row, "the row must take focus before Escape");
+
+  // Dispatched on the ROW, not on window: the handler listens on window but
+  // branches on event.target, and a keydown fired straight at window carries
+  // target=window — not a Node inside the palette — so it would silently skip
+  // the very hand-back this test exists to cover.
+  fireEvent.keyDown(row, { key: "Escape" });
+  await flushFrames();
+
+  assert.equal(screen.queryByRole("list", { name: "People directory" }), null, "Escape must leave the palette closed");
+  assert.ok(
+    document.activeElement === screen.getByRole("searchbox"),
+    "focus must land on the field, not <body>"
+  );
+
+  // …and a deliberate click still opens it, so the suppression is one-shot.
+  fireEvent.click(screen.getByRole("searchbox"));
+  assert.ok(screen.getByRole("list", { name: "People directory" }));
+});
+
+test("opening a person from the palette selects their seat and closes the palette", async () => {
+  await renderViewer();
+  openPalette();
+  const directory = screen.getByRole("list", { name: "People directory" });
+  fireEvent.click(within(directory).getByRole("button", { name: /^Grace Hopper/ }));
+  await flushFrames();
+
+  assert.equal(inspectorMode(), READ_ONLY_INSPECTOR);
+  assert.match(openInspector().textContent, /B-02/);
+  assert.equal(screen.queryByRole("list", { name: "People directory" }), null);
 });

@@ -30,10 +30,15 @@ test("Escape-deselect restores focus to the seat marker on both surfaces", async
   assert.ok(viewerRestores.length >= 3, `expected the helper + Escape + Close call sites, saw ${viewerRestores.length}`);
 });
 
-test("Esc-clear from inside a results panel returns focus to the search input", async () => {
+test("Esc from inside a transient search surface returns focus to the search input", async () => {
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
   assert.match(seatMap, /closest\('\[aria-label="Admin search results"\]'\)/);
 
+  // Viewer: the transient surface is the Find palette, and Esc dismisses the
+  // palette itself (contract #7 puts it one layer above the query) rather than
+  // clearing the query underneath it. Same hazard either way — the focused row
+  // unmounts with the surface — so the handoff is keyed on the palette
+  // containing the event target instead of the results list containing it.
   const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
-  assert.match(viewer, /closest\('\[aria-label="Viewer search results"\]'\)/);
+  assert.match(viewer, /paletteRef\.current\?\.contains\(target\)[\s\S]{0,160}searchInputRef\.current\?\.focus\(\)/);
 });

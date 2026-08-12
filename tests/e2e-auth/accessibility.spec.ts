@@ -367,6 +367,38 @@ test("the viewer map and its seat inspector have no WCAG A/AA violations", async
   expect(results.passes.length).toBeGreaterThan(0);
   expect(results.passes.map(rule => rule.id)).toContain("color-contrast");
 
+  // The Find palette is the viewer's primary surface — the only route to
+  // people, seats and zones since the docked directory was retired — and it is
+  // the part of this page a source guardrail structurally cannot check for
+  // contrast. Scanned in BOTH modes: they share one slot but render entirely
+  // different content, and only one of them can be on screen at a time.
+  //
+  // This scan is also what catches dangling id references on the field:
+  // aria-controls points at the palette, which is UNMOUNTED when closed, and a
+  // reference that resolves to nothing is a critical aria-valid-attr-value
+  // violation rather than a harmless one.
+  await retryUntilVisible(
+    () => page.locator("#viewer-seat-search").click(),
+    page.locator("#viewer-find-palette")
+  );
+  await expect(page.getByRole("list", { name: "People directory" })).toBeVisible();
+  await expectNoAxeViolations(page);
+
+  // Query mode. Asserted by the BROWSE list going away rather than by the
+  // results list arriving: a query with no matches is a legitimate state with
+  // its own copy, and it deserves the scan just as much as a hit does.
+  await page.locator("#viewer-seat-search").fill("a");
+  await expect(page.getByRole("list", { name: "People directory" })).toBeHidden();
+  await expect(page.locator("#viewer-find-palette")).toBeVisible();
+  await expectNoAxeViolations(page);
+
+  // Esc peels the palette first, the query second (contract #7).
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#viewer-find-palette")).toBeHidden();
+  await expect(page.locator("#viewer-seat-search")).toHaveValue("a");
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#viewer-seat-search")).toHaveValue("");
+
   // The viewer inspector is a non-modal panel, not a dialog; the "Published
   // seat" pill is unique to the viewer variant, so it doubles as proof this
   // is the read-only branch with no admin affordances.

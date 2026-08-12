@@ -81,10 +81,14 @@ test("empty and single-seat inputs return an empty set", () => {
   assert.equal(computeCrowdedSeatIds([{ id: "solo", x: 0.5, y: 0.5 }]).size, 0);
 });
 
-test("the tightest real pod is crowded at the directory-open rest scale", () => {
-  // ~1100px rendered frame (1440 viewport with the People directory holding
-  // the right slot). CW-pod pitch ≈ 0.025 normalized — well inside the 48px
-  // clearance, so these pills must be nudged apart at rest.
+test("the tightest real pod is crowded at a narrowed rest scale", () => {
+  // ~1100px rendered frame. This was the viewer's at-rest width while the
+  // docked People directory held the right slot; that panel is retired (the
+  // Find palette floats), so the viewer rests wider now — but the case stays
+  // worth pinning, because 1100px is still exactly what a 1440 viewport
+  // renders once the browser chrome and a narrow window take their share.
+  // CW-pod pitch ≈ 0.025 normalized — well inside the 48px clearance, so
+  // these pills must be nudged apart.
   const clearance = clearanceFromScale(1100);
   const seats = [
     { id: "cw05", x: 0.35, y: 0.62 },

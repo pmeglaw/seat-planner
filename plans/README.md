@@ -31,6 +31,15 @@ test files (`login-form`, `rpc-execution`, `seat-inspector`,
 drifts — reinstall before suspecting a change. Healthy baseline: ~600+ pass /
 0 fail.
 
+## Design-slice plans (not from an audit cycle)
+
+These execute a settled design handoff rather than an `improve` finding, so they
+sit outside the table above.
+
+| Plan | Title | Status |
+|------|-------|--------|
+| [017](017-viewer-find-palette-slice-1.md) | Viewer Find palette, slice 1 — palette shell + browse mode | **DONE (2026-08-12)** on `claude/viewer-palette-slice-1`. Two owner rulings and **three defects a green local gate missed** are recorded at the top of the plan — the native Escape-clear on `type="search"`, an `aria-controls` reference left pointing at an unmounted palette, and the zone-chip count failing AA contrast. Read them before starting slice 2, they change its scope: query mode already lives in the palette (slice 2 is the restyle, not the move), the zone chips are already wired, and the mocks' greys and opacities are unverified until measured |
+
 ## 2026-08-07 findings recorded but NOT planned this cycle
 
 The user scoped this cycle to the correctness backlog. Everything below was
