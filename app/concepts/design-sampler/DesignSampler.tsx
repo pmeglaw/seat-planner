@@ -235,10 +235,9 @@ function Reveal({
     state === "static"
       ? {}
       : {
-          transition: `transform 800ms ${EASE} ${delayMs}ms, opacity 800ms ${EASE} ${delayMs}ms, filter 800ms ${EASE} ${delayMs}ms`,
+          transition: `transform 800ms ${EASE} ${delayMs}ms, opacity 800ms ${EASE} ${delayMs}ms`,
           transform: hidden ? "translateY(4rem)" : "translateY(0)",
-          opacity: hidden ? 0 : 1,
-          filter: hidden ? "blur(12px)" : "blur(0)"
+          opacity: hidden ? 0 : 1
         };
   return (
     <div ref={ref} className={className} style={style}>
