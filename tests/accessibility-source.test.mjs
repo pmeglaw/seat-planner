@@ -234,12 +234,23 @@ test("a highlighted viewer seat announces which of the two causes lit it up", as
   assert.match(viewerFinderSource, /const seatIsPaletteHover = paletteOpen && seat\.id === hoverSeatId/);
   assert.match(viewerFinderSource, /highlighted=\{seatIsSearchHit \|\| seatIsPaletteHover\}/);
   const paletteSource = await readSource("../components/seat-map/ViewerFindPalette.tsx");
+  // The result LIST alone, ending at the empty state that closes it — NOT
+  // everything up to the browse list. The zone chips sit between the two and
+  // hover/focus-preview on purpose (they drive the zone wash, not hoverSeatId),
+  // so a slice that swallowed them would fail this on correct code.
   const paletteResultsBlock = paletteSource.slice(
     paletteSource.indexOf('aria-label="Viewer search results"'),
-    paletteSource.indexOf('aria-label="People directory"')
+    paletteSource.indexOf('<div role="status" aria-live="polite"')
   );
-  assert.ok(paletteResultsBlock.length > 0, "the palette must still render both lists");
-  assert.doesNotMatch(paletteResultsBlock, /onPointerEnter/);
+  assert.ok(paletteResultsBlock.length > 0, "the palette must still render the results list");
+  assert.ok(
+    paletteSource.includes('aria-label="People directory"'),
+    "the palette must still render the browse list"
+  );
+  // Every hover-ish entry point, not just the one the rows happen to use:
+  // swapping onPointerEnter for onMouseEnter would feed hoverSeatId from a
+  // search row and break the description contract just as thoroughly.
+  assert.doesNotMatch(paletteResultsBlock, /onPointerEnter|onPointerOver|onMouseEnter|onMouseOver|onFocus/);
   assert.match(
     viewerFinderSource,
     /highlightedDescription=\{seatIsSearchHit \? "Highlighted search result" : "Highlighted from the people list"\}/
