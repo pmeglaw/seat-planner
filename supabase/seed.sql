@@ -18,7 +18,7 @@ do $$
 declare
   admin_id constant uuid := '00000000-0000-0000-0000-0000000000a1';
   viewer_id constant uuid := '00000000-0000-0000-0000-0000000000a2';
-  seeded_password constant text := 'e2e-local-password';
+  seeded_password constant text := 'e2e-local-seed-r2-2026';
 begin
   -- email_confirmed_at must be set, or GoTrue rejects the sign-in as an
   -- unconfirmed address and every authenticated spec fails at the login step.
