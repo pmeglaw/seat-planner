@@ -53,6 +53,23 @@ function classifyAuthMessage(message: string): string | null {
   return null;
 }
 
+/**
+ * True when a GoTrue error means "no such account" — the class of failure
+ * the login page must NOT distinguish from success, or the magic-link /
+ * reset buttons become an account-existence oracle for unauthenticated
+ * visitors. The ?error= query path deliberately still maps these to
+ * admin-provisioning guidance: arriving there requires a clicked email
+ * link, which already proves email access.
+ */
+export function isAccountAbsenceError(rawMessage: string): boolean {
+  const normalized = rawMessage.toLowerCase();
+  return (
+    normalized.includes("user not found") ||
+    normalized.includes("signup disabled") ||
+    normalized.includes("signups not allowed")
+  );
+}
+
 // For an error the browser just got back from Supabase: unrecognized text is
 // echoed, because it is the only clue the user (or a support screenshot) has
 // about a failure we have not mapped yet.

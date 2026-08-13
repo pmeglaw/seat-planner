@@ -349,7 +349,7 @@ test("sending a magic link never makes the primary claim it is logging in", asyn
     await gate;
   });
   await flush();
-  assert.match(screen.getByRole("status").textContent, /Check your email/);
+  assert.match(screen.getByRole("status").textContent, /sign-in link is on its way/);
 });
 
 test("the step-2 magic-link button sends an OTP without creating a user", async () => {
@@ -361,7 +361,7 @@ test("the step-2 magic-link button sends an OTP without creating a user", async 
   assert.equal(calls.otp.length, 1);
   assert.equal(calls.otp[0].email, "person@example.com");
   assert.equal(calls.otp[0].options.shouldCreateUser, false);
-  assert.match(screen.getByRole("status").textContent, /Check your email/);
+  assert.match(screen.getByRole("status").textContent, /sign-in link is on its way/);
 });
 
 test("forgot-password sends the reset for the email entered on step 1", async () => {
@@ -372,6 +372,61 @@ test("forgot-password sends the reset for the email entered on step 1", async ()
 
   assert.equal(calls.reset.length, 1);
   assert.equal(calls.reset[0].email, "person@example.com");
+});
+
+// The no-account-existence-oracle guarantee (#372) covers step 1 already; this
+// pins that step 2's live buttons hold it too. GoTrue answers "no such
+// account" with a distinct error, and the pre-fix code let that reach
+// friendlyAuthMessage unmapped-through, which produced a different message
+// (and thus an oracle) for an unauthenticated visitor probing addresses.
+test("magic-link refusal for an unknown account renders the same notice as success", async () => {
+  await mountLogin({ results: { otp: { error: null } } });
+  await advanceToPassword("person@example.com");
+  await click(/sign-in link/i);
+  await flush();
+  const successText = screen.getByRole("status").textContent;
+
+  cleanup();
+
+  await mountLogin({ results: { otp: { error: { message: "Signups not allowed for otp" } } } });
+  await advanceToPassword("person@example.com");
+  await click(/sign-in link/i);
+  await flush();
+  const refusalNotice = screen.getByRole("status");
+
+  assert.equal(refusalNotice.textContent, successText, "identical notice text regardless of account existence");
+  assert.equal(screen.queryByRole("alert"), null, "the refusal renders as the success/status treatment, not an alert");
+});
+
+test("password-reset refusal for an unknown account renders the same notice as success", async () => {
+  await mountLogin({ results: { reset: { error: null } } });
+  await advanceToPassword("person@example.com");
+  await click(/Forgot password/);
+  await flush();
+  const successText = screen.getByRole("status").textContent;
+
+  cleanup();
+
+  await mountLogin({ results: { reset: { error: { message: "User not found" } } } });
+  await advanceToPassword("person@example.com");
+  await click(/Forgot password/);
+  await flush();
+  const refusalNotice = screen.getByRole("status");
+
+  assert.equal(refusalNotice.textContent, successText, "identical notice text regardless of account existence");
+  assert.equal(screen.queryByRole("alert"), null, "the refusal renders as the success/status treatment, not an alert");
+});
+
+// The neutralization must target only the absence class of failure — a real
+// problem (rate limiting, say) still has to explain itself, or a genuinely
+// stuck user gets the unhelpful "check your email" runaround forever.
+test("magic-link failures that are not absence still explain themselves", async () => {
+  await mountLogin({ results: { otp: { error: { message: "Email rate limit exceeded" } } } });
+  await advanceToPassword("person@example.com");
+  await click(/sign-in link/i);
+  await flush();
+
+  assert.match(screen.getByRole("alert").textContent, /Please wait 60 seconds/);
 });
 
 // Owner ruling: a returning visitor is prefilled and re-checked but still lands

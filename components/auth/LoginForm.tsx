@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { friendlyAuthMessage, friendlyAuthMessageFromQuery, safeNextPath } from "@/lib/authMessages";
+import {
+  friendlyAuthMessage,
+  friendlyAuthMessageFromQuery,
+  isAccountAbsenceError,
+  safeNextPath
+} from "@/lib/authMessages";
 import { assignLocation } from "@/lib/fullNavigation";
 import { cx, focusRingClass } from "@/components/ui/design-system";
 
@@ -59,6 +64,21 @@ type PendingAction = "password" | "link" | "reset" | null;
 // signInWithPassword). Every handler therefore clears its pending flag in a
 // finally, or the control it disabled stays dead for the rest of the session.
 const UNREACHABLE_MESSAGE = "Could not reach the sign-in service. Check your connection and try again.";
+
+// One response for "sent" and "no such account": the magic-link button is
+// reachable pre-auth, so distinguishing the two would hand any visitor an
+// account-existence oracle (the thing step 1 was built to avoid). The
+// footer's "ask an office admin" line carries the provisioning guidance.
+const MAGIC_LINK_NEUTRAL_NOTICE = {
+  text: "If that address has an account, the sign-in link is on its way. Use the newest email if you requested more than one link.",
+  tone: "success"
+} as const;
+
+// Same rationale as MAGIC_LINK_NEUTRAL_NOTICE, for the password-reset button.
+const RESET_NEUTRAL_NOTICE = {
+  text: "If that address has an account, a password reset email is on its way. Open the newest email to set a new password.",
+  tone: "success"
+} as const;
 
 type Notice = {
   text: string;
@@ -232,14 +252,15 @@ export function LoginForm() {
       });
 
       if (error) {
-        setNotice({ text: friendlyAuthMessage(error.message), tone: "error" });
+        if (isAccountAbsenceError(error.message)) {
+          setNotice(MAGIC_LINK_NEUTRAL_NOTICE);
+        } else {
+          setNotice({ text: friendlyAuthMessage(error.message), tone: "error" });
+        }
         return;
       }
 
-      setNotice({
-        text: "Check your email for the sign-in link. Use the newest email if you requested more than one link.",
-        tone: "success"
-      });
+      setNotice(MAGIC_LINK_NEUTRAL_NOTICE);
     } catch {
       setNotice({ text: UNREACHABLE_MESSAGE, tone: "error" });
     } finally {
@@ -264,11 +285,15 @@ export function LoginForm() {
       });
 
       if (error) {
-        setNotice({ text: friendlyAuthMessage(error.message), tone: "error" });
+        if (isAccountAbsenceError(error.message)) {
+          setNotice(RESET_NEUTRAL_NOTICE);
+        } else {
+          setNotice({ text: friendlyAuthMessage(error.message), tone: "error" });
+        }
         return;
       }
 
-      setNotice({ text: "Password reset email sent. Open the newest email to set a new password.", tone: "success" });
+      setNotice(RESET_NEUTRAL_NOTICE);
     } catch {
       setNotice({ text: UNREACHABLE_MESSAGE, tone: "error" });
     } finally {
