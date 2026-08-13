@@ -3,7 +3,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 // Credentials seeded by supabase/seed.sql into the disposable local stack.
 // Local-only: this database is a Docker container that `supabase stop`
 // destroys, and these values are never valid against the hosted project.
-export const SEEDED_PASSWORD = "e2e-local-password";
+export const SEEDED_PASSWORD = "e2e-local-seed-r2-2026";
 export const SEEDED_ADMIN_EMAIL = "e2e-admin@example.test";
 export const SEEDED_VIEWER_EMAIL = "e2e-viewer@example.test";
 
