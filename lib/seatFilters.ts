@@ -131,6 +131,27 @@ export function hasActiveConstraints(criteria: SeatFilterCriteria): boolean {
   return criteria.search.trim() !== "" || hasStructuredFilters(criteria);
 }
 
+/**
+ * One count per department for the chip row: how many seats the map would
+ * show if that chip were the active department. The criteria's own department
+ * facet is REPLACED, never ANDed — otherwise every non-active chip reads 0
+ * the moment one chip is active. Every other constraint (search, position,
+ * zone, status) still applies, keeping the chip numbers on the same
+ * counts-follow-filters contract as the legend.
+ */
+export function departmentChipCounts(
+  seats: SeatWithEmployee[],
+  criteria: SeatFilterCriteria,
+  departments: string[]
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const department of departments) {
+    const chipCriteria = { ...criteria, department };
+    counts[department] = seats.filter(seat => seatMatchesFilters(seat, chipCriteria)).length;
+  }
+  return counts;
+}
+
 /** Criteria with the structured filters reset, leaving any search intact. */
 export function clearedStructuredFilters(criteria: SeatFilterCriteria): SeatFilterCriteria {
   return { ...criteria, department: FILTER_ALL, position: FILTER_ALL, zone: FILTER_ALL, status: FILTER_ALL };
