@@ -13,19 +13,22 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPT = path.join(ROOT, "scripts", "backup-prod.mjs");
 const UNREACHABLE_DB_URL = "postgresql://user:pass@127.0.0.1:1/none";
 
-// Run the script with a controlled environment and return its exit code and
-// stderr. SUPABASE_DB_URL is blanked first so a real credential on the
-// developer's machine cannot leak into the run.
+// Run the script with a controlled environment and return its exit code,
+// stdout, and stderr. SUPABASE_DB_URL is blanked first so a real credential
+// on the developer's machine cannot leak into the run. stdout is captured
+// too (not just stderr): the dump child process inherits this script's own
+// stdout, so a credential surfacing there would otherwise bypass assertions
+// scoped only to stderr.
 function runScript(env) {
   try {
-    execFileSync(process.execPath, [SCRIPT], {
+    const stdout = execFileSync(process.execPath, [SCRIPT], {
       env: { ...process.env, SUPABASE_DB_URL: "", SEAT_PLANNER_BACKUP_DIR: "", ...env },
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"]
     });
-    return { code: 0, stderr: "" };
+    return { code: 0, stdout, stderr: "" };
   } catch (error) {
-    return { code: error.status, stderr: error.stderr ?? "" };
+    return { code: error.status, stdout: error.stdout ?? "", stderr: error.stderr ?? "" };
   }
 }
 
@@ -57,6 +60,28 @@ test("the backup script never reads credentials from a file", async () => {
   // The connection string carries the database password, so it must never be
   // echoed back — not in a log line and not in an error.
   assert.doesNotMatch(source, /console\.(log|error)\([^)]*dbUrl/);
+  assert.doesNotMatch(source, /error\.message/, "execFileSync error messages embed the full argv, --db-url included");
+});
+
+test("a failed dump never echoes the connection string or its password", () => {
+  // The dump itself must fail (unreachable host, port 1) AFTER the guards
+  // pass, so this exercises the catch block in the dump loop — the path
+  // where execFileSync's own error.message contains the full argv,
+  // including --db-url. The canary password proves the credential is what
+  // never surfaces, wherever the message text goes next.
+  const canaryUrl = "postgresql://user:canary-sekret-77@127.0.0.1:1/none";
+  const { code, stdout, stderr } = runScript({
+    SUPABASE_DB_URL: canaryUrl,
+    SEAT_PLANNER_BACKUP_DIR: path.join(ROOT, "..", "sp-backup-test")
+  });
+  // The dump child inherits this script's own stdout, so a credential could
+  // surface there instead of on stderr — check both, combined.
+  const output = stdout + stderr;
+  assert.equal(code, 1, "an unreachable database must be a hard failure");
+  assert.match(output, /dump failed/);
+  assert.match(output, /do not treat this run as a backup/);
+  assert.ok(!output.includes("canary-sekret-77"), "the database password must never appear in failure output");
+  assert.ok(!output.includes(canaryUrl), "the connection string must never appear in failure output");
 });
 
 test("the backup script dumps roles, schema, and data", async () => {
