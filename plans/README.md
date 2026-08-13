@@ -1,13 +1,193 @@
 # Implementation Plans
 
-Two audit cycles are recorded here. **Current cycle: 2026-08-07**, audited at
-commit `89a8fea` (HEAD, post PR #336) by the `improve` skill — 172 commits
-after the prior cycle. The prior cycle's record (2026-07-24, commit `3119e16`,
-all eleven plans shipped) is preserved at the bottom; its plan files were
-removed in the 2026-08-06 docs sweep (recover from git history).
+Three audit cycles are recorded here. **Current cycle: 2026-08-13**, audited
+at commit `985660a` by the `improve` skill — 50 commits after the 2026-08-07
+cycle. Prior cycles' records are preserved below; the 2026-07-24 plan files
+were removed in the 2026-08-06 docs sweep (recover from git history).
 
 Each executor: read the plan fully before starting, honor its STOP conditions,
 and update your row when done.
+
+## Execution order & status (2026-08-13 cycle)
+
+| Plan | Title | Priority | Effort | Risk | Depends on | Category | Status |
+|------|-------|----------|--------|------|------------|----------|--------|
+| [018](018-backup-failure-credential-echo.md) | Stop the backup script echoing the prod DB credential on dump failure | P1 | S | LOW | — | security | DONE — merged to main as `401da4b` (PR #386, 2026-08-13; incl. CodeRabbit round: canary asserts stdout+stderr combined). Executor fixed a plan self-conflict (comment wording vs the `/error\.message/` source pin) — documented, approved |
+| [019](019-magic-link-account-oracle.md) | Close the account-existence oracle on the login magic-link/reset paths | P1 | S | LOW-MED | — | security | DONE — merged to main as `a7d4277` (PR #387, 2026-08-13; CodeRabbit clean, no findings). Neutral-copy change owner-approved via PR merge |
+
+Both independent — any order.
+
+### 🔴 Owner action, not a plan (2026-08-13) — GitHub Pages exposure
+
+**GitHub Pages is publicly serving this private repo.** Verified live
+2026-08-13 against the GitHub API: repo `private: true`, but a legacy Pages
+build (`build_type: legacy`, source `main` branch, root path) publishes at
+`https://pmeglaw.github.io/seat-planner/` with `public: true`. Confirmed
+reachable: CLAUDE/AGENTS docs, `docs/RISKS.md`, the floor-plan image,
+`package.json`, `supabase/seed.sql` (local-stack seeded password constant).
+No workflow file — it is a repo *setting*, invisible to file audits; it also
+explains the red `pages-build-deployment` runs on main.
+**DISABLED 2026-08-13** via `gh api -X DELETE repos/pmeglaw/seat-planner/pages`;
+verified same day: Pages API 404, live URL HTTP 404. Residual rotation of the
+`supabase/seed.sql` local-stack password constant (burned while Pages was
+live): **merged to main as `9cd777a`** (PR #388, 2026-08-13; e2e-auth tier
+green = rotation proven by a real login; incl. CodeRabbit round: the
+auth.users upsert now `do update`s the password hash so reseeding an existing
+stack takes the rotation). Owner follow-ups: re-run `npm run db:seed` on any
+live local stack, and update `SEAT_PLANNER_E2E_PASSWORD` in `.env.local` if
+it mirrors the old seeded value.
+
+## 2026-08-13 findings recorded but NOT planned this cycle
+
+User scoped this cycle to the security findings. Everything below verified at
+`985660a` with my own source reads — candidates for a future cycle; do not
+re-audit from zero.
+
+**Bugs (all confirmed by source read):**
+- **B-01 Esc never clears the Position filter on the admin map** —
+  `SeatMap.tsx:921-925` clears department/zone/status but `position` is in
+  neither the condition nor the body (it IS in the dep array at `:930`).
+  Viewer twin was fixed and pinned (`ViewerSeatFinder.tsx:486-493`,
+  `tests/viewer-seat-finder.test.mjs:303`); admin missed.
+  `useSeatFilters.ts:125-130` already exports `clearStructuredFilters()` —
+  swap the trio for it and widen the guard. S / LOW.
+- **B-02 fast reselect within the 200ms unwind strands the map frame at a
+  partial translate** — `useInspectorNudge.ts:151` cleanup fires
+  `cancelNudge()` mid-unwind without settling the translate; re-plan for the
+  new seat returns `null` when it's already clear (`mapViewport.ts:282`) and
+  never repairs it. Fix: settle (jump to target or 0) in the cancel path
+  without reintroducing the post-unmount tween #341 removed. S / LOW-MED,
+  MED confidence on field frequency (needs a 200ms window).
+- **B-03 "No zone" chip filters seats but the wash matches nothing** —
+  `lib/viewerFindPalette.ts:24` falls back to `"No zone"`;
+  `lib/zoneWash.ts:61` falls back to `zone ?? department` only. A published
+  seat with both null gets a working filter chip and no wash box. Only fires
+  when such a seat exists (may be dormant in prod data). Same root as D-08. S.
+
+**Security (minor):**
+- **S-05 parseUuid gap is 4 sites, not 1** — recorded scope (S-01 residue)
+  named only `updateSeatAction.seatId`; also unparsed:
+  `actions.ts:412` (`employeeId`), `:498-505` (swap pair), `:770`
+  (`deleteSeatAction`). `parseUuid` IS applied at `:611,:647` — inconsistency,
+  not policy. Legibility-only (PostgREST parameterizes; RLS + RPC is_admin
+  hold). S.
+
+**Tests (the M4-extraction gap cluster):**
+- **T-10 the three M4 hooks (`useDraftHistory`, `usePublishReview`,
+  `useSeatFilters`) are pinned only by regex over their own source** — no
+  test imports them; `renderComponent.mjs:253` (`loadComponent`) + the
+  `__ct.actions` stub already support seam tests. One ct file per hook;
+  `useSeatFilters` cheapest first. M.
+- **T-11 `SeatMapDialogs.tsx` (591 lines, 7 dialogs) is jsdom-mountable today
+  and only grep-verified** — no server-side imports; absent from `test:ct`.
+  The clearest "mount instead of grep" case in the diff. M.
+- **T-12 coverage floors stop at `lib/**`** — ~1,073 lines of extracted
+  seat-map hooks (plus `app/actions.ts`) sit outside the 90/95/80 gate, so
+  each extraction moves logic out of measurement. Needs T-10 first, then a
+  staged include (per-directory or a lower initial floor for the new scope). M.
+- **T-13 `app/actions.ts` is never executed by any test tier** — publish
+  guard pinned by `indexOf` ordering on source text
+  (`tests/publish-guard.test.mjs:95-124`); `server-auth-context.test.mjs`
+  proves the loader can execute server modules with a stubbed
+  `@/lib/supabase/server`. Start with `publishSeatMapAction`. M.
+- **T-14 palette out-of-flow assertion is a Tailwind class regex**
+  (`tests/viewer-find-palette-source.test.mjs:33`) where a mount exists —
+  may need structural re-expression (harness doesn't compile Tailwind). S.
+
+**Tech debt:**
+- **D-08 (supersedes D-05) seat-zone fallback now has ~6 public/private
+  copies with 3 different fallbacks** — `""` (`lib/seatFilters.ts:39`,
+  `useSeatFilters.ts:26`, `AdminManagementPanel.tsx:102`), `"No zone"`
+  (`lib/viewerFindPalette.ts:23`, `lib/viewerSeatSearch.ts:108`), `null`
+  (`lib/mapOperationsAgent.ts:191`); #373 added a public copy while
+  re-exporting `zoneKey` to prevent exactly this drift. Consolidate with the
+  display default as a caller argument (collapsing `""` vs `"No zone"` is
+  user-visible in the admin dropdown). S / MED.
+- **D-09 next SeatMap seam: viewport/camera block** — `SeatMap.tsx:330-343`,
+  ~85 refs; 4 of the last 6 non-refactor SeatMap fixes were in this block
+  (#354, #340, #341, #358), each pinned afterward by source-grep because
+  nothing can mount it. Hardest seam (rAF, pointer capture); sequence behind
+  a browser-tier characterization pass. L / MED.
+- **D-10 cheaper SeatMap seam: the four confirm flows** — state at
+  `SeatMap.tsx:348-353` (71 refs) whose dialogs already left in M4 step 1;
+  a `useSeatConfirmFlows` hook completes the split and pairs with T-11. M / LOW.
+- **D-11 arrow-key list roving implemented 4× (2× in one file)** —
+  `ResultsPanel.tsx:64-90`, `ViewerFindPalette.tsx:185-204` + `:205-230`
+  (windowed fork is documented, not resolved), `ViewerSeatFinder.tsx:1108`.
+  A `useListRoving({ windowed })` must preserve the windowed/full
+  distinction. M / MED (a11y-load-bearing).
+- **D-12 `app/actions.ts` mixes six domains in 1,032 lines** — planner block
+  is 30% of the file; split into `app/actions/*` re-exported from the barrel
+  (ct harness stubs by static export name off `@/app/actions` —
+  `renderComponent.mjs:234` — so the barrel must survive). Best after T-13.
+  M / LOW-MED.
+
+**Perf / deps / DX:**
+- **X-01 image-pin mismatch STILL OPEN** — `next.config.js:94` pins the old
+  `?v=map-v2-warm-1911x867`; live is cool-2x (`mapLayoutTransform.ts:14`);
+  third divergent copy now in `ComponentStateBoard.tsx:1218`. Inert while all
+  `<Image>`s are `unoptimized`; tripwire for whoever removes that. Fix +
+  source test pinning config↔lib agreement. S.
+- **DEP-01 UPDATED: sharp override is now a no-op** — next 16.3.0 declares
+  `optionalDependencies.sharp: ^0.35.3` = root spec, and sharp is now a real
+  devDep (calibration generator + `tests/map-calibration.test.mjs`, which
+  runs in `npm test` → CI needs it). Remove the override; **keep the postcss
+  override** (it genuinely lifts next's pinned 8.5.23 to one tree copy). S.
+- **DEP-02 `@types/node` ^26 vs Node 22** engines/.nvmrc/CI — still open.
+  Pin `^22`. S.
+- **DEP-03 `@testing-library/user-event` still unused** (2 refs: manifest +
+  this file). Delete unless the ct tier plans to adopt it. S.
+- **X-03 no single-command local gate** — CI verify sequence
+  (lint → typecheck → coverage:check → build, `ci.yml:80-88`) exists only as
+  prose; plan 017's postmortem is literally titled around "a green local
+  gate". Add `"gate": "npm run lint && npm run typecheck && npm run coverage:check"`. S.
+- **P-02 all four vendored font cuts preload on every route** —
+  `app/layout.tsx:20-33`; `/login` preloads ~45KB of mono it never paints
+  (600 cut exists for Reception's 46px readout). Verify emitted preload tags
+  with one build first; then scope mono out of the root layout or
+  `preload: false` on 500/600 only (FOUT risk on Reception is the MED part).
+  S / MED.
+- **P-03 zero code-splitting anywhere** — no `next/dynamic`/`React.lazy` in
+  the app; `SeatInspector` (74KB source) and `AskPlannerDrawer` (26KB) are
+  the clean candidates. MEASURE FIRST (`web-app-performance` skill) — and do
+  NOT split `ViewerFindPalette` (opens on field focus; a lazy chunk lands in
+  the interaction budget). M.
+
+## 2026-08-13 verdicts: considered, rejected or downgraded (do not re-audit)
+
+- **SEC-03 "viewer payload ships emails nothing renders" — REFUTED in
+  vetting.** The viewer DOES render employee email + extension:
+  `ViewerSeatFinder.tsx:1447-1452` mounts `SeatInspector` with
+  `canEdit={false}`, whose read-only branch shows a CONTACT section
+  (`SeatInspector.tsx:1362-1367`). It's the contact feature, same family as
+  the Reception-extensions decision. Residual over-fetch
+  (`created_at`/`updated_at`/`avatar_url` via `select("*")`) is a few KB at
+  prod scale — not worth a change (matches the prior over-fetch verdict).
+- **P-01 CI caching — downgraded to not-worth-doing.** #343's Playwright
+  cache removed the 10-minute stalls that motivated it; runs now 4m34s–5m10s
+  wall. Remaining `.next/cache` work buys <1min against a real
+  stale-compiler-cache poisoning risk (and the e2e-auth build uses different
+  `NEXT_PUBLIC_*` env — `playwright-auth.config.ts:88-94` — so it can't share
+  a cache key anyway). Revisit only if CI crosses ~8min.
+- **B-04 palette chip pressed-state compares raw names not zoneKey**
+  (`ViewerFindPalette.tsx:353` vs the contract in
+  `lib/viewerFindPalette.ts:27-35`) — latent only (values byte-identical by
+  construction today). Tighten when next touching the file; not a bug today.
+- **Viewer over-fetch via `select("*")`** on seats/published_employees — a
+  few KB at 68 seats/61 employees; deliberate paging shape. Not worth it.
+- **`app/concepts/*` bundle cost** — none shipped (per-route splitting; 404
+  gates verified); build-time cost only, actively pruned (#385). Leave.
+- **DIR options this cycle** (owner previously ruled "none for now" — these
+  are NEW, recorded for when that changes): (1) seat/person "copy link"
+  affordance — `lib/deepLink.ts` is complete tested infra, both surfaces
+  write the URL, nothing hands it out; small design spike (person-link vs
+  seat-link is the real question). (2) viewer Ask Planner — cheap
+  structurally (swap gate, constrain tools to published) but OpenAI spend
+  scales with headcount. (3) in-app draft snapshots — adjacent to the
+  declined publish-rollback; if that decline meant "no new versioning
+  concepts," drop this too.
+
+## Execution order & status (2026-08-07 cycle)
 
 ## Execution order & status (2026-08-07 cycle)
 
