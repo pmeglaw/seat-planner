@@ -54,6 +54,15 @@ export function zoneKey(zone: string | null | undefined): string {
 }
 
 /**
+ * Display label for a seat with neither zone nor department. The viewer
+ * palette synthesizes a pinnable chip from it, so every consumer that
+ * compares against a pinned zone (the filter predicate, the wash) must
+ * treat a null zone/department as THIS value — two spellings of the
+ * fallback is how a chip ends up filtering seats its wash can't find.
+ */
+export const NO_ZONE_LABEL = "No zone";
+
+/**
  * The text a free-text search matches against.
  *
  * Includes the occupant's details, so searching a person's name finds their

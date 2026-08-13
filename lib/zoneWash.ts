@@ -11,7 +11,7 @@
  * walls, and the wash must hug the seats it lights (same split as
  * lib/officeRoomWash.ts documents for rooms).
  */
-import { zoneKey } from "@/lib/seatFilters";
+import { NO_ZONE_LABEL, zoneKey } from "@/lib/seatFilters";
 
 export type ZoneWashSeat = {
   x: number;
@@ -39,9 +39,13 @@ const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
 /**
  * Bounding box for a zone's seats, or null when the zone is empty/unknown.
- * Zone membership mirrors the filter facet's own grouping (seat.zone ??
- * seat.department) so hover-preview lights exactly the seats a pinned zone
- * filter would keep.
+ * Zone membership mirrors the VIEWER filter's own grouping — seat.zone ??
+ * seat.department ?? NO_ZONE_LABEL — so hover-preview lights exactly the
+ * seats a pinned zone filter would keep, including a pinned "No zone" chip
+ * (the viewer palette's display fallback for seats with neither column set).
+ * Admin is unaffected: that surface groups no-zone seats under "" and never
+ * produces a "No zone" pin, and buildZoneWash("", ...) still returns null
+ * via the !washZone guard below.
  */
 export function buildZoneWash(zone: string | null | undefined, seats: ZoneWashSeat[]): ZoneWashRect | null {
   const washZone = zone?.trim();
@@ -58,7 +62,7 @@ export function buildZoneWash(zone: string | null | undefined, seats: ZoneWashSe
   let seatCount = 0;
 
   for (const seat of seats) {
-    if (zoneKey(seat.zone ?? seat.department) !== washKey) continue;
+    if (zoneKey(seat.zone ?? seat.department ?? NO_ZONE_LABEL) !== washKey) continue;
     const x = Number(seat.x);
     const y = Number(seat.y);
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;

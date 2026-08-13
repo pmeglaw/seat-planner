@@ -1,4 +1,4 @@
-import { zoneKey } from "@/lib/seatFilters";
+import { NO_ZONE_LABEL, zoneKey } from "@/lib/seatFilters";
 import type { Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { buildViewerDirectory, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 
@@ -21,7 +21,7 @@ import { buildViewerDirectory, type ViewerSearchResult } from "@/lib/viewerSeatS
 
 /** A seat's zone, falling back the way the viewer has always displayed it. */
 export function getSeatZone(seat: Pick<SeatWithEmployee, "zone" | "department">) {
-  return seat.zone ?? seat.department ?? "No zone";
+  return seat.zone ?? seat.department ?? NO_ZONE_LABEL;
 }
 
 /**
