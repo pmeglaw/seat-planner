@@ -918,16 +918,19 @@ export function SeatMap({
         return;
       }
 
-      if (!isEditableTarget(event.target) && (department !== "all" || zone !== "all" || status !== "all")) {
-        setDepartment("all");
-        setZone("all");
-        setStatus("all");
+      if (!isEditableTarget(event.target) && structuredFiltersActive) {
+        // clearStructuredFilters(), not three hand-written setters: the flag
+        // counts POSITION too — the open-coded trio left a position-only
+        // filter pinned while Escape reported itself as having cleared the
+        // layer (the viewer twin fixed and pinned this first; see
+        // ViewerSeatFinder's Esc handler).
+        clearStructuredFilters();
       }
     }
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, closeAskPlannerDrawer, deleteSeatConfirm, department, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, position, publishReviewOpen, search, selectedSeatId, setActionNotice, setDepartment, setDiscardDraftConfirmOpen, setPublishReviewOpen, setSearch, setStatus, setZone, status, swapConfirm, swapSourceSeatId, vacateConfirm, zone]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, clearStructuredFilters, closeAskPlannerDrawer, deleteSeatConfirm, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, publishReviewOpen, search, selectedSeatId, setActionNotice, setDiscardDraftConfirmOpen, setPublishReviewOpen, setSearch, structuredFiltersActive, swapConfirm, swapSourceSeatId, vacateConfirm]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
