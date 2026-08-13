@@ -100,7 +100,6 @@ Naming note: `-v13` continues the `login-v12` precedent; owner may rename at rev
 
 - 2026-08-12 — Spec approved (S1–S5) in session; branch created.
 - 2026-08-12 — Sampler ruling (owner, live review): **Soft Structuralism eliminated.** Finalists: **Ethereal Glass** (to be re-cut with the brand orange #FF5715 replacing the purple/emerald glow) and **Editorial Luxury**. Phase 1 amended: instead of one viewer-v13 language, build the viewer hero as **one page with a theme toggle** between the two finalists (`app/concepts/viewer-v13/`). The runoff winner becomes the language for the remaining Phase 2–3 prototypes (admin, login).
-- 2026-08-12 — viewer-v13 runoff ruling (owner, live review): **Ethereal Glass wins.** Editorial Luxury eliminated. Phases 2–3 (admin-v13, login-v13) build in the glass language. Additionally the owner authorized **changing the brand orange itself** if a better one fits the glass look ("I am willing to change the brand orange to a better orange") — candidate **#FF6B35** (warmer, less red-lean on OLED black) is applied to the runoff page for live ratification against the v12 #FF5715. The ratified value becomes the accent for Phases 2–3; any change to the SHIPPED app's brand tokens remains a promotion-time decision.
-- 2026-08-12 — glass accent ruling (owner, live ladder #FF5715 → #FF6B35 → #FF7A1F): **#FF7A1F ratified.** This is the accent for the Phase 2–3 glass prototypes. The shipped app's brand tokens are unchanged; adopting #FF7A1F app-wide is a promotion-time decision.
+- viewer-v13 ruling (runoff winner): _pending_.
 - admin-v13 ruling: _pending_.
 - login-v13 ruling: _pending_.
