@@ -292,14 +292,12 @@ not re-audit from zero.
   the mechanism magic-link sign-in depends on. With signup off and
   `shouldCreateUser: false` on the magic-link path, no self-provisioning route
   exists — the trigger is not the hole, the signup switch was.
-  **Owner, in the dashboard (not reachable from here):** (1) confirm
-  Authentication → Policies → minimum password length is 12, not the default 6
-  — the settings endpoint does not expose it, so it is the one value still
-  unverified; (2) **GitHub OAuth is enabled on the hosted project**
-  (`"github": true` in the same settings response) though the app only ever
-  uses email/password and magic links — unused sign-in surface, almost
-  certainly left over from the prototype phase. Disable it unless it is
-  wanted.
+  **Owner dashboard items: BOTH CLOSED 2026-08-13.** (1) Minimum password
+  length confirmed as 12 by the owner in the dashboard (the settings endpoint
+  never exposes it — owner-verified only). (2) GitHub OAuth disabled;
+  verified live: `GET /auth/v1/settings` now reports `"github": false`
+  (flipped ~2 min after the dashboard save — the endpoint lags, don't panic
+  on the first read).
 - **S-04 backup argv exposure** — `scripts/backup-prod.mjs:110` passes the prod
   DB connection string on the child-process command line (world-readable in
   the process table for the dump's duration). Single-operator machine —
