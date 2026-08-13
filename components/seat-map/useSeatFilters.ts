@@ -9,7 +9,7 @@
 // effect is tied to DOM refs in SeatMap) and `hoverZone` (a wash preview
 // that is never a filter — see the comment at its declaration).
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ActiveFilterChip, ResultStatusBreakdown } from "@/components/seat-map/FilterPanel";
 import type { AdminResultCard } from "@/components/seat-map/ResultsPanel";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
@@ -122,12 +122,16 @@ export function useSeatFilters({
     return [...seatCards, ...unassignedPeople].slice(0, 60);
   }, [localEmployees, localSeats, matchingSeats, searchQuery]);
 
-  function clearStructuredFilters() {
+  // Memoized: this sits in SeatMap's Esc-effect dependency array, and an
+  // unstable identity there would tear down and re-add the window keydown
+  // listener on every render. The empty dep array is safe because useState
+  // setters are identity-stable across renders.
+  const clearStructuredFilters = useCallback(() => {
     setDepartment("all");
     setPosition("all");
     setZone("all");
     setStatus("all");
-  }
+  }, []);
 
   function clearAllConstraints() {
     setSearch("");
