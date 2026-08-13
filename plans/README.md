@@ -14,8 +14,12 @@ and update your row when done.
 |------|-------|----------|--------|------|------------|----------|--------|
 | [018](018-backup-failure-credential-echo.md) | Stop the backup script echoing the prod DB credential on dump failure | P1 | S | LOW | — | security | DONE — merged to main as `401da4b` (PR #386, 2026-08-13; incl. CodeRabbit round: canary asserts stdout+stderr combined). Executor fixed a plan self-conflict (comment wording vs the `/error\.message/` source pin) — documented, approved |
 | [019](019-magic-link-account-oracle.md) | Close the account-existence oracle on the login magic-link/reset paths | P1 | S | LOW-MED | — | security | DONE — merged to main as `a7d4277` (PR #387, 2026-08-13; CodeRabbit clean, no findings). Neutral-copy change owner-approved via PR merge |
+| [020](020-admin-escape-position-filter.md) | Make Esc clear the Position filter on the admin map (B-01) | P2 | S | LOW | — | bug | DONE — merged to main as `496e07b` (PR #389, 2026-08-13; 4 rounds: fix, a11y-source pin re-anchored — the plan missed `accessibility-source:614-616`, executor STOPPED correctly — stable `clearStructuredFilters` identity, comment-stripped handler assertions per CodeRabbit) |
+| [021](021-no-zone-wash-mismatch.md) | Make the "No zone" chip's wash match its filter (B-03) | P2 | S | LOW | — | bug | DONE — merged to main as `2c1e3d7` (PR #390, 2026-08-13; incl. CodeRabbit round: pin derived from the palette's own `getSeatZone`) |
+| [022](022-nudge-translate-strand.md) | Never strand the map frame at a partial nudge translate (B-02) | P2 | M | MED | — | bug | DONE — merged to main as `5fc6a99` (PR #391, 2026-08-13; incl. CodeRabbit round: skip guard now measures REMAINING scroll room, fixing a pre-existing right-boundary miss — seat could stay under the inspector at max scrollLeft; regression pair added). Hook gained injectable `animate` + 7 deterministic ct tests |
 
-Both independent — any order.
+All independent — any order. 020/021/022 planned at `52b652f` (bug trio from
+this cycle's backlog; the B-01/B-02/B-03 entries below are now planned).
 
 ### 🔴 Owner action, not a plan (2026-08-13) — GitHub Pages exposure
 
