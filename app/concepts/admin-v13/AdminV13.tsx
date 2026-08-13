@@ -16,7 +16,7 @@ import {
   seatsToVisualSeats
 } from "@/lib/mapLayoutTransform";
 import { pointToStyle } from "@/lib/seatMath";
-import { FIXTURE_SEATS } from "./fixtureSeats";
+import { FIXTURE_SEATS, type FixtureSeat } from "./fixtureSeats";
 
 const geist = localFont({
   src: "../fonts/geist-latin-wght-normal.woff2",
@@ -219,6 +219,45 @@ function Reveal({
 export function AdminV13() {
   const visualSeats = useMemo(() => seatsToVisualSeats(FIXTURE_SEATS), []);
   const [selectedSeatKey, setSelectedSeatKey] = useState<string | null>(null);
+  const [hasUnsavedEdits, setHasUnsavedEdits] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const dialogTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  const selectedSeat = useMemo(
+    () => visualSeats.find((seat) => seat.seat_key === selectedSeatKey) ?? null,
+    [visualSeats, selectedSeatKey]
+  );
+
+  // Marker buttons are always mounted (independent of selection state), so
+  // returning focus to one on close is a direct, synchronous DOM lookup —
+  // no effect/RAF needed, unlike the dialog's open-focus below which targets
+  // an element that doesn't exist until it mounts.
+  function closeInspector() {
+    const key = selectedSeatKey;
+    setSelectedSeatKey(null);
+    if (key) {
+      document.querySelector<HTMLButtonElement>(`[data-seat-key="${key}"]`)?.focus();
+    }
+  }
+
+  function handleMockAction() {
+    setHasUnsavedEdits(true);
+  }
+
+  function openPublishReview(trigger: HTMLButtonElement) {
+    dialogTriggerRef.current = trigger;
+    setDialogOpen(true);
+  }
+
+  function closeDialog() {
+    setDialogOpen(false);
+    dialogTriggerRef.current?.focus();
+  }
+
+  function handlePublish() {
+    setHasUnsavedEdits(false);
+    closeDialog();
+  }
 
   return (
     <div
@@ -257,10 +296,20 @@ export function AdminV13() {
                 <h1 className={`mt-4 ${ADMIN_GLASS.headingClass}`}>Draft floor plan.</h1>
               </div>
               <div className="flex items-center gap-3">
-                <button type="button" className={ADMIN_GLASS.pillClass}>
-                  Published · draft in sync
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    if (hasUnsavedEdits) openPublishReview(event.currentTarget);
+                  }}
+                  className={hasUnsavedEdits ? ADMIN_GLASS.pillUnsavedClass : ADMIN_GLASS.pillClass}
+                >
+                  {hasUnsavedEdits ? "2 unsaved edits · not visible to viewers" : "Published · draft in sync"}
                 </button>
-                <button type="button" className={ADMIN_GLASS.buttonPrimaryClass}>
+                <button
+                  type="button"
+                  onClick={(event) => openPublishReview(event.currentTarget)}
+                  className={ADMIN_GLASS.buttonPrimaryClass}
+                >
                   Publish
                 </button>
               </div>
@@ -298,6 +347,7 @@ export function AdminV13() {
                         <button
                           key={seat.seat_key}
                           type="button"
+                          data-seat-key={seat.seat_key}
                           aria-label={seat.full_name ? `${seat.label} — ${seat.full_name}` : `${seat.label} — open seat`}
                           aria-pressed={isSelected}
                           onClick={() => setSelectedSeatKey(seat.seat_key)}
@@ -314,13 +364,159 @@ export function AdminV13() {
                 </div>
               </div>
 
-              {/* Task 3 inserts: inspector panel here */}
+              {selectedSeat ? (
+                <InspectorPanel seat={selectedSeat} onClose={closeInspector} onMockAction={handleMockAction} />
+              ) : null}
             </div>
           </Reveal>
         </div>
       </main>
 
-      {/* Task 3 inserts: publish review dialog here */}
+      {dialogOpen ? <PublishReviewDialog onKeepEditing={closeDialog} onPublish={handlePublish} /> : null}
+    </div>
+  );
+}
+
+function InspectorPanel({
+  seat,
+  onClose,
+  onMockAction
+}: {
+  seat: FixtureSeat;
+  onClose: () => void;
+  onMockAction: () => void;
+}) {
+  // Reuses useReveal's IntersectionObserver + reduced-motion mechanics (the
+  // file's existing entry-animation helper) rather than the <Reveal> wrapper,
+  // because Reveal hardcodes a translateY recipe and this panel needs
+  // translate-x per the design brief.
+  const { ref, state } = useReveal();
+  const hidden = state === "pending";
+  const style: CSSProperties =
+    state === "static"
+      ? {}
+      : {
+          transition: `transform 400ms ${EASE}, opacity 400ms ${EASE}`,
+          transform: hidden ? "translateX(2rem)" : "translateX(0)",
+          opacity: hidden ? 0 : 1
+        };
+
+  return (
+    <div ref={ref} style={style} className={`${ADMIN_GLASS.panelClass} flex flex-col gap-5`}>
+      <div className="flex items-start justify-between gap-3">
+        <span className={ADMIN_GLASS.eyebrowClass}>
+          {seat.label} · {seat.zone}
+        </span>
+        <button
+          type="button"
+          aria-label="Close inspector"
+          onClick={onClose}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white/50 outline-none transition-colors hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-[#FF7A1F]"
+        >
+          ×
+        </button>
+      </div>
+
+      <p className="text-xl font-semibold text-white">{seat.full_name ?? "Open seat"}</p>
+
+      <dl className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <dt className={ADMIN_GLASS.fieldLabelClass}>Position</dt>
+          <dd className="text-sm text-white/70">{seat.position ?? "—"}</dd>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <dt className={ADMIN_GLASS.fieldLabelClass}>Extension</dt>
+          <dd className="text-sm text-white/70">{seat.phone_extension ?? "—"}</dd>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <dt className={ADMIN_GLASS.fieldLabelClass}>Department</dt>
+          <dd className="text-sm text-white/70">{seat.emp_department ?? "—"}</dd>
+        </div>
+      </dl>
+
+      <div className="flex flex-col gap-2">
+        <button type="button" onClick={onMockAction} className={ADMIN_GLASS.buttonPrimaryClass}>
+          Reassign seat
+        </button>
+        <button type="button" onClick={onMockAction} className={ADMIN_GLASS.buttonGhostClass}>
+          Clear assignment
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PublishReviewDialog({
+  onKeepEditing,
+  onPublish
+}: {
+  onKeepEditing: () => void;
+  onPublish: () => void;
+}) {
+  const { ref, state } = useReveal();
+
+  // Move focus into the dialog on mount. Not a setState-in-effect (only a DOM
+  // focus() call), so it doesn't add to the file's one known eslint warning.
+  useEffect(() => {
+    ref.current?.focus();
+  }, [ref]);
+
+  // Esc closes from anywhere inside the dialog. Subscribing to an external
+  // event and calling setState from its callback (not from the effect body)
+  // is the pattern react-hooks/set-state-in-effect explicitly allows.
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onKeepEditing();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onKeepEditing]);
+
+  const hidden = state === "pending";
+  const style: CSSProperties =
+    state === "static"
+      ? {}
+      : {
+          transition: `transform 300ms ${EASE}, opacity 300ms ${EASE}`,
+          transform: hidden ? "scale(0.96)" : "scale(1)",
+          opacity: hidden ? 0 : 1
+        };
+
+  return (
+    <div className={ADMIN_GLASS.dialogOverlayClass}>
+      <div
+        ref={ref}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-v13-publish-review-heading"
+        style={style}
+        className={ADMIN_GLASS.dialogClass}
+      >
+        <h2 id="admin-v13-publish-review-heading" className="text-xl font-semibold text-white">
+          Review before publishing
+        </h2>
+        <div className="mt-5 flex flex-col gap-2">
+          <div className={ADMIN_GLASS.diffRowClass}>
+            <span>W07 — assign Patrick M.</span>
+            <span aria-hidden className="font-semibold text-[#FF7A1F]">+</span>
+          </div>
+          <div className={ADMIN_GLASS.diffRowClass}>
+            <span>SE03 — clear assignment</span>
+            <span aria-hidden className="font-semibold text-white/50">−</span>
+          </div>
+        </div>
+        <div className="mt-6 flex items-center justify-end gap-3">
+          <button type="button" onClick={onKeepEditing} className={ADMIN_GLASS.buttonGhostClass}>
+            Keep editing
+          </button>
+          <button type="button" onClick={onPublish} className={ADMIN_GLASS.buttonPrimaryClass}>
+            Publish to viewers
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
