@@ -6,7 +6,7 @@ import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 // open-redirect guard, so testing a copy (as this file used to) protected
 // nothing. Importing the source means a regression in the shipped guard fails
 // here.
-const { friendlyAuthMessage, friendlyAuthMessageFromQuery, safeNextPath } =
+const { friendlyAuthMessage, friendlyAuthMessageFromQuery, isAccountAbsenceError, safeNextPath } =
   await importTsModule("lib/authMessages.ts");
 
 test("auth message maps rate limit errors to friendly guidance", () => {
@@ -32,11 +32,26 @@ test("auth message maps weak-password errors", () => {
 
 test("auth message maps otp-signup-refused to admin-provisioning guidance", () => {
   // GoTrue returns this when signInWithOtp runs with shouldCreateUser: false
-  // for an email that has no account.
+  // for an email that has no account. This mapping now serves the `?error=`
+  // arrival path only (a clicked email link already proves email access) —
+  // LoginForm's live magic-link and reset buttons neutralize this class of
+  // error via isAccountAbsenceError instead of letting it reach here, so an
+  // unauthenticated visitor can't use the two responses to probe for
+  // account existence.
   assert.equal(
     friendlyAuthMessage("Signups not allowed for otp"),
     "This email is not set up yet. Ask an admin to create the user first."
   );
+});
+
+test("isAccountAbsenceError recognizes the pinned GoTrue absence shapes, case-insensitively", () => {
+  assert.equal(isAccountAbsenceError("User not found"), true);
+  assert.equal(isAccountAbsenceError("USER NOT FOUND"), true);
+  assert.equal(isAccountAbsenceError("Signup disabled"), true);
+  assert.equal(isAccountAbsenceError("Signups not allowed for otp"), true);
+  assert.equal(isAccountAbsenceError("SIGNUPS NOT ALLOWED for otp"), true);
+  assert.equal(isAccountAbsenceError("Invalid login credentials"), false);
+  assert.equal(isAccountAbsenceError("Email rate limit exceeded"), false);
 });
 
 test("auth message maps expired links to a refresh hint", () => {
