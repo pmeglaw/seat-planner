@@ -4,6 +4,7 @@ import { test } from "node:test";
 import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 
 const { buildZoneWash, ZONE_WASH_PAD_X, ZONE_WASH_PAD_Y } = await importTsModule("lib/zoneWash.ts");
+const { NO_ZONE_LABEL } = await importTsModule("lib/seatFilters.ts");
 
 // v12 slice 6 (handoff contract #8): hovering/pinning a zone chip washes that
 // zone on the map. The wash is a single bounding box over the zone's seats in
@@ -84,6 +85,50 @@ test("buildZoneWash returns null when nothing can wash", () => {
   assert.equal(buildZoneWash("A", []), null);
   // Seats with unusable coordinates cannot anchor a box.
   assert.equal(buildZoneWash("A", [{ x: Number.NaN, y: 0.5, zone: "A" }]), null);
+});
+
+// A published seat with neither zone nor department gets a synthesized
+// "No zone" chip in the viewer palette (getSeatZone in
+// lib/viewerFindPalette.ts). Pinning that chip must wash the same seats the
+// filter keeps, or the chip filters correctly with no visible wash.
+test("a pinned 'No zone' chip washes the seats with neither zone nor department", () => {
+  const wash = buildZoneWash(NO_ZONE_LABEL, [
+    { x: 0.2, y: 0.2, zone: null, department: null },
+    { x: 0.4, y: 0.1, zone: null, department: null },
+    { x: 0.8, y: 0.8, zone: "Ops" }
+  ]);
+
+  assert.ok(wash, "a pinned 'No zone' chip must still produce a wash rect");
+  assert.equal(wash.seatCount, 2);
+  assert.ok(Math.abs(wash.xMin - (0.2 - ZONE_WASH_PAD_X)) < 1e-9);
+  assert.ok(Math.abs(wash.xMax - (0.4 + ZONE_WASH_PAD_X)) < 1e-9);
+  assert.ok(Math.abs(wash.yMin - (0.1 - ZONE_WASH_PAD_Y)) < 1e-9);
+  assert.ok(Math.abs(wash.yMax - (0.2 + ZONE_WASH_PAD_Y)) < 1e-9);
+});
+
+test("the no-zone fallback matches on the shared key, not the spelling", () => {
+  const seats = [
+    { x: 0.2, y: 0.2, zone: null, department: null },
+    { x: 0.4, y: 0.1, zone: null, department: null },
+    { x: 0.8, y: 0.8, zone: "Ops" }
+  ];
+
+  const wash = buildZoneWash("no ZONE", seats);
+
+  assert.ok(wash, "zoneKey normalization must apply to the no-zone fallback too");
+  assert.equal(wash.seatCount, 2);
+});
+
+test("an empty pin still returns null", () => {
+  const seats = [
+    { x: 0.2, y: 0.2, zone: null, department: null },
+    { x: 0.8, y: 0.8, zone: "Ops" }
+  ];
+
+  // The admin path: no-zone seats group under "", and admin never pins a
+  // "No zone" chip, so an empty/absent pin must keep returning null.
+  assert.equal(buildZoneWash("", seats), null);
+  assert.equal(buildZoneWash(null, seats), null);
 });
 
 test("both map surfaces render the wash as an inert decorative layer", async () => {
