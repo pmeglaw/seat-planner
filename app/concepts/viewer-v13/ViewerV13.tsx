@@ -57,6 +57,7 @@ type RunoffTheme = {
   chipActiveClass: string;
   fieldLabelClass: string;
   fieldClass: string;
+  toggleGroupClass: string;
   toggleClass: string;
   toggleActiveClass: string;
 };
@@ -91,6 +92,7 @@ const GLASS: RunoffTheme = {
   fieldLabelClass: "text-[11px] font-medium uppercase tracking-[0.18em] text-white/50",
   fieldClass:
     "w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 outline-none focus-visible:ring-2 focus-visible:ring-[#FF5715]",
+  toggleGroupClass: "flex items-center gap-1 rounded-full border border-white/15 p-1",
   toggleClass:
     "rounded-full px-4 py-1.5 text-xs font-medium text-white/60 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#FF5715]",
   toggleActiveClass:
@@ -132,6 +134,7 @@ const EDITORIAL: RunoffTheme = {
   fieldLabelClass: "text-[11px] font-medium uppercase tracking-[0.18em] text-[#8a6f57]",
   fieldClass:
     "w-full rounded-2xl border border-[#2b2018]/15 bg-white px-4 py-3 text-[#241a12] placeholder:text-[#b3a08d] outline-none focus-visible:ring-2 focus-visible:ring-[#241a12]/50",
+  toggleGroupClass: "flex items-center gap-1 rounded-full border border-[#2b2018]/15 p-1",
   toggleClass:
     "rounded-full px-4 py-1.5 text-xs font-medium text-[#8a6f57] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#241a12]",
   toggleActiveClass:
@@ -234,7 +237,7 @@ export function ViewerV13() {
                 Find anyone&apos;s seat in seconds.
               </h1>
             </div>
-            <div className="flex items-center gap-1 rounded-full border border-current/10 p-1" role="group" aria-label="Archetype">
+            <div className={theme.toggleGroupClass} role="group" aria-label="Archetype">
               {([GLASS, EDITORIAL] as const).map((t) => (
                 <button
                   key={t.id}
