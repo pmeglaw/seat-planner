@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Prototype gate verbatim (copy the design-sampler `page.tsx` shape exactly): `process.env.NODE_ENV !== "production" || process.env.SEAT_PLANNER_ENABLE_PROTOTYPES === "true"`, else `notFound()`; `robots: { index: false, follow: false }`. `tests/concept-gate-source.test.mjs` auto-discovers the page — after Task 1 it must report 7 tests (1 count + 6 pages), all passing.
+- Prototype gate verbatim (copy the design-sampler `page.tsx` shape exactly): `process.env.NODE_ENV !== "production" || process.env.SEAT_PLANNER_ENABLE_PROTOTYPES === "true"`, else `notFound()`; `robots: { index: false, follow: false }`. `tests/concept-gate-source.test.mjs` auto-discovers the page — after Task 1 it must report 6 tests (1 count + 5 pages), all passing.
 - Fixture data only: the copied `fixtureSeats.ts` is the sole data source. Zero `lib/supabase/*` imports, zero server actions. Allowed lib imports: `@/lib/mapLayoutTransform` (`MAP_IMAGE_SRC`, `MAP_IMAGE_BLUR_DATA_URL`, `MAP_IMAGE_WIDTH`, `MAP_IMAGE_HEIGHT`, `seatsToVisualSeats`) and `@/lib/seatMath` (`pointToStyle`).
 - The map `<Image>` MUST carry `unoptimized` (pinned lesson: `images.localPatterns` allowlists a stale `?v=` and rejects `MAP_IMAGE_SRC` through the optimizer; every production map consumer passes `unoptimized`).
 - Animate ONLY `transform`/`opacity` (final-review ruling on the sampler: no `filter` in transitions). Every reveal guarded by `prefers-reduced-motion` (reuse the sampler's `useReveal`/`Reveal` verbatim, minus nothing — it is already filter-free after commit 3b7c343). No `backdrop-blur` on anything that scrolls.
@@ -88,7 +88,7 @@ export default function ViewerV13Page() {
 - [ ] **Step 4: Verify the gate test discovered it**
 
 Run: `node --test tests/concept-gate-source.test.mjs`
-Expected: PASS, 7 tests (1 count + 6 pages including `viewer-v13/page.tsx`).
+Expected: PASS, 6 tests (1 count + 5 pages including `viewer-v13/page.tsx`).
 
 - [ ] **Step 5: Commit**
 
@@ -339,7 +339,7 @@ Check `pointToStyle`'s exact signature/return in `lib/seatMath.ts` before wiring
 - [ ] **Step 2: Gates**
 
 Run: `npm run typecheck && npx eslint app/concepts/viewer-v13/ViewerV13.tsx && node --test tests/concept-gate-source.test.mjs`
-Expected: clean / 0 errors / 7 pass.
+Expected: clean / 0 errors / 6 pass.
 
 - [ ] **Step 3: Commit**
 
@@ -378,7 +378,7 @@ Binding behavior (implement inside `ViewerV13`, plain `useState`/`useMemo` — n
 - [ ] **Step 3: Gates**
 
 Run: `npm run typecheck && npx eslint app/concepts/viewer-v13/ViewerV13.tsx && node --test tests/concept-gate-source.test.mjs && npm test`
-Expected: clean / 0 errors / 7 pass / full suite green (baseline 1091 + 1 new gate-test entry).
+Expected: clean / 0 errors / 6 pass / full suite green (baseline 1091 + 1 new gate-test entry).
 
 - [ ] **Step 4: Commit**
 
