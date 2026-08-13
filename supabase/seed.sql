@@ -42,7 +42,13 @@ begin
      'e2e-viewer@example.test', extensions.crypt(seeded_password, extensions.gen_salt('bf')), now(),
      now(), now(), '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb,
      '', '', '', '', '', '', '', '')
-  on conflict (id) do nothing;
+  -- DO UPDATE, not DO NOTHING: reseeding an already-provisioned local stack
+  -- (fixed UUIDs mean the conflict always hits) must refresh the password
+  -- hash, or a rotation here leaves the OLD hash live on any stack that
+  -- wasn't torn down first, and the e2e tier fails login against a stack
+  -- that otherwise looks freshly seeded.
+  on conflict (id) do update
+    set encrypted_password = excluded.encrypted_password;
 
   -- GoTrue looks the account up through auth.identities; without a matching
   -- row the password grant reports "Invalid login credentials" even though
