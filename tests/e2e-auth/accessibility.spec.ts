@@ -333,9 +333,14 @@ test.describe("admin map editor has no WCAG A/AA violations", () => {
     // Kebab first. Its "Discard draft changes" item renders disabled here
     // (this file never seeds a draft delta, and full runs end converged);
     // draft-dialogs.spec.ts scans the same menu in its ENABLED state.
+    // Probe the menu GROUP, not the "Show occupant names" item: since the
+    // canvas-chrome redesign the legend footer carries an always-visible
+    // button with that same name (and the kebab's copy is md:hidden), so an
+    // item-name probe reads "open" while the menu is still closed — the
+    // open/close click pairing then inverts and the close-click opens it.
     await retryUntilVisible(
       () => page.getByRole("button", { name: "More tools", exact: true }).click({ timeout: 2_000 }),
-      page.getByRole("button", { name: "Show occupant names" })
+      page.getByRole("group", { name: "More tools" })
     );
     await expectNoAxeViolations(page);
     await page.getByRole("button", { name: "More tools", exact: true }).click();

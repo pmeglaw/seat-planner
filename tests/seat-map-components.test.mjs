@@ -9,10 +9,12 @@ import { loadComponent, renderElement, React, configureContext, fireEvent, act, 
 let SeatMarker;
 let MapZoomControl;
 let FloorSelector;
+let DeptChipRow;
 before(async () => {
   ({ SeatMarker } = await loadComponent("@/components/seat-map/SeatMarker"));
   ({ MapZoomControl } = await loadComponent("@/components/seat-map/MapZoomControl"));
   ({ FloorSelector } = await loadComponent("@/components/seat-map/FloorSelector"));
+  ({ DeptChipRow } = await loadComponent("@/components/seat-map/DeptChipRow"));
 });
 beforeEach(() => configureContext({}));
 afterEach(() => cleanup());
@@ -242,6 +244,46 @@ test("MapZoomControl disables the zoom buttons at their limits", async () => {
   );
   assert.equal(document.querySelector('[aria-label="Zoom in"]').disabled, true);
   assert.equal(document.querySelector('[aria-label="Zoom out"]').disabled, false);
+});
+
+// --- DeptChipRow -----------------------------------------------------------
+// Canvas-chrome redesign (2026-08-13): quick department filter chips with
+// counts, floating on the map canvas. Counts come from the parent
+// (departmentChipCounts in lib/seatFilters — faceted, filter-aware); the row
+// is presentational plus the single-toggle rule: clicking the active chip
+// clears back to "all".
+
+test("DeptChipRow renders a labeled group with one counted chip per department", async () => {
+  await renderElement(React.createElement(DeptChipRow, {
+    departments: ["Attorneys", "Intake"],
+    counts: { Attorneys: 14, Intake: 8 },
+    activeDepartment: "all",
+    onSelectDepartment() {}
+  }));
+  const group = document.querySelector('[role="group"][aria-label="Department filters"]');
+  assert.ok(group, "chip row is a labeled group");
+  const chips = group.querySelectorAll("button");
+  assert.equal(chips.length, 2);
+  assert.match(chips[0].textContent, /Attorneys/);
+  assert.match(chips[0].textContent, /14/);
+  assert.match(chips[1].textContent, /Intake/);
+  assert.match(chips[1].textContent, /8/);
+});
+
+test("DeptChipRow chips toggle: inactive selects, active clears to all", async () => {
+  const picks = [];
+  await renderElement(React.createElement(DeptChipRow, {
+    departments: ["Attorneys", "Intake"],
+    counts: { Attorneys: 14, Intake: 8 },
+    activeDepartment: "Intake",
+    onSelectDepartment: value => picks.push(value)
+  }));
+  const chips = document.querySelectorAll('[role="group"][aria-label="Department filters"] button');
+  assert.equal(chips[0].getAttribute("aria-pressed"), "false");
+  assert.equal(chips[1].getAttribute("aria-pressed"), "true", "active chip exposes pressed state");
+  await act(async () => fireEvent.click(chips[0]));
+  await act(async () => fireEvent.click(chips[1]));
+  assert.deepEqual(picks, ["Attorneys", "all"], "active chip click clears the facet");
 });
 
 // --- FloorSelector ---------------------------------------------------------

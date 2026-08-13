@@ -13,7 +13,8 @@ const {
   hasStructuredFilters,
   hasActiveConstraints,
   clearedStructuredFilters,
-  clearedFilters
+  clearedFilters,
+  departmentChipCounts
 } = await importTsModule("lib/seatFilters.ts");
 
 function criteria(overrides = {}) {
@@ -178,4 +179,41 @@ test("clearing returns new criteria and never mutates the input", () => {
   assert.equal(hasActiveConstraints(allCleared), false);
 
   assert.deepEqual(current, snapshot, "input criteria must not be mutated");
+});
+
+// Canvas-chrome redesign (2026-08-13): the department chip row shows one count
+// per department. Faceted semantics — each chip answers "what would the map
+// show if I clicked this?", so the criteria's OWN department facet is replaced,
+// never ANDed, while every other active constraint still applies. That keeps
+// the chip numbers on the counts-follow-filters contract the legend already
+// honors, and keeps a non-active chip from reading 0 the moment any chip is
+// active.
+test("departmentChipCounts counts seats per department under the other filters", () => {
+  const seats = [
+    seat({ id: "s1" }),
+    seat({ id: "s2", employee: { full_name: "Bob Reyes", position: "Attorney", department: "Attorneys", phone_extension: null } }),
+    seat({ id: "s3", zone: "South Offices", employee: { full_name: "Cara Diaz", position: "Attorney", department: "Attorneys", phone_extension: null } }),
+    seat({ id: "s4", status: "available", employee: null })
+  ];
+
+  const idle = departmentChipCounts(seats, criteria(), ["Attorneys", "Intake", "Records"]);
+  assert.deepEqual(idle, { Attorneys: 2, Intake: 1, Records: 0 });
+
+  const zoned = departmentChipCounts(seats, criteria({ zone: "North Pod" }), ["Attorneys", "Intake"]);
+  assert.deepEqual(zoned, { Attorneys: 1, Intake: 1 }, "other active facets still constrain the counts");
+});
+
+test("departmentChipCounts replaces the active department facet instead of ANDing it", () => {
+  const seats = [
+    seat({ id: "s1" }),
+    seat({ id: "s2", employee: { full_name: "Bob Reyes", position: "Attorney", department: "Attorneys", phone_extension: null } })
+  ];
+  const counts = departmentChipCounts(seats, criteria({ department: "Intake" }), ["Attorneys", "Intake"]);
+  assert.deepEqual(counts, { Attorneys: 1, Intake: 1 }, "an active chip must not zero out the others");
+});
+
+test("departmentChipCounts matches departments through departmentKey drift", () => {
+  const seats = [seat({ id: "s1", employee: { full_name: "Alice Smith", position: null, department: " intake ", phone_extension: null } })];
+  const counts = departmentChipCounts(seats, criteria(), ["Intake"]);
+  assert.deepEqual(counts, { Intake: 1 });
 });
