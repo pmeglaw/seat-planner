@@ -611,9 +611,11 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.doesNotMatch(seatMapSource, /aria-label="Admin workspace rail"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Map command actions"|aria-label="Planning map actions"/);
-  assert.match(seatMapSource, /setDepartment\("all"\)/);
-  assert.match(seatMapSource, /setZone\("all"\)/);
-  assert.match(seatMapSource, /setStatus\("all"\)/);
+  // Esc's filter rung routes through the shared clear (all four facets,
+  // position included) — the per-facet setter literals it used to pin moved
+  // into useSeatFilters; tests/seat-map-escape-source.test.mjs pins the
+  // handler's shape.
+  assert.match(seatMapSource, /clearStructuredFilters\(\)/);
   // The map-pushing search hint card is removed; the input placeholder carries the guidance.
   assert.doesNotMatch(seatMapSource, /Search the draft map/);
   assert.match(seatMapSource, /placeholder=\{SEAT_SEARCH_PLACEHOLDER\}/);
