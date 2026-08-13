@@ -70,8 +70,8 @@ const GLASS: RunoffTheme = {
   pageClass: "bg-[#050505] text-white",
   backdrop: (
     <div aria-hidden className="pointer-events-none absolute inset-0">
-      <div className="absolute -top-40 left-1/4 h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,87,21,0.22),transparent_65%)]" />
-      <div className="absolute bottom-0 right-0 h-[28rem] w-[28rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,87,21,0.10),transparent_65%)]" />
+      <div className="absolute -top-40 left-1/4 h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,107,53,0.22),transparent_65%)]" />
+      <div className="absolute bottom-0 right-0 h-[28rem] w-[28rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,107,53,0.10),transparent_65%)]" />
     </div>
   ),
   eyebrowClass:
@@ -81,22 +81,22 @@ const GLASS: RunoffTheme = {
   shellClass: "rounded-[2rem] bg-white/5 p-1.5 ring-1 ring-white/10",
   coreClass: "relative overflow-hidden rounded-[calc(2rem-0.375rem)] bg-[#0b0b0d] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]",
   markerAssignedClass:
-    "rounded-full border border-[#FF5715]/60 bg-black/80 px-2 py-0.5 text-[10px] font-medium text-white outline-none focus-visible:ring-2 focus-visible:ring-[#FF5715]",
+    "rounded-full border border-[#FF6B35]/60 bg-black/80 px-2 py-0.5 text-[10px] font-medium text-white outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35]",
   markerAvailableClass:
     "rounded-full border border-white/25 bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/70 outline-none focus-visible:ring-2 focus-visible:ring-white/70",
   markerDimmedClass: "opacity-25",
   chipClass:
-    "rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#FF5715]",
+    "rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#FF6B35]",
   chipActiveClass:
-    "rounded-full border border-[#FF5715]/70 bg-[#FF5715]/15 px-3 py-1.5 text-xs font-medium text-[#ffb694] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#FF5715]",
+    "rounded-full border border-[#FF6B35]/70 bg-[#FF6B35]/15 px-3 py-1.5 text-xs font-medium text-[#ffb694] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#FF6B35]",
   fieldLabelClass: "text-[11px] font-medium uppercase tracking-[0.18em] text-white/50",
   fieldClass:
-    "w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 outline-none focus-visible:ring-2 focus-visible:ring-[#FF5715]",
+    "w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35]",
   toggleGroupClass: "flex items-center gap-1 rounded-full border border-white/15 p-1",
   toggleClass:
-    "rounded-full px-4 py-1.5 text-xs font-medium text-white/60 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#FF5715]",
+    "rounded-full px-4 py-1.5 text-xs font-medium text-white/60 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#FF6B35]",
   toggleActiveClass:
-    "rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-black outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#FF5715]"
+    "rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-black outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#FF6B35]"
 };
 
 const EDITORIAL: RunoffTheme = {
