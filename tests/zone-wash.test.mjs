@@ -5,6 +5,7 @@ import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 
 const { buildZoneWash, ZONE_WASH_PAD_X, ZONE_WASH_PAD_Y } = await importTsModule("lib/zoneWash.ts");
 const { NO_ZONE_LABEL } = await importTsModule("lib/seatFilters.ts");
+const { getSeatZone } = await importTsModule("lib/viewerFindPalette.ts");
 
 // v12 slice 6 (handoff contract #8): hovering/pinning a zone chip washes that
 // zone on the map. The wash is a single bounding box over the zone's seats in
@@ -92,7 +93,13 @@ test("buildZoneWash returns null when nothing can wash", () => {
 // lib/viewerFindPalette.ts). Pinning that chip must wash the same seats the
 // filter keeps, or the chip filters correctly with no visible wash.
 test("a pinned 'No zone' chip washes the seats with neither zone nor department", () => {
-  const wash = buildZoneWash(NO_ZONE_LABEL, [
+  // Derive the pin the same way the palette does, rather than hardcoding
+  // NO_ZONE_LABEL — this ties the chip producer to the wash consumer, so
+  // the two can't drift apart again.
+  const pin = getSeatZone({ zone: null, department: null });
+  assert.equal(pin, NO_ZONE_LABEL, "the palette's display fallback IS the pinnable chip value");
+
+  const wash = buildZoneWash(pin, [
     { x: 0.2, y: 0.2, zone: null, department: null },
     { x: 0.4, y: 0.1, zone: null, department: null },
     { x: 0.8, y: 0.8, zone: "Ops" }
