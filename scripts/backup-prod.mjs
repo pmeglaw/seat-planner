@@ -111,8 +111,11 @@ for (const dump of dumps) {
       { stdio: ["ignore", "inherit", "inherit"] }
     );
   } catch (error) {
-    // Never echo the command line — it carries the database password.
-    fail(`The ${dump.name} dump failed. Nothing was verified; do not treat this run as a backup.\n${error.message}`);
+    // Never read the caught error's message text: execFileSync builds it as
+    // "Command failed: <argv...>", which would print --db-url and the
+    // database password it carries. The CLI's own stderr is inherited, so
+    // the operator already saw the real diagnostics above this line.
+    fail(`The ${dump.name} dump failed (exit status ${error.status ?? "unknown"}). Nothing was verified; do not treat this run as a backup.`);
   }
   console.log(`  wrote ${path.basename(file)}`);
 }
