@@ -25,22 +25,40 @@ function readEscapeHandler(source) {
   assert.ok(start !== -1, "handleEscape should remain source-visible as a named function.");
   const end = source.indexOf('window.addEventListener("keydown", handleEscape)', start);
   assert.ok(end !== -1, "handleEscape should still be wired up via window.addEventListener.");
-  return source.slice(start, end);
+  const slice = source.slice(start, end);
+  // Strip comments before asserting: a comment can contain any token we
+  // check for (e.g. this file's own fix commentary quotes
+  // "clearStructuredFilters()" and "structuredFiltersActive"), which would
+  // let these assertions pass on prose alone even if the real code regressed.
+  return slice.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
 }
 
-test("the Esc handler's filter rung uses structuredFiltersActive + clearStructuredFilters", async () => {
-  const handler = readEscapeHandler(await readSeatMap());
+test("the Esc handler's filter rung gates structuredFiltersActive on the SAME if-block that calls clearStructuredFilters", async () => {
+  const handlerNoComments = readEscapeHandler(await readSeatMap());
 
-  assert.match(handler, /structuredFiltersActive/, "the filter rung should gate on the shared structuredFiltersActive flag (it counts position too).");
-  assert.match(handler, /clearStructuredFilters\(\)/, "the filter rung should call the shared clearStructuredFilters(), not hand-written setters.");
+  // One regex spanning condition -> call, not two independent assert.match
+  // calls: two separate matches would still pass if the flag and the call
+  // lived in unrelated branches, which is not the contract this test protects
+  // (the filter rung must gate ON structuredFiltersActive and then clear via
+  // the shared helper, in that one if-block).
+  // The condition itself calls isEditableTarget(event.target), a nested
+  // paren pair, so the search up to structuredFiltersActive must tolerate
+  // parens ([\s\S]*?, non-greedy) — but the search from "{" to the call stays
+  // paren-agnostic/brace-closed ([^}]*), so a clearStructuredFilters() in a
+  // LATER, unrelated if-block still cannot satisfy this match.
+  assert.match(
+    handlerNoComments,
+    /if \([\s\S]*?structuredFiltersActive\) \{[^}]*clearStructuredFilters\(\)/,
+    "the filter rung should be one if-block: gate on the shared structuredFiltersActive flag (it counts position too), then call the shared clearStructuredFilters()."
+  );
 });
 
 test("the open-coded department/zone/status trio is gone from the Esc handler", async () => {
-  const handler = readEscapeHandler(await readSeatMap());
+  const handlerNoComments = readEscapeHandler(await readSeatMap());
 
   // These setters legitimately exist elsewhere in the file (e.g. chip
   // removal), so the assertion is scoped to the handler's own text only.
-  assert.doesNotMatch(handler, /setDepartment\("all"\)/, 'the handler must not open-code setDepartment("all") — that left position unaffected.');
-  assert.doesNotMatch(handler, /setZone\("all"\)/, 'the handler must not open-code setZone("all") — that left position unaffected.');
-  assert.doesNotMatch(handler, /setStatus\("all"\)/, 'the handler must not open-code setStatus("all") — that left position unaffected.');
+  assert.doesNotMatch(handlerNoComments, /setDepartment\("all"\)/, 'the handler must not open-code setDepartment("all") — that left position unaffected.');
+  assert.doesNotMatch(handlerNoComments, /setZone\("all"\)/, 'the handler must not open-code setZone("all") — that left position unaffected.');
+  assert.doesNotMatch(handlerNoComments, /setStatus\("all"\)/, 'the handler must not open-code setStatus("all") — that left position unaffected.');
 });

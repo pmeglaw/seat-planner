@@ -614,8 +614,19 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   // Esc's filter rung routes through the shared clear (all four facets,
   // position included) — the per-facet setter literals it used to pin moved
   // into useSeatFilters; tests/seat-map-escape-source.test.mjs pins the
-  // handler's shape.
-  assert.match(seatMapSource, /clearStructuredFilters\(\)/);
+  // handler's shape precisely. This assertion is scoped to handleEscape
+  // itself (comments stripped), not the whole file: the unrelated
+  // onClearSearchContext call site elsewhere in SeatMap.tsx also mentions
+  // clearStructuredFilters, and would satisfy a whole-file match even if the
+  // Esc rung regressed.
+  const escapeHandlerStart = seatMapSource.indexOf("function handleEscape");
+  const escapeHandlerEnd = seatMapSource.indexOf('window.addEventListener("keydown", handleEscape)', escapeHandlerStart);
+  assert.ok(escapeHandlerStart !== -1 && escapeHandlerEnd !== -1, "handleEscape should remain source-visible and wired up via window.addEventListener.");
+  const escapeHandlerNoComments = seatMapSource
+    .slice(escapeHandlerStart, escapeHandlerEnd)
+    .replace(/\/\/[^\n]*/g, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.match(escapeHandlerNoComments, /clearStructuredFilters\(\)/);
   // The map-pushing search hint card is removed; the input placeholder carries the guidance.
   assert.doesNotMatch(seatMapSource, /Search the draft map/);
   assert.match(seatMapSource, /placeholder=\{SEAT_SEARCH_PLACEHOLDER\}/);
