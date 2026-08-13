@@ -21,7 +21,10 @@ export function useInspectorNudge({
   selectedSeatId,
   inspectorHidden,
   panelBreakpointPx,
-  resolveSeatVisualX
+  resolveSeatVisualX,
+  // Injectable for tests only — animateValue's own raf/now injection can't
+  // be reached through the hook otherwise. Production callers omit it.
+  animate = animateValue
 }: {
   viewportRef: RefObject<HTMLDivElement | null>;
   frameRef: RefObject<HTMLDivElement | null>;
@@ -32,6 +35,7 @@ export function useInspectorNudge({
   panelBreakpointPx: number;
   /** Selected seat's normalized VISUAL x (calibrated), or null if unknown. */
   resolveSeatVisualX: (seatId: string) => number | null;
+  animate?: typeof animateValue;
 }): { cancelNudge: () => void; skipNextNudge: () => void } {
   const nudgeCancelRef = useRef<(() => void) | null>(null);
   const frameTranslateRef = useRef(0);
@@ -53,6 +57,14 @@ export function useInspectorNudge({
   useEffect(() => {
     resolveRef.current = resolveSeatVisualX;
   });
+  // Same discipline as resolveRef above: the injected animate is a test-only
+  // override whose identity can churn with parent renders, mirrored through a
+  // ref so the effects below stay selection-driven rather than re-running on
+  // every render.
+  const animateRef = useRef(animate);
+  useEffect(() => {
+    animateRef.current = animate;
+  });
 
   const cancelNudge = useCallback(() => {
     nudgeCancelRef.current?.();
@@ -68,6 +80,29 @@ export function useInspectorNudge({
     const frame = frameRef.current;
     if (frame) frame.style.translate = px > 0 ? `${-px}px 0px` : "";
   }, [frameRef]);
+
+  // Plan 022: the single unwind path. Tweens any residual frame translate back
+  // to 0 and settles it there. Used both by the restore effect (selection
+  // cleared) and by the trigger effect's no-nudge early returns (Step 3) — a
+  // fast reselect that interrupts an in-flight unwind can otherwise freeze the
+  // frame at a nonzero translate forever, since the new selection's own plan
+  // may be null and never touch the translate again.
+  const startUnwind = useCallback(() => {
+    if (frameTranslateRef.current === 0) return;
+    cancelNudge();
+    const startTranslate = frameTranslateRef.current;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    nudgeCancelRef.current = animateRef.current({
+      from: startTranslate,
+      to: 0,
+      durationMs: 200,
+      reducedMotion,
+      onUpdate: setFrameTranslate,
+      onDone: () => {
+        nudgeCancelRef.current = null;
+      }
+    });
+  }, [cancelNudge, setFrameTranslate]);
 
   // Trigger: on selection at the panel tier, double-rAF so layout settles
   // (same discipline as the surfaces' queued centering helpers).
@@ -90,25 +125,50 @@ export function useInspectorNudge({
         // viewer fit-view selections covered (v1.25.0 live QA).
         if (skipNextRef.current) {
           skipNextRef.current = false;
-          if (viewport.scrollWidth - viewport.clientWidth > 1) return;
+          // Plan 022: a stale translate can still be sitting here from an
+          // interrupted unwind (fast reselect during the 200ms restore tween)
+          // even though THIS selection is skipping its own nudge — repair it
+          // rather than stranding the frame shifted for the rest of the
+          // selection.
+          if (viewport.scrollWidth - viewport.clientWidth > 1) {
+            if (frameTranslateRef.current !== 0) startUnwind();
+            return;
+          }
         }
         // Finding 3: cancel any stale tween from a superseded selection
         // unconditionally, before (re)planning — otherwise a null plan below
         // leaves that stale tween running instead of leaving the map at rest.
         cancelNudge();
         const seatVisualX = resolveRef.current(selectedSeatId);
-        if (seatVisualX === null) return;
+        if (seatVisualX === null) {
+          // Plan 022: same repair as above — the resolver may not (yet) know
+          // this seat, but a leftover translate from a prior selection must
+          // not be left behind.
+          if (frameTranslateRef.current !== 0) startUnwind();
+          return;
+        }
         const plan = planInspectorNudge({
           seatVisualX,
           map: frame,
           viewport,
           currentTranslatePx: frameTranslateRef.current
         });
-        if (!plan) return;
+        if (!plan) {
+          // Plan 022 (the strand bug): a fast reselect during the restore
+          // effect's 200ms unwind cancels that tween mid-flight without
+          // settling it. If the NEW selection needs no nudge — as here,
+          // where `plan` is null because the seat already clears the panel
+          // — nothing else in this effect ever touches the translate again,
+          // so without this repair the frame stays shifted for the rest of
+          // the selection. `startUnwind` does not reintroduce a nudge for a
+          // seat that does not need one — it only ever unwinds toward 0.
+          if (frameTranslateRef.current !== 0) startUnwind();
+          return;
+        }
         const startScroll = viewport.scrollLeft;
         const startTranslate = frameTranslateRef.current;
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        nudgeCancelRef.current = animateValue({
+        nudgeCancelRef.current = animateRef.current({
           from: 0,
           to: 1,
           durationMs: 250,
@@ -128,28 +188,16 @@ export function useInspectorNudge({
       if (second) window.cancelAnimationFrame(second);
       cancelNudge();
     };
-  }, [selectedSeatId, inspectorHidden, panelBreakpointPx, viewportRef, frameRef, cancelNudge, setFrameTranslate]);
+  }, [selectedSeatId, inspectorHidden, panelBreakpointPx, viewportRef, frameRef, cancelNudge, setFrameTranslate, startUnwind]);
 
   // Restore: the frame translate unwinds when nothing is selected anymore (or
   // the inspector auto-yielded) — the map returns to its true scroll position.
   useEffect(() => {
     const shouldRest = !selectedSeatId || inspectorHidden;
-    if (!shouldRest || frameTranslateRef.current === 0) return;
-    cancelNudge();
-    const startTranslate = frameTranslateRef.current;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    nudgeCancelRef.current = animateValue({
-      from: startTranslate,
-      to: 0,
-      durationMs: 200,
-      reducedMotion,
-      onUpdate: setFrameTranslate,
-      onDone: () => {
-        nudgeCancelRef.current = null;
-      }
-    });
+    if (!shouldRest) return;
+    startUnwind();
     return () => cancelNudge();
-  }, [selectedSeatId, inspectorHidden, cancelNudge, setFrameTranslate]);
+  }, [selectedSeatId, inspectorHidden, cancelNudge, startUnwind]);
 
   return { cancelNudge, skipNextNudge };
 }
