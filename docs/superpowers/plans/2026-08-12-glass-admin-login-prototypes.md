@@ -33,7 +33,7 @@
 
 ## Phase A — `app/concepts/admin-v13/` (branch `claude/admin-v13-glass`)
 
-### Task A1: Scaffold — fixture copy, gated route, shell
+### Task 1: Scaffold — fixture copy, gated route, shell
 
 **Files:**
 - Create: `app/concepts/admin-v13/fixtureSeats.ts` (copy of `app/concepts/viewer-v13/fixtureSeats.ts` — verbatim; concepts never import across directories)
@@ -42,22 +42,22 @@
 
 **Steps:** copy fixture → shell → gated page (byte-exact gate) → `node --test tests/concept-gate-source.test.mjs` expect 7 pass → commit `feat(concepts): scaffold gated admin-v13 route`.
 
-### Task A2: Glass admin chrome — rail, top bar, draft map stage
+### Task 2: Glass admin chrome — rail, top bar, draft map stage
 
 **Files:**
 - Modify: `app/concepts/admin-v13/AdminV13.tsx`
 
-**Interfaces produced (Task A3 consumes):** `ADMIN_GLASS` theme constant with fields: `pageClass`, `backdrop` (two #FF7A1F orbs, viewer-v13 recipe), `railClass`, `railItemClass`, `railItemActiveClass`, `topBarClass`, `eyebrowClass`, `headingClass`, `bodyClass`, `shellClass`, `coreClass`, `markerAssignedClass`, `markerAvailableClass`, `markerSelectedClass`, `pillClass` (status pill), `pillUnsavedClass`, `buttonPrimaryClass`, `buttonGhostClass`, `panelClass` (inspector), `fieldLabelClass`, `dialogOverlayClass`, `dialogClass`, `diffRowClass`. Also `selectedSeatKey: string | null` state + `setSelectedSeatKey`, and the `Reveal`/`useReveal` helpers (copied verbatim).
+**Interfaces produced (Task 3 consumes):** `ADMIN_GLASS` theme constant with fields: `pageClass`, `backdrop` (two #FF7A1F orbs, viewer-v13 recipe), `railClass`, `railItemClass`, `railItemActiveClass`, `topBarClass`, `eyebrowClass`, `headingClass`, `bodyClass`, `shellClass`, `coreClass`, `markerAssignedClass`, `markerAvailableClass`, `markerSelectedClass`, `pillClass` (status pill), `pillUnsavedClass`, `buttonPrimaryClass`, `buttonGhostClass`, `panelClass` (inspector), `fieldLabelClass`, `dialogOverlayClass`, `dialogClass`, `diffRowClass`. Also `selectedSeatKey: string | null` state + `setSelectedSeatKey`, and the `Reveal`/`useReveal` helpers (copied verbatim).
 
 Binding structure:
 - Fixed left rail (`fixed left-0 inset-y-0 w-12`, glass hairline right edge, 4 icon buttons as inline ultra-light SVGs — map/people/settings/sparkle; first active with a #FF7A1F left indicator bar; `aria-label` each). The rail is FIXED (non-scrolling) — a subtle `backdrop-blur` here is allowed.
-- Content column offset `pl-12`, top bar: eyebrow "ADMIN V13 — GLASS EDITOR CONCEPT", heading "Draft floor plan.", right side: status pill (Task A3 wires its two states) + primary button "Publish".
+- Content column offset `pl-12`, top bar: eyebrow "ADMIN V13 — GLASS EDITOR CONCEPT", heading "Draft floor plan.", right side: status pill (Task 3 wires its two states) + primary button "Publish".
 - Map stage: double-bezel shell/core, `aspectRatio` from `MAP_IMAGE_WIDTH/HEIGHT`, `Image ... unoptimized`, markers = focusable buttons via `seatsToVisualSeats` + `pointToStyle`; clicking a marker sets `selectedSeatKey`; selected marker gets `markerSelectedClass` (#FF7A1F ring + slight scale via transform class, not layout).
 - Draft framing copy near the map: small `bodyClass` line "Draft layer — edits here never reach viewers until publish." (concept honesty, mirrors the real two-layer model).
 
 **Steps:** implement → gates (`typecheck`, eslint file, gate test 7) → commit `feat(concepts): admin-v13 glass chrome — rail, top bar, draft map stage`.
 
-### Task A3: Inspector panel, unsaved pill, publish-review dialog, motion
+### Task 3: Inspector panel, unsaved pill, publish-review dialog, motion
 
 **Files:**
 - Modify: `app/concepts/admin-v13/AdminV13.tsx`
@@ -70,7 +70,7 @@ Binding behavior:
 
 **Steps:** implement → gates + full `npm test` → commit `feat(concepts): admin-v13 inspector, unsaved pill, publish review — concept complete`.
 
-### Task A4: Controller QA, docs, build, PR, merge
+### Task 4: Controller QA, docs, build, PR, merge
 
 - Controller drives: marker select → inspector opens, focus returns on close; mock action → pill flips to unsaved; pill → dialog (Esc, focus trap, buttons); publish mock resets; both reduced-motion sanity and keyboard pass; screenshots.
 - CLAUDE.md enumeration: append `admin-v13`.
@@ -82,7 +82,7 @@ Binding behavior:
 
 ## Phase B — `app/concepts/login-v13/` (branch `claude/login-v13-glass`, off fresh main after Phase A merges)
 
-### Task B1: Scaffold — gated route + shell
+### Task 5: Scaffold — gated route + shell
 
 **Files:**
 - Create: `app/concepts/login-v13/LoginV13.tsx` (shell, named export `LoginV13`)
@@ -92,7 +92,7 @@ Note: `login-v12` already exists as a separate concept — v13 is a NEW director
 
 **Steps:** shell → gated page → gate test 8 pass → commit `feat(concepts): scaffold gated login-v13 route`.
 
-### Task B2: Glass login — two-step machine, choreography, error state
+### Task 6: Glass login — two-step machine, choreography, error state
 
 **Files:**
 - Modify: `app/concepts/login-v13/LoginV13.tsx`
@@ -107,7 +107,7 @@ Binding structure & behavior:
 
 **Steps:** implement → gates + full `npm test` → commit `feat(concepts): login-v13 glass — two-step flow skin, error + magic-link placements`.
 
-### Task B3: Controller QA, docs, build, PR, merge
+### Task 7: Controller QA, docs, build, PR, merge
 
 - Controller drives: step transition both directions (Edit preserves email), wrong-password notification + its magic-link action present, magic link absent on step 1, keyboard-only run-through, reduced-motion, screenshots.
 - CLAUDE.md enumeration: append `login-v13`.
