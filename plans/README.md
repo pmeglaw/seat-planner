@@ -298,6 +298,18 @@ not re-audit from zero.
   verified live: `GET /auth/v1/settings` now reports `"github": false`
   (flipped ~2 min after the dashboard save — the endpoint lags, don't panic
   on the first read).
+  **Auth redirect allowlist pruned same day (owner, dashboard):** 11 → 2
+  entries — kept `http://localhost:3000/auth/callback` (dev) and
+  `https://seats.megeredchianlaw.com/auth/callback` (prod); deleted the
+  eight Vercel preview wildcards + the `seat-planner-pi.vercel.app` alias.
+  None were attacker-controllable (all inside the owner's Vercel team
+  namespace) — this was hygiene, not a vulnerability fix. Known consequences:
+  magic-link/reset redirects on PR preview deployments now fall back to the
+  Site URL instead of the preview host; if the custom domain ever falls over,
+  re-add the `seat-planner-pi.vercel.app/auth/callback` line before using the
+  alias for login. The Supabase↔Vercel integration may silently re-add
+  preview wildcards on a future preview deploy — harmless; glance at
+  Authentication → URL Configuration occasionally.
 - **S-04 backup argv exposure** — `scripts/backup-prod.mjs:110` passes the prod
   DB connection string on the child-process command line (world-readable in
   the process table for the dump's duration). Single-operator machine —
