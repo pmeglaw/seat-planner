@@ -116,21 +116,30 @@ export function useInspectorNudge({
         const frame = frameRef.current;
         if (!viewport || !frame) return;
         // Finding 1: a same-commit programmatic center armed this — but the
-        // skip is honored ONLY while the viewport has horizontal scroll room.
-        // With room, the center's smooth scrollTo really moves the seat to
-        // mid-viewport (clear of the panel) and a tween would race it. At fit
-        // view there is no scroll room: the center is a no-op, there is
-        // nothing to race, and the translate channel below is the only way an
-        // under-panel seat can clear (contract #1) — skipping there left
-        // viewer fit-view selections covered (v1.25.0 live QA).
+        // skip is honored ONLY while the viewport can still actually scroll
+        // further RIGHT from where it sits right now. With that room, the
+        // center's smooth scrollTo really moves the seat to mid-viewport
+        // (clear of the panel) and a tween would race it. At the right
+        // scroll boundary (fit view included, where there is no scroll room
+        // at all) the center is provably a no-op: there is nothing to race,
+        // and the translate channel below is the only way an under-panel
+        // seat can clear (contract #1) — skipping there left viewer fit-view
+        // selections covered (v1.25.0 live QA). CodeRabbit (PR #391): the
+        // guard must measure REMAINING room at the current scrollLeft, not
+        // total overflow — a viewport already scrolled to its right boundary
+        // has zero remaining room even though scrollWidth - clientWidth is
+        // large, and the old total-overflow check skipped the nudge there
+        // too, stranding the seat under the panel. Mirrors
+        // planInspectorNudge's own scrollRoom calculation.
         if (skipNextRef.current) {
           skipNextRef.current = false;
+          const scrollRoom = viewport.scrollWidth - viewport.clientWidth - viewport.scrollLeft;
           // Plan 022: a stale translate can still be sitting here from an
           // interrupted unwind (fast reselect during the 200ms restore tween)
           // even though THIS selection is skipping its own nudge — repair it
           // rather than stranding the frame shifted for the rest of the
           // selection.
-          if (viewport.scrollWidth - viewport.clientWidth > 1) {
+          if (scrollRoom > 1) {
             if (frameTranslateRef.current !== 0) startUnwind();
             return;
           }
