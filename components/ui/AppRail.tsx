@@ -253,20 +253,9 @@ export function AppRail({
           <span className={CELL}>
             <HamburgerIcon />
           </span>
-          {/* Decorative duplicate of the button's own aria-label — hidden
-              from AT so the rail isn't announced twice. Brand mark + wordmark
-              moved to AppTopBar with the top-bar-first chrome; the expanded
-              header row keeps a plain "Menu" caption. */}
-          <span
-            aria-hidden="true"
-            className={[
-              LABEL_BASE,
-              "flex items-center gap-2 text-[12.5px] font-semibold text-[var(--admin-chrome-text)]",
-              open ? "opacity-100" : "opacity-0"
-            ].join(" ")}
-          >
-            Menu
-          </span>
+          {/* No visible caption (owner call 2026-08-14): the expanded items
+              label themselves, and a "Menu" caption row read as furniture.
+              The button's aria-label above carries the accessible name. */}
         </button>
         {NAV_ITEMS.filter(item => railMode === "admin" || item.key === "reception").map(item => (
           <Link

@@ -9,6 +9,14 @@ export const FLOOR_LABELS: Record<FloorId, string> = {
   "2": "Floor 2 · Litigation"
 };
 
+// Chrome-variant trigger label (owner call 2026-08-14): the centered bar
+// title stays short and stable-width — the practice-group suffix lives in
+// the dropdown options and the trigger's aria-label, not the bar.
+const FLOOR_SHORT_LABELS: Record<FloorId, string> = {
+  "3": "Floor 3",
+  "2": "Floor 2"
+};
+
 // Multi-floor is UI scaffolding only (redesign spec §4/§9): Floor 2 exists in
 // the selector but is not yet mapped — selecting it shows a placeholder. Real
 // Floor 2 support (seats, floor-plan image, calibration) is a separate future
@@ -102,7 +110,7 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
             : "flex items-center gap-2 border border-[var(--admin-border)] bg-white px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--admin-text-primary)] shadow-elevation-3 transition hover:bg-[var(--sp-color-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
         }
       >
-        {FLOOR_LABELS[floor]}
+        {chrome ? FLOOR_SHORT_LABELS[floor] : FLOOR_LABELS[floor]}
         <svg aria-hidden="true" viewBox="0 0 20 20" className={chrome ? "h-3 w-3 text-[var(--admin-chrome-muted)]" : "h-3 w-3 text-[var(--admin-text-muted)]"}>
           <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
