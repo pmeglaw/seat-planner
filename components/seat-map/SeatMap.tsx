@@ -2367,7 +2367,9 @@ export function SeatMap({
   // (root lg:h-screen down the lg:flex-1 / lg:min-h-0 chain), never from the
   // frame width the overview ResizeObserver computes.
   const mapStageClassName = "relative min-w-0 lg:flex lg:min-h-0 lg:flex-1";
-  const mapCrumbLabel = floor === "2" ? "Not yet mapped" : `Draft map · ${stats.total} ${stats.total === 1 ? "seat" : "seats"}`;
+  // Just "Draft" (owner call 2026-08-14): it's obviously a map, and the
+  // legend already carries the seat count — the crumb only states the layer.
+  const mapCrumbLabel = floor === "2" ? "Not yet mapped" : "Draft";
   const mapMarkerLayerClassName = [
     "absolute inset-0",
     mobileMapControlsHidden ? "hidden sm:block" : ""
@@ -2711,9 +2713,12 @@ export function SeatMap({
   // clusters, so the canvas keeps the floor pill there (see the lg:hidden on
   // the canvas wrapper below).
   const barFloorIdentity = (
-    <div className="hidden h-full items-center gap-2 lg:flex">
+    <div className="hidden h-full items-center lg:flex">
       <FloorSelector floor={floor} onChange={setFloor} variant="chrome" />
-      <span className="hidden whitespace-nowrap border border-[var(--admin-chrome-border)] px-2 py-1 text-[11.5px] leading-none text-[var(--admin-chrome-muted)] xl:block">
+      {/* Quiet suffix, not a boxed chip (owner call 2026-08-14): the centered
+          identity reads as ONE document title — bolt-style "name (detail)" —
+          so the crumb is plain muted text beside the selector. */}
+      <span className="hidden whitespace-nowrap pl-1 text-[11.5px] leading-none text-[var(--admin-chrome-muted)] xl:block">
         {mapCrumbLabel}
       </span>
     </div>

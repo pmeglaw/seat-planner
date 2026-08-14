@@ -54,18 +54,23 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement }:
     /* z-50 keeps the chrome tier above z-40 page overlays (same rank the old
        per-surface bars held). sticky, not fixed: the bar participates in flow,
        so page roots keep their min-h-[calc(100svh-var(--admin-chrome-h))]
-       sizing untouched. pl-3 with NO rail offset — the rail hangs below this
-       bar now (AppRail is top-[var(--admin-chrome-h)]), so the bar owns the
-       full viewport width. */
-    <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+       sizing untouched. NO border-b on the header itself and no left padding:
+       the chrome must read as ONE upside-down L (owner call 2026-08-14) — the
+       brand mark sits centered in a w-12 corner cell aligned with the rail
+       column below, and the bottom hairline starts only to the RIGHT of that
+       column (the absolute span below), so no seam ever cuts the corner. */
+    <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)]">
+      <span aria-hidden="true" className="pointer-events-none absolute bottom-0 left-12 right-0 h-px bg-[var(--admin-chrome-border)]" />
       <a
         href={skipLink.href}
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"
       >
         {skipLink.label}
       </a>
-      <div className="flex min-w-0 shrink-0 items-center gap-2">
-        <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
+      <div className="flex min-w-0 shrink-0 items-center">
+        {/* Corner cell: same 48px column as the rail's icon cells, so the mark
+            lines up with the icons below it and the L reads continuous. */}
+        <span aria-hidden="true" className="flex h-full w-12 shrink-0 items-center justify-center">
           <Image src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
         </span>
         {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
