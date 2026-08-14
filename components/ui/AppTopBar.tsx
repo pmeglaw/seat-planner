@@ -114,13 +114,20 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, r
           this is the bar's visual echo of it (same convention as the brand
           text on the map header before this bar existed). */}
       <div className="pointer-events-none absolute left-1/2 top-0 flex h-full max-w-[42%] -translate-x-1/2 items-center">
-        {sectionTitle ? (
+        {sectionTitle && (
           <div aria-hidden="true" className="hidden truncate text-[12.5px] font-semibold md:block">
             {sectionTitle}
           </div>
-        ) : (
-          <div data-topbar-slot="center" ref={setCenterSlot} className="pointer-events-auto flex h-full min-w-0 items-center gap-2" />
         )}
+        {/* The slot div is ALWAYS mounted — never swapped out for the title.
+            A route change that deleted this element in the same commit that
+            unmounts the map surface raced React's portal cleanup: the portal
+            tried to remove its children from a container the bar had already
+            deleted, throwing NotFoundError (removeChild) into the route error
+            boundary on EVERY rail navigation off the map. Stable container =
+            safe portal teardown. On sub-pages it simply sits empty beside the
+            title. */}
+        <div data-topbar-slot="center" ref={setCenterSlot} className="pointer-events-auto flex h-full min-w-0 items-center gap-2" />
       </div>
       <div className="ml-auto flex h-full shrink-0 items-center">
         {/* Right slot: the map surface portals Ask Planner + the publish

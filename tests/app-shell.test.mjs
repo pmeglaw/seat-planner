@@ -72,12 +72,16 @@ test("every shell surface mounts ONE top bar with the account menu — map inclu
   assert.equal(screen.getByRole("link", { name: "Skip to seat map" }).getAttribute("href"), "#planning-canvas");
 });
 
-test("sub-pages keep the bar, swap the center slot for a title, and wire the skip link", async () => {
+test("sub-pages keep the bar, show a section title, and wire the skip link", async () => {
   await renderElement(shellElement({ pathname: "/admin/settings" }));
   assert.ok(bar());
   assert.equal(screen.getByRole("link", { name: "Settings" }).getAttribute("aria-current"), "page");
   assert.equal(screen.getByRole("link", { name: "Skip to content" }).getAttribute("href"), "#admin-subpage-main");
-  assert.equal(slot("center"), null, "sub-pages show a section title, not the map's center slot");
+  assert.ok(screen.getByText("Settings", { selector: "div" }), "sub-pages show their section title in the bar center");
+  // The center slot stays MOUNTED beside the title — swapping it out raced
+  // React's portal cleanup on navigation (see the crash-regression test
+  // below) — it just sits empty here.
+  assert.ok(slot("center"), "the center slot element must exist on every route");
   assert.ok(screen.getByRole("button", { name: "Account — jane@example.com" }));
 });
 
@@ -137,7 +141,8 @@ test("the rail and bar persist across a route change — same DOM nodes, updated
   const utils = await renderElement(shellElement({ pathname: "/admin" }));
   const railBefore = nav();
   const barBefore = bar();
-  assert.ok(slot("center"), "map surface exposes the center slot");
+  const centerBefore = slot("center");
+  assert.ok(centerBefore, "map surface exposes the center slot");
 
   setPathname("/admin/management");
   await act(async () => utils.rerender(shellElement({})));
@@ -146,7 +151,7 @@ test("the rail and bar persist across a route change — same DOM nodes, updated
   assert.equal(bar(), barBefore, "the bar must be the same mounted node after navigation");
   assert.equal(screen.getByRole("link", { name: "Management" }).getAttribute("aria-current"), "page");
   assert.equal(screen.getByRole("link", { name: "Seat map" }).getAttribute("aria-current"), null);
-  assert.equal(slot("center"), null, "the center slot swaps to the section title without remounting the bar");
+  assert.equal(slot("center"), centerBefore, "the center slot must be the SAME element across navigation — stable containers are what keep portal teardown safe");
 });
 
 test("normal navigation through the shell is client-side (router.push, no document load)", async () => {
@@ -223,10 +228,10 @@ test("without a registered opener, the AI item is a plain link to /admin?ask-pla
 // Slots contract (top-bar-first chrome): a surface portals live bar content
 // into the slot elements the bar registers — this is how SeatMap's undo/redo,
 // floor identity, and publish cluster reach the persistent bar.
-function SlotSurface({ label }) {
+function SlotSurface({ label, into = "right" }) {
   const slots = useAppShellSlots();
-  if (!slots?.right) return null;
-  return createPortal(React.createElement("button", { type: "button" }, label), slots.right);
+  if (!slots?.[into]) return null;
+  return createPortal(React.createElement("button", { type: "button" }, label), slots[into]);
 }
 
 test("a surface portals bar content through the slots context, and it unmounts with the surface", async () => {
@@ -292,6 +297,33 @@ test("a route commit that closes the account menu returns focus to the trigger",
 
   assert.equal(screen.queryByRole("menu", { name: "Account" }), null, "the route commit must close the menu");
   assert.equal(document.activeElement, trigger, "focus must land back on the account trigger, not <body>");
+});
+
+// Crash regression (caught live 2026-08-14, e2e-auth nav-shell): navigating
+// off the map unmounts the surface AND switches the bar center to a section
+// title in the SAME commit. When the title REPLACED the center slot element,
+// React's portal cleanup tried to remove its children from the deleted
+// container and threw NotFoundError (removeChild) into the route error
+// boundary on every rail navigation. The slot must stay mounted so the
+// portal tears down against a live container.
+test("a center-slot portal survives navigating off the map — no removeChild crash", async () => {
+  const utils = await renderElement(
+    shellElement({
+      pathname: "/admin",
+      children: React.createElement(SlotSurface, { label: "Centered identity", into: "center" })
+    })
+  );
+  assert.ok(bar().contains(screen.getByRole("button", { name: "Centered identity" })));
+
+  // The exact crashing transition: surface unmounts + center switches to the
+  // section title in one commit. rerender throws here if the container was
+  // deleted out from under the portal.
+  setPathname("/admin/management");
+  await act(async () => utils.rerender(shellElement({})));
+
+  assert.equal(screen.queryByRole("button", { name: "Centered identity" }), null, "portal content leaves with its surface");
+  assert.ok(screen.getByText("Management", { selector: "div" }), "the section title renders beside the (empty) slot");
+  assert.ok(slot("center"), "the center slot survives the transition");
 });
 
 test("useAppShellNavigation and useAppShellSlots are safe no-ops without a shell ancestor (standalone mounts)", async () => {
