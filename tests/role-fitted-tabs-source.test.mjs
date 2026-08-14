@@ -30,6 +30,6 @@ test("the top bar keeps one underline and one cross-surface exit", async () => {
   // with no promoted Settings entry.
   assert.doesNotMatch(shellBarSource, /<nav/);
   assert.doesNotMatch(shellBarSource, /aria-label="Open viewer surface"/);
-  assert.doesNotMatch(shellBarSource, /aria-current="true"/);
+  assert.doesNotMatch(shellBarSource, /aria-current=/);
   assert.doesNotMatch(shellBarSource, /onSelectSettings/);
 });

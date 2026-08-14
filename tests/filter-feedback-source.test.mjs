@@ -38,5 +38,8 @@ test("active filter chips sit with the trigger's corner, not across the map", as
   // canvas group beside the floor pill (the crumb label itself was removed,
   // owner call 2026-08-14 — the anchor is the floor selector wrapper now).
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
+  // The crumb must stay gone entirely (owner call 2026-08-14) — the floor
+  // selector is the map's whole document identity.
+  assert.doesNotMatch(seatMap, /\bmapCrumbLabel\b/);
   assert.match(seatMap, /<FloorSelector floor=\{floor\} onChange=\{setFloor\} \/>\s*\r?\n\s*<\/div>\s*\r?\n\s*<ActiveFilterChips/);
 });

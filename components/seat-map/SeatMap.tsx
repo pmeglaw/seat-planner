@@ -2329,16 +2329,18 @@ export function SeatMap({
       // every width, and the viewer centres its fit view from sm up — leaving
       // this lg-only would top-align the plan and pile the whole band under it
       // at 640-1023, splitting the two surfaces at the same widths.
-      ? "min-h-[300px] h-[calc(100svh-80px)] overflow-auto sm:flex sm:items-center sm:justify-center sm:overflow-hidden"
-      // The sm cap budgets the stacked chrome above the map, and it is the
-      // same 80px: 36px bar + 44px canvas search row. It read 88 while the
-      // search row was an estimate (36 + ~52); the row measures 44, so 88 left
-      // an 8px sliver of page below the map — the small version of the band
-      // the overview branch above exists to close. Below lg the pan viewport
-      // is the one vertical scroll owner (#197), so the page itself doesn't
-      // grow a second scrollbar next to it. On short windows the min-h floor
-      // wins and the page scrolls a little; that beats a stub of a map.
-      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px] sm:max-h-[calc(100svh-80px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+      ? "min-h-[300px] h-[calc(100svh-var(--admin-chrome-h)-44px)] overflow-auto sm:flex sm:items-center sm:justify-center sm:overflow-hidden"
+      // The sm cap budgets the stacked chrome above the map: the bar
+      // (--admin-chrome-h, token-derived so a bar resize can't strand a
+      // hardcoded sum again — the 36→40px bump caught exactly that) plus the
+      // 44px canvas search row. The row once read as ~52 (an estimate), which
+      // left an 8px sliver of page below the map — the small version of the
+      // band the overview branch above exists to close. Below lg the pan
+      // viewport is the one vertical scroll owner (#197), so the page itself
+      // doesn't grow a second scrollbar next to it. On short windows the
+      // min-h floor wins and the page scrolls a little; that beats a stub of
+      // a map.
+      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px] sm:max-h-[calc(100svh-var(--admin-chrome-h)-44px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     mapViewMode === "detail" && floor === "3" && !addSeatMode ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]" : ""
   ].join(" ");
