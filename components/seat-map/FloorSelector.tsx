@@ -9,12 +9,13 @@ export const FLOOR_LABELS: Record<FloorId, string> = {
   "2": "Floor 2 · Litigation"
 };
 
-// Chrome-variant trigger label (owner call 2026-08-14): the centered bar
-// title stays short and stable-width — the practice-group suffix lives in
-// the dropdown options and the trigger's aria-label, not the bar.
+// Chrome-variant trigger label (owner calls 2026-08-14): the centered bar
+// title stays short and stable-width — first tried "Floor N", owner then
+// picked the practice-group name alone; the floor number stays in the
+// dropdown options and the trigger's aria-label.
 const FLOOR_SHORT_LABELS: Record<FloorId, string> = {
-  "3": "Floor 3",
-  "2": "Floor 2"
+  "3": "Pre-Litigation",
+  "2": "Litigation"
 };
 
 // Multi-floor is UI scaffolding only (redesign spec §4/§9): Floor 2 exists in
