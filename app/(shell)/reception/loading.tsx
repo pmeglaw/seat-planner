@@ -1,5 +1,5 @@
 // Content-pane loading state for /reception. The persistent shell keeps the
-// rail and AdminShellBar mounted; this skeletons only the reception column
+// rail and AppTopBar mounted; this skeletons only the reception column
 // (search field + directory list) on the reception surface's own background
 // token, offset for the fixed rail.
 export default function ReceptionLoading() {

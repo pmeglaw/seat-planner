@@ -1,5 +1,5 @@
 // Content-pane loading state for /admin/management. The persistent shell
-// keeps the rail and the AdminShellBar mounted while this streams, so the
+// keeps the rail and the AppTopBar mounted while this streams, so the
 // skeleton renders no chrome of its own — just the section's content shapes
 // (summary cards + directory table wash), offset for the fixed rail (pl-12)
 // and for the bar already above it (the svh calc).

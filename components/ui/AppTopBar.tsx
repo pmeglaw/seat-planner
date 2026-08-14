@@ -1,0 +1,106 @@
+"use client";
+
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { useCallback } from "react";
+import { AccountMenu } from "@/components/ui/AccountMenu";
+import type { AppRailActive } from "@/components/ui/AppRail";
+
+// Top-bar-first chrome (2026-08-14 owner redesign): ONE full-width bar spans
+// the viewport top on every (shell) route — the rail starts BELOW it. Zone
+// contract (owner-confirmed): left = brand + surface-owned command cluster;
+// center = document identity (the map's floor selector + crumb, or a static
+// section title on sub-pages); right = surface-owned action cluster + the
+// account menu. This bar replaces both AdminShellBar (the old sub-page brand
+// bar) and SeatMap's own <header> — the map surface now portals its bar
+// tenants into the slot elements this component registers via onSlotElement
+// (see AppShellSlots in AppShell.tsx and the portals in SeatMap.tsx).
+//
+// The skip link lives here, as the bar's — and therefore the document's —
+// first focusable. It moved from AppRail when the bar took the top of the
+// tab order; the target ids stay per-surface (AppShell's SKIP_LINKS map).
+
+export type AppTopBarSlot = "left" | "center" | "right";
+
+const SECTION_TITLES: Record<AppRailActive, string | null> = {
+  map: null,
+  management: "Management",
+  settings: "Settings",
+  reception: "Reception"
+};
+
+export type AppTopBarProps = {
+  active: AppRailActive;
+  email: string;
+  roleLabel: string;
+  skipLink: { href: string; label: string };
+  onSlotElement: (slot: AppTopBarSlot, element: HTMLElement | null) => void;
+};
+
+export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement }: AppTopBarProps) {
+  const pathname = usePathname();
+  const sectionTitle = SECTION_TITLES[active];
+
+  // Stable ref callbacks, one per slot: an inline `el => onSlotElement(...)`
+  // closure would get a new identity every render, making React detach
+  // (null) + re-attach (element) the ref on EVERY commit — each pair fires a
+  // state update in AppShell and the render loops. useCallback keeps the
+  // identity fixed so the refs only fire on real mount/unmount.
+  const setLeftSlot = useCallback((element: HTMLElement | null) => onSlotElement("left", element), [onSlotElement]);
+  const setCenterSlot = useCallback((element: HTMLElement | null) => onSlotElement("center", element), [onSlotElement]);
+  const setRightSlot = useCallback((element: HTMLElement | null) => onSlotElement("right", element), [onSlotElement]);
+
+  return (
+    /* z-50 keeps the chrome tier above z-40 page overlays (same rank the old
+       per-surface bars held). sticky, not fixed: the bar participates in flow,
+       so page roots keep their min-h-[calc(100svh-var(--admin-chrome-h))]
+       sizing untouched. pl-3 with NO rail offset — the rail hangs below this
+       bar now (AppRail is top-[var(--admin-chrome-h)]), so the bar owns the
+       full viewport width. */
+    <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+      <a
+        href={skipLink.href}
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"
+      >
+        {skipLink.label}
+      </a>
+      <div className="flex min-w-0 shrink-0 items-center gap-2">
+        <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
+          <Image src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
+        </span>
+        {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
+        <div aria-hidden="true" translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
+          Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
+        </div>
+      </div>
+      {/* Left slot: the map surface portals its command cluster (undo/redo,
+          kebab) here; empty on sub-pages. */}
+      <div data-topbar-slot="left" ref={setLeftSlot} className="flex h-full min-w-0 shrink-0 items-center" />
+      {/* Center: document identity, absolutely centered on the bar like the
+          reference layout. pointer-events pass through the empty gutter so the
+          flanking clusters stay clickable; slot content opts back in. The
+          sub-page title is aria-hidden — each page renders its own real <h1>,
+          this is the bar's visual echo of it (same convention as the brand
+          text on the map header before this bar existed). */}
+      <div className="pointer-events-none absolute left-1/2 top-0 flex h-full max-w-[42%] -translate-x-1/2 items-center">
+        {sectionTitle ? (
+          <div aria-hidden="true" className="hidden truncate text-[12.5px] font-semibold md:block">
+            {sectionTitle}
+          </div>
+        ) : (
+          <div data-topbar-slot="center" ref={setCenterSlot} className="pointer-events-auto flex h-full min-w-0 items-center gap-2" />
+        )}
+      </div>
+      <div className="ml-auto flex h-full shrink-0 items-center">
+        {/* Right slot: the map surface portals Ask Planner + the publish
+            cluster here; empty on sub-pages. */}
+        <div data-topbar-slot="right" ref={setRightSlot} className="flex h-full shrink-0 items-center" />
+        {/* autoCloseKey: the bar persists across client navigations, so the
+            menu must not linger over an incoming page — and a back/forward
+            with the menu open must return focus to the trigger, the same
+            guarantee the old rail account cell gave (see AccountMenu). */}
+        <AccountMenu email={email} roleLabel={roleLabel} autoCloseKey={pathname} />
+      </div>
+    </header>
+  );
+}

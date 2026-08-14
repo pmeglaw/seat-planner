@@ -4,7 +4,7 @@
  * on both the map header and the sub-page bar moved to AppRail
  * (components/ui/AppRail.tsx) — Show names, Management, Settings, the
  * surface-shortcut cells, and the flat-tool Ask Planner button are all gone
- * from this module's callers, and AdminShellBar.tsx (the sub-page bar) is now
+ * from this module's callers, and the retired AdminShellBar (sub-page bar, now AppTopBar) was
  * identity-only (skip link + brand) and imports nothing from here.
  *
  * That collapsed this module down to one surviving export:
@@ -25,7 +25,7 @@
  * Vertical divider between chrome clusters — the rule itself, WITHOUT a
  * height. The map header (SeatMap.tsx) is the only consumer today, at 26px,
  * hidden below lg. Height and visibility stay with the caller by design
- * (not because a second consumer disagrees with them) — AdminShellBar.tsx
+ * (not because a second consumer disagrees with them) — the retired sub-page bar
  * dropped its own divider entirely in v12 (identity-only bar, no clusters to
  * separate). Only the 1px rule and its color are shared here, so a
  * border-token change still lands in one place if another surface adopts one.

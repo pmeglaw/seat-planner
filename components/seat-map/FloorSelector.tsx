@@ -21,6 +21,12 @@ const FLOORS: { id: FloorId; label: string; soon?: boolean }[] = [
 type FloorSelectorProps = {
   floor: FloorId;
   onChange: (floor: FloorId) => void;
+  /** "canvas" (default) is the light floating-card look for the map stage;
+   *  "chrome" restyles trigger + menu for the dark AppTopBar center slot
+   *  (top-bar-first chrome). Identical structure, roles, and keyboard
+   *  behavior in both — the APG menu pattern accessibility-source pins is
+   *  variant-independent. */
+  variant?: "canvas" | "chrome";
 };
 
 export function FloorPlaceholder() {
@@ -34,7 +40,8 @@ export function FloorPlaceholder() {
   );
 }
 
-export function FloorSelector({ floor, onChange }: FloorSelectorProps) {
+export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSelectorProps) {
+  const chrome = variant === "chrome";
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -89,10 +96,14 @@ export function FloorSelector({ floor, onChange }: FloorSelectorProps) {
             setOpen(true);
           }
         }}
-        className="flex items-center gap-2 border border-[var(--admin-border)] bg-white px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--admin-text-primary)] shadow-elevation-3 transition hover:bg-[var(--sp-color-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+        className={
+          chrome
+            ? "flex h-7 items-center gap-2 px-2.5 text-[12.5px] font-semibold text-[var(--admin-chrome-text)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
+            : "flex items-center gap-2 border border-[var(--admin-border)] bg-white px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--admin-text-primary)] shadow-elevation-3 transition hover:bg-[var(--sp-color-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+        }
       >
         {FLOOR_LABELS[floor]}
-        <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--admin-text-muted)]">
+        <svg aria-hidden="true" viewBox="0 0 20 20" className={chrome ? "h-3 w-3 text-[var(--admin-chrome-muted)]" : "h-3 w-3 text-[var(--admin-text-muted)]"}>
           <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
@@ -117,7 +128,11 @@ export function FloorSelector({ floor, onChange }: FloorSelectorProps) {
               moveOptionFocus(-1);
             }
           }}
-          className="absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--admin-border)] bg-white py-1 shadow-elevation-3"
+          className={
+            chrome
+              ? "absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-white/15 bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
+              : "absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--admin-border)] bg-white py-1 shadow-elevation-3"
+          }
         >
           {FLOORS.map(option => (
             <button
@@ -129,11 +144,23 @@ export function FloorSelector({ floor, onChange }: FloorSelectorProps) {
                 onChange(option.id);
                 closeAndRefocus();
               }}
-              className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
+              className={
+                chrome
+                  ? "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--admin-chrome-text)] transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
+                  : "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
+              }
             >
               <span className={option.id === floor ? "font-semibold" : undefined}>{option.label}</span>
               {option.soon && (
-                <span className="shrink-0 border border-[var(--admin-border)] px-1.5 py-0.5 text-[9.5px] font-medium text-[var(--admin-text-muted)]">SOON</span>
+                <span
+                  className={
+                    chrome
+                      ? "shrink-0 border border-white/20 px-1.5 py-0.5 text-[9.5px] font-medium text-[var(--admin-chrome-muted)]"
+                      : "shrink-0 border border-[var(--admin-border)] px-1.5 py-0.5 text-[9.5px] font-medium text-[var(--admin-text-muted)]"
+                  }
+                >
+                  SOON
+                </span>
               )}
             </button>
           ))}

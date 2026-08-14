@@ -1,31 +1,29 @@
 "use client";
 
-import Image from "next/image";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { returnFocusAfterClose } from "@/components/ui/returnFocus";
+import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { deploySkewMonitor, type SkewDetector } from "@/lib/deploySkew";
 import { assignLocation } from "@/lib/fullNavigation";
 
 // v12 left rail (design_handoff_carbon_v12 §structural move 1, prototype lines
-// 25-60). 48px collapsed column, full viewport height, 208px overlay when
-// expanded; item click / outside click / Escape collapse it. Nav items are
-// <Link>s with default (auto) prefetch — see the prefetch note on the nav
-// items — so they navigate natively before hydration; see handleNavClick
-// for how the onNavigate veto rides preventDefault. Owner rulings
-// 2026-07-31: this geometry (not concepts/nav-rail's 36px), account lives in
-// the rail bottom cell. People item lands with the People panel slice — see
+// 25-60), reshaped by the top-bar-first chrome (2026-08-14): the rail now
+// hangs BELOW AppTopBar (top-[var(--admin-chrome-h)], not top-0), and the
+// brand mark + account cell moved into the bar — the rail is navigation only.
+// 48px collapsed column, 208px overlay when expanded; item click / outside
+// click / Escape collapse it. Nav items are <Link>s with default (auto)
+// prefetch — see the prefetch note on the nav items — so they navigate
+// natively before hydration; see handleNavClick for how the onNavigate veto
+// rides preventDefault. People item lands with the People panel slice — see
 // the breadcrumb on NAV_ITEMS below.
 //
 // Since the persistent shell (components/ui/AppShell.tsx, mounted by
 // app/(shell)/layout.tsx) this rail is created ONCE per document load and
 // SURVIVES client-side navigation — pages no longer mount their own copies.
 // Everything keyed to "the rail unmounts on a successful nav" moved to the
-// pathname effect below: it disarms the stalled-nav watchdog, collapses the
-// overlay drawer so it can't linger over the incoming page, and closes the
-// account menu.
+// pathname effect below: it disarms the stalled-nav watchdog and collapses
+// the overlay drawer so it can't linger over the incoming page.
 //
 // Icon sizing follows the plan's restated constraint (17px, stroke 1.5,
 // hamburger 1.6) rather than the raw prototype markup, which used 16px for
@@ -36,11 +34,9 @@ export type AppRailActive = "map" | "management" | "settings" | "reception";
 
 export type AppRailProps = {
   active: AppRailActive;
-  email: string;
-  roleLabel: string;
   /** "admin" (default) shows the full admin nav + Ask Planner. "viewer" is
    *  the /reception-for-viewers shell: only role-safe items (Reception,
-   *  Viewer, account) — admin routes would bounce a viewer at the guard. */
+   *  Viewer) — admin routes would bounce a viewer at the guard. */
   railMode?: "admin" | "viewer";
   /** Return false to veto a navigation (unsaved-edits guard). When omitted,
    *  items navigate plainly. Receives the target href + human label. */
@@ -48,11 +44,6 @@ export type AppRailProps = {
   /** Map surface: open the Ask Planner drawer in place. Sub-pages omit it and
    *  the AI item navigates to /admin?ask-planner=open instead. */
   onOpenAskPlanner?: () => void;
-  /** Rendered as the rail's first child, before the hamburger — makes the
-   *  skip link the FIRST focusable on the page instead of the 8th (after
-   *  all 7 rail controls), which defeated its purpose. Each mounting
-   *  surface owns its own target id/copy; AppRail only positions it. */
-  skipLink?: { href: string; label: string };
   /** Test seam only — the deploy-skew detector (lib/deploySkew.ts). Defaults
    *  to the module singleton, which is sticky across soft navigations; jsdom
    *  suites inject a fake so cases stay order-independent. */
@@ -69,10 +60,6 @@ const ITEM_IDLE = "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome
 const ITEM_ACTIVE = "bg-[var(--admin-chrome-hover)] text-white shadow-[inset_3px_0_0_var(--admin-primary)]";
 const CELL = "flex w-12 shrink-0 items-center justify-center";
 const LABEL_BASE = "whitespace-nowrap text-[13px] transition-opacity duration-150";
-// Copied verbatim from AccountMenu.tsx's menu item style, since the account
-// submenu here reuses that component's exact keyboard/visual contract.
-const menuItemClassName =
-  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-[#E7E1D8] transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
 type NavItem = { key: AppRailActive; label: string; href: string; icon: ReactNode };
 
@@ -88,22 +75,14 @@ const NAV_ITEMS: NavItem[] = [
 
 export function AppRail({
   active,
-  email,
-  roleLabel,
   railMode = "admin",
   onNavigate,
   onOpenAskPlanner,
-  skipLink,
   skewDetector = deploySkewMonitor
 }: AppRailProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement | null>(null);
-  const accountTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const accountMenuRef = useRef<HTMLDivElement | null>(null);
-  const accountMenuId = useId();
-  const initial = (email.trim()[0] ?? "?").toUpperCase();
 
   const collapse = useCallback((refocus: boolean) => {
     setOpen(false);
@@ -129,45 +108,28 @@ export function AppRail({
     },
     []
   );
-  // Route committed, part 1 — transient chrome. Close the overlay drawer +
-  // account menu the moment the pathname changes so neither lingers over the
-  // incoming page (the pre-shell rail got this for free by unmounting).
+  // Route committed, part 1 — transient chrome. Close the overlay drawer the
+  // moment the pathname changes so it can't linger over the incoming page
+  // (the pre-shell rail got this for free by unmounting). The account menu's
+  // equivalent lives in AppTopBar now (key={pathname} on AccountMenu).
   // Adjust-state-during-render on purpose, not an effect: React re-renders
   // immediately with the closed state, so the stale overlay never paints.
   const [lastPathname, setLastPathname] = useState(pathname);
-  const accountOpenLastCommitRef = useRef(false);
   if (lastPathname !== pathname) {
     setLastPathname(pathname);
     setOpen(false);
-    setAccountOpen(false);
   }
   // Route committed, part 2 — the client router is provably alive: disarm the
-  // watchdog. Restore keyboard focus if closing the account menu stranded it:
-  // the menu's focused menuitem unmounts with the menu (back/forward while it
-  // is open), dropping focus to <body> with no way back — every other
-  // dismissal path refocuses the trigger, so this one must too. The ref reads
-  // the PREVIOUS commit's open state (see the mirror effect below), and the
-  // <body> check keeps a click-driven navigation from having its focus yanked
-  // off the clicked rail item. Also re-probe deploy skew on every route
-  // change: the detector throttles itself to one fetch/min, so this keeps
-  // the pre-shell "probe on page mount" cadence without per-navigation cost.
+  // watchdog. Also re-probe deploy skew on every route change: the detector
+  // throttles itself to one fetch/min, so this keeps the pre-shell "probe on
+  // page mount" cadence without per-navigation cost.
   useEffect(() => {
     if (navWatchdogRef.current !== null) {
       window.clearTimeout(navWatchdogRef.current);
       navWatchdogRef.current = null;
     }
-    if (accountOpenLastCommitRef.current && document.activeElement === document.body) {
-      accountTriggerRef.current?.focus();
-    }
     void skewDetector.check();
   }, [pathname, skewDetector]);
-  // Mirror accountOpen into the ref AFTER the pathname effect — declaration
-  // order is load-bearing: same-commit effects run top-down, so on the commit
-  // that closes the menu the pathname effect still sees the pre-navigation
-  // value (true) before this line overwrites it with the closed state.
-  useEffect(() => {
-    accountOpenLastCommitRef.current = accountOpen;
-  });
   // Deploy-skew probes: merging to main flips the prod alias under open tabs,
   // after which soft navigations fetch RSC from the NEW build and the router
   // falls back with a dead-feeling click + late full reload (2026-08-05
@@ -243,69 +205,6 @@ export function AppRail({
     armNavWatchdog(href);
   }
 
-  // --- Account menu: keyboard/scrim contract copied from AccountMenu.tsx,
-  // except focus-on-open rides a useEffect rather than AccountMenu's
-  // window.requestAnimationFrame — same observable result (first item is
-  // focused right after the menu opens) without depending on jsdom's
-  // real-timer rAF polyfill (jsdom only implements it under
-  // pretendToBeVisual, which runs a genuine 60Hz interval; that proved racy
-  // under `npm test`'s full parallel test-file run, occasionally throwing
-  // under memory pressure, though it was solid in isolation).
-  useEffect(() => {
-    if (!accountOpen) return;
-    accountMenuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
-  }, [accountOpen]);
-
-  function closeAccountMenu(restoreFocus: boolean) {
-    setAccountOpen(false);
-    if (restoreFocus) returnFocusAfterClose(accountTriggerRef);
-  }
-
-  function focusAccountItem(target: "first" | "last" | 1 | -1) {
-    const items = Array.from(accountMenuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
-    if (items.length === 0) return;
-    const activeIndex = items.findIndex(item => item === document.activeElement);
-    const nextIndex =
-      target === "first" ? 0 : target === "last" ? items.length - 1 : (activeIndex + target + items.length) % items.length;
-    items[nextIndex]?.focus();
-  }
-
-  function handleAccountMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Escape") {
-      // Never let this bubble to the rail's own Escape-collapses-rail
-      // listener above — the account menu closes on its own terms.
-      event.stopPropagation();
-      closeAccountMenu(true);
-      return;
-    }
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      focusAccountItem(1);
-      return;
-    }
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      focusAccountItem(-1);
-      return;
-    }
-    if (event.key === "Home") {
-      event.preventDefault();
-      focusAccountItem("first");
-      return;
-    }
-    if (event.key === "End") {
-      event.preventDefault();
-      focusAccountItem("last");
-      return;
-    }
-    if (event.key === "Tab") {
-      // Tab never walks a menu — close and hand focus back synchronously.
-      event.preventDefault();
-      setAccountOpen(false);
-      accountTriggerRef.current?.focus();
-    }
-  }
-
   return (
     <>
       {open && (
@@ -327,25 +226,16 @@ export function AppRail({
         aria-label={railMode === "admin" ? "Admin sections" : "Sections"}
         data-expanded={open}
         className={[
-          // NOT overflow-hidden: the account popup below is an absolutely
-          // positioned descendant that renders outside this box (left-full),
-          // and an ancestor's overflow-hidden clips positioned descendants
-          // too, not just in-flow ones — it doesn't matter that the popup is
-          // itself positioned against a nearer ancestor. Each item that needs
-          // to clip its own label during the width transition carries its own
-          // overflow-hidden instead (see ITEM), scoped to that item's box.
-          "fixed bottom-0 left-0 top-0 z-[80] flex flex-col border-r border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] transition-[width] duration-150 ease-out",
+          // top-[var(--admin-chrome-h)], not top-0: the rail hangs BELOW the
+          // full-width AppTopBar (top-bar-first chrome, 2026-08-14) — the two
+          // never overlap, so their z-indexes are independent. Each item that
+          // needs to clip its own label during the width transition carries
+          // its own overflow-hidden (see ITEM), scoped to that item's box —
+          // the rail box itself stays unclipped.
+          "fixed bottom-0 left-0 top-[var(--admin-chrome-h)] z-[80] flex flex-col border-r border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] transition-[width] duration-150 ease-out",
           open ? "w-[208px] shadow-[8px_0_24px_rgba(0,0,0,.35)]" : "w-12"
         ].join(" ")}
       >
-        {skipLink && (
-          <a
-            href={skipLink.href}
-            className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"
-          >
-            {skipLink.label}
-          </a>
-        )}
         <button
           ref={hamburgerRef}
           type="button"
@@ -360,7 +250,9 @@ export function AppRail({
             <HamburgerIcon />
           </span>
           {/* Decorative duplicate of the button's own aria-label — hidden
-              from AT so the rail isn't announced twice. */}
+              from AT so the rail isn't announced twice. Brand mark + wordmark
+              moved to AppTopBar with the top-bar-first chrome; the expanded
+              header row keeps a plain "Menu" caption. */}
           <span
             aria-hidden="true"
             className={[
@@ -369,15 +261,7 @@ export function AppRail({
               open ? "opacity-100" : "opacity-0"
             ].join(" ")}
           >
-            <Image
-              src="/images/megeredchian-mark.png?v=ma-2026-128"
-              alt=""
-              width={20}
-              height={20}
-              unoptimized
-              className="h-5 w-5 object-contain"
-            />
-            Seat Planner
+            Menu
           </span>
         </button>
         {NAV_ITEMS.filter(item => railMode === "admin" || item.key === "reception").map(item => (
@@ -438,76 +322,18 @@ export function AppRail({
             <AiCell open={open} />
           </Link>
         )}
+        {/* Last item: the account cell that used to sit below this moved to
+            AppTopBar's right cluster (AccountMenu) with the top-bar-first
+            chrome — the rail ends at the Viewer shortcut. */}
         <Link
           href="/"
           title="Viewer — published map"
           aria-label="Open viewer surface"
           onClick={event => handleNavClick(event, "/", "the viewer")}
-          className={[ITEM, ITEM_IDLE, "mb-0.5"].join(" ")}
+          className={[ITEM, ITEM_IDLE, "mb-2"].join(" ")}
         >
           <NavItemBody icon={<ViewerIcon />} label="Viewer" open={open} />
         </Link>
-        {/* Account cell: menu, not a bare sign-out (approved deviation #2,
-            plan §Global Constraints). Keyboard/scrim contract copied from
-            components/ui/AccountMenu.tsx — focus-first-item on open, arrow
-            roving, Home/End, Escape/Tab close + trigger refocus, transparent
-            scrim. */}
-        <div className="relative mb-2 shrink-0">
-          <button
-            ref={accountTriggerRef}
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={accountOpen}
-            aria-controls={accountOpen ? accountMenuId : undefined}
-            aria-label={`Account — ${email}`}
-            title={`Account — ${email} (${roleLabel})`}
-            onClick={() => (accountOpen ? closeAccountMenu(false) : setAccountOpen(true))}
-            className={[ITEM, ITEM_IDLE].join(" ")}
-          >
-            <span className={CELL}>
-              <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[var(--admin-brand)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">
-                {initial}
-              </span>
-            </span>
-            {/* Decorative duplicate of the button's own aria-label. */}
-            <span aria-hidden="true" className={["min-w-0 text-left", LABEL_BASE, open ? "opacity-100" : "opacity-0"].join(" ")}>
-              <span className="block max-w-[140px] truncate text-[11.5px] text-[var(--admin-chrome-text)]">{email}</span>
-              <span className="block text-[10.5px] text-[var(--admin-chrome-muted)]">{roleLabel}</span>
-            </span>
-          </button>
-          {accountOpen && (
-            <>
-              {/* Transparent scrim: outside click closes without stealing the click. */}
-              <button
-                type="button"
-                aria-hidden="true"
-                tabIndex={-1}
-                data-account-menu-scrim
-                onClick={() => closeAccountMenu(false)}
-                className="fixed inset-0 z-40 cursor-default"
-              />
-              <div
-                ref={accountMenuRef}
-                id={accountMenuId}
-                role="menu"
-                aria-label="Account"
-                onKeyDown={handleAccountMenuKeyDown}
-                className="absolute bottom-1 left-full z-[81] ml-1 w-60 border border-white/15 bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
-              >
-                <div className="border-b border-white/10 px-3 pb-2 pt-1.5">
-                  <div className="truncate text-[12.5px] font-medium text-[var(--admin-chrome-text)]">{email}</div>
-                  <div className="text-[11px] text-[var(--admin-chrome-muted)]">{roleLabel}</div>
-                </div>
-                <form action="/auth/signout" method="post" className="contents">
-                  <button type="submit" role="menuitem" tabIndex={-1} className={menuItemClassName}>
-                    <SignOutIcon />
-                    Sign out
-                  </button>
-                </form>
-              </div>
-            </>
-          )}
-        </div>
       </nav>
     </>
   );
@@ -597,16 +423,6 @@ function ViewerIcon() {
     <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <circle cx="12" cy="12" r="8.2" />
       <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function SignOutIcon() {
-  // Copied from AccountMenu.tsx's sign-out glyph for visual identity.
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 shrink-0">
-      <path d="M8.5 3.5H4.5v13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12.5 6.5 16 10l-3.5 3.5M16 10H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
