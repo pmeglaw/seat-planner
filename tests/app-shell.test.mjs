@@ -81,12 +81,37 @@ test("sub-pages keep the bar, swap the center slot for a title, and wire the ski
   assert.ok(screen.getByRole("button", { name: "Account — jane@example.com" }));
 });
 
-test("the skip link is the bar's first focusable — the document's first tab stop", async () => {
+test("the skip link is the bar's first focusable — the document's first tab stop — then the rail toggle", async () => {
   await renderElement(shellElement({ pathname: "/admin/settings" }));
   const skipLink = screen.getByRole("link", { name: "Skip to content" });
   const focusable = bar().querySelectorAll("a, button, input, [tabindex]");
   assert.equal(focusable[0], skipLink, "the skip link must be the first focusable element inside the bar");
+  assert.equal(
+    focusable[1],
+    screen.getByRole("button", { name: "Expand navigation" }),
+    "the rail toggle sits in the bar's corner cell, right after the skip link"
+  );
   assert.ok(bar().compareDocumentPosition(nav()) & Node.DOCUMENT_POSITION_FOLLOWING, "the bar precedes the rail in DOM order");
+});
+
+// The corner toggle (owner call 2026-08-14): the hamburger lives in the
+// bar's w-12 corner cell, directly above the rail column it controls —
+// AppShell owns the state, so the two chrome pieces stay in step.
+test("the bar's corner toggle expands and collapses the rail", async () => {
+  await renderElement(shellElement({ pathname: "/admin" }));
+  const toggle = screen.getByRole("button", { name: "Expand navigation" });
+  assert.equal(toggle.getAttribute("aria-controls"), "app-rail");
+  assert.ok(nav().className.includes("w-12"));
+
+  await act(async () => fireEvent.click(toggle));
+
+  assert.equal(toggle.getAttribute("aria-expanded"), "true");
+  assert.ok(nav().className.includes("w-[208px]"), "expanding must widen the rail overlay");
+
+  await act(async () => fireEvent.keyDown(window, { key: "Escape" }));
+
+  assert.ok(nav().className.includes("w-12"), "Escape must collapse the rail");
+  assert.equal(document.activeElement, toggle, "Escape must return focus to the corner toggle");
 });
 
 test("reception maps to its own active item and skip target", async () => {

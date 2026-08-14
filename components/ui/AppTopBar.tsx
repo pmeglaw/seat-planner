@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import type { RefObject } from "react";
 import { useCallback } from "react";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import type { AppRailActive } from "@/components/ui/AppRail";
@@ -35,9 +36,16 @@ export type AppTopBarProps = {
   roleLabel: string;
   skipLink: { href: string; label: string };
   onSlotElement: (slot: AppTopBarSlot, element: HTMLElement | null) => void;
+  /** Rail expansion state + toggle (owner call 2026-08-14: the hamburger
+   *  lives in the bar's corner cell, directly above the rail it controls;
+   *  AppShell owns the state). The ref lets the rail return focus here on
+   *  Escape/scrim dismissal. */
+  railOpen: boolean;
+  onToggleRail: () => void;
+  railToggleRef: RefObject<HTMLButtonElement | null>;
 };
 
-export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement }: AppTopBarProps) {
+export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, railOpen, onToggleRail, railToggleRef }: AppTopBarProps) {
   const pathname = usePathname();
   const sectionTitle = SECTION_TITLES[active];
 
@@ -68,17 +76,31 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement }:
         {skipLink.label}
       </a>
       <div className="flex min-w-0 shrink-0 items-center">
-        {/* Corner cell: same 48px column as the rail's icon cells, so the mark
-            lines up with the icons below it and the L reads continuous. */}
-        <span aria-hidden="true" className="flex h-full w-12 shrink-0 items-center justify-center">
+        {/* Corner cell: the rail toggle sits in the same 48px column as the
+            rail's icon cells, directly above the overlay it controls — the
+            L's corner is the menu control (owner call 2026-08-14). Quiet
+            styling on purpose: hover brightens the glyph only, no row fill. */}
+        <button
+          ref={railToggleRef}
+          type="button"
+          onClick={onToggleRail}
+          aria-expanded={railOpen}
+          aria-controls="app-rail"
+          aria-label={railOpen ? "Collapse navigation" : "Expand navigation"}
+          title={railOpen ? "Collapse navigation" : "Expand navigation"}
+          className="flex h-full w-12 shrink-0 items-center justify-center text-[var(--admin-chrome-muted)] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
+        >
+          <HamburgerIcon />
+        </button>
+        {/* Brand shifted right of the toggle. leading-[18px], not
+            leading-none: truncate's overflow-hidden clips descenders (the g)
+            at line-height 1. Wordmark only — the "· Seat Planner" suffix was
+            dropped (owner call 2026-08-14): the centered document title
+            carries the app identity now. */}
+        <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
           <Image src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
         </span>
-        {/* leading-[18px], not leading-none: truncate's overflow-hidden clips
-            descenders (the g) at line-height 1. Wordmark only — the "· Seat
-            Planner" suffix was dropped (owner call 2026-08-14): the centered
-            document title carries the app identity now, and two competing
-            text blocks read as noise. */}
-        <div aria-hidden="true" translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
+        <div aria-hidden="true" translate="no" className="ml-2 hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
           Megeredchian Law
         </div>
       </div>
@@ -111,5 +133,15 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement }:
         <AccountMenu email={email} roleLabel={roleLabel} autoCloseKey={pathname} />
       </div>
     </header>
+  );
+}
+
+function HamburgerIcon() {
+  // Moved from AppRail with the toggle (17px, stroke 1.6 — the one glyph
+  // that keeps its original heavier stroke; see AppRail's icon-sizing note).
+  return (
+    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <path d="M3 5.5h14M3 10h14M3 14.5h14" />
+    </svg>
   );
 }

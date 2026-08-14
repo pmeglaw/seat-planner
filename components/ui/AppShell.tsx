@@ -117,6 +117,25 @@ export function AppShell({ email, isAdmin, skewDetector, children }: AppShellPro
   const [handlers, setHandlers] = useState<ShellNavigationHandlers | null>(null);
   const [slots, setSlots] = useState<AppShellSlots>({ left: null, center: null, right: null });
 
+  // Rail expansion state lives HERE because its toggle moved into the bar's
+  // corner cell (owner call 2026-08-14) while the overlay it controls is the
+  // rail — the two chrome pieces share it through props. The toggle ref lets
+  // the rail hand keyboard focus back to the corner button on Escape/scrim
+  // dismissal, same contract the in-rail hamburger had.
+  const [railOpen, setRailOpen] = useState(false);
+  const railToggleRef = useRef<HTMLButtonElement | null>(null);
+  const focusRailToggle = useCallback(() => railToggleRef.current?.focus(), []);
+
+  // Route committed: close the overlay so it can't linger over the incoming
+  // page. Adjust-state-during-render on purpose (own state, legal) — React
+  // re-renders immediately with the closed state, so the stale overlay never
+  // paints. (This moved up from AppRail with the state.)
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (lastPathname !== pathname) {
+    setLastPathname(pathname);
+    setRailOpen(false);
+  }
+
   // Stable register identity: the context value must not change per render,
   // or every consumer's registration effect would re-fire in a loop.
   const register = useCallback((next: ShellNavigationHandlers) => {
@@ -151,12 +170,18 @@ export function AppShell({ email, isAdmin, skewDetector, children }: AppShellPro
             roleLabel={isAdmin ? "Admin" : "Viewer"}
             skipLink={SKIP_LINKS[active]}
             onSlotElement={setSlotElement}
+            railOpen={railOpen}
+            onToggleRail={() => setRailOpen(current => !current)}
+            railToggleRef={railToggleRef}
           />
           <AppRail
             active={active}
             railMode={isAdmin ? "admin" : "viewer"}
             onNavigate={handlers?.guard}
             onOpenAskPlanner={handlers?.openAskPlanner}
+            open={railOpen}
+            onOpenChange={setRailOpen}
+            focusToggle={focusRailToggle}
             {...(skewDetector ? { skewDetector } : {})}
           />
         </div>

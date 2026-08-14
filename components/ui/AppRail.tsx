@@ -3,7 +3,7 @@
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { deploySkewMonitor, type SkewDetector } from "@/lib/deploySkew";
 import { assignLocation } from "@/lib/fullNavigation";
 
@@ -34,6 +34,16 @@ export type AppRailActive = "map" | "management" | "settings" | "reception";
 
 export type AppRailProps = {
   active: AppRailActive;
+  /** Expansion state — CONTROLLED by AppShell since the toggle moved into
+   *  AppTopBar's corner cell (owner call 2026-08-14). The rail still owns
+   *  every dismissal gesture (Escape, scrim, item click) and reports them
+   *  through onOpenChange. */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** Return keyboard focus to the bar's corner toggle after a dismissal that
+   *  asked for it (Escape / scrim click) — the contract the in-rail
+   *  hamburger's ref used to serve. */
+  focusToggle?: () => void;
   /** "admin" (default) shows the full admin nav + Ask Planner. "viewer" is
    *  the /reception-for-viewers shell: only role-safe items (Reception,
    *  Viewer) — admin routes would bounce a viewer at the guard. */
@@ -75,19 +85,23 @@ const NAV_ITEMS: NavItem[] = [
 
 export function AppRail({
   active,
+  open,
+  onOpenChange,
+  focusToggle,
   railMode = "admin",
   onNavigate,
   onOpenAskPlanner,
   skewDetector = deploySkewMonitor
 }: AppRailProps) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const hamburgerRef = useRef<HTMLButtonElement | null>(null);
 
-  const collapse = useCallback((refocus: boolean) => {
-    setOpen(false);
-    if (refocus) hamburgerRef.current?.focus();
-  }, []);
+  const collapse = useCallback(
+    (refocus: boolean) => {
+      onOpenChange(false);
+      if (refocus) focusToggle?.();
+    },
+    [onOpenChange, focusToggle]
+  );
 
   // Navigation watchdog. Prod probes (2026-08-05) caught the App Router
   // client stalling on a rail navigation: the RSC response arrived (Vercel
@@ -108,18 +122,11 @@ export function AppRail({
     },
     []
   );
-  // Route committed, part 1 — transient chrome. Close the overlay drawer the
-  // moment the pathname changes so it can't linger over the incoming page
-  // (the pre-shell rail got this for free by unmounting). The account menu's
-  // equivalent lives in AppTopBar now (key={pathname} on AccountMenu).
-  // Adjust-state-during-render on purpose, not an effect: React re-renders
-  // immediately with the closed state, so the stale overlay never paints.
-  const [lastPathname, setLastPathname] = useState(pathname);
-  if (lastPathname !== pathname) {
-    setLastPathname(pathname);
-    setOpen(false);
-  }
-  // Route committed, part 2 — the client router is provably alive: disarm the
+  // Route-committed overlay close lives in AppShell now (it owns the lifted
+  // `open` state and adjusts it during its own render, so the stale overlay
+  // never paints); the account menu's equivalent is AccountMenu's
+  // autoCloseKey in AppTopBar.
+  // Route committed — the client router is provably alive: disarm the
   // watchdog. Also re-probe deploy skew on every route change: the detector
   // throttles itself to one fetch/min, so this keeps the pre-shell "probe on
   // page mount" cadence without per-navigation cost.
@@ -236,27 +243,9 @@ export function AppRail({
           open ? "w-[208px] shadow-[8px_0_24px_rgba(0,0,0,.35)]" : "w-12"
         ].join(" ")}
       >
-        <button
-          ref={hamburgerRef}
-          type="button"
-          onClick={() => setOpen(current => !current)}
-          aria-expanded={open}
-          aria-controls="app-rail"
-          aria-label={open ? "Collapse navigation" : "Expand navigation"}
-          title={open ? "Collapse navigation" : "Expand navigation"}
-          // No ITEM_IDLE: the hamburger is a chrome toggle, not a nav item —
-          // the full-row hover fill made its "Menu" caption row highlight
-          // exactly like the destinations below it (owner call 2026-08-14).
-          // Hover only brightens the glyph; the focus ring from ITEM stays.
-          className={[ITEM, "shrink-0 text-[var(--admin-chrome-muted)] transition-colors hover:text-white"].join(" ")}
-        >
-          <span className={CELL}>
-            <HamburgerIcon />
-          </span>
-          {/* No visible caption (owner call 2026-08-14): the expanded items
-              label themselves, and a "Menu" caption row read as furniture.
-              The button's aria-label above carries the accessible name. */}
-        </button>
+        {/* No toggle row: the hamburger lives in AppTopBar's corner cell,
+            directly above this column (owner call 2026-08-14) — the rail
+            starts straight at its destinations. */}
         {NAV_ITEMS.filter(item => railMode === "admin" || item.key === "reception").map(item => (
           <Link
             key={item.key}
@@ -355,14 +344,6 @@ function NavItemBody({ icon, label, open }: { icon: ReactNode; label: string; op
 // (lines 25-60): hamburger 28, map 32, management (stacked rows) 40, gear 44,
 // viewer (concentric circles) 53. All 17px, stroke 1.5 except the hamburger
 // (1.6) — see the file-header note on sizing.
-
-function HamburgerIcon() {
-  return (
-    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-      <path d="M3 5.5h14M3 10h14M3 14.5h14" />
-    </svg>
-  );
-}
 
 function MapIcon() {
   return (

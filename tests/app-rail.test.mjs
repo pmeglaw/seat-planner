@@ -21,17 +21,38 @@ beforeEach(() => {
 });
 afterEach(() => cleanup());
 
-function renderRail(overrides = {}) {
-  return renderElement(
+// The rail is CONTROLLED now (its toggle lives in AppTopBar's corner cell;
+// AppShell owns the open state) — this harness stands in for AppShell: it
+// holds the state, provides a stand-in toggle button, and records
+// focusToggle calls the way the bar's corner button would receive focus.
+let focusToggleCalls;
+function Harness({ overrides }) {
+  const [open, setOpen] = React.useState(false);
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement(
+      "button",
+      { type: "button", "aria-expanded": open, onClick: () => setOpen(current => !current) },
+      "Harness toggle"
+    ),
     React.createElement(AppRail, {
       active: "map",
+      open,
+      onOpenChange: setOpen,
+      focusToggle: () => focusToggleCalls.push("focus"),
       ...overrides
     })
   );
 }
 
+function renderRail(overrides = {}) {
+  focusToggleCalls = [];
+  return renderElement(React.createElement(Harness, { overrides }));
+}
+
 const nav = () => screen.getByRole("navigation", { name: "Admin sections" });
-const hamburger = () => screen.getByRole("button", { name: /(Expand|Collapse) navigation/ });
+const harnessToggle = () => screen.getByRole("button", { name: "Harness toggle" });
 
 // Nav items are <Link>s (role link), not buttons — they navigate natively
 // before hydration (default auto prefetch; see AppRail's prefetch note);
@@ -80,25 +101,26 @@ test("railMode viewer hides the admin nav items and Ask Planner, keeps Reception
   assert.ok(screen.getByRole("link", { name: "Open viewer surface" }));
 });
 
-test("the rail renders no skip anchor — the skip link lives in AppTopBar (top-bar-first chrome)", async () => {
+test("the rail renders neither a skip anchor nor a toggle — both live in AppTopBar", async () => {
   await renderRail();
   assert.equal(screen.queryByRole("link", { name: /Skip to/ }), null);
-  // And the hamburger is the rail's first focusable, since nothing precedes it.
+  assert.equal(nav().querySelector('[aria-controls="app-rail"]'), null, "the rail must not host its own toggle");
+  // The first nav destination is the rail's first focusable, since nothing
+  // precedes the items anymore.
   const focusable = nav().querySelectorAll('a[href], button:not([tabindex="-1"])');
-  assert.equal(focusable[0], hamburger(), "the hamburger must be the rail's first focusable element");
+  assert.equal(focusable[0], screen.getByRole("link", { name: "Seat map" }), "the first destination must be the rail's first focusable");
 });
 
-test("hamburger toggles aria-expanded and flips the rail width class w-12 <-> w-[208px]", async () => {
+test("the controlled open prop flips the rail width class w-12 <-> w-[208px]", async () => {
   await renderRail();
-  const button = hamburger();
   const navEl = nav();
-  assert.equal(button.getAttribute("aria-expanded"), "false");
+  assert.equal(navEl.getAttribute("data-expanded"), "false");
   assert.ok(navEl.className.includes("w-12"));
   assert.ok(!navEl.className.includes("w-[208px]"));
 
-  await act(async () => fireEvent.click(button));
+  await act(async () => fireEvent.click(harnessToggle()));
 
-  assert.equal(button.getAttribute("aria-expanded"), "true");
+  assert.equal(navEl.getAttribute("data-expanded"), "true");
   assert.ok(navEl.className.includes("w-[208px]"));
   assert.ok(!navEl.className.includes("w-12"));
 });
@@ -112,7 +134,7 @@ test("item labels stay mounted (opacity swap, not conditional render) across col
   const label = management.querySelector("span:last-child");
   assert.ok(label?.className.includes("opacity-0"));
 
-  await act(async () => fireEvent.click(hamburger()));
+  await act(async () => fireEvent.click(harnessToggle()));
 
   assert.ok(label?.className.includes("opacity-100"));
 });
@@ -176,29 +198,27 @@ test("the Viewer item is reachable and routes through onNavigate", async () => {
   assert.deepEqual(pushed, ["/"]);
 });
 
-test("Escape collapses an expanded rail and returns focus to the hamburger", async () => {
+test("Escape collapses an expanded rail and asks for focus on the corner toggle", async () => {
   await renderRail();
-  const button = hamburger();
-  await act(async () => fireEvent.click(button));
-  assert.equal(button.getAttribute("aria-expanded"), "true");
+  await act(async () => fireEvent.click(harnessToggle()));
+  assert.equal(nav().getAttribute("data-expanded"), "true");
 
   await act(async () => fireEvent.keyDown(window, { key: "Escape" }));
 
-  assert.equal(button.getAttribute("aria-expanded"), "false");
-  assert.equal(document.activeElement, button);
+  assert.equal(nav().getAttribute("data-expanded"), "false");
+  assert.deepEqual(focusToggleCalls, ["focus"], "Escape must hand focus back through focusToggle");
 });
 
-test("clicking the outside scrim collapses an expanded rail and returns focus to the hamburger", async () => {
+test("clicking the outside scrim collapses an expanded rail and asks for focus on the corner toggle", async () => {
   await renderRail();
-  const button = hamburger();
-  await act(async () => fireEvent.click(button));
+  await act(async () => fireEvent.click(harnessToggle()));
   const scrim = document.querySelector("[data-rail-scrim]");
   assert.ok(scrim, "a scrim renders while the rail is expanded");
 
   await act(async () => fireEvent.click(scrim));
 
-  assert.equal(button.getAttribute("aria-expanded"), "false");
-  assert.equal(document.activeElement, button);
+  assert.equal(nav().getAttribute("data-expanded"), "false");
+  assert.deepEqual(focusToggleCalls, ["focus"], "scrim dismissal must hand focus back through focusToggle");
 });
 
 test("with onOpenAskPlanner present, the AI item calls it instead of navigating", async () => {
@@ -241,7 +261,7 @@ test("the AI link routes its query href through onNavigate", async () => {
 // early return also skips collapse, so the rail visibly stays open.
 test("a ctrl-click on the AI link arms no watchdog, keeps the rail open, and navigates nothing", async () => {
   await renderRail();
-  await act(async () => fireEvent.click(hamburger()));
+  await act(async () => fireEvent.click(harnessToggle()));
   const scheduled = [];
   const originalSetTimeout = window.setTimeout;
   window.setTimeout = (fn, ms, ...rest) => {
@@ -254,7 +274,7 @@ test("a ctrl-click on the AI link arms no watchdog, keeps the rail open, and nav
     window.setTimeout = originalSetTimeout;
   }
   assert.ok(!scheduled.includes(4000), "modified click must not arm the 4s nav watchdog");
-  assert.equal(hamburger().getAttribute("aria-expanded"), "true", "modified click must not collapse the rail");
+  assert.equal(nav().getAttribute("data-expanded"), "true", "modified click must not collapse the rail");
   assert.deepEqual(pushed, []);
 });
 
@@ -374,7 +394,7 @@ test("a plain click on the AI link arms the 4s nav watchdog and navigates", asyn
 // into a navigation the user already superseded.
 test("a committed route change disarms the pending nav watchdog", async () => {
   configureContext({ router: { push: href => pushed.push(href) }, pathname: "/admin" });
-  const props = { active: "map" };
+  const props = { active: "map", open: false, onOpenChange() {} };
   const utils = await renderElement(React.createElement(AppRail, props));
 
   const armed = [];
