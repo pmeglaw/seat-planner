@@ -7,10 +7,6 @@ import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 type AccountMenuProps = {
   email: string;
   roleLabel: string;
-  // Map surface only: Settings stays behind the identity chip (owner
-  // preference) — as a labeled menu item. The callback runs the unsaved-edits
-  // guard and, when allowed, performs the navigation itself.
-  onSelectSettings?: () => void;
   /** Persistent-chrome hosts (AppTopBar): pass the current pathname. When it
    *  changes, the menu closes so it can't linger over an incoming page, and —
    *  if closing stranded keyboard focus on <body> (back/forward with the menu
@@ -25,11 +21,11 @@ const menuItemClassName =
 
 /**
  * The chrome bar's identity chip, opened into a small account menu: signed-in
- * email + role, the map surface's Settings entry, and Sign out. Follows the
- * map kebab's menu-button contract — first item focused on open, arrow-key
- * roving, Escape/Tab close with trigger refocus.
+ * email + role, and Sign out. Follows the map kebab's menu-button contract —
+ * first item focused on open, arrow-key roving, Escape/Tab close with trigger
+ * refocus.
  */
-export function AccountMenu({ email, roleLabel, onSelectSettings, autoCloseKey }: AccountMenuProps) {
+export function AccountMenu({ email, roleLabel, autoCloseKey }: AccountMenuProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -154,29 +150,6 @@ export function AccountMenu({ email, roleLabel, onSelectSettings, autoCloseKey }
               <div className="truncate text-[12.5px] font-medium text-[var(--admin-chrome-text)]">{email}</div>
               <div className="text-[11px] text-[var(--admin-chrome-muted)]">{roleLabel}</div>
             </div>
-            {onSelectSettings && (
-              <button
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                onClick={() => {
-                  setOpen(false);
-                  onSelectSettings();
-                }}
-                className={menuItemClassName}
-              >
-                <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 shrink-0">
-                  <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.5" />
-                  <path
-                    d="M10 3v2.2M10 14.8V17M17 10h-2.2M5.2 10H3M14.9 5.1l-1.5 1.5M6.6 13.4l-1.5 1.5M14.9 14.9l-1.5-1.5M6.6 6.6 5.1 5.1"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                Open settings
-              </button>
-            )}
             <form action="/auth/signout" method="post" className="contents">
               <button type="submit" role="menuitem" tabIndex={-1} className={menuItemClassName}>
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 shrink-0">
