@@ -73,9 +73,13 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement }:
         <span aria-hidden="true" className="flex h-full w-12 shrink-0 items-center justify-center">
           <Image src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
         </span>
-        {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
+        {/* leading-[18px], not leading-none: truncate's overflow-hidden clips
+            descenders (the g) at line-height 1. Wordmark only — the "· Seat
+            Planner" suffix was dropped (owner call 2026-08-14): the centered
+            document title carries the app identity now, and two competing
+            text blocks read as noise. */}
         <div aria-hidden="true" translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
-          Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
+          Megeredchian Law
         </div>
       </div>
       {/* Left slot: the map surface portals its command cluster (undo/redo,

@@ -2546,7 +2546,10 @@ export function SeatMap({
   // Left slot: divider + undo/redo + kebab — the bar acts (canvas finds).
   const barCommandCluster = canEdit ? (
     <>
-      <span aria-hidden="true" className={`mx-2.5 hidden h-[26px] lg:block ${adminChromeDividerRule}`} />
+      {/* Always-visible divider (aesthetic pass 2026-08-14): the command
+          cluster must read as its own group, clearly apart from the brand
+          wordmark — reference-bar Save/Fork/Share separation. */}
+      <span aria-hidden="true" className={`mx-3 h-5 ${adminChromeDividerRule}`} />
       {/* div, not <nav>: role="group" is not an allowed role on nav (axe
           aria-allowed-role), and this is a grouped tool cluster, not a
           navigation landmark. */}

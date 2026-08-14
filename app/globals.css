@@ -180,14 +180,15 @@
      Declared on :root rather than on the theme classes because `html` (below)
      has to read it for scroll-padding-top, and a token defined on a descendant
      is out of scope there.
-     36px on every surface (owner call: the top chrome keeps its original
-     size). The v12 handoff asks for 48px; if that is ever revisited, change
-     this one value and add a `.shell-theme { --admin-chrome-h: 36px }` override
-     after the theme block to hold the viewer back.
+     40px (owner call 2026-08-14, top-bar-first chrome): the bar is THE app
+     chrome now and 36px left its tenants shoulder-to-shoulder. The viewer
+     header keeps its own literal h-9 and does not read this token, so no
+     hold-back override is needed there (only its scroll-padding gains 4px of
+     harmless slack).
      Every full-height chrome item tracks this value instead of a literal: the
      active state is a 2px bottom border, and it only lands on the bar's bottom
      edge while item height == bar height. */
-  --admin-chrome-h: 36px;
+  --admin-chrome-h: 40px;
 
   --sp-focus-ring-color: rgb(255 87 21 / 0.9);
   --sp-focus-ring-width: 4px;
