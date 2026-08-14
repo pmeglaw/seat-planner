@@ -16,7 +16,7 @@
  * be a strange remnant to inline instead.
  *
  * The `<header>` element's own class list is deliberately NOT here. It stays an
- * inline literal in each file because tests/accessibility-source.test.mjs:548-550
+ * inline literal in each file because tests/accessibility-source.test.mjs
  * pins the exact `<header className="sticky top-0 ` prefix per file, and hoisting
  * it into a constant would delete the string that test greps for.
  */
