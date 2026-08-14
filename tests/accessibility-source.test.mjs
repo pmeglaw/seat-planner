@@ -98,7 +98,7 @@ test("Carbon-for-AI tokens (--admin-ai-*) stay exclusive to Ask Planner surfaces
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const railSource = await readSource("../components/ui/AppRail.tsx");
   const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
-  const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
+  const shellBarSource = await readSource("../components/ui/AppTopBar.tsx");
   const AI_TOKEN = "--admin-ai-";
 
   function countOccurrences(text, needle) {
@@ -200,7 +200,10 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   for (const source of [viewerFinderSource, findPaletteSource]) {
     assert.doesNotMatch(source, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
   }
-  assert.match(seatMapSource, /\{canEdit && \([\s\S]*draftStatusLabel/);
+  // Top-bar-first chrome: the publish cluster lives in barActionCluster,
+  // gated by the same canEdit condition (ternary form) before it portals
+  // into the shared bar.
+  assert.match(seatMapSource, /const barActionCluster = canEdit \? \([\s\S]*?draftStatusLabel/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AskPlannerDrawer/);
   // The anchor has moved twice: Swap left for the canvas action bar, then Move
   // was hidden behind MOVE_UI_ENABLED (2026-07-30). Delete is the surviving
@@ -743,7 +746,7 @@ test("the Ask Planner trigger's accessible name contains the badge it renders", 
 test("chrome bars stay pinned and the filter menu precedes search in the tab order", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
-  const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
+  const shellBarSource = await readSource("../components/ui/AppTopBar.tsx");
   const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
   const globalsSource = await readSource("../app/globals.css");
 
@@ -785,24 +788,27 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   assert.ok(viewerPanelIndex < viewerSearchIndex, "viewer filter panel must precede the search in DOM order");
 });
 
-test("the admin account menu surfaces identity and sign-out from the rail on every sub-page", async () => {
+test("the admin account menu surfaces identity and sign-out from the top bar on every surface", async () => {
   const railSource = await readSource("../components/ui/AppRail.tsx");
-  const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
+  const shellBarSource = await readSource("../components/ui/AppTopBar.tsx");
+  const accountMenuSource = await readSource("../components/ui/AccountMenu.tsx");
 
-  // v12 (2026-07-31 rail shell, Task 3): Settings is no longer specially
-  // promoted in the sub-page bar — it's just one of AppRail's three nav items,
-  // present identically on every admin surface (map included). The
-  // AccountMenu-in-shell-bar pin moves here: identity + sign-out now live in
-  // AppRail's own account cell (menu role + sign-out form), not a shared
-  // <AccountMenu> mounted in the sub-page bar.
-  assert.match(railSource, /role="menu"/);
-  assert.match(railSource, /role="menuitem"/);
-  assert.match(railSource, /<form action="\/auth\/signout" method="post"/);
-  assert.match(railSource, /Sign out/);
-  // With identity + sign-out in the rail, the sub-page bar itself must NOT
-  // double as a second account or settings control (2026-07-16 session layer,
-  // still true, just relocated).
-  assert.doesNotMatch(shellBarSource, /<AccountMenu/);
+  // Top-bar-first chrome (2026-08-14): identity + sign-out live in the shared
+  // AccountMenu mounted in AppTopBar's right cluster — present identically on
+  // every shell surface (map included), the same component the viewer header
+  // uses. The menu semantics (menu role, menuitem, POST sign-out form) are
+  // AccountMenu's own.
+  assert.match(shellBarSource, /<AccountMenu/);
+  assert.match(accountMenuSource, /role="menu"/);
+  assert.match(accountMenuSource, /role="menuitem"/);
+  assert.match(accountMenuSource, /<form action="\/auth\/signout" method="post"/);
+  assert.match(accountMenuSource, /Sign out/);
+  // With identity + sign-out in the bar, the rail must NOT double as a second
+  // account control (one sign-out affordance per chrome, relocated 2026-08-14),
+  // and the bar must not promote a special Settings entry either — Settings
+  // stays a plain rail nav item.
+  assert.doesNotMatch(railSource, /<form action="\/auth\/signout"/);
+  assert.doesNotMatch(railSource, /role="menu"/);
   assert.doesNotMatch(shellBarSource, /onSelectSettings/);
   assert.doesNotMatch(shellBarSource, /<Link[^>]*aria-label="Open settings"/);
 });
@@ -862,13 +868,11 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
 
   // A skip link is the first focusable on both map surfaces, targeting a
   // focusable map region — the chrome gauntlet is 8+ tab stops otherwise.
-  // The admin map's skip link is no longer a standalone anchor in this file
-  // (visual-pass fix: that placement put it AFTER AppRail's 7 controls in
-  // DOM order, making it the 8th tab stop) — the persistent AppShell maps
-  // the route to it and AppRail renders it as the rail's first child, before
-  // the hamburger. See AppRail.tsx's ordering pin below and
-  // app-rail.test.mjs's ct assertion for the actual first-focusable
-  // guarantee.
+  // Top-bar-first chrome: the persistent AppShell maps the route to the
+  // link and AppTopBar renders it as the bar's — and the document's — first
+  // focusable (the bar precedes the rail in DOM order). See AppTopBar.tsx's
+  // ordering pin below and app-shell.test.mjs's ct assertion for the actual
+  // first-focusable guarantee.
   const appShellSourceForSkip = await readSource("../components/ui/AppShell.tsx");
   assert.match(appShellSourceForSkip, /map: \{ href: "#planning-canvas", label: "Skip to seat map" \}/);
   assert.doesNotMatch(seatMapSource, /<a\s+href="#planning-canvas"/);
@@ -876,14 +880,15 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   assert.match(viewerSource, /href="#viewer-seat-map"[\s\S]{0,420}Skip to seat map/);
   assert.match(viewerSource, /id="viewer-seat-map"/);
 
-  // AppRail itself must render skipLink before the hamburger button — the
-  // concrete anchor for "first child of the rail" (source-text can't observe
-  // actual tab order; app-rail.test.mjs's ct test does).
-  const railSourceForSkip = await readSource("../components/ui/AppRail.tsx");
-  const skipLinkIndex = railSourceForSkip.indexOf("{skipLink && (");
-  const hamburgerIndex = railSourceForSkip.indexOf("ref={hamburgerRef}");
-  assert.ok(skipLinkIndex >= 0 && hamburgerIndex >= 0, "AppRail must still define both skipLink and the hamburger button");
-  assert.ok(skipLinkIndex < hamburgerIndex, "skipLink must render before the hamburger, so it is the rail's first focusable");
+  // AppTopBar itself must render the skip anchor before every other control
+  // in the bar — the concrete source anchor for "first focusable" (source
+  // text can't observe actual tab order; app-shell.test.mjs's ct test does).
+  const topBarSourceForSkip = await readSource("../components/ui/AppTopBar.tsx");
+  const skipLinkIndex = topBarSourceForSkip.indexOf("href={skipLink.href}");
+  const brandIndex = topBarSourceForSkip.indexOf("megeredchian-mark.png");
+  const accountIndex = topBarSourceForSkip.indexOf("<AccountMenu");
+  assert.ok(skipLinkIndex >= 0 && brandIndex >= 0 && accountIndex >= 0, "AppTopBar must define the skip link, brand, and account menu");
+  assert.ok(skipLinkIndex < brandIndex && skipLinkIndex < accountIndex, "the skip link must render before everything else in the bar, so it is the document's first focusable");
 });
 
 test("admin search clear controls use one clear path with distinct accessible names", async () => {
@@ -1101,7 +1106,7 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
-  const shellBarSource = await readSource("../components/ui/AdminShellBar.tsx");
+  const shellBarSource = await readSource("../components/ui/AppTopBar.tsx");
   const managementSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
   const managementPageSource = await readSource("../app/(shell)/admin/management/page.tsx");
   const settingsPageSource = await readSource("../app/(shell)/admin/settings/page.tsx");
@@ -1146,11 +1151,10 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   assert.match(loginPageSource, /You’re/);
 
   // The admin sub-pages get the same skip affordance the maps have, via
-  // AppRail's skipLink prop (not the shell bar — visual-pass fix: the shell
-  // bar's copy put the skip link behind all 7 rail controls, making it the
-  // 8th tab stop instead of the 1st). The persistent AppShell owns the
-  // route → skip-target mapping now; each page still owns its landing
-  // marker.
+  // AppTopBar's skipLink prop (top-bar-first chrome: the bar renders it as
+  // the document's first focusable). The persistent AppShell owns the
+  // route → skip-target mapping; each page still owns its landing marker,
+  // and no literal skip copy may be hardcoded in the bar itself.
   assert.doesNotMatch(shellBarSource, /Skip to content/);
   const appShellSource = await readSource("../components/ui/AppShell.tsx");
   assert.match(appShellSource, /management: \{ href: "#admin-subpage-main", label: "Skip to content" \}/);

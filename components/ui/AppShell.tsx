@@ -3,8 +3,8 @@
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AdminShellBar } from "@/components/ui/AdminShellBar";
 import { AppRail, type AppRailActive } from "@/components/ui/AppRail";
+import { AppTopBar, type AppTopBarSlot } from "@/components/ui/AppTopBar";
 import type { SkewDetector } from "@/lib/deploySkew";
 
 // Persistent app shell for the (shell) route group (/admin, /admin/management,
@@ -14,14 +14,22 @@ import type { SkewDetector } from "@/lib/deploySkew";
 // the whole chrome into a route-level loading wash (the pre-shell behavior,
 // where every page mounted its own rail).
 //
-// The rail's per-surface wiring (active item, skip link, the sub-page brand
-// bar) derives from usePathname, so it tracks navigation without remounting.
-// Surface-owned behavior — SeatMap's unsaved-edits veto and its in-place Ask
-// Planner opener — reaches the rail through the registration context below:
-// the page component registers on mount and unregisters on unmount, and the
-// rail reads whatever is currently registered. That keeps the veto contract
-// AppRail has always had (tests/app-rail.test.mjs) while the rail outlives
-// any one page.
+// Top-bar-first (2026-08-14): the chrome is AppTopBar (full-width, spans the
+// viewport top on EVERY shell route, map included) plus AppRail hanging below
+// it. The bar's per-surface wiring (center title, skip link, slot contents)
+// derives from usePathname, so it tracks navigation without remounting.
+// Surface-owned behavior reaches the persistent chrome two ways:
+// - handlers (SeatMap's unsaved-edits veto and its in-place Ask Planner
+//   opener) through the registration context below — the page registers on
+//   mount, unregisters on unmount, the rail reads whatever is registered.
+//   That keeps the veto contract AppRail has always had
+//   (tests/app-rail.test.mjs) while the rail outlives any one page.
+// - live bar content (undo/redo, floor selector, publish) through the slots
+//   context: AppTopBar registers its slot DOM elements here and the map
+//   surface portals into them (useAppShellSlots below). Portals — not
+//   registered ReactNodes — because this content re-renders with rapidly
+//   changing surface state (undo depth, draft counts), which a
+//   register-once-read-through-refs contract cannot express.
 
 type NavigationGuard = (href: string, label: string) => boolean;
 
@@ -38,6 +46,24 @@ type AppShellContextValue = {
 };
 
 const AppShellContext = createContext<AppShellContextValue | null>(null);
+
+export type AppShellSlots = Record<AppTopBarSlot, HTMLElement | null>;
+
+// Separate context from the handler registration on purpose: slot elements
+// change on surface transitions (the center slot remounts when the bar swaps
+// between title and slot mode), and a combined context value would re-fire
+// every consumer's registration effect on each of those — the slots context
+// churns freely while the registration context stays referentially stable.
+const AppShellSlotsContext = createContext<AppShellSlots | null>(null);
+
+/**
+ * The top bar's live slot elements (left/center/right), or null outside a
+ * shell ancestor (standalone component harnesses). Surfaces portal their bar
+ * tenants into these; a null return means "render your standalone fallback".
+ */
+export function useAppShellSlots(): AppShellSlots | null {
+  return useContext(AppShellSlotsContext);
+}
 
 /**
  * Plug a surface's navigation handlers into the persistent rail. Safe to call
@@ -69,8 +95,8 @@ function activeFromPathname(pathname: string): AppRailActive {
 }
 
 // Per-surface skip-link targets (each page renders the matching focusable
-// marker). The rail renders the link as its first focusable — the contract
-// tests/accessibility-source.test.mjs pins.
+// marker). The top bar renders the link as its — and the document's — first
+// focusable; the contract tests/accessibility-source.test.mjs pins.
 const SKIP_LINKS: Record<AppRailActive, { href: string; label: string }> = {
   map: { href: "#planning-canvas", label: "Skip to seat map" },
   management: { href: "#admin-subpage-main", label: "Skip to content" },
@@ -89,6 +115,26 @@ export type AppShellProps = {
 export function AppShell({ email, isAdmin, skewDetector, children }: AppShellProps) {
   const pathname = usePathname();
   const [handlers, setHandlers] = useState<ShellNavigationHandlers | null>(null);
+  const [slots, setSlots] = useState<AppShellSlots>({ left: null, center: null, right: null });
+
+  // Rail expansion state lives HERE because its toggle moved into the bar's
+  // corner cell (owner call 2026-08-14) while the overlay it controls is the
+  // rail — the two chrome pieces share it through props. The toggle ref lets
+  // the rail hand keyboard focus back to the corner button on Escape/scrim
+  // dismissal, same contract the in-rail hamburger had.
+  const [railOpen, setRailOpen] = useState(false);
+  const railToggleRef = useRef<HTMLButtonElement | null>(null);
+  const focusRailToggle = useCallback(() => railToggleRef.current?.focus(), []);
+
+  // Route committed: close the overlay so it can't linger over the incoming
+  // page. Adjust-state-during-render on purpose (own state, legal) — React
+  // re-renders immediately with the closed state, so the stale overlay never
+  // paints. (This moved up from AppRail with the state.)
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (lastPathname !== pathname) {
+    setLastPathname(pathname);
+    setRailOpen(false);
+  }
 
   // Stable register identity: the context value must not change per render,
   // or every consumer's registration effect would re-fire in a loop.
@@ -98,31 +144,49 @@ export function AppShell({ email, isAdmin, skewDetector, children }: AppShellPro
   }, []);
   const contextValue = useMemo(() => ({ register }), [register]);
 
+  // Callback-ref sink for the bar's slot elements. The identity guard matters:
+  // React re-runs callback refs with null-then-element around commits, and an
+  // unconditional set would loop the render.
+  const setSlotElement = useCallback((slot: AppTopBarSlot, element: HTMLElement | null) => {
+    setSlots(current => (current[slot] === element ? current : { ...current, [slot]: element }));
+  }, []);
+
   const active = activeFromPathname(pathname);
 
   return (
     <AppShellContext.Provider value={contextValue}>
-      {/* admin-theme + display:contents: the chrome tokens (--admin-*) are
-          class-scoped in globals.css and pages own their content themes
-          (reception is reception-theme), so the shell scopes ONLY its own
-          chrome. `contents` keeps the wrapper out of layout — the rail stays
-          position:fixed and the bar sticky against the viewport. */}
-      <div className="admin-theme contents">
-        <AppRail
-          active={active}
-          railMode={isAdmin ? "admin" : "viewer"}
-          email={email}
-          roleLabel={isAdmin ? "Admin" : "Viewer"}
-          onNavigate={handlers?.guard}
-          onOpenAskPlanner={handlers?.openAskPlanner}
-          skipLink={SKIP_LINKS[active]}
-          {...(skewDetector ? { skewDetector } : {})}
-        />
-        {/* The identity-only brand bar tops every sub-page; the map carries its
-            own richer header inside SeatMap, so it opts out. */}
-        {active !== "map" && <AdminShellBar />}
-      </div>
-      {children}
+      <AppShellSlotsContext.Provider value={slots}>
+        {/* admin-theme + display:contents: the chrome tokens (--admin-*) are
+            class-scoped in globals.css and pages own their content themes
+            (reception is reception-theme), so the shell scopes ONLY its own
+            chrome. `contents` keeps the wrapper out of layout — the bar stays
+            sticky and the rail position:fixed against the viewport. Bar before
+            rail in DOM: the bar tops the tab order, so its skip link is the
+            document's first focusable. */}
+        <div className="admin-theme contents">
+          <AppTopBar
+            active={active}
+            email={email}
+            roleLabel={isAdmin ? "Admin" : "Viewer"}
+            skipLink={SKIP_LINKS[active]}
+            onSlotElement={setSlotElement}
+            railOpen={railOpen}
+            onToggleRail={() => setRailOpen(current => !current)}
+            railToggleRef={railToggleRef}
+          />
+          <AppRail
+            active={active}
+            railMode={isAdmin ? "admin" : "viewer"}
+            onNavigate={handlers?.guard}
+            onOpenAskPlanner={handlers?.openAskPlanner}
+            open={railOpen}
+            onOpenChange={setRailOpen}
+            focusToggle={focusRailToggle}
+            {...(skewDetector ? { skewDetector } : {})}
+          />
+        </div>
+        {children}
+      </AppShellSlotsContext.Provider>
     </AppShellContext.Provider>
   );
 }

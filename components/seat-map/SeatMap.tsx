@@ -74,7 +74,8 @@ import {
 } from "@/components/seat-map/SeatMapDialogs";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { buildZoneWash } from "@/lib/zoneWash";
-import { useAppShellNavigation } from "@/components/ui/AppShell";
+import { createPortal } from "react-dom";
+import { useAppShellNavigation, useAppShellSlots } from "@/components/ui/AppShell";
 import { adminChromeDividerRule } from "@/components/ui/adminChrome";
 import { focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
@@ -584,6 +585,12 @@ export function SeatMap({
     guard: (href, label) => (isGuardedNavigationHref(href) ? beforeGuardedNavigation(href, label) : true),
     openAskPlanner: openAskPlannerDrawer
   });
+  // Top-bar-first chrome: this surface's bar tenants (undo/redo/kebab, the
+  // floor identity, Ask Planner + publish) render into AppTopBar's slot
+  // elements via portals — live-updating content can't ride the
+  // register-once handler contract above. null outside a shell ancestor
+  // (standalone harnesses), where the fallback header below renders instead.
+  const shellSlots = useAppShellSlots();
 
   // ?ask-planner=open contract (v12): a sub-page's AI rail item falls back to
   // <Link href="/admin?ask-planner=open"> when onOpenAskPlanner is absent
@@ -2322,16 +2329,18 @@ export function SeatMap({
       // every width, and the viewer centres its fit view from sm up — leaving
       // this lg-only would top-align the plan and pile the whole band under it
       // at 640-1023, splitting the two surfaces at the same widths.
-      ? "min-h-[300px] h-[calc(100svh-80px)] overflow-auto sm:flex sm:items-center sm:justify-center sm:overflow-hidden"
-      // The sm cap budgets the stacked chrome above the map, and it is the
-      // same 80px: 36px bar + 44px canvas search row. It read 88 while the
-      // search row was an estimate (36 + ~52); the row measures 44, so 88 left
-      // an 8px sliver of page below the map — the small version of the band
-      // the overview branch above exists to close. Below lg the pan viewport
-      // is the one vertical scroll owner (#197), so the page itself doesn't
-      // grow a second scrollbar next to it. On short windows the min-h floor
-      // wins and the page scrolls a little; that beats a stub of a map.
-      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px] sm:max-h-[calc(100svh-80px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+      ? "min-h-[300px] h-[calc(100svh-var(--admin-chrome-h)-44px)] overflow-auto sm:flex sm:items-center sm:justify-center sm:overflow-hidden"
+      // The sm cap budgets the stacked chrome above the map: the bar
+      // (--admin-chrome-h, token-derived so a bar resize can't strand a
+      // hardcoded sum again — the 36→40px bump caught exactly that) plus the
+      // 44px canvas search row. The row once read as ~52 (an estimate), which
+      // left an 8px sliver of page below the map — the small version of the
+      // band the overview branch above exists to close. Below lg the pan
+      // viewport is the one vertical scroll owner (#197), so the page itself
+      // doesn't grow a second scrollbar next to it. On short windows the
+      // min-h floor wins and the page scrolls a little; that beats a stub of
+      // a map.
+      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px] sm:max-h-[calc(100svh-var(--admin-chrome-h)-44px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     mapViewMode === "detail" && floor === "3" && !addSeatMode ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]" : ""
   ].join(" ");
@@ -2360,7 +2369,10 @@ export function SeatMap({
   // (root lg:h-screen down the lg:flex-1 / lg:min-h-0 chain), never from the
   // frame width the overview ResizeObserver computes.
   const mapStageClassName = "relative min-w-0 lg:flex lg:min-h-0 lg:flex-1";
-  const mapCrumbLabel = floor === "2" ? "Not yet mapped" : `Draft map · ${stats.total} ${stats.total === 1 ? "seat" : "seats"}`;
+  // No crumb at all (owner call 2026-08-14, round 2): the floor selector IS
+  // the document identity — layer state was tried as "Draft map · N seats",
+  // then "Draft", then removed; the legend carries the count and the publish
+  // cluster carries the pending-changes signal.
   const mapMarkerLayerClassName = [
     "absolute inset-0",
     mobileMapControlsHidden ? "hidden sm:block" : ""
@@ -2527,285 +2539,307 @@ export function SeatMap({
   const chromeKebabBtnActive = "relative flex h-full w-8 shrink-0 items-center justify-center bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
   const chromeMenuItem = "flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-chrome-text)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
+  // --- Top-bar tenants (top-bar-first chrome, 2026-08-14) -----------------
+  // Three clusters portal into AppTopBar's slots when a shell ancestor
+  // provides them (shellSlots); the standalone fallback header below the
+  // return renders the same consts inline, so harnesses that mount SeatMap
+  // without AppShell (the real-browser tier) keep every control.
+
+  // Left slot: divider + undo/redo + kebab — the bar acts (canvas finds).
+  const barCommandCluster = canEdit ? (
+    <>
+      {/* Always-visible divider (aesthetic pass 2026-08-14): the command
+          cluster must read as its own group, clearly apart from the brand
+          wordmark — reference-bar Save/Fork/Share separation. */}
+      <span aria-hidden="true" className={`mx-3 h-5 ${adminChromeDividerRule}`} />
+      {/* div, not <nav>: role="group" is not an allowed role on nav (axe
+          aria-allowed-role), and this is a grouped tool cluster, not a
+          navigation landmark. */}
+      <div role="group" aria-label="Admin command row" className="flex h-full shrink-0 items-center">
+        <button
+          type="button"
+          onClick={undoDraftEdit}
+          disabled={mutationInFlight || inspectorDirty || !undoAvailable}
+          aria-label="Undo last map change"
+          title={undoTitle}
+          className={chromeIconBtn}
+        >
+          {/* Literal ↺ glyph (U+21BA) to match the owner's shell mockup exactly;
+              sized to sit at the same weight as the SVG icons in the row. */}
+          <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↺</span>
+        </button>
+        <button
+          type="button"
+          onClick={redoDraftEdit}
+          disabled={mutationInFlight || inspectorDirty || !redoAvailable}
+          aria-label="Redo last undone change"
+          title={redoTitle}
+          className={chromeIconBtn}
+        >
+          {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
+          <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
+        </button>
+        {/* Kebab — v12 Menu subsystem. Items: names toggle (checkmark),
+            reset view, divider, danger discard. Visible at EVERY width —
+            it is the bar's only overflow surface. */}
+        <div data-chrome-menu className="relative flex h-full shrink-0 items-center">
+          <button
+            ref={chromeMenuButtonRef}
+            type="button"
+            aria-haspopup="true"
+            aria-expanded={chromeMenuOpen}
+            aria-controls={chromeMenuOpen ? "chrome-kebab-menu" : undefined}
+            aria-label="More tools"
+            title="More tools"
+            onClick={() => setChromeMenuOpen(current => !current)}
+            className={chromeMenuOpen ? chromeKebabBtnActive : chromeKebabBtn}
+          >
+            <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">⋮</span>
+          </button>
+          {chromeMenuOpen && (
+            <div
+              id="chrome-kebab-menu"
+              role="group"
+              aria-label="More tools"
+              onKeyDown={event => {
+                if (event.key === "Escape") {
+                  event.stopPropagation();
+                  setChromeMenuOpen(false);
+                  returnFocusAfterClose(chromeMenuButtonRef);
+                }
+              }}
+              className="absolute left-0 top-full z-50 w-[230px] border border-white/15 bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
+            >
+              {/* The label must NOT flip to the inverse verb when active: a
+                  flipping label with no pressed state is what left the
+                  current view invisible to assistive tech before, and
+                  accessibility-source pins that it never comes back.
+                  md:hidden since the canvas-chrome redesign: at md+ the
+                  toggle lives in the legend card's footer; below md the
+                  legend is hidden, so this kebab item stays mobile's
+                  only names control. */}
+              <button
+                type="button"
+                aria-pressed={showNames}
+                onClick={() => {
+                  setChromeMenuOpen(false);
+                  setShowNames(current => !current);
+                  // Activation unmounts the focused item — same stranded-
+                  // focus hazard as Escape.
+                  returnFocusAfterClose(chromeMenuButtonRef);
+                }}
+                className={[chromeMenuItem, "md:hidden"].join(" ")}
+              >
+                Show occupant names
+                {showNames && (
+                  // #24A148 (bright fill, --admin-status-ok-rgb's hex):
+                  // 4.92:1 on this menu's #1f1f1f, 4.52:1 on #262626 —
+                  // clears the 3:1 graphics floor (WCAG 1.4.11).
+                  // --admin-status-ok itself (#1D6E41) measures only
+                  // 2.64:1 / 2.42:1 here — too dim on dark chrome, fine
+                  // only on the light-surface status dot/pill it was
+                  // tuned for. The prototype's #42be65
+                  // (--admin-chrome-success-text) is a retired hex —
+                  // not reintroduced here.
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[rgb(var(--admin-status-ok-rgb))]">
+                    <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setChromeMenuOpen(false);
+                  // Reuses the same reset the MapZoomControl fit button
+                  // calls — no new pan/zoom state this slice.
+                  fitMapToView();
+                  returnFocusAfterClose(chromeMenuButtonRef);
+                }}
+                className={chromeMenuItem}
+              >
+                Reset zoom &amp; position
+              </button>
+              {/* Zoom to 100% moved here verbatim when the floating map ⋯
+                  kebab retired (v12 slice 3). It is NOT the same action as
+                  the reset above: fit/overview scales the plan to the
+                  viewport, this one lands on exact 1:1 detail zoom. The
+                  kebab's other item (fit) already lives on the zoom
+                  stack's fit button, so nothing was dropped. */}
+              <button
+                type="button"
+                onClick={() => {
+                  setChromeMenuOpen(false);
+                  applyMapZoom(1);
+                  returnFocusAfterClose(chromeMenuButtonRef);
+                }}
+                className={chromeMenuItem}
+              >
+                Zoom to 100%
+              </button>
+              <div className="mx-0 my-1 h-px bg-white/10" />
+              {/* Danger text #ff8389 (Carbon red-30, --admin-chrome-danger-text):
+                  6.95:1 measured on this menu's own #1f1f1f
+                  (--admin-chrome-elevated) background, 6.38:1 on
+                  #262626 (--admin-chrome-hover, in case this class ever
+                  rides a hover surface) — both well past the 4.5:1
+                  floor (Step 3 contrast gate). Disabled when there is
+                  nothing to discard: a no-op destructive control reads
+                  as broken, not as safe. Relocated here from the
+                  publish review dialog (v12) — resetDraftToPublishedAction
+                  keeps its one call site inside confirmDiscardDraftChanges;
+                  only this trigger moved. No focus restore here: the
+                  confirm dialog takes focus itself (useDialogFocus's
+                  ref-callback focuses it synchronously on mount) — a
+                  deferred returnFocusAfterClose would land AFTER that
+                  and yank focus back outside the open aria-modal
+                  dialog, breaking its own Tab trap. useDialogFocus
+                  restores focus to this button on close instead. */}
+              <button
+                type="button"
+                disabled={!publishSummary.hasChanges}
+                title={publishSummary.hasChanges ? "Discard every draft change back to the published map" : "No draft changes to discard"}
+                onClick={() => {
+                  setChromeMenuOpen(false);
+                  setDiscardDraftConfirmOpen(true);
+                }}
+                className={[chromeMenuItem, "text-[var(--admin-chrome-danger-text)] disabled:cursor-not-allowed disabled:text-[var(--admin-chrome-disabled)] disabled:hover:bg-transparent"].join(" ")}
+              >
+                Discard draft changes
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  ) : null;
+
+  // Center slot: the document identity — floor selector + crumb chip, the
+  // bar's equivalent of the reference layout's centered title. lg+ only: at
+  // narrower widths the absolute-centered cluster would underlap the flanking
+  // clusters, so the canvas keeps the floor pill there (see the lg:hidden on
+  // the canvas wrapper below).
+  const barFloorIdentity = (
+    <div className="hidden h-full items-center lg:flex">
+      <FloorSelector floor={floor} onChange={setFloor} variant="chrome" />
+    </div>
+  );
+
+  // Right slot: Ask Planner + the conditional publish cluster — Publish is
+  // the bar's single filled CTA (owner zone contract).
+  const barActionCluster = canEdit ? (
+    <>
+      {/* Ask Planner — the ONLY AI-blue control on this bar (AI tokens
+          never appear on a non-AI control). Active state is the bar's
+          usual bg-hover PLUS a 2px AI-blue bottom border, distinct from
+          the brand-orange underline every other active tool uses.
+          #78a9ff: 7.68:1 on #161616, 6.43:1 on #262626 (measured
+          2026-07-31, app/globals.css AI-family comment; re-confirmed
+          Step 3 gate). */}
+      <button
+        ref={askPlannerButtonRef}
+        type="button"
+        // "AI" is part of the label, not decoration: the badge below is
+        // aria-hidden but still VISIBLE, and WCAG 2.5.3 (Label in Name)
+        // asks that the accessible name contain the visible text — that
+        // is what lets a speech-input user say what they can see and
+        // have it activate. Lighthouse/axe flagged the mismatch.
+        aria-label={
+          plannerHighlightedSeatIds.length > 0
+            ? `Open Ask Planner AI, ${plannerHighlightedSeatIds.length} seats highlighted`
+            : "Open Ask Planner AI"
+        }
+        aria-controls="ask-planner-drawer"
+        aria-expanded={askPlannerOpen}
+        aria-haspopup="dialog"
+        onClick={openAskPlannerDrawer}
+        className={[
+          "inline-flex h-full shrink-0 items-center gap-1.5 border-b-2 px-3 text-[12.5px] font-medium leading-none text-[var(--admin-ai-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+          askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? "border-[var(--admin-ai-chrome-border)] bg-[var(--admin-chrome-hover)]" : "border-transparent"
+        ].join(" ")}
+      >
+        <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">✦</span>
+        {/* The {" "} is load-bearing, not formatting. axe compares the
+            accessible name against the button's TEXT CONTENT, and JSX
+            drops the newline between a string child and the next
+            element — so without it the text reads "Ask PlannerAI",
+            which no honest label contains, and Label in Name fails no
+            matter what the aria-label says. It costs nothing visually:
+            a whitespace-only run inside a flex line box collapses. */}
+        Ask Planner{" "}
+        <span aria-hidden="true" className="border border-[var(--admin-ai-chrome-border)] px-[3px] text-[9px] font-bold leading-none text-[var(--admin-ai-chrome-text)]">AI</span>
+        {plannerHighlightedSeatIds.length > 0 && (
+          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
+        )}
+      </button>
+
+      {/* Conditional publish cluster (contract #4): nothing renders here
+          without draft changes — no idle status chip, no
+          publish-status-popover. The has-changes styling is unchanged
+          from slice 1. */}
+      {publishSummary.hasChanges && (
+        <div className="flex h-full shrink-0 items-center gap-2.5 pl-3">
+          <span className="text-[12px] text-[var(--admin-chrome-muted)]">
+            Draft · {publishSummary.totalChangeCount} {publishSummary.totalChangeCount === 1 ? "change" : "changes"}
+          </span>
+          <button
+            type="button"
+            onClick={openPublishReview}
+            aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
+            title={draftStatusTitle}
+            className="inline-flex h-full shrink-0 items-center gap-1.5 bg-[var(--admin-primary-cta)] px-[15px] text-[12.5px] font-semibold leading-none text-white transition hover:bg-[var(--admin-primary-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
+          >
+            <span>Publish</span>
+            <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold tabular-nums text-[var(--admin-primary-ink)]">{publishSummary.totalChangeCount}</span>
+          </button>
+        </div>
+      )}
+    </>
+  ) : null;
+
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
-       which captures the sticky header so it never pins to the viewport.
+       which would capture any sticky descendant so it never pins.
        pl-12 clears the v12 left rail, which is position:fixed and does not
-       participate in this flex column.
-       min-h in svh, not min-h-screen (100lvh): below lg the map viewport is
+       participate in this flex column; the chrome-h calcs offset the
+       persistent AppTopBar the same way the sub-pages do.
+       min-h in svh, not screen-height (100lvh): below lg the map viewport is
        sized in svh, and on a mobile browser with a collapsing URL bar lvh runs
        past svh — the root would stretch below the map's bottom edge and reopen
        the dead band that height exists to close. */
-    <div className="flex min-h-[100svh] flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12 lg:h-screen lg:min-h-0 lg:overflow-hidden">
-      {/* The left rail is the (shell) layout's persistent AppShell — this
-          surface plugs its unsaved-edits veto and Ask Planner opener into it
-          via useAppShellNavigation (see the registration near the drawer
-          logic above); the veto contract is unchanged (true lets the rail
-          navigate, false means the guard dialog is driving). */}
-      {/* z-50, not z-40: once sticky, the header's z-index is live and must
-          outrank the z-40 canvas overlays (toasts, map menu) that follow it
-          in DOM order, or they paint over the pinned bar and its menus. */}
-      <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
-        <h1 className="sr-only">Seat Planner — admin map</h1>
-        <div className="flex min-w-0 shrink-0 items-center gap-2">
-          <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
-            {/* Brand monogram straight on the dark bar — the 2026 mark carries its own contrast. */}
-            <Image src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
-          </span>
-          {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
-          <div aria-hidden="true" translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
-            Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
-          </div>
-        </div>
-
-        {/* Canvas-chrome redesign (2026-08-13): Filter and search left the bar
-            for the map canvas — the bar acts (undo/redo, kebab, publish), the
-            canvas finds (chips + Filters trigger top-left, command search
-            top-right, matching the mobile canvas-search pattern that already
-            existed). Match feedback lives in the legend and the popover's
-            matchSummary; the bar's own "N of M match" readout died with the
-            field it annotated. */}
-
-        {canEdit && (
-          <>
-            <span aria-hidden="true" className={`mx-2.5 hidden h-[26px] lg:block ${adminChromeDividerRule}`} />
-
-            {/* div, not <nav>: role="group" is not an allowed role on nav (axe
-                aria-allowed-role), and this is a grouped tool cluster, not a
-                navigation landmark. v12: Undo/Redo/kebab are the only
-                surviving row controls — Show names, Management, and the old
-                flat-tool Ask Planner moved to the rail or the kebab. */}
-            <div role="group" aria-label="Admin command row" className="flex h-full shrink-0 items-center">
-              <button
-                type="button"
-                onClick={undoDraftEdit}
-                disabled={mutationInFlight || inspectorDirty || !undoAvailable}
-                aria-label="Undo last map change"
-                title={undoTitle}
-                className={chromeIconBtn}
-              >
-                {/* Literal ↺ glyph (U+21BA) to match the owner's shell mockup exactly;
-                    sized to sit at the same weight as the SVG icons in the row. */}
-                <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↺</span>
-              </button>
-              <button
-                type="button"
-                onClick={redoDraftEdit}
-                disabled={mutationInFlight || inspectorDirty || !redoAvailable}
-                aria-label="Redo last undone change"
-                title={redoTitle}
-                className={chromeIconBtn}
-              >
-                {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
-                <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
-              </button>
-              {/* Kebab — v12 Menu subsystem. Items: names toggle (checkmark),
-                  reset view, divider, danger discard. Visible at EVERY width
-                  now (no more xl:hidden) — it is the bar's only surviving
-                  overflow surface. */}
-              <div data-chrome-menu className="relative flex h-full shrink-0 items-center">
-                <button
-                  ref={chromeMenuButtonRef}
-                  type="button"
-                  aria-haspopup="true"
-                  aria-expanded={chromeMenuOpen}
-                  aria-controls={chromeMenuOpen ? "chrome-kebab-menu" : undefined}
-                  aria-label="More tools"
-                  title="More tools"
-                  onClick={() => setChromeMenuOpen(current => !current)}
-                  className={chromeMenuOpen ? chromeKebabBtnActive : chromeKebabBtn}
-                >
-                  <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">⋮</span>
-                </button>
-                {chromeMenuOpen && (
-                  <div
-                    id="chrome-kebab-menu"
-                    role="group"
-                    aria-label="More tools"
-                    onKeyDown={event => {
-                      if (event.key === "Escape") {
-                        event.stopPropagation();
-                        setChromeMenuOpen(false);
-                        returnFocusAfterClose(chromeMenuButtonRef);
-                      }
-                    }}
-                    className="absolute left-0 top-full z-50 w-[230px] border border-white/15 bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
-                  >
-                    {/* The label must NOT flip to the inverse verb when active: a
-                        flipping label with no pressed state is what left the
-                        current view invisible to assistive tech before, and
-                        accessibility-source pins that it never comes back.
-                        md:hidden since the canvas-chrome redesign: at md+ the
-                        toggle lives in the legend card's footer; below md the
-                        legend is hidden, so this kebab item stays mobile's
-                        only names control. */}
-                    <button
-                      type="button"
-                      aria-pressed={showNames}
-                      onClick={() => {
-                        setChromeMenuOpen(false);
-                        setShowNames(current => !current);
-                        // Activation unmounts the focused item — same stranded-
-                        // focus hazard as Escape.
-                        returnFocusAfterClose(chromeMenuButtonRef);
-                      }}
-                      className={[chromeMenuItem, "md:hidden"].join(" ")}
-                    >
-                      Show occupant names
-                      {showNames && (
-                        // #24A148 (bright fill, --admin-status-ok-rgb's hex):
-                        // 4.92:1 on this menu's #1f1f1f, 4.52:1 on #262626 —
-                        // clears the 3:1 graphics floor (WCAG 1.4.11).
-                        // --admin-status-ok itself (#1D6E41) measures only
-                        // 2.64:1 / 2.42:1 here — too dim on dark chrome, fine
-                        // only on the light-surface status dot/pill it was
-                        // tuned for. The prototype's #42be65
-                        // (--admin-chrome-success-text) is a retired hex —
-                        // not reintroduced here.
-                        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[rgb(var(--admin-status-ok-rgb))]">
-                          <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setChromeMenuOpen(false);
-                        // Reuses the same reset the MapZoomControl fit button
-                        // calls — no new pan/zoom state this slice.
-                        fitMapToView();
-                        returnFocusAfterClose(chromeMenuButtonRef);
-                      }}
-                      className={chromeMenuItem}
-                    >
-                      Reset zoom &amp; position
-                    </button>
-                    {/* Zoom to 100% moved here verbatim when the floating map ⋯
-                        kebab retired (v12 slice 3). It is NOT the same action as
-                        the reset above: fit/overview scales the plan to the
-                        viewport, this one lands on exact 1:1 detail zoom. The
-                        kebab's other item (fit) already lives on the zoom
-                        stack's fit button, so nothing was dropped. */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setChromeMenuOpen(false);
-                        applyMapZoom(1);
-                        returnFocusAfterClose(chromeMenuButtonRef);
-                      }}
-                      className={chromeMenuItem}
-                    >
-                      Zoom to 100%
-                    </button>
-                    <div className="mx-0 my-1 h-px bg-white/10" />
-                    {/* Danger text #ff8389 (Carbon red-30, --admin-chrome-danger-text):
-                        6.95:1 measured on this menu's own #1f1f1f
-                        (--admin-chrome-elevated) background, 6.38:1 on
-                        #262626 (--admin-chrome-hover, in case this class ever
-                        rides a hover surface) — both well past the 4.5:1
-                        floor (Step 3 contrast gate). Disabled when there is
-                        nothing to discard: a no-op destructive control reads
-                        as broken, not as safe. Relocated here from the
-                        publish review dialog (v12) — resetDraftToPublishedAction
-                        keeps its one call site inside confirmDiscardDraftChanges;
-                        only this trigger moved. No focus restore here: the
-                        confirm dialog takes focus itself (useDialogFocus's
-                        ref-callback focuses it synchronously on mount) — a
-                        deferred returnFocusAfterClose would land AFTER that
-                        and yank focus back outside the open aria-modal
-                        dialog, breaking its own Tab trap. useDialogFocus
-                        restores focus to this button on close instead. */}
-                    <button
-                      type="button"
-                      disabled={!publishSummary.hasChanges}
-                      title={publishSummary.hasChanges ? "Discard every draft change back to the published map" : "No draft changes to discard"}
-                      onClick={() => {
-                        setChromeMenuOpen(false);
-                        setDiscardDraftConfirmOpen(true);
-                      }}
-                      className={[chromeMenuItem, "text-[var(--admin-chrome-danger-text)] disabled:cursor-not-allowed disabled:text-[var(--admin-chrome-disabled)] disabled:hover:bg-transparent"].join(" ")}
-                    >
-                      Discard draft changes
-                    </button>
-                  </div>
-                )}
-              </div>
+    <div className="flex min-h-[calc(100svh-var(--admin-chrome-h))] flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12 lg:h-[calc(100vh-var(--admin-chrome-h))] lg:min-h-0 lg:overflow-hidden">
+      {/* The chrome is the (shell) layout's persistent AppShell (AppTopBar +
+          rail) — this surface plugs its unsaved-edits veto and Ask Planner
+          opener into it via useAppShellNavigation (see the registration near
+          the drawer logic above); the veto contract is unchanged (true lets
+          the rail navigate, false means the guard dialog is driving). */}
+      {/* Top-bar-first chrome: in-shell, this surface has NO header of its
+          own — its bar tenants portal into AppTopBar's slots (left commands,
+          center floor identity, right actions). The standalone fallback
+          header below keeps harnesses that mount SeatMap without AppShell
+          (the real-browser tier) fully controllable. */}
+      <h1 className="sr-only">Seat Planner — admin map</h1>
+      {shellSlots ? (
+        <>
+          {shellSlots.left && createPortal(barCommandCluster, shellSlots.left)}
+          {shellSlots.center && createPortal(barFloorIdentity, shellSlots.center)}
+          {shellSlots.right && createPortal(barActionCluster, shellSlots.right)}
+        </>
+      ) : (
+        <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+          <div className="flex min-w-0 shrink-0 items-center gap-2">
+            <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
+              {/* Brand monogram straight on the dark bar — the 2026 mark carries its own contrast. */}
+              <Image src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
+            </span>
+            {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
+            <div aria-hidden="true" translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
+              Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
             </div>
-          </>
-        )}
-
-        <div className="ml-auto flex h-full shrink-0 items-center">
-          {canEdit && (
-            <>
-              {/* Ask Planner — the ONLY AI-blue control on this bar (AI tokens
-                  never appear on a non-AI control). Active state is the bar's
-                  usual bg-hover PLUS a 2px AI-blue bottom border, distinct from
-                  the brand-orange underline every other active tool uses.
-                  #78a9ff: 7.68:1 on #161616, 6.43:1 on #262626 (measured
-                  2026-07-31, app/globals.css AI-family comment; re-confirmed
-                  Step 3 gate). */}
-              <button
-                ref={askPlannerButtonRef}
-                type="button"
-                // "AI" is part of the label, not decoration: the badge below is
-                // aria-hidden but still VISIBLE, and WCAG 2.5.3 (Label in Name)
-                // asks that the accessible name contain the visible text — that
-                // is what lets a speech-input user say what they can see and
-                // have it activate. Lighthouse/axe flagged the mismatch.
-                aria-label={
-                  plannerHighlightedSeatIds.length > 0
-                    ? `Open Ask Planner AI, ${plannerHighlightedSeatIds.length} seats highlighted`
-                    : "Open Ask Planner AI"
-                }
-                aria-controls="ask-planner-drawer"
-                aria-expanded={askPlannerOpen}
-                aria-haspopup="dialog"
-                onClick={openAskPlannerDrawer}
-                className={[
-                  "inline-flex h-full shrink-0 items-center gap-1.5 border-b-2 px-3 text-[12.5px] font-medium leading-none text-[var(--admin-ai-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
-                  askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? "border-[var(--admin-ai-chrome-border)] bg-[var(--admin-chrome-hover)]" : "border-transparent"
-                ].join(" ")}
-              >
-                <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">✦</span>
-                {/* The {" "} is load-bearing, not formatting. axe compares the
-                    accessible name against the button's TEXT CONTENT, and JSX
-                    drops the newline between a string child and the next
-                    element — so without it the text reads "Ask PlannerAI",
-                    which no honest label contains, and Label in Name fails no
-                    matter what the aria-label says. It costs nothing visually:
-                    a whitespace-only run inside a flex line box collapses. */}
-                Ask Planner{" "}
-                <span aria-hidden="true" className="border border-[var(--admin-ai-chrome-border)] px-[3px] text-[9px] font-bold leading-none text-[var(--admin-ai-chrome-text)]">AI</span>
-                {plannerHighlightedSeatIds.length > 0 && (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
-                )}
-              </button>
-
-              {/* Conditional publish cluster (contract #4): nothing renders here
-                  without draft changes — no idle status chip, no
-                  publish-status-popover. The has-changes styling is unchanged
-                  from slice 1. */}
-              {publishSummary.hasChanges && (
-                <div className="flex h-full shrink-0 items-center gap-2.5 pl-3">
-                  <span className="text-[12px] text-[var(--admin-chrome-muted)]">
-                    Draft · {publishSummary.totalChangeCount} {publishSummary.totalChangeCount === 1 ? "change" : "changes"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={openPublishReview}
-                    aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
-                    title={draftStatusTitle}
-                    className="inline-flex h-full shrink-0 items-center gap-1.5 bg-[var(--admin-primary-cta)] px-[15px] text-[12.5px] font-semibold leading-none text-white transition hover:bg-[var(--admin-primary-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
-                  >
-                    <span>Publish</span>
-                    <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold tabular-nums text-[var(--admin-primary-ink)]">{publishSummary.totalChangeCount}</span>
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </header>
+          </div>
+          {barCommandCluster}
+          <div className="ml-auto flex h-full shrink-0 items-center">{barActionCluster}</div>
+        </header>
+      )}
 
       {/* v12 slice 3: no width cap and no padding — the floor plan is layer-00
           and runs edge to edge below the bar. stageReservedClassName stays:
@@ -2818,7 +2852,7 @@ export function SeatMap({
             inspector column opens and closes, sticking the map small. Now that
             the stage is lg:flex-1 in overview too (the 1911/867 aspect pin is
             gone), this unbroken lg:flex-1 / lg:min-h-0 chain from the root's
-            lg:h-screen is the only thing keeping the stage height
+            lg viewport-calc height is the only thing keeping the stage height
             SCREEN-derived rather than content-derived — break a link and the
             feedback loop the aspect pin used to fence off comes back. */}
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0 lg:flex-1">
@@ -2939,10 +2973,12 @@ export function SeatMap({
                 2026-08-13 QA). */}
             <div className="pointer-events-none absolute inset-x-3 top-3 z-40 flex items-start gap-2">
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              <div className="pointer-events-auto">
+              {/* Floor identity: at lg+ (in-shell) it lives centered in the
+                  top bar (barFloorIdentity portal); below lg — and in
+                  standalone harnesses with no bar — the canvas keeps it. */}
+              <div className={shellSlots ? "pointer-events-auto lg:hidden" : "pointer-events-auto"}>
                 <FloorSelector floor={floor} onChange={setFloor} />
               </div>
-              <span className="pointer-events-auto border border-[var(--admin-border)] bg-white px-2.5 py-1.5 text-[12px] text-[var(--sp-color-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
               <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="pointer-events-auto" />
               {/* Canvas-chrome redesign (2026-08-13): department quick-filter
                   chips + the Filters trigger relocated here from the bar. The

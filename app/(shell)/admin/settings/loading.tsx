@@ -1,6 +1,6 @@
 // Content-pane loading state for /admin/settings. Chrome-free like the
 // management skeleton — the persistent shell already shows the rail and the
-// AdminShellBar — and shaped like the page it stands in for: a centered
+// AppTopBar — and shaped like the page it stands in for: a centered
 // 760px column of utility tiles.
 export default function AdminSettingsLoading() {
   return (

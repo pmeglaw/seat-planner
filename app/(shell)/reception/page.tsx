@@ -56,7 +56,7 @@ export default async function ReceptionPage() {
   const people = buildReceptionDirectory(employees, seats);
 
   return (
-    // pl-12 clears the fixed rail; the svh calc offsets the AdminShellBar the
+    // pl-12 clears the fixed rail; the svh calc offsets the AppTopBar the
     // shell renders above this pane (both live in the (shell) layout now).
     <main className="reception-theme min-h-[calc(100svh-var(--admin-chrome-h))] bg-[var(--r-bg)] pl-12 text-[var(--r-text)]">
       {/* Skip-link landing: focusable zero-height marker (the link itself is

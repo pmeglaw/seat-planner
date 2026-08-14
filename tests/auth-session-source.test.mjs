@@ -46,7 +46,8 @@ test("the account menu shows identity and hosts a no-JS sign-out form", async ()
 test("every signed-in surface mounts an identity + sign-out affordance", async () => {
   const shellLayout = await readSource("../app/(shell)/layout.tsx");
   const appShell = await readSource("../components/ui/AppShell.tsx");
-  const rail = await readSource("../components/ui/AppRail.tsx");
+  const topBar = await readSource("../components/ui/AppTopBar.tsx");
+  const accountMenu = await readSource("../components/ui/AccountMenu.tsx");
   const mapPage = await readSource("../app/(shell)/admin/page.tsx");
   const managementPage = await readSource("../app/(shell)/admin/management/page.tsx");
   const settingsPage = await readSource("../app/(shell)/admin/settings/page.tsx");
@@ -54,23 +55,27 @@ test("every signed-in surface mounts an identity + sign-out affordance", async (
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
   const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
-  // Nav-lag fix (persistent shell): the rail — which carries the identity +
-  // sign-out cell (same real <form action="/auth/signout" method="post">
-  // contract as the old shared AccountMenu; tests/app-rail.test.mjs is the
-  // source of truth for the cell's shape) — mounts ONCE in the (shell)
-  // layout's AppShell and covers every railed surface: the map, both admin
-  // sub-pages, and reception. The semantic this test has always guarded is
-  // unchanged: SOME identity + sign-out affordance on every signed-in
-  // surface. The pages must NOT mount a second rail of their own (that
-  // per-page mounting was the blank-flash bug), and the viewer surface still
-  // mounts the shared AccountMenu directly.
+  // Nav-lag fix (persistent shell) + top-bar-first chrome (2026-08-14): the
+  // chrome — AppTopBar carrying the shared AccountMenu (real
+  // <form action="/auth/signout" method="post"> contract) plus the rail —
+  // mounts ONCE in the (shell) layout's AppShell and covers every shell
+  // surface: the map, both admin sub-pages, and reception. The semantic this
+  // test has always guarded is unchanged: SOME identity + sign-out
+  // affordance on every signed-in surface. The pages must NOT mount a second
+  // rail or bar of their own (that per-page mounting was the blank-flash
+  // bug), and the viewer surface still mounts the shared AccountMenu
+  // directly.
   assert.match(shellLayout, /<AppShell/);
   assert.match(appShell, /<AppRail/);
-  assert.match(rail, /<form action="\/auth\/signout" method="post"/);
+  assert.match(appShell, /<AppTopBar/);
+  assert.match(topBar, /<AccountMenu/);
+  assert.match(accountMenu, /<form action="\/auth\/signout" method="post"/);
   for (const page of [mapPage, managementPage, settingsPage, receptionPage]) {
     assert.doesNotMatch(page, /<AppRail/);
+    assert.doesNotMatch(page, /<AppTopBar/);
   }
   assert.doesNotMatch(seatMap, /<AppRail/);
+  assert.doesNotMatch(seatMap, /<AppTopBar/);
   assert.match(viewer, /<AccountMenu/);
 });
 

@@ -66,7 +66,7 @@ export default async function AdminSettingsPage() {
 
   return (
     // pl-12 clears the v12 left rail — position:fixed, mounted by the (shell)
-    // layout's persistent AppShell along with the AdminShellBar above this
+    // layout's persistent AppShell along with the AppTopBar above this
     // pane (hence the svh calc: bar height comes off the pane's min-height).
     // The skip link itself lives in the rail (AppShell maps this route to
     // #admin-subpage-main); this page owns the landing marker below.

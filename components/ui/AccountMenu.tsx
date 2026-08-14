@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 
@@ -11,6 +11,13 @@ type AccountMenuProps = {
   // preference) — as a labeled menu item. The callback runs the unsaved-edits
   // guard and, when allowed, performs the navigation itself.
   onSelectSettings?: () => void;
+  /** Persistent-chrome hosts (AppTopBar): pass the current pathname. When it
+   *  changes, the menu closes so it can't linger over an incoming page, and —
+   *  if closing stranded keyboard focus on <body> (back/forward with the menu
+   *  open unmounts the focused menuitem) — focus returns to the trigger, the
+   *  same guarantee every other dismissal path gives. Omit on surfaces that
+   *  remount per document load (the viewer), which get this for free. */
+  autoCloseKey?: string;
 };
 
 const menuItemClassName =
@@ -22,12 +29,38 @@ const menuItemClassName =
  * map kebab's menu-button contract — first item focused on open, arrow-key
  * roving, Escape/Tab close with trigger refocus.
  */
-export function AccountMenu({ email, roleLabel, onSelectSettings }: AccountMenuProps) {
+export function AccountMenu({ email, roleLabel, onSelectSettings, autoCloseKey }: AccountMenuProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
   const initial = (email.trim()[0] ?? "?").toUpperCase();
+
+  // Route-commit close for persistent hosts (see the autoCloseKey prop doc).
+  // Adjust-state-during-render, not an effect: React re-renders immediately
+  // with the closed state, so the stale menu never paints over the incoming
+  // page. The focus restore runs in the keyed effect below, which reads the
+  // PREVIOUS commit's open state through openLastCommitRef — the mirror
+  // effect is declared after it on purpose (same-commit effects run top-down,
+  // so the restore still sees the pre-navigation value). The <body> check
+  // keeps a click-driven navigation from having its focus yanked off the
+  // clicked control.
+  const [lastAutoCloseKey, setLastAutoCloseKey] = useState(autoCloseKey);
+  const openLastCommitRef = useRef(false);
+  if (autoCloseKey !== lastAutoCloseKey) {
+    setLastAutoCloseKey(autoCloseKey);
+    setOpen(false);
+  }
+  useEffect(() => {
+    if (autoCloseKey === undefined) return;
+    if (openLastCommitRef.current && document.activeElement === document.body) {
+      triggerRef.current?.focus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed to route commits only
+  }, [autoCloseKey]);
+  useEffect(() => {
+    openLastCommitRef.current = open;
+  });
 
   function openMenu() {
     setOpen(true);

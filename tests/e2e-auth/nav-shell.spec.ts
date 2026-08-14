@@ -70,9 +70,11 @@ test("rail navigation is client-side: zero document loads, one persistent rail",
   // pre-hydration click on a rail <Link> would navigate natively as a full
   // document, failing invariant 1 for harness reasons rather than product
   // reasons. It also stages invariant 3: the drawer is open when the first
-  // navigation happens.
+  // navigation happens. The toggle lives in AppTopBar's corner cell
+  // (top-bar-first chrome, 2026-08-14), not inside #app-rail — it still
+  // controls the rail via aria-controls, which is what the selector rides.
   await retryUntilVisible(
-    () => page.locator('#app-rail button[aria-label="Expand navigation"]').click(),
+    () => page.locator('button[aria-controls="app-rail"][aria-label="Expand navigation"]').click(),
     page.locator('#app-rail[data-expanded="true"]')
   );
 
@@ -113,7 +115,7 @@ test("rail navigation is client-side: zero document loads, one persistent rail",
   // The warm lap collapsed the drawer on its first click; re-open it so the
   // measured pass still stages invariant 3 (drawer open at first transition).
   await retryUntilVisible(
-    () => page.locator('#app-rail button[aria-label="Expand navigation"]').click(),
+    () => page.locator('button[aria-controls="app-rail"][aria-label="Expand navigation"]').click(),
     page.locator('#app-rail[data-expanded="true"]')
   );
 
