@@ -244,7 +244,11 @@ export function AppRail({
           aria-controls="app-rail"
           aria-label={open ? "Collapse navigation" : "Expand navigation"}
           title={open ? "Collapse navigation" : "Expand navigation"}
-          className={[ITEM, ITEM_IDLE, "shrink-0 text-[var(--admin-chrome-text)]"].join(" ")}
+          // No ITEM_IDLE: the hamburger is a chrome toggle, not a nav item —
+          // the full-row hover fill made its "Menu" caption row highlight
+          // exactly like the destinations below it (owner call 2026-08-14).
+          // Hover only brightens the glyph; the focus ring from ITEM stays.
+          className={[ITEM, "shrink-0 text-[var(--admin-chrome-muted)] transition-colors hover:text-white"].join(" ")}
         >
           <span className={CELL}>
             <HamburgerIcon />
