@@ -2367,9 +2367,10 @@ export function SeatMap({
   // (root lg:h-screen down the lg:flex-1 / lg:min-h-0 chain), never from the
   // frame width the overview ResizeObserver computes.
   const mapStageClassName = "relative min-w-0 lg:flex lg:min-h-0 lg:flex-1";
-  // Just "Draft" (owner call 2026-08-14): it's obviously a map, and the
-  // legend already carries the seat count — the crumb only states the layer.
-  const mapCrumbLabel = floor === "2" ? "Not yet mapped" : "Draft";
+  // No crumb at all (owner call 2026-08-14, round 2): the floor selector IS
+  // the document identity — layer state was tried as "Draft map · N seats",
+  // then "Draft", then removed; the legend carries the count and the publish
+  // cluster carries the pending-changes signal.
   const mapMarkerLayerClassName = [
     "absolute inset-0",
     mobileMapControlsHidden ? "hidden sm:block" : ""
@@ -2715,12 +2716,6 @@ export function SeatMap({
   const barFloorIdentity = (
     <div className="hidden h-full items-center lg:flex">
       <FloorSelector floor={floor} onChange={setFloor} variant="chrome" />
-      {/* Quiet suffix, not a boxed chip (owner call 2026-08-14): the centered
-          identity reads as ONE document title — bolt-style "name (detail)" —
-          so the crumb is plain muted text beside the selector. */}
-      <span className="hidden whitespace-nowrap pl-1 text-[11.5px] leading-none text-[var(--admin-chrome-muted)] xl:block">
-        {mapCrumbLabel}
-      </span>
     </div>
   );
 
@@ -2979,7 +2974,6 @@ export function SeatMap({
               <div className={shellSlots ? "pointer-events-auto lg:hidden" : "pointer-events-auto"}>
                 <FloorSelector floor={floor} onChange={setFloor} />
               </div>
-              <span className={["pointer-events-auto border border-[var(--admin-border)] bg-white px-2.5 py-1.5 text-[12px] text-[var(--sp-color-text-secondary)] shadow-elevation-3", shellSlots ? "lg:hidden" : ""].filter(Boolean).join(" ")}>{mapCrumbLabel}</span>
               <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="pointer-events-auto" />
               {/* Canvas-chrome redesign (2026-08-13): department quick-filter
                   chips + the Filters trigger relocated here from the bar. The
