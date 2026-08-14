@@ -919,14 +919,25 @@ export function ViewerSeatFinder({
     // an exact height keeps this the one vertical scroll owner (#197) — the
     // job the 82svh ceiling used to do.
     "h-[calc(100svh-36px)] lg:h-full lg:min-h-0 lg:max-h-none lg:flex-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
-    zoomFactor === null ? "sm:flex sm:items-center sm:justify-center" : "",
+    // The fit view is a flex row at EVERY width so the frame's auto margins can
+    // centre the plan vertically below sm too — a top-aligned plan sat under
+    // the floating chip cluster (markers occluded) with the whole leftover
+    // column pooled below it. Centring is by auto margin, not items-center:
+    // cross-axis alignment makes overflowing top rows unreachable on short
+    // landscape phones, while auto margins collapse to 0 under overflow and
+    // keep the scroll origin intact.
+    zoomFactor === null ? "flex sm:items-center sm:justify-center" : "",
     floor === "3" ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]"
   );
   const mapFrameClassName = cx(
     "relative mx-auto max-w-none",
     zoomFactor === null
-      ? "w-[1040px] sm:w-full sm:max-w-[1911px] sm:shrink-0"
+      // shrink-0 at every width: the flex viewport must not squeeze the fixed
+      // 1040px mobile frame down to the phone's width (177px-tall plan). The
+      // auto vertical margins double as a stretch guard — a stretched frame
+      // taller than its image would break the markers' percentage anchors.
+      ? "my-auto w-[1040px] shrink-0 sm:w-full sm:max-w-[1911px]"
       : "[--map-detail-base:1040px] sm:[--map-detail-base:1340px] lg:[--map-detail-base:1911px]"
   );
   const mapFrameStyle = zoomFactor === null
