@@ -1298,6 +1298,7 @@ export function ViewerSeatFinder({
                     width={MAP_IMAGE_WIDTH}
                     height={MAP_IMAGE_HEIGHT}
                     priority
+                    fetchPriority="high"
                     unoptimized
                     placeholder="blur"
                     blurDataURL={MAP_IMAGE_BLUR_DATA_URL}
