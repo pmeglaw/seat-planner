@@ -59,6 +59,34 @@ export async function waitForColorSettle(locator: ReturnType<Page["locator"]>) {
 }
 
 /**
+ * Wait for every ONE-SHOT animation and transition on the page to finish.
+ *
+ * The complement to waitForColorSettle for whole-page scans: /login's 1e
+ * entrance (login-rise-in, 500ms, opacity 0 → 1 on the form column) fades
+ * EVERY descendant at once, and axe sampled mid-fade reads blended colors —
+ * step 1 flagged its helper text, labels and buttons wholesale, all of which
+ * measure well past AA at rest. Waiting on one element cannot cover a page
+ * whose animated node has no stable hook, so this drains the document's
+ * Animation.finished promises instead.
+ *
+ * Infinite loops are excluded — their `finished` never resolves, and the only
+ * one on /login is the brand panel's decorative aria-hidden map dot, which
+ * animates box-shadow on a text-free 10px circle that axe has no rule against.
+ * A cancelled animation rejects `finished`; that is a settle, not a failure.
+ * Under prefers-reduced-motion the list is empty and this resolves at once.
+ */
+export async function waitForOneShotAnimations(page: Page) {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter(animation => animation.effect?.getTiming().iterations !== Infinity)
+        .map(animation => animation.finished.catch(() => undefined))
+    )
+  );
+}
+
+/**
  * Run the standard WCAG A/AA scan against the page's CURRENT state and assert
  * zero violations. Callers are responsible for settling the UI first — axe
  * scans whatever is on screen, so a scan fired mid-transition or mid-animation

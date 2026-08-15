@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { formatAxeViolations, WCAG_A_AA_TAGS } from "./axe-helpers";
+import { formatAxeViolations, waitForOneShotAnimations, WCAG_A_AA_TAGS } from "./axe-helpers";
 
 // Runtime accessibility assertions against the real built app.
 //
@@ -21,6 +21,8 @@ import { formatAxeViolations, WCAG_A_AA_TAGS } from "./axe-helpers";
 test("the sign-in page has no WCAG A/AA violations", async ({ page }) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Log in" })).toBeVisible();
+  // The 1e entrance fades the whole form column; scan only after it lands.
+  await waitForOneShotAnimations(page);
 
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
   expect(formatAxeViolations(violations)).toEqual([]);
@@ -32,6 +34,7 @@ test("the sign-in page has no WCAG A/AA violations", async ({ page }) => {
 test("the axe scan actually inspects the page", async ({ page }) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Log in" })).toBeVisible();
+  await waitForOneShotAnimations(page);
 
   const results = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
   expect(results.passes.length).toBeGreaterThan(0);
@@ -46,6 +49,7 @@ test("the axe scan actually inspects the page", async ({ page }) => {
 test("the sign-in error state has no WCAG A/AA violations", async ({ page }) => {
   await page.goto("/login?error=Invalid%20login%20credentials");
   await expect(page.locator("main [role=alert]")).toBeVisible();
+  await waitForOneShotAnimations(page);
 
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
   expect(formatAxeViolations(violations)).toEqual([]);
@@ -65,6 +69,7 @@ test("the log-in password step has no WCAG A/AA violations", async ({ page }) =>
   await page.locator('input[type="email"]').fill("person@example.test");
   await advance.click();
   await expect(page.locator('input[type="password"]')).toBeVisible();
+  await waitForOneShotAnimations(page);
 
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
   expect(formatAxeViolations(violations)).toEqual([]);
@@ -80,6 +85,7 @@ test("the inline field error has no WCAG A/AA violations", async ({ page }) => {
   await expect(advance).toBeEnabled();
   await advance.click();
   await expect(page.getByText("Email is required")).toBeVisible();
+  await waitForOneShotAnimations(page);
 
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
   expect(formatAxeViolations(violations)).toEqual([]);

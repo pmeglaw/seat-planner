@@ -372,11 +372,22 @@ export function LoginForm() {
   const fieldErrorClass = "mt-1.5 text-[12px] leading-[1.4] text-[var(--login-error-text)]";
   // 1e links are plain copper (no resting underline, per the reference);
   // hover restores the underline so the affordance survives.
-  const inlineLinkClass = cx(
-    "text-[12px] font-medium text-[var(--login-link)] underline-offset-2 hover:underline",
+  //
+  // TWO colour roles, deliberately: --login-link (#B85207) is background-only —
+  // it measures 4.49:1 on the field fill and 4.50:1 on the error tint, so a
+  // link that sits ON a fill (Edit in the summary row, the notification's
+  // recovery action) takes --login-link-on-field (#9F4605, 5.70:1 on both).
+  // The e2e axe scan flagged Edit at 4.49:1 when both shared one colour.
+  // Split base + colour rather than stacking a second text-[...] utility:
+  // two same-specificity arbitrary utilities resolve by stylesheet order,
+  // not class-list order, so an "override" can silently lose.
+  const inlineLinkBaseClass = cx(
+    "text-[12px] font-medium underline-offset-2 hover:underline",
     "disabled:cursor-not-allowed disabled:text-[var(--login-text-tertiary)] disabled:no-underline",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
   );
+  const inlineLinkClass = cx(inlineLinkBaseClass, "text-[var(--login-link)]");
+  const onFieldLinkClass = cx(inlineLinkBaseClass, "text-[var(--login-link-on-field)]");
   const primaryButtonClass = cx(
     // No colour transition: hydration flips this button from disabled to
     // enabled on every load, and a 150ms tween made it fade up through a
@@ -449,7 +460,7 @@ export function LoginForm() {
                   type="button"
                   onClick={sendMagicLink}
                   disabled={pending !== null}
-                  className={cx(inlineLinkClass, "mt-1.5 font-semibold")}
+                  className={cx(onFieldLinkClass, "mt-1.5 font-semibold")}
                 >
                   Email me a magic link instead
                 </button>
@@ -555,7 +566,7 @@ export function LoginForm() {
                   {email.trim()}
                 </span>
               </span>
-              <button type="button" onClick={editEmail} disabled={pending !== null} className={cx(inlineLinkClass, "shrink-0")}>
+              <button type="button" onClick={editEmail} disabled={pending !== null} className={cx(onFieldLinkClass, "shrink-0")}>
                 Edit
               </button>
             </div>

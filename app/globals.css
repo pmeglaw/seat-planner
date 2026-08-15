@@ -670,12 +670,21 @@ input[type="search"]::-webkit-search-cancel-button {
    html[data-theme="dark"] attribute, exactly like Reception above. The
    --login-panel-* tokens are CONSTANTS: the left brand panel stays #161616
    in both themes.
-   Contrast (measured 2026-08-15): light — secondary #525252 on #ffffff
-   7.4:1 · tertiary #6f6f6f 5.0:1 on #ffffff and 4.6:1 on the #f4f4f4 field ·
-   link #B85207 on #ffffff 4.6:1 · white on #B85207 4.6:1 (hover #9F4605
-   6.3:1) · field rule #8d8d8d on #f4f4f4 3.02:1 (1.4.11 boundary). Dark —
-   secondary #c6c6c6 on the #262626 field 8.9:1 · tertiary #a8a8a8 on
-   #161616 7.6:1 · link #F0965A 8.0:1.
+   Contrast (computed 2026-08-15, WCAG relative-luminance formula; earlier
+   hand-estimated figures here UNDERstated several pairs — see the
+   --admin-text-muted note above for why a wrong number is worse than none):
+   light — secondary #525252 on #ffffff 7.81:1 · tertiary #6f6f6f 5.02:1 on
+   #ffffff, 4.57:1 on the #f4f4f4 field · link #B85207 on #ffffff 4.94:1 ·
+   white on #B85207 4.94:1 (hover #9F4605 6.26:1) · field rule #8d8d8d on
+   #f4f4f4 3.02:1 (1.4.11 boundary). Dark — secondary #c6c6c6 on the
+   #262626 field 8.86:1 · tertiary #a8a8a8 on #161616 7.61:1 · link
+   #F0965A on #161616 7.94:1.
+   The link colour is BACKGROUND-ONLY: #B85207 measures 4.49:1 on the
+   #f4f4f4 field fill and 4.50:1 on the #fff1f1 error tint — under/at the
+   AA line — so any link that sits ON a fill takes --login-link-on-field
+   (#9F4605: 5.70:1 on both fills; dark #F0965A: 6.64:1 on #262626). The
+   e2e axe scan flagged the step-2 Edit link at 4.49:1 before this split
+   existed; keep the two roles separate.
    Two deliberate deviations from the handoff palette, both AA-forced (the
    step-2 axe scan in tests/e2e/accessibility.spec.ts exists to catch this
    exact class of regression):
@@ -698,6 +707,7 @@ input[type="search"]::-webkit-search-cancel-button {
   --login-accent: #B85207;
   --login-accent-hover: #9F4605;
   --login-link: #B85207;
+  --login-link-on-field: #9F4605;
   --login-error: #da1e28;
   --login-error-text: #da1e28;
   --login-success: #24a148;
@@ -725,6 +735,7 @@ input[type="search"]::-webkit-search-cancel-button {
   --login-text-tertiary: #a8a8a8;
   --login-placeholder: #a8a8a8;
   --login-link: #F0965A;
+  --login-link-on-field: #F0965A;
   --login-error-text: #fa4d56;
   --login-success: #42be65;
   --login-notice-error-bg: #2d1a1c;
