@@ -3195,9 +3195,17 @@ export function SeatMap({
                     takes z-[6] — and it shares this frame's box, so zoom and
                     resize tracking is the same width transform the markers
                     ride. Decorative and pointer-inert, same contract as the
-                    washes above. */}
+                    washes above. The wrapper reuses mapMarkerLayerClassName
+                    for its mobile gate on purpose: the trail's lifetime (a
+                    swap/move confirm open) is one of the very conditions that
+                    hides the markers below sm, so an ungated trail would
+                    paint arrows between seats that aren't rendered. One
+                    shared class keeps the two layers' visibility in
+                    lockstep. */}
                 {draftTrail && (
-                  <DraftTrailOverlay kind={draftTrail.kind} sourceSeat={draftTrail.sourceSeat} targetSeat={draftTrail.targetSeat} />
+                  <div className={mapMarkerLayerClassName}>
+                    <DraftTrailOverlay kind={draftTrail.kind} sourceSeat={draftTrail.sourceSeat} targetSeat={draftTrail.targetSeat} />
+                  </div>
                 )}
 
                 <div

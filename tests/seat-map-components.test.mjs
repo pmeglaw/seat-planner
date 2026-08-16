@@ -338,7 +338,22 @@ test("a swap trail is two mirrored arcs with two arrowheads, decorative and poin
   assert.equal(arrows.length, 2, "each direction carries its own arrowhead");
   assert.equal(svg.querySelector('[data-trail-part="origin"]'), null, "origin ring is move-only");
   const [outbound, inbound] = flows;
-  assert.notEqual(outbound.getAttribute("d"), inbound.getAttribute("d"), "the two arcs bow to opposite sides");
+  assert.notEqual(outbound.getAttribute("d"), inbound.getAttribute("d"), "the two arcs are distinct paths");
+  // Mirroring, pinned geometrically: each `d` is `M sx sy Q cx cy ex ey`, and
+  // the cross product of the chord with the control offset gives which side
+  // of its own DIRECTED chord the arc bows to. A circular exchange means both
+  // arcs curve toward the same directed side (each bows left along its own
+  // travel — that is what closes a loop, since the chords run opposite ways);
+  // opposite directed signs are the shared-lens bug where both arcs bow to
+  // the same world side. (Directed side flips with the chord, so "mirrored in
+  // world space" reads as EQUAL signs here, not opposite ones.)
+  const bowSide = pathData => {
+    const [sx, sy, cx, cy, ex, ey] = pathData.match(/-?[\d.]+/g).map(Number);
+    return Math.sign((ex - sx) * (cy - sy) - (ey - sy) * (cx - sx));
+  };
+  const outboundSide = bowSide(outbound.getAttribute("d"));
+  assert.notEqual(outboundSide, 0, "the outbound arc is bowed, not a straight chord");
+  assert.equal(outboundSide, bowSide(inbound.getAttribute("d")), "both arcs curve toward the same directed side — a loop, not a lens");
   // The dash flow rides motion-safe only — under prefers-reduced-motion the
   // trail stays visible as a static dashed route (the handoff pins that).
   assert.match(outbound.getAttribute("class") ?? "", /motion-safe:animate-\[map-trail-dash/, "dash flow is motion-safe gated");
