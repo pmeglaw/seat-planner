@@ -39,7 +39,8 @@ const seat = (
   status: "available" | "assigned" | "reserved" | "unavailable",
   emp: ReturnType<typeof employee> | null,
   zone = "North Wing",
-  notes: string | null = null
+  notes: string | null = null,
+  layer: "draft" | "published" = "draft"
 ) => ({
   id,
   seat_key: id,
@@ -47,7 +48,7 @@ const seat = (
   x: 0.42,
   y: 0.55,
   status,
-  layer: "draft" as const,
+  layer,
   employee_id: emp?.id ?? null,
   zone,
   department: emp?.department ?? null,
@@ -144,13 +145,13 @@ export const SearchMismatchNotice = () => (
 export const ViewerPublishedSeat = () => (
   <Habitat label="viewer — read-only published assignment">
     <SeatInspector
-      seats={SEATS}
+      seats={SEATS.map((s) => ({ ...s, layer: "published" as const }))}
       employees={EMPLOYEES}
       departmentOptions={DEPARTMENT_OPTIONS}
       canEdit={false}
       collapsed={false}
       onClose={noop}
-      seat={seat("s10", "C-02", "assigned", { ...marcus, email: "mwebb@example-firm.com" }, "Reception")}
+      seat={seat("s10", "C-02", "assigned", { ...marcus, email: "mwebb@example-firm.com" }, "Reception", null, "published")}
     />
   </Habitat>
 );

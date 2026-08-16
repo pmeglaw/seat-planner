@@ -131,7 +131,11 @@ export const SwapAndHighlight = () => (
       />
     </Cell>
     <Cell label="viewer variant">
-      <SeatMarker {...base} variant="viewer" seat={seat("s12", "C-04", "assigned", marcus)} />
+      <SeatMarker
+        {...base}
+        variant="viewer"
+        seat={{ ...seat("s12", "C-04", "assigned", marcus), layer: "published" as const }}
+      />
     </Cell>
   </div>
 );

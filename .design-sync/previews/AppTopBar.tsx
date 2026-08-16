@@ -26,7 +26,7 @@ export const ManagementSection = () => (
       onToggleRail={noopToggle}
       railToggleRef={inertRef}
     />
-    <div style={canvasBelow} />
+    <main id="admin-subpage-main" tabIndex={-1} style={canvasBelow} />
   </div>
 );
 
@@ -42,7 +42,7 @@ export const MapSurface = () => (
       onToggleRail={noopToggle}
       railToggleRef={inertRef}
     />
-    <div style={canvasBelow} />
+    <main id="planning-canvas" tabIndex={-1} style={canvasBelow} />
   </div>
 );
 
@@ -58,6 +58,6 @@ export const ReceptionForViewer = () => (
       onToggleRail={noopToggle}
       railToggleRef={inertRef}
     />
-    <div style={canvasBelow} />
+    <main id="reception-main" tabIndex={-1} style={canvasBelow} />
   </div>
 );
