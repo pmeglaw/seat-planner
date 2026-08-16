@@ -36,7 +36,7 @@ test.describe("smoke: routes boot and auth guards redirect", () => {
     await expect(page.getByRole("button", { name: "Log in", exact: true })).toBeVisible();
     // The way back, and the alternative login — step 2 only.
     await expect(page.getByRole("button", { name: "Edit" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Email me a sign-in link instead" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Email me a magic link" })).toBeVisible();
   });
 
   // Since the route-level loading.tsx boundaries landed (UX-01 / #276), the

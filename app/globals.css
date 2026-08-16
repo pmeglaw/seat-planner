@@ -662,3 +662,99 @@ input[type="search"]::-webkit-search-cancel-button {
   --r-avatar-bg: #F4F4F4;
   --r-avatar-fg: #161616;
 }
+
+/* ---------------------------------------------------------------------------
+   Login (--login-*) — the /login split screen (design 1e, Carbon v12
+   direction, design_handoff_login_1e/README.md). Light ("White/G10") / dark
+   ("Gray 100") pairs; the dark set activates via the app-wide
+   html[data-theme="dark"] attribute, exactly like Reception above. The
+   --login-panel-* tokens are CONSTANTS: the left brand panel stays #161616
+   in both themes.
+   Contrast (computed 2026-08-15, WCAG relative-luminance formula; earlier
+   hand-estimated figures here UNDERstated several pairs — see the
+   --admin-text-muted note above for why a wrong number is worse than none):
+   light — secondary #525252 on #ffffff 7.81:1 · tertiary #6f6f6f 5.02:1 on
+   #ffffff, 4.57:1 on the #f4f4f4 field · link #B85207 on #ffffff 4.94:1 ·
+   white on #B85207 4.94:1 (hover #9F4605 6.26:1) · field rule #8d8d8d on
+   #f4f4f4 3.02:1 (1.4.11 boundary). Dark — secondary #c6c6c6 on the
+   #262626 field 8.86:1 · tertiary #a8a8a8 on #161616 7.61:1 · link
+   #F0965A on #161616 7.94:1.
+   The link colour is BACKGROUND-ONLY: #B85207 measures 4.49:1 on the
+   #f4f4f4 field fill and 4.50:1 on the #fff1f1 error tint — under/at the
+   AA line — so any link that sits ON a fill takes --login-link-on-field
+   (#9F4605: 5.70:1 on both fills; dark #F0965A: 6.64:1 on #262626). The
+   e2e axe scan flagged the step-2 Edit link at 4.49:1 before this split
+   existed; keep the two roles separate.
+   Two deliberate deviations from the handoff palette, both AA-forced (the
+   step-2 axe scan in tests/e2e/accessibility.spec.ts exists to catch this
+   exact class of regression):
+   - placeholder: the handoff's #a8a8a8 measures 1.9:1 on the light field
+     fill, so light reuses tertiary #6f6f6f (4.6:1). Dark keeps #a8a8a8 —
+     it measures 6.4:1 on the #262626 field there.
+   - error TEXT in dark: #da1e28 is 3.6:1 on #161616, so dark error text
+     lightens to #fa4d56 (5.4:1, the dark-chrome danger). Borders and icon
+     fills keep #da1e28 in both themes (≥3:1 non-text). */
+.login-theme {
+  --login-bg: #ffffff;
+  --login-field: #f4f4f4;
+  --login-field-hover: #e8e8e8;
+  --login-border-subtle: #e0e0e0;
+  --login-border-strong: #8d8d8d;
+  --login-text-primary: #161616;
+  --login-text-secondary: #525252;
+  --login-text-tertiary: #6f6f6f;
+  --login-placeholder: #6f6f6f;
+  --login-accent: #B85207;
+  --login-accent-hover: #9F4605;
+  --login-link: #B85207;
+  --login-link-on-field: #9F4605;
+  --login-error: #da1e28;
+  --login-error-text: #da1e28;
+  --login-success: #24a148;
+  --login-notice-error-bg: #fff1f1;
+  --login-notice-success-bg: #defbe6;
+
+  /* Brand panel constants — dark in both themes (1e ruling). */
+  --login-panel-bg: #161616;
+  --login-panel-text: #f4f4f4;
+  --login-panel-text-soft: #c6c6c6;
+  --login-panel-text-faint: #8d8d8d;
+  --login-panel-outline: #6f6f6f;
+  --login-panel-divider: #565656;
+  --login-publish-dot: #42be65;
+}
+
+:root[data-theme="dark"] .login-theme {
+  --login-bg: #161616;
+  --login-field: #262626;
+  --login-field-hover: #2c2c2c;
+  --login-border-subtle: #393939;
+  --login-border-strong: #6f6f6f;
+  --login-text-primary: #f4f4f4;
+  --login-text-secondary: #c6c6c6;
+  --login-text-tertiary: #a8a8a8;
+  --login-placeholder: #a8a8a8;
+  --login-link: #F0965A;
+  --login-link-on-field: #F0965A;
+  --login-error-text: #fa4d56;
+  --login-success: #42be65;
+  --login-notice-error-bg: #2d1a1c;
+  --login-notice-success-bg: #16281c;
+}
+
+/* Login motion (design 1e): a one-shot rise-in for the form column, plus the
+   brand panel's decorative 10px map dot — the one sanctioned LOOPING keyframe
+   in this file, allowed because it animates box-shadow on an aria-hidden dot.
+   Both apply only via Tailwind's motion-safe: variant, so prefers-reduced-
+   motion users get a static form and the dot's static base halo.
+   The rgba stops are --login-accent #B85207 spelled as rgb — @keyframes are
+   authored once here, not per-theme, and the accent is theme-constant. */
+@keyframes login-rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes login-dot-pulse {
+  0% { box-shadow: 0 0 0 3px rgba(184, 82, 7, 0.45); }
+  70%, 100% { box-shadow: 0 0 0 9px rgba(184, 82, 7, 0); }
+}

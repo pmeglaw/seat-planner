@@ -125,11 +125,13 @@ test("hydration enables the submit button and restores its label", async () => {
 // never between a field and its primary button (the pattern's hierarchy rule).
 test("step 1 asks only for identity and offers no alternate login", async () => {
   await mountLogin();
-  assert.equal(screen.getByRole("heading", { name: "Log in" }).tagName, "H1");
+  // H2, not H1: design 1e gives the document h1 to the brand panel's
+  // "Seat Planner" (app/login/page.tsx); the form heading is the subordinate.
+  assert.equal(screen.getByRole("heading", { name: "Log in" }).tagName, "H2");
   assert.ok(document.querySelector('input[type="email"]'));
   assert.equal(document.querySelector('input[type="password"]'), null, "password is not disclosed yet");
   assert.equal(screen.getByRole("button", { name: "Continue" }).getAttribute("type"), "submit");
-  assert.equal(screen.queryByRole("button", { name: /sign-in link/i }), null, "no magic link on step 1");
+  assert.equal(screen.queryByRole("button", { name: /magic link/i }), null, "no magic link on step 1");
   assert.equal(screen.queryByRole("button", { name: /Forgot password/ }), null, "no reset on step 1");
 });
 
@@ -142,7 +144,7 @@ test("Continue discloses the password step and carries the email into a summary 
   assert.match(document.body.textContent, /person@example\.com/);
   assert.equal(screen.getByRole("button", { name: "Log in" }).getAttribute("type"), "submit");
   // The link request must never be a submit: it would race the password path.
-  assert.equal(screen.getByRole("button", { name: /sign-in link/i }).getAttribute("type"), "button");
+  assert.equal(screen.getByRole("button", { name: /magic link/i }).getAttribute("type"), "button");
   assert.ok(screen.getByRole("button", { name: "Edit" }), "the way back");
   assert.ok(screen.getByRole("button", { name: /Forgot password/ }));
 });
@@ -280,7 +282,7 @@ test("a failed password attempt clears the password and offers the magic link in
   assert.equal(document.activeElement, document.querySelector('input[type="password"]'));
 
   const recovery = screen.getByRole("alert").querySelector("button");
-  assert.match(recovery.textContent, /Email me a sign-in link instead/);
+  assert.match(recovery.textContent, /Email me a magic link instead/);
   await act(async () => fireEvent.click(recovery));
   await flush();
 
@@ -313,11 +315,11 @@ test("a rejected sign-in explains itself and leaves the primary usable", async (
 test("a rejected magic-link send leaves its button usable", async () => {
   await mountLogin({ results: { otp: new Error("Failed to fetch") } });
   await advanceToPassword("person@example.com");
-  await click(/sign-in link/i);
+  await click(/magic link/i);
   await flush();
 
   assert.match(screen.getByRole("alert").textContent, /Could not reach the sign-in service/);
-  assert.equal(screen.getByRole("button", { name: /sign-in link/i }).disabled, false);
+  assert.equal(screen.getByRole("button", { name: /magic link/i }).disabled, false);
 });
 
 // One shared boolean made the primary announce "Logging in…" while the user was
@@ -339,7 +341,7 @@ test("sending a magic link never makes the primary claim it is logging in", asyn
   await renderElement(React.createElement(LoginForm));
   await advanceToPassword("person@example.com");
 
-  await act(async () => fireEvent.click(screen.getByRole("button", { name: /sign-in link/i })));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: /magic link/i })));
   const primary = screen.getByRole("button", { name: "Log in" });
   assert.equal(primary.textContent.trim(), "Log in", "the primary does not narrate the link send");
   assert.equal(primary.disabled, true, "but it is held while another action is in flight");
@@ -355,7 +357,7 @@ test("sending a magic link never makes the primary claim it is logging in", asyn
 test("the step-2 magic-link button sends an OTP without creating a user", async () => {
   const { calls } = await mountLogin();
   await advanceToPassword("person@example.com");
-  await click(/sign-in link/i);
+  await click(/magic link/i);
   await flush();
 
   assert.equal(calls.otp.length, 1);
@@ -382,7 +384,7 @@ test("forgot-password sends the reset for the email entered on step 1", async ()
 test("magic-link refusal for an unknown account renders the same notice as success", async () => {
   await mountLogin({ results: { otp: { error: null } } });
   await advanceToPassword("person@example.com");
-  await click(/sign-in link/i);
+  await click(/magic link/i);
   await flush();
   const successText = screen.getByRole("status").textContent;
 
@@ -390,7 +392,7 @@ test("magic-link refusal for an unknown account renders the same notice as succe
 
   await mountLogin({ results: { otp: { error: { message: "Signups not allowed for otp" } } } });
   await advanceToPassword("person@example.com");
-  await click(/sign-in link/i);
+  await click(/magic link/i);
   await flush();
   const refusalNotice = screen.getByRole("status");
 
@@ -423,7 +425,7 @@ test("password-reset refusal for an unknown account renders the same notice as s
 test("magic-link failures that are not absence still explain themselves", async () => {
   await mountLogin({ results: { otp: { error: { message: "Email rate limit exceeded" } } } });
   await advanceToPassword("person@example.com");
-  await click(/sign-in link/i);
+  await click(/magic link/i);
   await flush();
 
   assert.match(screen.getByRole("alert").textContent, /Please wait 60 seconds/);
