@@ -285,6 +285,17 @@
   --admin-primary-border: rgba(255, 87, 21, 0.40);
   --admin-copper: #D23F0A;
   --admin-paper: #FBEAE1;
+  /* Draft-trail overlay (design_handoff_swap_trail, 2026-08-15): the flowing
+     route between a pending swap/move pair on the admin map. The handoff pins
+     #B85207 — the login-1e copper, deliberately NOT this file's #FF5715 /
+     #D23F0A interaction ladder (its "wire to the existing accent token"
+     instruction assumed the app accent was already this copper; the pinned
+     hex wins, sourced here so JSX stays hex-free). Decorative aria-hidden
+     SVG over the plan — no text-contrast floor applies. The origin ring
+     matches --admin-text-muted's #6E655A by design but stays independent, so
+     a text retune can't silently move the ring. */
+  --admin-draft-trail: #B85207;
+  --admin-draft-trail-origin: #6E655A;
 
   --admin-secondary: #55504A;
   --admin-secondary-hover: #393939;
@@ -559,6 +570,20 @@
   0% { transform: scale(0.85); }
   55% { transform: scale(1.05); }
   100% { transform: scale(1); }
+}
+
+/* Draft-trail overlay motion (DraftTrailOverlay, design_handoff_swap_trail).
+   Applied only via `motion-safe:` — under prefers-reduced-motion the trail
+   renders static but never disappears (the handoff pins that). The dash
+   pattern is 6+4=10, and 10 divides the -20 offset exactly two periods, so
+   the 1.2s loop lands back on its own phase with no visible jump. */
+@keyframes map-trail-dash {
+  to { stroke-dashoffset: -20; }
+}
+
+@keyframes map-trail-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 * {

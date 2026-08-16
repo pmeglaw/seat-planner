@@ -48,6 +48,7 @@ import { AiHighlightChip } from "@/components/seat-map/AiHighlightChip";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import { ActiveFilterChips, FilterPanel } from "@/components/seat-map/FilterPanel";
 import { DeptChipRow } from "@/components/seat-map/DeptChipRow";
+import { DraftTrailOverlay } from "@/components/seat-map/DraftTrailOverlay";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
 import { MapWashLayer } from "@/components/seat-map/MapWashLayer";
@@ -1064,6 +1065,21 @@ export function SeatMap({
   const moveEmployeeTargetSeat = moveEmployeeConfirm ? localSeats.find(seat => seat.id === moveEmployeeConfirm.targetSeatId) ?? null : null;
   const visualLocalSeats = useMemo(() => seatsToVisualSeats(localSeats), [localSeats]);
   const visualSeatById = useMemo(() => new Map(visualLocalSeats.map(seat => [seat.id, seat])), [visualLocalSeats]);
+  // Draft-trail overlay pair (design_handoff_swap_trail): a pure derivation of
+  // the pending swap/move state above — the trail exists exactly while a
+  // confirm holds BOTH endpoints and unmounts with it on confirm/cancel. No
+  // new state. Visual (calibration-transformed) seats, so the route lands on
+  // the same anchors the markers render at; identities come from the memoized
+  // visualSeatById, which is what lets the overlay's geometry memo hold
+  // through zoom/pan re-renders.
+  const draftTrailCandidate = swapConfirm && swapSourceSeat && swapTargetSeat
+    ? { kind: "swap" as const, sourceSeat: visualSeatById.get(swapSourceSeat.id), targetSeat: visualSeatById.get(swapTargetSeat.id) }
+    : moveEmployeeConfirm && moveEmployeeSourceSeat && moveEmployeeTargetSeat
+      ? { kind: "move" as const, sourceSeat: visualSeatById.get(moveEmployeeSourceSeat.id), targetSeat: visualSeatById.get(moveEmployeeTargetSeat.id) }
+      : null;
+  const draftTrail = draftTrailCandidate?.sourceSeat && draftTrailCandidate.targetSeat
+    ? { kind: draftTrailCandidate.kind, sourceSeat: draftTrailCandidate.sourceSeat, targetSeat: draftTrailCandidate.targetSeat }
+    : null;
   // Roving tabindex: the map is ONE tab stop (the selected seat, else the last
   // visited seat, else top-left) and arrow keys walk between seats. Points are
   // scaled to the floor plan's pixel aspect so "right" matches the screen.
@@ -3172,6 +3188,25 @@ export function SeatMap({
                     surface (MapWashLayer) — it documents the decorative /
                     pointer-inert contract both surfaces rely on. */}
                 <MapWashLayer zoneWash={zoneWash} officeRoomWashes={officeRoomWashes} />
+
+                {/* Animated draft trail between a pending swap/move pair
+                    (design_handoff_swap_trail). Above the washes, below the
+                    markers — washes are z-[5], markers z-10, the overlay
+                    takes z-[6] — and it shares this frame's box, so zoom and
+                    resize tracking is the same width transform the markers
+                    ride. Decorative and pointer-inert, same contract as the
+                    washes above. The wrapper reuses mapMarkerLayerClassName
+                    for its mobile gate on purpose: the trail's lifetime (a
+                    swap/move confirm open) is one of the very conditions that
+                    hides the markers below sm, so an ungated trail would
+                    paint arrows between seats that aren't rendered. One
+                    shared class keeps the two layers' visibility in
+                    lockstep. */}
+                {draftTrail && (
+                  <div className={mapMarkerLayerClassName}>
+                    <DraftTrailOverlay kind={draftTrail.kind} sourceSeat={draftTrail.sourceSeat} targetSeat={draftTrail.targetSeat} />
+                  </div>
+                )}
 
                 <div
                   className={mapMarkerLayerClassName}
