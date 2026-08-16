@@ -14,23 +14,27 @@ import { assignLocation } from "@/lib/fullNavigation";
 import { cx, focusRingClass } from "@/components/ui/design-system";
 
 /**
- * Progressive auth, Carbon's login pattern (canvas options 2a/2b): step 1 asks
- * only for identity (work email + Continue), step 2 discloses the password
- * with the entered email as an editable summary row — the way back.
+ * Single-surface login — the design 1e reference layout verbatim
+ * (design_handoff_login_1e/README.md): email over password as one flush
+ * fluid-field stack, the primary beneath, and the magic link behind an "or"
+ * divider BELOW the primary (the hierarchy rule: never between a field and
+ * its primary button).
  *
- * The magic link appears ONLY on step 2: below the primary, behind an "or"
- * divider, and as the action inside the failed-login notification. Never on
- * step 1, and never between a field and its primary button (the pattern's
- * hierarchy rule). Owner decision, Aug 11 2026.
+ * Supersedes the Aug 11 2026 two-step ruling — owner decision 2026-08-15:
+ * progressive disclosure was judged UX overhead ("complicating things if
+ * they don't need to be"). Every security property of the two-step form is
+ * retained; only the disclosure choreography is gone:
  *
- * Visuals are design 1e (design_handoff_login_1e/README.md, Carbon v12
- * direction): fluid fields, copper accent, 48px sharp buttons — restyled onto
- * the two-step flow above, which the handoff explicitly leaves in place
- * ("mode toggle may remain as currently implemented"). Step 2 renders the
- * summary row as a filled fluid field so the stack reads as the reference's
- * email-over-password pair. Tokens are --login-* (app/globals.css).
+ * - Inputs are NAME-LESS and the primary ships disabled pre-hydration, so a
+ *   pre-hydration native GET submit has nothing to serialize into the URL —
+ *   the two remaining layers of the old three-layer guard (the third, the
+ *   password field's absence from step-1 HTML, was the choreography itself).
+ * - No account-existence oracle: email validation is FORMAT-only, GoTrue
+ *   answers unknown-email and wrong-password with the same error, and the
+ *   magic-link / reset buttons return one neutral notice either way.
+ * - Magic links never self-provision (shouldCreateUser: false); a password
+ *   never reaches storage (Remember keeps the email alone).
  */
-type Step = "email" | "password";
 
 // Same shape as the viewer's directory pref (ViewerSeatFinder.tsx): one
 // namespaced key, every access wrapped because storage throws outright in
@@ -59,9 +63,9 @@ function writeRememberedEmail(email: string | null) {
   }
 }
 
-// Format only, and deliberately loose. Step 1 must not decide whether an
-// account exists — every well-formed address advances to step 2, so this check
-// can never become an account oracle.
+// Format only, and deliberately loose. The submit-time check can never become
+// an account oracle: it looks at SHAPE, not existence, and the auth call it
+// gates answers unknown-email and wrong-password with one identical error.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type PendingAction = "password" | "link" | "reset" | null;
@@ -75,9 +79,8 @@ const UNREACHABLE_MESSAGE = "Could not reach the sign-in service. Check your con
 
 // One response for "sent" and "no such account": the magic-link button is
 // reachable pre-auth, so distinguishing the two would hand any visitor an
-// account-existence oracle (the thing step 1 was built to avoid). The
-// footer's "contact the office administrator" line carries the provisioning
-// guidance.
+// account-existence oracle. The footer's "contact the office administrator"
+// line carries the provisioning guidance.
 const MAGIC_LINK_NEUTRAL_NOTICE = {
   text: "If that address has an account, the sign-in link is on its way. Use the newest email if you requested more than one link.",
   tone: "success"
@@ -98,12 +101,10 @@ type Notice = {
 };
 
 export function LoginForm() {
-  const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
-  // Purely visual (the 1e eye toggle) — reset alongside the password when the
-  // user goes back to step 1, so a fresh disclosure always starts masked.
+  // Purely visual (the 1e eye toggle).
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -119,7 +120,6 @@ export function LoginForm() {
   const [hydrated, setHydrated] = useState(false);
   const emailInputRef = useRef<HTMLInputElement | null>(null);
   const passwordInputRef = useRef<HTMLInputElement | null>(null);
-  const previousStep = useRef<Step | null>(null);
 
   useEffect(() => {
     setHydrated(true);
@@ -128,9 +128,8 @@ export function LoginForm() {
     const next = safeNextPath(params.get("next"));
     setNextPath(next);
 
-    // Returning visitor: prefill and re-check, but still land on step 1. The
-    // owner's ruling — skipping to step 2 would hide the wrong-account escape
-    // and make first paint depend on storage state.
+    // Returning visitor: prefill and re-check. Arriving at /login must not
+    // steal focus from the page, so nothing is focused on mount.
     const remembered = readRememberedEmail();
     if (remembered) {
       setEmail(remembered);
@@ -145,21 +144,6 @@ export function LoginForm() {
     if (error) setNotice({ text: friendlyAuthMessageFromQuery(error), tone: "error" });
   }, []);
 
-  // Focus follows the disclosure — forward to the password, back to the email.
-  // Never on mount: arriving at /login must not steal focus from the page.
-  //
-  // Compares against the PREVIOUS step rather than a "have I run yet" flag.
-  // StrictMode double-invokes effects in dev, so a first-run flag is already
-  // spent on the second invocation and the email field grabbed focus on load
-  // (visible as a focused orange rule on a page nobody had touched).
-  useEffect(() => {
-    const previous = previousStep.current;
-    previousStep.current = step;
-    if (previous === null || previous === step) return;
-    if (step === "password") passwordInputRef.current?.focus();
-    else emailInputRef.current?.focus();
-  }, [step]);
-
   function redirectAfterLogin() {
     // Full document load, deliberately not router.push + router.refresh — the
     // session cookie just changed, and that pair raced two client transitions
@@ -168,11 +152,11 @@ export function LoginForm() {
     assignLocation(nextPath);
   }
 
-  // Step 1. Format validation only; routing to step 2 is unconditional for a
-  // well-formed address so the form never confirms that an account exists.
-  function continueToPassword() {
+  async function signInWithPassword() {
     const trimmed = email.trim();
 
+    // Submit-time validation, one field at a time so focus lands on the first
+    // problem. Format only — see EMAIL_PATTERN.
     if (!trimmed) {
       setEmailError("Email is required");
       emailInputRef.current?.focus();
@@ -185,19 +169,16 @@ export function LoginForm() {
       return;
     }
 
-    writeRememberedEmail(remember ? trimmed : null);
-    setEmailError(null);
-    setNotice(null);
-    setStep("password");
-  }
-
-  async function signInWithPassword() {
     if (!password.trim()) {
       setPasswordError("Password is required");
       passwordInputRef.current?.focus();
       return;
     }
 
+    // The remembered email persists at the moment of a real sign-in attempt —
+    // the same "user has committed to this address" point Continue used to be.
+    writeRememberedEmail(remember ? trimmed : null);
+    setEmailError(null);
     setPasswordError(null);
     setPending("password");
     setNotice(null);
@@ -208,16 +189,14 @@ export function LoginForm() {
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: trimmed,
         password
       });
 
       if (error) {
         // Password cleared, and the notification carries the magic link as its
-        // action. Focus goes to the password field rather than the email the
-        // pattern's single-step drawing names: on step 2 the email is a summary
-        // row, not a field, and the cleared password is what needs retyping —
-        // the way back to the email stays one tab away on Edit.
+        // action. Focus goes to the password field — the cleared password is
+        // what needs retyping, and the email field is one Shift-Tab away.
         setNotice({ text: friendlyAuthMessage(error.message), tone: "error", offerMagicLink: true });
         setPassword("");
         passwordInputRef.current?.focus();
@@ -313,14 +292,6 @@ export function LoginForm() {
     }
   }
 
-  function editEmail() {
-    setPassword("");
-    setShowPassword(false);
-    setPasswordError(null);
-    setNotice(null);
-    setStep("email");
-  }
-
   // Once hydrated, submit stays enabled and validates on submit so Enter works
   // everywhere and an empty click explains itself instead of hitting a silently
   // dead button.
@@ -330,40 +301,47 @@ export function LoginForm() {
   // whatever had been typed, with no message (UX-01, #276). Holding the button
   // disabled for that window keeps the input, and the "Starting up…" label keeps
   // the disabled state from being the silently dead button above — it says why.
+  // With the password on this surface, the name-less inputs below are the
+  // second layer of that guard: even a native GET serializes nothing.
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
-    if (step === "email") continueToPassword();
-    else void signInWithPassword();
+    void signInWithPassword();
   }
 
   // Fluid field (Carbon fluid text input; design 1e): 56px, label INSIDE, a
-  // bottom rule and no box — stacked flush on step 2 so the summary row's
-  // subtle rule reads as the divider between the email and password fields.
+  // bottom rule and no box — the email and password fields stack flush, the
+  // email field's subtle rule doubling as the divider between them.
   //
   // Height is fixed and box-sizing is border-box (app/globals.css), so the
   // 1px → 2px rule change on focus or error cannot shift layout.
   //
-  // The resting rule keeps --login-border-strong (#8d8d8d — 3.02:1 on the
-  // #f4f4f4 fill, clearing WCAG 1.4.11's 3:1 for an essential UI boundary):
-  // the handoff's #e0e0e0 is an internal DIVIDER between two flush fields
-  // (the summary row uses it), never a field's sole boundary. Focus doubles
-  // the rule in the 1e copper --login-accent, error in --login-error — the
-  // thickness change is the second, non-colour cue.
-  const fieldShellClass = (invalid: boolean, withTrailing = false) =>
+  // Rest rules split by position (the 1.4.11 note): the STACK's bottom edge —
+  // the password field — keeps --login-border-strong (#8d8d8d, 3.02:1 on the
+  // fill), the single line that says "this is an input". The email field's
+  // rest rule is the handoff's --login-border-subtle #e0e0e0: an internal
+  // DIVIDER between two flush fills, never the stack's sole boundary. Focus
+  // doubles the rule in the 1e copper, error in --login-error — the thickness
+  // change is the second, non-colour cue.
+  const fieldShellClass = (invalid: boolean, options?: { withTrailing?: boolean; restRule?: "subtle" | "strong" }) =>
     cx(
       // transition-[background-color], NOT transition-colors: the bottom rule
       // IS the focus indicator here, and a colour tween would delay it 150ms.
       // Only the hover fill eases.
       "relative flex h-14 bg-[var(--login-field)] px-4 transition-[background-color] hover:bg-[var(--login-field-hover)]",
-      withTrailing ? "items-center gap-1" : "flex-col justify-center",
+      options?.withTrailing ? "items-center gap-1" : "flex-col justify-center",
       // The `color:` hint is load-bearing. `border-[var(--x)]` is type-ambiguous
       // to Tailwind v3 — it cannot tell a length from a colour inside a var() —
       // and the focus variant lost silently, leaving a 2px rule still painted
       // #8d8d8d. Measured, not assumed. Keep the explicit longhand.
       invalid
         ? "border-b-2 border-b-[color:var(--login-error)]"
-        : "border-b border-b-[color:var(--login-border-strong)] focus-within:border-b-2 focus-within:border-b-[color:var(--login-accent)]"
+        : cx(
+            options?.restRule === "subtle"
+              ? "border-b border-b-[color:var(--login-border-subtle)]"
+              : "border-b border-b-[color:var(--login-border-strong)]",
+            "focus-within:border-b-2 focus-within:border-b-[color:var(--login-accent)]"
+          )
     );
   const fieldLabelClass = "block text-[11px] font-normal leading-[1.3] text-[var(--login-text-secondary)]";
   // outline-none is safe only because the shell above draws the focus rule.
@@ -375,9 +353,9 @@ export function LoginForm() {
   //
   // TWO colour roles, deliberately: --login-link (#B85207) is background-only —
   // it measures 4.49:1 on the field fill and 4.50:1 on the error tint, so a
-  // link that sits ON a fill (Edit in the summary row, the notification's
-  // recovery action) takes --login-link-on-field (#9F4605, 5.70:1 on both).
-  // The e2e axe scan flagged Edit at 4.49:1 when both shared one colour.
+  // link that sits ON a fill (the notification's recovery action) takes
+  // --login-link-on-field (#9F4605, 5.70:1 on both). The e2e axe scan flagged
+  // the split's absence at 4.49:1.
   // Split base + colour rather than stacking a second text-[...] utility:
   // two same-specificity arbitrary utilities resolve by stylesheet order,
   // not class-list order, so an "override" can silently lose.
@@ -424,7 +402,6 @@ export function LoginForm() {
       className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin"
     />
   );
-
   return (
     <div className="flex flex-col">
       <h2 className="text-[28px] font-normal leading-[1.25] text-[var(--login-text-primary)]">Log in</h2>
@@ -471,221 +448,198 @@ export function LoginForm() {
       )}
 
       {/* Inputs are deliberately name-less: a pre-hydration native submit must
-          not serialize the password into the URL (GET form default). */}
+          not serialize the password into the URL (GET form default). With one
+          surface this guard is structural, not stylistic — the password field
+          IS in the server HTML now, so name-lessness plus the disabled
+          pre-hydration primary are what keep that window inert. */}
       <form onSubmit={handleSubmit} noValidate aria-label="Log in">
-        {step === "email" ? (
-          <>
-            <div className="mt-6">
-              <div className={fieldShellClass(Boolean(emailError))}>
-                <label htmlFor="login-email" className={fieldLabelClass}>
-                  Email
-                </label>
-                <input
-                  id="login-email"
-                  ref={emailInputRef}
-                  type="email"
-                  spellCheck={false}
-                  value={email}
-                  onChange={event => {
-                    setEmail(event.target.value);
-                    if (emailError) setEmailError(null);
-                  }}
-                  placeholder="you@megeredchianlaw.com"
-                  autoComplete="email"
-                  aria-invalid={emailError ? true : undefined}
-                  aria-describedby={emailError ? "login-email-error" : undefined}
-                  className={fieldInputClass}
-                />
-                {emailError && (
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="absolute right-3.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2">
-                    <circle cx="10" cy="10" r="8" fill="var(--login-error)" />
-                    <path d="M10 5.5v5.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
-                    <circle cx="10" cy="14" r="1.1" fill="#fff" />
-                  </svg>
-                )}
-              </div>
-              {emailError && (
-                <p id="login-email-error" className={fieldErrorClass}>
-                  {emailError}
-                </p>
-              )}
-            </div>
-
-            <label className="mt-4 flex items-center gap-[9px] text-[12.5px] text-[var(--login-text-secondary)]">
-              <span className="relative inline-flex h-[15px] w-[15px] shrink-0 items-center justify-center">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={event => {
-                    setRemember(event.target.checked);
-                    // Unchecking clears the stored value immediately rather than
-                    // waiting for a Continue the user may never press.
-                    if (!event.target.checked) writeRememberedEmail(null);
-                  }}
-                  className={cx(
-                    "peer h-[15px] w-[15px] shrink-0 appearance-none border border-[var(--login-border-strong)] bg-transparent",
-                    "checked:border-[var(--login-text-primary)] checked:bg-[var(--login-text-primary)]",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2"
-                  )}
-                />
-                {/* The glyph paints in --login-bg so it stays legible on the
-                    ink fill in light AND the ivory fill in dark. */}
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 10 10"
-                  className="pointer-events-none absolute hidden h-[9px] w-[9px] text-[var(--login-bg)] peer-checked:block"
-                >
-                  <path d="M1.5 5.5 4 8l4.5-6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-              Remember my work email on this device
+        <div className="mt-6">
+          <div className={fieldShellClass(Boolean(emailError), { restRule: "subtle" })}>
+            <label htmlFor="login-email" className={fieldLabelClass}>
+              Email
             </label>
+            <input
+              id="login-email"
+              ref={emailInputRef}
+              type="email"
+              spellCheck={false}
+              value={email}
+              onChange={event => {
+                setEmail(event.target.value);
+                if (emailError) setEmailError(null);
+              }}
+              placeholder="you@megeredchianlaw.com"
+              autoComplete="email"
+              aria-invalid={emailError ? true : undefined}
+              aria-describedby={emailError ? "login-email-error" : undefined}
+              className={fieldInputClass}
+            />
+            {emailError && (
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="absolute right-3.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2">
+                <circle cx="10" cy="10" r="8" fill="var(--login-error)" />
+                <path d="M10 5.5v5.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+                <circle cx="10" cy="14" r="1.1" fill="#fff" />
+              </svg>
+            )}
+          </div>
+          {emailError && (
+            <p id="login-email-error" className={fieldErrorClass}>
+              {emailError}
+            </p>
+          )}
+        </div>
 
-            {/* Not the shared Button primitive, and the label is a DIRECT text
-                child on purpose. Button centres its content, and wrapping the
-                label in a span to get the label-left / arrow-right split made
-                `button:text-is("Continue")` stop matching — Playwright's text
-                engine binds to the smallest element containing the text, so the
-                span captured it and every authenticated e2e test lost its
-                sign-in step (tests/e2e-auth/auth-helpers.ts). */}
-            <button type="submit" disabled={pending !== null || !hydrated} className={primaryButtonClass}>
-              {!hydrated ? "Starting up…" : "Continue"}
-              {hydrated && primaryArrowIcon}
-            </button>
-          </>
-        ) : (
-          <>
-            {/* The entered email becomes an editable summary row — the pattern's
-                way back, without retyping — dressed as the reference's filled
-                fluid email field, its subtle bottom rule doubling as the
-                divider above the password field. */}
-            <div className="mt-6 flex h-14 items-center gap-3 border-b border-b-[color:var(--login-border-subtle)] bg-[var(--login-field)] px-4">
-              <span className="min-w-0 flex-1">
-                <span className={fieldLabelClass}>Email</span>
-                <span className="mt-1 block truncate text-[13.5px] leading-[1.4] text-[var(--login-text-primary)]">
-                  {email.trim()}
-                </span>
-              </span>
-              <button type="button" onClick={editEmail} disabled={pending !== null} className={cx(onFieldLinkClass, "shrink-0")}>
-                Edit
-              </button>
-            </div>
-
-            <div>
-              <div className={fieldShellClass(Boolean(passwordError), true)}>
-                <span className="flex min-w-0 flex-1 flex-col justify-center">
-                  <label htmlFor="login-password" className={fieldLabelClass}>
-                    Password
-                  </label>
-                  <input
-                    id="login-password"
-                    ref={passwordInputRef}
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={event => {
-                      setPassword(event.target.value);
-                      if (passwordError) setPasswordError(null);
-                    }}
-                    placeholder="Enter your password"
-                    autoComplete="current-password"
-                    aria-invalid={passwordError ? true : undefined}
-                    aria-describedby={passwordError ? "login-password-error" : undefined}
-                    className={cx(fieldInputClass, !showPassword && "tracking-[2px]")}
-                  />
-                </span>
-                {passwordError && (
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-[15px] w-[15px] shrink-0">
-                    <circle cx="10" cy="10" r="8" fill="var(--login-error)" />
-                    <path d="M10 5.5v5.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
-                    <circle cx="10" cy="14" r="1.1" fill="#fff" />
-                  </svg>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(value => !value)}
-                  aria-label="Show password"
-                  aria-pressed={showPassword}
-                  className={cx(
-                    "grid h-8 w-8 flex-none place-items-center text-[var(--login-text-secondary)] transition-colors hover:bg-[var(--login-field-hover)]",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)]"
-                  )}
-                >
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="h-[15px] w-[15px]"
-                  >
-                    <path d="M2.5 10s3-5 7.5-5 7.5 5 7.5 5-3 5-7.5 5-7.5-5-7.5-5z" />
-                    <circle cx="10" cy="10" r="2.2" />
-                    {showPassword && <path d="m4.5 15.5 11-11" strokeLinecap="round" />}
-                  </svg>
-                </button>
-              </div>
-              {passwordError && (
-                <p id="login-password-error" className={fieldErrorClass}>
-                  {passwordError}
-                </p>
-              )}
-            </div>
-
-            {/* Meta row (1e): the policy hint anchors left, reset stays with
-                the password field on the right rather than competing with the
-                buttons below. The hint interpolates MIN_PASSWORD_LENGTH so it
-                can never drift from the enforced minimum. */}
-            <div className="mt-2 flex items-baseline justify-between gap-3 text-[11px]">
-              <span className="text-[var(--login-text-tertiary)]">
-                Passwords are at least {MIN_PASSWORD_LENGTH} characters.
-              </span>
-              <button
-                type="button"
-                onClick={sendPasswordReset}
-                disabled={pending !== null}
-                className={cx(inlineLinkClass, "shrink-0 text-[11px] font-normal")}
-              >
-                {pending === "reset" ? "Sending reset email…" : "Forgot password?"}
-              </button>
-            </div>
-
-            <button type="submit" disabled={pending !== null || !hydrated} className={primaryButtonClass}>
-              {!hydrated ? "Starting up…" : pending === "password" ? "Logging in…" : "Log in"}
-              {hydrated && (pending === "password" ? primarySpinner : primaryArrowIcon)}
-            </button>
-
-            {/* The alternative login sits BELOW the primary behind a divider —
-                never between the field and its primary button. */}
-            <div className="mt-[22px] flex items-center gap-3">
-              <span className="h-px flex-1 bg-[var(--login-border-subtle)]" />
-              <span className="text-[11px] text-[var(--login-text-tertiary)]">or</span>
-              <span className="h-px flex-1 bg-[var(--login-border-subtle)]" />
-            </div>
+        <div>
+          <div className={fieldShellClass(Boolean(passwordError), { withTrailing: true })}>
+            <span className="flex min-w-0 flex-1 flex-col justify-center">
+              <label htmlFor="login-password" className={fieldLabelClass}>
+                Password
+              </label>
+              <input
+                id="login-password"
+                ref={passwordInputRef}
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={event => {
+                  setPassword(event.target.value);
+                  if (passwordError) setPasswordError(null);
+                }}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                aria-invalid={passwordError ? true : undefined}
+                aria-describedby={passwordError ? "login-password-error" : undefined}
+                className={cx(fieldInputClass, !showPassword && "tracking-[2px]")}
+              />
+            </span>
+            {passwordError && (
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-[15px] w-[15px] shrink-0">
+                <circle cx="10" cy="10" r="8" fill="var(--login-error)" />
+                <path d="M10 5.5v5.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+                <circle cx="10" cy="14" r="1.1" fill="#fff" />
+              </svg>
+            )}
             <button
               type="button"
-              onClick={sendMagicLink}
-              disabled={pending !== null}
+              onClick={() => setShowPassword(value => !value)}
+              aria-label="Show password"
+              aria-pressed={showPassword}
               className={cx(
-                "mt-[22px] flex h-12 w-full items-center justify-between gap-2.5 border border-[var(--login-border-strong)] bg-transparent px-4 text-[13px] leading-none text-[var(--login-text-primary)]",
-                "transition-colors hover:bg-[var(--login-field-hover)] disabled:cursor-not-allowed disabled:opacity-50",
+                "grid h-8 w-8 flex-none place-items-center text-[var(--login-text-secondary)] transition-colors hover:bg-[var(--login-field-hover)]",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)]"
               )}
             >
-              Email me a magic link
               <svg
                 aria-hidden="true"
                 viewBox="0 0 20 20"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.5"
-                className="h-3.5 w-3.5 shrink-0"
+                className="h-[15px] w-[15px]"
               >
-                <rect x="2.5" y="4.5" width="15" height="11" />
-                <path d="m3 5.5 7 5.5 7-5.5" />
+                <path d="M2.5 10s3-5 7.5-5 7.5 5 7.5 5-3 5-7.5 5-7.5-5-7.5-5z" />
+                <circle cx="10" cy="10" r="2.2" />
+                {showPassword && <path d="m4.5 15.5 11-11" strokeLinecap="round" />}
               </svg>
             </button>
-          </>
-        )}
+          </div>
+          {passwordError && (
+            <p id="login-password-error" className={fieldErrorClass}>
+              {passwordError}
+            </p>
+          )}
+        </div>
+
+        {/* Meta row (1e): the policy hint anchors left, reset stays with the
+            password field on the right rather than competing with the buttons
+            below. The hint interpolates MIN_PASSWORD_LENGTH so it can never
+            drift from the enforced minimum. */}
+        <div className="mt-2 flex items-baseline justify-between gap-3 text-[11px]">
+          <span className="text-[var(--login-text-tertiary)]">
+            Passwords are at least {MIN_PASSWORD_LENGTH} characters.
+          </span>
+          <button
+            type="button"
+            onClick={sendPasswordReset}
+            disabled={pending !== null}
+            className={cx(inlineLinkClass, "shrink-0 text-[11px] font-normal")}
+          >
+            {pending === "reset" ? "Sending reset email…" : "Forgot password?"}
+          </button>
+        </div>
+
+        <label className="mt-4 flex items-center gap-[9px] text-[12.5px] text-[var(--login-text-secondary)]">
+          <span className="relative inline-flex h-[15px] w-[15px] shrink-0 items-center justify-center">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={event => {
+                setRemember(event.target.checked);
+                // Unchecking clears the stored value immediately rather than
+                // waiting for a sign-in the user may never attempt.
+                if (!event.target.checked) writeRememberedEmail(null);
+              }}
+              className={cx(
+                "peer h-[15px] w-[15px] shrink-0 appearance-none border border-[var(--login-border-strong)] bg-transparent",
+                "checked:border-[var(--login-text-primary)] checked:bg-[var(--login-text-primary)]",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2"
+              )}
+            />
+            {/* The glyph paints in --login-bg so it stays legible on the
+                ink fill in light AND the ivory fill in dark. */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 10 10"
+              className="pointer-events-none absolute hidden h-[9px] w-[9px] text-[var(--login-bg)] peer-checked:block"
+            >
+              <path d="M1.5 5.5 4 8l4.5-6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          Remember my work email on this device
+        </label>
+
+        {/* Not the shared Button primitive, and the label is a DIRECT text
+            child on purpose. Button centres its content, and wrapping the
+            label in a span to get the label-left / arrow-right split made
+            `button:text-is("Log in")` stop matching — Playwright's text
+            engine binds to the smallest element containing the text, so the
+            span captured it and every authenticated e2e test lost its
+            sign-in step (tests/e2e-auth/auth-helpers.ts). */}
+        <button type="submit" disabled={pending !== null || !hydrated} className={primaryButtonClass}>
+          {!hydrated ? "Starting up…" : pending === "password" ? "Logging in…" : "Log in"}
+          {hydrated && (pending === "password" ? primarySpinner : primaryArrowIcon)}
+        </button>
+
+        {/* The alternative login sits BELOW the primary behind a divider —
+            never between a field and its primary button (the hierarchy rule
+            survives the two-step retirement). */}
+        <div className="mt-[22px] flex items-center gap-3">
+          <span className="h-px flex-1 bg-[var(--login-border-subtle)]" />
+          <span className="text-[11px] text-[var(--login-text-tertiary)]">or</span>
+          <span className="h-px flex-1 bg-[var(--login-border-subtle)]" />
+        </div>
+        <button
+          type="button"
+          onClick={sendMagicLink}
+          disabled={pending !== null}
+          className={cx(
+            "mt-[22px] flex h-12 w-full items-center justify-between gap-2.5 border border-[var(--login-border-strong)] bg-transparent px-4 text-[13px] leading-none text-[var(--login-text-primary)]",
+            "transition-colors hover:bg-[var(--login-field-hover)] disabled:cursor-not-allowed disabled:opacity-50",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+          )}
+        >
+          Email me a magic link
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            className="h-3.5 w-3.5 shrink-0"
+          >
+            <rect x="2.5" y="4.5" width="15" height="11" />
+            <path d="m3 5.5 7 5.5 7-5.5" />
+          </svg>
+        </button>
       </form>
 
       {/* The reference marks the administrator phrase in link colour without a
