@@ -10,11 +10,13 @@ let SeatMarker;
 let MapZoomControl;
 let FloorSelector;
 let DeptChipRow;
+let DraftTrailOverlay;
 before(async () => {
   ({ SeatMarker } = await loadComponent("@/components/seat-map/SeatMarker"));
   ({ MapZoomControl } = await loadComponent("@/components/seat-map/MapZoomControl"));
   ({ FloorSelector } = await loadComponent("@/components/seat-map/FloorSelector"));
   ({ DeptChipRow } = await loadComponent("@/components/seat-map/DeptChipRow"));
+  ({ DraftTrailOverlay } = await loadComponent("@/components/seat-map/DraftTrailOverlay"));
 });
 beforeEach(() => configureContext({}));
 afterEach(() => cleanup());
@@ -292,4 +294,74 @@ test("FloorSelector renders a floor control", async () => {
   await renderElement(React.createElement(FloorSelector, { floor: "3", onChange() {} }));
   const trigger = document.querySelector('[aria-label^="Change floor"]');
   assert.ok(trigger, "floor control renders");
+});
+
+// --- DraftTrailOverlay -------------------------------------------------------
+// The animated route between a pending swap/move pair
+// (design_handoff_swap_trail, 2026-08-15). SeatMap renders it conditionally
+// from its existing swap/move confirm state; the overlay itself is a pure,
+// stateless render of (sourceSeat, targetSeat, kind). SeatMap can't be
+// unit-rendered in jsdom (see header), so the mount/unmount contract is
+// exercised through a harness that flips the same conditional SeatMap uses.
+
+const trailSource = { id: "s1", x: 0.3, y: 0.4 };
+const trailTarget = { id: "s2", x: 0.5, y: 0.6 };
+
+test("the draft trail mounts while a swap is pending and unmounts on cancel", async () => {
+  function PendingSwapHarness() {
+    const [pending, setPending] = React.useState(true);
+    return React.createElement(
+      React.Fragment,
+      null,
+      pending
+        ? React.createElement(DraftTrailOverlay, { kind: "swap", sourceSeat: trailSource, targetSeat: trailTarget })
+        : null,
+      React.createElement("button", { onClick: () => setPending(false) }, "Cancel swap")
+    );
+  }
+  await renderElement(React.createElement(PendingSwapHarness));
+  assert.ok(document.querySelector('svg[data-draft-trail="swap"]'), "trail overlay mounts while the swap is pending");
+  await act(async () => fireEvent.click(document.querySelector("button")));
+  assert.equal(document.querySelector("svg[data-draft-trail]"), null, "trail overlay unmounts when the swap cancels");
+});
+
+test("a swap trail is two mirrored arcs with two arrowheads, decorative and pointer-inert", async () => {
+  await renderElement(React.createElement(DraftTrailOverlay, { kind: "swap", sourceSeat: trailSource, targetSeat: trailTarget }));
+  const svg = document.querySelector('svg[data-draft-trail="swap"]');
+  assert.equal(svg.getAttribute("aria-hidden"), "true", "trail is decorative reinforcement only");
+  assert.match(svg.getAttribute("class") ?? "", /pointer-events-none/, "trail never intercepts marker clicks");
+  const underlays = svg.querySelectorAll('[data-trail-part="underlay"]');
+  const flows = svg.querySelectorAll('[data-trail-part="flow"]');
+  const arrows = svg.querySelectorAll('[data-trail-part="arrow"]');
+  assert.equal(underlays.length, 2, "one route underlay per direction");
+  assert.equal(flows.length, 2, "one flow line per direction");
+  assert.equal(arrows.length, 2, "each direction carries its own arrowhead");
+  assert.equal(svg.querySelector('[data-trail-part="origin"]'), null, "origin ring is move-only");
+  const [outbound, inbound] = flows;
+  assert.notEqual(outbound.getAttribute("d"), inbound.getAttribute("d"), "the two arcs bow to opposite sides");
+  // The dash flow rides motion-safe only — under prefers-reduced-motion the
+  // trail stays visible as a static dashed route (the handoff pins that).
+  assert.match(outbound.getAttribute("class") ?? "", /motion-safe:animate-\[map-trail-dash/, "dash flow is motion-safe gated");
+});
+
+test("a move trail is one arc, one arrowhead, and a dashed origin ring at the start", async () => {
+  await renderElement(React.createElement(DraftTrailOverlay, { kind: "move", sourceSeat: trailSource, targetSeat: trailTarget }));
+  const svg = document.querySelector('svg[data-draft-trail="move"]');
+  assert.equal(svg.querySelectorAll('[data-trail-part="flow"]').length, 1);
+  assert.equal(svg.querySelectorAll('[data-trail-part="arrow"]').length, 1);
+  const origin = svg.querySelector('[data-trail-part="origin"]');
+  assert.ok(origin, "move trails mark the origin seat with a ring");
+  const flowPath = svg.querySelector('[data-trail-part="flow"]').getAttribute("d") ?? "";
+  const [, startX, startY] = flowPath.match(/^M ([\d.]+) ([\d.]+) /) ?? [];
+  assert.equal(origin.getAttribute("cx"), startX, "ring sits at the path start");
+  assert.equal(origin.getAttribute("cy"), startY, "ring sits at the path start");
+});
+
+test("trail colors come from the admin accent tokens, never hardcoded hex", async () => {
+  await renderElement(React.createElement(DraftTrailOverlay, { kind: "move", sourceSeat: trailSource, targetSeat: trailTarget }));
+  const svg = document.querySelector("svg[data-draft-trail]");
+  assert.equal(svg.querySelector('[data-trail-part="flow"]').getAttribute("stroke"), "var(--admin-draft-trail)");
+  assert.equal(svg.querySelector('[data-trail-part="arrow"]').getAttribute("fill"), "var(--admin-draft-trail)");
+  assert.equal(svg.querySelector('[data-trail-part="origin"]').getAttribute("stroke"), "var(--admin-draft-trail-origin)");
+  assert.ok(!/#[0-9a-fA-F]{3,8}/.test(svg.outerHTML), "no hardcoded hex anywhere in the trail markup");
 });
