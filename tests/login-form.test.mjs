@@ -140,6 +140,14 @@ test("one surface carries both fields, the reset link, and the magic-link altern
   // The link request must never be a submit: it would race the password path.
   assert.equal(screen.getByRole("button", { name: /magic link/i }).getAttribute("type"), "button");
   assert.ok(screen.getByRole("button", { name: /Forgot password/ }));
+  // The hierarchy rule is an ORDER claim, so pin the order: the alternative
+  // renders after the primary, never between a field and its primary button.
+  const primary = screen.getByRole("button", { name: "Log in" });
+  const magicLink = screen.getByRole("button", { name: /magic link/i });
+  assert.ok(
+    primary.compareDocumentPosition(magicLink) & Node.DOCUMENT_POSITION_FOLLOWING,
+    "the magic-link alternative must render after the primary"
+  );
 });
 
 // tests/e2e-auth/auth-helpers.ts drives the flow with button:text-is("Log in")

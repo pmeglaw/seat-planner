@@ -66,8 +66,8 @@ survived — kill that PID before trusting anything you see.
 node .claude/skills/run-seat-planner/driver.mjs --smoke
 ```
 
-It verifies: `/login` renders step 1 of the log-in form (identity only — no
-password field yet); unauthenticated `/` redirects to `/login`; bad credentials
+It verifies: `/login` renders the single-surface log-in form (email and
+password together); unauthenticated `/` redirects to `/login`; bad credentials
 round-trip to real Supabase Auth and surface the error alert; the seeded e2e user signs in and the published viewer map renders; the
 dev-only `/concepts/map-redesign` prototype renders. Expect `PASS` × 6.
 

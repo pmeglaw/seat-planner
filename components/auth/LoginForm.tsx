@@ -340,7 +340,12 @@ export function LoginForm() {
             options?.restRule === "subtle"
               ? "border-b border-b-[color:var(--login-border-subtle)]"
               : "border-b border-b-[color:var(--login-border-strong)]",
-            "focus-within:border-b-2 focus-within:border-b-[color:var(--login-accent)]"
+            // has-[input:focus], NOT focus-within: the password shell also
+            // contains the eye toggle, and focus-within would paint the
+            // field's focus rule while the BUTTON has keyboard focus — two
+            // indicators, one pointing at the wrong control. The rule tracks
+            // the input alone; the toggle keeps its own inset ring.
+            "has-[input:focus]:border-b-2 has-[input:focus]:border-b-[color:var(--login-accent)]"
           )
     );
   const fieldLabelClass = "block text-[11px] font-normal leading-[1.3] text-[var(--login-text-secondary)]";
