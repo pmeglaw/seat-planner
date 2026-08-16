@@ -66,8 +66,8 @@ survived — kill that PID before trusting anything you see.
 node .claude/skills/run-seat-planner/driver.mjs --smoke
 ```
 
-It verifies: `/login` renders step 1 of the log-in form (identity only — no
-password field yet); unauthenticated `/` redirects to `/login`; bad credentials
+It verifies: `/login` renders the single-surface log-in form (email and
+password together); unauthenticated `/` redirects to `/login`; bad credentials
 round-trip to real Supabase Auth and surface the error alert; the seeded e2e user signs in and the published viewer map renders; the
 dev-only `/concepts/map-redesign` prototype renders. Expect `PASS` × 6.
 
@@ -147,23 +147,22 @@ need no auth at all.
 
 ## Gotchas
 
-- **Log in is two steps.** Progressive auth (canvas 2a/2b): step 1 is the work
-  email + **Continue**, step 2 discloses the password + **Log in**. There is no
-  password field on screen until Continue is pressed, so any hand-rolled flow is
-  fill → Continue → fill → Log in. The `<h1>` on step 2 is also "Log in", so
-  target buttons with `button:text-is("Continue")` / `button:text-is("Log in")`
-  rather than a substring match.
-- **The step-1 primary is disabled until hydration.** It server-renders as
-  "Starting up…" and only becomes an enabled "Continue" once React mounts
+- **Log in is one surface** (owner decision 2026-08-15; the earlier two-step
+  disclosure is retired). Email, password, and the **Log in** primary render
+  together: fill both fields, click once. The form `<h2>` is also "Log in", so
+  target the button with `button:text-is("Log in")` rather than a substring
+  match.
+- **The primary is disabled until hydration.** It server-renders as
+  "Starting up…" and only becomes an enabled "Log in" once React mounts
   (#282), so a `fill` + `click` right after `domcontentloaded` finds a dead
   control — and before that fix, a click in that window ran the browser's native
-  GET and silently reloaded the page, discarding what had been typed.
+  GET and silently reloaded the page, discarding what had been typed (inputs
+  are name-less, so even that GET serializes no credential).
   Playwright's `click()` auto-waits for enabled, which is exactly this fence, so
   the driver just clicks; only a hand-rolled `dispatchEvent` needs its own poll.
-- **Step 2 is where the alternatives live.** "Email me a sign-in link instead"
-  (behind the "or" divider), "Forgot password?", and the **Edit** button that
-  walks back to step 1. None of them exist on step 1 — an owner decision, not an
-  oversight.
+- **The alternatives sit below the primary.** "Email me a magic link" (behind
+  the "or" divider) and "Forgot password?" (right of the password hint) are on
+  the same surface, always visible.
 - **`[role=alert]` matches Next's route announcer.** Next keeps an
   always-present, empty `[role=alert]` on `<body>`, so a bare alert wait
   succeeds instantly with empty text. Scope to `main [role=alert]`.
