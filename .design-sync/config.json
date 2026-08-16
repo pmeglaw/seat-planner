@@ -1,0 +1,136 @@
+{
+  "projectId": "2831f86e-03df-4d80-86ac-5b27437876d0",
+  "shape": "package",
+  "pkg": "seat-planner",
+  "globalName": "SeatPlanner",
+  "entry": "./.design-sync/ds-entry.ts",
+  "srcDir": "components",
+  "tsconfig": ".design-sync/tsconfig.sync.json",
+  "buildCmd": "npx tailwindcss -c tailwind.config.ts -i app/globals.css -o .design-sync/.cache/tailwind-compiled.css && cat .design-sync/tokens.css >> .design-sync/.cache/tailwind-compiled.css",
+  "cssEntry": ".design-sync/.cache/tailwind-compiled.css",
+  "extraFonts": [
+    ".design-sync/fonts.css"
+  ],
+  "docsDir": ".design-sync/docs-stubs",
+  "componentSrcMap": {
+    "Button": "components/ui/design-system.tsx",
+    "IconButton": "components/ui/design-system.tsx",
+    "StatusBadge": "components/ui/design-system.tsx",
+    "CloseIcon": "components/ui/CloseIcon.tsx",
+    "AppShell": "components/ui/AppShell.tsx",
+    "AppRail": "components/ui/AppRail.tsx",
+    "AppTopBar": "components/ui/AppTopBar.tsx",
+    "AccountMenu": "components/ui/AccountMenu.tsx",
+    "LoginForm": "components/auth/LoginForm.tsx",
+    "UpdatePasswordForm": "components/auth/UpdatePasswordForm.tsx",
+    "SeatMap": "components/seat-map/SeatMap.tsx",
+    "SeatMarker": "components/seat-map/SeatMarker.tsx",
+    "SeatInspector": "components/seat-map/SeatInspector.tsx",
+    "FilterPanel": "components/seat-map/FilterPanel.tsx",
+    "ResultsPanel": "components/seat-map/ResultsPanel.tsx",
+    "FloorSelector": "components/seat-map/FloorSelector.tsx",
+    "MapStatusLegend": "components/seat-map/MapStatusLegend.tsx",
+    "MapWashLayer": "components/seat-map/MapWashLayer.tsx",
+    "MapZoomControl": "components/seat-map/MapZoomControl.tsx",
+    "DeptChipRow": "components/seat-map/DeptChipRow.tsx",
+    "AiHighlightChip": "components/seat-map/AiHighlightChip.tsx",
+    "DraftTrailOverlay": "components/seat-map/DraftTrailOverlay.tsx",
+    "AskPlannerDrawer": "components/seat-map/AskPlannerDrawer.tsx",
+    "VacateConfirmDialog": "components/seat-map/SeatMapDialogs.tsx",
+    "DeleteSeatConfirmDialog": "components/seat-map/SeatMapDialogs.tsx",
+    "PublishReviewDialog": "components/seat-map/SeatMapDialogs.tsx",
+    "DiscardDraftDialog": "components/seat-map/SeatMapDialogs.tsx",
+    "InspectorGuardDialog": "components/seat-map/SeatMapDialogs.tsx",
+    "SwapConfirmDialog": "components/seat-map/SeatMapDialogs.tsx",
+    "MoveEmployeeConfirmDialog": "components/seat-map/SeatMapDialogs.tsx",
+    "ViewerFindPalette": "components/seat-map/ViewerFindPalette.tsx",
+    "ViewerSeatFinder": "components/seat-map/ViewerSeatFinder.tsx",
+    "ReceptionScreen": "components/reception/ReceptionScreen.tsx",
+    "ThemeToggle": "components/reception/ThemeToggle.tsx",
+    "AdminManagementPanel": "components/admin-management/AdminManagementPanel.tsx",
+    "DataUtilitiesPanel": "components/admin-settings/DataUtilitiesPanel.tsx"
+  },
+  "guidelinesGlob": [],
+  "overrides": {
+    "VacateConfirmDialog": {
+      "cardMode": "single",
+      "viewport": "760x560"
+    },
+    "DeleteSeatConfirmDialog": {
+      "cardMode": "single",
+      "viewport": "760x560"
+    },
+    "PublishReviewDialog": {
+      "cardMode": "single",
+      "viewport": "760x560"
+    },
+    "DiscardDraftDialog": {
+      "cardMode": "single",
+      "viewport": "760x560"
+    },
+    "InspectorGuardDialog": {
+      "cardMode": "single",
+      "viewport": "760x560"
+    },
+    "SwapConfirmDialog": {
+      "cardMode": "single",
+      "viewport": "760x560"
+    },
+    "MoveEmployeeConfirmDialog": {
+      "cardMode": "single",
+      "viewport": "760x560"
+    },
+    "AskPlannerDrawer": {
+      "cardMode": "single",
+      "viewport": "900x620"
+    },
+    "AppShell": {
+      "cardMode": "column"
+    },
+    "SeatMap": {
+      "cardMode": "column"
+    },
+    "ReceptionScreen": {
+      "cardMode": "single",
+      "viewport": "1280x800"
+    },
+    "AdminManagementPanel": {
+      "cardMode": "column"
+    },
+    "DataUtilitiesPanel": {
+      "cardMode": "column"
+    },
+    "ViewerSeatFinder": {
+      "cardMode": "single",
+      "viewport": "1280x800"
+    },
+    "DeptChipRow": {
+      "cardMode": "column"
+    },
+    "DraftTrailOverlay": {
+      "cardMode": "column"
+    },
+    "FilterPanel": {
+      "cardMode": "column"
+    },
+    "FloorSelector": {
+      "cardMode": "column"
+    },
+    "MapWashLayer": {
+      "cardMode": "column"
+    },
+    "ResultsPanel": {
+      "cardMode": "single",
+      "primaryStory": "MatchList"
+    },
+    "SeatInspector": {
+      "cardMode": "single",
+      "primaryStory": "AdminAssignedSeat"
+    },
+    "ViewerFindPalette": {
+      "cardMode": "single",
+      "primaryStory": "SearchResults"
+    }
+  },
+  "readmeHeader": ".design-sync/conventions.md"
+}

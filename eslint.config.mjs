@@ -10,7 +10,10 @@ const eslintConfig = [
       "node_modules/**",
       "next-env.d.ts",
       "playwright-report/**",
-      "test-results/**"
+      "test-results/**",
+      // design-sync build output + staged converter scripts (gitignored; absent in CI)
+      "ds-bundle/**",
+      ".ds-sync/**"
     ]
   },
   ...coreWebVitals,

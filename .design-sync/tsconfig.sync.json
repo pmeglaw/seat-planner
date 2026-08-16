@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "next/link": ["./shims/next-link.tsx"],
+      "next/image": ["./shims/next-image.tsx"],
+      "next/navigation": ["./shims/next-navigation.ts"],
+      "@/app/actions": ["./shims/app-actions.ts"],
+      "@/*": ["../*"]
+    }
+  }
+}
