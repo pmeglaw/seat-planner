@@ -38,24 +38,35 @@ test("no slash-opacity on arbitrary var() colors (Tailwind v3 drops the utility 
   assert.deepEqual(
     offenders,
     [],
-    `these utilities compile to nothing — use rgba(var(--…-rgb), a) instead:\n${offenders.join("\n")}`
+    `these utilities compile to nothing — use rgb(var(--…-rgb)/a) instead:\n${offenders.join("\n")}`
   );
 });
 
-test("every seat-map dialog suppresses the UA focus outline on its auto-focused container", async () => {
-  const source = await readFile(new URL("../components/seat-map/SeatMapDialogs.tsx", import.meta.url), "utf8");
-  // Each role="dialog" section is auto-focused by useDialogFocus; without
+test("every auto-focused seat-map dialog suppresses the UA focus outline on its container", async () => {
+  // Each role="dialog" container is auto-focused by useDialogFocus; without
   // focus-visible:outline-none the browser draws its default blue ring on the
   // keyboard-open path. Checked per dialog function — a file-wide count lets
   // one dialog's extra suppression (e.g. on its close button) mask another
-  // dialog's missing one.
-  const bodies = source.split(/(?=export function )/);
+  // dialog's missing one. Covers every seat-map file that mounts an
+  // auto-focused dialog, not just the extracted dialogs module.
+  const files = ["../components/seat-map/SeatMapDialogs.tsx", "../components/seat-map/AskPlannerDrawer.tsx"];
   const missing = [];
-  for (const body of bodies) {
-    if (!body.includes('role="dialog"')) continue;
-    const name = /export function (\w+)/.exec(body)?.[1] ?? "(unnamed)";
-    if (!body.includes("focus-visible:outline-none")) missing.push(name);
+  let sawDialog = false;
+  for (const file of files) {
+    const source = await readFile(new URL(file, import.meta.url), "utf8");
+    for (const body of source.split(/(?=export (?:default )?function )/)) {
+      if (!body.includes('role="dialog"')) continue;
+      sawDialog = true;
+      const name = /export (?:default )?function (\w+)/.exec(body)?.[1] ?? "(unnamed)";
+      // The container is the element carrying role="dialog" — check the first
+      // className after that attribute (still inside the opening tag), so a
+      // suppressed inner button can't satisfy the rule. A bare end-of-tag
+      // regex breaks on JSX arrow props (`onKeyDown={e => …}`).
+      const afterRole = body.slice(body.indexOf('role="dialog"'));
+      const containerClass = /className="([^"]*)"/.exec(afterRole)?.[1] ?? "";
+      if (!containerClass.includes("focus-visible:outline-none")) missing.push(name);
+    }
   }
-  assert.ok(bodies.some((b) => b.includes('role="dialog"')), 'expected role="dialog" sections in SeatMapDialogs.tsx');
+  assert.ok(sawDialog, 'expected role="dialog" containers in the checked files');
   assert.deepEqual(missing, [], `dialogs without focus-visible:outline-none show the UA blue outline: ${missing.join(", ")}`);
 });
