@@ -1389,7 +1389,7 @@ export function SeatInspector({
         edits, because a transient surface earns less trust than this panel. */}
 
     {moveConflict && (
-      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
         <section
           ref={moveConflictDialogFocusRef}
           tabIndex={-1}
@@ -1403,7 +1403,7 @@ export function SeatInspector({
               setMoveConflict(null);
             }
           }}
-          className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
+          className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
         >
           <div className="flex items-start justify-between gap-3">
             <div>

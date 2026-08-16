@@ -217,6 +217,7 @@
   /* Dark chrome (#161616): top bar + inspector read as one continuous dark
      surface. Text #F7F6F2 (16.45:1), muted #B8AEA2 (6.43:1) — both AA. */
   --admin-chrome-bg: #161616;
+  --admin-chrome-bg-rgb: 22 22 22;
   /* Raised chrome surfaces (filter menu): one step lighter than the bar;
      muted #B8AEA2 stays AA on it (5.86:1). */
   --admin-chrome-elevated: #1f1f1f;
@@ -227,10 +228,12 @@
   --admin-chrome-field: rgba(255, 255, 255, 0.08);
 
   --admin-rail-bg: var(--admin-chrome-bg);
+  --admin-rail-bg-rgb: var(--admin-chrome-bg-rgb);
   --admin-rail-surface: rgba(255, 255, 255, 0.05);
   --admin-rail-border: var(--admin-chrome-border);
   --admin-rail-muted: var(--admin-chrome-muted);
   --admin-surface: var(--sp-color-surface);
+  --admin-surface-rgb: var(--sp-color-surface-rgb);
   --admin-surface-hover: #FBFAF8;
   /* v12 filled field (Carbon Field-01). Neutral rather than the warm
      surface-alt so the input reads as a well, not as a tinted panel. The rule
@@ -241,6 +244,7 @@
   --admin-surface-alt: var(--sp-color-canvas);
   --admin-surface-muted: var(--sp-color-canvas);
   --admin-border: #E7E1D8;
+  --admin-border-rgb: 231 225 216;
   --admin-border-strong: #D8D0C5;
   /* v12 data-table pair: a warmer header fill than surface-alt (#F7F6F2) so the
      column head reads as chrome, and a hairline one step lighter than the card
@@ -271,6 +275,7 @@
      (#E64E13 = 3.84:1 vs white — fails AA text; kept for non-text use and
      ink-on-accent, ink on #E64E13 = 4.90:1). Measured 2026-07-21. */
   --admin-primary: #FF5715;
+  --admin-primary-rgb: 255 87 21;
   --admin-primary-hover: #E64E13;
   --admin-primary-cta: #D23F0A;
   --admin-primary-cta-hover: #B83708;
@@ -353,9 +358,11 @@
   --admin-ai-row: rgba(69, 137, 255, 0.08);
 
   --admin-success: #1D6E41;
+  --admin-success-rgb: 29 110 65;
   --admin-success-soft: #DEF3E4;
   --admin-warning: #f1c21b;
   --admin-warning-text: #684E00;
+  --admin-warning-text-rgb: 104 78 0;
   --admin-warning-soft: #FCF4D6;
   --admin-error: #B3232C;
   --admin-danger: #B3232C;
@@ -366,6 +373,7 @@
   --admin-danger-soft-hover: #F8DEE0;
   /* Neutral, matching --sp-color-state-info above — see the note there. */
   --admin-info: #55504A;
+  --admin-info-rgb: 85 80 74;
   --admin-info-soft: #F7F6F2;
   --admin-analytics: #55504A;
   --admin-focus: #FF5715;

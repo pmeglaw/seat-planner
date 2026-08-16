@@ -239,7 +239,7 @@ export function AskPlannerDrawer({
         aria-label="Close Ask Planner"
         aria-hidden="true"
         tabIndex={-1}
-        className="fixed inset-0 z-[70] cursor-default bg-[var(--admin-chrome-bg)]/30 backdrop-blur-[1px] motion-safe:animate-[sp-fade-in_180ms_ease-out] sm:z-50"
+        className="fixed inset-0 z-[70] cursor-default bg-[rgb(var(--admin-chrome-bg-rgb)/0.3)] backdrop-blur-[1px] motion-safe:animate-[sp-fade-in_180ms_ease-out] sm:z-50"
         onClick={onClose}
       />
 
@@ -439,7 +439,7 @@ export function AskPlannerDrawer({
                     onClick={onClearHighlights}
                     disabled={highlightedSeatIds.length === 0}
                     title={highlightedSeatIds.length === 0 ? "No highlighted seats to clear" : "Clear highlighted seats"}
-                    className="rounded-full border border-[var(--admin-primary)]/50 bg-[var(--admin-primary)]/10 px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary)] transition hover:bg-[var(--admin-primary)]/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--admin-chrome-border)] disabled:bg-white/10 disabled:text-[var(--admin-chrome-muted)]"
+                    className="rounded-full border border-[rgb(var(--admin-primary-rgb)/0.5)] bg-[rgb(var(--admin-primary-rgb)/0.1)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary)] transition hover:bg-[rgb(var(--admin-primary-rgb)/0.2)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--admin-chrome-border)] disabled:bg-white/10 disabled:text-[var(--admin-chrome-muted)]"
                   >
                     Clear highlights
                   </button>
