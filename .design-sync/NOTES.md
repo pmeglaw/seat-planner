@@ -85,14 +85,17 @@
 - `[RENDER_THIN]` on AskPlannerDrawer — benign: top-anchored fixed drawer
   renders complete; root just measures 0px flow height (fixed-only child).
 
-## App bugs surfaced by previews (owner follow-up, NOT sync issues)
+## App bugs surfaced by previews (all fixed)
 
-- Dialog scrims never compile app-wide: Tailwind v3.4 drops slash-opacity on
-  arbitrary var colors (`bg-[var(--sp-color-workspace-deep)]/45` → no CSS).
-  Fix in components/seat-map/SeatMapDialogs.tsx via the shipped `-rgb` channel
-  tokens: `bg-[rgba(var(--sp-color-workspace-deep-rgb),0.45)]`.
-- DiscardDraftDialog `<section>` is the only dialog missing
-  `focus-visible:outline-none` — UA blue ring on keyboard-open auto-focus.
+- Dialog scrims never compiled app-wide (Tailwind v3.4 drops slash-opacity on
+  arbitrary var colors) — fixed in #401 with `bg-[rgb(var(--…-rgb)/0.45)]`
+  slash syntax (NOT `rgba(…, a)`: comma syntax over space-separated channel
+  tokens parses as invalid and is equally invisible);
+  tests/tailwind-arbitrary-alpha-source.test.mjs bans both broken forms.
+- Missing `focus-visible:outline-none` on auto-focused dialog containers
+  (DiscardDraftDialog, AskPlannerDrawer) — fixed in #401; and #402 made
+  useDialogFocus land initial focus on the first enabled control (visible
+  ring on the safe action), container fallback when all controls disabled.
 
 ## Re-sync risks
 
