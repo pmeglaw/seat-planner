@@ -54,10 +54,10 @@ const KIND_LABELS: Record<ViewerSearchResultKind, string> = {
 };
 
 function resultKindClass(kind: ViewerSearchResultKind) {
-  if (kind === "person") return "bg-[var(--admin-info-soft)] text-[var(--admin-info)] ring-[var(--admin-info)]/30";
+  if (kind === "person") return "bg-[var(--admin-info-soft)] text-[var(--admin-info)] ring-[rgb(var(--admin-info-rgb)/0.3)]";
   if (kind === "seat") return "bg-[var(--admin-chrome-bg)] text-white ring-[var(--admin-chrome-bg)]";
-  if (kind === "department") return "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-[var(--admin-success)]/30";
-  return "bg-[var(--admin-warning-soft)] text-[var(--admin-warning-text)] ring-[var(--admin-warning-text)]/30";
+  if (kind === "department") return "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-[rgb(var(--admin-success-rgb)/0.3)]";
+  return "bg-[var(--admin-warning-soft)] text-[var(--admin-warning-text)] ring-[rgb(var(--admin-warning-text-rgb)/0.3)]";
 }
 
 // Eyebrow rows. The mock draws these at #8E8276, which measures 3.75:1 on

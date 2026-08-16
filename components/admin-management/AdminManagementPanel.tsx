@@ -1148,7 +1148,7 @@ export function AdminManagementPanel({
                   <div className="mt-4 border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
                     <div className="flex items-center gap-2">
                       <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)]">Latest publish</div>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--admin-success-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--admin-success)] ring-1 ring-[var(--admin-success)]/30">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--admin-success-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--admin-success)] ring-1 ring-[rgb(var(--admin-success-rgb)/0.3)]">
                         <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                         Latest
                       </span>
@@ -1215,7 +1215,7 @@ export function AdminManagementPanel({
                         <div>
                           <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">State</div>
                           {index === 0 ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--admin-success-soft)] px-2 py-1 text-[11px] font-semibold tracking-normal text-[var(--admin-success)] ring-1 ring-[var(--admin-success)]/30">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--admin-success-soft)] px-2 py-1 text-[11px] font-semibold tracking-normal text-[var(--admin-success)] ring-1 ring-[rgb(var(--admin-success-rgb)/0.3)]">
                               <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                               Latest
                             </span>
@@ -1240,7 +1240,7 @@ export function AdminManagementPanel({
       </div>
 
       {employeeDialogOpen && (
-        <div className="fixed inset-0 z-[65] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[65] flex items-end justify-center bg-[rgb(var(--admin-chrome-bg-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={employeeDialogFocusRef}
             tabIndex={-1}
@@ -1319,7 +1319,7 @@ export function AdminManagementPanel({
       )}
 
       {managementConfirm && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[rgb(var(--admin-chrome-bg-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={managementConfirmDialogFocusRef}
             tabIndex={-1}

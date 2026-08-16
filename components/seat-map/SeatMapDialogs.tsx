@@ -70,7 +70,7 @@ export function VacateConfirmDialog({
 }) {
   const vacateConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
       <section
         ref={vacateConfirmDialogFocusRef}
         tabIndex={-1}
@@ -118,7 +118,7 @@ export function DeleteSeatConfirmDialog({
 }) {
   const deleteSeatDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
       <section
         ref={deleteSeatDialogFocusRef}
         tabIndex={-1}
@@ -126,7 +126,7 @@ export function DeleteSeatConfirmDialog({
         aria-modal="true"
         aria-labelledby="delete-seat-confirm-title"
         aria-describedby="delete-seat-confirm-description"
-        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
+        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -184,7 +184,7 @@ export function PublishReviewDialog({
   const publishReadinessBadgeTone = publishSummary.hasChanges ? "draft" : "published";
   const publishReadinessBadgeLabel = publishSummary.hasChanges ? "Ready" : "No changes";
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--admin-rail-bg)]/48 p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--admin-rail-bg-rgb)/0.48)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
       <section
         ref={publishReviewDialogFocusRef}
         tabIndex={-1}
@@ -222,7 +222,7 @@ export function PublishReviewDialog({
           {publishSummary.hasChanges && (
           <>
           <div className="rounded-xl border border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] p-3 text-[var(--admin-publish-ready-text)]">
-            <StatusBadge tone={publishReadinessBadgeTone} className="!min-h-0 !bg-[var(--admin-surface)]/80 !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]">
+            <StatusBadge tone={publishReadinessBadgeTone} className="!min-h-0 !bg-[rgb(var(--admin-surface-rgb)/0.8)] !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]">
               {publishReadinessBadgeLabel}
             </StatusBadge>
             <h3 className="mt-2 text-sm font-semibold text-[var(--admin-text-primary)]">{publishReadinessTitle}</h3>
@@ -263,7 +263,7 @@ export function PublishReviewDialog({
                   <span role="columnheader" className="px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Change</span>
                 </div>
                 {publishDiffRows.map(row => (
-                  <div key={row.key} role="rowgroup" className="border-b border-[var(--admin-border)]/60 last:border-b-0">
+                  <div key={row.key} role="rowgroup" className="border-b border-[rgb(var(--admin-border-rgb)/0.6)] last:border-b-0">
                     <div role="row" className="grid grid-cols-[64px_1fr_1fr_96px] items-center">
                       <span role="cell" translate="no" className="px-3 py-2 font-mono text-xs font-semibold text-[var(--admin-text-primary)]">{row.label}</span>
                       <span role="cell" className="flex min-w-0 items-center gap-1.5 px-2.5 py-2 text-[12.5px] text-[var(--admin-text-muted)]">
@@ -360,7 +360,7 @@ export function DiscardDraftDialog({
 }) {
   const discardDraftDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-[var(--admin-chrome-bg)]/45 p-3 backdrop-blur-[2px] sm:items-center">
+    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-[rgb(var(--admin-chrome-bg-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:items-center">
       <section
         ref={discardDraftDialogFocusRef}
         tabIndex={-1}
@@ -374,7 +374,7 @@ export function DiscardDraftDialog({
             onCancel();
           }
         }}
-        className="w-full max-w-lg overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
+        className="w-full max-w-lg overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel focus-visible:outline-none"
       >
         <h2 id="discard-draft-title" className="text-base font-semibold">Discard all draft changes?</h2>
         <p id="discard-draft-description" className="mt-2 text-sm leading-5 text-[var(--admin-text-secondary)]">
@@ -423,7 +423,7 @@ export function InspectorGuardDialog({
 }) {
   const inspectorGuardDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-[60] sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-[60] sm:items-center">
       <section
         ref={inspectorGuardDialogFocusRef}
         tabIndex={-1}
@@ -431,7 +431,7 @@ export function InspectorGuardDialog({
         aria-modal="true"
         aria-labelledby="inspector-unsaved-title"
         aria-describedby="inspector-unsaved-description"
-        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
+        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
       >
         <div>
           <h2 id="inspector-unsaved-title" className="text-base font-semibold">Unsaved seat edits</h2>
@@ -470,14 +470,14 @@ export function SwapConfirmDialog({
 }) {
   const swapConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
       <section
         ref={swapConfirmDialogFocusRef}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="swap-confirm-title"
-        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
+        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -545,7 +545,7 @@ export function MoveEmployeeConfirmDialog({
 }) {
   const moveEmployeeConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[var(--sp-color-workspace-deep)]/45 p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
       <section
         ref={moveEmployeeConfirmDialogFocusRef}
         tabIndex={-1}
@@ -553,7 +553,7 @@ export function MoveEmployeeConfirmDialog({
         aria-modal="true"
         aria-labelledby="move-employee-map-confirm-title"
         aria-describedby="move-employee-map-confirm-description"
-        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-surface)]/95 p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
+        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
       >
         {offerSwap ? (
           <>

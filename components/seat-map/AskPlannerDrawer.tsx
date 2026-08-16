@@ -239,7 +239,7 @@ export function AskPlannerDrawer({
         aria-label="Close Ask Planner"
         aria-hidden="true"
         tabIndex={-1}
-        className="fixed inset-0 z-[70] cursor-default bg-[var(--admin-chrome-bg)]/30 backdrop-blur-[1px] motion-safe:animate-[sp-fade-in_180ms_ease-out] sm:z-50"
+        className="fixed inset-0 z-[70] cursor-default bg-[rgb(var(--admin-chrome-bg-rgb)/0.3)] backdrop-blur-[1px] motion-safe:animate-[sp-fade-in_180ms_ease-out] sm:z-50"
         onClick={onClose}
       />
 
@@ -255,7 +255,7 @@ export function AskPlannerDrawer({
         aria-modal="true"
         aria-labelledby="ask-planner-title"
         aria-describedby="ask-planner-description"
-        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden border border-[var(--admin-ai-panel-border)] bg-[var(--admin-chrome-bg)] bg-[image:var(--admin-ai-glow)] bg-no-repeat text-[var(--admin-chrome-text)] shadow-panel motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[calc(var(--admin-chrome-h)_+_12px)] sm:z-50 sm:max-h-[calc(100vh_-_var(--admin-chrome-h)_-_20px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
+        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden border border-[var(--admin-ai-panel-border)] bg-[var(--admin-chrome-bg)] bg-[image:var(--admin-ai-glow)] bg-no-repeat text-[var(--admin-chrome-text)] shadow-panel focus-visible:outline-none motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[calc(var(--admin-chrome-h)_+_12px)] sm:z-50 sm:max-h-[calc(100vh_-_var(--admin-chrome-h)_-_20px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
       >
         <div className="shrink-0 border-b border-[var(--admin-chrome-border)] px-4 py-3">
           <div className="flex items-start justify-between gap-3">
@@ -439,7 +439,7 @@ export function AskPlannerDrawer({
                     onClick={onClearHighlights}
                     disabled={highlightedSeatIds.length === 0}
                     title={highlightedSeatIds.length === 0 ? "No highlighted seats to clear" : "Clear highlighted seats"}
-                    className="rounded-full border border-[var(--admin-primary)]/50 bg-[var(--admin-primary)]/10 px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary)] transition hover:bg-[var(--admin-primary)]/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--admin-chrome-border)] disabled:bg-white/10 disabled:text-[var(--admin-chrome-muted)]"
+                    className="rounded-full border border-[rgb(var(--admin-primary-rgb)/0.5)] bg-[rgb(var(--admin-primary-rgb)/0.1)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary)] transition hover:bg-[rgb(var(--admin-primary-rgb)/0.2)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--admin-chrome-border)] disabled:bg-white/10 disabled:text-[var(--admin-chrome-muted)]"
                   >
                     Clear highlights
                   </button>
