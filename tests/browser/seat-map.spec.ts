@@ -283,3 +283,20 @@ test("the status band is the admin map's one zoom home and yields to the sheet",
   await expect(band).not.toBeAttached();
   await expect(page.locator('button[aria-label="Zoom in"]')).toHaveCount(1);
 });
+
+test("the inspector's panel-tier band clearance follows the band, not the floor it left", async ({ page }) => {
+  await mountSeatMap(page, { seats: [n01, n02], employees: [alice], canEdit: true });
+  await clickMarker(page, "N01");
+  const inspector = page.locator("#seat-inspector-panel");
+  // Floor 3: the band renders, so the docked panel clears it (52px).
+  await expect(inspector).toHaveClass(/panel:bottom-\[52px\]/);
+
+  // Switch to Floor 2: the selection survives, the band does not — the
+  // clearance must fall back to the stock 12px gutter, not hold a 52px gap
+  // above nothing.
+  // Two FloorSelector variants mount (chrome bar + canvas) — either menu works.
+  await page.locator('button[aria-label^="Change floor"]').first().dispatchEvent("click");
+  await page.getByRole("menuitemradio", { name: /Floor 2/ }).first().dispatchEvent("click");
+  await expect(page.locator("[data-map-status-band]")).not.toBeAttached();
+  await expect(inspector).toHaveClass(/panel:bottom-3/);
+});

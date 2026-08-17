@@ -3508,9 +3508,12 @@ export function SeatMap({
         employees={localEmployees}
         departmentOptions={localDepartmentOptions}
         canEdit={canEdit}
-        // Clears the 40px status band + the 12px gutter at the panel tier
-        // (below it the sheet owns the bottom and the band yields instead).
-        panelBottomClassName="panel:bottom-[52px]"
+        // Clears the 40px status band + the 12px gutter at the panel tier —
+        // but only while the band actually renders (Floor 2 has no band, and
+        // a selection survives the floor switch; a static 52px there is a
+        // dead gap above nothing). Below the panel tier the sheet owns the
+        // bottom and the band yields instead, so the panel: variant is inert.
+        panelBottomClassName={statusBandVisible ? "panel:bottom-[52px]" : undefined}
         collapsed={inspectorCollapsed}
         searchMismatchNotice={selectedSeatMismatchNotice}
         searchMismatchClearLabel={clearSearchContextLabel}
