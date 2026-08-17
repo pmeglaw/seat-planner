@@ -667,6 +667,14 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /aria-label=\{`\$\{activeMode\.label\} mode`\}/);
   assert.match(seatMapSource, /className=\{actionErrorBannerClassName\}/);
   assert.match(seatMapSource, /className=\{actionNoticeBannerClassName\}/);
+  // The action notice toast is IN-FLOW inside the top-cluster overlay (a
+  // second flex-col row), never absolutely offset over it: any fixed top
+  // clearance overlaps the cluster once its filter chips wrap to a second
+  // row, and the later-painted toast then intercepts their clicks
+  // (PR #404 review). pointer-events-auto is load-bearing — the cluster rail
+  // is pointer-events-none and each card opts back in.
+  assert.match(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]{0,1500}?"pointer-events-auto self-center/);
+  assert.doesNotMatch(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]{0,1500}?"[^"]*\babsolute\b[^"]*top-/);
   assert.match(seatMapSource, /className=\{mapMarkerLayerClassName\}/);
   // INV-2: no auto-select - a single match stays in results until an explicit open.
   assert.doesNotMatch(seatMapSource, /singleResultSeat|autoSelectedSearchKeyRef|Auto-selected/);

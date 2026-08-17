@@ -2403,12 +2403,15 @@ export function SeatMap({
     // Overlay, not layout: the toast's 6s lifetime must never shift the map
     // column height mid-session. Compact top-center drop-in toast (owner call
     // 2026-08-16, round 2 — bottom-right collided with the docked inspector
-    // and its neighbouring controls). top-14 clears the floating top clusters
-    // for the same reason the error overlay uses it. Centered via
-    // inset-x-0 + mx-auto + w-fit, NOT left-1/2/-translate-x-1/2: the entrance
-    // keyframe animates transform, which would stomp a translate-x center and
-    // make the toast jump sideways on arrival.
-    "absolute inset-x-0 top-14 z-50 mx-auto w-fit max-w-sm shadow-elevation-3",
+    // and its neighbouring controls). It renders as a second row INSIDE the
+    // floating top-cluster overlay rather than at a fixed top offset: the
+    // cluster's left half wraps (chips), so any hardcoded clearance (the old
+    // top-14) is wrong the moment chips take a second row — the toast then
+    // sat on the chips and, being later-painted, intercepted their clicks
+    // (CodeRabbit, PR #404). In-flow below the cluster row, wrapped chips
+    // push the toast down automatically. pointer-events-auto because the
+    // cluster rail is pointer-events-none with each card opting back in.
+    "pointer-events-auto self-center w-fit max-w-sm shadow-elevation-3",
     "flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold",
     "motion-safe:animate-[sp-toast-drop_200ms_ease-out]",
     actionNoticeTone === "neutral"
@@ -2955,26 +2958,6 @@ export function SeatMap({
             )}
           </div>
 
-          {actionNotice && !swapSourceSeatId && !moveEmployeeSourceSeatId && (
-            <div role="status" aria-live="polite" className={actionNoticeBannerClassName}>
-              <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{actionNotice}</span>
-              {canEdit && undoAvailable && lastUndoLabel && !mutationInFlight && !inspectorDirty && (
-                <button
-                  type="button"
-                  onClick={undoDraftEdit}
-                  className={[
-                    "shrink-0 rounded-full border bg-sp-surface/80 px-3 py-1 text-[11px] font-semibold transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4",
-                    actionNoticeTone === "neutral"
-                      ? "border-[var(--admin-border-strong)] text-[var(--admin-text-secondary)] focus-visible:ring-[var(--admin-border-strong)]"
-                      : "border-[var(--admin-state-saved-border)] text-[var(--admin-state-saved-text)] focus-visible:ring-[var(--admin-state-saved-border)]"
-                  ].join(" ")}
-                >
-                  Undo {lastUndoLabel}
-                </button>
-              )}
-            </div>
-          )}
-
           <div className={mapStageClassName}>
             {/* Top-left cluster (v12 slice 3): floor, crumb, and active filter
                 chips float over the full-bleed plan as layer-01 white cards.
@@ -2989,7 +2972,8 @@ export function SeatMap({
                 wrap under the floor pill instead of sliding beneath the
                 absolutely-positioned search card (measured overlap,
                 2026-08-13 QA). */}
-            <div className="pointer-events-none absolute inset-x-3 top-3 z-40 flex items-start gap-2">
+            <div className="pointer-events-none absolute inset-x-3 top-3 z-40 flex flex-col gap-2">
+              <div className="flex items-start gap-2">
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
               {/* Floor identity: at lg+ (in-shell) it lives centered in the
                   top bar (barFloorIdentity portal); below lg — and in
@@ -3141,6 +3125,26 @@ export function SeatMap({
                 </button>
               )}
               </div>
+              </div>
+              {actionNotice && !swapSourceSeatId && !moveEmployeeSourceSeatId && (
+                <div role="status" aria-live="polite" className={actionNoticeBannerClassName}>
+                  <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{actionNotice}</span>
+                  {canEdit && undoAvailable && lastUndoLabel && !mutationInFlight && !inspectorDirty && (
+                    <button
+                      type="button"
+                      onClick={undoDraftEdit}
+                      className={[
+                        "shrink-0 rounded-full border bg-sp-surface/80 px-3 py-1 text-[11px] font-semibold transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4",
+                        actionNoticeTone === "neutral"
+                          ? "border-[var(--admin-border-strong)] text-[var(--admin-text-secondary)] focus-visible:ring-[var(--admin-border-strong)]"
+                          : "border-[var(--admin-state-saved-border)] text-[var(--admin-state-saved-text)] focus-visible:ring-[var(--admin-state-saved-border)]"
+                      ].join(" ")}
+                    >
+                      Undo {lastUndoLabel}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             <div
               ref={mapViewportRef}
