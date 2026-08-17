@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
@@ -150,6 +151,13 @@ export function AccountMenu({ email, roleLabel, autoCloseKey }: AccountMenuProps
               <div className="truncate text-[12.5px] font-medium text-[var(--admin-chrome-text)]">{email}</div>
               <div className="text-[11px] text-[var(--admin-chrome-muted)]">{roleLabel}</div>
             </div>
+            <Link href="/my-seat" role="menuitem" tabIndex={-1} className={menuItemClassName} onClick={() => closeMenu(false)}>
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 shrink-0">
+                <rect x="4" y="6" width="12" height="7" rx="1" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M6.5 13v3.5M13.5 13v3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              My seat
+            </Link>
             <form action="/auth/signout" method="post" className="contents">
               <button type="submit" role="menuitem" tabIndex={-1} className={menuItemClassName}>
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 shrink-0">

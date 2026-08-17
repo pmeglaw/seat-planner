@@ -23,5 +23,5 @@ export async function proxy(request: NextRequest) {
 // Server actions POST to their page's own route, so the paths below cover
 // them too.
 export const config = {
-  matcher: ["/", "/admin/:path*", "/reception", "/login", "/auth/:path*"]
+  matcher: ["/", "/my-seat", "/admin/:path*", "/reception", "/login", "/auth/:path*"]
 };

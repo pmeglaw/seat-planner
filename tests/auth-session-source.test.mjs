@@ -94,7 +94,7 @@ test("the proxy matcher covers every auth-bearing route", async () => {
   // session layer serves. (/api/build-id and static assets are deliberately
   // NOT matched — the deploy-skew probe is unauthenticated and data-free.)
   const matcherArray = source.match(/matcher: \[([^\]]*)\]/)?.[1] ?? "";
-  for (const route of ['"/"', '"/admin/:path*"', '"/reception"', '"/login"', '"/auth/:path*"']) {
+  for (const route of ['"/"', '"/my-seat"', '"/admin/:path*"', '"/reception"', '"/login"', '"/auth/:path*"']) {
     assert.ok(matcherArray.includes(route), `proxy matcher must include ${route}`);
   }
   // The deploy-skew probe stays out: auth work on /api/build-id was pure
