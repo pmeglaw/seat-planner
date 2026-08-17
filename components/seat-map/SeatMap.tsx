@@ -51,6 +51,7 @@ import { DeptChipRow } from "@/components/seat-map/DeptChipRow";
 import { DraftTrailOverlay } from "@/components/seat-map/DraftTrailOverlay";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
+import { NamesVisibilityToggle } from "@/components/seat-map/NamesVisibilityToggle";
 import { MapWashLayer } from "@/components/seat-map/MapWashLayer";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { ResultsPanel } from "@/components/seat-map/ResultsPanel";
@@ -3336,22 +3337,10 @@ export function SeatMap({
                 ) : null}
                 footer={canEdit ? (
                   // Same accessible name + pressed-state contract as the kebab
-                  // item (accessibility-source counts them relationally). The
-                  // checkmark uses --admin-status-ok, the light-surface green —
-                  // this card is white, not dark chrome.
-                  <button
-                    type="button"
-                    aria-pressed={showNames}
-                    onClick={() => setShowNames(current => !current)}
-                    className="flex w-full items-center text-[11.5px] font-semibold text-[var(--sp-color-text-secondary)] transition hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
-                  >
-                    Show occupant names
-                    {showNames && (
-                      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-status-ok)]">
-                        <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </button>
+                  // item (accessibility-source counts them relationally); the
+                  // shared switch owns the aria-pressed and the always-visible
+                  // track cue, and the viewer legend renders the same control.
+                  <NamesVisibilityToggle pressed={showNames} onToggle={() => setShowNames(current => !current)} />
                 ) : null}
               />
             </div>

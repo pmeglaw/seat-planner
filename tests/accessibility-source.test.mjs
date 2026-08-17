@@ -853,10 +853,16 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   // control's role: a plain button takes aria-pressed, a menu item cannot (see
   // the guard below) and would need role="menuitemcheckbox" + aria-checked.
   // Having NEITHER is the regression.
+  // Two ways a control may satisfy the invariant: carry the attribute inline
+  // (the kebab item), or delegate to the shared NamesVisibilityToggle switch,
+  // which owns aria-pressed={pressed} itself (asserted below). Every flipper
+  // must land in exactly one bucket.
   const namesToggleControls = (seatMapSource.match(/setShowNames\(current => !current\)/g) ?? []).length;
   assert.ok(namesToggleControls >= 1, "the admin map must keep a names toggle");
+  const inlineExposures = (seatMapSource.match(/aria-(?:pressed|checked)=\{showNames\}/g) ?? []).length;
+  const delegatedExposures = (seatMapSource.match(/<NamesVisibilityToggle[\s\S]{0,160}pressed=\{showNames\}/g) ?? []).length;
   assert.equal(
-    (seatMapSource.match(/aria-(?:pressed|checked)=\{showNames\}/g) ?? []).length,
+    inlineExposures + delegatedExposures,
     namesToggleControls,
     "every control that toggles showNames must expose its state to assistive tech"
   );
@@ -873,6 +879,26 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   // "Hide names" substring check.
   assert.doesNotMatch(seatMapSource, /Hide occupant names/);
   assert.match(seatMapSource, /Show occupant names\s*\{showNames && \(/);
+
+  // The shared switch both legend footers render: stable label, aria-pressed,
+  // no inverse verb — the same contract as the inline controls, held once.
+  const namesToggleSource = await readSource("../components/seat-map/NamesVisibilityToggle.tsx");
+  assert.match(namesToggleSource, /aria-pressed=\{pressed\}/);
+  assert.match(namesToggleSource, /Show occupant names/);
+  assert.doesNotMatch(namesToggleSource, /Hide occupant names/);
+
+  // The viewer surface gained the same toggle (2026-08-17) under the same
+  // relational invariant: every control that flips its showNames must expose
+  // the state, inline or via the shared switch.
+  const viewerFlippers = (viewerSource.match(/setShowNames\(current => !current\)/g) ?? []).length;
+  assert.ok(viewerFlippers >= 1, "the viewer must keep a names toggle");
+  assert.equal(
+    (viewerSource.match(/aria-(?:pressed|checked)=\{showNames\}/g) ?? []).length +
+      (viewerSource.match(/<NamesVisibilityToggle[\s\S]{0,160}pressed=\{showNames\}/g) ?? []).length,
+    viewerFlippers,
+    "every viewer control that toggles showNames must expose its state to assistive tech"
+  );
+  assert.doesNotMatch(viewerSource, /Hide occupant names/);
 
   // A skip link is the first focusable on both map surfaces, targeting a
   // focusable map region — the chrome gauntlet is 8+ tab stops otherwise.

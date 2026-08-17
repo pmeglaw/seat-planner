@@ -460,3 +460,43 @@ test("opening a person from the palette selects their seat and closes the palett
   assert.match(openInspector().textContent, /B-02/);
   assert.equal(screen.queryByRole("list", { name: "People directory" }), null);
 });
+
+// --- Show occupant names -----------------------------------------------------
+// The viewer legend's footer carries the shared NamesVisibilityToggle. The
+// behavior pinned here: markers actually change render mode (not merely a
+// pressed attribute), the choice persists per browser, and the toggle stays a
+// render-local control — no server action, read-only surface intact.
+
+const VIEWER_NAMES_KEY = "seat-planner:viewer-names-visible";
+
+test("the legend names toggle switches markers to name mode and persists the choice", async () => {
+  window.localStorage.removeItem(VIEWER_NAMES_KEY);
+  await renderViewer();
+
+  const toggle = screen.getByRole("button", { name: "Show occupant names" });
+  assert.equal(toggle.getAttribute("aria-pressed"), "false");
+  assert.equal(seatMarker("A-01").getAttribute("data-token-mode"), "code");
+
+  fireEvent.click(toggle);
+  await flushFrames();
+
+  assert.equal(toggle.getAttribute("aria-pressed"), "true");
+  assert.equal(seatMarker("A-01").getAttribute("data-token-mode"), "name", "an assigned seat must render its occupant name");
+  assert.equal(seatMarker("D-04").getAttribute("data-token-mode"), "code", "an open seat has no name to show");
+  assert.equal(window.localStorage.getItem(VIEWER_NAMES_KEY), "true");
+  assert.deepEqual(actionCalls, [], "the names toggle is render-local — never a server action");
+});
+
+test("a persisted names preference hydrates on mount", async () => {
+  window.localStorage.setItem(VIEWER_NAMES_KEY, "true");
+  try {
+    await renderViewer();
+    assert.equal(
+      screen.getByRole("button", { name: "Show occupant names" }).getAttribute("aria-pressed"),
+      "true"
+    );
+    assert.equal(seatMarker("B-02").getAttribute("data-token-mode"), "name");
+  } finally {
+    window.localStorage.removeItem(VIEWER_NAMES_KEY);
+  }
+});

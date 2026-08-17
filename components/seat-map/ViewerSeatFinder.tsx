@@ -34,6 +34,7 @@ import { AccountMenu } from "@/components/ui/AccountMenu";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
+import { NamesVisibilityToggle } from "@/components/seat-map/NamesVisibilityToggle";
 import { MapWashLayer } from "@/components/seat-map/MapWashLayer";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
@@ -73,6 +74,11 @@ type ViewerPanState = {
 // (tailwind.config.ts) — the float exists only there. The viewer has no
 // SeatMap-style seat-centering breakpoint constant of its own to reuse.
 const VIEWER_PANEL_BREAKPOINT_PX = 900;
+
+// Deliberately a separate key from the admin map's "seat-planner:names-visible":
+// the surfaces are different densities and audiences, so one preference must
+// not leak into the other's default.
+const VIEWER_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:viewer-names-visible";
 
 // Keys the browser translates into native scrolling of the focused viewport
 // (mirrors SeatMap.tsx's VIEWPORT_NATIVE_SCROLL_KEYS, fix commit 49dc74f).
@@ -165,6 +171,28 @@ export function ViewerSeatFinder({
   const focusInspectorAfterSelectRef = useRef(false);
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
+  // Legend-footer names toggle (parity with the admin map's control). Default
+  // off, hydrated from localStorage after mount so SSR and first client render
+  // agree; the hydrated flag keeps the persist effect from writing "false"
+  // over a stored "true" before the read has happened.
+  const [showNames, setShowNames] = useState(false);
+  const [namesPreferenceHydrated, setNamesPreferenceHydrated] = useState(false);
+  useEffect(() => {
+    try {
+      setShowNames(window.localStorage.getItem(VIEWER_NAMES_VISIBLE_STORAGE_KEY) === "true");
+    } catch {
+      // Ignore unavailable storage; the toggle still works for the current page.
+    }
+    setNamesPreferenceHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!namesPreferenceHydrated) return;
+    try {
+      window.localStorage.setItem(VIEWER_NAMES_VISIBLE_STORAGE_KEY, showNames ? "true" : "false");
+    } catch {
+      // Ignore unavailable storage; this is a local UI preference only.
+    }
+  }, [namesPreferenceHydrated, showNames]);
   const [floor, setFloor] = useState<FloorId>("3");
   // null = fit-to-view; a number = zoom factor applied to the base frame width.
   const [zoomFactor, setZoomFactor] = useState<number | null>(null);
@@ -316,11 +344,19 @@ export function ViewerSeatFinder({
   // momentary and z-raised, and including it would re-solve both nudge
   // graphs on every list hover.
   const namedSeatIdSet = useMemo(() => {
-    if (!filtersActive) return new Set<string>();
-    const set = new Set(highlightedSeatIdSet);
+    const set = filtersActive ? new Set(highlightedSeatIdSet) : new Set<string>();
+    if (showNames) {
+      // The legend toggle lights every occupied seat's name — but only where
+      // SeatMarker will actually render it: namesVisible is gated on !dimmed,
+      // and under active filters the non-matching seats are dimmed, so the
+      // toggle adds nothing beyond the highlighted set there.
+      visualSeats.forEach(seat => {
+        if (seat.employee && (!filtersActive || set.has(seat.id))) set.add(seat.id);
+      });
+    }
     if (selectedSeatId) set.delete(selectedSeatId);
     return set;
-  }, [filtersActive, highlightedSeatIdSet, selectedSeatId]);
+  }, [filtersActive, highlightedSeatIdSet, selectedSeatId, showNames, visualSeats]);
   // Office room wash, published layer (parity with the admin map — the
   // 2026-07-24 publish check caught the viewer missing it entirely). Dim and
   // search-highlight sets mirror the marker loop's own predicates below; the
@@ -342,10 +378,10 @@ export function ViewerSeatFinder({
     () => buildZoneWash(hoverZone ?? (zone !== "all" ? zone : null), visualSeats),
     [hoverZone, visualSeats, zone]
   );
-  // Name-label collision nudges (render-layer only): viewers have no
-  // Show-names toggle, so the only tokens that leave the anchor row are the
-  // prominent ones — nudged at the same live zoom-aware clearance as the
-  // code graph (parity with the admin map).
+  // Name-label collision nudges (render-layer only): prominent tokens plus,
+  // with the legend's Show-names toggle on, every visible occupant name —
+  // nudged at the same live zoom-aware clearance as the code graph (parity
+  // with the admin map).
   const nameLabelNudges = useMemo(
     () => computeNameLabelNudges(visualSeats, namedSeatIdSet, seatDensityClearance),
     [namedSeatIdSet, seatDensityClearance, visualSeats]
@@ -1339,7 +1375,7 @@ export function ViewerSeatFinder({
                           selected={seat.id === selectedSeatId}
                           dimmed={dimmed}
                           canEdit={false}
-                          showNames={false}
+                          showNames={showNames}
                           searchResult={filtersActive && inMatches}
                           compactNameLabel
                           codeNudge={codePillNudges.get(seat.id) ?? 0}
@@ -1400,7 +1436,8 @@ export function ViewerSeatFinder({
                 explains, and gated to Floor 3: Floor 2 is the placeholder,
                 where whole-map counts would read as a bug. Viewer-shaped: no
                 draft entry (the published layer has no draft seats) and no
-                actions — this surface offers no verbs. */}
+                actions — this surface offers no data verbs; the footer's
+                names toggle is a render-local view control only. */}
             {floor === "3" && (
             <div className={cx("absolute bottom-3 left-3 z-30 hidden", bottomSheetOwnsBottom ? "panel:block" : "md:block")}>
               <MapStatusLegend
@@ -1418,6 +1455,7 @@ export function ViewerSeatFinder({
                     // critique, minor 8) — same status-line home for both.
                     ? `${highlightedSeatIdSet.size} of ${publishedSeats.length} seats ${highlightedSeatIdSet.size === 1 ? "matches" : "match"} filters`
                     : "Seating across people, seats, departments, and zones."}
+                footer={<NamesVisibilityToggle pressed={showNames} onToggle={() => setShowNames(current => !current)} />}
               />
             </div>
             )}
