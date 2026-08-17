@@ -41,6 +41,26 @@ stack takes the rotation). Owner follow-ups: re-run `npm run db:seed` on any
 live local stack, and update `SEAT_PLANNER_E2E_PASSWORD` in `.env.local` if
 it mirrors the old seeded value.
 
+## 2026-08-17 Lighthouse pass (prod `/admin`, v1.44.0 = `11b5b2f`) — digested, two residuals
+
+Owner-run Lighthouse 13.4 (desktop, DevTools, authenticated tab):
+Performance 99 / Accessibility 100 / Best Practices 100 / SEO 100. FCP 0.43s,
+LCP 0.90s, TBT 0, CLS ~0.0002; LCP-discovery checklist fully green, confirming
+#396 (`fetchPriority=high`) in prod. Axe 4.12 ran inside it (incl. target-size,
+color-contrast) — all pass. Everything red was triaged as deliberate (2x
+floor-plan asset at DPR 1), inherent (`no-store` on an auth app → bf-cache),
+already-settled (CSP `unsafe-inline` verdict below; HSTS scope is documented
+domain-owner territory in `next.config.js:44-49`), or the owner's Chrome
+extensions. Two residuals worth keeping:
+
+- **LH-01 add `Cross-Origin-Opener-Policy: same-origin`** — the one header
+  Lighthouse flagged that `next.config.js` doesn't address or deliberately
+  defer. Cheap add to `securityHeaders`; only risk is `window.opener`-based
+  popup flows, and auth here is redirect-based (Supabase PKCE callbacks).
+  Verify the GitHub OAuth flow still completes on preview before merge. S.
+- **LH-02 measurement recorded into P-03** (code-splitting) — see the updated
+  P-03 entry in the 2026-08-13 perf list below; no separate item.
+
 ## 2026-08-13 findings recorded but NOT planned this cycle
 
 User scoped this cycle to the security findings. Everything below verified at
@@ -156,6 +176,13 @@ re-audit from zero.
   the clean candidates. MEASURE FIRST (`web-app-performance` skill) — and do
   NOT split `ViewerFindPalette` (opens on field focus; a lazy chunk lands in
   the interaction budget). M.
+  **Measurement landed (2026-08-17 Lighthouse, prod `/admin`, v1.44.0):** one
+  chunk — 68KB transfer / 252KB resource, ~95% unused at page load — dominates
+  the unused-JS audit (est. 64KB waste, ~40ms modeled LCP). Chunk names are
+  per-build hashes, so identify contents via the build's source maps /
+  Lighthouse treemap, not the recorded name; the size profile matches the
+  SeatInspector/AskPlannerDrawer hypothesis above. Perf was 99 overall —
+  low urgency stands.
 
 ## 2026-08-13 verdicts: considered, rejected or downgraded (do not re-audit)
 
