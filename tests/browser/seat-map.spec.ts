@@ -265,6 +265,11 @@ test("the status band is the admin map's one zoom home and yields to the sheet",
   const band = page.locator("[data-map-status-band]");
   await expect(band).toBeAttached();
   await expect(band.locator('ul[aria-label="Seat status legend"]')).toBeAttached();
+  // The scrollable informational region must be keyboard-operable on its own —
+  // at rest it holds only text, so without tabindex a keyboard user can never
+  // scroll clipped counts into view (axe scrollable-region-focusable, caught
+  // by the e2e-auth viewer scan on #408).
+  await expect(band.locator('[data-band-scroll-region]')).toHaveAttribute("tabindex", "0");
   // toHaveCount(1) doubles as the one-zoom-home assertion: the floating stack
   // must not render alongside the band.
   await expect(page.locator('button[aria-label="Zoom in"]')).toHaveCount(1);

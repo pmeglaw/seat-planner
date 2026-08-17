@@ -42,7 +42,19 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
           worst case (five entries + actions in a 640px stage). The summary
           truncates instead of scrolling: prose is the one piece that may
           shorten, verbs and counts are not. */}
-      <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-x-auto px-3 [scrollbar-width:thin] md:gap-3">
+      {/* Focusable labelled group, not a bare div: at rest the region holds
+          only text, so without tabindex a keyboard user could never scroll
+          clipped counts into view (axe scrollable-region-focusable, serious —
+          the e2e-auth viewer scan caught exactly this). Focused, the region
+          scrolls natively with the arrow keys; the ul inside keeps its own
+          list semantics and shares the accessible name by design. */}
+      <div
+        data-band-scroll-region
+        role="group"
+        aria-label={ariaLabel}
+        tabIndex={0}
+        className="flex min-w-0 flex-1 items-center gap-2.5 overflow-x-auto px-3 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] md:gap-3"
+      >
         <span className="map-status-band-wide shrink-0 text-[12px] font-semibold text-[var(--sp-color-text-primary)]">Legend</span>
         <span className="map-status-band-wide shrink-0 text-[11.5px] font-semibold tabular-nums text-[var(--sp-color-text-secondary)]">{totalLabel}</span>
         <span aria-hidden="true" className="map-status-band-wide h-5 w-px shrink-0 bg-[var(--admin-border)]" />
