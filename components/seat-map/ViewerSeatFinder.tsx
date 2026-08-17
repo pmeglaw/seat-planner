@@ -39,7 +39,7 @@ import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { ViewerFindPalette } from "@/components/seat-map/ViewerFindPalette";
-import { ViewerStatusBand } from "@/components/seat-map/ViewerStatusBand";
+import { MapStatusBand } from "@/components/seat-map/MapStatusBand";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
@@ -1463,7 +1463,7 @@ export function ViewerSeatFinder({
                 Viewer-shaped: no draft entry and no data verbs; the names
                 toggle stays a render-local view control only. */}
             {statusBandVisible && (
-              <ViewerStatusBand
+              <MapStatusBand
                 ariaLabel="Seat status summary"
                 totalLabel={`${statusCountSeats.length} ${statusCountSeats.length === 1 ? "seat" : "seats"}`}
                 entries={[

@@ -1,27 +1,32 @@
 "use client";
 
-// The viewer's in-flow bottom status band (Option A, owner-picked 2026-08-17):
-// the ONE home for legend counts, the match summary, the names switch and the
-// zoom cluster from the sm tier up. It replaced the viewer's floating
-// MapStatusLegend card + floating zoom stack; the admin map keeps its floating
-// legend. Parents own count computation (counts-follow-filters semantics stay
-// pinned at the call site by filter-feedback-source) and tier gating: the band
-// renders only >=640, and below the panel tier it yields to the inspector
-// bottom sheet (ViewerSeatFinder owns both decisions — this renders the row).
+// The shared in-flow bottom status band (Option A, owner-picked 2026-08-17):
+// the ONE home for legend counts, the match summary, filter actions, the names
+// switch and the zoom cluster from the sm tier up. The viewer shipped it first
+// (v1.45.0, replacing its floating MapStatusLegend card + zoom stack); the
+// admin map renders the same band with its extra entries (unavailable,
+// draft-changed) and filter actions. Parents own count computation
+// (counts-follow-filters semantics stay pinned at the call sites by
+// filter-feedback-source) and tier gating: the band renders only >=640, and
+// below the panel tier it yields to the bottom sheets (each surface owns both
+// decisions — this renders the row). MapStatusLegend itself stays alive for
+// the .design-sync previews; no app surface mounts it any more.
 import type { ReactNode } from "react";
 import type { MapLegendEntry } from "@/components/seat-map/MapStatusLegend";
 
-export function ViewerStatusBand({ ariaLabel, totalLabel, entries, summary, controls }: {
+export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions, controls }: {
   ariaLabel: string;
   totalLabel: string;
   entries: MapLegendEntry[];
   summary?: ReactNode;
+  /** Surface-owned inline cluster after the summary (admin: Fit matches / Clear). */
+  actions?: ReactNode;
   /** Surface-owned right cluster (names switch, zoom) — rendered ml-auto. */
   controls?: ReactNode;
 }) {
   return (
     <div
-      data-viewer-status-band
+      data-map-status-band
       className="relative z-30 flex h-10 shrink-0 items-center gap-2.5 border-t border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 md:gap-3"
     >
       {/* Title + total yield below md: the sm..md band (640-767px) cannot fit
@@ -48,6 +53,9 @@ export function ViewerStatusBand({ ariaLabel, totalLabel, entries, summary, cont
           <p className="hidden min-w-0 truncate text-[11.5px] text-[var(--sp-color-text-secondary)] lg:block">{summary}</p>
         </>
       ) : null}
+      {/* Actions stay visible at every band width (unlike the prose summary):
+          Fit matches / Clear are the filtered map's verbs, not commentary. */}
+      {actions ? <div className="shrink-0">{actions}</div> : null}
       <div className="ml-auto flex shrink-0 items-center gap-3 md:gap-4">{controls}</div>
     </div>
   );
