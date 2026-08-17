@@ -450,6 +450,7 @@ function SeatMarkerComponent({
       tabIndex={tabIndex}
       data-seat-id={seat.id}
       data-marker-intent={markerIntent}
+      data-token-mode={tokenMode}
       data-draft-changed={draftChanged || undefined}
       aria-pressed={selected}
       title={`${seat.label} · ${displayName} · ${STATUS_LABELS[seat.status]}`}

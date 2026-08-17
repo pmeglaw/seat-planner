@@ -56,7 +56,19 @@ test("the dead directory-collapse preference stays deleted", async () => {
   // comment that warns against bringing it back.
   assert.doesNotMatch(source, /"seat-planner:viewer-directory-collapsed"/);
   assert.doesNotMatch(source, /useSyncExternalStore/);
-  assert.doesNotMatch(source, /localStorage/, "the viewer surface persists no preference of its own");
+  // 2026-08-17: the legend's Show-occupant-names toggle became the viewer's
+  // ONE persisted preference (owner-approved), so the old blanket "no
+  // localStorage" absence narrows to an exact allowlist: every storage call
+  // goes through the names-visible key constant, and the dead collapse key
+  // above still cannot return.
+  assert.match(source, /const VIEWER_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:viewer-names-visible";/);
+  const storageUses = source.match(/localStorage\.\w+\([^),]*/g) ?? [];
+  assert.ok(storageUses.length > 0, "the names toggle persists through localStorage");
+  assert.deepEqual(
+    storageUses.filter(use => !use.includes("VIEWER_NAMES_VISIBLE_STORAGE_KEY")),
+    [],
+    "the viewer touches no localStorage key besides the names toggle's"
+  );
 });
 
 test("palette row hover lights a seat and does nothing else (INV-2)", async () => {

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 // Tailwind v3 cannot apply a slash-opacity modifier to an arbitrary var()
 // color: `bg-[var(--x)]/45` produces NO CSS — the whole utility is silently
@@ -25,7 +26,9 @@ async function walkTsx(dir, out = []) {
 }
 
 test("no slash-opacity on arbitrary var() colors (Tailwind v3 drops the utility silently)", async () => {
-  const roots = ["components", "app"].map((d) => new URL(`../${d}`, import.meta.url).pathname);
+  // fileURLToPath, not URL#pathname: pathname yields "/E:/…" on Windows, which
+  // join() turns into the nonexistent "E:\E:\…" and the walk ENOENTs locally.
+  const roots = ["components", "app"].map((d) => fileURLToPath(new URL(`../${d}`, import.meta.url)));
   const offenders = [];
   for (const root of roots) {
     for (const file of await walkTsx(root)) {
