@@ -22,12 +22,16 @@ export function ViewerStatusBand({ ariaLabel, totalLabel, entries, summary, cont
   return (
     <div
       data-viewer-status-band
-      className="relative z-30 flex h-10 shrink-0 items-center gap-3 border-t border-[var(--admin-border)] bg-[var(--admin-surface)] px-3"
+      className="relative z-30 flex h-10 shrink-0 items-center gap-2.5 border-t border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 md:gap-3"
     >
-      <span className="shrink-0 text-[12px] font-semibold text-[var(--sp-color-text-primary)]">Legend</span>
-      <span className="shrink-0 text-[11.5px] font-semibold tabular-nums text-[var(--sp-color-text-secondary)]">{totalLabel}</span>
-      <span aria-hidden="true" className="h-5 w-px shrink-0 bg-[var(--admin-border)]" />
-      <ul aria-label={ariaLabel} className="flex shrink-0 items-center gap-3.5">
+      {/* Title + total yield below md: the sm..md band (640-767px) cannot fit
+          the full row — measured ~710px against a 640px floor, and the shell's
+          overflow-x-clip would silently cut the RIGHT cluster (the controls),
+          not this label. The counts list itself is never hidden. */}
+      <span className="hidden shrink-0 text-[12px] font-semibold text-[var(--sp-color-text-primary)] md:block">Legend</span>
+      <span className="hidden shrink-0 text-[11.5px] font-semibold tabular-nums text-[var(--sp-color-text-secondary)] md:block">{totalLabel}</span>
+      <span aria-hidden="true" className="hidden h-5 w-px shrink-0 bg-[var(--admin-border)] md:block" />
+      <ul aria-label={ariaLabel} className="flex shrink-0 items-center gap-2.5 md:gap-3.5">
         {entries.map(entry => (
           <li key={entry.key} className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--sp-color-text-secondary)]">
             <span aria-hidden="true" className={`h-[7px] w-[7px] shrink-0 rounded-full ${entry.dotClassName}`} />
@@ -44,7 +48,7 @@ export function ViewerStatusBand({ ariaLabel, totalLabel, entries, summary, cont
           <p className="hidden min-w-0 truncate text-[11.5px] text-[var(--sp-color-text-secondary)] lg:block">{summary}</p>
         </>
       ) : null}
-      <div className="ml-auto flex shrink-0 items-center gap-4">{controls}</div>
+      <div className="ml-auto flex shrink-0 items-center gap-3 md:gap-4">{controls}</div>
     </div>
   );
 }
