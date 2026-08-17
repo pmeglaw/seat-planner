@@ -1158,12 +1158,14 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   }
   assert.ok((paletteSource.match(/role="listitem"/g) ?? []).length >= 2, "both palette lists wrap buttons in listitem divs");
 
-  // Same list-semantics guarantee for the viewer's status counts. v12 slice 3
-  // floated them off the docked footer strip onto a layer-01 card over the
-  // full-bleed plan; the shared MapStatusLegend keeps them a labelled <ul>
-  // instead of decorative text painted on the map. Bound to its accessible
-  // name in one assertion for the same reason as the admin pin above.
-  assert.match(viewerSource, /<MapStatusLegend[\s\S]{0,200}ariaLabel="Seat status summary"/);
+  // Same list-semantics guarantee for the viewer's status counts. The Option A
+  // status band (owner-picked 2026-08-17) replaced the floating MapStatusLegend
+  // card on this surface, but the guarantee is unchanged: the counts stay a
+  // labelled <ul> instead of decorative text painted on the map. Bound to the
+  // accessible name in one assertion for the same reason as the admin pin above.
+  assert.match(viewerSource, /<ViewerStatusBand[\s\S]{0,200}ariaLabel="Seat status summary"/);
+  const statusBandSource = await readSource("../components/seat-map/ViewerStatusBand.tsx");
+  assert.match(statusBandSource, /<ul aria-label=\{ariaLabel\}/);
 
   // Brand and seat-code tokens are identifiers — never machine-translated.
   for (const [name, source] of [["SeatMap", seatMapSource], ["Viewer", viewerSource], ["ShellBar", shellBarSource]]) {

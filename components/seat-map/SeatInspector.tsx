@@ -24,6 +24,11 @@ type SeatInspectorProps = {
   collapsed: boolean;
   searchMismatchNotice?: string | null;
   searchMismatchClearLabel?: string;
+  // Panel-tier bottom offset only (the below-panel sheet always sits bottom-3).
+  // Default is the shipped 12px gutter; the viewer passes panel:bottom-[52px]
+  // so the side panel clears its 40px status band plus the same gutter. A
+  // class, not a number: it must compose with the panel: variant at build time.
+  panelBottomClassName?: string;
   onClose: () => void;
   onClearSearchContext?: () => void;
   // Icon action row verbs (v12 slice 4): hide-not-disable — the row and each
@@ -253,6 +258,7 @@ export function SeatInspector({
   collapsed,
   searchMismatchNotice = null,
   searchMismatchClearLabel = "Clear search",
+  panelBottomClassName = "panel:bottom-3",
   onClose,
   onClearSearchContext,
   onMove,
@@ -874,7 +880,7 @@ export function SeatInspector({
       tabIndex={-1}
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/[0.14] bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-elevation-4 panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[calc(var(--admin-chrome-h)+0.75rem)] panel:z-40 panel:max-h-none panel:w-[332px] panel:max-w-[calc(100vw-1.5rem)]"
+      className={`fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/[0.14] bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-elevation-4 panel:inset-x-auto ${panelBottomClassName} panel:right-3 panel:top-[calc(var(--admin-chrome-h)+0.75rem)] panel:z-40 panel:max-h-none panel:w-[332px] panel:max-w-[calc(100vw-1.5rem)]`}
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-white/10 bg-[var(--admin-chrome-bg)] px-4 pb-3 pt-3.5">
         <div className="flex items-start gap-2.5">

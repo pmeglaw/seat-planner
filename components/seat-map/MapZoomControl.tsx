@@ -3,6 +3,11 @@
 // Bottom-right map zoom cluster (redesign spec §4). Zoom is a presentation
 // transform on the map container only — it never writes to or recomputes
 // stored seat coordinates or the calibration transform.
+//
+// Two orientations, one behavior: "vertical" is the floating stack (admin map
+// at every width; viewer phones), "horizontal" is the row the viewer's status
+// band embeds from the sm tier up. Group role, labels and disabled semantics
+// are identical in both — orientation only changes layout classes.
 type MapZoomControlProps = {
   label: string;
   onZoomIn: () => void;
@@ -10,10 +15,11 @@ type MapZoomControlProps = {
   onFit: () => void;
   zoomInDisabled?: boolean;
   zoomOutDisabled?: boolean;
+  orientation?: "vertical" | "horizontal";
 };
 
-const zoomButtonClass =
-  "flex h-8 w-8 items-center justify-center border-b border-[var(--admin-border)] bg-[var(--admin-surface)] text-[15px] leading-none text-[var(--admin-text-primary)] transition last:border-b-0 hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:text-[var(--admin-text-subtle)] disabled:hover:bg-[var(--admin-surface)]";
+const zoomButtonBaseClass =
+  "flex items-center justify-center bg-[var(--admin-surface)] text-[15px] leading-none text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:text-[var(--admin-text-subtle)] disabled:hover:bg-[var(--admin-surface)]";
 
 export function MapZoomControl({
   label,
@@ -21,15 +27,29 @@ export function MapZoomControl({
   onZoomOut,
   onFit,
   zoomInDisabled = false,
-  zoomOutDisabled = false
+  zoomOutDisabled = false,
+  orientation = "vertical"
 }: MapZoomControlProps) {
+  const horizontal = orientation === "horizontal";
+  const zoomButtonClass = horizontal
+    ? `${zoomButtonBaseClass} h-7 w-7 border-r border-[var(--admin-border)] last:border-r-0`
+    : `${zoomButtonBaseClass} h-8 w-8 border-b border-[var(--admin-border)] last:border-b-0`;
+
   return (
     <div
       role="group"
       aria-label="Map zoom"
-      className="pointer-events-auto flex flex-col border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-2"
+      className={horizontal
+        // In-band row: flat border, no elevation — the band is layer-00 chrome.
+        ? "pointer-events-auto flex items-center border border-[var(--admin-border)] bg-[var(--admin-surface)]"
+        : "pointer-events-auto flex flex-col border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-2"}
     >
-      <span aria-live="polite" className="border-b border-[var(--admin-border)] px-1 py-1 text-center font-mono text-[10.5px] tabular-nums text-[var(--admin-text-secondary)]">
+      <span
+        aria-live="polite"
+        className={horizontal
+          ? "min-w-[36px] border-r border-[var(--admin-border)] px-2 py-1 text-center font-mono text-[10.5px] tabular-nums text-[var(--admin-text-secondary)]"
+          : "border-b border-[var(--admin-border)] px-1 py-1 text-center font-mono text-[10.5px] tabular-nums text-[var(--admin-text-secondary)]"}
+      >
         {label}
       </span>
       <button type="button" onClick={onZoomIn} disabled={zoomInDisabled} aria-label="Zoom in" title="Zoom in" className={zoomButtonClass}>
