@@ -500,3 +500,74 @@ test("a persisted names preference hydrates on mount", async () => {
     window.localStorage.removeItem(VIEWER_NAMES_KEY);
   }
 });
+
+// --- Status band (Option A, owner-picked 2026-08-17) -------------------------
+// The floating legend card + floating zoom stack become one in-flow bottom
+// band from the sm tier up. Only a mounting test can check the three moves
+// that matter: the band is the ONE home for legend counts and zoom at >=640,
+// phones keep the shipped floating zoom (and no band), and below the panel
+// tier the band yields to the inspector bottom sheet instead of fighting it.
+
+function statusBand() {
+  return document.querySelector("[data-viewer-status-band]");
+}
+
+test("the status band carries the legend list and the only zoom cluster at desktop widths", async () => {
+  await renderViewer();
+
+  const band = statusBand();
+  assert.ok(band, "expected the status band to render at the default 1280px viewport");
+  assert.ok(
+    band.contains(screen.getByRole("list", { name: "Seat status summary" })),
+    "the seat-status list must live inside the band"
+  );
+  assert.match(band.textContent, /4 seats/);
+
+  // getByRole throws on duplicates, so this doubles as the one-zoom-home
+  // assertion: the floating stack must not render alongside the band.
+  const zoomIn = screen.getByRole("button", { name: "Zoom in" });
+  assert.ok(band.contains(zoomIn), "zoom controls must live inside the band at this tier");
+  assert.ok(
+    band.contains(screen.getByRole("button", { name: "Show occupant names" })),
+    "the names switch moves into the band with the legend"
+  );
+});
+
+test("zooming from the band updates its own live label", async () => {
+  await renderViewer();
+  const band = statusBand();
+  assert.match(band.textContent, /Fit/);
+
+  fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+  await flushFrames();
+
+  assert.match(statusBand().textContent, /100%/);
+  assert.deepEqual(actionCalls, [], "zoom is render-local — never a server action");
+});
+
+test("below the sm tier the band stays away and the floating zoom stack remains", async () => {
+  setViewportWidth(500);
+  await renderViewer();
+
+  // assert.ok(x === null), never assert.equal(element, null): a failing
+  // element diff hangs ~100s then dies on buffer allocation (memory recipe).
+  assert.ok(statusBand() === null, "no band on phones (owner call 2026-08-17: band >=640 only)");
+  const zoomIn = screen.getByRole("button", { name: "Zoom in" });
+  assert.ok(zoomIn, "phones keep the shipped floating zoom stack");
+  assert.ok(screen.queryByRole("list", { name: "Seat status summary" }) === null, "no legend counts below sm — matches the shipped hidden-below-md legend");
+});
+
+test("below the panel tier the band yields to the inspector sheet and returns on dismiss", async () => {
+  setViewportWidth(820);
+  await renderViewer();
+  assert.ok(statusBand(), "band renders at tablet widths while nothing is selected");
+
+  fireEvent.click(seatMarker("A-01"));
+  await flushFrames();
+  assert.ok(openInspector(), "selecting a seat opens the inspector");
+  assert.ok(statusBand() === null, "the sheet owns the bottom — the band must yield while it is open");
+
+  fireEvent.click(screen.getByRole("button", { name: "Close inspector" }));
+  await flushFrames();
+  assert.ok(statusBand() !== null, "the band returns once the sheet is dismissed");
+});

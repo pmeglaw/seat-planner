@@ -33,13 +33,13 @@ import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
-import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
 import { NamesVisibilityToggle } from "@/components/seat-map/NamesVisibilityToggle";
 import { MapWashLayer } from "@/components/seat-map/MapWashLayer";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { ViewerFindPalette } from "@/components/seat-map/ViewerFindPalette";
+import { ViewerStatusBand } from "@/components/seat-map/ViewerStatusBand";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
@@ -194,6 +194,26 @@ export function ViewerSeatFinder({
     }
   }, [namesPreferenceHydrated, showNames]);
   const [floor, setFloor] = useState<FloorId>("3");
+  // Status-band tiers (Option A, owner call 2026-08-17): the band renders from
+  // sm (640) up, and below the panel tier it yields to the inspector bottom
+  // sheet. Desktop-first defaults keep SSR and the first client render in
+  // agreement; the mount effect corrects both before interaction (same
+  // read-after-mount pattern as the fit-width tiers below). JS state rather
+  // than hidden/sm: classes because the band and the phone-only floating zoom
+  // stack carry the SAME control roles — both mounted at once would be two
+  // "Zoom in" buttons in the accessibility tree.
+  const [bandTier, setBandTier] = useState(true);
+  const [panelTier, setPanelTier] = useState(true);
+  useEffect(() => {
+    function updateBandTiers() {
+      setBandTier(window.matchMedia("(min-width: 640px)").matches);
+      setPanelTier(window.matchMedia(`(min-width: ${VIEWER_PANEL_BREAKPOINT_PX}px)`).matches);
+    }
+
+    updateBandTiers();
+    window.addEventListener("resize", updateBandTiers);
+    return () => window.removeEventListener("resize", updateBandTiers);
+  }, []);
   // null = fit-to-view; a number = zoom factor applied to the base frame width.
   const [zoomFactor, setZoomFactor] = useState<number | null>(null);
   const [fitMapWidth, setFitMapWidth] = useState<number | null>(null);
@@ -909,16 +929,16 @@ export function ViewerSeatFinder({
   // width, in any hydration state.
 
   // Below the panel tier (<900) the inspector renders as a full-width
-  // `fixed inset-x-3 bottom-3` sheet, which paints straight over the z-30
-  // floating legend in the 768–899 band where the legend's own md floor lets
-  // it render (measured 2026-08-03: the sheet covered the whole 246px status
-  // row). Lifting the legend clear is not an option — the map viewport is
-  // ~520px there and a 50–60vh sheet would push it into the top-left floor
-  // cluster — so it yields the bottom instead and comes back on dismiss. At
-  // >=900 the inspector is a side panel and never overlaps, so the legend
-  // keeps rendering. The palette is not in this list: it hangs off the TOP of
-  // the screen under the bar, so it never contends for the bottom corners.
+  // `fixed inset-x-3 bottom-3` sheet. The status band yields to it (unmounts)
+  // and comes back on dismiss — the same bottom-yield rule the floating legend
+  // used before the band replaced it: the map viewport is ~520px there and a
+  // 50–60vh sheet would otherwise cover the whole status row. At >=900 the
+  // inspector is a side panel whose panel-tier bottom offset clears the band
+  // (52px = 40px band + the 12px gutter every floating card keeps), so the
+  // band keeps rendering. The palette is not part of this: it hangs off the
+  // TOP of the screen under the bar and never contends for the bottom.
   const bottomSheetOwnsBottom = Boolean(selectedSeat);
+  const statusBandVisible = floor === "3" && bandTier && (panelTier || !bottomSheetOwnsBottom);
 
   // `inspectorCollapsed` is purely the INV-1 auto-yield flag. An active query
   // owns the transient surface; once the query clears, the inspector returns
@@ -954,7 +974,13 @@ export function ViewerSeatFinder({
     // the plan on an unbroken workspace band to the bottom of the screen, and
     // an exact height keeps this the one vertical scroll owner (#197) — the
     // job the 82svh ceiling used to do.
-    "h-[calc(100svh-36px)] lg:h-full lg:min-h-0 lg:max-h-none lg:flex-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+    // With the band in flow the viewport gives up its 40px so the column still
+    // sums to the screen and stays the ONE vertical scroll owner (#197); on
+    // phones (band absent) the old full-height calc stands. At lg the stage is
+    // a flex column and flex-1 does the same subtraction, so the lg:h-full the
+    // pre-band layout needed is gone rather than fighting the band for 40px.
+    statusBandVisible ? "h-[calc(100svh-76px)]" : "h-[calc(100svh-36px)]",
+    "lg:h-auto lg:min-h-0 lg:max-h-none lg:flex-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
     // The fit view is a flex row at EVERY width so the frame's auto margins can
     // centre the plan vertically below sm too — a top-aligned plan sat under
     // the floating chip cluster (markers occluded) with the whole leftover
@@ -988,7 +1014,10 @@ export function ViewerSeatFinder({
   // Removing the aspect branch cannot start a fit feedback loop: at lg the
   // stage height comes from the screen (root lg:h-screen → main flex column),
   // never from the frame width the fit effect computes.
-  const mapStageClassName = "relative min-w-0 lg:flex lg:min-h-0 lg:flex-1";
+  // Flex COLUMN at every width now: the viewport and the in-flow status band
+  // stack vertically, and at lg flex-1 + min-h-0 keep the pair filling the
+  // screen column exactly as the lone viewport used to.
+  const mapStageClassName = "relative flex min-w-0 flex-col lg:min-h-0 lg:flex-1";
 
   const chromeSurfaceShortcut = "flex h-9 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
@@ -1407,15 +1436,12 @@ export function ViewerSeatFinder({
                 the announcement has to survive a floor switch (it still counts
                 the loaded seats on the placeholder floor). */}
             <p className="sr-only" aria-live="polite">{mapAnnouncement}</p>
-            {/* Flat bottom-3 at the panel tier. This used to clear 3.5rem
-                below it, because the fixed PEOPLE pill owned the same
-                bottom-right corner there and covered the fit button exactly
-                (measured 34x34). The pill went with the directory it opened —
-                the palette is reachable from the field at every width — so the
-                stack has the corner back. The home-indicator inset stays: the
-                pill is what the 3.5rem cleared, the safe area is a different
-                obstruction and is still there (#198). */}
-            {floor === "3" && (
+            {/* Phones only (band >=640 owns zoom there — owner call
+                2026-08-17): the shipped floating stack, unchanged. Flat
+                bottom-3 at the panel tier is vestigial while this is
+                phone-gated but harmless; the home-indicator inset is the part
+                that matters — the safe area is still an obstruction (#198). */}
+            {floor === "3" && !bandTier && (
               <div className="absolute right-3 z-30 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] panel:bottom-3">
                 <MapZoomControl
                   label={mapZoomLabel}
@@ -1427,20 +1453,17 @@ export function ViewerSeatFinder({
                 />
               </div>
             )}
-            {/* Status counts, floated bottom-left against the map stage (same
-                reason as the zoom stack: it re-centres with the narrowed map
-                when a panel reserves the right column). Counts still come from
-                statusCountSeats, which follows the active filters — the one
-                number row everyone reads must never contradict a filtered map.
-                Hidden below md, where the card would cover more plan than it
-                explains, and gated to Floor 3: Floor 2 is the placeholder,
-                where whole-map counts would read as a bug. Viewer-shaped: no
-                draft entry (the published layer has no draft seats) and no
-                actions — this surface offers no data verbs; the footer's
-                names toggle is a render-local view control only. */}
-            {floor === "3" && (
-            <div className={cx("absolute bottom-3 left-3 z-30 hidden", bottomSheetOwnsBottom ? "panel:block" : "md:block")}>
-              <MapStatusLegend
+            {/* The status band (Option A): the in-flow bottom row that
+                replaced the floating legend card + floating zoom stack from
+                sm up. Counts still come from statusCountSeats, which follows
+                the active filters — the one number row everyone reads must
+                never contradict a filtered map. Gated to Floor 3 (Floor 2 is
+                the placeholder, where whole-map counts would read as a bug)
+                and to statusBandVisible (band tier + sheet yield above).
+                Viewer-shaped: no draft entry and no data verbs; the names
+                toggle stays a render-local view control only. */}
+            {statusBandVisible && (
+              <ViewerStatusBand
                 ariaLabel="Seat status summary"
                 totalLabel={`${statusCountSeats.length} ${statusCountSeats.length === 1 ? "seat" : "seats"}`}
                 entries={[
@@ -1455,9 +1478,22 @@ export function ViewerSeatFinder({
                     // critique, minor 8) — same status-line home for both.
                     ? `${highlightedSeatIdSet.size} of ${publishedSeats.length} seats ${highlightedSeatIdSet.size === 1 ? "matches" : "match"} filters`
                     : "Seating across people, seats, departments, and zones."}
-                footer={<NamesVisibilityToggle pressed={showNames} onToggle={() => setShowNames(current => !current)} />}
+                controls={
+                  <>
+                    <NamesVisibilityToggle pressed={showNames} onToggle={() => setShowNames(current => !current)} />
+                    <span aria-hidden="true" className="h-5 w-px shrink-0 bg-[var(--admin-border)]" />
+                    <MapZoomControl
+                      orientation="horizontal"
+                      label={mapZoomLabel}
+                      onZoomIn={() => applyMapZoom(zoomFactor === null ? 1 : zoomFactor + MAP_ZOOM_STEP)}
+                      onZoomOut={() => applyMapZoom(zoomFactor === null ? 1 - MAP_ZOOM_STEP : zoomFactor - MAP_ZOOM_STEP)}
+                      onFit={fitMapToView}
+                      zoomInDisabled={zoomFactor !== null && zoomFactor >= MAP_ZOOM_MAX}
+                      zoomOutDisabled={zoomFactor !== null && zoomFactor <= MAP_ZOOM_MIN}
+                    />
+                  </>
+                }
               />
-            </div>
             )}
           </div>
         </main>
@@ -1500,6 +1536,9 @@ export function ViewerSeatFinder({
         employees={employees}
         departmentOptions={departmentOptions}
         canEdit={false}
+        // Clears the 40px status band + the 12px gutter at the panel tier
+        // (below it the sheet owns the bottom and the band yields instead).
+        panelBottomClassName="panel:bottom-[52px]"
         collapsed={inspectorCollapsed}
         onClose={() => {
           focusViewerSeatMarker(selectedSeatId);
