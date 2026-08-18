@@ -5,7 +5,7 @@ import { loadComponent, renderElement, React, configureContext, fireEvent, act, 
 // Interaction tests for the real SeatInspector: rendered in jsdom with the
 // updateSeatAction server action replaced by a double. Focus is the viewer↔admin
 // isolation guardrail (a viewer must never see edit affordances), the close
-// callback, the icon action row's hide-not-disable gating, the disclosure
+// callback, the Seat actions verbs' hide-not-disable gating, the disclosure
 // sections, and the custom-vs-protected delete guard.
 let SeatInspector;
 before(async () => {
@@ -39,7 +39,7 @@ function makeSeat(overrides = {}) {
   };
 }
 
-// A factory (not a constant) so the icon-action-row tests below can call it
+// A factory (not a constant) so the seat-action-verb tests below can call it
 // per-assertion — the employee is named "Alice Example" to match the
 // existing "Move ... to another seat" aria-label convention already
 // established for this exact button shape in seat-map-components.test.mjs.
@@ -127,7 +127,7 @@ test("admin mode shows the seat verbs inside Seat actions, gated on handlers", a
   assert.equal(moved, 1);
 });
 
-test("an open seat's action row offers Swap only (Move and Vacate hide, not disable)", async () => {
+test("an open seat's Seat actions offer Swap only (Move and Vacate hide, not disable)", async () => {
   const seat = makeSeat();
   await renderInspector(seat, { canEdit: true, onMove() {}, onSwap() {}, onVacate() {} });
   await openSeatActions();
@@ -140,7 +140,7 @@ test("an open seat's action row offers Swap only (Move and Vacate hide, not disa
 // disabled its verbs on `mutationInFlight || barSeatActions.pending` — a
 // mutation started elsewhere (not this inspector instance's own `pending`,
 // which is false here) must still block Move/Swap/Vacate.
-test("busy disables the icon action row even while this inspector's own pending is false", async () => {
+test("busy disables the Seat actions verbs even while this inspector's own pending is false", async () => {
   const seat = assignedSeat();
   await renderInspector(seat, { canEdit: true, onMove() {}, onSwap() {}, onVacate() {}, busy: true });
   await openSeatActions();
@@ -171,6 +171,41 @@ test("admin sections toggle independently and reset when the seat changes", asyn
   })));
   assert.equal(sectionHeader("seat-inspector-contact"), null, "open seat renders no Contact section");
   assert.equal(sectionHeader("seat-inspector-notes").getAttribute("aria-expanded"), "false");
+});
+
+test("clicking an open section's header collapses it and unmounts the body", async () => {
+  await renderInspector(assignedSeat(), { canEdit: true });
+  assert.equal(sectionHeader("seat-inspector-contact").getAttribute("aria-expanded"), "true");
+  assert.ok(document.getElementById("seat-inspector-contact"), "open body is mounted");
+  await act(async () => fireEvent.click(sectionHeader("seat-inspector-contact")));
+  assert.equal(sectionHeader("seat-inspector-contact").getAttribute("aria-expanded"), "false");
+  assert.equal(document.getElementById("seat-inspector-contact"), null, "collapsed body unmounts");
+});
+
+// Drives the real failure path end to end: a server notes-bounds rejection
+// (lib/schemas.ts wording) becomes a notes field error, and activating its
+// error-summary entry must open the collapsed Notes section before focusing
+// the textarea — focusInspectorField's rAF waits for the body to mount.
+test("a notes server error's summary entry auto-opens Notes and focuses the field", async () => {
+  const message = "Notes must be 1000 characters or fewer.";
+  configureContext({ actions: { updateSeatAction: async () => ({ ok: false, message }) } });
+  await renderInspector(makeSeat(), { canEdit: true });
+  await openSeatActions();
+  const statusSelect = document.querySelector("#seat-inspector-actions select");
+  await act(async () => fireEvent.change(statusSelect, { target: { value: "reserved" } }));
+  await act(async () => fireEvent.submit(document.getElementById("seat-inspector-form")));
+  const summaryEntry = [...document.querySelectorAll('[role="alert"] button')].find(button => button.textContent === message);
+  assert.ok(summaryEntry, "notes error appears as a focus entry in the summary");
+  assert.equal(sectionHeader("seat-inspector-notes").getAttribute("aria-expanded"), "false", "Notes stayed collapsed through the failed save");
+  await act(async () => fireEvent.click(summaryEntry));
+  assert.equal(sectionHeader("seat-inspector-notes").getAttribute("aria-expanded"), "true");
+  const textarea = document.querySelector('textarea[name="seatNote"]');
+  assert.ok(textarea, "Notes body mounted with the textarea");
+  // Flush the focus rAF scheduled by focusInspectorField (jsdom pretendToBeVisual).
+  await act(async () => {
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+  assert.equal(document.activeElement, textarea, "focus lands on the notes field after the section mounts");
 });
 
 test("viewer mode renders no sections, no action row, no footer CTA", async () => {

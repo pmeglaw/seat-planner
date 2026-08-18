@@ -72,13 +72,18 @@ all deferred minors triaged ship-as-is. Two items worth keeping:
   (zero diff lines of PR #411 touch it — verified during its QA); do not
   re-diagnose it as a regression of #411. `focusPrimaryActionSoon()` fires
   before the commit bar unmounts/CTA remounts settles. S.
-- **SI-02 mechanical follow-up bundle** from the #411 review, all no-behavior:
-  tighten `tests/accessibility-source.test.mjs` viewer-isolation regex
-  (anchor on `id="seat-inspector-actions"` instead of unbounded `[\s\S]*`);
-  sweep four stale tab-era comments in `SeatInspector.tsx` (~196/935/996/1344);
-  rename two jsdom test names + the `AdminOpenSeat` habitat label still saying
-  "action row"; add two jsdom tests (section toggle-closed; validation error
-  auto-opens Notes via `focusInspectorField`). S.
+- **SI-02 mechanical follow-up bundle** — CLOSED 2026-08-18 (branch
+  `chore/si02-seat-inspector-followups`). All items done: regex anchored on
+  `id="seat-inspector-actions"` with bounded spans; six (not four) stale
+  tab/icon-row comments swept (~46/165/196/935/996/1344 — two more than the
+  review recorded); two test renames + habitat label; both jsdom tests added.
+  **One premise correction:** the "validation error auto-opens Notes" test
+  was not purely no-behavior — nothing produced a `notes` field error
+  (`fieldErrorFromServerMessage` mapped only `/employee/i`, so the notes
+  error row at 1267 and the auto-open branch at 570 were unreachable). Fixed
+  with a one-line `/^notes\b/i` mapping so the server's Notes-bounds
+  rejection reaches the machinery #411 built; the test drives that real
+  path end to end.
 
 ## 2026-08-13 findings recorded but NOT planned this cycle
 
