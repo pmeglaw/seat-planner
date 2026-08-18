@@ -241,7 +241,7 @@ test.describe("admin map editor has no WCAG A/AA violations", () => {
     expect(results.passes.map(rule => rule.id)).toContain("color-contrast");
   });
 
-  test("with the seat inspector open, on both tabs", async ({ page }) => {
+  test("with the seat inspector open, then with Notes expanded", async ({ page }) => {
     test.setTimeout(120_000);
     const inspector = page.locator("#seat-inspector-panel");
     await retryUntilVisible(
@@ -254,9 +254,9 @@ test.describe("admin map editor has no WCAG A/AA violations", () => {
     await expect(inspector.getByRole("button", { name: /Assign an employee to|Edit assignment for/ })).toBeEnabled();
     await expectNoAxeViolations(page);
 
-    // The Notes tabpanel (and its textarea) is unmounted while inactive — the
-    // Overview scan never sees it.
-    await inspector.getByRole("tab", { name: "Notes" }).click();
+    // Collapsed section bodies (and the Notes textarea) are unmounted — the
+    // default scan never sees them; expand Notes for the second scan.
+    await inspector.getByRole("button", { name: "Notes" }).click();
     await expect(inspector.locator("textarea")).toBeVisible();
     await expectNoAxeViolations(page);
   });
@@ -291,7 +291,11 @@ test.describe("admin map editor has no WCAG A/AA violations", () => {
       if (await guardHeading.isVisible()) return;
       const commitBar = inspector.getByRole("button", { name: /^Save draft changes/ });
       if (!(await commitBar.isVisible())) {
-        await inspector.getByRole("tab", { name: "Notes" }).click();
+        // Notes is a toggle now (a discard resets it closed): only click the
+        // header when the textarea is not already mounted.
+        if (!(await inspector.locator("textarea").isVisible())) {
+          await inspector.getByRole("button", { name: "Notes" }).click();
+        }
         await inspector.locator("textarea").fill("a11y probe — never saved");
         await expect(commitBar).toBeVisible({ timeout: 2_000 });
       }
