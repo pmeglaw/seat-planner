@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { RefObject } from "react";
 import { useCallback } from "react";
 import { AccountMenu } from "@/components/ui/AccountMenu";
+import { adminChromeDividerRule } from "@/components/ui/adminChrome";
 import type { AppRailActive } from "@/components/ui/AppRail";
 
 // Top-bar-first chrome (2026-08-14 owner redesign): ONE full-width bar spans
@@ -132,7 +133,15 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, r
       <div className="ml-auto flex h-full shrink-0 items-center">
         {/* Right slot: the map surface portals Ask Planner + the publish
             cluster here; empty on sub-pages. */}
-        <div data-topbar-slot="right" ref={setRightSlot} className="flex h-full shrink-0 items-center" />
+        <div data-topbar-slot="right" ref={setRightSlot} className="peer flex h-full shrink-0 items-center" />
+        {/* Zone divider between surface actions and the account menu
+            (de-cram pass 2026-08-18): the avatar's own mx-2.5 supplies the
+            flanking air, so only mx-1 here. peer-empty:hidden, not a JS
+            occupancy flag — the slot div above stays mounted for the bar's
+            lifetime (portal-teardown contract), so :empty tracks tenant
+            presence for free: hidden on sub-pages and for viewers, shown
+            whenever the map portals its action cluster in. */}
+        <span aria-hidden="true" className={`mx-1 h-5 ${adminChromeDividerRule} peer-empty:hidden`} />
         {/* autoCloseKey: the bar persists across client navigations, so the
             menu must not linger over an incoming page — and a back/forward
             with the menu open must return focus to the trigger, the same
