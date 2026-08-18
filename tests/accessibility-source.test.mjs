@@ -470,8 +470,10 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // Collapsible sections hold only readable content and reset per seat —
   // uncontrolled <details> open state must not leak from one seat to the next.
   assert.match(inspectorSource, /key=\{`seat-inspector-sections-\$\{selectedSeat\.id\}`\}/);
-  // Delete renders only where it can ever succeed (custom draft seats); the
-  // Seat type fact explains protected originals instead of a dead button.
+  // Delete renders only where it can ever succeed (custom draft seats). The
+  // Seat type fact retired 2026-08-18 (progressive-disclosure spec: status /
+  // code / zone live only in the header meta row); the visible delete help
+  // line below still explains protected originals.
   // Drift-proof delete gate: custom AND not a protected-original label, so
   // is_custom data drift on original seats can't resurrect a dead button.
   assert.match(inspectorSource, /\{selectedSeat\.is_custom && !isProtectedOriginalSeatLabel\(selectedSeat\.label\) && \(/);
@@ -500,7 +502,6 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // The verbose repeated panels are gone (Claude Design cleanup).
   assert.doesNotMatch(inspectorSource, /Seat Summary|Planning inspector|Draft-only impact|Assignment workflow|Actions \/ Rules/);
   assert.match(inspectorSource, /isProtectedOriginalSeatLabel/);
-  assert.match(inspectorSource, /Protected original/);
   assert.match(inspectorSource, /Fix the highlighted inspector fields before saving/);
   // Move-confirm dialog renders canonical identity casing for both segments
   // (person via formatDisplayName, seat code via formatSeatCode) — raw stored

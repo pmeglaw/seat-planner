@@ -453,11 +453,6 @@ export function SeatInspector({
       : effectiveStatus === "unavailable"
         ? "bg-[var(--admin-status-bad)]"
         : "bg-[var(--admin-status-neutral)]";
-  const seatTypeLabel = isProtectedOriginalSeatLabel(selectedSeat.label)
-    ? "Protected original"
-    : selectedSeat.is_custom
-      ? "Custom draft"
-      : "Original";
   // Solid status tag (Seat section): shell status hue + AA text partner,
   // measured against the 2026-07-23 harmonized tokens: white on #1D6E41 ≈
   // 6.2:1, #161616 on #f1c21b ≈ 10.6:1, white on #B3232C ≈ 6.5:1, #161616 on
@@ -897,13 +892,17 @@ export function SeatInspector({
             <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"><CloseIcon /></button>
           </div>
         </div>
+        {/* Variant C meta: status pill owns state; code + zone are plain trailing facts. */}
         <div className="flex min-w-0 items-center gap-2">
           <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-heading)] ring-1 ring-white/15">
             <span aria-hidden="true" className={["h-2 w-2 rounded-full", headerStatusDotClass].join(" ")} />
             {currentStatusLabel}
           </span>
-          <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[11px] font-medium text-[var(--admin-chrome-heading)] ring-1 ring-white/15">{selectedSeat.label}</span>
-          <span className="min-w-0 truncate rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-heading)] ring-1 ring-white/15">{currentZone}</span>
+          <span className="min-w-0 truncate text-[11px] font-medium text-[var(--admin-chrome-heading)]">
+            <span className="font-mono">{selectedSeat.label}</span>
+            <span className="text-[var(--admin-chrome-muted)]"> · </span>
+            <span className="text-[var(--admin-chrome-muted)]">{currentZone}</span>
+          </span>
           {!canEdit && (
             <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] ring-1 ring-white/15">Published seat</span>
           )}
@@ -1190,18 +1189,6 @@ export function SeatInspector({
                       </section>
                     )}
 
-                    {/* Code and Status rows retired 2026-07-23: the header chips
-                        carry both at a glance, and the Status CONTROL for open
-                        seats lives in the Seat-actions zone below (it is an
-                        action, not a fact). */}
-                    <section aria-labelledby="seat-details-heading" className={hasCurrentAssignment ? "mt-3" : ""}>
-                      <h3 id="seat-details-heading" className={eyebrowHeadingClass}>SEAT</h3>
-                      <dl>
-                        <FactRow label="Zone" value={currentZone} mono={false} />
-                        <FactRow label="Seat type" value={seatTypeLabel} mono={false} />
-                      </dl>
-                    </section>
-
                     {/* Seat actions — Status for OPEN seats (it is an action,
                         not a fact: occupied seats derive "assigned" from the
                         occupant and show no control, the chip carries the
@@ -1210,7 +1197,7 @@ export function SeatInspector({
                         action row above (v12 slice 4); the canvas action bar
                         they used to live on is retired. Still never
                         collapsible. */}
-                    <div role="group" aria-labelledby="seat-actions-heading" className="mt-4">
+                    <div role="group" aria-labelledby="seat-actions-heading" className={hasCurrentAssignment ? "mt-4" : ""}>
                       <div className="flex items-center gap-2">
                         <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[var(--admin-chrome-heading)]">Seat actions</h3>
                         <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-white/10" />
@@ -1377,8 +1364,6 @@ export function SeatInspector({
             <section aria-labelledby="published-details-heading" className={hasCurrentAssignment ? "mt-3" : ""}>
               <h3 id="published-details-heading" className={eyebrowHeadingClass}>SEAT</h3>
               <dl>
-                <FactRow label="Code" value={selectedSeat.label} />
-                <FactRow label="Zone" value={currentZone} mono={false} />
                 <div className="flex items-center justify-between gap-2.5 py-1.5">
                   <dt className="shrink-0 text-[12.5px] text-[var(--admin-chrome-muted)]">Status</dt>
                   <dd><span className={["inline-block px-2 py-0.5 text-[10px] font-semibold", statusTagClass].join(" ")}>{currentStatusLabel}</span></dd>
