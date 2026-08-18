@@ -158,6 +158,10 @@ test("vacate, swap, and move confirm dialogs", async ({ page }) => {
   const inspector = page.locator("#seat-inspector-panel");
   await retryUntilVisible(() => clickSeat(page, n01Id), inspector);
 
+  // Vacate/Swap/Move live in the collapsed Seat actions section — expand it
+  // once; it stays open for the rest of this test (same seat throughout).
+  await page.getByRole("button", { name: "Seat actions" }).click();
+
   await page.getByRole("button", { name: "Vacate N01" }).click();
   await expect(page.getByRole("heading", { name: "Vacate N01?" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Vacate seat" })).toBeEnabled();
@@ -273,6 +277,8 @@ test("delete-custom-seat confirm dialog, then the real delete as cleanup", async
   await page.goto("/admin");
 
   await retryUntilVisible(() => clickSeat(page, x99Id), page.locator("#seat-inspector-panel"));
+  // Delete lives in the collapsed Seat actions section — expand it first.
+  await page.getByRole("button", { name: "Seat actions" }).click();
   await page.getByRole("button", { name: "Delete custom seat X99" }).click();
   await expect(page.getByRole("heading", { name: "Delete custom seat X99?" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Delete seat" })).toBeEnabled();

@@ -115,7 +115,7 @@ const Habitat = ({ label, children }: { label: string; children: ReactNode }) =>
 );
 
 export const AdminAssignedSeat = () => (
-  <Habitat label="admin draft seat — actions, tabs, contact + seat facts">
+  <Habitat label="admin draft seat — meta row + progressive sections">
     <SeatInspector
       {...adminBase}
       seat={SEATS[0]}

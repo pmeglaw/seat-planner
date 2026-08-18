@@ -211,13 +211,14 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   // admin-only control in the panel. The guarantee is unchanged — admin-only
   // affordances must sit inside the canEdit branch — only its anchor moved.
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete custom seat/);
-  // The reseat verbs live in the inspector's icon action row now (v12 slice 4).
-  // The row itself is canEdit-gated in SeatInspector; here we pin that only the
-  // ADMIN mount wires the verb handlers, so a viewer inspector can never grow
+  // The reseat verbs live in the inspector's Seat actions section now
+  // (2026-08-18 progressive disclosure). The section body is only mounted
+  // inside the canEdit-gated form branch; here we pin that only the ADMIN
+  // mount wires the verb handlers, so a viewer inspector can never grow
   // Move/Swap/Vacate even if the internal gate regressed.
   assert.match(seatMapSource, /<SeatInspector[\s\S]{0,2400}onVacate=\{requestVacateFromBar\}/);
   assert.doesNotMatch(viewerFinderSource, /onMove=|onSwap=|onVacate=/);
-  assert.match(inspectorSource, /\{canEdit && !editingAssignment && \(onMove \|\| onSwap \|\| onVacate\) && \(/);
+  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*\{\(onMove \|\| onSwap \|\| onVacate\) && \(/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
   assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Vacate/);
 });
@@ -436,12 +437,13 @@ test("inspector sections, validation, and actions retain accessible confidence c
   const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");
 
   assert.match(inspectorSource, /aria-label=\{`Ask Planner about \$\{selectedSeat\.label\}`\}/);
-  // v12 slice 4: the inspector is tabbed (APG tabs pattern) and close-only —
-  // the collapse rail/pill is retired, so no "VIEW DETAILS" affordance may return.
-  assert.match(inspectorSource, /role="tablist"/);
-  assert.match(inspectorSource, /role="tab"[\s\S]{0,200}aria-selected/);
-  assert.match(inspectorSource, /role="tabpanel"/);
-  assert.match(inspectorSource, /ArrowRight|ArrowLeft/);
+  // Progressive disclosure (2026-08-18): independent multi-open sections whose
+  // headers are real buttons carrying aria-expanded/aria-controls (heading-
+  // wrapped, APG disclosure pattern). The inspector stays close-only — the
+  // collapse rail/pill is retired, so no "VIEW DETAILS" affordance may return.
+  assert.match(inspectorSource, /<h3 id=\{id\}>[\s\S]{0,200}aria-expanded=\{open\}[\s\S]{0,80}aria-controls=\{bodyId\}/);
+  assert.match(inspectorSource, /setOpenSections\(DEFAULT_OPEN_SECTIONS\)/);
+  assert.doesNotMatch(inspectorSource, /role="tablist"|role="tabpanel"/);
   assert.doesNotMatch(inspectorSource, /VIEW DETAILS/);
   assert.doesNotMatch(inspectorSource, /Collapse inspector/);
   assert.match(inspectorSource, /z-\[80\][\s\S]*panel:z-40/);
@@ -463,15 +465,22 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // header, seat ops live in a static end-of-panel group, and Save/Cancel sit
   // in a conditional commit bar OUTSIDE the scroll area (rendered only while
   // editing or dirty; the 2026-07-10 ban on a PERMANENT sticky footer stands).
+  // 2026-08-18 progressive-disclosure spec (owner-locked) supersedes the
+  // "seat ops never collapse" half of that ruling: Move/Swap/Vacate/Status/
+  // Delete now live in the collapsible Seat actions section. What still may
+  // never collapse: the pinned primary CTA and the commit bar (asserted below).
   assert.doesNotMatch(inspectorSource, /InspectorSection title="Actions"/);
   assert.match(inspectorSource, /id="seat-actions-heading"/);
   assert.match(inspectorSource, /const showCommitBar = /);
   assert.match(inspectorSource, /id="seat-inspector-commit-bar"/);
-  // Collapsible sections hold only readable content and reset per seat —
-  // uncontrolled <details> open state must not leak from one seat to the next.
+  // Section open state resets per seat — the keyed remount plus the
+  // resetInspectorDraftForm default restore stop one seat's open sections
+  // from leaking into the next.
   assert.match(inspectorSource, /key=\{`seat-inspector-sections-\$\{selectedSeat\.id\}`\}/);
-  // Delete renders only where it can ever succeed (custom draft seats); the
-  // Seat type fact explains protected originals instead of a dead button.
+  // Delete renders only where it can ever succeed (custom draft seats). The
+  // Seat type fact retired 2026-08-18 (progressive-disclosure spec: status /
+  // code / zone live only in the header meta row); the visible delete help
+  // line below still explains protected originals.
   // Drift-proof delete gate: custom AND not a protected-original label, so
   // is_custom data drift on original seats can't resurrect a dead button.
   assert.match(inspectorSource, /\{selectedSeat\.is_custom && !isProtectedOriginalSeatLabel\(selectedSeat\.label\) && \(/);
@@ -481,15 +490,18 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // v12 slice 4: the <details>-based InspectorSection title prop retired
   // with the flat eyebrow-heading sections — the CONTACT heading text is the
   // new anchor for the same "only when assigned" guarantee.
+  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,300}title="Contact"/);
   assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,200}CONTACT/);
   assert.doesNotMatch(inspectorSource, /FactRow label="Department"/);
   // The occupied-seat CTA reads as an edit verb — it opens a form, it does
   // not act; "Change assignment" collided with Move/Swap/Vacate (2026-07-23).
   assert.match(inspectorSource, /Edit assignment for \$\{selectedSeat\.label\}/);
   assert.doesNotMatch(inspectorSource, /Change assignment/);
-  // v12 slice 4: Notes moved from an InspectorSection title prop into its own
-  // APG tabpanel — the tabpanel id/aria-labelledby pair is the new anchor.
-  assert.match(inspectorSource, /id="seat-inspector-tabpanel-notes" role="tabpanel" aria-labelledby="seat-inspector-tab-notes"/);
+  // Notes lives in its own disclosure section — the header/body id pair is
+  // the anchor (the body id is what the browser tier's dirty-notes helper and
+  // the e2e-auth guard spec reach for).
+  assert.match(inspectorSource, /bodyId="seat-inspector-notes" title="Notes"/);
+  assert.match(inspectorSource, /<div id="seat-inspector-notes"/);
   // The solid Assigned status tag pairs WHITE text with the deep green — the
   // 2026-07-23 harmonization darkened --admin-status-ok (#24a148 → #1D6E41)
   // and dark #161616 text on it fails AA at 2.89:1 (axe, prod 2026-07-24).
@@ -500,7 +512,6 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // The verbose repeated panels are gone (Claude Design cleanup).
   assert.doesNotMatch(inspectorSource, /Seat Summary|Planning inspector|Draft-only impact|Assignment workflow|Actions \/ Rules/);
   assert.match(inspectorSource, /isProtectedOriginalSeatLabel/);
-  assert.match(inspectorSource, /Protected original/);
   assert.match(inspectorSource, /Fix the highlighted inspector fields before saving/);
   // Move-confirm dialog renders canonical identity casing for both segments
   // (person via formatDisplayName, seat code via formatSeatCode) — raw stored

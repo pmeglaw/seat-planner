@@ -31,8 +31,8 @@ type SeatInspectorProps = {
   panelBottomClassName?: string;
   onClose: () => void;
   onClearSearchContext?: () => void;
-  // Icon action row verbs (v12 slice 4): hide-not-disable — the row and each
-  // button render only when canEdit AND the matching handler is supplied.
+  // Seat-verb handlers (hide-not-disable): each verb renders inside the Seat
+  // actions section only when canEdit AND the matching handler is supplied.
   // SeatMap keeps owning move/swap modes and the always-confirm vacate dialog.
   onMove?: () => void;
   onSwap?: () => void;
@@ -107,6 +107,18 @@ const emptyForm: SeatInspectorForm = {
   zone: "",
   status: "available",
   notes: ""
+};
+
+// Progressive-disclosure sections (2026-08-18 spec): independent multi-open,
+// never an accordion. Contact defaults open (it only renders when someone is
+// assigned); Actions / Notes / Activity default collapsed. Module-level so the
+// reset path has a stable identity to restore.
+type InspectorSectionKey = "contact" | "actions" | "notes" | "activity";
+const DEFAULT_OPEN_SECTIONS: Record<InspectorSectionKey, boolean> = {
+  contact: true,
+  actions: false,
+  notes: false,
+  activity: false
 };
 
 function formFromSeat(seat: SeatWithEmployee): SeatInspectorForm {
@@ -201,6 +213,27 @@ function FactRow({ label, value, mono = true }: { label: string; value: string; 
   );
 }
 
+// Disclosure header for the progressive sections: the heading wraps the
+// toggle button (APG disclosure pattern) so section titles stay in the
+// document outline while the whole row is one keyboard target. Collapsed
+// bodies unmount (same contract the retired tabs had for inactive panels).
+function DisclosureSectionHeader({ id, bodyId, title, open, onToggle }: { id?: string; bodyId: string; title: string; open: boolean; onToggle: () => void }) {
+  return (
+    <h3 id={id}>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={bodyId}
+        onClick={onToggle}
+        className="flex w-full items-center justify-between py-2.5 text-left text-[13px] font-semibold text-[var(--admin-chrome-heading)] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
+      >
+        {title}
+        {open ? <ChevronDownIcon /> : <ChevronRightIcon />}
+      </button>
+    </h3>
+  );
+}
+
 // Contact facts hide fields with nothing on file instead of rendering "—"
 // dash rows (2026-07-16 critique carryover) — an absent row reads as "nothing
 // recorded"; a column of dashes reads as broken. When NOTHING is on file, one
@@ -287,11 +320,11 @@ export function SeatInspector({
   const [editingAssignment, setEditingAssignment] = useState(false);
   const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
   const [activeEmployeeIndex, setActiveEmployeeIndex] = useState(0);
-  // v12 slice 4: Overview/Notes/Activity APG tabs. Resets to "overview"
-  // whenever the seat changes or the draft form resets — see
-  // resetInspectorDraftForm, which every reset path (seat change, resetSignal,
-  // Cancel-discard) funnels through.
-  const [activeTab, setActiveTab] = useState<"overview" | "notes" | "activity">("overview");
+  // Progressive sections (2026-08-18): open/closed per section. Resets to
+  // DEFAULT_OPEN_SECTIONS whenever the seat changes or the draft form resets —
+  // see resetInspectorDraftForm, which every reset path (seat change,
+  // resetSignal, Cancel-discard) funnels through.
+  const [openSections, setOpenSections] = useState<Record<InspectorSectionKey, boolean>>(DEFAULT_OPEN_SECTIONS);
   const [moveConflict, setMoveConflict] = useState<{
     employeeName: string;
     currentSeatLabel: string;
@@ -377,7 +410,7 @@ export function SeatInspector({
     setEditingAssignment(false);
     setEmployeeComboboxOpen(false);
     setActiveEmployeeIndex(0);
-    setActiveTab("overview");
+    setOpenSections(DEFAULT_OPEN_SECTIONS);
     setMoveConflict(null);
     onError(null);
     onDirtyChange(false);
@@ -453,11 +486,6 @@ export function SeatInspector({
       : effectiveStatus === "unavailable"
         ? "bg-[var(--admin-status-bad)]"
         : "bg-[var(--admin-status-neutral)]";
-  const seatTypeLabel = isProtectedOriginalSeatLabel(selectedSeat.label)
-    ? "Protected original"
-    : selectedSeat.is_custom
-      ? "Custom draft"
-      : "Original";
   // Solid status tag (Seat section): shell status hue + AA text partner,
   // measured against the 2026-07-23 harmonized tokens: white on #1D6E41 ≈
   // 6.2:1, #161616 on #f1c21b ≈ 10.6:1, white on #B3232C ≈ 6.5:1, #161616 on
@@ -535,11 +563,11 @@ export function SeatInspector({
       status: statusRef,
       notes: notesRef
     }[field];
-    // The notes field lives in the Notes tabpanel, which is only mounted
-    // while that tab is active — switch first, then focus on the next frame
+    // The notes field lives in the Notes section body, which is only mounted
+    // while the section is open — open it first, then focus on the next frame
     // so the target has mounted. rAF is harmless for the always-mounted
-    // editor fields too (no <details> reveal remains to replace).
-    if (field === "notes") setActiveTab("notes");
+    // editor fields too.
+    if (field === "notes") setOpenSections(current => ({ ...current, notes: true }));
     window.requestAnimationFrame(() => target.current?.focus());
   }
 
@@ -838,21 +866,8 @@ export function SeatInspector({
     onDeleteSeat();
   }
 
-  // APG tabs pattern roving tabindex: Left/Right cycle (wrap), Home/End jump
-  // to the ends. Activation moves focus with the selection (single-select tabs).
-  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    const order = ["overview", "notes", "activity"] as const;
-    const currentIndex = order.indexOf(activeTab);
-    let nextIndex = currentIndex;
-    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % order.length;
-    else if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + order.length) % order.length;
-    else if (event.key === "Home") nextIndex = 0;
-    else if (event.key === "End") nextIndex = order.length - 1;
-    else return;
-    event.preventDefault();
-    const next = order[nextIndex];
-    setActiveTab(next);
-    document.getElementById(`seat-inspector-tab-${next}`)?.focus();
+  function toggleSection(key: InspectorSectionKey) {
+    setOpenSections(current => ({ ...current, [key]: !current[key] }));
   }
 
   // [&>option] colors: native select popups ignore the control's own classes,
@@ -897,13 +912,17 @@ export function SeatInspector({
             <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"><CloseIcon /></button>
           </div>
         </div>
+        {/* Variant C meta: status pill owns state; code + zone are plain trailing facts. */}
         <div className="flex min-w-0 items-center gap-2">
           <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-heading)] ring-1 ring-white/15">
             <span aria-hidden="true" className={["h-2 w-2 rounded-full", headerStatusDotClass].join(" ")} />
             {currentStatusLabel}
           </span>
-          <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[11px] font-medium text-[var(--admin-chrome-heading)] ring-1 ring-white/15">{selectedSeat.label}</span>
-          <span className="min-w-0 truncate rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-heading)] ring-1 ring-white/15">{currentZone}</span>
+          <span className="min-w-0 truncate text-[11px] font-medium text-[var(--admin-chrome-heading)]">
+            <span className="font-mono">{selectedSeat.label}</span>
+            <span className="text-[var(--admin-chrome-muted)]"> · </span>
+            <span className="text-[var(--admin-chrome-muted)]">{currentZone}</span>
+          </span>
           {!canEdit && (
             <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] ring-1 ring-white/15">Published seat</span>
           )}
@@ -912,45 +931,6 @@ export function SeatInspector({
 
       {canEdit ? (
         <form id="seat-inspector-form" onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
-          {canEdit && !editingAssignment && (onMove || onSwap || onVacate) && (
-            <div role="group" aria-label={`Actions for seat ${selectedSeat.label}`} className="flex gap-px px-4 pb-3.5">
-              {hasCurrentAssignment && onMove && (
-                <button type="button" onClick={onMove} disabled={pending || busy}
-                  aria-label={selectedSeat.employee?.full_name ? `Move ${selectedSeat.employee.full_name} to another seat` : `Move ${selectedSeat.label}`}
-                  className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
-                  <MoveGlyph />Move
-                </button>
-              )}
-              {onSwap && (
-                <button type="button" onClick={onSwap} disabled={pending || busy} aria-label={`Swap ${selectedSeat.label}`} className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
-                  <SwapGlyph />Swap
-                </button>
-              )}
-              {hasCurrentAssignment && onVacate && (
-                <button type="button" onClick={onVacate} disabled={pending || busy} aria-label={`Vacate ${selectedSeat.label}`}
-                  className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-danger-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-danger-text)] transition hover:bg-[rgb(var(--admin-status-bad-rgb)/0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
-                  <VacateGlyph />Vacate
-                </button>
-              )}
-            </div>
-          )}
-
-          {!editingAssignment && (
-            <div role="tablist" aria-label="Seat details sections" className="mx-4 flex bg-[var(--admin-chrome-raised)]">
-              {(["overview", "notes", "activity"] as const).map(tab => (
-                <button key={tab} id={`seat-inspector-tab-${tab}`} type="button" role="tab"
-                  aria-selected={activeTab === tab} aria-controls={`seat-inspector-tabpanel-${tab}`}
-                  tabIndex={activeTab === tab ? 0 : -1}
-                  onClick={() => setActiveTab(tab)}
-                  onKeyDown={handleTabKeyDown}
-                  className={["flex-1 border-t-2 py-2 text-center text-[12px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
-                    activeTab === tab ? "border-t-[var(--admin-primary)] bg-[var(--admin-chrome-bg)] text-white" : "border-t-transparent text-[var(--admin-chrome-muted)] hover:text-white"].join(" ")}>
-                  {tab === "overview" ? "Overview" : tab === "notes" ? "Notes" : "Activity"}
-                </button>
-              ))}
-            </div>
-          )}
-
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {/* Save-state announcements sit outside the tabpanels: content
                 inside an inactive (unmounted) tab is never read by assistive
@@ -1170,16 +1150,16 @@ export function SeatInspector({
                 </section>
               </div>
             ) : (
-              <div key={`seat-inspector-sections-${selectedSeat.id}`}>
-                {activeTab === "overview" && (
-                  <div id="seat-inspector-tabpanel-overview" role="tabpanel" aria-labelledby="seat-inspector-tab-overview" className="px-4 pb-4 pt-3.5">
-                    {/* Contact, not "Occupant": the sticky header already carries
-                        the identity (name, position · department) — this section
-                        holds only the reach-them facts, so Department never
-                        renders twice. */}
-                    {hasCurrentAssignment && (
-                      <section aria-labelledby="seat-contact-heading">
-                        <h3 id="seat-contact-heading" className={eyebrowHeadingClass}>CONTACT</h3>
+              <div key={`seat-inspector-sections-${selectedSeat.id}`} className="px-4 pb-2 pt-1">
+                {/* Contact, not "Occupant": the sticky header already carries
+                    the identity (name, position · department) — this section
+                    holds only the reach-them facts. Renders only when someone
+                    is assigned. */}
+                {hasCurrentAssignment && (
+                  <div className="border-b border-white/5">
+                    <DisclosureSectionHeader id="seat-contact-heading" bodyId="seat-inspector-contact" title="Contact" open={openSections.contact} onToggle={() => toggleSection("contact")} />
+                    {openSections.contact && (
+                      <div id="seat-inspector-contact" className="pb-3">
                         <ContactFacts
                           canEdit
                           rows={buildContactRows({
@@ -1187,34 +1167,44 @@ export function SeatInspector({
                             extension: form.phoneExtension
                           })}
                         />
-                      </section>
-                    )}
-
-                    {/* Code and Status rows retired 2026-07-23: the header chips
-                        carry both at a glance, and the Status CONTROL for open
-                        seats lives in the Seat-actions zone below (it is an
-                        action, not a fact). */}
-                    <section aria-labelledby="seat-details-heading" className={hasCurrentAssignment ? "mt-3" : ""}>
-                      <h3 id="seat-details-heading" className={eyebrowHeadingClass}>SEAT</h3>
-                      <dl>
-                        <FactRow label="Zone" value={currentZone} mono={false} />
-                        <FactRow label="Seat type" value={seatTypeLabel} mono={false} />
-                      </dl>
-                    </section>
-
-                    {/* Seat actions — Status for OPEN seats (it is an action,
-                        not a fact: occupied seats derive "assigned" from the
-                        occupant and show no control, the chip carries the
-                        tag), and Delete live here. The reseat verbs — Move
-                        (person-centric), Swap, Vacate — live in the icon
-                        action row above (v12 slice 4); the canvas action bar
-                        they used to live on is retired. Still never
-                        collapsible. */}
-                    <div role="group" aria-labelledby="seat-actions-heading" className="mt-4">
-                      <div className="flex items-center gap-2">
-                        <h3 id="seat-actions-heading" className="shrink-0 text-[12px] font-semibold text-[var(--admin-chrome-heading)]">Seat actions</h3>
-                        <span aria-hidden="true" className="h-px min-w-4 flex-1 bg-white/10" />
                       </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Seat actions — the reseat verbs (Move / Swap / Vacate,
+                    hide-not-disable on their handlers), the Status control for
+                    OPEN seats (occupied seats derive "assigned" from the
+                    occupant; the meta pill carries the tag), and Delete.
+                    Collapsible per the 2026-08-18 owner spec (supersedes the
+                    2026-07-16 "actions never collapse" ruling for these verbs;
+                    the primary CTA and commit bar stay pinned outside). */}
+                <div className="border-b border-white/5">
+                  <DisclosureSectionHeader id="seat-actions-heading" bodyId="seat-inspector-actions" title="Seat actions" open={openSections.actions} onToggle={() => toggleSection("actions")} />
+                  {openSections.actions && (
+                    <div id="seat-inspector-actions" role="group" aria-labelledby="seat-actions-heading" className="pb-3">
+                      {(onMove || onSwap || onVacate) && (
+                        <div role="group" aria-label={`Actions for seat ${selectedSeat.label}`} className="flex gap-px">
+                          {hasCurrentAssignment && onMove && (
+                            <button type="button" onClick={onMove} disabled={pending || busy}
+                              aria-label={selectedSeat.employee?.full_name ? `Move ${selectedSeat.employee.full_name} to another seat` : `Move ${selectedSeat.label}`}
+                              className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                              <MoveGlyph />Move
+                            </button>
+                          )}
+                          {onSwap && (
+                            <button type="button" onClick={onSwap} disabled={pending || busy} aria-label={`Swap ${selectedSeat.label}`} className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                              <SwapGlyph />Swap
+                            </button>
+                          )}
+                          {hasCurrentAssignment && onVacate && (
+                            <button type="button" onClick={onVacate} disabled={pending || busy} aria-label={`Vacate ${selectedSeat.label}`}
+                              className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-danger-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-danger-text)] transition hover:bg-[rgb(var(--admin-status-bad-rgb)/0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                              <VacateGlyph />Vacate
+                            </button>
+                          )}
+                        </div>
+                      )}
                       {!hasAssignedPerson && (
                         <label className="mt-2 block">
                           <span className="text-[12px] font-medium tracking-normal text-[var(--admin-chrome-muted)]">Status</span>
@@ -1255,44 +1245,50 @@ export function SeatInspector({
                         </>
                       )}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
-                {activeTab === "notes" && (
-                  <div id="seat-inspector-tabpanel-notes" role="tabpanel" aria-labelledby="seat-inspector-tab-notes" className="px-4 pb-4 pt-3.5">
-                    <label className="block">
-                      <span className="sr-only">Seat note</span>
-                      <textarea
-                        ref={notesRef}
-                        name="seatNote"
-                        value={form.notes}
-                        onChange={event => handleTextChange("notes", event)}
-                        placeholder="Add a seat note…"
-                        aria-invalid={Boolean(fieldErrorMap.notes)}
-                        aria-describedby={fieldDescribedBy("notes")}
-                        className={`${fieldClassName} min-h-20`}
-                      />
-                      {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.notes}</p>}
-                    </label>
-                  </div>
-                )}
+                <div className="border-b border-white/5">
+                  <DisclosureSectionHeader bodyId="seat-inspector-notes" title="Notes" open={openSections.notes} onToggle={() => toggleSection("notes")} />
+                  {openSections.notes && (
+                    <div id="seat-inspector-notes" className="pb-3">
+                      <label className="block">
+                        <span className="sr-only">Seat note</span>
+                        <textarea
+                          ref={notesRef}
+                          name="seatNote"
+                          value={form.notes}
+                          onChange={event => handleTextChange("notes", event)}
+                          placeholder="Add a seat note…"
+                          aria-invalid={Boolean(fieldErrorMap.notes)}
+                          aria-describedby={fieldDescribedBy("notes")}
+                          className={`${fieldClassName} min-h-20`}
+                        />
+                        {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.notes}</p>}
+                      </label>
+                    </div>
+                  )}
+                </div>
 
-                {activeTab === "activity" && (
-                  <div id="seat-inspector-tabpanel-activity" role="tabpanel" aria-labelledby="seat-inspector-tab-activity" className="px-4 pb-4 pt-3.5">
-                    {activityEntries.length > 0 ? (
-                      <ul>
-                        {activityEntries.map((entry, index) => (
-                          <li key={`${entry}-${index}`} className="border-b border-white/5 py-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)] last:border-b-0">
-                            <span className="font-medium text-[var(--admin-chrome-text-soft)]">{entry}</span>
-                            <span className="ml-1.5">· this session</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-[12px] leading-4 text-[var(--admin-chrome-muted)]">No draft edits to this seat in this session. Saved changes appear here until publish.</p>
-                    )}
-                  </div>
-                )}
+                <div>
+                  <DisclosureSectionHeader bodyId="seat-inspector-activity" title="Activity" open={openSections.activity} onToggle={() => toggleSection("activity")} />
+                  {openSections.activity && (
+                    <div id="seat-inspector-activity" className="pb-3">
+                      {activityEntries.length > 0 ? (
+                        <ul>
+                          {activityEntries.map((entry, index) => (
+                            <li key={`${entry}-${index}`} className="border-b border-white/5 py-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)] last:border-b-0">
+                              <span className="font-medium text-[var(--admin-chrome-text-soft)]">{entry}</span>
+                              <span className="ml-1.5">· this session</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-[12px] leading-4 text-[var(--admin-chrome-muted)]">No draft edits to this seat in this session. Saved changes appear here until publish.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -1377,8 +1373,6 @@ export function SeatInspector({
             <section aria-labelledby="published-details-heading" className={hasCurrentAssignment ? "mt-3" : ""}>
               <h3 id="published-details-heading" className={eyebrowHeadingClass}>SEAT</h3>
               <dl>
-                <FactRow label="Code" value={selectedSeat.label} />
-                <FactRow label="Zone" value={currentZone} mono={false} />
                 <div className="flex items-center justify-between gap-2.5 py-1.5">
                   <dt className="shrink-0 text-[12.5px] text-[var(--admin-chrome-muted)]">Status</dt>
                   <dd><span className={["inline-block px-2 py-0.5 text-[10px] font-semibold", statusTagClass].join(" ")}>{currentStatusLabel}</span></dd>
