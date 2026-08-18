@@ -2617,8 +2617,10 @@ export function SeatMap({
     <>
       {/* Always-visible divider (aesthetic pass 2026-08-14): the command
           cluster must read as its own group, clearly apart from the brand
-          wordmark — reference-bar Save/Fork/Share separation. */}
-      <span aria-hidden="true" className={`mx-3 h-5 ${adminChromeDividerRule}`} />
+          wordmark — reference-bar Save/Fork/Share separation. mx-4, not mx-3:
+          zone-level boundaries get 16px air, group boundaries inside a zone
+          get 12px (de-cram pass 2026-08-18). */}
+      <span aria-hidden="true" className={`mx-4 h-5 ${adminChromeDividerRule}`} />
       {/* div, not <nav>: role="group" is not an allowed role on nav (axe
           aria-allowed-role), and this is a grouped tool cluster, not a
           navigation landmark. */}
@@ -2843,22 +2845,31 @@ export function SeatMap({
           without draft changes — no idle status chip, no
           publish-status-popover. The has-changes styling is unchanged
           from slice 1. */}
+      {/* The leading hairline (de-cram pass 2026-08-18) marks Ask Planner and
+          the publish cluster as separate groups in the right zone — mx-3 at
+          group boundaries, vs mx-4 at zone boundaries. It sits INSIDE the
+          conditional so a clean draft still renders nothing (and inside the
+          accessibility-source 500-char window, which is why this comment
+          lives above the conditional, not in it). */}
       {publishSummary.hasChanges && (
-        <div className="flex h-full shrink-0 items-center gap-2.5 pl-3">
-          <span className="text-[12px] text-[var(--admin-chrome-muted)]">
-            Draft · {publishSummary.totalChangeCount} {publishSummary.totalChangeCount === 1 ? "change" : "changes"}
-          </span>
-          <button
-            type="button"
-            onClick={openPublishReview}
-            aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
-            title={draftStatusTitle}
-            className="inline-flex h-full shrink-0 items-center gap-1.5 bg-[var(--admin-primary-cta)] px-[15px] text-[12.5px] font-semibold leading-none text-white transition hover:bg-[var(--admin-primary-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
-          >
-            <span>Publish</span>
-            <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold tabular-nums text-[var(--admin-primary-ink)]">{publishSummary.totalChangeCount}</span>
-          </button>
-        </div>
+        <>
+          <span aria-hidden="true" className={`mx-3 h-5 ${adminChromeDividerRule}`} />
+          <div className="flex h-full shrink-0 items-center gap-2.5">
+            <span className="text-[12px] text-[var(--admin-chrome-muted)]">
+              Draft · {publishSummary.totalChangeCount} {publishSummary.totalChangeCount === 1 ? "change" : "changes"}
+            </span>
+            <button
+              type="button"
+              onClick={openPublishReview}
+              aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
+              title={draftStatusTitle}
+              className="inline-flex h-full shrink-0 items-center gap-1.5 bg-[var(--admin-primary-cta)] px-[15px] text-[12.5px] font-semibold leading-none text-white transition hover:bg-[var(--admin-primary-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
+            >
+              <span>Publish</span>
+              <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold tabular-nums text-[var(--admin-primary-ink)]">{publishSummary.totalChangeCount}</span>
+            </button>
+          </div>
+        </>
       )}
     </>
   ) : null;

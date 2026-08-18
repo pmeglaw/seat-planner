@@ -23,11 +23,12 @@
 
 /**
  * Vertical divider between chrome clusters — the rule itself, WITHOUT a
- * height. The map header (SeatMap.tsx) is the only consumer today, at 26px,
- * hidden below lg. Height and visibility stay with the caller by design
- * (not because a second consumer disagrees with them) — the retired sub-page bar
- * dropped its own divider entirely in v12 (identity-only bar, no clusters to
- * separate). Only the 1px rule and its color are shared here, so a
- * border-token change still lands in one place if another surface adopts one.
+ * height. Consumers: the map's bar tenants (SeatMap.tsx — brand|commands at
+ * mx-4, Ask Planner|publish at mx-3) and AppTopBar's actions|account divider
+ * (peer-empty-gated). Height and spacing stay with the caller by design:
+ * zone-level boundaries get 16px air (mx-4), group boundaries inside a zone
+ * get 12px (mx-3) — the de-cram pass 2026-08-18 set that rhythm. Only the
+ * 1px rule and its color are shared here, so a border-token change still
+ * lands in one place.
  */
 export const adminChromeDividerRule = "w-px shrink-0 bg-[var(--admin-chrome-border)]";
