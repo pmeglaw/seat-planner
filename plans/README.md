@@ -61,6 +61,25 @@ extensions. Two residuals worth keeping:
 - **LH-02 measurement recorded into P-03** (code-splitting) — see the updated
   P-03 entry in the 2026-08-13 perf list below; no separate item.
 
+## 2026-08-18 SeatInspector progressive disclosure (PR #411) — two residuals
+
+Redesign shipped on `feat/seat-inspector-meta-v1` (Variant C meta row +
+disclosure sections replacing tabs/icon row). Final whole-branch review clean;
+all deferred minors triaged ship-as-is. Two items worth keeping:
+
+- **SI-01 post-save focus falls to `<body>`** instead of the re-mounted
+  primary CTA. **Pre-existing before the progressive-disclosure redesign**
+  (zero diff lines of PR #411 touch it — verified during its QA); do not
+  re-diagnose it as a regression of #411. `focusPrimaryActionSoon()` fires
+  before the commit bar unmounts/CTA remounts settles. S.
+- **SI-02 mechanical follow-up bundle** from the #411 review, all no-behavior:
+  tighten `tests/accessibility-source.test.mjs` viewer-isolation regex
+  (anchor on `id="seat-inspector-actions"` instead of unbounded `[\s\S]*`);
+  sweep four stale tab-era comments in `SeatInspector.tsx` (~196/935/996/1344);
+  rename two jsdom test names + the `AdminOpenSeat` habitat label still saying
+  "action row"; add two jsdom tests (section toggle-closed; validation error
+  auto-opens Notes via `focusInspectorField`). S.
+
 ## 2026-08-13 findings recorded but NOT planned this cycle
 
 User scoped this cycle to the security findings. Everything below verified at
