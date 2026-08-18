@@ -50,7 +50,7 @@ import { ActiveFilterChips, FilterPanel } from "@/components/seat-map/FilterPane
 import { DeptChipRow } from "@/components/seat-map/DeptChipRow";
 import { DraftTrailOverlay } from "@/components/seat-map/DraftTrailOverlay";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
-import { MapStatusLegend } from "@/components/seat-map/MapStatusLegend";
+import { MapStatusBand } from "@/components/seat-map/MapStatusBand";
 import { NamesVisibilityToggle } from "@/components/seat-map/NamesVisibilityToggle";
 import { MapWashLayer } from "@/components/seat-map/MapWashLayer";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
@@ -334,6 +334,25 @@ export function SeatMap({
   // Fit (overview) is the resting state: every individual seat visible in view.
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>("overview");
   const [floor, setFloor] = useState<FloorId>("3");
+  // Status-band tiers (Option A parity with the viewer, owner call
+  // 2026-08-17): the band renders from sm (640) up, and below the panel tier
+  // it yields to the bottom sheets. Desktop-first defaults keep SSR and the
+  // first client render in agreement; the mount effect corrects both before
+  // interaction. JS state rather than hidden/sm: classes because the band and
+  // the phone-only floating zoom stack carry the SAME control roles — both
+  // mounted at once would be two "Zoom in" buttons in the accessibility tree.
+  const [bandTier, setBandTier] = useState(true);
+  const [panelTier, setPanelTier] = useState(true);
+  useEffect(() => {
+    function updateBandTiers() {
+      setBandTier(window.matchMedia("(min-width: 640px)").matches);
+      setPanelTier(window.matchMedia(`(min-width: ${SEAT_CENTER_PANEL_BREAKPOINT_PX}px)`).matches);
+    }
+
+    updateBandTiers();
+    window.addEventListener("resize", updateBandTiers);
+    return () => window.removeEventListener("resize", updateBandTiers);
+  }, []);
   const [zoomFactor, setZoomFactor] = useState(1);
   const [panning, setPanning] = useState(false);
   const panStateRef = useRef<MapPanState>(null);
@@ -2316,13 +2335,21 @@ export function SeatMap({
   // (it guards edit affordances), while a sheet covers the legend whether or
   // not this session can edit, and the results panel is a sheet down there too.
   const bottomSheetOwnsBottom = mobileMapInteractionSurfaceOpen || resultsPanelOpen || Boolean(selectedSeat);
+  // Band visibility (Option A): floor-gated like the legend it replaced, sm+
+  // only, and below the panel tier it yields to whichever sheet owns the
+  // bottom — bottomSheetOwnsBottom is admin-wider than the viewer's flag on
+  // purpose (results panel and the edit-mode sheets are bottom sheets here).
+  const statusBandVisible = floor === "3" && bandTier && (panelTier || !bottomSheetOwnsBottom);
   const mapViewportClassName = [
     // v12 slice 3: the mounted-sheet treatment (hairline border + elevation +
     // matting padding) is gone. The plan is layer-00 now — it runs edge to
     // edge and the workspace band shows through around it, so there is no
     // card edge left to draw. Everything that reads over the map floats as a
     // layer-01 white card instead.
-    "relative mx-auto w-full max-w-full overscroll-contain bg-[var(--admin-map-workspace)] lg:h-full lg:min-h-0 lg:flex-1 lg:max-h-none",
+    // lg:h-auto, not the old lg:h-full: the stage is a flex column with the
+    // in-flow status band below this viewport, so flex-1 does the height
+    // subtraction — h-full would fight the band for its 40px.
+    "relative mx-auto w-full max-w-full overscroll-contain bg-[var(--admin-map-workspace)] lg:h-auto lg:min-h-0 lg:flex-1 lg:max-h-none",
     mapViewMode === "overview"
       // Below lg the viewport fills the screen under the chrome instead of
       // sizing itself to the plan. The old `sm:min-h-[480px] sm:max-h-none`
@@ -2346,7 +2373,15 @@ export function SeatMap({
       // every width, and the viewer centres its fit view from sm up — leaving
       // this lg-only would top-align the plan and pile the whole band under it
       // at 640-1023, splitting the two surfaces at the same widths.
-      ? "min-h-[300px] h-[calc(100svh-var(--admin-chrome-h)-44px)] overflow-auto sm:flex sm:items-center sm:justify-center sm:overflow-hidden"
+      // The band variant budgets 40px more below lg (84 = 44px search row +
+      // 40px band) so the viewport + band still sum to the screen and the
+      // viewport stays the one vertical scroll owner (#197).
+      ? [
+        statusBandVisible
+          ? "min-h-[300px] h-[calc(100svh-var(--admin-chrome-h)-84px)]"
+          : "min-h-[300px] h-[calc(100svh-var(--admin-chrome-h)-44px)]",
+        "overflow-auto sm:flex sm:items-center sm:justify-center sm:overflow-hidden"
+      ].join(" ")
       // The sm cap budgets the stacked chrome above the map: the bar
       // (--admin-chrome-h, token-derived so a bar resize can't strand a
       // hardcoded sum again — the 36→40px bump caught exactly that) plus the
@@ -2357,7 +2392,13 @@ export function SeatMap({
       // doesn't grow a second scrollbar next to it. On short windows the
       // min-h floor wins and the page scrolls a little; that beats a stub of
       // a map.
-      : "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px] sm:max-h-[calc(100svh-var(--admin-chrome-h)-44px)] lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden",
+      : [
+        "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px]",
+        statusBandVisible
+          ? "sm:max-h-[calc(100svh-var(--admin-chrome-h)-84px)]"
+          : "sm:max-h-[calc(100svh-var(--admin-chrome-h)-44px)]",
+        "lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden"
+      ].join(" "),
     mapViewMode === "detail" && floor === "3" && !addSeatMode ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     canEdit ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]" : ""
   ].join(" ");
@@ -2385,7 +2426,11 @@ export function SeatMap({
   // a CONTENT-derived stage height, and at lg the height comes from the screen
   // (root lg:h-screen down the lg:flex-1 / lg:min-h-0 chain), never from the
   // frame width the overview ResizeObserver computes.
-  const mapStageClassName = "relative min-w-0 lg:flex lg:min-h-0 lg:flex-1";
+  // Flex COLUMN at every width now: the viewport and the in-flow status band
+  // stack vertically, and at lg flex-1 + min-h-0 keep the pair filling the
+  // screen column exactly as the lone viewport used to (same move as the
+  // viewer's Option A restructure).
+  const mapStageClassName = "relative flex min-w-0 flex-col lg:min-h-0 lg:flex-1";
   // No crumb at all (owner call 2026-08-14, round 2): the floor selector IS
   // the document identity — layer state was tried as "Draft map · N seats",
   // then "Draft", then removed; the legend carries the count and the publish
@@ -3276,7 +3321,10 @@ export function SeatMap({
               </div>
               )}
             </div>
-            {floor === "3" && (
+            {/* Phones only (the band >=640 owns zoom there — owner call
+                2026-08-17): the shipped floating stack, still hidden while a
+                mobile edit surface owns the screen. */}
+            {floor === "3" && !bandTier && (
               <div className={["absolute bottom-3 right-3 z-30", mobileMapControlsHidden ? "hidden sm:block" : ""].filter(Boolean).join(" ")}>
                 <MapZoomControl
                   label={mapZoomLabel}
@@ -3288,25 +3336,18 @@ export function SeatMap({
                 />
               </div>
             )}
-            {/* Legend card, bottom-left against the map stage (it re-centres
-                with the narrowed map for the same reason the header does: a
-                docking panel — results panel or mode card, v12 slice 4 —
-                reserves its column via stageReservedClassName; the canvas
-                action bar this comment used to point to is retired). Counts
+            {/* The status band (Option A parity with the viewer, owner call
+                2026-08-17): the in-flow bottom row that replaced the floating
+                legend card + zoom stack from sm up. It narrows with the stage
+                when a docking panel reserves its column (stageReservedClassName
+                wraps this whole column), so the dock never overlaps it. Counts
                 come from legendCounts, which follows the active filters — the
-                number row must never contradict a filtered map. Hidden below
-                md, where the card would cover more plan than it explains,
-                and gated to Floor 3:
-                Floor 2 shows the placeholder, where whole-map counts would
-                read as a bug. In the 768–899 band the md floor lets this card
-                render while the inspector/results/filter surfaces are still
-                full-width `fixed inset-x-3 bottom-3 z-[80]` sheets, which
-                paint straight over it (measured on the viewer's identical
-                stack, 2026-08-03). It yields the bottom to them and returns on
-                dismiss; at >=900 those dock to the side and never overlap. */}
-            {floor === "3" && (
-            <div className={["absolute bottom-3 left-3 z-30 hidden", bottomSheetOwnsBottom ? "panel:block" : "md:block"].join(" ")}>
-              <MapStatusLegend
+                number row must never contradict a filtered map. Gated to
+                Floor 3 (Floor 2 is the placeholder, where whole-map counts
+                would read as a bug) and to statusBandVisible (band tier +
+                sheet yield above). */}
+            {statusBandVisible && (
+              <MapStatusBand
                 ariaLabel="Seat status legend"
                 totalLabel={`${stats.total} ${stats.total === 1 ? "seat" : "seats"}`}
                 entries={SEAT_STATUS_LEGEND
@@ -3335,15 +3376,31 @@ export function SeatMap({
                     </button>
                   </div>
                 ) : null}
-                footer={canEdit ? (
-                  // Same accessible name + pressed-state contract as the kebab
-                  // item (accessibility-source counts them relationally); the
-                  // shared switch owns the aria-pressed and the always-visible
-                  // track cue, and the viewer legend renders the same control.
-                  <NamesVisibilityToggle pressed={showNames} onToggle={() => setShowNames(current => !current)} />
-                ) : null}
+                controls={
+                  <>
+                    {canEdit ? (
+                      <>
+                        {/* Same accessible name + pressed-state contract as the
+                            kebab item (accessibility-source counts them
+                            relationally); the shared switch owns aria-pressed
+                            and the always-visible track cue, and the viewer
+                            band renders the same control. */}
+                        <NamesVisibilityToggle pressed={showNames} onToggle={() => setShowNames(current => !current)} />
+                        <span aria-hidden="true" className="h-5 w-px shrink-0 bg-[var(--admin-border)]" />
+                      </>
+                    ) : null}
+                    <MapZoomControl
+                      orientation="horizontal"
+                      label={mapZoomLabel}
+                      onZoomIn={() => applyMapZoom(mapViewMode === "detail" ? zoomFactor + MAP_ZOOM_STEP : 1)}
+                      onZoomOut={() => applyMapZoom(mapViewMode === "detail" ? zoomFactor - MAP_ZOOM_STEP : 1 - MAP_ZOOM_STEP)}
+                      onFit={fitMapToView}
+                      zoomInDisabled={mapViewMode === "detail" && zoomFactor >= MAP_ZOOM_MAX}
+                      zoomOutDisabled={mapViewMode === "detail" && zoomFactor <= MAP_ZOOM_MIN}
+                    />
+                  </>
+                }
               />
-            </div>
             )}
           </div>
         </section>
@@ -3451,6 +3508,12 @@ export function SeatMap({
         employees={localEmployees}
         departmentOptions={localDepartmentOptions}
         canEdit={canEdit}
+        // Clears the 40px status band + the 12px gutter at the panel tier —
+        // but only while the band actually renders (Floor 2 has no band, and
+        // a selection survives the floor switch; a static 52px there is a
+        // dead gap above nothing). Below the panel tier the sheet owns the
+        // bottom and the band yields instead, so the panel: variant is inert.
+        panelBottomClassName={statusBandVisible ? "panel:bottom-[52px]" : undefined}
         collapsed={inspectorCollapsed}
         searchMismatchNotice={selectedSeatMismatchNotice}
         searchMismatchClearLabel={clearSearchContextLabel}

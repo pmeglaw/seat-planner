@@ -47,16 +47,17 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /aria-label="Undo last map change"/);
   assert.match(source, /aria-label="Redo last undone change"/);
   assert.match(source, /Planning canvas/);
-  // v12 slice 3: the docked status strip is gone and the legend floats as a
-  // layer-01 card, but it must still BE a legend AND still carry the same
-  // accessible name. One assertion binds the two halves: a lone
-  // /Seat status legend/ pin would keep passing if the string drifted onto a
-  // title tooltip, and a lone /<MapStatusLegend/ pin would keep passing if the
-  // name vanished. MapStatusLegend owns the <ul aria-label={ariaLabel}>, so
-  // the status counts stay a labelled list rather than decorative text
-  // painted over the map (the rendered semantics — that it really is a
-  // labelled list — are verified at runtime by tests/map-status-legend.test.mjs).
-  assert.match(source, /<MapStatusLegend[\s\S]{0,200}ariaLabel="Seat status legend"/);
+  // The status counts moved from the floating legend card into the in-flow
+  // MapStatusBand (Option A, 2026-08-17), but the guarantee is unchanged:
+  // they must still BE a legend AND still carry the same accessible name.
+  // One assertion binds the two halves: a lone /Seat status legend/ pin would
+  // keep passing if the string drifted onto a title tooltip, and a lone
+  // /<MapStatusBand/ pin would keep passing if the name vanished.
+  // MapStatusBand owns the <ul aria-label={ariaLabel}>, so the status counts
+  // stay a labelled list rather than decorative text painted over the map
+  // (the rendered semantics are verified at runtime by
+  // tests/map-status-band.test.mjs).
+  assert.match(source, /<MapStatusBand[\s\S]{0,200}ariaLabel="Seat status legend"/);
   assert.match(source, /aria-controls="seat-map-filter-panel"/);
   // Session layer, v12 (2026-07-31 rail shell): identity + Settings moved off
   // the header AccountMenu into AppRail (Task 1), and the rail itself now
@@ -1163,8 +1164,8 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   // card on this surface, but the guarantee is unchanged: the counts stay a
   // labelled <ul> instead of decorative text painted on the map. Bound to the
   // accessible name in one assertion for the same reason as the admin pin above.
-  assert.match(viewerSource, /<ViewerStatusBand[\s\S]{0,200}ariaLabel="Seat status summary"/);
-  const statusBandSource = await readSource("../components/seat-map/ViewerStatusBand.tsx");
+  assert.match(viewerSource, /<MapStatusBand[\s\S]{0,200}ariaLabel="Seat status summary"/);
+  const statusBandSource = await readSource("../components/seat-map/MapStatusBand.tsx");
   assert.match(statusBandSource, /<ul aria-label=\{ariaLabel\}/);
 
   // Brand and seat-code tokens are identifiers — never machine-translated.

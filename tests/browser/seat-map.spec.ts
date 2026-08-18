@@ -254,3 +254,54 @@ test("the publish review lists per-seat diff rows with change tags", async ({ pa
   await expect(dialog.getByText("Added", { exact: true })).toBeAttached();
   await expect(dialog.getByText("1 seat change", { exact: true })).toBeAttached();
 });
+
+// --- Status band (Option A parity with the viewer, 2026-08-17) ---------------
+// The admin map folds its floating legend + zoom stack into the same in-flow
+// bottom band the viewer shipped in v1.45.0. Real-browser tier because SeatMap
+// never mounts in jsdom and the tiers are matchMedia-driven; presence-based
+// assertions because the harness ships no CSS.
+test("the status band is the admin map's one zoom home and yields to the sheet", async ({ page }) => {
+  await mountSeatMap(page, { seats: [n01, n02], employees: [alice], canEdit: true });
+  const band = page.locator("[data-map-status-band]");
+  await expect(band).toBeAttached();
+  await expect(band.locator('ul[aria-label="Seat status legend"]')).toBeAttached();
+  // The scrollable informational region must be keyboard-operable on its own —
+  // at rest it holds only text, so without tabindex a keyboard user can never
+  // scroll clipped counts into view (axe scrollable-region-focusable, caught
+  // by the e2e-auth viewer scan on #408).
+  await expect(band.locator('[data-band-scroll-region]')).toHaveAttribute("tabindex", "0");
+  // toHaveCount(1) doubles as the one-zoom-home assertion: the floating stack
+  // must not render alongside the band.
+  await expect(page.locator('button[aria-label="Zoom in"]')).toHaveCount(1);
+  await expect(band.locator('button[aria-label="Zoom in"]')).toBeAttached();
+
+  // Below the panel tier the inspector is a bottom sheet and the band yields.
+  await page.setViewportSize({ width: 820, height: 900 });
+  await clickMarker(page, "N01");
+  await expect(page.locator("#seat-inspector-panel")).toBeAttached();
+  await expect(band).not.toBeAttached();
+  await page.locator('button[aria-label="Close inspector"]').dispatchEvent("click");
+  await expect(band).toBeAttached();
+
+  // Phones: no band, the floating zoom stack returns (owner call 2026-08-17).
+  await page.setViewportSize({ width: 500, height: 850 });
+  await expect(band).not.toBeAttached();
+  await expect(page.locator('button[aria-label="Zoom in"]')).toHaveCount(1);
+});
+
+test("the inspector's panel-tier band clearance follows the band, not the floor it left", async ({ page }) => {
+  await mountSeatMap(page, { seats: [n01, n02], employees: [alice], canEdit: true });
+  await clickMarker(page, "N01");
+  const inspector = page.locator("#seat-inspector-panel");
+  // Floor 3: the band renders, so the docked panel clears it (52px).
+  await expect(inspector).toHaveClass(/panel:bottom-\[52px\]/);
+
+  // Switch to Floor 2: the selection survives, the band does not — the
+  // clearance must fall back to the stock 12px gutter, not hold a 52px gap
+  // above nothing.
+  // Two FloorSelector variants mount (chrome bar + canvas) — either menu works.
+  await page.locator('button[aria-label^="Change floor"]').first().dispatchEvent("click");
+  await page.getByRole("menuitemradio", { name: /Floor 2/ }).first().dispatchEvent("click");
+  await expect(page.locator("[data-map-status-band]")).not.toBeAttached();
+  await expect(inspector).toHaveClass(/panel:bottom-3/);
+});

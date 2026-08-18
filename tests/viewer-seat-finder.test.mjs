@@ -509,7 +509,7 @@ test("a persisted names preference hydrates on mount", async () => {
 // tier the band yields to the inspector bottom sheet instead of fighting it.
 
 function statusBand() {
-  return document.querySelector("[data-viewer-status-band]");
+  return document.querySelector("[data-map-status-band]");
 }
 
 test("the status band carries the legend list and the only zoom cluster at desktop widths", async () => {

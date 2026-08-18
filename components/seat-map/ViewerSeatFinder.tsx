@@ -39,7 +39,7 @@ import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { ViewerFindPalette } from "@/components/seat-map/ViewerFindPalette";
-import { ViewerStatusBand } from "@/components/seat-map/ViewerStatusBand";
+import { MapStatusBand } from "@/components/seat-map/MapStatusBand";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
@@ -1463,7 +1463,7 @@ export function ViewerSeatFinder({
                 Viewer-shaped: no draft entry and no data verbs; the names
                 toggle stays a render-local view control only. */}
             {statusBandVisible && (
-              <ViewerStatusBand
+              <MapStatusBand
                 ariaLabel="Seat status summary"
                 totalLabel={`${statusCountSeats.length} ${statusCountSeats.length === 1 ? "seat" : "seats"}`}
                 entries={[
@@ -1536,9 +1536,12 @@ export function ViewerSeatFinder({
         employees={employees}
         departmentOptions={departmentOptions}
         canEdit={false}
-        // Clears the 40px status band + the 12px gutter at the panel tier
-        // (below it the sheet owns the bottom and the band yields instead).
-        panelBottomClassName="panel:bottom-[52px]"
+        // Clears the 40px status band + the 12px gutter at the panel tier —
+        // but only while the band actually renders (Floor 2 has no band, and
+        // a selection survives the floor switch; a static 52px there is a
+        // dead gap above nothing). Below the panel tier the sheet owns the
+        // bottom and the band yields instead, so the panel: variant is inert.
+        panelBottomClassName={statusBandVisible ? "panel:bottom-[52px]" : undefined}
         collapsed={inspectorCollapsed}
         onClose={() => {
           focusViewerSeatMarker(selectedSeatId);

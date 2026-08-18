@@ -287,3 +287,24 @@ test("delete-custom-seat confirm dialog, then the real delete as cleanup", async
     .poll(async () => (await db("seats?seat_key=eq.X99&select=id")).length, { timeout: 15_000 })
     .toBe(0);
 });
+
+test("the status band's scroll region is keyboard-scrollable when it overflows", async ({ page }) => {
+  // The CSS-free harness tiers can only pin the tabindex; whether a focused
+  // horizontal scroller actually MOVES on keys is real-CSS behavior, so it
+  // lives in this tier (CodeRabbit on #408). At 640px — the band's floor —
+  // the local seed's four-digit counts guarantee the informational region
+  // overflows past the fixed controls cluster. ArrowRight, deliberately NOT
+  // End: measured in Chromium, End does not scroll a horizontal-only
+  // scroller (scrollLeft stays 0) while each ArrowRight moves it 40px.
+  await page.setViewportSize({ width: 640, height: 900 });
+  await page.goto("/admin");
+
+  const region = page.locator("[data-band-scroll-region]");
+  await expect(region).toBeVisible();
+  expect(await region.evaluate(el => el.scrollWidth > el.clientWidth), "expected the 640px band to overflow").toBe(true);
+
+  await region.focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(() => region.evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
+});
