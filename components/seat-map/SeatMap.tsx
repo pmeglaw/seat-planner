@@ -2648,6 +2648,11 @@ export function SeatMap({
           {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
           <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
         </button>
+        {/* Group hairline (follow-up to the 2026-08-18 de-cram pass): the
+            undo/redo history pair and the kebab overflow are separate groups
+            inside the command cluster, so they get the standard mx-3 group
+            divider — same rhythm as Ask Planner|publish, no third variant. */}
+        <span aria-hidden="true" className={`mx-3 h-5 ${adminChromeDividerRule}`} />
         {/* Kebab — v12 Menu subsystem. Items: names toggle (checkmark),
             reset view, divider, danger discard. Visible at EVERY width —
             it is the bar's only overflow surface. */}
