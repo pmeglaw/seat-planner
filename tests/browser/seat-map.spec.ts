@@ -151,13 +151,40 @@ test("an admin sees the edit affordances for a custom draft seat", async ({ page
 // keyboard user just activated); focus must land on the re-mounted primary
 // CTA, not fall to <body>. The CTA cannot mount until the transition commit
 // flips `pending` false, so a focus scheduled on a single frame loses
-// whenever that commit takes longer than a frame — 20x CPU throttle makes
-// the loss deterministic (unthrottled, this tiny harness wins the race and
-// masks the bug). Real browser only: jsdom has no frame timing to lose to.
+// whenever that commit takes longer than a frame — CPU throttle makes the
+// loss deterministic (unthrottled, this tiny harness wins the race and
+// masks the bug). The throttle engages inside the action response, so ONLY
+// the race window — the success handler and the transition commit after
+// it — runs slow; throttling the whole click→submit→bridge flow at 20x
+// blew past any timeout on slow CI runners (main run 32204620185). Real
+// browser only: jsdom has no frame timing to lose to.
+//
+// The viewport-size pin below is load-bearing, not cosmetic. The no-CSS
+// harness leaves the map viewport content-sized, which closes a feedback
+// loop through updateOverviewMapWidth's ResizeObserver (overview width is
+// computed FROM viewport height, and the resized map then changes viewport
+// height): the observer oscillates forever, ~25 sync-lane renders/s.
+// Unthrottled that churn is invisible, but under CPU throttle it fills
+// every frame with sync work and React starves the async-transition commit
+// this test waits on — the commit bar then never unmounts on ANY machine.
+// Pinning the viewport before the click lets the observer settle, so the
+// throttle slows only the race window it is aimed at.
 test("a successful save hands focus to the re-mounted primary CTA", async ({ page }) => {
   const saved = { ...n02, status: "assigned", employee_id: "emp-1", department: "Intake", employee: alice, updated_at: "2026-01-02T00:00:00Z" };
+  const cdp = await page.context().newCDPSession(page);
   await mountSeatMap(page, { seats: [n02], employees: [alice], canEdit: true }, {
-    responses: { "action:updateSeatAction": () => ({ ok: true, seat: saved }) }
+    responses: {
+      "action:updateSeatAction": async () => {
+        await cdp.send("Emulation.setCPUThrottlingRate", { rate: 20 });
+        return { ok: true, seat: saved };
+      }
+    }
+  });
+  await page.evaluate(() => {
+    const viewport = document.querySelector<HTMLElement>('[aria-label^="Admin seat map viewport"]');
+    if (!viewport) throw new Error("map viewport not found");
+    viewport.style.width = "1000px";
+    viewport.style.height = "600px";
   });
   await clickMarker(page, "N02");
   await page.locator('[aria-label^="Assign an employee to"]').dispatchEvent("click");
@@ -174,8 +201,6 @@ test("a successful save hands focus to the re-mounted primary CTA", async ({ pag
   const save = page.locator('#seat-inspector-commit-bar button[type="submit"]');
   await expect(save).toBeAttached();
   await save.evaluate(el => (el as HTMLElement).focus());
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 20 });
   try {
     await save.dispatchEvent("click");
     // The save lands and the commit bar unmounts...
