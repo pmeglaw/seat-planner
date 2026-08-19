@@ -67,11 +67,19 @@ Redesign shipped on `feat/seat-inspector-meta-v1` (Variant C meta row +
 disclosure sections replacing tabs/icon row). Final whole-branch review clean;
 all deferred minors triaged ship-as-is. Two items worth keeping:
 
-- **SI-01 post-save focus falls to `<body>`** instead of the re-mounted
-  primary CTA. **Pre-existing before the progressive-disclosure redesign**
-  (zero diff lines of PR #411 touch it — verified during its QA); do not
-  re-diagnose it as a regression of #411. `focusPrimaryActionSoon()` fires
-  before the commit bar unmounts/CTA remounts settles. S.
+- **SI-01 post-save focus falls to `<body>`** — CLOSED 2026-08-18 (branch
+  `fix/si01-post-save-focus`). Measured root cause (sharper than the
+  recorded hypothesis): `focusPrimaryActionSoon()` scheduled ONE rAF, but
+  `showCommitBar` includes `pending`, so the primary CTA cannot mount until
+  the transition commit flips `pending` false — under load that commit
+  lands later than a frame, the rAF found `primaryActionRef` null and
+  silently no-opped, and focus fell to `<body>` for good when the commit
+  bar unmounted. Deterministic repro: 20x CDP CPU throttle in the
+  `test:browser` tier (unthrottled, the tiny harness wins the race and
+  masks the bug — which is why the settled state looked fine there). Fix:
+  commit-driven focus intent (ref flag + effect that consumes it on the
+  first commit with the CTA mounted); intent cleared on seat switch via
+  `resetInspectorDraftForm`. Pinned by the throttled browser spec.
 - **SI-02 mechanical follow-up bundle** — CLOSED 2026-08-18 (branch
   `chore/si02-seat-inspector-followups`). All items done: regex anchored on
   `id="seat-inspector-actions"` with bounded spans; six (not four) stale

@@ -147,6 +147,48 @@ test("an admin sees the edit affordances for a custom draft seat", async ({ page
   await expect(page.locator('[aria-label^="Swap "]')).toBeAttached();
 });
 
+// SI-01: a successful save unmounts the commit bar (and the Save button the
+// keyboard user just activated); focus must land on the re-mounted primary
+// CTA, not fall to <body>. The CTA cannot mount until the transition commit
+// flips `pending` false, so a focus scheduled on a single frame loses
+// whenever that commit takes longer than a frame — 20x CPU throttle makes
+// the loss deterministic (unthrottled, this tiny harness wins the race and
+// masks the bug). Real browser only: jsdom has no frame timing to lose to.
+test("a successful save hands focus to the re-mounted primary CTA", async ({ page }) => {
+  const saved = { ...n02, status: "assigned", employee_id: "emp-1", department: "Intake", employee: alice, updated_at: "2026-01-02T00:00:00Z" };
+  await mountSeatMap(page, { seats: [n02], employees: [alice], canEdit: true }, {
+    responses: { "action:updateSeatAction": () => ({ ok: true, seat: saved }) }
+  });
+  await clickMarker(page, "N02");
+  await page.locator('[aria-label^="Assign an employee to"]').dispatchEvent("click");
+  await expect(page.locator("#seat-inspector-form input").first()).toBeAttached();
+  // Fill the employee name through React's controlled-input path (native
+  // setter + bubbling input, per the harness's no-CSS rules).
+  await page.evaluate(() => {
+    const field = [...document.querySelectorAll("input")].find(input => input.closest("label")?.textContent?.includes("Employee name"));
+    if (!field) throw new Error("employee input not found");
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    setter.call(field, "Alice Smith");
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  const save = page.locator('#seat-inspector-commit-bar button[type="submit"]');
+  await expect(save).toBeAttached();
+  await save.evaluate(el => (el as HTMLElement).focus());
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 20 });
+  try {
+    await save.dispatchEvent("click");
+    // The save lands and the commit bar unmounts...
+    await expect(page.locator("#seat-inspector-commit-bar")).toHaveCount(0, { timeout: 15000 });
+    // ...and the keyboard user's focus follows to the primary CTA.
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.tagName ?? "none"), { timeout: 15000 })
+      .toBe("Edit assignment for N02");
+  } finally {
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+  }
+});
+
 // Edit the notes field through React's controlled-input path so the inspector
 // reports dirty (native setter + bubbling input, per the harness's no-CSS rules).
 async function dirtyInspectorNotes(page: Page) {
