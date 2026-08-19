@@ -196,6 +196,100 @@
   --sp-focus-ring-offset-color: var(--sp-color-surface-raised);
 }
 
+/* Dark theme — "Graphite studio" (direction 4a, owner-selected 2026-08-19,
+   spec docs/superpowers/specs/2026-08-19-dark-mode-design.md). Keyed off the
+   app-wide html[data-theme] switch that Reception/login already ride — set
+   pre-paint by app/layout.tsx's boot script, flipped by ThemeToggle.
+   Contrast, measured on #161616 unless noted: text #f4f4f4 = 16.45:1,
+   #c6c6c6 = 9.9:1, #9a9a9a = 6.4:1; status text #42be65 = 7.3:1,
+   #3ddbd9 ≈ 10:1, #ff8389 = 7.9:1 — all ≥ 4.5:1; raw hues #08bdba / #fa4d56
+   ≥ 3:1 graphics floor. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --sp-color-canvas: #161616;
+  --sp-color-surface: #1f1f1f;
+  --sp-color-surface-raised: #262626;
+  --sp-color-border-subtle: rgba(255, 255, 255, 0.10);
+  --sp-color-border-strong: rgba(255, 255, 255, 0.18);
+  --sp-color-canvas-rgb: 22 22 22;
+  --sp-color-surface-rgb: 31 31 31;
+  --sp-color-surface-raised-rgb: 38 38 38;
+  --sp-color-border-subtle-rgb: 255 255 255;
+  --sp-color-border-strong-rgb: 255 255 255;
+
+  --sp-color-text-primary: #f4f4f4;
+  --sp-color-text-secondary: #c6c6c6;
+  --sp-color-text-muted: #9a9a9a;
+  --sp-color-text-disabled: #6f6f6f;
+  --sp-color-text-primary-rgb: 244 244 244;
+  --sp-color-text-secondary-rgb: 198 198 198;
+  --sp-color-text-muted-rgb: 154 154 154;
+  --sp-color-text-disabled-rgb: 111 111 111;
+
+  --sp-color-graphite-soft: #262626;
+  --sp-color-stone: #333333;
+  --sp-color-stone-muted: #6f6f6f;
+  --sp-color-state-disabled: #333333;
+  --sp-color-graphite-soft-rgb: 38 38 38;
+  --sp-color-stone-rgb: 51 51 51;
+  --sp-color-stone-muted-rgb: 111 111 111;
+  --sp-color-state-disabled-rgb: 51 51 51;
+
+  /* Status families: bright text + alpha softs (spec table). on-soft = the
+     bright text — the softs are washes of the same hue on near-black. */
+  --sp-color-state-published: #42be65;
+  --sp-color-state-published-surface: rgba(66, 190, 101, 0.14);
+  --sp-color-state-published-border: rgba(66, 190, 101, 0.40);
+  --sp-color-state-published-on-soft: #42be65;
+  --sp-color-state-published-rgb: 66 190 101;
+  --sp-color-state-success: #42be65;
+  --sp-color-state-success-surface: rgba(66, 190, 101, 0.14);
+  --sp-color-state-success-border: rgba(66, 190, 101, 0.40);
+  --sp-color-state-success-on-soft: #42be65;
+  --sp-color-state-success-rgb: 66 190 101;
+
+  --sp-color-state-draft: #08bdba;
+  --sp-color-state-draft-surface: rgba(8, 189, 186, 0.14);
+  --sp-color-state-draft-border: rgba(8, 189, 186, 0.40);
+  --sp-color-state-draft-on-soft: #3ddbd9;
+  --sp-color-state-draft-rgb: 8 189 186;
+  --sp-color-state-warning: #08bdba;
+  --sp-color-state-warning-surface: rgba(8, 189, 186, 0.14);
+  --sp-color-state-warning-border: rgba(8, 189, 186, 0.40);
+  --sp-color-state-warning-on-soft: #3ddbd9;
+  --sp-color-state-warning-rgb: 8 189 186;
+
+  --sp-color-state-danger: #fa4d56;
+  --sp-color-state-danger-surface: rgba(250, 77, 86, 0.14);
+  --sp-color-state-danger-border: rgba(250, 77, 86, 0.40);
+  --sp-color-state-danger-on-soft: #ff8389;
+  --sp-color-state-danger-hover: #ff8389;
+  --sp-color-state-danger-pressed: #fa4d56;
+  --sp-color-state-danger-rgb: 250 77 86;
+
+  --sp-color-state-info: #c6c6c6;
+  --sp-color-state-info-surface: rgba(255, 255, 255, 0.08);
+  --sp-color-state-info-border: rgba(255, 255, 255, 0.14);
+  --sp-color-state-info-on-soft: #c6c6c6;
+  --sp-color-state-info-rgb: 198 198 198;
+
+  /* Search stays brand-orange on dark: text #FF8A5C = 6.1:1 on #161616. */
+  --sp-color-state-search: #FF8A5C;
+  --sp-color-state-search-surface: rgba(255, 87, 21, 0.14);
+  --sp-color-state-search-border: #FF5715;
+  --sp-color-state-search-rgb: 255 138 92;
+  --sp-color-state-selected-surface: rgba(255, 87, 21, 0.14);
+  --sp-color-state-selected-border: rgba(255, 87, 21, 0.45);
+
+  /* Shadows: borders carry separation on dark; overlays deepen. */
+  --sp-shadow-raised: 0 2px 6px rgba(0, 0, 0, 0.45);
+  --sp-shadow-floating: 0 6px 16px rgba(0, 0, 0, 0.5);
+  --sp-shadow-sheet: 0 -8px 24px rgba(0, 0, 0, 0.55);
+  --sp-shadow-modal: 0 12px 40px rgba(0, 0, 0, 0.6);
+  /* --sp-focus-ring-offset-color already aliases surface-raised — follows. */
+}
+
 /* One shell for both surfaces: the viewer (`.shell-theme`) and the admin
    (`.admin-theme`) share the same token set — same dark chrome, same light
    workspace — with admin-only chrome hidden for viewers in markup. */

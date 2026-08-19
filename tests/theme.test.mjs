@@ -74,3 +74,9 @@ test("boot script seeds from the OS only when storage is empty", async () => {
   assert.equal(run({ stored: null, osDark: true }), theme.THEME_DARK);
   assert.equal(run({ stored: null, osDark: false }), undefined);
 });
+
+test("globals.css keys the dark theme off the shared data-theme attribute", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  // Mechanism only — values are free to evolve (repo test philosophy).
+  assert.match(css, /:root\[data-theme="dark"\]\s*\{[^}]*color-scheme:\s*dark/);
+});
