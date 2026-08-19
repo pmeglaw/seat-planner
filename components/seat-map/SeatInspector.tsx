@@ -325,10 +325,10 @@ function AskPlannerSeatRow({ seat: selectedSeat, onExplainSeat }: { seat: SeatWi
       onClick={() => onExplainSeat(selectedSeat)}
       aria-label={`Ask Planner about ${selectedSeat.label}`}
       title={`Ask Planner about ${selectedSeat.label}`}
-      className="mx-4 mb-3 flex w-auto items-center justify-between gap-3 bg-[var(--admin-chrome-raised)] px-3 py-2.5 text-left text-[12px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-white/[0.10] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+      className="mx-4 mb-3 flex w-auto items-center justify-between gap-3 rounded-[12px] bg-[var(--admin-chrome-raised)] px-3 py-2.5 text-left text-[12px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-white/[0.10] hover:text-white active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
     >
       <span className="flex items-center gap-2">
-        <span className="border border-[var(--admin-ai-chrome-border)] px-1 text-[9.5px] font-bold tracking-[0.04em] text-[var(--admin-ai-chrome-text)]">AI</span>
+        <span className="rounded-[4px] border border-[var(--admin-ai-chrome-border)] px-1 text-[9.5px] font-bold tracking-[0.04em] text-[var(--admin-ai-chrome-text)]">AI</span>
         Ask Planner about this seat
       </span>
       <span aria-hidden="true" className="shrink-0 leading-none"><ChevronRightIcon /></span>
@@ -951,7 +951,7 @@ export function SeatInspector({
   // [&>option] colors: native select popups ignore the control's own classes,
   // so without these Windows dark mode paints OS-colored options against the
   // dark panel (#200) — same pattern as FilterPanel's selectClassName.
-  const fieldClassName = "mt-1 w-full border border-white/20 bg-white/[0.06] px-3 py-2 text-sm font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-disabled)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] disabled:bg-white/[0.03] disabled:text-[var(--admin-chrome-disabled)] [&>option]:bg-[var(--admin-chrome-hover)] [&>option]:text-[var(--admin-chrome-text)]";
+  const fieldClassName = "mt-1 w-full rounded-[10px] border border-white/20 bg-white/[0.06] px-3 py-2 text-sm font-medium text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-disabled)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] disabled:bg-white/[0.03] disabled:text-[var(--admin-chrome-disabled)] [&>option]:bg-[var(--admin-chrome-hover)] [&>option]:text-[var(--admin-chrome-text)]";
   const saveDisabledReason = pending
     ? "Save is unavailable while the current draft change is finishing."
     : !isDirty
@@ -973,7 +973,7 @@ export function SeatInspector({
       tabIndex={-1}
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className={`fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-white/[0.14] bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-elevation-4 panel:inset-x-auto ${panelBottomClassName} panel:right-3 panel:top-[calc(var(--admin-chrome-h)+0.75rem)] panel:z-40 panel:max-h-none panel:w-[332px] panel:max-w-[calc(100vw-1.5rem)]`}
+      className={`fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden rounded-[16px] border border-white/[0.14] bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)] shadow-elevation-4 panel:inset-x-auto ${panelBottomClassName} panel:right-3 panel:top-[calc(var(--admin-chrome-h)+0.75rem)] panel:z-40 panel:max-h-none panel:w-[332px] panel:max-w-[calc(100vw-1.5rem)]`}
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-white/10 bg-[var(--admin-chrome-bg)] px-4 pb-3 pt-3.5">
         <div className="flex items-start gap-2.5">
@@ -987,7 +987,7 @@ export function SeatInspector({
             <div className="truncate text-[12px] leading-4 text-[var(--admin-chrome-muted)]">{occupantRoleLabel}</div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"><CloseIcon /></button>
+            <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 items-center justify-center rounded-[10px] text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"><CloseIcon /></button>
           </div>
         </div>
         {/* Variant C meta: status pill owns state; code + zone are plain trailing facts. */}
@@ -1016,7 +1016,7 @@ export function SeatInspector({
           <button type="button" onClick={startAssignmentEditing} disabled={pending} ref={primaryActionRef}
             aria-expanded={editingAssignment} aria-controls="seat-inspector-form"
             aria-label={hasCurrentAssignment ? `Edit assignment for ${selectedSeat.label}` : `Assign an employee to ${selectedSeat.label}`}
-            className="mt-0.5 flex h-10 w-full items-center justify-center gap-2 bg-[var(--admin-primary-cta)] text-[13px] font-semibold text-white transition hover:bg-[var(--admin-primary-cta-hover)] active:scale-[0.99] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white disabled:opacity-40">
+            className="mt-0.5 flex h-10 w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--admin-primary-cta)] text-[13px] font-semibold text-white transition hover:bg-[var(--admin-primary-cta-hover)] active:scale-[0.99] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white disabled:opacity-40">
             <PencilGlyph />
             {hasCurrentAssignment ? "Edit assignment" : "Assign employee"}
           </button>
@@ -1033,13 +1033,13 @@ export function SeatInspector({
               {inspectorStateLabel}
             </div>
             {searchMismatchNotice && (
-              <section className={["mx-4 mt-3 border p-3 text-xs", warningSurfaceClassName].join(" ")}>
+              <section className={["mx-4 mt-3 rounded-[10px] border p-3 text-xs", warningSurfaceClassName].join(" ")}>
                 <div className="font-semibold">{searchMismatchNotice}</div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="bg-white/10 px-3 py-1.5 font-semibold text-[var(--admin-status-warn)] ring-1 ring-[rgb(var(--admin-status-warn-rgb)/0.40)] transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
+                    className="rounded-[10px] bg-white/10 px-3 py-1.5 font-semibold text-[var(--admin-status-warn)] ring-1 ring-[rgb(var(--admin-status-warn-rgb)/0.40)] transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
                   >
                     Clear selection
                   </button>
@@ -1047,7 +1047,7 @@ export function SeatInspector({
                     <button
                       type="button"
                       onClick={onClearSearchContext}
-                      className="bg-white/10 px-3 py-1.5 font-semibold text-[var(--admin-status-warn)] ring-1 ring-[rgb(var(--admin-status-warn-rgb)/0.40)] transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
+                      className="rounded-[10px] bg-white/10 px-3 py-1.5 font-semibold text-[var(--admin-status-warn)] ring-1 ring-[rgb(var(--admin-status-warn-rgb)/0.40)] transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
                     >
                       {searchMismatchClearLabel}
                     </button>
@@ -1062,7 +1062,7 @@ export function SeatInspector({
                 tabIndex={-1}
                 role="alert"
                 aria-labelledby="seat-inspector-error-title"
-                className="mx-4 mt-3 border border-[rgb(var(--admin-status-bad-rgb)/0.40)] bg-[rgb(var(--admin-status-bad-rgb)/0.10)] p-3 text-xs text-[var(--admin-chrome-danger-text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-bad)]"
+                className="mx-4 mt-3 rounded-[10px] border border-[rgb(var(--admin-status-bad-rgb)/0.40)] bg-[rgb(var(--admin-status-bad-rgb)/0.10)] p-3 text-xs text-[var(--admin-chrome-danger-text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-bad)]"
               >
                 <h3 id="seat-inspector-error-title" className="font-bold text-[var(--admin-chrome-danger-text)]">Review inspector fields</h3>
                 <p className="mt-1 font-medium leading-5">{localError}</p>
@@ -1126,7 +1126,7 @@ export function SeatInspector({
                         setEmployeeComboboxOpen(current => !current);
                         employeeInputRef.current?.focus();
                       }}
-                      className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-xs text-[var(--admin-chrome-muted)] transition hover:bg-white/10 hover:text-white active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+                      className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-[8px] text-xs text-[var(--admin-chrome-muted)] transition hover:bg-white/10 hover:text-white active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
                     >
                       <ChevronDownIcon />
                     </button>
@@ -1134,7 +1134,7 @@ export function SeatInspector({
                       <div
                         id="seat-inspector-employee-listbox"
                         role="listbox"
-                        className="absolute z-50 mt-1 max-h-[min(16rem,40vh)] w-full overflow-auto border border-white/15 bg-[var(--admin-chrome-raised)] p-1 shadow-elevation-3"
+                        className="absolute z-50 mt-1 max-h-[min(16rem,40vh)] w-full overflow-auto rounded-[10px] border border-white/15 bg-[var(--admin-chrome-raised)] p-1 shadow-elevation-3"
                       >
                         {filteredEmployeeOptions.length > 0 ? filteredEmployeeOptions.map((option, index) => (
                           <button
@@ -1147,7 +1147,7 @@ export function SeatInspector({
                             onMouseEnter={() => setActiveEmployeeIndex(index)}
                             onClick={() => selectEmployee(option.employee)}
                             className={[
-                              "flex w-full items-start gap-3 px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+                              "flex w-full items-start gap-3 rounded-[8px] px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
                               index === activeEmployeeIndex ? "bg-white/10 text-white" : "text-[var(--admin-chrome-text-soft)] hover:bg-white/5"
                             ].join(" ")}
                           >
@@ -1163,7 +1163,7 @@ export function SeatInspector({
                             </span>
                           </button>
                         )) : (
-                          <div className={["border border-dashed p-3 text-xs leading-5", warningSurfaceClassName].join(" ")}>
+                          <div className={["rounded-[8px] border border-dashed p-3 text-xs leading-5", warningSurfaceClassName].join(" ")}>
                             <div className="font-bold">No existing employee match</div>
                             <div>Saving will create a new employee record if you keep this name.</div>
                           </div>
@@ -1180,7 +1180,7 @@ export function SeatInspector({
                 </label>
 
                 {showNewEmployeeNotice && (
-                  <div id="seat-inspector-new-employee-notice" role="note" className={["mt-2 border p-3 text-xs leading-5", warningSurfaceClassName].join(" ")}>
+                  <div id="seat-inspector-new-employee-notice" role="note" className={["mt-2 rounded-[10px] border p-3 text-xs leading-5", warningSurfaceClassName].join(" ")}>
                     <div className="font-bold">No existing employee match</div>
                     <p className="mt-1 font-medium">
                       Saving will create a new employee record named <span className="font-bold">{employeeNameValue}</span> and assign this draft seat. Viewers see it only after publish.
@@ -1278,22 +1278,22 @@ export function SeatInspector({
                   {openSections.actions && (
                     <div id="seat-inspector-actions" role="group" aria-labelledby="seat-actions-heading" className="pb-3">
                       {(onMove || onSwap || onVacate) && (
-                        <div role="group" aria-label={`Actions for seat ${selectedSeat.label}`} className="flex gap-px">
+                        <div role="group" aria-label={`Actions for seat ${selectedSeat.label}`} className="flex gap-2">
                           {hasCurrentAssignment && onMove && (
                             <button type="button" onClick={onMove} disabled={pending || busy}
                               aria-label={selectedSeat.employee?.full_name ? `Move ${selectedSeat.employee.full_name} to another seat` : `Move ${selectedSeat.label}`}
-                              className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                              className="flex flex-1 flex-col items-center gap-1 rounded-[10px] bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
                               <MoveGlyph />Move
                             </button>
                           )}
                           {onSwap && (
-                            <button type="button" onClick={onSwap} disabled={pending || busy} aria-label={`Swap ${selectedSeat.label}`} className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                            <button type="button" onClick={onSwap} disabled={pending || busy} aria-label={`Swap ${selectedSeat.label}`} className="flex flex-1 flex-col items-center gap-1 rounded-[10px] bg-[var(--admin-chrome-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-action-text)] transition hover:bg-[var(--admin-chrome-raised-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
                               <SwapGlyph />Swap
                             </button>
                           )}
                           {hasCurrentAssignment && onVacate && (
                             <button type="button" onClick={onVacate} disabled={pending || busy} aria-label={`Vacate ${selectedSeat.label}`}
-                              className="flex flex-1 flex-col items-center gap-1 bg-[var(--admin-chrome-danger-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-danger-text)] transition hover:bg-[rgb(var(--admin-status-bad-rgb)/0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
+                              className="flex flex-1 flex-col items-center gap-1 rounded-[10px] bg-[var(--admin-chrome-danger-raised)] py-2 text-[11px] font-semibold text-[var(--admin-chrome-danger-text)] transition hover:bg-[rgb(var(--admin-status-bad-rgb)/0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)] disabled:opacity-40">
                               <VacateGlyph />Vacate
                             </button>
                           )}
@@ -1333,7 +1333,7 @@ export function SeatInspector({
                             aria-label={`Delete custom seat ${selectedSeat.label}`}
                             aria-describedby="seat-inspector-delete-help"
                             title={deleteHelpText}
-                            className="mt-2 min-w-0 w-full gap-2 whitespace-normal leading-tight !border-[rgb(var(--admin-status-bad-rgb)/0.45)] !bg-transparent !text-[var(--admin-chrome-danger-text)] !shadow-none hover:!border-[rgb(var(--admin-status-bad-rgb)/0.70)] hover:!bg-[rgb(var(--admin-status-bad-rgb)/0.15)] disabled:!border-white/10 disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)] disabled:hover:!bg-[var(--admin-chrome-elevated)]"
+                            className="mt-2 min-w-0 w-full gap-2 rounded-[10px] whitespace-normal leading-tight !border-[rgb(var(--admin-status-bad-rgb)/0.45)] !bg-transparent !text-[var(--admin-chrome-danger-text)] !shadow-none hover:!border-[rgb(var(--admin-status-bad-rgb)/0.70)] hover:!bg-[rgb(var(--admin-status-bad-rgb)/0.15)] disabled:!border-white/10 disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)] disabled:hover:!bg-[var(--admin-chrome-elevated)]"
                           >
                             <TrashGlyph />
                             Delete seat
@@ -1415,7 +1415,7 @@ export function SeatInspector({
           {showCommitBar && (
             <div id="seat-inspector-commit-bar" className="border-t border-white/10 bg-[var(--admin-chrome-commit-bg)] px-4 py-3">
               {/* Draft-impact pill (announced via the sr-only live region at the top of the form). */}
-              <div aria-hidden="true" className={["flex items-center gap-2 px-3 py-2 text-xs font-medium", inspectorStatePillClassName].join(" ")}>
+              <div aria-hidden="true" className={["flex items-center gap-2 rounded-[10px] px-3 py-2 text-xs font-medium", inspectorStatePillClassName].join(" ")}>
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                 <span className="min-w-0 truncate">{inspectorStateLabel}</span>
               </div>
@@ -1425,7 +1425,7 @@ export function SeatInspector({
                     {saveDisabledReason}
                   </span>
                 )}
-                <Button type="button" onClick={handleCancelEditing} aria-label={`Cancel editing ${selectedSeat.label}`} className={`min-w-0 px-4 ${footerNeutralButtonClass}`}>
+                <Button type="button" onClick={handleCancelEditing} aria-label={`Cancel editing ${selectedSeat.label}`} className={`min-w-0 rounded-[10px] px-4 ${footerNeutralButtonClass}`}>
                   Cancel
                 </Button>
                 <Button
@@ -1435,7 +1435,7 @@ export function SeatInspector({
                   aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
                   aria-describedby={saveDisabledReason ? "seat-inspector-save-help" : undefined}
                   title={saveDisabledReason ?? `${primaryActionLabel} for ${selectedSeat.label}`}
-                  className="min-w-0 w-full whitespace-normal !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:shadow-none disabled:hover:!border-[var(--admin-state-neutral-border)] disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
+                  className="min-w-0 w-full whitespace-normal rounded-[10px] !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--admin-text-subtle)] disabled:shadow-none disabled:hover:!border-[var(--admin-state-neutral-border)] disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
                 >
                   {primaryActionLabel}
                 </Button>
@@ -1479,7 +1479,7 @@ export function SeatInspector({
               <dl>
                 <div className="flex items-center justify-between gap-2.5 py-1.5">
                   <dt className="shrink-0 text-[12.5px] text-[var(--admin-chrome-muted)]">Status</dt>
-                  <dd><span className={["inline-block px-2 py-0.5 text-[10px] font-semibold", statusTagClass].join(" ")}>{currentStatusLabel}</span></dd>
+                  <dd><span className={["inline-block rounded-[8px] px-2 py-0.5 text-[10px] font-semibold", statusTagClass].join(" ")}>{currentStatusLabel}</span></dd>
                 </div>
               </dl>
             </section>
@@ -1507,7 +1507,7 @@ export function SeatInspector({
               setMoveConflict(null);
             }
           }}
-          className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
+          className="w-full max-w-md rounded-[16px] border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -1527,7 +1527,7 @@ export function SeatInspector({
           </div>
 
           <div className="mt-4 grid gap-2">
-            <div className="rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-viewer-impact-text)]">
+            <div className="rounded-[12px] border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-viewer-impact-text)]">
               {PUBLISH_IMPACT_NOTE}
             </div>
           </div>
