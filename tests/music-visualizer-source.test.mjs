@@ -193,3 +193,42 @@ test("the microphone header exception is scoped to the prototype path alone", as
   assert.ok(catchAll !== -1 && override !== -1, "both header rules must be registered");
   assert.ok(catchAll < override, "the prototype override must come after the catch-all to win");
 });
+
+test("every audio source marks itself live, and the loop reads that flag", async () => {
+  const source = await read(`${DIR}MusicVisualizer.tsx`);
+
+  // THE BUG THIS PINS: liveness used to be inferred from sourceNodeRef, which
+  // the microphone and file paths set but the demo track does not — it builds
+  // and owns its own graph. So picking the demo left the render loop on its
+  // idle animation: the music played and nothing reacted. Inferring liveness
+  // from one source's implementation detail is what made that possible, so the
+  // flag is explicit and every start path must set it.
+  for (const [name, marker] of [
+    ["startMic", "const startMic"],
+    ["startDemo", "const startDemo"],
+    ["startFile", "const startFile"]
+  ]) {
+    const start = source.indexOf(marker);
+    assert.ok(start !== -1, `${name} not found`);
+    // Bound the slice at the next start-callback declaration so a marker in a
+    // neighbouring function cannot satisfy this for the wrong one.
+    const rest = source.slice(start + marker.length);
+    const nextDecl = rest.search(/\n  const (startMic|startDemo|startFile|stopEverything) = /);
+    const body = nextDecl === -1 ? rest : rest.slice(0, nextDecl);
+    assert.match(body, /liveRef\.current = true;/, `${name} must mark the source live or the scene stays idle`);
+  }
+
+  // ...and tearing a source down must clear it, or Stop leaves the scene
+  // reading an analyser nothing is feeding.
+  const stopStart = source.indexOf("const stopCurrentSource");
+  const stopBody = source.slice(stopStart, source.indexOf("const startMic"));
+  assert.match(stopBody, /liveRef\.current = false;/);
+
+  // The render loop must consult the explicit flag, not re-derive liveness.
+  assert.match(source, /const live = rig !== null && liveRef\.current;/);
+  assert.doesNotMatch(
+    source,
+    /const live = [^;]*sourceNodeRef/,
+    "liveness must not be inferred from sourceNodeRef — the demo track never sets one"
+  );
+});

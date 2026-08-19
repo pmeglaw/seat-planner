@@ -101,6 +101,17 @@ export function MusicVisualizer() {
   const demoRef = useRef<DemoTrack | null>(null);
   const objectUrlRef = useRef<string | null>(null);
 
+  /**
+   * True while a source is actually feeding the analyser.
+   *
+   * Tracked explicitly rather than inferred from sourceNodeRef. The demo track
+   * builds and owns its own graph, so it never registers a source node — and
+   * inferring liveness from that ref meant the render loop silently stayed on
+   * its idle animation for the whole demo: audio played, nothing reacted. Every
+   * start path must set this, which the source test enforces.
+   */
+  const liveRef = useRef(false);
+
   // Live mirrors for the rAF loop, so dragging a slider never restarts it.
   const paramsRef = useRef(params);
   const reducedMotionRef = useRef(reducedMotion);
@@ -164,6 +175,7 @@ export function MusicVisualizer() {
       }
     }
     sourceNodeRef.current = null;
+    liveRef.current = false;
   }, []);
 
   const startMic = useCallback(async () => {
@@ -183,6 +195,7 @@ export function MusicVisualizer() {
       // Muted output: the analyser still sees the signal, the speakers do not,
       // and the room does not scream.
       rig.output.gain.value = 0;
+      liveRef.current = true;
       setSource("mic");
       setStatusDetail("Monitoring is muted to prevent feedback");
     } catch (cause) {
@@ -204,6 +217,7 @@ export function MusicVisualizer() {
       const track = createDemoTrack(rig.context, rig.analyser);
       track.start();
       demoRef.current = track;
+      liveRef.current = true;
       setSource("demo");
       setFileName(null);
       setStatusDetail("Synthesised in the browser — no audio file, no network");
@@ -229,6 +243,7 @@ export function MusicVisualizer() {
         rig.output.gain.value = 1;
 
         await rig.element.play();
+        liveRef.current = true;
         setSource("file");
         setFileName(file.name);
         setStatusDetail("Looping — pick another file any time");
@@ -323,7 +338,7 @@ export function MusicVisualizer() {
       const active = paramsRef.current;
       const effective = reducedMotionRef.current ? reducedMotionParams(active) : active;
       const rig = rigRef.current;
-      const live = rig !== null && sourceNodeRef.current !== null;
+      const live = rig !== null && liveRef.current;
 
       let rawBass = 0;
       if (live && rig) {
