@@ -196,6 +196,331 @@
   --sp-focus-ring-offset-color: var(--sp-color-surface-raised);
 }
 
+/* Dark theme — "Graphite studio" (direction 4a, owner-selected 2026-08-19,
+   spec docs/superpowers/specs/2026-08-19-dark-mode-design.md). Keyed off the
+   app-wide html[data-theme] switch that Reception/login already ride — set
+   pre-paint by app/layout.tsx's boot script, flipped by ThemeToggle.
+   Contrast, measured on #161616 unless noted: text #f4f4f4 = 16.45:1,
+   #c6c6c6 = 9.9:1, #9a9a9a = 6.4:1; status text #42be65 = 7.3:1,
+   #3ddbd9 ≈ 10:1, #ff8389 = 7.9:1 — all ≥ 4.5:1; raw hues #08bdba / #fa4d56
+   ≥ 3:1 graphics floor. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --sp-color-canvas: #161616;
+  --sp-color-surface: #1f1f1f;
+  --sp-color-surface-raised: #262626;
+  --sp-color-border-subtle: rgba(255, 255, 255, 0.10);
+  --sp-color-border-strong: rgba(255, 255, 255, 0.18);
+  --sp-color-canvas-rgb: 22 22 22;
+  --sp-color-surface-rgb: 31 31 31;
+  --sp-color-surface-raised-rgb: 38 38 38;
+  --sp-color-border-subtle-rgb: 255 255 255;
+  --sp-color-border-strong-rgb: 255 255 255;
+
+  --sp-color-text-primary: #f4f4f4;
+  --sp-color-text-secondary: #c6c6c6;
+  --sp-color-text-muted: #9a9a9a;
+  --sp-color-text-disabled: #6f6f6f;
+  --sp-color-text-primary-rgb: 244 244 244;
+  --sp-color-text-secondary-rgb: 198 198 198;
+  --sp-color-text-muted-rgb: 154 154 154;
+  --sp-color-text-disabled-rgb: 111 111 111;
+
+  --sp-color-graphite-soft: #262626;
+  --sp-color-stone: #333333;
+  --sp-color-stone-muted: #6f6f6f;
+  --sp-color-state-disabled: #333333;
+  --sp-color-graphite-soft-rgb: 38 38 38;
+  --sp-color-stone-rgb: 51 51 51;
+  --sp-color-stone-muted-rgb: 111 111 111;
+  --sp-color-state-disabled-rgb: 51 51 51;
+
+  /* Status families: bright text + alpha softs (spec table). on-soft = the
+     bright text — the softs are washes of the same hue on near-black. */
+  --sp-color-state-published: #42be65;
+  --sp-color-state-published-surface: rgba(66, 190, 101, 0.14);
+  --sp-color-state-published-border: rgba(66, 190, 101, 0.40);
+  --sp-color-state-published-on-soft: #42be65;
+  --sp-color-state-published-rgb: 66 190 101;
+  --sp-color-state-success: #42be65;
+  --sp-color-state-success-surface: rgba(66, 190, 101, 0.14);
+  --sp-color-state-success-border: rgba(66, 190, 101, 0.40);
+  --sp-color-state-success-on-soft: #42be65;
+  --sp-color-state-success-rgb: 66 190 101;
+
+  --sp-color-state-draft: #08bdba;
+  --sp-color-state-draft-surface: rgba(8, 189, 186, 0.14);
+  --sp-color-state-draft-border: rgba(8, 189, 186, 0.40);
+  --sp-color-state-draft-on-soft: #3ddbd9;
+  --sp-color-state-draft-rgb: 8 189 186;
+  --sp-color-state-warning: #08bdba;
+  --sp-color-state-warning-surface: rgba(8, 189, 186, 0.14);
+  --sp-color-state-warning-border: rgba(8, 189, 186, 0.40);
+  --sp-color-state-warning-on-soft: #3ddbd9;
+  --sp-color-state-warning-rgb: 8 189 186;
+
+  --sp-color-state-danger: #fa4d56;
+  --sp-color-state-danger-surface: rgba(250, 77, 86, 0.14);
+  --sp-color-state-danger-border: rgba(250, 77, 86, 0.40);
+  --sp-color-state-danger-on-soft: #ff8389;
+  --sp-color-state-danger-hover: #ff8389;
+  --sp-color-state-danger-pressed: #fa4d56;
+  --sp-color-state-danger-rgb: 250 77 86;
+
+  --sp-color-state-info: #c6c6c6;
+  --sp-color-state-info-surface: rgba(255, 255, 255, 0.08);
+  --sp-color-state-info-border: rgba(255, 255, 255, 0.14);
+  --sp-color-state-info-on-soft: #c6c6c6;
+  --sp-color-state-info-rgb: 198 198 198;
+
+  /* Search stays brand-orange on dark: text #FF8A5C = 6.1:1 on #161616. */
+  --sp-color-state-search: #FF8A5C;
+  --sp-color-state-search-surface: rgba(255, 87, 21, 0.14);
+  --sp-color-state-search-border: #FF5715;
+  --sp-color-state-search-rgb: 255 138 92;
+  --sp-color-state-selected: #FF8A5C;   /* 6.1:1 on #161616 — matches the dark search text treatment */
+  --sp-color-state-selected-rgb: 255 138 92;
+  --sp-color-state-selected-surface: rgba(255, 87, 21, 0.14);
+  --sp-color-state-selected-border: rgba(255, 87, 21, 0.45);
+
+  /* Shadows: borders carry separation on dark; overlays deepen. */
+  --sp-shadow-raised: 0 2px 6px rgba(0, 0, 0, 0.45);
+  --sp-shadow-floating: 0 6px 16px rgba(0, 0, 0, 0.5);
+  --sp-shadow-sheet: 0 -8px 24px rgba(0, 0, 0, 0.55);
+  --sp-shadow-modal: 0 12px 40px rgba(0, 0, 0, 0.6);
+  --sp-focus-ring-offset-color: #161616; /* spec-mandated; the light alias would resolve to #262626 */
+}
+
+/* Admin + shell surfaces join the chrome on dark. The --admin-bg/surface/
+   border/text aliases of --sp-color-* follow Task 2's block automatically —
+   only the tokens with their own light literals are re-pointed here.
+   Contrast on #161616 unless noted: #FF8A5C = 6.1:1, ink on #FF5715 = 5.71:1
+   (unchanged), #42be65 = 7.3:1, #3ddbd9 ≈ 10:1, #ff8389 = 7.9:1. */
+:root[data-theme="dark"] .admin-theme,
+:root[data-theme="dark"] .shell-theme {
+  /* Chrome: top bar one step deeper than the workspace. */
+  --admin-chrome-bg: #0a0a0a;
+  --admin-text-inverse: #161616;
+
+  /* fixwave 2 (2026-08-19): text roles. These alias literal hex in the light
+     block, not var(--sp-color-*), so the :root dark swap never reached them —
+     the search-input bug (--admin-text-primary rendering dark-on-dark) was
+     this gap. Same values as the :root dark text ramp. */
+  --admin-text-primary: #f4f4f4;
+  --admin-text-secondary: #c6c6c6;
+  --admin-text-muted: #9a9a9a;
+  --admin-text-subtle: #9a9a9a;
+
+  /* fixwave 2: surfaces, field fill, and borders — same literal-hex gap as
+     text roles above. Border rgb pairs 255/255/255 so any /alpha call site
+     built on --admin-border-rgb lightens instead of staying a warm-light
+     triplet on a dark ground. */
+  --admin-surface-hover: #262626;
+  --admin-field-fill: #262626;
+  --admin-border: rgba(255, 255, 255, 0.10);
+  --admin-border-rgb: 255 255 255;
+  --admin-border-strong: rgba(255, 255, 255, 0.18);
+  --admin-table-header-bg: #262626;
+  --admin-table-row-border: rgba(255, 255, 255, 0.10);
+
+  /* fixwave 2: --admin-secondary family has zero current JSX consumers
+     (grepped) but is a literal-hex gap like the groups above — filled in for
+     completeness/future-proofing rather than left silently wrong. */
+  --admin-secondary: #c6c6c6;
+  --admin-secondary-hover: #e8e8e8;
+  --admin-secondary-soft: rgba(255, 255, 255, 0.10);
+
+  /* Map mat (fixwave finding 1): sits one step below the #161616 canvas so
+     the inverted raster reads as a lightbox floating on the dark chrome,
+     instead of the light block/globals.css#L470 workspace (#ECE8E0)
+     leaving a cream island behind the map. */
+  --admin-map-workspace: #101010;
+
+  /* Brand orange: hue unchanged, pairings swapped for a dark ground. */
+  --admin-primary-soft: rgba(255, 87, 21, 0.16);
+  --admin-primary-border: rgba(255, 87, 21, 0.45);
+  --admin-primary-on-soft: #FF8A5C;
+  --admin-paper: rgba(255, 87, 21, 0.12);
+
+  /* fixwave 2: draft-trail overlay (design_handoff_swap_trail pinned hex,
+     not this file's interaction ladder — see the light block's note). Origin
+     ring re-pointed to --admin-text-muted's dark value so it keeps tracking
+     that pairing by design, same as light. */
+  --admin-draft-trail: #FF8A5C;
+  --admin-draft-trail-origin: #9a9a9a;
+
+  /* Raw status dots/bars. */
+  --admin-status-ok: #42be65;
+  --admin-status-warn: #08bdba;
+  --admin-status-bad: #fa4d56;
+  --admin-status-neutral: #8d8d8d;
+  --admin-status-ok-rgb: 66 190 101;
+  --admin-status-warn-rgb: 8 189 186;
+  --admin-status-bad-rgb: 250 77 86;
+
+  /* Status families → dark partners (bright text + alpha soft). */
+  --admin-success: #42be65;
+  --admin-success-rgb: 66 190 101;
+  --admin-success-soft: rgba(66, 190, 101, 0.14);
+  --admin-warning: #08bdba;
+  --admin-warning-text: #3ddbd9;
+  --admin-warning-text-rgb: 61 219 217;
+  --admin-warning-soft: rgba(8, 189, 186, 0.14);
+  --admin-error: #fa4d56;
+  --admin-danger: #fa4d56;
+  --admin-danger-soft: rgba(250, 77, 86, 0.14);
+  --admin-danger-soft-hover: rgba(250, 77, 86, 0.22);
+  --admin-info: #c6c6c6;
+  --admin-info-rgb: 198 198 198;
+  --admin-info-soft: rgba(255, 255, 255, 0.08);
+  --admin-analytics: #c6c6c6;
+
+  --admin-state-clean-bg: rgba(66, 190, 101, 0.14);
+  --admin-state-clean-border: rgba(66, 190, 101, 0.40);
+  --admin-state-clean-text: #42be65;
+  --admin-state-dirty-border: rgba(8, 189, 186, 0.40);
+  --admin-state-dirty-text: #3ddbd9;
+  --admin-state-saving-border: rgba(255, 255, 255, 0.14);
+  /* fixwave 2: found gap — light's literal rgba(36,161,72,0.36) was the only
+     state-* border with no dark partner (bg/text are var() aliases that
+     already follow --admin-success-soft/--admin-success). Matches the same
+     success-family alpha already used for clean-border/diff-assigned-border
+     above. */
+  --admin-state-saved-border: rgba(66, 190, 101, 0.40);
+  --admin-state-error-bg: rgba(250, 77, 86, 0.14);
+  --admin-state-error-border: rgba(250, 77, 86, 0.40);
+  --admin-state-error-text: #ff8389;
+  --admin-state-danger-border: rgba(250, 77, 86, 0.40);
+  --admin-state-danger-text: #ff8389;
+
+  --admin-publish-viewer-impact-border: rgba(255, 255, 255, 0.14);
+
+  --admin-diff-assigned-bg: rgba(66, 190, 101, 0.14);
+  --admin-diff-assigned-border: rgba(66, 190, 101, 0.40);
+  --admin-diff-assigned-text: #42be65;
+  --admin-diff-vacated-bg: rgba(250, 77, 86, 0.14);
+  --admin-diff-vacated-border: rgba(250, 77, 86, 0.40);
+  --admin-diff-vacated-text: #ff8389;
+  --admin-diff-reassigned-bg: rgba(8, 189, 186, 0.14);
+  --admin-diff-reassigned-border: rgba(8, 189, 186, 0.40);
+  --admin-diff-reassigned-text: #3ddbd9;
+
+  /* fixwave 2: AI text (Carbon-for-AI family, light literal #0043ce is a
+     text-role hex, not var()). Dark chrome pair per the light block's own
+     contrast note: #78a9ff = 7.68:1 on #161616, 6.43:1 on #262626. Border/
+     ring/wash siblings stay untouched — already alpha- or rgba-based, so
+     they already sit correctly on a dark ground; --admin-ai-border is the
+     one solid literal left in that family and was checked (same #4589ff hue
+     is already used as --admin-chrome-info on the always-dark chrome without
+     issue) rather than changed. */
+  --admin-ai-text: #78a9ff;
+
+  /* Marker LEGEND chips (the live pills are Task 6). */
+  --admin-marker-assigned-surface: #262626;
+  --admin-marker-assigned-border: #42be65;
+  --admin-marker-assigned-text: #f4f4f4;
+  --admin-marker-assigned-accent: rgba(66, 190, 101, 0.85);
+  --admin-marker-available-surface: #1f1f1f;
+  --admin-marker-available-border: #4a4a4a;
+  --admin-marker-available-text: #c6c6c6;
+  --admin-marker-available-accent: rgba(154, 154, 154, 0.5);
+  --admin-marker-reserved-surface: rgba(8, 189, 186, 0.16);
+  --admin-marker-reserved-border: #08bdba;
+  --admin-marker-reserved-text: #3ddbd9;
+  --admin-marker-reserved-accent: rgba(8, 189, 186, 0.85);
+  --admin-marker-unavailable-surface: #161616;
+  --admin-marker-unavailable-border: #333333;
+  --admin-marker-unavailable-text: #7a7a7a;
+  --admin-marker-unavailable-accent: rgba(122, 122, 122, 0.6);
+  --admin-marker-draft-surface: rgba(8, 189, 186, 0.10);
+  --admin-marker-draft-border: #08bdba;
+  --admin-marker-draft-text: #3ddbd9;
+  --admin-marker-search-halo: rgba(255, 87, 21, 0.32);
+
+  /* Live seat-pill overrides (Task 6, verified in-browser against the dark
+     marker table in docs/superpowers/specs/2026-08-19-dark-mode-design.md;
+     fixwave 2026-08-19 closed the gaps Task 6 left open — see below).
+     Most --admin-marker-live-* names need no override: they already
+     color-mix over the dark state tokens above and land close to the
+     table (assigned/reserved/draft/search borders + text measured directly
+     in Chrome). Only the names below visibly missed, so only they are
+     re-pointed; everything else keeps the shared derivation. */
+
+  /* Assigned/available pill fills + base ring (fixwave finding 2):
+     SeatMarker.tsx used to hardcode `bg-white/95` for both pills and
+     `ring-white/45` for every pill's base ring regardless of `data-theme`
+     (no CSS var involved), leaving light islands over the inverted dark
+     raster. Now tokenized in JSX (SeatMarker.tsx ~234, ~239, ~473), so this
+     block can finally supply the table's dark pill fills and a low-alpha
+     white ring tuned for a dark ground. */
+  --admin-marker-live-available-surface: rgba(31, 31, 31, 0.95);  /* spec: available pill #1f1f1f */
+  --admin-marker-live-assigned-surface: rgba(38, 38, 38, 0.95);   /* spec: assigned pill #262626 */
+  --admin-marker-live-pill-ring: rgba(255, 255, 255, 0.12);
+
+  /* Available-pill ink (fixwave finding 3): --admin-marker-live-ink used to
+     be deliberately left alone because it only ever painted text on the
+     hardcoded white/95 available pill (dark ink on white reads fine in both
+     themes). Now that the available pill has a dark fill of its own, that
+     same light-brown literal (#453D33) would sit at failing contrast on
+     #1f1f1f, so it is re-pointed to the spec's available-text value —
+     measured ~8.9:1 on #1f1f1f. */
+  --admin-marker-live-ink: #c6c6c6;
+
+  /* Assigned text (fixwave finding 3): was pinned to the pre-existing LIGHT
+     on-soft literal (#284C3B, a dark green) because the assigned pill was
+     always white regardless of theme — 9.6:1 on that white fill. Now that
+     the assigned pill renders on the dark #262626 fill above, that same
+     dark-green literal would be nearly invisible; corrected to the spec's
+     assigned-text value for the dark pill. */
+  --admin-marker-live-assigned-text: #f4f4f4;
+
+  /* Unavailable: surface/border were still deriving from the *light* neutral
+     ramp (--sp-color-stone(-muted) is dark-aware, but the color-mix left a
+     ~52,52,52 surface at 92% alpha and a ~mid-gray border — both visibly
+     lighter/more prominent than the muted "void" look the table wants, and
+     unreadable against it). Matched to the table's exact triplet; text
+     measured 4.22:1 on the corrected #161616 surface — under the 4.5:1 body
+     floor but consistent with this state's existing muted/de-emphasized
+     treatment (light mode's own unavailable-text is the same kind of
+     lower-contrast literal) and pins the design spec's explicit value. */
+  --admin-marker-live-unavailable-surface: #161616;
+  --admin-marker-live-unavailable-border: #333333;
+  --admin-marker-live-unavailable-text: #7a7a7a;
+
+  /* Neutral (swap-target pending state): both values were still LIGHT
+     literals (#F1ECE4 cream surface, #353532 text) untouched by the dark
+     block, so a pending swap target would render a bright cream chip.
+     Re-pointed to the dark chrome pairing; text measured 8.86:1 on the new
+     surface in Chrome. */
+  --admin-marker-live-neutral-surface: #262626;
+  --admin-marker-live-neutral-text: #c6c6c6;
+
+  /* Verified and deliberately NOT overridden:
+     - --admin-marker-live-selected-surface (#171A1D): the table wants a
+       #FF5715 fill, but the selected pill's text is `text-white` — a JSX
+       literal, not a var, so out of Task 6's scope. White-on-#FF5715
+       measures ~3.17:1 (fails AA); the current dark near-black fill keeps
+       white text at ~17:1 and the pill stays identifiable via its
+       (unchanged, already-orange) --admin-marker-live-active-edge border/
+       ring — confirmed legible in a live dark screenshot. Swapping the fill
+       to raw orange without also fixing the hardcoded text color would be a
+       contrast regression, so it was left alone. */
+
+  /* Elevation: deepened, overlays only (borders separate everywhere else). */
+  --admin-elevation-2-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --admin-elevation-3-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+  --admin-elevation-4-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  --admin-elevation-5-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+/* Floor-plan raster on dark: CSS-only lightbox treatment (owner decision
+   2026-08-19 — no dark asset, so no ?v= bump). Applies to the <img> only;
+   washes and markers sit above it unfiltered. */
+:root[data-theme="dark"] .map-raster {
+  filter: invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95);
+}
+
 /* One shell for both surfaces: the viewer (`.shell-theme`) and the admin
    (`.admin-theme`) share the same token set — same dark chrome, same light
    workspace — with admin-only chrome hidden for viewers in markup. */
@@ -502,6 +827,13 @@
   --admin-marker-live-assigned-border: color-mix(in srgb, var(--sp-color-state-success) 55%, transparent);
   --admin-marker-live-assigned-text: var(--sp-color-state-success-on-soft);
   --admin-marker-live-available-border: var(--sp-color-stone-muted);
+  /* Pill fills + base ring (fixwave finding 2): promoted from the JSX
+     literals `bg-white/95` (both pills) / `ring-white/45` (base ring) so
+     the dark-theme block above has a token to override — pixel-identical
+     to the literals they replace. */
+  --admin-marker-live-available-surface: rgba(255, 255, 255, 0.95);
+  --admin-marker-live-assigned-surface: rgba(255, 255, 255, 0.95);
+  --admin-marker-live-pill-ring: rgba(255, 255, 255, 0.45);
   --admin-marker-live-reserved-border: color-mix(in srgb, var(--sp-color-state-warning) 55%, transparent);
   --admin-marker-live-reserved-surface: color-mix(in srgb, var(--sp-color-state-warning-surface) 95%, transparent);
   --admin-marker-live-reserved-text: var(--sp-color-state-warning-on-soft);
@@ -617,7 +949,8 @@ html {
 body {
   margin: 0;
   background: var(--sp-color-canvas);
-  color: #161616;
+  /* token so dark mode inherits a readable default */
+  color: var(--sp-color-text-primary);
   font-family: var(--font-sans, "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
 }
 

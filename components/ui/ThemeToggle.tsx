@@ -5,12 +5,13 @@ import { useEffect, useState } from "react";
 // switch must agree on these strings (see lib/theme.ts).
 import { THEME_DARK, THEME_LIGHT, THEME_STORAGE_KEY } from "@/lib/theme";
 
-// App-wide light/dark switch (reception handoff): flips html[data-theme] and
-// persists to localStorage; app/layout.tsx's boot script replays the stored
-// value before paint on the next load. Shell chrome stays dark in both themes
-// — today only Reception's --r-* tokens respond.
+// App-wide light/dark switch: flips html[data-theme] and persists to
+// localStorage; app/layout.tsx's boot script replays the stored value before
+// paint on the next load. Shared chrome across the viewer bar, both shell top
+// bars, and Reception — each mounts this one component, passing its own
+// className seam for surfaces whose tokens aren't chrome-default.
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   // Server renders the light-mode label; the effect syncs to the real
   // attribute after hydration (the boot script may have set dark already).
   const [dark, setDark] = useState(false);
@@ -36,7 +37,10 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-pressed={dark}
-      className="flex h-7 items-center gap-1.5 border border-[var(--r-card-border)] bg-[var(--r-card)] px-2.5 text-[11.5px] font-medium text-[var(--r-secondary)] transition-colors hover:bg-[var(--r-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--r-accent)]"
+      className={
+        className ??
+        "flex h-7 items-center gap-1.5 border border-white/15 bg-transparent px-2.5 text-[11.5px] font-medium text-[var(--admin-chrome-text-soft)] transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+      }
     >
       {dark ? (
         <svg aria-hidden="true" width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">

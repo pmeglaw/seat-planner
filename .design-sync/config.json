@@ -49,7 +49,7 @@
     "ViewerFindPalette": "components/seat-map/ViewerFindPalette.tsx",
     "ViewerSeatFinder": "components/seat-map/ViewerSeatFinder.tsx",
     "ReceptionScreen": "components/reception/ReceptionScreen.tsx",
-    "ThemeToggle": "components/reception/ThemeToggle.tsx",
+    "ThemeToggle": "components/ui/ThemeToggle.tsx",
     "AdminManagementPanel": "components/admin-management/AdminManagementPanel.tsx",
     "DataUtilitiesPanel": "components/admin-settings/DataUtilitiesPanel.tsx"
   },

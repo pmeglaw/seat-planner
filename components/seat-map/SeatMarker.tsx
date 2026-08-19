@@ -231,12 +231,12 @@ function SeatMarkerComponent({
             ? "border-[var(--admin-marker-unavailable-border)] bg-[var(--admin-marker-unavailable-surface)] text-[var(--admin-marker-unavailable-text)]"
             : "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)]"
       : seat.status === "assigned"
-        ? "border-[var(--admin-marker-live-assigned-border)] bg-white/95 text-[var(--admin-marker-live-assigned-text)]"
+        ? "border-[var(--admin-marker-live-assigned-border)] bg-[var(--admin-marker-live-assigned-surface)] text-[var(--admin-marker-live-assigned-text)]"
         : seat.status === "reserved"
           ? "border-[var(--admin-marker-live-reserved-border)] bg-[var(--admin-marker-live-reserved-surface)] text-[var(--admin-marker-live-reserved-text)]"
           : seat.status === "unavailable"
             ? "border-[var(--admin-marker-live-unavailable-border)] bg-[var(--admin-marker-live-unavailable-surface)] text-[var(--admin-marker-live-unavailable-text)]"
-            : "border-[var(--admin-marker-live-available-border)] bg-white/95 text-[var(--admin-marker-live-ink)]";
+            : "border-[var(--admin-marker-live-available-border)] bg-[var(--admin-marker-live-available-surface)] text-[var(--admin-marker-live-ink)]";
   // Search/planner emphasis keeps visual priority over the passive valid-target tint.
   const validTargetTone = (swapCandidate || moveCandidate) && !searchProminent && !plannerHighlighted;
   const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent" || validTargetTone || invalidTarget) ? "" : baseStatusToneClass;
@@ -470,7 +470,7 @@ function SeatMarkerComponent({
       <SeatToken
         style={tokenPositionStyle}
         className={[
-          "z-10 isolate flex items-center justify-center overflow-visible border ring-1 ring-white/45 backdrop-blur-[1px]",
+          "z-10 isolate flex items-center justify-center overflow-visible border ring-1 ring-[var(--admin-marker-live-pill-ring)] backdrop-blur-[1px]",
           tokenInteractionClass,
           tokenPositionClass,
           statusToneClass,
