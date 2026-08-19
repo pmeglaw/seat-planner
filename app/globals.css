@@ -78,7 +78,7 @@
   --sp-color-border-strong-rgb: 198 198 198;
 
   /* State families. Accent hues follow the shell status colors (assigned
-     #1D6E41 / reserved #f1c21b / danger #B3232C) for dots and bars; the
+     #1D6E41 / reserved #009d9a / danger #B3232C) for dots and bars; the
      text-bearing variants stay dark enough for AA on their soft surfaces. */
   --sp-color-state-selected: #D23F0A;
   --sp-color-state-selected-surface: #FBEAE1;
@@ -86,15 +86,15 @@
   --sp-color-state-published: #1D6E41;
   --sp-color-state-published-surface: #DEF3E4;
   --sp-color-state-published-border: #A9D7B8;
-  --sp-color-state-draft: #8A6116;
-  --sp-color-state-draft-surface: #FCF4D6;
-  --sp-color-state-draft-border: #E0C46E;
+  --sp-color-state-draft: #136A67;
+  --sp-color-state-draft-surface: #DDF0EF;
+  --sp-color-state-draft-border: #93CFCC;
   --sp-color-state-success: #1D6E41;
   --sp-color-state-success-surface: #DEF3E4;
   --sp-color-state-success-border: #A9D7B8;
-  --sp-color-state-warning: #8A6116;
-  --sp-color-state-warning-surface: #FCF4D6;
-  --sp-color-state-warning-border: #E0C46E;
+  --sp-color-state-warning: #136A67;
+  --sp-color-state-warning-surface: #DDF0EF;
+  --sp-color-state-warning-border: #93CFCC;
   --sp-color-state-danger: #B3232C;
   --sp-color-state-danger-surface: #FBE9EA;
   --sp-color-state-danger-border: #E8A5A9;
@@ -106,9 +106,9 @@
   --sp-color-state-danger-pressed: #6B271F;
   --sp-color-state-danger-on-soft: #7E2F24;
   --sp-color-state-published-on-soft: #284C3B;
-  --sp-color-state-draft-on-soft: #6D4712;
+  --sp-color-state-draft-on-soft: #0F5754;
   --sp-color-state-success-on-soft: #284C3B;
-  --sp-color-state-warning-on-soft: #6D4712;
+  --sp-color-state-warning-on-soft: #0F5754;
   /* Info is NEUTRAL GRAY, not a hue. It was the last teal family (#31626A) and
      the brief retires it: three status hues carry meaning (success / warning /
      danger), so a fourth coloured family for "here is some context" competed
@@ -141,9 +141,9 @@
 
   --sp-color-state-selected-rgb: 210 63 10;
   --sp-color-state-published-rgb: 29 110 65;
-  --sp-color-state-draft-rgb: 138 97 22;
+  --sp-color-state-draft-rgb: 19 106 103;
   --sp-color-state-success-rgb: 29 110 65;
-  --sp-color-state-warning-rgb: 138 97 22;
+  --sp-color-state-warning-rgb: 19 106 103;
   --sp-color-state-danger-rgb: 179 35 44;
   --sp-color-state-info-rgb: 82 82 82;
   --sp-color-state-search-rgb: 158 47 6;
@@ -306,20 +306,22 @@
   --admin-secondary-hover: #393939;
   --admin-secondary-soft: rgba(82, 82, 82, 0.12);
 
-  /* Status hues (shell spec): ok #1D6E41 · warn #f1c21b · bad #B3232C for
-     dots/bars/graphics (≥3:1 on white for the green/red; the yellow pairs with
-     a dark text partner). Text-bearing variants below are darkened for AA. */
+  /* Status hues (shell spec): ok #1D6E41 · warn #009d9a · bad #B3232C for
+     dots/bars/graphics (all ≥3:1 on white; the teal is 3.3:1 — non-text only,
+     it pairs with a dark text partner). Text-bearing variants below are
+     darkened for AA. */
   --admin-status-ok: #1D6E41;
-  --admin-status-warn: #f1c21b;
+  --admin-status-warn: #009d9a;
   --admin-status-bad: #B3232C;
   --admin-status-neutral: #8E8276;
   --admin-status-ok-rgb: 36 161 72;
-  --admin-status-warn-rgb: 241 194 27;
+  --admin-status-warn-rgb: 0 157 154;
   --admin-status-bad-rgb: 218 30 40;
 
   /* Dark-chrome raised surfaces and state/text ladder (measured on #161616:
-     danger text #ff8389 ≈ 7.9:1, success text #42be65 ≈ 7.3:1, info text
-     #78a9ff ≈ 6.6:1, soft #D8D0C5 ≈ 9.9:1, disabled #8E8276 ≈ 4.6:1).
+     danger text #ff8389 ≈ 7.9:1, success text #42be65 ≈ 7.3:1, warn text
+     #08bdba ≈ 7.2:1, info text #78a9ff ≈ 6.6:1, soft #D8D0C5 ≈ 9.9:1,
+     disabled #8E8276 ≈ 4.6:1).
      Promoted 2026-07-19 from repeated component-level hex (SeatInspector,
      AskPlannerDrawer) so the dark-panel palette lives beside the other
      chrome tokens. Raised (#262626) intentionally shares the hover value —
@@ -333,6 +335,7 @@
   --admin-chrome-danger-text: #ff8389;
   --admin-chrome-danger-text-rgb: 255 131 137;
   --admin-chrome-success-text: #42be65;
+  --admin-chrome-warn-text: #08bdba;
   --admin-chrome-info: #4589ff;
   --admin-chrome-info-rgb: 69 137 255;
   --admin-chrome-info-text: #78a9ff;
@@ -360,10 +363,10 @@
   --admin-success: #1D6E41;
   --admin-success-rgb: 29 110 65;
   --admin-success-soft: #DEF3E4;
-  --admin-warning: #f1c21b;
-  --admin-warning-text: #684E00;
-  --admin-warning-text-rgb: 104 78 0;
-  --admin-warning-soft: #FCF4D6;
+  --admin-warning: #009d9a;
+  --admin-warning-text: #0F5754;
+  --admin-warning-text-rgb: 15 87 84;
+  --admin-warning-soft: #DDF0EF;
   --admin-error: #B3232C;
   --admin-danger: #B3232C;
   --admin-danger-soft: #FBE9EA;
@@ -382,8 +385,8 @@
   --admin-state-clean-border: rgba(36, 161, 72, 0.36);
   --admin-state-clean-text: #1D6E41;
   --admin-state-dirty-bg: var(--admin-warning-soft);
-  --admin-state-dirty-border: rgba(138, 97, 22, 0.46);
-  --admin-state-dirty-text: #684E00;
+  --admin-state-dirty-border: rgba(62, 111, 114, 0.46);
+  --admin-state-dirty-text: #0F5754;
   --admin-state-saving-bg: var(--admin-info-soft);
   --admin-state-saving-border: rgba(141, 141, 141, 0.36);
   --admin-state-saving-text: var(--admin-info);
@@ -403,9 +406,9 @@
   --admin-publish-ready-bg: var(--admin-primary-soft);
   --admin-publish-ready-border: var(--admin-primary-border);
   /* on-soft ink, NOT the cta fill: every use of this token is TEXT on the
-     soft/tinted ready surfaces, where the cta orange #D23F0A measures only
-     4.18:1 (on #FFEEE8) / 4.27:1 (on the badge's blended #FCF4D6) — both
-     under AA. #9E2F06 measures 6.52:1 / 6.66:1 there. Caught by the
+     soft/tinted ready surfaces, where the cta orange #D23F0A measured only
+     4.18:1 (on #FFEEE8) / ~4.3:1 (on the badge's blended #DDF0EF) — both
+     under AA. #9E2F06 measures 6.52:1 / ≈6.2:1 there. Caught by the
      e2e-auth publish-review axe scan 2026-08-04; the cta hex is fine on
      white (4.71:1) which is how it slipped through the button-focused
      v12 slice-9 pass. */
@@ -419,16 +422,16 @@
 
   /* Publish diff tags (v12 slice 5). Text-on-bg contrast, measured:
      #284C3B on #DEF3E4 = 8.3:1 · #B3232C on #FBE9EA = 5.6:1 ·
-     #6D4712 on #FCF4D6 = 7.4:1 — all ≥ 4.5:1 body-text floor. */
+     #0F5754 on #DDF0EF ≈ 7.6:1 — all ≥ 4.5:1 body-text floor. */
   --admin-diff-assigned-bg: #DEF3E4;
   --admin-diff-assigned-border: #A9D7B8;
   --admin-diff-assigned-text: #284C3B;
   --admin-diff-vacated-bg: #FBE9EA;
   --admin-diff-vacated-border: #E8A5A9;
   --admin-diff-vacated-text: #B3232C;
-  --admin-diff-reassigned-bg: #FCF4D6;
-  --admin-diff-reassigned-border: #E0C46E;
-  --admin-diff-reassigned-text: #6D4712;
+  --admin-diff-reassigned-bg: #DDF0EF;
+  --admin-diff-reassigned-border: #93CFCC;
+  --admin-diff-reassigned-text: #0F5754;
 
   /* Marker-legend tokens. The map pills themselves render via the
      --admin-marker-live-* family below (formerly raw viewer-variant hex in
@@ -443,10 +446,10 @@
   --admin-marker-available-border: rgba(31, 34, 37, 0.16);
   --admin-marker-available-text: #696159;
   --admin-marker-available-accent: rgba(110, 101, 90, 0.5);
-  --admin-marker-reserved-surface: rgba(252, 240, 217, 0.96);
-  --admin-marker-reserved-border: rgba(138, 97, 22, 0.4);
-  --admin-marker-reserved-text: #6D4712;
-  --admin-marker-reserved-accent: rgba(138, 97, 22, 0.85);
+  --admin-marker-reserved-surface: rgba(220, 237, 234, 0.96);
+  --admin-marker-reserved-border: rgba(62, 111, 114, 0.4);
+  --admin-marker-reserved-text: #244E50;
+  --admin-marker-reserved-accent: rgba(62, 111, 114, 0.85);
   --admin-marker-unavailable-surface: rgba(236, 238, 240, 0.96);
   --admin-marker-unavailable-border: rgba(110, 101, 90, 0.26);
   --admin-marker-unavailable-text: #6E655A;
@@ -465,7 +468,7 @@
   --admin-marker-search-halo: rgba(255, 87, 21, 0.32);
   --admin-marker-draft-surface: rgba(210, 63, 10, 0.10);
   --admin-marker-draft-border: rgba(210, 63, 10, 0.60);
-  --admin-marker-draft-text: #6D4712;
+  --admin-marker-draft-text: #244E50;
   --admin-marker-draft-accent: var(--admin-copper);
   /* Neutral: a hover cue is transient feedback, not a status, so it should not
      borrow a status hue. (Dormant — the shipped viewer branch hovers to the

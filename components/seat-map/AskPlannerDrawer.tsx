@@ -48,8 +48,8 @@ function statusLabel(status: AskPlannerResponse["status"]) {
 }
 
 function statusClassName(status: AskPlannerResponse["status"]) {
-  // Dark-panel state pills (contrast on #161616: #42be65 ≈ 7.3:1, #f1c21b ≈ 10:1, #78a9ff ≈ 6.6:1).
-  if (status === "refused") return "bg-[rgb(var(--admin-status-warn-rgb)/0.15)] text-[var(--admin-status-warn)] ring-[rgb(var(--admin-status-warn-rgb)/0.40)]";
+  // Dark-panel state pills (contrast on #161616: #42be65 ≈ 7.3:1, #08bdba ≈ 7.2:1, #78a9ff ≈ 6.6:1).
+  if (status === "refused") return "bg-[rgb(var(--admin-status-warn-rgb)/0.15)] text-[var(--admin-chrome-warn-text)] ring-[rgb(var(--admin-status-warn-rgb)/0.40)]";
   if (status === "needs_clarification") return "bg-[rgb(var(--admin-chrome-info-rgb)/0.15)] text-[var(--admin-chrome-info-text)] ring-[rgb(var(--admin-chrome-info-rgb)/0.40)]";
   return "bg-[rgb(var(--admin-status-ok-rgb)/0.15)] text-[var(--admin-chrome-success-text)] ring-[rgb(var(--admin-status-ok-rgb)/0.40)]";
 }
@@ -277,7 +277,7 @@ export function AskPlannerDrawer({
           </div>
 
           {draftDirty && (
-            <div className="mt-3 rounded-lg border border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] px-3 py-2 text-xs font-medium text-[var(--admin-status-warn)]">
+            <div className="mt-3 rounded-lg border border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] px-3 py-2 text-xs font-medium text-[var(--admin-chrome-warn-text)]">
               Unsaved inspector edits are not included.
             </div>
           )}
@@ -416,8 +416,8 @@ export function AskPlannerDrawer({
                 const visibleWarnings = response.warnings.filter(w => w !== BROAD_ANSWER_EMPTY_HIGHLIGHT_WARNING);
                 return visibleWarnings.length > 0 && (
                   <section className="rounded-xl border border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] p-3">
-                    <div className="text-[11px] font-semibold text-[var(--admin-status-warn)]">Warnings</div>
-                    <ul className="mt-2 space-y-1 text-xs leading-5 text-[var(--admin-status-warn)]">
+                    <div className="text-[11px] font-semibold text-[var(--admin-chrome-warn-text)]">Warnings</div>
+                    <ul className="mt-2 space-y-1 text-xs leading-5 text-[var(--admin-chrome-warn-text)]">
                       {visibleWarnings.map(warning => (
                         <li key={warning}>{warning}</li>
                       ))}
