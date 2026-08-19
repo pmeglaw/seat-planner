@@ -263,7 +263,7 @@ export function PublishReviewDialog({
                   <span role="columnheader" className="px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-muted)]">Change</span>
                 </div>
                 {publishDiffRows.map(row => (
-                  <div key={row.key} role="rowgroup" className="border-b border-[rgb(var(--admin-border-rgb)/0.6)] last:border-b-0">
+                  <div key={row.key} role="rowgroup" className="border-b border-[var(--admin-border-soft)] last:border-b-0">
                     <div role="row" className="grid grid-cols-[64px_1fr_1fr_96px] items-center">
                       <span role="cell" translate="no" className="px-3 py-2 font-mono text-xs font-semibold text-[var(--admin-text-primary)]">{row.label}</span>
                       <span role="cell" className="flex min-w-0 items-center gap-1.5 px-2.5 py-2 text-[12.5px] text-[var(--admin-text-muted)]">

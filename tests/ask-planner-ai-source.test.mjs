@@ -61,8 +61,15 @@ test("the map's AI emphasis only engages while seats are actually highlighted", 
   // whole-map state: it must follow a live highlight set and never latch on.
   assert.match(seatMapSource, /plannerHighlightedSeatIds\.length > 0/,
     "AI emphasis must derive from a non-empty highlight set");
-  assert.match(seatMapSource, /saturate\(/,
-    "the floor-plan raster desaturates while AI highlights are live");
+  assert.match(seatMapSource, /plannerHighlightedSeatIds\.length > 0 \? "map-raster-dim"/,
+    "the floor-plan raster dim class engages only while AI highlights are live");
+
+  // The dim itself lives in CSS so the dark lightbox filter can restate it —
+  // `filter` is one property, so an inline saturate() would erase the invert.
+  const globalsSource = await readSource("../app/globals.css");
+  const dimRules = globalsSource.match(/\.map-raster-dim\s*{[^}]*saturate\([^}]*}/g) ?? [];
+  assert.ok(dimRules.length >= 2,
+    "globals.css must define .map-raster-dim saturate rules for BOTH themes (light + dark restatement)");
 });
 
 test("the AI highlight chip offers a labelled way out of the AI state", async () => {
