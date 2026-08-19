@@ -1367,7 +1367,7 @@ export function ViewerSeatFinder({
                     unoptimized
                     placeholder="blur"
                     blurDataURL={MAP_IMAGE_BLUR_DATA_URL}
-                    className="block h-auto w-full select-none"
+                    className="map-raster block h-auto w-full select-none"
                     draggable={false}
                   />
 

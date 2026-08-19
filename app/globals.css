@@ -388,6 +388,13 @@
   --admin-elevation-5-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
 
+/* Floor-plan raster on dark: CSS-only lightbox treatment (owner decision
+   2026-08-19 — no dark asset, so no ?v= bump). Applies to the <img> only;
+   washes and markers sit above it unfiltered. */
+:root[data-theme="dark"] .map-raster {
+  filter: invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95);
+}
+
 /* One shell for both surfaces: the viewer (`.shell-theme`) and the admin
    (`.admin-theme`) share the same token set — same dark chrome, same light
    workspace — with admin-only chrome hidden for viewers in markup. */
