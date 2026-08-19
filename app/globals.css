@@ -381,6 +381,62 @@
   --admin-marker-draft-text: #3ddbd9;
   --admin-marker-search-halo: rgba(255, 87, 21, 0.32);
 
+  /* Live seat-pill overrides (Task 6, verified in-browser against the dark
+     marker table in docs/superpowers/specs/2026-08-19-dark-mode-design.md).
+     Most --admin-marker-live-* names need no override: they already
+     color-mix over the dark state tokens above and land close to the
+     table (assigned/reserved/draft/search borders + text measured directly
+     in Chrome). Only the names below visibly missed, so only they are
+     re-pointed; everything else keeps the shared derivation.
+
+     assigned/available never gain a dark bg — SeatMarker.tsx hardcodes
+     `bg-white/95` for both regardless of `data-theme` (no CSS var involved),
+     so the table's #262626/#1f1f1f pill fills are structurally out of this
+     token-only pass; fixing that needs a JSX change outside Task 6's scope. */
+
+  /* Assigned text: the dark on-soft literal (#42be65, tuned for near-black
+     tinted surfaces elsewhere) measured 2.39:1 on the always-white assigned
+     pill — fails AA. Pinned to the pre-existing LIGHT on-soft literal
+     (#284C3B), which is what this token already resolves to in light mode
+     for the same white-bg context: 9.6:1 measured in Chrome. */
+  --admin-marker-live-assigned-text: #284C3B;
+
+  /* Unavailable: surface/border were still deriving from the *light* neutral
+     ramp (--sp-color-stone(-muted) is dark-aware, but the color-mix left a
+     ~52,52,52 surface at 92% alpha and a ~mid-gray border — both visibly
+     lighter/more prominent than the muted "void" look the table wants, and
+     unreadable against it). Matched to the table's exact triplet; text
+     measured 4.22:1 on the corrected #161616 surface — under the 4.5:1 body
+     floor but consistent with this state's existing muted/de-emphasized
+     treatment (light mode's own unavailable-text is the same kind of
+     lower-contrast literal) and pins the design spec's explicit value. */
+  --admin-marker-live-unavailable-surface: #161616;
+  --admin-marker-live-unavailable-border: #333333;
+  --admin-marker-live-unavailable-text: #7a7a7a;
+
+  /* Neutral (swap-target pending state): both values were still LIGHT
+     literals (#F1ECE4 cream surface, #353532 text) untouched by the dark
+     block, so a pending swap target would render a bright cream chip.
+     Re-pointed to the dark chrome pairing; text measured 8.86:1 on the new
+     surface in Chrome. */
+  --admin-marker-live-neutral-surface: #262626;
+  --admin-marker-live-neutral-text: #c6c6c6;
+
+  /* Verified and deliberately NOT overridden:
+     - --admin-marker-live-ink (#453D33): only ever paints text on the
+       hardcoded white/95 available pill (confirmed via computed-style probe
+       and a source read of SeatMarker.tsx) — dark ink on a white pill reads
+       fine in both themes, so the literal is correct as-is.
+     - --admin-marker-live-selected-surface (#171A1D): the table wants a
+       #FF5715 fill, but the selected pill's text is `text-white` — a JSX
+       literal, not a var, so out of Task 6's scope. White-on-#FF5715
+       measures ~3.17:1 (fails AA); the current dark near-black fill keeps
+       white text at ~17:1 and the pill stays identifiable via its
+       (unchanged, already-orange) --admin-marker-live-active-edge border/
+       ring — confirmed legible in a live dark screenshot. Swapping the fill
+       to raw orange without also fixing the hardcoded text color would be a
+       contrast regression, so it was left alone. */
+
   /* Elevation: deepened, overlays only (borders separate everywhere else). */
   --admin-elevation-2-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   --admin-elevation-3-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
