@@ -291,7 +291,7 @@ function SeatMarkerComponent({
       : "",
     draftChanged && !selected && !searchProminent
       ? adminMarker
-        ? "border-[var(--admin-marker-draft-border)] bg-[var(--admin-marker-draft-surface)] text-[var(--admin-marker-draft-text)] ring-1 ring-[var(--admin-marker-draft-border)] shadow-[0_4px_12px_rgba(212,154,6,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
+        ? "border-[var(--admin-marker-draft-border)] bg-[var(--admin-marker-draft-surface)] text-[var(--admin-marker-draft-text)] ring-1 ring-[var(--admin-marker-draft-border)] shadow-[0_4px_12px_rgba(0,157,154,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
         : "border-[var(--admin-marker-live-draft-border)] bg-[var(--admin-marker-live-draft-surface)] text-[var(--admin-marker-live-draft-text)] ring-1 ring-[var(--admin-marker-live-draft-ring)] shadow-[0_4px_12px_rgba(162,110,35,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
       : "",
     // Same source-state exclusion as the selected entry below — this is the

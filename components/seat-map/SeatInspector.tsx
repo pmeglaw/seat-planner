@@ -559,8 +559,8 @@ export function SeatInspector({
         ? "bg-[var(--admin-status-bad)]"
         : "bg-[var(--admin-status-neutral)]";
   // Solid status tag (Seat section): shell status hue + AA text partner,
-  // measured against the 2026-07-23 harmonized tokens: white on #1D6E41 ≈
-  // 6.2:1, #161616 on #f1c21b ≈ 10.6:1, white on #B3232C ≈ 6.5:1, #161616 on
+  // measured against the 2026-08-19 teal swap: white on #1D6E41 ≈ 6.2:1,
+  // #161616 on #009d9a ≈ 5.4:1, white on #B3232C ≈ 6.5:1, #161616 on
   // #8E8276 ≈ 4.9:1. Re-measure all four arms whenever these tokens move —
   // the assigned arm shipped a 2.89:1 fail when the green darkened untested.
   const statusTagClass = effectiveStatus === "assigned"
@@ -582,13 +582,13 @@ export function SeatInspector({
         ? "Unsaved changes"
         : saveFeedback ?? "No unsaved changes";
   // Figma draft-impact pill: green when the seat matches the saved draft,
-  // amber while edits are unsaved or saving, red when the last save failed.
-  // Dark-panel state colors (measured on #161616): #f1c21b ≈ 10.4:1,
+  // teal while edits are unsaved or saving, red when the last save failed.
+  // Dark-panel state colors (measured on #161616): #08bdba ≈ 7.2:1,
   // #ff8389 ≈ 7.9:1, #42be65 ≈ 7.3:1 — all clear AA for small text.
   const inspectorStatePillClassName = localError
     ? "bg-[rgb(var(--admin-status-bad-rgb)/0.15)] text-[var(--admin-chrome-danger-text)]"
     : pending || isDirty
-      ? "bg-[rgb(var(--admin-status-warn-rgb)/0.10)] text-[var(--admin-status-warn)]"
+      ? "bg-[rgb(var(--admin-status-warn-rgb)/0.10)] text-[var(--admin-chrome-warn-text)]"
       : "bg-[rgb(var(--admin-status-ok-rgb)/0.15)] text-[var(--admin-chrome-success-text)]";
   // Header identity reflects the SAVED occupant only — a staged, unsaved pick
   // must not flip the header, or the panel claims an assignment that doesn't
@@ -603,7 +603,7 @@ export function SeatInspector({
   const footerNeutralButtonClass =
     "!border-white/20 !bg-[var(--admin-chrome-raised)] !text-[var(--admin-chrome-text)] hover:!border-white/30 hover:!bg-[var(--admin-chrome-raised-hover)] hover:!text-white disabled:!border-white/10 disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)]";
   const fieldErrorClassName = "border-[var(--admin-status-bad)] focus:border-[var(--admin-status-bad)] focus:ring-[rgb(var(--admin-status-bad-rgb)/0.40)]";
-  const warningSurfaceClassName = "border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] text-[var(--admin-status-warn)]";
+  const warningSurfaceClassName = "border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] text-[var(--admin-chrome-warn-text)]";
   const neutralPillClassName = "bg-white/10 text-[var(--admin-chrome-text-soft)] ring-white/15";
   const successPillClassName = "bg-[rgb(var(--admin-status-ok-rgb)/0.15)] text-[var(--admin-chrome-success-text)] ring-[rgb(var(--admin-status-ok-rgb)/0.40)]";
 
@@ -1039,7 +1039,7 @@ export function SeatInspector({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-[10px] bg-white/10 px-3 py-1.5 font-semibold text-[var(--admin-status-warn)] ring-1 ring-[rgb(var(--admin-status-warn-rgb)/0.40)] transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
+                    className="rounded-[10px] bg-white/10 px-3 py-1.5 font-semibold text-[var(--admin-chrome-warn-text)] ring-1 ring-[rgb(var(--admin-status-warn-rgb)/0.40)] transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
                   >
                     Clear selection
                   </button>
@@ -1047,7 +1047,7 @@ export function SeatInspector({
                     <button
                       type="button"
                       onClick={onClearSearchContext}
-                      className="rounded-[10px] bg-white/10 px-3 py-1.5 font-semibold text-[var(--admin-status-warn)] ring-1 ring-[rgb(var(--admin-status-warn-rgb)/0.40)] transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
+                      className="rounded-[10px] bg-white/10 px-3 py-1.5 font-semibold text-[var(--admin-chrome-warn-text)] ring-1 ring-[rgb(var(--admin-status-warn-rgb)/0.40)] transition hover:bg-white/15 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
                     >
                       {searchMismatchClearLabel}
                     </button>
