@@ -30,6 +30,10 @@
     "ResultsPanel": "components/seat-map/ResultsPanel.tsx",
     "FloorSelector": "components/seat-map/FloorSelector.tsx",
     "MapStatusLegend": "components/seat-map/MapStatusLegend.tsx",
+    "MapStatusBand": "components/seat-map/MapStatusBand.tsx",
+    "NamesVisibilityToggle": "components/seat-map/NamesVisibilityToggle.tsx",
+    "SeatSheet": "components/seat-map/SeatSheet.tsx",
+    "SeatSheetNotice": "components/seat-map/SeatSheet.tsx",
     "MapWashLayer": "components/seat-map/MapWashLayer.tsx",
     "MapZoomControl": "components/seat-map/MapZoomControl.tsx",
     "DeptChipRow": "components/seat-map/DeptChipRow.tsx",
@@ -85,10 +89,26 @@
       "viewport": "900x620"
     },
     "AppShell": {
+      "cardMode": "single",
+      "primaryStory": "AdminMapShell"
+    },
+    "AppRail": {
+      "cardMode": "single",
+      "primaryStory": "ExpandedAdmin"
+    },
+    "AccountMenu": {
+      "cardMode": "column"
+    },
+    "CloseIcon": {
+      "cardMode": "column"
+    },
+    "ThemeToggle": {
       "cardMode": "column"
     },
     "SeatMap": {
-      "cardMode": "column"
+      "cardMode": "single",
+      "primaryStory": "AdminDraftEditor",
+      "viewport": "1280x800"
     },
     "ReceptionScreen": {
       "cardMode": "single",
@@ -106,6 +126,17 @@
     },
     "DeptChipRow": {
       "cardMode": "column"
+    },
+    "MapStatusBand": {
+      "cardMode": "column"
+    },
+    "SeatSheet": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "SeatSheetNotice": {
+      "cardMode": "single",
+      "viewport": "1100x640"
     },
     "DraftTrailOverlay": {
       "cardMode": "column"

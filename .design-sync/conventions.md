@@ -22,7 +22,7 @@ The shipped stylesheet is **precompiled and purged**: only the utility classes t
 Core token families (defined at `:root` in the shipped CSS — read `_ds_bundle.css` for the full set):
 
 - Brand: `--sp-color-brand-ivory`, `--sp-color-brand-paper`, `--sp-color-brand-copper`, `--sp-color-brand-accent`, `--sp-color-brand-clay`
-- Action: `--sp-color-action-primary` / `-hover` / `-pressed`
+- Action: `--sp-color-action-primary`, `--sp-color-action-primary-hover`, `--sp-color-action-primary-pressed` (each also has an `-rgb` channel triple for `rgb(var(--…-rgb)/0.45)` alpha)
 - Text: `--sp-color-text-primary`, `--sp-color-text-secondary`, `--sp-color-text-muted`, `--sp-color-text-disabled`
 - Admin (inside `.admin-theme` only): `--admin-bg`, `--admin-chrome-bg`, `--admin-chrome-text`, `--admin-chrome-border`, `--admin-rail-bg`
 - Fonts: `--font-sans` (IBM Plex Sans), `--font-mono` (IBM Plex Mono — used for seat codes, phone extensions, data readouts)
@@ -46,4 +46,4 @@ Utility exports on the library: `cx(...classes)` merges class strings; `focusRin
 </div>
 ```
 
-`Button` variants: `primary | secondary | quiet | destructive`; sizes `small | medium`; `loading`, `leftIcon`, `rightIcon` props. `StatusBadge` tones: `neutral | published | draft | success | warning | danger | info | readonly`.
+`Button` variants: `primary | secondary | quiet | destructive`; sizes `small | medium`; `loading`, `leftIcon`, `rightIcon` props. `StatusBadge` tones: `neutral | published | draft | success | warning | danger | info | readonly`, plus the seat-status set the map surfaces use — `available | assigned | reserved | unavailable | selected | blocked | pending`.

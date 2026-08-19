@@ -125,8 +125,16 @@ const departmentOptions = [
 
 const zoneOptions = [option("z1", "North Wing"), option("z2", "East Wing"), option("z3", "South Wing")];
 
+// The surface sizes itself off the screen (root `lg:h-screen`), and since
+// #408 folded the legend and zoom into a bottom status band, the last row sat
+// exactly on the card's bottom edge. Give the cell an explicit stage and pin
+// the surface to it — same relationship the app has with the viewport.
+const STAGE_CSS = `[data-ds-stage="seat-map"] > div { height: 100% !important; min-height: 0 !important; }`;
+
 export const AdminDraftEditor = () => (
-  <div className="admin-theme">
+  <div className="admin-theme" style={{ height: 700, overflow: "hidden" }}>
+    <style>{STAGE_CSS}</style>
+    <div data-ds-stage="seat-map" style={{ height: "100%" }}>
     <SeatMap
       seats={draftSeats}
       publishedSeats={publishedSeats}
@@ -136,5 +144,6 @@ export const AdminDraftEditor = () => (
       zoneOptions={zoneOptions}
       canEdit
     />
+    </div>
   </div>
 );
