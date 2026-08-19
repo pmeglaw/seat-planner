@@ -337,6 +337,7 @@ export function SeatInspector({
   const resetSignalRef = useRef(resetSignal);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const primaryActionRef = useRef<HTMLButtonElement | null>(null);
+  const pendingPrimaryFocusRef = useRef(false);
   const assignmentSectionRef = useRef<HTMLElement | null>(null);
   const moveConflictDialogFocusRef = useDialogFocus<HTMLElement>();
   const employeeInputRef = useRef<HTMLInputElement | null>(null);
@@ -401,7 +402,23 @@ export function SeatInspector({
     onDirtyChange(isDirty);
   }, [isDirty, onDirtyChange]);
 
+  // Consumes the focus intent from focusPrimaryActionSoon() on the first
+  // commit that actually has the primary CTA mounted. Commit-driven rather
+  // than a rAF because on the save path the CTA cannot mount until the
+  // transition commit flips `pending` false (showCommitBar depends on it) —
+  // under load that lands later than any single frame, so a lone rAF found
+  // primaryActionRef null, no-opped, and focus fell to <body> when the
+  // commit bar unmounted (SI-01).
+  useEffect(() => {
+    if (pendingPrimaryFocusRef.current && primaryActionRef.current) {
+      pendingPrimaryFocusRef.current = false;
+      primaryActionRef.current.focus();
+    }
+  });
+
   const resetInspectorDraftForm = useCallback((nextForm: SeatInspectorForm) => {
+    // A seat switch or external reset invalidates any queued focus handoff.
+    pendingPrimaryFocusRef.current = false;
     activeSeatSnapshotRef.current = formSnapshot(nextForm);
     setForm(nextForm);
     setInitialForm(nextForm);
@@ -833,9 +850,11 @@ export function SeatInspector({
 
   // After Cancel or a successful save the commit bar (and the button the
   // keyboard user just activated) unmounts — hand focus to the pinned
-  // primary action that re-renders in its place (critique action 5).
+  // primary action that re-renders in its place (critique action 5). Sets
+  // an intent consumed by the commit-driven effect above the early return;
+  // the CTA may not exist yet when this is called (see that effect).
   function focusPrimaryActionSoon() {
-    window.requestAnimationFrame(() => primaryActionRef.current?.focus());
+    pendingPrimaryFocusRef.current = true;
   }
 
   function handleCancelEditing() {
