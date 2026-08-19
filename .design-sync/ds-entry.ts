@@ -47,7 +47,7 @@ export {
 
 // Reception
 export { ReceptionScreen } from "../components/reception/ReceptionScreen";
-export { ThemeToggle } from "../components/reception/ThemeToggle";
+export { ThemeToggle } from "../components/ui/ThemeToggle";
 
 // Admin
 export { AdminManagementPanel } from "../components/admin-management/AdminManagementPanel";

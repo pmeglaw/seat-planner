@@ -81,3 +81,24 @@ test("globals.css keys the dark theme off the shared data-theme attribute", asyn
   assert.match(css, /:root\[data-theme="dark"\]\s*\{[^}]*color-scheme:\s*dark/);
   assert.match(css, /:root\[data-theme="dark"\]\s+\.admin-theme/);
 });
+
+test("dark-mode seams: raster parity and toggle mounts", async () => {
+  const seatMap = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  const viewerFinder = await readFile(new URL("../components/seat-map/ViewerSeatFinder.tsx", import.meta.url), "utf8");
+  const topBar = await readFile(new URL("../components/ui/AppTopBar.tsx", import.meta.url), "utf8");
+  const reception = await readFile(new URL("../components/reception/ReceptionScreen.tsx", import.meta.url), "utf8");
+
+  // The floor-plan raster class must stay on BOTH map surfaces (two-surface
+  // parity trap) — the dark invert filter keys on it. SeatMap builds its
+  // className from a joined array (`"map-raster ...`) while ViewerSeatFinder
+  // uses a plain string attribute (`className="map-raster ...`) — anchor on
+  // the quote-prefixed class token so both forms match.
+  assert.match(seatMap, /"map-raster /);
+  assert.match(viewerFinder, /"map-raster /);
+
+  // One canonical toggle per bar: the shared chrome mounts it; reception must
+  // NOT mount a second one (same accessible name, mount-time state desync).
+  assert.match(topBar, /<ThemeToggle/);
+  assert.match(viewerFinder, /<ThemeToggle/);
+  assert.doesNotMatch(reception, /ThemeToggle/);
+});

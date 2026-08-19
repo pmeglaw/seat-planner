@@ -949,7 +949,8 @@ html {
 body {
   margin: 0;
   background: var(--sp-color-canvas);
-  color: #161616;
+  /* token so dark mode inherits a readable default */
+  color: var(--sp-color-text-primary);
   font-family: var(--font-sans, "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
 }
 

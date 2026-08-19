@@ -39,7 +39,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-pressed={dark}
       className={
         className ??
-        "flex h-7 items-center gap-1.5 rounded-[10px] border border-white/15 bg-transparent px-2.5 text-[11.5px] font-medium text-[var(--admin-chrome-text-soft)] transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+        "flex h-7 items-center gap-1.5 border border-white/15 bg-transparent px-2.5 text-[11.5px] font-medium text-[var(--admin-chrome-text-soft)] transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
       }
     >
       {dark ? (

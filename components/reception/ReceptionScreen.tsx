@@ -12,7 +12,6 @@ import {
 // finder, Management) — Reception must not grow its own variant, or the same
 // person shows different initials at the front desk.
 import { buildInitials } from "@/lib/validators";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 // Reception — front-desk call routing (reception handoff). Read-only: renders
 // published data handed down by app/reception/page.tsx and never mutates
@@ -106,14 +105,11 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
 
   return (
     <div className="mx-auto w-full max-w-[1060px] px-8 pb-16 pt-6">
-      <header className="mb-4 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[22px] font-semibold leading-tight text-[var(--r-text)]">Reception</h1>
-          <p className="mt-1 text-[13px] text-[var(--r-muted)]">
-            Front-desk directory — type the caller&apos;s request, read the extension, transfer.
-          </p>
-        </div>
-        <ThemeToggle className="flex h-7 items-center gap-1.5 border border-[var(--r-card-border)] bg-[var(--r-card)] px-2.5 text-[11.5px] font-medium text-[var(--r-secondary)] transition-colors hover:bg-[var(--r-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--r-accent)]" />
+      <header className="mb-4">
+        <h1 className="text-[22px] font-semibold leading-tight text-[var(--r-text)]">Reception</h1>
+        <p className="mt-1 text-[13px] text-[var(--r-muted)]">
+          Front-desk directory — type the caller&apos;s request, read the extension, transfer.
+        </p>
       </header>
 
       {/* Search bar */}
