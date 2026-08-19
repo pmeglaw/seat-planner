@@ -303,6 +303,34 @@
   --admin-chrome-bg: #0a0a0a;
   --admin-text-inverse: #161616;
 
+  /* fixwave 2 (2026-08-19): text roles. These alias literal hex in the light
+     block, not var(--sp-color-*), so the :root dark swap never reached them —
+     the search-input bug (--admin-text-primary rendering dark-on-dark) was
+     this gap. Same values as the :root dark text ramp. */
+  --admin-text-primary: #f4f4f4;
+  --admin-text-secondary: #c6c6c6;
+  --admin-text-muted: #9a9a9a;
+  --admin-text-subtle: #9a9a9a;
+
+  /* fixwave 2: surfaces, field fill, and borders — same literal-hex gap as
+     text roles above. Border rgb pairs 255/255/255 so any /alpha call site
+     built on --admin-border-rgb lightens instead of staying a warm-light
+     triplet on a dark ground. */
+  --admin-surface-hover: #262626;
+  --admin-field-fill: #262626;
+  --admin-border: rgba(255, 255, 255, 0.10);
+  --admin-border-rgb: 255 255 255;
+  --admin-border-strong: rgba(255, 255, 255, 0.18);
+  --admin-table-header-bg: #262626;
+  --admin-table-row-border: rgba(255, 255, 255, 0.10);
+
+  /* fixwave 2: --admin-secondary family has zero current JSX consumers
+     (grepped) but is a literal-hex gap like the groups above — filled in for
+     completeness/future-proofing rather than left silently wrong. */
+  --admin-secondary: #c6c6c6;
+  --admin-secondary-hover: #e8e8e8;
+  --admin-secondary-soft: rgba(255, 255, 255, 0.10);
+
   /* Map mat (fixwave finding 1): sits one step below the #161616 canvas so
      the inverted raster reads as a lightbox floating on the dark chrome,
      instead of the light block/globals.css#L470 workspace (#ECE8E0)
@@ -314,6 +342,13 @@
   --admin-primary-border: rgba(255, 87, 21, 0.45);
   --admin-primary-on-soft: #FF8A5C;
   --admin-paper: rgba(255, 87, 21, 0.12);
+
+  /* fixwave 2: draft-trail overlay (design_handoff_swap_trail pinned hex,
+     not this file's interaction ladder — see the light block's note). Origin
+     ring re-pointed to --admin-text-muted's dark value so it keeps tracking
+     that pairing by design, same as light. */
+  --admin-draft-trail: #FF8A5C;
+  --admin-draft-trail-origin: #9a9a9a;
 
   /* Raw status dots/bars. */
   --admin-status-ok: #42be65;
@@ -347,6 +382,12 @@
   --admin-state-dirty-border: rgba(8, 189, 186, 0.40);
   --admin-state-dirty-text: #3ddbd9;
   --admin-state-saving-border: rgba(255, 255, 255, 0.14);
+  /* fixwave 2: found gap — light's literal rgba(36,161,72,0.36) was the only
+     state-* border with no dark partner (bg/text are var() aliases that
+     already follow --admin-success-soft/--admin-success). Matches the same
+     success-family alpha already used for clean-border/diff-assigned-border
+     above. */
+  --admin-state-saved-border: rgba(66, 190, 101, 0.40);
   --admin-state-error-bg: rgba(250, 77, 86, 0.14);
   --admin-state-error-border: rgba(250, 77, 86, 0.40);
   --admin-state-error-text: #ff8389;
@@ -364,6 +405,16 @@
   --admin-diff-reassigned-bg: rgba(8, 189, 186, 0.14);
   --admin-diff-reassigned-border: rgba(8, 189, 186, 0.40);
   --admin-diff-reassigned-text: #3ddbd9;
+
+  /* fixwave 2: AI text (Carbon-for-AI family, light literal #0043ce is a
+     text-role hex, not var()). Dark chrome pair per the light block's own
+     contrast note: #78a9ff = 7.68:1 on #161616, 6.43:1 on #262626. Border/
+     ring/wash siblings stay untouched — already alpha- or rgba-based, so
+     they already sit correctly on a dark ground; --admin-ai-border is the
+     one solid literal left in that family and was checked (same #4589ff hue
+     is already used as --admin-chrome-info on the always-dark chrome without
+     issue) rather than changed. */
+  --admin-ai-text: #78a9ff;
 
   /* Marker LEGEND chips (the live pills are Task 6). */
   --admin-marker-assigned-surface: #262626;

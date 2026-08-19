@@ -1328,7 +1328,7 @@ export function ViewerSeatFinder({
               <div className="pointer-events-auto">
                 <FloorSelector floor={floor} onChange={setFloor} />
               </div>
-              <span className="pointer-events-auto border border-[var(--admin-border)] bg-white px-2.5 py-1.5 text-[12px] text-[var(--sp-color-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
+              <span className="pointer-events-auto border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-[12px] text-[var(--sp-color-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
               {/* Viewers don't need the layer model ("Published" / "Read-only"
                   badges) — a last-publish date answers the question they have. */}
               {lastPublishedLabel && floor === "3" && (

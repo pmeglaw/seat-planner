@@ -3074,7 +3074,7 @@ export function SeatMap({
                       "flex h-8 items-center gap-1.5 border px-2.5 text-[12px] font-semibold shadow-elevation-3 transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]",
                       structuredFilterCount > 0 || !filterCollapsed
                         ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-on-soft)]"
-                        : "border-[var(--admin-border)] bg-white text-[var(--sp-color-text-secondary)] hover:bg-[var(--sp-color-canvas)] hover:text-[var(--admin-text-primary)]"
+                        : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--sp-color-text-secondary)] hover:bg-[var(--sp-color-canvas)] hover:text-[var(--admin-text-primary)]"
                     ].join(" ")}
                   >
                     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
@@ -3126,7 +3126,7 @@ export function SeatMap({
                   the stage, so the reserved inspector column slides it inboard
                   automatically. */}
               <div className="flex shrink-0 items-start gap-2">
-              <div role="search" aria-label="Command search" className="pointer-events-auto hidden w-[300px] border border-[var(--admin-border)] bg-white shadow-elevation-3 lg:block">
+              <div role="search" aria-label="Command search" className="pointer-events-auto hidden w-[300px] border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-3 lg:block">
                 <label className="relative flex h-8 w-full min-w-0 items-center">
                   <span className="sr-only">Search employee, seat, job title, department, or zone</span>
                   <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-text-muted)]">
@@ -3177,7 +3177,7 @@ export function SeatMap({
                     "pointer-events-auto flex h-8 items-center gap-1.5 border px-3 text-[12.5px] font-semibold shadow-elevation-3 transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]",
                     addSeatMode
                       ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-on-soft)]"
-                      : "border-[var(--admin-border)] bg-white text-[var(--sp-color-text-secondary)] hover:bg-[var(--sp-color-canvas)] hover:text-[var(--admin-text-primary)]"
+                      : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--sp-color-text-secondary)] hover:bg-[var(--sp-color-canvas)] hover:text-[var(--admin-text-primary)]"
                   ].join(" ")}
                 >
                   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none">
