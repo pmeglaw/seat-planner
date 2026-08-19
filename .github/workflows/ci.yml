@@ -58,9 +58,16 @@ permissions:
 # git-sourced npm dependencies), so nothing pays for the hardening. Adding a
 # step that DOES need git auth means opting that one job back in, not dropping
 # this line everywhere.
+# Each job carries a timeout-minutes cap at roughly 3x its healthy runtime
+# (verify ~4min, e2e ~7min, e2e-auth ~12min). Without one, a stalled step
+# inherits the 360-minute default — the 2026-08-19 apt-mirror stall held a
+# main run half an hour and would have held it six hours if the mirror had
+# hung instead of trickled. A cap turns any future stall into a fast,
+# attributable red.
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -89,6 +96,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -103,9 +111,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Cache the browser download (~170MB). The uncached path has stalled on
-      # CDN/apt slowness for 10+ minutes; on a hit only the apt deps install
-      # runs, which is seconds when mirrors are healthy.
+      # Cache the browser download (~170MB); the uncached CDN path has stalled
+      # for 10+ minutes. Deliberately NO apt step on either path: ubuntu-latest
+      # (noble) already ships every shared library chromium needs (the image
+      # includes Chrome), so `install-deps chromium` was observed installing
+      # ONLY intl font packages — and the azure apt mirror served those 18.2 MB
+      # at 11.0 kB/s, stalling main runs ~28 minutes (run 32291929184,
+      # 2026-08-19). No test here renders CJK text or asserts screenshots, so
+      # the fonts buy nothing. If a future runner image drops a library,
+      # chromium fails to LAUNCH with the missing lib named — a fast, legible
+      # red instead of a half-hour apt stall.
       - name: Resolve Playwright version
         id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
@@ -119,11 +134,7 @@ jobs:
 
       - name: Install Playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
-
-      - name: Install Playwright system dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        run: npx playwright install chromium
 
       - name: SeatMap component tests
         run: npm run test:browser
@@ -148,6 +159,7 @@ jobs:
   # be mistaken for an app failure there.
   e2e-auth:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -162,7 +174,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Same browser cache as the e2e job (see comment there).
+      # Same browser cache as the e2e job — and same deliberate absence of any
+      # apt step (see the comment there for the evidence).
       - name: Resolve Playwright version
         id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
@@ -176,11 +189,7 @@ jobs:
 
       - name: Install Playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
-
-      - name: Install Playwright system dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        run: npx playwright install chromium
 
       # Applies supabase/migrations/* then supabase/seed.sql. Deliberately
       # `start` and never `db reset`: a reset gives the containers new IPs while
