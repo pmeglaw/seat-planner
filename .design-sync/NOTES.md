@@ -53,10 +53,12 @@
   and `SeatSheetNotice` (both exports of SeatSheet.tsx). 36 → 40 components.
   `ViewerStatusBand` existed only between #407 and #408 and was folded into
   the shared band before it ever synced — don't go looking for it.
-- `MapStatusLegend` is app-dead since #407/#408 (no surface mounts it; it stays
-  exported for its DS card). Its card documents the retired floating legend —
-  the shipped surfaces render `MapStatusBand`. Retire the card when the
-  component goes.
+- `MapStatusLegend` is **gone** (owner call 2026-08-19, same day it was
+  spotted in the DS pane): app-dead since #407/#408, it survived only to feed
+  its own DS card, and a card for a retired component is worse than no card —
+  the design agent reads the pane as the menu of what to build with. Component,
+  ct test, preview, docs stub and the uploaded card all deleted; its
+  `MapLegendEntry` type moved into `MapStatusBand.tsx`. 40 → 39 components.
 - The driver's verification partition follows the RENDERED card, not the
   component source: SeatMap/ViewerSeatFinder/AppTopBar all changed in app code
   yet landed in `unchanged`. Re-verify materially reworked surfaces on purpose

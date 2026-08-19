@@ -3,16 +3,22 @@
 // The shared in-flow bottom status band (Option A, owner-picked 2026-08-17):
 // the ONE home for legend counts, the match summary, filter actions, the names
 // switch and the zoom cluster from the sm tier up. The viewer shipped it first
-// (v1.45.0, replacing its floating MapStatusLegend card + zoom stack); the
-// admin map renders the same band with its extra entries (unavailable,
-// draft-changed) and filter actions. Parents own count computation
-// (counts-follow-filters semantics stay pinned at the call sites by
-// filter-feedback-source) and tier gating: the band renders only >=640, and
-// below the panel tier it yields to the bottom sheets (each surface owns both
-// decisions — this renders the row). MapStatusLegend itself stays alive for
-// the .design-sync previews; no app surface mounts it any more.
+// (v1.45.0, replacing its floating legend card + zoom stack); the admin map
+// renders the same band with its extra entries (unavailable, draft-changed)
+// and filter actions. Parents own count computation (counts-follow-filters
+// semantics stay pinned at the call sites by filter-feedback-source) and tier
+// gating: the band renders only >=640, and below the panel tier it yields to
+// the bottom sheets (each surface owns both decisions — this renders the row).
+// The retired MapStatusLegend was deleted once it had no caller left (owner
+// call 2026-08-19); its entry type lives here now.
 import type { ReactNode } from "react";
-import type { MapLegendEntry } from "@/components/seat-map/MapStatusLegend";
+
+export type MapLegendEntry = {
+  key: string;
+  label: string;
+  dotClassName: string;
+  count: number;
+};
 
 export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions, controls }: {
   ariaLabel: string;

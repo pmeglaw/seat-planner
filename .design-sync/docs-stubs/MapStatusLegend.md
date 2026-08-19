@@ -1,3 +1,0 @@
----
-category: Seat Map
----
