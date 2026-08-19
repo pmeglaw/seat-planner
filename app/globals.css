@@ -292,6 +292,102 @@
   --sp-focus-ring-offset-color: #161616; /* spec-mandated; the light alias would resolve to #262626 */
 }
 
+/* Admin + shell surfaces join the chrome on dark. The --admin-bg/surface/
+   border/text aliases of --sp-color-* follow Task 2's block automatically —
+   only the tokens with their own light literals are re-pointed here.
+   Contrast on #161616 unless noted: #FF8A5C = 6.1:1, ink on #FF5715 = 5.71:1
+   (unchanged), #42be65 = 7.3:1, #3ddbd9 ≈ 10:1, #ff8389 = 7.9:1. */
+:root[data-theme="dark"] .admin-theme,
+:root[data-theme="dark"] .shell-theme {
+  /* Chrome: top bar one step deeper than the workspace. */
+  --admin-chrome-bg: #0a0a0a;
+  --admin-text-inverse: #161616;
+
+  /* Brand orange: hue unchanged, pairings swapped for a dark ground. */
+  --admin-primary-soft: rgba(255, 87, 21, 0.16);
+  --admin-primary-border: rgba(255, 87, 21, 0.45);
+  --admin-primary-on-soft: #FF8A5C;
+  --admin-paper: rgba(255, 87, 21, 0.12);
+
+  /* Raw status dots/bars. */
+  --admin-status-ok: #42be65;
+  --admin-status-warn: #08bdba;
+  --admin-status-bad: #fa4d56;
+  --admin-status-neutral: #8d8d8d;
+  --admin-status-ok-rgb: 66 190 101;
+  --admin-status-warn-rgb: 8 189 186;
+  --admin-status-bad-rgb: 250 77 86;
+
+  /* Status families → dark partners (bright text + alpha soft). */
+  --admin-success: #42be65;
+  --admin-success-rgb: 66 190 101;
+  --admin-success-soft: rgba(66, 190, 101, 0.14);
+  --admin-warning: #08bdba;
+  --admin-warning-text: #3ddbd9;
+  --admin-warning-text-rgb: 61 219 217;
+  --admin-warning-soft: rgba(8, 189, 186, 0.14);
+  --admin-error: #fa4d56;
+  --admin-danger: #fa4d56;
+  --admin-danger-soft: rgba(250, 77, 86, 0.14);
+  --admin-danger-soft-hover: rgba(250, 77, 86, 0.22);
+  --admin-info: #c6c6c6;
+  --admin-info-rgb: 198 198 198;
+  --admin-info-soft: rgba(255, 255, 255, 0.08);
+  --admin-analytics: #c6c6c6;
+
+  --admin-state-clean-bg: rgba(66, 190, 101, 0.14);
+  --admin-state-clean-border: rgba(66, 190, 101, 0.40);
+  --admin-state-clean-text: #42be65;
+  --admin-state-dirty-border: rgba(8, 189, 186, 0.40);
+  --admin-state-dirty-text: #3ddbd9;
+  --admin-state-saving-border: rgba(255, 255, 255, 0.14);
+  --admin-state-error-bg: rgba(250, 77, 86, 0.14);
+  --admin-state-error-border: rgba(250, 77, 86, 0.40);
+  --admin-state-error-text: #ff8389;
+  --admin-state-danger-border: rgba(250, 77, 86, 0.40);
+  --admin-state-danger-text: #ff8389;
+
+  --admin-publish-viewer-impact-border: rgba(255, 255, 255, 0.14);
+
+  --admin-diff-assigned-bg: rgba(66, 190, 101, 0.14);
+  --admin-diff-assigned-border: rgba(66, 190, 101, 0.40);
+  --admin-diff-assigned-text: #42be65;
+  --admin-diff-vacated-bg: rgba(250, 77, 86, 0.14);
+  --admin-diff-vacated-border: rgba(250, 77, 86, 0.40);
+  --admin-diff-vacated-text: #ff8389;
+  --admin-diff-reassigned-bg: rgba(8, 189, 186, 0.14);
+  --admin-diff-reassigned-border: rgba(8, 189, 186, 0.40);
+  --admin-diff-reassigned-text: #3ddbd9;
+
+  /* Marker LEGEND chips (the live pills are Task 6). */
+  --admin-marker-assigned-surface: #262626;
+  --admin-marker-assigned-border: #42be65;
+  --admin-marker-assigned-text: #f4f4f4;
+  --admin-marker-assigned-accent: rgba(66, 190, 101, 0.85);
+  --admin-marker-available-surface: #1f1f1f;
+  --admin-marker-available-border: #4a4a4a;
+  --admin-marker-available-text: #c6c6c6;
+  --admin-marker-available-accent: rgba(154, 154, 154, 0.5);
+  --admin-marker-reserved-surface: rgba(8, 189, 186, 0.16);
+  --admin-marker-reserved-border: #08bdba;
+  --admin-marker-reserved-text: #3ddbd9;
+  --admin-marker-reserved-accent: rgba(8, 189, 186, 0.85);
+  --admin-marker-unavailable-surface: #161616;
+  --admin-marker-unavailable-border: #333333;
+  --admin-marker-unavailable-text: #7a7a7a;
+  --admin-marker-unavailable-accent: rgba(122, 122, 122, 0.6);
+  --admin-marker-draft-surface: rgba(8, 189, 186, 0.10);
+  --admin-marker-draft-border: #08bdba;
+  --admin-marker-draft-text: #3ddbd9;
+  --admin-marker-search-halo: rgba(255, 87, 21, 0.32);
+
+  /* Elevation: deepened, overlays only (borders separate everywhere else). */
+  --admin-elevation-2-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --admin-elevation-3-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+  --admin-elevation-4-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  --admin-elevation-5-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
 /* One shell for both surfaces: the viewer (`.shell-theme`) and the admin
    (`.admin-theme`) share the same token set — same dark chrome, same light
    workspace — with admin-only chrome hidden for viewers in markup. */

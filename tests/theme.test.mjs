@@ -79,4 +79,5 @@ test("globals.css keys the dark theme off the shared data-theme attribute", asyn
   const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   // Mechanism only — values are free to evolve (repo test philosophy).
   assert.match(css, /:root\[data-theme="dark"\]\s*\{[^}]*color-scheme:\s*dark/);
+  assert.match(css, /:root\[data-theme="dark"\]\s+\.admin-theme/);
 });
