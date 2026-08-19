@@ -125,7 +125,7 @@ export const AdminAssignedSeat = () => (
 );
 
 export const AdminOpenSeat = () => (
-  <Habitat label="admin open seat — assign path, swap only in action row">
+  <Habitat label="admin open seat — assign path, swap only in Seat actions">
     <SeatInspector {...adminBase} seat={SEATS[3]} />
   </Habitat>
 );

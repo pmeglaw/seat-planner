@@ -43,7 +43,7 @@ type SeatInspectorProps = {
   // block Move/Swap/Vacate here. `pending` alone only covers a mutation this
   // inspector instance itself started (its own save/assign transition), so
   // the parent passes its own in-flight signal through this prop. Viewer
-  // never passes it (read-only, no icon row rendered anyway).
+  // never passes it (read-only, no Seat actions verbs rendered anyway).
   busy?: boolean;
   // Edit callbacks are optional so the read-only viewer can render the same
   // inspector without wiring any draft machinery (canEdit=false never calls them).
@@ -162,8 +162,9 @@ function ChevronRightIcon() {
   );
 }
 
-// Icon action row glyphs (v12 slice 4, prototype "Seat Planner v12
-// Prototype.dc.html" lines 218-220): ~15px, 1.5 stroke, aria-hidden.
+// Seat-action verb glyphs (v12 slice 4's icon action row, now inside the
+// Seat actions disclosure; prototype "Seat Planner v12 Prototype.dc.html"
+// lines 218-220): ~15px, 1.5 stroke, aria-hidden.
 function MoveGlyph() {
   return (
     <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -192,9 +193,9 @@ function VacateGlyph() {
 }
 
 // Heading row used inside the progressive assignment editor. The <details>-
-// based section styling this used to share with is retired (v12 slice 4) —
-// see the Overview tabpanel below for the flat eyebrow-heading style that
-// replaced it.
+// based section styling this used to share with is retired (v12 slice 4);
+// the disclosure sections use DisclosureSectionHeader below — this flat
+// eyebrow style now belongs to the assignment editor alone.
 function SectionHeading({ id, title }: { id?: string; title: string }) {
   return (
     <div className="flex items-center gap-2">
@@ -592,6 +593,10 @@ export function SeatInspector({
 
   function fieldErrorFromServerMessage(message: string): FieldError[] {
     if (/employee/i.test(message)) return [{ field: "employeeName", message }];
+    // The notes bounds messages lead with the field name ("Notes must be
+    // 1000 characters or fewer.", lib/schemas.ts); routing them here makes
+    // the notes error row and its auto-open focus branch reachable.
+    if (/^notes\b/i.test(message)) return [{ field: "notes", message }];
     return [];
   }
 
@@ -932,9 +937,9 @@ export function SeatInspector({
       {canEdit ? (
         <form id="seat-inspector-form" onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            {/* Save-state announcements sit outside the tabpanels: content
-                inside an inactive (unmounted) tab is never read by assistive
-                tech. */}
+            {/* Save-state announcements sit outside the disclosure bodies:
+                content inside a collapsed (unmounted) section is never read
+                by assistive tech. */}
             <div role="status" aria-live="polite" className="sr-only">
               {inspectorStateLabel}
             </div>
@@ -992,8 +997,8 @@ export function SeatInspector({
 
             {/* Editor for the progressive assignment flow (v12 slice 4): the
                 footer CTA below (Assign employee / Edit assignment) opens
-                this; Save/Cancel live in the commit bar. The icon action row
-                and tabs above hide while this is open. */}
+                this; Save/Cancel live in the commit bar. The disclosure
+                sections hide while this is open. */}
             {editingAssignment ? (
               <div className="border-b border-white/10 px-4 pb-3 pt-3">
                 <section ref={assignmentSectionRef} aria-labelledby="seat-assignment-heading">
@@ -1340,8 +1345,8 @@ export function SeatInspector({
           )}
         </form>
       ) : (
-        // Viewer inspector: Contact + Seat only — no Actions, Notes,
-        // Activity, tabs, action row, AI row, or footer. The data is the
+        // Viewer inspector: Contact + Seat only — no disclosure sections,
+        // seat-action verbs, AI row, or footer. The data is the
         // published assignment snapshot.
         //
         // tabIndex: the region must stay keyboard-scrollable on its own (axe

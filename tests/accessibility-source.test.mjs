@@ -206,21 +206,24 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   // into the shared bar.
   assert.match(seatMapSource, /const barActionCluster = canEdit \? \([\s\S]*?draftStatusLabel/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AskPlannerDrawer/);
-  // The anchor has moved twice: Swap left for the canvas action bar, then Move
-  // was hidden behind MOVE_UI_ENABLED (2026-07-30). Delete is the surviving
-  // admin-only control in the panel. The guarantee is unchanged — admin-only
-  // affordances must sit inside the canEdit branch — only its anchor moved.
-  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete custom seat/);
-  // The reseat verbs live in the inspector's Seat actions section now
-  // (2026-08-18 progressive disclosure). The section body is only mounted
-  // inside the canEdit-gated form branch; here we pin that only the ADMIN
-  // mount wires the verb handlers, so a viewer inspector can never grow
-  // Move/Swap/Vacate even if the internal gate regressed.
+  // Delete, the verbs, and the Status select all live in the Seat actions
+  // body (2026-08-18 progressive disclosure), whose id is unique in the
+  // file. Requiring the admin ternary to reach that id, then anchoring each
+  // control within the section's bounded span, replaces the old unbounded
+  // `\{canEdit \? \([\s\S]*` matches — those could satisfy themselves across
+  // unrelated code anywhere later in the file.
+  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*?id="seat-inspector-actions"/);
+  assert.match(inspectorSource, /id="seat-inspector-actions"[\s\S]{0,6000}Delete custom seat/);
+  // The reseat verbs live in the inspector's Seat actions section now.
+  // The section body is only mounted inside the canEdit-gated form branch;
+  // here we pin that only the ADMIN mount wires the verb handlers, so a
+  // viewer inspector can never grow Move/Swap/Vacate even if the internal
+  // gate regressed.
   assert.match(seatMapSource, /<SeatInspector[\s\S]{0,2400}onVacate=\{requestVacateFromBar\}/);
   assert.doesNotMatch(viewerFinderSource, /onMove=|onSwap=|onVacate=/);
-  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*\{\(onMove \|\| onSwap \|\| onVacate\) && \(/);
-  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Delete seat/);
-  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*Vacate/);
+  assert.match(inspectorSource, /id="seat-inspector-actions"[\s\S]{0,300}\{\(onMove \|\| onSwap \|\| onVacate\) && \(/);
+  assert.match(inspectorSource, /id="seat-inspector-actions"[\s\S]{0,6000}Delete seat/);
+  assert.match(inspectorSource, /id="seat-inspector-actions"[\s\S]{0,6000}Vacate/);
 });
 
 // A viewer seat can light up for two unrelated reasons — it matched the active
