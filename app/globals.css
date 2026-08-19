@@ -303,6 +303,12 @@
   --admin-chrome-bg: #0a0a0a;
   --admin-text-inverse: #161616;
 
+  /* Map mat (fixwave finding 1): sits one step below the #161616 canvas so
+     the inverted raster reads as a lightbox floating on the dark chrome,
+     instead of the light block/globals.css#L470 workspace (#ECE8E0)
+     leaving a cream island behind the map. */
+  --admin-map-workspace: #101010;
+
   /* Brand orange: hue unchanged, pairings swapped for a dark ground. */
   --admin-primary-soft: rgba(255, 87, 21, 0.16);
   --admin-primary-border: rgba(255, 87, 21, 0.45);
@@ -382,24 +388,41 @@
   --admin-marker-search-halo: rgba(255, 87, 21, 0.32);
 
   /* Live seat-pill overrides (Task 6, verified in-browser against the dark
-     marker table in docs/superpowers/specs/2026-08-19-dark-mode-design.md).
+     marker table in docs/superpowers/specs/2026-08-19-dark-mode-design.md;
+     fixwave 2026-08-19 closed the gaps Task 6 left open — see below).
      Most --admin-marker-live-* names need no override: they already
      color-mix over the dark state tokens above and land close to the
      table (assigned/reserved/draft/search borders + text measured directly
      in Chrome). Only the names below visibly missed, so only they are
-     re-pointed; everything else keeps the shared derivation.
+     re-pointed; everything else keeps the shared derivation. */
 
-     assigned/available never gain a dark bg — SeatMarker.tsx hardcodes
-     `bg-white/95` for both regardless of `data-theme` (no CSS var involved),
-     so the table's #262626/#1f1f1f pill fills are structurally out of this
-     token-only pass; fixing that needs a JSX change outside Task 6's scope. */
+  /* Assigned/available pill fills + base ring (fixwave finding 2):
+     SeatMarker.tsx used to hardcode `bg-white/95` for both pills and
+     `ring-white/45` for every pill's base ring regardless of `data-theme`
+     (no CSS var involved), leaving light islands over the inverted dark
+     raster. Now tokenized in JSX (SeatMarker.tsx ~234, ~239, ~473), so this
+     block can finally supply the table's dark pill fills and a low-alpha
+     white ring tuned for a dark ground. */
+  --admin-marker-live-available-surface: rgba(31, 31, 31, 0.95);  /* spec: available pill #1f1f1f */
+  --admin-marker-live-assigned-surface: rgba(38, 38, 38, 0.95);   /* spec: assigned pill #262626 */
+  --admin-marker-live-pill-ring: rgba(255, 255, 255, 0.12);
 
-  /* Assigned text: the dark on-soft literal (#42be65, tuned for near-black
-     tinted surfaces elsewhere) measured 2.39:1 on the always-white assigned
-     pill — fails AA. Pinned to the pre-existing LIGHT on-soft literal
-     (#284C3B), which is what this token already resolves to in light mode
-     for the same white-bg context: 9.6:1 measured in Chrome. */
-  --admin-marker-live-assigned-text: #284C3B;
+  /* Available-pill ink (fixwave finding 3): --admin-marker-live-ink used to
+     be deliberately left alone because it only ever painted text on the
+     hardcoded white/95 available pill (dark ink on white reads fine in both
+     themes). Now that the available pill has a dark fill of its own, that
+     same light-brown literal (#453D33) would sit at failing contrast on
+     #1f1f1f, so it is re-pointed to the spec's available-text value —
+     measured ~8.9:1 on #1f1f1f. */
+  --admin-marker-live-ink: #c6c6c6;
+
+  /* Assigned text (fixwave finding 3): was pinned to the pre-existing LIGHT
+     on-soft literal (#284C3B, a dark green) because the assigned pill was
+     always white regardless of theme — 9.6:1 on that white fill. Now that
+     the assigned pill renders on the dark #262626 fill above, that same
+     dark-green literal would be nearly invisible; corrected to the spec's
+     assigned-text value for the dark pill. */
+  --admin-marker-live-assigned-text: #f4f4f4;
 
   /* Unavailable: surface/border were still deriving from the *light* neutral
      ramp (--sp-color-stone(-muted) is dark-aware, but the color-mix left a
@@ -423,10 +446,6 @@
   --admin-marker-live-neutral-text: #c6c6c6;
 
   /* Verified and deliberately NOT overridden:
-     - --admin-marker-live-ink (#453D33): only ever paints text on the
-       hardcoded white/95 available pill (confirmed via computed-style probe
-       and a source read of SeatMarker.tsx) — dark ink on a white pill reads
-       fine in both themes, so the literal is correct as-is.
      - --admin-marker-live-selected-surface (#171A1D): the table wants a
        #FF5715 fill, but the selected pill's text is `text-white` — a JSX
        literal, not a var, so out of Task 6's scope. White-on-#FF5715
@@ -757,6 +776,13 @@
   --admin-marker-live-assigned-border: color-mix(in srgb, var(--sp-color-state-success) 55%, transparent);
   --admin-marker-live-assigned-text: var(--sp-color-state-success-on-soft);
   --admin-marker-live-available-border: var(--sp-color-stone-muted);
+  /* Pill fills + base ring (fixwave finding 2): promoted from the JSX
+     literals `bg-white/95` (both pills) / `ring-white/45` (base ring) so
+     the dark-theme block above has a token to override — pixel-identical
+     to the literals they replace. */
+  --admin-marker-live-available-surface: rgba(255, 255, 255, 0.95);
+  --admin-marker-live-assigned-surface: rgba(255, 255, 255, 0.95);
+  --admin-marker-live-pill-ring: rgba(255, 255, 255, 0.45);
   --admin-marker-live-reserved-border: color-mix(in srgb, var(--sp-color-state-warning) 55%, transparent);
   --admin-marker-live-reserved-surface: color-mix(in srgb, var(--sp-color-state-warning-surface) 95%, transparent);
   --admin-marker-live-reserved-text: var(--sp-color-state-warning-on-soft);
