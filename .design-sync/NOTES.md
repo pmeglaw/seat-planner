@@ -47,6 +47,47 @@
 - cardMode overrides: 7 dialogs + AskPlannerDrawer single (fixed inset-0
   overlays); AppShell/SeatMap/ReceptionScreen/Admin panels column.
 
+## 2026-08-19 re-sync (40 components)
+
+- Added to the surface: `MapStatusBand`, `NamesVisibilityToggle`, `SeatSheet`
+  and `SeatSheetNotice` (both exports of SeatSheet.tsx). 36 → 40 components.
+  `ViewerStatusBand` existed only between #407 and #408 and was folded into
+  the shared band before it ever synced — don't go looking for it.
+- `MapStatusLegend` is app-dead since #407/#408 (no surface mounts it; it stays
+  exported for its DS card). Its card documents the retired floating legend —
+  the shipped surfaces render `MapStatusBand`. Retire the card when the
+  component goes.
+- The driver's verification partition follows the RENDERED card, not the
+  component source: SeatMap/ViewerSeatFinder/AppTopBar all changed in app code
+  yet landed in `unchanged`. Re-verify materially reworked surfaces on purpose
+  with `package-capture.mjs --components … --spot-check-components …` — that
+  audit is what caught the clipped status band below.
+- `[GRID_OVERFLOW]` warns (new since the last converter version) on
+  AccountMenu / CloseIcon / ThemeToggle (wide) and AppRail / AppShell (escape,
+  fixed positioning). Remedies applied in cfg.overrides: column for the first
+  three, `single` + primaryStory for the rail and shell.
+- **Column-mode cells cap their height (~560px).** A full-surface preview
+  clipped there — SeatMap lost the whole status band off the bottom edge.
+  Full-viewport surfaces need `cardMode: single` + an explicit `viewport`.
+- **Full-surface previews need an explicit stage.** SeatMap/ViewerSeatFinder
+  size off `lg:h-screen`, so the band (their last row) landed exactly on the
+  card's edge. Both previews now wrap the surface in a fixed-height div plus
+  `[data-ds-stage="…"] > div { height:100% !important; min-height:0 !important }`.
+- **Mount animations freeze at frame 0 in capture.** SeatSheet draws itself in
+  (opacity 0 + stroke-dashoffset keyframes) and both its cards came back as an
+  empty drawing frame. The previews inject the component's OWN
+  `prefers-reduced-motion: reduce` rules with `!important`. Any future
+  animated-entrance component needs the same treatment.
+- A `cardMode` change needs a FULL `package-build.mjs`: `preview-rebuild.mjs`
+  + capture prints `[CONFIG_STALE]` and captures the stale card anyway.
+- `conventions.md` drift found and fixed: the Action family was written
+  `--sp-color-action-hover/-pressed`, which do not exist (real names are
+  `--sp-color-action-primary-hover` / `-pressed`), and the StatusBadge tone
+  list was missing the seat-status tones. Re-run that validation every sync.
+- Grades live in the gitignored `.cache/` — a fresh clone has none, and
+  carry-forward comes from the uploaded `_ds_sync.json`. Both this run's
+  clones started cold; that is expected, not a bug.
+
 ## Preview-authoring playbook (from wave 1)
 
 - **Post-build asset copy (MANUAL, every package-build run):**
@@ -109,3 +150,12 @@
   (and any design using SeatMap) has no map image.
 - Tailwind compile happens at sync time from app/globals.css — utilities used
   only by NEW app code appear in the bundle only after re-running buildCmd.
+- The `[data-ds-stage]` height pin in the SeatMap/ViewerSeatFinder previews is
+  tied to those surfaces keeping a viewport-relative root (`lg:h-screen`). If
+  the height model changes, the pin silently over- or under-constrains.
+- SeatSheet's settle CSS targets the component's own `.mss-*` class names.
+  Rename those in the component and the card goes blank again with no warning
+  (the render check passes — the DOM is there, it is just invisible).
+- `cfg.writes` for the upload must include `images/**`: the manual asset copy
+  puts the brand mark and floor plan in the bundle, and a plan without that
+  glob rejects them (the map cards then ship with a missing floor plan).

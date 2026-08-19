@@ -94,7 +94,15 @@ const departmentOptions = [
 
 const zoneOptions = [option("z1", "North Wing"), option("z2", "East Wing"), option("z3", "South Wing")];
 
+// Same stage treatment as the SeatMap preview: the surface takes its height
+// from the screen (`lg:h-screen`), and the status band (#407) is its last row,
+// so without an explicit stage the band lands on the card's bottom edge.
+const STAGE_CSS = `[data-ds-stage="viewer"] > div { height: 100% !important; min-height: 0 !important; }`;
+
 export const ViewerHome = () => (
+  <div style={{ height: 700, overflow: "hidden" }}>
+    <style>{STAGE_CSS}</style>
+    <div data-ds-stage="viewer" style={{ height: "100%" }}>
   <ViewerSeatFinder
     seats={seats}
     employees={employees}
@@ -105,4 +113,6 @@ export const ViewerHome = () => (
     accountEmail="patrick@megeredchianlaw.com"
     accountRoleLabel="Admin"
   />
+    </div>
+  </div>
 );
