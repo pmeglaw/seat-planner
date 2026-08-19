@@ -24,7 +24,6 @@ export { SeatInspector } from "../components/seat-map/SeatInspector";
 export { FilterPanel } from "../components/seat-map/FilterPanel";
 export { ResultsPanel } from "../components/seat-map/ResultsPanel";
 export { FloorSelector } from "../components/seat-map/FloorSelector";
-export { MapStatusLegend } from "../components/seat-map/MapStatusLegend";
 export { MapStatusBand } from "../components/seat-map/MapStatusBand";
 export { NamesVisibilityToggle } from "../components/seat-map/NamesVisibilityToggle";
 export { SeatSheet, SeatSheetNotice } from "../components/seat-map/SeatSheet";

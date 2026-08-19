@@ -29,7 +29,6 @@
     "FilterPanel": "components/seat-map/FilterPanel.tsx",
     "ResultsPanel": "components/seat-map/ResultsPanel.tsx",
     "FloorSelector": "components/seat-map/FloorSelector.tsx",
-    "MapStatusLegend": "components/seat-map/MapStatusLegend.tsx",
     "MapStatusBand": "components/seat-map/MapStatusBand.tsx",
     "NamesVisibilityToggle": "components/seat-map/NamesVisibilityToggle.tsx",
     "SeatSheet": "components/seat-map/SeatSheet.tsx",
