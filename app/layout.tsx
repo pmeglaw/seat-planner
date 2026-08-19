@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { THEME_DARK, THEME_STORAGE_KEY } from "@/lib/theme";
+import { THEME_DARK, THEME_MEDIA_QUERY, THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
 // The woff2 files are vendored in app/fonts (see its README for provenance).
@@ -39,10 +39,12 @@ const plexMono = localFont({
 // every other surface renders identically until it grows dark tokens. Runs
 // synchronously before paint to avoid a light flash; suppressHydrationWarning
 // on <html> covers the server-markup mismatch this deliberately creates. The
-// key/value literals are interpolated from lib/theme.ts at build time so the
-// boot replay and ThemeToggle can never disagree.
+// stored choice replays first; empty storage seeds from the OS (owner decision
+// 2026-08-19); THEME_LIGHT stored by the toggle is an explicit choice. Key/value
+// literals are interpolated from lib/theme.ts at build time so the boot replay
+// and ThemeToggle can never disagree.
 const THEME_BOOT_SCRIPT =
-  `try{if(localStorage.getItem('${THEME_STORAGE_KEY}')==='${THEME_DARK}')document.documentElement.dataset.theme='${THEME_DARK}'}catch(e){}`;
+  `try{var t=localStorage.getItem('${THEME_STORAGE_KEY}');if(t==='${THEME_DARK}'||(!t&&matchMedia('${THEME_MEDIA_QUERY}').matches))document.documentElement.dataset.theme='${THEME_DARK}'}catch(e){}`;
 
 export const metadata: Metadata = {
   title: "Seat Planner",

@@ -11,3 +11,8 @@
 export const THEME_STORAGE_KEY = "sp-theme";
 export const THEME_DARK = "dark";
 export const THEME_LIGHT = "light";
+
+// The OS fallback consulted ONLY when localStorage holds no choice — a stored
+// "light" is an explicit pick and beats a dark OS. Interpolated into the boot
+// script like the key/values above, for the same drift reason.
+export const THEME_MEDIA_QUERY = "(prefers-color-scheme: dark)";

@@ -38,3 +38,39 @@ test("the boot script and the toggle both build from lib/theme, never raw litera
   assert.match(toggleSource, /\bTHEME_LIGHT\b/);
   assert.doesNotMatch(toggleSource, /(['"`])(?:sp-theme|dark|light)\1/);
 });
+
+test("boot script seeds from the OS only when storage is empty", async () => {
+  const layoutSource = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
+  const theme = await importTsModule("lib/theme.ts");
+
+  // The media query is part of the cross-runtime contract: the boot script
+  // interpolates it from lib/theme.ts like the storage key and values.
+  assert.equal(theme.THEME_MEDIA_QUERY, "(prefers-color-scheme: dark)");
+  assert.match(layoutSource, /\$\{THEME_MEDIA_QUERY\}/);
+  assert.doesNotMatch(layoutSource, /prefers-color-scheme/);
+
+  // Replay the boot script in a stubbed DOM: stored choice wins over the OS;
+  // only empty storage consults matchMedia.
+  const bootMatch = layoutSource.match(/THEME_BOOT_SCRIPT =\s*`([^`]+)`/);
+  assert.ok(bootMatch, "THEME_BOOT_SCRIPT template not found");
+  const script = bootMatch[1]
+    .replaceAll("${THEME_STORAGE_KEY}", theme.THEME_STORAGE_KEY)
+    .replaceAll("${THEME_DARK}", theme.THEME_DARK)
+    .replaceAll("${THEME_MEDIA_QUERY}", theme.THEME_MEDIA_QUERY);
+
+  function run({ stored, osDark }) {
+    const documentElement = { dataset: {} };
+    const fn = new Function("localStorage", "matchMedia", "document", script);
+    fn(
+      { getItem: () => stored },
+      query => ({ matches: query === theme.THEME_MEDIA_QUERY && osDark }),
+      { documentElement }
+    );
+    return documentElement.dataset.theme;
+  }
+
+  assert.equal(run({ stored: theme.THEME_DARK, osDark: false }), theme.THEME_DARK);
+  assert.equal(run({ stored: theme.THEME_LIGHT, osDark: true }), undefined);
+  assert.equal(run({ stored: null, osDark: true }), theme.THEME_DARK);
+  assert.equal(run({ stored: null, osDark: false }), undefined);
+});
