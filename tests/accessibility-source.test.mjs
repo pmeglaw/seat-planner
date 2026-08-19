@@ -529,9 +529,11 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /getSeatDeleteBlockReason/);
   assert.match(inspectorSource, /Delete seat/);
   assert.match(inspectorSource, /aria-describedby="seat-inspector-delete-help"/);
-  // v12 slice 4: rounded-[10px] button overrides retired everywhere in this
-  // file (flat 0 radius); the layout guarantee (no-wrap-collapse of the
-  // helper line) is what this pin protects, not the corner radius.
+  // Corner radius is free to evolve (v12 slice 4 flattened it to 0; the
+  // 2026-08-19 reference-image pass rounded the inspector again via
+  // arbitrary rounded-[Npx] values, since the theme radius scale stays
+  // zeroed); the layout guarantee (no-wrap-collapse of the helper line) is
+  // what this pin protects, not the corner radius.
   assert.match(inspectorSource, /whitespace-normal leading-tight/);
   // Figma delete treatment: the block reason is a visible helper line, not sr-only.
   // (Class content deliberately unpinned — type-scale values are free to evolve;
