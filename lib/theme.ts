@@ -1,6 +1,6 @@
 // The app-wide theme contract, in one place. Two runtimes must agree on these
 // strings: app/layout.tsx's inline boot script (replays the stored choice
-// before paint) and components/reception/ThemeToggle.tsx (flips it in-page).
+// before paint) and components/ui/ThemeToggle.tsx (flips it in-page).
 // They previously duplicated the literals, where a rename in one place would
 // silently split boot-time replay from the toggle — the theme would revert on
 // every reload, or stop persisting, with no test or type error.

@@ -7,6 +7,7 @@ import { useCallback } from "react";
 import { AccountMenu } from "@/components/ui/AccountMenu";
 import { adminChromeDividerRule } from "@/components/ui/adminChrome";
 import type { AppRailActive } from "@/components/ui/AppRail";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 // Top-bar-first chrome (2026-08-14 owner redesign): ONE full-width bar spans
 // the viewport top on every (shell) route — the rail starts BELOW it. Zone
@@ -146,6 +147,7 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, r
             menu must not linger over an incoming page — and a back/forward
             with the menu open must return focus to the trigger, the same
             guarantee the old rail account cell gave (see AccountMenu). */}
+        <ThemeToggle />
         <AccountMenu email={email} roleLabel={roleLabel} autoCloseKey={pathname} />
       </div>
     </header>

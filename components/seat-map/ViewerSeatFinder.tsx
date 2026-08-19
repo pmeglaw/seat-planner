@@ -31,6 +31,7 @@ import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResu
 import { buildViewerPaletteBrowse, getSeatZone, zoneKey } from "@/lib/viewerFindPalette";
 import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
 import { AccountMenu } from "@/components/ui/AccountMenu";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { NamesVisibilityToggle } from "@/components/seat-map/NamesVisibilityToggle";
@@ -1294,6 +1295,7 @@ export function ViewerSeatFinder({
               </Link>
             </div>
           )}
+          <ThemeToggle />
           {/* Account menu (identity + sign out); decorative fallback keeps
               unauthenticated prototype embeds rendering. */}
           {accountEmail ? (

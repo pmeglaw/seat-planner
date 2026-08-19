@@ -20,7 +20,7 @@ test("theme contract: stored key and values", () => {
 
 test("the boot script and the toggle both build from lib/theme, never raw literals", async () => {
   const layoutSource = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
-  const toggleSource = await readFile(new URL("../components/reception/ThemeToggle.tsx", import.meta.url), "utf8");
+  const toggleSource = await readFile(new URL("../components/ui/ThemeToggle.tsx", import.meta.url), "utf8");
 
   // Boot script interpolates the shared constants at build time.
   assert.match(layoutSource, /from "@\/lib\/theme"/);

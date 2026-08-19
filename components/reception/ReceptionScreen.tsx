@@ -12,7 +12,7 @@ import {
 // finder, Management) — Reception must not grow its own variant, or the same
 // person shows different initials at the front desk.
 import { buildInitials } from "@/lib/validators";
-import { ThemeToggle } from "@/components/reception/ThemeToggle";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 // Reception — front-desk call routing (reception handoff). Read-only: renders
 // published data handed down by app/reception/page.tsx and never mutates
@@ -113,7 +113,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
             Front-desk directory — type the caller&apos;s request, read the extension, transfer.
           </p>
         </div>
-        <ThemeToggle />
+        <ThemeToggle className="flex h-7 items-center gap-1.5 border border-[var(--r-card-border)] bg-[var(--r-card)] px-2.5 text-[11.5px] font-medium text-[var(--r-secondary)] transition-colors hover:bg-[var(--r-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--r-accent)]" />
       </header>
 
       {/* Search bar */}
