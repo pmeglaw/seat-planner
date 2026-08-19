@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
+import type { ChangeEvent, FormEvent, KeyboardEvent, ReactNode } from "react";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
@@ -139,6 +139,19 @@ function formSnapshot(form: SeatInspectorForm) {
   return JSON.stringify(form);
 }
 
+// Display-only timestamp for the footer facts (reference image: "Last
+// updated"). The draft-concurrency fence still passes seat.updated_at back to
+// the server VERBATIM — never this parsed/formatted copy (the header comment
+// in lib/draftConcurrency.ts explains why re-parsing through Date is banned
+// on that path). The formatter is module-level because Intl.DateTimeFormat
+// construction is expensive and this runs on every inspector render.
+const seatTimestampFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+function formatSeatTimestamp(value: string): string | null {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return seatTimestampFormat.format(date);
+}
+
 function formsEqual(left: SeatInspectorForm, right: SeatInspectorForm) {
   return Object.keys(emptyForm).every(key => {
     const formKey = key as keyof SeatInspectorForm;
@@ -192,6 +205,43 @@ function VacateGlyph() {
   );
 }
 
+// 2026-08-19 reference-image pass: the primary CTA, Contact rows, and Delete
+// gain small leading glyphs (same ~15px / 1.5-stroke family as the seat verbs
+// above, all aria-hidden — the text labels carry the meaning).
+function PencilGlyph() {
+  return (
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m13.2 3.6 3.2 3.2L7 16.2l-3.8.6.6-3.8Z" />
+    </svg>
+  );
+}
+
+function MailGlyph() {
+  return (
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2.5" y="4.5" width="15" height="11" />
+      <path d="m3 5.5 7 5.5 7-5.5" />
+    </svg>
+  );
+}
+
+function PhoneGlyph() {
+  return (
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 3.5h3l1.5 3.5-2 1.5a10.5 10.5 0 0 0 5 5l1.5-2 3.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5C8.5 17.5 2.5 11.5 2.5 5A1.5 1.5 0 0 1 4 3.5Z" />
+    </svg>
+  );
+}
+
+function TrashGlyph() {
+  return (
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5 6.3 16a1 1 0 0 0 1 .9h5.4a1 1 0 0 0 1-.9l.8-10.5" />
+      <path d="M8.3 8.5v5M11.7 8.5v5" />
+    </svg>
+  );
+}
+
 // Heading row used inside the progressive assignment editor. The <details>-
 // based section styling this used to share with is retired (v12 slice 4);
 // the disclosure sections use DisclosureSectionHeader below — this flat
@@ -205,10 +255,13 @@ function SectionHeading({ id, title }: { id?: string; title: string }) {
   );
 }
 
-function FactRow({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
+function FactRow({ label, value, mono = true, icon }: { label: string; value: string; mono?: boolean; icon?: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-2.5 border-b border-white/5 py-1.5 last:border-b-0">
-      <dt className="shrink-0 text-[12.5px] text-[var(--admin-chrome-muted)]">{label}</dt>
+      <dt className="flex shrink-0 items-center gap-2 text-[12.5px] text-[var(--admin-chrome-muted)]">
+        {icon}
+        {label}
+      </dt>
       <dd className={["min-w-0 truncate text-right text-[12.5px] font-medium text-[var(--admin-chrome-value-text)]", mono ? "font-mono" : ""].filter(Boolean).join(" ")}>{value}</dd>
     </div>
   );
@@ -251,7 +304,7 @@ function ContactFacts({ rows, canEdit }: { rows: ContactFactRow[]; canEdit: bool
   return (
     <dl>
       {rows.map(row => (
-        <FactRow key={row.label} label={row.label} value={row.value} />
+        <FactRow key={row.label} label={row.label} value={row.value} icon={row.label === "Email" ? <MailGlyph /> : <PhoneGlyph />} />
       ))}
     </dl>
   );
@@ -495,6 +548,7 @@ export function SeatInspector({
 
   const currentZone = selectedSeat.zone ?? selectedSeat.department ?? "Unzoned";
   const currentStatusLabel = STATUS_LABELS[effectiveStatus];
+  const lastUpdatedLabel = formatSeatTimestamp(selectedSeat.updated_at);
   // Header status chip on the dark panel: neutral pill, the status carries the
   // shell status hue on the dot only (never color-only — the label names it).
   const headerStatusDotClass = effectiveStatus === "assigned"
@@ -850,7 +904,7 @@ export function SeatInspector({
 
   // After Cancel or a successful save the commit bar (and the button the
   // keyboard user just activated) unmounts — hand focus to the pinned
-  // primary action that re-renders in its place (critique action 5). Sets
+  // primary action that re-renders in the header (critique action 5). Sets
   // an intent consumed by the commit-driven effect above the early return;
   // the CTA may not exist yet when this is called (see that effect).
   function focusPrimaryActionSoon() {
@@ -951,6 +1005,22 @@ export function SeatInspector({
             <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] ring-1 ring-white/15">Published seat</span>
           )}
         </div>
+        {/* Primary CTA pinned under the header meta (2026-08-19 reference
+            image; also restores the 2026-07-16 "pinned under the header"
+            owner ruling verbatim). Lives in the sticky header so it can never
+            scroll away or collapse; it yields to the commit bar while a save
+            could be pending — same showCommitBar gate the old footer slot
+            used. Identity (ref, labels, aria, disabled rule) is unchanged so
+            the focus-handoff contract keeps landing here after Cancel/Save. */}
+        {canEdit && !showCommitBar && (
+          <button type="button" onClick={startAssignmentEditing} disabled={pending} ref={primaryActionRef}
+            aria-expanded={editingAssignment} aria-controls="seat-inspector-form"
+            aria-label={hasCurrentAssignment ? `Edit assignment for ${selectedSeat.label}` : `Assign an employee to ${selectedSeat.label}`}
+            className="mt-0.5 flex h-10 w-full items-center justify-center gap-2 bg-[var(--admin-primary-cta)] text-[13px] font-semibold text-white transition hover:bg-[var(--admin-primary-cta-hover)] active:scale-[0.99] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white disabled:opacity-40">
+            <PencilGlyph />
+            {hasCurrentAssignment ? "Edit assignment" : "Assign employee"}
+          </button>
+        )}
       </div>
 
       {canEdit ? (
@@ -1015,7 +1085,7 @@ export function SeatInspector({
             )}
 
             {/* Editor for the progressive assignment flow (v12 slice 4): the
-                footer CTA below (Assign employee / Edit assignment) opens
+                header CTA above (Assign employee / Edit assignment) opens
                 this; Save/Cancel live in the commit bar. The disclosure
                 sections hide while this is open. */}
             {editingAssignment ? (
@@ -1247,11 +1317,13 @@ export function SeatInspector({
                           {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[var(--admin-chrome-danger-text)]">{fieldErrorMap.status}</p>}
                         </label>
                       )}
-                      {/* Figma delete treatment: full-width low-emphasis button +
-                          visible helper line. Rendered only for deletable-class
-                          seats: custom AND not a protected-original label — the
-                          label guard makes the gate immune to is_custom data
-                          drift on original seats. */}
+                      {/* Delete treatment (2026-08-19 reference image):
+                          full-width OUTLINED danger button with a trash glyph
+                          + visible helper line. Rendered only for
+                          deletable-class seats: custom AND not a
+                          protected-original label — the label guard makes the
+                          gate immune to is_custom data drift on original
+                          seats. */}
                       {selectedSeat.is_custom && !isProtectedOriginalSeatLabel(selectedSeat.label) && (
                         <>
                           <Button
@@ -1261,8 +1333,9 @@ export function SeatInspector({
                             aria-label={`Delete custom seat ${selectedSeat.label}`}
                             aria-describedby="seat-inspector-delete-help"
                             title={deleteHelpText}
-                            className="mt-2 min-w-0 w-full whitespace-normal leading-tight !border-transparent !bg-[var(--admin-chrome-raised)] !text-[var(--admin-chrome-danger-text)] !shadow-none hover:!border-transparent hover:!bg-[rgb(var(--admin-status-bad-rgb)/0.20)] disabled:!border-transparent disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)] disabled:hover:!bg-[var(--admin-chrome-elevated)]"
+                            className="mt-2 min-w-0 w-full gap-2 whitespace-normal leading-tight !border-[rgb(var(--admin-status-bad-rgb)/0.45)] !bg-transparent !text-[var(--admin-chrome-danger-text)] !shadow-none hover:!border-[rgb(var(--admin-status-bad-rgb)/0.70)] hover:!bg-[rgb(var(--admin-status-bad-rgb)/0.15)] disabled:!border-white/10 disabled:!bg-[var(--admin-chrome-elevated)] disabled:!text-[var(--admin-chrome-disabled)] disabled:hover:!bg-[var(--admin-chrome-elevated)]"
                           >
+                            <TrashGlyph />
                             Delete seat
                           </Button>
                           <p id="seat-inspector-delete-help" className="mt-1.5 text-[12px] leading-4 text-[var(--admin-chrome-muted)]">{deleteHelpText}</p>
@@ -1294,7 +1367,7 @@ export function SeatInspector({
                   )}
                 </div>
 
-                <div>
+                <div className="border-b border-white/5">
                   <DisclosureSectionHeader bodyId="seat-inspector-activity" title="Activity" open={openSections.activity} onToggle={() => toggleSection("activity")} />
                   {openSections.activity && (
                     <div id="seat-inspector-activity" className="pb-3">
@@ -1313,24 +1386,31 @@ export function SeatInspector({
                     </div>
                   )}
                 </div>
+
+                {/* Footer facts (2026-08-19 reference image): seat identity +
+                    recency, quieter than the sections above. Display-only —
+                    the concurrency fence keeps sending updated_at back
+                    verbatim, never this formatted copy. */}
+                <dl className="pb-1 pt-2.5">
+                  <div className="flex items-center justify-between gap-2.5 py-1">
+                    <dt className="shrink-0 text-[12px] text-[var(--admin-chrome-muted)]">Seat ID</dt>
+                    <dd className="min-w-0 truncate font-mono text-[12px] font-medium text-[var(--admin-chrome-value-text)]">{selectedSeat.label}</dd>
+                  </div>
+                  {lastUpdatedLabel && (
+                    <div className="flex items-center justify-between gap-2.5 py-1">
+                      <dt className="shrink-0 text-[12px] text-[var(--admin-chrome-muted)]">Last updated</dt>
+                      <dd className="min-w-0 truncate text-[12px] font-medium text-[var(--admin-chrome-value-text)]">{lastUpdatedLabel}</dd>
+                    </div>
+                  )}
+                </dl>
               </div>
             )}
           </div>
 
           {/* Ask Planner stays the panel's last word — tertiary, after the
-              scroll area; the verbs live in the action zone above. */}
+              scroll area; the verbs live in the Seat actions section and the
+              primary CTA sits pinned in the header above. */}
           {onExplainSeat && <AskPlannerSeatRow seat={selectedSeat} onExplainSeat={onExplainSeat} />}
-
-          {canEdit && !showCommitBar && (
-            <div className="border-t border-white/10">
-              <button type="button" onClick={startAssignmentEditing} disabled={pending} ref={primaryActionRef}
-                aria-expanded={editingAssignment} aria-controls="seat-inspector-form"
-                aria-label={hasCurrentAssignment ? `Edit assignment for ${selectedSeat.label}` : `Assign an employee to ${selectedSeat.label}`}
-                className="h-12 w-full bg-[var(--admin-primary-cta)] text-[14px] font-semibold text-white transition hover:bg-[var(--admin-primary-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white disabled:opacity-40">
-                {hasCurrentAssignment ? "Edit assignment" : "Assign employee"}
-              </button>
-            </div>
-          )}
 
           {showCommitBar && (
             <div id="seat-inspector-commit-bar" className="border-t border-white/10 bg-[var(--admin-chrome-commit-bg)] px-4 py-3">
