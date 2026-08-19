@@ -1,0 +1,70 @@
+/* PROTOTYPE ONLY — scoped to /concepts/music-visualizer.
+ *
+ * Lives here rather than in app/globals.css so a throwaway surface cannot leak
+ * styles into the shipped viewer/admin themes. Every rule is nested under
+ * .prism-stage for the same reason.
+ *
+ * Range inputs are the one control Tailwind cannot dress: the track and thumb
+ * are shadow-DOM pseudo-elements, and the native rendering is a light-grey bar
+ * that all but vanishes on this background. */
+
+.prism-stage .prism-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Track — WebKit/Blink */
+.prism-stage .prism-range::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Track — Gecko */
+.prism-stage .prism-range::-moz-range-track {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.prism-stage .prism-range::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(125, 211, 252, 0.75);
+}
+
+/* Thumb — 16px is above the 14px floor where a pointer target starts to feel
+   fiddly, and the ring keeps it legible where it overlaps a bright track. */
+.prism-stage .prism-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6.5px;
+  border-radius: 999px;
+  background: #e8f4ff;
+  border: 1px solid rgba(125, 211, 252, 0.9);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+}
+
+.prism-stage .prism-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #e8f4ff;
+  border: 1px solid rgba(125, 211, 252, 0.9);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+}
+
+/* The scene itself already damps its motion under prefers-reduced-motion
+   (reducedMotionParams); this covers the chrome's own fades. */
+@media (prefers-reduced-motion: reduce) {
+  .prism-stage * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

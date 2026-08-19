@@ -19,7 +19,7 @@ function supabaseOrigin() {
 // kept anyway — frame-ancestors, base-uri, form-action, object-src and
 // connect-src all still constrain real attack paths that X-Frame-Options alone
 // does not cover. Tightening script-src to a nonce is a separate change.
-function contentSecurityPolicy() {
+function contentSecurityPolicy(extraDirectives = []) {
   return [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline'",
@@ -32,9 +32,34 @@ function contentSecurityPolicy() {
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "object-src 'none'"
+    "object-src 'none'",
+    ...extraDirectives
   ].join("; ");
 }
+
+// PROTOTYPE-ONLY header override, scoped to exactly one path.
+//
+// /concepts/music-visualizer needs two things the app-wide posture denies, and
+// rightly denies: microphone access, and a blob: media source for playing a
+// locally-picked audio file. Both are widened HERE and only here — the global
+// `securityHeaders` above are untouched, so every real surface still sends
+// `microphone=()` and a CSP with no media-src. tests/music-visualizer-source
+// pins that scoping.
+//
+// Exposure is small by construction: without SEAT_PLANNER_ENABLE_PROTOTYPES=true
+// at BUILD time the page's notFound() fires during prerender, so production
+// serves the not-found body and none of the visualizer's code reaches the
+// browser (the response status stays 200 — same as the other /concepts routes).
+// The microphone also still requires the browser's own permission prompt.
+// Delete this entry (and the Microphone button) if the prototype is retired.
+const MUSIC_VISUALIZER_PATH = "/concepts/music-visualizer";
+
+const musicVisualizerHeaders = [
+  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" },
+  ...(process.env.NODE_ENV === "production"
+    ? [{ key: "Content-Security-Policy", value: contentSecurityPolicy(["media-src 'self' blob:"]) }]
+    : [])
+];
 
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -96,7 +121,13 @@ const nextConfig = {
     ]
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // Order matters: the catch-all lands first and the prototype override
+    // second, so its Permissions-Policy / CSP replace the app-wide values on
+    // that single path rather than being replaced by them.
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      { source: MUSIC_VISUALIZER_PATH, headers: musicVisualizerHeaders }
+    ];
   }
 };
 
