@@ -135,10 +135,9 @@ test("a viewer sees no edit affordances in the inspector", async ({ page }) => {
 test("an admin sees the edit affordances for a custom draft seat", async ({ page }) => {
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
   await clickMarker(page, "S01");
-  // Delete and Swap live in the collapsed Seat actions section — expand it first.
-  const actionsHeader = page.locator('button[aria-controls="seat-inspector-actions"]');
-  await expect(actionsHeader).toBeAttached();
-  await actionsHeader.dispatchEvent("click");
+  // Delete and Swap sit in the always-mounted Seat management section (flat
+  // sections, 2026-08-19 Carbon handoff).
+  await expect(page.locator("#seat-inspector-actions")).toBeAttached();
   await expect(page.locator('[aria-label^="Delete custom seat"]')).toBeAttached();
   // The assign affordance now has a single source (the inspector's footer
   // CTA) — the canvas bar that duplicated it is retired, so the name is
@@ -218,12 +217,9 @@ test("a successful save hands focus to the re-mounted primary CTA", async ({ pag
 // reports dirty (native setter + bubbling input, per the harness's no-CSS rules).
 async function dirtyInspectorNotes(page: Page) {
   await clickMarker(page, "S01");
-  // Progressive sections: the notes textarea lives in the Notes section,
-  // collapsed by default — expand it before reaching for the field.
-  const notesHeader = page.locator('button[aria-controls="seat-inspector-notes"]');
-  await expect(notesHeader).toBeAttached();
-  await notesHeader.dispatchEvent("click");
-  await expect(page.locator("textarea").first()).toBeAttached();
+  // Flat sections (2026-08-19 Carbon handoff): the notes textarea is always
+  // mounted inside #seat-inspector-notes.
+  await expect(page.locator("#seat-inspector-notes textarea")).toBeAttached();
   await page.evaluate(() => {
     const field = document.querySelector("textarea");
     if (!field) throw new Error("notes textarea not found");

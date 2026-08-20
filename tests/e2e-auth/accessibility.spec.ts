@@ -241,7 +241,7 @@ test.describe("admin map editor has no WCAG A/AA violations", () => {
     expect(results.passes.map(rule => rule.id)).toContain("color-contrast");
   });
 
-  test("with the seat inspector open, then with Notes expanded", async ({ page }) => {
+  test("with the seat inspector open", async ({ page }) => {
     test.setTimeout(120_000);
     const inspector = page.locator("#seat-inspector-panel");
     await retryUntilVisible(
@@ -252,11 +252,10 @@ test.describe("admin map editor has no WCAG A/AA violations", () => {
     // state; its label depends on the seat's occupancy, which this spec must
     // not assume.
     await expect(inspector.getByRole("button", { name: /Assign an employee to|Edit assignment for/ })).toBeEnabled();
-    await expectNoAxeViolations(page);
-
-    // Collapsed section bodies (and the Notes textarea) are unmounted — the
-    // default scan never sees them; expand Notes for the second scan.
-    await inspector.getByRole("button", { name: "Notes" }).click();
+    // Flat sections (2026-08-19 Carbon handoff): every section body — the
+    // Notes textarea included — is always mounted, so ONE scan sees the
+    // whole panel (the old expand-Notes second scan is retired with the
+    // disclosure toggles).
     await expect(inspector.locator("textarea")).toBeVisible();
     await expectNoAxeViolations(page);
   });
@@ -291,11 +290,7 @@ test.describe("admin map editor has no WCAG A/AA violations", () => {
       if (await guardHeading.isVisible()) return;
       const commitBar = inspector.getByRole("button", { name: /^Save draft changes/ });
       if (!(await commitBar.isVisible())) {
-        // Notes is a toggle now (a discard resets it closed): only click the
-        // header when the textarea is not already mounted.
-        if (!(await inspector.locator("textarea").isVisible())) {
-          await inspector.getByRole("button", { name: "Notes" }).click();
-        }
+        // Flat sections: the notes textarea is always mounted — dirty it directly.
         await inspector.locator("textarea").fill("a11y probe — never saved");
         await expect(commitBar).toBeVisible({ timeout: 2_000 });
       }

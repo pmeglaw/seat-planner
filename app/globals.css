@@ -423,6 +423,10 @@
      issue) rather than changed. */
   --admin-ai-text: #78a9ff;
   --admin-ai-marker-surface: #262626; /* AI pill/chip fill; #78a9ff text = 6.43:1 here */
+  /* Ask Planner card purple, dark partners: #a56eff on #161616 ≈ 6.0:1 (AA);
+     the soft wash is an alpha tint over the dark surface, no text on it. */
+  --admin-ai-accent: #a56eff;
+  --admin-ai-accent-soft: rgba(138, 63, 252, 0.16);
 
   /* Marker LEGEND chips (the live pills are Task 6). */
   --admin-marker-assigned-surface: #262626;
@@ -705,6 +709,12 @@
   --admin-ai-panel-border: rgba(120, 169, 255, 0.35);
   --admin-ai-glow: linear-gradient(180deg, rgba(69, 137, 255, 0.10), rgba(69, 137, 255, 0) 140px);
   --admin-ai-row: rgba(69, 137, 255, 0.08);
+  /* Inspector Ask Planner card (2026-08-19 Carbon handoff): semantic-AI
+     purple, distinct from the blue AI chrome family above. #8a3ffc on white
+     = 4.97:1 (AA for the card's 11px-bold eyebrow and 13px body); the soft
+     wash carries no text of its own. */
+  --admin-ai-accent: #8a3ffc;
+  --admin-ai-accent-soft: #f6f2ff;
 
   --admin-success: #1D6E41;
   --admin-success-rgb: 29 110 65;
