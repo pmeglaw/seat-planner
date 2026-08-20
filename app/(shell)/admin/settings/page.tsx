@@ -11,7 +11,7 @@ export default async function AdminSettingsPage() {
 
   if (!isAdmin) {
     return (
-      <main className="admin-theme flex min-h-screen items-center justify-center bg-[var(--admin-bg)] p-6 text-[var(--admin-text-primary)]">
+      <main className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] items-center justify-center bg-[var(--admin-bg)] p-6 text-[var(--admin-text-primary)]">
         <section className="max-w-md border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-elevation-2">
           <h1 className="text-lg font-semibold text-[var(--admin-text-primary)]">Admin access required</h1>
           <p className="mt-2 text-sm text-[var(--admin-text-secondary)]">
@@ -70,11 +70,20 @@ export default async function AdminSettingsPage() {
     // pane (hence the svh calc: bar height comes off the pane's min-height).
     // The skip link itself lives in the rail (AppShell maps this route to
     // #admin-subpage-main); this page owns the landing marker below.
-    <main className="admin-theme min-h-[calc(100svh-var(--admin-chrome-h))] bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12">
+    <main className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] flex-col bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12 lg:h-[calc(100svh-var(--admin-chrome-h))] lg:min-h-0 lg:overflow-hidden">
       {/* Skip-link landing: focusable zero-height marker; the next Tab enters
           the panel content. */}
       <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />
-      <div className="mx-auto w-full max-w-[760px] px-6 pb-12 pt-6">
+      {/* Desktop: the document never scrolls (viewer-map contract) — long
+          content scrolls inside this focusable region instead (tabIndex +
+          aria-label per axe scrollable-region-must-be-focusable). */}
+      <div
+        role="region"
+        aria-label="Settings"
+        tabIndex={0}
+        className="flex-1 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] lg:min-h-0 lg:overflow-y-auto"
+      >
+        <div className="mx-auto w-full max-w-[760px] px-6 pb-12 pt-6">
         <header className="mb-4">
           <h1 className="text-[22px] font-semibold leading-tight text-[var(--admin-text-primary)]">Settings</h1>
           <p className="mt-1 text-[13.5px] leading-5 text-[var(--admin-text-secondary)]">
@@ -87,6 +96,7 @@ export default async function AdminSettingsPage() {
           publishedSeats={publishedSeats}
           employees={employees}
         />
+        </div>
       </div>
     </main>
   );
