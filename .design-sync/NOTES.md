@@ -90,6 +90,69 @@
   carry-forward comes from the uploaded `_ds_sync.json`. Both this run's
   clones started cold; that is expected, not a bug.
 
+## 2026-08-20 re-sync (38 components, full re-verify)
+
+- Scope call: the driver reported `39 verified-by-upload / 0 changed` even though
+  teal (#421), app-wide dark mode (#422–#424), the inspector restyle (#426/#427
+  follow-up) and the admin filter removal (f218f64) had all landed since the
+  08-19 upload — the same partition trap recorded above. Owner chose a FULL
+  re-verify: `package-capture.mjs --force`, 38 components / 87 cells, graded by
+  five parallel subagents. Every cell ended `good`.
+- `DeptChipRow` card DROPPED (owner call, MapStatusLegend precedent): f218f64
+  removed its last caller, so it left ds-entry.ts, componentSrcMap, docs-stubs
+  and the uploaded project. The component + its ct tests STAY in the repo — this
+  is a card removal, not a code removal. 39 → 38 components.
+- `[GRID_OVERFLOW]` on AppTopBar (new this run) fixed with
+  `cfg.overrides.AppTopBar = {"cardMode": "column"}`.
+- **Three previews were silently broken by a missing theme-scope wrapper.** The
+  token families are class-scoped, never on `:root`: `--login-*` lives only under
+  `.login-theme`, `--admin-*` (including the `--admin-marker-live-*` pill palette)
+  only under `.admin-theme, .shell-theme`. LoginForm rendered an invisible
+  primary (`bg-[var(--login-accent)] text-white` on an undefined fill);
+  SeatMarker rendered every pill as an unpainted hairline with white-on-white
+  text. Before writing any preview: grep the component for `var(--x-…)` and wrap
+  in the class that scopes that prefix. `--sp-*` is the ONLY global family.
+- `.admin-theme` and `.shell-theme` are token-identical (globals.css always names
+  them as a pair), so swapping a preview between them is a provenance fix with
+  zero pixel change — that is what FilterPanel got, since ViewerSeatFinder is its
+  only caller now.
+- **Viewport-anchored fixed surfaces need a stage that cancels the story-root
+  padding, not just its height.** AskPlannerDrawer is `fixed` at
+  `top-[calc(var(--admin-chrome-h)+12px)]`; the harness root is transformed AND
+  24px-padded, so the drawer sat 24px low and the taller variant ran off the
+  frame. Stage is now `{position:"relative", height:620, margin:-24,
+  transform:"translateZ(0)"}` — the -24 was measured (pre-fix top border y=76,
+  minus `--admin-chrome-h` 40 + 12), so re-derive it the same way if the harness
+  padding ever changes. Centred modals never hit this; their existing
+  `{position:"relative", height:512, transform:"translateZ(0)"}` stage is correct
+  and must not be "tidied away".
+- Capture is `fullPage:false` at the declared viewport (default 900x700) and
+  crops tall content mid-element with no warning. Fix it fixture-side (Admin
+  Management's roster went 10 people → 6, seats freed so the summary tiles stay
+  arithmetically honest) rather than reaching for a viewport override.
+- Prop-less click-to-open surfaces CAN be shown open: preview pages mount with
+  `createRoot`, so a `useEffect` that clicks `button[aria-haspopup="menu"]`
+  discloses the real menu through the real code path (AccountMenu now does this,
+  as FloorSelector already did). Menu habitats need width as well as height —
+  size for `triggerOffset + menuMinWidth` (FloorSelector's chrome cell 320 → 400).
+- Confirmed NOT stale, do not "fix": AiHighlightChip and the AppRail `AI` glyph
+  are blue on purpose (`--admin-ai-*`, a deliberate exception to the warm
+  palette); FilterPanel is a dark menu on purpose (viewer top bar shares
+  `--admin-chrome-*`); MapStatusBand's `FiltersActive` cell still shows
+  "Fit matches"/"Clear" because SeatMap still feeds the band's summary/actions
+  slots on active search; SeatMarker's `variant="viewer"` IS the shipped palette
+  (the `admin` arm is dormant); PublishReviewDialog filling its 512px stage is
+  the dialog's own `max-h`, not a crop; the tall blank band under `cardMode:
+  "column"` rows is the review-sheet compositor, not a preview defect.
+- SeatSheet's `.mss-*` settle CSS had NOT drifted this run. The whole check is
+  `grep -o "mss-[a-z-]*" components/seat-map/SeatSheet.tsx` diffed against the
+  preview's `SETTLED_CSS` block.
+- conventions.md drift fixed: `--sp-color-border` does not exist (real names are
+  `--sp-color-border-subtle` / `-strong`); the StatusBadge tone list wrongly
+  claimed seat statuses as tones (real union adds `blocked`/`pending`, and
+  available/assigned/reserved/unavailable ride the `seat` row into SeatMarker).
+  Added: the dark-mode contract and the `.login-theme` / marker-token scopes.
+
 ## Preview-authoring playbook (from wave 1)
 
 - **Post-build asset copy (MANUAL, every package-build run):**
@@ -125,8 +188,11 @@
 
 ## Known render warns
 
-- `[RENDER_THIN]` on AskPlannerDrawer — benign: top-anchored fixed drawer
-  renders complete; root just measures 0px flow height (fixed-only child).
+- (none as of 2026-08-20 — the last full validate printed zero warn lines.)
+- RETIRED 2026-08-20: `[RENDER_THIN]` on AskPlannerDrawer. It was benign (a
+  top-anchored fixed drawer whose root measured 0px flow height), and the
+  620px stage added to its preview this run gave the wrapper real height, so
+  the warn stopped firing. If it returns, the stage was removed.
 
 ## App bugs surfaced by previews (all fixed)
 
@@ -161,3 +227,13 @@
 - `cfg.writes` for the upload must include `images/**`: the manual asset copy
   puts the brand mark and floor plan in the bundle, and a plan without that
   glob rejects them (the map cards then ship with a missing floor plan).
+- The image copy CANNOT be interleaved into a `resync.mjs` driver run — the
+  driver's build stage wipes `ds-bundle/` and validate/capture follow it
+  immediately. Order that works: driver run → `cp` the images → upload. If you
+  need true screenshots mid-loop, run `package-build.mjs`, copy images, then
+  `package-validate.mjs` / `package-capture.mjs` as separate commands.
+- `previews/ViewerSeatFinder.tsx`'s header comment still claims the floor-plan
+  raster is absent from the bundle. Stale since the image copy — comment only.
+- SeatSheet ships a single story, so its cells can never be graded on the
+  "variant axis varies" clause. A second story (seat with no neighbours / no
+  extension) is the natural addition if that ever matters.

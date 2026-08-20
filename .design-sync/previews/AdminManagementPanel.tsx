@@ -25,13 +25,13 @@ const marcus = employee("e-marcus", "Marcus Webb", "Associate Attorney", "Litiga
 const elena = employee("e-elena", "Elena Vasquez", "Office Manager", "Records", "202");
 const daniel = employee("e-daniel", "Daniel Kim", "Intake Specialist", "Intake", "218");
 const grace = employee("e-grace", "Grace Lindqvist", "Receptionist", "Intake", "200");
-const james = employee("e-james", "James Harootunian", "Senior Attorney", "Litigation", "201");
 const sofia = employee("e-sofia", "Sofia Reyes", "Estate Planning Attorney", "Estate Planning", "222");
-const priya = employee("e-priya", "Priya Natarajan", "Records Clerk", "Records", "230");
-const tom = employee("e-tom", "Tom Okafor", "Litigation Paralegal", "Litigation", "208");
-const maria = employee("e-maria", "Maria Duarte", "Billing Coordinator", "Records", "226");
 
-const employees = [anahit, marcus, elena, daniel, grace, james, sofia, priya, tom, maria];
+// Six people, one of them unassigned: the directory table then finishes inside
+// the 900x700 card frame (a longer roster is cut mid-row by the capture
+// viewport, which reads as a broken render), and the Status column still shows
+// both badge states.
+const employees = [anahit, marcus, elena, daniel, grace, sofia];
 
 type Emp = ReturnType<typeof employee>;
 
@@ -62,22 +62,22 @@ const seat = (
 });
 
 const seats = [
-  seat("s-a03", "A-03", 0.1, 0.17, "assigned", "North Wing", tom),
-  seat("s-a05", "A-05", 0.145, 0.17, "assigned", "North Wing", james),
+  seat("s-a03", "A-03", 0.1, 0.17, "available", "North Wing", null),
+  seat("s-a05", "A-05", 0.145, 0.17, "available", "North Wing", null),
   seat("s-a12", "A-12", 0.19, 0.17, "assigned", "North Wing", anahit),
   seat("s-a14", "A-14", 0.235, 0.17, "available", "North Wing", null),
   seat("s-b03", "B-03", 0.1, 0.31, "assigned", "North Wing", marcus),
   seat("s-b04", "B-04", 0.145, 0.31, "reserved", "North Wing", null, "Held for the fall clerkship"),
   seat("s-b07", "B-07", 0.19, 0.31, "available", "North Wing", null),
-  seat("s-b01", "B-01", 0.55, 0.19, "assigned", "East Wing", sofia),
+  seat("s-b01", "B-01", 0.55, 0.19, "reserved", "East Wing", null, "Held for Sofia Reyes — starts Monday"),
   seat("s-b02", "B-02", 0.6, 0.19, "available", "East Wing", null),
   seat("s-b05", "B-05", 0.65, 0.19, "unavailable", "East Wing", null, "Standing desk awaiting repair"),
   seat("s-c01", "C-01", 0.3, 0.74, "assigned", "South Wing", daniel),
   seat("s-c02", "C-02", 0.35, 0.74, "assigned", "South Wing", grace),
   seat("s-c03", "C-03", 0.4, 0.74, "assigned", "South Wing", elena),
   seat("s-c04", "C-04", 0.45, 0.74, "unavailable", "South Wing", null, "Printer alcove"),
-  seat("s-c05", "C-05", 0.5, 0.74, "assigned", "South Wing", priya),
-  seat("s-c06", "C-06", 0.55, 0.74, "assigned", "South Wing", maria)
+  seat("s-c05", "C-05", 0.5, 0.74, "available", "South Wing", null),
+  seat("s-c06", "C-06", 0.55, 0.74, "available", "South Wing", null)
 ];
 
 const option = (id: string, name: string) => ({ id, name, active: true, ...TS });

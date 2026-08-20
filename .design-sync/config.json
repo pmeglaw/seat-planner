@@ -35,7 +35,6 @@
     "SeatSheetNotice": "components/seat-map/SeatSheet.tsx",
     "MapWashLayer": "components/seat-map/MapWashLayer.tsx",
     "MapZoomControl": "components/seat-map/MapZoomControl.tsx",
-    "DeptChipRow": "components/seat-map/DeptChipRow.tsx",
     "AiHighlightChip": "components/seat-map/AiHighlightChip.tsx",
     "DraftTrailOverlay": "components/seat-map/DraftTrailOverlay.tsx",
     "AskPlannerDrawer": "components/seat-map/AskPlannerDrawer.tsx",
@@ -123,9 +122,6 @@
       "cardMode": "single",
       "viewport": "1280x800"
     },
-    "DeptChipRow": {
-      "cardMode": "column"
-    },
     "MapStatusBand": {
       "cardMode": "column"
     },
@@ -160,6 +156,9 @@
     "ViewerFindPalette": {
       "cardMode": "single",
       "primaryStory": "SearchResults"
+    },
+    "AppTopBar": {
+      "cardMode": "column"
     }
   },
   "readmeHeader": ".design-sync/conventions.md"
