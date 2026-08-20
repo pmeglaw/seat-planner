@@ -58,7 +58,9 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   // (the rendered semantics are verified at runtime by
   // tests/map-status-band.test.mjs).
   assert.match(source, /<MapStatusBand[\s\S]{0,200}ariaLabel="Seat status legend"/);
-  assert.match(source, /aria-controls="seat-map-filter-panel"/);
+  // The canvas filter trigger/panel is gone (owner call 2026-08-20) — no
+  // stray aria-controls may reference the retired panel id.
+  assert.doesNotMatch(source, /seat-map-filter-panel/);
   // Session layer, v12 (2026-07-31 rail shell): identity + Settings moved off
   // the header AccountMenu into AppRail (Task 1), and the rail itself now
   // lives in the persistent AppShell (nav-lag fix) — SeatMap plugs its guard
@@ -671,7 +673,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(viewerFinderForInv1, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), false\)\) \{\s*setInspectorCollapsed\(true\);/);
   assert.doesNotMatch(seatMapSource, /mapKeyPanelOpen|desktopInspectorReserveMarginClassName|dock:/);
   assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = ""/);
-  assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title" className=\{\[filterCollapsed \? "order-1" : "order-2", "min-w-0 overflow-hidden/);
+  assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title" className="order-1 min-w-0 overflow-hidden/);
   assert.match(seatMapSource, /const mobileMapInteractionSurfaceOpen = canEdit && \(/);
   assert.match(seatMapSource, /const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;/);
   assert.match(seatMapSource, /mobileMapControlsHidden \? "hidden sm:block" : ""/);
@@ -734,13 +736,13 @@ test("popovers restore trigger focus when a close unmounts the focused element",
   assert.match(helperSource, /export function returnFocusAfterClose/);
   assert.match(helperSource, /setTimeout\(\(\) => trigger\.current\?\.focus\(\), 0\)/);
 
-  // FilterPanel owns its Escape contract on BOTH surfaces: close, then
-  // restore the caller-supplied trigger.
+  // FilterPanel owns its Escape contract: close, then restore the
+  // caller-supplied trigger. Viewer-only since the admin canvas filter UI
+  // was removed (owner call 2026-08-20).
   assert.match(filterSource, /onKeyDown=\{event => \{\s*if \(event\.key === "Escape"\) \{[\s\S]{0,220}onClose\(\);[\s\S]{0,200}returnFocusAfterClose\(returnFocusRef\)/);
-  for (const source of [seatMapSource, viewerSource]) {
-    assert.match(source, /ref=\{filterTriggerRef\}/);
-    assert.match(source, /returnFocusRef=\{filterTriggerRef\}/);
-  }
+  assert.match(viewerSource, /ref=\{filterTriggerRef\}/);
+  assert.match(viewerSource, /returnFocusRef=\{filterTriggerRef\}/);
+  assert.doesNotMatch(seatMapSource, /filterTriggerRef/);
 
   // The chrome ⋯ More menu returns focus to its trigger on Escape.
   assert.match(seatMapSource, /ref=\{chromeMenuButtonRef\}/);
@@ -802,10 +804,9 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   // The filter popover renders visually beneath its trigger, so it must also
   // FOLLOW the trigger in DOM order — before the search field — or Tab from
   // the open trigger detours through search before reaching the menu.
-  const adminPanelIndex = seatMapSource.indexOf("{showFilterPanel && (");
-  const adminSearchIndex = seatMapSource.indexOf('role="search" aria-label="Command search"');
-  assert.ok(adminPanelIndex >= 0 && adminSearchIndex >= 0, "admin filter panel and command search should remain source-visible");
-  assert.ok(adminPanelIndex < adminSearchIndex, "admin filter panel must precede the command search in DOM order");
+  // Viewer-only: the admin canvas filter UI was removed (owner call
+  // 2026-08-20), so SeatMap has no filter popover to order any more.
+  assert.doesNotMatch(seatMapSource, /showFilterPanel/);
 
   const viewerPanelIndex = viewerSource.indexOf("{filterOpen && (");
   // Regex, not indexOf: the field wrapper carries a ref and spans several

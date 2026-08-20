@@ -15,11 +15,14 @@ test("the filter popover states its live match count before you commit", async (
   assert.match(panel, /matchSummary/);
   assert.match(panel, /aria-live="polite"[^>]*>\s*\r?\n\s*\{matchSummary\}/);
 
+  // Viewer only: the admin canvas filter UI was removed 2026-08-20 (owner) —
+  // SeatMap no longer mounts FilterPanel, so search is its only constraint.
   const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   assert.match(viewer, /matchSummary=\{`\$\{statusCountSeats\.length\} of \$\{publishedSeats\.length\} seats match`\}/);
 
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
-  assert.match(seatMap, /matchSummary=\{`\$\{legendSourceSeats\.length\} of \$\{localSeats\.length\} seats match`\}/);
+  assert.doesNotMatch(seatMap, /<FilterPanel/);
+  assert.doesNotMatch(seatMap, /<DeptChipRow/);
 });
 
 test("legend counts follow the active constraints instead of contradicting the map", async () => {
@@ -34,12 +37,10 @@ test("active filter chips sit with the trigger's corner, not across the map", as
   const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   assert.doesNotMatch(viewer, /<ActiveFilterChips[^/]*className="ml-auto"/);
 
-  // Admin chips move out of the right-aligned action cluster into the left
-  // canvas group beside the floor pill (the crumb label itself was removed,
-  // owner call 2026-08-14 — the anchor is the floor selector wrapper now).
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
   // The crumb must stay gone entirely (owner call 2026-08-14) — the floor
-  // selector is the map's whole document identity.
+  // selector is the map's whole document identity. Admin active-filter chips
+  // are gone with the rest of the canvas filter UI (owner call 2026-08-20).
   assert.doesNotMatch(seatMap, /\bmapCrumbLabel\b/);
-  assert.match(seatMap, /<FloorSelector floor=\{floor\} onChange=\{setFloor\} \/>\s*\r?\n\s*<\/div>\s*\r?\n\s*<ActiveFilterChips/);
+  assert.doesNotMatch(seatMap, /<ActiveFilterChips/);
 });

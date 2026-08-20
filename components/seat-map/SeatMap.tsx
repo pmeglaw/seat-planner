@@ -26,7 +26,6 @@ import {
   scrollTargetForZoomAnchor,
   zoomAnchorFromViewport
 } from "@/lib/mapViewport";
-import { buildPositionOptions } from "@/lib/positions";
 import { clientPointToNormalized } from "@/lib/seatMath";
 import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
 import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
@@ -46,8 +45,6 @@ import {
 import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
 import { AiHighlightChip } from "@/components/seat-map/AiHighlightChip";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
-import { ActiveFilterChips, FilterPanel } from "@/components/seat-map/FilterPanel";
-import { DeptChipRow } from "@/components/seat-map/DeptChipRow";
 import { DraftTrailOverlay } from "@/components/seat-map/DraftTrailOverlay";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
 import { MapStatusBand } from "@/components/seat-map/MapStatusBand";
@@ -60,7 +57,6 @@ import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
 import { useDraftHistory } from "@/components/seat-map/useDraftHistory";
 import { usePublishReview } from "@/components/seat-map/usePublishReview";
 import { getSeatZone, useSeatFilters } from "@/components/seat-map/useSeatFilters";
-import { departmentChipCounts } from "@/lib/seatFilters";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import {
@@ -312,15 +308,16 @@ export function SeatMap({
   const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
   const [plannerHighlightedSeatIds, setPlannerHighlightedSeatIds] = useState<string[]>([]);
   // Transient preview of a zone chip under the pointer/focus (v12 contract
-  // #8). Never a filter — it only decides which zone the map washes.
-  const [hoverZone, setHoverZone] = useState<string | null>(null);
-  const [filterCollapsed, setFilterCollapsed] = useState(true);
+  // #8). Never a filter — it only decides which zone the map washes. Dormant
+  // since the canvas filter UI was removed (2026-08-20, owner): nothing on
+  // the admin surface sets it any more, but the wash plumbing stays shared
+  // with the viewer.
+  const [hoverZone] = useState<string | null>(null);
   const [chromeMenuOpen, setChromeMenuOpen] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
   const chromeSearchInputRef = useRef<HTMLInputElement | null>(null);
   const canvasSearchInputRef = useRef<HTMLInputElement | null>(null);
-  const filterTriggerRef = useRef<HTMLButtonElement | null>(null);
   const chromeMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   // Whether the docked inspector was expanded when Ask Planner took the right
   // edge — closed drawers hand the slot back (2026-07-16 critique, minor 6).
@@ -448,26 +445,20 @@ export function SeatMap({
   });
 
   // Filter/search values, everything derived from them, and their handlers
-  // live in their own hook (M4 step 4). SeatMap keeps the panel-visibility
-  // chrome (filterCollapsed, whose outside-click effect needs this file's
-  // DOM refs) and the hoverZone wash preview, which is never a filter.
+  // live in their own hook (M4 step 4). The structured facets (department /
+  // position / zone / status) are DORMANT on this surface since the canvas
+  // filter UI was removed (2026-08-20, owner) — no admin control sets them,
+  // so only the search facet can narrow the map. The hook keeps its full
+  // shape because the results panel and the Esc ladder still consume the
+  // shared flags/handlers.
   const {
     search,
     setSearch,
-    department,
-    setDepartment,
-    position,
-    setPosition,
     zone,
-    setZone,
-    status,
-    setStatus,
     filtersActive,
     searchQuery,
     searchActive,
     structuredFiltersActive,
-    activeFilterChips,
-    structuredFilterCount,
     matchingSeats,
     resultStatusBreakdown,
     panelResults,
@@ -475,8 +466,7 @@ export function SeatMap({
     clearStructuredFilters,
     clearAllConstraints,
     clearSearch,
-    handleSearchInputChange,
-    removeActiveFilterChip
+    handleSearchInputChange
   } = useSeatFilters({
     localSeats,
     localEmployees,
@@ -575,18 +565,12 @@ export function SeatMap({
     focusAskPlannerButton();
   }, [focusAskPlannerButton]);
 
-  const toggleFilterPanel = useCallback(() => {
-    setAskPlannerOpen(false);
-    setFilterCollapsed(current => !current);
-  }, []);
-
   const openAskPlannerDrawer = useCallback(() => {
     // B2: the right edge only ever holds one panel. Opening Ask Planner
-    // collapses the filter panel and the seat inspector so they don't stack /
-    // overlap. Keep the seat selected (selectedSeatId untouched) — collapsing
-    // only pins the inspector to its pill; expanding restores it.
+    // collapses the seat inspector so they don't stack / overlap. Keep the
+    // seat selected (selectedSeatId untouched) — collapsing only pins the
+    // inspector to its pill; expanding restores it.
     inspectorExpandedBeforePlannerRef.current = Boolean(selectedSeatId) && !inspectorCollapsed;
-    setFilterCollapsed(true);
     setInspectorCollapsed(true);
     setAskPlannerOpen(true);
   }, [inspectorCollapsed, selectedSeatId]);
@@ -708,21 +692,8 @@ export function SeatMap({
     };
   }, [actionError, canEdit]);
 
-  // The filter dropdown behaves like a menu (prototype .fmenu): a pointer press
-  // outside the panel or its trigger buttons dismisses it.
-  useEffect(() => {
-    if (filterCollapsed) return;
-
-    function handleOutsidePointer(event: globalThis.PointerEvent) {
-      if (event.target instanceof Element && event.target.closest("[data-filter-ui]")) return;
-      setFilterCollapsed(true);
-    }
-
-    document.addEventListener("pointerdown", handleOutsidePointer);
-    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
-  }, [filterCollapsed]);
-
-  // Same dismissal rule for the chrome-bar "More" menu (the v12 kebab).
+  // Dismissal rule for the chrome-bar "More" menu (the v12 kebab): a pointer
+  // press outside the menu or its trigger dismisses it.
   useEffect(() => {
     if (!chromeMenuOpen) return;
 
@@ -907,11 +878,6 @@ export function SeatMap({
         return;
       }
 
-      if (!filterCollapsed && !isEditableTarget(event.target)) {
-        setFilterCollapsed(true);
-        return;
-      }
-
       if (!isEditableTarget(event.target) && selectedSeatId) {
         if (inspectorDirty) {
           setInspectorGuardAction({ kind: "close-inspector" });
@@ -959,7 +925,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, clearStructuredFilters, closeAskPlannerDrawer, deleteSeatConfirm, discardDraftConfirmOpen, filterCollapsed, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, publishReviewOpen, search, selectedSeatId, setActionNotice, setDiscardDraftConfirmOpen, setPublishReviewOpen, setSearch, structuredFiltersActive, swapConfirm, swapSourceSeatId, vacateConfirm]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, clearStructuredFilters, closeAskPlannerDrawer, deleteSeatConfirm, discardDraftConfirmOpen, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, publishReviewOpen, search, selectedSeatId, setActionNotice, setDiscardDraftConfirmOpen, setPublishReviewOpen, setSearch, structuredFiltersActive, swapConfirm, swapSourceSeatId, vacateConfirm]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
@@ -1019,27 +985,6 @@ export function SeatMap({
     // localSeats omitted: a seat's label is stable for the life of its id.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSeatId]);
-
-  const departments = useMemo(() => {
-    const values = new Set<string>();
-    localDepartmentOptions.filter(item => item.active).forEach(item => values.add(item.name));
-    localEmployees.forEach(emp => {
-      if (emp.department) values.add(emp.department);
-    });
-    return Array.from(values).sort();
-  }, [localDepartmentOptions, localEmployees]);
-
-  // Chip-row counts are faceted (the department facet is replaced, never
-  // ANDed — see departmentChipCounts), so they stay on the same
-  // counts-follow-filters contract as the legend.
-  const deptChipCounts = useMemo(
-    () => departmentChipCounts(localSeats, { search, department, position, zone, status }, departments),
-    [localSeats, search, department, position, zone, status, departments]
-  );
-
-  // No position_options side table exists — job titles are free text on
-  // employees, so the facet's options come straight off the roster.
-  const positions = useMemo(() => buildPositionOptions(localEmployees), [localEmployees]);
 
   const zones = useMemo(() => {
     const values = new Set<string>();
@@ -1251,7 +1196,6 @@ export function SeatMap({
       const isNewSelection = selectedSeatId !== action.seatId;
       commitSeatSelection(action.seatId);
       if (action.center) {
-        setFilterCollapsed(true);
         // Finding 1: same race as openSeatFromResults — this is its
         // dirty-guard-deferred continuation, so it arms the skip too (only
         // when the selection is actually changing — see the deep-link
@@ -1810,7 +1754,6 @@ export function SeatMap({
     const isNewSelection = selectedSeatId !== seatId;
     if (!selectSeat(seatId)) return;
 
-    setFilterCollapsed(true);
     // Finding 1 (v12 slice 4 final review): arm the skip in the same commit
     // as this selection so the nudge trigger effect never races this queued
     // center's native smooth scrollTo (see useInspectorNudge's skipNextNudge).
@@ -2285,10 +2228,9 @@ export function SeatMap({
           onExit: cancelSwapSeatMode
         }
         : null;
-  // 3b OVERLAY + INV-6: Filters floats over the full-bleed canvas at lg — the
-  // canvas never reflows when the drawer opens.
+  // 3b OVERLAY + INV-6: floating panels ride over the full-bleed canvas at
+  // lg — the canvas never reflows when one opens.
   const desktopMapGridClass = "lg:grid-cols-[minmax(0,1fr)]";
-  const showFilterPanel = !filterCollapsed;
   // Panel slot (right): floating panels over a full-bleed map (owner preference — no
   // reserved gutter, no idle Map key rail; the legend lives in the bottom status bar).
   // One occupant expanded at a time: DETAIL (inspector) when a seat is selected and
@@ -2320,7 +2262,6 @@ export function SeatMap({
   const canvasBannerSafeAreaClassName = "";
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
-    showFilterPanel ||
     askPlannerOpen ||
     publishReviewOpen ||
     Boolean(deleteSeatConfirm) ||
@@ -2981,7 +2922,7 @@ export function SeatMap({
           </div>
 
       <main className={["grid grid-cols-1 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
-        <section id="planning-canvas" tabIndex={-1} aria-labelledby="admin-planning-canvas-title" className={[filterCollapsed ? "order-1" : "order-2", "min-w-0 overflow-hidden relative lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2"].filter(Boolean).join(" ")}>
+        <section id="planning-canvas" tabIndex={-1} aria-labelledby="admin-planning-canvas-title" className="order-1 min-w-0 overflow-hidden relative lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2">
           {/* The status strip that used to carry this heading is gone (v12
               slice 3). The heading stays as the canvas section's accessible
               name — aria-labelledby above points at this id — and is now
@@ -3021,14 +2962,14 @@ export function SeatMap({
           </div>
 
           <div className={mapStageClassName}>
-            {/* Top-left cluster (v12 slice 3): floor, crumb, and active filter
-                chips float over the full-bleed plan as layer-01 white cards.
-                Nothing above the map is in flow any more, so a chip arriving
-                mid-session can no longer resize the map column and re-run the
-                overview fit. pointer-events-none on the rail with each card
-                opting itself back in keeps the gaps between cards draggable
-                map. Ungated by floor on purpose — the floor pill IS how you
-                leave the Floor 2 placeholder. */}
+            {/* Top-left cluster (v12 slice 3): floor pill and the AI
+                highlight chip float over the full-bleed plan as layer-01
+                white cards. Nothing above the map is in flow, so a chip
+                arriving mid-session can no longer resize the map column and
+                re-run the overview fit. pointer-events-none on the rail with
+                each card opting itself back in keeps the gaps between cards
+                draggable map. Ungated by floor on purpose — the floor pill IS
+                how you leave the Floor 2 placeholder. */}
             {/* One row, two halves: the left half wraps, the right half is
                 shrink-0 — when a docking panel narrows the stage the chips
                 wrap under the floor pill instead of sliding beneath the
@@ -3043,77 +2984,11 @@ export function SeatMap({
               <div className={shellSlots ? "pointer-events-auto lg:hidden" : "pointer-events-auto"}>
                 <FloorSelector floor={floor} onChange={setFloor} />
               </div>
-              <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="pointer-events-auto" />
-              {/* Canvas-chrome redesign (2026-08-13): department quick-filter
-                  chips + the Filters trigger relocated here from the bar. The
-                  chip row is md+ only (below md it would bury the plan under
-                  cards); the trigger stays at every width — it is mobile's
-                  only structured-filter affordance. */}
-              {canEdit && (
-                <div className="pointer-events-auto hidden md:block">
-                  <DeptChipRow
-                    departments={departments}
-                    counts={deptChipCounts}
-                    activeDepartment={department}
-                    onSelectDepartment={setDepartment}
-                  />
-                </div>
-              )}
-              {canEdit && (
-                <div data-filter-ui className="pointer-events-auto relative">
-                  <button
-                    ref={filterTriggerRef}
-                    type="button"
-                    data-filter-ui
-                    onClick={toggleFilterPanel}
-                    aria-controls="seat-map-filter-panel"
-                    aria-expanded={!filterCollapsed}
-                    aria-haspopup="true"
-                    aria-label={filterCollapsed ? "Open filters" : "Collapse filters"}
-                    className={[
-                      "flex h-8 items-center gap-1.5 border px-2.5 text-[12px] font-semibold shadow-elevation-3 transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]",
-                      structuredFilterCount > 0 || !filterCollapsed
-                        ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-on-soft)]"
-                        : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--sp-color-text-secondary)] hover:bg-[var(--sp-color-canvas)] hover:text-[var(--admin-text-primary)]"
-                    ].join(" ")}
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-                      <path d="M3 4.5h14l-5.4 6.2v4.8l-3.2-1.7v-3.1L3 4.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                    </svg>
-                    Filters
-                    {structuredFilterCount > 0 && (
-                      <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{structuredFilterCount}</span>
-                    )}
-                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3">
-                      <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                  {showFilterPanel && (
-                    <div data-filter-ui className="absolute left-0 top-[calc(100%+4px)] z-50 w-[288px] max-w-[calc(100vw-16px)]">
-                      <FilterPanel
-                        department={department}
-                        position={position}
-                        status={status}
-                        departments={departments}
-                        positions={positions}
-                        zone={zone}
-                        zones={zones}
-                        activeChips={activeFilterChips}
-                        returnFocusRef={filterTriggerRef}
-                        onClose={() => setFilterCollapsed(true)}
-                        onDepartmentChange={setDepartment}
-                        onPositionChange={setPosition}
-                        onZoneChange={setZone}
-                        onZoneHoverChange={setHoverZone}
-                        onStatusChange={setStatus}
-                        matchSummary={`${legendSourceSeats.length} of ${localSeats.length} seats match`}
-                        onRemoveActiveChip={removeActiveFilterChip}
-                        onClearFilters={clearStructuredFilters}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* The structured-filter UI (dept quick-chips, Filters trigger
+                  + dropdown, active-filter chips) is GONE from this canvas —
+                  owner ruling 2026-08-20: search is the only way an admin
+                  narrows the map. The viewer keeps its own filter surface in
+                  ViewerSeatFinder; don't reintroduce one here. */}
               {canEdit && (
                 <AiHighlightChip
                   seatCount={plannerHighlightedSeatIds.length}
