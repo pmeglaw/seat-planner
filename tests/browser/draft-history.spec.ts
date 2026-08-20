@@ -56,12 +56,11 @@ const redoButton = (page: Page) => page.getByRole("button", { name: "Redo last u
 
 // Delete S01 through the real flow — select, inspector delete, confirm — so a
 // history entry is recorded exactly the way the product records one. Delete
-// lives in the collapsed Seat actions section — expand it before reaching for it.
+// sits in the always-mounted Seat management section (flat sections,
+// 2026-08-19 Carbon handoff).
 async function deleteCustomSeat(page: Page) {
   await clickMarker(page, "S01");
-  const actionsHeader = page.locator('button[aria-controls="seat-inspector-actions"]');
-  await expect(actionsHeader).toBeAttached();
-  await actionsHeader.dispatchEvent("click");
+  await expect(page.locator("#seat-inspector-actions")).toBeAttached();
   await page.locator('[aria-label^="Delete custom seat"]').dispatchEvent("click");
   await page.getByRole("button", { name: "Delete seat" }).dispatchEvent("click");
   await expect(markers(page, "S01")).toHaveCount(0);

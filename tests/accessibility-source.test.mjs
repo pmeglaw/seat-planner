@@ -440,12 +440,14 @@ test("inspector sections, validation, and actions retain accessible confidence c
   const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");
 
   assert.match(inspectorSource, /aria-label=\{`Ask Planner about \$\{selectedSeat\.label\}`\}/);
-  // Progressive disclosure (2026-08-18): independent multi-open sections whose
-  // headers are real buttons carrying aria-expanded/aria-controls (heading-
-  // wrapped, APG disclosure pattern). The inspector stays close-only — the
+  // Flat sections (2026-08-19 Carbon handoff, owner-approved — supersedes the
+  // 2026-08-18 progressive disclosure): section headings are static h3s and
+  // every section body stays mounted, so no section header may carry an
+  // aria-expanded/aria-controls toggle. The inspector stays close-only — the
   // collapse rail/pill is retired, so no "VIEW DETAILS" affordance may return.
-  assert.match(inspectorSource, /<h3 id=\{id\}>[\s\S]{0,200}aria-expanded=\{open\}[\s\S]{0,80}aria-controls=\{bodyId\}/);
-  assert.match(inspectorSource, /setOpenSections\(DEFAULT_OPEN_SECTIONS\)/);
+  assert.doesNotMatch(inspectorSource, /DisclosureSectionHeader/);
+  assert.doesNotMatch(inspectorSource, /aria-controls=\{bodyId\}/);
+  assert.doesNotMatch(inspectorSource, /setOpenSections/);
   assert.doesNotMatch(inspectorSource, /role="tablist"|role="tabpanel"/);
   assert.doesNotMatch(inspectorSource, /VIEW DETAILS/);
   assert.doesNotMatch(inspectorSource, /Collapse inspector/);
@@ -463,22 +465,19 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.doesNotMatch(inspectorSource, /Status &amp; notes/);
   assert.equal((inspectorSource.match(/ref=\{statusRef\}/g) ?? []).length, 1, "exactly one status control");
   // Owner QA (2026-07-16, inspector reorg): action and commit controls may
-  // never sit inside a collapsible container. "Actions" stopped being a
-  // <details> section — the primary assignment action is pinned under the
-  // header, seat ops live in a static end-of-panel group, and Save/Cancel sit
-  // in a conditional commit bar OUTSIDE the scroll area (rendered only while
-  // editing or dirty; the 2026-07-10 ban on a PERMANENT sticky footer stands).
-  // 2026-08-18 progressive-disclosure spec (owner-locked) supersedes the
-  // "seat ops never collapse" half of that ruling: Move/Swap/Vacate/Status/
-  // Delete now live in the collapsible Seat actions section. What still may
-  // never collapse: the pinned primary CTA and the commit bar (asserted below).
+  // never sit inside a collapsible container — the primary assignment action
+  // is pinned under the header and Save/Cancel sit in a conditional commit
+  // bar OUTSIDE the scroll area (rendered only while editing or dirty; the
+  // 2026-07-10 ban on a PERMANENT sticky ACTION footer stands — the quiet
+  // facts footer bar is display-only and carries no controls). The flat
+  // 2026-08-19 handoff restores "seat ops never collapse" for free: the Seat
+  // management section body is always mounted.
   assert.doesNotMatch(inspectorSource, /InspectorSection title="Actions"/);
   assert.match(inspectorSource, /id="seat-actions-heading"/);
   assert.match(inspectorSource, /const showCommitBar = /);
   assert.match(inspectorSource, /id="seat-inspector-commit-bar"/);
-  // Section open state resets per seat — the keyed remount plus the
-  // resetInspectorDraftForm default restore stop one seat's open sections
-  // from leaking into the next.
+  // The keyed remount stays: it resets transient DOM state (scroll position)
+  // when the selection moves to another seat.
   assert.match(inspectorSource, /key=\{`seat-inspector-sections-\$\{selectedSeat\.id\}`\}/);
   // Delete renders only where it can ever succeed (custom draft seats). The
   // Seat type fact retired 2026-08-18 (progressive-disclosure spec: status /
@@ -493,22 +492,25 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // v12 slice 4: the <details>-based InspectorSection title prop retired
   // with the flat eyebrow-heading sections — the CONTACT heading text is the
   // new anchor for the same "only when assigned" guarantee.
-  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,300}title="Contact"/);
+  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,300}title="Contact metadata"/);
   assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,200}CONTACT/);
   assert.doesNotMatch(inspectorSource, /FactRow label="Department"/);
   // The occupied-seat CTA reads as an edit verb — it opens a form, it does
   // not act; "Change assignment" collided with Move/Swap/Vacate (2026-07-23).
   assert.match(inspectorSource, /Edit assignment for \$\{selectedSeat\.label\}/);
   assert.doesNotMatch(inspectorSource, /Change assignment/);
-  // Notes lives in its own disclosure section — the header/body id pair is
-  // the anchor (the body id is what the browser tier's dirty-notes helper and
-  // the e2e-auth guard spec reach for).
-  assert.match(inspectorSource, /bodyId="seat-inspector-notes" title="Notes"/);
+  // Notes keeps its stable body id — it is what the browser tier's
+  // dirty-notes helper and the e2e-auth guard spec reach for.
+  assert.match(inspectorSource, /title="Workspace notes"/);
   assert.match(inspectorSource, /<div id="seat-inspector-notes"/);
-  // The solid Assigned status tag pairs WHITE text with the deep green — the
-  // 2026-07-23 harmonization darkened --admin-status-ok (#24a148 → #1D6E41)
-  // and dark #161616 text on it fails AA at 2.89:1 (axe, prod 2026-07-24).
-  assert.match(inspectorSource, /bg-\[var\(--admin-status-ok\)\] text-white/);
+  // Status chips are SOFT PAIRS (2026-08-19 Carbon handoff): every arm pulls
+  // bg and text from the same --admin-state-* family, whose light AND dark
+  // values are measured AA together in globals.css. Solid status fills with
+  // hardcoded text partners are banned here — white on the dark-theme
+  // --admin-status-ok (#42be65) fails AA at ~2.2:1, which is how the old
+  // solid tag broke silently when dark mode landed.
+  assert.match(inspectorSource, /bg-\[var\(--admin-state-clean-bg\)\] text-\[var\(--admin-state-clean-text\)\]/);
+  assert.doesNotMatch(inspectorSource, /bg-\[var\(--admin-status-ok\)\] text-white/);
   assert.doesNotMatch(inspectorSource, /bg-\[var\(--admin-status-ok\)\] text-\[var\(--sp-color-text-primary\)\]/);
   assert.doesNotMatch(inspectorSource, /sticky bottom-0/);
   assert.match(inspectorSource, /No unsaved changes\./);
