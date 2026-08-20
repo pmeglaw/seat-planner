@@ -14,7 +14,7 @@ export default async function AdminPage() {
     // Deep links can still land viewers here (the in-app Admin shortcut is
     // role-gated), so the page must offer a way back instead of a dead end.
     return (
-      <main className="admin-theme flex min-h-screen items-center justify-center bg-[var(--admin-bg)] p-6 text-[var(--admin-text-primary)]">
+      <main className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] items-center justify-center bg-[var(--admin-bg)] p-6 text-[var(--admin-text-primary)]">
         <section className="w-full max-w-md border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-2">
           <div className="flex items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] px-5 py-2.5 text-[12.5px] font-semibold text-[var(--admin-chrome-text)]">
             <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
@@ -112,7 +112,7 @@ export default async function AdminPage() {
   return (
     // div, not <main>: SeatMap renders the page's real <main> internally, and
     // nesting a second one trips axe landmark-no-duplicate-main.
-    <div className="admin-theme min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text-primary)]">
+    <div className="admin-theme min-h-[calc(100svh-var(--admin-chrome-h))] bg-[var(--admin-bg)] text-[var(--admin-text-primary)]">
       <SeatMap
         seats={seats}
         publishedSeats={publishedSeats}

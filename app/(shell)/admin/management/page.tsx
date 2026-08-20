@@ -24,7 +24,7 @@ export default async function AdminManagementPage({
 
   if (!isAdmin) {
     return (
-      <main className="admin-theme flex min-h-screen items-center justify-center bg-[var(--admin-bg)] p-6">
+      <main className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] items-center justify-center bg-[var(--admin-bg)] p-6">
         <section className="max-w-md border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-elevation-2">
           <h1 className="text-lg font-semibold text-[var(--admin-text-primary)]">Admin access required</h1>
           <p className="mt-2 text-sm text-[var(--admin-text-secondary)]">
@@ -79,17 +79,27 @@ export default async function AdminManagementPage({
     // pane (hence the svh calc: bar height comes off the pane's min-height).
     // The skip link itself lives in the rail (AppShell maps this route to
     // #admin-subpage-main); this page owns the landing marker below.
-    <div className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] flex-col bg-[var(--admin-bg)] pl-12">
+    <div className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] flex-col bg-[var(--admin-bg)] pl-12 lg:h-[calc(100svh-var(--admin-chrome-h))] lg:min-h-0 lg:overflow-hidden">
       {/* Skip-link landing: focusable zero-height marker; the next Tab enters
           the panel content. */}
       <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />
-      <AdminManagementPanel
-        seats={seats}
-        employees={employees}
-        departmentOptions={(departments ?? []) as DepartmentOption[]}
-        zoneOptions={(zones ?? []) as ZoneOption[]}
-        initialTab={initialTab}
-      />
+      {/* Desktop: the document never scrolls (viewer-map contract) — long
+          content scrolls inside this focusable region instead (tabIndex +
+          aria-label per axe scrollable-region-must-be-focusable). */}
+      <div
+        role="region"
+        aria-label="Management"
+        tabIndex={0}
+        className="flex flex-1 flex-col [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] lg:min-h-0 lg:overflow-y-auto"
+      >
+        <AdminManagementPanel
+          seats={seats}
+          employees={employees}
+          departmentOptions={(departments ?? []) as DepartmentOption[]}
+          zoneOptions={(zones ?? []) as ZoneOption[]}
+          initialTab={initialTab}
+        />
+      </div>
     </div>
   );
 }

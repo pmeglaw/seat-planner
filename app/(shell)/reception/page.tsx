@@ -59,12 +59,22 @@ export default async function ReceptionPage() {
   return (
     // pl-12 clears the fixed rail; the svh calc offsets the AppTopBar the
     // shell renders above this pane (both live in the (shell) layout now).
-    <main className="reception-theme min-h-[calc(100svh-var(--admin-chrome-h))] bg-[var(--r-bg)] pl-12 text-[var(--r-text)]">
+    <main className="reception-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] flex-col bg-[var(--r-bg)] pl-12 text-[var(--r-text)] lg:h-[calc(100svh-var(--admin-chrome-h))] lg:min-h-0 lg:overflow-hidden">
       {/* Skip-link landing: focusable zero-height marker (the link itself is
           the persistent rail's first focusable — AppShell maps this route to
           #reception-main). */}
       <div id="reception-main" tabIndex={-1} className="outline-none" />
-      <ReceptionScreen people={people} />
+      {/* Desktop: the document never scrolls (viewer-map contract) — the
+          directory scrolls inside this focusable region instead (tabIndex +
+          aria-label per axe scrollable-region-must-be-focusable). */}
+      <div
+        role="region"
+        aria-label="Reception directory"
+        tabIndex={0}
+        className="flex-1 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--r-accent)] lg:min-h-0 lg:overflow-y-auto"
+      >
+        <ReceptionScreen people={people} />
+      </div>
     </main>
   );
 }
