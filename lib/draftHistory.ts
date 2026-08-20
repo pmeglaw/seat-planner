@@ -19,7 +19,7 @@ export type DraftHistoryState = {
 const DEFAULT_HISTORY_LIMIT = 20;
 
 function cloneSnapshot(snapshot: DraftSnapshot): DraftSnapshot {
-  return JSON.parse(JSON.stringify(snapshot)) as DraftSnapshot;
+  return structuredClone(snapshot);
 }
 
 function snapshotsEqual(left: DraftSnapshot, right: DraftSnapshot) {
