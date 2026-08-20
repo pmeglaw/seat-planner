@@ -670,6 +670,9 @@ export async function createDepartmentAction(name: string): Promise<DepartmentMu
     .single();
 
   if (error) throw new Error(error.message);
+  // The viewer's filter chips read live department_options (the documented
+  // snapshot exception), so option mutations must bust "/" too.
+  revalidatePath("/");
   revalidatePath("/admin");
   return { ok: true, department: data as DepartmentOption };
 }
@@ -726,6 +729,8 @@ export async function createZoneAction(name: string): Promise<ZoneMutationResult
     .single();
 
   if (error) throw new Error(error.message);
+  // Viewer chips also read live zone_options — same rule as departments.
+  revalidatePath("/");
   revalidatePath("/admin");
   return { ok: true, zone: data as ZoneOption };
 }
@@ -747,6 +752,7 @@ export async function renameZoneAction(input: { from: string; to: string }): Pro
   });
 
   if (error) throw new Error(error.message);
+  revalidatePath("/");
   revalidatePath("/admin");
   return { ok: true, from, to };
 }
@@ -763,6 +769,7 @@ export async function deleteZoneAction(zone: string): Promise<ZoneDeleteResult> 
   });
 
   if (error) throw new Error(error.message);
+  revalidatePath("/");
   revalidatePath("/admin");
   return { ok: true, zone: target };
 }

@@ -825,7 +825,11 @@ export function SeatMap({
       if (event.key !== "Escape") return;
 
       if (discardDraftConfirmOpen) {
-        setDiscardDraftConfirmOpen(false);
+        // While the discard RPC is in flight the dialog is the only "still
+        // running" indicator — its buttons disable on `pending`, and Escape
+        // must not sidestep that (the dialog's own guarded handler can't stop
+        // this window listener from firing).
+        if (!pending) setDiscardDraftConfirmOpen(false);
         return;
       }
 
@@ -845,7 +849,9 @@ export function SeatMap({
       }
 
       if (publishReviewOpen) {
-        setPublishReviewOpen(false);
+        // Same pending guard as the discard branch above: keep the review
+        // dialog visible while publish is resolving.
+        if (!pending) setPublishReviewOpen(false);
         return;
       }
 
@@ -925,7 +931,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, clearStructuredFilters, closeAskPlannerDrawer, deleteSeatConfirm, discardDraftConfirmOpen, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, publishReviewOpen, search, selectedSeatId, setActionNotice, setDiscardDraftConfirmOpen, setPublishReviewOpen, setSearch, structuredFiltersActive, swapConfirm, swapSourceSeatId, vacateConfirm]);
+  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, clearStructuredFilters, closeAskPlannerDrawer, deleteSeatConfirm, discardDraftConfirmOpen, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, pending, publishReviewOpen, search, selectedSeatId, setActionNotice, setDiscardDraftConfirmOpen, setPublishReviewOpen, setSearch, structuredFiltersActive, swapConfirm, swapSourceSeatId, vacateConfirm]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser

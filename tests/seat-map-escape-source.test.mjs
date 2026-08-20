@@ -53,6 +53,28 @@ test("the Esc handler's filter rung gates structuredFiltersActive on the SAME if
   );
 });
 
+test("Esc cannot dismiss the publish/discard dialogs while their RPC is pending", async () => {
+  const handlerNoComments = readEscapeHandler(await readSeatMap());
+
+  // The publish-review and discard-confirm dialogs stay mounted through their
+  // async server action, showing "in progress" state with Cancel/Confirm
+  // disabled on `pending`. The dialogs' own key handlers honor that, but they
+  // cannot stop this window-level listener — so the guard must live here too.
+  // Without it, Escape closed the "Publishing…"/"Discarding…" dialog mid-RPC,
+  // hiding the only still-running indicator (review finding, 2026-08-20).
+  // Each rung must gate its close call on !pending inside its own if-block.
+  assert.match(
+    handlerNoComments,
+    /if \(discardDraftConfirmOpen\) \{[^}]*if \(!pending\) setDiscardDraftConfirmOpen\(false\)/,
+    "the discard rung must gate setDiscardDraftConfirmOpen(false) on !pending."
+  );
+  assert.match(
+    handlerNoComments,
+    /if \(publishReviewOpen\) \{[^}]*if \(!pending\) setPublishReviewOpen\(false\)/,
+    "the publish-review rung must gate setPublishReviewOpen(false) on !pending."
+  );
+});
+
 test("the open-coded department/zone/status trio is gone from the Esc handler", async () => {
   const handlerNoComments = readEscapeHandler(await readSeatMap());
 

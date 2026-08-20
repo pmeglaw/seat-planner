@@ -103,6 +103,28 @@ test("zone management RPCs preserve option-state behavior and mutate draft seats
   assert.match(deleteZoneSql, /update public\.zone_options as zone_option\s+set active = false\s+where zone_option\.name = normalized_name/);
 });
 
+test("every option-mutating action revalidates the viewer route too", () => {
+  // The viewer's filter chips read live department_options/zone_options (the
+  // one documented snapshot exception), so all six option mutations must bust
+  // the acting tab's client-router cache for "/" as well as "/admin" — the
+  // zone actions and both creates once skipped "/" while the department
+  // rename/delete pair called it, leaving viewer chips stale for up to
+  // staleTimes.dynamic (120s) in the acting tab (review finding, 2026-08-20).
+  const optionActionPairs = [
+    ["createDepartmentAction", "renameDepartmentAction"],
+    ["renameDepartmentAction", "deleteDepartmentAction"],
+    ["deleteDepartmentAction", "createZoneAction"],
+    ["createZoneAction", "renameZoneAction"],
+    ["renameZoneAction", "deleteZoneAction"],
+    ["deleteZoneAction", "deleteSeatAction"]
+  ];
+  for (const [name, nextName] of optionActionPairs) {
+    const source = extractActionSource(name, nextName);
+    assert.match(source, /revalidatePath\("\/"\);/, `${name} should revalidate the viewer route ("/").`);
+    assert.match(source, /revalidatePath\("\/admin"\);/, `${name} should revalidate the admin route ("/admin").`);
+  }
+});
+
 test("management server actions delegate multi-write mutations to RPCs", () => {
   const actionContracts = [
     {
