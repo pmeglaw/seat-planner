@@ -3246,7 +3246,7 @@ export function SeatMap({
                   blurDataURL={MAP_IMAGE_BLUR_DATA_URL}
                   className={[
                     "map-raster block h-auto w-full select-none transition-[filter] duration-200",
-                    plannerHighlightedSeatIds.length > 0 ? "[filter:saturate(0.8)]" : ""
+                    plannerHighlightedSeatIds.length > 0 ? "map-raster-dim" : ""
                   ].join(" ")}
                   draggable={false}
                 />

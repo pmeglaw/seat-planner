@@ -320,6 +320,7 @@
   --admin-field-fill: #262626;
   --admin-border: rgba(255, 255, 255, 0.10);
   --admin-border-rgb: 255 255 255;
+  --admin-border-soft: rgba(255, 255, 255, 0.06); /* one step below --admin-border; the old rgb/0.6 call read 60% WHITE here */
   --admin-border-strong: rgba(255, 255, 255, 0.18);
   --admin-table-header-bg: #262626;
   --admin-table-row-border: rgba(255, 255, 255, 0.10);
@@ -415,6 +416,7 @@
      is already used as --admin-chrome-info on the always-dark chrome without
      issue) rather than changed. */
   --admin-ai-text: #78a9ff;
+  --admin-ai-marker-surface: #262626; /* AI pill/chip fill; #78a9ff text = 6.43:1 here */
 
   /* Marker LEGEND chips (the live pills are Task 6). */
   --admin-marker-assigned-surface: #262626;
@@ -521,6 +523,17 @@
   filter: invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95);
 }
 
+/* Ask-Planner dim while seats are highlighted. `filter` is a single property,
+   so the dark variant must restate the whole lightbox chain with the dim
+   folded in (0.45 × 0.8 = 0.36) — a lone saturate() would erase the invert. */
+.map-raster-dim {
+  filter: saturate(0.8);
+}
+
+:root[data-theme="dark"] .map-raster-dim {
+  filter: invert(0.93) hue-rotate(180deg) saturate(0.36) contrast(0.95);
+}
+
 /* One shell for both surfaces: the viewer (`.shell-theme`) and the admin
    (`.admin-theme`) share the same token set — same dark chrome, same light
    workspace — with admin-only chrome hidden for viewers in markup. */
@@ -570,6 +583,7 @@
   --admin-surface-muted: var(--sp-color-canvas);
   --admin-border: #E7E1D8;
   --admin-border-rgb: 231 225 216;
+  --admin-border-soft: rgba(231, 225, 216, 0.6);
   --admin-border-strong: #D8D0C5;
   /* v12 data-table pair: a warmer header fill than surface-alt (#F7F6F2) so the
      column head reads as chrome, and a hairline one step lighter than the card
@@ -673,6 +687,7 @@
      #161616, 6.43:1 on #262626. Measured 2026-07-31. */
   --admin-ai-border: #4589ff;
   --admin-ai-text: #0043ce;
+  --admin-ai-marker-surface: #ffffff;
   --admin-ai-rgb: 69 137 255;
   --admin-ai-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.12), rgba(255, 255, 255, 0) 70%);
   --admin-ai-marker-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.14), rgba(255, 255, 255, 0) 60%);
