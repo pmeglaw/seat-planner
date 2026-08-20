@@ -3,7 +3,8 @@ import { connection } from "next/server";
 import { ViewerSeatFinder } from "@/components/seat-map/ViewerSeatFinder";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { createClient } from "@/lib/supabase/server";
-import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
+import { VIEWER_SEAT_COLUMNS, withNullNotes, type ViewerSeatRow } from "@/lib/viewerSeatColumns";
+import type { DepartmentOption, Employee, ZoneOption } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -33,11 +34,11 @@ export default async function HomePage() {
   // awaits stacked round-trips into this force-dynamic render.
   const [profileResult, seatRows, employees, departmentsResult, zonesResult] = await Promise.all([
     supabase.from("profiles").select("role").eq("id", user.id).single(),
-    fetchAllRows<SeatWithEmployee>(
+    fetchAllRows<ViewerSeatRow>(
       (from, to) =>
         supabase
           .from("seats")
-          .select("*", { count: "exact" })
+          .select(VIEWER_SEAT_COLUMNS, { count: "exact" })
           .eq("layer", "published")
           .order("label")
           .range(from, to),
@@ -61,7 +62,7 @@ export default async function HomePage() {
 
   const employeesById = new Map(employees.map(employee => [employee.id, employee]));
   const seats = seatRows.map(seat => ({
-    ...seat,
+    ...withNullNotes(seat),
     employee: seat.employee_id ? employeesById.get(seat.employee_id) ?? null : null
   }));
 

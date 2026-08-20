@@ -6,7 +6,8 @@ import { fetchAllRows } from "@/lib/fetchAllRows";
 import { seatsToVisualSeats } from "@/lib/mapLayoutTransform";
 import { findEmployeeByEmail, findSeatForEmployee, pickNeighbors } from "@/lib/mySeat";
 import { createClient } from "@/lib/supabase/server";
-import type { Employee, SeatWithEmployee } from "@/lib/types";
+import type { Employee } from "@/lib/types";
+import { VIEWER_SEAT_COLUMNS, withNullNotes, type ViewerSeatRow } from "@/lib/viewerSeatColumns";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -31,11 +32,11 @@ export default async function MySeatPage() {
   if (!user) redirect("/login?next=/my-seat");
 
   const [seatRows, employees] = await Promise.all([
-    fetchAllRows<SeatWithEmployee>(
+    fetchAllRows<ViewerSeatRow>(
       (from, to) =>
         supabase
           .from("seats")
-          .select("*", { count: "exact" })
+          .select(VIEWER_SEAT_COLUMNS, { count: "exact" })
           .eq("layer", "published")
           .order("label")
           .range(from, to),
@@ -57,7 +58,7 @@ export default async function MySeatPage() {
   const employeesById = new Map(employees.map(employee => [employee.id, employee]));
   const seats = seatsToVisualSeats(
     seatRows.map(seat => ({
-      ...seat,
+      ...withNullNotes(seat),
       employee: seat.employee_id ? employeesById.get(seat.employee_id) ?? null : null
     }))
   );
