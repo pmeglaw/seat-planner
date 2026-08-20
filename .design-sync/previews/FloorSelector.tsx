@@ -38,10 +38,12 @@ const CanvasCell = ({ label, minHeight = 72, children }: { label: string; minHei
 );
 
 // Chrome cells sit the trigger in a 40px dark top-bar strip like AppTopBar's
-// center slot; the tall variant leaves canvas room below for the menu.
+// center slot; the tall variant leaves canvas room below for the menu. 400px
+// wide, not 320: the menu is `absolute left-0` off a centre-slot trigger and
+// min-w-[230px], so a 320px strip pushed it out past the cell border.
 const ChromeCell = ({ label, menuRoom = 0, children }: { label: string; menuRoom?: number; children: ReactNode }) => (
   <div style={{ display: "grid", gap: 4 }}>
-    <div className="admin-theme" style={{ width: 320, border: "1px solid #E7E1D8", background: "var(--admin-bg)", paddingBottom: menuRoom }}>
+    <div className="admin-theme" style={{ width: 400, border: "1px solid #E7E1D8", background: "var(--admin-bg)", paddingBottom: menuRoom }}>
       <div
         style={{
           display: "flex",

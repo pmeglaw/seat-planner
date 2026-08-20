@@ -2,9 +2,12 @@ import { FilterPanel } from "seat-planner";
 import { createRef } from "react";
 import type { ReactNode } from "react";
 
-// Compact dark filter menu anchored under the chrome bar's Filter button —
-// content only, the caller's wrapper owns positioning and width. Cells size
-// it like its in-app popover slot (~320px) over the map canvas.
+// Compact dark filter menu anchored under the VIEWER chrome bar's Filter
+// button — content only, the caller's wrapper owns positioning and width.
+// f218f64 removed the admin canvas filter UI, so ViewerSeatFinder is now the
+// panel's only home; the cells wear `.shell-theme` (the viewer's token class,
+// token-identical to `.admin-theme`) and size the popover like its in-app
+// slot (~288px + the caller's padding) over the light map workspace.
 
 const returnFocusRef = createRef<HTMLButtonElement>();
 const noop = () => {};
@@ -16,10 +19,10 @@ const ZONES = ["North Wing", "South Wing", "Reception", "Records Annex"];
 const Cell = ({ label, children }: { label: string; children: ReactNode }) => (
   <div style={{ display: "grid", gap: 4 }}>
     <div
-      className="admin-theme"
+      className="shell-theme"
       style={{
         width: 344,
-        background: "var(--admin-bg)",
+        background: "var(--admin-map-workspace, #ECE8E0)",
         border: "1px solid #E7E1D8",
         padding: 12
       }}

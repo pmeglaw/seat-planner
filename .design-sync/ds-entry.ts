@@ -29,7 +29,6 @@ export { NamesVisibilityToggle } from "../components/seat-map/NamesVisibilityTog
 export { SeatSheet, SeatSheetNotice } from "../components/seat-map/SeatSheet";
 export { MapWashLayer } from "../components/seat-map/MapWashLayer";
 export { MapZoomControl } from "../components/seat-map/MapZoomControl";
-export { DeptChipRow } from "../components/seat-map/DeptChipRow";
 export { AiHighlightChip } from "../components/seat-map/AiHighlightChip";
 export { DraftTrailOverlay } from "../components/seat-map/DraftTrailOverlay";
 export { AskPlannerDrawer } from "../components/seat-map/AskPlannerDrawer";

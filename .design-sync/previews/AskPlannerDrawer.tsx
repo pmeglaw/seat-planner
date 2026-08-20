@@ -6,6 +6,19 @@ import { AskPlannerDrawer } from "seat-planner";
 // top-right on sm+ (top = --admin-chrome-h + 12px, a :root token). Wrapped in
 // .admin-theme for the chrome/AI --admin-* tokens.
 
+// Explicit stage: the harness story root is transformed, so the drawer's
+// `fixed` positioning resolves against this wrapper. Without a real height the
+// wrapper collapses to 0px, the `fixed inset-0` scrim paints nothing (drawer
+// floats on bare white) and the panel is pushed down by the root's 24px
+// padding until its bottom edge runs off the 900x620 frame. The negative
+// margin cancels that padding so the stage — and the scrim — fill the shot.
+const stage = {
+  position: "relative" as const,
+  height: 620,
+  margin: -24,
+  transform: "translateZ(0)"
+};
+
 const handlers = {
   onClose: () => {},
   onHighlightSeats: () => {},
@@ -14,7 +27,7 @@ const handlers = {
 };
 
 export const Default = () => (
-  <div className="admin-theme">
+  <div className="admin-theme" style={stage}>
     <AskPlannerDrawer
       open
       draftDirty={false}
@@ -26,9 +39,10 @@ export const Default = () => (
   </div>
 );
 
-// Unsaved inspector edits pending — the amber exclusion notice under the header.
+// Unsaved inspector edits pending — the teal exclusion notice under the header
+// (the amber status family was retired in #421).
 export const DraftDirty = () => (
-  <div className="admin-theme">
+  <div className="admin-theme" style={stage}>
     <AskPlannerDrawer
       open
       draftDirty
