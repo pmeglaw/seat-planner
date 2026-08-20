@@ -24,7 +24,7 @@ function contentSecurityPolicy(extraDirectives = []) {
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline'",
     "style-src 'self' 'unsafe-inline'",
-    // next/font/google self-hosts at build time, so no external font origin.
+    // Fonts are vendored (app/fonts/, next/font/local — #371), so no external font origin.
     "font-src 'self'",
     // data: for the map's blur-up placeholder, blob: for CSV/JSON export URLs.
     "img-src 'self' data: blob:",
