@@ -289,7 +289,13 @@
   --sp-shadow-floating: 0 6px 16px rgba(0, 0, 0, 0.5);
   --sp-shadow-sheet: 0 -8px 24px rgba(0, 0, 0, 0.55);
   --sp-shadow-modal: 0 12px 40px rgba(0, 0, 0, 0.6);
-  --sp-focus-ring-offset-color: #161616; /* spec-mandated; the light alias would resolve to #262626 */
+  /* Focus-ring offset deliberately NOT overridden here (owner retune
+     2026-08-19, replacing the spec's #161616 literal): it keeps the :root
+     alias var(--sp-color-surface-raised) → #262626 — an exact gap on raised
+     panels, near-invisible on #1f1f1f, where the old literal painted a dark
+     halo around every focused control. Surfaces that sit on the bare canvas
+     pass ring-offset-[var(--sp-color-canvas)] explicitly (SeatMap viewport,
+     ViewerSeatFinder), so they are unaffected. */
 }
 
 /* Admin + shell surfaces join the chrome on dark. The --admin-bg/surface/
