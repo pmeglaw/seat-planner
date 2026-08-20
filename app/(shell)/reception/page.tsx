@@ -4,7 +4,8 @@ import { ReceptionScreen } from "@/components/reception/ReceptionScreen";
 import { buildReceptionDirectory } from "@/lib/receptionDirectory";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { getSessionContext } from "@/lib/serverAuth";
-import type { Employee, Seat } from "@/lib/types";
+import type { Employee } from "@/lib/types";
+import { VIEWER_SEAT_COLUMNS, withNullNotes, type ViewerSeatRow } from "@/lib/viewerSeatColumns";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -30,11 +31,11 @@ export default async function ReceptionPage() {
   // Both queries only need the session, so they fire together — serial
   // awaits stacked round-trips into this force-dynamic render.
   const [seats, employees] = await Promise.all([
-    fetchAllRows<Seat>(
+    fetchAllRows<ViewerSeatRow>(
       (from, to) =>
         supabase
           .from("seats")
-          .select("*", { count: "exact" })
+          .select(VIEWER_SEAT_COLUMNS, { count: "exact" })
           .eq("layer", "published")
           .order("label")
           .range(from, to),
@@ -53,7 +54,7 @@ export default async function ReceptionPage() {
     )
   ]);
 
-  const people = buildReceptionDirectory(employees, seats);
+  const people = buildReceptionDirectory(employees, seats.map(withNullNotes));
 
   return (
     // pl-12 clears the fixed rail; the svh calc offsets the AppTopBar the
