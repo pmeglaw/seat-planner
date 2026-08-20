@@ -695,7 +695,11 @@ export function AdminManagementPanel({
   function confirmManagementDestructiveAction() {
     if (!managementConfirm) return;
     const action = managementConfirm;
-    setManagementConfirm(null);
+    // Keep the confirm dialog mounted (buttons disabled on `pending`) until
+    // the action settles — closing it up front left the table interactive
+    // during the round-trip, so opening another employee's edit dialog then
+    // had its form clobbered by this handler's reset below. Same pattern as
+    // DataUtilitiesPanel's review dialogs.
 
     startTransition(async () => {
       try {
@@ -750,6 +754,8 @@ export function AdminManagementPanel({
               ? "Could not delete department."
               : "Could not delete zone."
         );
+      } finally {
+        setManagementConfirm(null);
       }
     });
   }

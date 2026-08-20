@@ -93,6 +93,23 @@ test("management destructive actions use one in-app confirmation path", async ()
   assert.match(source, /published viewer map is unchanged until publish/i);
 });
 
+test("management confirm dialog stays mounted until its destructive action settles", async () => {
+  const source = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  const confirmFunction = source.match(/function confirmManagementDestructiveAction\(\) \{[\s\S]*?return \(/);
+  assert.ok(confirmFunction, "management confirm mutation path should be source-visible.");
+
+  // Closing the confirm dialog before the async action left the directory
+  // table interactive during the round-trip: opening another employee's edit
+  // dialog then had its form clobbered by this handler's post-success reset
+  // (blank "Add employee" form under the admin's typing — an accidental
+  // create on Save). The dialog must stay mounted (buttons disabled on
+  // `pending`) and close only when the action settles (review, 2026-08-20).
+  const preTransition = confirmFunction[0].slice(0, confirmFunction[0].indexOf("startTransition"));
+  assert.notEqual(preTransition.length, confirmFunction[0].length, "confirm flow should still run inside startTransition.");
+  assert.doesNotMatch(preTransition, /setManagementConfirm\(null\)/, "the confirm dialog must not close before the action starts.");
+  assert.match(confirmFunction[0], /\} finally \{\s*setManagementConfirm\(null\);/, "the confirm dialog should close in the transition's finally block.");
+});
+
 test("reset-to-published reviews in-app on both surfaces before calling the reset action", async () => {
   const settingsSource = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
