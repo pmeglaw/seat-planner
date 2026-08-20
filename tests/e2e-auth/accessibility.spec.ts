@@ -404,13 +404,14 @@ test("the viewer map and its seat inspector have no WCAG A/AA violations", async
   await expect(page.locator("#viewer-seat-search")).toHaveValue("");
 
   // The viewer inspector is a non-modal panel, not a dialog; the "Published
-  // seat" pill is unique to the viewer variant, so it doubles as proof this
-  // is the read-only branch with no admin affordances.
+  // seat details" region is unique to the viewer variant, so it doubles as
+  // proof this is the read-only branch with no admin affordances (the old
+  // "Published seat" pill was removed 2026-08-20 as viewer noise).
   await retryUntilVisible(
     () => page.locator("button[data-seat-id]").first().dispatchEvent("click"),
     page.locator("#seat-inspector-panel")
   );
-  await expect(page.getByText("Published seat", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Published seat details" })).toBeVisible();
   await expectNoAxeViolations(page);
 
   await page.getByRole("button", { name: "Close inspector", exact: true }).click();

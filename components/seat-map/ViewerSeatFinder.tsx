@@ -1538,12 +1538,10 @@ export function ViewerSeatFinder({
         employees={employees}
         departmentOptions={departmentOptions}
         canEdit={false}
-        // Clears the 40px status band + the 12px gutter at the panel tier —
-        // but only while the band actually renders (Floor 2 has no band, and
-        // a selection survives the floor switch; a static 52px there is a
-        // dead gap above nothing). Below the panel tier the sheet owns the
-        // bottom and the band yields instead, so the panel: variant is inert.
-        panelBottomClassName={statusBandVisible ? "panel:bottom-[52px]" : undefined}
+        // No panelBottomClassName: the viewer card is top-anchored and
+        // content-height, so it never reaches the status band (the old
+        // conditional panel:bottom-[52px] clearance died with the
+        // full-column pin, 2026-08-20).
         collapsed={inspectorCollapsed}
         onClose={() => {
           focusViewerSeatMarker(selectedSeatId);

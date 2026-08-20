@@ -479,13 +479,13 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // The keyed remount stays: it resets transient DOM state (scroll position)
   // when the selection moves to another seat.
   assert.match(inspectorSource, /key=\{`seat-inspector-sections-\$\{selectedSeat\.id\}`\}/);
-  // Delete renders only where it can ever succeed (custom draft seats). The
-  // Seat type fact retired 2026-08-18 (progressive-disclosure spec: status /
-  // code / zone live only in the header meta row); the visible delete help
-  // line below still explains protected originals.
-  // Drift-proof delete gate: custom AND not a protected-original label, so
-  // is_custom data drift on original seats can't resurrect a dead button.
-  assert.match(inspectorSource, /\{selectedSeat\.is_custom && !isProtectedOriginalSeatLabel\(selectedSeat\.label\) && \(/);
+  // Delete renders only where it can actually succeed. Owner ruling
+  // 2026-08-20: a delete button that can never fire must not appear at all,
+  // not appear disabled — so the render gate is canDeleteSeat (draft +
+  // custom + unassigned + available + not a protected-original label, which
+  // keeps the gate immune to is_custom data drift on original seats).
+  assert.match(inspectorSource, /\{selectedSeatCanDelete && \(/);
+  assert.match(inspectorSource, /const selectedSeatCanDelete = canDeleteSeat\(selectedSeat\);/);
   // An open seat has no occupant — the Contact section exists only when
   // someone is assigned (admin and viewer variants alike). Department stays
   // out of it: the header role line already carries it (dedup 2026-07-23).
@@ -516,7 +516,7 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /No unsaved changes\./);
   // The verbose repeated panels are gone (Claude Design cleanup).
   assert.doesNotMatch(inspectorSource, /Seat Summary|Planning inspector|Draft-only impact|Assignment workflow|Actions \/ Rules/);
-  assert.match(inspectorSource, /isProtectedOriginalSeatLabel/);
+  assert.match(inspectorSource, /canDeleteSeat/);
   assert.match(inspectorSource, /Fix the highlighted inspector fields before saving/);
   // Move-confirm dialog renders canonical identity casing for both segments
   // (person via formatDisplayName, seat code via formatSeatCode) — raw stored

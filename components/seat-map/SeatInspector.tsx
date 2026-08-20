@@ -6,7 +6,7 @@ import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { updateSeatAction } from "@/app/actions";
-import { canDeleteSeat, getSeatDeleteBlockReason, isProtectedOriginalSeatLabel } from "@/lib/seatProtection";
+import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { buildContactRows, employeeAssignmentFields, type ContactFactRow } from "@/lib/employeeAssignment";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
@@ -25,9 +25,11 @@ type SeatInspectorProps = {
   searchMismatchNotice?: string | null;
   searchMismatchClearLabel?: string;
   // Panel-tier bottom offset only (the below-panel sheet always sits bottom-3).
-  // Default is the shipped 12px gutter; the viewer passes panel:bottom-[52px]
+  // Default is the shipped 12px gutter; the admin map passes panel:bottom-[52px]
   // so the side panel clears its 40px status band plus the same gutter. A
   // class, not a number: it must compose with the panel: variant at build time.
+  // Edit-mode only: the viewer variant is top-anchored and content-height
+  // (panel:bottom-auto), so it never reaches the band and ignores this prop.
   panelBottomClassName?: string;
   onClose: () => void;
   onClearSearchContext?: () => void;
@@ -225,6 +227,23 @@ function PhoneGlyph() {
   );
 }
 
+function CopyGlyph() {
+  return (
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="7" y="7" width="9.5" height="9.5" />
+      <path d="M13 3.5H3.5V13" />
+    </svg>
+  );
+}
+
+function CheckGlyph() {
+  return (
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m4 10.5 4 4 8-8.5" />
+    </svg>
+  );
+}
+
 function PinGlyph() {
   return (
     <svg aria-hidden="true" width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -330,9 +349,13 @@ function ContactFacts({ rows, canEdit }: { rows: ContactFactRow[]; canEdit: bool
               type="button"
               onClick={() => copyExtension(row.value)}
               aria-label={`Copy extension ${row.value}`}
-              className="flex h-8 shrink-0 items-center gap-1.5 bg-[var(--admin-surface-alt)] px-2.5 text-[12px] font-medium text-[var(--admin-primary-on-soft)] transition hover:bg-[var(--admin-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+              title={copiedValue === row.value ? "Copied" : `Copy extension ${row.value}`}
+              className="flex h-8 w-8 shrink-0 items-center justify-center bg-[var(--admin-surface-alt)] text-[var(--admin-primary-on-soft)] transition hover:bg-[var(--admin-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
             >
-              {copiedValue === row.value ? "Copied ✓" : "Copy"}
+              {copiedValue === row.value ? <CheckGlyph /> : <CopyGlyph />}
+              {/* Live confirmation for screen readers (and the ct test's
+                  /Copied/ anchor) — the icon swap alone is silent. */}
+              <span role="status" className="sr-only">{copiedValue === row.value ? "Copied" : ""}</span>
             </button>
           )}
         </div>
@@ -991,7 +1014,13 @@ export function SeatInspector({
       tabIndex={-1}
       aria-label={canEdit ? "Selected draft seat inspector" : "Selected published seat details"}
       aria-labelledby="seat-inspector-title"
-      className={`fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-elevation-4 panel:inset-x-auto ${panelBottomClassName} panel:right-3 panel:top-[calc(var(--admin-chrome-h)+0.75rem)] panel:z-40 panel:max-h-none panel:w-[332px] panel:max-w-[calc(100vw-1.5rem)]`}
+      // Panel-tier height is variant-split: the admin form pins top AND bottom
+      // (full column — the editor is long and the commit bar must stay put),
+      // while the viewer card is top-anchored and content-height
+      // (panel:bottom-auto; the base max-h-[60vh] cap stays as the overflow
+      // fence) — a read-only card holding only identity + contact must not
+      // stretch a full empty column (owner ruling 2026-08-20).
+      className={`fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-elevation-4 panel:inset-x-auto ${canEdit ? `${panelBottomClassName} panel:max-h-none` : "panel:bottom-auto"} panel:right-3 panel:top-[calc(var(--admin-chrome-h)+0.75rem)] panel:z-40 panel:w-[332px] panel:max-w-[calc(100vw-1.5rem)]`}
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-[var(--admin-border)] bg-[var(--admin-surface)] px-4 pb-3 pt-3">
         <div className="flex items-center justify-between gap-2">
@@ -999,16 +1028,16 @@ export function SeatInspector({
           <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 shrink-0 items-center justify-center text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"><CloseIcon /></button>
         </div>
         <div className="flex items-start gap-2.5">
-          <span aria-hidden="true" className="relative flex h-10 w-10 shrink-0 items-center justify-center bg-[var(--admin-chrome-bg)] text-[11px] font-bold text-[var(--admin-chrome-text)]">
-            {occupantInitials}
-            <span className={["absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-[var(--admin-surface)]", avatarStatusDotClass].join(" ")} />
-          </span>
           <div className="min-w-0 flex-1">
             <h2 id="seat-inspector-title" className="truncate text-[19px] font-medium leading-6 text-[var(--admin-text-primary)]">
               {formatDisplayName(assignmentIdentityLabel) || "Open seat"}
             </h2>
             <div className="truncate text-[12.5px] leading-4 text-[var(--admin-text-muted)]">{occupantRoleLabel}</div>
           </div>
+          <span aria-hidden="true" className="relative flex h-10 w-10 shrink-0 items-center justify-center bg-[var(--admin-chrome-bg)] text-[11px] font-bold text-[var(--admin-chrome-text)]">
+            {occupantInitials}
+            <span className={["absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-[var(--admin-surface)]", avatarStatusDotClass].join(" ")} />
+          </span>
         </div>
         {/* Meta row: soft status chip owns state; pin + code · zone are plain trailing facts. */}
         <div className="flex min-w-0 items-center gap-2">
@@ -1021,9 +1050,6 @@ export function SeatInspector({
             <span className="text-[var(--admin-text-muted)]">·</span>
             <span className="truncate text-[var(--admin-text-muted)]">{currentZone}</span>
           </span>
-          {!canEdit && (
-            <span className="shrink-0 bg-[var(--admin-state-neutral-bg)] px-2.5 py-1 text-[11px] font-medium leading-none text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-state-neutral-border)]">Published seat</span>
-          )}
         </div>
         {/* Primary CTA pinned under the header meta (2026-08-19 reference
             image; also restores the 2026-07-16 "pinned under the header"
@@ -1338,16 +1364,18 @@ export function SeatInspector({
                     )}
                     {/* Delete treatment: full-width OUTLINED danger button
                         with a trash glyph + visible helper line. Rendered only
-                        for deletable-class seats: custom AND not a
-                        protected-original label — the label guard makes the
-                        gate immune to is_custom data drift on original
-                        seats. */}
-                    {selectedSeat.is_custom && !isProtectedOriginalSeatLabel(selectedSeat.label) && (
+                        when the seat is actually deletable (canDeleteSeat:
+                        draft + custom + unassigned + available + not a
+                        protected-original label) — a delete button that can
+                        never fire must not appear at all, not appear disabled
+                        (owner ruling 2026-08-20). Disabled covers only the
+                        transient pending-save state. */}
+                    {selectedSeatCanDelete && (
                       <>
                         <Button
                           type="button"
                           onClick={handleDeleteSeat}
-                          disabled={pending || !selectedSeatCanDelete}
+                          disabled={pending}
                           aria-label={`Delete custom seat ${selectedSeat.label}`}
                           aria-describedby="seat-inspector-delete-help"
                           title={deleteHelpText}
@@ -1450,14 +1478,18 @@ export function SeatInspector({
           </footer>
         </form>
       ) : (
-        // Viewer inspector: Contact + Seat only — no admin sections,
-        // seat-action verbs, AI row, or footer. The data is the
-        // published assignment snapshot.
+        // Viewer inspector: Contact only — no admin sections, seat-action
+        // verbs, AI row, or footer. The data is the published assignment
+        // snapshot. Status/code/zone already live in the header meta row, so
+        // no Seat section repeats them (owner ruling 2026-08-20: the
+        // duplicate "Assigned" row and the "Published seat" badge are gone —
+        // on the viewer surface everything is published, the badge said
+        // nothing).
         //
         // tabIndex: the region must stay keyboard-scrollable on its own (axe
         // scrollable-region-focusable) — unlike the admin form above, this
         // read-only branch has no focusable descendant guaranteed (an open
-        // seat renders facts only), so an overflowing panel would otherwise
+        // seat renders no body content), so an overflowing panel would otherwise
         // be unreachable by keyboard. Same contract as the viewer lists in
         // ViewerSeatFinder.
         <div
@@ -1480,15 +1512,6 @@ export function SeatInspector({
                 />
               </section>
             )}
-            <section aria-labelledby="published-details-heading" className={hasCurrentAssignment ? "mt-3" : ""}>
-              <h3 id="published-details-heading" className={eyebrowHeadingClass}>SEAT</h3>
-              <dl>
-                <div className="flex items-center justify-between gap-2.5 py-1.5">
-                  <dt className="shrink-0 text-[12.5px] text-[var(--admin-text-muted)]">Status</dt>
-                  <dd><span className={["inline-block px-2 py-0.5 text-[10px] font-semibold", statusTagClass].join(" ")}>{currentStatusLabel}</span></dd>
-                </div>
-              </dl>
-            </section>
           </div>
         </div>
       )}
