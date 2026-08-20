@@ -19,6 +19,10 @@ const migrationSql = await readFile(
   new URL("../supabase/migrations/20260724150000_reset_draft_staged_writes.sql", import.meta.url),
   "utf8"
 );
+const grantFixSql = await readFile(
+  new URL("../supabase/migrations/20260820120000_revoke_anon_reset_draft_execute.sql", import.meta.url),
+  "utf8"
+);
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
 
 function extractResetAction(source) {
@@ -37,6 +41,13 @@ test("reset migration creates an authenticated admin-only fenced RPC", () => {
   assert.match(migrationSql, /if not app_private\.is_admin\(\) then/);
   assert.match(migrationSql, /revoke all on function public\.reset_draft_seats_to_published\(jsonb\) from public;/);
   assert.match(migrationSql, /grant execute on function public\.reset_draft_seats_to_published\(jsonb\) to authenticated;/);
+});
+
+test("follow-up migration revokes the explicit anon grant like every sibling RPC", () => {
+  // 20260724150000 only revoked PUBLIC; the explicit anon grant from
+  // Supabase's create-time default privileges survived it in production.
+  assert.match(grantFixSql, /revoke all on function public\.reset_draft_seats_to_published\(jsonb\) from public, anon, authenticated;/);
+  assert.match(grantFixSql, /grant execute on function public\.reset_draft_seats_to_published\(jsonb\) to authenticated;/);
 });
 
 test("reset RPC locks the draft, fences staleness, and never touches employees", () => {

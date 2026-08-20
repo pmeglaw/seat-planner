@@ -154,8 +154,12 @@ max_catalogs = 2
 # [storage.analytics.buckets.my-warehouse]
 
 # Store vector embeddings in S3 for large and durable datasets
+# Keep disabled: the app stores no vectors, and `enabled = true` (the init
+# template default this file was created with) makes Supabase preview-branch
+# provisioning 402 on the Free plan ("upgrade ... to enable vector buckets"),
+# failing the branch before migrations run.
 [storage.vector]
-enabled = true
+enabled = false
 max_buckets = 10
 max_indexes = 5
 
