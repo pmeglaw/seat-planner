@@ -51,11 +51,14 @@ test("the /admin map wrapper subtracts the chrome bar height", async () => {
   assert.match(source, /min-h-\[calc\(100svh-var\(--admin-chrome-h\)\)\]/);
 });
 
-// The document itself must never scroll on desktop shell routes — the viewer
-// map is the reference (no window scrollbar even at 200% zoom). Long content
-// scrolls inside a focusable region instead (MapStatusBand precedent:
+// The document must never scroll on shell routes — the viewer map is the
+// reference (no window scrollbar even at 200% zoom, which drops the CSS
+// viewport below the lg breakpoint, so the clamp cannot be lg-gated). Long
+// content scrolls inside a focusable region (MapStatusBand precedent:
 // tabIndex={0} + aria-label, or the region is unreachable by keyboard —
-// axe scrollable-region-must-be-focusable).
+// axe scrollable-region-must-be-focusable) whose scrollbar is visually
+// hidden (owner requirement 2026-08-20: no visible scrollbar anywhere,
+// wheel/keys/touch still scroll).
 const SCROLL_PAGES = [
   ["admin/management/page.tsx", path.join(shellDir, "admin", "management", "page.tsx")],
   ["admin/settings/page.tsx", path.join(shellDir, "admin", "settings", "page.tsx")],
@@ -63,14 +66,16 @@ const SCROLL_PAGES = [
 ];
 
 for (const [label, file] of SCROLL_PAGES) {
-  test(`${label} pins its pane to the viewport at lg and scrolls internally`, async () => {
+  test(`${label} pins its pane to the viewport and scrolls internally, scrollbar hidden`, async () => {
     const source = await readFile(file, "utf8");
-    assert.match(source, /lg:h-\[calc\(100svh-var\(--admin-chrome-h\)\)\]/, "root pane must be viewport-height at lg");
-    assert.match(source, /lg:overflow-hidden/, "root pane must clip — the document never scrolls at lg");
-    assert.match(source, /lg:overflow-y-auto/, "content must scroll in an internal region at lg");
-    const scroller = source.match(/<div[^>]*lg:overflow-y-auto[^>]*>/s) ?? source.match(/<div[^>]*tabIndex=\{0\}[^>]*>/s);
+    assert.match(source, /(?<!lg:)h-\[calc\(100svh-var\(--admin-chrome-h\)\)\]/, "root pane must be viewport-height at every width (no lg: gate)");
+    assert.match(source, /(?<!lg:)overflow-hidden/, "root pane must clip — the document never scrolls");
+    assert.match(source, /(?<!lg:)overflow-y-auto/, "content must scroll in an internal region");
+    const scroller = source.match(/<div[^>]*overflow-y-auto[^>]*>/s) ?? source.match(/<div[^>]*tabIndex=\{0\}[^>]*>/s);
     assert.ok(scroller, "internal scroll region present");
     assert.match(scroller[0], /tabIndex=\{0\}/, "scroll region must be keyboard-focusable");
     assert.match(scroller[0], /aria-label=/, "focusable scroll region needs an accessible name");
+    assert.match(scroller[0], /\[scrollbar-width:none\]/, "scrollbar hidden (Firefox)");
+    assert.match(scroller[0], /\[&::-webkit-scrollbar\]:hidden/, "scrollbar hidden (Chromium/WebKit)");
   });
 }

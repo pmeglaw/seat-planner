@@ -79,7 +79,7 @@ export default async function AdminManagementPage({
     // pane (hence the svh calc: bar height comes off the pane's min-height).
     // The skip link itself lives in the rail (AppShell maps this route to
     // #admin-subpage-main); this page owns the landing marker below.
-    <div className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] flex-col bg-[var(--admin-bg)] pl-12 lg:h-[calc(100svh-var(--admin-chrome-h))] lg:min-h-0 lg:overflow-hidden">
+    <div className="admin-theme flex h-[calc(100svh-var(--admin-chrome-h))] flex-col overflow-hidden bg-[var(--admin-bg)] pl-12">
       {/* Skip-link landing: focusable zero-height marker; the next Tab enters
           the panel content. */}
       <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />
@@ -90,7 +90,7 @@ export default async function AdminManagementPage({
         role="region"
         aria-label="Management"
         tabIndex={0}
-        className="flex flex-1 flex-col [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] lg:min-h-0 lg:overflow-y-auto"
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
       >
         <AdminManagementPanel
           seats={seats}
