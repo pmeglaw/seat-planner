@@ -3,6 +3,20 @@
 Things found during the mechanical rename that want a decision or fix later.
 Rule for this branch: renames and twin deletion only — nothing here was acted on.
 
+## Verification (scripts/css-dangling-refs.mjs, scripts/css-resolved-map.mjs)
+
+- Dangling refs in emitted CSS: **branch 0**; main had 2 (`--admin-border-subtle`
+  — the always-taken-fallback quirk below, fixed here; `--x` — a phantom
+  Tailwind utility generated from a code COMMENT in LoginForm.tsx that
+  mentioned `border-[var(--x)]`; the comment was reworded so the scanner
+  stops minting it).
+- Resolved-map diff main→branch: every value present on exactly one side is a
+  deleted `-rgb` twin channel triplet or the deleted `none` shadow trio. One
+  B-only artifact: `--sp-marker-neutral-ring` evaluated *inside the chrome
+  zone* resolves through the zone's `--sp-border-strong` — no marker ever
+  renders inside a chrome zone, so no shipped pixel changes, but it is the
+  same latent alias-chain-in-zone class as the focus-offset note below.
+
 ## §3.2 (`--sp-color-*`)
 
 - `app/concepts/component-state-board/ComponentStateBoard.tsx` pinned

@@ -330,7 +330,7 @@ export function LoginForm() {
       // Only the hover fill eases.
       "relative flex h-14 bg-[var(--sp-field)] px-4 transition-[background-color] hover:bg-[var(--sp-field-hover)]",
       options?.withTrailing ? "items-center gap-1" : "flex-col justify-center",
-      // The `color:` hint is load-bearing. `border-[var(--x)]` is type-ambiguous
+      // The `color:` hint is load-bearing. a bare var() inside a `border-` arbitrary value is type-ambiguous
       // to Tailwind v3 — it cannot tell a length from a colour inside a var() —
       // and the focus variant lost silently, leaving a 2px rule still painted
       // #8d8d8d. Measured, not assumed. Keep the explicit longhand.
