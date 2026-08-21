@@ -572,6 +572,11 @@
   --admin-chrome-text: #F7F6F2;
   --admin-chrome-muted: #B8AEA2;
   --admin-chrome-border: rgba(255, 255, 255, 0.10);
+  /* Strong chrome hairline: popover/menu outlines (account, kebab, floor) and
+     outlined controls (ThemeToggle) — one step brighter than the base border
+     so overlays read as edges against the elevated surface. Replaces the
+     scattered border-white/15 literals (chrome-unification pass 2026-08-20). */
+  --admin-chrome-border-strong: rgba(255, 255, 255, 0.15);
   --admin-chrome-hover: #262626;
   --admin-chrome-field: rgba(255, 255, 255, 0.08);
 
@@ -580,6 +585,11 @@
   --admin-rail-surface: rgba(255, 255, 255, 0.05);
   --admin-rail-border: var(--admin-chrome-border);
   --admin-rail-muted: var(--admin-chrome-muted);
+  /* Expanded-rail overlay shadow — the rail's entry in the elevation ladder
+     (directional: the rail casts rightward over the page). Named Tailwind
+     utility `shadow-rail-overlay`; arbitrary shadow-[var(--…)] is silently
+     dropped by Tailwind v3 (see tailwind.config.ts boxShadow comment). */
+  --admin-rail-overlay-shadow: 8px 0 24px rgba(0, 0, 0, 0.35);
   --admin-surface: var(--sp-color-surface);
   --admin-surface-rgb: var(--sp-color-surface-rgb);
   --admin-surface-hover: #FBFAF8;

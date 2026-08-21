@@ -2629,7 +2629,7 @@ export function SeatMap({
                   returnFocusAfterClose(chromeMenuButtonRef);
                 }
               }}
-              className="absolute left-0 top-full z-50 w-[230px] border border-white/15 bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
+              className="absolute left-0 top-full z-50 w-[230px] border border-[var(--admin-chrome-border-strong)] bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
             >
               {/* The label must NOT flip to the inverse verb when active: a
                   flipping label with no pressed state is what left the

@@ -63,13 +63,19 @@ export type AppRailProps = {
 // overflow-hidden here (not on <nav>, see the nav className comment): each
 // item's own box is what needs to clip its whitespace-nowrap label while the
 // rail animates between 48px and 208px.
+// h-10 = 40px, matching --admin-chrome-h: rail cells and the bar's corner
+// cell share one 48×40 grid unit (chrome-unification pass 2026-08-20). The
+// hit area is still the full rail width. Hover/active foreground is the
+// chrome text token, not text-white — one hovered foreground across the
+// chrome (see components/ui/adminChrome.ts doctrine).
 const ITEM =
-  "relative flex h-11 w-full items-center overflow-hidden text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-const ITEM_IDLE = "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-white";
-// Active: #262626 surface + inset 3px #FF5715 left edge (contract #3).
-const ITEM_ACTIVE = "bg-[var(--admin-chrome-hover)] text-white shadow-[inset_3px_0_0_var(--admin-primary)]";
+  "relative flex h-10 w-full items-center overflow-hidden text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+const ITEM_IDLE = "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]";
+// Active: #262626 surface + inset 3px #FF5715 left edge (contract #3) — the
+// vertical-chrome active marker (adminChrome.ts doctrine).
+const ITEM_ACTIVE = "bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)] shadow-[inset_3px_0_0_var(--admin-primary)]";
 const CELL = "flex w-12 shrink-0 items-center justify-center";
-const LABEL_BASE = "whitespace-nowrap text-[13px] transition-opacity duration-150";
+const LABEL_BASE = "whitespace-nowrap text-[12.5px] transition-opacity duration-150";
 
 type NavItem = { key: AppRailActive; label: string; href: string; icon: ReactNode };
 
@@ -240,7 +246,7 @@ export function AppRail({
           // its own overflow-hidden (see ITEM), scoped to that item's box —
           // the rail box itself stays unclipped.
           "fixed bottom-0 left-0 top-[var(--admin-chrome-h)] z-[80] flex flex-col border-r border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] transition-[width] duration-150 ease-out",
-          open ? "w-[208px] shadow-[8px_0_24px_rgba(0,0,0,.35)]" : "w-12"
+          open ? "w-[208px] shadow-rail-overlay" : "w-12"
         ].join(" ")}
       >
         {/* No toggle row: the hamburger lives in AppTopBar's corner cell,

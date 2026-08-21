@@ -18,7 +18,7 @@ type AccountMenuProps = {
 };
 
 const menuItemClassName =
-  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-[#E7E1D8] transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--admin-chrome-heading)] transition hover:bg-white/10 hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
 /**
  * The chrome bar's identity chip, opened into a small account menu: signed-in
@@ -125,6 +125,10 @@ export function AccountMenu({ email, roleLabel, autoCloseKey }: AccountMenuProps
         aria-label={`Account — ${email}`}
         title={`Account — ${email} (${roleLabel})`}
         onClick={() => (open ? closeMenu(false) : openMenu())}
+        // Offset (non-inset) focus ring — a documented exception to the
+        // chrome's ring-inset doctrine (adminChrome.ts): an inset ring on a
+        // 26px circle would eat the monogram; the offset halo reads cleanly
+        // against the dark bar.
         className="relative flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-brand)] text-[11px] font-semibold text-[var(--admin-primary-ink)] transition after:absolute after:-inset-[9px] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-chrome-bg)]"
       >
         {initial}
@@ -145,7 +149,10 @@ export function AccountMenu({ email, roleLabel, autoCloseKey }: AccountMenuProps
             role="menu"
             aria-label="Account"
             onKeyDown={handleMenuKeyDown}
-            className="absolute right-0 top-[34px] z-50 w-60 border border-white/15 bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
+            // top offset derives from the bar height token (bar 40px, 26px
+            // avatar centered ends at 33px, +1px gap) so a chrome-h change
+            // can't strand the menu — was a hardcoded top-[34px].
+            className="absolute right-0 top-[calc(var(--admin-chrome-h)-6px)] z-50 w-60 border border-[var(--admin-chrome-border-strong)] bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
           >
             <div className="border-b border-white/10 px-3 pb-2 pt-1.5">
               <div className="truncate text-[12.5px] font-medium text-[var(--admin-chrome-text)]">{email}</div>
