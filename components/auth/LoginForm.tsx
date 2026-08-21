@@ -317,60 +317,60 @@ export function LoginForm() {
   // 1px → 2px rule change on focus or error cannot shift layout.
   //
   // Rest rules split by position (the 1.4.11 note): the STACK's bottom edge —
-  // the password field — keeps --login-border-strong (#8d8d8d, 3.02:1 on the
+  // the password field — keeps --sp-border-strong (#8d8d8d, 3.02:1 on the
   // fill), the single line that says "this is an input". The email field's
-  // rest rule is the handoff's --login-border-subtle #e0e0e0: an internal
+  // rest rule is the handoff's --sp-border-subtle #e0e0e0: an internal
   // DIVIDER between two flush fills, never the stack's sole boundary. Focus
-  // doubles the rule in the 1e copper, error in --login-error — the thickness
+  // doubles the rule in the 1e copper, error in --sp-status-danger-mark — the thickness
   // change is the second, non-colour cue.
   const fieldShellClass = (invalid: boolean, options?: { withTrailing?: boolean; restRule?: "subtle" | "strong" }) =>
     cx(
       // transition-[background-color], NOT transition-colors: the bottom rule
       // IS the focus indicator here, and a colour tween would delay it 150ms.
       // Only the hover fill eases.
-      "relative flex h-14 bg-[var(--login-field)] px-4 transition-[background-color] hover:bg-[var(--login-field-hover)]",
+      "relative flex h-14 bg-[var(--sp-field)] px-4 transition-[background-color] hover:bg-[var(--sp-field-hover)]",
       options?.withTrailing ? "items-center gap-1" : "flex-col justify-center",
       // The `color:` hint is load-bearing. `border-[var(--x)]` is type-ambiguous
       // to Tailwind v3 — it cannot tell a length from a colour inside a var() —
       // and the focus variant lost silently, leaving a 2px rule still painted
       // #8d8d8d. Measured, not assumed. Keep the explicit longhand.
       invalid
-        ? "border-b-2 border-b-[color:var(--login-error)]"
+        ? "border-b-2 border-b-[color:var(--sp-status-danger-mark)]"
         : cx(
             options?.restRule === "subtle"
-              ? "border-b border-b-[color:var(--login-border-subtle)]"
-              : "border-b border-b-[color:var(--login-border-strong)]",
+              ? "border-b border-b-[color:var(--sp-border-subtle)]"
+              : "border-b border-b-[color:var(--sp-border-strong)]",
             // has-[input:focus], NOT focus-within: the password shell also
             // contains the eye toggle, and focus-within would paint the
             // field's focus rule while the BUTTON has keyboard focus — two
             // indicators, one pointing at the wrong control. The rule tracks
             // the input alone; the toggle keeps its own inset ring.
-            "has-[input:focus]:border-b-2 has-[input:focus]:border-b-[color:var(--login-accent)]"
+            "has-[input:focus]:border-b-2 has-[input:focus]:border-b-[color:var(--sp-button-primary)]"
           )
     );
-  const fieldLabelClass = "block text-[11px] font-normal leading-[1.3] text-[var(--login-text-secondary)]";
+  const fieldLabelClass = "block text-[11px] font-normal leading-[1.3] text-[var(--sp-text-secondary)]";
   // outline-none is safe only because the shell above draws the focus rule.
   const fieldInputClass =
-    "mt-1 w-full border-0 bg-transparent p-0 text-[13.5px] font-normal leading-[1.4] text-[var(--login-text-primary)] caret-[var(--login-accent)] outline-none placeholder:text-[var(--login-placeholder)]";
-  const fieldErrorClass = "mt-1.5 text-[12px] leading-[1.4] text-[var(--login-error-text)]";
+    "mt-1 w-full border-0 bg-transparent p-0 text-[13.5px] font-normal leading-[1.4] text-[var(--sp-text-primary)] caret-[var(--sp-button-primary)] outline-none placeholder:text-[var(--sp-text-placeholder)]";
+  const fieldErrorClass = "mt-1.5 text-[12px] leading-[1.4] text-[var(--sp-status-danger-text)]";
   // 1e links are plain copper (no resting underline, per the reference);
   // hover restores the underline so the affordance survives.
   //
-  // TWO colour roles, deliberately: --login-link (#B85207) is background-only —
+  // TWO colour roles, deliberately: --sp-link (#B85207) is background-only —
   // it measures 4.49:1 on the field fill and 4.50:1 on the error tint, so a
   // link that sits ON a fill (the notification's recovery action) takes
-  // --login-link-on-field (#9F4605, 5.70:1 on both). The e2e axe scan flagged
+  // --sp-link-on-field (#9F4605, 5.70:1 on both). The e2e axe scan flagged
   // the split's absence at 4.49:1.
   // Split base + colour rather than stacking a second text-[...] utility:
   // two same-specificity arbitrary utilities resolve by stylesheet order,
   // not class-list order, so an "override" can silently lose.
   const inlineLinkBaseClass = cx(
     "text-[12px] font-medium underline-offset-2 hover:underline",
-    "disabled:cursor-not-allowed disabled:text-[var(--login-text-tertiary)] disabled:no-underline",
+    "disabled:cursor-not-allowed disabled:text-[var(--sp-text-helper)] disabled:no-underline",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
   );
-  const inlineLinkClass = cx(inlineLinkBaseClass, "text-[var(--login-link)]");
-  const onFieldLinkClass = cx(inlineLinkBaseClass, "text-[var(--login-link-on-field)]");
+  const inlineLinkClass = cx(inlineLinkBaseClass, "text-[var(--sp-link)]");
+  const onFieldLinkClass = cx(inlineLinkBaseClass, "text-[var(--sp-link-on-field)]");
   const primaryButtonClass = cx(
     // No colour transition: hydration flips this button from disabled to
     // enabled on every load, and a 150ms tween made it fade up through a
@@ -378,12 +378,12 @@ export function LoginForm() {
     // an instant change.
     // Carbon button anatomy (1e): 48px, sharp corners, label left + glyph
     // right on a space-between row.
-    "mt-6 flex h-12 w-full items-center justify-between gap-3 bg-[var(--login-accent)] px-4 text-[13.5px] font-medium leading-none text-white",
-    "hover:bg-[var(--login-accent-hover)] active:bg-[var(--login-accent-hover)]",
+    "mt-6 flex h-12 w-full items-center justify-between gap-3 bg-[var(--sp-button-primary)] px-4 text-[13.5px] font-medium leading-none text-white",
+    "hover:bg-[var(--sp-button-primary-hover)] active:bg-[var(--sp-button-primary-hover)]",
     focusRingClass,
     // Disabled controls are exempt from contrast requirements; the quiet
     // field-grey pair works on both themes.
-    "disabled:cursor-not-allowed disabled:bg-[var(--login-field)] disabled:text-[var(--login-text-tertiary)]"
+    "disabled:cursor-not-allowed disabled:bg-[var(--sp-field)] disabled:text-[var(--sp-text-helper)]"
   );
   const primaryArrowIcon = (
     <svg
@@ -409,8 +409,8 @@ export function LoginForm() {
   );
   return (
     <div className="flex flex-col">
-      <h2 className="text-[28px] font-normal leading-[1.25] text-[var(--login-text-primary)]">Log in</h2>
-      <p className="mt-2 text-[12.5px] leading-[1.5] text-[var(--login-text-secondary)]">
+      <h2 className="text-[28px] font-normal leading-[1.25] text-[var(--sp-text-primary)]">Log in</h2>
+      <p className="mt-2 text-[12.5px] leading-[1.5] text-[var(--sp-text-secondary)]">
         Use your firm email. Viewers see the published map; admins can edit the draft.
       </p>
 
@@ -421,19 +421,19 @@ export function LoginForm() {
           className={cx(
             "mt-6 flex items-start gap-2.5 border-l-[3px] px-3.5 py-3",
             notice.tone === "error"
-              ? "border-[var(--login-error)] bg-[var(--login-notice-error-bg)]"
-              : "border-[var(--login-success)] bg-[var(--login-notice-success-bg)]"
+              ? "border-[var(--sp-status-danger-mark)] bg-[var(--sp-status-danger-surface)]"
+              : "border-[var(--sp-status-success-mark)] bg-[var(--sp-status-success-surface)]"
           )}
         >
           <svg aria-hidden="true" viewBox="0 0 20 20" className="mt-px h-[15px] w-[15px] shrink-0">
-            <circle cx="10" cy="10" r="8" fill={notice.tone === "error" ? "var(--login-error)" : "var(--login-success)"} />
+            <circle cx="10" cy="10" r="8" fill={notice.tone === "error" ? "var(--sp-status-danger-mark)" : "var(--sp-status-success-mark)"} />
             {notice.tone === "error" ? (
               <path d="m7 7 6 6m0-6-6 6" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
             ) : (
               <path d="m6.5 10.2 2.4 2.4 4.6-5.2" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             )}
           </svg>
-          <div className="text-[12.5px] leading-[1.5] text-[var(--login-text-primary)]">
+          <div className="text-[12.5px] leading-[1.5] text-[var(--sp-text-primary)]">
             <span className="font-semibold">{notice.text}</span>
             {notice.offerMagicLink && (
               <>
@@ -481,7 +481,7 @@ export function LoginForm() {
             />
             {emailError && (
               <svg aria-hidden="true" viewBox="0 0 20 20" className="absolute right-3.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2">
-                <circle cx="10" cy="10" r="8" fill="var(--login-error)" />
+                <circle cx="10" cy="10" r="8" fill="var(--sp-status-danger-mark)" />
                 <path d="M10 5.5v5.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
                 <circle cx="10" cy="14" r="1.1" fill="#fff" />
               </svg>
@@ -518,7 +518,7 @@ export function LoginForm() {
             </span>
             {passwordError && (
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-[15px] w-[15px] shrink-0">
-                <circle cx="10" cy="10" r="8" fill="var(--login-error)" />
+                <circle cx="10" cy="10" r="8" fill="var(--sp-status-danger-mark)" />
                 <path d="M10 5.5v5.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
                 <circle cx="10" cy="14" r="1.1" fill="#fff" />
               </svg>
@@ -529,7 +529,7 @@ export function LoginForm() {
               aria-label="Show password"
               aria-pressed={showPassword}
               className={cx(
-                "grid h-8 w-8 flex-none place-items-center text-[var(--login-text-secondary)] transition-colors hover:bg-[var(--login-field-hover)]",
+                "grid h-8 w-8 flex-none place-items-center text-[var(--sp-text-secondary)] transition-colors hover:bg-[var(--sp-field-hover)]",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus)]"
               )}
             >
@@ -559,7 +559,7 @@ export function LoginForm() {
             below. The hint interpolates MIN_PASSWORD_LENGTH so it can never
             drift from the enforced minimum. */}
         <div className="mt-2 flex items-baseline justify-between gap-3 text-[11px]">
-          <span className="text-[var(--login-text-tertiary)]">
+          <span className="text-[var(--sp-text-helper)]">
             Passwords are at least {MIN_PASSWORD_LENGTH} characters.
           </span>
           <button
@@ -572,7 +572,7 @@ export function LoginForm() {
           </button>
         </div>
 
-        <label className="mt-4 flex items-center gap-[9px] text-[12.5px] text-[var(--login-text-secondary)]">
+        <label className="mt-4 flex items-center gap-[9px] text-[12.5px] text-[var(--sp-text-secondary)]">
           <span className="relative inline-flex h-[15px] w-[15px] shrink-0 items-center justify-center">
             <input
               type="checkbox"
@@ -584,17 +584,17 @@ export function LoginForm() {
                 if (!event.target.checked) writeRememberedEmail(null);
               }}
               className={cx(
-                "peer h-[15px] w-[15px] shrink-0 appearance-none border border-[var(--login-border-strong)] bg-transparent",
-                "checked:border-[var(--login-text-primary)] checked:bg-[var(--login-text-primary)]",
+                "peer h-[15px] w-[15px] shrink-0 appearance-none border border-[var(--sp-border-strong)] bg-transparent",
+                "checked:border-[var(--sp-text-primary)] checked:bg-[var(--sp-text-primary)]",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)] focus-visible:ring-offset-2"
               )}
             />
-            {/* The glyph paints in --login-bg so it stays legible on the
+            {/* The glyph paints in --sp-background so it stays legible on the
                 ink fill in light AND the ivory fill in dark. */}
             <svg
               aria-hidden="true"
               viewBox="0 0 10 10"
-              className="pointer-events-none absolute hidden h-[9px] w-[9px] text-[var(--login-bg)] peer-checked:block"
+              className="pointer-events-none absolute hidden h-[9px] w-[9px] text-[var(--sp-background)] peer-checked:block"
             >
               <path d="M1.5 5.5 4 8l4.5-6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -618,17 +618,17 @@ export function LoginForm() {
             never between a field and its primary button (the hierarchy rule
             survives the two-step retirement). */}
         <div className="mt-[22px] flex items-center gap-3">
-          <span className="h-px flex-1 bg-[var(--login-border-subtle)]" />
-          <span className="text-[11px] text-[var(--login-text-tertiary)]">or</span>
-          <span className="h-px flex-1 bg-[var(--login-border-subtle)]" />
+          <span className="h-px flex-1 bg-[var(--sp-border-subtle)]" />
+          <span className="text-[11px] text-[var(--sp-text-helper)]">or</span>
+          <span className="h-px flex-1 bg-[var(--sp-border-subtle)]" />
         </div>
         <button
           type="button"
           onClick={sendMagicLink}
           disabled={pending !== null}
           className={cx(
-            "mt-[22px] flex h-12 w-full items-center justify-between gap-2.5 border border-[var(--login-border-strong)] bg-transparent px-4 text-[13px] leading-none text-[var(--login-text-primary)]",
-            "transition-colors hover:bg-[var(--login-field-hover)] disabled:cursor-not-allowed disabled:opacity-50",
+            "mt-[22px] flex h-12 w-full items-center justify-between gap-2.5 border border-[var(--sp-border-strong)] bg-transparent px-4 text-[13px] leading-none text-[var(--sp-text-primary)]",
+            "transition-colors hover:bg-[var(--sp-field-hover)] disabled:cursor-not-allowed disabled:opacity-50",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus)]"
           )}
         >
@@ -650,8 +650,8 @@ export function LoginForm() {
       {/* The reference marks the administrator phrase in link colour without a
           destination (there is no admin-contact route), so it stays a styled
           span — colouring it as a live control would lie to pointer users. */}
-      <p className="mt-[22px] text-[11px] leading-[1.5] text-[var(--login-text-tertiary)]">
-        Trouble signing in? <span className="text-[var(--login-link)]">Contact the office administrator</span> —
+      <p className="mt-[22px] text-[11px] leading-[1.5] text-[var(--sp-text-helper)]">
+        Trouble signing in? <span className="text-[var(--sp-link)]">Contact the office administrator</span> —
         accounts are provisioned by the firm.
       </p>
     </div>

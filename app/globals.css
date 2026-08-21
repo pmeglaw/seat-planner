@@ -1019,12 +1019,12 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 /* ---------------------------------------------------------------------------
-   Login (--login-*) — the /login split screen (design 1e, Carbon v12
+   Login zone — the /login split screen (design 1e, Carbon v12
    direction, design_handoff_login_1e/README.md). Light ("White/G10") / dark
    ("Gray 100") pairs; the dark set activates via the app-wide
    html[data-theme="dark"] attribute, exactly like Reception above. The
-   --login-panel-* tokens are CONSTANTS: the left brand panel stays #161616
-   in both themes.
+   brand-panel roles are CONSTANTS: the left panel stays #161616 in both
+   themes (chrome zone with login-scoped values — see the blocks below).
    Contrast (computed 2026-08-15, WCAG relative-luminance formula; earlier
    hand-estimated figures here UNDERstated several pairs — see the
    --sp-text-helper note above for why a wrong number is worse than none):
@@ -1036,7 +1036,7 @@ input[type="search"]::-webkit-search-cancel-button {
    #F0965A on #161616 7.94:1.
    The link colour is BACKGROUND-ONLY: #B85207 measures 4.49:1 on the
    #f4f4f4 field fill and 4.50:1 on the #fff1f1 error tint — under/at the
-   AA line — so any link that sits ON a fill takes --login-link-on-field
+   AA line — so any link that sits ON a fill takes --sp-link-on-field
    (#9F4605: 5.70:1 on both fills; dark #F0965A: 6.64:1 on #262626). The
    e2e axe scan flagged the step-2 Edit link at 4.49:1 before this split
    existed; keep the two roles separate.
@@ -1050,51 +1050,70 @@ input[type="search"]::-webkit-search-cancel-button {
      lightens to #fa4d56 (5.4:1, the dark-chrome danger). Borders and icon
      fills keep #da1e28 in both themes (≥3:1 non-text). */
 .login-theme {
-  --login-bg: #ffffff;
-  --login-field: #f4f4f4;
-  --login-field-hover: #e8e8e8;
-  --login-border-subtle: #e0e0e0;
-  --login-border-strong: #8d8d8d;
-  --login-text-primary: #161616;
-  --login-text-secondary: #525252;
-  --login-text-tertiary: #6f6f6f;
-  --login-placeholder: #6f6f6f;
-  --login-accent: #B85207;
-  --login-accent-hover: #9F4605;
-  --login-link: #B85207;
-  --login-link-on-field: #9F4605;
-  --login-error: #da1e28;
-  --login-error-text: #da1e28;
-  --login-success: #24a148;
-  --login-notice-error-bg: #fff1f1;
-  --login-notice-success-bg: #defbe6;
-
-  /* Brand panel constants — dark in both themes (1e ruling). */
-  --login-panel-bg: #161616;
-  --login-panel-text: #f4f4f4;
-  --login-panel-text-soft: #c6c6c6;
-  --login-panel-text-faint: #8d8d8d;
-  --login-panel-outline: #6f6f6f;
-  --login-panel-divider: #565656;
-  --login-publish-dot: #42be65;
+  /* Login zone (PASS1 §3.8): White/cool-gray temperature — same role names,
+     zone-scoped values (⚑3: two neutral temperatures coexist deliberately;
+     ⚑2: the #B85207/#9F4605 CTA ladder is the login-1e copper, a second
+     ladder kept until a Pass-2 convergence ruling; ⚑4: danger anchors on
+     Carbon red 60 #da1e28 here, not the app's #B3232C). */
+  --sp-background: #ffffff;
+  --sp-field: #f4f4f4;
+  --sp-field-hover: #e8e8e8;
+  --sp-border-subtle: #e0e0e0;
+  --sp-border-strong: #8d8d8d;
+  --sp-text-primary: #161616;
+  --sp-text-secondary: #525252;
+  --sp-text-helper: #6f6f6f;
+  --sp-text-placeholder: #6f6f6f;
+  --sp-button-primary: #B85207;
+  --sp-button-primary-hover: #9F4605;
+  --sp-link: #B85207;
+  --sp-link-on-field: #9F4605;
+  --sp-status-danger-mark: #da1e28;
+  --sp-status-danger-text: #da1e28;
+  /* #24a148 is Carbon green 50 — the documented hover-surface trap (⚑5).
+     Safe here (login has no hovered-row context); never export it to app
+     surfaces — the app's own success marks are #1D6E41 / #42be65. */
+  --sp-status-success-mark: #24a148;
+  --sp-status-danger-surface: #fff1f1;
+  --sp-status-success-surface: #defbe6;
 }
 
 :root[data-theme="dark"] .login-theme {
-  --login-bg: #161616;
-  --login-field: #262626;
-  --login-field-hover: #2c2c2c;
-  --login-border-subtle: #393939;
-  --login-border-strong: #6f6f6f;
-  --login-text-primary: #f4f4f4;
-  --login-text-secondary: #c6c6c6;
-  --login-text-tertiary: #a8a8a8;
-  --login-placeholder: #a8a8a8;
-  --login-link: #F0965A;
-  --login-link-on-field: #F0965A;
-  --login-error-text: #fa4d56;
-  --login-success: #42be65;
-  --login-notice-error-bg: #2d1a1c;
-  --login-notice-success-bg: #16281c;
+  --sp-background: #161616;
+  --sp-field: #262626;
+  --sp-field-hover: #2c2c2c;
+  --sp-border-subtle: #393939;
+  --sp-border-strong: #6f6f6f;
+  --sp-text-primary: #f4f4f4;
+  --sp-text-secondary: #c6c6c6;
+  --sp-text-helper: #a8a8a8;
+  --sp-text-placeholder: #a8a8a8;
+  --sp-link: #F0965A;
+  --sp-link-on-field: #F0965A;
+  --sp-status-danger-text: #fa4d56;
+  --sp-status-success-mark: #42be65;
+  --sp-status-danger-surface: #2d1a1c;
+  --sp-status-success-surface: #16281c;
+}
+
+/* Login brand panel — a chrome zone with login-scoped values (§3.8): the
+   panel IS the dark chrome (#161616 exact match, constant across themes —
+   1e ruling), but its grays sit one step off the bar's warm set (⚑3:
+   #f4f4f4/#c6c6c6/#8d8d8d vs #F7F6F2/#D8D0C5/#B8AEA2), so this block
+   re-declares the text/border roles over the generic .sp-zone-chrome
+   values. The dark-theme rules pin the panel's #161616 against the zone's
+   dark deepening to #0a0a0a — the panel never deepens. */
+.login-theme .sp-zone-chrome {
+  --sp-text-primary: #f4f4f4;
+  --sp-text-secondary: #c6c6c6;
+  --sp-text-helper: #8d8d8d;
+  --sp-border-strong: #6f6f6f;
+  --sp-border-subtle: #565656;
+  --sp-status-success-mark: #42be65;
+}
+
+:root[data-theme="dark"] .login-theme .sp-zone-chrome {
+  --sp-background: #161616;
 }
 
 /* Login motion (design 1e): a one-shot rise-in for the form column, plus the
@@ -1102,7 +1121,7 @@ input[type="search"]::-webkit-search-cancel-button {
    in this file, allowed because it animates box-shadow on an aria-hidden dot.
    Both apply only via Tailwind's motion-safe: variant, so prefers-reduced-
    motion users get a static form and the dot's static base halo.
-   The rgba stops are --login-accent #B85207 spelled as rgb — @keyframes are
+   The rgba stops are --sp-button-primary #B85207 spelled as rgb — @keyframes are
    authored once here, not per-theme, and the accent is theme-constant. */
 @keyframes login-rise-in {
   from { opacity: 0; transform: translateY(8px); }
