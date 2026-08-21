@@ -151,7 +151,8 @@ export function AccountMenu({ email, roleLabel, autoCloseKey }: AccountMenuProps
             onKeyDown={handleMenuKeyDown}
             // top offset derives from the bar height token (bar 40px, 26px
             // avatar centered ends at 33px, +1px gap) so a chrome-h change
-            // can't strand the menu — was a hardcoded top-[34px].
+            // can't strand the menu — it used to be a hardcoded pixel
+            // literal (tests/app-top-bar.test.mjs pins the token form).
             className="absolute right-0 top-[calc(var(--admin-chrome-h)-6px)] z-50 w-60 border border-[var(--admin-chrome-border-strong)] bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
           >
             <div className="border-b border-white/10 px-3 pb-2 pt-1.5">
