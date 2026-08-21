@@ -90,7 +90,7 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, r
           aria-controls="app-rail"
           aria-label={railOpen ? "Collapse navigation" : "Expand navigation"}
           title={railOpen ? "Collapse navigation" : "Expand navigation"}
-          className="flex h-full w-12 shrink-0 items-center justify-center text-[var(--admin-chrome-muted)] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
+          className="flex h-full w-12 shrink-0 items-center justify-center text-[var(--admin-chrome-muted)] transition-colors hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
         >
           <HamburgerIcon />
         </button>
@@ -135,14 +135,16 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, r
         {/* Right slot: the map surface portals Ask Planner + the publish
             cluster here; empty on sub-pages. */}
         <div data-topbar-slot="right" ref={setRightSlot} className="peer flex h-full shrink-0 items-center" />
-        {/* Zone divider between surface actions and the account menu
-            (de-cram pass 2026-08-18): the avatar's own mx-2.5 supplies the
-            flanking air, so only mx-1 here. peer-empty:hidden, not a JS
-            occupancy flag — the slot div above stays mounted for the bar's
-            lifetime (portal-teardown contract), so :empty tracks tenant
-            presence for free: hidden on sub-pages and for viewers, shown
-            whenever the map portals its action cluster in. */}
-        <span aria-hidden="true" className={`mx-1 h-5 ${adminChromeDividerRule} peer-empty:hidden`} />
+        {/* Zone divider between surface actions and the account menu, on the
+            standard mx-3 group rhythm (chrome-unification 2026-08-20 — the
+            old mx-1 was a third spacing tier that existed only to offset the
+            avatar's own margin; two tiers is the doctrine, see
+            adminChrome.ts). peer-empty:hidden, not a JS occupancy flag — the
+            slot div above stays mounted for the bar's lifetime
+            (portal-teardown contract), so :empty tracks tenant presence for
+            free: hidden on sub-pages and for viewers, shown whenever the map
+            portals its action cluster in. */}
+        <span aria-hidden="true" className={`mx-3 h-5 ${adminChromeDividerRule} peer-empty:hidden`} />
         {/* autoCloseKey: the bar persists across client navigations, so the
             menu must not linger over an incoming page — and a back/forward
             with the menu open must return focus to the trigger, the same

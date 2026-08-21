@@ -90,6 +90,7 @@ const config: Config = {
         // Elevation tiers must be NAMED utilities: Tailwind v3 drops arbitrary
         // shadow-[var(--…)] candidates (box-shadow vs shadow-color ambiguity),
         // so that form silently ships box-shadow: none.
+        "rail-overlay": "var(--admin-rail-overlay-shadow)",
         "elevation-2": "var(--admin-elevation-2-shadow)",
         "elevation-3": "var(--admin-elevation-3-shadow)",
         "elevation-4": "var(--admin-elevation-4-shadow)",

@@ -54,6 +54,11 @@ export type AppRailProps = {
   /** Map surface: open the Ask Planner drawer in place. Sub-pages omit it and
    *  the AI item navigates to /admin?ask-planner=open instead. */
   onOpenAskPlanner?: () => void;
+  /** Ask Planner drawer is open — the AI item shows the vertical-chrome
+   *  active treatment (adminChrome.ts doctrine), matching the feedback the
+   *  bar's Ask Planner tenant already gives. Threaded from the registered
+   *  surface via AppShell's live channel. */
+  askPlannerActive?: boolean;
   /** Test seam only — the deploy-skew detector (lib/deploySkew.ts). Defaults
    *  to the module singleton, which is sticky across soft navigations; jsdom
    *  suites inject a fake so cases stay order-independent. */
@@ -63,13 +68,19 @@ export type AppRailProps = {
 // overflow-hidden here (not on <nav>, see the nav className comment): each
 // item's own box is what needs to clip its whitespace-nowrap label while the
 // rail animates between 48px and 208px.
+// h-10 = 40px, matching --admin-chrome-h: rail cells and the bar's corner
+// cell share one 48×40 grid unit (chrome-unification pass 2026-08-20). The
+// hit area is still the full rail width. Hover/active foreground is the
+// chrome text token, not text-white — one hovered foreground across the
+// chrome (see components/ui/adminChrome.ts doctrine).
 const ITEM =
-  "relative flex h-11 w-full items-center overflow-hidden text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-const ITEM_IDLE = "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-white";
-// Active: #262626 surface + inset 3px #FF5715 left edge (contract #3).
-const ITEM_ACTIVE = "bg-[var(--admin-chrome-hover)] text-white shadow-[inset_3px_0_0_var(--admin-primary)]";
+  "relative flex h-10 w-full items-center overflow-hidden text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+const ITEM_IDLE = "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]";
+// Active: #262626 surface + inset 3px #FF5715 left edge (contract #3) — the
+// vertical-chrome active marker (adminChrome.ts doctrine).
+const ITEM_ACTIVE = "bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)] shadow-[inset_3px_0_0_var(--admin-primary)]";
 const CELL = "flex w-12 shrink-0 items-center justify-center";
-const LABEL_BASE = "whitespace-nowrap text-[13px] transition-opacity duration-150";
+const LABEL_BASE = "whitespace-nowrap text-[12.5px] transition-opacity duration-150";
 
 type NavItem = { key: AppRailActive; label: string; href: string; icon: ReactNode };
 
@@ -91,6 +102,7 @@ export function AppRail({
   railMode = "admin",
   onNavigate,
   onOpenAskPlanner,
+  askPlannerActive = false,
   skewDetector = deploySkewMonitor
 }: AppRailProps) {
   const pathname = usePathname();
@@ -240,7 +252,7 @@ export function AppRail({
           // its own overflow-hidden (see ITEM), scoped to that item's box —
           // the rail box itself stays unclipped.
           "fixed bottom-0 left-0 top-[var(--admin-chrome-h)] z-[80] flex flex-col border-r border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] transition-[width] duration-150 ease-out",
-          open ? "w-[208px] shadow-[8px_0_24px_rgba(0,0,0,.35)]" : "w-12"
+          open ? "w-[208px] shadow-rail-overlay" : "w-12"
         ].join(" ")}
       >
         {/* No toggle row: the hamburger lives in AppTopBar's corner cell,
@@ -281,13 +293,21 @@ export function AppRail({
           <button
             type="button"
             title="Ask Planner (AI)"
+            aria-expanded={askPlannerActive}
             onClick={() => {
               collapse(false);
               onOpenAskPlanner();
             }}
-            className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)]"].join(" ")}
+            // Active = the vertical-chrome treatment (fill + 3px left inset
+            // edge), in the AI family's own hue rather than brand orange —
+            // same fill/weight as ITEM_ACTIVE, AI-blue edge.
+            className={[
+              ITEM,
+              "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-ai-chrome-text-hover)]",
+              askPlannerActive ? "bg-[var(--admin-chrome-hover)] shadow-[inset_3px_0_0_var(--admin-ai-chrome-border)]" : ""
+            ].join(" ")}
           >
-            <AiCell open={open} />
+            <AiCell open={open} active={askPlannerActive} />
           </button>
         ) : (
           <Link
@@ -299,9 +319,9 @@ export function AppRail({
             // onNavigate veto inside is a no-op here — sub-pages don't
             // pass it.
             onClick={event => handleNavClick(event, "/admin?ask-planner=open", "Ask Planner")}
-            className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)]"].join(" ")}
+            className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-ai-chrome-text-hover)]"].join(" ")}
           >
-            <AiCell open={open} />
+            <AiLinkBody open={open} />
           </Link>
         )}
         {/* Last item: the account cell that used to sit below this moved to
@@ -393,31 +413,46 @@ function ReceptionIcon() {
 }
 
 function ViewerIcon() {
+  // 20-unit viewBox like every other rail glyph (chrome-unification
+  // 2026-08-20 — this one was drawn on a 24 grid, which rendered its 1.5
+  // stroke ~17% lighter than its neighbors at the same 17px size).
   return (
-    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <circle cx="12" cy="12" r="8.2" />
-      <circle cx="12" cy="12" r="3" />
+    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="10" cy="10" r="6.8" />
+      <circle cx="10" cy="10" r="2.5" />
     </svg>
   );
 }
 
-function AiCell({ open }: { open: boolean }) {
+function AiCell({ open, active = false, pending = false }: { open: boolean; active?: boolean; pending?: boolean }) {
   return (
     <>
-      <span className={[CELL, "relative"].join(" ")}>
-        <span aria-hidden="true" className="text-[15px]">
+      {/* Sparkle 13px + square 9px "AI" badge — the ONE badge spec, matching
+          the bar's Ask Planner tenant (SeatMap.tsx) since the
+          chrome-unification pass 2026-08-20 (was 15px / 7.5px here). */}
+      <span className={[CELL, "relative", pending ? "animate-pulse motion-reduce:animate-none" : ""].join(" ")}>
+        <span aria-hidden="true" className="text-[13px]">
           ✦
         </span>
         <span
           aria-hidden="true"
-          className="absolute right-1 top-1 border border-[var(--admin-ai-chrome-border)] px-[2px] text-[7.5px] font-bold text-[var(--admin-ai-chrome-text)]"
+          className="absolute right-0.5 top-0.5 border border-[var(--admin-ai-chrome-border)] px-[3px] text-[9px] font-bold leading-none text-[var(--admin-ai-chrome-text)]"
         >
           AI
         </span>
       </span>
       {/* NOT aria-hidden: the sole accessible name for the AI item, mounted
           at every width (opacity swap) like the nav items. */}
-      <span className={[LABEL_BASE, open ? "opacity-100" : "opacity-0"].join(" ")}>Ask Planner</span>
+      <span className={[LABEL_BASE, open ? "opacity-100" : "opacity-0", active ? "font-semibold" : "font-medium"].join(" ")}>Ask Planner</span>
     </>
   );
+}
+
+// Pending-pulse parity for the Link form of the AI item (sub-pages): the nav
+// items get this via NavItemBody, and useLinkStatus must be called from a
+// component INSIDE the Link. The button form never navigates, so it keeps
+// plain AiCell.
+function AiLinkBody({ open }: { open: boolean }) {
+  const { pending } = useLinkStatus();
+  return <AiCell open={open} pending={pending} />;
 }

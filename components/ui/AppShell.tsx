@@ -39,10 +39,17 @@ type ShellNavigationHandlers = {
   /** Open Ask Planner in place (map surface only); absent → the AI rail item
    *  is a plain link to /admin?ask-planner=open. */
   openAskPlanner?: () => void;
+  /** Live open-state of the Ask Planner drawer: drives the rail AI item's
+   *  active treatment so both entry points (rail + bar) give the same
+   *  feedback (chrome-unification 2026-08-20). Unlike the handlers above,
+   *  this must RE-RENDER the rail when it changes, so it flows through its
+   *  own state channel in the hook — never through the register effect. */
+  askPlannerOpen?: boolean;
 };
 
 type AppShellContextValue = {
   register: (handlers: ShellNavigationHandlers) => () => void;
+  setAskPlannerActive: (active: boolean) => void;
 };
 
 const AppShellContext = createContext<AppShellContextValue | null>(null);
@@ -85,6 +92,16 @@ export function useAppShellNavigation(handlers: ShellNavigationHandlers) {
       openAskPlanner: hasOpener ? () => latest.current.openAskPlanner?.() : undefined
     });
   }, [context, hasOpener]);
+  // Separate live channel (see ShellNavigationHandlers.askPlannerOpen): kept
+  // out of the registration effect's deps so drawer toggles never churn the
+  // handler registration. Cleanup resets the flag so an unmounting surface
+  // can't leave the rail item stuck active.
+  const askPlannerOpen = Boolean(handlers.askPlannerOpen);
+  useEffect(() => {
+    if (!context) return;
+    context.setAskPlannerActive(askPlannerOpen);
+    return () => context.setAskPlannerActive(false);
+  }, [context, askPlannerOpen]);
 }
 
 function activeFromPathname(pathname: string): AppRailActive {
@@ -142,7 +159,10 @@ export function AppShell({ email, isAdmin, skewDetector, children }: AppShellPro
     setHandlers(next);
     return () => setHandlers(current => (current === next ? null : current));
   }, []);
-  const contextValue = useMemo(() => ({ register }), [register]);
+  // Ask Planner drawer open-state, mirrored from the registered surface (the
+  // hook's live channel) into the rail AI item's active treatment.
+  const [askPlannerActive, setAskPlannerActive] = useState(false);
+  const contextValue = useMemo(() => ({ register, setAskPlannerActive }), [register, setAskPlannerActive]);
 
   // Callback-ref sink for the bar's slot elements. The identity guard matters:
   // React re-runs callback refs with null-then-element around commits, and an
@@ -179,6 +199,7 @@ export function AppShell({ email, isAdmin, skewDetector, children }: AppShellPro
             railMode={isAdmin ? "admin" : "viewer"}
             onNavigate={handlers?.guard}
             onOpenAskPlanner={handlers?.openAskPlanner}
+            askPlannerActive={askPlannerActive}
             open={railOpen}
             onOpenChange={setRailOpen}
             focusToggle={focusRailToggle}
