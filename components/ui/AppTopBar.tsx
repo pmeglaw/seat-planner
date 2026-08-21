@@ -69,7 +69,7 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, r
        brand mark sits centered in a w-12 corner cell aligned with the rail
        column below, and the bottom hairline starts only to the RIGHT of that
        column (the absolute span below), so no seam ever cuts the corner. */
-    <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)]">
+    <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)]" data-chrome="dark">
       <span aria-hidden="true" className="pointer-events-none absolute bottom-0 left-12 right-0 h-px bg-[var(--admin-chrome-border)]" />
       <a
         href={skipLink.href}

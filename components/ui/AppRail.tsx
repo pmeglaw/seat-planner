@@ -244,6 +244,7 @@ export function AppRail({
         id="app-rail"
         aria-label={railMode === "admin" ? "Admin sections" : "Sections"}
         data-expanded={open}
+        data-chrome="dark"
         className={[
           // top-[var(--admin-chrome-h)], not top-0: the rail hangs BELOW the
           // full-width AppTopBar (top-bar-first chrome, 2026-08-14) — the two

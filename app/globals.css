@@ -315,6 +315,27 @@
   --sp-focus-ring-color: #FF8A5C;
 }
 
+/* Focus follows the SURFACE, not the page theme (2026-08-21). Some regions
+   paint the dark chrome ladder (#161616 / #1f1f1f / #262626 / #333333) in
+   BOTH app themes — the top bar, the rail, the viewer chrome strip, the
+   SeatMap standalone fallback header, and the Ask Planner drawer. (The
+   error/404 screens also paint the dark chrome, but every focusable there
+   sits on a WHITE card — marking them would put #FF8A5C on white at 2.32:1,
+   so they stay unmarked.) The light-theme focus value #D23F0A measures
+   3.84:1 on #161616, 3.21 on #262626, 2.68 on #333333, and 2.45 on #393939 —
+   under the 3:1 indicator floor on the hovered/raised fills. Each of those
+   region roots carries data-chrome="dark", and this block re-anchors both
+   focus tokens to the dark value #FF8A5C for that subtree regardless of app
+   theme (7.79:1 on #161616 · 7.10 on #1f1f1f · 6.52 on #262626 · 5.44 on
+   #333333). In dark theme the values already agree, so the marker is a no-op
+   there. Never nest a LIGHT-surface popover/dialog under a marked root —
+   #FF8A5C is 2.32:1 on white. tests/focus-brand-contrast-source.test.mjs
+   pins the marker block and the region roots. */
+[data-chrome="dark"] {
+  --sp-focus-ring-color: #FF8A5C;
+  --admin-focus: #FF8A5C;
+}
+
 /* Admin + shell surfaces join the chrome on dark. The --admin-bg/surface/
    border/text aliases of --sp-color-* follow Task 2's block automatically —
    only the tokens with their own light literals are re-pointed here.
