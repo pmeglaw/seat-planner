@@ -399,10 +399,13 @@ function ReceptionIcon() {
 }
 
 function ViewerIcon() {
+  // 20-unit viewBox like every other rail glyph (chrome-unification
+  // 2026-08-20 — this one was drawn on a 24 grid, which rendered its 1.5
+  // stroke ~17% lighter than its neighbors at the same 17px size).
   return (
-    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <circle cx="12" cy="12" r="8.2" />
-      <circle cx="12" cy="12" r="3" />
+    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="10" cy="10" r="6.8" />
+      <circle cx="10" cy="10" r="2.5" />
     </svg>
   );
 }
@@ -410,13 +413,16 @@ function ViewerIcon() {
 function AiCell({ open }: { open: boolean }) {
   return (
     <>
+      {/* Sparkle 13px + square 9px "AI" badge — the ONE badge spec, matching
+          the bar's Ask Planner tenant (SeatMap.tsx) since the
+          chrome-unification pass 2026-08-20 (was 15px / 7.5px here). */}
       <span className={[CELL, "relative"].join(" ")}>
-        <span aria-hidden="true" className="text-[15px]">
+        <span aria-hidden="true" className="text-[13px]">
           ✦
         </span>
         <span
           aria-hidden="true"
-          className="absolute right-1 top-1 border border-[var(--admin-ai-chrome-border)] px-[2px] text-[7.5px] font-bold text-[var(--admin-ai-chrome-text)]"
+          className="absolute right-0.5 top-0.5 border border-[var(--admin-ai-chrome-border)] px-[3px] text-[9px] font-bold leading-none text-[var(--admin-ai-chrome-text)]"
         >
           AI
         </span>

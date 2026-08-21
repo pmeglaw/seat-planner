@@ -2580,9 +2580,13 @@ export function SeatMap({
           title={undoTitle}
           className={chromeIconBtn}
         >
-          {/* Literal ↺ glyph (U+21BA) to match the owner's shell mockup exactly;
-              sized to sit at the same weight as the SVG icons in the row. */}
-          <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↺</span>
+          {/* SVG on the chrome icon grid (20-viewBox, stroke 1.5) — replaced
+              the literal ↺ glyph in the chrome-unification pass 2026-08-20:
+              font-rendered arrows couldn't track the 1.5-stroke icon system. */}
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <path d="M2.5 2.5v4.17h4.17" />
+            <path d="M2.5 10a7.5 7.5 0 1 0 7.5-7.5 8.1 8.1 0 0 0-5.62 2.28L2.5 6.67" />
+          </svg>
         </button>
         <button
           type="button"
@@ -2592,8 +2596,11 @@ export function SeatMap({
           title={redoTitle}
           className={chromeIconBtn}
         >
-          {/* Literal ↻ glyph (U+21BB) — matches the mockup; see Undo above. */}
-          <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">↻</span>
+          {/* Mirrored twin of the Undo SVG above. */}
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <path d="M17.5 2.5v4.17h-4.17" />
+            <path d="M17.5 10a7.5 7.5 0 1 1-7.5-7.5 8.1 8.1 0 0 1 5.62 2.28L17.5 6.67" />
+          </svg>
         </button>
         {/* Group hairline (follow-up to the 2026-08-18 de-cram pass): the
             undo/redo history pair and the kebab overflow are separate groups
@@ -2615,7 +2622,14 @@ export function SeatMap({
             onClick={() => setChromeMenuOpen(current => !current)}
             className={chromeMenuOpen ? chromeKebabBtnActive : chromeKebabBtn}
           >
-            <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[15px] leading-none">⋮</span>
+            {/* Filled-dot kebab on the 20-viewBox icon grid (dots, not
+                strokes, so no strokeWidth) — replaced the literal ⋮ glyph
+                with the other Unicode chrome glyphs (2026-08-20). */}
+            <svg aria-hidden="true" width="17" height="17" viewBox="0 0 20 20" fill="currentColor" className="shrink-0">
+              <circle cx="10" cy="4.5" r="1.4" />
+              <circle cx="10" cy="10" r="1.4" />
+              <circle cx="10" cy="15.5" r="1.4" />
+            </svg>
           </button>
           {chromeMenuOpen && (
             <div
