@@ -131,7 +131,7 @@ export default async function LoginPage() {
               </p>
               <Link
                 href="/"
-                className="mt-6 flex h-12 w-full items-center justify-between gap-3 bg-[var(--login-accent)] px-4 text-[13.5px] font-medium leading-none text-white hover:bg-[var(--login-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2"
+                className="mt-6 flex h-12 w-full items-center justify-between gap-3 bg-[var(--login-accent)] px-4 text-[13.5px] font-medium leading-none text-white hover:bg-[var(--login-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)] focus-visible:ring-offset-2"
               >
                 Continue to seat map
                 <svg
@@ -150,7 +150,7 @@ export default async function LoginPage() {
               <form action="/auth/signout" method="post" className="mt-3">
                 <button
                   type="submit"
-                  className="flex h-12 w-full items-center border border-[var(--login-border-strong)] bg-transparent px-4 text-[13px] leading-none text-[var(--login-text-primary)] transition-colors hover:bg-[var(--login-field-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                  className="flex h-12 w-full items-center border border-[var(--login-border-strong)] bg-transparent px-4 text-[13px] leading-none text-[var(--login-text-primary)] transition-colors hover:bg-[var(--login-field-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus)]"
                 >
                   Sign out
                 </button>

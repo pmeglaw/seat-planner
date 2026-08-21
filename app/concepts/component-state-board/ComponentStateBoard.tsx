@@ -135,7 +135,7 @@ const focusSurfaceExamples: {
     description: "Tinted containers override the semantic offset locally.",
     containerClass: "border-[#E2BDA0] bg-[#F6E7D8] text-[#6F2C13]",
     buttonClass: "border-[#D46A24] bg-[#FFFDF8] text-[#6F2C13]",
-    style: { "--sp-focus-ring-offset-color": "var(--sp-color-brand-paper)" } as CSSProperties
+    style: { "--sp-focus-offset-color": "var(--sp-brand-subtle)" } as CSSProperties
   },
   {
     label: "Dark graphite",
@@ -143,8 +143,11 @@ const focusSurfaceExamples: {
     containerClass: "border-[#353532] bg-[#171A1D] text-white",
     buttonClass: "border-white/20 bg-white/10 text-white",
     style: {
-      "--sp-focus-ring-color": "rgb(var(--sp-color-brand-copper-rgb) / 0.72)",
-      "--sp-focus-ring-offset-color": "var(--sp-color-workspace)"
+      "--sp-focus": "color-mix(in srgb, var(--sp-button-primary) 72%, transparent)",
+      /* was var(--sp-color-workspace) — that token retired with the chrome
+         zone (PASS1 §3.2); this board simulates the dark chrome, so it pins
+         the same #161616 the zone paints. */
+      "--sp-focus-offset-color": "#161616"
     } as CSSProperties
   }
 ];
@@ -530,44 +533,44 @@ const buttonStateExamples = [
 const buttonStatePreviewClasses: Record<ButtonVariant, Record<(typeof buttonStateExamples)[number]["key"], string>> = {
   primary: {
     defaultClass: "",
-    hoverClass: "border-[var(--sp-color-action-primary-hover)] bg-[var(--sp-color-action-primary-hover)]",
-    pressedClass: "border-[var(--sp-color-action-primary-pressed)] bg-[var(--sp-color-action-primary-pressed)] translate-y-px",
-    focusClass: "ring-4 ring-[color:var(--sp-focus-ring-color)] ring-offset-2 ring-offset-[color:var(--sp-focus-ring-offset-color)]",
-    disabledClass: "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-state-disabled)] text-[var(--sp-color-text-muted)]",
+    hoverClass: "border-[var(--sp-button-primary-hover)] bg-[var(--sp-button-primary-hover)]",
+    pressedClass: "border-[var(--sp-button-primary-active)] bg-[var(--sp-button-primary-active)] translate-y-px",
+    focusClass: "ring-4 ring-[color:var(--sp-focus)] ring-offset-2 ring-offset-[color:var(--sp-focus-offset-color)]",
+    disabledClass: "border-[var(--sp-border-subtle)] bg-[var(--sp-surface-disabled)] text-[var(--sp-text-helper)]",
     loadingClass: ""
   },
   secondary: {
     defaultClass: "",
-    hoverClass: "border-[var(--sp-color-brand-copper)] bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)]",
-    pressedClass: "border-[var(--sp-color-action-primary)] bg-[#F3D1B9] text-[var(--sp-color-brand-clay)] translate-y-px",
-    focusClass: "ring-4 ring-[color:var(--sp-focus-ring-color)] ring-offset-2 ring-offset-[color:var(--sp-focus-ring-offset-color)]",
-    disabledClass: "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-disabled)]",
+    hoverClass: "border-[var(--sp-button-primary)] bg-[var(--sp-brand-subtle)] text-[var(--sp-brand-deep)]",
+    pressedClass: "border-[var(--sp-button-primary)] bg-[#F3D1B9] text-[var(--sp-brand-deep)] translate-y-px",
+    focusClass: "ring-4 ring-[color:var(--sp-focus)] ring-offset-2 ring-offset-[color:var(--sp-focus-offset-color)]",
+    disabledClass: "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] text-[var(--sp-text-disabled)]",
     loadingClass: ""
   },
   quiet: {
     defaultClass: "",
-    hoverClass: "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-secondary)]",
-    pressedClass: "bg-[var(--sp-color-stone)] text-[var(--sp-color-text-secondary)] translate-y-px",
-    focusClass: "ring-4 ring-[color:var(--sp-focus-ring-color)] ring-offset-2 ring-offset-[color:var(--sp-focus-ring-offset-color)]",
-    disabledClass: "bg-transparent text-[var(--sp-color-stone-muted)]",
+    hoverClass: "bg-[var(--sp-layer-accent)] text-[var(--sp-text-secondary)]",
+    pressedClass: "bg-[var(--sp-neutral-strong)] text-[var(--sp-text-secondary)] translate-y-px",
+    focusClass: "ring-4 ring-[color:var(--sp-focus)] ring-offset-2 ring-offset-[color:var(--sp-focus-offset-color)]",
+    disabledClass: "bg-transparent text-[var(--sp-neutral-muted)]",
     loadingClass: ""
   },
   destructive: {
     defaultClass: "",
     hoverClass: "border-[#7E2F24] bg-[#7E2F24]",
     pressedClass: "border-[#6B271F] bg-[#6B271F] translate-y-px",
-    focusClass: "ring-4 ring-[color:var(--sp-color-state-danger-border)] ring-offset-2 ring-offset-[color:var(--sp-focus-ring-offset-color)]",
-    disabledClass: "border-[var(--sp-color-state-danger-border)] bg-[var(--sp-color-state-danger-border)] text-[#7E2F24]",
+    focusClass: "ring-4 ring-[color:var(--sp-status-danger-border)] ring-offset-2 ring-offset-[color:var(--sp-focus-offset-color)]",
+    disabledClass: "border-[var(--sp-status-danger-border)] bg-[var(--sp-status-danger-border)] text-[#7E2F24]",
     loadingClass: ""
   }
 };
 
 const iconButtonStatePreviewClasses: Record<(typeof buttonStateExamples)[number]["key"], string> = {
   defaultClass: "",
-  hoverClass: "border-[var(--sp-color-brand-copper)] bg-[var(--sp-color-brand-paper)] text-[var(--sp-color-brand-clay)]",
-  pressedClass: "border-[var(--sp-color-action-primary)] bg-[#F3D1B9] text-[var(--sp-color-brand-clay)] translate-y-px",
-  focusClass: "ring-4 ring-[color:var(--sp-focus-ring-color)] ring-offset-2 ring-offset-[color:var(--sp-focus-ring-offset-color)]",
-  disabledClass: "border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-disabled)]",
+  hoverClass: "border-[var(--sp-button-primary)] bg-[var(--sp-brand-subtle)] text-[var(--sp-brand-deep)]",
+  pressedClass: "border-[var(--sp-button-primary)] bg-[#F3D1B9] text-[var(--sp-brand-deep)] translate-y-px",
+  focusClass: "ring-4 ring-[color:var(--sp-focus)] ring-offset-2 ring-offset-[color:var(--sp-focus-offset-color)]",
+  disabledClass: "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] text-[var(--sp-text-disabled)]",
   loadingClass: ""
 };
 

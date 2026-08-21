@@ -70,7 +70,7 @@ export function VacateConfirmDialog({
 }) {
   const vacateConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
       <section
         ref={vacateConfirmDialogFocusRef}
         tabIndex={-1}
@@ -118,7 +118,7 @@ export function DeleteSeatConfirmDialog({
 }) {
   const deleteSeatDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
       <section
         ref={deleteSeatDialogFocusRef}
         tabIndex={-1}
@@ -126,19 +126,19 @@ export function DeleteSeatConfirmDialog({
         aria-modal="true"
         aria-labelledby="delete-seat-confirm-title"
         aria-describedby="delete-seat-confirm-description"
-        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
+        className="w-full max-w-md rounded-2xl border border-[var(--sp-border-subtle)] bg-[color-mix(in_srgb,var(--sp-layer-01)_95%,transparent)] p-4 text-[var(--sp-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 id="delete-seat-confirm-title" className="text-base font-semibold">Delete custom seat {label}?</h2>
-            <p id="delete-seat-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
+            <p id="delete-seat-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
               Only available custom draft seats can be deleted. Original seats are protected.
             </p>
           </div>
           <button
             type="button"
             onClick={onCancel}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
             aria-label="Cancel custom seat deletion"
           >
             <CloseIcon />
@@ -222,7 +222,7 @@ export function PublishReviewDialog({
           {publishSummary.hasChanges && (
           <>
           <div className="rounded-xl border border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] p-3 text-[var(--admin-publish-ready-text)]">
-            <StatusBadge tone={publishReadinessBadgeTone} className="!min-h-0 !bg-[rgb(var(--admin-surface-rgb)/0.8)] !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]">
+            <StatusBadge tone={publishReadinessBadgeTone} className="!min-h-0 !bg-[color-mix(in_srgb,var(--sp-layer-01)_80%,transparent)] !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]">
               {publishReadinessBadgeLabel}
             </StatusBadge>
             <h3 className="mt-2 text-sm font-semibold text-[var(--admin-text-primary)]">{publishReadinessTitle}</h3>
@@ -423,7 +423,7 @@ export function InspectorGuardDialog({
 }) {
   const inspectorGuardDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-[60] sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[60] sm:items-center">
       <section
         ref={inspectorGuardDialogFocusRef}
         tabIndex={-1}
@@ -431,11 +431,11 @@ export function InspectorGuardDialog({
         aria-modal="true"
         aria-labelledby="inspector-unsaved-title"
         aria-describedby="inspector-unsaved-description"
-        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
+        className="w-full max-w-md rounded-2xl border border-[var(--sp-border-subtle)] bg-[color-mix(in_srgb,var(--sp-layer-01)_95%,transparent)] p-4 text-[var(--sp-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
       >
         <div>
           <h2 id="inspector-unsaved-title" className="text-base font-semibold">Unsaved seat edits</h2>
-          <p id="inspector-unsaved-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
+          <p id="inspector-unsaved-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
             Save or discard changes to {seatLabel} before {actionDescription}
           </p>
         </div>
@@ -470,24 +470,24 @@ export function SwapConfirmDialog({
 }) {
   const swapConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
       <section
         ref={swapConfirmDialogFocusRef}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="swap-confirm-title"
-        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
+        className="w-full max-w-md rounded-2xl border border-[var(--sp-border-subtle)] bg-[color-mix(in_srgb,var(--sp-layer-01)_95%,transparent)] p-4 text-[var(--sp-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 id="swap-confirm-title" className="text-base font-semibold">Confirm seat swap</h2>
-            <p className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">This updates draft seats only. {PUBLISH_IMPACT_NOTE}</p>
+            <p className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">This updates draft seats only. {PUBLISH_IMPACT_NOTE}</p>
           </div>
           <button
             type="button"
             onClick={onCancel}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)]"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)]"
             aria-label="Cancel swap confirmation"
           >
             <CloseIcon />
@@ -495,15 +495,15 @@ export function SwapConfirmDialog({
         </div>
 
         <div className="mt-4 grid gap-2">
-          <div className="rounded-xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] p-3">
-            <div className="text-[11px] font-semibold text-[var(--sp-color-text-muted)]">Source</div>
-            <div className="mt-1 text-sm font-semibold text-[var(--sp-color-text-primary)]">{swapSourceSeat.label}</div>
-            <div className="text-sm text-[var(--sp-color-text-muted)]">{seatPersonLabel(swapSourceSeat)}</div>
+          <div className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] p-3">
+            <div className="text-[11px] font-semibold text-[var(--sp-text-helper)]">Source</div>
+            <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapSourceSeat.label}</div>
+            <div className="text-sm text-[var(--sp-text-helper)]">{seatPersonLabel(swapSourceSeat)}</div>
           </div>
-          <div className="rounded-xl border border-[var(--sp-color-border-subtle)] bg-[var(--sp-color-graphite-soft)] p-3">
-            <div className="text-[11px] font-semibold text-[var(--sp-color-text-muted)]">Target</div>
-            <div className="mt-1 text-sm font-semibold text-[var(--sp-color-text-primary)]">{swapTargetSeat.label}</div>
-            <div className="text-sm text-[var(--sp-color-text-muted)]">{seatPersonLabel(swapTargetSeat)}</div>
+          <div className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] p-3">
+            <div className="text-[11px] font-semibold text-[var(--sp-text-helper)]">Target</div>
+            <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapTargetSeat.label}</div>
+            <div className="text-sm text-[var(--sp-text-helper)]">{seatPersonLabel(swapTargetSeat)}</div>
           </div>
         </div>
 
@@ -545,7 +545,7 @@ export function MoveEmployeeConfirmDialog({
 }) {
   const moveEmployeeConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
       <section
         ref={moveEmployeeConfirmDialogFocusRef}
         tabIndex={-1}
@@ -553,14 +553,14 @@ export function MoveEmployeeConfirmDialog({
         aria-modal="true"
         aria-labelledby="move-employee-map-confirm-title"
         aria-describedby="move-employee-map-confirm-description"
-        className="w-full max-w-md rounded-2xl border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
+        className="w-full max-w-md rounded-2xl border border-[var(--sp-border-subtle)] bg-[color-mix(in_srgb,var(--sp-layer-01)_95%,transparent)] p-4 text-[var(--sp-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl focus-visible:outline-none"
       >
         {offerSwap ? (
           <>
             <h2 id="move-employee-map-confirm-title" className="text-base font-semibold">
               Swap {formatDisplayName(sourceEmployeeName)} and {formatDisplayName(seatPersonLabel(moveEmployeeTargetSeat))}?
             </h2>
-            <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
+            <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
               {formatDisplayName(seatPersonLabel(moveEmployeeTargetSeat))} already sits at {formatSeatCode(moveEmployeeTargetSeat.label)}. Swapping moves them to {formatSeatCode(moveEmployeeSourceSeat.label)}. {PUBLISH_IMPACT_NOTE}
             </p>
             <div className="mt-4 rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold text-[var(--admin-publish-viewer-impact-text)]">
@@ -576,7 +576,7 @@ export function MoveEmployeeConfirmDialog({
             <h2 id="move-employee-map-confirm-title" className="text-base font-semibold">
               Move {formatDisplayName(sourceEmployeeName)} to {formatSeatCode(moveEmployeeTargetSeat.label)}?
             </h2>
-            <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
+            <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
               They currently sit at {formatSeatCode(moveEmployeeSourceSeat.label)}. Moving frees {formatSeatCode(moveEmployeeSourceSeat.label)} (it becomes Open). {PUBLISH_IMPACT_NOTE}
             </p>
             <div className="mt-4 grid grid-cols-2 gap-2">

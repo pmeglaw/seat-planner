@@ -299,7 +299,7 @@ export function AdminManagementPanel({
     { label: "Unassigned", value: unassignedEmployees },
     { label: "Active zones", value: zoneNames.length }
   ];
-  const fieldClassName = "w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]";
+  const fieldClassName = "w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]";
 
   // Virtualized directory (Figma page 10, Scalability): only the employee rows
   // near the viewport render; padding preserves the page scroll height. Geometry
@@ -830,7 +830,7 @@ export function AdminManagementPanel({
                   value={search}
                   onChange={event => setSearch(event.target.value)}
                   placeholder="Search employees…"
-                  className="h-full w-full min-w-0 border-0 bg-transparent pl-10 pr-4 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                  className="h-full w-full min-w-0 border-0 bg-transparent pl-10 pr-4 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus)]"
                 />
               </label>
               <button
@@ -866,7 +866,7 @@ export function AdminManagementPanel({
                               <button
                                 type="button"
                                 onClick={() => toggleSort(column.key)}
-                                className="inline-flex items-center gap-1 outline-none hover:text-[var(--admin-text-primary)] focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                                className="inline-flex items-center gap-1 outline-none hover:text-[var(--admin-text-primary)] focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
                               >
                                 <span>{column.label}</span>
                                 <span aria-hidden="true" className={isSorted ? "text-[var(--admin-text-primary)]" : "text-transparent"}>
@@ -931,7 +931,7 @@ export function AdminManagementPanel({
                                     // prefetch off — see AppRail's note.
                                     prefetch={false}
                                     onClick={event => event.stopPropagation()}
-                                    className="truncate font-semibold text-[var(--admin-text-primary)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                                    className="truncate font-semibold text-[var(--admin-text-primary)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
                                   >
                                     {displayName}
                                   </Link>
@@ -947,7 +947,7 @@ export function AdminManagementPanel({
                             <td className={cellClass}>
                               {/* Assigned mirrors the map legend's green chip — the
                                   orange-soft family reads as a warning here. */}
-                              <span className={["inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium", isAssigned ? "border-[var(--sp-color-state-success-border)] bg-[var(--admin-success-soft)] text-[var(--sp-color-state-success-on-soft)]" : "border-[var(--admin-border)] bg-[var(--admin-surface-alt)] text-[var(--admin-text-secondary)]"].join(" ")}>
+                              <span className={["inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium", isAssigned ? "border-[var(--sp-status-success-border)] bg-[var(--admin-success-soft)] text-[var(--sp-status-success-text)]" : "border-[var(--admin-border)] bg-[var(--admin-surface-alt)] text-[var(--admin-text-secondary)]"].join(" ")}>
                                 <span aria-hidden="true" className={["h-1.5 w-1.5 shrink-0 rounded-full", isAssigned ? "bg-[var(--admin-success)]" : "bg-[var(--admin-status-neutral)]"].join(" ")} />
                                 {isAssigned ? "Assigned" : "Unassigned"}
                               </span>
@@ -960,7 +960,7 @@ export function AdminManagementPanel({
                                   editEmployee(employee);
                                 }}
                                 aria-label={`Edit ${displayName}`}
-                                className="inline-flex h-7 w-7 items-center justify-center text-[var(--admin-status-neutral)] transition-colors hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                                className="inline-flex h-7 w-7 items-center justify-center text-[var(--admin-status-neutral)] transition-colors hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
                               >
                                 <span aria-hidden="true" className="text-base leading-none">⋮</span>
                               </button>
@@ -987,7 +987,7 @@ export function AdminManagementPanel({
                 <p className="text-sm text-[var(--admin-text-secondary)]">Employee departments are separate from physical seating zones.</p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <input value={newDepartmentName} onChange={event => setNewDepartmentName(event.target.value)} placeholder="New department" className="min-w-0 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]" />
+                <input value={newDepartmentName} onChange={event => setNewDepartmentName(event.target.value)} placeholder="New department" className="min-w-0 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
                 <Button type="button" variant="primary" onClick={createDepartment} disabled={pending || !newDepartmentName.trim()}>Add</Button>
               </div>
             </div>
@@ -1046,7 +1046,7 @@ export function AdminManagementPanel({
                 <p className="text-sm text-[var(--admin-text-secondary)]">Zones are physical map areas used for filtering and custom-seat label prefixes.</p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <input value={newZoneName} onChange={event => setNewZoneName(event.target.value)} placeholder="New zone" className="min-w-0 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus-ring-color)]" />
+                <input value={newZoneName} onChange={event => setNewZoneName(event.target.value)} placeholder="New zone" className="min-w-0 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
                 <Button type="button" variant="primary" onClick={createZone} disabled={pending || !newZoneName.trim()}>Add</Button>
               </div>
             </div>
@@ -1273,7 +1273,7 @@ export function AdminManagementPanel({
                 type="button"
                 onClick={closeEmployeeDialog}
                 disabled={pending}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close employee form"
               >
                 <CloseIcon />
@@ -1358,7 +1358,7 @@ export function AdminManagementPanel({
                 type="button"
                 onClick={closeManagementConfirm}
                 disabled={pending}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Cancel management confirmation"
               >
                 <CloseIcon />

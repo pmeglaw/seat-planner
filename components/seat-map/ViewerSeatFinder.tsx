@@ -991,7 +991,7 @@ export function ViewerSeatFinder({
     // keep the scroll origin intact.
     zoomFactor === null ? "flex sm:items-center sm:justify-center" : "",
     floor === "3" ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
-    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-color-canvas)]"
+    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-background)]"
   );
   const mapFrameClassName = cx(
     "relative mx-auto max-w-none",
@@ -1328,7 +1328,7 @@ export function ViewerSeatFinder({
               <div className="pointer-events-auto">
                 <FloorSelector floor={floor} onChange={setFloor} />
               </div>
-              <span className="pointer-events-auto border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-[12px] text-[var(--sp-color-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
+              <span className="pointer-events-auto border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-[12px] text-[var(--sp-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
               {/* Viewers don't need the layer model ("Published" / "Read-only"
                   badges) — a last-publish date answers the question they have. */}
               {lastPublishedLabel && floor === "3" && (

@@ -367,7 +367,7 @@ export function LoginForm() {
   const inlineLinkBaseClass = cx(
     "text-[12px] font-medium underline-offset-2 hover:underline",
     "disabled:cursor-not-allowed disabled:text-[var(--login-text-tertiary)] disabled:no-underline",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
   );
   const inlineLinkClass = cx(inlineLinkBaseClass, "text-[var(--login-link)]");
   const onFieldLinkClass = cx(inlineLinkBaseClass, "text-[var(--login-link-on-field)]");
@@ -530,7 +530,7 @@ export function LoginForm() {
               aria-pressed={showPassword}
               className={cx(
                 "grid h-8 w-8 flex-none place-items-center text-[var(--login-text-secondary)] transition-colors hover:bg-[var(--login-field-hover)]",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus)]"
               )}
             >
               <svg
@@ -586,7 +586,7 @@ export function LoginForm() {
               className={cx(
                 "peer h-[15px] w-[15px] shrink-0 appearance-none border border-[var(--login-border-strong)] bg-transparent",
                 "checked:border-[var(--login-text-primary)] checked:bg-[var(--login-text-primary)]",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2"
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)] focus-visible:ring-offset-2"
               )}
             />
             {/* The glyph paints in --login-bg so it stays legible on the
@@ -629,7 +629,7 @@ export function LoginForm() {
           className={cx(
             "mt-[22px] flex h-12 w-full items-center justify-between gap-2.5 border border-[var(--login-border-strong)] bg-transparent px-4 text-[13px] leading-none text-[var(--login-text-primary)]",
             "transition-colors hover:bg-[var(--login-field-hover)] disabled:cursor-not-allowed disabled:opacity-50",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus)]"
           )}
         >
           Email me a magic link

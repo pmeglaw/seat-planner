@@ -90,7 +90,7 @@ function UtilityTile({ label, description, tone = "default", affordance = "revie
       onClick={onClick}
       disabled={disabled}
       className={[
-        "relative min-h-[96px] p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50",
+        "relative min-h-[96px] p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50",
         wide ? "sm:col-span-full" : "",
         isDanger
           ? "bg-[var(--admin-danger-soft)] hover:bg-[var(--admin-danger-soft-hover)]"
@@ -98,7 +98,7 @@ function UtilityTile({ label, description, tone = "default", affordance = "revie
       ].join(" ")}
     >
       <span className={["block text-[13.5px] font-semibold", isDanger ? "text-[var(--admin-danger)]" : "text-[var(--admin-text-primary)]"].join(" ")}>{label}</span>
-      <span className={["mt-1 block max-w-[38ch] pr-6 text-[12.5px] leading-5", isDanger ? "text-[var(--sp-color-state-danger-on-soft)]" : "text-[var(--admin-text-muted)]"].join(" ")}>{description}</span>
+      <span className={["mt-1 block max-w-[38ch] pr-6 text-[12.5px] leading-5", isDanger ? "text-[var(--sp-status-danger-text)]" : "text-[var(--admin-text-muted)]"].join(" ")}>{description}</span>
       <span aria-hidden="true" className={["absolute bottom-3 right-3", isDanger ? "text-[var(--admin-danger)]" : "text-[var(--admin-status-neutral)]"].join(" ")}>
         {affordance === "download" ? (
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
@@ -327,7 +327,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
 
       {/* White fill, not an amber wash: this is standing guidance, and a tinted
           banner would read as an active warning every time the page loads. */}
-      <div className="flex items-start gap-2.5 border-l-[3px] border-[var(--sp-color-state-warning)] bg-[var(--admin-surface)] px-3.5 py-3 shadow-[0_1px_2px_rgba(22,22,22,0.06)]">
+      <div className="flex items-start gap-2.5 border-l-[3px] border-[var(--sp-status-pending-strong)] bg-[var(--admin-surface)] px-3.5 py-3 shadow-[0_1px_2px_rgba(22,22,22,0.06)]">
         <span aria-hidden="true" className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--admin-status-warn)] text-[10px] font-bold leading-none text-[var(--admin-text-primary)]">!</span>
         <p className="text-[12.5px] leading-5 text-[var(--admin-text-primary)]">
           <strong className="font-semibold">The published map is never touched until you publish.</strong>{" "}
@@ -393,7 +393,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 type="button"
                 onClick={() => setResetReviewOpen(false)}
                 disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close reset review"
               >
                 <CloseIcon />
@@ -447,7 +447,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 type="button"
                 onClick={closeCsvReview}
                 disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close CSV import review"
               >
                 <CloseIcon />
@@ -531,7 +531,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 type="button"
                 onClick={closeJsonReview}
                 disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close draft snapshot restore review"
               >
                 <CloseIcon />

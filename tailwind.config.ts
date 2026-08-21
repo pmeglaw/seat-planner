@@ -48,37 +48,35 @@ const config: Config = {
           DEFAULT: "#f97316",
           dark: "#c2410c"
         },
+        // Every entry points at the hex token directly — the -rgb channel
+        // twins were fully deleted (twin-resolution 2026-08-21 + PASS1 §4.1).
+        // Alpha modifiers (e.g. text-sp-secondary/50) are NOT supported here;
+        // derive washes with color-mix(in srgb, var(--…) N%, transparent).
+        // Utility names keep their pre-PASS1 keys (bg-sp-surface, …) — only
+        // the vars behind them were renamed; key renames are a Pass-2 call.
         sp: {
-          "brand-ivory": "rgb(var(--sp-color-brand-ivory-rgb) / <alpha-value>)",
-          "brand-paper": "rgb(var(--sp-color-brand-paper-rgb) / <alpha-value>)",
-          "brand-copper": "rgb(var(--sp-color-brand-copper-rgb) / <alpha-value>)",
-          "brand-accent": "rgb(var(--sp-color-brand-accent-rgb) / <alpha-value>)",
-          "action-primary": "rgb(var(--sp-color-action-primary-rgb) / <alpha-value>)",
-          "action-primary-hover": "rgb(var(--sp-color-action-primary-hover-rgb) / <alpha-value>)",
-          "action-primary-pressed": "rgb(var(--sp-color-action-primary-pressed-rgb) / <alpha-value>)",
-          primary: "rgb(var(--sp-color-text-primary-rgb) / <alpha-value>)",
-          // These next entries point at the hex token directly — their -rgb
-          // twins held stale values and were deleted (twin-resolution
-          // 2026-08-21). Alpha modifiers (e.g. text-sp-secondary/50) are NOT
-          // supported on them; zero call sites used one. Derive washes with
-          // color-mix(in srgb, var(--…) N%, transparent) instead.
-          secondary: "var(--sp-color-text-secondary)",
-          muted: "var(--sp-color-text-muted)",
-          disabled: "var(--sp-color-state-disabled)",
-          canvas: "var(--sp-color-canvas)",
-          workspace: "rgb(var(--sp-color-workspace-rgb) / <alpha-value>)",
-          surface: "rgb(var(--sp-color-surface-rgb) / <alpha-value>)",
-          "surface-raised": "rgb(var(--sp-color-surface-raised-rgb) / <alpha-value>)",
-          subtle: "var(--sp-color-border-subtle)",
-          strong: "var(--sp-color-border-strong)",
-          selected: "rgb(var(--sp-color-state-selected-rgb) / <alpha-value>)",
-          published: "rgb(var(--sp-color-state-published-rgb) / <alpha-value>)",
-          draft: "rgb(var(--sp-color-state-draft-rgb) / <alpha-value>)",
-          success: "rgb(var(--sp-color-state-success-rgb) / <alpha-value>)",
-          warning: "rgb(var(--sp-color-state-warning-rgb) / <alpha-value>)",
-          danger: "rgb(var(--sp-color-state-danger-rgb) / <alpha-value>)",
-          info: "var(--sp-color-state-info)",
-          search: "rgb(var(--sp-color-state-search-rgb) / <alpha-value>)"
+          "brand-paper": "var(--sp-brand-subtle)",
+          "brand-accent": "var(--sp-brand)",
+          "action-primary": "var(--sp-button-primary)",
+          "action-primary-hover": "var(--sp-button-primary-hover)",
+          "action-primary-pressed": "var(--sp-button-primary-active)",
+          primary: "var(--sp-text-primary)",
+          secondary: "var(--sp-text-secondary)",
+          muted: "var(--sp-text-helper)",
+          disabled: "var(--sp-surface-disabled)",
+          canvas: "var(--sp-background)",
+          surface: "var(--sp-layer-01)",
+          "surface-raised": "var(--sp-layer-02)",
+          subtle: "var(--sp-border-subtle)",
+          strong: "var(--sp-border-strong)",
+          selected: "var(--sp-selection)",
+          published: "var(--sp-status-published-strong)",
+          draft: "var(--sp-status-draft-strong)",
+          success: "var(--sp-status-success-strong)",
+          warning: "var(--sp-status-pending-strong)",
+          danger: "var(--sp-status-danger-strong)",
+          info: "var(--sp-status-neutral-strong)",
+          search: "var(--sp-status-search-text)"
         }
       },
       spacing: {

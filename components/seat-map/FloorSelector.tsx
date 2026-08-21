@@ -108,7 +108,7 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
         className={
           chrome
             ? "flex h-7 items-center gap-2 px-2.5 text-[12.5px] font-semibold text-[var(--admin-chrome-text)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
-            : "flex items-center gap-2 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--admin-text-primary)] shadow-elevation-3 transition hover:bg-[var(--sp-color-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+            : "flex items-center gap-2 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--admin-text-primary)] shadow-elevation-3 transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
         }
       >
         {chrome ? FLOOR_SHORT_LABELS[floor] : FLOOR_LABELS[floor]}

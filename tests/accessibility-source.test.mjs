@@ -513,7 +513,7 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // solid tag broke silently when dark mode landed.
   assert.match(inspectorSource, /bg-\[var\(--admin-state-clean-bg\)\] text-\[var\(--admin-state-clean-text\)\]/);
   assert.doesNotMatch(inspectorSource, /bg-\[var\(--admin-status-ok\)\] text-white/);
-  assert.doesNotMatch(inspectorSource, /bg-\[var\(--admin-status-ok\)\] text-\[var\(--sp-color-text-primary\)\]/);
+  assert.doesNotMatch(inspectorSource, /bg-\[var\(--admin-status-ok\)\] text-\[var\(--sp-text-primary\)\]/);
   assert.doesNotMatch(inspectorSource, /sticky bottom-0/);
   assert.match(inspectorSource, /No unsaved changes\./);
   // The verbose repeated panels are gone (Claude Design cleanup).

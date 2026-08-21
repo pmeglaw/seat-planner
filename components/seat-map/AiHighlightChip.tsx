@@ -43,7 +43,7 @@ export function AiHighlightChip({
         // The visible label is the bare word; the accessible name says what it
         // clears, because "Clear" alone is meaningless out of context.
         aria-label="Clear Ask Planner seat highlights"
-        className="font-medium text-[var(--sp-color-text-secondary)] transition hover:text-[var(--admin-ai-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+        className="font-medium text-[var(--sp-text-secondary)] transition hover:text-[var(--admin-ai-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
       >
         · Clear
       </button>

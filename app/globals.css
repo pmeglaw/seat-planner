@@ -9,107 +9,88 @@
      signature orange #FF5715 — indicator-only: active tool underline, selected
      seat, search/filter highlight, focus. Publish moved to the CTA ladder
      (#D23F0A + white, v12 owner decision 2a, 2026-07-31). Owner-set 2026-07-21. */
-  --sp-color-brand-ivory: #FFFFFF;
-  --sp-color-brand-paper: #FBEAE1;
-  --sp-color-brand-copper: #D23F0A;
-  --sp-color-brand-accent: #FF5715;
+  --sp-brand-subtle: #FBEAE1;
+  --sp-brand: #FF5715;
   /* Action ladder for text-bearing orange fills. The raw brand #FF5715 is only
      3.17:1 with white (fails AA text), so white-label buttons use the deepened
      #D23F0A (4.71:1). The hero Publish button joined this ladder 2026-07-31
      (v12 owner decision 2a): #D23F0A bg + white label + white count badge with
      ink text (18.10:1). Measured 2026-07-21/2026-07-31. */
-  --sp-color-action-primary: #D23F0A;
-  --sp-color-action-primary-hover: #B83708;
-  --sp-color-action-primary-pressed: #9E2F06;
-  --sp-color-brand-clay: #6D4712;
-
-  /* -rgb channel twins exist ONLY to feed rgb(var(--x-rgb) / a) call sites.
-     Each one must hold exactly the channels of its hex partner — the hex is
-     the source of truth (twin-resolution ruling 2026-08-21), and
-     color-twin-drift-source.test.mjs fails the build if any twin drifts.
-     Fifteen stale twins were deleted in that pass; new alpha washes should
-     derive in place via color-mix(in srgb, var(--x) N%, transparent) instead
-     of minting a twin. */
-  --sp-color-brand-ivory-rgb: 255 255 255;
-  --sp-color-brand-paper-rgb: 251 234 225;
-  --sp-color-brand-copper-rgb: 210 63 10;
-  --sp-color-brand-accent-rgb: 255 87 21;
-  --sp-color-action-primary-rgb: 210 63 10;
-  --sp-color-action-primary-hover-rgb: 184 55 8;
-  --sp-color-action-primary-pressed-rgb: 158 47 6;
+  --sp-button-primary: #D23F0A;
+  --sp-button-primary-hover: #B83708;
+  --sp-button-primary-active: #9E2F06;
+  --sp-brand-deep: #6D4712;
 
   /* Shell neutrals (IBM-gray family): #161616 chrome, #F7F6F2 workspace,
      #ffffff panels, #E7E1D8 hairlines. Text on light: #161616 (16.45:1),
      #55504A (7.10:1 on #F7F6F2), muted #6E655A (4.57:1 on #F7F6F2 — AA). */
-  --sp-color-text-primary: #161616;
-  --sp-color-text-secondary: #55504A;
-  --sp-color-text-muted: #6E655A;
-  --sp-color-text-disabled: #B8AEA2;
-  --sp-color-workspace: #161616;
-  --sp-color-workspace-deep: #0a0a0a;
-  --sp-color-graphite-soft: #F7F6F2;
-  --sp-color-stone: #E7E1D8;
-  --sp-color-stone-muted: #B8AEA2;
-
-  --sp-color-text-primary-rgb: 22 22 22;
-  --sp-color-workspace-rgb: 22 22 22;
-  --sp-color-workspace-deep-rgb: 10 10 10;
+  --sp-text-primary: #161616;
+  --sp-text-secondary: #55504A;
+  --sp-text-helper: #6E655A;
+  --sp-text-disabled: #B8AEA2;
+  --sp-layer-accent: #F7F6F2;
+  --sp-neutral-strong: #E7E1D8;
+  --sp-neutral-muted: #B8AEA2;
+  /* Scrim/overlay base (was --sp-color-workspace-deep): dialog and sheet
+     backdrops derive their washes from this in place via color-mix. The old
+     --sp-color-workspace (#161616) was the dark chrome wearing a workspace
+     name (PASS1 ⚑6) — the chrome zone below owns that value now. */
+  --sp-overlay-base: #0a0a0a;
 
   /* The ONLY two light neutrals: every page/canvas/mat surface uses canvas,
      every panel/strip/control uses surface. The floor-plan raster is content
      (its cream paper is baked into the image), not a third neutral — nothing
      else may introduce one. */
-  --sp-color-canvas: #F7F6F2;
-  --sp-color-surface: #ffffff;
-  --sp-color-surface-raised: #ffffff;
-  --sp-color-border-subtle: #E7E1D8;
-  --sp-color-border-strong: #D8D0C5;
-
-  --sp-color-surface-rgb: 255 255 255;
-  --sp-color-surface-raised-rgb: 255 255 255;
+  --sp-background: #F7F6F2;
+  --sp-layer-01: #ffffff;
+  --sp-layer-02: #ffffff;
+  --sp-border-subtle: #E7E1D8;
+  --sp-border-strong: #D8D0C5;
 
   /* State families. Accent hues follow the shell status colors (assigned
      #1D6E41 / reserved #009d9a / danger #B3232C) for dots and bars; the
      text-bearing variants stay dark enough for AA on their soft surfaces. */
-  --sp-color-state-selected: #D23F0A;
-  --sp-color-state-selected-surface: #FBEAE1;
-  --sp-color-state-selected-border: #F0B49A;
-  --sp-color-state-published: #1D6E41;
-  --sp-color-state-published-surface: #DEF3E4;
-  --sp-color-state-published-border: #A9D7B8;
-  --sp-color-state-draft: #136A67;
-  --sp-color-state-draft-surface: #DDF0EF;
-  --sp-color-state-draft-border: #93CFCC;
-  --sp-color-state-success: #1D6E41;
-  --sp-color-state-success-surface: #DEF3E4;
-  --sp-color-state-success-border: #A9D7B8;
-  --sp-color-state-warning: #136A67;
-  --sp-color-state-warning-surface: #DDF0EF;
-  --sp-color-state-warning-border: #93CFCC;
-  --sp-color-state-danger: #B3232C;
-  --sp-color-state-danger-surface: #FBE9EA;
-  --sp-color-state-danger-border: #E8A5A9;
+  --sp-selection: #D23F0A;
+  --sp-selection-surface: #FBEAE1;
+  --sp-selection-border: #F0B49A;
+  /* published/draft are PRODUCT aliases of the success/pending families
+     (PASS1 §1c) — same values by construction, product names kept. */
+  --sp-status-published-strong: var(--sp-status-success-strong);
+  --sp-status-published-surface: var(--sp-status-success-surface);
+  --sp-status-published-border: var(--sp-status-success-border);
+  --sp-status-draft-strong: var(--sp-status-pending-strong);
+  --sp-status-draft-surface: var(--sp-status-pending-surface);
+  --sp-status-draft-border: var(--sp-status-pending-border);
+  --sp-status-success-strong: #1D6E41;
+  --sp-status-success-surface: #DEF3E4;
+  --sp-status-success-border: #A9D7B8;
+  --sp-status-pending-strong: #136A67;
+  --sp-status-pending-surface: #DDF0EF;
+  --sp-status-pending-border: #93CFCC;
+  --sp-status-danger-strong: #B3232C;
+  --sp-status-danger-surface: #FBE9EA;
+  --sp-status-danger-border: #E8A5A9;
   /* Interaction + on-soft text partners for the state families. The on-soft
      values are the darkened AA text colors StatusBadge and the danger Button
      variants already shipped as raw hex; promoted 2026-07-19 so the pairs
      live beside their surfaces. */
-  --sp-color-state-danger-hover: #7E2F24;
-  --sp-color-state-danger-pressed: #6B271F;
-  --sp-color-state-danger-on-soft: #7E2F24;
-  --sp-color-state-published-on-soft: #284C3B;
-  --sp-color-state-draft-on-soft: #0F5754;
-  --sp-color-state-success-on-soft: #284C3B;
-  --sp-color-state-warning-on-soft: #0F5754;
+  --sp-status-danger-hover: #7E2F24;
+  --sp-status-danger-pressed: #6B271F;
+  --sp-status-danger-text: #7E2F24;
+  --sp-status-published-text: var(--sp-status-success-text);
+  --sp-status-draft-text: var(--sp-status-pending-text);
+  --sp-status-success-text: #284C3B;
+  --sp-status-pending-text: #0F5754;
   /* Info is NEUTRAL GRAY, not a hue. It was the last teal family (#31626A) and
      the brief retires it: three status hues carry meaning (success / warning /
      danger), so a fourth coloured family for "here is some context" competed
      with them for attention while signalling nothing. Folding it onto the IBM
      gray ramp leaves colour to the states that need it.
      Measured 2026-07-22: #55504A on #F7F6F2 = 7.10:1, on white = 7.81:1. */
-  --sp-color-state-info-on-soft: #55504A;
-  --sp-color-state-info: #55504A;
-  --sp-color-state-info-surface: #F7F6F2;
-  --sp-color-state-info-border: #D8D0C5;
+  --sp-status-neutral-text: #55504A;
+  --sp-status-neutral-strong: #55504A;
+  --sp-status-neutral-surface: #F7F6F2;
+  --sp-status-neutral-border: #D8D0C5;
   /* Search/filter highlight is the brand accent, NOT a teal. Until 2026-07-21
      this family was #1D6E41 — a near-twin of state-info #31626A doing a
      similar job, which is what made the palette read as more colors than it
@@ -118,9 +99,9 @@
      text #9E2F06 = 6.27:1 on the #FBEAE1 fill; the #D23F0A edge = 4.03:1 on
      that fill and 4.71:1 on white, clearing the 3:1 non-text minimum on both
      sides. Measured 2026-07-21. */
-  --sp-color-state-search: #9E2F06;
-  --sp-color-state-search-surface: #FBEAE1;
-  --sp-color-state-search-border: #D23F0A;
+  --sp-status-search-text: #9E2F06;
+  --sp-status-search-surface: #FBEAE1;
+  --sp-status-search-border: #D23F0A;
   /* --sp-color-state-planner-* retired 2026-07-22. The brief folds info into
      neutral gray by MERGING it with this family, and its target values
      (#55504A / #F7F6F2 / #D8D0C5) are what state-info above now carries. This
@@ -128,15 +109,7 @@
      ZERO consumers — no var() reference, no tailwind mapping, no rgb partner —
      so the merge is a deletion, not an alias. Use state-info for neutral
      context surfaces. */
-  --sp-color-state-disabled: #E7E1D8;
-
-  --sp-color-state-selected-rgb: 210 63 10;
-  --sp-color-state-published-rgb: 29 110 65;
-  --sp-color-state-draft-rgb: 19 106 103;
-  --sp-color-state-success-rgb: 29 110 65;
-  --sp-color-state-warning-rgb: 19 106 103;
-  --sp-color-state-danger-rgb: 179 35 44;
-  --sp-color-state-search-rgb: 158 47 6;
+  --sp-surface-disabled: #E7E1D8;
 
   --sp-space-1: 4px;
   --sp-space-2: 8px;
@@ -190,10 +163,10 @@
      alpha over an unknown ground can only lower contrast.
      tests/focus-brand-contrast-source.test.mjs pins that no focus token
      regresses to the raw #FF5715. */
-  --sp-focus-ring-color: #D23F0A;
-  --sp-focus-ring-width: 4px;
-  --sp-focus-ring-offset: 2px;
-  --sp-focus-ring-offset-color: var(--sp-color-surface-raised);
+  --sp-focus: #D23F0A;
+  --sp-focus-width: 4px;
+  --sp-focus-offset: 2px;
+  --sp-focus-offset-color: var(--sp-layer-02);
 }
 
 /* Dark theme — "Graphite studio" (direction 4a, owner-selected 2026-08-19,
@@ -207,71 +180,55 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --sp-color-canvas: #161616;
-  --sp-color-surface: #1f1f1f;
-  --sp-color-surface-raised: #262626;
-  --sp-color-border-subtle: rgba(255, 255, 255, 0.10);
-  --sp-color-border-strong: rgba(255, 255, 255, 0.18);
-  --sp-color-surface-rgb: 31 31 31;
-  --sp-color-surface-raised-rgb: 38 38 38;
+  --sp-background: #161616;
+  --sp-layer-01: #1f1f1f;
+  --sp-layer-02: #262626;
+  --sp-border-subtle: rgba(255, 255, 255, 0.10);
+  --sp-border-strong: rgba(255, 255, 255, 0.18);
 
-  --sp-color-text-primary: #f4f4f4;
-  --sp-color-text-secondary: #c6c6c6;
-  --sp-color-text-muted: #9a9a9a;
-  --sp-color-text-disabled: #6f6f6f;
-  --sp-color-text-primary-rgb: 244 244 244;
+  --sp-text-primary: #f4f4f4;
+  --sp-text-secondary: #c6c6c6;
+  --sp-text-helper: #9a9a9a;
+  --sp-text-disabled: #6f6f6f;
 
-  --sp-color-graphite-soft: #262626;
-  --sp-color-stone: #333333;
-  --sp-color-stone-muted: #6f6f6f;
-  --sp-color-state-disabled: #333333;
+  --sp-layer-accent: #262626;
+  --sp-neutral-strong: #333333;
+  --sp-neutral-muted: #6f6f6f;
+  --sp-surface-disabled: #333333;
 
   /* Status families: bright text + alpha softs (spec table). on-soft = the
      bright text — the softs are washes of the same hue on near-black. */
-  --sp-color-state-published: #42be65;
-  --sp-color-state-published-surface: rgba(66, 190, 101, 0.14);
-  --sp-color-state-published-border: rgba(66, 190, 101, 0.40);
-  --sp-color-state-published-on-soft: #42be65;
-  --sp-color-state-published-rgb: 66 190 101;
-  --sp-color-state-success: #42be65;
-  --sp-color-state-success-surface: rgba(66, 190, 101, 0.14);
-  --sp-color-state-success-border: rgba(66, 190, 101, 0.40);
-  --sp-color-state-success-on-soft: #42be65;
-  --sp-color-state-success-rgb: 66 190 101;
+  /* published/draft follow their families via the :root aliases — only the
+     family anchors are re-declared here. */
+  --sp-status-success-strong: #42be65;
+  --sp-status-success-surface: rgba(66, 190, 101, 0.14);
+  --sp-status-success-border: rgba(66, 190, 101, 0.40);
+  --sp-status-success-text: #42be65;
 
-  --sp-color-state-draft: #08bdba;
-  --sp-color-state-draft-surface: rgba(8, 189, 186, 0.14);
-  --sp-color-state-draft-border: rgba(8, 189, 186, 0.40);
-  --sp-color-state-draft-on-soft: #3ddbd9;
-  --sp-color-state-draft-rgb: 8 189 186;
-  --sp-color-state-warning: #08bdba;
-  --sp-color-state-warning-surface: rgba(8, 189, 186, 0.14);
-  --sp-color-state-warning-border: rgba(8, 189, 186, 0.40);
-  --sp-color-state-warning-on-soft: #3ddbd9;
-  --sp-color-state-warning-rgb: 8 189 186;
+  --sp-status-pending-strong: #08bdba;
+  --sp-status-pending-surface: rgba(8, 189, 186, 0.14);
+  --sp-status-pending-border: rgba(8, 189, 186, 0.40);
+  --sp-status-pending-text: #3ddbd9;
 
-  --sp-color-state-danger: #fa4d56;
-  --sp-color-state-danger-surface: rgba(250, 77, 86, 0.14);
-  --sp-color-state-danger-border: rgba(250, 77, 86, 0.40);
-  --sp-color-state-danger-on-soft: #ff8389;
-  --sp-color-state-danger-hover: #ff8389;
-  --sp-color-state-danger-pressed: #fa4d56;
-  --sp-color-state-danger-rgb: 250 77 86;
+  --sp-status-danger-strong: #fa4d56;
+  --sp-status-danger-surface: rgba(250, 77, 86, 0.14);
+  --sp-status-danger-border: rgba(250, 77, 86, 0.40);
+  --sp-status-danger-text: #ff8389;
+  --sp-status-danger-hover: #ff8389;
+  --sp-status-danger-pressed: #fa4d56;
 
-  --sp-color-state-info: #c6c6c6;
-  --sp-color-state-info-surface: rgba(255, 255, 255, 0.08);
-  --sp-color-state-info-border: rgba(255, 255, 255, 0.14);
-  --sp-color-state-info-on-soft: #c6c6c6;
+  --sp-status-neutral-strong: #c6c6c6;
+  --sp-status-neutral-surface: rgba(255, 255, 255, 0.08);
+  --sp-status-neutral-border: rgba(255, 255, 255, 0.14);
+  --sp-status-neutral-text: #c6c6c6;
 
   /* Search stays brand-orange on dark: text #FF8A5C = 6.1:1 on #161616. */
-  --sp-color-state-search: #FF8A5C;
-  --sp-color-state-search-surface: rgba(255, 87, 21, 0.14);
-  --sp-color-state-search-border: #FF5715;
-  --sp-color-state-search-rgb: 255 138 92;
-  --sp-color-state-selected: #FF8A5C;   /* 6.1:1 on #161616 — matches the dark search text treatment */
-  --sp-color-state-selected-rgb: 255 138 92;
-  --sp-color-state-selected-surface: rgba(255, 87, 21, 0.14);
-  --sp-color-state-selected-border: rgba(255, 87, 21, 0.45);
+  --sp-status-search-text: #FF8A5C;
+  --sp-status-search-surface: rgba(255, 87, 21, 0.14);
+  --sp-status-search-border: #FF5715;
+  --sp-selection: #FF8A5C;   /* 6.1:1 on #161616 — matches the dark search text treatment */
+  --sp-selection-surface: rgba(255, 87, 21, 0.14);
+  --sp-selection-border: rgba(255, 87, 21, 0.45);
 
   /* Shadows: borders carry separation on dark; overlays deepen. */
   --sp-shadow-raised: 0 2px 6px rgba(0, 0, 0, 0.45);
@@ -280,17 +237,17 @@
   --sp-shadow-modal: 0 12px 40px rgba(0, 0, 0, 0.6);
   /* Focus-ring offset deliberately NOT overridden here (owner retune
      2026-08-19, replacing the spec's #161616 literal): it keeps the :root
-     alias var(--sp-color-surface-raised) → #262626 — an exact gap on raised
+     alias var(--sp-layer-02) → #262626 — an exact gap on raised
      panels, near-invisible on #1f1f1f, where the old literal painted a dark
      halo around every focused control. Surfaces that sit on the bare canvas
-     pass ring-offset-[var(--sp-color-canvas)] explicitly (SeatMap viewport,
+     pass ring-offset-[var(--sp-background)] explicitly (SeatMap viewport,
      ViewerSeatFinder), so they are unaffected. */
 
   /* Focus ring on dark (PR-A): the light #D23F0A drops to 3.5:1-ish on the
      dark layers; #FF8A5C measures 7.79:1 on #161616, 7.10 on #1f1f1f, 6.52 on
      #262626, 5.44 on #333333 — clears 3:1 on every dark surface. Same hue
      family as the light ring, so focus stays recognizably brand. */
-  --sp-focus-ring-color: #FF8A5C;
+  --sp-focus: #FF8A5C;
 }
 
 /* Focus follows the SURFACE, not the page theme (2026-08-21). Some regions
@@ -310,7 +267,7 @@
    #FF8A5C is 2.32:1 on white. tests/focus-brand-contrast-source.test.mjs
    pins the marker block and the region roots. */
 [data-chrome="dark"] {
-  --sp-focus-ring-color: #FF8A5C;
+  --sp-focus: #FF8A5C;
   --admin-focus: #FF8A5C;
 }
 
@@ -362,7 +319,7 @@
 
   /* Brand orange: hue unchanged, pairings swapped for a dark ground. */
   /* PR-A: dark focus follows the :root dark ring — #FF8A5C, ≥5.4:1 on every
-     dark layer (see the --sp-focus-ring-color notes). */
+     dark layer (see the --sp-focus notes). */
   --admin-focus: #FF8A5C;
   --admin-primary-soft: rgba(255, 87, 21, 0.16);
   --admin-primary-border: rgba(255, 87, 21, 0.45);
@@ -505,7 +462,7 @@
   --admin-marker-live-assigned-text: #f4f4f4;
 
   /* Unavailable: surface/border were still deriving from the *light* neutral
-     ramp (--sp-color-stone(-muted) is dark-aware, but the color-mix left a
+     ramp (--sp-neutral-strong(-muted) is dark-aware, but the color-mix left a
      ~52,52,52 surface at 92% alpha and a ~mid-gray border — both visibly
      lighter/more prominent than the muted "void" look the table wants, and
      unreadable against it). Matched to the table's exact triplet; text
@@ -567,12 +524,12 @@
 .admin-theme,
 .shell-theme {
   /* Light workspace behind the map (shell spec: #F7F6F2). The light-surface
-     admin tokens alias the two :root neutrals (--sp-color-canvas /
-     --sp-color-surface) — exactly ONE canvas tone and ONE panel tone exist,
+     admin tokens alias the two :root neutrals (--sp-background /
+     --sp-layer-01) — exactly ONE canvas tone and ONE panel tone exist,
      so a stray third background can't creep back in per-component. The one
      sanctioned exception is --admin-map-workspace below: it is not a surface
      tone but the band behind a full-bleed raster, and it is decorative only. */
-  --admin-bg: var(--sp-color-canvas);
+  --admin-bg: var(--sp-background);
 
   /* v12 layer-00 workspace: the band behind the full-bleed floor plan raster.
      Decorative only (no text sits directly on it), so it carries no contrast
@@ -605,8 +562,7 @@
      utility `shadow-rail-overlay`; arbitrary shadow-[var(--…)] is silently
      dropped by Tailwind v3 (see tailwind.config.ts boxShadow comment). */
   --admin-rail-overlay-shadow: 8px 0 24px rgba(0, 0, 0, 0.35);
-  --admin-surface: var(--sp-color-surface);
-  --admin-surface-rgb: var(--sp-color-surface-rgb);
+  --admin-surface: var(--sp-layer-01);
   --admin-surface-hover: #FBFAF8;
   /* v12 filled field (Carbon Field-01). Neutral rather than the warm
      surface-alt so the input reads as a well, not as a tinted panel. The rule
@@ -614,8 +570,8 @@
      UI boundary, which is the whole reason this pair is specified together. */
   --admin-field-fill: #F4F4F4;
   --admin-field-rule: #8d8d8d;
-  --admin-surface-alt: var(--sp-color-canvas);
-  --admin-surface-muted: var(--sp-color-canvas);
+  --admin-surface-alt: var(--sp-background);
+  --admin-surface-muted: var(--sp-background);
   --admin-border: #E7E1D8;
   --admin-border-rgb: 231 225 216;
   --admin-border-soft: rgba(231, 225, 216, 0.6);
@@ -756,13 +712,13 @@
      off its own resting fill rather than the surface-alt jump rows use.
      #B3232C on #F8DEE0 = 5.2:1; #161616 on #FBFAF8 = 16.2:1. */
   --admin-danger-soft-hover: #F8DEE0;
-  /* Neutral, matching --sp-color-state-info above — see the note there. */
+  /* Neutral, matching --sp-status-neutral-strong above — see the note there. */
   --admin-info: #55504A;
   --admin-info-rgb: 85 80 74;
   --admin-info-soft: #F7F6F2;
   --admin-analytics: #55504A;
   /* PR-A (2026-08-21): #D23F0A, not the raw #FF5715 — see the
-     --sp-focus-ring-color note in :root for the measurements (the raw brand
+     --sp-focus note in :root for the measurements (the raw brand
      fails 3:1 on #F4F4F4 / #E8E8E8 / #E7E1D8). Dark block overrides to
      #FF8A5C. */
   --admin-focus: #D23F0A;
@@ -865,7 +821,7 @@
   --admin-marker-hover-border: #8E8276;
   --admin-marker-hover-shadow: 0 6px 14px rgba(22, 22, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
   /* PR-A: solid #D23F0A replaces rgba(255,87,21,.75) — same 3:1 reasoning as
-     --sp-focus-ring-color (this token serves the dormant admin marker arm;
+     --sp-focus (this token serves the dormant admin marker arm;
      the live pills' focus ring rides --admin-marker-live-active-edge-soft).
      The white offset ring below is unchanged — it carries the separation
      against the busy raster. */
@@ -893,9 +849,9 @@
      stay legend-only. Contrast notes live at the use sites in
      SeatMarker.tsx. */
   --admin-marker-live-ink: #453D33;
-  --admin-marker-live-assigned-border: color-mix(in srgb, var(--sp-color-state-success) 55%, transparent);
-  --admin-marker-live-assigned-text: var(--sp-color-state-success-on-soft);
-  --admin-marker-live-available-border: var(--sp-color-stone-muted);
+  --admin-marker-live-assigned-border: color-mix(in srgb, var(--sp-status-success-strong) 55%, transparent);
+  --admin-marker-live-assigned-text: var(--sp-status-success-text);
+  --admin-marker-live-available-border: var(--sp-neutral-muted);
   /* Pill fills + base ring (fixwave finding 2): promoted from the JSX
      literals `bg-white/95` (both pills) / `ring-white/45` (base ring) so
      the dark-theme block above has a token to override — pixel-identical
@@ -903,39 +859,39 @@
   --admin-marker-live-available-surface: rgba(255, 255, 255, 0.95);
   --admin-marker-live-assigned-surface: rgba(255, 255, 255, 0.95);
   --admin-marker-live-pill-ring: rgba(255, 255, 255, 0.45);
-  --admin-marker-live-reserved-border: color-mix(in srgb, var(--sp-color-state-warning) 55%, transparent);
-  --admin-marker-live-reserved-surface: color-mix(in srgb, var(--sp-color-state-warning-surface) 95%, transparent);
-  --admin-marker-live-reserved-text: var(--sp-color-state-warning-on-soft);
-  --admin-marker-live-unavailable-border: color-mix(in srgb, var(--sp-color-stone-muted) 90%, transparent);
-  --admin-marker-live-unavailable-surface: color-mix(in srgb, var(--sp-color-stone) 92%, transparent);
+  --admin-marker-live-reserved-border: color-mix(in srgb, var(--sp-status-pending-strong) 55%, transparent);
+  --admin-marker-live-reserved-surface: color-mix(in srgb, var(--sp-status-pending-surface) 95%, transparent);
+  --admin-marker-live-reserved-text: var(--sp-status-pending-text);
+  --admin-marker-live-unavailable-border: color-mix(in srgb, var(--sp-neutral-muted) 90%, transparent);
+  --admin-marker-live-unavailable-surface: color-mix(in srgb, var(--sp-neutral-strong) 92%, transparent);
   --admin-marker-live-unavailable-text: #696159;
-  --admin-marker-live-draft-border: color-mix(in srgb, var(--sp-color-state-warning) 70%, transparent);
-  --admin-marker-live-draft-surface: color-mix(in srgb, var(--sp-color-state-warning-surface) 95%, transparent);
-  --admin-marker-live-draft-text: var(--sp-color-state-warning-on-soft);
-  --admin-marker-live-draft-ring: color-mix(in srgb, var(--sp-color-state-warning-border) 55%, transparent);
-  --admin-marker-live-draft-badge: var(--sp-color-state-warning);
+  --admin-marker-live-draft-border: color-mix(in srgb, var(--sp-status-pending-strong) 70%, transparent);
+  --admin-marker-live-draft-surface: color-mix(in srgb, var(--sp-status-pending-surface) 95%, transparent);
+  --admin-marker-live-draft-text: var(--sp-status-pending-text);
+  --admin-marker-live-draft-ring: color-mix(in srgb, var(--sp-status-pending-border) 55%, transparent);
+  --admin-marker-live-draft-badge: var(--sp-status-pending-strong);
   --admin-marker-live-active-edge: #D46A24;
   --admin-marker-live-active-edge-strong: color-mix(in srgb, var(--admin-marker-live-active-edge) 90%, transparent);
   --admin-marker-live-active-edge-soft: color-mix(in srgb, var(--admin-marker-live-active-edge) 75%, transparent);
   --admin-marker-live-selected-surface: #171A1D;
   --admin-marker-live-search-selected-surface: #15181B;
-  --admin-marker-live-search-border: var(--sp-color-state-search-border);
-  --admin-marker-live-search-surface: var(--sp-color-state-search-surface);
-  --admin-marker-live-search-text: var(--sp-color-state-search);
-  --admin-marker-live-search-ring: color-mix(in srgb, var(--sp-color-state-search-border) 55%, transparent);
-  --admin-marker-live-positive-border: var(--sp-color-state-success);
-  --admin-marker-live-positive-surface: var(--sp-color-state-success-surface);
-  --admin-marker-live-positive-text: var(--sp-color-state-success-on-soft);
-  --admin-marker-live-positive-ring: color-mix(in srgb, var(--sp-color-state-success-border) 80%, transparent);
-  --admin-marker-live-positive-outline: color-mix(in srgb, var(--sp-color-state-success) 70%, transparent);
-  --admin-marker-live-planner-ring: color-mix(in srgb, var(--sp-color-state-success) 55%, transparent);
-  --admin-marker-live-invalid-border: var(--sp-color-state-danger);
-  --admin-marker-live-invalid-surface: var(--sp-color-state-danger-surface);
-  --admin-marker-live-invalid-text: var(--sp-color-state-danger-on-soft);
-  --admin-marker-live-neutral-border: var(--sp-color-text-muted);
+  --admin-marker-live-search-border: var(--sp-status-search-border);
+  --admin-marker-live-search-surface: var(--sp-status-search-surface);
+  --admin-marker-live-search-text: var(--sp-status-search-text);
+  --admin-marker-live-search-ring: color-mix(in srgb, var(--sp-status-search-border) 55%, transparent);
+  --admin-marker-live-positive-border: var(--sp-status-success-strong);
+  --admin-marker-live-positive-surface: var(--sp-status-success-surface);
+  --admin-marker-live-positive-text: var(--sp-status-success-text);
+  --admin-marker-live-positive-ring: color-mix(in srgb, var(--sp-status-success-border) 80%, transparent);
+  --admin-marker-live-positive-outline: color-mix(in srgb, var(--sp-status-success-strong) 70%, transparent);
+  --admin-marker-live-planner-ring: color-mix(in srgb, var(--sp-status-success-strong) 55%, transparent);
+  --admin-marker-live-invalid-border: var(--sp-status-danger-strong);
+  --admin-marker-live-invalid-surface: var(--sp-status-danger-surface);
+  --admin-marker-live-invalid-text: var(--sp-status-danger-text);
+  --admin-marker-live-neutral-border: var(--sp-text-helper);
   --admin-marker-live-neutral-surface: #F1ECE4;
   --admin-marker-live-neutral-text: #353532;
-  --admin-marker-live-neutral-ring: color-mix(in srgb, var(--sp-color-border-strong) 85%, transparent);
+  --admin-marker-live-neutral-ring: color-mix(in srgb, var(--sp-border-strong) 85%, transparent);
 
   /* Zone-wash overlay fill (SeatMap): success green at wash strength. */
   --admin-zone-wash-fill: color-mix(in srgb, var(--admin-status-ok) 10%, transparent);
@@ -1017,9 +973,9 @@ html {
 
 body {
   margin: 0;
-  background: var(--sp-color-canvas);
+  background: var(--sp-background);
   /* token so dark mode inherits a readable default */
-  color: var(--sp-color-text-primary);
+  color: var(--sp-text-primary);
   font-family: var(--font-sans, "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
 }
 

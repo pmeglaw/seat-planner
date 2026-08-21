@@ -276,7 +276,7 @@ export function AskPlannerDrawer({
               </h2>
               <p id="ask-planner-description" className="mt-1 text-xs leading-5 text-[var(--admin-chrome-muted)]">Read-only answers from saved draft map data.</p>
             </div>
-            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] transition hover:bg-white/10 hover:text-[var(--admin-chrome-text-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]">
+            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] transition hover:bg-white/10 hover:text-[var(--admin-chrome-text-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
               Close
             </button>
           </div>
@@ -301,7 +301,7 @@ export function AskPlannerDrawer({
                 onClick={() => choosePrompt(promptOption.prompt)}
                 disabled={pending}
                 title={pending ? "Wait for Ask Planner to finish" : promptOption.prompt}
-                className="max-w-full rounded-full border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-chrome-text-soft)] transition hover:-translate-y-px hover:border-[var(--admin-primary)] hover:bg-[var(--admin-chrome-hover)] hover:text-white hover:shadow-elevation-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:hover:translate-y-0"
+                className="max-w-full rounded-full border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-chrome-text-soft)] transition hover:-translate-y-px hover:border-[var(--admin-primary)] hover:bg-[var(--admin-chrome-hover)] hover:text-white hover:shadow-elevation-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:hover:translate-y-0"
               >
                 {promptOption.label}
               </button>
@@ -391,7 +391,7 @@ export function AskPlannerDrawer({
                     onClick={() => setExplainOpen(current => !current)}
                     aria-expanded={explainOpen}
                     aria-controls="ask-planner-explain"
-                    className="ml-auto border border-[var(--admin-ai-chrome-border)] px-[5px] py-px text-[10px] font-bold tracking-[0.04em] text-[var(--admin-ai-chrome-text)] transition hover:bg-[var(--admin-ai-row)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                    className="ml-auto border border-[var(--admin-ai-chrome-border)] px-[5px] py-px text-[10px] font-bold tracking-[0.04em] text-[var(--admin-ai-chrome-text)] transition hover:bg-[var(--admin-ai-row)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
                   >
                     AI {explainOpen ? "▴" : "▾"}
                   </button>
@@ -444,7 +444,7 @@ export function AskPlannerDrawer({
                     onClick={onClearHighlights}
                     disabled={highlightedSeatIds.length === 0}
                     title={highlightedSeatIds.length === 0 ? "No highlighted seats to clear" : "Clear highlighted seats"}
-                    className="rounded-full border border-[rgb(var(--admin-primary-rgb)/0.5)] bg-[rgb(var(--admin-primary-rgb)/0.1)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary)] transition hover:bg-[rgb(var(--admin-primary-rgb)/0.2)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:border-[var(--admin-chrome-border)] disabled:bg-white/10 disabled:text-[var(--admin-chrome-muted)]"
+                    className="rounded-full border border-[rgb(var(--admin-primary-rgb)/0.5)] bg-[rgb(var(--admin-primary-rgb)/0.1)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary)] transition hover:bg-[rgb(var(--admin-primary-rgb)/0.2)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:border-[var(--admin-chrome-border)] disabled:bg-white/10 disabled:text-[var(--admin-chrome-muted)]"
                   >
                     Clear highlights
                   </button>
@@ -457,7 +457,7 @@ export function AskPlannerDrawer({
                         key={highlight.seatId}
                         type="button"
                         onClick={() => onSelectSeat(highlight.seatId)}
-                        className="flex w-full items-start justify-between gap-3 rounded-lg border border-[var(--admin-ai-panel-border)] bg-[var(--admin-ai-row)] p-2 text-left transition hover:bg-[color-mix(in_srgb,var(--admin-ai-border)_16%,transparent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                        className="flex w-full items-start justify-between gap-3 rounded-lg border border-[var(--admin-ai-panel-border)] bg-[var(--admin-ai-row)] p-2 text-left transition hover:bg-[color-mix(in_srgb,var(--admin-ai-border)_16%,transparent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                       >
                         <span className="min-w-0">
                           <span className="block text-sm font-semibold text-[var(--admin-chrome-text)]">{highlight.label}</span>
@@ -485,7 +485,7 @@ export function AskPlannerDrawer({
                         onClick={() => askFollowUp(followUp)}
                         disabled={pending}
                         title={pending ? "Wait for Ask Planner to finish" : followUp}
-                        className="max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-chrome-text-soft)] ring-1 ring-[var(--admin-chrome-border)] transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-chrome-text-soft)] ring-1 ring-[var(--admin-chrome-border)] transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {followUp}
                       </button>

@@ -1522,7 +1522,7 @@ export function SeatInspector({
         edits, because a transient surface earns less trust than this panel. */}
 
     {moveConflict && (
-      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--sp-color-workspace-deep-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
         <section
           ref={moveConflictDialogFocusRef}
           tabIndex={-1}
@@ -1536,19 +1536,19 @@ export function SeatInspector({
               setMoveConflict(null);
             }
           }}
-          className="w-full max-w-md rounded-[16px] border border-[var(--sp-color-border-subtle)] bg-[rgb(var(--sp-color-surface-rgb)/0.95)] p-4 text-[var(--sp-color-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
+          className="w-full max-w-md rounded-[16px] border border-[var(--sp-border-subtle)] bg-[color-mix(in_srgb,var(--sp-layer-01)_95%,transparent)] p-4 text-[var(--sp-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 id="move-employee-confirm-title" className="text-base font-black">Move {formatDisplayName(moveConflict.employeeName)} to {formatSeatCode(selectedSeat.label)}?</h2>
-              <p id="move-employee-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-color-text-muted)]">
+              <p id="move-employee-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
                 They currently sit at {formatSeatCode(moveConflict.currentSeatLabel)}. Moving frees {formatSeatCode(moveConflict.currentSeatLabel)} (it becomes Open).
               </p>
             </div>
             <button
               type="button"
               onClick={() => setMoveConflict(null)}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-color-text-muted)] transition hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
               aria-label="Cancel moving employee"
             >
               <CloseIcon />
