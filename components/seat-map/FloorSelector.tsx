@@ -42,8 +42,8 @@ export function FloorPlaceholder() {
   return (
     <div role="status" className="grid min-h-[360px] w-full place-items-center p-6 text-center sm:min-h-[520px] lg:h-full lg:min-h-0">
       <div>
-        <div className="text-sm font-semibold text-[var(--admin-text-primary)]">{FLOOR_LABELS["2"]}</div>
-        <p className="mt-1 text-xs text-[var(--admin-text-muted)]">Not yet mapped — reserved for a future rollout.</p>
+        <div className="text-sm font-semibold text-[var(--sp-text-primary)]">{FLOOR_LABELS["2"]}</div>
+        <p className="mt-1 text-xs text-[var(--sp-text-helper)]">Not yet mapped — reserved for a future rollout.</p>
       </div>
     </div>
   );
@@ -107,12 +107,12 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
         }}
         className={
           chrome
-            ? "flex h-7 items-center gap-2 px-2.5 text-[12.5px] font-semibold text-[var(--admin-chrome-text)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
-            : "flex items-center gap-2 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--admin-text-primary)] shadow-elevation-3 transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+            ? "flex h-7 items-center gap-2 px-2.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
+            : "flex items-center gap-2 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] shadow-elevation-3 transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
         }
       >
         {chrome ? FLOOR_SHORT_LABELS[floor] : FLOOR_LABELS[floor]}
-        <svg aria-hidden="true" viewBox="0 0 20 20" className={chrome ? "h-3 w-3 text-[var(--admin-chrome-muted)]" : "h-3 w-3 text-[var(--admin-text-muted)]"}>
+        <svg aria-hidden="true" viewBox="0 0 20 20" className={chrome ? "h-3 w-3 text-[var(--sp-text-helper)]" : "h-3 w-3 text-[var(--sp-text-helper)]"}>
           <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
@@ -139,8 +139,8 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
           }}
           className={
             chrome
-              ? "absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--admin-chrome-border-strong)] bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
-              : "absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--admin-border)] bg-[var(--admin-surface)] py-1 shadow-elevation-3"
+              ? "absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] py-1 shadow-elevation-3"
+              : "absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] py-1 shadow-elevation-3"
           }
         >
           {FLOORS.map(option => (
@@ -155,8 +155,8 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
               }}
               className={
                 chrome
-                  ? "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--admin-chrome-text)] transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
-                  : "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
+                  ? "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--sp-text-primary)] transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
+                  : "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
               }
             >
               <span className={option.id === floor ? "font-semibold" : undefined}>{option.label}</span>
@@ -164,8 +164,8 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
                 <span
                   className={
                     chrome
-                      ? "shrink-0 border border-white/20 px-1.5 py-0.5 text-[9.5px] font-medium text-[var(--admin-chrome-muted)]"
-                      : "shrink-0 border border-[var(--admin-border)] px-1.5 py-0.5 text-[9.5px] font-medium text-[var(--admin-text-muted)]"
+                      ? "shrink-0 border border-white/20 px-1.5 py-0.5 text-[9.5px] font-medium text-[var(--sp-text-helper)]"
+                      : "shrink-0 border border-[var(--sp-border-subtle)] px-1.5 py-0.5 text-[9.5px] font-medium text-[var(--sp-text-helper)]"
                   }
                 >
                   SOON

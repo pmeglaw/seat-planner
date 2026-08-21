@@ -33,11 +33,11 @@ export function DeptChipRow({ departments, counts, activeDepartment, onSelectDep
               "flex h-8 items-center gap-1.5 border px-2.5 text-[12px] font-semibold shadow-elevation-3 transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]",
               active
                 ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-on-soft)]"
-                : "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--sp-text-secondary)] hover:bg-[var(--sp-background)] hover:text-[var(--admin-text-primary)]"
+                : "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-secondary)] hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)]"
             ].join(" ")}
           >
             <span className="max-w-[16ch] truncate">{department}</span>
-            <span className={["tabular-nums", active ? "text-[var(--admin-primary-on-soft)]" : "text-[var(--admin-text-muted)]"].join(" ")}>
+            <span className={["tabular-nums", active ? "text-[var(--admin-primary-on-soft)]" : "text-[var(--sp-text-helper)]"].join(" ")}>
               {counts[department] ?? 0}
             </span>
           </button>

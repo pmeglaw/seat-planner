@@ -39,7 +39,7 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
     // a filtered admin row is ~790px against a 640px floor).
     <div
       data-map-status-band
-      className="relative z-30 flex h-10 shrink-0 items-center border-t border-[var(--admin-border)] bg-[var(--admin-surface)] [container-type:inline-size]"
+      className="relative z-30 flex h-10 shrink-0 items-center border-t border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] [container-type:inline-size]"
     >
       {/* Everything informational scrolls; the controls never do. The
           overflow-x-auto is the safety valve that makes clipping impossible
@@ -63,7 +63,7 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
       >
         <span className="map-status-band-wide shrink-0 text-[12px] font-semibold text-[var(--sp-text-primary)]">Legend</span>
         <span className="map-status-band-wide shrink-0 text-[11.5px] font-semibold tabular-nums text-[var(--sp-text-secondary)]">{totalLabel}</span>
-        <span aria-hidden="true" className="map-status-band-wide h-5 w-px shrink-0 bg-[var(--admin-border)]" />
+        <span aria-hidden="true" className="map-status-band-wide h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
         <ul aria-label={ariaLabel} className="flex shrink-0 items-center gap-2.5 md:gap-3.5">
           {entries.map(entry => (
             <li key={entry.key} className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--sp-text-secondary)]">
@@ -75,7 +75,7 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
         </ul>
         {summary ? (
           <>
-            <span aria-hidden="true" className="map-status-band-widest h-5 w-px shrink-0 bg-[var(--admin-border)]" />
+            <span aria-hidden="true" className="map-status-band-widest h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
             <p className="map-status-band-widest min-w-0 truncate text-[11.5px] text-[var(--sp-text-secondary)]">{summary}</p>
           </>
         ) : null}
@@ -85,7 +85,7 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
       </div>
       {/* border-l draws the seam the scroll boundary otherwise lacks — under
           overflow, clipped content butts straight against these controls. */}
-      <div className="flex shrink-0 items-center gap-3 border-l border-[var(--admin-border)] pl-3 pr-3 md:gap-4">{controls}</div>
+      <div className="flex shrink-0 items-center gap-3 border-l border-[var(--sp-border-subtle)] pl-3 pr-3 md:gap-4">{controls}</div>
     </div>
   );
 }

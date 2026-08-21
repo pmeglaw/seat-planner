@@ -67,11 +67,11 @@ function isDraftSnapshot(value: unknown): value is DraftSnapshot {
 
 function ReviewCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
   return (
-    <div className={["border p-3", tone === "warn" ? "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)]" : "border-[var(--admin-border)] bg-[var(--admin-surface-muted)]"].join(" ")}>
-      <div className={["text-[10px] font-medium", tone === "warn" ? "text-[var(--admin-state-dirty-text)]" : "text-[var(--admin-text-muted)]"].join(" ")}>
+    <div className={["border p-3", tone === "warn" ? "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)]"].join(" ")}>
+      <div className={["text-[10px] font-medium", tone === "warn" ? "text-[var(--admin-state-dirty-text)]" : "text-[var(--sp-text-helper)]"].join(" ")}>
         {label}
       </div>
-      <div className="mt-1 text-xl font-semibold text-[var(--admin-text-primary)]">{value.toLocaleString()}</div>
+      <div className="mt-1 text-xl font-semibold text-[var(--sp-text-primary)]">{value.toLocaleString()}</div>
     </div>
   );
 }
@@ -94,11 +94,11 @@ function UtilityTile({ label, description, tone = "default", affordance = "revie
         wide ? "sm:col-span-full" : "",
         isDanger
           ? "bg-[var(--admin-danger-soft)] hover:bg-[var(--admin-danger-soft-hover)]"
-          : "bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)]"
+          : "bg-[var(--sp-layer-01)] hover:bg-[var(--sp-layer-hover)]"
       ].join(" ")}
     >
-      <span className={["block text-[13.5px] font-semibold", isDanger ? "text-[var(--admin-danger)]" : "text-[var(--admin-text-primary)]"].join(" ")}>{label}</span>
-      <span className={["mt-1 block max-w-[38ch] pr-6 text-[12.5px] leading-5", isDanger ? "text-[var(--sp-status-danger-text)]" : "text-[var(--admin-text-muted)]"].join(" ")}>{description}</span>
+      <span className={["block text-[13.5px] font-semibold", isDanger ? "text-[var(--admin-danger)]" : "text-[var(--sp-text-primary)]"].join(" ")}>{label}</span>
+      <span className={["mt-1 block max-w-[38ch] pr-6 text-[12.5px] leading-5", isDanger ? "text-[var(--sp-status-danger-text)]" : "text-[var(--sp-text-helper)]"].join(" ")}>{description}</span>
       <span aria-hidden="true" className={["absolute bottom-3 right-3", isDanger ? "text-[var(--admin-danger)]" : "text-[var(--admin-status-neutral)]"].join(" ")}>
         {affordance === "download" ? (
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
@@ -327,9 +327,9 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
 
       {/* White fill, not an amber wash: this is standing guidance, and a tinted
           banner would read as an active warning every time the page loads. */}
-      <div className="flex items-start gap-2.5 border-l-[3px] border-[var(--sp-status-pending-strong)] bg-[var(--admin-surface)] px-3.5 py-3 shadow-[0_1px_2px_rgba(22,22,22,0.06)]">
-        <span aria-hidden="true" className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--admin-status-warn)] text-[10px] font-bold leading-none text-[var(--admin-text-primary)]">!</span>
-        <p className="text-[12.5px] leading-5 text-[var(--admin-text-primary)]">
+      <div className="flex items-start gap-2.5 border-l-[3px] border-[var(--sp-status-pending-strong)] bg-[var(--sp-layer-01)] px-3.5 py-3 shadow-[0_1px_2px_rgba(22,22,22,0.06)]">
+        <span aria-hidden="true" className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--admin-status-warn)] text-[10px] font-bold leading-none text-[var(--sp-text-primary)]">!</span>
+        <p className="text-[12.5px] leading-5 text-[var(--sp-text-primary)]">
           <strong className="font-semibold">The published map is never touched until you publish.</strong>{" "}
           Restores replace the entire draft — review before confirming.
         </p>
@@ -338,11 +338,11 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
       <section>
         {/* Uppercased in CSS, not in the string: the source keeps the honest
             scope names the INFRA-02 guardrail (#277) pinned. */}
-        <h2 className="text-xs font-semibold uppercase tracking-[0.04em] text-[var(--admin-text-secondary)]">CSV assignments</h2>
-        <p className="mb-2 mt-1 text-xs leading-5 text-[var(--admin-text-muted)]">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.04em] text-[var(--sp-text-secondary)]">CSV assignments</h2>
+        <p className="mb-2 mt-1 text-xs leading-5 text-[var(--sp-text-helper)]">
           Imports update draft assignments; seat positions don&apos;t move.
         </p>
-        <div className="grid gap-px border border-[var(--admin-border)] bg-[var(--admin-border)] [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+        <div className="grid gap-px border border-[var(--sp-border-subtle)] bg-[var(--sp-border-subtle)] [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
           <UtilityTile label="Download CSV template" description="A blank assignment sheet to fill in" affordance="download" onClick={downloadTemplate} disabled={busy} />
           <UtilityTile label="Export CSV" description="Download draft assignments" affordance="download" onClick={exportCsv} disabled={busy} />
           <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={event => importCsv(event.target.files?.[0])} />
@@ -352,11 +352,11 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
 
       <section>
         <h2 className="text-xs font-semibold uppercase tracking-[0.04em] text-[var(--admin-danger)]">Draft working-copy snapshots</h2>
-        <p className="mb-2 mt-1 text-xs leading-5 text-[var(--admin-text-muted)]">
+        <p className="mb-2 mt-1 text-xs leading-5 text-[var(--sp-text-helper)]">
           Draft seats and employees only. Restoring replaces the entire draft map, so review carefully before confirming.
           These snapshots are not a database backup: they do not include the published map, publish history, or user accounts.
         </p>
-        <div className="grid gap-px border border-[var(--admin-border)] bg-[var(--admin-border)] [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+        <div className="grid gap-px border border-[var(--sp-border-subtle)] bg-[var(--sp-border-subtle)] [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
           <UtilityTile label="Export draft snapshot" description="Download draft seats and employees as JSON" affordance="download" onClick={exportDraftSnapshot} disabled={busy} />
           <input ref={jsonInputRef} type="file" accept=".json,application/json" className="hidden" onChange={event => importJson(event.target.files?.[0])} />
           <UtilityTile label="Restore draft snapshot" description="Review a draft snapshot before restoring" onClick={() => jsonInputRef.current?.click()} disabled={busy} />
@@ -365,7 +365,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
       </section>
 
       {resetReviewOpen && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--admin-chrome-bg)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={resetReviewDialogFocusRef}
             tabIndex={-1}
@@ -379,12 +379,12 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 setResetReviewOpen(false);
               }
             }}
-            className="w-full max-w-lg overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
+            className="w-full max-w-lg overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 id="reset-review-title" className="text-base font-semibold">Reset draft to published?</h2>
-                <p id="reset-review-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-secondary)]">
+                <p id="reset-review-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-secondary)]">
                   Every draft seat change is erased and the draft goes back to exactly what viewers see today.
                   People edits in Management are kept. This cannot be undone.
                 </p>
@@ -393,7 +393,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 type="button"
                 onClick={() => setResetReviewOpen(false)}
                 disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close reset review"
               >
                 <CloseIcon />
@@ -418,7 +418,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
       )}
 
       {csvReview && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--admin-chrome-bg)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={csvReviewDialogFocusRef}
             tabIndex={-1}
@@ -432,14 +432,14 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 closeCsvReview();
               }
             }}
-            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
+            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
+            <div className="flex items-start justify-between gap-3 border-b border-[var(--sp-border-subtle)] pb-3">
               <div>
                 <h2 id="csv-import-review-title" className="text-base font-semibold">
                   {csvReview.issues.length > 0 ? "CSV import has blocking errors" : "Review CSV import"}
                 </h2>
-                <p id="csv-import-review-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-muted)]">
+                <p id="csv-import-review-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
                   CSV imports update saved draft assignments only. Marker positions and the published viewer map will not change until you publish.
                 </p>
               </div>
@@ -447,7 +447,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 type="button"
                 onClick={closeCsvReview}
                 disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close CSV import review"
               >
                 <CloseIcon />
@@ -484,7 +484,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 border-t border-[var(--admin-border)] pt-3">
+            <div className="grid grid-cols-2 gap-2 border-t border-[var(--sp-border-subtle)] pt-3">
               <Button type="button" onClick={closeCsvReview} disabled={busy} className="w-full">
                 {csvReview.issues.length > 0 ? "Close" : "Cancel"}
               </Button>
@@ -504,7 +504,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
       )}
 
       {jsonReview && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--admin-chrome-bg)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={jsonReviewDialogFocusRef}
             tabIndex={-1}
@@ -518,12 +518,12 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 closeJsonReview();
               }
             }}
-            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
+            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-3">
+            <div className="flex items-start justify-between gap-3 border-b border-[var(--sp-border-subtle)] pb-3">
               <div>
                 <h2 id="json-restore-review-title" className="text-base font-semibold">Review draft snapshot restore</h2>
-                <p id="json-restore-review-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-muted)]">
+                <p id="json-restore-review-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
                   A draft snapshot covers draft seats and employees only. The published viewer map will not change until you publish.
                 </p>
               </div>
@@ -531,7 +531,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 type="button"
                 onClick={closeJsonReview}
                 disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-subtle)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--admin-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close draft snapshot restore review"
               >
                 <CloseIcon />
@@ -549,7 +549,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 border-t border-[var(--admin-border)] pt-3">
+            <div className="grid grid-cols-2 gap-2 border-t border-[var(--sp-border-subtle)] pt-3">
               <Button type="button" onClick={closeJsonReview} disabled={busy} className="w-full">
                 Cancel
               </Button>

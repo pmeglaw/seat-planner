@@ -19,7 +19,7 @@ type MapZoomControlProps = {
 };
 
 const zoomButtonBaseClass =
-  "flex items-center justify-center bg-[var(--admin-surface)] text-[15px] leading-none text-[var(--admin-text-primary)] transition hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:text-[var(--admin-text-subtle)] disabled:hover:bg-[var(--admin-surface)]";
+  "flex items-center justify-center bg-[var(--sp-layer-01)] text-[15px] leading-none text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:text-[var(--sp-text-helper)] disabled:hover:bg-[var(--sp-layer-01)]";
 
 export function MapZoomControl({
   label,
@@ -32,8 +32,8 @@ export function MapZoomControl({
 }: MapZoomControlProps) {
   const horizontal = orientation === "horizontal";
   const zoomButtonClass = horizontal
-    ? `${zoomButtonBaseClass} h-7 w-7 border-r border-[var(--admin-border)] last:border-r-0`
-    : `${zoomButtonBaseClass} h-8 w-8 border-b border-[var(--admin-border)] last:border-b-0`;
+    ? `${zoomButtonBaseClass} h-7 w-7 border-r border-[var(--sp-border-subtle)] last:border-r-0`
+    : `${zoomButtonBaseClass} h-8 w-8 border-b border-[var(--sp-border-subtle)] last:border-b-0`;
 
   return (
     <div
@@ -41,14 +41,14 @@ export function MapZoomControl({
       aria-label="Map zoom"
       className={horizontal
         // In-band row: flat border, no elevation — the band is layer-00 chrome.
-        ? "pointer-events-auto flex items-center border border-[var(--admin-border)] bg-[var(--admin-surface)]"
-        : "pointer-events-auto flex flex-col border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-2"}
+        ? "pointer-events-auto flex items-center border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)]"
+        : "pointer-events-auto flex flex-col border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-elevation-2"}
     >
       <span
         aria-live="polite"
         className={horizontal
-          ? "min-w-[36px] border-r border-[var(--admin-border)] px-2 py-1 text-center font-mono text-[10.5px] tabular-nums text-[var(--admin-text-secondary)]"
-          : "border-b border-[var(--admin-border)] px-1 py-1 text-center font-mono text-[10.5px] tabular-nums text-[var(--admin-text-secondary)]"}
+          ? "min-w-[36px] border-r border-[var(--sp-border-subtle)] px-2 py-1 text-center font-mono text-[10.5px] tabular-nums text-[var(--sp-text-secondary)]"
+          : "border-b border-[var(--sp-border-subtle)] px-1 py-1 text-center font-mono text-[10.5px] tabular-nums text-[var(--sp-text-secondary)]"}
       >
         {label}
       </span>

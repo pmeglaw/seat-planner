@@ -49,13 +49,13 @@ function statusLabel(status: AskPlannerResponse["status"]) {
 
 function statusClassName(status: AskPlannerResponse["status"]) {
   // Dark-panel state pills (contrast on #161616: #42be65 ≈ 7.3:1, #08bdba ≈ 7.2:1, #78a9ff ≈ 6.6:1).
-  if (status === "refused") return "bg-[rgb(var(--admin-status-warn-rgb)/0.15)] text-[var(--admin-chrome-warn-text)] ring-[rgb(var(--admin-status-warn-rgb)/0.40)]";
-  if (status === "needs_clarification") return "bg-[rgb(var(--admin-chrome-info-rgb)/0.15)] text-[var(--admin-chrome-info-text)] ring-[rgb(var(--admin-chrome-info-rgb)/0.40)]";
+  if (status === "refused") return "bg-[rgb(var(--admin-status-warn-rgb)/0.15)] text-[var(--sp-status-pending-text)] ring-[rgb(var(--admin-status-warn-rgb)/0.40)]";
+  if (status === "needs_clarification") return "bg-[color-mix(in_srgb,var(--sp-chrome-info)_15%,transparent)] text-[var(--sp-chrome-info-text)] ring-[color-mix(in_srgb,var(--sp-chrome-info)_40%,transparent)]";
   // Success wash/ring derive from the chrome success token (this panel is dark
   // chrome in BOTH themes) — the retired --admin-status-ok-rgb twin held the
   // stale #24A148 here, and the light status hex #1D6E41 is tuned for light
   // surfaces (a 40% ring of it on #161616 is near-invisible, ~1.3:1).
-  return "bg-[color-mix(in_srgb,var(--admin-chrome-success-text)_15%,transparent)] text-[var(--admin-chrome-success-text)] ring-[color-mix(in_srgb,var(--admin-chrome-success-text)_40%,transparent)]";
+  return "bg-[color-mix(in_srgb,var(--sp-status-success-text)_15%,transparent)] text-[var(--sp-status-success-text)] ring-[color-mix(in_srgb,var(--sp-status-success-text)_40%,transparent)]";
 }
 
 function friendlyDrawerError(message: string, code?: "RATE_LIMITED"): DrawerError {
@@ -243,7 +243,7 @@ export function AskPlannerDrawer({
         aria-label="Close Ask Planner"
         aria-hidden="true"
         tabIndex={-1}
-        className="fixed inset-0 z-[70] cursor-default bg-[color-mix(in_srgb,var(--admin-chrome-bg)_30%,transparent)] backdrop-blur-[1px] motion-safe:animate-[sp-fade-in_180ms_ease-out] sm:z-50"
+        className="fixed inset-0 z-[70] cursor-default bg-[color-mix(in_srgb,var(--sp-background)_30%,transparent)] backdrop-blur-[1px] motion-safe:animate-[sp-fade-in_180ms_ease-out] sm:z-50"
         onClick={onClose}
       />
 
@@ -260,9 +260,9 @@ export function AskPlannerDrawer({
         aria-labelledby="ask-planner-title"
         aria-describedby="ask-planner-description"
         data-chrome="dark"
-        className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden border border-[var(--admin-ai-panel-border)] bg-[var(--admin-chrome-bg)] bg-[image:var(--admin-ai-glow)] bg-no-repeat text-[var(--admin-chrome-text)] shadow-panel focus-visible:outline-none motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[calc(var(--admin-chrome-h)_+_12px)] sm:z-50 sm:max-h-[calc(100vh_-_var(--admin-chrome-h)_-_20px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
+        className="sp-zone-chrome fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden border border-[var(--admin-ai-panel-border)] bg-[var(--sp-background)] bg-[image:var(--admin-ai-glow)] bg-no-repeat text-[var(--sp-text-primary)] shadow-panel focus-visible:outline-none motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[calc(var(--sp-chrome-height)_+_12px)] sm:z-50 sm:max-h-[calc(100vh_-_var(--sp-chrome-height)_-_20px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
       >
-        <div className="shrink-0 border-b border-[var(--admin-chrome-border)] px-4 py-3">
+        <div className="shrink-0 border-b border-[var(--sp-border-subtle)] px-4 py-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               {/* The AI label sits WITH the title, not in a corner: Carbon for
@@ -274,24 +274,24 @@ export function AskPlannerDrawer({
                 Ask Planner
                 <span aria-hidden="true" className="border border-[var(--admin-ai-chrome-border)] px-[5px] py-px text-[10px] font-bold tracking-[0.04em] text-[var(--admin-ai-chrome-text)]">AI</span>
               </h2>
-              <p id="ask-planner-description" className="mt-1 text-xs leading-5 text-[var(--admin-chrome-muted)]">Read-only answers from saved draft map data.</p>
+              <p id="ask-planner-description" className="mt-1 text-xs leading-5 text-[var(--sp-text-helper)]">Read-only answers from saved draft map data.</p>
             </div>
-            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--admin-chrome-muted)] transition hover:bg-white/10 hover:text-[var(--admin-chrome-text-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--sp-text-helper)] transition hover:bg-white/10 hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
               Close
             </button>
           </div>
 
           {draftDirty && (
-            <div className="mt-3 rounded-lg border border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] px-3 py-2 text-xs font-medium text-[var(--admin-chrome-warn-text)]">
+            <div className="mt-3 rounded-lg border border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] px-3 py-2 text-xs font-medium text-[var(--sp-status-pending-text)]">
               Unsaved inspector edits are not included.
             </div>
           )}
         </div>
 
-        <div className="shrink-0 border-b border-[var(--admin-chrome-border)] px-4 py-3">
+        <div className="shrink-0 border-b border-[var(--sp-border-subtle)] px-4 py-3">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <div className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Suggested prompts</div>
-            <div className="text-[11px] font-medium text-[var(--admin-chrome-muted)]">Saved draft only</div>
+            <div className="text-[11px] font-medium text-[var(--sp-text-helper)]">Suggested prompts</div>
+            <div className="text-[11px] font-medium text-[var(--sp-text-helper)]">Saved draft only</div>
           </div>
           <div className="mb-3 flex flex-wrap gap-2">
             {suggestedPrompts.map(promptOption => (
@@ -301,7 +301,7 @@ export function AskPlannerDrawer({
                 onClick={() => choosePrompt(promptOption.prompt)}
                 disabled={pending}
                 title={pending ? "Wait for Ask Planner to finish" : promptOption.prompt}
-                className="max-w-full rounded-full border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-chrome-text-soft)] transition hover:-translate-y-px hover:border-[var(--admin-primary)] hover:bg-[var(--admin-chrome-hover)] hover:text-white hover:shadow-elevation-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:hover:translate-y-0"
+                className="max-w-full rounded-full border border-[var(--sp-border-subtle)] bg-[var(--sp-field)] px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--sp-text-secondary)] transition hover:-translate-y-px hover:border-[var(--admin-primary)] hover:bg-[var(--sp-background-hover)] hover:text-white hover:shadow-elevation-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:hover:translate-y-0"
               >
                 {promptOption.label}
               </button>
@@ -331,11 +331,11 @@ export function AskPlannerDrawer({
                 placeholder="Ask about seats, zones, departments, or assignments…"
                 maxLength={800}
                 disabled={pending}
-                className="min-h-24 w-full resize-none rounded-xl border border-white/15 bg-[var(--admin-chrome-field)] px-3 py-2 text-sm text-[var(--admin-chrome-text)] outline-none transition placeholder:text-[var(--admin-chrome-muted)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary)] disabled:bg-white/5 disabled:text-[var(--admin-chrome-muted)]"
+                className="min-h-24 w-full resize-none rounded-xl border border-white/15 bg-[var(--sp-field)] px-3 py-2 text-sm text-[var(--sp-text-primary)] outline-none transition placeholder:text-[var(--sp-text-helper)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary)] disabled:bg-white/5 disabled:text-[var(--sp-text-helper)]"
               />
             </label>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-              <div className="truncate text-[11px] font-medium text-[var(--admin-chrome-muted)]">{question.trim().length}/800 · {submitShortcutHint} to ask</div>
+              <div className="truncate text-[11px] font-medium text-[var(--sp-text-helper)]">{question.trim().length}/800 · {submitShortcutHint} to ask</div>
               <Button type="submit" variant="primary" disabled={pending || !question.trim()} title={!question.trim() ? "Enter a question before asking" : undefined} className="rounded-full px-4">
                 {pending ? "Asking…" : "Ask"}
               </Button>
@@ -345,7 +345,7 @@ export function AskPlannerDrawer({
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
           {!pending && !error && !response && (
-            <section className="rounded-xl border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] p-3 text-sm leading-6 text-[var(--admin-chrome-text-soft)]">
+            <section className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-field)] p-3 text-sm leading-6 text-[var(--sp-text-secondary)]">
               Ask about seats, assignments, zones, or departments. Ask Planner can highlight supporting seats, but it cannot change the map.
             </section>
           )}
@@ -358,14 +358,14 @@ export function AskPlannerDrawer({
                 <span className="h-3 w-3 shrink-0 motion-safe:animate-pulse rounded-full bg-[var(--admin-ai-chrome-text)]" />
                 <div>
                   <div className="text-sm font-semibold text-[var(--admin-ai-chrome-text)]">Checking saved draft map data</div>
-                  <p className="mt-1 text-xs leading-5 text-[var(--admin-chrome-text-soft)]">Ask Planner is using read-only lookups. No seats or assignments will be changed.</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--sp-text-secondary)]">Ask Planner is using read-only lookups. No seats or assignments will be changed.</p>
                 </div>
               </div>
             </section>
           )}
 
           {error && (
-            <div role="alert" className="rounded-xl border border-[rgb(var(--admin-chrome-danger-text-rgb)/0.40)] bg-[rgb(var(--admin-chrome-danger-rgb)/0.10)] p-3 text-sm leading-6 text-[var(--admin-chrome-danger-text)]">
+            <div role="alert" className="rounded-xl border border-[color-mix(in_srgb,var(--sp-status-danger-text)_40%,transparent)] bg-[color-mix(in_srgb,var(--sp-status-danger-strong)_10%,transparent)] p-3 text-sm leading-6 text-[var(--sp-status-danger-text)]">
               <div className="font-semibold">{error.title}</div>
               <p className="mt-1 font-semibold">{error.message}</p>
             </div>
@@ -375,12 +375,12 @@ export function AskPlannerDrawer({
             <div className="space-y-3">
               {/* The answer itself sits on the luminous AI layer, so generated
                   text is never mistaken for the app's own stated facts. */}
-              <section className="rounded-xl border border-[var(--admin-ai-panel-border)] bg-[image:var(--admin-ai-aura)] bg-[var(--admin-chrome-hover)] bg-no-repeat p-3">
+              <section className="rounded-xl border border-[var(--admin-ai-panel-border)] bg-[image:var(--admin-ai-aura)] bg-[var(--sp-background-hover)] bg-no-repeat p-3">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span className={["rounded-full px-2 py-1 text-[10px] font-semibold ring-1", statusClassName(response.status)].join(" ")}>
                     {statusLabel(response.status)}
                   </span>
-                  <span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold text-[var(--admin-chrome-muted)] ring-1 ring-[var(--admin-chrome-border)]">
+                  <span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">
                     {response.confidence} confidence
                   </span>
                   {/* Carbon for AI requires the provenance of an answer to be
@@ -396,19 +396,19 @@ export function AskPlannerDrawer({
                     AI {explainOpen ? "▴" : "▾"}
                   </button>
                 </div>
-                <p className="whitespace-pre-wrap text-sm leading-6 text-[var(--admin-chrome-text-soft)]">{response.answer}</p>
+                <p className="whitespace-pre-wrap text-sm leading-6 text-[var(--sp-text-secondary)]">{response.answer}</p>
                 {response.summary && (
-                  <p className="mt-3 border-t border-[var(--admin-chrome-border)] pt-2 text-xs font-medium leading-5 text-[var(--admin-chrome-muted)]">{response.summary}</p>
+                  <p className="mt-3 border-t border-[var(--sp-border-subtle)] pt-2 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">{response.summary}</p>
                 )}
 
                 {explainOpen && (
-                  <div id="ask-planner-explain" className="mt-3 border border-[color-mix(in_srgb,var(--admin-ai-border)_40%,transparent)] bg-[var(--admin-chrome-bg)] p-3">
+                  <div id="ask-planner-explain" className="mt-3 border border-[color-mix(in_srgb,var(--admin-ai-border)_40%,transparent)] bg-[var(--sp-background)] p-3">
                     <div className="text-[11.5px] font-semibold text-[var(--admin-ai-chrome-text)]">How this answer was made</div>
-                    <p className="mt-1.5 text-xs leading-5 text-[var(--admin-chrome-text-soft)]">
-                      Generated from the <b className="font-semibold text-[var(--admin-chrome-text)]">saved draft layer only</b> — seats, directory, zones. The model reads the map; it cannot modify it. Unsaved inspector edits are excluded.
+                    <p className="mt-1.5 text-xs leading-5 text-[var(--sp-text-secondary)]">
+                      Generated from the <b className="font-semibold text-[var(--sp-text-primary)]">saved draft layer only</b> — seats, directory, zones. The model reads the map; it cannot modify it. Unsaved inspector edits are excluded.
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-text-soft)]">Sources: draft seats · directory</span>
+                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--sp-text-secondary)]">Sources: draft seats · directory</span>
                       <span className={["rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1", statusClassName(response.status)].join(" ")}>
                         {response.confidence} confidence
                       </span>
@@ -421,8 +421,8 @@ export function AskPlannerDrawer({
                 const visibleWarnings = response.warnings.filter(w => w !== BROAD_ANSWER_EMPTY_HIGHLIGHT_WARNING);
                 return visibleWarnings.length > 0 && (
                   <section className="rounded-xl border border-[rgb(var(--admin-status-warn-rgb)/0.40)] bg-[rgb(var(--admin-status-warn-rgb)/0.10)] p-3">
-                    <div className="text-[11px] font-semibold text-[var(--admin-chrome-warn-text)]">Warnings</div>
-                    <ul className="mt-2 space-y-1 text-xs leading-5 text-[var(--admin-chrome-warn-text)]">
+                    <div className="text-[11px] font-semibold text-[var(--sp-status-pending-text)]">Warnings</div>
+                    <ul className="mt-2 space-y-1 text-xs leading-5 text-[var(--sp-status-pending-text)]">
                       {visibleWarnings.map(warning => (
                         <li key={warning}>{warning}</li>
                       ))}
@@ -431,11 +431,11 @@ export function AskPlannerDrawer({
                 );
               })()}
 
-              <section className="rounded-xl border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-hover)] p-3">
+              <section className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-background-hover)] p-3">
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <div className="text-[11px] font-semibold text-[var(--admin-chrome-muted)]">Highlighted seats</div>
-                    <div className="mt-0.5 text-xs font-medium text-[var(--admin-chrome-muted)]">
+                    <div className="text-[11px] font-semibold text-[var(--sp-text-helper)]">Highlighted seats</div>
+                    <div className="mt-0.5 text-xs font-medium text-[var(--sp-text-helper)]">
                       {response.highlights.length} in answer · {highlightedSeatIds.length} on map
                     </div>
                   </div>
@@ -444,7 +444,7 @@ export function AskPlannerDrawer({
                     onClick={onClearHighlights}
                     disabled={highlightedSeatIds.length === 0}
                     title={highlightedSeatIds.length === 0 ? "No highlighted seats to clear" : "Clear highlighted seats"}
-                    className="rounded-full border border-[rgb(var(--admin-primary-rgb)/0.5)] bg-[rgb(var(--admin-primary-rgb)/0.1)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary)] transition hover:bg-[rgb(var(--admin-primary-rgb)/0.2)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:border-[var(--admin-chrome-border)] disabled:bg-white/10 disabled:text-[var(--admin-chrome-muted)]"
+                    className="rounded-full border border-[rgb(var(--admin-primary-rgb)/0.5)] bg-[rgb(var(--admin-primary-rgb)/0.1)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-primary)] transition hover:bg-[rgb(var(--admin-primary-rgb)/0.2)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:border-[var(--sp-border-subtle)] disabled:bg-white/10 disabled:text-[var(--sp-text-helper)]"
                   >
                     Clear highlights
                   </button>
@@ -460,8 +460,8 @@ export function AskPlannerDrawer({
                         className="flex w-full items-start justify-between gap-3 rounded-lg border border-[var(--admin-ai-panel-border)] bg-[var(--admin-ai-row)] p-2 text-left transition hover:bg-[color-mix(in_srgb,var(--admin-ai-border)_16%,transparent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                       >
                         <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-[var(--admin-chrome-text)]">{highlight.label}</span>
-                          <span className="mt-0.5 block text-xs leading-5 text-[var(--admin-chrome-text-soft)]">{highlight.reason}</span>
+                          <span className="block text-sm font-semibold text-[var(--sp-text-primary)]">{highlight.label}</span>
+                          <span className="mt-0.5 block text-xs leading-5 text-[var(--sp-text-secondary)]">{highlight.reason}</span>
                         </span>
                         <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold text-[var(--admin-ai-chrome-text)] ring-1 ring-white/15">
                           Select
@@ -470,13 +470,13 @@ export function AskPlannerDrawer({
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-3 text-xs leading-5 text-[var(--admin-chrome-muted)]">Broad answers don&apos;t highlight seats — ask about a specific zone or department to see them on the map.</p>
+                  <p className="mt-3 text-xs leading-5 text-[var(--sp-text-helper)]">Broad answers don&apos;t highlight seats — ask about a specific zone or department to see them on the map.</p>
                 )}
               </section>
 
               {response.followUps.length > 0 && (
-                <section className="rounded-xl border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-hover)] p-3">
-                  <div className="text-[11px] font-semibold text-[var(--admin-chrome-muted)]">Follow-ups</div>
+                <section className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-background-hover)] p-3">
+                  <div className="text-[11px] font-semibold text-[var(--sp-text-helper)]">Follow-ups</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {response.followUps.map(followUp => (
                       <button
@@ -485,7 +485,7 @@ export function AskPlannerDrawer({
                         onClick={() => askFollowUp(followUp)}
                         disabled={pending}
                         title={pending ? "Wait for Ask Planner to finish" : followUp}
-                        className="max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--admin-chrome-text-soft)] ring-1 ring-[var(--admin-chrome-border)] transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-border-subtle)] transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {followUp}
                       </button>

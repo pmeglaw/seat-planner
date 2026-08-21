@@ -9,7 +9,7 @@ import { assignLocation } from "@/lib/fullNavigation";
 
 // v12 left rail (design_handoff_carbon_v12 §structural move 1, prototype lines
 // 25-60), reshaped by the top-bar-first chrome (2026-08-14): the rail now
-// hangs BELOW AppTopBar (top-[var(--admin-chrome-h)], not top-0), and the
+// hangs BELOW AppTopBar (top-[var(--sp-chrome-height)], not top-0), and the
 // brand mark + account cell moved into the bar — the rail is navigation only.
 // 48px collapsed column, 208px overlay when expanded; item click / outside
 // click / Escape collapse it. Nav items are <Link>s with default (auto)
@@ -68,17 +68,17 @@ export type AppRailProps = {
 // overflow-hidden here (not on <nav>, see the nav className comment): each
 // item's own box is what needs to clip its whitespace-nowrap label while the
 // rail animates between 48px and 208px.
-// h-10 = 40px, matching --admin-chrome-h: rail cells and the bar's corner
+// h-10 = 40px, matching --sp-chrome-height: rail cells and the bar's corner
 // cell share one 48×40 grid unit (chrome-unification pass 2026-08-20). The
 // hit area is still the full rail width. Hover/active foreground is the
 // chrome text token, not text-white — one hovered foreground across the
 // chrome (see components/ui/adminChrome.ts doctrine).
 const ITEM =
   "relative flex h-10 w-full items-center overflow-hidden text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-const ITEM_IDLE = "text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]";
+const ITEM_IDLE = "text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]";
 // Active: #262626 surface + inset 3px #FF5715 left edge (contract #3) — the
 // vertical-chrome active marker (adminChrome.ts doctrine).
-const ITEM_ACTIVE = "bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)] shadow-[inset_3px_0_0_var(--admin-primary)]";
+const ITEM_ACTIVE = "bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)] shadow-[inset_3px_0_0_var(--admin-primary)]";
 const CELL = "flex w-12 shrink-0 items-center justify-center";
 const LABEL_BASE = "whitespace-nowrap text-[12.5px] transition-opacity duration-150";
 
@@ -246,13 +246,13 @@ export function AppRail({
         data-expanded={open}
         data-chrome="dark"
         className={[
-          // top-[var(--admin-chrome-h)], not top-0: the rail hangs BELOW the
+          // top-[var(--sp-chrome-height)], not top-0: the rail hangs BELOW the
           // full-width AppTopBar (top-bar-first chrome, 2026-08-14) — the two
           // never overlap, so their z-indexes are independent. Each item that
           // needs to clip its own label during the width transition carries
           // its own overflow-hidden (see ITEM), scoped to that item's box —
           // the rail box itself stays unclipped.
-          "fixed bottom-0 left-0 top-[var(--admin-chrome-h)] z-[80] flex flex-col border-r border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] transition-[width] duration-150 ease-out",
+          "sp-zone-chrome fixed bottom-0 left-0 top-[var(--sp-chrome-height)] z-[80] flex flex-col border-r border-[var(--sp-border-subtle)] bg-[var(--sp-background)] transition-[width] duration-150 ease-out",
           open ? "w-[208px] shadow-rail-overlay" : "w-12"
         ].join(" ")}
       >
@@ -304,8 +304,8 @@ export function AppRail({
             // same fill/weight as ITEM_ACTIVE, AI-blue edge.
             className={[
               ITEM,
-              "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-ai-chrome-text-hover)]",
-              askPlannerActive ? "bg-[var(--admin-chrome-hover)] shadow-[inset_3px_0_0_var(--admin-ai-chrome-border)]" : ""
+              "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--admin-ai-chrome-text-hover)]",
+              askPlannerActive ? "bg-[var(--sp-background-hover)] shadow-[inset_3px_0_0_var(--admin-ai-chrome-border)]" : ""
             ].join(" ")}
           >
             <AiCell open={open} active={askPlannerActive} />
@@ -320,7 +320,7 @@ export function AppRail({
             // onNavigate veto inside is a no-op here — sub-pages don't
             // pass it.
             onClick={event => handleNavClick(event, "/admin?ask-planner=open", "Ask Planner")}
-            className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-ai-chrome-text-hover)]"].join(" ")}
+            className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--admin-ai-chrome-text-hover)]"].join(" ")}
           >
             <AiLinkBody open={open} />
           </Link>

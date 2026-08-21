@@ -45,16 +45,16 @@ export default function AdminError({
   }, []);
 
   return (
-    <main className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] items-center justify-center bg-[var(--admin-bg)] p-6 text-[var(--admin-text-primary)]">
-      <section className="w-full max-w-md border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-elevation-2">
+    <main className="admin-theme flex min-h-[calc(100svh-var(--sp-chrome-height))] items-center justify-center bg-[var(--sp-background)] p-6 text-[var(--sp-text-primary)]">
+      <section className="w-full max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-6 shadow-elevation-2">
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="text-lg font-semibold text-[var(--admin-text-primary)] outline-none"
+          className="text-lg font-semibold text-[var(--sp-text-primary)] outline-none"
         >
           This admin page could not load
         </h1>
-        <p className="mt-2 text-sm leading-5 text-[var(--admin-text-secondary)]">
+        <p className="mt-2 text-sm leading-5 text-[var(--sp-text-secondary)]">
           The page failed before it finished loading. Nothing was published, and the draft map is exactly as the last
           successful save left it — but any edit you had open and unsaved is gone.
         </p>
@@ -65,14 +65,14 @@ export default function AdminError({
           </Button>
           <Link
             href="/"
-            className="flex min-h-11 w-full items-center justify-center rounded-[var(--sp-radius-xl)] border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-sm font-semibold text-[var(--admin-text-primary)] transition-colors hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] focus-visible:ring-offset-2"
+            className="flex min-h-11 w-full items-center justify-center rounded-[var(--sp-radius-xl)] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] text-sm font-semibold text-[var(--sp-text-primary)] transition-colors hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] focus-visible:ring-offset-2"
           >
             Back to the published map
           </Link>
         </div>
 
         {error.digest ? (
-          <p className="mt-6 font-mono text-[11px] leading-4 text-[var(--admin-text-muted)]">
+          <p className="mt-6 font-mono text-[11px] leading-4 text-[var(--sp-text-helper)]">
             Reference: {error.digest}
           </p>
         ) : null}

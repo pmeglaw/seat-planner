@@ -23,7 +23,9 @@
 
   /* Shell neutrals (IBM-gray family): #161616 chrome, #F7F6F2 workspace,
      #ffffff panels, #E7E1D8 hairlines. Text on light: #161616 (16.45:1),
-     #55504A (7.10:1 on #F7F6F2), muted #6E655A (4.57:1 on #F7F6F2 — AA). */
+     #55504A (7.10:1 on #F7F6F2), muted #6E655A (5.29:1 on #F7F6F2, 5.72:1 on
+     white — AA body text; re-measured 2026-08-09, the old 4.57:1 note here
+     UNDERstated it). */
   --sp-text-primary: #161616;
   --sp-text-secondary: #55504A;
   --sp-text-helper: #6E655A;
@@ -150,7 +152,7 @@
      Every full-height chrome item tracks this value instead of a literal: the
      active state is a 2px bottom border, and it only lands on the bar's bottom
      edge while item height == bar height. */
-  --admin-chrome-h: 40px;
+  --sp-chrome-height: 40px;
 
   /* Focus ring color (PR-A, 2026-08-21): solid #D23F0A replaces the raw brand
      rgb(255 87 21 / 0.9). #FF5715 measures 2.88:1 on #F4F4F4 and 2.59:1 on
@@ -271,38 +273,97 @@
   --admin-focus: #FF8A5C;
 }
 
-/* Admin + shell surfaces join the chrome on dark. The --admin-bg/surface/
-   border/text aliases of --sp-color-* follow Task 2's block automatically —
+/* ---------------------------------------------------------------------------
+   Chrome zone (PASS1 §2/§3.3): the permanently dark chrome — top bar, rail,
+   viewer chrome strip, SeatMap standalone fallback header, Ask Planner
+   drawer, plus the small dark-chrome islands (error/404 screens, loading
+   skeleton bars, monogram chips). One set of role NAMES; this zone
+   re-declares their VALUES — the same mechanism the dark theme uses, and
+   what retired the --admin-chrome-* vocabulary without touching a pixel.
+   Region roots carry the `sp-zone-chrome` class (usually next to
+   data-chrome="dark", which keeps owning the focus-token re-anchor).
+   Values are the former --admin-chrome-* literals, unchanged. Contrast on
+   #161616: text #F7F6F2 16.45:1, secondary #D8D0C5 9.9:1, helper #B8AEA2
+   6.43:1 (5.86:1 on the #1f1f1f layer), disabled #8E8276 4.6:1; status text
+   #ff8389 7.9:1, #42be65 7.3:1, #08bdba 7.2:1.
+   The zone deliberately does NOT touch --sp-focus / --sp-focus-offset-color:
+   focus re-anchoring stays with [data-chrome="dark"] (#435 ruling — the
+   error/404 screens are chrome-zoned but keep the light ring for their white
+   cards). A LIGHT surface nested inside the zone takes `sp-zone-base` below. */
+.sp-zone-chrome {
+  /* Bar one step deeper than the workspace in dark theme (override below). */
+  --sp-background: #161616;
+  /* Raised chrome (filter menu): one step lighter than the bar. */
+  --sp-layer-01: #1f1f1f;
+  /* Raised panel surfaces; intentionally shares the hover value — distinct
+     roles, one gray. */
+  --sp-layer-02: #262626;
+  --sp-background-hover: #262626;
+  --sp-layer-hover: #333333;
+  --sp-field: rgba(255, 255, 255, 0.08);
+  --sp-text-primary: #F7F6F2;
+  --sp-text-secondary: #D8D0C5;
+  --sp-text-helper: #B8AEA2;
+  --sp-text-disabled: #8E8276;
+  --sp-border-subtle: rgba(255, 255, 255, 0.10);
+  /* Strong chrome hairline: popover/menu outlines (account, kebab, floor) and
+     outlined controls (ThemeToggle) — one step brighter than the base border
+     so overlays read as edges against the elevated surface. Replaces the
+     scattered border-white/15 literals (chrome-unification pass 2026-08-20). */
+  --sp-border-strong: rgba(255, 255, 255, 0.15);
+  --sp-status-danger-strong: #fa4d56;
+  --sp-status-danger-text: #ff8389;
+  --sp-status-success-text: #42be65;
+  --sp-status-pending-text: #08bdba;
+}
+
+:root[data-theme="dark"] .sp-zone-chrome {
+  /* Top bar one step deeper than the dark workspace (was the dark
+     --sp-background override). */
+  --sp-background: #0a0a0a;
+}
+
+/* Base-theme re-entry (nested zone): a LIGHT surface that renders inside a
+   chrome-zone subtree — today the active-filter chips, which appear both
+   floating over the map AND inside the dark filter popover — re-pins the
+   base role values so the zone can't flip it. Values mirror :root exactly
+   (light and dark); applying the class outside a zone is a no-op. */
+.sp-zone-base {
+  --sp-background: #F7F6F2;
+  --sp-layer-01: #ffffff;
+  --sp-text-primary: #161616;
+  --sp-text-secondary: #55504A;
+  --sp-text-helper: #6E655A;
+  --sp-border-subtle: #E7E1D8;
+  --sp-border-strong: #D8D0C5;
+}
+
+:root[data-theme="dark"] .sp-zone-base {
+  --sp-background: #161616;
+  --sp-layer-01: #1f1f1f;
+  --sp-text-primary: #f4f4f4;
+  --sp-text-secondary: #c6c6c6;
+  --sp-text-helper: #9a9a9a;
+  --sp-border-subtle: rgba(255, 255, 255, 0.10);
+  --sp-border-strong: rgba(255, 255, 255, 0.18);
+}
+
+/* Admin + shell surfaces join the chrome on dark. Roles that alias the :root
+   tokens (surface/border/text) follow the :root dark block automatically —
    only the tokens with their own light literals are re-pointed here.
    Contrast on #161616 unless noted: #FF8A5C = 6.1:1, ink on #FF5715 = 5.71:1
    (unchanged), #42be65 = 7.3:1, #3ddbd9 ≈ 10:1, #ff8389 = 7.9:1. */
 :root[data-theme="dark"] .admin-theme,
 :root[data-theme="dark"] .shell-theme {
-  /* Chrome: top bar one step deeper than the workspace. */
-  --admin-chrome-bg: #0a0a0a;
-  --admin-text-inverse: #161616;
+  /* Chrome scrim base tracks the chrome zone's dark deepening. */
+  --sp-chrome-scrim: #0a0a0a;
+  --sp-text-inverse: #161616;
 
-  /* fixwave 2 (2026-08-19): text roles. These alias literal hex in the light
-     block, not var(--sp-color-*), so the :root dark swap never reached them —
-     the search-input bug (--admin-text-primary rendering dark-on-dark) was
-     this gap. Same values as the :root dark text ramp. */
-  --admin-text-primary: #f4f4f4;
-  --admin-text-secondary: #c6c6c6;
-  --admin-text-muted: #9a9a9a;
-  --admin-text-subtle: #9a9a9a;
-
-  /* fixwave 2: surfaces, field fill, and borders — same literal-hex gap as
-     text roles above. Border rgb pairs 255/255/255 so any /alpha call site
-     built on --admin-border-rgb lightens instead of staying a warm-light
-     triplet on a dark ground. */
-  --admin-surface-hover: #262626;
-  --admin-field-fill: #262626;
-  --admin-border: rgba(255, 255, 255, 0.10);
-  --admin-border-rgb: 255 255 255;
-  --admin-border-soft: rgba(255, 255, 255, 0.06); /* one step below --admin-border; the old rgb/0.6 call read 60% WHITE here */
-  --admin-border-strong: rgba(255, 255, 255, 0.18);
-  --admin-table-header-bg: #262626;
-  --admin-table-row-border: rgba(255, 255, 255, 0.10);
+  --sp-layer-hover: #262626;
+  --sp-field: #262626;
+  --sp-border-soft: rgba(255, 255, 255, 0.06); /* one step below --sp-border-subtle; the old rgb/0.6 call read 60% WHITE here */
+  --sp-table-header: #262626;
+  --sp-table-row-border: rgba(255, 255, 255, 0.10);
 
   /* fixwave 2: --admin-secondary family has zero current JSX consumers
      (grepped) but is a literal-hex gap like the groups above — filled in for
@@ -313,9 +374,9 @@
 
   /* Map mat (fixwave finding 1): sits one step below the #161616 canvas so
      the inverted raster reads as a lightbox floating on the dark chrome,
-     instead of the light block/globals.css#L470 workspace (#ECE8E0)
-     leaving a cream island behind the map. */
-  --admin-map-workspace: #101010;
+     instead of the light block's mat (#ECE8E0) leaving a cream island behind
+     the map. */
+  --sp-map-mat: #101010;
 
   /* Brand orange: hue unchanged, pairings swapped for a dark ground. */
   /* PR-A: dark focus follows the :root dark ring — #FF8A5C, ≥5.4:1 on every
@@ -328,7 +389,7 @@
 
   /* fixwave 2: draft-trail overlay (design_handoff_swap_trail pinned hex,
      not this file's interaction ladder — see the light block's note). Origin
-     ring re-pointed to --admin-text-muted's dark value so it keeps tracking
+     ring re-pointed to --sp-text-helper's dark value so it keeps tracking
      that pairing by design, same as light. */
   --admin-draft-trail: #FF8A5C;
   --admin-draft-trail-origin: #9a9a9a;
@@ -393,7 +454,7 @@
      ring/wash siblings stay untouched — already alpha- or rgba-based, so
      they already sit correctly on a dark ground; --admin-ai-border is the
      one solid literal left in that family and was checked (same #4589ff hue
-     is already used as --admin-chrome-info on the always-dark chrome without
+     is already used as --sp-chrome-info on the always-dark chrome without
      issue) rather than changed. */
   --admin-ai-text: #78a9ff;
   --admin-ai-marker-surface: #262626; /* AI pill/chip fill; #78a9ff text = 6.43:1 here */
@@ -523,77 +584,46 @@
    workspace — with admin-only chrome hidden for viewers in markup. */
 .admin-theme,
 .shell-theme {
-  /* Light workspace behind the map (shell spec: #F7F6F2). The light-surface
-     admin tokens alias the two :root neutrals (--sp-background /
-     --sp-layer-01) — exactly ONE canvas tone and ONE panel tone exist,
-     so a stray third background can't creep back in per-component. The one
-     sanctioned exception is --admin-map-workspace below: it is not a surface
+  /* Light workspace behind the map (shell spec: #F7F6F2). Surfaces/text/
+     borders read the :root role tokens directly since PASS1 §3.3 — exactly
+     ONE canvas tone (--sp-background) and ONE panel tone (--sp-layer-01)
+     exist, so a stray third background can't creep back in per-component.
+     The one sanctioned exception is --sp-map-mat below: it is not a surface
      tone but the band behind a full-bleed raster, and it is decorative only. */
-  --admin-bg: var(--sp-background);
 
   /* v12 layer-00 workspace: the band behind the full-bleed floor plan raster.
      Decorative only (no text sits directly on it), so it carries no contrast
      obligation — every label over the map rides a layer-01 white card. */
-  --admin-map-workspace: #ECE8E0;
+  --sp-map-mat: #ECE8E0;
 
-  /* Dark chrome (#161616): top bar + inspector read as one continuous dark
-     surface. Text #F7F6F2 (16.45:1), muted #B8AEA2 (6.43:1) — both AA. */
-  --admin-chrome-bg: #161616;
-  /* Raised chrome surfaces (filter menu): one step lighter than the bar;
-     muted #B8AEA2 stays AA on it (5.86:1). */
-  --admin-chrome-elevated: #1f1f1f;
-  --admin-chrome-text: #F7F6F2;
-  --admin-chrome-muted: #B8AEA2;
-  --admin-chrome-border: rgba(255, 255, 255, 0.10);
-  /* Strong chrome hairline: popover/menu outlines (account, kebab, floor) and
-     outlined controls (ThemeToggle) — one step brighter than the base border
-     so overlays read as edges against the elevated surface. Replaces the
-     scattered border-white/15 literals (chrome-unification pass 2026-08-20). */
-  --admin-chrome-border-strong: rgba(255, 255, 255, 0.15);
-  --admin-chrome-hover: #262626;
-  --admin-chrome-field: rgba(255, 255, 255, 0.08);
-
-  --admin-rail-bg: var(--admin-chrome-bg);
-  --admin-rail-surface: rgba(255, 255, 255, 0.05);
-  --admin-rail-border: var(--admin-chrome-border);
-  --admin-rail-muted: var(--admin-chrome-muted);
+  /* Chrome extras that stay chrome-unique (PASS1 §3.3): the rail wash and the
+     scrim base. --sp-chrome-scrim mirrors the chrome zone's background
+     (#161616, #0a0a0a in dark) for the fixed-overlay dialog scrims that
+     derive a 45% wash from it — they sit OUTSIDE any chrome-zone subtree, so
+     they can't read the zone's --sp-background. */
+  --sp-chrome-wash: rgba(255, 255, 255, 0.05);
+  --sp-chrome-scrim: #161616;
   /* Expanded-rail overlay shadow — the rail's entry in the elevation ladder
      (directional: the rail casts rightward over the page). Named Tailwind
      utility `shadow-rail-overlay`; arbitrary shadow-[var(--…)] is silently
      dropped by Tailwind v3 (see tailwind.config.ts boxShadow comment). */
-  --admin-rail-overlay-shadow: 8px 0 24px rgba(0, 0, 0, 0.35);
-  --admin-surface: var(--sp-layer-01);
-  --admin-surface-hover: #FBFAF8;
+  --sp-elevation-rail: 8px 0 24px rgba(0, 0, 0, 0.35);
+  --sp-layer-hover: #FBFAF8;
   /* v12 filled field (Carbon Field-01). Neutral rather than the warm
-     surface-alt so the input reads as a well, not as a tinted panel. The rule
+     canvas so the input reads as a well, not as a tinted panel. The rule
      measures 3.02:1 on the fill — clearing WCAG 1.4.11's 3:1 for an essential
      UI boundary, which is the whole reason this pair is specified together. */
-  --admin-field-fill: #F4F4F4;
-  --admin-field-rule: #8d8d8d;
-  --admin-surface-alt: var(--sp-background);
-  --admin-surface-muted: var(--sp-background);
-  --admin-border: #E7E1D8;
-  --admin-border-rgb: 231 225 216;
-  --admin-border-soft: rgba(231, 225, 216, 0.6);
-  --admin-border-strong: #D8D0C5;
-  /* v12 data-table pair: a warmer header fill than surface-alt (#F7F6F2) so the
+  --sp-field: #F4F4F4;
+  --sp-field-border: #8d8d8d;
+  --sp-border-soft: rgba(231, 225, 216, 0.6);
+  /* v12 data-table pair: a warmer header fill than the canvas (#F7F6F2) so the
      column head reads as chrome, and a hairline one step lighter than the card
      border so 40px rows stripe without boxing every cell. Neither carries text
      — #161616 on #F0EDE7 is ~15.6:1. */
-  --admin-table-header-bg: #F0EDE7;
-  --admin-table-row-border: #F0ECE5;
+  --sp-table-header: #F0EDE7;
+  --sp-table-row-border: #F0ECE5;
 
-  --admin-text-primary: #161616;
-  --admin-text-secondary: #55504A;
-  /* Muted 5.29:1 on #F7F6F2, 5.72:1 on white — AA body text. Same hex, so the
-     same pair covers --admin-text-subtle below. Re-measured 2026-08-09: this
-     note previously read 4.57:1 / 5.00:1, which was never right for #6E655A
-     (introduced at this value in b6eea1e, unchanged since). Both figures were
-     UNDERstated, so nothing was failing — but a wrong number here is worse than
-     no number, since these notes get trusted instead of recomputed. */
-  --admin-text-muted: #6E655A;
-  --admin-text-subtle: #6E655A;
-  --admin-text-inverse: #F7F6F2;
+  --sp-text-inverse: #F7F6F2;
 
   /* Brand ladder. accent = identity + selection (never behind white text,
      3.17:1); cta = deepened orange for white-label fills (4.71:1 vs white,
@@ -627,7 +657,7 @@
      instruction assumed the app accent was already this copper; the pinned
      hex wins, sourced here so JSX stays hex-free). Decorative aria-hidden
      SVG over the plan — no text-contrast floor applies. The origin ring
-     matches --admin-text-muted's #6E655A by design but stays independent, so
+     matches --sp-text-helper's #6E655A by design but stays independent, so
      a text retune can't silently move the ring. */
   --admin-draft-trail: #B85207;
   --admin-draft-trail-origin: #6E655A;
@@ -646,27 +676,11 @@
   --admin-status-neutral: #8E8276;
   --admin-status-warn-rgb: 0 157 154;
 
-  /* Dark-chrome raised surfaces and state/text ladder (measured on #161616:
-     danger text #ff8389 ≈ 7.9:1, success text #42be65 ≈ 7.3:1, warn text
-     #08bdba ≈ 7.2:1, info text #78a9ff ≈ 6.6:1, soft #D8D0C5 ≈ 9.9:1,
-     disabled #8E8276 ≈ 4.6:1).
-     Promoted 2026-07-19 from repeated component-level hex (SeatInspector,
-     AskPlannerDrawer) so the dark-panel palette lives beside the other
-     chrome tokens. Raised (#262626) intentionally shares the hover value —
-     distinct roles, one gray. */
-  --admin-chrome-raised: #262626;
-  --admin-chrome-raised-hover: #333333;
-  --admin-chrome-text-soft: #D8D0C5;
-  --admin-chrome-disabled: #8E8276;
-  --admin-chrome-danger: #fa4d56;
-  --admin-chrome-danger-rgb: 250 77 86;
-  --admin-chrome-danger-text: #ff8389;
-  --admin-chrome-danger-text-rgb: 255 131 137;
-  --admin-chrome-success-text: #42be65;
-  --admin-chrome-warn-text: #08bdba;
-  --admin-chrome-info: #4589ff;
-  --admin-chrome-info-rgb: 69 137 255;
-  --admin-chrome-info-text: #78a9ff;
+  /* Chrome keyboard-hint blue (near-dup of the AI hexes, kept separate —
+     roles differ: "hint", not "AI presence"; PASS1 ⚑11). The rest of the old
+     dark-panel chrome ladder lives in the .sp-zone-chrome block below. */
+  --sp-chrome-info: #4589ff;
+  --sp-chrome-info-text: #78a9ff;
 
   /* Carbon-for-AI family (v12 handoff, 2026-07-31). Reserved EXCLUSIVELY for
      AI presence — Ask Planner chip/drawer and the planner-highlight seat
@@ -744,9 +758,9 @@
   --admin-state-danger-bg: var(--admin-danger-soft);
   --admin-state-danger-border: rgba(162, 25, 31, 0.34);
   --admin-state-danger-text: var(--admin-danger);
-  --admin-state-neutral-bg: var(--admin-surface-alt);
-  --admin-state-neutral-border: var(--admin-border);
-  --admin-state-neutral-text: var(--admin-text-secondary);
+  --admin-state-neutral-bg: var(--sp-background);
+  --admin-state-neutral-border: var(--sp-border-subtle);
+  --admin-state-neutral-text: var(--sp-text-secondary);
 
   --admin-publish-ready-bg: var(--admin-primary-soft);
   --admin-publish-ready-border: var(--admin-primary-border);
@@ -900,12 +914,12 @@
      (values unchanged; see the chrome ladder comment above for the pattern).
      heading #E7E1D8 shares stone's value but is a TEXT role on #161616
      (12.9:1), so it gets its own name rather than aliasing a border token. */
-  --admin-chrome-heading: #E7E1D8;
-  --admin-chrome-value-text: #eeeeee;
-  --admin-chrome-action-text: #F4F4F4;
-  --admin-chrome-label: #8E8276;
-  --admin-chrome-commit-bg: #1c1c1c;
-  --admin-chrome-danger-raised: #2b1a1b;
+  --sp-chrome-heading: #E7E1D8;
+  --sp-chrome-value: #eeeeee;
+  --sp-chrome-action: #F4F4F4;
+  --sp-chrome-label: #8E8276;
+  --sp-chrome-commit: #1c1c1c;
+  --sp-chrome-danger-raised: #2b1a1b;
   --admin-avatar-gradient: linear-gradient(135deg, var(--admin-primary), #8a3a1a);
 
   /* Elevation flattened to the shell language: hairline borders carry most of
@@ -968,7 +982,7 @@ html {
      browser-driven scrolls (focus-into-view, ⌘K) align the target flush
      under the opaque bar and the focused control is fully obscured.
      Reads the shared token so this can never drift from the bar it clears. */
-  scroll-padding-top: var(--admin-chrome-h);
+  scroll-padding-top: var(--sp-chrome-height);
 }
 
 body {
@@ -1071,7 +1085,7 @@ input[type="search"]::-webkit-search-cancel-button {
    in both themes.
    Contrast (computed 2026-08-15, WCAG relative-luminance formula; earlier
    hand-estimated figures here UNDERstated several pairs — see the
-   --admin-text-muted note above for why a wrong number is worse than none):
+   --sp-text-helper note above for why a wrong number is worse than none):
    light — secondary #525252 on #ffffff 7.81:1 · tertiary #6f6f6f 5.02:1 on
    #ffffff, 4.57:1 on the #f4f4f4 field · link #B85207 on #ffffff 4.94:1 ·
    white on #B85207 4.94:1 (hover #9F4605 6.26:1) · field rule #8d8d8d on

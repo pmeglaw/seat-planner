@@ -51,7 +51,7 @@ export const metadata: Metadata = {
   description: "Internal interactive office seating map"
 };
 
-// Matches the dark top chrome (--admin-chrome-bg) so mobile browser UI blends
+// Matches the dark top chrome (the chrome zone's --sp-background) so mobile browser UI blends
 // with the bar it sits against (#200).
 export const viewport: Viewport = {
   themeColor: "#161616"

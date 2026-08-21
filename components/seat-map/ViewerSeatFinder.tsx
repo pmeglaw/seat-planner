@@ -962,7 +962,7 @@ export function ViewerSeatFinder({
     // plan is layer-00: it runs edge to edge and the workspace band shows
     // through around it, so there is no card edge left to draw and everything
     // that reads over the map floats as a layer-01 white card instead.
-    "relative mx-auto w-full max-w-full overflow-auto overscroll-contain bg-[var(--admin-map-workspace)]",
+    "relative mx-auto w-full max-w-full overflow-auto overscroll-contain bg-[var(--sp-map-mat)]",
     // Below lg the viewport takes the whole screen under the 36px bar, rather
     // than the old content-driven min-h/82svh pair. That pair sized the box to
     // the plan (472px at the mobile frame width), which was fine while a
@@ -1025,28 +1025,28 @@ export function ViewerSeatFinder({
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
        which captures the sticky header so it never pins to the viewport. */
-    <div className="shell-theme flex min-h-[100svh] flex-col overflow-x-clip bg-[var(--admin-bg)] text-[var(--admin-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
+    <div className="shell-theme flex min-h-[100svh] flex-col overflow-x-clip bg-[var(--sp-background)] text-[var(--sp-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
       <a
         href="#viewer-seat-map"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"
+        className="sp-zone-chrome sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--sp-background)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--sp-text-primary)] focus:outline-none"
       >
         Skip to seat map
       </a>
       {/* z-50 matches the admin bar: sticky activates the z-index, which must
           outrank z-40 workspace overlays that follow in DOM order. */}
-      <header className="sticky top-0 z-50 flex h-9 shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]" data-chrome="dark">
+      <header className="sp-zone-chrome sticky top-0 z-50 flex h-9 shrink-0 items-center border-b border-[var(--sp-border-subtle)] bg-[var(--sp-background)] pl-3 text-[var(--sp-text-primary)]" data-chrome="dark">
         <div className="flex min-w-0 shrink-0 items-center gap-2">
           <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
             <Image src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
           </span>
           {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
           <div aria-hidden="true" translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
-            Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
+            Megeredchian Law <span className="font-normal text-[var(--sp-text-helper)]">· Seat Planner</span>
           </div>
         </div>
 
         {/* Divider tracks the bar (was 22px in a 40px bar — same 0.55 ratio). */}
-        <span aria-hidden="true" className="mx-2.5 hidden h-[26px] w-px shrink-0 bg-[var(--admin-chrome-border)] lg:block" />
+        <span aria-hidden="true" className="mx-2.5 hidden h-[26px] w-px shrink-0 bg-[var(--sp-border-subtle)] lg:block" />
 
         {/* Filter and Search are two DISTINCT controls (was one shared 26px box
             capped at 340px for BOTH). Finding your own seat or looking up a
@@ -1054,7 +1054,7 @@ export function ViewerSeatFinder({
             field and the width; Filter keeps the pairing by sitting immediately
             to its LEFT with the dropdown anchored to itself. Both Carbon `sm` =
             Carbon `md` = 40px inside the 48px bar (owner, 2026-07-22). */}
-        <div ref={filterRootRef} className="relative mr-1.5 flex h-7 shrink-0 items-stretch border border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-field)] lg:mr-2">
+        <div ref={filterRootRef} className="relative mr-1.5 flex h-7 shrink-0 items-stretch border border-[var(--sp-border-subtle)] bg-[var(--sp-field)] lg:mr-2">
           <button
             ref={filterTriggerRef}
             type="button"
@@ -1066,8 +1066,8 @@ export function ViewerSeatFinder({
             className={[
               "flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
               structuredFilterCount > 0 || filterOpen
-                ? "border-b-[var(--admin-primary)] bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)]"
-                : "border-b-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]"
+                ? "border-b-[var(--admin-primary)] bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)]"
+                : "border-b-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]"
             ].join(" ")}
           >
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
@@ -1077,7 +1077,7 @@ export function ViewerSeatFinder({
             {structuredFilterCount > 0 && (
               <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{structuredFilterCount}</span>
             )}
-            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--admin-chrome-muted)]">
+            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--sp-text-helper)]">
               <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -1118,17 +1118,17 @@ export function ViewerSeatFinder({
           role="search"
           aria-label="Viewer search"
           className={cx(
-            "h-7 min-w-0 flex-1 border bg-[var(--admin-chrome-field)] lg:max-w-[420px]",
+            "h-7 min-w-0 flex-1 border bg-[var(--sp-field)] lg:max-w-[420px]",
             // Open field: the 2px inset accent (both chrome themes) is what
             // ties the palette below to the field it belongs to.
             paletteOpen
               ? "border-transparent shadow-[inset_0_0_0_2px_var(--admin-primary)]"
-              : "border-[var(--admin-chrome-border)]"
+              : "border-[var(--sp-border-subtle)]"
           )}
         >
           <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
             <span className="sr-only">Search office seating</span>
-            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-chrome-muted)]">
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--sp-text-helper)]">
               <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
               <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
             </svg>
@@ -1218,14 +1218,14 @@ export function ViewerSeatFinder({
               // only tier that scans this surface signed in).
               aria-controls={paletteOpen ? "viewer-find-palette" : undefined}
               type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
-              className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--admin-chrome-text)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--admin-chrome-muted)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
+              className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
             />
             {search.trim() ? (
               <button
                 type="button"
                 aria-label="Clear viewer search"
                 title="Clear search"
-                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--admin-chrome-muted)] transition hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
                 onClick={clearSearch}
               >
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -1233,7 +1233,7 @@ export function ViewerSeatFinder({
             ) : paletteOpen || searchShortcutHint ? (
               // Open, the field advertises the way OUT rather than the way in —
               // the shortcut that got you here is spent.
-              <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--admin-chrome-border)] px-1 py-0.5 text-[10px] font-semibold text-[var(--admin-chrome-muted)]">{paletteOpen ? "Esc" : searchShortcutHint}</kbd>
+              <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--sp-border-subtle)] px-1 py-0.5 text-[10px] font-semibold text-[var(--sp-text-helper)]">{paletteOpen ? "Esc" : searchShortcutHint}</kbd>
             ) : null}
           </label>
         </div>
@@ -1252,7 +1252,7 @@ export function ViewerSeatFinder({
               prefetch={false}
               aria-label="Open reception directory"
               title="Reception — front-desk call routing"
-              className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]")}
+              className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]")}
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 11V9.5a6 6 0 0 1 12 0V11" />
@@ -1284,7 +1284,7 @@ export function ViewerSeatFinder({
                 prefetch={false}
                 aria-label="Open admin surface"
                 title="Admin — draft editing surface"
-                className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--admin-chrome-muted)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)]")}
+                className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]")}
               >
                 <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="9" cy="7" r="3.1" />
@@ -1328,13 +1328,13 @@ export function ViewerSeatFinder({
               <div className="pointer-events-auto">
                 <FloorSelector floor={floor} onChange={setFloor} />
               </div>
-              <span className="pointer-events-auto border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 text-[12px] text-[var(--sp-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
+              <span className="pointer-events-auto border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12px] text-[var(--sp-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
               {/* Viewers don't need the layer model ("Published" / "Read-only"
                   badges) — a last-publish date answers the question they have. */}
               {lastPublishedLabel && floor === "3" && (
                 <span
                   title={`The map everyone sees — last updated ${lastPublishedLabel}`}
-                  className="pointer-events-auto rounded-full bg-[var(--admin-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--admin-text-secondary)] shadow-elevation-3 ring-1 ring-[var(--admin-border)]"
+                  className="pointer-events-auto rounded-full bg-[var(--sp-layer-01)] px-2.5 py-1 text-[11px] font-semibold text-[var(--sp-text-secondary)] shadow-elevation-3 ring-1 ring-[var(--sp-border-subtle)]"
                 >
                   Updated {lastPublishedLabel}
                 </span>
@@ -1483,7 +1483,7 @@ export function ViewerSeatFinder({
                 controls={
                   <>
                     <NamesVisibilityToggle pressed={showNames} onToggle={() => setShowNames(current => !current)} />
-                    <span aria-hidden="true" className="h-5 w-px shrink-0 bg-[var(--admin-border)]" />
+                    <span aria-hidden="true" className="h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
                     <MapZoomControl
                       orientation="horizontal"
                       label={mapZoomLabel}

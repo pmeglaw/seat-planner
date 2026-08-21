@@ -299,7 +299,7 @@ export function AdminManagementPanel({
     { label: "Unassigned", value: unassignedEmployees },
     { label: "Active zones", value: zoneNames.length }
   ];
-  const fieldClassName = "w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]";
+  const fieldClassName = "w-full border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]";
 
   // Virtualized directory (Figma page 10, Scalability): only the employee rows
   // near the viewport render; padding preserves the page scroll height. Geometry
@@ -761,11 +761,11 @@ export function AdminManagementPanel({
   }
 
   return (
-    <main className="admin-theme flex-1 bg-[var(--admin-bg)] px-4 pb-12 pt-6 text-[var(--admin-text-primary)] sm:px-8">
+    <main className="admin-theme flex-1 bg-[var(--sp-background)] px-4 pb-12 pt-6 text-[var(--sp-text-primary)] sm:px-8">
       <div className="mx-auto max-w-[1240px] space-y-4">
         <header className="pb-1">
-          <h1 className="text-[22px] font-semibold leading-tight text-[var(--admin-text-primary)]">Management</h1>
-          <p className="mt-1 max-w-2xl text-[13px] leading-5 text-[var(--admin-text-muted)]">
+          <h1 className="text-[22px] font-semibold leading-tight text-[var(--sp-text-primary)]">Management</h1>
+          <p className="mt-1 max-w-2xl text-[13px] leading-5 text-[var(--sp-text-helper)]">
             People, departments, zones, and publish history.
           </p>
         </header>
@@ -782,11 +782,11 @@ export function AdminManagementPanel({
 
         {/* Hairline tile grid: the 1px gaps over a stone background draw the
             rules, so the tiles themselves stay borderless. */}
-        <section className="grid gap-px border border-[var(--admin-border)] bg-[var(--admin-border)] [grid-template-columns:repeat(auto-fit,minmax(160px,1fr))]">
+        <section className="grid gap-px border border-[var(--sp-border-subtle)] bg-[var(--sp-border-subtle)] [grid-template-columns:repeat(auto-fit,minmax(160px,1fr))]">
           {managementSummaryCards.map(card => (
-            <div key={card.label} className="relative bg-[var(--admin-surface)] p-4">
-              <div className="text-2xl font-semibold leading-none text-[var(--admin-text-primary)]">{card.value.toLocaleString()}</div>
-              <div className="mt-2 text-xs text-[var(--admin-text-muted)]">{card.label}</div>
+            <div key={card.label} className="relative bg-[var(--sp-layer-01)] p-4">
+              <div className="text-2xl font-semibold leading-none text-[var(--sp-text-primary)]">{card.value.toLocaleString()}</div>
+              <div className="mt-2 text-xs text-[var(--sp-text-helper)]">{card.label}</div>
               <TileArrowIcon />
             </div>
           ))}
@@ -802,24 +802,24 @@ export function AdminManagementPanel({
                 className={[
                   "px-4 py-[9px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
                   activeTab === tab.id
-                    ? "border border-b-2 border-[var(--admin-border)] border-b-[var(--admin-primary-cta)] bg-[var(--admin-surface)] font-semibold text-[var(--admin-text-primary)]"
-                    : "border-b border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)]"
+                    ? "border border-b-2 border-[var(--sp-border-subtle)] border-b-[var(--admin-primary-cta)] bg-[var(--sp-layer-01)] font-semibold text-[var(--sp-text-primary)]"
+                    : "border-b border-[var(--sp-border-subtle)] text-[var(--sp-text-secondary)] hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)]"
                 ].join(" ")}
                 aria-current={activeTab === tab.id ? "page" : undefined}
               >
                 {tab.label}
               </button>
             ))}
-            <span aria-hidden="true" className="flex-1 border-b border-[var(--admin-border)]" />
+            <span aria-hidden="true" className="flex-1 border-b border-[var(--sp-border-subtle)]" />
           </nav>
 
         {activeTab === "employees" && (
-          <section className="border border-t-0 border-[var(--admin-border)] bg-[var(--admin-surface)]">
+          <section className="border border-t-0 border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)]">
             <h2 className="sr-only">Employees</h2>
             {/* 44px toolbar: the search is bare inline chrome (its own border
                 would fight the card edge it sits inside) and the CTA fills the
                 strip's full height. */}
-            <div className="flex h-11 items-stretch border-b border-[var(--admin-border)]">
+            <div className="flex h-11 items-stretch border-b border-[var(--sp-border-subtle)]">
               <label className="relative flex min-w-0 flex-1 items-center">
                 <span className="sr-only">Search employees</span>
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-4 h-3.5 w-3.5 text-[var(--admin-status-neutral)]">
@@ -845,15 +845,15 @@ export function AdminManagementPanel({
               </button>
             </div>
               {sortedEmployees.length === 0 ? (
-                <div className="p-6 text-sm text-[var(--admin-text-secondary)]">
-                  <div className="font-semibold text-[var(--admin-text-primary)]">No employees match this search</div>
+                <div className="p-6 text-sm text-[var(--sp-text-secondary)]">
+                  <div className="font-semibold text-[var(--sp-text-primary)]">No employees match this search</div>
                   <p className="mt-1">Try a different name, department, position, or seat label.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[760px] border-collapse text-left text-[13px]">
                     <thead>
-                      <tr className="border-b border-[var(--admin-border)] bg-[var(--admin-table-header-bg)] text-xs text-[var(--admin-text-secondary)]">
+                      <tr className="border-b border-[var(--sp-border-subtle)] bg-[var(--sp-table-header)] text-xs text-[var(--sp-text-secondary)]">
                         {employeeColumns.map(column => {
                           const isSorted = sortKey === column.key;
                           return (
@@ -866,10 +866,10 @@ export function AdminManagementPanel({
                               <button
                                 type="button"
                                 onClick={() => toggleSort(column.key)}
-                                className="inline-flex items-center gap-1 outline-none hover:text-[var(--admin-text-primary)] focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+                                className="inline-flex items-center gap-1 outline-none hover:text-[var(--sp-text-primary)] focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
                               >
                                 <span>{column.label}</span>
-                                <span aria-hidden="true" className={isSorted ? "text-[var(--admin-text-primary)]" : "text-transparent"}>
+                                <span aria-hidden="true" className={isSorted ? "text-[var(--sp-text-primary)]" : "text-transparent"}>
                                   <svg viewBox="0 0 20 20" fill="none" className={["h-3 w-3 transition-transform", isSorted && sortDirection === "desc" ? "rotate-180" : ""].join(" ")}>
                                     <path d="m5.5 12 4.5-4.5L14.5 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                   </svg>
@@ -900,7 +900,7 @@ export function AdminManagementPanel({
                         const displayName = formatDisplayName(employee.full_name);
                         // Background lives on the cells (not the <tr>) so it paints
                         // reliably under border-collapse in every browser.
-                        const cellClass = ["px-3 py-2 align-middle transition-colors", isSelected ? "bg-[var(--admin-primary-soft)]" : "group-hover/row:bg-[var(--admin-surface-alt)]"].join(" ");
+                        const cellClass = ["px-3 py-2 align-middle transition-colors", isSelected ? "bg-[var(--admin-primary-soft)]" : "group-hover/row:bg-[var(--sp-background)]"].join(" ");
                         return (
                           <tr
                             key={employee.id}
@@ -917,7 +917,7 @@ export function AdminManagementPanel({
                                offering nothing the other two don't. Keyboard
                                users reach the map through the name link and the
                                form through the kebab (v12 slice 9). */
-                            className="group/row cursor-pointer border-b border-[var(--admin-table-row-border)] transition last:border-b-0"
+                            className="group/row cursor-pointer border-b border-[var(--sp-table-row-border)] transition last:border-b-0"
                           >
                             <td className={[cellClass, "pl-4"].join(" ")}>
                               <div className="flex items-center gap-2.5">
@@ -931,23 +931,23 @@ export function AdminManagementPanel({
                                     // prefetch off — see AppRail's note.
                                     prefetch={false}
                                     onClick={event => event.stopPropagation()}
-                                    className="truncate font-semibold text-[var(--admin-text-primary)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+                                    className="truncate font-semibold text-[var(--sp-text-primary)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
                                   >
                                     {displayName}
                                   </Link>
                                 ) : (
-                                  <span className="truncate font-semibold text-[var(--admin-text-primary)]">{displayName}</span>
+                                  <span className="truncate font-semibold text-[var(--sp-text-primary)]">{displayName}</span>
                                 )}
                               </div>
                             </td>
-                            <td className={[cellClass, "text-[12.5px] text-[var(--admin-text-secondary)]"].join(" ")}>{employee.department || "—"}</td>
-                            <td className={[cellClass, "text-[12.5px] text-[var(--admin-text-secondary)]"].join(" ")}>{employee.position || "—"}</td>
-                            <td className={[cellClass, "text-[12.5px] text-[var(--admin-text-secondary)]"].join(" ")}>{employee.phone_extension || "—"}</td>
-                            <td className={[cellClass, "font-mono text-xs font-semibold text-[var(--admin-text-primary)]"].join(" ")}>{seatLabel || "—"}</td>
+                            <td className={[cellClass, "text-[12.5px] text-[var(--sp-text-secondary)]"].join(" ")}>{employee.department || "—"}</td>
+                            <td className={[cellClass, "text-[12.5px] text-[var(--sp-text-secondary)]"].join(" ")}>{employee.position || "—"}</td>
+                            <td className={[cellClass, "text-[12.5px] text-[var(--sp-text-secondary)]"].join(" ")}>{employee.phone_extension || "—"}</td>
+                            <td className={[cellClass, "font-mono text-xs font-semibold text-[var(--sp-text-primary)]"].join(" ")}>{seatLabel || "—"}</td>
                             <td className={cellClass}>
                               {/* Assigned mirrors the map legend's green chip — the
                                   orange-soft family reads as a warning here. */}
-                              <span className={["inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium", isAssigned ? "border-[var(--sp-status-success-border)] bg-[var(--admin-success-soft)] text-[var(--sp-status-success-text)]" : "border-[var(--admin-border)] bg-[var(--admin-surface-alt)] text-[var(--admin-text-secondary)]"].join(" ")}>
+                              <span className={["inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium", isAssigned ? "border-[var(--sp-status-success-border)] bg-[var(--admin-success-soft)] text-[var(--sp-status-success-text)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)]"].join(" ")}>
                                 <span aria-hidden="true" className={["h-1.5 w-1.5 shrink-0 rounded-full", isAssigned ? "bg-[var(--admin-success)]" : "bg-[var(--admin-status-neutral)]"].join(" ")} />
                                 {isAssigned ? "Assigned" : "Unassigned"}
                               </span>
@@ -960,7 +960,7 @@ export function AdminManagementPanel({
                                   editEmployee(employee);
                                 }}
                                 aria-label={`Edit ${displayName}`}
-                                className="inline-flex h-7 w-7 items-center justify-center text-[var(--admin-status-neutral)] transition-colors hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+                                className="inline-flex h-7 w-7 items-center justify-center text-[var(--admin-status-neutral)] transition-colors hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
                               >
                                 <span aria-hidden="true" className="text-base leading-none">⋮</span>
                               </button>
@@ -972,7 +972,7 @@ export function AdminManagementPanel({
                   </table>
                 </div>
               )}
-            <p aria-live="polite" className="border-t border-[var(--admin-border)] px-4 py-[9px] text-xs text-[var(--admin-text-muted)]">
+            <p aria-live="polite" className="border-t border-[var(--sp-border-subtle)] px-4 py-[9px] text-xs text-[var(--sp-text-helper)]">
               {pluralize(sortedEmployees.length, "employee")} of {activeEmployees.length.toLocaleString()} shown — click a name to show them on the map
             </p>
 
@@ -980,28 +980,28 @@ export function AdminManagementPanel({
         )}
 
         {activeTab === "departments" && (
-          <section className="border border-t-0 border-[var(--admin-border)] bg-[var(--admin-surface)] p-4">
+          <section className="border border-t-0 border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Departments</h2>
-                <p className="text-sm text-[var(--admin-text-secondary)]">Employee departments are separate from physical seating zones.</p>
+                <h2 className="text-lg font-semibold text-[var(--sp-text-primary)]">Departments</h2>
+                <p className="text-sm text-[var(--sp-text-secondary)]">Employee departments are separate from physical seating zones.</p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <input value={newDepartmentName} onChange={event => setNewDepartmentName(event.target.value)} placeholder="New department" className="min-w-0 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
+                <input value={newDepartmentName} onChange={event => setNewDepartmentName(event.target.value)} placeholder="New department" className="min-w-0 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
                 <Button type="button" variant="primary" onClick={createDepartment} disabled={pending || !newDepartmentName.trim()}>Add</Button>
               </div>
             </div>
-            <div className="mt-4 divide-y divide-[var(--admin-border-subtle,var(--admin-border))] border border-[var(--admin-border)]">
+            <div className="mt-4 divide-y divide-[var(--sp-border-subtle)] border border-[var(--sp-border-subtle)]">
               {departmentRoster.map(row => (
                 <div key={row.key} className="group flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[var(--admin-text-primary)]">{row.name}</span>
+                      <span className="text-sm font-semibold text-[var(--sp-text-primary)]">{row.name}</span>
                       {!row.managed && (
                         <span className="rounded-full bg-[var(--admin-state-dirty-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--admin-state-dirty-text)]">Not in managed list</span>
                       )}
                     </div>
-                    <div className="text-xs text-[var(--admin-text-secondary)]">{row.employeeCount.toLocaleString()} employee{row.employeeCount === 1 ? "" : "s"}</div>
+                    <div className="text-xs text-[var(--sp-text-secondary)]">{row.employeeCount.toLocaleString()} employee{row.employeeCount === 1 ? "" : "s"}</div>
                   </div>
                   {editingDepartment === row.name ? (
                     <div className="flex flex-1 flex-col gap-2 md:max-w-md md:flex-row">
@@ -1020,7 +1020,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteDepartment(row.name)}
                         disabled={pending}
                         aria-label={`Delete ${row.name}`}
-                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--admin-text-muted)] opacity-0 outline-none transition hover:bg-[var(--admin-state-error-bg)] hover:text-[var(--admin-state-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--admin-error)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition hover:bg-[var(--admin-state-error-bg)] hover:text-[var(--admin-state-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--admin-error)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -1029,8 +1029,8 @@ export function AdminManagementPanel({
                 </div>
               ))}
               {departmentNames.length === 0 && (
-                <div className="p-5 text-sm text-[var(--admin-text-secondary)]">
-                  <div className="font-semibold text-[var(--admin-text-primary)]">No departments yet</div>
+                <div className="p-5 text-sm text-[var(--sp-text-secondary)]">
+                  <div className="font-semibold text-[var(--sp-text-primary)]">No departments yet</div>
                   <p className="mt-1">Add a department to keep employee records easier to scan.</p>
                 </div>
               )}
@@ -1039,23 +1039,23 @@ export function AdminManagementPanel({
         )}
 
         {activeTab === "zones" && (
-          <section className="border border-t-0 border-[var(--admin-border)] bg-[var(--admin-surface)] p-4">
+          <section className="border border-t-0 border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Zones</h2>
-                <p className="text-sm text-[var(--admin-text-secondary)]">Zones are physical map areas used for filtering and custom-seat label prefixes.</p>
+                <h2 className="text-lg font-semibold text-[var(--sp-text-primary)]">Zones</h2>
+                <p className="text-sm text-[var(--sp-text-secondary)]">Zones are physical map areas used for filtering and custom-seat label prefixes.</p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <input value={newZoneName} onChange={event => setNewZoneName(event.target.value)} placeholder="New zone" className="min-w-0 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
+                <input value={newZoneName} onChange={event => setNewZoneName(event.target.value)} placeholder="New zone" className="min-w-0 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
                 <Button type="button" variant="primary" onClick={createZone} disabled={pending || !newZoneName.trim()}>Add</Button>
               </div>
             </div>
-            <div className="mt-4 divide-y divide-[var(--admin-border-subtle,var(--admin-border))] border border-[var(--admin-border)]">
+            <div className="mt-4 divide-y divide-[var(--sp-border-subtle)] border border-[var(--sp-border-subtle)]">
               {zoneNames.map(name => (
                 <div key={name} className="group flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="text-sm font-semibold text-[var(--admin-text-primary)]">{name}</div>
-                    <div className="text-xs text-[var(--admin-text-secondary)]">{(zoneCounts.get(name) ?? 0).toLocaleString()} draft seat{(zoneCounts.get(name) ?? 0) === 1 ? "" : "s"}</div>
+                    <div className="text-sm font-semibold text-[var(--sp-text-primary)]">{name}</div>
+                    <div className="text-xs text-[var(--sp-text-secondary)]">{(zoneCounts.get(name) ?? 0).toLocaleString()} draft seat{(zoneCounts.get(name) ?? 0) === 1 ? "" : "s"}</div>
                   </div>
                   {editingZone === name ? (
                     <div className="flex flex-1 flex-col gap-2 md:max-w-md md:flex-row">
@@ -1071,7 +1071,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteZone(name)}
                         disabled={pending}
                         aria-label={`Delete ${name}`}
-                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--admin-text-muted)] opacity-0 outline-none transition hover:bg-[var(--admin-state-error-bg)] hover:text-[var(--admin-state-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--admin-error)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition hover:bg-[var(--admin-state-error-bg)] hover:text-[var(--admin-state-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--admin-error)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -1080,8 +1080,8 @@ export function AdminManagementPanel({
                 </div>
               ))}
               {zoneNames.length === 0 && (
-                <div className="p-5 text-sm text-[var(--admin-text-secondary)]">
-                  <div className="font-semibold text-[var(--admin-text-primary)]">No zones yet</div>
+                <div className="p-5 text-sm text-[var(--sp-text-secondary)]">
+                  <div className="font-semibold text-[var(--sp-text-primary)]">No zones yet</div>
                   <p className="mt-1">Add a zone to organize map filters and custom-seat labels.</p>
                 </div>
               )}
@@ -1090,11 +1090,11 @@ export function AdminManagementPanel({
         )}
 
         {activeTab === "publishHistory" && (
-          <section className="border border-t-0 border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 sm:p-5">
+          <section className="border border-t-0 border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 sm:p-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="max-w-2xl">
-                <h2 className="text-lg font-semibold text-[var(--admin-text-primary)]">Publish History</h2>
-                <p className="text-sm leading-6 text-[var(--admin-text-secondary)]">
+                <h2 className="text-lg font-semibold text-[var(--sp-text-primary)]">Publish History</h2>
+                <p className="text-sm leading-6 text-[var(--sp-text-secondary)]">
                   Recent completed publishes from the draft map, including published seat count and admin identity when the profile can be resolved.
                 </p>
               </div>
@@ -1105,22 +1105,22 @@ export function AdminManagementPanel({
 
             {publishHistoryState.status === "loading" && (
               <>
-                <div className="mt-4 border border-[var(--admin-border)] bg-[var(--admin-surface-alt)] p-4">
-                  <div className="h-3 w-24 motion-safe:animate-pulse rounded bg-[var(--admin-border)]" />
+                <div className="mt-4 border border-[var(--sp-border-subtle)] bg-[var(--sp-background)] p-4">
+                  <div className="h-3 w-24 motion-safe:animate-pulse rounded bg-[var(--sp-border-subtle)]" />
                   <div className="mt-4 grid gap-3 md:grid-cols-3">
-                    <div className="h-14 motion-safe:animate-pulse bg-[var(--admin-surface)]" />
-                    <div className="h-14 motion-safe:animate-pulse bg-[var(--admin-surface)]" />
-                    <div className="h-14 motion-safe:animate-pulse bg-[var(--admin-surface)]" />
+                    <div className="h-14 motion-safe:animate-pulse bg-[var(--sp-layer-01)]" />
+                    <div className="h-14 motion-safe:animate-pulse bg-[var(--sp-layer-01)]" />
+                    <div className="h-14 motion-safe:animate-pulse bg-[var(--sp-layer-01)]" />
                   </div>
                 </div>
-                <div className="mt-4 divide-y divide-[var(--admin-border-subtle,var(--admin-border))] border border-[var(--admin-border)]">
+                <div className="mt-4 divide-y divide-[var(--sp-border-subtle)] border border-[var(--sp-border-subtle)]">
                   {[0, 1, 2].map(item => (
                     <div key={item} className="grid gap-3 p-3 md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_minmax(0,1.2fr)_80px]">
-                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--admin-surface-alt)]" />
-                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--admin-surface-alt)]" />
-                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--admin-surface-alt)]" />
-                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--admin-surface-alt)]" />
-                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--admin-surface-alt)]" />
+                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--sp-background)]" />
+                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--sp-background)]" />
+                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--sp-background)]" />
+                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--sp-background)]" />
+                      <div className="h-5 motion-safe:animate-pulse rounded bg-[var(--sp-background)]" />
                     </div>
                   ))}
                 </div>
@@ -1140,9 +1140,9 @@ export function AdminManagementPanel({
             )}
 
             {publishHistoryState.status === "loaded" && publishHistoryState.events.length === 0 && (
-              <div className="mt-4 border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface-alt)] p-6">
-                <h3 className="text-sm font-semibold text-[var(--admin-text-primary)]">No publish events yet</h3>
-                <p className="mt-1 max-w-xl text-sm leading-6 text-[var(--admin-text-secondary)]">
+              <div className="mt-4 border border-dashed border-[var(--sp-border-subtle)] bg-[var(--sp-background)] p-6">
+                <h3 className="text-sm font-semibold text-[var(--sp-text-primary)]">No publish events yet</h3>
+                <p className="mt-1 max-w-xl text-sm leading-6 text-[var(--sp-text-secondary)]">
                   Published maps will appear here after the first successful publish audit event is written.
                 </p>
               </div>
@@ -1151,9 +1151,9 @@ export function AdminManagementPanel({
             {publishHistoryState.status === "loaded" && publishHistoryState.events.length > 0 && (
               <>
                 {latestPublish && (
-                  <div className="mt-4 border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-elevation-2">
+                  <div className="mt-4 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 shadow-elevation-2">
                     <div className="flex items-center gap-2">
-                      <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)]">Latest publish</div>
+                      <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)]">Latest publish</div>
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--admin-success-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--admin-success)] ring-1 ring-[rgb(var(--admin-success-rgb)/0.3)]">
                         <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                         Latest
@@ -1161,72 +1161,72 @@ export function AdminManagementPanel({
                     </div>
                     <div className="mt-3 grid gap-3 md:grid-cols-3">
                       <div>
-                        <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Created</div>
-                        <div className="mt-1 text-sm font-semibold text-[var(--admin-text-primary)]">{formatPublishDate(latestPublish.created_at)}</div>
+                        <div className="text-xs font-medium tracking-normal text-[var(--sp-text-helper)]">Created</div>
+                        <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{formatPublishDate(latestPublish.created_at)}</div>
                       </div>
                       <div>
-                        <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Seat count</div>
-                        <div className="mt-1 text-sm font-semibold text-[var(--admin-text-primary)]">{latestPublish.seat_count.toLocaleString()}</div>
+                        <div className="text-xs font-medium tracking-normal text-[var(--sp-text-helper)]">Seat count</div>
+                        <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{latestPublish.seat_count.toLocaleString()}</div>
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Published by</div>
-                        <div className="mt-1 truncate text-sm font-semibold text-[var(--admin-text-primary)]" title={latestPublish.published_by ?? undefined}>
+                        <div className="text-xs font-medium tracking-normal text-[var(--sp-text-helper)]">Published by</div>
+                        <div className="mt-1 truncate text-sm font-semibold text-[var(--sp-text-primary)]" title={latestPublish.published_by ?? undefined}>
                           {getPublishHistoryActor(latestPublish)}
                         </div>
                       </div>
                     </div>
-                    <div className="mt-3 border-t border-[var(--admin-border-subtle,var(--admin-border))] pt-3">
-                      <div className="text-xs font-medium tracking-normal text-[var(--admin-text-muted)]">Changes</div>
-                      <div className="mt-1 text-sm text-[var(--admin-text-secondary)]">
+                    <div className="mt-3 border-t border-[var(--sp-border-subtle)] pt-3">
+                      <div className="text-xs font-medium tracking-normal text-[var(--sp-text-helper)]">Changes</div>
+                      <div className="mt-1 text-sm text-[var(--sp-text-secondary)]">
                         {formatPublishChangeSummary(latestPublish.change_summary) ?? "—"}
                       </div>
                     </div>
                   </div>
                 )}
 
-                <div className="mt-4 overflow-hidden border border-[var(--admin-border)]">
-                  <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_minmax(0,1.2fr)_80px] bg-[var(--admin-surface-alt)] px-3 py-2 text-xs font-semibold tracking-normal text-[var(--admin-text-secondary)] md:grid">
+                <div className="mt-4 overflow-hidden border border-[var(--sp-border-subtle)]">
+                  <div className="hidden grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_minmax(0,1.2fr)_80px] bg-[var(--sp-background)] px-3 py-2 text-xs font-semibold tracking-normal text-[var(--sp-text-secondary)] md:grid">
                     <div>Created at</div>
                     <div>Seat count</div>
                     <div>Published by</div>
                     <div>Changes</div>
                     <div>State</div>
                   </div>
-                  <div className="divide-y divide-[var(--admin-border-subtle,var(--admin-border))]">
+                  <div className="divide-y divide-[var(--sp-border-subtle)]">
                     {publishHistoryState.events.map((event, index) => (
                       <div
                         key={`${event.created_at}-${event.published_by ?? "unknown"}-${index}`}
                         className="grid gap-3 p-3 text-sm md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_minmax(0,1.2fr)_80px] md:items-center"
                       >
                         <div>
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Created at</div>
-                          <div className="font-semibold text-[var(--admin-text-primary)]">{formatPublishDate(event.created_at)}</div>
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Created at</div>
+                          <div className="font-semibold text-[var(--sp-text-primary)]">{formatPublishDate(event.created_at)}</div>
                         </div>
                         <div>
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Seat count</div>
-                          <div className="font-semibold text-[var(--admin-text-primary)]">{event.seat_count.toLocaleString()}</div>
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Seat count</div>
+                          <div className="font-semibold text-[var(--sp-text-primary)]">{event.seat_count.toLocaleString()}</div>
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Published by</div>
-                          <div className="truncate font-semibold text-[var(--admin-text-secondary)]" title={event.published_by ?? undefined}>
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Published by</div>
+                          <div className="truncate font-semibold text-[var(--sp-text-secondary)]" title={event.published_by ?? undefined}>
                             {getPublishHistoryActor(event)}
                           </div>
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">Changes</div>
-                          <div className="text-[var(--admin-text-secondary)]">
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Changes</div>
+                          <div className="text-[var(--sp-text-secondary)]">
                             {formatPublishChangeSummary(event.change_summary) ?? "—"}
                           </div>
                         </div>
                         <div>
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--admin-text-secondary)] md:hidden">State</div>
+                          <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">State</div>
                           {index === 0 ? (
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--admin-success-soft)] px-2 py-1 text-[11px] font-semibold tracking-normal text-[var(--admin-success)] ring-1 ring-[rgb(var(--admin-success-rgb)/0.3)]">
                               <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                               Latest
                             </span>
                           ) : (
-                            <span className="text-xs font-semibold text-[var(--admin-text-muted)]">Previous</span>
+                            <span className="text-xs font-semibold text-[var(--sp-text-helper)]">Previous</span>
                           )}
                         </div>
                       </div>
@@ -1246,7 +1246,7 @@ export function AdminManagementPanel({
       </div>
 
       {employeeDialogOpen && (
-        <div className="fixed inset-0 z-[65] flex items-end justify-center bg-[color-mix(in_srgb,var(--admin-chrome-bg)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[65] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={employeeDialogFocusRef}
             tabIndex={-1}
@@ -1260,12 +1260,12 @@ export function AdminManagementPanel({
                 closeEmployeeDialog();
               }
             }}
-            className="max-h-[90vh] w-full max-w-[560px] overflow-y-auto overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
+            className="max-h-[90vh] w-full max-w-[560px] overflow-y-auto overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 id="management-employee-title" className="text-base font-semibold">{selectedEmployee ? "Edit employee" : "Add employee"}</h2>
-                <p id="management-employee-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-secondary)]">
+                <p id="management-employee-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-secondary)]">
                   Changes update the employee directory and draft seat references.
                 </p>
               </div>
@@ -1273,7 +1273,7 @@ export function AdminManagementPanel({
                 type="button"
                 onClick={closeEmployeeDialog}
                 disabled={pending}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close employee form"
               >
                 <CloseIcon />
@@ -1282,25 +1282,25 @@ export function AdminManagementPanel({
 
             <div className="mt-4 space-y-3">
               <label className="block">
-                <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Name</span>
+                <span className="text-xs font-medium tracking-normal text-[var(--sp-text-secondary)]">Name</span>
                 <input ref={employeeNameInputRef} value={employeeForm.fullName} onChange={event => setEmployeeForm(current => ({ ...current, fullName: event.target.value }))} className={fieldClassName} />
               </label>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Position</span>
+                  <span className="text-xs font-medium tracking-normal text-[var(--sp-text-secondary)]">Position</span>
                   <input value={employeeForm.position} onChange={event => setEmployeeForm(current => ({ ...current, position: event.target.value }))} className={fieldClassName} />
                 </label>
                 <label className="block">
-                  <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Phone Ext.</span>
+                  <span className="text-xs font-medium tracking-normal text-[var(--sp-text-secondary)]">Phone Ext.</span>
                   <input type="tel" value={employeeForm.phoneExtension} onChange={event => setEmployeeForm(current => ({ ...current, phoneExtension: event.target.value }))} className={fieldClassName} inputMode="numeric" />
                 </label>
               </div>
               <label className="block">
-                <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Email</span>
+                <span className="text-xs font-medium tracking-normal text-[var(--sp-text-secondary)]">Email</span>
                 <input type="email" spellCheck={false} value={employeeForm.email} onChange={event => setEmployeeForm(current => ({ ...current, email: event.target.value }))} placeholder="Optional" className={fieldClassName} inputMode="email" autoComplete="off" />
               </label>
               <label className="block">
-                <span className="text-xs font-medium tracking-normal text-[var(--admin-text-secondary)]">Department</span>
+                <span className="text-xs font-medium tracking-normal text-[var(--sp-text-secondary)]">Department</span>
                 <input list="management-department-options" value={employeeForm.department} onChange={event => setEmployeeForm(current => ({ ...current, department: event.target.value }))} className={fieldClassName} />
               </label>
             </div>
@@ -1325,7 +1325,7 @@ export function AdminManagementPanel({
       )}
 
       {managementConfirm && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[color-mix(in_srgb,var(--admin-chrome-bg)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={managementConfirmDialogFocusRef}
             tabIndex={-1}
@@ -1339,7 +1339,7 @@ export function AdminManagementPanel({
                 closeManagementConfirm();
               }
             }}
-            className="w-full max-w-lg overscroll-contain border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 text-[var(--admin-text-primary)] shadow-panel"
+            className="w-full max-w-lg overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -1350,7 +1350,7 @@ export function AdminManagementPanel({
                       ? `Delete department “${managementConfirm.name}”?`
                       : `Delete zone “${managementConfirm.name}”?`}
                 </h2>
-                <p id="management-confirm-description" className="mt-1 text-sm leading-5 text-[var(--admin-text-secondary)]">
+                <p id="management-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-secondary)]">
                   Review the exact management impact before applying this cleanup.
                 </p>
               </div>
@@ -1358,7 +1358,7 @@ export function AdminManagementPanel({
                 type="button"
                 onClick={closeManagementConfirm}
                 disabled={pending}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--admin-text-muted)] transition hover:bg-[var(--admin-surface-alt)] hover:text-[var(--admin-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Cancel management confirmation"
               >
                 <CloseIcon />

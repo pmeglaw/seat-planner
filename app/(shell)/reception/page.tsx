@@ -59,7 +59,7 @@ export default async function ReceptionPage() {
   return (
     // pl-12 clears the fixed rail; the svh calc offsets the AppTopBar the
     // shell renders above this pane (both live in the (shell) layout now).
-    <main className="reception-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] flex-col bg-[var(--r-bg)] pl-12 text-[var(--r-text)] lg:h-[calc(100svh-var(--admin-chrome-h))] lg:min-h-0 lg:overflow-hidden">
+    <main className="reception-theme flex min-h-[calc(100svh-var(--sp-chrome-height))] flex-col bg-[var(--r-bg)] pl-12 text-[var(--r-text)] lg:h-[calc(100svh-var(--sp-chrome-height))] lg:min-h-0 lg:overflow-hidden">
       {/* Skip-link landing: focusable zero-height marker (the link itself is
           the persistent rail's first focusable — AppShell maps this route to
           #reception-main). */}

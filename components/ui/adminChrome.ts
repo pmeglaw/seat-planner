@@ -6,7 +6,7 @@
  * owner ruling says otherwise.
  *
  * **Grid** — a 48×40 cell system: rail cells are 48px wide × 40px tall
- * (h-10, matching --admin-chrome-h), the bar's corner cell is the same
+ * (h-10, matching --sp-chrome-height), the bar's corner cell is the same
  * 48×40, full-height bar tenants are 40px (h-full), field controls are 28px
  * (h-7: ThemeToggle, undo/redo, FloorSelector chrome trigger), the avatar
  * is 26px.
@@ -14,11 +14,11 @@
  * **Active states** — vertical chrome (rail items) mark active with a 3px
  * left inset edge in --admin-primary; horizontal chrome (bar tenants) with a
  * 2px bottom border; transient menu-open state (kebab, account, floor) with
- * fill only. All three share the same fill (--admin-chrome-hover),
- * foreground (--admin-chrome-text), and weight (font-semibold where a label
+ * fill only. All three share the same fill (--sp-background-hover),
+ * foreground (--sp-text-primary), and weight (font-semibold where a label
  * exists).
  *
- * **Hover** — fill --admin-chrome-hover + foreground --admin-chrome-text
+ * **Hover** — fill --sp-background-hover + foreground --sp-text-primary
  * (never text-white). Exception (owner ruling 2026-08-14): the corner rail
  * toggle brightens its glyph only, no fill.
  *
@@ -57,4 +57,4 @@
  * its color are shared here, so a border-token change still lands in one
  * place.
  */
-export const adminChromeDividerRule = "w-px shrink-0 bg-[var(--admin-chrome-border)]";
+export const adminChromeDividerRule = "w-px shrink-0 bg-[var(--sp-border-subtle)]";

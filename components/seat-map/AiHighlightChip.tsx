@@ -29,7 +29,7 @@ export function AiHighlightChip({
       // Polite, not assertive: the count changes as a side effect of an answer
       // the user just asked for, so it should never interrupt them.
       aria-live="polite"
-      className="pointer-events-auto flex items-center gap-2 border border-[var(--admin-ai-border)] bg-[var(--admin-surface)] bg-[image:var(--admin-ai-aura)] bg-no-repeat px-2.5 py-1.5 text-[12px] font-semibold text-[var(--admin-ai-text)] shadow-[0_6px_16px_rgba(69,137,255,0.20)]"
+      className="pointer-events-auto flex items-center gap-2 border border-[var(--admin-ai-border)] bg-[var(--sp-layer-01)] bg-[image:var(--admin-ai-aura)] bg-no-repeat px-2.5 py-1.5 text-[12px] font-semibold text-[var(--admin-ai-text)] shadow-[0_6px_16px_rgba(69,137,255,0.20)]"
     >
       <span aria-hidden="true" className="border border-[var(--admin-ai-border)] px-[3px] text-[9px] font-bold leading-[1.5] tracking-[0.04em]">
         AI

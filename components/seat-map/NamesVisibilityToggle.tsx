@@ -15,7 +15,7 @@ export function NamesVisibilityToggle({ pressed, onToggle }: {
       type="button"
       aria-pressed={pressed}
       onClick={onToggle}
-      className="flex w-full items-center gap-2 text-[11.5px] font-semibold text-[var(--sp-text-secondary)] transition hover:text-[var(--admin-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+      className="flex w-full items-center gap-2 text-[11.5px] font-semibold text-[var(--sp-text-secondary)] transition hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
     >
       <span className="min-w-0 truncate">Show occupant names</span>
       <span
@@ -25,7 +25,7 @@ export function NamesVisibilityToggle({ pressed, onToggle }: {
           "relative ml-auto h-4 w-7 shrink-0 rounded-full border transition-colors motion-reduce:transition-none",
           pressed
             ? "border-[var(--admin-status-ok)] bg-[var(--admin-status-ok)]"
-            : "border-[var(--admin-border)] bg-[var(--sp-background)]"
+            : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)]"
         ].join(" ")}
       >
         <span

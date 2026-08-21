@@ -7,15 +7,15 @@ export default function AdminSettingsLoading() {
     <div
       role="status"
       aria-busy="true"
-      className="admin-theme min-h-[calc(100svh-var(--admin-chrome-h))] bg-[var(--admin-bg)] pl-12 text-[var(--admin-text-primary)]"
+      className="admin-theme min-h-[calc(100svh-var(--sp-chrome-height))] bg-[var(--sp-background)] pl-12 text-[var(--sp-text-primary)]"
     >
       <span className="sr-only">Loading settings…</span>
       <div aria-hidden="true" className="mx-auto w-full max-w-[760px] animate-pulse px-6 pb-12 pt-6 motion-reduce:animate-none">
-        <div className="h-8 w-40 bg-[var(--admin-surface)]" />
-        <div className="mt-2 h-4 w-72 max-w-full bg-[var(--admin-surface)]" />
-        <div className="mt-6 h-28 w-full bg-[var(--admin-surface)]" />
-        <div className="mt-3 h-28 w-full bg-[var(--admin-surface)]" />
-        <div className="mt-3 h-28 w-full bg-[var(--admin-surface)]" />
+        <div className="h-8 w-40 bg-[var(--sp-layer-01)]" />
+        <div className="mt-2 h-4 w-72 max-w-full bg-[var(--sp-layer-01)]" />
+        <div className="mt-6 h-28 w-full bg-[var(--sp-layer-01)]" />
+        <div className="mt-3 h-28 w-full bg-[var(--sp-layer-01)]" />
+        <div className="mt-3 h-28 w-full bg-[var(--sp-layer-01)]" />
       </div>
     </div>
   );

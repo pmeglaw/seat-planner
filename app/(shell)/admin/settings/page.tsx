@@ -11,10 +11,10 @@ export default async function AdminSettingsPage() {
 
   if (!isAdmin) {
     return (
-      <main className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] items-center justify-center bg-[var(--admin-bg)] p-6 text-[var(--admin-text-primary)]">
-        <section className="max-w-md border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-elevation-2">
-          <h1 className="text-lg font-semibold text-[var(--admin-text-primary)]">Admin access required</h1>
-          <p className="mt-2 text-sm text-[var(--admin-text-secondary)]">
+      <main className="admin-theme flex min-h-[calc(100svh-var(--sp-chrome-height))] items-center justify-center bg-[var(--sp-background)] p-6 text-[var(--sp-text-primary)]">
+        <section className="max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-6 shadow-elevation-2">
+          <h1 className="text-lg font-semibold text-[var(--sp-text-primary)]">Admin access required</h1>
+          <p className="mt-2 text-sm text-[var(--sp-text-secondary)]">
             You are signed in, but your profile does not have admin permissions.
           </p>
         </section>
@@ -70,7 +70,7 @@ export default async function AdminSettingsPage() {
     // pane (hence the svh calc: bar height comes off the pane's min-height).
     // The skip link itself lives in the rail (AppShell maps this route to
     // #admin-subpage-main); this page owns the landing marker below.
-    <main className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] flex-col bg-[var(--admin-bg)] text-[var(--admin-text-primary)] pl-12 lg:h-[calc(100svh-var(--admin-chrome-h))] lg:min-h-0 lg:overflow-hidden">
+    <main className="admin-theme flex min-h-[calc(100svh-var(--sp-chrome-height))] flex-col bg-[var(--sp-background)] text-[var(--sp-text-primary)] pl-12 lg:h-[calc(100svh-var(--sp-chrome-height))] lg:min-h-0 lg:overflow-hidden">
       {/* Skip-link landing: focusable zero-height marker; the next Tab enters
           the panel content. */}
       <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />
@@ -85,8 +85,8 @@ export default async function AdminSettingsPage() {
       >
         <div className="mx-auto w-full max-w-[760px] px-6 pb-12 pt-6">
         <header className="mb-4">
-          <h1 className="text-[22px] font-semibold leading-tight text-[var(--admin-text-primary)]">Settings</h1>
-          <p className="mt-1 text-[13.5px] leading-5 text-[var(--admin-text-secondary)]">
+          <h1 className="text-[22px] font-semibold leading-tight text-[var(--sp-text-primary)]">Settings</h1>
+          <p className="mt-1 text-[13.5px] leading-5 text-[var(--sp-text-secondary)]">
             Import, export, and recovery tools. Everything here changes the draft only.
           </p>
         </header>

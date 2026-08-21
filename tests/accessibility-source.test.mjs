@@ -790,9 +790,9 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   // static bar carries the app's only chrome (search, filters, publish
   // status) out of view. Only the pinning behavior is pinned here — z tiers
   // and the rest of the class list are layout choices, free to evolve.
-  assert.match(shellBarSource, /<header className="sticky top-0 /);
-  assert.match(seatMapSource, /<header className="sticky top-0 /);
-  assert.match(viewerSource, /<header className="sticky top-0 /);
+  assert.match(shellBarSource, /<header className="sp-zone-chrome sticky top-0 /);
+  assert.match(seatMapSource, /<header className="sp-zone-chrome sticky top-0 /);
+  assert.match(viewerSource, /<header className="sp-zone-chrome sticky top-0 /);
   // The map roots must clip horizontal overflow with `clip`, not `hidden`:
   // overflow-x-hidden turns the root into a scroll container, which captures
   // the sticky header so it never pins to the viewport (live-caught).
@@ -1269,8 +1269,8 @@ test("CTA labels sit on the ladder's white, not the off-white inverse token", as
     for (const match of source.match(/bg-\[var\(--admin-primary-cta\)\][^"']*/g) ?? []) {
       assert.doesNotMatch(
         match,
-        /text-\[var\(--admin-text-inverse\)\]/,
-        `${file}: CTA labels must be white (4.71:1), not --admin-text-inverse (4.35:1)`
+        /text-\[var\(--sp-text-inverse\)\]/,
+        `${file}: CTA labels must be white (4.71:1), not --sp-text-inverse (4.35:1)`
       );
     }
   }
