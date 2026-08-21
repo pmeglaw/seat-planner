@@ -190,7 +190,18 @@
      edge while item height == bar height. */
   --admin-chrome-h: 40px;
 
-  --sp-focus-ring-color: rgb(255 87 21 / 0.9);
+  /* Focus ring color (PR-A, 2026-08-21): solid #D23F0A replaces the raw brand
+     rgb(255 87 21 / 0.9). #FF5715 measures 2.88:1 on #F4F4F4 and 2.59:1 on
+     #E8E8E8 — under the 3:1 non-text floor on layered/hovered light surfaces —
+     and the 0.9 alpha only lowered it further. #D23F0A measures 4.71 on white,
+     4.29 on #F4F4F4, 4.36 on #F7F6F2, 3.85 on #E8E8E8, 3.63 on #E7E1D8, and
+     3.84 on the dark chrome #161616 — ≥3:1 everywhere it can land (one known
+     sub-3:1 edge: 2.68 on the chrome raised-hover #333333; the dark override
+     below and the future chrome-zone #FF8A5C close it). Solid, never alpha:
+     alpha over an unknown ground can only lower contrast.
+     tests/focus-brand-contrast-source.test.mjs pins that no focus token
+     regresses to the raw #FF5715. */
+  --sp-focus-ring-color: #D23F0A;
   --sp-focus-ring-width: 4px;
   --sp-focus-ring-offset: 2px;
   --sp-focus-ring-offset-color: var(--sp-color-surface-raised);
@@ -296,6 +307,12 @@
      halo around every focused control. Surfaces that sit on the bare canvas
      pass ring-offset-[var(--sp-color-canvas)] explicitly (SeatMap viewport,
      ViewerSeatFinder), so they are unaffected. */
+
+  /* Focus ring on dark (PR-A): the light #D23F0A drops to 3.5:1-ish on the
+     dark layers; #FF8A5C measures 7.79:1 on #161616, 7.10 on #1f1f1f, 6.52 on
+     #262626, 5.44 on #333333 — clears 3:1 on every dark surface. Same hue
+     family as the light ring, so focus stays recognizably brand. */
+  --sp-focus-ring-color: #FF8A5C;
 }
 
 /* Admin + shell surfaces join the chrome on dark. The --admin-bg/surface/
@@ -345,6 +362,9 @@
   --admin-map-workspace: #101010;
 
   /* Brand orange: hue unchanged, pairings swapped for a dark ground. */
+  /* PR-A: dark focus follows the :root dark ring — #FF8A5C, ≥5.4:1 on every
+     dark layer (see the --sp-focus-ring-color notes). */
+  --admin-focus: #FF8A5C;
   --admin-primary-soft: rgba(255, 87, 21, 0.16);
   --admin-primary-border: rgba(255, 87, 21, 0.45);
   --admin-primary-on-soft: #FF8A5C;
@@ -749,7 +769,11 @@
   --admin-info-rgb: 85 80 74;
   --admin-info-soft: #F7F6F2;
   --admin-analytics: #55504A;
-  --admin-focus: #FF5715;
+  /* PR-A (2026-08-21): #D23F0A, not the raw #FF5715 — see the
+     --sp-focus-ring-color note in :root for the measurements (the raw brand
+     fails 3:1 on #F4F4F4 / #E8E8E8 / #E7E1D8). Dark block overrides to
+     #FF8A5C. */
+  --admin-focus: #D23F0A;
 
   --admin-state-clean-bg: #DEF3E4;
   --admin-state-clean-border: rgba(36, 161, 72, 0.36);
@@ -845,7 +869,12 @@
      accent; see the note at SeatMarker.tsx:130.) */
   --admin-marker-hover-border: #8E8276;
   --admin-marker-hover-shadow: 0 6px 14px rgba(22, 22, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
-  --admin-marker-focus-ring: rgba(255, 87, 21, 0.75);
+  /* PR-A: solid #D23F0A replaces rgba(255,87,21,.75) — same 3:1 reasoning as
+     --sp-focus-ring-color (this token serves the dormant admin marker arm;
+     the live pills' focus ring rides --admin-marker-live-active-edge-soft).
+     The white offset ring below is unchanged — it carries the separation
+     against the busy raster. */
+  --admin-marker-focus-ring: #D23F0A;
   --admin-marker-focus-offset: rgba(255, 255, 255, 0.70);
   --admin-marker-move-origin-surface: #F7F6F2;
   --admin-marker-move-origin-border: #B8AEA2;
