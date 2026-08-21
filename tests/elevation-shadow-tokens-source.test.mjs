@@ -38,8 +38,8 @@ test("tailwind config maps the elevation tokens to named shadow utilities", asyn
     );
   }
   assert.match(config, /panel:\s*"var\(--sp-elevation-panel\)"/, "boxShadow theme must expose shadow-panel bound to its token");
-  assert.match(config, /"marker-selected":\s*"var\(--admin-marker-selected-shadow\)"/, "boxShadow theme must expose the selected-marker shadow");
-  assert.match(config, /"marker-hover":\s*"var\(--admin-marker-hover-shadow\)"/, "boxShadow theme must expose the hover-marker shadow");
+  assert.match(config, /"marker-selected":\s*"var\(--sp-legend-selected-shadow\)"/, "boxShadow theme must expose the selected-marker shadow");
+  assert.match(config, /"marker-hover":\s*"var\(--sp-legend-hover-shadow\)"/, "boxShadow theme must expose the hover-marker shadow");
 });
 
 test("no component uses the silently-dropped arbitrary shadow-[var(…)] form", async () => {

@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const globalsCss = readFileSync(join(repoRoot, "app", "globals.css"), "utf8");
 
-const FOCUS_TOKENS = ["--sp-focus", "--sp-focus", "--admin-marker-focus-ring"];
+const FOCUS_TOKENS = ["--sp-focus", "--sp-focus", "--sp-focus-marker-ring"];
 const RAW_BRAND = [/#ff5715/i, /255[,\s]+87[,\s]+21/];
 
 test("no focus token carries the raw brand orange (fails 3:1 on layered surfaces)", () => {

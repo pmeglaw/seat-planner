@@ -910,7 +910,7 @@ function MarkerSection() {
           <div className="mt-4 rounded-2xl border border-[#DED6CA] bg-white p-4">
             <h3 className="text-base font-semibold">Marker semantic recipes</h3>
             <p className="mt-1 text-sm font-normal leading-6 text-[#696159]">
-              Prototype vocabulary (warm palette). The production SeatMarker now carries the full 17-state taxonomy in charcoal values via the --admin-marker-* tokens; these warm recipes stay for concept comparison only.
+              Prototype vocabulary (warm palette). The production SeatMarker now carries the full 17-state taxonomy in charcoal values via the --sp-legend-*/--sp-marker-* tokens; these warm recipes stay for concept comparison only.
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {Object.keys(markerStateClassRecipes).map((state) => (

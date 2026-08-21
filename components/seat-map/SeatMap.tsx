@@ -236,32 +236,32 @@ const SEAT_STATUS_LEGEND: SeatStatusLegendItem[] = [
   {
     key: "assigned",
     label: STATUS_LABELS.assigned,
-    chipClass: "border-[var(--admin-marker-assigned-border)] bg-[var(--admin-marker-assigned-surface)]",
-    accentClass: "bg-[var(--admin-marker-assigned-accent)]"
+    chipClass: "border-[var(--sp-legend-assigned-border)] bg-[var(--sp-legend-assigned-surface)]",
+    accentClass: "bg-[var(--sp-legend-assigned-accent)]"
   },
   {
     key: "available",
     label: STATUS_LABELS.available,
-    chipClass: "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)]",
-    accentClass: "bg-[var(--admin-marker-available-accent)]"
+    chipClass: "border-[var(--sp-legend-available-border)] bg-[var(--sp-legend-available-surface)]",
+    accentClass: "bg-[var(--sp-legend-available-accent)]"
   },
   {
     key: "reserved",
     label: STATUS_LABELS.reserved,
-    chipClass: "border-[var(--admin-marker-reserved-border)] bg-[var(--admin-marker-reserved-surface)]",
-    accentClass: "bg-[var(--admin-marker-reserved-accent)]"
+    chipClass: "border-[var(--sp-legend-reserved-border)] bg-[var(--sp-legend-reserved-surface)]",
+    accentClass: "bg-[var(--sp-legend-reserved-accent)]"
   },
   {
     key: "unavailable",
     label: STATUS_LABELS.unavailable,
-    chipClass: "border-[var(--admin-marker-unavailable-border)] bg-[var(--admin-marker-unavailable-surface)]",
-    accentClass: "bg-[var(--admin-marker-unavailable-accent)]"
+    chipClass: "border-[var(--sp-legend-unavailable-border)] bg-[var(--sp-legend-unavailable-surface)]",
+    accentClass: "bg-[var(--sp-legend-unavailable-accent)]"
   },
   {
     key: "draft-changed",
     label: "Draft change",
-    chipClass: "border-[var(--admin-marker-draft-border)] bg-[var(--admin-marker-draft-surface)]",
-    accentClass: "bg-[var(--admin-marker-draft-accent)]",
+    chipClass: "border-[var(--sp-legend-draft-border)] bg-[var(--sp-legend-draft-surface)]",
+    accentClass: "bg-[var(--sp-legend-draft-accent)]",
     draftOnly: true,
     badge: true
   }

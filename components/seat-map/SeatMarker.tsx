@@ -224,12 +224,12 @@ function SeatMarkerComponent({
   const baseStatusToneClass =
     adminMarker
       ? seat.status === "assigned"
-        ? "border-[var(--admin-marker-assigned-border)] bg-[var(--admin-marker-assigned-surface)] text-[var(--admin-marker-assigned-text)]"
+        ? "border-[var(--sp-legend-assigned-border)] bg-[var(--sp-legend-assigned-surface)] text-[var(--sp-legend-assigned-text)]"
         : seat.status === "reserved"
-          ? "border-[var(--admin-marker-reserved-border)] bg-[var(--admin-marker-reserved-surface)] text-[var(--admin-marker-reserved-text)]"
+          ? "border-[var(--sp-legend-reserved-border)] bg-[var(--sp-legend-reserved-surface)] text-[var(--sp-legend-reserved-text)]"
           : seat.status === "unavailable"
-            ? "border-[var(--admin-marker-unavailable-border)] bg-[var(--admin-marker-unavailable-surface)] text-[var(--admin-marker-unavailable-text)]"
-            : "border-[var(--admin-marker-available-border)] bg-[var(--admin-marker-available-surface)] text-[var(--admin-marker-available-text)]"
+            ? "border-[var(--sp-legend-unavailable-border)] bg-[var(--sp-legend-unavailable-surface)] text-[var(--sp-legend-unavailable-text)]"
+            : "border-[var(--sp-legend-available-border)] bg-[var(--sp-legend-available-surface)] text-[var(--sp-legend-available-text)]"
       : seat.status === "assigned"
         ? "border-[var(--admin-marker-live-assigned-border)] bg-[var(--admin-marker-live-assigned-surface)] text-[var(--admin-marker-live-assigned-text)]"
         : seat.status === "reserved"
@@ -291,14 +291,14 @@ function SeatMarkerComponent({
       : "",
     draftChanged && !selected && !searchProminent
       ? adminMarker
-        ? "border-[var(--admin-marker-draft-border)] bg-[var(--admin-marker-draft-surface)] text-[var(--admin-marker-draft-text)] ring-1 ring-[var(--admin-marker-draft-border)] shadow-[0_4px_12px_rgba(0,157,154,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
+        ? "border-[var(--sp-legend-draft-border)] bg-[var(--sp-legend-draft-surface)] text-[var(--sp-legend-draft-text)] ring-1 ring-[var(--sp-legend-draft-border)] shadow-[0_4px_12px_rgba(0,157,154,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
         : "border-[var(--admin-marker-live-draft-border)] bg-[var(--admin-marker-live-draft-surface)] text-[var(--admin-marker-live-draft-text)] ring-1 ring-[var(--admin-marker-live-draft-ring)] shadow-[0_4px_12px_rgba(162,110,35,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
       : "",
     // Same source-state exclusion as the selected entry below — this is the
     // other dark-pill state that would collide with the green source tint.
     searchSelected && !swapSource && !moveEmployeeSource
       ? adminMarker
-        ? "border-[var(--admin-marker-selected-border)] bg-[var(--admin-marker-selected-surface)] text-[var(--admin-marker-selected-text)] ring-2 ring-[var(--admin-marker-selected-border)] outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-border)] shadow-[0_12px_28px_rgba(16,17,20,0.34),0_0_0_5px_var(--admin-marker-search-halo),inset_0_1px_0_rgba(255,255,255,0.14)]"
+        ? "border-[var(--sp-legend-selected-border)] bg-[var(--sp-legend-selected-surface)] text-[var(--sp-legend-selected-text)] ring-2 ring-[var(--sp-legend-selected-border)] outline outline-2 outline-offset-2 outline-[var(--sp-legend-search-border)] shadow-[0_12px_28px_rgba(16,17,20,0.34),0_0_0_5px_var(--sp-legend-search-halo),inset_0_1px_0_rgba(255,255,255,0.14)]"
         : "border-[var(--admin-marker-live-active-edge)] bg-[var(--admin-marker-live-search-selected-surface)] text-white ring-2 ring-[var(--admin-marker-live-active-edge-strong)] outline outline-2 outline-offset-2 outline-[var(--admin-marker-live-active-edge-soft)] shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_rgba(255,87,21,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
       : "",
     // Arming swap/move keeps the seat SELECTED (applyStartSwapSeatAction never
@@ -311,22 +311,22 @@ function SeatMarkerComponent({
       ? searchSelected
         ? ""
         : adminMarker
-          ? "border-[var(--admin-marker-selected-border)] bg-[var(--admin-marker-selected-surface)] text-[var(--admin-marker-selected-text)] ring-2 ring-[var(--admin-marker-selected-border)] shadow-marker-selected"
+          ? "border-[var(--sp-legend-selected-border)] bg-[var(--sp-legend-selected-surface)] text-[var(--sp-legend-selected-text)] ring-2 ring-[var(--sp-legend-selected-border)] shadow-marker-selected"
           : "border-[var(--admin-marker-live-active-edge)] bg-[var(--admin-marker-live-selected-surface)] text-white ring-2 ring-[var(--admin-marker-live-active-edge-strong)] shadow-[0_10px_24px_rgba(31,35,39,0.30),inset_0_1px_0_rgba(255,255,255,0.16)]"
       : "",
     validTargetTone
       ? adminMarker
-        ? "border-[var(--admin-marker-target-valid-border)] bg-[var(--admin-marker-target-valid-surface)] text-[var(--admin-marker-target-valid-text)]"
+        ? "border-[var(--sp-legend-target-valid-border)] bg-[var(--sp-legend-target-valid-surface)] text-[var(--sp-legend-target-valid-text)]"
         : "border-[var(--admin-marker-live-positive-border)] bg-[var(--admin-marker-live-positive-surface)] text-[var(--admin-marker-live-positive-text)]"
       : "",
     invalidTarget
       ? adminMarker
-        ? "border-[var(--admin-marker-target-invalid-border)] bg-[var(--admin-marker-target-invalid-surface)] text-[var(--admin-marker-target-invalid-text)]"
+        ? "border-[var(--sp-legend-target-invalid-border)] bg-[var(--sp-legend-target-invalid-surface)] text-[var(--sp-legend-target-invalid-text)]"
         : "border-[var(--admin-marker-live-invalid-border)] bg-[var(--admin-marker-live-invalid-surface)] text-[var(--admin-marker-live-invalid-text)]"
       : "",
     searchProminent && !selected
       ? adminMarker
-        ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-2 ring-[var(--admin-marker-search-ring)] shadow-[0_8px_18px_rgba(158,47,6,0.20),inset_0_1px_0_rgba(255,255,255,0.78)]"
+        ? "border-[var(--sp-legend-search-border)] bg-[var(--sp-legend-search-surface)] text-[var(--sp-legend-search-text)] ring-2 ring-[var(--sp-legend-search-ring)] shadow-[0_8px_18px_rgba(158,47,6,0.20),inset_0_1px_0_rgba(255,255,255,0.78)]"
         // Search/filter match = the brand accent (was teal until
         // 2026-07-21). Text #9E2F06 on the #FBEAE1 fill = 6.27:1; the #D23F0A
         // edge = 4.03:1 on that fill and 4.71:1 on white, so the pill reads
@@ -335,26 +335,26 @@ function SeatMarkerComponent({
         // decoration, never the boundary that identifies the match.
         : "border-[var(--admin-marker-live-search-border)] bg-[var(--admin-marker-live-search-surface)] text-[var(--admin-marker-live-search-text)] ring-2 ring-[var(--admin-marker-live-search-ring)] shadow-[0_0_0_4px_rgba(255,87,21,0.20),0_10px_20px_-4px_rgba(210,63,10,0.35),inset_0_1px_0_rgba(255,255,255,0.78)]"
       : "",
-    highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--admin-marker-search-ring)]" : "outline outline-2 outline-offset-2 outline-[var(--admin-marker-live-positive-outline)]" : "",
-    swapSource || moveEmployeeSource ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[var(--admin-marker-live-positive-border)] bg-[var(--admin-marker-live-positive-surface)] text-[var(--admin-marker-live-positive-text)] ring-4 ring-[var(--admin-marker-live-positive-ring)]" : "",
-    swapTarget ? adminMarker ? "border-[var(--admin-marker-search-border)] bg-[var(--admin-marker-search-surface)] text-[var(--admin-marker-search-text)] ring-4 ring-[var(--admin-marker-search-ring)]" : "border-[var(--admin-marker-live-neutral-border)] bg-[var(--admin-marker-live-neutral-surface)] text-[var(--admin-marker-live-neutral-text)] ring-4 ring-[var(--admin-marker-live-neutral-ring)]" : "",
+    highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--sp-legend-search-ring)]" : "outline outline-2 outline-offset-2 outline-[var(--admin-marker-live-positive-outline)]" : "",
+    swapSource || moveEmployeeSource ? adminMarker ? "border-[var(--sp-legend-search-border)] bg-[var(--sp-legend-search-surface)] text-[var(--sp-legend-search-text)] ring-4 ring-[var(--sp-legend-search-ring)]" : "border-[var(--admin-marker-live-positive-border)] bg-[var(--admin-marker-live-positive-surface)] text-[var(--admin-marker-live-positive-text)] ring-4 ring-[var(--admin-marker-live-positive-ring)]" : "",
+    swapTarget ? adminMarker ? "border-[var(--sp-legend-search-border)] bg-[var(--sp-legend-search-surface)] text-[var(--sp-legend-search-text)] ring-4 ring-[var(--sp-legend-search-ring)]" : "border-[var(--admin-marker-live-neutral-border)] bg-[var(--admin-marker-live-neutral-surface)] text-[var(--admin-marker-live-neutral-text)] ring-4 ring-[var(--admin-marker-live-neutral-ring)]" : "",
     // v12 slice 7: on ADMIN this state means "Ask Planner chose this seat", so
     // it wears the AI aura — the only place AI blue touches a pill. The viewer
     // branch keeps its green: there `highlighted` means a search hit or a
     // people-list hover, which is not AI presence and must never look like it.
     plannerHighlighted ? adminMarker ? "border-[var(--sp-ai-border)] bg-[var(--sp-ai-marker-surface)] bg-[image:var(--sp-ai-marker-aura)] bg-no-repeat text-[var(--sp-ai-text)] shadow-marker-ai" : "border-[var(--admin-marker-live-positive-border)] bg-[var(--admin-marker-live-positive-surface)] text-[var(--admin-marker-live-positive-text)] ring-2 ring-[var(--admin-marker-live-planner-ring)] shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
-    (swapMode && !swapSource) || (moveEmployeeMode && !moveEmployeeSource) ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--admin-marker-search-ring)]" : "group-hover:ring-4 group-hover:ring-[var(--admin-marker-live-positive-ring)]" : ""
+    (swapMode && !swapSource) || (moveEmployeeMode && !moveEmployeeSource) ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--sp-legend-search-ring)]" : "group-hover:ring-4 group-hover:ring-[var(--admin-marker-live-positive-ring)]" : ""
   ].join(" ");
   const markerFocusClass = adminMarker
-    ? "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-marker-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-marker-focus-offset)]"
+    ? "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-focus-marker-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-focus-marker-offset)]"
     : "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--admin-marker-live-active-edge-soft)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/70";
   // Hover is a transient cue: it must never repaint a committed (selected) seat's
   // orange ring, so the hover border applies only to unselected markers.
   const tokenInteractionClass = adminMarker
-    ? `transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out ${selected ? "" : "group-hover:border-[var(--admin-marker-hover-border)] "}group-hover:brightness-105 group-hover:shadow-marker-hover group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--admin-marker-focus-ring)] motion-reduce:transition-none`
+    ? `transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out ${selected ? "" : "group-hover:border-[var(--sp-legend-hover-border)] "}group-hover:brightness-105 group-hover:shadow-marker-hover group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--sp-focus-marker-ring)] motion-reduce:transition-none`
     : "transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out group-hover:border-[var(--admin-marker-live-active-edge)] group-hover:brightness-105 group-hover:shadow-[0_6px_14px_rgba(23,26,29,0.20),inset_0_1px_0_rgba(255,255,255,0.82)] group-active:shadow-[0_2px_6px_rgba(23,26,29,0.16),inset_0_2px_4px_rgba(23,26,29,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--admin-marker-live-active-edge-soft)] motion-reduce:transition-none";
   const draftBadgeClass = adminMarker
-    ? "bg-[var(--admin-marker-draft-accent)] shadow-[0_2px_5px_rgba(16,17,20,0.24)]"
+    ? "bg-[var(--sp-legend-draft-accent)] shadow-[0_2px_5px_rgba(16,17,20,0.24)]"
     : "bg-[var(--admin-marker-live-draft-badge)] shadow-[0_2px_5px_rgba(23,26,29,0.24)]";
 
   const hitTargetSizeClass = tokenMode === "selected" ? "h-10 w-10" : tokenMode === "prominent" ? "h-9 w-9" : "h-8 w-8";

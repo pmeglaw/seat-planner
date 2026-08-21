@@ -439,26 +439,26 @@
   --sp-ai-accent-soft: rgba(138, 63, 252, 0.16);
 
   /* Marker LEGEND chips (the live pills are Task 6). */
-  --admin-marker-assigned-surface: #262626;
-  --admin-marker-assigned-border: #42be65;
-  --admin-marker-assigned-text: #f4f4f4;
-  --admin-marker-assigned-accent: rgba(66, 190, 101, 0.85);
-  --admin-marker-available-surface: #1f1f1f;
-  --admin-marker-available-border: #4a4a4a;
-  --admin-marker-available-text: #c6c6c6;
-  --admin-marker-available-accent: rgba(154, 154, 154, 0.5);
-  --admin-marker-reserved-surface: rgba(8, 189, 186, 0.16);
-  --admin-marker-reserved-border: #08bdba;
-  --admin-marker-reserved-text: #3ddbd9;
-  --admin-marker-reserved-accent: rgba(8, 189, 186, 0.85);
-  --admin-marker-unavailable-surface: #161616;
-  --admin-marker-unavailable-border: #333333;
-  --admin-marker-unavailable-text: #7a7a7a;
-  --admin-marker-unavailable-accent: rgba(122, 122, 122, 0.6);
-  --admin-marker-draft-surface: rgba(8, 189, 186, 0.10);
-  --admin-marker-draft-border: #08bdba;
-  --admin-marker-draft-text: #3ddbd9;
-  --admin-marker-search-halo: rgba(255, 87, 21, 0.32);
+  --sp-legend-assigned-surface: #262626;
+  --sp-legend-assigned-border: #42be65;
+  --sp-legend-assigned-text: #f4f4f4;
+  --sp-legend-assigned-accent: rgba(66, 190, 101, 0.85);
+  --sp-legend-available-surface: #1f1f1f;
+  --sp-legend-available-border: #4a4a4a;
+  --sp-legend-available-text: #c6c6c6;
+  --sp-legend-available-accent: rgba(154, 154, 154, 0.5);
+  --sp-legend-reserved-surface: rgba(8, 189, 186, 0.16);
+  --sp-legend-reserved-border: #08bdba;
+  --sp-legend-reserved-text: #3ddbd9;
+  --sp-legend-reserved-accent: rgba(8, 189, 186, 0.85);
+  --sp-legend-unavailable-surface: #161616;
+  --sp-legend-unavailable-border: #333333;
+  --sp-legend-unavailable-text: #7a7a7a;
+  --sp-legend-unavailable-accent: rgba(122, 122, 122, 0.6);
+  --sp-legend-draft-surface: rgba(8, 189, 186, 0.10);
+  --sp-legend-draft-border: #08bdba;
+  --sp-legend-draft-text: #3ddbd9;
+  --sp-legend-search-halo: rgba(255, 87, 21, 0.32);
 
   /* Live seat-pill overrides (Task 6, verified in-browser against the dark
      marker table in docs/superpowers/specs/2026-08-19-dark-mode-design.md;
@@ -746,60 +746,60 @@
      SeatMarker.tsx); these legend tokens only color the legend chips and
      result-row dots, so they mirror the marker hues. Do not point the
      markers at these. */
-  --admin-marker-assigned-surface: rgba(255, 255, 255, 0.96);
-  --admin-marker-assigned-border: rgba(29, 110, 65, 0.5);
-  --admin-marker-assigned-text: #1D6E41;
-  --admin-marker-assigned-accent: rgba(29, 110, 65, 0.85);
-  --admin-marker-available-surface: rgba(252, 252, 253, 0.96);
-  --admin-marker-available-border: rgba(31, 34, 37, 0.16);
-  --admin-marker-available-text: #696159;
-  --admin-marker-available-accent: rgba(110, 101, 90, 0.5);
-  --admin-marker-reserved-surface: rgba(220, 237, 234, 0.96);
-  --admin-marker-reserved-border: rgba(62, 111, 114, 0.4);
-  --admin-marker-reserved-text: #244E50;
-  --admin-marker-reserved-accent: rgba(62, 111, 114, 0.85);
-  --admin-marker-unavailable-surface: rgba(236, 238, 240, 0.96);
-  --admin-marker-unavailable-border: rgba(110, 101, 90, 0.26);
-  --admin-marker-unavailable-text: #6E655A;
-  --admin-marker-unavailable-accent: rgba(110, 101, 90, 0.6);
-  --admin-marker-selected-surface: rgba(255, 255, 255, 0.97);
-  --admin-marker-selected-border: var(--sp-button-primary);
-  --admin-marker-selected-text: #161616;
-  --admin-marker-selected-shadow: 0 0 0 2px rgba(255, 87, 21, 0.30), 0 0 0 3px rgba(22, 22, 22, 0.30), 0 10px 22px rgba(22, 22, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  --sp-legend-assigned-surface: rgba(255, 255, 255, 0.96);
+  --sp-legend-assigned-border: rgba(29, 110, 65, 0.5);
+  --sp-legend-assigned-text: #1D6E41;
+  --sp-legend-assigned-accent: rgba(29, 110, 65, 0.85);
+  --sp-legend-available-surface: rgba(252, 252, 253, 0.96);
+  --sp-legend-available-border: rgba(31, 34, 37, 0.16);
+  --sp-legend-available-text: #696159;
+  --sp-legend-available-accent: rgba(110, 101, 90, 0.5);
+  --sp-legend-reserved-surface: rgba(220, 237, 234, 0.96);
+  --sp-legend-reserved-border: rgba(62, 111, 114, 0.4);
+  --sp-legend-reserved-text: #244E50;
+  --sp-legend-reserved-accent: rgba(62, 111, 114, 0.85);
+  --sp-legend-unavailable-surface: rgba(236, 238, 240, 0.96);
+  --sp-legend-unavailable-border: rgba(110, 101, 90, 0.26);
+  --sp-legend-unavailable-text: #6E655A;
+  --sp-legend-unavailable-accent: rgba(110, 101, 90, 0.6);
+  --sp-legend-selected-surface: rgba(255, 255, 255, 0.97);
+  --sp-legend-selected-border: var(--sp-button-primary);
+  --sp-legend-selected-text: #161616;
+  --sp-legend-selected-shadow: 0 0 0 2px rgba(255, 87, 21, 0.30), 0 0 0 3px rgba(22, 22, 22, 0.30), 0 10px 22px rgba(22, 22, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
   /* Re-hued off the teal onto the brand accent 2026-07-21, and deliberately
      decoupled from --sp-status-neutral-surface: info is slated to fold into neutral
      gray, and the search highlight must not follow it there. */
-  --admin-marker-search-surface: var(--sp-brand-subtle);
-  --admin-marker-search-border: var(--sp-button-primary);
-  --admin-marker-search-text: var(--sp-brand-text);
-  --admin-marker-search-ring: rgba(255, 87, 21, 0.44);
-  --admin-marker-search-halo: rgba(255, 87, 21, 0.32);
-  --admin-marker-draft-surface: rgba(210, 63, 10, 0.10);
-  --admin-marker-draft-border: rgba(210, 63, 10, 0.60);
-  --admin-marker-draft-text: #244E50;
-  --admin-marker-draft-accent: var(--sp-button-primary);
+  --sp-legend-search-surface: var(--sp-brand-subtle);
+  --sp-legend-search-border: var(--sp-button-primary);
+  --sp-legend-search-text: var(--sp-brand-text);
+  --sp-legend-search-ring: rgba(255, 87, 21, 0.44);
+  --sp-legend-search-halo: rgba(255, 87, 21, 0.32);
+  --sp-legend-draft-surface: rgba(210, 63, 10, 0.10);
+  --sp-legend-draft-border: rgba(210, 63, 10, 0.60);
+  --sp-legend-draft-text: #244E50;
+  --sp-legend-draft-accent: var(--sp-button-primary);
   /* Neutral: a hover cue is transient feedback, not a status, so it should not
      borrow a status hue. (Dormant — the shipped viewer branch hovers to the
      accent; see the note at SeatMarker.tsx:130.) */
-  --admin-marker-hover-border: #8E8276;
-  --admin-marker-hover-shadow: 0 6px 14px rgba(22, 22, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  --sp-legend-hover-border: #8E8276;
+  --sp-legend-hover-shadow: 0 6px 14px rgba(22, 22, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
   /* PR-A: solid #D23F0A replaces rgba(255,87,21,.75) — same 3:1 reasoning as
      --sp-focus (this token serves the dormant admin marker arm;
      the live pills' focus ring rides --admin-marker-live-active-edge-soft).
      The white offset ring below is unchanged — it carries the separation
      against the busy raster. */
-  --admin-marker-focus-ring: #D23F0A;
-  --admin-marker-focus-offset: rgba(255, 255, 255, 0.70);
-  --admin-marker-move-origin-surface: #F7F6F2;
-  --admin-marker-move-origin-border: #B8AEA2;
-  --admin-marker-move-origin-text: #55504A;
-  --admin-marker-target-valid-surface: #DEF3E4;
-  --admin-marker-target-valid-border: #1D6E41;
-  --admin-marker-target-valid-text: #1D6E41;
-  --admin-marker-target-invalid-surface: #ffffff;
-  --admin-marker-target-invalid-border: #8E8276;
-  --admin-marker-target-invalid-text: #6E655A;
-  --admin-marker-target-invalid-accent: #B3232C;
+  --sp-focus-marker-ring: #D23F0A;
+  --sp-focus-marker-offset: rgba(255, 255, 255, 0.70);
+  --sp-legend-move-origin-surface: #F7F6F2;
+  --sp-legend-move-origin-border: #B8AEA2;
+  --sp-legend-move-origin-text: #55504A;
+  --sp-legend-target-valid-surface: #DEF3E4;
+  --sp-legend-target-valid-border: #1D6E41;
+  --sp-legend-target-valid-text: #1D6E41;
+  --sp-legend-target-invalid-surface: #ffffff;
+  --sp-legend-target-invalid-border: #8E8276;
+  --sp-legend-target-invalid-text: #6E655A;
+  --sp-legend-target-invalid-accent: #B3232C;
 
   /* Live seat-pill palette — the values SeatMarker's shipped (viewer-variant)
      branch actually renders, promoted 2026-08-05 from raw hex in
@@ -808,7 +808,7 @@
      replaced — full-strength colors alias the --sp-color-* ramps, alpha
      variants derive from the same ramps via color-mix, and the handful of
      marker-only inks/surfaces below carry their old literal values under a
-     name. Distinct from the --admin-marker-* legend mirrors above, which
+     name. Distinct from the --sp-legend-* mirrors above, which
      stay legend-only. Contrast notes live at the use sites in
      SeatMarker.tsx. */
   --admin-marker-live-ink: #453D33;

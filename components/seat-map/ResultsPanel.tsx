@@ -18,10 +18,10 @@ export type AdminResultCard = {
 };
 
 const STATUS_DOT_CLASS: Record<SeatStatus, string> = {
-  assigned: "bg-[var(--admin-marker-assigned-accent)]",
-  available: "bg-[var(--admin-marker-available-accent)]",
-  reserved: "bg-[var(--admin-marker-reserved-accent)]",
-  unavailable: "bg-[var(--admin-marker-unavailable-accent)]"
+  assigned: "bg-[var(--sp-legend-assigned-accent)]",
+  available: "bg-[var(--sp-legend-available-accent)]",
+  reserved: "bg-[var(--sp-legend-reserved-accent)]",
+  unavailable: "bg-[var(--sp-legend-unavailable-accent)]"
 };
 
 type ResultsPanelProps = {
