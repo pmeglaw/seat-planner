@@ -93,6 +93,26 @@ all deferred minors triaged ship-as-is. Two items worth keeping:
   rejection reaches the machinery #411 built; the test drives that real
   path end to end.
 
+## 2026-08-21 finding recorded but NOT planned (from the focus-follows-surface pass)
+
+- **B-04 Ask Planner drawer: suggested-prompt chips and the Close button never
+  paint their focus ring** — measured live 2026-08-21, and re-measured on main
+  via `git stash` (pre-existing, NOT introduced by the `data-chrome="dark"`
+  focus scoping): with the chip keyboard-focused and `:focus-visible`
+  matching, `--tw-ring-shadow` computes to the correct `0 0 0 4px <ring>` but
+  the element's `box-shadow` stays the transparent fallback stack, and the
+  rendered pixels show no ring. Pattern: `focus-visible:ring-4` with neither
+  `ring-inset` nor any `ring-offset-*` utility fails; rings WITH an offset
+  (design-system Button in the same drawer) and inset rings (chrome doctrine)
+  render fine. Keyboard users get zero visible focus on those chips today —
+  a real WCAG 2.4.7 gap. Fix candidate: add `ring-inset` or a
+  `ring-offset-2 ring-offset-[var(--admin-chrome-bg)]` pair to the drawer's
+  Close button (`AskPlannerDrawer.tsx:274`), prompt chips (`:299`), highlight
+  rows (`:455`), and recent-question chips (`:483`), then re-verify in the
+  live app (computed `box-shadow` AND a screenshot crop — computed ring vars
+  alone are not proof). Root cause of the var-set-but-unconsumed behavior
+  unexplained; diagnose before trusting any wider sweep. S / LOW.
+
 ## 2026-08-13 findings recorded but NOT planned this cycle
 
 User scoped this cycle to the security findings. Everything below verified at

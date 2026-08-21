@@ -51,6 +51,39 @@ test("focus tokens keep a dark override (the light ring drops below 3:1 on hover
   }
 });
 
+test("focus follows the surface: dark-chrome regions re-anchor both focus tokens", () => {
+  // Some regions paint the dark chrome in BOTH app themes (top bar, rail,
+  // viewer chrome strip, SeatMap fallback header, Ask Planner drawer). The
+  // light focus value fails 3:1 on the chrome's hovered fills (#333333), so a
+  // [data-chrome="dark"] marker scopes the dark focus value to those subtrees
+  // regardless of theme. This pins the marker block and the region roots —
+  // dropping either silently ships a sub-3:1 ring onto dark chrome in light
+  // theme.
+  const markerBlock = globalsCss.match(/\[data-chrome="dark"\]\s*\{[^}]*\}/);
+  assert.ok(markerBlock, 'globals.css must scope focus tokens under [data-chrome="dark"]');
+  for (const token of ["--sp-focus-ring-color", "--admin-focus"]) {
+    assert.ok(
+      markerBlock[0].includes(`${token}:`),
+      `the [data-chrome="dark"] block must re-declare ${token}`
+    );
+  }
+
+  const markedRoots = [
+    ["components", "ui", "AppTopBar.tsx"],
+    ["components", "ui", "AppRail.tsx"],
+    ["components", "seat-map", "SeatMap.tsx"],
+    ["components", "seat-map", "ViewerSeatFinder.tsx"],
+    ["components", "seat-map", "AskPlannerDrawer.tsx"]
+  ];
+  for (const parts of markedRoots) {
+    const source = readFileSync(join(repoRoot, ...parts), "utf8");
+    assert.ok(
+      source.includes('data-chrome="dark"'),
+      `${parts.join("/")} paints dark chrome in both themes and must mark its root with data-chrome="dark"`
+    );
+  }
+});
+
 function collectTsxFiles(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     const path = join(dir, entry);

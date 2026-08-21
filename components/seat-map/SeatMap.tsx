@@ -2881,7 +2881,7 @@ export function SeatMap({
           {shellSlots.right && createPortal(barActionCluster, shellSlots.right)}
         </>
       ) : (
-        <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]">
+        <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] pl-3 text-[var(--admin-chrome-text)]" data-chrome="dark">
           <div className="flex min-w-0 shrink-0 items-center gap-2">
             <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
               {/* Brand monogram straight on the dark bar — the 2026 mark carries its own contrast. */}

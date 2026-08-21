@@ -255,6 +255,7 @@ export function AskPlannerDrawer({
         aria-modal="true"
         aria-labelledby="ask-planner-title"
         aria-describedby="ask-planner-description"
+        data-chrome="dark"
         className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden border border-[var(--admin-ai-panel-border)] bg-[var(--admin-chrome-bg)] bg-[image:var(--admin-ai-glow)] bg-no-repeat text-[var(--admin-chrome-text)] shadow-panel focus-visible:outline-none motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[calc(var(--admin-chrome-h)_+_12px)] sm:z-50 sm:max-h-[calc(100vh_-_var(--admin-chrome-h)_-_20px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
       >
         <div className="shrink-0 border-b border-[var(--admin-chrome-border)] px-4 py-3">
