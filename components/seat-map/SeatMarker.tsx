@@ -342,7 +342,7 @@ function SeatMarkerComponent({
     // it wears the AI aura — the only place AI blue touches a pill. The viewer
     // branch keeps its green: there `highlighted` means a search hit or a
     // people-list hover, which is not AI presence and must never look like it.
-    plannerHighlighted ? adminMarker ? "border-[var(--admin-ai-border)] bg-[var(--admin-ai-marker-surface)] bg-[image:var(--admin-ai-marker-aura)] bg-no-repeat text-[var(--admin-ai-text)] shadow-marker-ai" : "border-[var(--admin-marker-live-positive-border)] bg-[var(--admin-marker-live-positive-surface)] text-[var(--admin-marker-live-positive-text)] ring-2 ring-[var(--admin-marker-live-planner-ring)] shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
+    plannerHighlighted ? adminMarker ? "border-[var(--sp-ai-border)] bg-[var(--sp-ai-marker-surface)] bg-[image:var(--sp-ai-marker-aura)] bg-no-repeat text-[var(--sp-ai-text)] shadow-marker-ai" : "border-[var(--admin-marker-live-positive-border)] bg-[var(--admin-marker-live-positive-surface)] text-[var(--admin-marker-live-positive-text)] ring-2 ring-[var(--admin-marker-live-planner-ring)] shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
     (swapMode && !swapSource) || (moveEmployeeMode && !moveEmployeeSource) ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--admin-marker-search-ring)]" : "group-hover:ring-4 group-hover:ring-[var(--admin-marker-live-positive-ring)]" : ""
   ].join(" ");
   const markerFocusClass = adminMarker
@@ -501,7 +501,7 @@ function SeatMarkerComponent({
         {plannerHighlighted && adminMarker && (
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute -right-2 -top-[7px] rounded-[2px] border border-[var(--admin-ai-border)] bg-[var(--admin-ai-marker-surface)] px-[3px] text-[7.5px] font-bold leading-[1.4] tracking-[0.04em] text-[var(--admin-ai-text)]"
+            className="pointer-events-none absolute -right-2 -top-[7px] rounded-[2px] border border-[var(--sp-ai-border)] bg-[var(--sp-ai-marker-surface)] px-[3px] text-[7.5px] font-bold leading-[1.4] tracking-[0.04em] text-[var(--sp-ai-text)]"
           >
             AI
           </span>

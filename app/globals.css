@@ -270,7 +270,6 @@
    pins the marker block and the region roots. */
 [data-chrome="dark"] {
   --sp-focus: #FF8A5C;
-  --admin-focus: #FF8A5C;
 }
 
 /* ---------------------------------------------------------------------------
@@ -365,12 +364,12 @@
   --sp-table-header: #262626;
   --sp-table-row-border: rgba(255, 255, 255, 0.10);
 
-  /* fixwave 2: --admin-secondary family has zero current JSX consumers
+  /* fixwave 2: --sp-button-secondary family has zero current JSX consumers
      (grepped) but is a literal-hex gap like the groups above — filled in for
      completeness/future-proofing rather than left silently wrong. */
-  --admin-secondary: #c6c6c6;
-  --admin-secondary-hover: #e8e8e8;
-  --admin-secondary-soft: rgba(255, 255, 255, 0.10);
+  --sp-button-secondary: #c6c6c6;
+  --sp-button-secondary-hover: #e8e8e8;
+  --sp-button-secondary-soft: rgba(255, 255, 255, 0.10);
 
   /* Map mat (fixwave finding 1): sits one step below the #161616 canvas so
      the inverted raster reads as a lightbox floating on the dark chrome,
@@ -381,87 +380,63 @@
   /* Brand orange: hue unchanged, pairings swapped for a dark ground. */
   /* PR-A: dark focus follows the :root dark ring — #FF8A5C, ≥5.4:1 on every
      dark layer (see the --sp-focus notes). */
-  --admin-focus: #FF8A5C;
-  --admin-primary-soft: rgba(255, 87, 21, 0.16);
-  --admin-primary-border: rgba(255, 87, 21, 0.45);
-  --admin-primary-on-soft: #FF8A5C;
-  --admin-paper: rgba(255, 87, 21, 0.12);
+  --sp-brand-wash: rgba(255, 87, 21, 0.16);
+  --sp-brand-border: rgba(255, 87, 21, 0.45);
+  --sp-brand-text: #FF8A5C;
+  --sp-brand-subtle: rgba(255, 87, 21, 0.12);
 
   /* fixwave 2: draft-trail overlay (design_handoff_swap_trail pinned hex,
      not this file's interaction ladder — see the light block's note). Origin
      ring re-pointed to --sp-text-helper's dark value so it keeps tracking
      that pairing by design, same as light. */
-  --admin-draft-trail: #FF8A5C;
-  --admin-draft-trail-origin: #9a9a9a;
+  --sp-trail: #FF8A5C;
+  --sp-trail-origin: #9a9a9a;
 
   /* Raw status dots/bars. */
-  --admin-status-ok: #42be65;
-  --admin-status-warn: #08bdba;
-  --admin-status-bad: #fa4d56;
-  --admin-status-neutral: #8d8d8d;
-  --admin-status-warn-rgb: 8 189 186;
+  --sp-status-success-mark: #42be65;
+  --sp-status-pending-mark: #08bdba;
+  --sp-status-danger-mark: #fa4d56;
+  --sp-status-neutral-mark: #8d8d8d;
 
   /* Status families → dark partners (bright text + alpha soft). */
-  --admin-success: #42be65;
-  --admin-success-rgb: 66 190 101;
-  --admin-success-soft: rgba(66, 190, 101, 0.14);
-  --admin-warning: #08bdba;
-  --admin-warning-text: #3ddbd9;
-  --admin-warning-text-rgb: 61 219 217;
-  --admin-warning-soft: rgba(8, 189, 186, 0.14);
-  --admin-error: #fa4d56;
-  --admin-danger: #fa4d56;
-  --admin-danger-soft: rgba(250, 77, 86, 0.14);
-  --admin-danger-soft-hover: rgba(250, 77, 86, 0.22);
-  --admin-info: #c6c6c6;
-  --admin-info-rgb: 198 198 198;
-  --admin-info-soft: rgba(255, 255, 255, 0.08);
-  --admin-analytics: #c6c6c6;
+  --sp-status-danger-surface-hover: rgba(250, 77, 86, 0.22);
 
-  --admin-state-clean-bg: rgba(66, 190, 101, 0.14);
-  --admin-state-clean-border: rgba(66, 190, 101, 0.40);
-  --admin-state-clean-text: #42be65;
-  --admin-state-dirty-border: rgba(8, 189, 186, 0.40);
-  --admin-state-dirty-text: #3ddbd9;
-  --admin-state-saving-border: rgba(255, 255, 255, 0.14);
+  --sp-editor-clean-bg: rgba(66, 190, 101, 0.14);
+  --sp-editor-clean-border: rgba(66, 190, 101, 0.40);
+  --sp-editor-clean-text: #42be65;
+  --sp-editor-dirty-border: rgba(8, 189, 186, 0.40);
+  --sp-editor-dirty-text: #3ddbd9;
+  --sp-editor-saving-border: rgba(255, 255, 255, 0.14);
   /* fixwave 2: found gap — light's saved-border (now color-mix-derived from
-     --admin-status-ok) was the only state-* border with no dark partner
-     (bg/text are var() aliases that already follow --admin-success-soft/
-     --admin-success). Matches the same success-family alpha already used for
+     --sp-status-success-mark) was the only state-* border with no dark partner
+     (bg/text are var() aliases that already follow --sp-status-success-surface/
+     --sp-status-success-strong). Matches the same success-family alpha already used for
      clean-border/diff-assigned-border above. */
-  --admin-state-saved-border: rgba(66, 190, 101, 0.40);
-  --admin-state-error-bg: rgba(250, 77, 86, 0.14);
-  --admin-state-error-border: rgba(250, 77, 86, 0.40);
-  --admin-state-error-text: #ff8389;
-  --admin-state-danger-border: rgba(250, 77, 86, 0.40);
-  --admin-state-danger-text: #ff8389;
+  --sp-editor-saved-border: rgba(66, 190, 101, 0.40);
+  --sp-editor-error-bg: rgba(250, 77, 86, 0.14);
+  --sp-editor-error-border: rgba(250, 77, 86, 0.40);
+  --sp-editor-error-text: #ff8389;
+  --sp-editor-danger-border: rgba(250, 77, 86, 0.40);
+  --sp-editor-danger-text: #ff8389;
 
-  --admin-publish-viewer-impact-border: rgba(255, 255, 255, 0.14);
+  --sp-publish-viewer-impact-border: rgba(255, 255, 255, 0.14);
 
-  --admin-diff-assigned-bg: rgba(66, 190, 101, 0.14);
-  --admin-diff-assigned-border: rgba(66, 190, 101, 0.40);
-  --admin-diff-assigned-text: #42be65;
-  --admin-diff-vacated-bg: rgba(250, 77, 86, 0.14);
-  --admin-diff-vacated-border: rgba(250, 77, 86, 0.40);
   --admin-diff-vacated-text: #ff8389;
-  --admin-diff-reassigned-bg: rgba(8, 189, 186, 0.14);
-  --admin-diff-reassigned-border: rgba(8, 189, 186, 0.40);
-  --admin-diff-reassigned-text: #3ddbd9;
 
   /* fixwave 2: AI text (Carbon-for-AI family, light literal #0043ce is a
      text-role hex, not var()). Dark chrome pair per the light block's own
      contrast note: #78a9ff = 7.68:1 on #161616, 6.43:1 on #262626. Border/
      ring/wash siblings stay untouched — already alpha- or rgba-based, so
-     they already sit correctly on a dark ground; --admin-ai-border is the
+     they already sit correctly on a dark ground; --sp-ai-border is the
      one solid literal left in that family and was checked (same #4589ff hue
      is already used as --sp-chrome-info on the always-dark chrome without
      issue) rather than changed. */
-  --admin-ai-text: #78a9ff;
-  --admin-ai-marker-surface: #262626; /* AI pill/chip fill; #78a9ff text = 6.43:1 here */
+  --sp-ai-text: #78a9ff;
+  --sp-ai-marker-surface: #262626; /* AI pill/chip fill; #78a9ff text = 6.43:1 here */
   /* Ask Planner card purple, dark partners: #a56eff on #161616 ≈ 6.0:1 (AA);
      the soft wash is an alpha tint over the dark surface, no text on it. */
-  --admin-ai-accent: #a56eff;
-  --admin-ai-accent-soft: rgba(138, 63, 252, 0.16);
+  --sp-ai-accent: #a56eff;
+  --sp-ai-accent-soft: rgba(138, 63, 252, 0.16);
 
   /* Marker LEGEND chips (the live pills are Task 6). */
   --admin-marker-assigned-surface: #262626;
@@ -555,10 +530,10 @@
        contrast regression, so it was left alone. */
 
   /* Elevation: deepened, overlays only (borders separate everywhere else). */
-  --admin-elevation-2-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --admin-elevation-3-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
-  --admin-elevation-4-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-  --admin-elevation-5-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --sp-elevation-2: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sp-elevation-3: 0 6px 16px rgba(0, 0, 0, 0.5);
+  --sp-elevation-4: 0 12px 40px rgba(0, 0, 0, 0.6);
+  --sp-elevation-5: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
 
 /* Floor-plan raster on dark: CSS-only lightbox treatment (owner decision
@@ -634,22 +609,15 @@
      fills hover to cta-hover (#B83708 = 5.85:1), never primary-hover
      (#E64E13 = 3.84:1 vs white — fails AA text; kept for non-text use and
      ink-on-accent, ink on #E64E13 = 4.90:1). Measured 2026-07-21. */
-  --admin-primary: #FF5715;
-  --admin-primary-rgb: 255 87 21;
-  --admin-primary-hover: #E64E13;
-  --admin-primary-cta: #D23F0A;
-  --admin-primary-cta-hover: #B83708;
-  --admin-primary-cta-active: #9E2F06;
-  --admin-primary-on-soft: #9E2F06;
-  --admin-primary-ink: #161616;
+  --sp-brand-hover: #E64E13;
+  --sp-brand-text: #9E2F06;
+  --sp-text-on-brand: #161616;
   /* Identity/brand chip fill — sampled from the monogram artwork (#FC672A),
      not the interaction orange: the avatar ties to the mark, CTAs stay CTA.
      Ink #161616 on it = 6.13:1 (measured 2026-07-23). */
-  --admin-brand: #FC672A;
-  --admin-primary-soft: rgba(255, 87, 21, 0.10);
-  --admin-primary-border: rgba(255, 87, 21, 0.40);
-  --admin-copper: #D23F0A;
-  --admin-paper: #FBEAE1;
+  --sp-brand-mark: #FC672A;
+  --sp-brand-wash: rgba(255, 87, 21, 0.10);
+  --sp-brand-border: rgba(255, 87, 21, 0.40);
   /* Draft-trail overlay (design_handoff_swap_trail, 2026-08-15): the flowing
      route between a pending swap/move pair on the admin map. The handoff pins
      #B85207 — the login-1e copper, deliberately NOT this file's #FF5715 /
@@ -659,22 +627,21 @@
      SVG over the plan — no text-contrast floor applies. The origin ring
      matches --sp-text-helper's #6E655A by design but stays independent, so
      a text retune can't silently move the ring. */
-  --admin-draft-trail: #B85207;
-  --admin-draft-trail-origin: #6E655A;
+  --sp-trail: #B85207;
+  --sp-trail-origin: #6E655A;
 
-  --admin-secondary: #55504A;
-  --admin-secondary-hover: #393939;
-  --admin-secondary-soft: rgba(82, 82, 82, 0.12);
+  --sp-button-secondary: #55504A;
+  --sp-button-secondary-hover: #393939;
+  --sp-button-secondary-soft: rgba(82, 82, 82, 0.12);
 
   /* Status hues (shell spec): ok #1D6E41 · warn #009d9a · bad #B3232C for
      dots/bars/graphics (all ≥3:1 on white; the teal is 3.3:1 — non-text only,
      it pairs with a dark text partner). Text-bearing variants below are
      darkened for AA. */
-  --admin-status-ok: #1D6E41;
-  --admin-status-warn: #009d9a;
-  --admin-status-bad: #B3232C;
-  --admin-status-neutral: #8E8276;
-  --admin-status-warn-rgb: 0 157 154;
+  --sp-status-success-mark: #1D6E41;
+  --sp-status-pending-mark: #009d9a;
+  --sp-status-danger-mark: #B3232C;
+  --sp-status-neutral-mark: #8E8276;
 
   /* Chrome keyboard-hint blue (near-dup of the AI hexes, kept separate —
      roles differ: "hint", not "AI presence"; PASS1 ⚑11). The rest of the old
@@ -688,82 +655,67 @@
      7.79:1 on white, 7.21:1 on #F7F6F2; border #4589ff = 3.35:1 on white
      (graphics ≥3:1, not for text). Dark-chrome pair: #78a9ff = 7.68:1 on
      #161616, 6.43:1 on #262626. Measured 2026-07-31. */
-  --admin-ai-border: #4589ff;
-  --admin-ai-text: #0043ce;
-  --admin-ai-marker-surface: #ffffff;
-  --admin-ai-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.12), rgba(255, 255, 255, 0) 70%);
-  --admin-ai-marker-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.14), rgba(255, 255, 255, 0) 60%);
-  --admin-ai-ring: rgba(69, 137, 255, 0.45);
-  --admin-ai-ring-soft: rgba(69, 137, 255, 0.18);
-  --admin-marker-ai-shadow: 0 0 0 2px rgba(69, 137, 255, 0.45), 0 0 0 6px rgba(69, 137, 255, 0.18), 0 10px 22px rgba(69, 137, 255, 0.35);
-  --admin-ai-chrome-text: #78a9ff;
+  --sp-ai-border: #4589ff;
+  --sp-ai-text: #0043ce;
+  --sp-ai-marker-surface: #ffffff;
+  --sp-ai-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.12), rgba(255, 255, 255, 0) 70%);
+  --sp-ai-marker-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.14), rgba(255, 255, 255, 0) 60%);
+  --sp-ai-ring: rgba(69, 137, 255, 0.45);
+  --sp-ai-ring-soft: rgba(69, 137, 255, 0.18);
+  --sp-ai-marker-shadow: 0 0 0 2px rgba(69, 137, 255, 0.45), 0 0 0 6px rgba(69, 137, 255, 0.18), 0 10px 22px rgba(69, 137, 255, 0.35);
+  --sp-ai-chrome-text: #78a9ff;
   /* Hovered AI foreground (chrome-unification 2026-08-20): one step brighter
      (Carbon blue-30) so the AI items' foreground responds to hover like every
      other chrome control. ~8.7:1 on #262626 hover fill — comfortably AA. */
-  --admin-ai-chrome-text-hover: #a6c8ff;
-  --admin-ai-chrome-border: #78a9ff;
-  --admin-ai-panel-border: rgba(120, 169, 255, 0.35);
-  --admin-ai-glow: linear-gradient(180deg, rgba(69, 137, 255, 0.10), rgba(69, 137, 255, 0) 140px);
-  --admin-ai-row: rgba(69, 137, 255, 0.08);
+  --sp-ai-chrome-text-hover: #a6c8ff;
+  --sp-ai-chrome-border: #78a9ff;
+  --sp-ai-panel-border: rgba(120, 169, 255, 0.35);
+  --sp-ai-glow: linear-gradient(180deg, rgba(69, 137, 255, 0.10), rgba(69, 137, 255, 0) 140px);
+  --sp-ai-row: rgba(69, 137, 255, 0.08);
   /* Inspector Ask Planner card (2026-08-19 Carbon handoff): semantic-AI
      purple, distinct from the blue AI chrome family above. #8a3ffc on white
      = 4.97:1 (AA for the card's 11px-bold eyebrow and 13px body); the soft
      wash carries no text of its own. */
-  --admin-ai-accent: #8a3ffc;
-  --admin-ai-accent-soft: #f6f2ff;
+  --sp-ai-accent: #8a3ffc;
+  --sp-ai-accent-soft: #f6f2ff;
 
-  --admin-success: #1D6E41;
-  --admin-success-rgb: 29 110 65;
-  --admin-success-soft: #DEF3E4;
-  --admin-warning: #009d9a;
-  --admin-warning-text: #0F5754;
-  --admin-warning-text-rgb: 15 87 84;
-  --admin-warning-soft: #DDF0EF;
-  --admin-error: #B3232C;
-  --admin-danger: #B3232C;
-  --admin-danger-soft: #FBE9EA;
   /* v12 tile hovers. A tile is a large click target, so its hover is one step
      off its own resting fill rather than the surface-alt jump rows use.
      #B3232C on #F8DEE0 = 5.2:1; #161616 on #FBFAF8 = 16.2:1. */
-  --admin-danger-soft-hover: #F8DEE0;
+  --sp-status-danger-surface-hover: #F8DEE0;
   /* Neutral, matching --sp-status-neutral-strong above — see the note there. */
-  --admin-info: #55504A;
-  --admin-info-rgb: 85 80 74;
-  --admin-info-soft: #F7F6F2;
-  --admin-analytics: #55504A;
   /* PR-A (2026-08-21): #D23F0A, not the raw #FF5715 — see the
      --sp-focus note in :root for the measurements (the raw brand
      fails 3:1 on #F4F4F4 / #E8E8E8 / #E7E1D8). Dark block overrides to
      #FF8A5C. */
-  --admin-focus: #D23F0A;
 
-  --admin-state-clean-bg: #DEF3E4;
-  /* Borders derive from --admin-status-ok so they can never drift from the
+  --sp-editor-clean-bg: #DEF3E4;
+  /* Borders derive from --sp-status-success-mark so they can never drift from the
      status hex again (the old literal rgba(36,161,72,…) was the retired
      #24A148 green — twin-resolution ruling 2026-08-21). */
-  --admin-state-clean-border: color-mix(in srgb, var(--admin-status-ok) 36%, transparent);
-  --admin-state-clean-text: #1D6E41;
-  --admin-state-dirty-bg: var(--admin-warning-soft);
-  --admin-state-dirty-border: rgba(62, 111, 114, 0.46);
-  --admin-state-dirty-text: #0F5754;
-  --admin-state-saving-bg: var(--admin-info-soft);
-  --admin-state-saving-border: rgba(141, 141, 141, 0.36);
-  --admin-state-saving-text: var(--admin-info);
-  --admin-state-saved-bg: var(--admin-success-soft);
-  --admin-state-saved-border: color-mix(in srgb, var(--admin-status-ok) 36%, transparent);
-  --admin-state-saved-text: var(--admin-success);
-  --admin-state-error-bg: #FBE9EA;
-  --admin-state-error-border: rgba(179, 35, 44, 0.38);
-  --admin-state-error-text: #B3232C;
-  --admin-state-danger-bg: var(--admin-danger-soft);
-  --admin-state-danger-border: rgba(162, 25, 31, 0.34);
-  --admin-state-danger-text: var(--admin-danger);
-  --admin-state-neutral-bg: var(--sp-background);
-  --admin-state-neutral-border: var(--sp-border-subtle);
-  --admin-state-neutral-text: var(--sp-text-secondary);
+  --sp-editor-clean-border: color-mix(in srgb, var(--sp-status-success-mark) 36%, transparent);
+  --sp-editor-clean-text: #1D6E41;
+  --sp-editor-dirty-bg: var(--sp-status-pending-surface);
+  --sp-editor-dirty-border: rgba(62, 111, 114, 0.46);
+  --sp-editor-dirty-text: #0F5754;
+  --sp-editor-saving-bg: var(--sp-status-neutral-surface);
+  --sp-editor-saving-border: rgba(141, 141, 141, 0.36);
+  --sp-editor-saving-text: var(--sp-status-neutral-strong);
+  --sp-editor-saved-bg: var(--sp-status-success-surface);
+  --sp-editor-saved-border: color-mix(in srgb, var(--sp-status-success-mark) 36%, transparent);
+  --sp-editor-saved-text: var(--sp-status-success-strong);
+  --sp-editor-error-bg: #FBE9EA;
+  --sp-editor-error-border: rgba(179, 35, 44, 0.38);
+  --sp-editor-error-text: #B3232C;
+  --sp-editor-danger-bg: var(--sp-status-danger-surface);
+  --sp-editor-danger-border: rgba(162, 25, 31, 0.34);
+  --sp-editor-danger-text: var(--sp-status-danger-strong);
+  --sp-editor-neutral-bg: var(--sp-background);
+  --sp-editor-neutral-border: var(--sp-border-subtle);
+  --sp-editor-neutral-text: var(--sp-text-secondary);
 
-  --admin-publish-ready-bg: var(--admin-primary-soft);
-  --admin-publish-ready-border: var(--admin-primary-border);
+  --sp-publish-ready-bg: var(--sp-brand-wash);
+  --sp-publish-ready-border: var(--sp-brand-border);
   /* on-soft ink, NOT the cta fill: every use of this token is TEXT on the
      soft/tinted ready surfaces, where the cta orange #D23F0A measured only
      4.18:1 (on #FFEEE8) / ~4.3:1 (on the badge's blended #DDF0EF) — both
@@ -771,26 +723,23 @@
      e2e-auth publish-review axe scan 2026-08-04; the cta hex is fine on
      white (4.71:1) which is how it slipped through the button-focused
      v12 slice-9 pass. */
-  --admin-publish-ready-text: var(--admin-primary-on-soft);
-  --admin-publish-no-change-bg: var(--admin-state-clean-bg);
-  --admin-publish-no-change-border: var(--admin-state-clean-border);
-  --admin-publish-no-change-text: var(--admin-state-clean-text);
-  --admin-publish-viewer-impact-bg: var(--admin-info-soft);
-  --admin-publish-viewer-impact-border: rgba(141, 141, 141, 0.34);
-  --admin-publish-viewer-impact-text: var(--admin-info);
+  --sp-publish-ready-text: var(--sp-brand-text);
+  --sp-publish-no-change-bg: var(--sp-editor-clean-bg);
+  --sp-publish-no-change-border: var(--sp-editor-clean-border);
+  --sp-publish-no-change-text: var(--sp-editor-clean-text);
+  --sp-publish-viewer-impact-bg: var(--sp-status-neutral-surface);
+  --sp-publish-viewer-impact-border: rgba(141, 141, 141, 0.34);
+  --sp-publish-viewer-impact-text: var(--sp-status-neutral-strong);
 
-  /* Publish diff tags (v12 slice 5). Text-on-bg contrast, measured:
-     #284C3B on #DEF3E4 = 8.3:1 · #B3232C on #FBE9EA = 5.6:1 ·
+  /* Publish diff tags (v12 slice 5) merged onto the status families in the
+     PASS1 renames — every pair was value-identical in BOTH themes except this
+     one: vacated TEXT is the danger STRONG hex in light (#B3232C, 5.6:1 on
+     the #FBE9EA surface) but the danger TEXT hex in dark (#ff8389), so no
+     single status role matches it and it stays parked under its old name
+     (NOTES.md; the §3.4 "values verified identical" claim was light-only).
+     Other measured pairs, unchanged: #284C3B on #DEF3E4 = 8.3:1 ·
      #0F5754 on #DDF0EF ≈ 7.6:1 — all ≥ 4.5:1 body-text floor. */
-  --admin-diff-assigned-bg: #DEF3E4;
-  --admin-diff-assigned-border: #A9D7B8;
-  --admin-diff-assigned-text: #284C3B;
-  --admin-diff-vacated-bg: #FBE9EA;
-  --admin-diff-vacated-border: #E8A5A9;
   --admin-diff-vacated-text: #B3232C;
-  --admin-diff-reassigned-bg: #DDF0EF;
-  --admin-diff-reassigned-border: #93CFCC;
-  --admin-diff-reassigned-text: #0F5754;
 
   /* Marker-legend tokens. The map pills themselves render via the
      --admin-marker-live-* family below (formerly raw viewer-variant hex in
@@ -814,21 +763,21 @@
   --admin-marker-unavailable-text: #6E655A;
   --admin-marker-unavailable-accent: rgba(110, 101, 90, 0.6);
   --admin-marker-selected-surface: rgba(255, 255, 255, 0.97);
-  --admin-marker-selected-border: var(--admin-primary-cta);
+  --admin-marker-selected-border: var(--sp-button-primary);
   --admin-marker-selected-text: #161616;
   --admin-marker-selected-shadow: 0 0 0 2px rgba(255, 87, 21, 0.30), 0 0 0 3px rgba(22, 22, 22, 0.30), 0 10px 22px rgba(22, 22, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
   /* Re-hued off the teal onto the brand accent 2026-07-21, and deliberately
-     decoupled from --admin-info-soft: info is slated to fold into neutral
+     decoupled from --sp-status-neutral-surface: info is slated to fold into neutral
      gray, and the search highlight must not follow it there. */
-  --admin-marker-search-surface: var(--admin-paper);
-  --admin-marker-search-border: var(--admin-primary-cta);
-  --admin-marker-search-text: var(--admin-primary-on-soft);
+  --admin-marker-search-surface: var(--sp-brand-subtle);
+  --admin-marker-search-border: var(--sp-button-primary);
+  --admin-marker-search-text: var(--sp-brand-text);
   --admin-marker-search-ring: rgba(255, 87, 21, 0.44);
   --admin-marker-search-halo: rgba(255, 87, 21, 0.32);
   --admin-marker-draft-surface: rgba(210, 63, 10, 0.10);
   --admin-marker-draft-border: rgba(210, 63, 10, 0.60);
   --admin-marker-draft-text: #244E50;
-  --admin-marker-draft-accent: var(--admin-copper);
+  --admin-marker-draft-accent: var(--sp-button-primary);
   /* Neutral: a hover cue is transient feedback, not a status, so it should not
      borrow a status hue. (Dormant — the shipped viewer branch hovers to the
      accent; see the note at SeatMarker.tsx:130.) */
@@ -908,7 +857,7 @@
   --admin-marker-live-neutral-ring: color-mix(in srgb, var(--sp-border-strong) 85%, transparent);
 
   /* Zone-wash overlay fill (SeatMap): success green at wash strength. */
-  --admin-zone-wash-fill: color-mix(in srgb, var(--admin-status-ok) 10%, transparent);
+  --sp-wash-zone: color-mix(in srgb, var(--sp-status-success-mark) 10%, transparent);
 
   /* Dark-panel additions promoted from SeatInspector's raw hex 2026-08-05
      (values unchanged; see the chrome ladder comment above for the pattern).
@@ -920,19 +869,16 @@
   --sp-chrome-label: #8E8276;
   --sp-chrome-commit: #1c1c1c;
   --sp-chrome-danger-raised: #2b1a1b;
-  --admin-avatar-gradient: linear-gradient(135deg, var(--admin-primary), #8a3a1a);
+  --sp-identity-gradient: linear-gradient(135deg, var(--sp-brand), #8a3a1a);
 
   /* Elevation flattened to the shell language: hairline borders carry most of
      the separation; shadows are quiet and reserved for overlays/menus. */
-  --admin-elevation-2-shadow: 0 1px 2px rgba(22, 22, 22, 0.06);
-  --admin-elevation-3-shadow: 0 6px 16px rgba(22, 22, 22, 0.14);
-  --admin-elevation-4-shadow: 0 12px 40px rgba(22, 22, 22, 0.24);
-  --admin-elevation-5-shadow: 0 8px 24px rgba(22, 22, 22, 0.24);
+  --sp-elevation-2: 0 1px 2px rgba(22, 22, 22, 0.06);
+  --sp-elevation-3: 0 6px 16px rgba(22, 22, 22, 0.14);
+  --sp-elevation-4: 0 12px 40px rgba(22, 22, 22, 0.24);
+  --sp-elevation-5: 0 8px 24px rgba(22, 22, 22, 0.24);
 
-  --admin-shadow-shell: none;
-  --admin-shadow-command: none;
-  --admin-shadow-map: none;
-  --admin-shadow-panel: var(--admin-elevation-3-shadow);
+  --sp-elevation-panel: var(--sp-elevation-3);
 }
 
 /* Chrome motion — quiet, one-shot entrances. Applied only via Tailwind's `motion-safe:`

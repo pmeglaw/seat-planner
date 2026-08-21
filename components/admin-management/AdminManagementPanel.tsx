@@ -155,7 +155,7 @@ function TrashIcon() {
 // drawn on the house 20-viewBox grid at the 12px stroke tier (1.6).
 function TileArrowIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2.5 top-2.5 h-3 w-3 text-[var(--admin-status-neutral)]">
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2.5 top-2.5 h-3 w-3 text-[var(--sp-status-neutral-mark)]">
       <path d="M6 14 14 6M8 6h6v6" />
     </svg>
   );
@@ -299,7 +299,7 @@ export function AdminManagementPanel({
     { label: "Unassigned", value: unassignedEmployees },
     { label: "Active zones", value: zoneNames.length }
   ];
-  const fieldClassName = "w-full border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]";
+  const fieldClassName = "w-full border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--sp-button-primary)] focus:ring-2 focus:ring-[color:var(--sp-focus)]";
 
   // Virtualized directory (Figma page 10, Scalability): only the employee rows
   // near the viewport render; padding preserves the page scroll height. Geometry
@@ -774,7 +774,7 @@ export function AdminManagementPanel({
           <div
             role={error ? "alert" : "status"}
             aria-live={error ? "assertive" : "polite"}
-            className={["border px-4 py-3 text-sm font-semibold", error ? "border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] text-[var(--admin-state-error-text)]" : "border-[var(--admin-state-clean-border)] bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)]"].join(" ")}
+            className={["border px-4 py-3 text-sm font-semibold", error ? "border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] text-[var(--sp-editor-error-text)]" : "border-[var(--sp-editor-clean-border)] bg-[var(--sp-editor-clean-bg)] text-[var(--sp-editor-clean-text)]"].join(" ")}
           >
             {error ?? message}
           </div>
@@ -800,9 +800,9 @@ export function AdminManagementPanel({
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={[
-                  "px-4 py-[9px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+                  "px-4 py-[9px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]",
                   activeTab === tab.id
-                    ? "border border-b-2 border-[var(--sp-border-subtle)] border-b-[var(--admin-primary-cta)] bg-[var(--sp-layer-01)] font-semibold text-[var(--sp-text-primary)]"
+                    ? "border border-b-2 border-[var(--sp-border-subtle)] border-b-[var(--sp-button-primary)] bg-[var(--sp-layer-01)] font-semibold text-[var(--sp-text-primary)]"
                     : "border-b border-[var(--sp-border-subtle)] text-[var(--sp-text-secondary)] hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)]"
                 ].join(" ")}
                 aria-current={activeTab === tab.id ? "page" : undefined}
@@ -822,7 +822,7 @@ export function AdminManagementPanel({
             <div className="flex h-11 items-stretch border-b border-[var(--sp-border-subtle)]">
               <label className="relative flex min-w-0 flex-1 items-center">
                 <span className="sr-only">Search employees</span>
-                <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-4 h-3.5 w-3.5 text-[var(--admin-status-neutral)]">
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-4 h-3.5 w-3.5 text-[var(--sp-status-neutral-mark)]">
                   <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
                   <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                 </svg>
@@ -839,7 +839,7 @@ export function AdminManagementPanel({
                 disabled={pending}
                 /* White, not text-inverse: #F7F6F2 on #D23F0A is 4.35:1 and axe
                    fails it. The CTA ladder is specified as white (4.71:1). */
-                className="shrink-0 bg-[var(--admin-primary-cta)] px-[18px] text-[13.5px] font-semibold text-white transition-colors hover:bg-[var(--admin-primary-cta-hover)] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+                className="shrink-0 bg-[var(--sp-button-primary)] px-[18px] text-[13.5px] font-semibold text-white transition-colors hover:bg-[var(--sp-button-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
               >
                 Add employee ＋
               </button>
@@ -900,7 +900,7 @@ export function AdminManagementPanel({
                         const displayName = formatDisplayName(employee.full_name);
                         // Background lives on the cells (not the <tr>) so it paints
                         // reliably under border-collapse in every browser.
-                        const cellClass = ["px-3 py-2 align-middle transition-colors", isSelected ? "bg-[var(--admin-primary-soft)]" : "group-hover/row:bg-[var(--sp-background)]"].join(" ");
+                        const cellClass = ["px-3 py-2 align-middle transition-colors", isSelected ? "bg-[var(--sp-brand-wash)]" : "group-hover/row:bg-[var(--sp-background)]"].join(" ");
                         return (
                           <tr
                             key={employee.id}
@@ -921,7 +921,7 @@ export function AdminManagementPanel({
                           >
                             <td className={[cellClass, "pl-4"].join(" ")}>
                               <div className="flex items-center gap-2.5">
-                                <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--admin-paper)] text-[9px] font-bold text-[var(--admin-primary-on-soft)]">{getInitials(employee.full_name)}</span>
+                                <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--sp-brand-subtle)] text-[9px] font-bold text-[var(--sp-brand-text)]">{getInitials(employee.full_name)}</span>
                                 {/* Contract #13: the name is the map affordance —
                                     a real link so it is shareable and middle-clickable.
                                     Unseated people have nothing to show, so they stay text. */}
@@ -947,8 +947,8 @@ export function AdminManagementPanel({
                             <td className={cellClass}>
                               {/* Assigned mirrors the map legend's green chip — the
                                   orange-soft family reads as a warning here. */}
-                              <span className={["inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium", isAssigned ? "border-[var(--sp-status-success-border)] bg-[var(--admin-success-soft)] text-[var(--sp-status-success-text)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)]"].join(" ")}>
-                                <span aria-hidden="true" className={["h-1.5 w-1.5 shrink-0 rounded-full", isAssigned ? "bg-[var(--admin-success)]" : "bg-[var(--admin-status-neutral)]"].join(" ")} />
+                              <span className={["inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium", isAssigned ? "border-[var(--sp-status-success-border)] bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)]"].join(" ")}>
+                                <span aria-hidden="true" className={["h-1.5 w-1.5 shrink-0 rounded-full", isAssigned ? "bg-[var(--sp-status-success-strong)]" : "bg-[var(--sp-status-neutral-mark)]"].join(" ")} />
                                 {isAssigned ? "Assigned" : "Unassigned"}
                               </span>
                             </td>
@@ -960,7 +960,7 @@ export function AdminManagementPanel({
                                   editEmployee(employee);
                                 }}
                                 aria-label={`Edit ${displayName}`}
-                                className="inline-flex h-7 w-7 items-center justify-center text-[var(--admin-status-neutral)] transition-colors hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+                                className="inline-flex h-7 w-7 items-center justify-center text-[var(--sp-status-neutral-mark)] transition-colors hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
                               >
                                 <span aria-hidden="true" className="text-base leading-none">⋮</span>
                               </button>
@@ -987,7 +987,7 @@ export function AdminManagementPanel({
                 <p className="text-sm text-[var(--sp-text-secondary)]">Employee departments are separate from physical seating zones.</p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <input value={newDepartmentName} onChange={event => setNewDepartmentName(event.target.value)} placeholder="New department" className="min-w-0 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
+                <input value={newDepartmentName} onChange={event => setNewDepartmentName(event.target.value)} placeholder="New department" className="min-w-0 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--sp-button-primary)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
                 <Button type="button" variant="primary" onClick={createDepartment} disabled={pending || !newDepartmentName.trim()}>Add</Button>
               </div>
             </div>
@@ -998,7 +998,7 @@ export function AdminManagementPanel({
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-[var(--sp-text-primary)]">{row.name}</span>
                       {!row.managed && (
-                        <span className="rounded-full bg-[var(--admin-state-dirty-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--admin-state-dirty-text)]">Not in managed list</span>
+                        <span className="rounded-full bg-[var(--sp-editor-dirty-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--sp-editor-dirty-text)]">Not in managed list</span>
                       )}
                     </div>
                     <div className="text-xs text-[var(--sp-text-secondary)]">{row.employeeCount.toLocaleString()} employee{row.employeeCount === 1 ? "" : "s"}</div>
@@ -1020,7 +1020,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteDepartment(row.name)}
                         disabled={pending}
                         aria-label={`Delete ${row.name}`}
-                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition hover:bg-[var(--admin-state-error-bg)] hover:text-[var(--admin-state-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--admin-error)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-strong)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -1046,7 +1046,7 @@ export function AdminManagementPanel({
                 <p className="text-sm text-[var(--sp-text-secondary)]">Zones are physical map areas used for filtering and custom-seat label prefixes.</p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <input value={newZoneName} onChange={event => setNewZoneName(event.target.value)} placeholder="New zone" className="min-w-0 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--admin-primary-cta)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
+                <input value={newZoneName} onChange={event => setNewZoneName(event.target.value)} placeholder="New zone" className="min-w-0 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--sp-button-primary)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
                 <Button type="button" variant="primary" onClick={createZone} disabled={pending || !newZoneName.trim()}>Add</Button>
               </div>
             </div>
@@ -1071,7 +1071,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteZone(name)}
                         disabled={pending}
                         aria-label={`Delete ${name}`}
-                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition hover:bg-[var(--admin-state-error-bg)] hover:text-[var(--admin-state-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--admin-error)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-strong)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -1128,7 +1128,7 @@ export function AdminManagementPanel({
             )}
 
             {publishHistoryState.status === "error" && (
-              <div className="mt-4 flex flex-col gap-3 border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-4 text-sm text-[var(--admin-state-error-text)] md:flex-row md:items-center md:justify-between">
+              <div className="mt-4 flex flex-col gap-3 border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-4 text-sm text-[var(--sp-editor-error-text)] md:flex-row md:items-center md:justify-between">
                 <div>
                   <div className="font-semibold">Could not load publish history.</div>
                   <div className="mt-1 whitespace-pre-wrap">{publishHistoryState.error}</div>
@@ -1154,7 +1154,7 @@ export function AdminManagementPanel({
                   <div className="mt-4 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 shadow-elevation-2">
                     <div className="flex items-center gap-2">
                       <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)]">Latest publish</div>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--admin-success-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--admin-success)] ring-1 ring-[rgb(var(--admin-success-rgb)/0.3)]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--sp-status-success-surface)] px-2 py-0.5 text-[11px] font-medium text-[var(--sp-status-success-strong)] ring-1 ring-[color-mix(in_srgb,var(--sp-status-success-strong)_30%,transparent)]">
                         <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                         Latest
                       </span>
@@ -1221,7 +1221,7 @@ export function AdminManagementPanel({
                         <div>
                           <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">State</div>
                           {index === 0 ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--admin-success-soft)] px-2 py-1 text-[11px] font-semibold tracking-normal text-[var(--admin-success)] ring-1 ring-[rgb(var(--admin-success-rgb)/0.3)]">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--sp-status-success-surface)] px-2 py-1 text-[11px] font-semibold tracking-normal text-[var(--sp-status-success-strong)] ring-1 ring-[color-mix(in_srgb,var(--sp-status-success-strong)_30%,transparent)]">
                               <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                               Latest
                             </span>
@@ -1305,7 +1305,7 @@ export function AdminManagementPanel({
               </label>
             </div>
             {selectedEmployee && (
-              <div className="mt-4 border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-3 text-xs leading-5 text-[var(--admin-state-dirty-text)]">
+              <div className="mt-4 border border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)] p-3 text-xs leading-5 text-[var(--sp-editor-dirty-text)]">
                 <div className="font-semibold tracking-normal">Deactivation impact</div>
                 <div className="mt-1">
                   Current draft seat: <span className="font-bold">{selectedEmployeeSeatLabel}</span>.
@@ -1367,7 +1367,7 @@ export function AdminManagementPanel({
 
             <div className="mt-4 grid gap-2">
               {managementConfirm.kind === "employee" && (
-                <div className="border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-3 text-sm leading-5 text-[var(--admin-state-dirty-text)]">
+                <div className="border border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)] p-3 text-sm leading-5 text-[var(--sp-editor-dirty-text)]">
                   <div className="font-semibold tracking-normal">Deactivation impact</div>
                   <div className="mt-1">
                     Current draft seat: <span className="font-bold">{managementConfirm.assignedSeatLabel}</span>.
@@ -1379,7 +1379,7 @@ export function AdminManagementPanel({
               )}
 
               {managementConfirm.kind === "department" && (
-                <div className="border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-3 text-sm leading-5 text-[var(--admin-state-dirty-text)]">
+                <div className="border border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)] p-3 text-sm leading-5 text-[var(--sp-editor-dirty-text)]">
                   <div className="font-semibold tracking-normal">Department delete impact</div>
                   <div className="mt-1">
                     Clears this department from <span className="font-bold">{pluralize(managementConfirm.affectedCount, "active employee")}</span>. Employee records remain active and physical seat zones are unchanged.
@@ -1388,7 +1388,7 @@ export function AdminManagementPanel({
               )}
 
               {managementConfirm.kind === "zone" && (
-                <div className="border border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] p-3 text-sm leading-5 text-[var(--admin-state-dirty-text)]">
+                <div className="border border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)] p-3 text-sm leading-5 text-[var(--sp-editor-dirty-text)]">
                   <div className="font-semibold tracking-normal">Zone delete impact</div>
                   <div className="mt-1">
                     Clears this physical zone from <span className="font-bold">{pluralize(managementConfirm.affectedCount, "draft seat")}</span>. Seat markers and employees remain in place.
@@ -1396,7 +1396,7 @@ export function AdminManagementPanel({
                 </div>
               )}
 
-              <div className="border border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-ready-text)]">
+              <div className="border border-[var(--sp-publish-ready-border)] bg-[var(--sp-publish-ready-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-publish-ready-text)]">
                 {managementConfirm.kind === "employee"
                   ? "The published map everyone sees won't change until you publish again. Publish draft changes when ready."
                   : managementConfirm.kind === "department"

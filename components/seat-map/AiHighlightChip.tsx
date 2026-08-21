@@ -6,7 +6,7 @@
  *
  * It lives in its own file for a reason that outlives the styling: the AI
  * token family is confined per-file by `tests/accessibility-source.test.mjs`,
- * which requires every `--admin-ai-*` occurrence in SeatMap.tsx to sit inside
+ * which requires every `--sp-ai-*` occurrence in SeatMap.tsx to sit inside
  * the Ask Planner toolbar button. Keeping the chip here satisfies that
  * confinement structurally instead of widening the guardrail.
  *
@@ -29,9 +29,9 @@ export function AiHighlightChip({
       // Polite, not assertive: the count changes as a side effect of an answer
       // the user just asked for, so it should never interrupt them.
       aria-live="polite"
-      className="pointer-events-auto flex items-center gap-2 border border-[var(--admin-ai-border)] bg-[var(--sp-layer-01)] bg-[image:var(--admin-ai-aura)] bg-no-repeat px-2.5 py-1.5 text-[12px] font-semibold text-[var(--admin-ai-text)] shadow-[0_6px_16px_rgba(69,137,255,0.20)]"
+      className="pointer-events-auto flex items-center gap-2 border border-[var(--sp-ai-border)] bg-[var(--sp-layer-01)] bg-[image:var(--sp-ai-aura)] bg-no-repeat px-2.5 py-1.5 text-[12px] font-semibold text-[var(--sp-ai-text)] shadow-[0_6px_16px_rgba(69,137,255,0.20)]"
     >
-      <span aria-hidden="true" className="border border-[var(--admin-ai-border)] px-[3px] text-[9px] font-bold leading-[1.5] tracking-[0.04em]">
+      <span aria-hidden="true" className="border border-[var(--sp-ai-border)] px-[3px] text-[9px] font-bold leading-[1.5] tracking-[0.04em]">
         AI
       </span>
       <span>
@@ -43,7 +43,7 @@ export function AiHighlightChip({
         // The visible label is the bare word; the accessible name says what it
         // clears, because "Clear" alone is meaningless out of context.
         aria-label="Clear Ask Planner seat highlights"
-        className="font-medium text-[var(--sp-text-secondary)] transition hover:text-[var(--admin-ai-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+        className="font-medium text-[var(--sp-text-secondary)] transition hover:text-[var(--sp-ai-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
       >
         · Clear
       </button>

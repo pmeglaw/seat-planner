@@ -39,7 +39,7 @@ export function MapWashLayer({ zoneWash, officeRoomWashes }: MapWashLayerProps) 
             height: `${(zoneWash.yMax - zoneWash.yMin) * 100}%`
           }}
         >
-          <span className="absolute -top-[11px] left-2.5 whitespace-nowrap rounded-full bg-[var(--admin-primary-cta)] px-2 py-0.5 text-[10px] font-bold tracking-[0.04em] text-white">
+          <span className="absolute -top-[11px] left-2.5 whitespace-nowrap rounded-full bg-[var(--sp-button-primary)] px-2 py-0.5 text-[10px] font-bold tracking-[0.04em] text-white">
             {zoneWash.zone} · {zoneWash.seatCount} seats
           </span>
         </div>
@@ -50,7 +50,7 @@ export function MapWashLayer({ zoneWash, officeRoomWashes }: MapWashLayerProps) 
           key={wash.key}
           aria-hidden="true"
           data-office-wash={wash.key}
-          className="pointer-events-none absolute rounded-lg bg-[var(--admin-zone-wash-fill)] shadow-[inset_0_0_0_1.5px_rgba(29,110,65,0.22)]"
+          className="pointer-events-none absolute rounded-lg bg-[var(--sp-wash-zone)] shadow-[inset_0_0_0_1.5px_rgba(29,110,65,0.22)]"
           style={{
             left: `${wash.rect.xMin * 100}%`,
             top: `${wash.rect.yMin * 100}%`,

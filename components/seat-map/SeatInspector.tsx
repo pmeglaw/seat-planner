@@ -335,7 +335,7 @@ function ContactFacts({ rows, canEdit }: { rows: ContactFactRow[]; canEdit: bool
               {row.label === "Email" ? (
                 <a
                   href={`mailto:${row.value}`}
-                  className="block truncate text-[13px] font-medium text-[var(--admin-primary-on-soft)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+                  className="block truncate text-[13px] font-medium text-[var(--sp-brand-text)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
                 >
                   {row.value}
                 </a>
@@ -350,7 +350,7 @@ function ContactFacts({ rows, canEdit }: { rows: ContactFactRow[]; canEdit: bool
               onClick={() => copyExtension(row.value)}
               aria-label={`Copy extension ${row.value}`}
               title={copiedValue === row.value ? "Copied" : `Copy extension ${row.value}`}
-              className="flex h-8 w-8 shrink-0 items-center justify-center bg-[var(--sp-background)] text-[var(--admin-primary-on-soft)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+              className="flex h-8 w-8 shrink-0 items-center justify-center bg-[var(--sp-background)] text-[var(--sp-brand-text)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
             >
               {copiedValue === row.value ? <CheckGlyph /> : <CopyGlyph />}
               {/* Live confirmation for screen readers (and the ct test's
@@ -379,16 +379,16 @@ function AskPlannerSeatRow({ seat: selectedSeat, onExplainSeat }: { seat: SeatWi
       onClick={() => onExplainSeat(selectedSeat)}
       aria-label={`Ask Planner about ${selectedSeat.label}`}
       title={`Ask Planner about ${selectedSeat.label}`}
-      className="mx-4 mb-3 flex w-auto items-center justify-between gap-3 border border-[var(--sp-border-subtle)] border-l-4 border-l-[var(--admin-ai-accent)] bg-[var(--sp-layer-01)] px-3.5 py-3 text-left transition hover:border-[var(--admin-ai-accent)] hover:border-l-[var(--admin-ai-accent)] hover:bg-[var(--admin-ai-accent-soft)] active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-ai-accent)]"
+      className="mx-4 mb-3 flex w-auto items-center justify-between gap-3 border border-[var(--sp-border-subtle)] border-l-4 border-l-[var(--sp-ai-accent)] bg-[var(--sp-layer-01)] px-3.5 py-3 text-left transition hover:border-[var(--sp-ai-accent)] hover:border-l-[var(--sp-ai-accent)] hover:bg-[var(--sp-ai-accent-soft)] active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-ai-accent)]"
     >
       <span className="min-w-0">
-        <span className="mb-1 flex items-center gap-2 text-[var(--admin-ai-accent)]">
-          <span className="border border-[var(--admin-ai-accent)] px-1 text-[9.5px] font-bold tracking-[0.04em]">AI</span>
+        <span className="mb-1 flex items-center gap-2 text-[var(--sp-ai-accent)]">
+          <span className="border border-[var(--sp-ai-accent)] px-1 text-[9.5px] font-bold tracking-[0.04em]">AI</span>
           <span className="text-[11px] font-bold uppercase tracking-[0.08em]">Ask Planner</span>
         </span>
         <span className="block truncate text-[13px] font-medium text-[var(--sp-text-primary)]">Ask Planner about this seat</span>
       </span>
-      <span aria-hidden="true" className="shrink-0 leading-none text-[var(--admin-ai-accent)]"><ChevronRightIcon /></span>
+      <span aria-hidden="true" className="shrink-0 leading-none text-[var(--sp-ai-accent)]"><ChevronRightIcon /></span>
     </button>
   );
 }
@@ -601,26 +601,26 @@ export function SeatInspector({
   const currentStatusLabel = STATUS_LABELS[effectiveStatus];
   const lastUpdatedLabel = formatSeatTimestamp(selectedSeat.updated_at);
   // Status chip (header meta row + published Seat section): SOFT PAIRS from
-  // the --admin-state-* families, whose light AND dark values are measured AA
+  // the --sp-editor-* families, whose light AND dark values are measured AA
   // together in globals.css — never a solid status fill with a hardcoded text
-  // partner (white on the dark-theme --admin-status-ok #42be65 is ~2.2:1).
+  // partner (white on the dark-theme --sp-status-success-mark #42be65 is ~2.2:1).
   // Never color-only: the label always names the status.
   const statusTagClass = effectiveStatus === "assigned"
-    ? "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)]"
+    ? "bg-[var(--sp-editor-clean-bg)] text-[var(--sp-editor-clean-text)]"
     : effectiveStatus === "reserved"
-      ? "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)]"
+      ? "bg-[var(--sp-editor-dirty-bg)] text-[var(--sp-editor-dirty-text)]"
       : effectiveStatus === "unavailable"
-        ? "bg-[var(--admin-state-error-bg)] text-[var(--admin-state-error-text)]"
-        : "bg-[var(--admin-state-neutral-bg)] text-[var(--admin-state-neutral-text)]";
+        ? "bg-[var(--sp-editor-error-bg)] text-[var(--sp-editor-error-text)]"
+        : "bg-[var(--sp-editor-neutral-bg)] text-[var(--sp-editor-neutral-text)]";
   // Avatar presence dot: decorative (aria-hidden wrapper) — the chip above
   // carries the status label, so this is never the only signal.
   const avatarStatusDotClass = effectiveStatus === "assigned"
-    ? "bg-[var(--admin-status-ok)]"
+    ? "bg-[var(--sp-status-success-mark)]"
     : effectiveStatus === "reserved"
-      ? "bg-[var(--admin-status-warn)]"
+      ? "bg-[var(--sp-status-pending-mark)]"
       : effectiveStatus === "unavailable"
-        ? "bg-[var(--admin-status-bad)]"
-        : "bg-[var(--admin-status-neutral)]";
+        ? "bg-[var(--sp-status-danger-mark)]"
+        : "bg-[var(--sp-status-neutral-mark)]";
   const fieldErrorMap = fieldErrors.reduce<Partial<Record<SeatInspectorField, string>>>((current, error) => {
     current[error.field] = error.message;
     return current;
@@ -634,12 +634,12 @@ export function SeatInspector({
         : saveFeedback ?? "No unsaved changes";
   // Draft-impact pill: green when the seat matches the saved draft, teal
   // while edits are unsaved or saving, red when the last save failed. Soft
-  // --admin-state-* pairs — AA measured in globals.css for both themes.
+  // --sp-editor-* pairs — AA measured in globals.css for both themes.
   const inspectorStatePillClassName = localError
-    ? "bg-[var(--admin-state-error-bg)] text-[var(--admin-state-error-text)]"
+    ? "bg-[var(--sp-editor-error-bg)] text-[var(--sp-editor-error-text)]"
     : pending || isDirty
-      ? "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)]"
-      : "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)]";
+      ? "bg-[var(--sp-editor-dirty-bg)] text-[var(--sp-editor-dirty-text)]"
+      : "bg-[var(--sp-editor-clean-bg)] text-[var(--sp-editor-clean-text)]";
   // Header identity reflects the SAVED occupant only — a staged, unsaved pick
   // must not flip the header, or the panel claims an assignment that doesn't
   // exist yet (the draft-impact pill carries the unsaved-state signal).
@@ -648,10 +648,10 @@ export function SeatInspector({
   const occupantRoleLabel = hasCurrentAssignment
     ? [selectedSeat.employee?.position, selectedSeat.employee?.department].filter(Boolean).join(" · ") || "Employee"
     : "Unassigned";
-  const fieldErrorClassName = "border-[var(--admin-status-bad)] focus:border-[var(--admin-status-bad)] focus:ring-[color-mix(in_srgb,var(--admin-status-bad)_40%,transparent)]";
-  const warningSurfaceClassName = "border-[var(--admin-state-dirty-border)] bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)]";
-  const neutralPillClassName = "bg-[var(--admin-state-neutral-bg)] text-[var(--admin-state-neutral-text)] ring-[var(--admin-state-neutral-border)]";
-  const successPillClassName = "bg-[var(--admin-state-clean-bg)] text-[var(--admin-state-clean-text)] ring-[var(--admin-state-clean-border)]";
+  const fieldErrorClassName = "border-[var(--sp-status-danger-mark)] focus:border-[var(--sp-status-danger-mark)] focus:ring-[color-mix(in_srgb,var(--sp-status-danger-mark)_40%,transparent)]";
+  const warningSurfaceClassName = "border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)] text-[var(--sp-editor-dirty-text)]";
+  const neutralPillClassName = "bg-[var(--sp-editor-neutral-bg)] text-[var(--sp-editor-neutral-text)] ring-[var(--sp-editor-neutral-border)]";
+  const successPillClassName = "bg-[var(--sp-editor-clean-bg)] text-[var(--sp-editor-clean-text)] ring-[var(--sp-editor-clean-border)]";
 
   function fieldErrorId(field: SeatInspectorField) {
     return `seat-inspector-${field}-error`;
@@ -992,7 +992,7 @@ export function SeatInspector({
   // panel (#200) — same pattern as FilterPanel's selectClassName. Field-01
   // treatment: --sp-field/--sp-field-border (the pair's 3:1 boundary
   // note lives in globals.css).
-  const fieldClassName = "mt-1 w-full border border-[var(--sp-field-border)] bg-[var(--sp-field)] px-3 py-2 text-sm font-medium text-[var(--sp-text-primary)] outline-none transition placeholder:text-[var(--sp-text-helper)] focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] disabled:bg-[var(--sp-background)] disabled:text-[var(--sp-text-helper)] [&>option]:bg-[var(--sp-layer-01)] [&>option]:text-[var(--sp-text-primary)]";
+  const fieldClassName = "mt-1 w-full border border-[var(--sp-field-border)] bg-[var(--sp-field)] px-3 py-2 text-sm font-medium text-[var(--sp-text-primary)] outline-none transition placeholder:text-[var(--sp-text-helper)] focus:border-[var(--sp-brand)] focus:ring-2 focus:ring-[color:var(--sp-brand-border)] disabled:bg-[var(--sp-background)] disabled:text-[var(--sp-text-helper)] [&>option]:bg-[var(--sp-layer-01)] [&>option]:text-[var(--sp-text-primary)]";
   const saveDisabledReason = pending
     ? "Save is unavailable while the current draft change is finishing."
     : !isDirty
@@ -1025,7 +1025,7 @@ export function SeatInspector({
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-4 pb-3 pt-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]">Property Inspector</span>
-          <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"><CloseIcon /></button>
+          <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]"><CloseIcon /></button>
         </div>
         <div className="flex items-start gap-2.5">
           <div className="min-w-0 flex-1">
@@ -1048,7 +1048,7 @@ export function SeatInspector({
             {currentStatusLabel}
           </span>
           <span className="flex min-w-0 items-center gap-1.5 truncate text-[11px] font-medium text-[var(--sp-text-secondary)]">
-            <span aria-hidden="true" className="shrink-0 text-[var(--admin-primary-cta)]"><PinGlyph /></span>
+            <span aria-hidden="true" className="shrink-0 text-[var(--sp-button-primary)]"><PinGlyph /></span>
             <span className="font-mono">{selectedSeat.label}</span>
             <span className="text-[var(--sp-text-helper)]">·</span>
             <span className="truncate text-[var(--sp-text-helper)]">{currentZone}</span>
@@ -1065,7 +1065,7 @@ export function SeatInspector({
           <button type="button" onClick={startAssignmentEditing} disabled={pending} ref={primaryActionRef}
             aria-expanded={editingAssignment} aria-controls="seat-inspector-form"
             aria-label={hasCurrentAssignment ? `Edit assignment for ${selectedSeat.label}` : `Assign an employee to ${selectedSeat.label}`}
-            className="mt-0.5 flex h-10 w-full items-center justify-between gap-2 bg-[var(--admin-primary-cta)] px-4 text-[13px] font-semibold text-white transition hover:bg-[var(--admin-primary-cta-hover)] active:scale-[0.99] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white disabled:opacity-40">
+            className="mt-0.5 flex h-10 w-full items-center justify-between gap-2 bg-[var(--sp-button-primary)] px-4 text-[13px] font-semibold text-white transition hover:bg-[var(--sp-button-primary-hover)] active:scale-[0.99] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white disabled:opacity-40">
             <span className="flex items-center gap-2">
               <PencilGlyph />
               {hasCurrentAssignment ? "Edit assignment" : "Assign employee"}
@@ -1090,7 +1090,7 @@ export function SeatInspector({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="bg-[var(--sp-layer-01)] px-3 py-1.5 font-semibold text-[var(--admin-state-dirty-text)] ring-1 ring-[var(--admin-state-dirty-border)] transition hover:bg-[var(--sp-background)] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
+                    className="bg-[var(--sp-layer-01)] px-3 py-1.5 font-semibold text-[var(--sp-editor-dirty-text)] ring-1 ring-[var(--sp-editor-dirty-border)] transition hover:bg-[var(--sp-background)] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-pending-mark)]"
                   >
                     Clear selection
                   </button>
@@ -1098,7 +1098,7 @@ export function SeatInspector({
                     <button
                       type="button"
                       onClick={onClearSearchContext}
-                      className="bg-[var(--sp-layer-01)] px-3 py-1.5 font-semibold text-[var(--admin-state-dirty-text)] ring-1 ring-[var(--admin-state-dirty-border)] transition hover:bg-[var(--sp-background)] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-warn)]"
+                      className="bg-[var(--sp-layer-01)] px-3 py-1.5 font-semibold text-[var(--sp-editor-dirty-text)] ring-1 ring-[var(--sp-editor-dirty-border)] transition hover:bg-[var(--sp-background)] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-pending-mark)]"
                     >
                       {searchMismatchClearLabel}
                     </button>
@@ -1113,9 +1113,9 @@ export function SeatInspector({
                 tabIndex={-1}
                 role="alert"
                 aria-labelledby="seat-inspector-error-title"
-                className="mx-4 mt-3 border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-xs text-[var(--admin-state-error-text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-bad)]"
+                className="mx-4 mt-3 border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-xs text-[var(--sp-editor-error-text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-mark)]"
               >
-                <h3 id="seat-inspector-error-title" className="font-bold text-[var(--admin-state-error-text)]">Review inspector fields</h3>
+                <h3 id="seat-inspector-error-title" className="font-bold text-[var(--sp-editor-error-text)]">Review inspector fields</h3>
                 <p className="mt-1 font-medium leading-5">{localError}</p>
                 {fieldErrors.length > 0 && (
                   <ul className="mt-2 space-y-1">
@@ -1124,7 +1124,7 @@ export function SeatInspector({
                         <button
                           type="button"
                           onClick={() => focusInspectorField(error.field)}
-                          className="text-left font-bold underline decoration-[var(--admin-state-error-border)] underline-offset-2 transition hover:text-[var(--admin-danger)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-status-bad)]"
+                          className="text-left font-bold underline decoration-[var(--sp-editor-error-border)] underline-offset-2 transition hover:text-[var(--sp-status-danger-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-mark)]"
                         >
                           {error.message}
                         </button>
@@ -1177,7 +1177,7 @@ export function SeatInspector({
                         setEmployeeComboboxOpen(current => !current);
                         employeeInputRef.current?.focus();
                       }}
-                      className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-xs text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+                      className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-xs text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
                     >
                       <ChevronDownIcon />
                     </button>
@@ -1198,18 +1198,18 @@ export function SeatInspector({
                             onMouseEnter={() => setActiveEmployeeIndex(index)}
                             onClick={() => selectEmployee(option.employee)}
                             className={[
-                              "flex w-full items-start gap-3 px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+                              "flex w-full items-start gap-3 px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]",
                               index === activeEmployeeIndex ? "bg-[var(--sp-background)] text-[var(--sp-text-primary)]" : "text-[var(--sp-text-secondary)] hover:bg-[var(--sp-layer-hover)]"
                             ].join(" ")}
                           >
-                            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--admin-paper)] text-[11px] font-bold text-[var(--admin-primary-on-soft)]">
+                            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--sp-brand-subtle)] text-[11px] font-bold text-[var(--sp-brand-text)]">
                               {buildInitials(option.employee.full_name) || "?"}
                             </span>
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-sm font-semibold">{formatDisplayName(option.employee.full_name)}</span>
                               <span className="block truncate text-xs text-[var(--sp-text-helper)]">{option.meta}</span>
                             </span>
-                            <span className="shrink-0 bg-[var(--admin-state-neutral-bg)] px-2 py-1 font-mono text-[10px] font-semibold tracking-normal text-[var(--sp-text-secondary)] ring-1 ring-[var(--admin-state-neutral-border)]">
+                            <span className="shrink-0 bg-[var(--sp-editor-neutral-bg)] px-2 py-1 font-mono text-[10px] font-semibold tracking-normal text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-editor-neutral-border)]">
                               {option.assignedSeatLabel}
                             </span>
                           </button>
@@ -1223,9 +1223,9 @@ export function SeatInspector({
                     )}
                   </div>
                   {fieldErrorMap.employeeName && (
-                    <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.employeeName}</p>
+                    <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[var(--sp-editor-error-text)]">{fieldErrorMap.employeeName}</p>
                   )}
-                  <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold tracking-normal ring-1", employeeNameValue ? matchedEmployee ? successPillClassName : "bg-[var(--admin-state-dirty-bg)] text-[var(--admin-state-dirty-text)] ring-[var(--admin-state-dirty-border)]" : neutralPillClassName].join(" ")}>
+                  <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold tracking-normal ring-1", employeeNameValue ? matchedEmployee ? successPillClassName : "bg-[var(--sp-editor-dirty-bg)] text-[var(--sp-editor-dirty-text)] ring-[var(--sp-editor-dirty-border)]" : neutralPillClassName].join(" ")}>
                     {assignmentStateText}
                   </span>
                 </label>
@@ -1253,7 +1253,7 @@ export function SeatInspector({
                       aria-describedby={fieldDescribedBy("employeePosition")}
                       className={fieldClassName}
                     />
-                    {fieldErrorMap.employeePosition && <p id={fieldErrorId("employeePosition")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.employeePosition}</p>}
+                    {fieldErrorMap.employeePosition && <p id={fieldErrorId("employeePosition")} className="mt-1 text-xs font-semibold text-[var(--sp-editor-error-text)]">{fieldErrorMap.employeePosition}</p>}
                   </label>
 
                   <label className="block">
@@ -1271,7 +1271,7 @@ export function SeatInspector({
                       aria-invalid={Boolean(fieldErrorMap.phoneExtension)}
                       aria-describedby={fieldDescribedBy("phoneExtension")}
                     />
-                    {fieldErrorMap.phoneExtension && <p id={fieldErrorId("phoneExtension")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.phoneExtension}</p>}
+                    {fieldErrorMap.phoneExtension && <p id={fieldErrorId("phoneExtension")} className="mt-1 text-xs font-semibold text-[var(--sp-editor-error-text)]">{fieldErrorMap.phoneExtension}</p>}
                   </label>
                 </div>
 
@@ -1290,7 +1290,7 @@ export function SeatInspector({
                       <option key={department} value={department}>{department}</option>
                     ))}
                   </select>
-                  {fieldErrorMap.department && <p id={fieldErrorId("department")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.department}</p>}
+                  {fieldErrorMap.department && <p id={fieldErrorId("department")} className="mt-1 text-xs font-semibold text-[var(--sp-editor-error-text)]">{fieldErrorMap.department}</p>}
                 </label>
                 </section>
               </div>
@@ -1330,18 +1330,18 @@ export function SeatInspector({
                         {hasCurrentAssignment && onMove && (
                           <button type="button" onClick={onMove} disabled={pending || busy}
                             aria-label={selectedSeat.employee?.full_name ? `Move ${selectedSeat.employee.full_name} to another seat` : `Move ${selectedSeat.label}`}
-                            className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-[11px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] disabled:opacity-40">
+                            className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-[11px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] disabled:opacity-40">
                             <MoveGlyph />Move
                           </button>
                         )}
                         {onSwap && (
-                          <button type="button" onClick={onSwap} disabled={pending || busy} aria-label={`Swap ${selectedSeat.label}`} className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-[11px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] disabled:opacity-40">
+                          <button type="button" onClick={onSwap} disabled={pending || busy} aria-label={`Swap ${selectedSeat.label}`} className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-[11px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] disabled:opacity-40">
                             <SwapGlyph />Swap
                           </button>
                         )}
                         {hasCurrentAssignment && onVacate && (
                           <button type="button" onClick={onVacate} disabled={pending || busy} aria-label={`Vacate ${selectedSeat.label}`}
-                            className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-[11px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] disabled:opacity-40">
+                            className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-[11px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] disabled:opacity-40">
                             <VacateGlyph />Vacate
                           </button>
                         )}
@@ -1362,7 +1362,7 @@ export function SeatInspector({
                           <option value="reserved">{STATUS_LABELS.reserved}</option>
                           <option value="unavailable">{STATUS_LABELS.unavailable}</option>
                         </select>
-                        {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.status}</p>}
+                        {fieldErrorMap.status && <p id={fieldErrorId("status")} className="mt-1 text-xs font-semibold text-[var(--sp-editor-error-text)]">{fieldErrorMap.status}</p>}
                       </label>
                     )}
                     {/* Delete treatment: full-width OUTLINED danger button
@@ -1382,7 +1382,7 @@ export function SeatInspector({
                           aria-label={`Delete custom seat ${selectedSeat.label}`}
                           aria-describedby="seat-inspector-delete-help"
                           title={deleteHelpText}
-                          className="mt-3 min-w-0 w-full gap-2 whitespace-normal leading-tight !border-[var(--admin-state-danger-border)] !bg-transparent !text-[var(--admin-state-error-text)] !shadow-none hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-state-error-bg)] disabled:!border-[var(--sp-border-subtle)] disabled:!bg-[var(--sp-background)] disabled:!text-[var(--sp-text-helper)] disabled:hover:!bg-[var(--sp-background)]"
+                          className="mt-3 min-w-0 w-full gap-2 whitespace-normal leading-tight !border-[var(--sp-editor-danger-border)] !bg-transparent !text-[var(--sp-editor-error-text)] !shadow-none hover:!border-[var(--sp-status-danger-strong)] hover:!bg-[var(--sp-editor-error-bg)] disabled:!border-[var(--sp-border-subtle)] disabled:!bg-[var(--sp-background)] disabled:!text-[var(--sp-text-helper)] disabled:hover:!bg-[var(--sp-background)]"
                         >
                           <TrashGlyph />
                           Delete seat
@@ -1408,7 +1408,7 @@ export function SeatInspector({
                         aria-describedby={fieldDescribedBy("notes")}
                         className={`${fieldClassName} min-h-20`}
                       />
-                      {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-[var(--admin-state-error-text)]">{fieldErrorMap.notes}</p>}
+                      {fieldErrorMap.notes && <p id={fieldErrorId("notes")} className="mt-1 text-xs font-semibold text-[var(--sp-editor-error-text)]">{fieldErrorMap.notes}</p>}
                     </label>
                   </div>
                 </div>
@@ -1462,7 +1462,7 @@ export function SeatInspector({
                   aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
                   aria-describedby={saveDisabledReason ? "seat-inspector-save-help" : undefined}
                   title={saveDisabledReason ?? `${primaryActionLabel} for ${selectedSeat.label}`}
-                  className="min-w-0 w-full whitespace-normal !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--sp-text-helper)] disabled:shadow-none disabled:hover:!border-[var(--admin-state-neutral-border)] disabled:hover:!bg-[var(--admin-state-neutral-bg)]"
+                  className="min-w-0 w-full whitespace-normal !border-[var(--sp-button-primary)] !bg-[var(--sp-button-primary)] !text-white hover:!border-[var(--sp-button-primary-hover)] hover:!bg-[var(--sp-button-primary-hover)] disabled:!border-[var(--sp-editor-neutral-border)] disabled:!bg-[var(--sp-editor-neutral-bg)] disabled:!text-[var(--sp-text-helper)] disabled:shadow-none disabled:hover:!border-[var(--sp-editor-neutral-border)] disabled:hover:!bg-[var(--sp-editor-neutral-bg)]"
                 >
                   {primaryActionLabel}
                 </Button>
@@ -1499,7 +1499,7 @@ export function SeatInspector({
           role="region"
           aria-label="Published seat details"
           tabIndex={0}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]"
         >
           <div key={`seat-inspector-sections-${selectedSeat.id}`} className="px-4 pb-4 pt-3.5">
             {hasCurrentAssignment && (
@@ -1559,7 +1559,7 @@ export function SeatInspector({
           </div>
 
           <div className="mt-4 grid gap-2">
-            <div className="rounded-[12px] border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-viewer-impact-text)]">
+            <div className="rounded-[12px] border border-[var(--sp-publish-viewer-impact-border)] bg-[var(--sp-publish-viewer-impact-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-publish-viewer-impact-text)]">
               {PUBLISH_IMPACT_NOTE}
             </div>
           </div>

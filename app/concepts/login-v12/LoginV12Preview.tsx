@@ -29,7 +29,7 @@ import Image from "next/image";
  * 2. NO FIELD-UNDERLINE TOKEN EXISTS. The source's resting rule is #8d8d8d and
  *    the repo's greige ramp has no equivalent — border-strong (#D8D0C5) is far
  *    too faint to read as an input, and the text tokens are the wrong role. It
- *    borrows --admin-status-neutral (#8E8276), the closest greige twin. That
+ *    borrows --sp-status-neutral-mark (#8E8276), the closest greige twin. That
  *    gap is itself an argument for §03's proposed color.border.strong.
  *
  * Colours otherwise map to the repo's tokens per the owner's palette call, so
@@ -94,20 +94,20 @@ export function LoginV12Preview() {
 
           <div className="mt-7 flex flex-col gap-[2px]">
             {/* Resting: 1px rule. */}
-            <div className={`${FIELD_SHELL} border-b border-[var(--admin-status-neutral)]`}>
+            <div className={`${FIELD_SHELL} border-b border-[var(--sp-status-neutral-mark)]`}>
               <span className={FIELD_LABEL}>Work email</span>
               <span className={FIELD_VALUE}>e.marchetti@megeredchianlaw.com</span>
             </div>
             {/* Focused: 2px brand rule. Both states are shown at once so the
                 fluid pattern is legible without interaction. */}
-            <div className={`${FIELD_SHELL} border-b-2 border-[var(--admin-primary)]`}>
+            <div className={`${FIELD_SHELL} border-b-2 border-[var(--sp-brand)]`}>
               <span className={FIELD_LABEL}>Password</span>
               <span className={`${FIELD_VALUE} font-mono tracking-[0.12em]`}>••••••••••••</span>
             </div>
           </div>
 
           {/* Divs, not buttons — this is a picture, and nothing here acts. */}
-          <div className={`${ACTION_SHELL} mt-6 bg-[var(--admin-primary-cta)] font-semibold text-white`}>
+          <div className={`${ACTION_SHELL} mt-6 bg-[var(--sp-button-primary)] font-semibold text-white`}>
             Sign in
             <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" className="ml-auto" aria-hidden="true">
               <path d="M4 10h11m0 0-4-4m4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
@@ -128,7 +128,7 @@ export function LoginV12Preview() {
       <div className="mt-4 flex flex-wrap gap-[1px] bg-[var(--sp-border-subtle)]">
         <Note title="Two deviations from the source">
           The footer line moves off #6f6f6f, which is about 3.3:1 on #161616 and fails AA for body text, onto
-          --sp-text-disabled (~4.6:1). And the resting field rule borrows --admin-status-neutral because the repo
+          --sp-text-disabled (~4.6:1). And the resting field rule borrows --sp-status-neutral-mark because the repo
           has no field-underline token at all — border-strong is far too faint to read as an input. That gap is an
           argument for the DTCG rename in §03, which proposes exactly such a token.
         </Note>

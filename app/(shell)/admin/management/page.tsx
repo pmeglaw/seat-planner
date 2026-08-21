@@ -90,7 +90,7 @@ export default async function AdminManagementPage({
         role="region"
         aria-label="Management"
         tabIndex={0}
-        className="flex flex-1 flex-col [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] lg:min-h-0 lg:overflow-y-auto"
+        className="flex flex-1 flex-col [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] lg:min-h-0 lg:overflow-y-auto"
       >
         <AdminManagementPanel
           seats={seats}

@@ -82,7 +82,7 @@ test("every stored -rgb twin matches its hex partner in every theme cascade", as
   // Sanity: the parser found the real blocks, not an empty set.
   assert.ok(Object.keys(light).length > 50, "expected :root variables");
   assert.ok(Object.keys(shellLight).length > Object.keys(light).length, "expected .shell-theme variables");
-  assert.ok("admin-status-ok" in shellDark, "expected the dark admin block in the cascade");
+  assert.ok("sp-status-success-mark" in shellDark, "expected the dark admin block in the cascade");
 
   const problems = [];
   for (const [context, vars] of Object.entries({ light, dark, shellLight, shellDark })) {

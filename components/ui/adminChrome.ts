@@ -12,7 +12,7 @@
  * is 26px.
  *
  * **Active states** — vertical chrome (rail items) mark active with a 3px
- * left inset edge in --admin-primary; horizontal chrome (bar tenants) with a
+ * left inset edge in --sp-brand; horizontal chrome (bar tenants) with a
  * 2px bottom border; transient menu-open state (kebab, account, floor) with
  * fill only. All three share the same fill (--sp-background-hover),
  * foreground (--sp-text-primary), and weight (font-semibold where a label
@@ -22,7 +22,7 @@
  * (never text-white). Exception (owner ruling 2026-08-14): the corner rail
  * toggle brightens its glyph only, no fill.
  *
- * **Focus** — ring-2 ring-inset ring-[var(--admin-primary)] everywhere, with
+ * **Focus** — ring-2 ring-inset ring-[var(--sp-brand)] everywhere, with
  * two documented exceptions: Publish (white ring on the filled CTA — orange
  * on orange would vanish) and the avatar (offset ring on a 26px circle —
  * inset would eat the monogram).

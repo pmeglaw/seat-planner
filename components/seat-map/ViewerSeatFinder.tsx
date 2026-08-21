@@ -1020,7 +1020,7 @@ export function ViewerSeatFinder({
   // screen column exactly as the lone viewport used to.
   const mapStageClassName = "relative flex min-w-0 flex-col lg:min-h-0 lg:flex-1";
 
-  const chromeSurfaceShortcut = "flex h-9 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeSurfaceShortcut = "flex h-9 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
 
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
@@ -1028,7 +1028,7 @@ export function ViewerSeatFinder({
     <div className="shell-theme flex min-h-[100svh] flex-col overflow-x-clip bg-[var(--sp-background)] text-[var(--sp-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
       <a
         href="#viewer-seat-map"
-        className="sp-zone-chrome sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--sp-background)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--sp-text-primary)] focus:outline-none"
+        className="sp-zone-chrome sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--sp-brand)] focus:bg-[var(--sp-background)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--sp-text-primary)] focus:outline-none"
       >
         Skip to seat map
       </a>
@@ -1064,9 +1064,9 @@ export function ViewerSeatFinder({
             aria-haspopup="true"
             aria-label={structuredFilterCount ? `Filter seating, ${structuredFilterCount} active` : "Filter seating"}
             className={[
-              "flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+              "flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]",
               structuredFilterCount > 0 || filterOpen
-                ? "border-b-[var(--admin-primary)] bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)]"
+                ? "border-b-[var(--sp-brand)] bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)]"
                 : "border-b-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]"
             ].join(" ")}
           >
@@ -1075,7 +1075,7 @@ export function ViewerSeatFinder({
             </svg>
             Filter
             {structuredFilterCount > 0 && (
-              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--admin-primary-cta)] px-1 text-[11px] font-semibold text-white">{structuredFilterCount}</span>
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--sp-button-primary)] px-1 text-[11px] font-semibold text-white">{structuredFilterCount}</span>
             )}
             <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--sp-text-helper)]">
               <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -1122,7 +1122,7 @@ export function ViewerSeatFinder({
             // Open field: the 2px inset accent (both chrome themes) is what
             // ties the palette below to the field it belongs to.
             paletteOpen
-              ? "border-transparent shadow-[inset_0_0_0_2px_var(--admin-primary)]"
+              ? "border-transparent shadow-[inset_0_0_0_2px_var(--sp-brand)]"
               : "border-[var(--sp-border-subtle)]"
           )}
         >
@@ -1218,14 +1218,14 @@ export function ViewerSeatFinder({
               // only tier that scans this surface signed in).
               aria-controls={paletteOpen ? "viewer-find-palette" : undefined}
               type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
-              className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--admin-primary)]"
+              className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-brand)]"
             />
             {search.trim() ? (
               <button
                 type="button"
                 aria-label="Clear viewer search"
                 title="Clear search"
-                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)]"
+                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
                 onClick={clearSearch}
               >
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -1271,7 +1271,7 @@ export function ViewerSeatFinder({
               <span
                 aria-current="page"
                 title="Viewer — published map"
-                className={cx(chromeSurfaceShortcut, "border-[var(--admin-primary)] text-white")}
+                className={cx(chromeSurfaceShortcut, "border-[var(--sp-brand)] text-white")}
               >
                 <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="8.2" />
@@ -1301,7 +1301,7 @@ export function ViewerSeatFinder({
           {accountEmail ? (
             <AccountMenu email={accountEmail} roleLabel={accountRoleLabel} />
           ) : (
-            <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-primary)] text-[11px] font-semibold text-[var(--admin-primary-ink)]">V</span>
+            <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-brand)] text-[11px] font-semibold text-[var(--sp-text-on-brand)]">V</span>
           )}
         </div>
       </header>
@@ -1469,9 +1469,9 @@ export function ViewerSeatFinder({
                 ariaLabel="Seat status summary"
                 totalLabel={`${statusCountSeats.length} ${statusCountSeats.length === 1 ? "seat" : "seats"}`}
                 entries={[
-                  { key: "assigned", label: STATUS_LABELS.assigned, dotClassName: "bg-[var(--admin-status-ok)]", count: assignedCount },
-                  { key: "available", label: STATUS_LABELS.available, dotClassName: "bg-[var(--admin-status-neutral)]", count: openCount },
-                  { key: "reserved", label: STATUS_LABELS.reserved, dotClassName: "bg-[var(--admin-status-warn)]", count: reservedCount }
+                  { key: "assigned", label: STATUS_LABELS.assigned, dotClassName: "bg-[var(--sp-status-success-mark)]", count: assignedCount },
+                  { key: "available", label: STATUS_LABELS.available, dotClassName: "bg-[var(--sp-status-neutral-mark)]", count: openCount },
+                  { key: "reserved", label: STATUS_LABELS.reserved, dotClassName: "bg-[var(--sp-status-pending-mark)]", count: reservedCount }
                 ]}
                 summary={searchActive
                   ? `${resultCountLabel} · ${searchResults.resultSeatIds.length} mapped`

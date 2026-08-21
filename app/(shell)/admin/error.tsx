@@ -65,7 +65,7 @@ export default function AdminError({
           </Button>
           <Link
             href="/"
-            className="flex min-h-11 w-full items-center justify-center rounded-[var(--sp-radius-xl)] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] text-sm font-semibold text-[var(--sp-text-primary)] transition-colors hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] focus-visible:ring-offset-2"
+            className="flex min-h-11 w-full items-center justify-center rounded-[var(--sp-radius-xl)] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] text-sm font-semibold text-[var(--sp-text-primary)] transition-colors hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] focus-visible:ring-offset-2"
           >
             Back to the published map
           </Link>

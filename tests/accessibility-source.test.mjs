@@ -95,14 +95,14 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /onClick=\{undoDraftEdit\}/);
 });
 
-test("Carbon-for-AI tokens (--admin-ai-*) stay exclusive to Ask Planner surfaces (contract #9)", async () => {
+test("Carbon-for-AI tokens (--sp-ai-*) stay exclusive to Ask Planner surfaces (contract #9)", async () => {
   // Guarded semantic: AI blue is reserved EXCLUSIVELY for AI presence — no
-  // non-AI control may ever paint itself with an --admin-ai- token.
+  // non-AI control may ever paint itself with an --sp-ai- token.
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const railSource = await readSource("../components/ui/AppRail.tsx");
   const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   const shellBarSource = await readSource("../components/ui/AppTopBar.tsx");
-  const AI_TOKEN = "--admin-ai-";
+  const AI_TOKEN = "--sp-ai-";
 
   function countOccurrences(text, needle) {
     return text.split(needle).length - 1;
@@ -120,7 +120,7 @@ test("Carbon-for-AI tokens (--admin-ai-*) stay exclusive to Ask Planner surfaces
   assert.equal(
     countOccurrences(askPlannerBlock, AI_TOKEN),
     seatMapTotal,
-    "every --admin-ai- occurrence in SeatMap.tsx must live inside the Ask Planner tool button"
+    "every --sp-ai- occurrence in SeatMap.tsx must live inside the Ask Planner tool button"
   );
 
   // AppRail: the token may only appear on the AI nav item (both branches of
@@ -145,7 +145,7 @@ test("Carbon-for-AI tokens (--admin-ai-*) stay exclusive to Ask Planner surfaces
   assert.equal(
     countOccurrences(aiItemBlock, AI_TOKEN) + countOccurrences(aiCellBlock, AI_TOKEN),
     railTotal,
-    "every --admin-ai- occurrence in AppRail.tsx must live inside the AI nav item or AiCell()"
+    "every --sp-ai- occurrence in AppRail.tsx must live inside the AI nav item or AiCell()"
   );
 
   // SeatInspector: v12 slice 4 factors the Ask Planner row into
@@ -162,13 +162,13 @@ test("Carbon-for-AI tokens (--admin-ai-*) stay exclusive to Ask Planner surfaces
   assert.equal(
     countOccurrences(inspectorAiBlock, AI_TOKEN),
     inspectorTotal,
-    "every --admin-ai- occurrence in SeatInspector.tsx must live inside AskPlannerSeatRow()"
+    "every --sp-ai- occurrence in SeatInspector.tsx must live inside AskPlannerSeatRow()"
   );
 
   // Non-AI surfaces: zero AI-blue tokens, ever.
-  assert.doesNotMatch(viewerFinderSource, /--admin-ai-/);
-  assert.doesNotMatch(await readSource("../components/seat-map/ViewerFindPalette.tsx"), /--admin-ai-/);
-  assert.doesNotMatch(shellBarSource, /--admin-ai-/);
+  assert.doesNotMatch(viewerFinderSource, /--sp-ai-/);
+  assert.doesNotMatch(await readSource("../components/seat-map/ViewerFindPalette.tsx"), /--sp-ai-/);
+  assert.doesNotMatch(shellBarSource, /--sp-ai-/);
 });
 
 test("active modes exit after dialogs and keep visible exit controls", async () => {
@@ -366,9 +366,9 @@ test("publish review summarizes draft changes before publish", async () => {
   // The diff table's column contract and kind-tag tokens.
   assert.match(dialogsSource, /Published now/);
   assert.match(dialogsSource, /After publish/);
-  assert.match(dialogsSource, /--admin-diff-assigned-/);
-  assert.match(dialogsSource, /--admin-diff-vacated-/);
-  assert.match(dialogsSource, /--admin-diff-reassigned-/);
+  assert.match(dialogsSource, /--sp-status-success-surface/);
+  assert.match(dialogsSource, /--admin-diff-vacated-text/);
+  assert.match(dialogsSource, /--sp-status-pending-surface/);
   assert.match(dialogsSource, /People details/);
   assert.match(source, /Publish review blocked: Save or discard the selected seat edits before publishing/);
   assert.match(source, /Save or discard the selected seat edits before publishing/);
@@ -506,14 +506,14 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /title="Workspace notes"/);
   assert.match(inspectorSource, /<div id="seat-inspector-notes"/);
   // Status chips are SOFT PAIRS (2026-08-19 Carbon handoff): every arm pulls
-  // bg and text from the same --admin-state-* family, whose light AND dark
+  // bg and text from the same --sp-editor-* family, whose light AND dark
   // values are measured AA together in globals.css. Solid status fills with
   // hardcoded text partners are banned here — white on the dark-theme
-  // --admin-status-ok (#42be65) fails AA at ~2.2:1, which is how the old
+  // --sp-status-success-mark (#42be65) fails AA at ~2.2:1, which is how the old
   // solid tag broke silently when dark mode landed.
-  assert.match(inspectorSource, /bg-\[var\(--admin-state-clean-bg\)\] text-\[var\(--admin-state-clean-text\)\]/);
-  assert.doesNotMatch(inspectorSource, /bg-\[var\(--admin-status-ok\)\] text-white/);
-  assert.doesNotMatch(inspectorSource, /bg-\[var\(--admin-status-ok\)\] text-\[var\(--sp-text-primary\)\]/);
+  assert.match(inspectorSource, /bg-\[var\(--sp-editor-clean-bg\)\] text-\[var\(--sp-editor-clean-text\)\]/);
+  assert.doesNotMatch(inspectorSource, /bg-\[var\(--sp-status-success-mark\)\] text-white/);
+  assert.doesNotMatch(inspectorSource, /bg-\[var\(--sp-status-success-mark\)\] text-\[var\(--sp-text-primary\)\]/);
   assert.doesNotMatch(inspectorSource, /sticky bottom-0/);
   assert.match(inspectorSource, /No unsaved changes\./);
   // The verbose repeated panels are gone (Claude Design cleanup).
@@ -1266,7 +1266,7 @@ test("CTA labels sit on the ladder's white, not the off-white inverse token", as
     "../app/(shell)/admin/page.tsx"
   ]) {
     const source = await readSource(file);
-    for (const match of source.match(/bg-\[var\(--admin-primary-cta\)\][^"']*/g) ?? []) {
+    for (const match of source.match(/bg-\[var\(--sp-button-primary\)\][^"']*/g) ?? []) {
       assert.doesNotMatch(
         match,
         /text-\[var\(--sp-text-inverse\)\]/,

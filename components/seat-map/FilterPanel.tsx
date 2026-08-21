@@ -64,15 +64,15 @@ export function ActiveFilterChips({
   return (
     <div aria-label="Active filters" className={["sp-zone-base flex flex-wrap items-center gap-1.5", className].filter(Boolean).join(" ")}>
       {chips.map(chip => (
-        <span key={chip.id} className="inline-flex max-w-full items-center gap-1 bg-[var(--sp-layer-01)] py-0.5 pl-2 pr-1 text-[11px] font-semibold text-[var(--sp-text-secondary)] ring-1 ring-[var(--admin-primary-border)]">
+        <span key={chip.id} className="inline-flex max-w-full items-center gap-1 bg-[var(--sp-layer-01)] py-0.5 pl-2 pr-1 text-[11px] font-semibold text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-brand-border)]">
           <span className="shrink-0 text-[var(--sp-text-helper)]">{chip.label}</span>
-          <span className="min-w-0 truncate text-[var(--admin-primary-cta)]">{chip.value}</span>
+          <span className="min-w-0 truncate text-[var(--sp-button-primary)]">{chip.value}</span>
           <button
             type="button"
             onClick={() => onRemove(chip.id)}
             aria-label={chip.removeLabel}
             title={chip.removeLabel}
-            className="ml-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-[10px] font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+            className="ml-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-[10px] font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-editor-neutral-bg)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
           >
             <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
@@ -82,7 +82,7 @@ export function ActiveFilterChips({
         <button
           type="button"
           onClick={onClearAll}
-          className="inline-flex min-h-6 items-center border border-[var(--admin-primary-border)] bg-[var(--admin-primary-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--admin-primary-on-soft)] transition hover:bg-[rgba(255,87,21,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+          className="inline-flex min-h-6 items-center border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-2.5 py-1 text-[11px] font-semibold text-[var(--sp-brand-text)] transition hover:bg-[rgba(255,87,21,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
         >
           Clear all
         </button>
@@ -98,7 +98,7 @@ export function ActiveFilterChips({
 // only the chrome is styled: appearance-none + an inline SVG chevron (data-URI,
 // stroke #B8AEA2 to match --sp-text-helper) standing in for the native arrow.
 const darkSelectClassName =
-  "mt-1 w-full min-w-0 cursor-pointer appearance-none border border-white/20 bg-white/[0.06] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2012%208%22%20fill=%22none%22%3E%3Cpolyline%20points=%221,1.5%206,6.5%2011,1.5%22%20stroke=%22%239a9a9a%22%20stroke-width=%221.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[length:12px_8px] bg-[position:right_8px_center] bg-no-repeat px-2.5 py-1.5 pr-8 text-sm text-[var(--sp-text-primary)] outline-none transition hover:border-white/30 focus:border-[var(--admin-primary)] focus:ring-2 focus:ring-[color:var(--admin-primary-border)] [&>option]:bg-[var(--sp-background-hover)] [&>option]:text-[var(--sp-text-primary)]";
+  "mt-1 w-full min-w-0 cursor-pointer appearance-none border border-white/20 bg-white/[0.06] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2012%208%22%20fill=%22none%22%3E%3Cpolyline%20points=%221,1.5%206,6.5%2011,1.5%22%20stroke=%22%239a9a9a%22%20stroke-width=%221.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[length:12px_8px] bg-[position:right_8px_center] bg-no-repeat px-2.5 py-1.5 pr-8 text-sm text-[var(--sp-text-primary)] outline-none transition hover:border-white/30 focus:border-[var(--sp-brand)] focus:ring-2 focus:ring-[color:var(--sp-brand-border)] [&>option]:bg-[var(--sp-background-hover)] [&>option]:text-[var(--sp-text-primary)]";
 
 export function FilterPanel({
   department,
@@ -205,8 +205,8 @@ export function FilterPanel({
                   className={[
                     "max-w-full truncate rounded-full border px-2.5 py-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
                     active
-                      ? "border-[var(--admin-primary)] bg-[rgba(255,87,21,0.15)] text-[var(--admin-primary)]"
-                      : "border-white/20 bg-white/[0.06] text-[var(--sp-text-primary)] hover:border-[var(--admin-primary)]"
+                      ? "border-[var(--sp-brand)] bg-[rgba(255,87,21,0.15)] text-[var(--sp-brand)]"
+                      : "border-white/20 bg-white/[0.06] text-[var(--sp-text-primary)] hover:border-[var(--sp-brand)]"
                   ].join(" ")}
                 >
                   {choice.label}

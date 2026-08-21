@@ -5,17 +5,17 @@ import AxeBuilder from "@axe-core/playwright";
 import { formatAxeViolations, WCAG_A_AA_TAGS } from "./axe-helpers";
 
 // Regression coverage for the app/globals.css change that repoints
-// --admin-publish-ready-text from --admin-primary-cta (#D23F0A, which the
+// --sp-publish-ready-text from --sp-button-primary (#D23F0A, which the
 // header comment measures at only 4.18:1 / 4.27:1 as TEXT on the ready
-// surfaces) to --admin-primary-on-soft (#9E2F06, 6.52:1 / 6.66:1).
+// surfaces) to --sp-brand-text (#9E2F06, 6.52:1 / 6.66:1).
 //
 // This loads the REAL app/globals.css into a real page (no app server or
 // build needed — just the token definitions and a fragment matching how
 // AdminManagementPanel.tsx and SeatMap.tsx actually use the tokens: bg +
 // border + text all on one element, no App build required to catch a
 // regression here) and asserts on the resolved values and on contrast.
-test.describe("--admin-publish-ready-text token", () => {
-  test("resolves to --admin-primary-on-soft, not the cta fill", async ({ page }) => {
+test.describe("--sp-publish-ready-text token", () => {
+  test("resolves to --sp-brand-text, not the cta fill", async ({ page }) => {
     // process.cwd() (the project root Playwright runs from), not import.meta.url:
     // Playwright transpiles specs to CJS, where import.meta is a load-time
     // SyntaxError — same constraint documented in tests/browser/build-harness.ts.
@@ -30,7 +30,7 @@ test.describe("--admin-publish-ready-text token", () => {
         </head>
         <body class="admin-theme">
           <div id="ready-banner" class="border p-3 text-sm font-semibold"
-               style="background-color: var(--admin-publish-ready-bg); border-color: var(--admin-publish-ready-border); color: var(--admin-publish-ready-text);">
+               style="background-color: var(--sp-publish-ready-bg); border-color: var(--sp-publish-ready-border); color: var(--sp-publish-ready-text);">
             Publish draft changes when ready.
           </div>
         </body>
@@ -38,14 +38,14 @@ test.describe("--admin-publish-ready-text token", () => {
     `);
 
     const [resolvedText, primaryOnSoft, primaryCta] = await page.evaluate(() => {
-      // The admin tokens (including --admin-primary-on-soft / --admin-primary-cta)
+      // The admin tokens (including --sp-brand-text / --sp-button-primary)
       // are scoped to `.admin-theme, .shell-theme`, not `:root`, so they must be
       // read from an element within that scope — not from document.documentElement.
       const style = getComputedStyle(document.getElementById("ready-banner")!);
       return [
         style.color,
-        style.getPropertyValue("--admin-primary-on-soft").trim(),
-        style.getPropertyValue("--admin-primary-cta").trim()
+        style.getPropertyValue("--sp-brand-text").trim(),
+        style.getPropertyValue("--sp-button-primary").trim()
       ];
     });
 
@@ -74,9 +74,9 @@ test.describe("--admin-publish-ready-text token", () => {
         </head>
         <body class="admin-theme" style="background-color: #ffffff; margin: 0;">
           <div id="ready-banner" style="
-              background-color: var(--admin-publish-ready-bg);
-              border: 1px solid var(--admin-publish-ready-border);
-              color: var(--admin-publish-ready-text);
+              background-color: var(--sp-publish-ready-bg);
+              border: 1px solid var(--sp-publish-ready-border);
+              color: var(--sp-publish-ready-text);
               padding: 12px;
               font-size: 14px;
               font-weight: 600;

@@ -8,7 +8,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 // Admin-theme confirm dialogs force the danger CTA over the variant palette.
 export const adminDangerButtonClassName =
-  "!border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)]";
+  "!border-[var(--sp-status-danger-strong)] !bg-[var(--sp-status-danger-strong)] !text-white hover:!border-[var(--sp-status-danger-strong)] hover:!bg-[var(--sp-status-danger-strong)]";
 
 const variants = {
   primary:
@@ -16,7 +16,7 @@ const variants = {
   secondary:
     "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-primary)] hover:border-[var(--sp-border-strong)] hover:bg-[var(--sp-background)]",
   danger:
-    "border-[var(--admin-state-danger-border)] bg-[var(--admin-state-danger-bg)] text-[var(--admin-state-danger-text)] hover:border-[var(--admin-danger)]"
+    "border-[var(--sp-editor-danger-border)] bg-[var(--sp-editor-danger-bg)] text-[var(--sp-editor-danger-text)] hover:border-[var(--sp-status-danger-strong)]"
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({ className = "", variant = "secondary", ...props }, ref) {

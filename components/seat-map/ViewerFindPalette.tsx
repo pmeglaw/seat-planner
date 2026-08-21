@@ -54,10 +54,10 @@ const KIND_LABELS: Record<ViewerSearchResultKind, string> = {
 };
 
 function resultKindClass(kind: ViewerSearchResultKind) {
-  if (kind === "person") return "bg-[var(--admin-info-soft)] text-[var(--admin-info)] ring-[rgb(var(--admin-info-rgb)/0.3)]";
+  if (kind === "person") return "bg-[var(--sp-status-neutral-surface)] text-[var(--sp-status-neutral-strong)] ring-[color-mix(in_srgb,var(--sp-status-neutral-strong)_30%,transparent)]";
   if (kind === "seat") return "sp-zone-chrome bg-[var(--sp-background)] text-white ring-[var(--sp-background)]";
-  if (kind === "department") return "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-[rgb(var(--admin-success-rgb)/0.3)]";
-  return "bg-[var(--admin-warning-soft)] text-[var(--admin-warning-text)] ring-[rgb(var(--admin-warning-text-rgb)/0.3)]";
+  if (kind === "department") return "bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-strong)] ring-[color-mix(in_srgb,var(--sp-status-success-strong)_30%,transparent)]";
+  return "bg-[var(--sp-status-pending-surface)] text-[var(--sp-status-pending-text)] ring-[color-mix(in_srgb,var(--sp-status-pending-text)_30%,transparent)]";
 }
 
 // Eyebrow rows. The mock draws these at #8E8276, which measures 3.75:1 on
@@ -228,7 +228,7 @@ export function ViewerFindPalette({
   }
 
   const listClassName =
-    "min-h-0 flex-1 overflow-y-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]";
+    "min-h-0 flex-1 overflow-y-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]";
 
   return (
     <div
@@ -291,8 +291,8 @@ export function ViewerFindPalette({
                       // row, and the two causes are kept separately
                       // announceable on purpose (accessibility-source).
                       className={cx(
-                        "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:opacity-60",
-                        selected ? "border-[var(--admin-primary-border)] bg-[var(--admin-paper)]" : "border-transparent"
+                        "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-60",
+                        selected ? "border-[var(--sp-brand-border)] bg-[var(--sp-brand-subtle)]" : "border-transparent"
                       )}
                     >
                       <span className="min-w-0">
@@ -326,7 +326,7 @@ export function ViewerFindPalette({
                 // argument, which is both a leaked DOM reference and an
                 // argument the prop's type never promised.
                 onClick={() => onClearSearch()}
-                className="mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-[11px] font-semibold text-[var(--sp-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:text-[var(--admin-primary-cta)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+                className="mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-[11px] font-semibold text-[var(--sp-text-secondary)] transition hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
               >
                 Clear search
               </button>
@@ -364,8 +364,8 @@ export function ViewerFindPalette({
                       className={cx(
                         "inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
                         pinned
-                          ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-on-soft)]"
-                          : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)] hover:border-[var(--admin-primary-border)]"
+                          ? "border-[var(--sp-brand)] bg-[var(--sp-brand-wash)] text-[var(--sp-brand-text)]"
+                          : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)] hover:border-[var(--sp-brand-border)]"
                       )}
                     >
                       {chip.name}
@@ -434,7 +434,7 @@ export function ViewerFindPalette({
                     // line-height the pair alone is 37px, which pushed the row
                     // to 54 and cost a launch-scale directory a third of its
                     // visible names.
-                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border border-transparent px-2 py-1.5 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border border-transparent px-2 py-1.5 text-left transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <span aria-hidden="true" className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-background)] text-[10px] font-bold text-[var(--sp-text-secondary)]">
                       {buildInitials(row.title) || "?"}

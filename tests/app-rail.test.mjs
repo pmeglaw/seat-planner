@@ -241,14 +241,14 @@ test("askPlannerActive marks the AI button active; idle otherwise", async () => 
   const activeButton = screen.getByRole("button", { name: /Ask Planner/ });
   assert.equal(activeButton.getAttribute("aria-expanded"), "true");
   assert.ok(
-    activeButton.className.includes("shadow-[inset_3px_0_0_var(--admin-ai-chrome-border)]"),
+    activeButton.className.includes("shadow-[inset_3px_0_0_var(--sp-ai-chrome-border)]"),
     "the open drawer must be visible on the rail item, not only on the bar tenant"
   );
   cleanup();
   await renderRail({ onOpenAskPlanner: () => {} });
   const idleButton = screen.getByRole("button", { name: /Ask Planner/ });
   assert.equal(idleButton.getAttribute("aria-expanded"), "false");
-  assert.ok(!idleButton.className.includes("shadow-[inset_3px_0_0_var(--admin-ai-chrome-border)]"));
+  assert.ok(!idleButton.className.includes("shadow-[inset_3px_0_0_var(--sp-ai-chrome-border)]"));
 });
 
 test("without onOpenAskPlanner, the AI item is a plain link to /admin?ask-planner=open", async () => {

@@ -18,6 +18,28 @@ Rule for this branch: renames and twin deletion only — nothing here was acted 
   was deleted here (§3.3 lists it) rather than left dangling; its one call
   site (publish-readiness StatusBadge) derives via color-mix now.
 
+## §3.4 (`--admin-*` brand/status/states)
+
+- **`--admin-diff-vacated-text` stayed parked (doc error found):** §3.4 says
+  the nine `--admin-diff-*` tokens are value-identical merges. True in BOTH
+  themes for eight of them — but vacated-text is `#B3232C` (= danger STRONG)
+  in light and `#ff8389` (= danger TEXT) in dark, so no single status role
+  matches both. Merging it would change a pixel in one theme. Kept under its
+  old name with a comment in globals.css; owner can rule which role wins in
+  Pass 2 (that IS a value change).
+- **`--admin-paper` was NOT a pure duplicate (doc error found):** §3.4 says
+  "delete — duplicate of --sp-brand-subtle", but its dark admin value is
+  `rgba(255, 87, 21, 0.12)` while `--sp-brand-subtle` has no dark override
+  (#FBEAE1). The dark declaration was kept as a scoped `--sp-brand-subtle`
+  override in the dark admin block — pixel-identical, name retired.
+- `--admin-shadow-shell/command/map` (`none`) had zero call sites — deleted
+  with nothing to migrate.
+- `--sp-status-pending-mark` (#009d9a light) is deliberately NOT the same
+  value as `--sp-status-pending-strong` (#136A67 light) — the doc's §1c table
+  lists both anchors; the mark is the raw dot/bar hue, strong is the deeper
+  text-capable anchor. success/danger marks DO equal their strongs (doc's
+  "mark ≡ strong for these two").
+
 ## §3.3 (`--admin-*` surfaces/text/chrome — the chrome zone)
 
 - **`--sp-chrome-scrim` (new chrome-extra, not in the §3 table):** six fixed

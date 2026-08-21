@@ -42,12 +42,12 @@ test("AI blue reaches the map only through the planner-highlight state", async (
   // Do-not-touch #1: this redesign changes NOTHING about the pills except the
   // planner-highlight state. If AI blue leaked into a resting, selected or
   // search state, the aura would stop meaning "the assistant chose this seat".
-  assert.ok((markerSource.match(/--admin-ai-|shadow-marker-ai/g) ?? []).length > 0,
+  assert.ok((markerSource.match(/--sp-ai-|shadow-marker-ai/g) ?? []).length > 0,
     "the planner-highlight state should consume the AI token family");
 
   const plannerBranch = markerSource.match(/plannerHighlighted[\s\S]{0,4000}/);
   assert.ok(plannerBranch, "the marker must derive a plannerHighlighted predicate");
-  for (const match of markerSource.matchAll(/--admin-ai-[a-z-]+|shadow-marker-ai/g)) {
+  for (const match of markerSource.matchAll(/--sp-ai-[a-z-]+|shadow-marker-ai/g)) {
     const context = markerSource.slice(Math.max(0, match.index - 400), match.index);
     assert.match(context, /plannerHighlighted/,
       `AI token ${match[0]} must sit in a planner-highlight-gated expression`);
@@ -90,5 +90,5 @@ test("viewer isolation holds: no Ask Planner, no AI language on the viewer map",
   // the aura" copy-paste trips here first.
   assert.doesNotMatch(viewerSource, /AskPlanner/, "the viewer must not reference Ask Planner");
   assert.doesNotMatch(viewerSource, /AiHighlightChip/, "the viewer must not render the AI chip");
-  assert.doesNotMatch(viewerSource, /--admin-ai-/, "the viewer must not borrow the AI token family");
+  assert.doesNotMatch(viewerSource, /--sp-ai-/, "the viewer must not borrow the AI token family");
 });

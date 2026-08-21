@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const globalsCss = readFileSync(join(repoRoot, "app", "globals.css"), "utf8");
 
-const FOCUS_TOKENS = ["--sp-focus", "--admin-focus", "--admin-marker-focus-ring"];
+const FOCUS_TOKENS = ["--sp-focus", "--sp-focus", "--admin-marker-focus-ring"];
 const RAW_BRAND = [/#ff5715/i, /255[,\s]+87[,\s]+21/];
 
 test("no focus token carries the raw brand orange (fails 3:1 on layered surfaces)", () => {
@@ -40,7 +40,7 @@ test("focus tokens keep a dark override (the light ring drops below 3:1 on hover
   // The dark blocks re-declare these tokens; losing the override in a refactor
   // would silently ship the light ring onto dark grounds. Presence check only —
   // the value is free to evolve as long as the override exists.
-  for (const token of ["--sp-focus", "--admin-focus"]) {
+  for (const token of ["--sp-focus", "--sp-focus"]) {
     const declarations = globalsCss
       .split("\n")
       .filter(line => line.trim().startsWith(`${token}:`));
@@ -61,7 +61,7 @@ test("focus follows the surface: dark-chrome regions re-anchor both focus tokens
   // theme.
   const markerBlock = globalsCss.match(/\[data-chrome="dark"\]\s*\{[^}]*\}/);
   assert.ok(markerBlock, 'globals.css must scope focus tokens under [data-chrome="dark"]');
-  for (const token of ["--sp-focus", "--admin-focus"]) {
+  for (const token of ["--sp-focus", "--sp-focus"]) {
     assert.ok(
       markerBlock[0].includes(`${token}:`),
       `the [data-chrome="dark"] block must re-declare ${token}`
@@ -100,9 +100,9 @@ function collectTsxFiles(dir, out = []) {
 
 test("no shipped surface pairs white text with a raw brand-orange fill (3.17:1)", () => {
   // White text is legal only on the deepened CTA ladder (#D23F0A and darker);
-  // raw #FF5715 fills must pair with ink (--admin-primary-ink, 5.71:1).
+  // raw #FF5715 fills must pair with ink (--sp-text-on-brand, 5.71:1).
   // Line-scoped scan, matching how className strings are authored in this repo.
-  const brandFill = /bg-\[(var\(--admin-primary\)|#ff5715|var\(--sp-brand\))\]|bg-sp-brand-accent/i;
+  const brandFill = /bg-\[(var\(--sp-brand\)|#ff5715|var\(--sp-brand\))\]|bg-sp-brand-accent/i;
   const offenders = [];
   const files = [
     ...collectTsxFiles(join(repoRoot, "app")),
@@ -119,6 +119,6 @@ test("no shipped surface pairs white text with a raw brand-orange fill (3.17:1)"
   assert.deepEqual(
     offenders,
     [],
-    `White text on a raw #FF5715 fill fails AA (3.17:1) — use bg-[var(--admin-primary-cta)] with white, or keep the raw brand fill and pair it with text-[var(--admin-primary-ink)]. Offending lines:\n${offenders.join("\n")}`
+    `White text on a raw #FF5715 fill fails AA (3.17:1) — use bg-[var(--sp-button-primary)] with white, or keep the raw brand fill and pair it with text-[var(--sp-text-on-brand)]. Offending lines:\n${offenders.join("\n")}`
   );
 });

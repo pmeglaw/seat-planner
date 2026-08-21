@@ -29,12 +29,12 @@ export function buildSwapSummary(sourceSeat: SeatWithEmployee, targetSeat: SeatW
 }
 
 const PUBLISH_DIFF_TAG_STYLES: Record<PublishDiffRowKind, { label: string; className: string }> = {
-  assigned: { label: "Assigned", className: "border-[var(--admin-diff-assigned-border)] bg-[var(--admin-diff-assigned-bg)] text-[var(--admin-diff-assigned-text)]" },
-  added: { label: "Added", className: "border-[var(--admin-diff-assigned-border)] bg-[var(--admin-diff-assigned-bg)] text-[var(--admin-diff-assigned-text)]" },
-  vacated: { label: "Vacated", className: "border-[var(--admin-diff-vacated-border)] bg-[var(--admin-diff-vacated-bg)] text-[var(--admin-diff-vacated-text)]" },
-  removed: { label: "Removed", className: "border-[var(--admin-diff-vacated-border)] bg-[var(--admin-diff-vacated-bg)] text-[var(--admin-diff-vacated-text)]" },
-  reassigned: { label: "Reassigned", className: "border-[var(--admin-diff-reassigned-border)] bg-[var(--admin-diff-reassigned-bg)] text-[var(--admin-diff-reassigned-text)]" },
-  updated: { label: "Updated", className: "border-[var(--admin-state-neutral-border)] bg-[var(--admin-state-neutral-bg)] text-[var(--sp-text-helper)]" }
+  assigned: { label: "Assigned", className: "border-[var(--sp-status-success-border)] bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]" },
+  added: { label: "Added", className: "border-[var(--sp-status-success-border)] bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]" },
+  vacated: { label: "Vacated", className: "border-[var(--sp-status-danger-border)] bg-[var(--sp-status-danger-surface)] text-[var(--admin-diff-vacated-text)]" },
+  removed: { label: "Removed", className: "border-[var(--sp-status-danger-border)] bg-[var(--sp-status-danger-surface)] text-[var(--admin-diff-vacated-text)]" },
+  reassigned: { label: "Reassigned", className: "border-[var(--sp-status-pending-border)] bg-[var(--sp-status-pending-surface)] text-[var(--sp-status-pending-text)]" },
+  updated: { label: "Updated", className: "border-[var(--sp-editor-neutral-border)] bg-[var(--sp-editor-neutral-bg)] text-[var(--sp-text-helper)]" }
 };
 
 function PublishDiffTag({ kind }: { kind: PublishDiffRowKind }) {
@@ -145,7 +145,7 @@ export function DeleteSeatConfirmDialog({
           </button>
         </div>
 
-        <div className="mt-4 rounded-xl border border-[var(--admin-state-danger-border)] bg-[var(--admin-state-danger-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-danger-text)]">
+        <div className="mt-4 rounded-xl border border-[var(--sp-editor-danger-border)] bg-[var(--sp-editor-danger-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-editor-danger-text)]">
           This removes custom draft seats only. Published maps are unchanged until you publish.
         </div>
 
@@ -205,7 +205,7 @@ export function PublishReviewDialog({
             type="button"
             onClick={onClose}
             disabled={pending}
-            className={["flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--admin-state-neutral-bg)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40", focusRingClass].join(" ")}
+            className={["flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-editor-neutral-bg)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40", focusRingClass].join(" ")}
             aria-label="Close publish review"
           >
             <CloseIcon />
@@ -214,15 +214,15 @@ export function PublishReviewDialog({
 
         <div className="min-h-0 overflow-y-auto overscroll-contain py-4">
           {!publishSummary.hasChanges && (
-            <p className="rounded-xl border border-[var(--admin-publish-no-change-border)] bg-[var(--admin-publish-no-change-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-publish-no-change-text)]">
+            <p className="rounded-xl border border-[var(--sp-publish-no-change-border)] bg-[var(--sp-publish-no-change-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-publish-no-change-text)]">
               No draft changes to publish. The saved draft already matches the currently published viewer map.
             </p>
           )}
 
           {publishSummary.hasChanges && (
           <>
-          <div className="rounded-xl border border-[var(--admin-publish-ready-border)] bg-[var(--admin-publish-ready-bg)] p-3 text-[var(--admin-publish-ready-text)]">
-            <StatusBadge tone={publishReadinessBadgeTone} className="!min-h-0 !bg-[color-mix(in_srgb,var(--sp-layer-01)_80%,transparent)] !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--admin-publish-ready-text)] !ring-[var(--admin-publish-ready-border)]">
+          <div className="rounded-xl border border-[var(--sp-publish-ready-border)] bg-[var(--sp-publish-ready-bg)] p-3 text-[var(--sp-publish-ready-text)]">
+            <StatusBadge tone={publishReadinessBadgeTone} className="!min-h-0 !bg-[color-mix(in_srgb,var(--sp-layer-01)_80%,transparent)] !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--sp-publish-ready-text)] !ring-[var(--sp-publish-ready-border)]">
               {publishReadinessBadgeLabel}
             </StatusBadge>
             <h3 className="mt-2 text-sm font-semibold text-[var(--sp-text-primary)]">{publishReadinessTitle}</h3>
@@ -230,13 +230,13 @@ export function PublishReviewDialog({
           </div>
 
           {actionError && !pending && (
-            <div role="alert" className="mt-3 rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-error-text)]">
+            <div role="alert" className="mt-3 rounded-xl border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-editor-error-text)]">
               <span className="font-semibold">Publish did not complete.</span> {actionError}
             </div>
           )}
 
           {pending && (
-            <div role="status" aria-live="polite" className="mt-3 rounded-xl border border-[var(--admin-state-saving-border)] bg-[var(--admin-state-saving-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-saving-text)]">
+            <div role="status" aria-live="polite" className="mt-3 rounded-xl border border-[var(--sp-editor-saving-border)] bg-[var(--sp-editor-saving-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-editor-saving-text)]">
               Publishing reviewed draft changes. Viewer map stays unchanged until publish finishes.
             </div>
           )}
@@ -256,7 +256,7 @@ export function PublishReviewDialog({
           {publishDiffRows.length > 0 ? (
             <div className="mt-2 overflow-x-auto border border-[var(--sp-border-subtle)]">
               <div role="table" aria-label="Per-seat draft changes" className="max-h-56 min-w-[480px] overflow-y-auto">
-                <div role="row" className="sticky top-0 z-10 grid grid-cols-[64px_1fr_1fr_96px] border-b border-[var(--sp-border-subtle)] bg-[var(--admin-state-neutral-bg)]">
+                <div role="row" className="sticky top-0 z-10 grid grid-cols-[64px_1fr_1fr_96px] border-b border-[var(--sp-border-subtle)] bg-[var(--sp-editor-neutral-bg)]">
                   <span role="columnheader" className="px-3 py-1.5 text-[11px] font-semibold text-[var(--sp-text-helper)]">Seat</span>
                   <span role="columnheader" className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--sp-text-helper)]">Published now</span>
                   <span role="columnheader" className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--sp-text-helper)]">After publish</span>
@@ -294,7 +294,7 @@ export function PublishReviewDialog({
             <div className="mt-3 border border-[var(--sp-border-subtle)] p-3">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-[var(--sp-text-primary)]">People details</h3>
-                <span className="rounded-full bg-[var(--admin-state-neutral-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--admin-state-neutral-border)]">{publishSummary.employeeDetailChanges.length}</span>
+                <span className="rounded-full bg-[var(--sp-editor-neutral-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-editor-neutral-border)]">{publishSummary.employeeDetailChanges.length}</span>
               </div>
               <ul className="mt-2 space-y-1.5 text-xs leading-5 text-[var(--sp-text-helper)]">
                 {publishSummary.employeeDetailChanges.map(item => (
@@ -330,7 +330,7 @@ export function PublishReviewDialog({
             onClick={onConfirm}
             disabled={pending || !publishSummary.hasChanges}
             title={publishSummary.hasChanges ? "Publish reviewed draft changes" : "No draft changes to publish"}
-            className={["w-full h-12 !border-[var(--admin-primary-cta)] !bg-[var(--admin-primary-cta)] !text-white hover:!border-[var(--admin-primary-cta-hover)] hover:!bg-[var(--admin-primary-cta-hover)] disabled:!border-[var(--admin-state-neutral-border)] disabled:!bg-[var(--admin-state-neutral-bg)] disabled:!text-[var(--sp-text-helper)]", focusRingClass].join(" ")}
+            className={["w-full h-12 !border-[var(--sp-button-primary)] !bg-[var(--sp-button-primary)] !text-white hover:!border-[var(--sp-button-primary-hover)] hover:!bg-[var(--sp-button-primary-hover)] disabled:!border-[var(--sp-editor-neutral-border)] disabled:!bg-[var(--sp-editor-neutral-bg)] disabled:!text-[var(--sp-text-helper)]", focusRingClass].join(" ")}
           >
             {pending ? "Publishing…" : actionError && publishSummary.hasChanges ? "Retry publish" : publishSummary.hasChanges ? (
               <>
@@ -383,7 +383,7 @@ export function DiscardDraftDialog({
           This cannot be undone — Undo/Redo history is cleared.
         </p>
         {actionError && (
-          <p role="alert" className="mt-3 rounded-xl border border-[var(--admin-state-error-border)] bg-[var(--admin-state-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--admin-state-error-text)]">
+          <p role="alert" className="mt-3 rounded-xl border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-editor-error-text)]">
             {actionError}
           </p>
         )}
@@ -507,7 +507,7 @@ export function SwapConfirmDialog({
           </div>
         </div>
 
-        <div className="mt-4 rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold text-[var(--admin-publish-viewer-impact-text)]">
+        <div className="mt-4 rounded-xl border border-[var(--sp-publish-viewer-impact-border)] bg-[var(--sp-publish-viewer-impact-bg)] p-3 text-sm font-semibold text-[var(--sp-publish-viewer-impact-text)]">
           {buildSwapSummary(swapSourceSeat, swapTargetSeat)}
         </div>
 
@@ -563,7 +563,7 @@ export function MoveEmployeeConfirmDialog({
             <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
               {formatDisplayName(seatPersonLabel(moveEmployeeTargetSeat))} already sits at {formatSeatCode(moveEmployeeTargetSeat.label)}. Swapping moves them to {formatSeatCode(moveEmployeeSourceSeat.label)}. {PUBLISH_IMPACT_NOTE}
             </p>
-            <div className="mt-4 rounded-xl border border-[var(--admin-publish-viewer-impact-border)] bg-[var(--admin-publish-viewer-impact-bg)] p-3 text-sm font-semibold text-[var(--admin-publish-viewer-impact-text)]">
+            <div className="mt-4 rounded-xl border border-[var(--sp-publish-viewer-impact-border)] bg-[var(--sp-publish-viewer-impact-bg)] p-3 text-sm font-semibold text-[var(--sp-publish-viewer-impact-text)]">
               {buildSwapSummary(moveEmployeeSourceSeat, moveEmployeeTargetSeat)}
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">

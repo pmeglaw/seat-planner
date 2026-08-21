@@ -19,7 +19,7 @@ type MapZoomControlProps = {
 };
 
 const zoomButtonBaseClass =
-  "flex items-center justify-center bg-[var(--sp-layer-01)] text-[15px] leading-none text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:text-[var(--sp-text-helper)] disabled:hover:bg-[var(--sp-layer-01)]";
+  "flex items-center justify-center bg-[var(--sp-layer-01)] text-[15px] leading-none text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] disabled:cursor-not-allowed disabled:text-[var(--sp-text-helper)] disabled:hover:bg-[var(--sp-layer-01)]";
 
 export function MapZoomControl({
   label,

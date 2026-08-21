@@ -74,11 +74,11 @@ export type AppRailProps = {
 // chrome text token, not text-white — one hovered foreground across the
 // chrome (see components/ui/adminChrome.ts doctrine).
 const ITEM =
-  "relative flex h-10 w-full items-center overflow-hidden text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  "relative flex h-10 w-full items-center overflow-hidden text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
 const ITEM_IDLE = "text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]";
 // Active: #262626 surface + inset 3px #FF5715 left edge (contract #3) — the
 // vertical-chrome active marker (adminChrome.ts doctrine).
-const ITEM_ACTIVE = "bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)] shadow-[inset_3px_0_0_var(--admin-primary)]";
+const ITEM_ACTIVE = "bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)] shadow-[inset_3px_0_0_var(--sp-brand)]";
 const CELL = "flex w-12 shrink-0 items-center justify-center";
 const LABEL_BASE = "whitespace-nowrap text-[12.5px] transition-opacity duration-150";
 
@@ -286,8 +286,8 @@ export function AppRail({
           </Link>
         ))}
         <div className="flex-1" />
-        {/* Ask Planner — the AI entry. AI blue (--admin-ai-chrome-text /
-            --admin-ai-chrome-border) is reserved for AI presence and must not
+        {/* Ask Planner — the AI entry. AI blue (--sp-ai-chrome-text /
+            --sp-ai-chrome-border) is reserved for AI presence and must not
             appear on any non-AI control in this component. Admin rail only:
             Ask Planner is an admin surface, so the viewer-mode rail hides it. */}
         {railMode !== "admin" ? null : onOpenAskPlanner ? (
@@ -304,8 +304,8 @@ export function AppRail({
             // same fill/weight as ITEM_ACTIVE, AI-blue edge.
             className={[
               ITEM,
-              "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--admin-ai-chrome-text-hover)]",
-              askPlannerActive ? "bg-[var(--sp-background-hover)] shadow-[inset_3px_0_0_var(--admin-ai-chrome-border)]" : ""
+              "text-[var(--sp-ai-chrome-text)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-ai-chrome-text-hover)]",
+              askPlannerActive ? "bg-[var(--sp-background-hover)] shadow-[inset_3px_0_0_var(--sp-ai-chrome-border)]" : ""
             ].join(" ")}
           >
             <AiCell open={open} active={askPlannerActive} />
@@ -320,7 +320,7 @@ export function AppRail({
             // onNavigate veto inside is a no-op here — sub-pages don't
             // pass it.
             onClick={event => handleNavClick(event, "/admin?ask-planner=open", "Ask Planner")}
-            className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--admin-ai-chrome-text-hover)]"].join(" ")}
+            className={[ITEM, "text-[var(--sp-ai-chrome-text)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-ai-chrome-text-hover)]"].join(" ")}
           >
             <AiLinkBody open={open} />
           </Link>
@@ -437,7 +437,7 @@ function AiCell({ open, active = false, pending = false }: { open: boolean; acti
         </span>
         <span
           aria-hidden="true"
-          className="absolute right-0.5 top-0.5 border border-[var(--admin-ai-chrome-border)] px-[3px] text-[9px] font-bold leading-none text-[var(--admin-ai-chrome-text)]"
+          className="absolute right-0.5 top-0.5 border border-[var(--sp-ai-chrome-border)] px-[3px] text-[9px] font-bold leading-none text-[var(--sp-ai-chrome-text)]"
         >
           AI
         </span>

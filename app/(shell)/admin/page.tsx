@@ -30,7 +30,7 @@ export default async function AdminPage() {
             </p>
             <Link
               href="/"
-              className="mt-5 inline-flex min-h-9 items-center justify-center border border-[var(--admin-primary-cta)] bg-[var(--admin-primary-cta)] px-4 py-2 text-sm font-semibold leading-none text-white transition-colors hover:border-[var(--admin-primary-cta-hover)] hover:bg-[var(--admin-primary-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] focus-visible:ring-offset-2"
+              className="mt-5 inline-flex min-h-9 items-center justify-center border border-[var(--sp-button-primary)] bg-[var(--sp-button-primary)] px-4 py-2 text-sm font-semibold leading-none text-white transition-colors hover:border-[var(--sp-button-primary-hover)] hover:bg-[var(--sp-button-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] focus-visible:ring-offset-2"
             >
               Back to seat map
             </Link>

@@ -59,7 +59,7 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
         role="group"
         aria-label={ariaLabel}
         tabIndex={0}
-        className="flex min-w-0 flex-1 items-center gap-2.5 overflow-x-auto px-3 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] md:gap-3"
+        className="flex min-w-0 flex-1 items-center gap-2.5 overflow-x-auto px-3 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] md:gap-3"
       >
         <span className="map-status-band-wide shrink-0 text-[12px] font-semibold text-[var(--sp-text-primary)]">Legend</span>
         <span className="map-status-band-wide shrink-0 text-[11.5px] font-semibold tabular-nums text-[var(--sp-text-secondary)]">{totalLabel}</span>

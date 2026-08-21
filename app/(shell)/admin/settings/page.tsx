@@ -81,7 +81,7 @@ export default async function AdminSettingsPage() {
         role="region"
         aria-label="Settings"
         tabIndex={0}
-        className="flex-1 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] lg:min-h-0 lg:overflow-y-auto"
+        className="flex-1 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] lg:min-h-0 lg:overflow-y-auto"
       >
         <div className="mx-auto w-full max-w-[760px] px-6 pb-12 pt-6">
         <header className="mb-4">

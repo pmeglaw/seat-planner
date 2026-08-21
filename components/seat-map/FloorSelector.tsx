@@ -107,8 +107,8 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
         }}
         className={
           chrome
-            ? "flex h-7 items-center gap-2 px-2.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
-            : "flex items-center gap-2 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] shadow-elevation-3 transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+            ? "flex h-7 items-center gap-2 px-2.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]"
+            : "flex items-center gap-2 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] shadow-elevation-3 transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
         }
       >
         {chrome ? FLOOR_SHORT_LABELS[floor] : FLOOR_LABELS[floor]}
@@ -155,8 +155,8 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
               }}
               className={
                 chrome
-                  ? "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--sp-text-primary)] transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
-                  : "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]"
+                  ? "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--sp-text-primary)] transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]"
+                  : "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]"
               }
             >
               <span className={option.id === floor ? "font-semibold" : undefined}>{option.label}</span>

@@ -73,7 +73,7 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, r
       <span aria-hidden="true" className="pointer-events-none absolute bottom-0 left-12 right-0 h-px bg-[var(--sp-border-subtle)]" />
       <a
         href={skipLink.href}
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--sp-background)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--sp-text-primary)] focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--sp-brand)] focus:bg-[var(--sp-background)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--sp-text-primary)] focus:outline-none"
       >
         {skipLink.label}
       </a>
@@ -90,7 +90,7 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, r
           aria-controls="app-rail"
           aria-label={railOpen ? "Collapse navigation" : "Expand navigation"}
           title={railOpen ? "Collapse navigation" : "Expand navigation"}
-          className="flex h-full w-12 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
+          className="flex h-full w-12 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]"
         >
           <HamburgerIcon />
         </button>
