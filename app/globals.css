@@ -463,7 +463,7 @@
   /* Live seat-pill overrides (Task 6, verified in-browser against the dark
      marker table in docs/superpowers/specs/2026-08-19-dark-mode-design.md;
      fixwave 2026-08-19 closed the gaps Task 6 left open — see below).
-     Most --admin-marker-live-* names need no override: they already
+     Most --sp-marker-* names need no override: they already
      color-mix over the dark state tokens above and land close to the
      table (assigned/reserved/draft/search borders + text measured directly
      in Chrome). Only the names below visibly missed, so only they are
@@ -476,18 +476,18 @@
      raster. Now tokenized in JSX (SeatMarker.tsx ~234, ~239, ~473), so this
      block can finally supply the table's dark pill fills and a low-alpha
      white ring tuned for a dark ground. */
-  --admin-marker-live-available-surface: rgba(31, 31, 31, 0.95);  /* spec: available pill #1f1f1f */
-  --admin-marker-live-assigned-surface: rgba(38, 38, 38, 0.95);   /* spec: assigned pill #262626 */
-  --admin-marker-live-pill-ring: rgba(255, 255, 255, 0.12);
+  --sp-marker-available-surface: rgba(31, 31, 31, 0.95);  /* spec: available pill #1f1f1f */
+  --sp-marker-assigned-surface: rgba(38, 38, 38, 0.95);   /* spec: assigned pill #262626 */
+  --sp-marker-pill-ring: rgba(255, 255, 255, 0.12);
 
-  /* Available-pill ink (fixwave finding 3): --admin-marker-live-ink used to
+  /* Available-pill ink (fixwave finding 3): --sp-marker-ink used to
      be deliberately left alone because it only ever painted text on the
      hardcoded white/95 available pill (dark ink on white reads fine in both
      themes). Now that the available pill has a dark fill of its own, that
      same light-brown literal (#453D33) would sit at failing contrast on
      #1f1f1f, so it is re-pointed to the spec's available-text value —
      measured ~8.9:1 on #1f1f1f. */
-  --admin-marker-live-ink: #c6c6c6;
+  --sp-marker-ink: #c6c6c6;
 
   /* Assigned text (fixwave finding 3): was pinned to the pre-existing LIGHT
      on-soft literal (#284C3B, a dark green) because the assigned pill was
@@ -495,7 +495,7 @@
      the assigned pill renders on the dark #262626 fill above, that same
      dark-green literal would be nearly invisible; corrected to the spec's
      assigned-text value for the dark pill. */
-  --admin-marker-live-assigned-text: #f4f4f4;
+  --sp-marker-assigned-text: #f4f4f4;
 
   /* Unavailable: surface/border were still deriving from the *light* neutral
      ramp (--sp-neutral-strong(-muted) is dark-aware, but the color-mix left a
@@ -506,25 +506,25 @@
      floor but consistent with this state's existing muted/de-emphasized
      treatment (light mode's own unavailable-text is the same kind of
      lower-contrast literal) and pins the design spec's explicit value. */
-  --admin-marker-live-unavailable-surface: #161616;
-  --admin-marker-live-unavailable-border: #333333;
-  --admin-marker-live-unavailable-text: #7a7a7a;
+  --sp-marker-unavailable-surface: #161616;
+  --sp-marker-unavailable-border: #333333;
+  --sp-marker-unavailable-text: #7a7a7a;
 
   /* Neutral (swap-target pending state): both values were still LIGHT
      literals (#F1ECE4 cream surface, #353532 text) untouched by the dark
      block, so a pending swap target would render a bright cream chip.
      Re-pointed to the dark chrome pairing; text measured 8.86:1 on the new
      surface in Chrome. */
-  --admin-marker-live-neutral-surface: #262626;
-  --admin-marker-live-neutral-text: #c6c6c6;
+  --sp-marker-neutral-surface: #262626;
+  --sp-marker-neutral-text: #c6c6c6;
 
   /* Verified and deliberately NOT overridden:
-     - --admin-marker-live-selected-surface (#171A1D): the table wants a
+     - --sp-marker-selected-surface (#171A1D): the table wants a
        #FF5715 fill, but the selected pill's text is `text-white` — a JSX
        literal, not a var, so out of Task 6's scope. White-on-#FF5715
        measures ~3.17:1 (fails AA); the current dark near-black fill keeps
        white text at ~17:1 and the pill stays identifiable via its
-       (unchanged, already-orange) --admin-marker-live-active-edge border/
+       (unchanged, already-orange) --sp-marker-active-edge border/
        ring — confirmed legible in a live dark screenshot. Swapping the fill
        to raw orange without also fixing the hardcoded text color would be a
        contrast regression, so it was left alone. */
@@ -742,7 +742,7 @@
   --admin-diff-vacated-text: #B3232C;
 
   /* Marker-legend tokens. The map pills themselves render via the
-     --admin-marker-live-* family below (formerly raw viewer-variant hex in
+     --sp-marker-* family below (formerly raw viewer-variant hex in
      SeatMarker.tsx); these legend tokens only color the legend chips and
      result-row dots, so they mirror the marker hues. Do not point the
      markers at these. */
@@ -785,7 +785,7 @@
   --sp-legend-hover-shadow: 0 6px 14px rgba(22, 22, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.82);
   /* PR-A: solid #D23F0A replaces rgba(255,87,21,.75) — same 3:1 reasoning as
      --sp-focus (this token serves the dormant admin marker arm;
-     the live pills' focus ring rides --admin-marker-live-active-edge-soft).
+     the live pills' focus ring rides --sp-marker-active-edge-soft).
      The white offset ring below is unchanged — it carries the separation
      against the busy raster. */
   --sp-focus-marker-ring: #D23F0A;
@@ -811,50 +811,50 @@
      name. Distinct from the --sp-legend-* mirrors above, which
      stay legend-only. Contrast notes live at the use sites in
      SeatMarker.tsx. */
-  --admin-marker-live-ink: #453D33;
-  --admin-marker-live-assigned-border: color-mix(in srgb, var(--sp-status-success-strong) 55%, transparent);
-  --admin-marker-live-assigned-text: var(--sp-status-success-text);
-  --admin-marker-live-available-border: var(--sp-neutral-muted);
+  --sp-marker-ink: #453D33;
+  --sp-marker-assigned-border: color-mix(in srgb, var(--sp-status-success-strong) 55%, transparent);
+  --sp-marker-assigned-text: var(--sp-status-success-text);
+  --sp-marker-available-border: var(--sp-neutral-muted);
   /* Pill fills + base ring (fixwave finding 2): promoted from the JSX
      literals `bg-white/95` (both pills) / `ring-white/45` (base ring) so
      the dark-theme block above has a token to override — pixel-identical
      to the literals they replace. */
-  --admin-marker-live-available-surface: rgba(255, 255, 255, 0.95);
-  --admin-marker-live-assigned-surface: rgba(255, 255, 255, 0.95);
-  --admin-marker-live-pill-ring: rgba(255, 255, 255, 0.45);
-  --admin-marker-live-reserved-border: color-mix(in srgb, var(--sp-status-pending-strong) 55%, transparent);
-  --admin-marker-live-reserved-surface: color-mix(in srgb, var(--sp-status-pending-surface) 95%, transparent);
-  --admin-marker-live-reserved-text: var(--sp-status-pending-text);
-  --admin-marker-live-unavailable-border: color-mix(in srgb, var(--sp-neutral-muted) 90%, transparent);
-  --admin-marker-live-unavailable-surface: color-mix(in srgb, var(--sp-neutral-strong) 92%, transparent);
-  --admin-marker-live-unavailable-text: #696159;
-  --admin-marker-live-draft-border: color-mix(in srgb, var(--sp-status-pending-strong) 70%, transparent);
-  --admin-marker-live-draft-surface: color-mix(in srgb, var(--sp-status-pending-surface) 95%, transparent);
-  --admin-marker-live-draft-text: var(--sp-status-pending-text);
-  --admin-marker-live-draft-ring: color-mix(in srgb, var(--sp-status-pending-border) 55%, transparent);
-  --admin-marker-live-draft-badge: var(--sp-status-pending-strong);
-  --admin-marker-live-active-edge: #D46A24;
-  --admin-marker-live-active-edge-strong: color-mix(in srgb, var(--admin-marker-live-active-edge) 90%, transparent);
-  --admin-marker-live-active-edge-soft: color-mix(in srgb, var(--admin-marker-live-active-edge) 75%, transparent);
-  --admin-marker-live-selected-surface: #171A1D;
-  --admin-marker-live-search-selected-surface: #15181B;
-  --admin-marker-live-search-border: var(--sp-status-search-border);
-  --admin-marker-live-search-surface: var(--sp-status-search-surface);
-  --admin-marker-live-search-text: var(--sp-status-search-text);
-  --admin-marker-live-search-ring: color-mix(in srgb, var(--sp-status-search-border) 55%, transparent);
-  --admin-marker-live-positive-border: var(--sp-status-success-strong);
-  --admin-marker-live-positive-surface: var(--sp-status-success-surface);
-  --admin-marker-live-positive-text: var(--sp-status-success-text);
-  --admin-marker-live-positive-ring: color-mix(in srgb, var(--sp-status-success-border) 80%, transparent);
-  --admin-marker-live-positive-outline: color-mix(in srgb, var(--sp-status-success-strong) 70%, transparent);
-  --admin-marker-live-planner-ring: color-mix(in srgb, var(--sp-status-success-strong) 55%, transparent);
-  --admin-marker-live-invalid-border: var(--sp-status-danger-strong);
-  --admin-marker-live-invalid-surface: var(--sp-status-danger-surface);
-  --admin-marker-live-invalid-text: var(--sp-status-danger-text);
-  --admin-marker-live-neutral-border: var(--sp-text-helper);
-  --admin-marker-live-neutral-surface: #F1ECE4;
-  --admin-marker-live-neutral-text: #353532;
-  --admin-marker-live-neutral-ring: color-mix(in srgb, var(--sp-border-strong) 85%, transparent);
+  --sp-marker-available-surface: rgba(255, 255, 255, 0.95);
+  --sp-marker-assigned-surface: rgba(255, 255, 255, 0.95);
+  --sp-marker-pill-ring: rgba(255, 255, 255, 0.45);
+  --sp-marker-reserved-border: color-mix(in srgb, var(--sp-status-pending-strong) 55%, transparent);
+  --sp-marker-reserved-surface: color-mix(in srgb, var(--sp-status-pending-surface) 95%, transparent);
+  --sp-marker-reserved-text: var(--sp-status-pending-text);
+  --sp-marker-unavailable-border: color-mix(in srgb, var(--sp-neutral-muted) 90%, transparent);
+  --sp-marker-unavailable-surface: color-mix(in srgb, var(--sp-neutral-strong) 92%, transparent);
+  --sp-marker-unavailable-text: #696159;
+  --sp-marker-draft-border: color-mix(in srgb, var(--sp-status-pending-strong) 70%, transparent);
+  --sp-marker-draft-surface: color-mix(in srgb, var(--sp-status-pending-surface) 95%, transparent);
+  --sp-marker-draft-text: var(--sp-status-pending-text);
+  --sp-marker-draft-ring: color-mix(in srgb, var(--sp-status-pending-border) 55%, transparent);
+  --sp-marker-draft-badge: var(--sp-status-pending-strong);
+  --sp-marker-active-edge: #D46A24;
+  --sp-marker-active-edge-strong: color-mix(in srgb, var(--sp-marker-active-edge) 90%, transparent);
+  --sp-marker-active-edge-soft: color-mix(in srgb, var(--sp-marker-active-edge) 75%, transparent);
+  --sp-marker-selected-surface: #171A1D;
+  --sp-marker-search-selected-surface: #15181B;
+  --sp-marker-search-border: var(--sp-status-search-border);
+  --sp-marker-search-surface: var(--sp-status-search-surface);
+  --sp-marker-search-text: var(--sp-status-search-text);
+  --sp-marker-search-ring: color-mix(in srgb, var(--sp-status-search-border) 55%, transparent);
+  --sp-marker-positive-border: var(--sp-status-success-strong);
+  --sp-marker-positive-surface: var(--sp-status-success-surface);
+  --sp-marker-positive-text: var(--sp-status-success-text);
+  --sp-marker-positive-ring: color-mix(in srgb, var(--sp-status-success-border) 80%, transparent);
+  --sp-marker-positive-outline: color-mix(in srgb, var(--sp-status-success-strong) 70%, transparent);
+  --sp-marker-planner-ring: color-mix(in srgb, var(--sp-status-success-strong) 55%, transparent);
+  --sp-marker-invalid-border: var(--sp-status-danger-strong);
+  --sp-marker-invalid-surface: var(--sp-status-danger-surface);
+  --sp-marker-invalid-text: var(--sp-status-danger-text);
+  --sp-marker-neutral-border: var(--sp-text-helper);
+  --sp-marker-neutral-surface: #F1ECE4;
+  --sp-marker-neutral-text: #353532;
+  --sp-marker-neutral-ring: color-mix(in srgb, var(--sp-border-strong) 85%, transparent);
 
   /* Zone-wash overlay fill (SeatMap): success green at wash strength. */
   --sp-wash-zone: color-mix(in srgb, var(--sp-status-success-mark) 10%, transparent);
