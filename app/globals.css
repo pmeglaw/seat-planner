@@ -9,12 +9,6 @@
      signature orange #FF5715 — indicator-only: active tool underline, selected
      seat, search/filter highlight, focus. Publish moved to the CTA ladder
      (#D23F0A + white, v12 owner decision 2a, 2026-07-31). Owner-set 2026-07-21. */
-  --ml-orange-signature: #FF5715;
-  --ml-orange-hover: #E64E13;
-  --ml-orange-cta: #D23F0A;
-  --ml-graphite: #262626;
-  --ml-ink: #161616;
-
   --sp-color-brand-ivory: #FFFFFF;
   --sp-color-brand-paper: #FBEAE1;
   --sp-color-brand-copper: #D23F0A;
