@@ -29,6 +29,13 @@
   --sp-color-action-primary-pressed: #9E2F06;
   --sp-color-brand-clay: #6D4712;
 
+  /* -rgb channel twins exist ONLY to feed rgb(var(--x-rgb) / a) call sites.
+     Each one must hold exactly the channels of its hex partner — the hex is
+     the source of truth (twin-resolution ruling 2026-08-21), and
+     color-twin-drift-source.test.mjs fails the build if any twin drifts.
+     Fifteen stale twins were deleted in that pass; new alpha washes should
+     derive in place via color-mix(in srgb, var(--x) N%, transparent) instead
+     of minting a twin. */
   --sp-color-brand-ivory-rgb: 255 255 255;
   --sp-color-brand-paper-rgb: 251 234 225;
   --sp-color-brand-copper-rgb: 210 63 10;
@@ -36,7 +43,6 @@
   --sp-color-action-primary-rgb: 210 63 10;
   --sp-color-action-primary-hover-rgb: 184 55 8;
   --sp-color-action-primary-pressed-rgb: 158 47 6;
-  --sp-color-brand-clay-rgb: 122 46 12;
 
   /* Shell neutrals (IBM-gray family): #161616 chrome, #F7F6F2 workspace,
      #ffffff panels, #E7E1D8 hairlines. Text on light: #161616 (16.45:1),
@@ -52,14 +58,8 @@
   --sp-color-stone-muted: #B8AEA2;
 
   --sp-color-text-primary-rgb: 22 22 22;
-  --sp-color-text-secondary-rgb: 82 82 82;
-  --sp-color-text-muted-rgb: 111 111 111;
-  --sp-color-text-disabled-rgb: 168 168 168;
   --sp-color-workspace-rgb: 22 22 22;
   --sp-color-workspace-deep-rgb: 10 10 10;
-  --sp-color-graphite-soft-rgb: 244 244 244;
-  --sp-color-stone-rgb: 224 224 224;
-  --sp-color-stone-muted-rgb: 168 168 168;
 
   /* The ONLY two light neutrals: every page/canvas/mat surface uses canvas,
      every panel/strip/control uses surface. The floor-plan raster is content
@@ -71,11 +71,8 @@
   --sp-color-border-subtle: #E7E1D8;
   --sp-color-border-strong: #D8D0C5;
 
-  --sp-color-canvas-rgb: 244 244 244;
   --sp-color-surface-rgb: 255 255 255;
   --sp-color-surface-raised-rgb: 255 255 255;
-  --sp-color-border-subtle-rgb: 224 224 224;
-  --sp-color-border-strong-rgb: 198 198 198;
 
   /* State families. Accent hues follow the shell status colors (assigned
      #1D6E41 / reserved #009d9a / danger #B3232C) for dots and bars; the
@@ -145,9 +142,7 @@
   --sp-color-state-success-rgb: 29 110 65;
   --sp-color-state-warning-rgb: 19 106 103;
   --sp-color-state-danger-rgb: 179 35 44;
-  --sp-color-state-info-rgb: 82 82 82;
   --sp-color-state-search-rgb: 158 47 6;
-  --sp-color-state-disabled-rgb: 224 224 224;
 
   --sp-space-1: 4px;
   --sp-space-2: 8px;
@@ -223,29 +218,19 @@
   --sp-color-surface-raised: #262626;
   --sp-color-border-subtle: rgba(255, 255, 255, 0.10);
   --sp-color-border-strong: rgba(255, 255, 255, 0.18);
-  --sp-color-canvas-rgb: 22 22 22;
   --sp-color-surface-rgb: 31 31 31;
   --sp-color-surface-raised-rgb: 38 38 38;
-  --sp-color-border-subtle-rgb: 255 255 255;
-  --sp-color-border-strong-rgb: 255 255 255;
 
   --sp-color-text-primary: #f4f4f4;
   --sp-color-text-secondary: #c6c6c6;
   --sp-color-text-muted: #9a9a9a;
   --sp-color-text-disabled: #6f6f6f;
   --sp-color-text-primary-rgb: 244 244 244;
-  --sp-color-text-secondary-rgb: 198 198 198;
-  --sp-color-text-muted-rgb: 154 154 154;
-  --sp-color-text-disabled-rgb: 111 111 111;
 
   --sp-color-graphite-soft: #262626;
   --sp-color-stone: #333333;
   --sp-color-stone-muted: #6f6f6f;
   --sp-color-state-disabled: #333333;
-  --sp-color-graphite-soft-rgb: 38 38 38;
-  --sp-color-stone-rgb: 51 51 51;
-  --sp-color-stone-muted-rgb: 111 111 111;
-  --sp-color-state-disabled-rgb: 51 51 51;
 
   /* Status families: bright text + alpha softs (spec table). on-soft = the
      bright text — the softs are washes of the same hue on near-black. */
@@ -283,7 +268,6 @@
   --sp-color-state-info-surface: rgba(255, 255, 255, 0.08);
   --sp-color-state-info-border: rgba(255, 255, 255, 0.14);
   --sp-color-state-info-on-soft: #c6c6c6;
-  --sp-color-state-info-rgb: 198 198 198;
 
   /* Search stays brand-orange on dark: text #FF8A5C = 6.1:1 on #161616. */
   --sp-color-state-search: #FF8A5C;
@@ -403,9 +387,7 @@
   --admin-status-warn: #08bdba;
   --admin-status-bad: #fa4d56;
   --admin-status-neutral: #8d8d8d;
-  --admin-status-ok-rgb: 66 190 101;
   --admin-status-warn-rgb: 8 189 186;
-  --admin-status-bad-rgb: 250 77 86;
 
   /* Status families → dark partners (bright text + alpha soft). */
   --admin-success: #42be65;
@@ -430,11 +412,11 @@
   --admin-state-dirty-border: rgba(8, 189, 186, 0.40);
   --admin-state-dirty-text: #3ddbd9;
   --admin-state-saving-border: rgba(255, 255, 255, 0.14);
-  /* fixwave 2: found gap — light's literal rgba(36,161,72,0.36) was the only
-     state-* border with no dark partner (bg/text are var() aliases that
-     already follow --admin-success-soft/--admin-success). Matches the same
-     success-family alpha already used for clean-border/diff-assigned-border
-     above. */
+  /* fixwave 2: found gap — light's saved-border (now color-mix-derived from
+     --admin-status-ok) was the only state-* border with no dark partner
+     (bg/text are var() aliases that already follow --admin-success-soft/
+     --admin-success). Matches the same success-family alpha already used for
+     clean-border/diff-assigned-border above. */
   --admin-state-saved-border: rgba(66, 190, 101, 0.40);
   --admin-state-error-bg: rgba(250, 77, 86, 0.14);
   --admin-state-error-border: rgba(250, 77, 86, 0.40);
@@ -606,7 +588,6 @@
   /* Dark chrome (#161616): top bar + inspector read as one continuous dark
      surface. Text #F7F6F2 (16.45:1), muted #B8AEA2 (6.43:1) — both AA. */
   --admin-chrome-bg: #161616;
-  --admin-chrome-bg-rgb: 22 22 22;
   /* Raised chrome surfaces (filter menu): one step lighter than the bar;
      muted #B8AEA2 stays AA on it (5.86:1). */
   --admin-chrome-elevated: #1f1f1f;
@@ -622,7 +603,6 @@
   --admin-chrome-field: rgba(255, 255, 255, 0.08);
 
   --admin-rail-bg: var(--admin-chrome-bg);
-  --admin-rail-bg-rgb: var(--admin-chrome-bg-rgb);
   --admin-rail-surface: rgba(255, 255, 255, 0.05);
   --admin-rail-border: var(--admin-chrome-border);
   --admin-rail-muted: var(--admin-chrome-muted);
@@ -714,9 +694,7 @@
   --admin-status-warn: #009d9a;
   --admin-status-bad: #B3232C;
   --admin-status-neutral: #8E8276;
-  --admin-status-ok-rgb: 36 161 72;
   --admin-status-warn-rgb: 0 157 154;
-  --admin-status-bad-rgb: 218 30 40;
 
   /* Dark-chrome raised surfaces and state/text ladder (measured on #161616:
      danger text #ff8389 ≈ 7.9:1, success text #42be65 ≈ 7.3:1, warn text
@@ -749,7 +727,6 @@
   --admin-ai-border: #4589ff;
   --admin-ai-text: #0043ce;
   --admin-ai-marker-surface: #ffffff;
-  --admin-ai-rgb: 69 137 255;
   --admin-ai-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.12), rgba(255, 255, 255, 0) 70%);
   --admin-ai-marker-aura: linear-gradient(180deg, rgba(69, 137, 255, 0.14), rgba(255, 255, 255, 0) 60%);
   --admin-ai-ring: rgba(69, 137, 255, 0.45);
@@ -797,7 +774,10 @@
   --admin-focus: #D23F0A;
 
   --admin-state-clean-bg: #DEF3E4;
-  --admin-state-clean-border: rgba(36, 161, 72, 0.36);
+  /* Borders derive from --admin-status-ok so they can never drift from the
+     status hex again (the old literal rgba(36,161,72,…) was the retired
+     #24A148 green — twin-resolution ruling 2026-08-21). */
+  --admin-state-clean-border: color-mix(in srgb, var(--admin-status-ok) 36%, transparent);
   --admin-state-clean-text: #1D6E41;
   --admin-state-dirty-bg: var(--admin-warning-soft);
   --admin-state-dirty-border: rgba(62, 111, 114, 0.46);
@@ -806,7 +786,7 @@
   --admin-state-saving-border: rgba(141, 141, 141, 0.36);
   --admin-state-saving-text: var(--admin-info);
   --admin-state-saved-bg: var(--admin-success-soft);
-  --admin-state-saved-border: rgba(36, 161, 72, 0.36);
+  --admin-state-saved-border: color-mix(in srgb, var(--admin-status-ok) 36%, transparent);
   --admin-state-saved-text: var(--admin-success);
   --admin-state-error-bg: #FBE9EA;
   --admin-state-error-border: rgba(179, 35, 44, 0.38);

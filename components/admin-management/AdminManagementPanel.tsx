@@ -1246,7 +1246,7 @@ export function AdminManagementPanel({
       </div>
 
       {employeeDialogOpen && (
-        <div className="fixed inset-0 z-[65] flex items-end justify-center bg-[rgb(var(--admin-chrome-bg-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[65] flex items-end justify-center bg-[color-mix(in_srgb,var(--admin-chrome-bg)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={employeeDialogFocusRef}
             tabIndex={-1}
@@ -1325,7 +1325,7 @@ export function AdminManagementPanel({
       )}
 
       {managementConfirm && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[rgb(var(--admin-chrome-bg-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[color-mix(in_srgb,var(--admin-chrome-bg)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={managementConfirmDialogFocusRef}
             tabIndex={-1}

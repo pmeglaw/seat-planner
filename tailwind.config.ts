@@ -57,22 +57,27 @@ const config: Config = {
           "action-primary-hover": "rgb(var(--sp-color-action-primary-hover-rgb) / <alpha-value>)",
           "action-primary-pressed": "rgb(var(--sp-color-action-primary-pressed-rgb) / <alpha-value>)",
           primary: "rgb(var(--sp-color-text-primary-rgb) / <alpha-value>)",
-          secondary: "rgb(var(--sp-color-text-secondary-rgb) / <alpha-value>)",
-          muted: "rgb(var(--sp-color-text-muted-rgb) / <alpha-value>)",
-          disabled: "rgb(var(--sp-color-state-disabled-rgb) / <alpha-value>)",
-          canvas: "rgb(var(--sp-color-canvas-rgb) / <alpha-value>)",
+          // These next entries point at the hex token directly — their -rgb
+          // twins held stale values and were deleted (twin-resolution
+          // 2026-08-21). Alpha modifiers (e.g. text-sp-secondary/50) are NOT
+          // supported on them; zero call sites used one. Derive washes with
+          // color-mix(in srgb, var(--…) N%, transparent) instead.
+          secondary: "var(--sp-color-text-secondary)",
+          muted: "var(--sp-color-text-muted)",
+          disabled: "var(--sp-color-state-disabled)",
+          canvas: "var(--sp-color-canvas)",
           workspace: "rgb(var(--sp-color-workspace-rgb) / <alpha-value>)",
           surface: "rgb(var(--sp-color-surface-rgb) / <alpha-value>)",
           "surface-raised": "rgb(var(--sp-color-surface-raised-rgb) / <alpha-value>)",
-          subtle: "rgb(var(--sp-color-border-subtle-rgb) / <alpha-value>)",
-          strong: "rgb(var(--sp-color-border-strong-rgb) / <alpha-value>)",
+          subtle: "var(--sp-color-border-subtle)",
+          strong: "var(--sp-color-border-strong)",
           selected: "rgb(var(--sp-color-state-selected-rgb) / <alpha-value>)",
           published: "rgb(var(--sp-color-state-published-rgb) / <alpha-value>)",
           draft: "rgb(var(--sp-color-state-draft-rgb) / <alpha-value>)",
           success: "rgb(var(--sp-color-state-success-rgb) / <alpha-value>)",
           warning: "rgb(var(--sp-color-state-warning-rgb) / <alpha-value>)",
           danger: "rgb(var(--sp-color-state-danger-rgb) / <alpha-value>)",
-          info: "rgb(var(--sp-color-state-info-rgb) / <alpha-value>)",
+          info: "var(--sp-color-state-info)",
           search: "rgb(var(--sp-color-state-search-rgb) / <alpha-value>)"
         }
       },

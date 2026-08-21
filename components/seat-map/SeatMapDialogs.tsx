@@ -184,7 +184,7 @@ export function PublishReviewDialog({
   const publishReadinessBadgeTone = publishSummary.hasChanges ? "draft" : "published";
   const publishReadinessBadgeLabel = publishSummary.hasChanges ? "Ready" : "No changes";
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgb(var(--admin-rail-bg-rgb)/0.48)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--admin-rail-bg)_48%,transparent)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
       <section
         ref={publishReviewDialogFocusRef}
         tabIndex={-1}
@@ -360,7 +360,7 @@ export function DiscardDraftDialog({
 }) {
   const discardDraftDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-[rgb(var(--admin-chrome-bg-rgb)/0.45)] p-3 backdrop-blur-[2px] sm:items-center">
+    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-[color-mix(in_srgb,var(--admin-chrome-bg)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
       <section
         ref={discardDraftDialogFocusRef}
         tabIndex={-1}

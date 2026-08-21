@@ -357,6 +357,23 @@ excluded from Pass 1's no-visual-change guarantee and parked as flag ⚑1**: own
 survivor (recommendation: the hex — the ramp is the source of truth — then re-measure the
 affected washes with the contrast script).
 
+> **⚑1 RESOLVED 2026-08-21 (`pass1/twin-resolution`): hex is the source of truth.** All 15
+> disagreeing twins deleted; consumers derive in place via
+> `color-mix(in srgb, var(--x) N%, transparent)` (browser floor is Next's default
+> `chrome 111 / edge 111 / firefox 111 / safari 16.4` — relative color syntax is NOT in
+> floor, color-mix is already load-bearing in globals.css). Corrections found while
+> closing: (1) the "Twin consumed?" counts above were mostly definitions-per-theme-scope,
+> not call sites — the only live consumers were `status-ok` (3 uses), `status-bad` (1),
+> the ghost borders, and 7 unused tailwind.config entries; (2) two MORE drifted pairs the
+> audit missed: `--admin-chrome-bg-rgb`/`--admin-rail-bg-rgb` (dark theme: hex #0a0a0a,
+> twin 22 22 22 — 8 scrim consumers) and `--admin-ai-rgb` (no hex partner at all) — both
+> also deleted; (3) two dark-chrome call sites (SeatMap kebab checkmark, drawer ok-chip)
+> derive from `--admin-chrome-success-text` instead of the light-tuned `--admin-status-ok`
+> hex, which measures 2.64:1 on #1f1f1f (fails WCAG 1.4.11 there).
+> `tests/color-twin-drift-source.test.mjs` now pins every surviving twin to its hex
+> partner in all four theme cascades, so no stored twin can drift again. The delete-the-
+> remaining-31-twins work stays with §4.1's Pass 1 rename PR.
+
 ### 4.2 Other deletions
 
 Pure aliases: `--admin-bg`, `--admin-surface`, `--admin-surface-alt`, `--admin-surface-muted`,

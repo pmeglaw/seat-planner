@@ -51,7 +51,11 @@ function statusClassName(status: AskPlannerResponse["status"]) {
   // Dark-panel state pills (contrast on #161616: #42be65 ≈ 7.3:1, #08bdba ≈ 7.2:1, #78a9ff ≈ 6.6:1).
   if (status === "refused") return "bg-[rgb(var(--admin-status-warn-rgb)/0.15)] text-[var(--admin-chrome-warn-text)] ring-[rgb(var(--admin-status-warn-rgb)/0.40)]";
   if (status === "needs_clarification") return "bg-[rgb(var(--admin-chrome-info-rgb)/0.15)] text-[var(--admin-chrome-info-text)] ring-[rgb(var(--admin-chrome-info-rgb)/0.40)]";
-  return "bg-[rgb(var(--admin-status-ok-rgb)/0.15)] text-[var(--admin-chrome-success-text)] ring-[rgb(var(--admin-status-ok-rgb)/0.40)]";
+  // Success wash/ring derive from the chrome success token (this panel is dark
+  // chrome in BOTH themes) — the retired --admin-status-ok-rgb twin held the
+  // stale #24A148 here, and the light status hex #1D6E41 is tuned for light
+  // surfaces (a 40% ring of it on #161616 is near-invisible, ~1.3:1).
+  return "bg-[color-mix(in_srgb,var(--admin-chrome-success-text)_15%,transparent)] text-[var(--admin-chrome-success-text)] ring-[color-mix(in_srgb,var(--admin-chrome-success-text)_40%,transparent)]";
 }
 
 function friendlyDrawerError(message: string, code?: "RATE_LIMITED"): DrawerError {
@@ -239,7 +243,7 @@ export function AskPlannerDrawer({
         aria-label="Close Ask Planner"
         aria-hidden="true"
         tabIndex={-1}
-        className="fixed inset-0 z-[70] cursor-default bg-[rgb(var(--admin-chrome-bg-rgb)/0.3)] backdrop-blur-[1px] motion-safe:animate-[sp-fade-in_180ms_ease-out] sm:z-50"
+        className="fixed inset-0 z-[70] cursor-default bg-[color-mix(in_srgb,var(--admin-chrome-bg)_30%,transparent)] backdrop-blur-[1px] motion-safe:animate-[sp-fade-in_180ms_ease-out] sm:z-50"
         onClick={onClose}
       />
 
@@ -398,7 +402,7 @@ export function AskPlannerDrawer({
                 )}
 
                 {explainOpen && (
-                  <div id="ask-planner-explain" className="mt-3 border border-[rgb(var(--admin-ai-rgb)/0.40)] bg-[var(--admin-chrome-bg)] p-3">
+                  <div id="ask-planner-explain" className="mt-3 border border-[color-mix(in_srgb,var(--admin-ai-border)_40%,transparent)] bg-[var(--admin-chrome-bg)] p-3">
                     <div className="text-[11.5px] font-semibold text-[var(--admin-ai-chrome-text)]">How this answer was made</div>
                     <p className="mt-1.5 text-xs leading-5 text-[var(--admin-chrome-text-soft)]">
                       Generated from the <b className="font-semibold text-[var(--admin-chrome-text)]">saved draft layer only</b> — seats, directory, zones. The model reads the map; it cannot modify it. Unsaved inspector edits are excluded.
@@ -453,7 +457,7 @@ export function AskPlannerDrawer({
                         key={highlight.seatId}
                         type="button"
                         onClick={() => onSelectSeat(highlight.seatId)}
-                        className="flex w-full items-start justify-between gap-3 rounded-lg border border-[var(--admin-ai-panel-border)] bg-[var(--admin-ai-row)] p-2 text-left transition hover:bg-[rgb(var(--admin-ai-rgb)/0.16)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
+                        className="flex w-full items-start justify-between gap-3 rounded-lg border border-[var(--admin-ai-panel-border)] bg-[var(--admin-ai-row)] p-2 text-left transition hover:bg-[color-mix(in_srgb,var(--admin-ai-border)_16%,transparent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)]"
                       >
                         <span className="min-w-0">
                           <span className="block text-sm font-semibold text-[var(--admin-chrome-text)]">{highlight.label}</span>
