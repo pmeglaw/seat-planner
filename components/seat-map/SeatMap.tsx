@@ -2671,16 +2671,16 @@ export function SeatMap({
               >
                 Show occupant names
                 {showNames && (
-                  // #24A148 (bright fill, --admin-status-ok-rgb's hex):
-                  // 4.92:1 on this menu's #1f1f1f, 4.52:1 on #262626 —
-                  // clears the 3:1 graphics floor (WCAG 1.4.11).
-                  // --admin-status-ok itself (#1D6E41) measures only
-                  // 2.64:1 / 2.42:1 here — too dim on dark chrome, fine
-                  // only on the light-surface status dot/pill it was
-                  // tuned for. The prototype's #42be65
-                  // (--admin-chrome-success-text) is a retired hex —
-                  // not reintroduced here.
-                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[rgb(var(--admin-status-ok-rgb))]">
+                  // Chrome-success token (#42be65): 6.90:1 on this menu's
+                  // #1f1f1f, 6.33:1 on #262626 — clears the 3:1 graphics
+                  // floor (WCAG 1.4.11). --admin-status-ok itself (#1D6E41)
+                  // measures only 2.64:1 / 2.42:1 here — too dim on dark
+                  // chrome, fine only on the light-surface status dot/pill
+                  // it was tuned for. (The retired --admin-status-ok-rgb
+                  // twin previously supplied #24A148 here; this menu is
+                  // dark chrome in both themes, so the mark follows the
+                  // dark-chrome success family — twin-resolution 2026-08-21.)
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--admin-chrome-success-text)]">
                     <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
