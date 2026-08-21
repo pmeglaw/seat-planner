@@ -2753,16 +2753,16 @@ export function SeatMap({
   ) : null;
 
   // Center slot: the document identity — floor selector + crumb chip, the
-  // bar's equivalent of the reference layout's centered title. md+ (was lg+;
-  // chrome-unification 2026-08-20): the bar center sat empty between 768 and
-  // 1024 while both flanking clusters were full. Fits at 768 because the
-  // "Draft · N changes" text hides below lg (redundant with the Publish
-  // count pill). Below md — and in standalone harnesses with no bar — the
-  // canvas keeps the floor pill (see the md:hidden on the canvas wrapper
-  // below; the two breakpoints must stay in lockstep or the selector
-  // doubles/vanishes).
+  // bar's equivalent of the reference layout's centered title. lg+ only, and
+  // MEASURED, not vibes (chrome-unification 2026-08-20 tried md+ and
+  // reverted): at 768 the centered cluster ends ~x444 and the right cluster
+  // starts ~x462 with a CLEAN draft — the Publish cluster (~127px) overlaps
+  // the absolutely-centered selector by ~109px, and the two only clear each
+  // other from ~985px up. Below lg the canvas keeps the floor pill (see the
+  // lg:hidden on the canvas wrapper below; the two breakpoints must stay in
+  // lockstep or the selector doubles/vanishes).
   const barFloorIdentity = (
-    <div className="hidden h-full items-center md:flex">
+    <div className="hidden h-full items-center lg:flex">
       <FloorSelector floor={floor} onChange={setFloor} variant="chrome" />
     </div>
   );
@@ -2825,10 +2825,10 @@ export function SeatMap({
           conditional so a clean draft still renders nothing (and inside the
           accessibility-source 500-char window, which is why this comment
           lives above the conditional, not in it). Same for the draft-count
-          text: hidden below lg (chrome-unification 2026-08-20) because the
-          bar center hosts the floor selector from md and the text is
-          redundant with the Publish count pill — hiding it is what makes the
-          md center tenant fit at 768; 12.5px is the one chrome text size. */}
+          text: hidden below lg (chrome-unification 2026-08-20) — it is
+          redundant with the Publish count pill, and at 768 the full right
+          cluster with the text nearly collides with the left command
+          cluster; 12.5px is the one chrome text size. */}
       {publishSummary.hasChanges && (
         <>
           <span aria-hidden="true" className={`mx-3 h-5 ${adminChromeDividerRule}`} />
@@ -3010,11 +3010,11 @@ export function SeatMap({
             <div className="pointer-events-none absolute inset-x-3 top-3 z-40 flex flex-col gap-2">
               <div className="flex items-start gap-2">
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              {/* Floor identity: at md+ (in-shell) it lives centered in the
-                  top bar (barFloorIdentity portal); below md — and in
+              {/* Floor identity: at lg+ (in-shell) it lives centered in the
+                  top bar (barFloorIdentity portal); below lg — and in
                   standalone harnesses with no bar — the canvas keeps it.
                   Breakpoint locksteps with barFloorIdentity above. */}
-              <div className={shellSlots ? "pointer-events-auto md:hidden" : "pointer-events-auto"}>
+              <div className={shellSlots ? "pointer-events-auto lg:hidden" : "pointer-events-auto"}>
                 <FloorSelector floor={floor} onChange={setFloor} />
               </div>
               {/* The structured-filter UI (dept quick-chips, Filters trigger
