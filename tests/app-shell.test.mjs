@@ -174,8 +174,8 @@ test("a skewed tab navigates via assignLocation instead of the client router", a
 // rail routes through them; unmounting restores plain navigation. This is how
 // SeatMap's unsaved-edits dialog keeps intercepting rail clicks now that the
 // rail outlives the page.
-function Registrar({ guard, opener }) {
-  useAppShellNavigation({ guard, openAskPlanner: opener });
+function Registrar({ guard, opener, askPlannerOpen }) {
+  useAppShellNavigation({ guard, openAskPlanner: opener, askPlannerOpen });
   return null;
 }
 
@@ -215,6 +215,20 @@ test("a registered Ask Planner opener turns the AI item into an in-place button"
   await act(async () => fireEvent.click(aiButton));
   assert.equal(opened, 1);
   assert.deepEqual(pushed, []);
+});
+
+// The live drawer-state channel (chrome-unification 2026-08-20): a registered
+// surface's askPlannerOpen flag re-renders the rail AI item into its active
+// treatment, and flipping it back deactivates — the parity that keeps both
+// Ask Planner entry points honest about the drawer being open.
+test("a registered askPlannerOpen flag drives the rail AI item's active state", async () => {
+  const registrar = open =>
+    React.createElement(Registrar, { guard: () => true, opener: () => {}, askPlannerOpen: open });
+  const utils = await renderElement(shellElement({ pathname: "/admin", children: registrar(true) }));
+  assert.equal(screen.getByRole("button", { name: /Ask Planner/ }).getAttribute("aria-expanded"), "true");
+
+  await act(async () => utils.rerender(shellElement({ pathname: "/admin", children: registrar(false) })));
+  assert.equal(screen.getByRole("button", { name: /Ask Planner/ }).getAttribute("aria-expanded"), "false");
 });
 
 test("without a registered opener, the AI item is a plain link to /admin?ask-planner=open", async () => {

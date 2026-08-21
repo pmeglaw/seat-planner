@@ -588,7 +588,11 @@ export function SeatMap({
     // so this branch only exists for hrefs a future rail adds before this
     // list learns about them.
     guard: (href, label) => (isGuardedNavigationHref(href) ? beforeGuardedNavigation(href, label) : true),
-    openAskPlanner: openAskPlannerDrawer
+    openAskPlanner: openAskPlannerDrawer,
+    // Live drawer state → the rail AI item's active treatment (parity with
+    // the bar's Ask Planner tenant; flows through AppShell's own channel,
+    // not the register-once handlers).
+    askPlannerOpen
   });
   // Top-bar-first chrome: this surface's bar tenants (undo/redo/kebab, the
   // floor identity, Ask Planner + publish) render into AppTopBar's slot
@@ -2551,7 +2555,7 @@ export function SeatMap({
   // gets its own fixed 32px-wide grid cell instead, since it is icon-only.
   const chromeKebabBtn = "relative flex h-full w-8 shrink-0 items-center justify-center text-[var(--admin-chrome-muted)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
   const chromeKebabBtnActive = "relative flex h-full w-8 shrink-0 items-center justify-center bg-[var(--admin-chrome-hover)] text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
-  const chromeMenuItem = "flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12px] font-medium text-[var(--admin-chrome-text)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  const chromeMenuItem = "flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--admin-chrome-text)] transition hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
 
   // --- Top-bar tenants (top-bar-first chrome, 2026-08-14) -----------------
   // Three clusters portal into AppTopBar's slots when a shell ancestor
@@ -2749,12 +2753,16 @@ export function SeatMap({
   ) : null;
 
   // Center slot: the document identity — floor selector + crumb chip, the
-  // bar's equivalent of the reference layout's centered title. lg+ only: at
-  // narrower widths the absolute-centered cluster would underlap the flanking
-  // clusters, so the canvas keeps the floor pill there (see the lg:hidden on
-  // the canvas wrapper below).
+  // bar's equivalent of the reference layout's centered title. md+ (was lg+;
+  // chrome-unification 2026-08-20): the bar center sat empty between 768 and
+  // 1024 while both flanking clusters were full. Fits at 768 because the
+  // "Draft · N changes" text hides below lg (redundant with the Publish
+  // count pill). Below md — and in standalone harnesses with no bar — the
+  // canvas keeps the floor pill (see the md:hidden on the canvas wrapper
+  // below; the two breakpoints must stay in lockstep or the selector
+  // doubles/vanishes).
   const barFloorIdentity = (
-    <div className="hidden h-full items-center lg:flex">
+    <div className="hidden h-full items-center md:flex">
       <FloorSelector floor={floor} onChange={setFloor} variant="chrome" />
     </div>
   );
@@ -2788,7 +2796,7 @@ export function SeatMap({
         aria-haspopup="dialog"
         onClick={openAskPlannerDrawer}
         className={[
-          "inline-flex h-full shrink-0 items-center gap-1.5 border-b-2 px-3 text-[12.5px] font-medium leading-none text-[var(--admin-ai-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
+          "inline-flex h-full shrink-0 items-center gap-1.5 border-b-2 px-3 text-[12.5px] font-medium leading-none text-[var(--admin-ai-chrome-text)] transition-colors duration-150 hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-ai-chrome-text-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]",
           askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? "border-[var(--admin-ai-chrome-border)] bg-[var(--admin-chrome-hover)]" : "border-transparent"
         ].join(" ")}
       >
@@ -2816,12 +2824,16 @@ export function SeatMap({
           group boundaries, vs mx-4 at zone boundaries. It sits INSIDE the
           conditional so a clean draft still renders nothing (and inside the
           accessibility-source 500-char window, which is why this comment
-          lives above the conditional, not in it). */}
+          lives above the conditional, not in it). Same for the draft-count
+          text: hidden below lg (chrome-unification 2026-08-20) because the
+          bar center hosts the floor selector from md and the text is
+          redundant with the Publish count pill — hiding it is what makes the
+          md center tenant fit at 768; 12.5px is the one chrome text size. */}
       {publishSummary.hasChanges && (
         <>
           <span aria-hidden="true" className={`mx-3 h-5 ${adminChromeDividerRule}`} />
           <div className="flex h-full shrink-0 items-center gap-2.5">
-            <span className="text-[12px] text-[var(--admin-chrome-muted)]">
+            <span className="hidden text-[12.5px] text-[var(--admin-chrome-muted)] lg:inline">
               Draft · {publishSummary.totalChangeCount} {publishSummary.totalChangeCount === 1 ? "change" : "changes"}
             </span>
             <button
@@ -2998,10 +3010,11 @@ export function SeatMap({
             <div className="pointer-events-none absolute inset-x-3 top-3 z-40 flex flex-col gap-2">
               <div className="flex items-start gap-2">
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              {/* Floor identity: at lg+ (in-shell) it lives centered in the
-                  top bar (barFloorIdentity portal); below lg — and in
-                  standalone harnesses with no bar — the canvas keeps it. */}
-              <div className={shellSlots ? "pointer-events-auto lg:hidden" : "pointer-events-auto"}>
+              {/* Floor identity: at md+ (in-shell) it lives centered in the
+                  top bar (barFloorIdentity portal); below md — and in
+                  standalone harnesses with no bar — the canvas keeps it.
+                  Breakpoint locksteps with barFloorIdentity above. */}
+              <div className={shellSlots ? "pointer-events-auto md:hidden" : "pointer-events-auto"}>
                 <FloorSelector floor={floor} onChange={setFloor} />
               </div>
               {/* The structured-filter UI (dept quick-chips, Filters trigger

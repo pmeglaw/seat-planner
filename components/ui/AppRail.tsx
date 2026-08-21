@@ -54,6 +54,11 @@ export type AppRailProps = {
   /** Map surface: open the Ask Planner drawer in place. Sub-pages omit it and
    *  the AI item navigates to /admin?ask-planner=open instead. */
   onOpenAskPlanner?: () => void;
+  /** Ask Planner drawer is open — the AI item shows the vertical-chrome
+   *  active treatment (adminChrome.ts doctrine), matching the feedback the
+   *  bar's Ask Planner tenant already gives. Threaded from the registered
+   *  surface via AppShell's live channel. */
+  askPlannerActive?: boolean;
   /** Test seam only — the deploy-skew detector (lib/deploySkew.ts). Defaults
    *  to the module singleton, which is sticky across soft navigations; jsdom
    *  suites inject a fake so cases stay order-independent. */
@@ -97,6 +102,7 @@ export function AppRail({
   railMode = "admin",
   onNavigate,
   onOpenAskPlanner,
+  askPlannerActive = false,
   skewDetector = deploySkewMonitor
 }: AppRailProps) {
   const pathname = usePathname();
@@ -287,13 +293,21 @@ export function AppRail({
           <button
             type="button"
             title="Ask Planner (AI)"
+            aria-expanded={askPlannerActive}
             onClick={() => {
               collapse(false);
               onOpenAskPlanner();
             }}
-            className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)]"].join(" ")}
+            // Active = the vertical-chrome treatment (fill + 3px left inset
+            // edge), in the AI family's own hue rather than brand orange —
+            // same fill/weight as ITEM_ACTIVE, AI-blue edge.
+            className={[
+              ITEM,
+              "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-ai-chrome-text-hover)]",
+              askPlannerActive ? "bg-[var(--admin-chrome-hover)] shadow-[inset_3px_0_0_var(--admin-ai-chrome-border)]" : ""
+            ].join(" ")}
           >
-            <AiCell open={open} />
+            <AiCell open={open} active={askPlannerActive} />
           </button>
         ) : (
           <Link
@@ -305,9 +319,9 @@ export function AppRail({
             // onNavigate veto inside is a no-op here — sub-pages don't
             // pass it.
             onClick={event => handleNavClick(event, "/admin?ask-planner=open", "Ask Planner")}
-            className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)]"].join(" ")}
+            className={[ITEM, "text-[var(--admin-ai-chrome-text)] hover:bg-[var(--admin-chrome-hover)] hover:text-[var(--admin-ai-chrome-text-hover)]"].join(" ")}
           >
-            <AiCell open={open} />
+            <AiLinkBody open={open} />
           </Link>
         )}
         {/* Last item: the account cell that used to sit below this moved to
@@ -410,13 +424,13 @@ function ViewerIcon() {
   );
 }
 
-function AiCell({ open }: { open: boolean }) {
+function AiCell({ open, active = false, pending = false }: { open: boolean; active?: boolean; pending?: boolean }) {
   return (
     <>
       {/* Sparkle 13px + square 9px "AI" badge — the ONE badge spec, matching
           the bar's Ask Planner tenant (SeatMap.tsx) since the
           chrome-unification pass 2026-08-20 (was 15px / 7.5px here). */}
-      <span className={[CELL, "relative"].join(" ")}>
+      <span className={[CELL, "relative", pending ? "animate-pulse motion-reduce:animate-none" : ""].join(" ")}>
         <span aria-hidden="true" className="text-[13px]">
           ✦
         </span>
@@ -429,7 +443,16 @@ function AiCell({ open }: { open: boolean }) {
       </span>
       {/* NOT aria-hidden: the sole accessible name for the AI item, mounted
           at every width (opacity swap) like the nav items. */}
-      <span className={[LABEL_BASE, open ? "opacity-100" : "opacity-0"].join(" ")}>Ask Planner</span>
+      <span className={[LABEL_BASE, open ? "opacity-100" : "opacity-0", active ? "font-semibold" : "font-medium"].join(" ")}>Ask Planner</span>
     </>
   );
+}
+
+// Pending-pulse parity for the Link form of the AI item (sub-pages): the nav
+// items get this via NavItemBody, and useLinkStatus must be called from a
+// component INSIDE the Link. The button form never navigates, so it keeps
+// plain AiCell.
+function AiLinkBody({ open }: { open: boolean }) {
+  const { pending } = useLinkStatus();
+  return <AiCell open={open} pending={pending} />;
 }

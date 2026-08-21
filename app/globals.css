@@ -715,6 +715,10 @@
   --admin-ai-ring-soft: rgba(69, 137, 255, 0.18);
   --admin-marker-ai-shadow: 0 0 0 2px rgba(69, 137, 255, 0.45), 0 0 0 6px rgba(69, 137, 255, 0.18), 0 10px 22px rgba(69, 137, 255, 0.35);
   --admin-ai-chrome-text: #78a9ff;
+  /* Hovered AI foreground (chrome-unification 2026-08-20): one step brighter
+     (Carbon blue-30) so the AI items' foreground responds to hover like every
+     other chrome control. ~8.7:1 on #262626 hover fill — comfortably AA. */
+  --admin-ai-chrome-text-hover: #a6c8ff;
   --admin-ai-chrome-border: #78a9ff;
   --admin-ai-panel-border: rgba(120, 169, 255, 0.35);
   --admin-ai-glow: linear-gradient(180deg, rgba(69, 137, 255, 0.10), rgba(69, 137, 255, 0) 140px);
