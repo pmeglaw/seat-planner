@@ -106,15 +106,15 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
   return (
     <div className="mx-auto w-full max-w-[1060px] px-8 pb-16 pt-6">
       <header className="mb-4">
-        <h1 className="text-[22px] font-semibold leading-tight text-[var(--r-text)]">Reception</h1>
-        <p className="mt-1 text-[13px] text-[var(--r-muted)]">
+        <h1 className="text-[22px] font-semibold leading-tight text-[var(--sp-text-primary)]">Reception</h1>
+        <p className="mt-1 text-[13px] text-[var(--sp-text-helper)]">
           Front-desk directory — type the caller&apos;s request, read the extension, transfer.
         </p>
       </header>
 
       {/* Search bar */}
-      <div className="flex h-[52px] items-center gap-3 border border-[var(--r-card-border)] bg-[var(--r-card)] px-4">
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--r-muted)" strokeWidth="1.6" strokeLinecap="round">
+      <div className="flex h-[52px] items-center gap-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-4">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--sp-text-helper)" strokeWidth="1.6" strokeLinecap="round">
           <circle cx="9" cy="9" r="5.2" />
           <path d="m13 13 4 4" />
         </svg>
@@ -138,23 +138,23 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
             setHighlightIndex(0);
           }}
           onKeyDown={handleKeyDown}
-          className="h-full w-full min-w-0 bg-transparent text-[16.5px] text-[var(--r-text)] outline-none placeholder:text-[var(--r-muted)]"
+          className="h-full w-full min-w-0 bg-transparent text-[16.5px] text-[var(--sp-text-primary)] outline-none placeholder:text-[var(--sp-text-helper)]"
         />
         <span aria-hidden="true" className="hidden shrink-0 items-center gap-1.5 sm:flex">
-          <kbd className="border border-[var(--r-card-border)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--r-micro)]">↑↓</kbd>
-          <kbd className="border border-[var(--r-card-border)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--r-micro)]">↵ select</kbd>
+          <kbd className="border border-[var(--sp-border-subtle)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--sp-text-helper)]">↑↓</kbd>
+          <kbd className="border border-[var(--sp-border-subtle)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--sp-text-helper)]">↵ select</kbd>
         </span>
       </div>
 
       <div className="mt-5 grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_372px]">
         {/* Results list */}
-        <section aria-label="Directory" className="border border-[var(--r-card-border)] bg-[var(--r-card)]">
-          <div className="flex items-center justify-between border-b border-[var(--r-rule)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--r-micro)]">
+        <section aria-label="Directory" className="border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)]">
+          <div className="flex items-center justify-between border-b border-[var(--sp-border-hairline)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
             <span aria-live="polite">{countLabel}</span>
             <span>Ext</span>
           </div>
           {results.length === 0 ? (
-            <p className="px-4 py-10 text-center text-[13px] text-[var(--r-muted)]">
+            <p className="px-4 py-10 text-center text-[13px] text-[var(--sp-text-helper)]">
               No one matches &ldquo;{query.trim()}&rdquo;
             </p>
           ) : (
@@ -170,30 +170,30 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                     onMouseDown={keepInputFocus}
                     onClick={() => lock(person)}
                     className={[
-                      "flex cursor-pointer items-center gap-3 border-b border-[var(--r-rule-soft)] px-4 py-2.5 last:border-b-0",
+                      "flex cursor-pointer items-center gap-3 border-b border-[var(--sp-border-hairline-soft)] px-4 py-2.5 last:border-b-0",
                       isActive
-                        ? "bg-[var(--r-selected)] shadow-[inset_3px_0_0_var(--r-accent)]"
-                        : "hover:bg-[var(--r-hover)]"
+                        ? "bg-[var(--sp-layer-selected)] shadow-[inset_3px_0_0_var(--sp-accent)]"
+                        : "hover:bg-[var(--sp-layer-hover)]"
                     ].join(" ")}
                   >
                     <span
                       aria-hidden="true"
-                      className="flex h-[34px] w-[34px] shrink-0 items-center justify-center bg-[var(--r-chip-bg)] text-[12px] font-semibold text-[var(--r-chip-fg)]"
+                      className="flex h-[34px] w-[34px] shrink-0 items-center justify-center bg-[var(--sp-tag-bg)] text-[12px] font-semibold text-[var(--sp-tag-text)]"
                     >
                       {buildInitials(person.name) || "?"}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14.5px] font-semibold leading-tight text-[var(--r-text)]">
+                      <span className="block truncate text-[14.5px] font-semibold leading-tight text-[var(--sp-text-primary)]">
                         {person.name}
                       </span>
-                      <span className="block truncate text-[12px] text-[var(--r-muted)]">
+                      <span className="block truncate text-[12px] text-[var(--sp-text-helper)]">
                         {[person.position, person.department].filter(Boolean).join(" · ") || "—"}
                       </span>
                     </span>
-                    <span className="shrink-0 border border-[var(--r-card-border)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--r-secondary)]">
+                    <span className="shrink-0 border border-[var(--sp-border-subtle)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--sp-text-secondary)]">
                       {person.seatLabel ?? "—"}
                     </span>
-                    <span className="w-[72px] shrink-0 text-right font-mono text-[20px] font-semibold text-[var(--r-text)]">
+                    <span className="w-[72px] shrink-0 text-right font-mono text-[20px] font-semibold text-[var(--sp-text-primary)]">
                       {person.extension ?? "—"}
                     </span>
                   </li>
@@ -206,34 +206,34 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
         {/* Sidebar: detail (or empty state) + recents */}
         <div className="flex flex-col gap-5 lg:sticky lg:top-5">
           {detail ? (
-            <section aria-label="Caller detail" className="border border-[var(--r-card-border)] bg-[var(--r-card)] p-[22px]">
+            <section aria-label="Caller detail" className="border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-[22px]">
               <div className="flex items-center gap-3">
                 <span
                   aria-hidden="true"
-                  className="flex h-[46px] w-[46px] shrink-0 items-center justify-center bg-[var(--r-avatar-bg)] text-[16px] font-semibold text-[var(--r-avatar-fg)]"
+                  className="flex h-[46px] w-[46px] shrink-0 items-center justify-center bg-[var(--sp-identity-avatar-bg)] text-[16px] font-semibold text-[var(--sp-identity-avatar-fg)]"
                 >
                   {buildInitials(detail.name) || "?"}
                 </span>
                 <div className="min-w-0">
-                  <h2 className="truncate text-[18px] font-semibold leading-tight text-[var(--r-text)]">{detail.name}</h2>
-                  <p className="truncate text-[12.5px] text-[var(--r-muted)]">
+                  <h2 className="truncate text-[18px] font-semibold leading-tight text-[var(--sp-text-primary)]">{detail.name}</h2>
+                  <p className="truncate text-[12.5px] text-[var(--sp-text-helper)]">
                     {[detail.position, detail.department].filter(Boolean).join(" · ") || "—"}
                   </p>
                 </div>
               </div>
 
               {/* The readout is the screen's output — announce changes. */}
-              <div aria-live="polite" className="mt-4 border border-[var(--r-ext-border)] bg-[var(--r-ext-bg)] px-4 py-3.5">
+              <div aria-live="polite" className="mt-4 border border-[var(--sp-extension-border)] bg-[var(--sp-extension-bg)] px-4 py-3.5">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--r-ext-label)]">Extension</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--sp-extension-label)]">Extension</span>
                   {searching && (
-                    <span aria-hidden="true" className="text-[11px] text-[var(--r-muted)]">↵ to lock</span>
+                    <span aria-hidden="true" className="text-[11px] text-[var(--sp-text-helper)]">↵ to lock</span>
                   )}
                 </div>
-                <div className="font-mono text-[46px] font-semibold leading-[1.15] text-[var(--r-text)]">
+                <div className="font-mono text-[46px] font-semibold leading-[1.15] text-[var(--sp-text-primary)]">
                   {detail.extension ?? "—"}
                 </div>
-                <p className="mt-1 flex items-center gap-1.5 text-[12.5px] text-[var(--r-secondary)]">
+                <p className="mt-1 flex items-center gap-1.5 text-[12.5px] text-[var(--sp-text-secondary)]">
                   <svg aria-hidden="true" width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                     <path d="M10 18s-6-5.1-6-9.5a6 6 0 1 1 12 0C16 12.9 10 18 10 18Z" />
                     <circle cx="10" cy="8.5" r="2" />
@@ -245,8 +245,8 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
               </div>
 
               {fallback.length > 0 && (
-                <div className="mt-4 border-t border-[var(--r-rule)] pt-3">
-                  <h3 className="text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--r-micro)]">
+                <div className="mt-4 border-t border-[var(--sp-border-hairline)] pt-3">
+                  <h3 className="text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
                     If no answer — same department
                   </h3>
                   <ul className="mt-1.5">
@@ -256,10 +256,10 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                           type="button"
                           onMouseDown={keepInputFocus}
                           onClick={() => lock(colleague)}
-                          className="flex w-full items-center justify-between gap-3 py-1.5 text-left hover:bg-[var(--r-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--r-accent)]"
+                          className="flex w-full items-center justify-between gap-3 py-1.5 text-left hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-accent)]"
                         >
-                          <span className="truncate text-[13px] text-[var(--r-text)]">{colleague.name}</span>
-                          <span className="shrink-0 font-mono text-[14px] font-semibold text-[var(--r-text)]">
+                          <span className="truncate text-[13px] text-[var(--sp-text-primary)]">{colleague.name}</span>
+                          <span className="shrink-0 font-mono text-[14px] font-semibold text-[var(--sp-text-primary)]">
                             {colleague.extension}
                           </span>
                         </button>
@@ -272,42 +272,42 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
           ) : (
             <section
               aria-label="Caller detail"
-              className="flex flex-col items-center border border-[var(--r-card-border)] bg-[var(--r-card)] px-6 py-12 text-center"
+              className="flex flex-col items-center border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-6 py-12 text-center"
             >
-              <svg aria-hidden="true" width="28" height="28" viewBox="0 0 20 20" fill="none" stroke="var(--r-muted)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" width="28" height="28" viewBox="0 0 20 20" fill="none" stroke="var(--sp-text-helper)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 11V9.5a6 6 0 0 1 12 0V11" />
                 <path d="M4 11h2v3.5H4.6A.6.6 0 0 1 4 13.9V11ZM16 11h-2v3.5h1.4a.6.6 0 0 0 .6-.6V11Z" />
                 <path d="M16 14.5v1a2 2 0 0 1-2 2h-2.5" />
               </svg>
-              <p className="mt-3 text-[14.5px] font-semibold text-[var(--r-text)]">Waiting for a call</p>
-              <p className="mt-1 text-[12.5px] text-[var(--r-muted)]">
+              <p className="mt-3 text-[14.5px] font-semibold text-[var(--sp-text-primary)]">Waiting for a call</p>
+              <p className="mt-1 text-[12.5px] text-[var(--sp-text-helper)]">
                 Start typing what the caller gives you — a name, department, seat, or extension.
               </p>
             </section>
           )}
 
           {recentPeople.length > 0 && (
-            <section aria-label="Recent lookups" className="border border-[var(--r-card-border)] bg-[var(--r-card)]">
-              <h3 className="border-b border-[var(--r-rule)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--r-micro)]">
+            <section aria-label="Recent lookups" className="border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)]">
+              <h3 className="border-b border-[var(--sp-border-hairline)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
                 Recent lookups
               </h3>
               <ul>
                 {recentPeople.map(person => (
-                  <li key={person.id} className="border-b border-[var(--r-rule-soft)] last:border-b-0">
+                  <li key={person.id} className="border-b border-[var(--sp-border-hairline-soft)] last:border-b-0">
                     <button
                       type="button"
                       onMouseDown={keepInputFocus}
                       onClick={() => lock(person)}
-                      className="flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-[var(--r-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--r-accent)]"
+                      className="flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-accent)]"
                     >
                       <span
                         aria-hidden="true"
-                        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center bg-[var(--r-chip-bg)] text-[10.5px] font-semibold text-[var(--r-chip-fg)]"
+                        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center bg-[var(--sp-tag-bg)] text-[10.5px] font-semibold text-[var(--sp-tag-text)]"
                       >
                         {buildInitials(person.name) || "?"}
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--r-text)]">{person.name}</span>
-                      <span className="shrink-0 font-mono text-[14px] font-semibold text-[var(--r-text)]">
+                      <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--sp-text-primary)]">{person.name}</span>
+                      <span className="shrink-0 font-mono text-[14px] font-semibold text-[var(--sp-text-primary)]">
                         {person.extension ?? "—"}
                       </span>
                     </button>

@@ -973,53 +973,49 @@ input[type="search"]::-webkit-search-cancel-button {
    app-wide html[data-theme="dark"] attribute (set pre-hydration in
    app/layout.tsx, persisted in localStorage). Shell chrome (rail + top bar)
    stays dark in both themes, so only this scope re-themes.
-   Contrast notes (on --r-card light #FFFFFF / dark #212121):
+   Contrast notes (on --sp-layer-01 light #FFFFFF / dark #212121):
    text #161616 = 17.9:1 · secondary #55504A = 7.5:1 · muted #6E655A = 5.3:1.
    Dark: #F4F4F4 = 15.4:1 · #D8D0C5 = 10.7:1 · #B8AEA2 = 7.4:1.
    Micro-labels deliberately use the AA-compliant muted pair, not the
    prototype's #8E8276 (3.1:1 on white — below AA even for labels). */
 .reception-theme {
-  --r-bg: #F7F6F2;
-  --r-card: #FFFFFF;
-  --r-card-border: #E7E1D8;
-  --r-rule: #EDE8E0;
-  --r-rule-soft: #F0EDE7;
-  --r-text: #161616;
-  --r-secondary: #55504A;
-  --r-muted: #6E655A;
-  --r-micro: #6E655A;
-  --r-chip-bg: #F0EDE7;
-  --r-chip-fg: #55504A;
-  --r-hover: #F7F4EE;
-  --r-selected: #FBF1E9;
-  --r-accent: #D23F0A;
-  --r-ext-bg: #FBF1E9;
-  --r-ext-border: #F0DFD2;
-  --r-ext-label: #B85C33;
-  --r-avatar-bg: #161616;
-  --r-avatar-fg: #F7F6F2;
+  /* Reception zone (PASS1 §3.7). bg/text-primary matched the base theme in
+     BOTH themes and merged onto the :root roles outright; the roles declared
+     here are the ones whose reception values differ from base somewhere —
+     the light row-state pair below, plus the dark divergences in the dark
+     block (the §3.7 "values match" claims were light-only for card/
+     card-border/secondary/muted — see NOTES.md). Values unchanged. */
+  --sp-border-hairline: #EDE8E0;
+  --sp-border-hairline-soft: #F0EDE7;
+  --sp-tag-bg: #F0EDE7;
+  --sp-tag-text: #55504A;
+  --sp-layer-hover: #F7F4EE;
+  --sp-layer-selected: #FBF1E9;
+  --sp-accent: #D23F0A;
+  --sp-extension-bg: #FBF1E9;
+  --sp-extension-border: #F0DFD2;
+  --sp-extension-label: #B85C33;
+  --sp-identity-avatar-bg: #161616;
+  --sp-identity-avatar-fg: #F7F6F2;
 }
 
 :root[data-theme="dark"] .reception-theme {
-  --r-bg: #161616;
-  --r-card: #212121;
-  --r-card-border: rgba(255, 255, 255, 0.12);
-  --r-rule: rgba(255, 255, 255, 0.08);
-  --r-rule-soft: rgba(255, 255, 255, 0.06);
-  --r-text: #F4F4F4;
-  --r-secondary: #D8D0C5;
-  --r-muted: #B8AEA2;
-  --r-micro: #B8AEA2;
-  --r-chip-bg: rgba(255, 255, 255, 0.10);
-  --r-chip-fg: #D8D0C5;
-  --r-hover: #282828;
-  --r-selected: #332018;
-  --r-accent: #FF5715;
-  --r-ext-bg: #2A1B12;
-  --r-ext-border: #54301B;
-  --r-ext-label: #FC672A;
-  --r-avatar-bg: #F4F4F4;
-  --r-avatar-fg: #161616;
+  --sp-layer-01: #212121;
+  --sp-border-subtle: rgba(255, 255, 255, 0.12);
+  --sp-text-secondary: #D8D0C5;
+  --sp-text-helper: #B8AEA2;
+  --sp-border-hairline: rgba(255, 255, 255, 0.08);
+  --sp-border-hairline-soft: rgba(255, 255, 255, 0.06);
+  --sp-tag-bg: rgba(255, 255, 255, 0.10);
+  --sp-tag-text: #D8D0C5;
+  --sp-layer-hover: #282828;
+  --sp-layer-selected: #332018;
+  --sp-accent: #FF5715;
+  --sp-extension-bg: #2A1B12;
+  --sp-extension-border: #54301B;
+  --sp-extension-label: #FC672A;
+  --sp-identity-avatar-bg: #F4F4F4;
+  --sp-identity-avatar-fg: #161616;
 }
 
 /* ---------------------------------------------------------------------------
