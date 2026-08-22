@@ -10,7 +10,7 @@ Repo-authored skills live in `.claude/skills/` — `run-seat-planner` (boot and 
 
 ## Stack
 
-Private office seat-planning app (Next.js App Router + Supabase, TypeScript strict). Deployed on Vercel to `seats.megeredchianlaw.com`.
+Private office seat-planning app (Next.js App Router + Supabase, TypeScript strict). Deployed on Vercel to `seats.megeredchianlaw.com`. GitHub repo `pmeglaw/seat-planner`; pushes to `main` auto-deploy to production. Supabase project "Seat Planner Prototype", id `wujsniclwzefvufavama`. Node ≥ 22 (`engines` in `package.json`).
 
 Framework and library **versions live in `package.json`** — don't restate them here, they go stale silently.
 
@@ -108,3 +108,30 @@ Treat the tokens and primitives as an **evolvable starting point, not fixed law*
 ## Ask Planner
 
 `/admin` includes a read-only AI assistant (`AskPlannerDrawer` → `askPlannerAction` → `lib/mapOperationsAgent.ts`). It answers questions and highlights seats but must never mutate data — keep it read-only.
+
+## Data model (schema `public`)
+
+`seats` (per-row `layer` — the two-layer model above) · `employees` (admins' live working set, **not** a draft layer) · `published_employees` (viewer snapshot, publish-RPC-only) · `publish_events` (publish audit history) · `department_options` / `zone_options` (filter/lookup names) · `profiles` (auth roles). RLS is enabled on every table — never disable it or write bypassing policies as a "fix"; if a query unexpectedly returns nothing, suspect RLS before assuming missing data. This list is the schema reference — don't query the database or read migrations just to rediscover it. Production rows are live office data: don't modify or delete them unless explicitly asked; prefer read-only queries when debugging.
+
+## Owner working preferences
+
+Read the relevant code and state your plan before implementing; ask clarifying questions instead of guessing when a request is ambiguous, and when two approaches are reasonable, give the tradeoffs and let the owner pick. Make the smallest change that solves the problem — no unrelated refactors or drive-by "improvements". `main` deploys straight to production: don't push to `main` unless the change is confirmed ready; use a branch + Vercel preview for risky or visual changes and remind the owner to check the preview URL before merging. The publish flow must never break — it's the core feature — and the UI stays simple for non-technical staff.
+
+## Codebase map (go here first instead of exploring)
+
+- Seat map UI: `components/seat-map/SeatMap.tsx` (+ siblings in `components/seat-map/`)
+- Publish flow: `publishSeatMapAction` in `app/actions.ts` → `publish_seat_map()` SQL; diff/audit `lib/publishSummary.ts`, `lib/publishHistory.ts`; guard `lib/publishGuard.ts`
+- Supabase clients: `lib/supabase/client.ts` (browser), `lib/supabase/server.ts` (server), `lib/supabase/middleware.ts` (session refresh, wired via `proxy.ts`)
+- Auth: `lib/serverAuth.ts`, `lib/adminPageGuard.ts`, `components/auth/LoginForm.tsx`, `app/auth/*`
+- Page routes: viewer `app/page.tsx`; admin + reception under `app/(shell)/`; `app/login/`, `app/my-seat/`
+
+Never read `node_modules/`, `.next/`, lockfiles, or build output. Prefer targeted greps and specific line ranges over whole files; verify with the narrowest relevant check first (one test file, typecheck) before a full build. Summarize changes in a few sentences — don't restate file contents or diffs.
+
+## Environment variables (names only; values live in local `.env.local` and the Vercel dashboard for prod)
+
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — client-safe Supabase values (both places; start by copying `.env.local.example`)
+- `OPENAI_API_KEY` (+ optional `OPENAI_MODEL`) — server-only, powers Ask Planner (both places)
+- `NEXT_PUBLIC_BUILD_ID` — derived from `VERCEL_GIT_COMMIT_SHA` in `next.config.js`, never hand-set
+- `SEAT_PLANNER_ALLOW_PROD_PUBLISH` — deliberate publish-guard opt-in (see two-layer model above); not in the example file on purpose
+- `SEAT_PLANNER_ENABLE_PROTOTYPES` — build-time gate for `app/concepts/` pages
+- `SUPABASE_DB_URL` / `SEAT_PLANNER_BACKUP_DIR` — `backup:prod` script; process environment only (it ignores `.env.local` by design)
