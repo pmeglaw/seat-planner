@@ -88,6 +88,9 @@ test("type-floor ruling 1 (2026-08-24): the micro-glyph MARKS are exempt from th
   //   - the five-site chrome "AI" badge: AppRail AiCell, SeatMap bar tenant,
   //     AskPlannerDrawer header + response chip, AiHighlightChip,
   //     SeatInspector Ask-Planner row
+  //   - the login page's decorative "C05" faux seat code (owner ruling on the
+  //     #444 scope note): a coordinate drawn ON an aria-hidden illustration,
+  //     not information — it stays at its 9px illustration scale
   // WORDS on the canvas (code pill label, inline names, office plate title)
   // are NOT covered by this exemption — they follow the PR-2 zoom-threshold
   // rule (marks below the threshold, 12px text at or above it).
@@ -104,6 +107,12 @@ test("type-floor ruling 1 (2026-08-24): the micro-glyph MARKS are exempt from th
     );
   }
   assert.match(markerSource, /plannerHighlighted && adminMarker && \(\s*<span\s*aria-hidden="true"/);
+
+  // The login "C05" mark stays inside the aria-hidden illustration container
+  // (the whole decorative panel is hidden, so the mark can never be read as
+  // content) at its illustration scale.
+  const loginPageSource = await readSource("../app/login/page.tsx");
+  assert.match(loginPageSource, /aria-hidden="true"[^]*?text-\[9px\][^]*?C05/);
 });
 
 test("desktop marker redesign stays clear of data auth publish and route boundaries", async () => {

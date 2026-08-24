@@ -89,9 +89,13 @@ export default async function LoginPage() {
           />
           <span className="absolute left-[37%] top-[62%] h-2.5 w-2.5 rounded-full bg-[var(--sp-button-primary)] shadow-[0_0_0_3px_rgba(184,82,7,0.35)] motion-safe:animate-[login-dot-pulse_2.4s_infinite]" />
           <span className="absolute left-[34%] top-[44%] h-[7px] w-[7px] rounded-full border-[1.5px] border-[var(--sp-border-strong)]" />
+          {/* Type-floor Ruling 1 (owner, 2026-08-24): this faux seat code is a
+              MARK — a decorative coordinate on an aria-hidden illustration,
+              not text anyone reads — so it keeps its 9px scale. Registry in
+              tests/desktop-seat-marker-system-source.test.mjs. */}
           <span
             translate="no"
-            className="absolute left-[39%] top-[56%] font-mono text-xs font-semibold tracking-[0.4px] text-[var(--sp-text-helper)]"
+            className="absolute left-[39%] top-[56%] font-mono text-[9px] font-semibold tracking-[0.4px] text-[var(--sp-text-helper)]"
           >
             C05
           </span>
