@@ -29,6 +29,35 @@ export const CODE_PILL_CLEARANCE_PX: CrowdingClearance = { x: 48, y: 26 };
 export const CODE_PILL_SIZE_PX = { w: 46, h: 24 } as const;
 export const PILL_NUDGE_PX = 14;
 
+// PR-2 text tier (owner ruling 2026-08-24): canvas labels are MARKS below a
+// collision threshold and 12px TEXT at or above it. At the tier, code pills
+// rest at the hover-disclosure geometry — 12px type, w-auto with a 48px
+// min-width — and name/prominent tokens widen to the 124px hover width (~40px
+// tall at 12px type). These footprints exist so the tier gate and the nudge
+// scorers reason about the pills that are actually on screen when the tier is
+// on; SeatMarker's text-tier Tailwind classes must embed the same numbers
+// (tests/pill-crowding-scale-source.test.mjs pins the pair, same contract as
+// CODE_PILL_SIZE_PX above). The threshold itself is DERIVED at runtime from
+// the live scale — no hardcoded frame width, no per-base zoom table: add
+// seats that tighten pitch and the tier retreats by construction. (The
+// measured table — ≈1634px rendered frame for the 2026-08 seat set — lives in
+// NOTES.md as documentation only.)
+export const TEXT_TIER_CODE_PILL_SIZE_PX = { w: 48, h: 24 } as const;
+export const TEXT_TIER_NAME_OBSTACLE_PX = { w: 124, h: 40 } as const;
+// The tier gate's collision clearance IS the footprint — two 48×24 boxes
+// centered on their seats overlap iff |dx| < 48 and |dy| < 24 — so the enter
+// threshold matches the measured table exactly (tightest pitch ≥ 48px; no
+// extra breathing slack, that belongs to the resting-mark clearance only).
+export const TEXT_TIER_CLEARANCE_PX: CrowdingClearance = { x: 48, y: 24 };
+// Deadband (hysteresis): fit mode keeps the rendered frame width CONTINUOUS
+// under window resize, so a single enter/exit boundary would flap the whole
+// marker layer while a user drags a window edge across it. Enter when the
+// text-tier footprints are fully clear; exit only once they are more than one
+// nudge amplitude underwater — inside the band, any residual overlap is ≤ the
+// vertical travel the token-nudge system can recover, so the tier holds
+// legibly instead of flickering.
+export const TEXT_TIER_EXIT_SLACK_PX = PILL_NUDGE_PX;
+
 // Conservative footprint for a resting name/prominent token — sized to the
 // WIDEST variant so the scorer is never blind to a real overlap: passive
 // prominent tokens render 118px × min-h 39px (SeatMarker), standard name
@@ -50,7 +79,8 @@ export const CODE_PILL_DEFAULT_CLEARANCE: CrowdingClearance = { x: 0.044, y: 0.0
 // image aspect).
 export function clearanceFromScale(
   pixelsPerXUnit: number,
-  pixelsPerYUnit: number = pixelsPerXUnit
+  pixelsPerYUnit: number = pixelsPerXUnit,
+  clearancePx: CrowdingClearance = CODE_PILL_CLEARANCE_PX
 ): CrowdingClearance {
   if (
     !Number.isFinite(pixelsPerXUnit) || pixelsPerXUnit <= 0 ||
@@ -59,8 +89,8 @@ export function clearanceFromScale(
     return CODE_PILL_DEFAULT_CLEARANCE;
   }
   const converted = {
-    x: CODE_PILL_CLEARANCE_PX.x / pixelsPerXUnit,
-    y: CODE_PILL_CLEARANCE_PX.y / pixelsPerYUnit
+    x: clearancePx.x / pixelsPerXUnit,
+    y: clearancePx.y / pixelsPerYUnit
   };
   // Denormal scales pass the input checks but overflow the quotient — a
   // non-finite clearance would poison the nudge scoring downstream (every
@@ -69,6 +99,63 @@ export function clearanceFromScale(
     return CODE_PILL_DEFAULT_CLEARANCE;
   }
   return converted;
+}
+
+// The pill geometry a nudge scorer models — resting marks by default, the
+// text-tier footprints when the tier is on. clearancePx must be the SAME px
+// clearance the caller's normalized clearance was derived from
+// (clearanceFromScale's third argument): computeCodePillNudges recovers the
+// live px-per-unit scale by dividing clearancePx by the normalized clearance,
+// so mismatched bases silently mis-scale every projected pill rect.
+export type PillGeometry = {
+  clearancePx: CrowdingClearance;
+  pillSizePx: { readonly w: number; readonly h: number };
+  nameObstaclePx: { readonly w: number; readonly h: number };
+};
+
+export const RESTING_PILL_GEOMETRY: PillGeometry = {
+  clearancePx: CODE_PILL_CLEARANCE_PX,
+  pillSizePx: CODE_PILL_SIZE_PX,
+  nameObstaclePx: NAME_PILL_OBSTACLE_PX
+};
+
+export const TEXT_TIER_PILL_GEOMETRY: PillGeometry = {
+  clearancePx: TEXT_TIER_CLEARANCE_PX,
+  pillSizePx: TEXT_TIER_CODE_PILL_SIZE_PX,
+  nameObstaclePx: TEXT_TIER_NAME_OBSTACLE_PX
+};
+
+// The tier gate: true iff the text-tier code-pill footprints produce ZERO
+// collisions over the actual seat set at the live scale — the same pairwise
+// predicate (computeCrowdedSeatIds/boxCollides) the nudge scorers use, so the
+// gate and the de-collision system can never disagree about what "fits".
+// `wasActive` carries the hysteresis (see TEXT_TIER_EXIT_SLACK_PX): an active
+// tier only exits once collisions persist at the slack-reduced clearance, so
+// a continuous fit-mode width sweep cannot oscillate the marker layer at the
+// boundary. Unmeasured scale (SSR/first paint, 0/NaN) always reads as marks.
+export function textTierActive<T extends { id: string; x: number; y: number }>(
+  seats: ReadonlyArray<T>,
+  pixelsPerXUnit: number,
+  pixelsPerYUnit: number,
+  wasActive = false
+): boolean {
+  if (
+    !Number.isFinite(pixelsPerXUnit) || pixelsPerXUnit <= 0 ||
+    !Number.isFinite(pixelsPerYUnit) || pixelsPerYUnit <= 0
+  ) {
+    return false;
+  }
+  const boundaryPx = wasActive
+    ? {
+        x: Math.max(1, TEXT_TIER_CLEARANCE_PX.x - TEXT_TIER_EXIT_SLACK_PX),
+        y: Math.max(1, TEXT_TIER_CLEARANCE_PX.y - TEXT_TIER_EXIT_SLACK_PX)
+      }
+    : TEXT_TIER_CLEARANCE_PX;
+  const boundary = { x: boundaryPx.x / pixelsPerXUnit, y: boundaryPx.y / pixelsPerYUnit };
+  if (!Number.isFinite(boundary.x) || !Number.isFinite(boundary.y)) {
+    return false;
+  }
+  return computeCrowdedSeatIds(seats, boundary).size === 0;
 }
 
 function isDegenerateClearance(clearance: CrowdingClearance): boolean {
@@ -129,6 +216,10 @@ export type CodePillNudgeOptions = {
   // obstacles at their nudged rows with the larger name footprint.
   nameNudges?: ReadonlyMap<string, -1 | 0 | 1>;
   namedSeatIds?: ReadonlySet<string>;
+  // Which pill footprints the scorer models — RESTING_PILL_GEOMETRY (default)
+  // below the text tier, TEXT_TIER_PILL_GEOMETRY when the tier is on. Must
+  // share a basis with the caller's clearance (see the PillGeometry comment).
+  geometry?: PillGeometry;
 };
 
 // Deterministic code-pill nudge assignment: seats whose fixed-size code
@@ -157,6 +248,9 @@ export function computeCodePillNudges<T extends { id: string; x: number; y: numb
   const safeClearance = isDegenerateClearance(clearance) ? CODE_PILL_DEFAULT_CLEARANCE : clearance;
   const namedSeatIds = options.namedSeatIds ?? new Set<string>();
   const nameNudges = options.nameNudges ?? new Map<string, -1 | 0 | 1>();
+  const geometry = options.geometry ?? RESTING_PILL_GEOMETRY;
+  const pillSize = geometry.pillSizePx;
+  const nameObstacleSize = geometry.nameObstaclePx;
 
   // Crowding is detected across ALL seats — a code pill whose only close
   // neighbour is a named seat still participates, so it can dodge the name
@@ -171,10 +265,10 @@ export function computeCodePillNudges<T extends { id: string; x: number; y: numb
     .filter((seat) => crowdedIds.has(seat.id) && !namedSeatIds.has(seat.id))
     .sort(compareSeatOrder);
 
-  // Recover CSS px from the clearance (both axes of CODE_PILL_CLEARANCE_PX
-  // divide by the same live scale the caller used).
-  const pxPerNormX = CODE_PILL_CLEARANCE_PX.x / safeClearance.x;
-  const pxPerNormY = CODE_PILL_CLEARANCE_PX.y / safeClearance.y;
+  // Recover CSS px from the clearance (both axes of the geometry's px
+  // clearance divide by the same live scale the caller used).
+  const pxPerNormX = geometry.clearancePx.x / safeClearance.x;
+  const pxPerNormY = geometry.clearancePx.y / safeClearance.y;
 
   // Obstacles that can never move: resting code pills on the anchor row and
   // named seats at their name-nudge rows. Prefiltered to the reachable
@@ -182,8 +276,8 @@ export function computeCodePillNudges<T extends { id: string; x: number; y: numb
   // pill within half the summed widths on x and half the summed heights plus
   // twice the nudge travel on y.
   type Obstacle = { x: number; y: number; nudge: -1 | 0 | 1; w: number; h: number };
-  const reachX = (CODE_PILL_SIZE_PX.w + NAME_PILL_OBSTACLE_PX.w) / 2 / pxPerNormX;
-  const reachY = ((CODE_PILL_SIZE_PX.h + NAME_PILL_OBSTACLE_PX.h) / 2 + 2 * PILL_NUDGE_PX) / pxPerNormY;
+  const reachX = (pillSize.w + nameObstacleSize.w) / 2 / pxPerNormX;
+  const reachY = ((pillSize.h + nameObstacleSize.h) / 2 + 2 * PILL_NUDGE_PX) / pxPerNormY;
   const nearAParticipant = (seat: { x: number; y: number }): boolean =>
     sorted.some((p) => Math.abs(p.x - seat.x) < reachX && Math.abs(p.y - seat.y) < reachY);
   const obstacles: Obstacle[] = [];
@@ -194,12 +288,12 @@ export function computeCodePillNudges<T extends { id: string; x: number; y: numb
           x: seat.x,
           y: seat.y,
           nudge: nameNudges.get(seat.id) ?? 0,
-          w: NAME_PILL_OBSTACLE_PX.w,
-          h: NAME_PILL_OBSTACLE_PX.h
+          w: nameObstacleSize.w,
+          h: nameObstacleSize.h
         });
       }
     } else if (!crowdedIds.has(seat.id) && nearAParticipant(seat)) {
-      obstacles.push({ x: seat.x, y: seat.y, nudge: 0, w: CODE_PILL_SIZE_PX.w, h: CODE_PILL_SIZE_PX.h });
+      obstacles.push({ x: seat.x, y: seat.y, nudge: 0, w: pillSize.w, h: pillSize.h });
     }
   }
 
@@ -210,8 +304,8 @@ export function computeCodePillNudges<T extends { id: string; x: number; y: numb
     const against = (other: { x: number; y: number }, otherNudge: -1 | 0 | 1, w: number, h: number) => {
       const dxPx = Math.abs(seat.x - other.x) * pxPerNormX;
       const dyPx = Math.abs((seat.y - other.y) * pxPerNormY + (value - otherNudge) * PILL_NUDGE_PX);
-      const ox = (CODE_PILL_SIZE_PX.w + w) / 2 - dxPx;
-      const oy = (CODE_PILL_SIZE_PX.h + h) / 2 - dyPx;
+      const ox = (pillSize.w + w) / 2 - dxPx;
+      const oy = (pillSize.h + h) / 2 - dyPx;
       if (ox > 0 && oy > 0) {
         area += ox * oy;
       }
@@ -219,7 +313,7 @@ export function computeCodePillNudges<T extends { id: string; x: number; y: numb
     // Fixed summation order (sorted participants, then sorted obstacles) so
     // near-tie argmins can't flip with the caller's input array order.
     for (let j = 0; j < placedUpTo; j += 1) {
-      against(sorted[j], nudges.get(sorted[j].id) ?? 0, CODE_PILL_SIZE_PX.w, CODE_PILL_SIZE_PX.h);
+      against(sorted[j], nudges.get(sorted[j].id) ?? 0, pillSize.w, pillSize.h);
     }
     for (const obstacle of obstacles) {
       against(obstacle, obstacle.nudge, obstacle.w, obstacle.h);

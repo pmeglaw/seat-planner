@@ -42,7 +42,7 @@ import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { ViewerFindPalette } from "@/components/seat-map/ViewerFindPalette";
 import { MapStatusBand } from "@/components/seat-map/MapStatusBand";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
-import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
+import { RESTING_PILL_GEOMETRY, TEXT_TIER_PILL_GEOMETRY, clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, textTierActive } from "@/lib/seatCrowding";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { buildZoneWash } from "@/lib/zoneWash";
 
@@ -279,9 +279,31 @@ export function ViewerSeatFinder({
   // so the viewer rests full-bleed now and the narrow scales are the small
   // windows and the fixed-width mobile frame instead. Before first measure
   // (SSR/first paint) the helper falls back to the default fit-zoom clearance.
+  //
+  // PR-2 text tier: derived from the SAME live scale — labels are marks below
+  // the collision threshold and 12px text at or above it, with the threshold
+  // computed from the actual seat set (no hardcoded frame width; add seats
+  // that tighten pitch and the tier retreats by construction). The ref
+  // carries the deadband: fit mode makes the frame width CONTINUOUS under
+  // window resize, so textTierActive holds an entered tier until it is a full
+  // nudge amplitude underwater instead of flapping at the boundary.
+  const textTierWasActiveRef = useRef(false);
+  const textTier = useMemo(
+    () => textTierActive(
+      visualSeats,
+      mapRenderedWidth ?? 0,
+      (mapRenderedWidth ?? 0) * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
+      textTierWasActiveRef.current
+    ),
+    [mapRenderedWidth, visualSeats]
+  );
+  textTierWasActiveRef.current = textTier;
+  // Whenever the tier is on, the nudge scorers model the text-tier footprints
+  // — the pills actually on screen — instead of the resting-mark geometry.
+  const seatPillGeometry = textTier ? TEXT_TIER_PILL_GEOMETRY : RESTING_PILL_GEOMETRY;
   const seatDensityClearance = useMemo(
-    () => clearanceFromScale(mapRenderedWidth ?? 0, (mapRenderedWidth ?? 0) * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH)),
-    [mapRenderedWidth]
+    () => clearanceFromScale(mapRenderedWidth ?? 0, (mapRenderedWidth ?? 0) * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH), seatPillGeometry.clearancePx),
+    [mapRenderedWidth, seatPillGeometry]
   );
   // Pixel-aspect points for arrow-key traversal (see lib/seatKeyboardNav).
   const seatNavPoints = useMemo(
@@ -411,8 +433,8 @@ export function ViewerSeatFinder({
   // can dodge the rows the name pills actually occupy (named seats render
   // name/prominent tokens, not code pills).
   const codePillNudges = useMemo(
-    () => computeCodePillNudges(visualSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet }),
-    [nameLabelNudges, namedSeatIdSet, seatDensityClearance, visualSeats]
+    () => computeCodePillNudges(visualSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet, geometry: seatPillGeometry }),
+    [nameLabelNudges, namedSeatIdSet, seatDensityClearance, seatPillGeometry, visualSeats]
   );
 
   const selectedResultTitle = activeResult?.title ?? selectedSeat?.label ?? null;
@@ -1414,6 +1436,7 @@ export function ViewerSeatFinder({
                           compactNameLabel
                           codeNudge={codePillNudges.get(seat.id) ?? 0}
                           nameNudge={nameLabelNudges.get(seat.id) ?? 0}
+                          textTier={textTier}
                           swapMode={false}
                           moveEmployeeMode={false}
                           officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}

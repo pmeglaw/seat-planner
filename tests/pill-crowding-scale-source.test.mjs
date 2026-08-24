@@ -36,9 +36,10 @@ test("viewer computes nudges from the live rendered scale, names feeding codes",
     "ViewerSeatFinder must pass the same live clearance to computeNameLabelNudges (parity with the admin map)"
   );
   assert.ok(
-    /computeCodePillNudges\(\s*visualSeats\s*,\s*seatDensityClearance\s*,\s*\{\s*nameNudges:\s*nameLabelNudges\s*,\s*namedSeatIds:\s*namedSeatIdSet\s*\}\s*\)/.test(source),
-    "ViewerSeatFinder must de-collide uniform-size code pills via computeCodePillNudges at the same live clearance, feeding it the name-label rows — two independent graphs converge pills onto the same row"
+    /computeCodePillNudges\(\s*visualSeats\s*,\s*seatDensityClearance\s*,\s*\{\s*nameNudges:\s*nameLabelNudges\s*,\s*namedSeatIds:\s*namedSeatIdSet\s*,\s*geometry:\s*seatPillGeometry\s*\}\s*\)/.test(source),
+    "ViewerSeatFinder must de-collide uniform-size code pills via computeCodePillNudges at the same live clearance, feeding it the name-label rows AND the tier-aware pill geometry — two independent graphs converge pills onto the same row, and a marks-geometry scorer is blind to text-tier pills"
   );
+  assertTextTierWiring(source, "ViewerSeatFinder", "visualSeats");
 });
 
 test("admin map keeps its zoom-aware clearance wiring, names feeding codes", async () => {
@@ -52,10 +53,38 @@ test("admin map keeps its zoom-aware clearance wiring, names feeding codes", asy
     "SeatMap must pass an aspect-corrected y scale — normalized y spans the frame height, not its width"
   );
   assert.ok(
-    /computeCodePillNudges\(\s*visualLocalSeats\s*,\s*seatDensityClearance\s*,\s*\{\s*nameNudges:\s*nameLabelNudges\s*,\s*namedSeatIds:\s*namedSeatIdSet\s*\}\s*\)/.test(source),
-    "SeatMap must de-collide uniform-size code pills via computeCodePillNudges at the same zoom-aware clearance, feeding it the name-label rows"
+    /computeCodePillNudges\(\s*visualLocalSeats\s*,\s*seatDensityClearance\s*,\s*\{\s*nameNudges:\s*nameLabelNudges\s*,\s*namedSeatIds:\s*namedSeatIdSet\s*,\s*geometry:\s*seatPillGeometry\s*\}\s*\)/.test(source),
+    "SeatMap must de-collide uniform-size code pills via computeCodePillNudges at the same zoom-aware clearance, feeding it the name-label rows AND the tier-aware pill geometry"
   );
+  assertTextTierWiring(source, "SeatMap", "visualLocalSeats");
 });
+
+// PR-2 text tier: both surfaces must derive the tier from the live scale via
+// textTierActive (threading the hysteresis ref — the fit-mode deadband), and
+// must swap the scorer geometry with the tier so the nudge graphs model the
+// pills actually on screen.
+function assertTextTierWiring(source, surface, seatSet) {
+  assert.ok(
+    new RegExp(`textTierActive\\(\\s*${seatSet}\\s*,`).test(source),
+    `${surface} must gate the text tier with textTierActive over the same visual seat set the nudge graphs use`
+  );
+  assert.ok(
+    /textTierActive\([^;]*textTierWasActiveRef\.current\s*\)/.test(source),
+    `${surface} must thread the previous tier state into textTierActive — the deadband is what keeps a continuous fit-mode width sweep from flapping the marker layer`
+  );
+  assert.ok(
+    /const seatPillGeometry = textTier \? TEXT_TIER_PILL_GEOMETRY : RESTING_PILL_GEOMETRY;/.test(source),
+    `${surface} must swap the scorer geometry with the tier`
+  );
+  assert.ok(
+    /clearanceFromScale\([^;]*seatPillGeometry\.clearancePx\s*\)/.test(source),
+    `${surface} must derive the crowding clearance from the SAME geometry it feeds the scorer — mismatched bases mis-scale every projected pill rect`
+  );
+  assert.ok(
+    /textTier=\{textTier\}/.test(source),
+    `${surface} must pass the tier to SeatMarker`
+  );
+}
 
 test("SeatMarker's pill geometry matches the scoring model's constants", async () => {
   // The nudge scorer reasons about pills of CODE_PILL_SIZE_PX nudged by
@@ -79,5 +108,28 @@ test("SeatMarker's pill geometry matches the scoring model's constants", async (
   assert.ok(
     marker.includes(`-translate-y-[calc(50%+${nudge}px)]`) && marker.includes(`-translate-y-[calc(50%-${nudge}px)]`),
     `SeatMarker's token nudge classes must translate by the ±${nudge}px the nudge scorer models`
+  );
+
+  // PR-2 text tier: same contract for the tier footprints. The text-tier code
+  // pill rests at w-auto on the min-width the tier gate and scorer model, at
+  // 12px type; the text-tier name token rests at the width the name-obstacle
+  // footprint models.
+  const textSizeMatch = lib.match(/TEXT_TIER_CODE_PILL_SIZE_PX = \{ w: (\d+), h: (\d+) \}/);
+  const textNameMatch = lib.match(/TEXT_TIER_NAME_OBSTACLE_PX = \{ w: (\d+), h: (\d+) \}/);
+  assert.ok(textSizeMatch, "lib/seatCrowding.ts must export TEXT_TIER_CODE_PILL_SIZE_PX as a plain literal");
+  assert.ok(textNameMatch, "lib/seatCrowding.ts must export TEXT_TIER_NAME_OBSTACLE_PX as a plain literal");
+  const [, textW] = textSizeMatch;
+  const [, textNameW] = textNameMatch;
+  assert.ok(
+    marker.includes(`w-auto min-w-[${textW}px]`),
+    `SeatMarker's text-tier code pill must rest at w-auto with the ${textW}px min-width the tier gate models`
+  );
+  assert.ok(
+    /textTier\s*\?\s*"text-\[12px\]"/.test(marker),
+    "SeatMarker's text-tier code label must hold the 12px floor (the tier IS the at-or-above-threshold state)"
+  );
+  assert.ok(
+    marker.includes(`w-[${textNameW}px] max-w-[${textNameW}px]`),
+    `SeatMarker's text-tier name token must rest at the ${textNameW}px width the name-obstacle footprint models`
   );
 });

@@ -42,7 +42,7 @@ import {
   seatsToVisualSeats,
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
-import { clearanceFromScale, computeCodePillNudges, computeNameLabelNudges } from "@/lib/seatCrowding";
+import { RESTING_PILL_GEOMETRY, TEXT_TIER_PILL_GEOMETRY, clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, textTierActive } from "@/lib/seatCrowding";
 import { AiHighlightChip } from "@/components/seat-map/AiHighlightChip";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import { DraftTrailOverlay } from "@/components/seat-map/DraftTrailOverlay";
@@ -2430,12 +2430,33 @@ export function SeatMap({
   // pointer-move-driven re-renders (drag/pan/hover) don't rerun them: with
   // Show names off (the hot-path default) every dep below is
   // identity-stable, so the whole pipeline is cached.
+  // PR-2 text tier: derived from the SAME zoom-aware scale — labels are marks
+  // below the collision threshold and 12px text at or above it, computed from
+  // the actual seat set (no hardcoded frame width or per-base zoom table).
+  // The ref carries the deadband: fit mode keeps the frame width CONTINUOUS
+  // under window resize, so textTierActive holds an entered tier until it is
+  // a full nudge amplitude underwater instead of flapping at the boundary.
+  const textTierWasActiveRef = useRef(false);
+  const textTier = useMemo(
+    () => textTierActive(
+      visualLocalSeats,
+      mapPixelsPerNormalizedUnit,
+      mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
+      textTierWasActiveRef.current
+    ),
+    [mapPixelsPerNormalizedUnit, visualLocalSeats]
+  );
+  textTierWasActiveRef.current = textTier;
+  // Whenever the tier is on, the nudge scorers model the text-tier footprints
+  // — the pills actually on screen — instead of the resting-mark geometry.
+  const seatPillGeometry = textTier ? TEXT_TIER_PILL_GEOMETRY : RESTING_PILL_GEOMETRY;
   const seatDensityClearance = useMemo(
     () => clearanceFromScale(
       mapPixelsPerNormalizedUnit,
-      mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH)
+      mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
+      seatPillGeometry.clearancePx
     ),
-    [mapPixelsPerNormalizedUnit]
+    [mapPixelsPerNormalizedUnit, seatPillGeometry]
   );
   // Shared with the marker render loop below (dimmed={dimmedSeatIdSet.has(...)}).
   const dimmedSeatIdSet = new Set(localSeats.filter(isSeatDimmed).map(seat => seat.id));
@@ -2480,8 +2501,8 @@ export function SeatMap({
   // can dodge the rows the name pills actually occupy (named seats render
   // name tokens, not code pills).
   const codePillNudges = useMemo(
-    () => computeCodePillNudges(visualLocalSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet }),
-    [nameLabelNudges, namedSeatIdSet, seatDensityClearance, visualLocalSeats]
+    () => computeCodePillNudges(visualLocalSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet, geometry: seatPillGeometry }),
+    [nameLabelNudges, namedSeatIdSet, seatDensityClearance, seatPillGeometry, visualLocalSeats]
   );
   // Office room wash (PR B, 2026-07-24): a private office glows faintly green
   // while an assigned seat sits in it. buildOfficeRoomWashes owns the
@@ -3218,6 +3239,7 @@ export function SeatMap({
                         compactNameLabel={(nameLabelNudges.get(seat.id) ?? 0) !== 0}
                         codeNudge={codePillNudges.get(seat.id) ?? 0}
                         nameNudge={nameLabelNudges.get(seat.id) ?? 0}
+                        textTier={textTier}
                         swapMode={Boolean(swapSourceSeatId)}
                         moveEmployeeMode={Boolean(moveEmployeeSourceSeatId)}
                         officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}
