@@ -115,6 +115,13 @@ export function usePublishReview({
         const result = await publishSeatMapAction(publishReviewExpectations, publishReviewEmployeeExpectations);
         if (!result.ok) {
           setPublishReviewOpen(false);
+          // PUBLISH_BLOCKED is an environment refusal (this server cannot
+          // prove it may publish to prod) — a plain error banner, not the
+          // stale-draft reload flow: nothing about the draft is stale.
+          if (result.code === "PUBLISH_BLOCKED") {
+            setActionError(result.message);
+            return;
+          }
           handleStaleDraft(result.message);
           return;
         }
