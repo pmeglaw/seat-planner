@@ -125,3 +125,17 @@ Rule for this branch: renames and twin deletion only — nothing here was acted 
   sub-12px debt first).
 - Everything off the canvas holds the 12px floor (label-01 / `text-xs`) since
   the PR-1 sweep; eyebrows subordinate via weight + colour, never size.
+- **Working zoom is fit, and fit is below the text threshold on common
+  displays.** Both map surfaces open at fit (admin `mapViewMode` initial
+  `"overview"` — "Fit is the resting state"; viewer `zoomFactor` initial
+  `null` = fit-to-view), zoom is never persisted (the only stored map
+  preferences are Show-names in localStorage and undo/redo in per-tab
+  sessionStorage; zoom is plain component state that resets on load and on
+  route remount), and there is no interaction telemetry (SpeedInsights is
+  performance-only). Owner ruling to record (2026-08-24): **at working
+  density this tool cannot show readable names. Hover disclosure and the
+  inspector are therefore the PRIMARY read path, not a fallback, and should
+  be resourced accordingly.** Nuance: the threshold is a rendered-width
+  fact, not a mode fact — on a wide monitor the fit frame itself can cross
+  the text threshold (≈1634px rendered for today's seat set), so wide
+  displays get readable names at rest once the PR-2 tier lands.
