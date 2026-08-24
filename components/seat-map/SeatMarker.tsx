@@ -177,6 +177,10 @@ function SeatMarkerComponent({
   const namesVisible = showNames && hasEmployee && !dimmed;
   const swapCandidate = canEdit && swapMode && !swapSource && !swapTarget && !invalidTarget;
   const moveCandidate = canEdit && moveEmployeeMode && !moveEmployeeSource && !invalidTarget;
+  // PR-C: while a target-mode glyph (✓/✕) occupies the badge slots, the
+  // resting glyphs (presence dot, D badge) yield — mode glyph wins, the
+  // underlying state stays readable via the preserved fill.
+  const targetGlyphActive = swapCandidate || moveCandidate || invalidTarget;
   const activeMarker = selected || swapSource || swapTarget || moveEmployeeSource;
   const searchProminent = searchResult && !dimmed;
   const searchSelected = selected && searchProminent;
@@ -235,11 +239,15 @@ function SeatMarkerComponent({
         : seat.status === "reserved"
           ? "border-[var(--sp-marker-reserved-border)] bg-[var(--sp-marker-reserved-surface)] text-[var(--sp-marker-reserved-text)]"
           : seat.status === "unavailable"
-            ? "border-[var(--sp-marker-unavailable-border)] bg-[var(--sp-marker-unavailable-surface)] text-[var(--sp-marker-unavailable-text)]"
+            // PR-C hatch = the "structurally unusable" fill axis value; clipped
+            // to padding-box so the strokes never touch the border (keeps the
+            // hover edge's measured 3.11:1 against the un-hatched fill honest).
+            ? "border-[var(--sp-marker-unavailable-border)] bg-[var(--sp-marker-unavailable-surface)] bg-[image:var(--sp-marker-unavailable-hatch)] bg-clip-padding text-[var(--sp-marker-unavailable-text)]"
             : "border-[var(--sp-marker-available-border)] bg-[var(--sp-marker-available-surface)] text-[var(--sp-marker-ink)]";
-  // Search/planner emphasis keeps visual priority over the passive valid-target tint.
-  const validTargetTone = (swapCandidate || moveCandidate) && !searchProminent && !plannerHighlighted;
-  const statusToneClass = (tokenMode === "selected" || tokenMode === "prominent" || validTargetTone || invalidTarget) ? "" : baseStatusToneClass;
+  // PR-C ruling (change 2): target modes PRESERVE the underlying seat's fill —
+  // the admin still needs occupied/open/unusable mid-swap — and validity rides
+  // the ✓/✕ badge glyphs below instead of a tone swap.
+  const statusToneClass = tokenMode === "selected" || tokenMode === "prominent" ? "" : baseStatusToneClass;
 
   // Capsule geometry (2026-07-23 owner reference hybrid): every token is a
   // full stadium (rounded-full on a fixed height), and with the left accent
@@ -314,16 +322,6 @@ function SeatMarkerComponent({
           ? "border-[var(--sp-legend-selected-border)] bg-[var(--sp-legend-selected-surface)] text-[var(--sp-legend-selected-text)] ring-2 ring-[var(--sp-legend-selected-border)] shadow-marker-selected"
           : "border-[var(--sp-marker-active-edge)] bg-[var(--sp-marker-selected-surface)] text-white ring-2 ring-[var(--sp-marker-active-edge-strong)] shadow-[0_10px_24px_rgba(31,35,39,0.30),inset_0_1px_0_rgba(255,255,255,0.16)]"
       : "",
-    validTargetTone
-      ? adminMarker
-        ? "border-[var(--sp-legend-target-valid-border)] bg-[var(--sp-legend-target-valid-surface)] text-[var(--sp-legend-target-valid-text)]"
-        : "border-[var(--sp-marker-positive-border)] bg-[var(--sp-marker-positive-surface)] text-[var(--sp-marker-positive-text)]"
-      : "",
-    invalidTarget
-      ? adminMarker
-        ? "border-[var(--sp-legend-target-invalid-border)] bg-[var(--sp-legend-target-invalid-surface)] text-[var(--sp-legend-target-invalid-text)]"
-        : "border-[var(--sp-marker-invalid-border)] bg-[var(--sp-marker-invalid-surface)] text-[var(--sp-marker-invalid-text)]"
-      : "",
     searchProminent && !selected
       ? adminMarker
         ? "border-[var(--sp-legend-search-border)] bg-[var(--sp-legend-search-surface)] text-[var(--sp-legend-search-text)] ring-2 ring-[var(--sp-legend-search-ring)] shadow-[0_8px_18px_rgba(158,47,6,0.20),inset_0_1px_0_rgba(255,255,255,0.78)]"
@@ -343,7 +341,9 @@ function SeatMarkerComponent({
     // branch keeps its green: there `highlighted` means a search hit or a
     // people-list hover, which is not AI presence and must never look like it.
     plannerHighlighted ? adminMarker ? "border-[var(--sp-ai-border)] bg-[var(--sp-ai-marker-surface)] bg-[image:var(--sp-ai-marker-aura)] bg-no-repeat text-[var(--sp-ai-text)] shadow-marker-ai" : "border-[var(--sp-marker-positive-border)] bg-[var(--sp-marker-positive-surface)] text-[var(--sp-marker-positive-text)] ring-2 ring-[var(--sp-marker-planner-ring)] shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
-    (swapMode && !swapSource) || (moveEmployeeMode && !moveEmployeeSource) ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--sp-legend-search-ring)]" : "group-hover:ring-4 group-hover:ring-[var(--sp-marker-positive-ring)]" : ""
+    // PR-C (PASS1 §8 `:346` fix): invalid targets are excluded — the hover
+    // affordance ring must fire on seats the drop can land on, never on ✕.
+    (swapMode && !swapSource && !invalidTarget) || (moveEmployeeMode && !moveEmployeeSource && !invalidTarget) ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--sp-legend-search-ring)]" : "group-hover:ring-4 group-hover:ring-[var(--sp-marker-positive-ring)]" : ""
   ].join(" ");
   const markerFocusClass = adminMarker
     ? "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-focus-marker-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-focus-marker-offset)]"
@@ -462,7 +462,9 @@ function SeatMarkerComponent({
         selected ? "z-40 focus-visible:z-40" : "",
         prominentToken ? "z-30" : "",
         dimmed ? "opacity-45 saturate-50" : "",
-        "cursor-pointer"
+        // PR-C: the pointer everywhere EXCEPT a rejecting drop target —
+        // requested with the ✓/✕ pass (PASS1 §8; never landed in PR-A).
+        invalidTarget ? "cursor-not-allowed" : "cursor-pointer"
       ].join(" ")}
       style={pointToStyle({ x: seat.x, y: seat.y })}
       aria-label={`${seat.label} ${accessibleSeatName}. ${STATUS_LABELS[seat.status]} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${moveEmployeeSource ? " Move source." : ""}${moveCandidate ? " Valid destination seat." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
@@ -478,20 +480,39 @@ function SeatMarkerComponent({
           tokenStateClass
         ].join(" ")}
       >
-        {/* 2026-07-23 capsule hybrid (owner reference): the key-look accent
-            bar + top-left status shape are replaced by ONE non-color cue — a
-            green dot on the pill's bottom-right edge for occupied seats. Dot
-            PRESENCE (not hue) is what separates assigned from open, so the A3
-            colorblind-legibility intent survives the redesign. */}
-        {seat.status === "assigned" && !invalidTarget && (
+        {/* PR-C glyph axis (extends the 2026-07-23 capsule hybrid's single
+            dot): dot = a person is attached to the seat — assigned (solid
+            fill) and reserved (hollow fill) both carry it, and the FILL axis
+            separates the pair. Glyph PRESENCE/SHAPE (not hue) carries the
+            meaning, so the A3 colorblind-legibility intent survives; the
+            per-state dot hue is redundancy only. Yields to the ✓/✕ mode
+            badges (targetGlyphActive) so one glyph speaks at a time. */}
+        {(seat.status === "assigned" || seat.status === "reserved") && !targetGlyphActive && (
           <span
-            className="pointer-events-none absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[var(--sp-marker-positive-border)] ring-[1.5px] ring-white/90"
+            className={[
+              "pointer-events-none absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full ring-[1.5px] ring-white/90",
+              seat.status === "assigned" ? "bg-[var(--sp-marker-assigned-glyph)]" : "bg-[var(--sp-marker-reserved-glyph)]"
+            ].join(" ")}
             aria-hidden="true"
           />
         )}
-        {draftChanged && !selected && !searchProminent && (
-          <span className={["pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 text-[8px] font-black leading-none text-white", draftBadgeClass].join(" ")} aria-hidden="true">
+        {draftChanged && !selected && !searchProminent && !targetGlyphActive && (
+          <span className={["pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 text-[8px] font-black leading-none text-[var(--sp-marker-glyph-ink)]", draftBadgeClass].join(" ")} aria-hidden="true">
             D
+          </span>
+        )}
+        {/* Target-mode reason glyphs (PR-C ruling change 2): the underlying
+            fill stays, ✓/✕ says whether the armed swap/move can land here.
+            aria-hidden — the accessible name already carries "Valid swap
+            target." / "Not a valid target." */}
+        {(swapCandidate || moveCandidate) && (
+          <span className="pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 bg-[var(--sp-marker-valid-glyph)] text-[8px] font-black leading-none text-[var(--sp-marker-glyph-ink)] shadow-[0_2px_5px_rgba(23,26,29,0.24)]" aria-hidden="true">
+            ✓
+          </span>
+        )}
+        {invalidTarget && (
+          <span className="pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 bg-[var(--sp-marker-invalid-glyph)] text-[8px] font-black leading-none text-[var(--sp-marker-glyph-ink)] shadow-[0_2px_5px_rgba(23,26,29,0.24)]" aria-hidden="true">
+            ✕
           </span>
         )}
         {/* AI provenance on the seat itself: the aura says "something picked

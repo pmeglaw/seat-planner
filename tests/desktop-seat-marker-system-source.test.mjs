@@ -6,7 +6,9 @@ import test from "node:test";
 // the map calibration constants stay untouched, and that the marker/map code
 // never crosses data/auth/publish/route boundaries. The marker's visual styling
 // (colors, pill sizes, name truncation classes) is intentionally NOT locked here
-// so the marker look can be redesigned freely.
+// so the marker look can be redesigned freely. GLYPH PRESENCE per state is the
+// one styling-adjacent thing pinned (PR-C): it is the WCAG 1.4.1 vocabulary,
+// not a look — hues and geometry stay free, the non-colour signals do not.
 
 async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
@@ -41,6 +43,36 @@ test("desktop marker system keeps true coordinates and calibration constants unt
   // since the fix/floor-plan-polish micro-tune:
   assert.match(transformSource, /xOffset: -0\.056543/);
   assert.match(transformSource, /xScale: 0\.835824/);
+});
+
+test("marker vocabulary: glyph presence per state cannot drift (PR-C 1.4.1)", async () => {
+  const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
+
+  // Presence dot = person attached: assigned AND reserved carry it, and it
+  // yields while a target-mode glyph is active (one glyph speaks at a time).
+  assert.match(markerSource, /\(seat\.status === "assigned" \|\| seat\.status === "reserved"\) && !targetGlyphActive &&/);
+  assert.match(markerSource, /const targetGlyphActive = swapCandidate \|\| moveCandidate \|\| invalidTarget;/);
+
+  // Target modes: underlying fill preserved (no tone swap left in the state
+  // classes), validity rides the ✓/✕ badges.
+  assert.match(markerSource, /\(swapCandidate \|\| moveCandidate\) && \(\s*<span[^>]*>\s*✓/);
+  assert.match(markerSource, /invalidTarget && \(\s*<span[^>]*>\s*✕/);
+  assert.doesNotMatch(markerSource, /validTargetTone/);
+  assert.doesNotMatch(markerSource, /--sp-marker-invalid-surface|--sp-legend-target-invalid-surface/);
+
+  // Hatch = structurally unusable, on the unavailable arm only, clipped off
+  // the border so the hover edge's measured contrast stays honest.
+  assert.match(markerSource, /bg-\[image:var\(--sp-marker-unavailable-hatch\)\] bg-clip-padding/);
+
+  // Draft badge survives with its glyph-ink token, and also yields to ✓/✕.
+  assert.match(markerSource, /draftChanged && !selected && !searchProminent && !targetGlyphActive &&/);
+
+  // Invalid targets: not-allowed cursor, and no hover affordance ring.
+  assert.match(markerSource, /invalidTarget \? "cursor-not-allowed" : "cursor-pointer"/);
+  assert.match(markerSource, /swapMode && !swapSource && !invalidTarget\) \|\| \(moveEmployeeMode && !moveEmployeeSource && !invalidTarget\)/);
+
+  // Borders carry zero semantic weight — the uniform hover repaint stays.
+  assert.match(markerSource, /group-hover:border-\[var\(--sp-marker-active-edge\)\]/);
 });
 
 test("desktop marker redesign stays clear of data auth publish and route boundaries", async () => {
