@@ -921,7 +921,7 @@ export function AdminManagementPanel({
                           >
                             <td className={[cellClass, "pl-4"].join(" ")}>
                               <div className="flex items-center gap-2.5">
-                                <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--sp-brand-subtle)] text-[9px] font-bold text-[var(--sp-brand-text)]">{getInitials(employee.full_name)}</span>
+                                <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--sp-brand-subtle)] text-xs font-bold text-[var(--sp-brand-text)]">{getInitials(employee.full_name)}</span>
                                 {/* Contract #13: the name is the map affordance —
                                     a real link so it is shareable and middle-clickable.
                                     Unseated people have nothing to show, so they stay text. */}
@@ -947,7 +947,7 @@ export function AdminManagementPanel({
                             <td className={cellClass}>
                               {/* Assigned mirrors the map legend's green chip — the
                                   orange-soft family reads as a warning here. */}
-                              <span className={["inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium", isAssigned ? "border-[var(--sp-status-success-border)] bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)]"].join(" ")}>
+                              <span className={["inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium", isAssigned ? "border-[var(--sp-status-success-border)] bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)]"].join(" ")}>
                                 <span aria-hidden="true" className={["h-1.5 w-1.5 shrink-0 rounded-full", isAssigned ? "bg-[var(--sp-status-success-strong)]" : "bg-[var(--sp-status-neutral-mark)]"].join(" ")} />
                                 {isAssigned ? "Assigned" : "Unassigned"}
                               </span>
@@ -998,7 +998,7 @@ export function AdminManagementPanel({
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-[var(--sp-text-primary)]">{row.name}</span>
                       {!row.managed && (
-                        <span className="rounded-full bg-[var(--sp-editor-dirty-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--sp-editor-dirty-text)]">Not in managed list</span>
+                        <span className="rounded-full bg-[var(--sp-editor-dirty-bg)] px-2 py-0.5 text-xs font-medium text-[var(--sp-editor-dirty-text)]">Not in managed list</span>
                       )}
                     </div>
                     <div className="text-xs text-[var(--sp-text-secondary)]">{row.employeeCount.toLocaleString()} employee{row.employeeCount === 1 ? "" : "s"}</div>
@@ -1153,8 +1153,8 @@ export function AdminManagementPanel({
                 {latestPublish && (
                   <div className="mt-4 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 shadow-elevation-2">
                     <div className="flex items-center gap-2">
-                      <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)]">Latest publish</div>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--sp-status-success-surface)] px-2 py-0.5 text-[11px] font-medium text-[var(--sp-status-success-strong)] ring-1 ring-[color-mix(in_srgb,var(--sp-status-success-strong)_30%,transparent)]">
+                      <div className="text-xs font-semibold tracking-normal text-[var(--sp-text-secondary)]">Latest publish</div>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--sp-status-success-surface)] px-2 py-0.5 text-xs font-medium text-[var(--sp-status-success-strong)] ring-1 ring-[color-mix(in_srgb,var(--sp-status-success-strong)_30%,transparent)]">
                         <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                         Latest
                       </span>
@@ -1199,29 +1199,29 @@ export function AdminManagementPanel({
                         className="grid gap-3 p-3 text-sm md:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_minmax(0,1.2fr)_80px] md:items-center"
                       >
                         <div>
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Created at</div>
+                          <div className="text-xs font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Created at</div>
                           <div className="font-semibold text-[var(--sp-text-primary)]">{formatPublishDate(event.created_at)}</div>
                         </div>
                         <div>
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Seat count</div>
+                          <div className="text-xs font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Seat count</div>
                           <div className="font-semibold text-[var(--sp-text-primary)]">{event.seat_count.toLocaleString()}</div>
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Published by</div>
+                          <div className="text-xs font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Published by</div>
                           <div className="truncate font-semibold text-[var(--sp-text-secondary)]" title={event.published_by ?? undefined}>
                             {getPublishHistoryActor(event)}
                           </div>
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Changes</div>
+                          <div className="text-xs font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">Changes</div>
                           <div className="text-[var(--sp-text-secondary)]">
                             {formatPublishChangeSummary(event.change_summary) ?? "—"}
                           </div>
                         </div>
                         <div>
-                          <div className="text-[11px] font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">State</div>
+                          <div className="text-xs font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">State</div>
                           {index === 0 ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--sp-status-success-surface)] px-2 py-1 text-[11px] font-semibold tracking-normal text-[var(--sp-status-success-strong)] ring-1 ring-[color-mix(in_srgb,var(--sp-status-success-strong)_30%,transparent)]">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--sp-status-success-surface)] px-2 py-1 text-xs font-semibold tracking-normal text-[var(--sp-status-success-strong)] ring-1 ring-[color-mix(in_srgb,var(--sp-status-success-strong)_30%,transparent)]">
                               <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                               Latest
                             </span>

@@ -1020,7 +1020,9 @@ export function ViewerSeatFinder({
   // screen column exactly as the lone viewport used to.
   const mapStageClassName = "relative flex min-w-0 flex-col lg:min-h-0 lg:flex-1";
 
-  const chromeSurfaceShortcut = "flex h-9 w-12 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-[10px] font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
+  // Type-floor Ruling 3 (2026-08-24): w-16, not w-12 — the 12px label
+  // ("Reception" ≈ 56px) must fit; widen the tab, never truncate the word.
+  const chromeSurfaceShortcut = "flex h-9 w-16 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-xs font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
 
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,

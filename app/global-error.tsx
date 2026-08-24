@@ -57,12 +57,12 @@ export default function GlobalError({
             Try again
           </button>
           {error.digest ? (
-            <p style={{ marginTop: 24, fontFamily: "monospace", fontSize: 11, color: "#8d8d8d" }}>
+            <p style={{ marginTop: 24, fontFamily: "monospace", fontSize: 12, color: "#8d8d8d" }}>
               Reference: {error.digest}
             </p>
           ) : null}
         </main>
-        <p style={{ marginTop: 40, fontFamily: "monospace", fontSize: 11, color: "#8d8d8d" }}>
+        <p style={{ marginTop: 40, fontFamily: "monospace", fontSize: 12, color: "#8d8d8d" }}>
           seats.megeredchianlaw.com · internal use only
         </p>
       </body>

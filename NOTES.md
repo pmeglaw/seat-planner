@@ -101,3 +101,41 @@ Rule for this branch: renames and twin deletion only — nothing here was acted 
   but it was never there — PASS1 §8 deferred it to PR-C (PR-A #434 was focus
   tokens only). Landed in PR-C, on invalid targets only (not on unavailable
   seats, which still open the inspector — the click is allowed).
+
+## Type-floor rulings (2026-08-24)
+
+- **The map canvas has its own geometry, exempted as ONE decision, not two.**
+  The fixed boxes there — the 46px code pill, the 14px D/✓/✕ glyph circles,
+  the 26px avatar circles — are off the 8px mini-unit size ladder *by design*:
+  a spatial surface packs to seat pitch (tightest ~0.032 normalized ≈ 61px at
+  the 1911px display cap), not to a component grid. That geometry choice and
+  the sub-12px type inside it stand or fall together — "exempt the type" and
+  "exempt the geometry" are the same ruling. Do not file 46px / 14px / 26px as
+  mini-unit violations, and do not "fix" canvas type to 12px inside the
+  existing boxes (it does not fit; that is what the PR-2 zoom-threshold rule
+  is for).
+- **Marks vs words.** Micro-glyphs (D/✓/✕/AI badges) are graphical elements —
+  non-text contrast (3:1, all measured ≥5.31:1) governs them, no text-size
+  floor. Words on the canvas (pill code labels, inline names, office plate
+  title) are text and get the zoom rule: MARKS below a measured zoom
+  threshold, 12px minimum at or above it. Pinned in
+  `tests/desktop-seat-marker-system-source.test.mjs`; ledger enforced by
+  `tests/type-floor-source.test.mjs` (also the graduation gate: a concept
+  page moving out of `app/concepts/` lands in the scan and must shed its
+  sub-12px debt first).
+- Everything off the canvas holds the 12px floor (label-01 / `text-xs`) since
+  the PR-1 sweep; eyebrows subordinate via weight + colour, never size.
+- **Working zoom is fit, and fit is below the text threshold on common
+  displays.** Both map surfaces open at fit (admin `mapViewMode` initial
+  `"overview"` — "Fit is the resting state"; viewer `zoomFactor` initial
+  `null` = fit-to-view), zoom is never persisted (the only stored map
+  preferences are Show-names in localStorage and undo/redo in per-tab
+  sessionStorage; zoom is plain component state that resets on load and on
+  route remount), and there is no interaction telemetry (SpeedInsights is
+  performance-only). Owner ruling to record (2026-08-24): **at working
+  density this tool cannot show readable names. Hover disclosure and the
+  inspector are therefore the PRIMARY read path, not a fallback, and should
+  be resourced accordingly.** Nuance: the threshold is a rendered-width
+  fact, not a mode fact — on a wide monitor the fit frame itself can cross
+  the text threshold (≈1634px rendered for today's seat set), so wide
+  displays get readable names at rest once the PR-2 tier lands.

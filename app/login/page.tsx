@@ -89,6 +89,10 @@ export default async function LoginPage() {
           />
           <span className="absolute left-[37%] top-[62%] h-2.5 w-2.5 rounded-full bg-[var(--sp-button-primary)] shadow-[0_0_0_3px_rgba(184,82,7,0.35)] motion-safe:animate-[login-dot-pulse_2.4s_infinite]" />
           <span className="absolute left-[34%] top-[44%] h-[7px] w-[7px] rounded-full border-[1.5px] border-[var(--sp-border-strong)]" />
+          {/* Type-floor Ruling 1 (owner, 2026-08-24): this faux seat code is a
+              MARK — a decorative coordinate on an aria-hidden illustration,
+              not text anyone reads — so it keeps its 9px scale. Registry in
+              tests/desktop-seat-marker-system-source.test.mjs. */}
           <span
             translate="no"
             className="absolute left-[39%] top-[56%] font-mono text-[9px] font-semibold tracking-[0.4px] text-[var(--sp-text-helper)]"
@@ -105,7 +109,7 @@ export default async function LoginPage() {
             <br />
             across every floor we occupy.
           </p>
-          <p className="mt-7 hidden items-center gap-2 font-mono text-[11px] leading-none text-[var(--sp-text-helper)] lg:flex">
+          <p className="mt-7 hidden items-center gap-2 font-mono text-xs leading-none text-[var(--sp-text-helper)] lg:flex">
             <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--sp-status-success-mark)]" />
             <span translate="no">seats.megeredchianlaw.com</span>
             <span aria-hidden="true" className="text-[var(--sp-border-subtle)]">
@@ -155,7 +159,7 @@ export default async function LoginPage() {
                   Sign out
                 </button>
               </form>
-              <p className="mt-[22px] text-[11px] leading-[1.5] text-[var(--sp-text-helper)]">
+              <p className="mt-[22px] text-xs leading-[1.5] text-[var(--sp-text-helper)]">
                 Trouble signing in? <span className="text-[var(--sp-link)]">Contact the office administrator</span>{" "}
                 — accounts are provisioned by the firm.
               </p>

@@ -97,7 +97,9 @@ const emptyDraftSnapshot = (): DraftSnapshot => ({ seats: [], employees: [] });
 
 // Shared eyebrow-heading style for the CONTACT/SEAT section labels (admin and
 // published variants), factored so the four headings can't drift apart.
-const eyebrowHeadingClass = "text-[10px] font-bold tracking-[0.12em] text-[var(--sp-text-helper)]";
+// Type-floor Ruling 3 (2026-08-24): eyebrows hold the 12px floor; they read
+// as subordinate through weight + the muted helper token, never through size.
+const eyebrowHeadingClass = "text-xs font-semibold tracking-[0.12em] text-[var(--sp-text-helper)]";
 
 const emptyForm: SeatInspectorForm = {
   label: "",
@@ -278,7 +280,7 @@ function SectionHeading({ id, title }: { id?: string; title: string }) {
 // unmount; hairline dividers between sections carry the grouping.
 function InspectorSectionLabel({ id, title }: { id?: string; title: string }) {
   return (
-    <h3 id={id} className="pb-2.5 pt-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">{title}</h3>
+    <h3 id={id} className="pb-2.5 pt-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">{title}</h3>
   );
 }
 
@@ -384,7 +386,7 @@ function AskPlannerSeatRow({ seat: selectedSeat, onExplainSeat }: { seat: SeatWi
       <span className="min-w-0">
         <span className="mb-1 flex items-center gap-2 text-[var(--sp-ai-accent)]">
           <span className="border border-[var(--sp-ai-accent)] px-1 text-[9.5px] font-bold tracking-[0.04em]">AI</span>
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em]">Ask Planner</span>
+          <span className="text-xs font-bold uppercase tracking-[0.08em]">Ask Planner</span>
         </span>
         <span className="block truncate text-[13px] font-medium text-[var(--sp-text-primary)]">Ask Planner about this seat</span>
       </span>
@@ -1024,7 +1026,7 @@ export function SeatInspector({
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-4 pb-3 pt-3">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]">Property Inspector</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]">Property Inspector</span>
           <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]"><CloseIcon /></button>
         </div>
         <div className="flex items-start gap-2.5">

@@ -22,7 +22,7 @@ export default function NotFound() {
           </Link>
         </div>
       </section>
-      <p className="mt-10 font-mono text-[11px] text-[var(--sp-text-helper)]">
+      <p className="mt-10 font-mono text-xs text-[var(--sp-text-helper)]">
         seats.megeredchianlaw.com · internal use only
       </p>
     </main>
