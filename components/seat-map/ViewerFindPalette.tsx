@@ -64,7 +64,9 @@ function resultKindClass(kind: ViewerSearchResultKind) {
 // white and fails AA at this size — the same call `LoginForm` and
 // `app/concepts/login-v12` already made, so they take --sp-text-helper
 // (#6E655A, 5.7:1) instead. Deliberate deviation from the drawing.
-const eyebrowClassName = "text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]";
+// Type-floor Ruling 3 (2026-08-24): 12px floor for eyebrows — subordination
+// via weight + the muted helper token, not size.
+const eyebrowClassName = "text-xs font-semibold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]";
 
 type PaletteFrame = { left: number; top: number; width: number | null; maxHeight: number };
 

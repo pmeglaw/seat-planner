@@ -348,7 +348,7 @@ export function LoginForm() {
             "has-[input:focus]:border-b-2 has-[input:focus]:border-b-[color:var(--sp-button-primary)]"
           )
     );
-  const fieldLabelClass = "block text-[11px] font-normal leading-[1.3] text-[var(--sp-text-secondary)]";
+  const fieldLabelClass = "block text-xs font-normal leading-[1.3] text-[var(--sp-text-secondary)]";
   // outline-none is safe only because the shell above draws the focus rule.
   const fieldInputClass =
     "mt-1 w-full border-0 bg-transparent p-0 text-[13.5px] font-normal leading-[1.4] text-[var(--sp-text-primary)] caret-[var(--sp-button-primary)] outline-none placeholder:text-[var(--sp-text-placeholder)]";
@@ -558,7 +558,7 @@ export function LoginForm() {
             password field on the right rather than competing with the buttons
             below. The hint interpolates MIN_PASSWORD_LENGTH so it can never
             drift from the enforced minimum. */}
-        <div className="mt-2 flex items-baseline justify-between gap-3 text-[11px]">
+        <div className="mt-2 flex items-baseline justify-between gap-3 text-xs">
           <span className="text-[var(--sp-text-helper)]">
             Passwords are at least {MIN_PASSWORD_LENGTH} characters.
           </span>
@@ -566,7 +566,7 @@ export function LoginForm() {
             type="button"
             onClick={sendPasswordReset}
             disabled={pending !== null}
-            className={cx(inlineLinkClass, "shrink-0 text-[11px] font-normal")}
+            className={cx(inlineLinkClass, "shrink-0 text-xs font-normal")}
           >
             {pending === "reset" ? "Sending reset email…" : "Forgot password?"}
           </button>
@@ -619,7 +619,7 @@ export function LoginForm() {
             survives the two-step retirement). */}
         <div className="mt-[22px] flex items-center gap-3">
           <span className="h-px flex-1 bg-[var(--sp-border-subtle)]" />
-          <span className="text-[11px] text-[var(--sp-text-helper)]">or</span>
+          <span className="text-xs text-[var(--sp-text-helper)]">or</span>
           <span className="h-px flex-1 bg-[var(--sp-border-subtle)]" />
         </div>
         <button
@@ -650,7 +650,7 @@ export function LoginForm() {
       {/* The reference marks the administrator phrase in link colour without a
           destination (there is no admin-contact route), so it stays a styled
           span — colouring it as a live control would lie to pointer users. */}
-      <p className="mt-[22px] text-[11px] leading-[1.5] text-[var(--sp-text-helper)]">
+      <p className="mt-[22px] text-xs leading-[1.5] text-[var(--sp-text-helper)]">
         Trouble signing in? <span className="text-[var(--sp-link)]">Contact the office administrator</span> —
         accounts are provisioned by the firm.
       </p>

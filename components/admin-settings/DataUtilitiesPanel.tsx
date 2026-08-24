@@ -68,7 +68,7 @@ function isDraftSnapshot(value: unknown): value is DraftSnapshot {
 function ReviewCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
   return (
     <div className={["border p-3", tone === "warn" ? "border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)]"].join(" ")}>
-      <div className={["text-[10px] font-medium", tone === "warn" ? "text-[var(--sp-editor-dirty-text)]" : "text-[var(--sp-text-helper)]"].join(" ")}>
+      <div className={["text-xs font-medium", tone === "warn" ? "text-[var(--sp-editor-dirty-text)]" : "text-[var(--sp-text-helper)]"].join(" ")}>
         {label}
       </div>
       <div className="mt-1 text-xl font-semibold text-[var(--sp-text-primary)]">{value.toLocaleString()}</div>
@@ -328,7 +328,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
       {/* White fill, not an amber wash: this is standing guidance, and a tinted
           banner would read as an active warning every time the page loads. */}
       <div className="flex items-start gap-2.5 border-l-[3px] border-[var(--sp-status-pending-strong)] bg-[var(--sp-layer-01)] px-3.5 py-3 shadow-[0_1px_2px_rgba(22,22,22,0.06)]">
-        <span aria-hidden="true" className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--sp-status-pending-mark)] text-[10px] font-bold leading-none text-[var(--sp-text-primary)]">!</span>
+        <span aria-hidden="true" className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--sp-status-pending-mark)] text-xs font-bold leading-none text-[var(--sp-text-primary)]">!</span>
         <p className="text-[12.5px] leading-5 text-[var(--sp-text-primary)]">
           <strong className="font-semibold">The published map is never touched until you publish.</strong>{" "}
           Restores replace the entire draft — review before confirming.

@@ -40,7 +40,7 @@ const PUBLISH_DIFF_TAG_STYLES: Record<PublishDiffRowKind, { label: string; class
 function PublishDiffTag({ kind }: { kind: PublishDiffRowKind }) {
   const style = PUBLISH_DIFF_TAG_STYLES[kind];
   return (
-    <span className={["inline-flex rounded-full border px-2 py-0.5 text-[10.5px] font-semibold", style.className].join(" ")}>
+    <span className={["inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold", style.className].join(" ")}>
       {style.label}
     </span>
   );
@@ -49,7 +49,7 @@ function PublishDiffTag({ kind }: { kind: PublishDiffRowKind }) {
 function PublishDiffChip({ kind, count }: { kind: PublishDiffRowKind; count: number }) {
   const style = PUBLISH_DIFF_TAG_STYLES[kind];
   return (
-    <span className={["inline-flex items-center rounded-full border px-2 py-0.5 text-[10.5px] font-semibold", style.className].join(" ")}>
+    <span className={["inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold", style.className].join(" ")}>
       {count} {style.label.toLowerCase()}
     </span>
   );
@@ -222,7 +222,7 @@ export function PublishReviewDialog({
           {publishSummary.hasChanges && (
           <>
           <div className="rounded-xl border border-[var(--sp-publish-ready-border)] bg-[var(--sp-publish-ready-bg)] p-3 text-[var(--sp-publish-ready-text)]">
-            <StatusBadge tone={publishReadinessBadgeTone} className="!min-h-0 !bg-[color-mix(in_srgb,var(--sp-layer-01)_80%,transparent)] !px-2 !py-0.5 !text-[11px] !font-semibold !tracking-wide !text-[var(--sp-publish-ready-text)] !ring-[var(--sp-publish-ready-border)]">
+            <StatusBadge tone={publishReadinessBadgeTone} className="!min-h-0 !bg-[color-mix(in_srgb,var(--sp-layer-01)_80%,transparent)] !px-2 !py-0.5 !text-xs !font-semibold !tracking-wide !text-[var(--sp-publish-ready-text)] !ring-[var(--sp-publish-ready-border)]">
               {publishReadinessBadgeLabel}
             </StatusBadge>
             <h3 className="mt-2 text-sm font-semibold text-[var(--sp-text-primary)]">{publishReadinessTitle}</h3>
@@ -257,10 +257,10 @@ export function PublishReviewDialog({
             <div className="mt-2 overflow-x-auto border border-[var(--sp-border-subtle)]">
               <div role="table" aria-label="Per-seat draft changes" className="max-h-56 min-w-[480px] overflow-y-auto">
                 <div role="row" className="sticky top-0 z-10 grid grid-cols-[64px_1fr_1fr_96px] border-b border-[var(--sp-border-subtle)] bg-[var(--sp-editor-neutral-bg)]">
-                  <span role="columnheader" className="px-3 py-1.5 text-[11px] font-semibold text-[var(--sp-text-helper)]">Seat</span>
-                  <span role="columnheader" className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--sp-text-helper)]">Published now</span>
-                  <span role="columnheader" className="px-2.5 py-1.5 text-[11px] font-semibold text-[var(--sp-text-helper)]">After publish</span>
-                  <span role="columnheader" className="px-3 py-1.5 text-[11px] font-semibold text-[var(--sp-text-helper)]">Change</span>
+                  <span role="columnheader" className="px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-helper)]">Seat</span>
+                  <span role="columnheader" className="px-2.5 py-1.5 text-xs font-semibold text-[var(--sp-text-helper)]">Published now</span>
+                  <span role="columnheader" className="px-2.5 py-1.5 text-xs font-semibold text-[var(--sp-text-helper)]">After publish</span>
+                  <span role="columnheader" className="px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-helper)]">Change</span>
                 </div>
                 {publishDiffRows.map(row => (
                   <div key={row.key} role="rowgroup" className="border-b border-[var(--sp-border-soft)] last:border-b-0">
@@ -277,7 +277,7 @@ export function PublishReviewDialog({
                     {row.detail && (
                       <div role="row" className="grid grid-cols-[64px_1fr]">
                         <span role="cell" aria-hidden="true" />
-                        <span role="cell" aria-colspan={3} className="px-2.5 pb-2 text-[11px] leading-4 text-[var(--sp-text-helper)]">{row.detail}</span>
+                        <span role="cell" aria-colspan={3} className="px-2.5 pb-2 text-xs leading-4 text-[var(--sp-text-helper)]">{row.detail}</span>
                       </div>
                     )}
                   </div>
@@ -294,7 +294,7 @@ export function PublishReviewDialog({
             <div className="mt-3 border border-[var(--sp-border-subtle)] p-3">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-[var(--sp-text-primary)]">People details</h3>
-                <span className="rounded-full bg-[var(--sp-editor-neutral-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-editor-neutral-border)]">{publishSummary.employeeDetailChanges.length}</span>
+                <span className="rounded-full bg-[var(--sp-editor-neutral-bg)] px-2 py-0.5 text-xs font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-editor-neutral-border)]">{publishSummary.employeeDetailChanges.length}</span>
               </div>
               <ul className="mt-2 space-y-1.5 text-xs leading-5 text-[var(--sp-text-helper)]">
                 {publishSummary.employeeDetailChanges.map(item => (
@@ -306,7 +306,7 @@ export function PublishReviewDialog({
             </div>
           )}
 
-          <p className="mt-3 text-[11.5px] font-semibold text-[var(--sp-text-helper)]">
+          <p className="mt-3 text-xs font-semibold text-[var(--sp-text-helper)]">
             Draft: {publishSummary.draftSeatCount} seats · Currently published: {publishSummary.publishedSeatCount} seats · Total publish changes: {publishSummary.totalChangeCount}
           </p>
           <p className="mt-2 text-xs leading-5 text-[var(--sp-text-secondary)]">
@@ -496,12 +496,12 @@ export function SwapConfirmDialog({
 
         <div className="mt-4 grid gap-2">
           <div className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] p-3">
-            <div className="text-[11px] font-semibold text-[var(--sp-text-helper)]">Source</div>
+            <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Source</div>
             <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapSourceSeat.label}</div>
             <div className="text-sm text-[var(--sp-text-helper)]">{seatPersonLabel(swapSourceSeat)}</div>
           </div>
           <div className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] p-3">
-            <div className="text-[11px] font-semibold text-[var(--sp-text-helper)]">Target</div>
+            <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Target</div>
             <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapTargetSeat.label}</div>
             <div className="text-sm text-[var(--sp-text-helper)]">{seatPersonLabel(swapTargetSeat)}</div>
           </div>

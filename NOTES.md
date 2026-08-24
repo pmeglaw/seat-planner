@@ -101,3 +101,27 @@ Rule for this branch: renames and twin deletion only — nothing here was acted 
   but it was never there — PASS1 §8 deferred it to PR-C (PR-A #434 was focus
   tokens only). Landed in PR-C, on invalid targets only (not on unavailable
   seats, which still open the inspector — the click is allowed).
+
+## Type-floor rulings (2026-08-24)
+
+- **The map canvas has its own geometry, exempted as ONE decision, not two.**
+  The fixed boxes there — the 46px code pill, the 14px D/✓/✕ glyph circles,
+  the 26px avatar circles — are off the 8px mini-unit size ladder *by design*:
+  a spatial surface packs to seat pitch (tightest ~0.032 normalized ≈ 61px at
+  the 1911px display cap), not to a component grid. That geometry choice and
+  the sub-12px type inside it stand or fall together — "exempt the type" and
+  "exempt the geometry" are the same ruling. Do not file 46px / 14px / 26px as
+  mini-unit violations, and do not "fix" canvas type to 12px inside the
+  existing boxes (it does not fit; that is what the PR-2 zoom-threshold rule
+  is for).
+- **Marks vs words.** Micro-glyphs (D/✓/✕/AI badges) are graphical elements —
+  non-text contrast (3:1, all measured ≥5.31:1) governs them, no text-size
+  floor. Words on the canvas (pill code labels, inline names, office plate
+  title) are text and get the zoom rule: MARKS below a measured zoom
+  threshold, 12px minimum at or above it. Pinned in
+  `tests/desktop-seat-marker-system-source.test.mjs`; ledger enforced by
+  `tests/type-floor-source.test.mjs` (also the graduation gate: a concept
+  page moving out of `app/concepts/` lands in the scan and must shed its
+  sub-12px debt first).
+- Everything off the canvas holds the 12px floor (label-01 / `text-xs`) since
+  the PR-1 sweep; eyebrows subordinate via weight + colour, never size.

@@ -141,15 +141,15 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
           className="h-full w-full min-w-0 bg-transparent text-[16.5px] text-[var(--sp-text-primary)] outline-none placeholder:text-[var(--sp-text-helper)]"
         />
         <span aria-hidden="true" className="hidden shrink-0 items-center gap-1.5 sm:flex">
-          <kbd className="border border-[var(--sp-border-subtle)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--sp-text-helper)]">↑↓</kbd>
-          <kbd className="border border-[var(--sp-border-subtle)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--sp-text-helper)]">↵ select</kbd>
+          <kbd className="border border-[var(--sp-border-subtle)] px-1.5 py-0.5 font-mono text-xs text-[var(--sp-text-helper)]">↑↓</kbd>
+          <kbd className="border border-[var(--sp-border-subtle)] px-1.5 py-0.5 font-mono text-xs text-[var(--sp-text-helper)]">↵ select</kbd>
         </span>
       </div>
 
       <div className="mt-5 grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_372px]">
         {/* Results list */}
         <section aria-label="Directory" className="border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)]">
-          <div className="flex items-center justify-between border-b border-[var(--sp-border-hairline)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
+          <div className="flex items-center justify-between border-b border-[var(--sp-border-hairline)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
             <span aria-live="polite">{countLabel}</span>
             <span>Ext</span>
           </div>
@@ -190,7 +190,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                         {[person.position, person.department].filter(Boolean).join(" · ") || "—"}
                       </span>
                     </span>
-                    <span className="shrink-0 border border-[var(--sp-border-subtle)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--sp-text-secondary)]">
+                    <span className="shrink-0 border border-[var(--sp-border-subtle)] px-1.5 py-0.5 font-mono text-xs text-[var(--sp-text-secondary)]">
                       {person.seatLabel ?? "—"}
                     </span>
                     <span className="w-[72px] shrink-0 text-right font-mono text-[20px] font-semibold text-[var(--sp-text-primary)]">
@@ -225,9 +225,11 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
               {/* The readout is the screen's output — announce changes. */}
               <div aria-live="polite" className="mt-4 border border-[var(--sp-extension-border)] bg-[var(--sp-extension-bg)] px-4 py-3.5">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--sp-extension-label)]">Extension</span>
+                  {/* Type-floor Ruling 3 (2026-08-24): eyebrows hold 12px minimum;
+                      subordination comes from weight + colour, not size. */}
+                  <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--sp-extension-label)]">Extension</span>
                   {searching && (
-                    <span aria-hidden="true" className="text-[11px] text-[var(--sp-text-helper)]">↵ to lock</span>
+                    <span aria-hidden="true" className="text-xs text-[var(--sp-text-helper)]">↵ to lock</span>
                   )}
                 </div>
                 <div className="font-mono text-[46px] font-semibold leading-[1.15] text-[var(--sp-text-primary)]">
@@ -246,7 +248,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
 
               {fallback.length > 0 && (
                 <div className="mt-4 border-t border-[var(--sp-border-hairline)] pt-3">
-                  <h3 className="text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
+                  <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
                     If no answer — same department
                   </h3>
                   <ul className="mt-1.5">
@@ -288,7 +290,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
 
           {recentPeople.length > 0 && (
             <section aria-label="Recent lookups" className="border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)]">
-              <h3 className="border-b border-[var(--sp-border-hairline)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
+              <h3 className="border-b border-[var(--sp-border-hairline)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
                 Recent lookups
               </h3>
               <ul>
@@ -302,7 +304,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                     >
                       <span
                         aria-hidden="true"
-                        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center bg-[var(--sp-tag-bg)] text-[10.5px] font-semibold text-[var(--sp-tag-text)]"
+                        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center bg-[var(--sp-tag-bg)] text-xs font-semibold text-[var(--sp-tag-text)]"
                       >
                         {buildInitials(person.name) || "?"}
                       </span>

@@ -72,7 +72,7 @@ export default function AdminError({
         </div>
 
         {error.digest ? (
-          <p className="mt-6 font-mono text-[11px] leading-4 text-[var(--sp-text-helper)]">
+          <p className="mt-6 font-mono text-xs leading-4 text-[var(--sp-text-helper)]">
             Reference: {error.digest}
           </p>
         ) : null}

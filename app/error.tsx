@@ -73,13 +73,13 @@ export default function ViewerError({
         </div>
 
         {error.digest ? (
-          <p className="mt-6 font-mono text-[11px] leading-4 text-[var(--sp-text-helper)]">
+          <p className="mt-6 font-mono text-xs leading-4 text-[var(--sp-text-helper)]">
             Reference: {error.digest}
           </p>
         ) : null}
       </section>
 
-      <p className="mt-10 font-mono text-[11px] text-[var(--sp-text-helper)]">
+      <p className="mt-10 font-mono text-xs text-[var(--sp-text-helper)]">
         seats.megeredchianlaw.com · internal use only
       </p>
     </main>

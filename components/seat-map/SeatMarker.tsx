@@ -368,11 +368,16 @@ function SeatMarkerComponent({
   // 3.84:1, #9E2F06@70 on the #FBEAE1 search tint = 3.51:1); 90% keeps the
   // demoted look while measuring 6.35:1 / 5.22:1 there.
   const lightProminentSurface = swapSource || moveEmployeeSource || plannerHighlighted || (searchProminent && !selected);
+  // Type-floor Ruling 3 (2026-08-24): the expanded badge is the engaged,
+  // reading state, so its code eyebrow holds the 12px floor and demotes via
+  // WEIGHT (medium vs the name's bold) + the opacity above, not via size.
+  // The resting-pill branches stay sub-12 pending the PR-2 zoom-threshold
+  // ruling (below the threshold they function as marks, not text).
   const codeTextClass = expandedNameBadge
-    ? `text-[8.5px] tracking-[0.04em] ${lightProminentSurface ? "opacity-90" : "opacity-70"}`
+    ? `text-[12px] font-medium tracking-[0.04em] ${lightProminentSurface ? "opacity-90" : "opacity-70"}`
     : tokenMode === "selected" || tokenMode === "prominent"
-      ? "text-[10px]"
-      : "text-[9.5px]";
+      ? "text-[10px] font-extrabold"
+      : "text-[9.5px] font-extrabold";
   const markerUsesTrueCoordinate = addSeatMode || swapMode || moveEmployeeMode;
   const tokenCanHugViewportEdge = showInlineName || prominentToken;
   const resolvedViewportEdge = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? "none" : viewportEdge;
@@ -571,7 +576,7 @@ function SeatMarkerComponent({
           </span>
         ) : (
           <span className="relative z-10 flex w-full min-w-0 flex-col items-start text-left">
-            <span translate="no" className={["whitespace-nowrap font-extrabold leading-[1.05]", codeTextClass].join(" ")}>{seat.label}</span>
+            <span translate="no" className={["whitespace-nowrap leading-[1.05]", codeTextClass].join(" ")}>{seat.label}</span>
             {/* Word separator for subtree-text serializers — see the twin
                 comment in the hover-disclosure branch above. */}
             {showInlineName && " "}

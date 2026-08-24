@@ -75,6 +75,37 @@ test("marker vocabulary: glyph presence per state cannot drift (PR-C 1.4.1)", as
   assert.match(markerSource, /group-hover:border-\[var\(--sp-marker-active-edge\)\]/);
 });
 
+test("type-floor ruling 1 (2026-08-24): the micro-glyph MARKS are exempt from the 12px text floor", async () => {
+  // Owner ruling, 2026-08-24 type-floor pass. These glyphs are GRAPHICAL
+  // ELEMENTS, not text: WCAG governs them under non-text contrast (1.4.11,
+  // 3:1 — all measured ≥5.31:1), the same category as chart symbols and
+  // status indicators. Text-size floors do NOT apply to them; do not refile
+  // their sub-12px sizes as violations. The registry:
+  //   - SeatMarker draft "D" badge, ✓ valid-target, ✕ invalid-target
+  //     (14px circles; also the PR-C 1.4.1 second signal — see the glyph
+  //     test above)
+  //   - SeatMarker planner "AI" provenance chip
+  //   - the five-site chrome "AI" badge: AppRail AiCell, SeatMap bar tenant,
+  //     AskPlannerDrawer header + response chip, AiHighlightChip,
+  //     SeatInspector Ask-Planner row
+  // WORDS on the canvas (code pill label, inline names, office plate title)
+  // are NOT covered by this exemption — they follow the PR-2 zoom-threshold
+  // rule (marks below the threshold, 12px text at or above it).
+  // What is pinned: the marker glyphs stay aria-hidden decoration (their
+  // meaning always rides the accessible name / a second signal, never the
+  // tiny glyph itself). Sizes and hues stay free.
+  const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
+
+  for (const glyph of ["D", "✓", "✕"]) {
+    assert.match(
+      markerSource,
+      new RegExp(`<span[^>]*aria-hidden="true"[^>]*/?>\\s*${glyph}\\s*</span>|aria-hidden="true"\\s*>\\s*${glyph}`),
+      `${glyph} badge must stay aria-hidden decoration`
+    );
+  }
+  assert.match(markerSource, /plannerHighlighted && adminMarker && \(\s*<span\s*aria-hidden="true"/);
+});
+
 test("desktop marker redesign stays clear of data auth publish and route boundaries", async () => {
   const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
