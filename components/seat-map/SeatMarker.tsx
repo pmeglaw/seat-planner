@@ -28,6 +28,13 @@ type SeatMarkerProps = {
   // colliding name pills don't render on top of each other. The marker
   // anchor (seat position) never moves.
   nameNudge?: -1 | 0 | 1;
+  // PR-2 text tier (lib/seatCrowding textTierActive): at or above the
+  // collision threshold canvas labels are TEXT and hold the 12px floor — the
+  // hover-disclosure geometry made resting (code pills 12px on w-auto +
+  // min-w-[48px], inline names 12px at the widened hover width, office plate
+  // title 12px). Below the threshold (false, the default) everything renders
+  // exactly as today: the labels function as marks.
+  textTier?: boolean;
   swapMode: boolean;
   // Office-plate layout, derived by SeatMap from the seat's room rect:
   // token offset (px) from the seat anchor to the room center, and a width
@@ -59,6 +66,17 @@ type MarkerIntent = "assigned" | "available" | "reserved" | "unavailable" | "dra
 function SeatToken({ className, style, children }: { className: string; style?: CSSProperties; children: ReactNode }) {
   return <span className={className} style={style}>{children}</span>;
 }
+
+// Tier-flip motion (PR-2, motion doctrine): elements move on ONE AXIS AT A
+// TIME with slight overlap — the token's WIDTH moves immediately and the TYPE
+// follows 75ms behind, both moderate-01 (150ms) on the productive standard
+// curve. Simultaneous width + font-size is two axes at once and flashes type
+// overflowing a pill that hasn't finished growing; growth first, then type,
+// is also the causal order. Lives on the label spans because font-size does
+// not transition through inheritance from the token. Same motion-reduce guard
+// as every other marker transition.
+const LABEL_SIZE_TRANSITION_CLASS =
+  "transition-[font-size] delay-75 duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)] motion-reduce:transition-none";
 
 function getSeatLabelPrefix(label: string) {
   return label.trim().toUpperCase().match(/^[A-Z]+/)?.[0] ?? "";
@@ -142,6 +160,7 @@ function SeatMarkerComponent({
   compactNameLabel,
   codeNudge = 0,
   nameNudge = 0,
+  textTier = false,
   swapMode,
   officePlateOffsetXPx = 0,
   officePlateOffsetYPx = 0,
@@ -267,7 +286,12 @@ function SeatMarkerComponent({
         : tokenMode === "name"
           ? [
             "min-h-[34px] rounded-full px-3 py-1.5 text-left",
-            tokenDensity === "standard" ? "w-[92px] max-w-[92px] sm:w-[104px] sm:max-w-[104px]" : "w-[78px] max-w-[78px] sm:w-[86px] sm:max-w-[86px]",
+            // Text tier: the hover width made resting — 124px matches
+            // TEXT_TIER_NAME_OBSTACLE_PX, which the nudge scorers model
+            // whenever the tier is on.
+            textTier
+              ? "w-[124px] max-w-[124px]"
+              : tokenDensity === "standard" ? "w-[92px] max-w-[92px] sm:w-[104px] sm:max-w-[104px]" : "w-[78px] max-w-[78px] sm:w-[86px] sm:max-w-[86px]",
             "group-hover:w-[124px] group-hover:max-w-[124px] group-focus-visible:w-[124px] group-focus-visible:max-w-[124px]"
           ].filter(Boolean).join(" ")
           : [
@@ -284,11 +308,19 @@ function SeatMarkerComponent({
             // 46 − 2 borders − 12 padding = 32px, which fits the widest
             // 4-char code ("CW05" ≈ 27px in Plex extrabold at 9.5px). The
             // old px-2/pl-2.5 left 26px and ellipsized every CW label.
-            "h-[24px] min-h-[24px] w-[46px] rounded-full px-1.5 py-0 text-center",
+            // Text tier: the hover-disclosure width made resting — w-auto on a
+            // 48px min-width (= TEXT_TIER_CODE_PILL_SIZE_PX; the widest 4-char
+            // code at 12px extrabold ≈ 34px + padding + borders lands at
+            // ~48px, so min-w governs and every pill stays uniform).
+            textTier
+              ? "h-[24px] min-h-[24px] w-auto min-w-[48px] rounded-full px-1.5 py-0 text-center"
+              : "h-[24px] min-h-[24px] w-[46px] rounded-full px-1.5 py-0 text-center",
             "group-hover:w-auto group-focus-visible:w-auto",
             hasHoverDisclosure
               ? "group-hover:min-w-[96px] group-hover:px-3 group-hover:text-left group-focus-visible:min-w-[96px] group-focus-visible:px-3 group-focus-visible:text-left"
-              : "group-hover:min-w-[46px] group-focus-visible:min-w-[46px]"
+              : textTier
+                ? "group-hover:min-w-[48px] group-focus-visible:min-w-[48px]"
+                : "group-hover:min-w-[46px] group-focus-visible:min-w-[46px]"
           ].filter(Boolean).join(" ");
 
   const tokenStateClass = [
@@ -350,9 +382,14 @@ function SeatMarkerComponent({
     : "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-marker-active-edge-soft)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/70";
   // Hover is a transient cue: it must never repaint a committed (selected) seat's
   // orange ring, so the hover border applies only to unselected markers.
+  // Tier-flip stagger (PR-2): font-size joins the token's transition list, and
+  // the easing is the productive standard curve (moderate-01 stays 150ms). The
+  // 75ms type delay lives on the label spans (LABEL_SIZE_TRANSITION_CLASS) —
+  // font-size doesn't transition through inheritance, so the token entry only
+  // covers token-level sizes while width/min-width move immediately here.
   const tokenInteractionClass = adminMarker
-    ? `transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out ${selected ? "" : "group-hover:border-[var(--sp-legend-hover-border)] "}group-hover:brightness-105 group-hover:shadow-marker-hover group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--sp-focus-marker-ring)] motion-reduce:transition-none`
-    : "transition-[width,min-width,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-out group-hover:border-[var(--sp-marker-active-edge)] group-hover:brightness-105 group-hover:shadow-[0_6px_14px_rgba(23,26,29,0.20),inset_0_1px_0_rgba(255,255,255,0.82)] group-active:shadow-[0_2px_6px_rgba(23,26,29,0.16),inset_0_2px_4px_rgba(23,26,29,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--sp-marker-active-edge-soft)] motion-reduce:transition-none";
+    ? `transition-[width,min-width,font-size,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)] ${selected ? "" : "group-hover:border-[var(--sp-legend-hover-border)] "}group-hover:brightness-105 group-hover:shadow-marker-hover group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--sp-focus-marker-ring)] motion-reduce:transition-none`
+    : "transition-[width,min-width,font-size,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)] group-hover:border-[var(--sp-marker-active-edge)] group-hover:brightness-105 group-hover:shadow-[0_6px_14px_rgba(23,26,29,0.20),inset_0_1px_0_rgba(255,255,255,0.82)] group-active:shadow-[0_2px_6px_rgba(23,26,29,0.16),inset_0_2px_4px_rgba(23,26,29,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--sp-marker-active-edge-soft)] motion-reduce:transition-none";
   const draftBadgeClass = adminMarker
     ? "bg-[var(--sp-legend-draft-accent)] shadow-[0_2px_5px_rgba(16,17,20,0.24)]"
     : "bg-[var(--sp-marker-draft-badge)] shadow-[0_2px_5px_rgba(23,26,29,0.24)]";
@@ -371,13 +408,21 @@ function SeatMarkerComponent({
   // Type-floor Ruling 3 (2026-08-24): the expanded badge is the engaged,
   // reading state, so its code eyebrow holds the 12px floor and demotes via
   // WEIGHT (medium vs the name's bold) + the opacity above, not via size.
-  // The resting-pill branches stay sub-12 pending the PR-2 zoom-threshold
-  // ruling (below the threshold they function as marks, not text).
+  // PR-2 ruling extension: at the text tier the NAME-MODE eyebrow follows the
+  // same rule — 12px, medium weight vs the name's bold, opacity-90 (name
+  // pills are light status surfaces, the same case the 90% figure above was
+  // measured for). Measured live 2026-08-24: the 12px eyebrow + 12px name
+  // land every pod name pill at 39.5px, inside the 40px
+  // TEXT_TIER_NAME_OBSTACLE_PX the nudge scorer models — it fits, so the
+  // eyebrow stays (the ruled fallback was dropping it at tier). Below the
+  // threshold the resting-pill branches stay sub-12 (marks, not text).
   const codeTextClass = expandedNameBadge
     ? `text-[12px] font-medium tracking-[0.04em] ${lightProminentSurface ? "opacity-90" : "opacity-70"}`
     : tokenMode === "selected" || tokenMode === "prominent"
       ? "text-[10px] font-extrabold"
-      : "text-[9.5px] font-extrabold";
+      : textTier
+        ? "text-[12px] font-medium tracking-[0.04em] opacity-90"
+        : "text-[9.5px] font-extrabold";
   const markerUsesTrueCoordinate = addSeatMode || swapMode || moveEmployeeMode;
   const tokenCanHugViewportEdge = showInlineName || prominentToken;
   const resolvedViewportEdge = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? "none" : viewportEdge;
@@ -438,9 +483,14 @@ function SeatMarkerComponent({
       ? "max-w-[98px] text-[13px]"
       : tokenMode === "prominent"
         ? "max-w-[88px] text-[12.5px]"
-        : tokenDensity === "standard"
-          ? "max-w-[74px] text-[9.5px] group-hover:max-w-[96px] group-hover:text-[10px] group-focus-visible:max-w-[96px] group-focus-visible:text-[10px]"
-          : "max-w-[58px] text-[9px] group-hover:max-w-[94px] group-hover:text-[10px] group-focus-visible:max-w-[94px] group-focus-visible:text-[10px]";
+        // Text tier: 12px at the widened hover max-widths, resting — no
+        // hover overrides (hover would otherwise SHRINK the type back to
+        // 10px).
+        : textTier
+          ? tokenDensity === "standard" ? "max-w-[96px] text-[12px]" : "max-w-[94px] text-[12px]"
+          : tokenDensity === "standard"
+            ? "max-w-[74px] text-[9.5px] group-hover:max-w-[96px] group-hover:text-[10px] group-focus-visible:max-w-[96px] group-focus-visible:text-[10px]"
+            : "max-w-[58px] text-[9px] group-hover:max-w-[94px] group-hover:text-[10px] group-focus-visible:max-w-[94px] group-focus-visible:text-[10px]";
 
   return (
     <button
@@ -546,7 +596,7 @@ function SeatMarkerComponent({
                 <span className="block w-full min-w-0 truncate text-[13px] font-bold leading-[1.15]">{inlineNameLabel}</span>
                 {officeTitleLabel && " "}
                 {officeTitleLabel && (
-                  <span className="block w-full min-w-0 truncate text-[9.5px] font-semibold leading-[1.2] opacity-75">{officeTitleLabel}</span>
+                  <span className={`block w-full min-w-0 truncate font-semibold leading-[1.2] opacity-75 ${LABEL_SIZE_TRANSITION_CLASS} ${textTier ? "text-[12px]" : "text-[9.5px]"}`}>{officeTitleLabel}</span>
                 )}
               </>
             ) : (
@@ -561,7 +611,7 @@ function SeatMarkerComponent({
             {/* truncate (not plain nowrap): an over-long label must clip
                 inside the fixed pill rather than spill over neighbouring
                 markers — hover/focus grows the token, revealing it fully. */}
-            <span translate="no" className="max-w-full truncate text-[9.5px] font-extrabold leading-[1.05]">{seat.label}</span>
+            <span translate="no" className={`max-w-full truncate font-extrabold leading-[1.05] ${LABEL_SIZE_TRANSITION_CLASS} ${textTier ? "text-[12px]" : "text-[9.5px]"}`}>{seat.label}</span>
             {/* The literal space text node keeps the code and name as separate
                 words when a checker serializes the subtree (axe 4.10's
                 label-content-name-mismatch joins spans without one); flex
@@ -576,12 +626,12 @@ function SeatMarkerComponent({
           </span>
         ) : (
           <span className="relative z-10 flex w-full min-w-0 flex-col items-start text-left">
-            <span translate="no" className={["whitespace-nowrap leading-[1.05]", codeTextClass].join(" ")}>{seat.label}</span>
+            <span translate="no" className={["whitespace-nowrap leading-[1.05]", LABEL_SIZE_TRANSITION_CLASS, codeTextClass].join(" ")}>{seat.label}</span>
             {/* Word separator for subtree-text serializers — see the twin
                 comment in the hover-disclosure branch above. */}
             {showInlineName && " "}
             {showInlineName && (
-              <span className={["block min-w-0 truncate font-bold leading-[1.08] opacity-95", nameTextClass].join(" ")}>
+              <span className={["block min-w-0 truncate font-bold leading-[1.08] opacity-95", LABEL_SIZE_TRANSITION_CLASS, nameTextClass].join(" ")}>
                 {inlineNameLabel}
               </span>
             )}
