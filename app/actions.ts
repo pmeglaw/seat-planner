@@ -987,7 +987,8 @@ export async function getPublishHistoryAction(limit = 10) {
 
 export type PublishSeatMapResult =
   | { ok: true }
-  | { ok: false; code: "STALE_DRAFT"; message: string };
+  | { ok: false; code: "STALE_DRAFT"; message: string }
+  | { ok: false; code: "PUBLISH_BLOCKED"; message: string };
 
 export async function publishSeatMapAction(
   /**
@@ -1009,16 +1010,20 @@ export async function publishSeatMapAction(
 ): Promise<PublishSeatMapResult> {
   const supabase = await requireAdmin();
 
-  // Refuse to publish from a dev server pointed at the production database
-  // (lib/publishGuard.ts). Thrown, not returned: the guard can only fire when
-  // NODE_ENV !== "production", where digest stripping doesn't apply, so the
-  // message reaches the admin's error banner intact.
+  // Fail-closed environment guard (lib/publishGuard.ts): publish is allowed
+  // only when the database is local, the server is the real Vercel production
+  // deployment, or the operator opted in explicitly. Returned, not thrown:
+  // the guard can fire under NODE_ENV=production (a local `npm run start`),
+  // where thrown server-action messages are digest-stripped — returning keeps
+  // the refusal readable in the admin's error banner.
   const environment = assessPublishEnvironment({
-    nodeEnv: process.env.NODE_ENV,
+    vercelEnv: process.env.VERCEL_ENV,
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
     overrideValue: process.env.SEAT_PLANNER_ALLOW_PROD_PUBLISH
   });
-  if (!environment.allowed) throw new Error(environment.message);
+  if (!environment.allowed) {
+    return { ok: false, code: "PUBLISH_BLOCKED", message: environment.message };
+  }
 
   const { error } = await supabase.rpc("publish_seat_map", {
     expected_draft_seats: expectedDraftSeats ?? null,

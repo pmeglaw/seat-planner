@@ -39,10 +39,12 @@ a supported path, not a workaround.
 > routine work; use the live project only when you specifically need production
 > data in front of you.
 >
-> Publish is also **guarded in code** (`lib/publishGuard.ts`): a dev server
-> pointed at a non-local database refuses to publish unless you set
-> `SEAT_PLANNER_ALLOW_PROD_PUBLISH=true`, so a routine local session can't
-> ship the live map by accident. Draft edits are deliberately not guarded.
+> Publish is also **guarded in code** (`lib/publishGuard.ts`), and the guard
+> fails closed: publish is refused unless the database is local, the server is
+> the real Vercel production deployment (`VERCEL_ENV=production`), or you set
+> `SEAT_PLANNER_ALLOW_PROD_PUBLISH=true` deliberately. That covers `npm run
+> dev` **and** a local `npm run build && npm run start` (where `NODE_ENV` is
+> `production` — it is not trusted). Draft edits are deliberately not guarded.
 
 Required environment variables (`.env.local`):
 
