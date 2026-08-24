@@ -10,7 +10,7 @@ Repo-authored skills live in `.claude/skills/` — `run-seat-planner` (boot and 
 
 ## Stack
 
-Private office seat-planning app (Next.js App Router + Supabase, TypeScript strict). Deployed on Vercel to `seats.megeredchianlaw.com`. GitHub repo `pmeglaw/seat-planner`; pushes to `main` auto-deploy to production. Supabase project "Seat Planner Prototype", id `wujsniclwzefvufavama`. Node ≥ 22 (`engines` in `package.json`).
+Private office seat-planning app (Next.js App Router + Supabase, TypeScript strict). Deployed on Vercel to `seats.megeredchianlaw.com`. GitHub repo `pmeglaw/seat-planner`; pushes to `main` auto-deploy to production. Supabase project "Seat Planner Prototype", id `wujsniclwzefvufavama`. Node 24 (`engines` in `package.json`, pinned `24.x` — CI and the Vercel build match it).
 
 Framework and library **versions live in `package.json`** — don't restate them here, they go stale silently.
 
