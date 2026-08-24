@@ -1028,6 +1028,7 @@ export function ViewerSeatFinder({
     <div className="shell-theme flex min-h-[100svh] flex-col overflow-x-clip bg-[var(--sp-background)] text-[var(--sp-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
       <a
         href="#viewer-seat-map"
+        data-chrome="dark"
         className="sp-zone-chrome sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--sp-brand)] focus:bg-[var(--sp-background)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--sp-text-primary)] focus:outline-none"
       >
         Skip to seat map

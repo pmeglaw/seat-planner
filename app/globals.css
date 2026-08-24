@@ -304,6 +304,11 @@
   --sp-text-secondary: #D8D0C5;
   --sp-text-helper: #B8AEA2;
   --sp-text-disabled: #8E8276;
+  /* Disabled fill matches the dark-theme value: without this, a disabled
+     control inside the chrome painted the LIGHT #E7E1D8 fill under the
+     zone's light text roles (~1.6:1 — the Ask Planner drawer's disabled
+     submit). scripts/zone-completeness.mjs guards the whole class of gap. */
+  --sp-surface-disabled: #333333;
   --sp-border-subtle: rgba(255, 255, 255, 0.10);
   /* Strong chrome hairline: popover/menu outlines (account, kebab, floor) and
      outlined controls (ThemeToggle) — one step brighter than the base border
