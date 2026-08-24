@@ -90,10 +90,10 @@ test("the bottom hairline starts clear of the corner cell", async () => {
 });
 
 // Regression pin for the chrome-unification fix: the AccountMenu popover's
-// vertical offset must derive from --admin-chrome-h, never a hardcoded pixel
+// vertical offset must derive from --sp-chrome-height, never a hardcoded pixel
 // literal — a bar-height change silently stranded the old top-[34px].
 test("the account menu offset derives from the chrome height token", async () => {
   const source = await readFile(fileURLToPath(new URL("../components/ui/AccountMenu.tsx", import.meta.url)), "utf8");
-  assert.match(source, /var\(--admin-chrome-h\)/);
+  assert.match(source, /var\(--sp-chrome-height\)/);
   assert.doesNotMatch(source, /top-\[34px\]/);
 });

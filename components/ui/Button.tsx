@@ -8,15 +8,15 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 // Admin-theme confirm dialogs force the danger CTA over the variant palette.
 export const adminDangerButtonClassName =
-  "!border-[var(--admin-danger)] !bg-[var(--admin-danger)] !text-white hover:!border-[var(--admin-danger)] hover:!bg-[var(--admin-danger)]";
+  "!border-[var(--sp-status-danger-strong)] !bg-[var(--sp-status-danger-strong)] !text-white hover:!border-[var(--sp-status-danger-strong)] hover:!bg-[var(--sp-status-danger-strong)]";
 
 const variants = {
   primary:
-    "border-[var(--sp-color-action-primary)] bg-[var(--sp-color-action-primary)] text-white hover:border-[var(--sp-color-action-primary-hover)] hover:bg-[var(--sp-color-action-primary-hover)]",
+    "border-[var(--sp-button-primary)] bg-[var(--sp-button-primary)] text-white hover:border-[var(--sp-button-primary-hover)] hover:bg-[var(--sp-button-primary-hover)]",
   secondary:
-    "border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-surface-alt)]",
+    "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-primary)] hover:border-[var(--sp-border-strong)] hover:bg-[var(--sp-background)]",
   danger:
-    "border-[var(--admin-state-danger-border)] bg-[var(--admin-state-danger-bg)] text-[var(--admin-state-danger-text)] hover:border-[var(--admin-danger)]"
+    "border-[var(--sp-editor-danger-border)] bg-[var(--sp-editor-danger-bg)] text-[var(--sp-editor-danger-text)] hover:border-[var(--sp-status-danger-strong)]"
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({ className = "", variant = "secondary", ...props }, ref) {
@@ -26,7 +26,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       className={[
         "inline-flex min-h-9 items-center justify-center whitespace-nowrap border px-3 py-2 text-sm font-semibold leading-none transition-colors",
         focusRingClass,
-        "disabled:cursor-not-allowed disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-state-disabled)] disabled:text-[var(--sp-color-text-muted)]",
+        "disabled:cursor-not-allowed disabled:border-[var(--sp-border-subtle)] disabled:bg-[var(--sp-surface-disabled)] disabled:text-[var(--sp-text-helper)]",
         variants[variant],
         className
       ].join(" ")}

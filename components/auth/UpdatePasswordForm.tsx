@@ -49,14 +49,14 @@ export function UpdatePasswordForm() {
 
   return (
     <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-soft">
-      <h1 className="text-xl font-bold text-[var(--sp-color-text-primary)]">Set a new password</h1>
-      <p className="mt-2 text-sm text-[var(--sp-color-text-muted)]">
+      <h1 className="text-xl font-bold text-[var(--sp-text-primary)]">Set a new password</h1>
+      <p className="mt-2 text-sm text-[var(--sp-text-helper)]">
         Enter a new password for your seat planner account.
       </p>
 
       <form onSubmit={updatePassword} noValidate>
         <label className="mt-5 block">
-          <span className="text-sm font-semibold text-[var(--sp-color-text-secondary)]">New password</span>
+          <span className="text-sm font-semibold text-[var(--sp-text-secondary)]">New password</span>
           <input
             type="password"
             name="password"
@@ -68,7 +68,7 @@ export function UpdatePasswordForm() {
         </label>
 
         <label className="mt-4 block">
-          <span className="text-sm font-semibold text-[var(--sp-color-text-secondary)]">Confirm password</span>
+          <span className="text-sm font-semibold text-[var(--sp-text-secondary)]">Confirm password</span>
           <input
             type="password"
             name="confirmPassword"
@@ -91,8 +91,8 @@ export function UpdatePasswordForm() {
           className={[
             "mt-4 rounded-xl p-3 text-sm",
             messageType === "error"
-              ? "bg-[var(--sp-color-state-danger-surface)] text-[var(--sp-color-state-danger-on-soft)]"
-              : "bg-[var(--sp-color-state-success-surface)] text-[var(--sp-color-state-success-on-soft)]"
+              ? "bg-[var(--sp-status-danger-surface)] text-[var(--sp-status-danger-text)]"
+              : "bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]"
           ].join(" ")}
         >
           {message}

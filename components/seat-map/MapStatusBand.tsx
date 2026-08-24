@@ -39,7 +39,7 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
     // a filtered admin row is ~790px against a 640px floor).
     <div
       data-map-status-band
-      className="relative z-30 flex h-10 shrink-0 items-center border-t border-[var(--admin-border)] bg-[var(--admin-surface)] [container-type:inline-size]"
+      className="relative z-30 flex h-10 shrink-0 items-center border-t border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] [container-type:inline-size]"
     >
       {/* Everything informational scrolls; the controls never do. The
           overflow-x-auto is the safety valve that makes clipping impossible
@@ -59,24 +59,24 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
         role="group"
         aria-label={ariaLabel}
         tabIndex={0}
-        className="flex min-w-0 flex-1 items-center gap-2.5 overflow-x-auto px-3 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)] md:gap-3"
+        className="flex min-w-0 flex-1 items-center gap-2.5 overflow-x-auto px-3 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] md:gap-3"
       >
-        <span className="map-status-band-wide shrink-0 text-[12px] font-semibold text-[var(--sp-color-text-primary)]">Legend</span>
-        <span className="map-status-band-wide shrink-0 text-[11.5px] font-semibold tabular-nums text-[var(--sp-color-text-secondary)]">{totalLabel}</span>
-        <span aria-hidden="true" className="map-status-band-wide h-5 w-px shrink-0 bg-[var(--admin-border)]" />
+        <span className="map-status-band-wide shrink-0 text-[12px] font-semibold text-[var(--sp-text-primary)]">Legend</span>
+        <span className="map-status-band-wide shrink-0 text-[11.5px] font-semibold tabular-nums text-[var(--sp-text-secondary)]">{totalLabel}</span>
+        <span aria-hidden="true" className="map-status-band-wide h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
         <ul aria-label={ariaLabel} className="flex shrink-0 items-center gap-2.5 md:gap-3.5">
           {entries.map(entry => (
-            <li key={entry.key} className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--sp-color-text-secondary)]">
+            <li key={entry.key} className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--sp-text-secondary)]">
               <span aria-hidden="true" className={`h-[7px] w-[7px] shrink-0 rounded-full ${entry.dotClassName}`} />
               <span className="whitespace-nowrap">{entry.label}</span>
-              <span className="tabular-nums text-[var(--sp-color-text-primary)]">{entry.count}</span>
+              <span className="tabular-nums text-[var(--sp-text-primary)]">{entry.count}</span>
             </li>
           ))}
         </ul>
         {summary ? (
           <>
-            <span aria-hidden="true" className="map-status-band-widest h-5 w-px shrink-0 bg-[var(--admin-border)]" />
-            <p className="map-status-band-widest min-w-0 truncate text-[11.5px] text-[var(--sp-color-text-secondary)]">{summary}</p>
+            <span aria-hidden="true" className="map-status-band-widest h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
+            <p className="map-status-band-widest min-w-0 truncate text-[11.5px] text-[var(--sp-text-secondary)]">{summary}</p>
           </>
         ) : null}
         {/* Actions stay present at every band width (unlike the prose
@@ -85,7 +85,7 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
       </div>
       {/* border-l draws the seam the scroll boundary otherwise lacks — under
           overflow, clipped content butts straight against these controls. */}
-      <div className="flex shrink-0 items-center gap-3 border-l border-[var(--admin-border)] pl-3 pr-3 md:gap-4">{controls}</div>
+      <div className="flex shrink-0 items-center gap-3 border-l border-[var(--sp-border-subtle)] pl-3 pr-3 md:gap-4">{controls}</div>
     </div>
   );
 }

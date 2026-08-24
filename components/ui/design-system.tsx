@@ -7,7 +7,7 @@ export function cx(...classes: ClassValue[]) {
 }
 
 export const focusRingClass =
-  "outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus-ring-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--sp-focus-ring-offset-color)]";
+  "outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--sp-focus-offset-color)]";
 
 const loadingSpinnerClass =
   "h-3.5 w-3.5 shrink-0 motion-safe:animate-spin rounded-full border-2 border-current border-t-transparent";
@@ -25,30 +25,30 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const buttonVariants: Record<ButtonVariant, string> = {
   primary:
-    "border-[var(--sp-color-action-primary)] bg-[var(--sp-color-action-primary)] text-white hover:border-[var(--sp-color-action-primary-hover)] hover:bg-[var(--sp-color-action-primary-hover)] active:border-[var(--sp-color-action-primary-pressed)] active:bg-[var(--sp-color-action-primary-pressed)]",
+    "border-[var(--sp-button-primary)] bg-[var(--sp-button-primary)] text-white hover:border-[var(--sp-button-primary-hover)] hover:bg-[var(--sp-button-primary-hover)] active:border-[var(--sp-button-primary-active)] active:bg-[var(--sp-button-primary-active)]",
   secondary:
-    "border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface-raised)] text-[var(--sp-color-text-primary)] hover:border-[var(--sp-color-brand-copper)] hover:bg-[var(--sp-color-brand-paper)] hover:text-[var(--sp-color-brand-clay)] active:border-[var(--sp-color-action-primary)] active:bg-[#F3D1B9]",
+    "border-[var(--sp-border-strong)] bg-[var(--sp-layer-02)] text-[var(--sp-text-primary)] hover:border-[var(--sp-button-primary)] hover:bg-[var(--sp-brand-subtle)] hover:text-[var(--sp-brand-deep)] active:border-[var(--sp-button-primary)] active:bg-[#F3D1B9]",
   quiet:
-    "border-transparent bg-transparent text-[var(--sp-color-text-muted)] hover:bg-[var(--sp-color-graphite-soft)] hover:text-[var(--sp-color-text-secondary)] active:bg-[var(--sp-color-stone)] active:text-[var(--sp-color-text-secondary)]",
+    "border-transparent bg-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] active:bg-[var(--sp-neutral-strong)] active:text-[var(--sp-text-secondary)]",
   destructive:
-    "border-[var(--sp-color-state-danger)] bg-[var(--sp-color-state-danger)] text-white hover:border-[var(--sp-color-state-danger-hover)] hover:bg-[var(--sp-color-state-danger-hover)] active:border-[var(--sp-color-state-danger-pressed)] active:bg-[var(--sp-color-state-danger-pressed)]"
+    "border-[var(--sp-status-danger-strong)] bg-[var(--sp-status-danger-strong)] text-white hover:border-[var(--sp-status-danger-hover)] hover:bg-[var(--sp-status-danger-hover)] active:border-[var(--sp-status-danger-pressed)] active:bg-[var(--sp-status-danger-pressed)]"
 };
 
 const buttonLoadingVariants: Record<ButtonVariant, string> = {
-  primary: "!border-[var(--sp-color-action-primary)] !bg-[var(--sp-color-action-primary)] !text-white",
-  secondary: "!border-[var(--sp-color-border-strong)] !bg-[var(--sp-color-surface-raised)] !text-[var(--sp-color-text-primary)]",
-  quiet: "!border-transparent !bg-transparent !text-[var(--sp-color-text-muted)]",
-  destructive: "!border-[var(--sp-color-state-danger)] !bg-[var(--sp-color-state-danger)] !text-white"
+  primary: "!border-[var(--sp-button-primary)] !bg-[var(--sp-button-primary)] !text-white",
+  secondary: "!border-[var(--sp-border-strong)] !bg-[var(--sp-layer-02)] !text-[var(--sp-text-primary)]",
+  quiet: "!border-transparent !bg-transparent !text-[var(--sp-text-helper)]",
+  destructive: "!border-[var(--sp-status-danger-strong)] !bg-[var(--sp-status-danger-strong)] !text-white"
 };
 
 const buttonDisabledVariants: Record<ButtonVariant, string> = {
   primary:
-    "disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-state-disabled)] disabled:text-[var(--sp-color-text-muted)]",
+    "disabled:border-[var(--sp-border-subtle)] disabled:bg-[var(--sp-surface-disabled)] disabled:text-[var(--sp-text-helper)]",
   secondary:
-    "disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-disabled)]",
-  quiet: "disabled:border-transparent disabled:bg-transparent disabled:text-[var(--sp-color-stone-muted)]",
+    "disabled:border-[var(--sp-border-subtle)] disabled:bg-[var(--sp-layer-accent)] disabled:text-[var(--sp-text-disabled)]",
+  quiet: "disabled:border-transparent disabled:bg-transparent disabled:text-[var(--sp-neutral-muted)]",
   destructive:
-    "disabled:border-[var(--sp-color-state-danger-border)] disabled:bg-[var(--sp-color-state-danger-border)] disabled:text-[var(--sp-color-state-danger-on-soft)]"
+    "disabled:border-[var(--sp-status-danger-border)] disabled:bg-[var(--sp-status-danger-border)] disabled:text-[var(--sp-status-danger-text)]"
 };
 
 const buttonSizes: Record<ButtonSize, string> = {
@@ -111,17 +111,17 @@ export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "ari
 
 const iconButtonVariants: Record<IconButtonVariant, string> = {
   neutral:
-    "border-[var(--sp-color-border-strong)] bg-[var(--sp-color-surface-raised)] text-[var(--sp-color-text-secondary)] hover:border-[var(--sp-color-brand-copper)] hover:bg-[var(--sp-color-brand-paper)] hover:text-[var(--sp-color-brand-clay)]",
+    "border-[var(--sp-border-strong)] bg-[var(--sp-layer-02)] text-[var(--sp-text-secondary)] hover:border-[var(--sp-button-primary)] hover:bg-[var(--sp-brand-subtle)] hover:text-[var(--sp-brand-deep)]",
   primary:
-    "border-[var(--sp-color-action-primary)] bg-[var(--sp-color-action-primary)] text-white hover:border-[var(--sp-color-action-primary-hover)] hover:bg-[var(--sp-color-action-primary-hover)]",
+    "border-[var(--sp-button-primary)] bg-[var(--sp-button-primary)] text-white hover:border-[var(--sp-button-primary-hover)] hover:bg-[var(--sp-button-primary-hover)]",
   destructive:
-    "border-[var(--sp-color-state-danger)] bg-[var(--sp-color-state-danger-surface)] text-[var(--sp-color-state-danger-on-soft)] hover:border-[var(--sp-color-state-danger)] hover:bg-[var(--sp-color-state-danger)] hover:text-white"
+    "border-[var(--sp-status-danger-strong)] bg-[var(--sp-status-danger-surface)] text-[var(--sp-status-danger-text)] hover:border-[var(--sp-status-danger-strong)] hover:bg-[var(--sp-status-danger-strong)] hover:text-white"
 };
 
 const iconButtonLoadingVariants: Record<IconButtonVariant, string> = {
-  neutral: "!border-[var(--sp-color-border-strong)] !bg-[var(--sp-color-surface-raised)] !text-[var(--sp-color-text-secondary)]",
-  primary: "!border-[var(--sp-color-action-primary)] !bg-[var(--sp-color-action-primary)] !text-white",
-  destructive: "!border-[var(--sp-color-state-danger)] !bg-[var(--sp-color-state-danger)] !text-white"
+  neutral: "!border-[var(--sp-border-strong)] !bg-[var(--sp-layer-02)] !text-[var(--sp-text-secondary)]",
+  primary: "!border-[var(--sp-button-primary)] !bg-[var(--sp-button-primary)] !text-white",
+  destructive: "!border-[var(--sp-status-danger-strong)] !bg-[var(--sp-status-danger-strong)] !text-white"
 };
 
 const iconButtonSizes: Record<IconButtonSize, string> = {
@@ -143,7 +143,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       disabled={isDisabled}
       aria-busy={loading ? "true" : undefined}
       className={cx(
-        "grid place-items-center rounded-[var(--sp-radius-xl)] border transition duration-sp-standard disabled:cursor-not-allowed disabled:border-[var(--sp-color-border-subtle)] disabled:bg-[var(--sp-color-graphite-soft)] disabled:text-[var(--sp-color-text-disabled)]",
+        "grid place-items-center rounded-[var(--sp-radius-xl)] border transition duration-sp-standard disabled:cursor-not-allowed disabled:border-[var(--sp-border-subtle)] disabled:bg-[var(--sp-layer-accent)] disabled:text-[var(--sp-text-disabled)]",
         "active:translate-y-px",
         focusRingClass,
         iconButtonSizes[size],
@@ -178,19 +178,19 @@ export type StatusBadgeProps = {
 };
 
 const statusBadgeTones: Record<StatusBadgeTone, string> = {
-  neutral: "bg-[var(--sp-color-graphite-soft)] text-[var(--sp-color-text-secondary)] ring-[var(--sp-color-border-subtle)]",
+  neutral: "bg-[var(--sp-layer-accent)] text-[var(--sp-text-secondary)] ring-[var(--sp-border-subtle)]",
   published:
-    "bg-[var(--sp-color-state-published-surface)] text-[var(--sp-color-state-published-on-soft)] ring-[var(--sp-color-state-published-border)]",
-  draft: "bg-[var(--sp-color-state-draft-surface)] text-[var(--sp-color-state-draft-on-soft)] ring-[var(--sp-color-state-draft-border)]",
+    "bg-[var(--sp-status-published-surface)] text-[var(--sp-status-published-text)] ring-[var(--sp-status-published-border)]",
+  draft: "bg-[var(--sp-status-draft-surface)] text-[var(--sp-status-draft-text)] ring-[var(--sp-status-draft-border)]",
   success:
-    "bg-[var(--sp-color-state-success-surface)] text-[var(--sp-color-state-success-on-soft)] ring-[var(--sp-color-state-success-border)]",
+    "bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)] ring-[var(--sp-status-success-border)]",
   warning:
-    "bg-[var(--sp-color-state-warning-surface)] text-[var(--sp-color-state-warning-on-soft)] ring-[var(--sp-color-state-warning-border)]",
-  danger: "bg-[var(--sp-color-state-danger-surface)] text-[var(--sp-color-state-danger-on-soft)] ring-[var(--sp-color-state-danger-border)]",
-  info: "bg-[var(--sp-color-state-info-surface)] text-[var(--sp-color-state-info-on-soft)] ring-[var(--sp-color-state-info-border)]",
-  readonly: "bg-[var(--sp-color-surface)] text-[var(--sp-color-text-muted)] ring-[var(--sp-color-border-subtle)]",
-  blocked: "bg-[var(--sp-color-state-danger-surface)] text-[var(--sp-color-state-danger-on-soft)] ring-[var(--sp-color-state-danger-border)]",
-  pending: "bg-[var(--sp-color-state-info-surface)] text-[var(--sp-color-state-info-on-soft)] ring-[var(--sp-color-state-info-border)]"
+    "bg-[var(--sp-status-pending-surface)] text-[var(--sp-status-pending-text)] ring-[var(--sp-status-pending-border)]",
+  danger: "bg-[var(--sp-status-danger-surface)] text-[var(--sp-status-danger-text)] ring-[var(--sp-status-danger-border)]",
+  info: "bg-[var(--sp-status-neutral-surface)] text-[var(--sp-status-neutral-text)] ring-[var(--sp-status-neutral-border)]",
+  readonly: "bg-[var(--sp-layer-01)] text-[var(--sp-text-helper)] ring-[var(--sp-border-subtle)]",
+  blocked: "bg-[var(--sp-status-danger-surface)] text-[var(--sp-status-danger-text)] ring-[var(--sp-status-danger-border)]",
+  pending: "bg-[var(--sp-status-neutral-surface)] text-[var(--sp-status-neutral-text)] ring-[var(--sp-status-neutral-border)]"
 };
 
 export function StatusBadge({ children, className, icon, tone = "neutral" }: StatusBadgeProps) {

@@ -63,17 +63,17 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, r
   return (
     /* z-50 keeps the chrome tier above z-40 page overlays (same rank the old
        per-surface bars held). sticky, not fixed: the bar participates in flow,
-       so page roots keep their min-h-[calc(100svh-var(--admin-chrome-h))]
+       so page roots keep their min-h-[calc(100svh-var(--sp-chrome-height))]
        sizing untouched. NO border-b on the header itself and no left padding:
        the chrome must read as ONE upside-down L (owner call 2026-08-14) — the
        brand mark sits centered in a w-12 corner cell aligned with the rail
        column below, and the bottom hairline starts only to the RIGHT of that
        column (the absolute span below), so no seam ever cuts the corner. */
-    <header className="sticky top-0 z-50 flex h-[var(--admin-chrome-h)] shrink-0 items-center bg-[var(--admin-chrome-bg)] text-[var(--admin-chrome-text)]" data-chrome="dark">
-      <span aria-hidden="true" className="pointer-events-none absolute bottom-0 left-12 right-0 h-px bg-[var(--admin-chrome-border)]" />
+    <header className="sp-zone-chrome sticky top-0 z-50 flex h-[var(--sp-chrome-height)] shrink-0 items-center bg-[var(--sp-background)] text-[var(--sp-text-primary)]" data-chrome="dark">
+      <span aria-hidden="true" className="pointer-events-none absolute bottom-0 left-12 right-0 h-px bg-[var(--sp-border-subtle)]" />
       <a
         href={skipLink.href}
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--admin-primary)] focus:bg-[var(--admin-chrome-bg)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--admin-chrome-text)] focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--sp-brand)] focus:bg-[var(--sp-background)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--sp-text-primary)] focus:outline-none"
       >
         {skipLink.label}
       </a>
@@ -90,7 +90,7 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, r
           aria-controls="app-rail"
           aria-label={railOpen ? "Collapse navigation" : "Expand navigation"}
           title={railOpen ? "Collapse navigation" : "Expand navigation"}
-          className="flex h-full w-12 shrink-0 items-center justify-center text-[var(--admin-chrome-muted)] transition-colors hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]"
+          className="flex h-full w-12 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]"
         >
           <HamburgerIcon />
         </button>

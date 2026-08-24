@@ -46,16 +46,16 @@ export default function ViewerError({
   }, []);
 
   return (
-    <main className="shell-theme flex min-h-screen flex-col items-center justify-center bg-[var(--admin-chrome-bg)] px-6 py-12">
-      <section className="w-full max-w-[440px] bg-[var(--admin-surface)] p-6 sm:px-10 sm:pb-9 sm:pt-10">
+    <main className="shell-theme sp-zone-chrome flex min-h-screen flex-col items-center justify-center bg-[var(--sp-background)] px-6 py-12">
+      <section className="sp-zone-base w-full max-w-[440px] bg-[var(--sp-layer-01)] p-6 sm:px-10 sm:pb-9 sm:pt-10">
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="text-2xl font-semibold text-[var(--admin-text-primary)] outline-none"
+          className="text-2xl font-semibold text-[var(--sp-text-primary)] outline-none"
         >
           The seat map could not load
         </h1>
-        <p className="mt-4 text-[13px] leading-5 text-[var(--admin-text-secondary)]">
+        <p className="mt-4 text-[13px] leading-5 text-[var(--sp-text-secondary)]">
           Something went wrong while loading this page. The seating map itself is unchanged — this is a display
           problem, not a data one.
         </p>
@@ -66,20 +66,20 @@ export default function ViewerError({
           </Button>
           <Link
             href="/"
-            className="flex min-h-11 w-full items-center justify-center rounded-[var(--sp-radius-xl)] border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-sm font-semibold text-[var(--admin-text-primary)] transition-colors hover:bg-[var(--admin-surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] focus-visible:ring-offset-2"
+            className="flex min-h-11 w-full items-center justify-center rounded-[var(--sp-radius-xl)] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] text-sm font-semibold text-[var(--sp-text-primary)] transition-colors hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] focus-visible:ring-offset-2"
           >
             Back to the seat map
           </Link>
         </div>
 
         {error.digest ? (
-          <p className="mt-6 font-mono text-[11px] leading-4 text-[var(--admin-text-muted)]">
+          <p className="mt-6 font-mono text-[11px] leading-4 text-[var(--sp-text-helper)]">
             Reference: {error.digest}
           </p>
         ) : null}
       </section>
 
-      <p className="mt-10 font-mono text-[11px] text-[var(--admin-chrome-muted)]">
+      <p className="mt-10 font-mono text-[11px] text-[var(--sp-text-helper)]">
         seats.megeredchianlaw.com · internal use only
       </p>
     </main>

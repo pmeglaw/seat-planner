@@ -14,23 +14,23 @@ export default async function AdminPage() {
     // Deep links can still land viewers here (the in-app Admin shortcut is
     // role-gated), so the page must offer a way back instead of a dead end.
     return (
-      <main className="admin-theme flex min-h-[calc(100svh-var(--admin-chrome-h))] items-center justify-center bg-[var(--admin-bg)] p-6 text-[var(--admin-text-primary)]">
-        <section className="w-full max-w-md border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-2">
-          <div className="flex items-center gap-2 border-b border-[var(--admin-chrome-border)] bg-[var(--admin-chrome-bg)] px-5 py-2.5 text-[12.5px] font-semibold text-[var(--admin-chrome-text)]">
+      <main className="admin-theme flex min-h-[calc(100svh-var(--sp-chrome-height))] items-center justify-center bg-[var(--sp-background)] p-6 text-[var(--sp-text-primary)]">
+        <section className="w-full max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-elevation-2">
+          <div className="sp-zone-chrome flex items-center gap-2 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-background)] px-5 py-2.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)]">
             <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element -- static brand mark, unoptimized on purpose */}
               <img src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} className="h-6 w-6 object-contain" />
             </span>
-            Megeredchian Law <span className="font-normal text-[var(--admin-chrome-muted)]">· Seat Planner</span>
+            Megeredchian Law <span className="font-normal text-[var(--sp-text-helper)]">· Seat Planner</span>
           </div>
           <div className="p-6">
             <h1 className="text-lg font-semibold">Admin access required</h1>
-            <p className="mt-2 text-sm text-[var(--admin-text-secondary)]">
+            <p className="mt-2 text-sm text-[var(--sp-text-secondary)]">
               You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to edit the seat map.
             </p>
             <Link
               href="/"
-              className="mt-5 inline-flex min-h-9 items-center justify-center border border-[var(--admin-primary-cta)] bg-[var(--admin-primary-cta)] px-4 py-2 text-sm font-semibold leading-none text-white transition-colors hover:border-[var(--admin-primary-cta-hover)] hover:bg-[var(--admin-primary-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] focus-visible:ring-offset-2"
+              className="mt-5 inline-flex min-h-9 items-center justify-center border border-[var(--sp-button-primary)] bg-[var(--sp-button-primary)] px-4 py-2 text-sm font-semibold leading-none text-white transition-colors hover:border-[var(--sp-button-primary-hover)] hover:bg-[var(--sp-button-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] focus-visible:ring-offset-2"
             >
               Back to seat map
             </Link>
@@ -112,7 +112,7 @@ export default async function AdminPage() {
   return (
     // div, not <main>: SeatMap renders the page's real <main> internally, and
     // nesting a second one trips axe landmark-no-duplicate-main.
-    <div className="admin-theme min-h-[calc(100svh-var(--admin-chrome-h))] bg-[var(--admin-bg)] text-[var(--admin-text-primary)]">
+    <div className="admin-theme min-h-[calc(100svh-var(--sp-chrome-height))] bg-[var(--sp-background)] text-[var(--sp-text-primary)]">
       <SeatMap
         seats={seats}
         publishedSeats={publishedSeats}

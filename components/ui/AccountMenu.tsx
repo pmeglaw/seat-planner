@@ -18,7 +18,7 @@ type AccountMenuProps = {
 };
 
 const menuItemClassName =
-  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--admin-chrome-heading)] transition hover:bg-white/10 hover:text-[var(--admin-chrome-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-primary)]";
+  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--sp-chrome-heading)] transition hover:bg-white/10 hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
 
 /**
  * The chrome bar's identity chip, opened into a small account menu: signed-in
@@ -129,7 +129,7 @@ export function AccountMenu({ email, roleLabel, autoCloseKey }: AccountMenuProps
         // chrome's ring-inset doctrine (adminChrome.ts): an inset ring on a
         // 26px circle would eat the monogram; the offset halo reads cleanly
         // against the dark bar.
-        className="relative flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-brand)] text-[11px] font-semibold text-[var(--admin-primary-ink)] transition after:absolute after:-inset-[9px] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--admin-chrome-bg)]"
+        className="relative flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-brand-mark)] text-[11px] font-semibold text-[var(--sp-text-on-brand)] transition after:absolute after:-inset-[9px] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-background)]"
       >
         {initial}
       </button>
@@ -153,11 +153,11 @@ export function AccountMenu({ email, roleLabel, autoCloseKey }: AccountMenuProps
             // avatar centered ends at 33px, +1px gap) so a chrome-h change
             // can't strand the menu — it used to be a hardcoded pixel
             // literal (tests/app-top-bar.test.mjs pins the token form).
-            className="absolute right-0 top-[calc(var(--admin-chrome-h)-6px)] z-50 w-60 border border-[var(--admin-chrome-border-strong)] bg-[var(--admin-chrome-elevated)] py-1 shadow-elevation-3"
+            className="absolute right-0 top-[calc(var(--sp-chrome-height)-6px)] z-50 w-60 border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] py-1 shadow-elevation-3"
           >
             <div className="border-b border-white/10 px-3 pb-2 pt-1.5">
-              <div className="truncate text-[12.5px] font-medium text-[var(--admin-chrome-text)]">{email}</div>
-              <div className="text-[11px] text-[var(--admin-chrome-muted)]">{roleLabel}</div>
+              <div className="truncate text-[12.5px] font-medium text-[var(--sp-text-primary)]">{email}</div>
+              <div className="text-[11px] text-[var(--sp-text-helper)]">{roleLabel}</div>
             </div>
             <Link href="/my-seat" role="menuitem" tabIndex={-1} className={menuItemClassName} onClick={() => closeMenu(false)}>
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 shrink-0">

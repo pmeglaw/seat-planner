@@ -134,7 +134,7 @@ test("both map surfaces render washes and feed the plate layout", async () => {
   // the extraction is what makes that class of drift unrepresentable.
   const layer = await readFile(new URL("../components/seat-map/MapWashLayer.tsx", import.meta.url), "utf8");
   assert.match(layer, /data-office-wash/, "MapWashLayer renders the room wash");
-  assert.match(layer, /bg-\[var\(--admin-zone-wash-fill\)\]/, "room wash fill stays tokenized");
+  assert.match(layer, /bg-\[var\(--sp-wash-zone\)\]/, "room wash fill stays tokenized");
   assert.doesNotMatch(layer, /bg-\[#/, "no raw hex fill class in the wash layer");
 });
 

@@ -375,8 +375,8 @@ test("a move trail is one arc, one arrowhead, and a dashed origin ring at the st
 test("trail colors come from the admin accent tokens, never hardcoded hex", async () => {
   await renderElement(React.createElement(DraftTrailOverlay, { kind: "move", sourceSeat: trailSource, targetSeat: trailTarget }));
   const svg = document.querySelector("svg[data-draft-trail]");
-  assert.equal(svg.querySelector('[data-trail-part="flow"]').getAttribute("stroke"), "var(--admin-draft-trail)");
-  assert.equal(svg.querySelector('[data-trail-part="arrow"]').getAttribute("fill"), "var(--admin-draft-trail)");
-  assert.equal(svg.querySelector('[data-trail-part="origin"]').getAttribute("stroke"), "var(--admin-draft-trail-origin)");
+  assert.equal(svg.querySelector('[data-trail-part="flow"]').getAttribute("stroke"), "var(--sp-trail)");
+  assert.equal(svg.querySelector('[data-trail-part="arrow"]').getAttribute("fill"), "var(--sp-trail)");
+  assert.equal(svg.querySelector('[data-trail-part="origin"]').getAttribute("stroke"), "var(--sp-trail-origin)");
   assert.ok(!/#[0-9a-fA-F]{3,8}/.test(svg.outerHTML), "no hardcoded hex anywhere in the trail markup");
 });

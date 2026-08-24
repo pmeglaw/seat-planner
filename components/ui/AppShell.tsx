@@ -176,8 +176,8 @@ export function AppShell({ email, isAdmin, skewDetector, children }: AppShellPro
   return (
     <AppShellContext.Provider value={contextValue}>
       <AppShellSlotsContext.Provider value={slots}>
-        {/* admin-theme + display:contents: the chrome tokens (--admin-*) are
-            class-scoped in globals.css and pages own their content themes
+        {/* admin-theme + display:contents: the theme-scoped token values are
+            class-keyed in globals.css and pages own their content themes
             (reception is reception-theme), so the shell scopes ONLY its own
             chrome. `contents` keeps the wrapper out of layout — the bar stays
             sticky and the rail position:fixed against the viewport. Bar before

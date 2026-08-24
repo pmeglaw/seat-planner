@@ -12,13 +12,13 @@ export default function Loading() {
     <div
       role="status"
       aria-busy="true"
-      className="shell-theme flex min-h-screen flex-col bg-[var(--admin-bg)]"
+      className="shell-theme flex min-h-screen flex-col bg-[var(--sp-background)]"
     >
       <span className="sr-only">Loading the seat map…</span>
-      <div aria-hidden="true" className="h-11 shrink-0 bg-[var(--admin-chrome-bg)]" />
+      <div aria-hidden="true" className="sp-zone-chrome h-11 shrink-0 bg-[var(--sp-background)]" />
       <div aria-hidden="true" className="flex-1 animate-pulse motion-reduce:animate-none">
-        <div className="mx-auto mt-6 h-8 w-full max-w-[520px] bg-[var(--admin-surface)]" />
-        <div className="mx-auto mt-4 h-[60vh] w-[min(94vw,1200px)] bg-[var(--admin-surface)]" />
+        <div className="mx-auto mt-6 h-8 w-full max-w-[520px] bg-[var(--sp-layer-01)]" />
+        <div className="mx-auto mt-4 h-[60vh] w-[min(94vw,1200px)] bg-[var(--sp-layer-01)]" />
       </div>
     </div>
   );

@@ -54,17 +54,17 @@ const KIND_LABELS: Record<ViewerSearchResultKind, string> = {
 };
 
 function resultKindClass(kind: ViewerSearchResultKind) {
-  if (kind === "person") return "bg-[var(--admin-info-soft)] text-[var(--admin-info)] ring-[rgb(var(--admin-info-rgb)/0.3)]";
-  if (kind === "seat") return "bg-[var(--admin-chrome-bg)] text-white ring-[var(--admin-chrome-bg)]";
-  if (kind === "department") return "bg-[var(--admin-success-soft)] text-[var(--admin-success)] ring-[rgb(var(--admin-success-rgb)/0.3)]";
-  return "bg-[var(--admin-warning-soft)] text-[var(--admin-warning-text)] ring-[rgb(var(--admin-warning-text-rgb)/0.3)]";
+  if (kind === "person") return "bg-[var(--sp-status-neutral-surface)] text-[var(--sp-status-neutral-strong)] ring-[color-mix(in_srgb,var(--sp-status-neutral-strong)_30%,transparent)]";
+  if (kind === "seat") return "sp-zone-chrome bg-[var(--sp-background)] text-white ring-[var(--sp-background)]";
+  if (kind === "department") return "bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-strong)] ring-[color-mix(in_srgb,var(--sp-status-success-strong)_30%,transparent)]";
+  return "bg-[var(--sp-status-pending-surface)] text-[var(--sp-status-pending-text)] ring-[color-mix(in_srgb,var(--sp-status-pending-text)_30%,transparent)]";
 }
 
 // Eyebrow rows. The mock draws these at #8E8276, which measures 3.75:1 on
 // white and fails AA at this size — the same call `LoginForm` and
-// `app/concepts/login-v12` already made, so they take --admin-text-muted
+// `app/concepts/login-v12` already made, so they take --sp-text-helper
 // (#6E655A, 5.7:1) instead. Deliberate deviation from the drawing.
-const eyebrowClassName = "text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--admin-text-muted)]";
+const eyebrowClassName = "text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]";
 
 type PaletteFrame = { left: number; top: number; width: number | null; maxHeight: number };
 
@@ -228,7 +228,7 @@ export function ViewerFindPalette({
   }
 
   const listClassName =
-    "min-h-0 flex-1 overflow-y-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--admin-focus)]";
+    "min-h-0 flex-1 overflow-y-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]";
 
   return (
     <div
@@ -248,7 +248,7 @@ export function ViewerFindPalette({
       className={cx(
         // Floats (contract #2): fixed, above the floating map cards, and it
         // reserves no stage width — the map behind it never reflows.
-        "fixed z-[70] flex flex-col overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-elevation-4",
+        "fixed z-[70] flex flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-elevation-4",
         // Below the panel tier the measured width is null and these own the box.
         frame?.width === null ? "right-3" : "",
         "motion-safe:animate-[sp-panel-in_150ms_ease-out]"
@@ -256,9 +256,9 @@ export function ViewerFindPalette({
     >
       {queryActive ? (
         <>
-          <div className="flex items-baseline justify-between gap-3 border-b border-[var(--admin-border)] px-4 pb-2.5 pt-3">
+          <div className="flex items-baseline justify-between gap-3 border-b border-[var(--sp-border-subtle)] px-4 pb-2.5 pt-3">
             <h2 id="viewer-results-title" className={eyebrowClassName}>Results</h2>
-            <span aria-live="polite" className="text-[11px] font-medium text-[var(--admin-text-muted)]">
+            <span aria-live="polite" className="text-[11px] font-medium text-[var(--sp-text-helper)]">
               {resultCountLabel} · {mappedSeatCount} mapped
             </span>
           </div>
@@ -291,21 +291,21 @@ export function ViewerFindPalette({
                       // row, and the two causes are kept separately
                       // announceable on purpose (accessibility-source).
                       className={cx(
-                        "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:opacity-60",
-                        selected ? "border-[var(--admin-primary-border)] bg-[var(--admin-paper)]" : "border-transparent"
+                        "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-60",
+                        selected ? "border-[var(--sp-brand-border)] bg-[var(--sp-brand-subtle)]" : "border-transparent"
                       )}
                     >
                       <span className="min-w-0">
                         <span className="flex min-w-0 items-center gap-2">
-                          <span className="truncate text-sm font-semibold text-[var(--admin-text-primary)]">{result.title}</span>
+                          <span className="truncate text-sm font-semibold text-[var(--sp-text-primary)]">{result.title}</span>
                           <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1", resultKindClass(result.kind))}>
                             {KIND_LABELS[result.kind]}
                           </span>
                         </span>
-                        <span className="mt-1 block truncate text-xs font-medium text-[var(--admin-text-secondary)]">{result.subtitle}</span>
-                        <span className="mt-0.5 block truncate text-[11px] text-[var(--admin-text-muted)]">{result.meta}</span>
+                        <span className="mt-1 block truncate text-xs font-medium text-[var(--sp-text-secondary)]">{result.subtitle}</span>
+                        <span className="mt-0.5 block truncate text-[11px] text-[var(--sp-text-helper)]">{result.meta}</span>
                       </span>
-                      <span className="shrink-0 rounded-full bg-[var(--admin-surface-muted)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--admin-text-muted)] ring-1 ring-[var(--admin-border)]">
+                      <span className="shrink-0 rounded-full bg-[var(--sp-background)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">
                         {result.seatIds.length || "-"}
                       </span>
                     </button>
@@ -315,8 +315,8 @@ export function ViewerFindPalette({
             </div>
           ) : (
             <div role="status" aria-live="polite" className="p-4">
-              <div className="text-sm font-semibold text-[var(--admin-text-primary)]">No results for “{query}”</div>
-              <p className="mt-1 text-xs font-medium leading-5 text-[var(--admin-text-muted)]">
+              <div className="text-sm font-semibold text-[var(--sp-text-primary)]">No results for “{query}”</div>
+              <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
                 No matching people, seats, departments, or zones.
               </p>
               <button
@@ -326,7 +326,7 @@ export function ViewerFindPalette({
                 // argument, which is both a leaked DOM reference and an
                 // argument the prop's type never promised.
                 onClick={() => onClearSearch()}
-                className="mt-3 border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--admin-text-secondary)] transition hover:border-[var(--admin-primary-border)] hover:text-[var(--admin-primary-cta)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)]"
+                className="mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-[11px] font-semibold text-[var(--sp-text-secondary)] transition hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
               >
                 Clear search
               </button>
@@ -345,7 +345,7 @@ export function ViewerFindPalette({
               role="group"
               aria-label="Zones"
               onMouseLeave={() => onZoneHoverChange(null)}
-              className="border-b border-[var(--admin-border)] px-4 pb-2.5 pt-3"
+              className="border-b border-[var(--sp-border-subtle)] px-4 pb-2.5 pt-3"
             >
               <span className={eyebrowClassName}>Zones — hover to preview, Enter to filter</span>
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -362,10 +362,10 @@ export function ViewerFindPalette({
                       onFocus={() => onZoneHoverChange(chip.name)}
                       onBlur={() => onZoneHoverChange(null)}
                       className={cx(
-                        "inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus-ring-color)]",
+                        "inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
                         pinned
-                          ? "border-[var(--admin-primary)] bg-[var(--admin-primary-soft)] text-[var(--admin-primary-on-soft)]"
-                          : "border-[var(--admin-border)] bg-[var(--admin-surface-alt)] text-[var(--admin-text-secondary)] hover:border-[var(--admin-primary-border)]"
+                          ? "border-[var(--sp-brand)] bg-[var(--sp-brand-wash)] text-[var(--sp-brand-text)]"
+                          : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)] hover:border-[var(--sp-brand-border)]"
                       )}
                     >
                       {chip.name}
@@ -410,7 +410,7 @@ export function ViewerFindPalette({
                   key={row.id}
                   data-vindex={segment.index}
                   data-vpinned={segment.pinned ? "" : undefined}
-                  className="border-b border-[var(--admin-surface-alt)] last:border-b-0"
+                  className="border-b border-[var(--sp-background)] last:border-b-0"
                 >
                   {/* Unseated people stay listed and honest, never openable
                       (contract #9): the row is disabled and its trailing cell
@@ -434,21 +434,21 @@ export function ViewerFindPalette({
                     // line-height the pair alone is 37px, which pushed the row
                     // to 54 and cost a launch-scale directory a third of its
                     // visible names.
-                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border border-transparent px-2 py-1.5 text-left transition hover:border-[var(--admin-primary-border)] hover:bg-[var(--admin-paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--admin-focus)] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border border-transparent px-2 py-1.5 text-left transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <span aria-hidden="true" className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--admin-surface-alt)] text-[10px] font-bold text-[var(--admin-text-secondary)]">
+                    <span aria-hidden="true" className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-background)] text-[10px] font-bold text-[var(--sp-text-secondary)]">
                       {buildInitials(row.title) || "?"}
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-[13px] font-semibold leading-[1.25] text-[var(--admin-text-primary)]">{row.title}</span>
-                      <span className="block truncate text-[11px] font-medium leading-[1.25] text-[var(--admin-text-muted)]">{row.subtitle}</span>
+                      <span className="block truncate text-[13px] font-semibold leading-[1.25] text-[var(--sp-text-primary)]">{row.title}</span>
+                      <span className="block truncate text-[11px] font-medium leading-[1.25] text-[var(--sp-text-helper)]">{row.subtitle}</span>
                     </span>
                     {row.seatId ? (
-                      <span className="shrink-0 rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-alt)] px-2 py-0.5 font-mono text-[10px] font-semibold text-[var(--admin-text-secondary)]">
+                      <span className="shrink-0 rounded-full border border-[var(--sp-border-subtle)] bg-[var(--sp-background)] px-2 py-0.5 font-mono text-[10px] font-semibold text-[var(--sp-text-secondary)]">
                         {row.subtitle.split(" · ")[0]}
                       </span>
                     ) : (
-                      <span className="shrink-0 text-[10px] font-medium text-[var(--admin-text-muted)]">No seat</span>
+                      <span className="shrink-0 text-[10px] font-medium text-[var(--sp-text-helper)]">No seat</span>
                     )}
                   </button>
                 </div>
@@ -463,7 +463,7 @@ export function ViewerFindPalette({
           rather than decoration. Browse mode pairs it with the feed's own
           "N people · M seated"; in query mode the header already carries the
           live count, so a second number here would only compete with it. */}
-      <div className="flex items-center justify-between gap-3 border-t border-[var(--admin-border)] px-4 py-2 text-[11px] font-medium text-[var(--admin-text-muted)]">
+      <div className="flex items-center justify-between gap-3 border-t border-[var(--sp-border-subtle)] px-4 py-2 text-[11px] font-medium text-[var(--sp-text-helper)]">
         <span>↑↓ to move · Enter opens · Esc closes</span>
         {queryActive ? null : <span>{browse.summary}</span>}
       </div>
