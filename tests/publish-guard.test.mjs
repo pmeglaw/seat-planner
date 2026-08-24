@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 
@@ -113,6 +113,25 @@ test("isLocalSupabaseUrl recognizes only genuinely local hosts", () => {
   assert.equal(isLocalSupabaseUrl("https://localhost.supabase.co"), false);
   assert.equal(isLocalSupabaseUrl("https://127.0.0.1.evil.example"), false);
   assert.equal(isLocalSupabaseUrl(PROD_URL), false);
+});
+
+// Machine hygiene pin: the guard's production signal is VERCEL_ENV as set by
+// the Vercel platform. A VERCEL_ENV line in a developer's .env.local (the
+// classic source is `vercel env pull --environment=production`) feeds the
+// guard "production" on a local machine and defeats it entirely. CI has no
+// .env.local, so this only ever fires where the risk lives: a dev machine.
+test(".env.local must not define VERCEL_ENV", (t) => {
+  const envLocalUrl = new URL("../.env.local", import.meta.url);
+  if (!existsSync(envLocalUrl)) {
+    return t.skip(".env.local absent (CI) — nothing to check");
+  }
+  const envLocal = readFileSync(envLocalUrl, "utf8");
+  assert.ok(
+    !/^\s*(?:export\s+)?VERCEL_ENV\s*=/m.test(envLocal),
+    ".env.local defines VERCEL_ENV. The publish guard reads VERCEL_ENV from " +
+      "the Vercel platform as its proof of production; a local definition " +
+      "defeats it — delete the line."
+  );
 });
 
 // Source pin: the guard is only worth anything if publishSeatMapAction calls
