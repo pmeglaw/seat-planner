@@ -285,8 +285,8 @@ export function ViewerSeatFinder({
   // computed from the actual seat set (no hardcoded frame width; add seats
   // that tighten pitch and the tier retreats by construction). The ref
   // carries the deadband: fit mode makes the frame width CONTINUOUS under
-  // window resize, so textTierActive holds an entered tier until it is a full
-  // nudge amplitude underwater instead of flapping at the boundary.
+  // window resize, so textTierActive holds an entered tier across a
+  // jitter-sized slack band instead of flapping at the boundary.
   const textTierWasActiveRef = useRef(false);
   const textTier = useMemo(
     () => textTierActive(

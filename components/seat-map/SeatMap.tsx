@@ -2434,8 +2434,8 @@ export function SeatMap({
   // below the collision threshold and 12px text at or above it, computed from
   // the actual seat set (no hardcoded frame width or per-base zoom table).
   // The ref carries the deadband: fit mode keeps the frame width CONTINUOUS
-  // under window resize, so textTierActive holds an entered tier until it is
-  // a full nudge amplitude underwater instead of flapping at the boundary.
+  // under window resize, so textTierActive holds an entered tier across a
+  // jitter-sized slack band instead of flapping at the boundary.
   const textTierWasActiveRef = useRef(false);
   const textTier = useMemo(
     () => textTierActive(

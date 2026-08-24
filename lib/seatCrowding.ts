@@ -51,12 +51,16 @@ export const TEXT_TIER_NAME_OBSTACLE_PX = { w: 124, h: 40 } as const;
 export const TEXT_TIER_CLEARANCE_PX: CrowdingClearance = { x: 48, y: 24 };
 // Deadband (hysteresis): fit mode keeps the rendered frame width CONTINUOUS
 // under window resize, so a single enter/exit boundary would flap the whole
-// marker layer while a user drags a window edge across it. Enter when the
-// text-tier footprints are fully clear; exit only once they are more than one
-// nudge amplitude underwater — inside the band, any residual overlap is ≤ the
-// vertical travel the token-nudge system can recover, so the tier holds
-// legibly instead of flickering.
-export const TEXT_TIER_EXIT_SLACK_PX = PILL_NUDGE_PX;
+// marker layer while a user drags a window edge across it. The band only
+// needs to exceed resize jitter — a pixel or two of FRAME width — and the
+// slack here is in FOOTPRINT px, which the tightest pitch multiplies into
+// frame width (1px of footprint ≈ 34px of frame at prod's 0.0294 pitch, so
+// 2px ≈ a ~68px band). Owner re-ruling 2026-08-24: the original clear−14px
+// spec was approved without that unit conversion — 14px of footprint is
+// ~477px of frame width, which isn't flicker protection but visible
+// path-dependence (two windows at the same width showing different tiers
+// depending on arrival direction). Keep this jitter-sized.
+export const TEXT_TIER_EXIT_SLACK_PX = 2;
 
 // Conservative footprint for a resting name/prominent token — sized to the
 // WIDEST variant so the scorer is never blind to a real overlap: passive

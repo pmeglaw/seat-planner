@@ -3,7 +3,6 @@ import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 import test from "node:test";
 
 const {
-  PILL_NUDGE_PX,
   TEXT_TIER_CLEARANCE_PX,
   TEXT_TIER_CODE_PILL_SIZE_PX,
   TEXT_TIER_EXIT_SLACK_PX,
@@ -84,14 +83,21 @@ test("deadband: continuous width sweep across the boundary never oscillates", ()
   assert.equal(transitions.length, 2, `expected 2 transitions, got ${JSON.stringify(transitions)}`);
   assert.equal(transitions[0].to, true);
   assert.equal(transitions[1].to, false);
-  // Hysteresis is real: the exit width sits a full nudge amplitude of pitch
-  // below the enter width, so boundary jitter cannot flap the marker layer.
+  // Hysteresis is jitter-sized and no larger (owner re-ruling 2026-08-24):
+  // the band must exceed resize noise, but a wide band is path-dependence —
+  // two windows at the same width showing different tiers depending on
+  // arrival direction. Pin both edges of the slack's frame-width conversion.
   const enterWidth = transitions[0].width;
   const exitWidth = transitions[1].width;
   const pitch = 0.0294;
+  const bandWidth = enterWidth - exitWidth;
   assert.ok(
-    enterWidth - exitWidth >= (TEXT_TIER_EXIT_SLACK_PX / pitch) * 0.9,
+    bandWidth >= (TEXT_TIER_EXIT_SLACK_PX / pitch) * 0.9,
     `deadband too narrow: enter ${enterWidth}, exit ${exitWidth}`
+  );
+  assert.ok(
+    bandWidth <= (TEXT_TIER_EXIT_SLACK_PX / pitch) * 1.2 + 2,
+    `deadband too wide (path-dependence): enter ${enterWidth}, exit ${exitWidth}`
   );
 
   // Jitter directly across the enter boundary: once entered, the tier holds.
@@ -104,14 +110,18 @@ test("deadband: continuous width sweep across the boundary never oscillates", ()
   assert.deepEqual(states, [false, true, true, true, true]);
 });
 
-test("exit slack equals one nudge amplitude — in-band overlap stays recoverable", () => {
-  assert.equal(TEXT_TIER_EXIT_SLACK_PX, PILL_NUDGE_PX);
+test("exit slack is jitter-sized — in-band overlap still de-collides", () => {
+  // Owner re-ruling 2026-08-24: slack is in FOOTPRINT px and the tightest
+  // pitch multiplies it into frame width (~34px of frame per footprint px),
+  // so it only needs to beat resize jitter — 2px ≈ a ~68px band. Anything
+  // like the original 14 is ~477px of visible path-dependence.
+  assert.equal(TEXT_TIER_EXIT_SLACK_PX, 2);
   // Inside the deadband the residual footprint overlap is at most the slack,
   // and the nudge scorer (fed the text-tier geometry) resolves it: a pair one
-  // slack-width tighter than the enter threshold still gets divergent rows.
+  // px tighter than the enter threshold still gets divergent rows.
   const pxPerNormX = 1000;
   const pxPerNormY = yScale(1000);
-  const pitchPx = TEXT_TIER_CODE_PILL_SIZE_PX.w - TEXT_TIER_EXIT_SLACK_PX + 2; // 36px — in-band
+  const pitchPx = TEXT_TIER_CODE_PILL_SIZE_PX.w - TEXT_TIER_EXIT_SLACK_PX + 1; // 47px — in-band
   const pair = [
     { id: "a", x: 0.5, y: 0.5 },
     { id: "b", x: 0.5 + pitchPx / pxPerNormX, y: 0.5 }
