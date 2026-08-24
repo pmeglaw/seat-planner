@@ -86,3 +86,18 @@ Rule for this branch: renames and twin deletion only — nothing here was acted 
   No control inside a chrome zone uses a focus ring offset today (audited),
   but a future light-ringed control nested in a zone would get a #262626
   offset in light theme. The zone comment in globals.css flags it.
+
+## PR-C severity frame (2026-08-24)
+
+- **The correct 1.4.1 severity frame is PAIRWISE, not per-state.** The original
+  §8 audit reported "4 of 9 states fail"; measuring every pair showed **27 of
+  36 pairs indistinguishable in greyscale by fill** (≤1.27:1 — worst cluster
+  search / target-valid / target-invalid / reserved, all ≈1.00–1.01:1). A
+  per-state frame undercounts because a state "passes" if it has *any* signal,
+  while what users resolve is always a pair. `scripts/marker-contrast.mjs`
+  (wired into `tests/marker-contrast.test.mjs`) enforces the pairwise frame:
+  every pair must differ on fill texture, glyph, or geometry — never hue alone.
+- `cursor: not-allowed` on invalid targets: requested as if it were PR-A scope,
+  but it was never there — PASS1 §8 deferred it to PR-C (PR-A #434 was focus
+  tokens only). Landed in PR-C, on invalid targets only (not on unavailable
+  seats, which still open the inspector — the click is allowed).

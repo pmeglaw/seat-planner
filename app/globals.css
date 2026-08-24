@@ -481,9 +481,16 @@
      raster. Now tokenized in JSX (SeatMarker.tsx ~234, ~239, ~473), so this
      block can finally supply the table's dark pill fills and a low-alpha
      white ring tuned for a dark ground. */
-  --sp-marker-available-surface: rgba(31, 31, 31, 0.95);  /* spec: available pill #1f1f1f */
-  --sp-marker-assigned-surface: rgba(38, 38, 38, 0.95);   /* spec: assigned pill #262626 */
+  --sp-marker-available-surface: rgba(31, 31, 31, 0.55);  /* PR-C hollow: 55% frost of the spec's #1f1f1f available pill */
+  --sp-marker-assigned-surface: rgba(38, 38, 38, 0.95);   /* spec: assigned pill #262626 — stays SOLID (occupied) */
   --sp-marker-pill-ring: rgba(255, 255, 255, 0.12);
+  /* PR-C hollow/glyph dark values. Reserved joins available on the frosted
+     fill (light theme's value is white-based, so the dark block must
+     override). Glyph tokens that alias --sp-status-* resolve dark
+     automatically and need no line here; the two below are literals. */
+  --sp-marker-reserved-surface: rgba(31, 31, 31, 0.55);
+  --sp-marker-unavailable-hatch-stroke: #7a7a7a; /* 4.2:1 on the #161616 unavailable fill */
+  --sp-marker-glyph-ink: #161616; /* dark badge fills brighten (#42be65 / #fa4d56 / #08bdba): dark ink 8.1 / 5.4 / 7.8:1 */
 
   /* Available-pill ink (fixwave finding 3): --sp-marker-ink used to
      be deliberately left alone because it only ever painted text on the
@@ -798,13 +805,9 @@
   --sp-legend-move-origin-surface: #F7F6F2;
   --sp-legend-move-origin-border: #B8AEA2;
   --sp-legend-move-origin-text: #55504A;
-  --sp-legend-target-valid-surface: #DEF3E4;
-  --sp-legend-target-valid-border: #1D6E41;
-  --sp-legend-target-valid-text: #1D6E41;
-  --sp-legend-target-invalid-surface: #ffffff;
-  --sp-legend-target-invalid-border: #8E8276;
-  --sp-legend-target-invalid-text: #6E655A;
-  --sp-legend-target-invalid-accent: #B3232C;
+  /* --sp-legend-target-{valid,invalid}-* retired by PR-C: both arms of the
+     target tone swap are gone (dormant admin arm included) — validity renders
+     as ✓/✕ glyphs over the preserved status fill. */
 
   /* Live seat-pill palette — the values SeatMarker's shipped (viewer-variant)
      branch actually renders, promoted 2026-08-05 from raw hex in
@@ -824,15 +827,39 @@
      literals `bg-white/95` (both pills) / `ring-white/45` (base ring) so
      the dark-theme block above has a token to override — pixel-identical
      to the literals they replace. */
-  --sp-marker-available-surface: rgba(255, 255, 255, 0.95);
+  /* PR-C two-axis vocabulary (owner ruling 2026-08-24). FILL = availability:
+     solid (opaque, occupied) / hollow (frosted 55% — open or held; the raster
+     ghosting through IS the signal, greyscale-safe) / hatched (structurally
+     unusable). GLYPH = reason: none / dot (person attached) / check (valid
+     target) / cross (blocked). Borders carry ZERO semantic weight — the
+     group-hover repaint to --sp-marker-active-edge erases them at exactly
+     the moment of inspection; state hues on borders below are redundancy
+     only. Measured pairs live in scripts/marker-contrast.mjs (wired into
+     tests/marker-contrast.test.mjs); ink #453D33 stays ≥5.3:1 even over a
+     mid-gray raster line behind the 55% frost (worst case, blur-softened). */
+  --sp-marker-available-surface: rgba(255, 255, 255, 0.55);
   --sp-marker-assigned-surface: rgba(255, 255, 255, 0.95);
   --sp-marker-pill-ring: rgba(255, 255, 255, 0.45);
+  --sp-marker-assigned-glyph: var(--sp-status-success-strong);
   --sp-marker-reserved-border: color-mix(in srgb, var(--sp-status-pending-strong) 55%, transparent);
-  --sp-marker-reserved-surface: color-mix(in srgb, var(--sp-status-pending-surface) 95%, transparent);
+  --sp-marker-reserved-surface: rgba(255, 255, 255, 0.55);
   --sp-marker-reserved-text: var(--sp-status-pending-text);
+  --sp-marker-reserved-glyph: var(--sp-status-pending-strong);
   --sp-marker-unavailable-border: color-mix(in srgb, var(--sp-neutral-muted) 90%, transparent);
   --sp-marker-unavailable-surface: color-mix(in srgb, var(--sp-neutral-strong) 92%, transparent);
   --sp-marker-unavailable-text: #696159;
+  /* Hatch strokes 5.31:1 on the HOVERED (brightness 1.05) unavailable fill;
+     bg-clip-padding in SeatMarker keeps strokes off the border, so the hover
+     edge's thin 3.11:1 against this fill is unchanged by the hatch. */
+  --sp-marker-unavailable-hatch-stroke: #696159;
+  --sp-marker-unavailable-hatch: repeating-linear-gradient(135deg, var(--sp-marker-unavailable-hatch-stroke) 0, var(--sp-marker-unavailable-hatch-stroke) 1px, transparent 1px, transparent 4px);
+  /* Target-mode badges: white glyph ink on strong status fills (✓ 6.25:1,
+     ✕ 6.58:1); dark theme flips ink to #161616 because the strong hues
+     brighten there. The D badge shares this ink (fixes the dark theme's
+     white-on-#08bdba ≈2.3:1 badge, a pre-PR-C latent fail). */
+  --sp-marker-valid-glyph: var(--sp-status-success-strong);
+  --sp-marker-invalid-glyph: var(--sp-status-danger-strong);
+  --sp-marker-glyph-ink: #ffffff;
   --sp-marker-draft-border: color-mix(in srgb, var(--sp-status-pending-strong) 70%, transparent);
   --sp-marker-draft-surface: color-mix(in srgb, var(--sp-status-pending-surface) 95%, transparent);
   --sp-marker-draft-text: var(--sp-status-pending-text);
@@ -853,9 +880,9 @@
   --sp-marker-positive-ring: color-mix(in srgb, var(--sp-status-success-border) 80%, transparent);
   --sp-marker-positive-outline: color-mix(in srgb, var(--sp-status-success-strong) 70%, transparent);
   --sp-marker-planner-ring: color-mix(in srgb, var(--sp-status-success-strong) 55%, transparent);
-  --sp-marker-invalid-border: var(--sp-status-danger-strong);
-  --sp-marker-invalid-surface: var(--sp-status-danger-surface);
-  --sp-marker-invalid-text: var(--sp-status-danger-text);
+  /* --sp-marker-invalid-{border,surface,text} retired by PR-C: the invalid
+     tone swap is gone (underlying fill preserved; ✕ badge carries validity
+     via --sp-marker-invalid-glyph above). */
   --sp-marker-neutral-border: var(--sp-text-helper);
   --sp-marker-neutral-surface: #F1ECE4;
   --sp-marker-neutral-text: #353532;
