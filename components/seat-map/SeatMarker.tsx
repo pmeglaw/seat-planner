@@ -408,13 +408,21 @@ function SeatMarkerComponent({
   // Type-floor Ruling 3 (2026-08-24): the expanded badge is the engaged,
   // reading state, so its code eyebrow holds the 12px floor and demotes via
   // WEIGHT (medium vs the name's bold) + the opacity above, not via size.
-  // The resting-pill branches stay sub-12 pending the PR-2 zoom-threshold
-  // ruling (below the threshold they function as marks, not text).
+  // PR-2 ruling extension: at the text tier the NAME-MODE eyebrow follows the
+  // same rule — 12px, medium weight vs the name's bold, opacity-90 (name
+  // pills are light status surfaces, the same case the 90% figure above was
+  // measured for). Measured live 2026-08-24: the 12px eyebrow + 12px name
+  // land every pod name pill at 39.5px, inside the 40px
+  // TEXT_TIER_NAME_OBSTACLE_PX the nudge scorer models — it fits, so the
+  // eyebrow stays (the ruled fallback was dropping it at tier). Below the
+  // threshold the resting-pill branches stay sub-12 (marks, not text).
   const codeTextClass = expandedNameBadge
     ? `text-[12px] font-medium tracking-[0.04em] ${lightProminentSurface ? "opacity-90" : "opacity-70"}`
     : tokenMode === "selected" || tokenMode === "prominent"
       ? "text-[10px] font-extrabold"
-      : "text-[9.5px] font-extrabold";
+      : textTier
+        ? "text-[12px] font-medium tracking-[0.04em] opacity-90"
+        : "text-[9.5px] font-extrabold";
   const markerUsesTrueCoordinate = addSeatMode || swapMode || moveEmployeeMode;
   const tokenCanHugViewportEdge = showInlineName || prominentToken;
   const resolvedViewportEdge = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? "none" : viewportEdge;
@@ -618,7 +626,7 @@ function SeatMarkerComponent({
           </span>
         ) : (
           <span className="relative z-10 flex w-full min-w-0 flex-col items-start text-left">
-            <span translate="no" className={["whitespace-nowrap leading-[1.05]", codeTextClass].join(" ")}>{seat.label}</span>
+            <span translate="no" className={["whitespace-nowrap leading-[1.05]", LABEL_SIZE_TRANSITION_CLASS, codeTextClass].join(" ")}>{seat.label}</span>
             {/* Word separator for subtree-text serializers — see the twin
                 comment in the hover-disclosure branch above. */}
             {showInlineName && " "}
