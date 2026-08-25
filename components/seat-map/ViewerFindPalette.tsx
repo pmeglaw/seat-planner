@@ -278,7 +278,7 @@ export function ViewerFindPalette({
         <>
           <div className="flex items-baseline justify-between gap-3 border-b border-[var(--sp-border-subtle)] px-4 pb-2.5 pt-3">
             <h2 id="viewer-results-title" className={eyebrowClassName}>Results</h2>
-            <span aria-live="polite" className="text-[11px] font-medium text-[var(--sp-text-helper)]">
+            <span aria-live="polite" className="text-xs font-medium text-[var(--sp-text-helper)]">
               {resultCountLabel} · {mappedSeatCount} mapped
             </span>
           </div>
@@ -318,12 +318,16 @@ export function ViewerFindPalette({
                       <span className="min-w-0">
                         <span className="flex min-w-0 items-center gap-2">
                           <span className="truncate text-sm font-semibold text-[var(--sp-text-primary)]">{result.title}</span>
-                          <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1", resultKindClass(result.kind))}>
+                          {/* 12px per the P3 ruling (2026-08-25) — this was the
+                              9px floor-breaker, and it is a WORD (the kind
+                              half of the badge's color+word signal pair), so
+                              F6's words-off-canvas logic applies. */}
+                          <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wide ring-1", resultKindClass(result.kind))}>
                             {KIND_LABELS[result.kind]}
                           </span>
                         </span>
                         <span className="mt-1 block truncate text-xs font-medium text-[var(--sp-text-secondary)]">{result.subtitle}</span>
-                        <span className="mt-0.5 block truncate text-[11px] text-[var(--sp-text-helper)]">{result.meta}</span>
+                        <span className="mt-0.5 block truncate text-xs text-[var(--sp-text-helper)]">{result.meta}</span>
                       </span>
                       <span className="shrink-0 rounded-full bg-[var(--sp-background)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">
                         {result.seatIds.length || "-"}
@@ -346,7 +350,7 @@ export function ViewerFindPalette({
                 // argument, which is both a leaked DOM reference and an
                 // argument the prop's type never promised.
                 onClick={() => onClearSearch()}
-                className="mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-[11px] font-semibold text-[var(--sp-text-secondary)] transition hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+                className="mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
               >
                 Clear search
               </button>
@@ -389,7 +393,7 @@ export function ViewerFindPalette({
                       onFocus={() => onZoneHoverChange(chip.name)}
                       onBlur={() => onZoneHoverChange(null)}
                       className={cx(
-                        "inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
+                        "inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
                         pinned
                           ? "border-[var(--sp-brand)] bg-[var(--sp-brand-wash)] text-[var(--sp-brand-text)]"
                           : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)] hover:border-[var(--sp-brand-border)]"
@@ -464,11 +468,14 @@ export function ViewerFindPalette({
                     onClick={() => onOpenRow(row)}
                     onPointerEnter={() => onRowHoverChange(row.seatId)}
                     onPointerLeave={() => onRowHoverChange(null)}
-                    // ~40px rows (contract #3). The two text lines need an
+                    // Compact rows (contract #3). The two text lines need an
                     // explicit leading to get there: at the inherited body
                     // line-height the pair alone is 37px, which pushed the row
                     // to 54 and cost a launch-scale directory a third of its
-                    // visible names.
+                    // visible names. The P3 ruling (2026-08-25) raised the
+                    // subtitle to the 12px floor, growing the row ~40→44px —
+                    // an accepted cost (~10% fewer names per screen), chosen
+                    // over tightening leading to hold 40.
                     className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border border-transparent px-2 py-1.5 text-left transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <span aria-hidden="true" className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-background)] text-[10px] font-bold text-[var(--sp-text-secondary)]">
@@ -476,14 +483,14 @@ export function ViewerFindPalette({
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-[13px] font-semibold leading-[1.25] text-[var(--sp-text-primary)]">{row.title}</span>
-                      <span className="block truncate text-[11px] font-medium leading-[1.25] text-[var(--sp-text-helper)]">{row.subtitle}</span>
+                      <span className="block truncate text-xs font-medium leading-[1.25] text-[var(--sp-text-helper)]">{row.subtitle}</span>
                     </span>
                     {row.seatId ? (
                       <span className="shrink-0 rounded-full border border-[var(--sp-border-subtle)] bg-[var(--sp-background)] px-2 py-0.5 font-mono text-[10px] font-semibold text-[var(--sp-text-secondary)]">
                         {row.subtitle.split(" · ")[0]}
                       </span>
                     ) : (
-                      <span className="shrink-0 text-[10px] font-medium text-[var(--sp-text-helper)]">No seat</span>
+                      <span className="shrink-0 text-xs font-medium text-[var(--sp-text-helper)]">No seat</span>
                     )}
                   </button>
                 </div>
@@ -507,7 +514,7 @@ export function ViewerFindPalette({
           narrow fine-pointer widths (the 375px two-line wrap). */}
       <div
         className={cx(
-          "flex items-center justify-between gap-3 border-t border-[var(--sp-border-subtle)] px-4 py-2 text-[11px] font-medium text-[var(--sp-text-helper)]",
+          "flex items-center justify-between gap-3 border-t border-[var(--sp-border-subtle)] px-4 py-2 text-xs font-medium text-[var(--sp-text-helper)]",
           queryActive && "[@media(pointer:coarse)]:hidden"
         )}
       >

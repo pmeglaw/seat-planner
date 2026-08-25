@@ -32,7 +32,13 @@ Contract #9 ("unseated people stay listed and honest, never openable") was ruled
 
 **RULED 2026-08-25 — seated-first grouping.** Owner picked it over a seated-only default with reveal (hides 86 people behind a click, adds toggle state) and over accept-as-is. Contract #9 is intact — the unseated stay listed, disabled and honest — they just follow every openable row. **FIXED same day:** `buildViewerPaletteBrowse` sorts seated above unseated with A→Z inside each group; the eyebrow reads "People — seated first, A to Z". One implementation deviation from the option as described: **no in-list section header at the group boundary** — the virtual window measures a uniform row stride and sizes its spacers from it, so a taller header-bearing row would corrupt scroll geometry (`useVirtualListWindow` measures `rows[1].offsetTop - rows[0].offsetTop`); the boundary reads without it (full-opacity rows with seat-code pills, then the grey "No seat" block), and the eyebrow carries the honesty. Ordering pinned in `tests/viewer-find-palette.test.mjs` (seated-precedes-unseated with an alphabetical decoy).
 
-## P3 — The find path carries the widest sub-12px spread in the app. **(medium — type-floor ruling, same logic that closed F6)**
+## P3 — The find path carries the widest sub-12px spread in the app. **(medium — RULED + FIXED)**
+
+**RULED 2026-08-25 (three-part owner ruling) + FIXED same day:**
+
+- **Words → 12px floor (eight sites raised):** header count, result meta, "Clear search", zone chip labels, browse row subtitles, "No seat", footer legend/summary — and the **9px kind badge**, ruled a word (it is the word half of the badge's color+word signal pair), raised to 12px with its full labels (DEPARTMENT measures 97px, no row overflow). Browse rows grew ~40→46px measured (~10% fewer names per screen) — an accepted cost, chosen over tightening leading to hold 40.
+- **Marks exempt (four sites stay):** the mono seat-code pill, both mono seat counts (zone chip + result row), and the aria-hidden initials monogram — codes and numerals in pills, not reading text; the seat code also reads at 12px in the subtitle, so nothing is read-path-only at 10px.
+- Ledger ratcheted in `type-floor-source`: ViewerFindPalette 12 → 4, with the exemption list named in the ledger comment.
 
 `ViewerFindPalette.tsx` holds 12 ledger instances (`type-floor-source`), all Group 3 "not yet ruled", and they are words on chrome, not map canvas: the **9px** result-kind badge (the smallest text on any shipped surface, on every query row), **10px** mono seat-code pills / chip counts / "No seat", **11px** row subtitles, result meta, zone chips, header count, and footer legend. F6 just ruled that words on the sanctioned *read* surface obey the 12px floor; the palette is now the sanctioned *find* surface, and the same weight-raise applies. A ruling should also say which of these are mark-adjacent (the mono seat-code pill and chip count have a real mark argument) versus reading text (subtitle, meta, footer).
 
@@ -67,9 +73,9 @@ Pinned in `tests/viewer-find-palette-source.test.mjs` (modality + mode scoping) 
 |---|---|---|---|
 | P1 | Keyboard chip-pin drops focus to `<body>` | high | **fixed** — handoff added, pinned in `focus-handoff-source` |
 | P2 | Browse feed 85% disabled rows at 101-person scale | medium | **ruled + fixed** — seated-first grouping, ordering pinned in the lib test |
-| P3 | 9–11px words across the find surface (12 ledger sites) | medium | ruling (extend the F6 floor logic; separate marks from words) |
+| P3 | 9–11px words across the find surface (12 ledger sites) | medium | **ruled + fixed** — 8 word sites to 12px, 4 marks exempt, ledger 12→4 |
 | P4 | Stale frame on resize across the 900px breakpoint | low-medium | **fixed** — rAF re-read + `ResizeObserver` on the anchor, pinned in `viewer-find-palette-source` |
 | P5 | Keyboard copy on touch; "Enter opens" false in browse mode | low | **fixed** — modality + mode scoping, pinned in both palette test files |
 | P6 | Design facts recorded (pin-closes, no-reflow, no-combobox) | — | recorded |
 
-Nothing blocks first users. P1 (the only defect) is fixed; P2 is ruled and fixed (seated-first), which settles the feed shape P3's floor work has to fit — P3 (the palette type-floor ruling) is the one item still open.
+Nothing blocks first users. P1 (the only defect) is fixed; P2 is ruled and fixed (seated-first); P3 is ruled and fixed (12px floor for words, marks exempt); P5's copy is scoped per modality and mode. **Every finding in this assessment is closed.**
