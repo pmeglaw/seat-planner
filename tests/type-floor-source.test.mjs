@@ -42,7 +42,11 @@ const SUB12_LEDGER = new Map(Object.entries({
   "components/seat-map/MapZoomControl.tsx": 2,
   "components/seat-map/NamesVisibilityToggle.tsx": 1,
   "components/seat-map/ResultsPanel.tsx": 6,
-  "components/seat-map/SeatInspector.tsx": 12,
+  // F6 ruling 2026-08-25: the three viewer read-path lines (status chip,
+  // seat-code · zone locator, contact field labels) were raised to the 12px
+  // floor — the inspector is the sanctioned read surface. Remaining 9 are
+  // editor chrome (action tiles, footer, monogram, pills), still Group 3.
+  "components/seat-map/SeatInspector.tsx": 9,
   "components/seat-map/SeatMap.tsx": 10,
   "components/seat-map/ViewerFindPalette.tsx": 12,
   "components/seat-map/ViewerSeatFinder.tsx": 4,

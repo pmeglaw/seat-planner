@@ -153,8 +153,10 @@ Open from the assessment: F4 fix, F3/F6 rulings, F8 small fix, palette
 assessment. (F4 fixed #452 v1.61.2; F8 fixed by REMOVAL — the #432 chrome
 unification had already taken away the zone chips a setter would attach to,
 so contract #8's chip preview is viewer-only, not missing-on-admin. F3 ruled
-2026-08-25: ambiguity accepted, marker `title` removed — only F6 and the
-palette assessment remain.)
+2026-08-25: ambiguity accepted, marker `title` removed. F6 ruled + fixed
+2026-08-25: the three 11px inspector read-path lines raised to the 12px floor,
+`type-floor-source` ledger ratcheted 12 → 9 — only the palette assessment
+remains.)
 
 - **"Borders carry zero semantic weight" has TWO independent causes, and only
   one was written down.** The recorded one is the `group-hover:border` repaint.

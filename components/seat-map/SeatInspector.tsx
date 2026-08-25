@@ -331,7 +331,7 @@ function ContactFacts({ rows, canEdit }: { rows: ContactFactRow[]; canEdit: bool
               {row.label === "Email" ? <MailGlyph /> : <PhoneGlyph />}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="mb-0.5 text-[11px] leading-none text-[var(--sp-text-helper)]">
+              <p className="mb-0.5 text-xs leading-none text-[var(--sp-text-helper)]">
                 {row.label === "Email" ? "Email address" : "Internal extension"}
               </p>
               {row.label === "Email" ? (
@@ -1053,10 +1053,10 @@ export function SeatInspector({
         </div>
         {/* Meta row: soft status chip owns state; pin + code · zone are plain trailing facts. */}
         <div className="flex min-w-0 items-center gap-2">
-          <span className={["inline-flex shrink-0 items-center px-2.5 py-1 text-[11px] font-semibold leading-none", statusTagClass].join(" ")}>
+          <span className={["inline-flex shrink-0 items-center px-2.5 py-1 text-xs font-semibold leading-none", statusTagClass].join(" ")}>
             {currentStatusLabel}
           </span>
-          <span className="flex min-w-0 items-center gap-1.5 truncate text-[11px] font-medium text-[var(--sp-text-secondary)]">
+          <span className="flex min-w-0 items-center gap-1.5 truncate text-xs font-medium text-[var(--sp-text-secondary)]">
             <span aria-hidden="true" className="shrink-0 text-[var(--sp-button-primary)]"><PinGlyph /></span>
             <span className="font-mono">{selectedSeat.label}</span>
             <span className="text-[var(--sp-text-helper)]">·</span>

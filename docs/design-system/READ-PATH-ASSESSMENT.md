@@ -125,6 +125,8 @@ But it is **off the map canvas**, where #444 set a 12px floor, and three lines s
 
 `SeatInspector.tsx` carries a 12-site ledger in `tests/type-floor-source` that these sit inside, unruled. The second line is the one that answers *where do they sit* — the panel's whole reason to exist — and it is the smallest text on it.
 
+**RULED + FIXED 2026-08-25: all three raised to the 12px floor.** Owner ruling: these are words off the map canvas — squarely under the #444 floor (marks exempt, words not) — on the surface the browse ruling just sanctioned as *the* read surface. Layout absorbed the change (the locator line truncates, the meta row is flex); the `type-floor-source` ledger ratchets SeatInspector from 12 sub-12px instances to 9, all of them editor chrome (action tiles, footer, monogram, pills) that stays in Group 3 unruled.
+
 ### F7 — Keyboard parity is the strongest part of the whole path. Recording it so it is not re-litigated. **(no action)**
 
 Every measurement passed:
@@ -182,8 +184,8 @@ Worth settling before spending anything on F1/F2, because the answer changes wha
 | F3 | First name only visible; full name lives in the native `title` | medium | **closed** — ambiguity accepted, `title` removed (ruled 2026-08-25) |
 | F4 | `"Marcus Marcus Bell"` on all 15 occupied seats | medium | **fixed** — `accessibleSeatName` gated on `hasHoverDisclosure` |
 | F5 | No hover path at all on a touch laptop; 32px targets | medium | **closed** — browse ruling 2026-08-25 |
-| F6 | Three inspector lines at 11px, incl. the locator line | medium | ruling (weight raised: inspector is now the sanctioned read surface) |
+| F6 | Three inspector lines at 11px, incl. the locator line | medium | **fixed** — all three raised to 12px (ruled 2026-08-25) |
 | F7 | Keyboard parity complete | — | recorded |
 | F8 | Admin zone hover-wash is dead code | low | **fixed** — dead state removed; contract #8 chip-preview is viewer-only per #432 |
 
-Nothing here blocks first users on its own. The §7 reframing is ruled (browse — see above); what remains is F4 (fix), F3/F6 (rulings), F8 (small fix), and the palette assessment.
+Nothing here blocks first users on its own. The §7 reframing is ruled (browse — see above). F1–F8 are all closed, fixed, or recorded; the only remaining item from this assessment is the palette assessment (`ViewerFindPalette` as the first-class find path).
