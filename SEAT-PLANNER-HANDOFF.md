@@ -73,6 +73,8 @@ Target modes preserve the underlying fill so the admin sees both *"is this legal
 
 **MARKS are exempt** — graphical elements governed by non-text contrast (3:1), not text sizing: D badge, ✓, ✗, marker AI chip, the five-site "AI" chrome badge, login-illustration "C05". Registry pinned in `desktop-seat-marker-system-source.test.mjs`.
 
+**Sanctioned variant (ruled 2026-08-25, candidate B):** the Ask Planner card label (`SeatInspector.tsx:389`) holds eyebrow **metrics** — 12px semibold uppercase `tracking-[0.08em]`, matching `InspectorSectionLabel` (bold was a third emphasis device on already-uppercase, already-tracked words) — but keeps `--sp-ai-accent` **colour**: it marks an AI-touched surface, the same five-site vocabulary as the "AI" badge. Signal, not drift; consistency sweeps must not re-flag it. Condition measured per §6's hovered-surface rule: light `#8a3ffc` on hover wash `#f6f2ff` = **4.54:1** (pass at 12px), on white 5.00. Dark measured while at it: `#a56eff` on `#1f1f1f` rest 4.92, but on the dark hover wash composite (**4.31:1**) — pre-existing shortfall, parked in §9. Pinned beside the MARKS registry.
+
 ### The text tier (#446)
 
 Map-canvas labels are **marks** below a runtime-derived collision threshold and **text** at or above it. `textTierActive` (`lib/seatCrowding.ts`) derives from the same scalar that feeds `clearanceFromScale` — **no hardcoded threshold**. Add seats that tighten pitch and the tier retreats by construction.
@@ -121,28 +123,11 @@ Most allowlist reasons are claims about today's component tree — "no chrome mo
 
 ## 5. Open work
 
-The type-floor arc (#444 / #446 / #447) and the publish guard (#443 / #445) are **complete and prod-verified**. Two items remain.
+The type-floor arc (#444 / #446 / #447) and the publish guard (#443 / #445) are **complete and prod-verified**. The SeatInspector label ruling landed as candidate B — recorded in §3, pinned in `desktop-seat-marker-system-source.test.mjs`. One item remains.
 
 ### Hover disclosure + inspector as a first-class read path — unassessed
 
 §7's consequence: on laptop widths the map at fit shows marks, so hover disclosure and the inspector are the **primary** way anyone reads a name. Neither has been assessed as a primary path — they were built as fallbacks. This is an assessment task first (what's slow, what's missing, what breaks keyboard-only), not a build task.
-
-### Open ruling — the two unconverted SeatInspector labels
-
-PR-1's Ruling 3 set the eyebrow treatment: 12px, subordinate via **weight + colour, never size** — `eyebrowHeadingClass` = `text-xs font-semibold tracking-[0.12em] text-[var(--sp-text-helper)]` (`SeatInspector.tsx:102`, used by the CONTACT/SEAT headings). Two same-family labels rode the sweep unconverted. Both already sit at 12px, so the type-floor ledger has no opinion — this is a **vocabulary-consistency ruling, not a floor violation**, which is why it was deferred: PR-1 converted only the named sites, these two were flagged per the §8 family rule, and the owner asked for a plain restatement before acting either way.
-
-**The two labels:**
-
-1. **`InspectorSectionLabel`** — `SeatInspector.tsx:283` (component at :281). The static `h3` section headings of the flat disclosure sections. Currently `text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]` in a `pb-2.5 pt-3.5` block. Deviates from the ruled eyebrow only in **tracking** (0.08em vs 0.12em) and uppercase-via-class.
-2. **Ask Planner card label** — `SeatInspector.tsx:389` ("ASK PLANNER", inside the CTA card). Currently `text-xs font-bold uppercase tracking-[0.08em]`, colour inherited from the `:387` wrapper = `--sp-ai-accent`. Deviates in **weight** (bold vs semibold), **tracking**, and **colour** (AI accent vs helper). The adjacent 9.5px "AI" chip is a MARK — exempt, not part of this question.
-
-**Candidate treatments:**
-
-- **A — full unification.** Both take `eyebrowHeadingClass`. Cost: the Ask Planner label loses the accent colour that ties it to the five-site AI chrome vocabulary — weakens the AI affordance; two-line diff + a live visual pass (tests prove values, not assignment).
-- **B — metrics-only unification.** Tracking → 0.12em, Ask Planner weight → semibold; accent colour stays. Cost: same diff size; leaves colour as a sanctioned per-family variant that must be recorded, or it becomes the next unexplained deviation.
-- **C — record as deliberate variants.** No code change. Rationale available: a section heading is not a field eyebrow, and the accent colour is load-bearing AI vocabulary. Cost: one more special case carried in comments/doc.
-
-**What decides it:** contrast is already settled — `#8a3ffc` on white = 4.97:1 (measured, `globals.css`), dark `#a56eff` on `#161616` ≈ 6.0:1 — so no measurement forces a choice. Two checks are worth doing before ruling: (1) the accent label on the card's **hover** wash `--sp-ai-accent-soft` (`#f6f2ff`), per §6's "measure on the hovered surface" rule — if that dips under 4.5:1, colour must move and only B-without-colour or A remain; (2) one side-by-side screenshot of an open inspector showing all three treatments. Otherwise this is a taste ruling on consistency, and any of A/B/C is defensible.
 
 ---
 
@@ -204,6 +189,7 @@ Consequence: on laptop widths, hover disclosure and the inspector are the **prim
 | Arbitrary spacing values | 442 | Invisible to users; maintenance only |
 | Four near-identical greige hairlines | 4 | Needs an owner ruling |
 | `--admin-diff-vacated-text`, `--admin-paper`, §3.7 reception rows | 3 | Doc errors found during PR-B, parked under old names. See `NOTES.md` |
+| Dark AI accent on its hover wash: 4.31:1 | 1 hex or 1 alpha | `#a56eff` over `rgba(138,63,252,.16)`-on-`#1f1f1f` misses 4.5 (rest passes at 4.92). Pre-existing, found while measuring the §3 sanctioned variant. Fix is lighten the dark accent OR thin the dark wash — needs an owner ruling; touching the accent hex touches all five AI sites |
 
 ---
 
@@ -215,7 +201,7 @@ The design work is nearly out of runway. "Ready" means:
 - [x] **SeatSheet landed** (#447, v1.61.0) — `/my-seat` legible on a phone, which is where staff will open it
 - [x] **Publish guard landed, fail-closed** (#443 + #445, v1.58.0) — the only item whose downside was data
 - [ ] **Hover disclosure and the inspector are good**, because on laptop widths they are the primary read path — see §7. Not yet assessed as a first-class path (§5)
-- [ ] **SeatInspector label ruling** — the A/B/C decision written out in §5
+- [x] **SeatInspector label ruling** — candidate B, ruled + shipped 2026-08-25; recorded in §3, pinned in the marker-system source test
 - [ ] **A decision about who goes first and what you want to learn from them** — a product question, not a design one
 
 Everything in §9 can happen after people are using the app.

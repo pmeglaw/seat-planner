@@ -386,7 +386,14 @@ function AskPlannerSeatRow({ seat: selectedSeat, onExplainSeat }: { seat: SeatWi
       <span className="min-w-0">
         <span className="mb-1 flex items-center gap-2 text-[var(--sp-ai-accent)]">
           <span className="border border-[var(--sp-ai-accent)] px-1 text-[9.5px] font-bold tracking-[0.04em]">AI</span>
-          <span className="text-xs font-bold uppercase tracking-[0.08em]">Ask Planner</span>
+          {/* Sanctioned eyebrow variant (owner ruling 2026-08-25): eyebrow
+              metrics (semibold — uppercase + tracking already carry the
+              emphasis; bold would be a third device), but the colour stays
+              --sp-ai-accent from the wrapper: it marks an AI-touched surface,
+              same vocabulary as the five-site "AI" badge. Contrast measured
+              on the HOVER wash per the §6 rule: #8a3ffc on #f6f2ff = 4.54:1.
+              Pinned in desktop-seat-marker-system-source.test.mjs. */}
+          <span className="text-xs font-semibold uppercase tracking-[0.08em]">Ask Planner</span>
         </span>
         <span className="block truncate text-[13px] font-medium text-[var(--sp-text-primary)]">Ask Planner about this seat</span>
       </span>
