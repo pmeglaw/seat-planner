@@ -147,6 +147,11 @@ path (§5/§10 of the handoff; full findings in
 `docs/design-system/READ-PATH-ASSESSMENT.md`). Neither item was acted on beyond
 the comment correction noted below.
 
+**Ruled same day: hover is a browse affordance** (owner ruling, recorded in the
+assessment doc). F1/F2/F5 closed under it; §5/§7/§10 of the handoff updated.
+Open from the assessment: F4 fix, F3/F6 rulings, F8 small fix, palette
+assessment.
+
 - **"Borders carry zero semantic weight" has TWO independent causes, and only
   one was written down.** The recorded one is the `group-hover:border` repaint.
   The second is `statusToneClass` (`SeatMarker.tsx:269`): it collapses to `""`
