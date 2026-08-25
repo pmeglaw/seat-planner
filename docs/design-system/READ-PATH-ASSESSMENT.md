@@ -141,6 +141,8 @@ Keyboard-only is the best-served path, not the broken one. F1, F3 and F4 still a
 
 `SeatMap.tsx:315` declares `const [hoverZone] = useState<string | null>(null)` with **no setter**, so `buildZoneWash(hoverZone ?? …)` at `:2525` can only ever receive the pinned zone. The viewer has a live `setHoverZone` (`ViewerSeatFinder.tsx:230`). v12 contract #8's "the hovered chip wins over the pinned zone" is unimplemented on the admin surface, and the comment above it describes behaviour that cannot occur.
 
+**Fixed by removal, not wiring.** The dormancy was downstream of an owner ruling this assessment missed: the admin canvas filter UI — the zone chips a hover source would attach to — was removed 2026-08-20 (#432), and the structured facets themselves are dormant on that surface. There is nothing to wire a setter to without re-litigating #432. The setter-less state is deleted, the wash follows the (dormant) pinned facet, and contract #8's chip-hover preview is recorded as viewer-only by consequence of #432.
+
 ---
 
 ## The finding that reframes §7
@@ -180,6 +182,6 @@ Worth settling before spending anything on F1/F2, because the answer changes wha
 | F5 | No hover path at all on a touch laptop; 32px targets | medium | **closed** — browse ruling 2026-08-25 |
 | F6 | Three inspector lines at 11px, incl. the locator line | medium | ruling (weight raised: inspector is now the sanctioned read surface) |
 | F7 | Keyboard parity complete | — | recorded |
-| F8 | Admin zone hover-wash is dead code | low | small fix |
+| F8 | Admin zone hover-wash is dead code | low | **fixed** — dead state removed; contract #8 chip-preview is viewer-only per #432 |
 
 Nothing here blocks first users on its own. The §7 reframing is ruled (browse — see above); what remains is F4 (fix), F3/F6 (rulings), F8 (small fix), and the palette assessment.

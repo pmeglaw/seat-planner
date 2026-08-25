@@ -307,12 +307,6 @@ export function SeatMap({
   const [askPlannerOpen, setAskPlannerOpen] = useState(false);
   const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
   const [plannerHighlightedSeatIds, setPlannerHighlightedSeatIds] = useState<string[]>([]);
-  // Transient preview of a zone chip under the pointer/focus (v12 contract
-  // #8). Never a filter — it only decides which zone the map washes. Dormant
-  // since the canvas filter UI was removed (2026-08-20, owner): nothing on
-  // the admin surface sets it any more, but the wash plumbing stays shared
-  // with the viewer.
-  const [hoverZone] = useState<string | null>(null);
   const [chromeMenuOpen, setChromeMenuOpen] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
@@ -2517,13 +2511,17 @@ export function SeatMap({
     swapMode: Boolean(swapSourceSeatId || moveEmployeeSourceSeatId),
     draggingSeatId: null
   });
-  // Zone hover-wash (v12 contract #8): the hovered chip wins over the pinned
-  // zone filter, so moving along the chip row previews each zone in turn
-  // without disturbing what is actually filtered. Seats come from the visual
-  // set — the wash box must land in the same space as the markers it frames.
+  // Zone wash follows the pinned zone facet only. The chip-hover preview half
+  // of v12 contract #8 is viewer-only (ViewerSeatFinder): this surface lost
+  // its zone chips with the canvas filter UI (2026-08-20, owner / #432), so
+  // its hoverZone state was removed as dead code (F8, read-path assessment).
+  // `zone` itself is dormant here too (see the useSeatFilters note above) —
+  // the wash plumbing stays so the facet can return without rework. Seats
+  // come from the visual set — the wash box must land in the same space as
+  // the markers it frames.
   const zoneWash = useMemo(
-    () => buildZoneWash(hoverZone ?? (zone !== "all" ? zone : null), visualLocalSeats),
-    [hoverZone, visualLocalSeats, zone]
+    () => buildZoneWash(zone !== "all" ? zone : null, visualLocalSeats),
+    [visualLocalSeats, zone]
   );
   const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;

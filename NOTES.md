@@ -150,7 +150,9 @@ the comment correction noted below.
 **Ruled same day: hover is a browse affordance** (owner ruling, recorded in the
 assessment doc). F1/F2/F5 closed under it; §5/§7/§10 of the handoff updated.
 Open from the assessment: F4 fix, F3/F6 rulings, F8 small fix, palette
-assessment.
+assessment. (F4 fixed #452 v1.61.2; F8 fixed by REMOVAL — the #432 chrome
+unification had already taken away the zone chips a setter would attach to,
+so contract #8's chip preview is viewer-only, not missing-on-admin.)
 
 - **"Borders carry zero semantic weight" has TWO independent causes, and only
   one was written down.** The recorded one is the `group-hover:border` repaint.

@@ -6,8 +6,9 @@
 // everything derived from them (active-chip list, matching seats, result
 // cards, status breakdown), and their clear/change handlers. Deliberately
 // NOT here: `filterCollapsed` (panel visibility chrome, whose outside-click
-// effect is tied to DOM refs in SeatMap) and `hoverZone` (a wash preview
-// that is never a filter — see the comment at its declaration).
+// effect is tied to DOM refs in SeatMap) and the viewer's `hoverZone` (a wash
+// preview that is never a filter — it lives in ViewerSeatFinder; the admin
+// map's copy was removed as dead code once #432 took the zone chips away).
 
 import { useCallback, useMemo, useState } from "react";
 import type { ActiveFilterChip, ResultStatusBreakdown } from "@/components/seat-map/FilterPanel";

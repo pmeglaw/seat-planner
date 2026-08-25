@@ -71,7 +71,7 @@ Target modes preserve the underlying fill so the admin sees both *"is this legal
 
 **Dormant branches document behaviour that never runs — and that is how the border rule came to be understated.** `SeatMarker.tsx` forks on `adminMarker` in a dozen places, and **no caller passes `variant="admin"`** (`:182`; `SeatMap.tsx:3260` passes `"viewer"` by owner preference). The comment at `:383` used to say the hover border "applies only to unselected markers" — true of the `adminMarker` arm, which carries a real `selected ?` guard because its hover (`--sp-legend-hover-border` `#8E8276`) and selected (`--sp-legend-selected-border` → `#D23F0A`) tokens differ. The live viewer arm has **no guard and needs none**: hover and selected both resolve to `--sp-marker-active-edge` `#D46A24`, and the selected *ring* is a `ring-*` box-shadow that `group-hover:border` cannot reach. So the shipped repaint is unconditional across every unselected state, and the comment described the dormant branch's mechanism as if it were the rule's scope — narrowing it. Corrected in place 2026-08-25. **When editing an `adminMarker` arm, confirm which arm ships before believing its comment** (the `:182` note says this; the `:383` drift is what happens when it is not consulted).
 
-**Same class, unrelated site: the admin map's zone hover-wash is dead code.** `SeatMap.tsx:315` declares `const [hoverZone] = useState<string | null>(null)` with **no setter**, so `buildZoneWash(hoverZone ?? …)` at `:2525` can only ever receive the pinned zone. The viewer has a live `setHoverZone` (`ViewerSeatFinder.tsx:230`, consumed at `:421`). v12 contract #8 — "the hovered chip wins over the pinned zone" — is unimplemented on admin, and the comment at `:2520` describes behaviour that cannot occur. Small; parked in §9.
+**Same class, unrelated site: the admin map's zone hover-wash was dead code — removed 2026-08-25.** `SeatMap.tsx` declared a setter-less `hoverZone`, so `buildZoneWash` could only ever receive the pinned zone, and the comment above it described chip-hover behaviour that could not occur. Root cause was an owner ruling, not an oversight: #432 removed the admin canvas filter UI (zone chips included), so there was nothing to wire a setter to. Fixed by deleting the dead state; **v12 contract #8's chip-hover preview is viewer-only** (`ViewerSeatFinder.tsx`) by consequence of #432 — re-adding it to admin means re-adding chips, which re-litigates #432.
 
 ### The type floor (#444)
 
@@ -133,7 +133,7 @@ The type-floor arc (#444 / #446 / #447) and the publish guard (#443 / #445) are 
 
 ### Hover disclosure + inspector as a first-class read path — assessed 2026-08-25, ruled
 
-Assessed (findings F1–F8 in `docs/design-system/READ-PATH-ASSESSMENT.md`, #450) and the framing ruled: **hover is a browse affordance, not the find path** (owner ruling 2026-08-25, recorded in the assessment doc). Search/palette answers "where does X sit"; the inspector is the sanctioned read surface. F1/F2/F5 closed cheap under that ruling. **F4 fixed** (double name announce — `accessibleSeatName` gated on `hasHoverDisclosure`, pinned in `seat-map-components`). Still open from the assessment: **F3/F6** rulings, **F8** small fix (§9), and a follow-on assessment of `ViewerFindPalette` as the first-class find path.
+Assessed (findings F1–F8 in `docs/design-system/READ-PATH-ASSESSMENT.md`, #450) and the framing ruled: **hover is a browse affordance, not the find path** (owner ruling 2026-08-25, recorded in the assessment doc). Search/palette answers "where does X sit"; the inspector is the sanctioned read surface. F1/F2/F5 closed cheap under that ruling. **F4 fixed** (double name announce — `accessibleSeatName` gated on `hasHoverDisclosure`, pinned in `seat-map-components`). **F8 fixed** (dead admin hover-wash state removed; contract #8 chip-preview recorded viewer-only per #432 — see §3). Still open from the assessment: **F3/F6** rulings and a follow-on assessment of `ViewerFindPalette` as the first-class find path.
 
 ---
 
@@ -197,7 +197,6 @@ Consequence: on laptop widths, hover disclosure and the inspector are the **prim
 | Arbitrary spacing values | 442 | Invisible to users; maintenance only |
 | Four near-identical greige hairlines | 4 | Needs an owner ruling |
 | `--admin-diff-vacated-text`, `--admin-paper`, §3.7 reception rows | 3 | Doc errors found during PR-B, parked under old names. See `NOTES.md` |
-| Admin zone hover-wash is dead code (`SeatMap.tsx:315` has no setter) | small | v12 contract #8 unimplemented on admin; viewer's copy works. See §3 |
 | Dark AI accent on its hover wash: 4.31:1 | 1 hex or 1 alpha | `#a56eff` over `rgba(138,63,252,.16)`-on-`#1f1f1f` misses 4.5 (rest passes at 4.92). Pre-existing, found while measuring the §3 sanctioned variant. Fix is lighten the dark accent OR thin the dark wash — needs an owner ruling; touching the accent hex touches all five AI sites |
 
 ---
