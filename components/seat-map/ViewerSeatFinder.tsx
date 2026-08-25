@@ -895,13 +895,41 @@ export function ViewerSeatFinder({
       const isNewSelection = selectedSeatId !== result.seatId;
       setSelectedSeatId(result.seatId);
       setInspectorCollapsed(false);
-      if (isNewSelection) skipNextNudge();
+      if (isNewSelection) {
+        skipNextNudge();
+        // The row button unmounts with the palette, so focus falls to <body>
+        // unless it is placed — the same drop the Escape handler above already
+        // guards. Hand it to the panel this find just opened: the handoff the
+        // marker's Enter path makes, and since the 2026-08-25 browse ruling
+        // the sanctioned read surface. Armed only on a NEW selection for the
+        // reason the nudge guard states — the trigger effect keys on
+        // selectedSeatId, so arming it for an unchanged selection leaves a
+        // flag no future effect run will consume.
+        focusInspectorAfterSelectRef.current = true;
+      } else {
+        // Re-opening the already-selected seat's row: selectedSeatId never
+        // moves, so that effect will not run. The panel is already mounted,
+        // so focus it directly rather than arming a flag nothing will clear.
+        window.requestAnimationFrame(() => {
+          document.getElementById("seat-inspector-panel")?.focus();
+        });
+      }
       centerSeatInMap(result.seatId);
       return;
     }
 
     setSelectedSeatId(null);
     fitSeatIdsInMap(result.seatIds);
+    // Department/zone rows open no panel, so there is nothing to hand focus
+    // to — return it to the field, exactly as Escape does. The suppress flag
+    // is load-bearing rather than defensive: the field's own onFocus re-opens
+    // the palette, so focusing it here unguarded would reopen what this call
+    // just closed.
+    suppressPaletteReopenRef.current = true;
+    window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+      suppressPaletteReopenRef.current = false;
+    });
   }
 
   const activeFilterChips: ActiveFilterChip[] = [
