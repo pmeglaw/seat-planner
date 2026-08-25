@@ -47,8 +47,14 @@ const SUB12_LEDGER = new Map(Object.entries({
   "components/seat-map/ViewerFindPalette.tsx": 12,
   "components/seat-map/ViewerSeatFinder.tsx": 4,
   "components/ui/design-system.tsx": 1,
-  // Expressive artifact, exempt-or-redesign pending the rendered-size report:
-  "components/seat-map/SeatSheet.tsx": 9
+  // SeatSheet (owner rulings 2026-08-24): info-pane CSS promoted to the 12px
+  // floor at all widths; SVG plan text raised to fontSize 13 viewBox units and
+  // hidden below 1133px viewports where it would render sub-12 (legible-or-
+  // absent — see the geometry test below). Remaining 2 = the title-block
+  // conceit (8.5px label, 10px block), EXEMPT desktop-only: the block hides
+  // below 880px, and above it the drawing-sheet title block earns its
+  // micro-print on a large surface by owner ruling.
+  "components/seat-map/SeatSheet.tsx": 2
 }));
 
 const ROOTS = ["app", "components", "lib"];
@@ -122,4 +128,32 @@ test("sub-12px type on shipped surfaces stays inside the ruled ledger", async ()
     [],
     `Type-floor ledger drift:\n${problems.join("\n")}\n\nActual counts:\n${JSON.stringify(Object.fromEntries([...actual.entries()].sort()), null, 2)}`
   );
+});
+
+// SeatSheet geometry (owner rulings 2026-08-24, measured live). The numbers
+// couple: fontSize 13 viewBox units renders 12px only when the plan SVG
+// reaches ~591px, which the two-column layout first does at ~1133px viewports
+// (it caps at 613px → 12.45px). Below that the text hides rather than render
+// sub-12 ("legible-or-absent"); no fontSize both fits the 52×27-unit desk
+// boxes and clears 12px across the whole two-column range. Changing any of
+// these values requires re-measuring the others — see the CSS comment in
+// SeatSheet.tsx.
+test("SeatSheet plan text is legible-or-absent and the phone page drops the sheet conceits", async () => {
+  const source = await readFile(path.join(repoRoot, "components/seat-map/SeatSheet.tsx"), "utf8");
+
+  // SVG text at 13 viewBox units — desk codes, zone reference, leader annotation.
+  assert.equal(source.match(/fontSize=\{13\}/g)?.length, 3, "expected all three SVG text kinds at fontSize 13");
+
+  // The legibility threshold: SVG strings and the zone-reference extension
+  // lines hide wherever they would render below 12px.
+  const svgHide = source.match(/@media \(max-width: 1132px\) \{[^}]*\.mss-plan svg text,[^}]*\.mss-zone-ref \{ display: none; \}/);
+  assert.ok(svgHide, "SVG text + zone-ref must hide below the 1133px legibility threshold");
+
+  // The single-column breakpoint drops the title block; the notice states keep
+  // their issued-for line so the name survives the drop.
+  const phoneBlock = source.match(/@media \(max-width: 880px\) \{[\s\S]*?\n\}/);
+  assert.ok(phoneBlock, "single-column media block missing");
+  assert.ok(phoneBlock[0].includes(".mss-title-block { display: none; }"), "title block must drop below 880px");
+  assert.ok(phoneBlock[0].includes(".mss-notice-issued { display: block; }"), "notice issued-for line must appear below 880px");
+  assert.ok(source.includes('className="mss-notice-issued">Issued for {issuedFor}'), "notice states must render issued-for outside the title block");
 });
