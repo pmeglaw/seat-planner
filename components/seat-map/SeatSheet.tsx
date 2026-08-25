@@ -84,7 +84,7 @@ const CSS = `
   min-width: 0;
 }
 .mss-eyebrow {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: ${COPPER};
@@ -117,7 +117,7 @@ const CSS = `
 }
 .mss-code-sub {
   margin-top: 10px;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: ${MUTED};
@@ -136,7 +136,7 @@ const CSS = `
   gap: 14px;
 }
 .mss-fact-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -163,6 +163,13 @@ const CSS = `
   line-height: 1.6;
   color: #55524B;
   max-width: 52ch;
+}
+.mss-notice-issued {
+  display: none;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #55524B;
 }
 .mss-title-block {
   border-top: 1.5px solid ${INK};
@@ -197,7 +204,7 @@ const CSS = `
   letter-spacing: 0.02em;
 }
 .mss-back {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #55524B;
@@ -248,13 +255,19 @@ const CSS = `
   }
 }
 
+/* Below the single-column breakpoint the plan is a picture, not a document
+   (owner ruling 2026-08-24): SVG plan text renders ~4.4px at 390px viewports,
+   so the strings hide and the info pane beneath — seat code, zone,
+   nearest-first neighbor list, all ≥12px — carries the same information. The
+   drawing-title-block conceit goes with it; its one non-duplicated datum
+   (issued-for on the notice states) surfaces via .mss-notice-issued. */
 @media (max-width: 880px) {
   .mss-main { grid-template-columns: 1fr; }
   .mss-plan { border-right: 0; border-bottom: 1px solid ${LINE}; }
-  .mss-title-block { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .mss-tb-cell { border-top: 1px solid ${LINE}; }
-  .mss-tb-cell:nth-child(-n+2) { border-top: 0; }
-  .mss-tb-cell:nth-child(2n) { border-right: 0; }
+  .mss-plan svg text,
+  .mss-zone-ref { display: none; }
+  .mss-title-block { display: none; }
+  .mss-notice-issued { display: block; }
 }
 @media print {
   .mss-backdrop { background: #fff; padding: 0; }
@@ -369,8 +382,10 @@ function PlanDetail({
         strokeDasharray="6 4"
       />
 
-      {/* Zone reference line above the boundary, drafting extension ticks */}
-      <g className="mss-draw mss-d2" stroke={INK} strokeWidth={0.75} fill="none">
+      {/* Zone reference line above the boundary, drafting extension ticks.
+          mss-zone-ref hides with the SVG text below 880px — a dimension line
+          without its text is floating decoration. */}
+      <g className="mss-draw mss-d2 mss-zone-ref" stroke={INK} strokeWidth={0.75} fill="none">
         <line pathLength={1} x1={boundary.minX} y1={boundary.minY - 18} x2={boundary.maxX} y2={boundary.minY - 18} />
         <line pathLength={1} x1={boundary.minX} y1={boundary.minY - 26} x2={boundary.minX} y2={boundary.minY - 10} />
         <line pathLength={1} x1={boundary.maxX} y1={boundary.minY - 26} x2={boundary.maxX} y2={boundary.minY - 10} />
@@ -553,6 +568,9 @@ export function SeatSheetNotice({
         <p className="mss-eyebrow">Seat assignment</p>
         <h1 className="mss-notice-heading">{heading}</h1>
         <p className="mss-notice-detail">{detail}</p>
+        {/* Below 880px the title block is hidden, and on the notice states it
+            is the only place the account/name appears — carry it here. */}
+        <p className="mss-notice-issued">Issued for {issuedFor}</p>
       </div>
       <TitleBlock issuedFor={issuedFor} dateLabel={null} />
     </SheetShell>

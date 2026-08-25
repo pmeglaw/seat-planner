@@ -47,8 +47,13 @@ const SUB12_LEDGER = new Map(Object.entries({
   "components/seat-map/ViewerFindPalette.tsx": 12,
   "components/seat-map/ViewerSeatFinder.tsx": 4,
   "components/ui/design-system.tsx": 1,
-  // Expressive artifact, exempt-or-redesign pending the rendered-size report:
-  "components/seat-map/SeatSheet.tsx": 9
+  // SeatSheet (owner rulings 2026-08-24): info-pane CSS promoted to the 12px
+  // floor; below 880px the plan is a picture (SVG text + title block hidden,
+  // info pane carries the content at ≥12px). Remaining 5 = title-block conceit
+  // (8.5px label, 10px block — desktop-only by ruling) + the three SVG
+  // fontSize literals (desk codes / zone ref / leader annotation), whose
+  // desktop treatment (raise vs remove) is pending the owner's branch call.
+  "components/seat-map/SeatSheet.tsx": 5
 }));
 
 const ROOTS = ["app", "components", "lib"];
