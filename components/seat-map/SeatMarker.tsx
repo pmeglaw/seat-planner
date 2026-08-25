@@ -380,8 +380,29 @@ function SeatMarkerComponent({
   const markerFocusClass = adminMarker
     ? "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-focus-marker-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-focus-marker-offset)]"
     : "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-marker-active-edge-soft)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/70";
-  // Hover is a transient cue: it must never repaint a committed (selected) seat's
-  // orange ring, so the hover border applies only to unselected markers.
+  // Hover repaints the pill's BORDER, and on the SHIPPED path it does so
+  // unconditionally. Read that before editing either arm below. The `selected ?`
+  // guard is on the adminMarker arm ONLY, where it is load-bearing because that
+  // arm's hover colour (--sp-legend-hover-border #8E8276) differs from its
+  // selected colour (--sp-legend-selected-border -> #D23F0A). The viewer arm —
+  // the one every caller actually renders, see the NOTE at the top of this
+  // component — has no guard and needs none: its hover and selected borders are
+  // the SAME token (--sp-marker-active-edge #D46A24), and the selected
+  // treatment's orange RING is a ring-* box-shadow that a border repaint cannot
+  // reach.
+  //
+  // Consequence, and half the reason PR-C put meaning on fill + glyph instead:
+  // live, EVERY unselected state's status border is overwritten on hover —
+  // assigned, reserved, unavailable, draft-changed alike. The other half is
+  // statusToneClass above, which drops baseStatusToneClass wholesale in
+  // selected/prominent modes. Two independent erasers; borders carry zero
+  // semantic weight (globals.css, above the marker fills; NOTES.md "Read-path
+  // assessment", 2026-08-25).
+  //
+  // This comment used to say the repaint "applies only to unselected markers" —
+  // the adminMarker arm's mechanism, stated as if it were the rule's scope,
+  // which understated the rule. Dormant branches drift because nothing renders
+  // them to contradict them: check which arm ships before trusting one.
   // Tier-flip stagger (PR-2): font-size joins the token's transition list, and
   // the easing is the productive standard curve (moderate-01 stays 150ms). The
   // 75ms type delay lives on the label spans (LABEL_SIZE_TRANSITION_CLASS) —
