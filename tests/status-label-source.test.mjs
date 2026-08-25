@@ -35,8 +35,12 @@ test("status pickers render their options from STATUS_LABELS", async () => {
   assert.match(inspector, /const currentStatusLabel = STATUS_LABELS\[effectiveStatus\]/);
 });
 
-test("seat marker tooltip and aria-label format the status instead of leaking the enum", async () => {
+test("seat marker aria-label formats the status instead of leaking the enum", async () => {
   const marker = await readSource("../components/seat-map/SeatMarker.tsx");
-  assert.match(marker, /title=\{`\$\{seat\.label\} · \$\{displayName\} · \$\{STATUS_LABELS\[seat\.status\]\}`\}/);
+  assert.match(marker, /\$\{STATUS_LABELS\[seat\.status\]\} seat\./);
   assert.doesNotMatch(marker, /\$\{seat\.status\} seat\./);
+  // F3 ruling (2026-08-25): the marker carries NO native title tooltip — it
+  // was an uncontrolled second disclosure channel. Re-adding one re-litigates
+  // that ruling.
+  assert.doesNotMatch(marker, /title=\{/);
 });
