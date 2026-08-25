@@ -367,7 +367,14 @@ export function ViewerFindPalette({
               onMouseLeave={() => onZoneHoverChange(null)}
               className="border-b border-[var(--sp-border-subtle)] px-4 pb-2.5 pt-3"
             >
-              <span className={eyebrowClassName}>Zones — hover to preview, Enter to filter</span>
+              {/* Copy is scoped per modality (P5, same ruling as the read-path
+                  F5): a coarse-pointer device has no hover and usually no
+                  Enter, so promising them is a false legend. Tap is the one
+                  input that always exists there, and it pins. */}
+              <span className={eyebrowClassName}>
+                Zones — <span className="[@media(pointer:coarse)]:hidden">hover to preview, Enter to filter</span>
+                <span className="hidden [@media(pointer:coarse)]:inline">tap to filter</span>
+              </span>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {browse.zones.map(chip => {
                   const pinned = pinnedZone === chip.name;
@@ -480,12 +487,26 @@ export function ViewerFindPalette({
 
       {/* Footer legend (contract #3). Every key it advertises works while
           focus is still in the search field — that is what makes it a legend
-          rather than decoration. Browse mode pairs it with the feed's own
-          "N people · M seated"; in query mode the header already carries the
-          live count, so a second number here would only compete with it. */}
-      <div className="flex items-center justify-between gap-3 border-t border-[var(--sp-border-subtle)] px-4 py-2 text-[11px] font-medium text-[var(--sp-text-helper)]">
-        <span>↑↓ to move · Enter opens · Esc closes</span>
-        {queryActive ? null : <span>{browse.summary}</span>}
+          rather than decoration. That contract is why browse mode drops
+          "Enter opens" (P5): the field's Enter handler is gated on an active
+          query, so with an empty query the key does nothing. Browse mode
+          pairs it with the feed's own "N people · M seated"; in query mode
+          the header already carries the live count, so a second number here
+          would only compete with it. On a coarse pointer none of the keys
+          exist, so the key copy hides — and in query mode that empties the
+          footer, so the whole strip goes with it rather than leaving a bare
+          border. whitespace-nowrap + truncate keep the strip to one line at
+          narrow fine-pointer widths (the 375px two-line wrap). */}
+      <div
+        className={cx(
+          "flex items-center justify-between gap-3 border-t border-[var(--sp-border-subtle)] px-4 py-2 text-[11px] font-medium text-[var(--sp-text-helper)]",
+          queryActive && "[@media(pointer:coarse)]:hidden"
+        )}
+      >
+        <span className="whitespace-nowrap [@media(pointer:coarse)]:hidden">
+          {queryActive ? "↑↓ to move · Enter opens · Esc closes" : "↑↓ to move · Esc closes"}
+        </span>
+        {queryActive ? null : <span className="min-w-0 truncate">{browse.summary}</span>}
       </div>
     </div>
   );

@@ -40,11 +40,15 @@ Contract #9 ("unseated people stay listed and honest, never openable") was ruled
 
 The palette measures its frame on `resize` only, on the stated theory that the field never moves vertically. Crossing the 900px breakpoint falsifies it: the top bar re-wraps *after* the resize handler reads the anchor, so at 375×800-after-resize the palette measured 40px past the viewport bottom **and** underlapping the top bar (screenshot on file). Fresh opens are correct, so exposure is live resize/rotation with the palette open. Fix shape: a `ResizeObserver` on the anchor (or a rAF re-measure after resize) instead of the single synchronous read.
 
-## P5 — The copy promises inputs the modality doesn't have. **(low — copy fixes)**
+## P5 — The copy promises inputs the modality doesn't have. **(low — FIXED)**
 
-- On a coarse-pointer phone the zones eyebrow reads "hover to preview, Enter to filter" and the footer legend advertises "↑↓ to move · Enter opens · Esc closes" — none of hover, arrows, Enter or Esc exist there. The read-path assessment's F5 logic (rule the copy per modality) applies verbatim.
-- The legend's "Enter opens" is also false in **browse** mode on desktop: the field's Enter handler is gated on an active query (`ViewerSeatFinder.tsx:1252`), so with an empty query Enter does nothing while the legend promises otherwise. Either claim Enter in browse mode (open the first enabled row) or scope the legend line to query mode.
-- Cosmetic: the footer wraps to two lines at 375px.
+**FIXED 2026-08-25**, three parts, all copy-side (the Enter behavior was left as-is and the legend scoped to it, the cheaper of the two options offered):
+
+- **Per modality** (the F5 logic verbatim): on `(pointer: coarse)` the keyboard copy hides — the zones eyebrow swaps its "hover to preview, Enter to filter" tail for "tap to filter", and the footer's key legend hides. In query mode that empties the footer, so the whole strip hides with it rather than leaving a bare border; in browse mode the strip stays for the "N people · M seated" summary.
+- **Per mode**: the browse legend drops "Enter opens" ("↑↓ to move · Esc closes"), because the field's Enter handler is gated on an active query; only the query-mode legend claims Enter.
+- **The 375px two-line wrap**: keys span `whitespace-nowrap`, summary `min-w-0 truncate` — the strip stays one line at any width (and on real phones the coarse-pointer hide removes half of it anyway).
+
+Pinned in `tests/viewer-find-palette-source.test.mjs` (modality + mode scoping) and `tests/viewer-find-palette-component.test.mjs` (browse legend must not say "Enter opens"; query legend must).
 
 ## P6 — Recorded facts for the next session. **(no action)**
 
@@ -63,7 +67,7 @@ The palette measures its frame on `resize` only, on the stated theory that the f
 | P2 | Browse feed 85% disabled rows at 101-person scale | medium | ruling (contract #9 re-weigh: grouping / seated-first / accept) |
 | P3 | 9–11px words across the find surface (12 ledger sites) | medium | ruling (extend the F6 floor logic; separate marks from words) |
 | P4 | Stale frame on resize across the 900px breakpoint | low-medium | **fixed** — rAF re-read + `ResizeObserver` on the anchor, pinned in `viewer-find-palette-source` |
-| P5 | Keyboard copy on touch; "Enter opens" false in browse mode | low | copy fixes |
+| P5 | Keyboard copy on touch; "Enter opens" false in browse mode | low | **fixed** — modality + mode scoping, pinned in both palette test files |
 | P6 | Design facts recorded (pin-closes, no-reflow, no-combobox) | — | recorded |
 
 Nothing blocks first users. P1 (the only defect) is fixed; P2 and P3 are the two rulings, and P2 is the one to settle first — its answer (how much of the feed is people vs. census) shapes what P3's floor work has to fit.
