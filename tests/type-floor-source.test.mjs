@@ -48,7 +48,13 @@ const SUB12_LEDGER = new Map(Object.entries({
   // editor chrome (action tiles, footer, monogram, pills), still Group 3.
   "components/seat-map/SeatInspector.tsx": 9,
   "components/seat-map/SeatMap.tsx": 10,
-  "components/seat-map/ViewerFindPalette.tsx": 12,
+  // P3 ruling 2026-08-25: the palette is the sanctioned FIND surface, so its
+  // eight word sites (header count, kind badge — the 9px floor-breaker — result
+  // meta, Clear search, zone chip labels, row subtitles, "No seat", footer)
+  // were raised to the 12px floor. Remaining 4 are EXEMPT marks by the same
+  // ruling: the mono seat-code pill, the two mono seat counts (chip + result
+  // row), and the aria-hidden initials monogram.
+  "components/seat-map/ViewerFindPalette.tsx": 4,
   "components/seat-map/ViewerSeatFinder.tsx": 4,
   "components/ui/design-system.tsx": 1,
   // SeatSheet (owner rulings 2026-08-24): info-pane CSS promoted to the 12px
