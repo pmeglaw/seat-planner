@@ -42,3 +42,15 @@ test("Esc from inside a transient search surface returns focus to the search inp
   const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   assert.match(viewer, /paletteRef\.current\?\.contains\(target\)[\s\S]{0,160}searchInputRef\.current\?\.focus\(\)/);
 });
+
+test("pinning a zone chip hands focus back to the search field (P1, palette assessment)", async () => {
+  // The chips' eyebrow invites "Enter to filter", and the pin closes the
+  // palette (by design — P6), unmounting the focused chip. Without a handoff
+  // focus falls to <body>; the suppress flag is load-bearing because the
+  // field's own onFocus re-opens the palette the pin just closed.
+  const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  const pin = viewer.match(/function pinZoneFromPalette[\s\S]{0,1000}?\n  \}/)?.[0];
+  assert.ok(pin, "pinZoneFromPalette not found");
+  assert.match(pin, /suppressPaletteReopenRef\.current = true/);
+  assert.match(pin, /searchInputRef\.current\?\.focus\(\)/);
+});

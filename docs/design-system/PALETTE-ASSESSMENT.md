@@ -24,6 +24,8 @@
 
 `pinZoneFromPalette` (`ViewerSeatFinder.tsx:785`) closes the palette with no focus handoff. Every other close path guards the drop — Escape hands back to the field, `openResult` hands to the inspector or the field — but Tab/arrow to a chip, press Enter, and the chip unmounts under focus: `document.activeElement` measured `BODY` live. The chips' own eyebrow advertises "Enter to filter", so this is an invited keyboard path, not an edge case. Fix shape already exists in the same file: focus the field behind `suppressPaletteReopenRef`, exactly as the department/zone rows do.
 
+**FIXED 2026-08-25** — `pinZoneFromPalette` now hands focus to the field behind the suppress flag; verified live (focus lands on the field, palette stays closed) and pinned in `tests/focus-handoff-source.test.mjs` alongside the other two handoffs.
+
 ## P2 — At real scale, 85% of the browse feed is disabled rows. **(medium — contract #9 re-weigh, owner ruling)**
 
 Contract #9 ("unseated people stay listed and honest, never openable") was ruled when the directory was 16 placeholder people. Live it is 101 people / 15 seated: the A→Z feed interleaves the 15 openable rows among **86 disabled rows** at `opacity-60` (~sub-AA by design; axe skips disabled elements, so no tier will ever flag it). The browse feed's signal density is 15% — a user browsing for *who sits here* scrolls a directory that is mostly grey. IDL's own disabled/read-only table says disabled is only safe when the content doesn't need reading; a directory row's presence arguably *is* content. Options at ruling time: seated-first grouping (honest and cheap), a seated-only default with a "show everyone" reveal, or accept as-is (the honest-census reading). This is a re-weigh on new facts, not a re-litigation.
@@ -55,11 +57,11 @@ The palette measures its frame on `resize` only, on the stated theory that the f
 
 | # | Finding | Severity | Wants |
 |---|---|---|---|
-| P1 | Keyboard chip-pin drops focus to `<body>` | high | fix (hand focus to the field behind the suppress flag) |
+| P1 | Keyboard chip-pin drops focus to `<body>` | high | **fixed** — handoff added, pinned in `focus-handoff-source` |
 | P2 | Browse feed 85% disabled rows at 101-person scale | medium | ruling (contract #9 re-weigh: grouping / seated-first / accept) |
 | P3 | 9–11px words across the find surface (12 ledger sites) | medium | ruling (extend the F6 floor logic; separate marks from words) |
 | P4 | Stale frame on resize across the 900px breakpoint | low-medium | fix (observe the anchor, not just `resize`) |
 | P5 | Keyboard copy on touch; "Enter opens" false in browse mode | low | copy fixes |
 | P6 | Design facts recorded (pin-closes, no-reflow, no-combobox) | — | recorded |
 
-Nothing blocks first users. P1 is the only defect; P2 and P3 are the two rulings, and P2 is the one to settle first — its answer (how much of the feed is people vs. census) shapes what P3's floor work has to fit.
+Nothing blocks first users. P1 (the only defect) is fixed; P2 and P3 are the two rulings, and P2 is the one to settle first — its answer (how much of the feed is people vs. census) shapes what P3's floor work has to fit.
