@@ -145,7 +145,7 @@ test("a seat with no zone falls back to its department, then to No zone", () => 
   ]);
 });
 
-test("browse mode returns zone chips, the A→Z people list, and the footer counts", () => {
+test("browse mode returns zone chips, the seated-first people list, and the footer counts", () => {
   const browse = palette.buildViewerPaletteBrowse({
     seats: [
       seat({ id: "s1", label: "N01", zone: "North Pod", employee: alex }),
@@ -156,10 +156,30 @@ test("browse mode returns zone chips, the A→Z people list, and the footer coun
   });
 
   assert.deepEqual(browse.zones.map(chip => chip.name), ["North Pod", "West Pod"]);
-  assert.deepEqual(browse.people.map(row => row.title), ["Alex Rivera", "Jordan Brooks", "Maya Chen"]);
+  // Seated group first (P2 ruling), A→Z inside each group — Jordan is
+  // unseated, so alphabetical order alone would wrongly place him second.
+  assert.deepEqual(browse.people.map(row => row.title), ["Alex Rivera", "Maya Chen", "Jordan Brooks"]);
   assert.equal(browse.totalCount, 3);
   assert.equal(browse.seatedCount, 2);
   assert.equal(browse.summary, "3 people · 2 seated");
+});
+
+// P2 ruling (2026-08-25): at real scale (101 people / 15 seated) a flat A→Z
+// feed interleaves the openable rows among ~86 disabled ones. Seated people
+// group first so every openable row precedes every disabled one; contract #9
+// still holds — the unseated stay listed, disabled and honest, below.
+test("every seated row precedes every unseated row (P2 seated-first grouping)", () => {
+  const browse = palette.buildViewerPaletteBrowse({
+    seats: [seat({ id: "s1", label: "N01", employee: { ...alex, full_name: "Zora Quill" } })],
+    employees: [{ ...alex, full_name: "Zora Quill" }, jordan, maya]
+  });
+
+  // "Zora" loses alphabetically to both unseated people, and still leads.
+  assert.deepEqual(browse.people.map(row => [row.title, row.seatId === null]), [
+    ["Zora Quill", false],
+    ["Jordan Brooks", true],
+    ["Maya Chen", true]
+  ]);
 });
 
 test("the footer line stays grammatical for a single person", () => {
