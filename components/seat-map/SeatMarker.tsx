@@ -221,11 +221,16 @@ function SeatMarkerComponent({
   // broke containment, and abbreviated visible names ("Alex S.") must appear
   // before the full name they abbreviate. Office plates add their visible
   // title line (and the "Open office" copy) under the same containment rule.
+  // Containment only binds when the short name is VISIBLE at rest — under
+  // hover disclosure it is display:none, axe evaluates at rest, and the
+  // concatenation was pure stutter ("Marcus Marcus Bell" on every occupied
+  // seat; F4, read-path assessment 2026-08-25) — so it gates on
+  // hasHoverDisclosure.
   const accessibleSeatName = officePlate
     ? !hasEmployee
       ? "Open office"
       : [inlineNameLabel, officeTitleLabel, inlineNameLabel === displayName ? "" : displayName].filter(Boolean).join(" ")
-    : !hasEmployee || inlineNameLabel === displayName ? displayName : `${inlineNameLabel} ${displayName}`;
+    : !hasEmployee || inlineNameLabel === displayName || hasHoverDisclosure ? displayName : `${inlineNameLabel} ${displayName}`;
   const markerIntent: MarkerIntent = swapSource || moveEmployeeSource
     ? "swap-source"
     : swapTarget

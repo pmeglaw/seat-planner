@@ -133,7 +133,7 @@ The type-floor arc (#444 / #446 / #447) and the publish guard (#443 / #445) are 
 
 ### Hover disclosure + inspector as a first-class read path — assessed 2026-08-25, ruled
 
-Assessed (findings F1–F8 in `docs/design-system/READ-PATH-ASSESSMENT.md`, #450) and the framing ruled: **hover is a browse affordance, not the find path** (owner ruling 2026-08-25, recorded in the assessment doc). Search/palette answers "where does X sit"; the inspector is the sanctioned read surface. F1/F2/F5 closed cheap under that ruling. Still open from the assessment: **F4** (double name announce on all occupied seats — a screen-reader bug regardless of framing, fix next), **F3/F6** rulings, **F8** small fix (§9), and a follow-on assessment of `ViewerFindPalette` as the first-class find path.
+Assessed (findings F1–F8 in `docs/design-system/READ-PATH-ASSESSMENT.md`, #450) and the framing ruled: **hover is a browse affordance, not the find path** (owner ruling 2026-08-25, recorded in the assessment doc). Search/palette answers "where does X sit"; the inspector is the sanctioned read surface. F1/F2/F5 closed cheap under that ruling. **F4 fixed** (double name announce — `accessibleSeatName` gated on `hasHoverDisclosure`, pinned in `seat-map-components`). Still open from the assessment: **F3/F6** rulings, **F8** small fix (§9), and a follow-on assessment of `ViewerFindPalette` as the first-class find path.
 
 ---
 
