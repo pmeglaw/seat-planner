@@ -88,3 +88,21 @@ test("palette row hover lights a seat and does nothing else (INV-2)", async () =
   assert.match(palette, /onPointerEnter=\{\(\) => onRowHoverChange\(row\.seatId\)\}/);
   assert.match(palette, /onPointerLeave=\{\(\) => onRowHoverChange\(null\)\}/);
 });
+
+test("the palette frame re-measures after the bar re-wraps (P4)", async () => {
+  const palette = await readSource("../components/seat-map/ViewerFindPalette.tsx");
+
+  // A synchronous read on `resize` alone measured the anchor BEFORE the bar's
+  // own resize handler re-wrapped its tiers, leaving the open palette 40px
+  // past the viewport bottom and under the bar (PALETTE-ASSESSMENT P4). Both
+  // halves of the fix are load-bearing: the rAF re-read lands after the bar's
+  // re-render, and the ResizeObserver catches anchor-box changes that arrive
+  // with no window resize at all.
+  assert.match(palette, /rafId = requestAnimationFrame\(measure\)/);
+  assert.match(palette, /new ResizeObserver\(measure\)/);
+  assert.match(palette, /observer\.observe\(anchor\)/);
+  // And the teardown for each: no leaked observer, no stale rAF firing into
+  // an unmounted palette.
+  assert.match(palette, /cancelAnimationFrame\(rafId\)/);
+  assert.match(palette, /observer\.disconnect\(\)/);
+});

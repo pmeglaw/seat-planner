@@ -150,10 +150,28 @@ export function ViewerFindPalette({
   useLayoutEffect(() => {
     const measure = () => setFrame(measurePaletteFrame(anchorRef.current));
     measure();
-    // Resize only: the bar is sticky and the map owns its own scroll
-    // container, so the field never moves vertically under the page.
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    // No scroll listener: the bar is sticky and the map owns its own scroll
+    // container, so the field never moves vertically under the page. But a
+    // synchronous read on `resize` alone is not enough — the bar re-wraps its
+    // tiers from its own resize handler (React state), which moves the anchor
+    // *after* this handler has already measured. The rAF re-read lands after
+    // that re-render; the ResizeObserver covers anchor-box changes that arrive
+    // without a window resize at all.
+    let rafId = 0;
+    const onResize = () => {
+      measure();
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(measure);
+    };
+    window.addEventListener("resize", onResize);
+    const anchor = anchorRef.current;
+    const observer = new ResizeObserver(measure);
+    if (anchor) observer.observe(anchor);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", onResize);
+      observer.disconnect();
+    };
   }, [anchorRef]);
 
   // Closing while a chip is hovered or focused unmounts it without ever firing
