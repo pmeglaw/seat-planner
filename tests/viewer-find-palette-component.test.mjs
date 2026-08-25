@@ -168,7 +168,11 @@ test("browse mode renders the zone chips and the A→Z people feed", async () =>
 
 test("browse mode carries the feed's own summary in the footer legend", async () => {
   const { container } = await renderPalette();
-  assert.match(container.textContent, /↑↓ to move · Enter opens · Esc closes/);
+  // Browse scopes the legend to the keys that work from the field: the field's
+  // Enter handler is gated on an active query, so browse must not advertise
+  // "Enter opens" (P5).
+  assert.match(container.textContent, /↑↓ to move · Esc closes/);
+  assert.doesNotMatch(container.textContent, /Enter opens/);
   assert.match(container.textContent, /3 people · 2 seated/);
 });
 
@@ -241,6 +245,11 @@ test("a query swaps the same slot to results — the directory does not linger b
   assert.match(results.textContent, /B-02/);
   assert.equal(screen.queryByRole("list", { name: "People directory" }), null);
   assert.equal(screen.queryByRole("group", { name: "Zones" }), null);
+});
+
+test("query mode is the one place the legend claims Enter", async () => {
+  const { container } = await renderPalette({ query: "ben", results: [SEAT_RESULT], resultCountLabel: "1 result", mappedSeatCount: 1 });
+  assert.match(container.textContent, /↑↓ to move · Enter opens · Esc closes/);
 });
 
 test("a query with no matches reports it and offers the way out", async () => {

@@ -1256,10 +1256,12 @@ export function ViewerSeatFinder({
                   )?.focus();
                   return;
                 }
-                // The palette's own legend promises "Enter opens" while focus
-                // is still here, so honour it against the top result rather
-                // than making the user arrow into the list first. With no
-                // results the keystroke stays unclaimed.
+                // The palette's own legend promises "Enter opens" in QUERY
+                // mode while focus is still here, so honour it against the top
+                // result rather than making the user arrow into the list
+                // first. Browse mode's legend drops the promise (P5), so the
+                // searchActive gate below is the copy staying honest, not a
+                // gap. With no results the keystroke stays unclaimed.
                 if (event.key === "Enter" && paletteOpen && searchActive) {
                   const [firstSearchResult] = searchResults.results;
                   if (!firstSearchResult) return;
