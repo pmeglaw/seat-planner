@@ -76,6 +76,8 @@ Two consequences:
 - Two people sharing a first name are **indistinguishable** on the primary read path. `getPassiveEmployeeLabel` only appends a last initial when the first name is ≤4 characters, so `Marcus Bell` and `Marcus Chen` both disclose as `Marcus`; `Ana Ruiz` and `Ana Diaz` both disclose as `Ana R.` / `Ana D.` and are fine. The failure is length-dependent, which makes it intermittent rather than absent.
 - The browser's native tooltip is a **second, uncontrolled disclosure channel** carrying strictly more information than the designed one: ~1s delay, OS styling in neither theme, no keyboard path, nothing on touch. IDL sanctions `title` as the escape hatch for *truncated* text; here it is not backing a truncation, it is the only place the full name appears on the canvas.
 
+**RULED 2026-08-25: ambiguity accepted, `title` removed.** Under the browse ruling the cue does not owe disambiguation — the inspector and palette carry full names. The alternative (always append the last initial) also widens **resting** labels via `getPassiveEmployeeLabel`, reopening the PR-2 text-tier threshold measurement — priced out. The `title` attribute is deleted from the marker; the aria-label already carries everything for AT. Pinned by `status-label-source.test.mjs` (no `title=` on the marker).
+
 ### F4 — Every assigned seat announces its occupant's first name twice. **(medium · needs ruling)**
 
 Measured accessible name at rest, 1376:
@@ -177,7 +179,7 @@ Worth settling before spending anything on F1/F2, because the answer changes wha
 |---|---|---|---|
 | F1 | Disclosed name 10px at every width; outside the text tier | high | **closed** — browse ruling 2026-08-25 |
 | F2 | Hover occludes the neighbour's seat code (17.6px → 51.6px) | high | **closed** — browse ruling 2026-08-25 |
-| F3 | First name only visible; full name lives in the native `title` | medium | ruling |
+| F3 | First name only visible; full name lives in the native `title` | medium | **closed** — ambiguity accepted, `title` removed (ruled 2026-08-25) |
 | F4 | `"Marcus Marcus Bell"` on all 15 occupied seats | medium | **fixed** — `accessibleSeatName` gated on `hasHoverDisclosure` |
 | F5 | No hover path at all on a touch laptop; 32px targets | medium | **closed** — browse ruling 2026-08-25 |
 | F6 | Three inspector lines at 11px, incl. the locator line | medium | ruling (weight raised: inspector is now the sanctioned read surface) |

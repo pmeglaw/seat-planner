@@ -534,7 +534,11 @@ function SeatMarkerComponent({
       data-token-mode={tokenMode}
       data-draft-changed={draftChanged || undefined}
       aria-pressed={selected}
-      title={`${seat.label} · ${displayName} · ${STATUS_LABELS[seat.status]}`}
+      // No title attribute — ruled off with F3 (read-path assessment,
+      // 2026-08-25). It was a second, uncontrolled disclosure channel that
+      // out-informed the designed hover cue on exactly one input modality;
+      // the aria-label carries everything for AT, and the full name is read
+      // in the inspector.
       className={[
         "group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-manipulation select-none items-center justify-center overflow-visible rounded-full border-0 bg-transparent p-0 font-extrabold leading-none text-[var(--sp-marker-ink)]",
         "transition-[transform,opacity,filter] duration-150 ease-out hover:z-30 active:scale-[0.96] active:duration-75 motion-reduce:transition-none",
