@@ -34,7 +34,9 @@ Contract #9 ("unseated people stay listed and honest, never openable") was ruled
 
 `ViewerFindPalette.tsx` holds 12 ledger instances (`type-floor-source`), all Group 3 "not yet ruled", and they are words on chrome, not map canvas: the **9px** result-kind badge (the smallest text on any shipped surface, on every query row), **10px** mono seat-code pills / chip counts / "No seat", **11px** row subtitles, result meta, zone chips, header count, and footer legend. F6 just ruled that words on the sanctioned *read* surface obey the 12px floor; the palette is now the sanctioned *find* surface, and the same weight-raise applies. A ruling should also say which of these are mark-adjacent (the mono seat-code pill and chip count have a real mark argument) versus reading text (subtitle, meta, footer).
 
-## P4 — Resize races the bar re-wrap; the frame goes stale. **(low-medium — fix)**
+## P4 — Resize races the bar re-wrap; the frame goes stale. **(low-medium — FIXED)**
+
+**FIXED 2026-08-25** — the measure effect now re-reads in a rAF after each `resize` (landing after the bar's tier re-render moves the anchor) and holds a `ResizeObserver` on the anchor for box changes with no window resize. Verified live both directions across the 900px breakpoint (1280→375: sheet snaps to insets inside the viewport; 375→1280: frame realigns to the anchor); pinned in `tests/viewer-find-palette-source.test.mjs`.
 
 The palette measures its frame on `resize` only, on the stated theory that the field never moves vertically. Crossing the 900px breakpoint falsifies it: the top bar re-wraps *after* the resize handler reads the anchor, so at 375×800-after-resize the palette measured 40px past the viewport bottom **and** underlapping the top bar (screenshot on file). Fresh opens are correct, so exposure is live resize/rotation with the palette open. Fix shape: a `ResizeObserver` on the anchor (or a rAF re-measure after resize) instead of the single synchronous read.
 
@@ -60,7 +62,7 @@ The palette measures its frame on `resize` only, on the stated theory that the f
 | P1 | Keyboard chip-pin drops focus to `<body>` | high | **fixed** — handoff added, pinned in `focus-handoff-source` |
 | P2 | Browse feed 85% disabled rows at 101-person scale | medium | ruling (contract #9 re-weigh: grouping / seated-first / accept) |
 | P3 | 9–11px words across the find surface (12 ledger sites) | medium | ruling (extend the F6 floor logic; separate marks from words) |
-| P4 | Stale frame on resize across the 900px breakpoint | low-medium | fix (observe the anchor, not just `resize`) |
+| P4 | Stale frame on resize across the 900px breakpoint | low-medium | **fixed** — rAF re-read + `ResizeObserver` on the anchor, pinned in `viewer-find-palette-source` |
 | P5 | Keyboard copy on touch; "Enter opens" false in browse mode | low | copy fixes |
 | P6 | Design facts recorded (pin-closes, no-reflow, no-combobox) | — | recorded |
 
