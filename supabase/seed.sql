@@ -77,6 +77,77 @@ end $$;
 -- make the tests pass while leaving a rebuilt project broken, which is exactly
 -- the gap that hid here the first time.
 
+-- Occupancy. 002_seed_initial_data.sql seeds 60 seats and 12 employees whose
+-- id sets do not intersect: every seeded seat is 'available' with a null
+-- employee_id, in BOTH layers. That is a legitimate state, but it is the
+-- emptiest one the app has, and it was the only one CI ever rendered — so the
+-- e2e-auth axe scan of the Find palette (tests/e2e-auth/accessibility.spec.ts)
+-- saw twelve DISABLED browse rows reading "No seat", and axe skips disabled
+-- elements for contrast. The enabled browse row and the person-result row with
+-- a seat — the most important row on the find path — had never been scanned by
+-- anything (read-path follow-on assessment P13, 2026-08-25).
+--
+-- Assigning here rather than in 002: that migration is already applied to
+-- production, and this file is local-only by construction (db:seed execs into
+-- the Docker container, never a connection string). Four people across four
+-- zones is enough to render every row variant the palette has; keep it small
+-- so the "mostly empty office" case stays the default the specs see.
+--
+-- Both layers get the SAME assignment, which is what a publish produces. A
+-- draft/published divergence here would show up as phantom pending changes in
+-- the admin publish review and fight publish-flow.spec.ts.
+-- Position and extension are null for every seeded employee, so a result row's
+-- meta line would render as department alone and the palette's phone-extension
+-- match path would never fire. Fill them for the seated four only. This runs
+-- BEFORE the published_employees copy below, so the snapshot picks them up
+-- without a second write.
+update public.employees as e
+   set position = v.position,
+       phone_extension = v.phone_extension
+  from (values
+    ('00000000-0000-0000-0000-000000000001'::uuid, 'Intake Coordinator', '201'),
+    ('00000000-0000-0000-0000-000000000002'::uuid, 'Case Manager',       '202'),
+    ('00000000-0000-0000-0000-000000000003'::uuid, 'Associate',          '203'),
+    ('00000000-0000-0000-0000-000000000004'::uuid, 'Staff Accountant',   '204')
+  ) as v(id, position, phone_extension)
+ where e.id = v.id;
+
+-- ...and mirror them onto the snapshot, which is NOT reachable from the copy
+-- at the bottom of this file. 20260708230000_published_employee_snapshot.sql
+-- backfills published_employees at migration time (":144"), so by the time
+-- this file runs the table already holds all 12 rows and that copy's
+-- `on conflict (id) do nothing` inserts nothing — it is a safety net for a
+-- stack that somehow lacks the snapshot, not the thing that builds it.
+-- Editing public.employees alone therefore leaves the viewer reading the
+-- pre-edit values, which is the layered-employee-data rule doing exactly what
+-- it says: people edits reach viewers only at the next publish. Writing both
+-- is what a publish does, and this is the one place allowed to imitate one
+-- (local container only; the guard test scans supabase/migrations, and the
+-- production rule that only publish_seat_map() writes this table stands).
+update public.published_employees as pe
+   set position = e.position,
+       phone_extension = e.phone_extension
+  from public.employees as e
+ where e.id = pe.id
+   and e.position is not null;
+
+-- No layer predicate: the update is deliberately BOTH layers. The seats CHECK
+-- pairs the two columns (001_initial_schema.sql:54) — 'assigned' requires a
+-- non-null employee_id and every other status requires null — so they move
+-- together. The unique indexes on employee_id are partial per layer, so one
+-- person holding the same seat in draft and published is legal, and is exactly
+-- what publish_seat_map() leaves behind.
+update public.seats as s
+   set employee_id = v.employee_id,
+       status = 'assigned'::public.seat_status
+  from (values
+    ('CW01', '00000000-0000-0000-0000-000000000001'::uuid),  -- Alex Shabazian · Center West
+    ('N03',  '00000000-0000-0000-0000-000000000002'::uuid),  -- Maria Lopez    · North Pod
+    ('W04',  '00000000-0000-0000-0000-000000000003'::uuid),  -- David Kim      · West Pod
+    ('SE01', '00000000-0000-0000-0000-000000000004'::uuid)   -- Nina Patel     · Southeast Office
+  ) as v(seat_key, employee_id)
+ where s.seat_key = v.seat_key;
+
 -- Viewers read published seats joined against the published_employees
 -- snapshot, which only publish_seat_map() ever writes. Without a snapshot the
 -- viewer map renders every published seat as unoccupied, so the authenticated
