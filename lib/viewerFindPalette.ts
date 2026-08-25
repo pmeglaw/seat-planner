@@ -107,11 +107,18 @@ export function buildViewerPaletteBrowse({
 
   // buildViewerDirectory preserves the order it is GIVEN — its "(alphabetical)"
   // note describes what the old panel happened to pass, not a guarantee it
-  // makes. Contract #3 says the palette lists people A→Z, so sort here instead
-  // of trusting every future caller to have sorted first.
-  const people = [...directory.rows].sort((left, right) =>
-    left.title.localeCompare(right.title, undefined, { numeric: true })
-  );
+  // makes. So sort here instead of trusting every future caller to have
+  // sorted first. SEATED people group first (P2 ruling, 2026-08-25,
+  // PALETTE-ASSESSMENT): at real scale the directory is ~15 seated among 101,
+  // and a flat A→Z feed interleaved the openable rows among ~86 disabled
+  // ones. Contract #9 is intact — unseated people stay listed and honest,
+  // they just follow the rows a browser can actually open. A→Z within each
+  // group (contract #3's ordering, applied per group).
+  const people = [...directory.rows].sort((left, right) => {
+    const leftUnseated = left.seatId === null;
+    if (leftUnseated !== (right.seatId === null)) return leftUnseated ? 1 : -1;
+    return left.title.localeCompare(right.title, undefined, { numeric: true });
+  });
 
   return {
     zones: buildViewerZoneChips({ seats, zoneOptions }),

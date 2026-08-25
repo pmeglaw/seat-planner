@@ -413,7 +413,15 @@ export function ViewerFindPalette({
           )}
 
           <div className="px-4 pb-1 pt-3">
-            <span className={eyebrowClassName}>People — A to Z</span>
+            {/* "Seated first" because the feed IS seated-first (P2 ruling —
+                lib/viewerFindPalette sorts seated above unseated, A→Z within
+                each). No in-list section header marks the boundary: the
+                virtual window measures a uniform row stride and sizes its
+                spacers from it, so one taller header-bearing row would corrupt
+                the scroll geometry for every row after it. The grouping reads
+                without one — full-opacity rows with seat-code pills, then the
+                disabled grey "No seat" block. */}
+            <span className={eyebrowClassName}>People — seated first, A to Z</span>
           </div>
 
           {/* Same scrollable-region-focusable contract as the results list. */}

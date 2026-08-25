@@ -26,9 +26,11 @@
 
 **FIXED 2026-08-25** — `pinZoneFromPalette` now hands focus to the field behind the suppress flag; verified live (focus lands on the field, palette stays closed) and pinned in `tests/focus-handoff-source.test.mjs` alongside the other two handoffs.
 
-## P2 — At real scale, 85% of the browse feed is disabled rows. **(medium — contract #9 re-weigh, owner ruling)**
+## P2 — At real scale, 85% of the browse feed is disabled rows. **(medium — RULED + FIXED)**
 
-Contract #9 ("unseated people stay listed and honest, never openable") was ruled when the directory was 16 placeholder people. Live it is 101 people / 15 seated: the A→Z feed interleaves the 15 openable rows among **86 disabled rows** at `opacity-60` (~sub-AA by design; axe skips disabled elements, so no tier will ever flag it). The browse feed's signal density is 15% — a user browsing for *who sits here* scrolls a directory that is mostly grey. IDL's own disabled/read-only table says disabled is only safe when the content doesn't need reading; a directory row's presence arguably *is* content. Options at ruling time: seated-first grouping (honest and cheap), a seated-only default with a "show everyone" reveal, or accept as-is (the honest-census reading). This is a re-weigh on new facts, not a re-litigation.
+Contract #9 ("unseated people stay listed and honest, never openable") was ruled when the directory was 16 placeholder people. Live it is 101 people / 15 seated: the A→Z feed interleaves the 15 openable rows among **86 disabled rows** at `opacity-60` (~sub-AA by design; axe skips disabled elements, so no tier will ever flag it). The browse feed's signal density is 15% — a user browsing for *who sits here* scrolls a directory that is mostly grey. IDL's own disabled/read-only table says disabled is only safe when the content doesn't need reading; a directory row's presence arguably *is* content.
+
+**RULED 2026-08-25 — seated-first grouping.** Owner picked it over a seated-only default with reveal (hides 86 people behind a click, adds toggle state) and over accept-as-is. Contract #9 is intact — the unseated stay listed, disabled and honest — they just follow every openable row. **FIXED same day:** `buildViewerPaletteBrowse` sorts seated above unseated with A→Z inside each group; the eyebrow reads "People — seated first, A to Z". One implementation deviation from the option as described: **no in-list section header at the group boundary** — the virtual window measures a uniform row stride and sizes its spacers from it, so a taller header-bearing row would corrupt scroll geometry (`useVirtualListWindow` measures `rows[1].offsetTop - rows[0].offsetTop`); the boundary reads without it (full-opacity rows with seat-code pills, then the grey "No seat" block), and the eyebrow carries the honesty. Ordering pinned in `tests/viewer-find-palette.test.mjs` (seated-precedes-unseated with an alphabetical decoy).
 
 ## P3 — The find path carries the widest sub-12px spread in the app. **(medium — type-floor ruling, same logic that closed F6)**
 
@@ -64,10 +66,10 @@ Pinned in `tests/viewer-find-palette-source.test.mjs` (modality + mode scoping) 
 | # | Finding | Severity | Wants |
 |---|---|---|---|
 | P1 | Keyboard chip-pin drops focus to `<body>` | high | **fixed** — handoff added, pinned in `focus-handoff-source` |
-| P2 | Browse feed 85% disabled rows at 101-person scale | medium | ruling (contract #9 re-weigh: grouping / seated-first / accept) |
+| P2 | Browse feed 85% disabled rows at 101-person scale | medium | **ruled + fixed** — seated-first grouping, ordering pinned in the lib test |
 | P3 | 9–11px words across the find surface (12 ledger sites) | medium | ruling (extend the F6 floor logic; separate marks from words) |
 | P4 | Stale frame on resize across the 900px breakpoint | low-medium | **fixed** — rAF re-read + `ResizeObserver` on the anchor, pinned in `viewer-find-palette-source` |
 | P5 | Keyboard copy on touch; "Enter opens" false in browse mode | low | **fixed** — modality + mode scoping, pinned in both palette test files |
 | P6 | Design facts recorded (pin-closes, no-reflow, no-combobox) | — | recorded |
 
-Nothing blocks first users. P1 (the only defect) is fixed; P2 and P3 are the two rulings, and P2 is the one to settle first — its answer (how much of the feed is people vs. census) shapes what P3's floor work has to fit.
+Nothing blocks first users. P1 (the only defect) is fixed; P2 is ruled and fixed (seated-first), which settles the feed shape P3's floor work has to fit — P3 (the palette type-floor ruling) is the one item still open.
