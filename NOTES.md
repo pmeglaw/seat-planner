@@ -139,3 +139,51 @@ Rule for this branch: renames and twin deletion only — nothing here was acted 
   fact, not a mode fact — on a wide monitor the fit frame itself can cross
   the text threshold (≈1634px rendered for today's seat set), so wide
   displays get readable names at rest once the PR-2 tier lands.
+
+## Read-path assessment (2026-08-25)
+
+Found while assessing hover disclosure and the inspector as a first-class read
+path (§5/§10 of the handoff; full findings in
+`docs/design-system/READ-PATH-ASSESSMENT.md`). Neither item was acted on beyond
+the comment correction noted below.
+
+- **"Borders carry zero semantic weight" has TWO independent causes, and only
+  one was written down.** The recorded one is the `group-hover:border` repaint.
+  The second is `statusToneClass` (`SeatMarker.tsx:269`): it collapses to `""`
+  whenever `tokenMode` is `selected` or `prominent`, dropping the whole
+  `baseStatusToneClass` — status border included. `prominent` is not just
+  selection: `prominentToken = activeMarker || searchProminent ||
+  plannerHighlighted` and `activeMarker = selected || swapSource || swapTarget
+  || moveEmployeeSource` (`:203`/`:210`), so a search hit, a planner
+  highlight, and every swap/move source or target erase the status border too.
+  Two orthogonal, common state changes, both total, neither recoverable. Fill
+  and glyph survive both — the state classes re-declare them, and PR-C's
+  ruling 2 has target modes preserve the underlying fill on purpose. That is
+  the structural reason the two-axis vocabulary holds and a border axis could
+  not, and it is a stronger argument than the hover one alone: a rebuttal has
+  to defeat both erasers. Worth stating because the hue *is* still on the
+  borders as redundancy (`globals.css:834` says so explicitly), which reads
+  like a half-open door unless both erasers are on the record.
+- **The comment at `SeatMarker.tsx:383` described a branch that never runs,
+  and thereby understated the rule. Corrected 2026-08-25.** It read: the hover
+  border "applies only to unselected markers". That is true of the
+  `adminMarker` arm, which does carry a `selected ?` guard — and needs one,
+  since its hover token (`--sp-legend-hover-border` `#8E8276`) differs from
+  its selected token (`--sp-legend-selected-border` → `#D23F0A`). But **no
+  caller passes `variant="admin"`** (the `:182` NOTE says so; `SeatMap.tsx:3260`
+  passes `"viewer"`). The live viewer arm has no guard and needs none: hover
+  and selected both resolve to `--sp-marker-active-edge` `#D46A24`, and the
+  selected *ring* is a `ring-*` box-shadow that `group-hover:border` cannot
+  reach at all. Net effect: the shipped repaint is unconditional across every
+  unselected state, so the comment's scope ("only unselected markers are
+  affected") read as a limit on the rule when it was really a description of
+  the dormant arm's mechanism. **Dormant-branch comments drift silently** —
+  nothing renders them, so nothing contradicts them. When touching an
+  `adminMarker` arm, check which arm ships first.
+- **Unrelated site, same class of defect: the admin map's zone hover-wash is
+  dead code.** `SeatMap.tsx:315` is `const [hoverZone] = useState<string |
+  null>(null)` — no setter — so `buildZoneWash(hoverZone ?? …)` at `:2525` can
+  only ever receive the pinned zone, and the comment at `:2520` ("the hovered
+  chip wins over the pinned") describes something that cannot happen. The
+  viewer's copy is live (`ViewerSeatFinder.tsx:230`, consumed at `:421`), so
+  v12 contract #8 is implemented on one surface of two. Parked in handoff §9.

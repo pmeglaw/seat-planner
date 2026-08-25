@@ -67,6 +67,12 @@ Target modes preserve the underlying fill so the admin sees both *"is this legal
 
 **Borders carry zero semantic weight.** `group-hover:border` repaints every unselected pill on hover, so any meaning on a border is destroyed exactly when the user inspects the seat. The uniform hover repaint stays as an "interactive" affordance; never encode state there.
 
+**Two independent erasers, not one (found 2026-08-25).** The hover repaint is the one that was written down. The second is `statusToneClass` (`SeatMarker.tsx:269`): it collapses to `""` whenever `tokenMode` is `selected` or `prominent`, dropping `baseStatusToneClass` — border included — wholesale. `prominent` covers search hits, planner highlights, and every swap/move source or target (`:203`/`:210`), so **selecting a seat or matching a search erases the status border just as completely as hovering it**, and neither erasure is recoverable. Fill and glyph survive both because the state classes re-declare them and target modes explicitly preserve the underlying fill — that is the structural reason the two-axis vocabulary works and a border axis could not. Anyone re-litigating "could we put *one* thing on the border" has to defeat both erasers, not just the hover one.
+
+**Dormant branches document behaviour that never runs — and that is how the border rule came to be understated.** `SeatMarker.tsx` forks on `adminMarker` in a dozen places, and **no caller passes `variant="admin"`** (`:182`; `SeatMap.tsx:3260` passes `"viewer"` by owner preference). The comment at `:383` used to say the hover border "applies only to unselected markers" — true of the `adminMarker` arm, which carries a real `selected ?` guard because its hover (`--sp-legend-hover-border` `#8E8276`) and selected (`--sp-legend-selected-border` → `#D23F0A`) tokens differ. The live viewer arm has **no guard and needs none**: hover and selected both resolve to `--sp-marker-active-edge` `#D46A24`, and the selected *ring* is a `ring-*` box-shadow that `group-hover:border` cannot reach. So the shipped repaint is unconditional across every unselected state, and the comment described the dormant branch's mechanism as if it were the rule's scope — narrowing it. Corrected in place 2026-08-25. **When editing an `adminMarker` arm, confirm which arm ships before believing its comment** (the `:182` note says this; the `:383` drift is what happens when it is not consulted).
+
+**Same class, unrelated site: the admin map's zone hover-wash is dead code.** `SeatMap.tsx:315` declares `const [hoverZone] = useState<string | null>(null)` with **no setter**, so `buildZoneWash(hoverZone ?? …)` at `:2525` can only ever receive the pinned zone. The viewer has a live `setHoverZone` (`ViewerSeatFinder.tsx:230`, consumed at `:421`). v12 contract #8 — "the hovered chip wins over the pinned zone" — is unimplemented on admin, and the comment at `:2520` describes behaviour that cannot occur. Small; parked in §9.
+
 ### The type floor (#444)
 
 12px (`label-01`, 12/16) everywhere off the map canvas. Eyebrows converted from **size hierarchy to weight + colour** hierarchy. Shortcut tabs `w-12` → `w-16`.
@@ -189,6 +195,7 @@ Consequence: on laptop widths, hover disclosure and the inspector are the **prim
 | Arbitrary spacing values | 442 | Invisible to users; maintenance only |
 | Four near-identical greige hairlines | 4 | Needs an owner ruling |
 | `--admin-diff-vacated-text`, `--admin-paper`, §3.7 reception rows | 3 | Doc errors found during PR-B, parked under old names. See `NOTES.md` |
+| Admin zone hover-wash is dead code (`SeatMap.tsx:315` has no setter) | small | v12 contract #8 unimplemented on admin; viewer's copy works. See §3 |
 | Dark AI accent on its hover wash: 4.31:1 | 1 hex or 1 alpha | `#a56eff` over `rgba(138,63,252,.16)`-on-`#1f1f1f` misses 4.5 (rest passes at 4.92). Pre-existing, found while measuring the §3 sanctioned variant. Fix is lighten the dark accent OR thin the dark wash — needs an owner ruling; touching the accent hex touches all five AI sites |
 
 ---
