@@ -786,6 +786,17 @@ export function ViewerSeatFinder({
     setZone(nextZone);
     setHoverZone(null);
     setPaletteOpen(false);
+    // The chip unmounts with the palette, so a keyboard pin ("Enter to
+    // filter", the eyebrow's own invitation) would drop focus to <body> —
+    // the same fall every other close path already guards. Return it to the
+    // field, exactly as openResult's department/zone rows do; the suppress
+    // flag is load-bearing there and here for the same reason: the field's
+    // onFocus re-opens the palette this pin just closed.
+    suppressPaletteReopenRef.current = true;
+    window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+      suppressPaletteReopenRef.current = false;
+    });
   }
 
   // Identity-stable handle for the memoized SeatMarker. selectSeat is

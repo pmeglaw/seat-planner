@@ -160,8 +160,9 @@ so contract #8's chip preview is viewer-only, not missing-on-admin. F3 ruled
 The palette assessment ran 2026-08-25
 (`docs/design-system/PALETTE-ASSESSMENT.md`, P1–P6): live directory is now
 101 people / 15 seated (the "16 placeholder" comment in ViewerFindPalette is
-stale). Open: P1 focus-drop fix, P2 contract-#9 re-weigh ruling, P3 palette
-type-floor ruling, P4 resize-frame fix, P5 copy fixes.
+stale). P1 focus-drop FIXED 2026-08-25 (handoff added in pinZoneFromPalette,
+pinned in focus-handoff-source). Open: P2 contract-#9 re-weigh ruling,
+P3 palette type-floor ruling, P4 resize-frame fix, P5 copy fixes.
 
 - **"Borders carry zero semantic weight" has TWO independent causes, and only
   one was written down.** The recorded one is the `group-hover:border` repaint.
