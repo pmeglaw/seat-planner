@@ -1,6 +1,6 @@
 # Seat Planner — design system pass, session handoff
 
-**As of 24 Aug 2026.** Written to seed a fresh Claude session. Lives in the repo beside `NOTES.md` / `PASS1-TOKENS.md` / `AUDIT.md` / `DOCS-DIFF.md`. Update it when you tag a release — the same reflex that already gets you `/api/build-id` verification.
+**As of 25 Aug 2026.** Written to seed a fresh Claude session. Lives in the repo beside `NOTES.md` / `PASS1-TOKENS.md` / `AUDIT.md` / `DOCS-DIFF.md`. Update it when you tag a release — the same reflex that already gets you `/api/build-id` verification.
 
 ---
 
@@ -13,12 +13,12 @@
 | Plugin repo | `E:/code/claude-plugins` → `github.com/pmeglaw/claude-plugins`, private |
 | Skill | `/design-system:ibm-design-language` **v1.1.0**, installed per-machine |
 | Deploy | Vercel → `seats.megeredchianlaw.com`; `/api/build-id` returns the live commit SHA |
-| App version | **v1.59.0** (merge `5cc1f93`) |
+| App version | **v1.61.0** (merge `eec4a42`) |
 
 **Two standing facts that change how decisions get made:**
 
 1. **No one has seen this app except the owner.** No change-management overhead, no staged rollouts, no user heads-ups. Merge on green checks. It also means **visual-vocabulary changes are free now and expensive later** — the reason PR-C and the type floor were done before granting access.
-2. **There is no staging database.** Local dev points at live Supabase. **Two machines now hold live credentials.** The guard is the last unfinished pre-access item and the only one whose downside is data rather than time.
+2. **There is no staging database.** Local dev points at live Supabase. **Two machines now hold live credentials.** The publish guard shipped fail-closed in #443 (v1.58.0); draft edits stay deliberately unguarded.
 
 ---
 
@@ -32,10 +32,14 @@
 | **PR-B** | — | §3.1–3.8 renames, ~1,400 replacements, one commit per family. Introduced the `.sp-zone-chrome` / `.sp-zone-base` cascade. Fixed the `--sp-surface-disabled` regression it created; added `data-chrome="dark"` to the skip link |
 | **#440 (PR-C)** | — | Marker vocabulary — the WCAG 1.4.1 pass. 36/36 pairs now differ on a non-hue channel |
 | **#444** | **v1.59.0** | Type floor part 1 — 12px everywhere off the map canvas |
+| **#443** | v1.58.0 | Publish guard, fail-closed prod attestation — positive proof (local DB / `VERCEL_ENV === "production"` / explicit opt-in) or `PUBLISH_BLOCKED`; `NODE_ENV` deliberately untrusted |
+| **#445** | — | Test: fail if `.env.local` defines `VERCEL_ENV` (would forge the attestation) + §5/§10 corrections |
+| **#446** | v1.60.0 | Type floor part 2 — map-canvas text tier at the collision threshold |
+| **#447** | v1.61.0 | SeatSheet type floor — phone page below 880, plan text legible-or-absent above |
 
 ---
 
-## 3. The two systems this work established
+## 3. The systems this work established
 
 ### The chrome zone (PR-B)
 
@@ -69,6 +73,28 @@ Target modes preserve the underlying fill so the admin sees both *"is this legal
 
 **MARKS are exempt** — graphical elements governed by non-text contrast (3:1), not text sizing: D badge, ✓, ✗, marker AI chip, the five-site "AI" chrome badge, login-illustration "C05". Registry pinned in `desktop-seat-marker-system-source.test.mjs`.
 
+### The text tier (#446)
+
+Map-canvas labels are **marks** below a runtime-derived collision threshold and **text** at or above it. `textTierActive` (`lib/seatCrowding.ts`) derives from the same scalar that feeds `clearanceFromScale` — **no hardcoded threshold**. Add seats that tighten pitch and the tier retreats by construction.
+
+- **Staggered transition:** width immediate, `font-size` +75ms, both 150ms, inside the existing `motion-reduce` guard. One axis at a time — simultaneous would flash type overflowing an ungrown pill.
+- **Hysteresis:** `TEXT_TIER_EXIT_SLACK_PX = 2`, jitter-sized, in **footprint px**. The originally approved slack (14) was fine-sounding until converted: ×~34 into frame width at pitch 0.0294 = ~477px of path-dependence. **Convert units before presenting a threshold for approval** — this lesson bit twice in one day (see SeatSheet).
+- Measured band today: enter ~1633px rendered frame / exit ~1564. Transition measured 58.9fps across 68 markers (worst frame 33.3ms, at the resize relayout) — no transform fallback needed.
+- Name-mode eyebrow follows the tier: 12px medium + opacity-90 at tier (measured 39.5px pill ≤ 40px obstacle — fits, not dropped).
+
+### The SeatSheet outcome (#447)
+
+**The durable finding: SVG plan text was illegible at every real width, not just phones.** The two-column layout caps the SVG at 613px, so the 10/11-viewBox-unit text rendered 9.58–10.54px at *every* viewport ≥881 — and 4.44px at 390 (worse than the 5.1 estimate). The "fine on desktop" assumption was false; the fix was incidental, the finding is what to keep. Owner re-ruled mid-pass: SVG plan text is **words, not drawing-convention marks** — make it legible or drop it.
+
+What shipped:
+
+- **Below 880** the plan is a picture: SVG text, zone-ref lines, and title block hidden; the info pane carries everything at ≥12px. CSS-only; the static server component survived.
+- **At/above 880**, fontSize raised 10/11 → **13 viewBox units**, and the SVG text hides below 1133px viewports (1132 = 12.09px hidden / 1133 = 12.45px at the 613px cap). The measurement forced the branch: no single fontSize both fits the 52×27-unit boxes *and* covers 881px (that needs ~20.5 units), so the cap-only "raise it if it fits" framing would have silently shipped a sub-12 window across 881–1130. Owner picked raise-13 + hide-below-1133 once that hole was measured — the unit lesson applied.
+- Four promotions at all widths (eyebrow, code-sub, fact-label, back link → 12px); notice states gained a visible "Issued for" line below 880 (the hidden title block was the only place the name appeared — "needs fixing, not noting").
+- **Surviving sub-12 exemptions** (`SeatSheet.tsx` ledger 9 → 2): the title-block conceit — 8.5px label + 10px block — **desktop-only by owner ruling**: it hides below 880, and above it the drawing-sheet title block earns its micro-print on a large surface.
+- A11y freebie: the SVG is `role="img"` + `aria-label`, so its `<text>` children were never in the AX tree — hiding them changed nothing for screen readers (verified live).
+- Geometry test pins fontSize 13 ×3, the 1132 hide, the 880 drop, and the issued-for line; a comment couples the numbers — change one, re-measure all.
+
 ---
 
 ## 4. Guards — the durable part
@@ -95,29 +121,28 @@ Most allowlist reasons are claims about today's component tree — "no chrome mo
 
 ## 5. Open work
 
-### PR-2 — map-canvas zoom tier (go given, not built)
+The type-floor arc (#444 / #446 / #447) and the publish guard (#443 / #445) are **complete and prod-verified**. Two items remain.
 
-Labels are **marks** below a collision threshold and **text** at or above it. Below: current sizes, no floor. At or above: 12px minimum.
+### Hover disclosure + inspector as a first-class read path — unassessed
 
-Approved mechanism: `textTierActive(seats, pxPerNormX, pxPerNormY)` — true iff text-tier footprints produce zero collisions over the actual seat set, using the pairwise predicate the nudge scorer already uses. **Derived at runtime, no hardcoded threshold.** Add seats that tighten pitch and the tier retreats by construction.
+§7's consequence: on laptop widths the map at fit shows marks, so hover disclosure and the inspector are the **primary** way anyone reads a name. Neither has been assessed as a primary path — they were built as fallbacks. This is an assessment task first (what's slow, what's missing, what breaks keyboard-only), not a build task.
 
-Three required changes:
+### Open ruling — the two unconverted SeatInspector labels
 
-1. **Stagger the transition** — width immediate, `font-size` +75ms, both 150ms (`moderate-01`), inside the existing `motion-reduce` guard. Doctrine: one axis at a time. Simultaneous would flash type overflowing an ungrown pill.
-2. **Ship the deadband** — don't wait for QA. Detail zoom is discrete but **fit mode is not**; frame width is continuous under window resize, and fit is the default mode.
-3. **Measure the transition frame rate** — ~68 markers transitioning `font-size` at once is 68 layout-triggering animations in one frame. Fallbacks: transform-based scaling, or width-only with an instant type step at the midpoint.
+PR-1's Ruling 3 set the eyebrow treatment: 12px, subordinate via **weight + colour, never size** — `eyebrowHeadingClass` = `text-xs font-semibold tracking-[0.12em] text-[var(--sp-text-helper)]` (`SeatInspector.tsx:102`, used by the CONTACT/SEAT headings). Two same-family labels rode the sweep unconverted. Both already sit at 12px, so the type-floor ledger has no opinion — this is a **vocabulary-consistency ruling, not a floor violation**, which is why it was deferred: PR-1 converted only the named sites, these two were flagged per the §8 family rule, and the owner asked for a plain restatement before acting either way.
 
-### SeatSheet — rulings given, queued behind PR-2
+**The two labels:**
 
-SVG plan text renders **~5.1–5.6px on a 390px phone** (derived; confirm live first). CSS title-block micro-print at 8.5px never scales at all.
+1. **`InspectorSectionLabel`** — `SeatInspector.tsx:283` (component at :281). The static `h3` section headings of the flat disclosure sections. Currently `text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]` in a `pb-2.5 pt-3.5` block. Deviates from the ruled eyebrow only in **tracking** (0.08em vs 0.12em) and uppercase-via-class.
+2. **Ask Planner card label** — `SeatInspector.tsx:389` ("ASK PLANNER", inside the CTA card). Currently `text-xs font-bold uppercase tracking-[0.08em]`, colour inherited from the `:387` wrapper = `--sp-ai-accent`. Deviates in **weight** (bold vs semibold), **tracking**, and **colour** (AI accent vs helper). The adjacent 9.5px "AI" chip is a MARK — exempt, not part of this question.
 
-**Below the single-column breakpoint the floor plan is a picture, not a document.** Strip labels from the SVG, list them beneath. Drop the title-block conceit at the same breakpoint. Responsive layout, not responsive type — one breakpoint decision, not two.
+**Candidate treatments:**
 
-### Supabase Publish guard — not started
+- **A — full unification.** Both take `eyebrowHeadingClass`. Cost: the Ask Planner label loses the accent colour that ties it to the five-site AI chrome vocabulary — weakens the AI affordance; two-line diff + a live visual pass (tests prove values, not assignment).
+- **B — metrics-only unification.** Tracking → 0.12em, Ask Planner weight → semibold; accent colour stays. Cost: same diff size; leaves colour as a sanctioned per-family variant that must be recorded, or it becomes the next unexplained deviation.
+- **C — record as deliberate variants.** No code change. Rationale available: a section heading is not a field eyebrow, and the accent colour is load-bearing AI vocabulary. Cost: one more special case carried in comments/doc.
 
-Audit every write path. The guard must **fail closed**: refuse live writes unless it can positively confirm production. Not "refuse when it detects local" — a missing variable should block, not permit.
-
-**This is orthogonal to PR-2 and SeatSheet and can run in a parallel session.**
+**What decides it:** contrast is already settled — `#8a3ffc` on white = 4.97:1 (measured, `globals.css`), dark `#a56eff` on `#161616` ≈ 6.0:1 — so no measurement forces a choice. Two checks are worth doing before ruling: (1) the accent label on the card's **hover** wash `--sp-ai-accent-soft` (`#f6f2ff`), per §6's "measure on the hovered surface" rule — if that dips under 4.5:1, colour must move and only B-without-colour or A remain; (2) one side-by-side screenshot of an open inspector showing all three treatments. Otherwise this is a taste ruling on consistency, and any of A/B/C is defensible.
 
 ---
 
@@ -167,6 +192,7 @@ Consequence: on laptop widths, hover disclosure and the inspector are the **prim
 - **Invoke the skill when the ANSWER comes from design doctrine** — not when the task merely happens inside a UI codebase. Spacing, type, colour, motion, status semantics, shell, patterns → yes. Auth, data safety, build config, deploy, performance → no.
 - **Footer "last updated" dates are build stamps.** Confirmed false alarms on 2026-08-21 and 2026-08-24. Authoritative checks: IDL → `/whats-new`; Carbon → `npm view @carbon/react time --json` + the changelog.
 - **Verify updates by loading the artifact, not by reading the repo.** A fresh subagent reading only the installed cache is the standard.
+- **Parallel sessions get parallel worktrees:** `git worktree add ../seat-planner-side main`. Two agents in one working tree caused two incidents; both were caught by a human, neither by git.
 
 ---
 
@@ -185,10 +211,11 @@ Consequence: on laptop widths, hover disclosure and the inspector are the **prim
 
 The design work is nearly out of runway. "Ready" means:
 
-- [ ] **PR-2 landed** — the map's read path is settled, not provisional
-- [ ] **SeatSheet landed** — `/my-seat` legible on a phone, which is where staff will open it
-- [ ] **Publish guard landed, fail-closed** — the only item whose downside is data
-- [ ] **Hover disclosure and the inspector are good**, because on laptop widths they are the primary read path — see §7. This has not been assessed as a first-class path yet
+- [x] **PR-2 landed** (#446, v1.60.0) — the map's read path is settled, not provisional
+- [x] **SeatSheet landed** (#447, v1.61.0) — `/my-seat` legible on a phone, which is where staff will open it
+- [x] **Publish guard landed, fail-closed** (#443 + #445, v1.58.0) — the only item whose downside was data
+- [ ] **Hover disclosure and the inspector are good**, because on laptop widths they are the primary read path — see §7. Not yet assessed as a first-class path (§5)
+- [ ] **SeatInspector label ruling** — the A/B/C decision written out in §5
 - [ ] **A decision about who goes first and what you want to learn from them** — a product question, not a design one
 
 Everything in §9 can happen after people are using the app.
