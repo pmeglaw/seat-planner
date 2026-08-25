@@ -156,19 +156,28 @@ Two ways to read that, and it is an owner call:
 
 Worth settling before spending anything on F1/F2, because the answer changes what they are worth.
 
+**RULED 2026-08-25: hover is a browse affordance.** Owner ruling, taken on the case above plus two further points: F5 (a primary find path cannot be absent on a touch laptop — browse framing has no such hole) and consistency with the type-floor rulings (marks exempt, words not — a 10px transient hover cue is mark-adjacent; the place a name is *read* is the inspector). Consequences, per the branch as written:
+
+- **F1 closed** — the 10px disclosure stands; it is a cue, not reading text.
+- **F2 closed** — the graze is accepted; the disclosure is transient and carries no reading duty.
+- **F5 closed** — touch is served by tap → inspector and by the palette; hover owes it nothing.
+- **The inspector is the sanctioned read surface** (F6's 11px lines gain weight accordingly — still an open ruling).
+- **The next assessment target is the palette** (`ViewerFindPalette`) as the first-class find path.
+- F3, F4, F6 remain open rulings; F4 is a screen-reader noise bug worth fixing regardless of any framing.
+
 ---
 
 ## Ranked
 
 | # | Finding | Severity | Wants |
 |---|---|---|---|
-| F1 | Disclosed name 10px at every width; outside the text tier | high | ruling, with F2 |
-| F2 | Hover occludes the neighbour's seat code (17.6px → 51.6px) | high | ruling, with F1 |
+| F1 | Disclosed name 10px at every width; outside the text tier | high | **closed** — browse ruling 2026-08-25 |
+| F2 | Hover occludes the neighbour's seat code (17.6px → 51.6px) | high | **closed** — browse ruling 2026-08-25 |
 | F3 | First name only visible; full name lives in the native `title` | medium | ruling |
-| F4 | `"Marcus Marcus Bell"` on all 15 occupied seats | medium | ruling |
-| F5 | No hover path at all on a touch laptop; 32px targets | medium | ruling |
-| F6 | Three inspector lines at 11px, incl. the locator line | medium | ruling |
+| F4 | `"Marcus Marcus Bell"` on all 15 occupied seats | medium | fix (bug regardless of ruling) |
+| F5 | No hover path at all on a touch laptop; 32px targets | medium | **closed** — browse ruling 2026-08-25 |
+| F6 | Three inspector lines at 11px, incl. the locator line | medium | ruling (weight raised: inspector is now the sanctioned read surface) |
 | F7 | Keyboard parity complete | — | recorded |
 | F8 | Admin zone hover-wash is dead code | low | small fix |
 
-Nothing here blocks first users on its own. F1 + F2 together are the pair worth settling first, and the §7 reframing above is worth settling before either.
+Nothing here blocks first users on its own. The §7 reframing is ruled (browse — see above); what remains is F4 (fix), F3/F6 (rulings), F8 (small fix), and the palette assessment.

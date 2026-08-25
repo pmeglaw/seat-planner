@@ -131,9 +131,9 @@ Most allowlist reasons are claims about today's component tree — "no chrome mo
 
 The type-floor arc (#444 / #446 / #447) and the publish guard (#443 / #445) are **complete and prod-verified**. The SeatInspector label ruling landed as candidate B — recorded in §3, pinned in `desktop-seat-marker-system-source.test.mjs`. One item remains.
 
-### Hover disclosure + inspector as a first-class read path — unassessed
+### Hover disclosure + inspector as a first-class read path — assessed 2026-08-25, ruled
 
-§7's consequence: on laptop widths the map at fit shows marks, so hover disclosure and the inspector are the **primary** way anyone reads a name. Neither has been assessed as a primary path — they were built as fallbacks. This is an assessment task first (what's slow, what's missing, what breaks keyboard-only), not a build task.
+Assessed (findings F1–F8 in `docs/design-system/READ-PATH-ASSESSMENT.md`, #450) and the framing ruled: **hover is a browse affordance, not the find path** (owner ruling 2026-08-25, recorded in the assessment doc). Search/palette answers "where does X sit"; the inspector is the sanctioned read surface. F1/F2/F5 closed cheap under that ruling. Still open from the assessment: **F4** (double name announce on all occupied seats — a screen-reader bug regardless of framing, fix next), **F3/F6** rulings, **F8** small fix (§9), and a follow-on assessment of `ViewerFindPalette` as the first-class find path.
 
 ---
 
@@ -167,6 +167,8 @@ The map opens at **fit on every base, both surfaces**. Zoom does **not** persist
 **But the threshold is a rendered-width fact, not a mode fact.** On a wide monitor the fit frame itself can exceed the threshold, so wide displays get readable names at rest once the tier lands. **Fit ≠ marks universally; fit = marks on common laptop widths.**
 
 Consequence: on laptop widths, hover disclosure and the inspector are the **primary read path**, not a fallback, and should be resourced accordingly.
+
+**Reframed by the read-path assessment, ruled 2026-08-25:** with 15 of 68 seats occupied, hover is a **browse** affordance — search/palette is the find path and the inspector is the read surface. "Primary read path" above stays true of the *surfaces* (marks at fit), but resourcing follows the ruling: palette and inspector first, hover disclosure stays a cue. See §5 and the assessment doc.
 
 ---
 
@@ -207,7 +209,7 @@ The design work is nearly out of runway. "Ready" means:
 - [x] **PR-2 landed** (#446, v1.60.0) — the map's read path is settled, not provisional
 - [x] **SeatSheet landed** (#447, v1.61.0) — `/my-seat` legible on a phone, which is where staff will open it
 - [x] **Publish guard landed, fail-closed** (#443 + #445, v1.58.0) — the only item whose downside was data
-- [ ] **Hover disclosure and the inspector are good**, because on laptop widths they are the primary read path — see §7. Not yet assessed as a first-class path (§5)
+- [x] **Hover disclosure and the inspector assessed + ruled** (2026-08-25) — hover is a browse affordance, inspector is the read surface, palette is the find path; F1/F2/F5 closed under the ruling. Remaining items (F3/F4/F6/F8, palette assessment) don't block first users — see §5
 - [x] **SeatInspector label ruling** — candidate B, ruled + shipped 2026-08-25; recorded in §3, pinned in the marker-system source test
 - [ ] **A decision about who goes first and what you want to learn from them** — a product question, not a design one
 
