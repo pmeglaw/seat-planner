@@ -255,17 +255,26 @@ const CSS = `
   }
 }
 
-/* Below the single-column breakpoint the plan is a picture, not a document
-   (owner ruling 2026-08-24): SVG plan text renders ~4.4px at 390px viewports,
-   so the strings hide and the info pane beneath — seat code, zone,
-   nearest-first neighbor list, all ≥12px — carries the same information. The
-   drawing-title-block conceit goes with it; its one non-duplicated datum
-   (issued-for on the notice states) surfaces via .mss-notice-issued. */
+/* SVG text is legible-or-absent (owner ruling 2026-08-24): at fontSize 13
+   viewBox units it renders 12px only once the plan reaches ~591px — viewport
+   ≥1133 in the two-column layout. Below that (including all single-column
+   widths, where it renders as small as 4.4px at 390) the strings and the
+   zone-reference extension lines hide, and the info pane — seat code, zone,
+   nearest-first neighbor list, all ≥12px — carries the same information. No
+   fontSize both fits the 52×27-unit desk boxes and clears 12px across the
+   whole two-column range (881px viewports would need ~20.5 units), so the
+   threshold sits where the rendered number crosses the floor. */
+@media (max-width: 1132px) {
+  .mss-plan svg text,
+  .mss-zone-ref { display: none; }
+}
+/* Below the single-column breakpoint the plan is a picture, not a document:
+   the drawing-title-block conceit drops with the columns; its one
+   non-duplicated datum (issued-for on the notice states) surfaces via
+   .mss-notice-issued. */
 @media (max-width: 880px) {
   .mss-main { grid-template-columns: 1fr; }
   .mss-plan { border-right: 0; border-bottom: 1px solid ${LINE}; }
-  .mss-plan svg text,
-  .mss-zone-ref { display: none; }
   .mss-title-block { display: none; }
   .mss-notice-issued { display: block; }
 }
@@ -322,9 +331,9 @@ function PlanDesk({ px, py, label, kind }: { px: number; py: number; label: stri
         <text
           className="mss-settle"
           x={px}
-          y={py + 3.5}
+          y={py + 4.5}
           textAnchor="middle"
-          fontSize={10}
+          fontSize={13}
           fill={kind === "mine" ? COPPER : MUTED}
           fontWeight={kind === "mine" ? 600 : 400}
         >
@@ -395,7 +404,7 @@ function PlanDetail({
         x={(boundary.minX + boundary.maxX) / 2}
         y={boundary.minY - 26}
         textAnchor="middle"
-        fontSize={10}
+        fontSize={13}
         fill={MUTED}
         letterSpacing="2"
       >
@@ -416,11 +425,11 @@ function PlanDetail({
       <g className="mss-draw mss-d3" fill="none" stroke={COPPER} strokeWidth={1.25}>
         <path
           pathLength={1}
-          d={`M150 ${VIEW_H - 24} H${Math.max(170, mine.px - 60)} L${mine.px - DESK_W / 2 - 4} ${mine.py + DESK_H / 2 + 4}`}
+          d={`M158 ${VIEW_H - 24} H${Math.max(178, mine.px - 60)} L${mine.px - DESK_W / 2 - 4} ${mine.py + DESK_H / 2 + 4}`}
           markerEnd="url(#mss-arrow)"
         />
       </g>
-      <text className="mss-settle" x={146} y={VIEW_H - 20} textAnchor="end" fontSize={11} fill={COPPER} letterSpacing="2" fontWeight={600}>
+      <text className="mss-settle" x={154} y={VIEW_H - 20} textAnchor="end" fontSize={13} fill={COPPER} letterSpacing="2" fontWeight={600}>
         YOUR SEAT — {mySeat.label}
       </text>
     </svg>
