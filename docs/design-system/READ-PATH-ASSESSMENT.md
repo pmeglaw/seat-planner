@@ -92,6 +92,8 @@ In code mode at laptop width the short name is `display: none` until hover, so t
 
 **Ruling wanted:** whether text revealed on hover counts as "visible" for WCAG 2.5.3. If it does, the stutter is the price and should be documented as such; if it doesn't, the gate is a two-line change.
 
+**Fixed under the browse ruling:** hover-revealed text is a transient cue, not a visible label — containment binds only at rest, which is where axe evaluates. `accessibleSeatName` now gates the concatenation on `hasHoverDisclosure`; the visible-name cases (selected pill, door plate, names-on) keep short + full. Pinned by the "no stutter" test in `tests/seat-map-components.test.mjs`.
+
 ### F5 — On a touch-capable laptop the hover path does not exist at all. **(medium · needs ruling)**
 
 Emulated at 1376 with a coarse pointer: `(hover: none)` and `(pointer: coarse)` both match. Every `group-hover:` rule is dead; `group-focus-visible:` needs a keyboard. The only remaining path is tap → inspector.
@@ -174,7 +176,7 @@ Worth settling before spending anything on F1/F2, because the answer changes wha
 | F1 | Disclosed name 10px at every width; outside the text tier | high | **closed** — browse ruling 2026-08-25 |
 | F2 | Hover occludes the neighbour's seat code (17.6px → 51.6px) | high | **closed** — browse ruling 2026-08-25 |
 | F3 | First name only visible; full name lives in the native `title` | medium | ruling |
-| F4 | `"Marcus Marcus Bell"` on all 15 occupied seats | medium | fix (bug regardless of ruling) |
+| F4 | `"Marcus Marcus Bell"` on all 15 occupied seats | medium | **fixed** — `accessibleSeatName` gated on `hasHoverDisclosure` |
 | F5 | No hover path at all on a touch laptop; 32px targets | medium | **closed** — browse ruling 2026-08-25 |
 | F6 | Three inspector lines at 11px, incl. the locator line | medium | ruling (weight raised: inspector is now the sanctioned read surface) |
 | F7 | Keyboard parity complete | — | recorded |

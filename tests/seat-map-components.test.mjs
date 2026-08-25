@@ -107,6 +107,20 @@ test("an empty seat's accessible label reflects available status, not an occupan
   assert.ok(!/Alice/.test(label));
 });
 
+// F4 (read-path assessment 2026-08-25): with names off, the short name is
+// display:none until hover — no visible text to contain, so concatenating
+// short + full name is pure stutter ("Alice Alice Smith") on every occupied
+// seat, at rest, on every arrow-key step. Axe evaluates at rest, so gating
+// the concatenation on hover disclosure does not weaken
+// label-content-name-mismatch.
+test("with names hidden, the accessible label carries the full name once — no stutter", async () => {
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { showNames: false })));
+  const label = document.querySelector("button").getAttribute("aria-label");
+  assert.match(label, /Alice Smith/, "full name still announced");
+  assert.ok(!/Alice Alice Smith/.test(label), "no doubled first name");
+  assert.equal(label.match(/Alice/g).length, 1, "occupant named exactly once");
+});
+
 test("clicking a SeatMarker selects it by id", async () => {
   const selected = [];
   await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { onSelect: id => selected.push(id) })));
