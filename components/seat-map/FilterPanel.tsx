@@ -72,7 +72,7 @@ export function ActiveFilterChips({
             onClick={() => onRemove(chip.id)}
             aria-label={chip.removeLabel}
             title={chip.removeLabel}
-            className="ml-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-editor-neutral-bg)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+            className="relative ml-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-x-2.5 after:-inset-y-[3px] hover:bg-[var(--sp-editor-neutral-bg)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
           >
             <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
@@ -82,7 +82,7 @@ export function ActiveFilterChips({
         <button
           type="button"
           onClick={onClearAll}
-          className="inline-flex min-h-6 items-center border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-brand-text)] transition hover:bg-[rgba(255,87,21,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+          className="relative inline-flex min-h-6 items-center border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-brand-text)] transition after:absolute after:-inset-y-[3px] after:inset-x-0 hover:bg-[rgba(255,87,21,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
         >
           Clear all
         </button>
@@ -97,8 +97,11 @@ export function ActiveFilterChips({
 // Native <select> keeps its semantics (disclosure pattern verified adversarially) —
 // only the chrome is styled: appearance-none + an inline SVG chevron (data-URI,
 // stroke #B8AEA2 to match --sp-text-helper) standing in for the native arrow.
+// relative z-[1]: each facet label carries a hit-expansion ::after that would
+// otherwise paint over its own select and swallow the click that opens the
+// native picker — the control rides above the pseudo (PR-2 / F-SP-4).
 const darkSelectClassName =
-  "mt-1 w-full min-w-0 cursor-pointer appearance-none border border-white/20 bg-white/[0.06] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2012%208%22%20fill=%22none%22%3E%3Cpolyline%20points=%221,1.5%206,6.5%2011,1.5%22%20stroke=%22%239a9a9a%22%20stroke-width=%221.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[length:12px_8px] bg-[position:right_8px_center] bg-no-repeat px-2.5 py-1.5 pr-8 text-sm text-[var(--sp-text-primary)] outline-none transition hover:border-white/30 focus:border-[var(--sp-brand)] focus:ring-2 focus:ring-[color:var(--sp-brand-border)] [&>option]:bg-[var(--sp-background-hover)] [&>option]:text-[var(--sp-text-primary)]";
+  "relative z-[1] mt-1 w-full min-w-0 cursor-pointer appearance-none border border-white/20 bg-white/[0.06] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2012%208%22%20fill=%22none%22%3E%3Cpolyline%20points=%221,1.5%206,6.5%2011,1.5%22%20stroke=%22%239a9a9a%22%20stroke-width=%221.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[length:12px_8px] bg-[position:right_8px_center] bg-no-repeat px-2.5 py-1.5 pr-8 text-sm text-[var(--sp-text-primary)] outline-none transition hover:border-white/30 focus:border-[var(--sp-brand)] focus:ring-2 focus:ring-[color:var(--sp-brand-border)] [&>option]:bg-[var(--sp-background-hover)] [&>option]:text-[var(--sp-text-primary)]";
 
 export function FilterPanel({
   department,
@@ -156,7 +159,7 @@ export function FilterPanel({
       <ActiveFilterChips chips={activeStructuredChips} onRemove={onRemoveActiveChip} onClearAll={onClearFilters} className="mb-3" />
 
       <div className="grid grid-cols-1 gap-2">
-        <label className="block">
+        <label className="relative block after:absolute after:-inset-y-1 after:inset-x-0">
           <span className="text-xs font-medium text-[var(--sp-text-helper)]">Department</span>
           <select value={department} onChange={event => onDepartmentChange(event.target.value)} className={darkSelectClassName}>
             <option value="all">All departments</option>
@@ -170,7 +173,7 @@ export function FilterPanel({
             Zone and Status below describe the SEAT. Grouping them this way is
             what makes "show me every Case Manager, then look at their zones"
             readable as one motion. */}
-        <label className="block">
+        <label className="relative block after:absolute after:-inset-y-1 after:inset-x-0">
           <span className="text-xs font-medium text-[var(--sp-text-helper)]">Position</span>
           <select value={position} onChange={event => onPositionChange(event.target.value)} className={darkSelectClassName}>
             <option value="all">All positions</option>
@@ -203,7 +206,7 @@ export function FilterPanel({
                   onFocus={() => onZoneHoverChange?.(previewZone)}
                   onBlur={() => onZoneHoverChange?.(null)}
                   className={[
-                    "max-w-full truncate rounded-full border px-2.5 py-1 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
+                    "relative max-w-full truncate rounded-full border px-2.5 py-1 text-xs font-semibold transition after:absolute after:-inset-x-[3px] after:-inset-y-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
                     active
                       ? "border-[var(--sp-brand)] bg-[rgba(255,87,21,0.15)] text-[var(--sp-brand)]"
                       : "border-white/20 bg-white/[0.06] text-[var(--sp-text-primary)] hover:border-[var(--sp-brand)]"
@@ -216,7 +219,7 @@ export function FilterPanel({
           </div>
         </div>
 
-        <label className="block">
+        <label className="relative block after:absolute after:-inset-y-1 after:inset-x-0">
           <span className="text-xs font-medium text-[var(--sp-text-helper)]">Status</span>
           <select value={status} onChange={event => onStatusChange(event.target.value)} className={darkSelectClassName}>
             <option value="all">All statuses</option>

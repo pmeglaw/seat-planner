@@ -442,7 +442,7 @@ export function LoginForm() {
                   type="button"
                   onClick={sendMagicLink}
                   disabled={pending !== null}
-                  className={cx(onFieldLinkClass, "mt-1.5 font-semibold")}
+                  className={cx(onFieldLinkClass, "relative mt-1.5 font-semibold after:absolute after:-inset-y-1.5 after:inset-x-0")}
                 >
                   Email me a magic link instead
                 </button>
@@ -529,7 +529,7 @@ export function LoginForm() {
               aria-label="Show password"
               aria-pressed={showPassword}
               className={cx(
-                "grid h-8 w-8 flex-none place-items-center text-[var(--sp-text-secondary)] transition-colors hover:bg-[var(--sp-field-hover)]",
+                "relative grid h-8 w-8 flex-none place-items-center text-[var(--sp-text-secondary)] transition-colors after:absolute after:-inset-1.5 hover:bg-[var(--sp-field-hover)]",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus)]"
               )}
             >
@@ -566,13 +566,13 @@ export function LoginForm() {
             type="button"
             onClick={sendPasswordReset}
             disabled={pending !== null}
-            className={cx(inlineLinkClass, "shrink-0 text-xs font-normal")}
+            className={cx(inlineLinkClass, "relative shrink-0 text-xs font-normal after:absolute after:-top-1 after:-bottom-2 after:inset-x-0")}
           >
             {pending === "reset" ? "Sending reset email…" : "Forgot password?"}
           </button>
         </div>
 
-        <label className="mt-4 flex items-center gap-[9px] text-[12.5px] text-[var(--sp-text-secondary)]">
+        <label className="relative mt-4 flex items-center gap-[9px] text-[12.5px] text-[var(--sp-text-secondary)] after:absolute after:-inset-y-2 after:inset-x-0">
           <span className="relative inline-flex h-[15px] w-[15px] shrink-0 items-center justify-center">
             <input
               type="checkbox"

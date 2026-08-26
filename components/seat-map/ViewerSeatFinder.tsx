@@ -1083,7 +1083,7 @@ export function ViewerSeatFinder({
 
   // Type-floor Ruling 3 (2026-08-24): w-16, not w-12 — the 12px label
   // ("Reception" ≈ 56px) must fit; widen the tab, never truncate the word.
-  const chromeSurfaceShortcut = "flex h-9 w-16 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-xs font-medium tracking-[0.02em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
+  const chromeSurfaceShortcut = "relative flex h-9 w-16 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-xs font-medium tracking-[0.02em] transition-colors duration-150 after:absolute after:-inset-y-1 after:inset-x-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
 
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
@@ -1128,7 +1128,7 @@ export function ViewerSeatFinder({
             aria-haspopup="true"
             aria-label={structuredFilterCount ? `Filter seating, ${structuredFilterCount} active` : "Filter seating"}
             className={[
-              "flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]",
+              "relative flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 after:absolute after:-inset-y-2 after:inset-x-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]",
               structuredFilterCount > 0 || filterOpen
                 ? "border-b-[var(--sp-brand)] bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)]"
                 : "border-b-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]"
@@ -1190,7 +1190,7 @@ export function ViewerSeatFinder({
               : "border-[var(--sp-border-subtle)]"
           )}
         >
-          <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center">
+          <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center after:absolute after:-inset-y-2 after:inset-x-0">
             <span className="sr-only">Search office seating</span>
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--sp-text-helper)]">
               <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
@@ -1284,14 +1284,20 @@ export function ViewerSeatFinder({
               // only tier that scans this surface signed in).
               aria-controls={paletteOpen ? "viewer-find-palette" : undefined}
               type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
-              className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-brand)]"
+              // relative z-[1]: the wrapping label's hit-expansion ::after
+              // paints above in-flow children, so without this the pseudo
+              // would swallow direct clicks on the field (caret placement,
+              // drag-select, the onClick reopen contract). The control rides
+              // above its label's pseudo; the pseudo keeps the strips outside
+              // the control's box.
+              className="relative z-[1] h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-brand)]"
             />
             {search.trim() ? (
               <button
                 type="button"
                 aria-label="Clear viewer search"
                 title="Clear search"
-                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
+                className="absolute right-1.5 top-1/2 z-[1] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-3 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
                 onClick={clearSearch}
               >
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>

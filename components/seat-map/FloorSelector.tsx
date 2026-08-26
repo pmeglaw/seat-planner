@@ -107,8 +107,8 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
         }}
         className={
           chrome
-            ? "flex h-7 items-center gap-2 px-2.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]"
-            : "flex items-center gap-2 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] shadow-elevation-3 transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+            ? "relative flex h-7 items-center gap-2 px-2.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:bg-[var(--sp-background-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]"
+            : "relative flex items-center gap-2 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] shadow-elevation-3 transition after:absolute after:-inset-y-2 after:inset-x-0 hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
         }
       >
         {chrome ? FLOOR_SHORT_LABELS[floor] : FLOOR_LABELS[floor]}

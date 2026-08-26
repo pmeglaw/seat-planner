@@ -24,7 +24,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     <button
       ref={ref}
       className={[
-        "inline-flex min-h-9 items-center justify-center whitespace-nowrap border px-3 py-2 text-sm font-semibold leading-none transition-colors",
+        // 44px touch reach (PR-2 / F-SP-4): min-h-9 = 36 visual + 4px hit
+        // expansion per side. Width stays content-driven (text buttons clear
+        // 44 with px-3); dialog button rows sit at gap-2+, so 4px per side
+        // never crosses a sibling.
+        "relative inline-flex min-h-9 items-center justify-center whitespace-nowrap border px-3 py-2 text-sm font-semibold leading-none transition-colors after:absolute after:-inset-y-1 after:inset-x-0",
         focusRingClass,
         "disabled:cursor-not-allowed disabled:border-[var(--sp-border-subtle)] disabled:bg-[var(--sp-surface-disabled)] disabled:text-[var(--sp-text-helper)]",
         variants[variant],

@@ -2434,8 +2434,8 @@ export function SeatMap({
       : "border-[var(--sp-editor-saved-border)] bg-[var(--sp-editor-saved-bg)] text-[var(--sp-editor-saved-text)]",
     canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
-  const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-wash)] hover:text-[var(--sp-brand-text)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50";
-  const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-brand-text)] transition hover:border-[var(--sp-brand)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]";
+  const resultActionButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-wash)] hover:text-[var(--sp-brand-text)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50";
+  const resultClearButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-brand-text)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-brand)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]";
   const visibleMapSpan = Math.max(0, mapVisibleRange.right - mapVisibleRange.left);
   const mapPixelsPerNormalizedUnit = visibleMapSpan > 0 && mapVisibleRange.viewportWidth > 0
     ? mapVisibleRange.viewportWidth / visibleMapSpan
@@ -2584,11 +2584,13 @@ export function SeatMap({
   // Icon-only tools (undo/redo) sit as small squares beside the Filter/search
   // field pair (2026-07-23), not as full-height flat tools — they carry no
   // active-underline state, so nothing ties them to the bar's bottom edge.
-  // after:-inset-1.5 keeps the ~40px hit target the full-height buttons had
-  // (#198's touch-target line) while the visual stays 28px. (This comment used
-  // to claim 32px; the class has been h-7 = 28px throughout, so the number was
-  // wrong, not the class.)
-  const chromeIconBtn = "relative flex h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 after:absolute after:-inset-1.5 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--sp-text-helper)]";
+  // The hit target is 44px (PR-2 / F-SP-4, 2026-08-26: the WCAG touch minimum
+  // is binding off the map canvas — the old -inset-1.5 reached only 40) while
+  // the visual stays 28px. The undo/redo pair is zero-gap, so the shared class
+  // carries the vertical expansion only and each call site adds its OUTWARD
+  // horizontal face (undo -left-4 = 44 wide; redo -right-3 = 40, capped at
+  // half the gap to the kebab — ledgered in tests/touch-target-source).
+  const chromeIconBtn = "relative flex h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 after:absolute after:-inset-y-2 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--sp-text-helper)]";
   // v12: the kebab is now the bar's ONLY overflow surface, visible at every
   // width. The old below-lg/below-xl chromeToolbarBtnCollapsible* derivations
   // (and the adminChromeTool/Active/Disabled imports that fed them) are
@@ -2596,8 +2598,8 @@ export function SeatMap({
   // and the flat-tool Ask Planner all moved to the rail or the kebab. See
   // components/ui/adminChrome.ts's updated header comment. The kebab trigger
   // gets its own fixed 32px-wide grid cell instead, since it is icon-only.
-  const chromeKebabBtn = "relative flex h-full w-8 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
-  const chromeKebabBtnActive = "relative flex h-full w-8 shrink-0 items-center justify-center bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
+  const chromeKebabBtn = "relative flex h-full w-8 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 after:absolute after:-inset-x-1.5 after:-inset-y-0.5 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
+  const chromeKebabBtnActive = "relative flex h-full w-8 shrink-0 items-center justify-center bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)] after:absolute after:-inset-x-1.5 after:-inset-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
   const chromeMenuItem = "flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
 
   // --- Top-bar tenants (top-bar-first chrome, 2026-08-14) -----------------
@@ -2625,7 +2627,7 @@ export function SeatMap({
           disabled={mutationInFlight || inspectorDirty || !undoAvailable}
           aria-label="Undo last map change"
           title={undoTitle}
-          className={chromeIconBtn}
+          className={`${chromeIconBtn} after:-left-4 after:right-0`}
         >
           {/* SVG on the chrome icon grid (20-viewBox, stroke 1.5) — replaced
               the literal ↺ glyph in the chrome-unification pass 2026-08-20:
@@ -2641,7 +2643,7 @@ export function SeatMap({
           disabled={mutationInFlight || inspectorDirty || !redoAvailable}
           aria-label="Redo last undone change"
           title={redoTitle}
-          className={chromeIconBtn}
+          className={`${chromeIconBtn} after:-right-3 after:left-0`}
         >
           {/* Mirrored twin of the Undo SVG above. */}
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
@@ -2956,7 +2958,7 @@ export function SeatMap({
             feedback loop the aspect pin used to fence off comes back. */}
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0 lg:flex-1">
           <div role="search" aria-label="Canvas search" className="z-30 px-0.5 pb-2 lg:hidden">
-            <label className="relative block w-full min-w-0">
+            <label className="relative block w-full min-w-0 after:absolute after:-inset-y-1 after:inset-x-0">
               <span className="sr-only">Search employee, seat, job title, department, or zone</span>
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--sp-text-helper)]">
                 <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
@@ -2980,14 +2982,16 @@ export function SeatMap({
                   }
                 }}
                 type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
-                className="h-9 w-full border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] pl-11 pr-10 text-sm font-medium text-[var(--sp-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--sp-text-helper)] hover:border-[var(--sp-border-strong)] focus:border-[var(--sp-brand)] focus:ring-2 focus:ring-[color:var(--sp-brand-border)]"
+                // relative z-[1]: rides above the label's hit-expansion ::after
+                // so direct clicks (caret, drag-select) still reach the field.
+                className="relative z-[1] h-9 w-full border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] pl-11 pr-10 text-sm font-medium text-[var(--sp-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--sp-text-helper)] hover:border-[var(--sp-border-strong)] focus:border-[var(--sp-brand)] focus:ring-2 focus:ring-[color:var(--sp-brand-border)]"
               />
               {search.trim() && (
                 <button
                   type="button"
                   aria-label="Clear top search"
                   title="Clear top search"
-                  className={["absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-secondary)] active:scale-90", focusRingClass].join(" ")}
+                  className={["absolute right-2 top-1/2 z-[1] flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-[var(--sp-text-helper)] transition after:absolute after:-inset-2 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-secondary)] active:scale-90", focusRingClass].join(" ")}
                   onClick={clearSearch}
                 >
                   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -3078,7 +3082,7 @@ export function SeatMap({
                   automatically. */}
               <div className="flex shrink-0 items-start gap-2">
               <div role="search" aria-label="Command search" className="pointer-events-auto hidden w-[300px] border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-elevation-3 lg:block">
-                <label className="relative flex h-8 w-full min-w-0 items-center">
+                <label className="relative flex h-8 w-full min-w-0 items-center after:absolute after:-inset-y-1.5 after:inset-x-0">
                   <span className="sr-only">Search employee, seat, job title, department, or zone</span>
                   <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--sp-text-helper)]">
                     <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
@@ -3102,14 +3106,16 @@ export function SeatMap({
                       }
                     }}
                     type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
-                    className="h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-[var(--sp-background)] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-brand)]"
+                    // relative z-[1]: above the label's hit-expansion ::after
+                    // (same contract as the viewer field).
+                    className="relative z-[1] h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-[var(--sp-background)] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-brand)]"
                   />
                   {search.trim() ? (
                     <button
                       type="button"
                       aria-label="Clear search"
                       title="Clear search"
-                      className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
+                      className="absolute right-1.5 top-1/2 z-[1] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-3 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
                       onClick={clearSearch}
                     >
                       <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -3125,7 +3131,7 @@ export function SeatMap({
                   aria-pressed={addSeatMode}
                   onClick={addSeatMode ? cancelAddSeatMode : startAddSeatMode}
                   className={[
-                    "pointer-events-auto flex h-8 items-center gap-1.5 border px-3 text-[12.5px] font-semibold shadow-elevation-3 transition active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]",
+                    "pointer-events-auto relative flex h-8 items-center gap-1.5 border px-3 text-[12.5px] font-semibold shadow-elevation-3 transition after:absolute after:-inset-y-1.5 after:inset-x-0 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]",
                     addSeatMode
                       ? "border-[var(--sp-brand)] bg-[var(--sp-brand-wash)] text-[var(--sp-brand-text)]"
                       : "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-secondary)] hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)]"

@@ -31,8 +31,8 @@ flowchart TD
 
   subgraph P2[Pass 2 — in progress]
     PR1[PR-1 #471 errors · empty states]:::done
-    PR2[PR-2 touch targets · queued next]:::todo
-    PR3[PR-3 update-password dark]:::todo
+    PR2[PR-2 #474 touch targets]:::done
+    PR3[PR-3 update-password dark · queued next]:::todo
     PR4[PR-4 error behind modal]:::todo
     PR5[PR-5 pending + SR busy]:::todo
     R1{Ruling: destructive tiers}:::done --> PR6[PR-6 type-the-name · toast]:::todo
@@ -59,8 +59,8 @@ flowchart TD
 | R3 ruling — motion scale | 2 | F-MO-4/5 | **ruled 2026-08-26** | — |
 | R4 ruling — dark hover direction | 2 | F-DK-3 | **ruled 2026-08-26** | — |
 | R5 ruling — greige hairlines | 2 | handoff §9 parked | in progress — principle ruled, value deferred to the PR-11 brief's measurement report | — |
-| PR-2 touch targets | 3 | F-SP-4 (+ 28px family of F-SP-3) | not started — **queued next** | — |
-| PR-3 update-password dark | 3 | F-DK-1 | not started | — |
+| PR-2 touch targets (#474) | 3 | F-SP-4 (+ 28px family of F-SP-3) | **done** — 54 of 58 specs expanded to 44 or ledgered under the no-overlap rule | v1.65.0 |
+| PR-3 update-password dark | 3 | F-DK-1 | not started — **queued next** | — |
 | PR-4 error-behind-modal | 3 | F-INT-4 / F-FRM-1 | not started | — |
 | PR-5 pending + SR busy | 3 | §8.1 remainder of §0 item 6 | not started | — |
 | PR-6 destructive tiers + toast | 3 | F-INT-1/2 | not started · R1 ruled — unblocked | — |
@@ -128,14 +128,14 @@ These needed ruling **before code** because they change visual vocabulary (free 
 - **Entry per PR:** its ruling (where one is listed) is recorded; the preceding unblocked PR is merged or independent.
 - **Deliverables:** PR-2 … PR-11 below.
 - **Exit:** all AUDIT-2 §0 items closed or explicitly re-parked; every territory in the §9 guard map has a pin.
-- **Status: in progress** — PR-1 shipped (#471, v1.64.0); PR-2 queued next.
+- **Status: in progress** — PR-1 shipped (#471, v1.64.0); PR-2 shipped (#474, v1.65.0); PR-3 queued next.
 
 The reviewer's proposed order, validated against the repo — **it stands, no reorder**. R1–R4 were ruled with the plan review itself (2026-08-26), so PR-6/7/8a are already unblocked and can interleave with PR-2…PR-5 rather than queue behind them.
 
 | PR | Scope | Findings | Guard shipped with it |
 |---|---|---|---|
 | PR-1 | **done #471 v1.64.0** — prod-safe error paths, single-flight, first-run states | §0 items 1, 3, part of 6 | `action-error-contract-source`, `client-action-error`, ct/source guards on all five empty states |
-| PR-2 | Touch-target / hit-expansion sweep | F-SP-4 (absorbs the 28px family of F-SP-3) | source scan: every interactive spec <44px has an `after:-inset-*` reaching 44 (axe `target-size` enablement moved to PR-10, assessed for app-wide fallout first) |
+| PR-2 | **done #474 v1.65.0** — 44px hit expansion off the map canvas, no-overlap rule, adjacency-capped ledger | F-SP-4 (absorbs the 28px family of F-SP-3) | `touch-target-source` — arithmetic scan (reach = size + insets ≥ 44), reach-floored ledger, expansion pins (axe `target-size` enablement stays in PR-10) |
 | PR-3 | `/auth/update-password` dark theme | F-DK-1 | dark-completeness reverse-direction check |
 | PR-4 | Error-behind-modal | F-INT-4 / F-FRM-1 | ct test: server error visible inside the open dialog |
 | PR-5 | Pending indication + SR busy on all 17 mutating flows | §8.1 remainder of §0 item 6 | source test: every mutating flow has a live region + pending UI |
@@ -178,7 +178,7 @@ The reviewer's proposed order, validated against the repo — **it stands, no re
 |---|---|---|
 | Transition sites without `motion-reduce:` | ~100 of ~106 | 0 (or a ruled exemption list) |
 | Eased sites off-curve | ~96 % of ~120 | 0 |
-| Interactive specs <44px without hit-expansion | ~17 of ~21 | 0 |
+| Interactive specs <44px without hit-expansion | ~17 of ~21 (measured 54 of 58 in the PR-2 sweep) | 0 — **reached #474** (44, or ledgered adjacency-capped reach) |
 | Dark surface-hover sites sinking | 20 of 33 | 0 |
 | Mutating flows without pending UI / SR busy | 4 / 12 of 17 | 0 / 0 |
 | High-tier actions without their ruled confirmation strength | 4 of 4 | 0 |

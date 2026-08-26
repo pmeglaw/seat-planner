@@ -353,7 +353,7 @@ function ContactFacts({ rows, canEdit }: { rows: ContactFactRow[]; canEdit: bool
               onClick={() => copyExtension(row.value)}
               aria-label={`Copy extension ${row.value}`}
               title={copiedValue === row.value ? "Copied" : `Copy extension ${row.value}`}
-              className="flex h-8 w-8 shrink-0 items-center justify-center bg-[var(--sp-background)] text-[var(--sp-brand-text)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+              className="relative flex h-8 w-8 shrink-0 items-center justify-center bg-[var(--sp-background)] text-[var(--sp-brand-text)] transition after:absolute after:-inset-x-1.5 after:-inset-y-[5px] hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
             >
               {copiedValue === row.value ? <CheckGlyph /> : <CopyGlyph />}
               {/* Live confirmation for screen readers (and the ct test's
@@ -1035,7 +1035,7 @@ export function SeatInspector({
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-4 pb-3 pt-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]">Property Inspector</span>
-          <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="flex h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]"><CloseIcon /></button>
+          <button type="button" onClick={onClose} aria-label="Close inspector" title="Close" className="relative flex h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-2 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]"><CloseIcon /></button>
         </div>
         <div className="flex items-start gap-2.5">
           <div className="min-w-0 flex-1">
@@ -1075,7 +1075,7 @@ export function SeatInspector({
           <button type="button" onClick={startAssignmentEditing} disabled={pending} ref={primaryActionRef}
             aria-expanded={editingAssignment} aria-controls="seat-inspector-form"
             aria-label={hasCurrentAssignment ? `Edit assignment for ${selectedSeat.label}` : `Assign an employee to ${selectedSeat.label}`}
-            className="mt-0.5 flex h-10 w-full items-center justify-between gap-2 bg-[var(--sp-button-primary)] px-4 text-[13px] font-semibold text-white transition hover:bg-[var(--sp-button-primary-hover)] active:scale-[0.99] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white disabled:opacity-40">
+            className="relative mt-0.5 flex h-10 w-full items-center justify-between gap-2 bg-[var(--sp-button-primary)] px-4 text-[13px] font-semibold text-white transition after:absolute after:-inset-y-0.5 after:inset-x-0 hover:bg-[var(--sp-button-primary-hover)] active:scale-[0.99] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white disabled:opacity-40">
             <span className="flex items-center gap-2">
               <PencilGlyph />
               {hasCurrentAssignment ? "Edit assignment" : "Assign employee"}
@@ -1187,7 +1187,7 @@ export function SeatInspector({
                         setEmployeeComboboxOpen(current => !current);
                         employeeInputRef.current?.focus();
                       }}
-                      className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-xs text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
+                      className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-xs text-[var(--sp-text-helper)] transition after:absolute after:-inset-2 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
                     >
                       <ChevronDownIcon />
                     </button>
@@ -1561,7 +1561,7 @@ export function SeatInspector({
             <button
               type="button"
               onClick={() => setMoveConflict(null)}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+              className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
               aria-label="Cancel moving employee"
             >
               <CloseIcon />

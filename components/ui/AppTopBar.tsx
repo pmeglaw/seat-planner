@@ -90,7 +90,7 @@ export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, r
           aria-controls="app-rail"
           aria-label={railOpen ? "Collapse navigation" : "Expand navigation"}
           title={railOpen ? "Collapse navigation" : "Expand navigation"}
-          className="flex h-full w-12 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]"
+          className="relative flex h-full w-12 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors after:absolute after:-inset-y-0.5 after:inset-x-0 hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]"
         >
           <HamburgerIcon />
         </button>

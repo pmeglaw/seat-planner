@@ -276,7 +276,7 @@ export function AskPlannerDrawer({
               </h2>
               <p id="ask-planner-description" className="mt-1 text-xs leading-5 text-[var(--sp-text-helper)]">Read-only answers from saved draft map data.</p>
             </div>
-            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="rounded-full px-3 py-1 text-xs font-medium text-[var(--sp-text-helper)] transition hover:bg-white/10 hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="relative rounded-full px-3 py-1 text-xs font-medium text-[var(--sp-text-helper)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:bg-white/10 hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
               Close
             </button>
           </div>
@@ -485,7 +485,7 @@ export function AskPlannerDrawer({
                         onClick={() => askFollowUp(followUp)}
                         disabled={pending}
                         title={pending ? "Wait for Ask Planner to finish" : followUp}
-                        className="max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-xs font-medium leading-none text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-border-subtle)] transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="relative max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-xs font-medium leading-none text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-border-subtle)] transition after:absolute after:-inset-y-1 after:inset-x-0 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {followUp}
                       </button>
