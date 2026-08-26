@@ -155,7 +155,9 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
           </div>
           {results.length === 0 ? (
             <p className="px-4 py-10 text-center text-[13px] text-[var(--sp-text-helper)]">
-              No one matches &ldquo;{query.trim()}&rdquo;
+              {people.length === 0
+                ? "The directory is empty — it fills in when an admin publishes the seat map."
+                : <>No one matches &ldquo;{query.trim()}&rdquo; &mdash; press Esc to clear the search.</>}
             </p>
           ) : (
             <ul id="reception-results" role="listbox" aria-label="People">

@@ -95,6 +95,17 @@ test("a query matching nobody says so instead of rendering an empty listbox", as
   assert.match(document.body.textContent, /No one matches/);
 });
 
+// AUDIT-2 §8.2: before the first publish the directory is genuinely empty and
+// no search is active — the old branch rendered `No one matches ""`, blaming a
+// query that does not exist. First-run gets its own message with a next step.
+test("an empty directory with no query explains first-run instead of No one matches \"\"", async () => {
+  await renderElement(React.createElement(ReceptionScreen, { people: [] }));
+  assert.ok(!screen.queryByRole("listbox", { name: "People" }));
+  assert.doesNotMatch(document.body.textContent, /No one matches/);
+  assert.match(document.body.textContent, /directory is empty/i);
+  assert.match(document.body.textContent, /publish/i);
+});
+
 // --- Contract #2: while searching, the detail card previews the HIGHLIGHT ----
 
 test("the detail card previews the highlighted result while searching", async () => {

@@ -357,6 +357,16 @@ export function ViewerFindPalette({
             </div>
           )}
         </>
+      ) : browse.totalCount === 0 ? (
+        /* AUDIT-2 §8.2 first-run: an empty browse feed used to render the
+           "People — seated first" eyebrow over nothing. Name the state and
+           the step that fills it. */
+        <div role="status" className="p-4">
+          <div className="text-sm font-semibold text-[var(--sp-text-primary)]">No one is in the directory yet</div>
+          <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
+            People appear here after an admin publishes the seat map.
+          </p>
+        </div>
       ) : (
         <>
           {/* Zone chips (contract #4): hover previews the wash on the map and

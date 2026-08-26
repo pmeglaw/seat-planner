@@ -316,3 +316,16 @@ test("both list regions keep a tab stop of their own", async () => {
   await renderPalette({ query: "ben", results: [SEAT_RESULT], resultCountLabel: "1 result", mappedSeatCount: 1 });
   assert.equal(screen.getByRole("list", { name: "Viewer search results" }).getAttribute("tabindex"), "0");
 });
+
+// AUDIT-2 §8.2: before the first publish the browse feed has zero people, and
+// the palette rendered its "People — seated first" eyebrow over an empty list.
+// First-run states its emptiness and the next step instead.
+test("browse mode with zero people shows a first-run message, not an eyebrow over nothing", async () => {
+  await renderPalette({
+    browse: { zones: [], people: [], totalCount: 0, seatedCount: 0, summary: "0 people · 0 seated" }
+  });
+  assert.ok(!screen.queryByRole("list", { name: "People directory" }));
+  assert.doesNotMatch(document.body.textContent, /People — seated first/);
+  assert.match(document.body.textContent, /No one is in the directory yet/i);
+  assert.match(document.body.textContent, /publish/i);
+});

@@ -19,6 +19,7 @@ import {
   type DraftHistoryState,
   type DraftSnapshot
 } from "@/lib/draftHistory";
+import { clientActionErrorMessage } from "@/lib/clientActionError";
 import { listDraftSeatExpectations } from "@/lib/draftConcurrency";
 import { restoreDraftSnapshotAction } from "@/app/actions";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
@@ -174,11 +175,7 @@ export function useDraftHistory({
           onNotice(notice);
         } catch (error) {
           onNotice(null);
-          onError(
-            error instanceof Error
-              ? error.message
-              : `Could not ${actionLabel.toLowerCase()} draft edit.`
-          );
+          onError(clientActionErrorMessage(error, `Could not ${actionLabel.toLowerCase()} draft edit.`));
         } finally {
           setMutationInFlight(false);
         }

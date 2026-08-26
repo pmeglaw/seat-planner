@@ -1445,6 +1445,21 @@ export function ViewerSeatFinder({
                       pointer-inert contract both surfaces rely on. */}
                   <MapWashLayer zoneWash={zoneWash} officeRoomWashes={officeRoomWashes} />
 
+                  {/* AUDIT-2 §8.2 first-run: a never-published map is a bare
+                      floor plan with zero markers and a zeroed band — nothing
+                      says why. Name the state; viewers can only wait, so the
+                      next step names who acts. */}
+                  {visualSeats.length === 0 && (
+                    <div role="status" className="absolute inset-0 flex items-center justify-center p-6">
+                      <div className="max-w-sm border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-center shadow-sm">
+                        <div className="text-sm font-semibold text-[var(--sp-text-primary)]">Nothing has been published yet</div>
+                        <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
+                          Seats appear here once an admin publishes the seat map.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div
                     className="absolute inset-0"
                     onKeyDown={handleMarkerLayerKeyDown}

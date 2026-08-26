@@ -71,7 +71,7 @@ const adminProps = { seats: [custom, n02], employees: [], canEdit: true, publish
 test("a draft edit enables Undo, and Undo puts the seat back", async ({ page }) => {
   await mountSeatMap(page, adminProps, {
     responses: {
-      "action:deleteSeatAction": () => ({ seatId: "s3" }),
+      "action:deleteSeatAction": () => ({ ok: true, seatId: "s3" }),
       "action:restoreDraftSnapshotAction": () => ({ ok: true, seats: [custom, n02], employees: [] })
     }
   });
@@ -95,7 +95,7 @@ test("a draft edit enables Undo, and Undo puts the seat back", async ({ page }) 
 test("Undo fences on the draft the page holds now, not the snapshot it restores", async ({ page }) => {
   const { calls } = await mountSeatMap(page, adminProps, {
     responses: {
-      "action:deleteSeatAction": () => ({ seatId: "s3" }),
+      "action:deleteSeatAction": () => ({ ok: true, seatId: "s3" }),
       "action:restoreDraftSnapshotAction": () => ({ ok: true, seats: [custom, n02], employees: [] })
     }
   });
@@ -125,7 +125,7 @@ test("Redo becomes available after an Undo and re-applies the change", async ({ 
   let restores = 0;
   await mountSeatMap(page, adminProps, {
     responses: {
-      "action:deleteSeatAction": () => ({ seatId: "s3" }),
+      "action:deleteSeatAction": () => ({ ok: true, seatId: "s3" }),
       "action:restoreDraftSnapshotAction": () => {
         restores += 1;
         // Undo restores the pre-delete draft; redo re-applies the delete.
@@ -152,7 +152,7 @@ test("Redo becomes available after an Undo and re-applies the change", async ({ 
 test("a stale-draft rejection on Undo drops the history and explains why", async ({ page }) => {
   await mountSeatMap(page, adminProps, {
     responses: {
-      "action:deleteSeatAction": () => ({ seatId: "s3" }),
+      "action:deleteSeatAction": () => ({ ok: true, seatId: "s3" }),
       // What the action returns when the RPC raises MLS02: another session
       // advanced the draft after this page loaded it.
       "action:restoreDraftSnapshotAction": () => ({ ok: false, message: "Another admin changed the draft." })

@@ -102,7 +102,7 @@ const optionActions = [
   { name: "deleteDepartmentAction", nextName: "createZoneAction", field: "Department" },
   { name: "createZoneAction", nextName: "renameZoneAction", field: "Zone name" },
   { name: "renameZoneAction", nextName: "deleteZoneAction", field: "Zone to rename" },
-  { name: "deleteZoneAction", nextName: "deleteSeatAction", field: "Zone" }
+  { name: "deleteZoneAction", nextName: "DeleteSeatResult", field: "Zone" }
 ];
 
 test("option actions parse their name before writing, and return the failure", () => {
