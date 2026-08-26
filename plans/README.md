@@ -53,11 +53,15 @@ already-settled (CSP `unsafe-inline` verdict below; HSTS scope is documented
 domain-owner territory in `next.config.js:44-49`), or the owner's Chrome
 extensions. Two residuals worth keeping:
 
-- **LH-01 add `Cross-Origin-Opener-Policy: same-origin`** — the one header
-  Lighthouse flagged that `next.config.js` doesn't address or deliberately
-  defer. Cheap add to `securityHeaders`; only risk is `window.opener`-based
-  popup flows, and auth here is redirect-based (Supabase PKCE callbacks).
-  Verify the GitHub OAuth flow still completes on preview before merge. S.
+- **LH-01 add `Cross-Origin-Opener-Policy: same-origin`** — CLOSED 2026-08-26,
+  merged to main as `7452f86` (PR #465). Header added to `securityHeaders`
+  with a TDD pin (presence + value) in
+  `tests/security-headers-source.test.mjs`. Strict value verified safe before
+  merge: zero `window.open`/`target="_blank"` in `app`/`components`/`lib`,
+  auth redirect-based PKCE, GitHub OAuth off since 08-13 (the entry's
+  "verify OAuth popup flow" concern was already moot). Served header
+  confirmed on a local server; preview sits behind Vercel deployment
+  protection, so preview curl shows platform headers, not the app's.
 - **LH-02 measurement recorded into P-03** (code-splitting) — see the updated
   P-03 entry in the 2026-08-13 perf list below; no separate item.
 
