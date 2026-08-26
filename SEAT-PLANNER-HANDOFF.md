@@ -36,6 +36,7 @@
 | **#445** | — | Test: fail if `.env.local` defines `VERCEL_ENV` (would forge the attestation) + §5/§10 corrections |
 | **#446** | v1.60.0 | Type floor part 2 — map-canvas text tier at the collision threshold |
 | **#447** | v1.61.0 | SeatSheet type floor — phone page below 880, plan text legible-or-absent above |
+| **#474 (PR-2)** | v1.65.0 | 44px touch targets off the map canvas — hit expansion (`after:-inset-*`), no visual size moved; no-overlap rule with an adjacency-capped ledger; guard `touch-target-source` (arithmetic scan + reach floors + pins) |
 
 ---
 
@@ -129,7 +130,7 @@ Most allowlist reasons are claims about today's component tree — "no chrome mo
 
 ## 5. Open work
 
-**Pass-2 audit landed 2026-08-26:** `docs/design-system/AUDIT-2.md` — motion, spacing, the seventeen patterns, shell, keyboard, dark parity, and absences; ranked findings in its §0, guard map in §9 (spacing findings corrected same day against the fixed Carbon scale, skill v1.2.0; the docs-site-unreliable rule added in v1.2.1). **PR-1 shipped same day (#471, v1.64.0):** digest-leak error paths, silent vacate, double-click single-flight, five first-run states — §0 items 1 and 3 closed, item 6 partial; queued next: PR-2 touch-target/hit-expansion sweep (F-SP-4). **The staged plan for the rest of the arc — ruling queue, PR sequence, status board — is `docs/design-system/PLAN.md`; its diagram updates in the same commit as every PR that lands.**
+**Pass-2 audit landed 2026-08-26:** `docs/design-system/AUDIT-2.md` — motion, spacing, the seventeen patterns, shell, keyboard, dark parity, and absences; ranked findings in its §0, guard map in §9 (spacing findings corrected same day against the fixed Carbon scale, skill v1.2.0; the docs-site-unreliable rule added in v1.2.1). **PR-1 shipped same day (#471, v1.64.0):** digest-leak error paths, silent vacate, double-click single-flight, five first-run states — §0 items 1 and 3 closed, item 6 partial. **PR-2 shipped (#474, v1.65.0):** 44px touch-target hit expansion off the map canvas under the no-overlap rule (54 of 58 specs; capped sites ledgered in `tests/touch-target-source.test.mjs`); queued next: PR-3 `/auth/update-password` dark theme (F-DK-1). **The staged plan for the rest of the arc — ruling queue, PR sequence, status board — is `docs/design-system/PLAN.md`; its diagram updates in the same commit as every PR that lands.**
 
 The type-floor arc (#444 / #446 / #447) and the publish guard (#443 / #445) are **complete and prod-verified**. The SeatInspector label ruling landed as candidate B — recorded in §3, pinned in `desktop-seat-marker-system-source.test.mjs`. One item remains.
 
