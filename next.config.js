@@ -73,6 +73,11 @@ const securityHeaders = [
   // entry) and are the domain owner's call once the subdomain inventory is
   // confirmed HTTPS-only — not something a per-app config should assume.
   { key: "Strict-Transport-Security", value: "max-age=63072000" },
+  // Isolate the browsing context group. Safe at the strict value because the
+  // app opens no popups (no window.open / target=_blank anywhere) and auth is
+  // redirect-based (Supabase PKCE callbacks) — no flow depends on
+  // window.opener. LH-01 from the 2026-08-17 Lighthouse pass.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   // Enforced in production only. The dev server needs eval and a websocket for
   // HMR, which this policy forbids — applying it to `next dev` breaks fast
   // refresh without protecting anything users are exposed to.

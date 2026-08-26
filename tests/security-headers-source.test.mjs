@@ -35,6 +35,7 @@ test("every security response header is still declared", () => {
     "Referrer-Policy",
     "Permissions-Policy",
     "Strict-Transport-Security",
+    "Cross-Origin-Opener-Policy",
     "Content-Security-Policy"
   ]) {
     assert.match(
@@ -53,6 +54,9 @@ test("the headers are applied to every route, not a subset", () => {
 test("header values keep the properties they were chosen for", () => {
   assert.match(nextConfig, /"X-Frame-Options", value: "DENY"/);
   assert.match(nextConfig, /"X-Content-Type-Options", value: "nosniff"/);
+  // same-origin (not -allow-popups): the app opens no popups at all, so the
+  // strictest value costs nothing and keeps the browsing context group isolated.
+  assert.match(nextConfig, /"Cross-Origin-Opener-Policy", value: "same-origin"/);
   assert.match(nextConfig, /frame-ancestors 'none'/);
   assert.match(nextConfig, /base-uri 'self'/);
   assert.match(nextConfig, /form-action 'self'/);
