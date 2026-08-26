@@ -172,7 +172,8 @@ test("server draft seat update action delegates dependent writes to the transact
   assert.match(updateSeatActionSource, /const \{ label, employeeName, department, zone, notes \} = parsed\.value;/);
   assert.match(updateSeatActionSource, /Assigned seats require an employee name or selected employee/);
   assert.match(updateSeatActionSource, /\.rpc\("update_draft_seat", \{/);
-  assert.match(updateSeatActionSource, /draft_seat_id: input\.seatId/);
+  // S-05: the RPC receives the uuid-parsed id, not the raw input.
+  assert.match(updateSeatActionSource, /draft_seat_id: seatId\.value/);
   assert.match(updateSeatActionSource, /seat_label: label/);
   assert.match(updateSeatActionSource, /requested_status: input\.status/);
   assert.match(updateSeatActionSource, /selected_employee_id: employeeId/);
@@ -195,7 +196,7 @@ test("server draft seat update action delegates dependent writes to the transact
   // reconstruct that second seat from its own stale copy, which baked a
   // stale updated_at into local state and failed the next Undo's per-row
   // concurrency fence (MLS02, reproduced live).
-  assert.match(updateSeatActionSource, /const seat = await getDraftSeatById\(supabase, input\.seatId\)/);
+  assert.match(updateSeatActionSource, /const seat = await getDraftSeatById\(supabase, seatId\.value\)/);
   assert.match(updateSeatActionSource, /return \{ ok: true, seat, \.\.\.\(await getDraftMapPayload\(supabase\)\) \}/);
   assert.match(updateSeatActionSource, /return mapUpdateSeatError\(error\)/);
   assert.doesNotMatch(updateSeatActionSource, /throw new Error\(error\.message\)/);
