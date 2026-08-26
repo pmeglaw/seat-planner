@@ -210,11 +210,13 @@ re-audit from zero.
   M / LOW-MED.
 
 **Perf / deps / DX:**
-- **X-01 image-pin mismatch STILL OPEN** — `next.config.js:94` pins the old
-  `?v=map-v2-warm-1911x867`; live is cool-2x (`mapLayoutTransform.ts:14`);
-  third divergent copy now in `ComponentStateBoard.tsx:1218`. Inert while all
-  `<Image>`s are `unoptimized`; tripwire for whoever removes that. Fix +
-  source test pinning config↔lib agreement. S.
+- **X-01 image-pin mismatch** — DONE, merged to main as `01a2408` (PR #469,
+  2026-08-26). Config pin updated to cool-2x;
+  `tests/map-image-pin-source.test.mjs` derives the expectation from
+  `MAP_IMAGE_SRC` itself, so an asset re-render must bump both files or fail.
+  Scope correction: the recorded "third divergent copy" in
+  `ComponentStateBoard.tsx` already matched cool-2x — only the config copy
+  was stale.
 - **DEP-01/02/03 — ALL DONE**, merged to main as `fa4e99e` (PR #468,
   2026-08-26). Sharp override removed (installed sharp stayed 0.35.3 —
   proven no-op; postcss override KEPT per the entry). `@types/node` pinned
