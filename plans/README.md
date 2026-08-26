@@ -149,12 +149,15 @@ re-audit from zero.
   when such a seat exists (may be dormant in prod data). Same root as D-08. S.
 
 **Security (minor):**
-- **S-05 parseUuid gap is 4 sites, not 1** — recorded scope (S-01 residue)
-  named only `updateSeatAction.seatId`; also unparsed:
-  `actions.ts:412` (`employeeId`), `:498-505` (swap pair), `:770`
-  (`deleteSeatAction`). `parseUuid` IS applied at `:611,:647` — inconsistency,
-  not policy. Legibility-only (PostgREST parameterizes; RLS + RPC is_admin
-  hold). S.
+- **S-05 parseUuid gap is 4 sites, not 1** — DONE, merged to main as
+  `4e8132e` (PR #466, 2026-08-26). All four sites parsed: updateSeatAction
+  (seatId + employeeId, VALIDATION-returned per its result shape),
+  swapSeatAssignmentsAction (both ids) and deleteSeatAction (thrown — their
+  unions have no VALIDATION arm and the ids come from rendered rows).
+  Pinned by three new tests in `action-input-validation-source.test.mjs`;
+  the two `update-seat-transaction-safety` pins moved from `input.seatId` to
+  `seatId.value`. `assertNonEmpty` survives only in the restore normalizers
+  (out of recorded scope, deliberate).
 
 **Tests (the M4-extraction gap cluster):**
 - **T-10 the three M4 hooks (`useDraftHistory`, `usePublishReview`,
