@@ -202,6 +202,50 @@ test("snapshot restore normalizers bound the text they rewrite", () => {
   assert.ok(employeeNormalizer.includes("MAX_EMPLOYEE_NAME_LENGTH"), "the restored name is bounded");
 });
 
+// S-05: parseUuid was applied inconsistently — updateEmployeeAction and
+// deleteEmployeeAction parsed their target ids while the seat-facing actions
+// took theirs on trust (trim-only or raw). Legibility hardening, not a
+// vulnerability fix: PostgREST parameterizes and RLS + the RPCs' is_admin
+// checks hold either way, but a malformed id should fail as a readable
+// validation error at the boundary, not as a Postgres uuid cast deep in a
+// query.
+test("updateSeatAction validates the seat and employee ids it targets", () => {
+  const source = extractAction("updateSeatAction", "SwapSeatAssignmentsResult");
+
+  const seatIdGuard = source.indexOf('parseUuid(input.seatId, "Seat id")');
+  assert.notEqual(seatIdGuard, -1, "the seat id should be parsed as a uuid");
+  assert.ok(seatIdGuard < source.indexOf('.rpc("update_draft_seat"'), "seat id must be validated before the RPC call");
+  assert.match(source, /draft_seat_id: seatId\.value/, "the parsed seat id is what reaches the RPC");
+
+  assert.match(source, /parseUuid\(input\.employeeId, "Employee id"\)/, "a provided employee id should be parsed as a uuid");
+  assert.doesNotMatch(source, /input\.employeeId \|\| null/, "the raw employee id must not reach the RPC");
+});
+
+test("swapSeatAssignmentsAction validates both seat ids", () => {
+  // extractAction needs a `}\n\nexport` boundary; swap is followed by the
+  // ActionValidationFailure doc comment instead, so anchor on that comment.
+  const source = actionsSource.match(
+    /export async function swapSeatAssignmentsAction\([\s\S]+?\r?\n}(?=\r?\n\r?\n\/\*\*)/
+  )?.[0];
+  assert.ok(source, "swapSeatAssignmentsAction should be present");
+
+  const sourceGuard = source.indexOf('parseUuid(input.sourceSeatId, "Source seat id")');
+  const targetGuard = source.indexOf('parseUuid(input.targetSeatId, "Target seat id")');
+  assert.notEqual(sourceGuard, -1, "the source seat id should be parsed as a uuid");
+  assert.notEqual(targetGuard, -1, "the target seat id should be parsed as a uuid");
+  const readIndex = source.indexOf('.from("seats")');
+  assert.ok(sourceGuard < readIndex && targetGuard < readIndex, "ids must be validated before the seats read");
+  assert.doesNotMatch(source, /assertNonEmpty\(/, "the trim-only helper must not survive here");
+});
+
+test("deleteSeatAction validates the seat id it deletes", () => {
+  const source = extractAction("deleteSeatAction", "ImportAssignmentsCsvResult");
+
+  const guardIndex = source.indexOf('parseUuid(seatId, "Seat id")');
+  assert.notEqual(guardIndex, -1, "the seat id should be parsed as a uuid");
+  assert.ok(guardIndex < source.indexOf('.from("seats")'), "id must be validated before the seats read");
+});
+
 test("deleteEmployeeAction validates the id it deactivates", () => {
   const source = extractAction("deleteEmployeeAction", "createDepartmentAction");
   const guardIndex = source.indexOf('parseUuid(targetEmployeeId, "Employee id")');

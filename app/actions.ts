@@ -399,6 +399,12 @@ export async function updateSeatAction(input: {
 }): Promise<UpdateSeatResult> {
   const supabase = await requireAdmin();
 
+  // S-05: ids get the same boundary parse the employee actions apply, so a
+  // malformed one fails here with a field-level message instead of as a
+  // Postgres uuid cast error inside the RPC.
+  const seatId = parseUuid(input.seatId, "Seat id");
+  if (!seatId.ok) return { ok: false, code: "VALIDATION", message: seatId.message };
+
   // S-01: these fields reach `employees` (full_name, position, phone_extension,
   // department) through the RPC, so they get the same bounds the employee
   // actions apply. parseSeatTextInput preserves the absent-vs-null distinction
@@ -409,14 +415,20 @@ export async function updateSeatAction(input: {
   const { label, employeeName, department, zone, notes } = parsed.value;
   const employeePosition = parsed.value.employeePosition;
   const phoneExtension = parsed.value.phoneExtension;
-  const employeeId = input.employeeId || null;
+
+  let employeeId: string | null = null;
+  if (input.employeeId) {
+    const parsedEmployeeId = parseUuid(input.employeeId, "Employee id");
+    if (!parsedEmployeeId.ok) return { ok: false, code: "VALIDATION", message: parsedEmployeeId.message };
+    employeeId = parsedEmployeeId.value;
+  }
 
   if (!employeeId && input.status === "assigned" && !employeeName) {
     return { ok: false, code: "VALIDATION", message: "Assigned seats require an employee name or selected employee." };
   }
 
   const { error } = await supabase.rpc("update_draft_seat", {
-    draft_seat_id: input.seatId,
+    draft_seat_id: seatId.value,
     seat_label: label,
     requested_status: input.status,
     selected_employee_id: employeeId,
@@ -437,7 +449,7 @@ export async function updateSeatAction(input: {
   }
 
   revalidatePath("/admin");
-  const seat = await getDraftSeatById(supabase, input.seatId);
+  const seat = await getDraftSeatById(supabase, seatId.value);
   // Fresh full payload alongside the single seat — see UpdateSeatResult's
   // comment: a force_move also vacates another draft seat server-side, and a
   // caller reconstructing that seat from its own stale copy bakes a stale
@@ -495,8 +507,16 @@ export async function swapSeatAssignmentsAction(input: {
   targetExpectedUpdatedAt?: string | null;
 }): Promise<SwapSeatAssignmentsResult> {
   const supabase = await requireAdmin();
-  const sourceSeatId = assertNonEmpty(input.sourceSeatId, "Source seat");
-  const targetSeatId = assertNonEmpty(input.targetSeatId, "Target seat");
+  // S-05: uuid-parse both ids at the boundary. Thrown (not returned) because
+  // the result union has no VALIDATION arm and the ids come from rendered
+  // draft rows, not typed input — an invalid one here is a programming error,
+  // exactly what the assertNonEmpty this replaces also threw for.
+  const parsedSourceSeatId = parseUuid(input.sourceSeatId, "Source seat id");
+  if (!parsedSourceSeatId.ok) throw new Error(parsedSourceSeatId.message);
+  const parsedTargetSeatId = parseUuid(input.targetSeatId, "Target seat id");
+  if (!parsedTargetSeatId.ok) throw new Error(parsedTargetSeatId.message);
+  const sourceSeatId = parsedSourceSeatId.value;
+  const targetSeatId = parsedTargetSeatId.value;
 
   const { data: seats, error: seatsError } = await supabase
     .from("seats")
@@ -776,6 +796,12 @@ export async function deleteZoneAction(zone: string): Promise<ZoneDeleteResult> 
 
 export async function deleteSeatAction(seatId: string) {
   const supabase = await requireAdmin();
+
+  // S-05: same boundary parse as the swap action; thrown for the same reason
+  // (the id comes from a rendered draft row, and this action throws throughout).
+  const parsedSeatId = parseUuid(seatId, "Seat id");
+  if (!parsedSeatId.ok) throw new Error(parsedSeatId.message);
+  seatId = parsedSeatId.value;
 
   const { data: seat, error: seatError } = await supabase
     .from("seats")
