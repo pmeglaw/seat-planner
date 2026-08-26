@@ -1,6 +1,6 @@
 # PLAN.md — the staged plan for the rest of the design-system adoption
 
-**Written 2026-08-26**, app at **v1.64.0** (live `/api/build-id` = `d7ac640`, verified same day). Companion to `AUDIT.md` / `PASS1-TOKENS.md` / `AUDIT-2.md` / `READ-PATH-ASSESSMENT.md` / `PALETTE-ASSESSMENT.md` and `SEAT-PLANNER-HANDOFF.md`. AUDIT-2 ranks findings but sequences nothing — **this document is the sequence.** It goes to the design reviewer for ruling before any stage inside it starts; PR-2 gets its own brief once the plan is ruled.
+**Written 2026-08-26**, app at **v1.64.0** (live `/api/build-id` = `d7ac640`, verified same day). Companion to `AUDIT.md` / `PASS1-TOKENS.md` / `AUDIT-2.md` / `READ-PATH-ASSESSMENT.md` / `PALETTE-ASSESSMENT.md` and `SEAT-PLANNER-HANDOFF.md`. AUDIT-2 ranks findings but sequences nothing — **this document is the sequence.** Reviewed and ruled **2026-08-26** (PR #472 review): structure accepted; Stage-2 rulings **R1–R4 recorded below**, R5 principle ruled with the value deferred. PR-2 gets its own brief after this merges.
 
 Position-statement verification (per the brief): checked against the repo and the live deployment — **accurate as written, no corrections**. Pass 1 complete and prod-verified #434–#447 (handoff §2), seven guards (handoff §4), F1–F8 closed 2026-08-25 (`READ-PATH-ASSESSMENT.md` ranked table); AUDIT-2 §0 items 1 and 3 closed by #471 v1.64.0, item 6 partial (single-flight closed, pending + SR busy open), items 2/4/5/7/8/9/10 open with no guard (AUDIT-2 §0/§9); readiness 5 of 6 boxes, the open one a product decision (handoff §10).
 
@@ -35,40 +35,43 @@ flowchart TD
     PR3[PR-3 update-password dark]:::todo
     PR4[PR-4 error behind modal]:::todo
     PR5[PR-5 pending + SR busy]:::todo
-    R1{Ruling: destructive tiers}:::todo --> PR6[PR-6 type-the-name · toast]:::todo
-    R2{Ruling: sense of place}:::todo --> PR7[PR-7 draft · env · identity]:::todo
-    R3{Ruling: motion scale}:::todo --> PR8a[PR-8a motion tokens]:::todo --> PR8b[PR-8b motion sites]:::todo
-    R4{Ruling: dark hover}:::todo --> PR9[PR-9 dark hover + inks]:::todo
-    R5{Ruling: greige hairlines}:::todo --> PR11[PR-11 long tail]:::todo
+    R1{Ruling: destructive tiers}:::done --> PR6[PR-6 type-the-name · toast]:::todo
+    R2{Ruling: sense of place}:::done --> PR7[PR-7 draft · env · identity]:::todo
+    R3{Ruling: motion scale}:::done --> PR8a[PR-8a motion tokens · mechanical]:::todo --> PR8b[PR-8b timing default · site migration]:::todo --> PR8c[PR-8c motion sites · reduced-motion]:::todo
+    R4{Ruling: dark hover}:::done --> PR9a[PR-9a dark hover sweep]:::todo
+    R5{Ruling: greige hairlines}:::wip --> PR11[PR-11 long tail]:::todo
+    PR9b[PR-9b JSX inks · glints]:::todo
     PR10[PR-10 guard-only]:::todo
     PR1 --> PR2 --> PR3 --> PR4 --> PR5
   end
 
   P1 --> P2
   S2 -. rulings feed .-> R1 & R2 & R3 & R4 & R5
-  PR6 & PR7 & PR8a --> GATE{{Vocabulary-changing PRs<br/>land before first users}}:::todo --> S5
+  PR6 & PR7 & PR8b --> GATE{{Vocabulary-changing PRs<br/>land before first users}}:::todo --> S5
 ```
 
 | PR | Stage | Findings | Status | Tag |
 |---|---|---|---|---|
 | Pass 1 (#434–#447) | 1–3 | tokens · twins · zone · markers · type floor · focus · publish guard | **done** | v1.61.0 |
 | PR-1 (#471) | 3 | AUDIT-2 §0 items 1, 3, part of 6 | **done** | v1.64.0 |
-| R1 ruling — destructive tiers | 2 | F-INT-1/2 | not started | — |
-| R2 ruling — sense of place | 2 | F-SH-1/2/3 | not started | — |
-| R3 ruling — motion scale | 2 | F-MO-4/5 | not started | — |
-| R4 ruling — dark hover direction | 2 | F-DK-3 | not started | — |
-| R5 ruling — greige hairlines | 2 | handoff §9 parked | not started | — |
+| R1 ruling — destructive tiers | 2 | F-INT-1/2 | **ruled 2026-08-26** | — |
+| R2 ruling — sense of place | 2 | F-SH-1/2/3 | **ruled 2026-08-26** | — |
+| R3 ruling — motion scale | 2 | F-MO-4/5 | **ruled 2026-08-26** | — |
+| R4 ruling — dark hover direction | 2 | F-DK-3 | **ruled 2026-08-26** | — |
+| R5 ruling — greige hairlines | 2 | handoff §9 parked | in progress — principle ruled, value deferred to the PR-11 brief's measurement report | — |
 | PR-2 touch targets | 3 | F-SP-4 (+ 28px family of F-SP-3) | not started — **queued next** | — |
 | PR-3 update-password dark | 3 | F-DK-1 | not started | — |
 | PR-4 error-behind-modal | 3 | F-INT-4 / F-FRM-1 | not started | — |
 | PR-5 pending + SR busy | 3 | §8.1 remainder of §0 item 6 | not started | — |
-| PR-6 destructive tiers + toast | 3 | F-INT-1/2 | not started · blocked on R1 | — |
-| PR-7 sense of place | 3 | F-SH-1/2/3 | not started · blocked on R2 | — |
-| PR-8a motion tokens | 3 | F-MO-4/5 | not started · blocked on R3 | — |
-| PR-8b motion sites | 3 | F-MO-1/2/3 | not started · after PR-8a | — |
-| PR-9 dark hover + inks | 3 | F-DK-3/4 | not started · blocked on R4 | — |
-| PR-10 guard-only | 3 | §0 item 10, handoff §4 | not started | — |
-| PR-11 long tail | 3 | F-SH-4/5/6 · F-KB-1/2/3 · F-FRM-2…8 · F-SP-1/2 · §9 doc errors | not started | — |
+| PR-6 destructive tiers + toast | 3 | F-INT-1/2 | not started · R1 ruled — unblocked | — |
+| PR-7 sense of place | 3 | F-SH-1/2/3 | not started · R2 ruled — unblocked | — |
+| PR-8a motion tokens (mechanical) | 3 | F-MO-5 values | not started · R3 ruled — unblocked | — |
+| PR-8b timing default + site migration (design) | 3 | F-MO-4/5 | not started · after PR-8a | — |
+| PR-8c motion sites | 3 | F-MO-1/2/3 | not started · after PR-8b | — |
+| PR-9a dark hover sweep | 3 | F-DK-3 | not started · R4 ruled — unblocked | — |
+| PR-9b JSX inks/glints | 3 | F-DK-4 | not started | — |
+| PR-10 guard-only | 3 | §0 item 10, handoff §4, axe `target-size` assessment | not started | — |
+| PR-11 long tail | 3 | F-SH-4/5/6 · F-KB-1/2/3 · F-FRM-2…8 · F-SP-1/2 · §9 doc errors · greige hairlines | not started | — |
 
 ---
 
@@ -85,22 +88,40 @@ One discovery item remains open, already scoped: the handoff §4 **circumstantia
 ## Stage 2 — UI/UX design (rulings)
 
 - **Entry:** this plan ruled.
-- **Deliverables:** five rulings, recorded in the handoff ledger the way Pass-1 rulings are (handoff §3/§8).
+- **Deliverables:** five rulings. They live **here** — the handoff §3/§8 ledger entry ships with each implementing PR, not with this document.
 - **Exit:** each item below carries an owner/reviewer decision; its Stage-3 PR is then unblocked.
 - **Guard added:** none at this stage — each ruling's guard ships with its PR.
-- **Status: in progress** — Pass-1 rulings done; the five Pass-2 rulings below are open. They are independent and can be ruled in any order, in parallel with PR-2…PR-5.
+- **Status:** **R1–R4 ruled 2026-08-26** (PR #472 review); **R5 principle ruled, value deferred** to the measurement report in the PR-11 brief.
 
-These need ruling **before code** because they change visual vocabulary (free now, expensive after first users) or product behavior. Each is a recommendation with measured values, not an implementation.
+These needed ruling **before code** because they change visual vocabulary (free now, expensive after first users) or product behavior. Each section: the measured basis, then the ruling.
 
-**R1 — Destructive tiers + toast timer (F-INT-1/2).** 0 of the 4 High-tier destructive actions require typing the resource name (AUDIT-2 §3): publish, discard draft ("This cannot be undone"), snapshot restore, reset-to-published; CSV import is borderline. Recommendation: **type-the-name on the three draft/state-replacing one-click actions** — discard draft, snapshot restore, reset-to-published (each replaces the whole draft and clears Undo/Redo history after a single click) — and **leave publish as review-diff + single confirm**: publish already has the strongest review apparatus in the app, it is the core flow for non-technical staff, and its prior state concern is being addressed by the toast half of this ruling. Toast: the app's only toast auto-dismisses at 6 s while carrying Undo (`SeatMap.tsx:657-661`, `:3121-3133`) and is the **only** success confirmation for publish and discard — the two highest-consequence operations get the most ephemeral confirmation while CSV/restore/reset/deactivate get persistent banners. Recommendation: **persist-until-dismissed** (Carbon: a toast with an action must persist); the staleness concern recorded at `:651-656` is answered by explicit dismiss. The alternative (drop Undo from the toast — it stays in the toolbar — and keep the timer) preserves capability but keeps the confirmation disparity running the wrong way.
+**R1 — Destructive tiers + toast timer (F-INT-1/2).** Basis: 0 of the 4 High-tier destructive actions require typing the resource name (AUDIT-2 §3) — publish, discard draft ("This cannot be undone"), snapshot restore, reset-to-published; CSV import is borderline. The app's only toast auto-dismisses at 6 s while carrying Undo (`SeatMap.tsx:657-661`, `:3121-3133`) and is the **only** success confirmation for publish and discard, while CSV/restore/reset/deactivate get persistent banners.
 
-**R2 — Sense of place: draft marker, environment indicator, identity (F-SH-1/2/3).** Mode identity is persistent on 2 of 5 signed-in surfaces (clean `/admin` shows nothing; the "Draft · N changes" text is `hidden … lg:inline`, `SeatMap.tsx:2855`); an environment indicator exists on 0 of 7 surfaces in an app where local dev writes the production database; identity is behind a click on 6 of 7. Recommendation: **one ruling, one header vocabulary**, all three in the top bar. (a) A persistent mode tag ("Draft" on `/admin`/management/settings, "Published view" implied elsewhere) — always visible, not gated on `hasChanges` (contract #4's no-idle-chip ruling governs the *publish cluster*, not mode identity; the finding is compatible with it). (b) An environment tag rendered whenever the deployment cannot attest `VERCEL_ENV === "production"` — same attestation the publish guard already trusts (`lib/publishGuard.ts`), worded to the actual danger ("Local dev — writes production"), warning-family with text so it carries two signals. (c) Identity: email or name as persistent text beside the monogram at ≥lg, monogram-only below (`AccountMenu.tsx:158-160` currently menu-only). Where exactly in the 40px bar each sits is the ruling's call — the recommendation is only that all three share one placement decision so the header is designed once.
+**RULED 2026-08-26: type-the-name on all four** — publish, discard draft, snapshot restore, reset-to-published. Tier is set by consequence, not by the quality of the preview; a persistent toast confirms publish, it does not recover the prior published state. The typed string is the short base name (e.g. the floor/base name), never a path. **CSV import is Moderate** — confirm with the consequences spelled out, and the confirm must state the row count it overwrites. Toast: **persist-until-dismissed, Undo stays on it.**
 
-**R3 — Motion scale (F-MO-4/5).** Current scale `--sp-duration-fast/standard/deliberate` = 150/200/280 ms (`app/globals.css:139-141`) — only 150 is on Carbon's table; ~96 % of ~120 eased sites run an off-Carbon curve because `tailwind.config.ts` defines no `transitionTimingFunction`, so bare `transition-*` resolves to Tailwind's `cubic-bezier(0.4,0,0.2,1)`; Button/IconButton hover feedback runs 200 ms against Carbon's fast-01 **70 ms** budget. Recommendation (reviewer's stated default — endorse it): **adopt Carbon's six stops wholesale** — 70/110/150/240/400/700 as `--sp-duration-*` tokens — rather than a 3-stop subset: the app already needs at least five roles (hover feedback, fades/nav, small expansion, panels/toasts/modals, background dimming), so a subset would re-derive Carbon's table with gaps. Set Tailwind's default timing function to productive-standard `cubic-bezier(.2,0,.38,.9)` with named entrance/exit variants. Values-only in PR-8a; site migrations in PR-8b.
+**R2 — Sense of place: draft marker, environment indicator, identity (F-SH-1/2/3).** Basis: mode identity is persistent on 2 of 5 signed-in surfaces (clean `/admin` shows nothing; the "Draft · N changes" text is `hidden … lg:inline`, `SeatMap.tsx:2855`); an environment indicator exists on 0 of 7 surfaces in an app where local dev writes the production database; identity is behind a click on 6 of 7 (`AccountMenu.tsx:158-160`).
 
-**R4 — Dark hover direction (F-DK-3).** In dark, 20 of 33 surface-hover sites reuse the light idiom `hover:bg-[var(--sp-background)]`, sinking controls below their resting surface (`#1f1f1f` → `#161616`); the dark-correct token already exists and 9 sites use it (`--sp-layer-hover: #262626`, one step *up*). Recommendation: rule **hover lightens in dark** (per Carbon), and make the mechanism a theme-aware role token — all surface-hover goes through `--sp-layer-hover` (or a sibling role), never through `--sp-background`. This is a one-line ruling that unblocks PR-9's mechanical sweep.
+**RULED 2026-08-26: all three land in the top bar, one placement decision, product-left / global-right (the F-SH-6 rule).**
+- **Left cluster:** product name · **mode tag** — "Draft" on `/admin`, management, settings, always visible, not gated on `hasChanges`. Viewer surfaces carry **no** tag: absence is the published default, not a status.
+- **Right cluster:** **environment tag** (only when the deployment cannot attest `VERCEL_ENV === "production"` — same attestation as `lib/publishGuard.ts`) · identity text · monogram. The env tag is warning-family with icon + text ("Local dev — writes production"); it is global, so it sits right.
+- **Identity:** email as persistent text at ≥lg, monogram-only below. Role stays in the menu.
+- Tags are **24px** inside the 40px bar. No new colour beyond the warning family already in the vocabulary.
 
-**R5 — The four greige hairlines (handoff §9, parked → un-parked here).** Four near-identical greige border values survive from the pre-token era (the last `border-[#D8D0C5]` literal lives in `UpdatePasswordForm.tsx`, F-DK-1's surface). Recommendation: **collapse to one border role token** in the `--sp-*` vocabulary; which of the four values wins (or whether an existing role token like the current subtle-border value absorbs them) is the ruling. Fix lands in PR-11 (and PR-3 removes the update-password instance in passing).
+**R3 — Motion scale (F-MO-4/5).** Basis: current scale `--sp-duration-fast/standard/deliberate` = 150/200/280 ms (`app/globals.css:139-141`) — only 150 is on Carbon's table; ~96 % of ~120 eased sites run an off-Carbon curve because `tailwind.config.ts` defines no `transitionTimingFunction`, so bare `transition-*` resolves to Tailwind's `cubic-bezier(0.4,0,0.2,1)`; Button/IconButton hover feedback runs 200 ms against Carbon's fast-01 **70 ms** budget.
+
+**RULED 2026-08-26: Carbon's six stops accepted, with a split that protects the no-op proof** — adding a Tailwind default `transitionTimingFunction` moves ~100 computed curves at once, which is a value change, not a token addition:
+- **PR-8a (mechanical):** add six new tokens named for Carbon roles (`--sp-motion-fast-01` … `--sp-motion-slow-02`) with Carbon values (70/110/150/240/400/700), **unused**; old `--sp-duration-*` untouched. `resolved-map` proves nothing moved. Guard: test pins the six values.
+- **PR-8b (design):** Tailwind timing default → productive-standard `cubic-bezier(.2,0,.38,.9)` with named entrance/exit variants; migrate sites to the new tokens; delete the three old tokens last. Live pass both themes. Guard: pins the Tailwind default; no `--sp-duration-*` references remain.
+- **PR-8c (design):** reduced-motion on transitions, kill `sp-chip-pop`, one-axis entrances. Guard: no keyframe past 100 %; no transition without `motion-reduce:`.
+- The Stage-5 vocabulary gate sits on **PR-8b** — that is where the feel changes.
+
+**R4 — Dark hover direction (F-DK-3).** Basis: in dark, 20 of 33 surface-hover sites reuse the light idiom `hover:bg-[var(--sp-background)]`, sinking controls below their resting surface (`#1f1f1f` → `#161616`); the dark-correct token already exists and 9 sites use it (`--sp-layer-hover: #262626`, one step *up*).
+
+**RULED 2026-08-26: hover lightens in dark.** All surface hover goes through `--sp-layer-hover` (or a sibling role token), never `--sp-background`. PR-9 splits: **9a** hover-direction sweep (class swap, value moves, live pass); **9b** hardcoded JSX inks/glints (F-DK-4). Two concerns, two PRs.
+
+**R5 — The four greige hairlines (handoff §9, parked → un-parked here).** Basis: four near-identical greige border values survive from the pre-token era (the last `border-[#D8D0C5]` literal lives in `UpdatePasswordForm.tsx`, F-DK-1's surface).
+
+**PRINCIPLE RULED 2026-08-26, value deferred: collapse to one border role token.** Before the value is picked, the four hexes get listed with file:line and each measured against `layer-01` **and** the hover surface, in both themes — if a hairline ever separates interactive rows it needs 3:1 on hover; if purely decorative, no floor. That measurement report goes in the **PR-11 brief**, not here. Fix lands in PR-11 (PR-3 removes the update-password instance in passing).
 
 ## Stage 3 — App development (the PR arc)
 
@@ -109,22 +130,24 @@ These need ruling **before code** because they change visual vocabulary (free no
 - **Exit:** all AUDIT-2 §0 items closed or explicitly re-parked; every territory in the §9 guard map has a pin.
 - **Status: in progress** — PR-1 shipped (#471, v1.64.0); PR-2 queued next.
 
-The reviewer's proposed order, validated against the repo — **it stands, no reorder**. The only observation worth recording: R1–R5 are independent of PR-2…PR-5, so rulings should run in parallel with the early PRs — PR-6/7/8a must not end up serialized behind PR-5 when their only real dependency is a ruling.
+The reviewer's proposed order, validated against the repo — **it stands, no reorder**. R1–R4 were ruled with the plan review itself (2026-08-26), so PR-6/7/8a are already unblocked and can interleave with PR-2…PR-5 rather than queue behind them.
 
 | PR | Scope | Findings | Guard shipped with it |
 |---|---|---|---|
 | PR-1 | **done #471 v1.64.0** — prod-safe error paths, single-flight, first-run states | §0 items 1, 3, part of 6 | `action-error-contract-source`, `client-action-error`, ct/source guards on all five empty states |
-| PR-2 | Touch-target / hit-expansion sweep | F-SP-4 (absorbs the 28px family of F-SP-3) | source scan: every interactive spec <44px has an `after:-inset-*` reaching 44; or enable axe `target-size` (WCAG 2.2 tag) |
+| PR-2 | Touch-target / hit-expansion sweep | F-SP-4 (absorbs the 28px family of F-SP-3) | source scan: every interactive spec <44px has an `after:-inset-*` reaching 44 (axe `target-size` enablement moved to PR-10, assessed for app-wide fallout first) |
 | PR-3 | `/auth/update-password` dark theme | F-DK-1 | dark-completeness reverse-direction check |
 | PR-4 | Error-behind-modal | F-INT-4 / F-FRM-1 | ct test: server error visible inside the open dialog |
 | PR-5 | Pending indication + SR busy on all 17 mutating flows | §8.1 remainder of §0 item 6 | source test: every mutating flow has a live region + pending UI |
 | PR-6 | Destructive tiers + toast timer | F-INT-1/2 (after R1) | source test: High-tier confirm requires typed name; no `role="alert"` on a timer with an action |
 | PR-7 | Sense of place — draft marker, env indicator, identity | F-SH-1/2/3 (after R2) | source test: marker present on every admin surface; env indicator when not `VERCEL_ENV=production` |
-| PR-8a | Motion tokens — **values only**: duration scale, timing-function defaults | F-MO-4/5 (after R3) | test pins `--sp-duration-*` to Carbon table; pins Tailwind timing default |
-| PR-8b | Motion sites — reduced-motion on transitions, kill `sp-chip-pop` bounce, one-axis entrances | F-MO-1/2/3 | regex: no keyframe travels past 100%; no transition without `motion-reduce:` |
-| PR-9 | Dark hover direction + hardcoded JSX inks/glints | F-DK-3/4 (after R4) | scan: no `text-white`/`#fff` literals in JSX over theme-flipped fills |
-| PR-10 | Guard-only: 8px grid + control ladder scan; circumstantial-allowlist categories | §0 item 10, handoff §4 | the guards *are* the PR |
-| PR-11 | Long tail: F-SH-4/5/6, F-KB-1/2/3, F-FRM-2…8, F-SP-1/2 drift, §9 parked doc errors, greige hairlines (after R5) | — | per item |
+| PR-8a | Motion tokens — **mechanical**: six Carbon-role tokens (`--sp-motion-fast-01`…`-slow-02`), added unused; old `--sp-duration-*` untouched | F-MO-5 values (R3 ruled) | test pins the six values; `resolved-map` proves nothing moved |
+| PR-8b | **Design**: Tailwind timing default → productive-standard + entrance/exit variants; migrate sites to the new tokens; delete old tokens last | F-MO-4/5 (R3 ruled) | pins the Tailwind default; no `--sp-duration-*` references remain |
+| PR-8c | Motion sites — reduced-motion on transitions, kill `sp-chip-pop` bounce, one-axis entrances | F-MO-1/2/3 | regex: no keyframe travels past 100%; no transition without `motion-reduce:` |
+| PR-9a | Dark hover-direction sweep — surface hover through `--sp-layer-hover`, never `--sp-background` | F-DK-3 (R4 ruled) | scan: no `hover:bg-[var(--sp-background)]`; live pass both themes |
+| PR-9b | Hardcoded JSX inks/glints | F-DK-4 | scan: no `text-white`/`#fff` literals in JSX over theme-flipped fills |
+| PR-10 | Guard-only: 8px grid + control ladder scan; circumstantial-allowlist categories; assess + enable axe `target-size` (WCAG 2.2) | §0 item 10, handoff §4 | the guards *are* the PR |
+| PR-11 | Long tail: F-SH-4/5/6, F-KB-1/2/3, F-FRM-2…8, F-SP-1/2 drift, §9 parked doc errors, greige hairlines (R5 value from the brief's measurement report) | — | per item |
 
 **Rules that hold across every PR:**
 
@@ -145,7 +168,7 @@ The reviewer's proposed order, validated against the repo — **it stands, no re
 
 1. `npm test` green, **including the PR's new guard**.
 2. The seven Pass-1 guards untouched (`dangling-refs`, `resolved-map`, `zone-completeness`, paired-marker scan, `marker-contrast`, `desktop-seat-marker-system-source`, `type-floor-source` — handoff §4).
-3. Axe tiers pass.
+3. Axe tiers pass — as configured today (WCAG 2.0/2.1 tags; `target-size` joins the tiers via PR-10 after its fallout assessment).
 4. Live visual pass, light **and** dark (build/typecheck/tests are not visual verification).
 5. `/api/build-id` matches the merged SHA after deploy.
 
@@ -169,7 +192,7 @@ The reviewer's proposed order, validated against the repo — **it stands, no re
 - **Guard added:** none.
 - **Status: not started.**
 
-**Vocabulary-changing PRs that should land before first users** (visual vocabulary is free now, expensive after): **PR-6** (confirmation strength), **PR-7** (header vocabulary), **PR-8a** (motion feel). Everything else — including PR-8b's site sweep, PR-9, PR-10, PR-11 — can follow with users present.
+**Vocabulary-changing PRs that should land before first users** (visual vocabulary is free now, expensive after): **PR-6** (confirmation strength), **PR-7** (header vocabulary), **PR-8b** (motion feel — the gate sits on 8b, not 8a, because the mechanical token addition changes nothing the user sees). Everything else — including PR-8c's site sweep, PR-9a/9b, PR-10, PR-11 — can follow with users present.
 
 ## Stage 6 — Maintenance & support
 
