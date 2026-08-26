@@ -138,7 +138,7 @@ export function DeleteSeatConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+            className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
             aria-label="Cancel custom seat deletion"
           >
             <CloseIcon />
@@ -205,7 +205,7 @@ export function PublishReviewDialog({
             type="button"
             onClick={onClose}
             disabled={pending}
-            className={["flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-editor-neutral-bg)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40", focusRingClass].join(" ")}
+            className={["relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-editor-neutral-bg)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40", focusRingClass].join(" ")}
             aria-label="Close publish review"
           >
             <CloseIcon />
@@ -487,7 +487,7 @@ export function SwapConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)]"
+            className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)]"
             aria-label="Cancel swap confirmation"
           >
             <CloseIcon />

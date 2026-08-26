@@ -15,7 +15,7 @@ export function NamesVisibilityToggle({ pressed, onToggle }: {
       type="button"
       aria-pressed={pressed}
       onClick={onToggle}
-      className="flex w-full items-center gap-2 text-xs font-semibold text-[var(--sp-text-secondary)] transition hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+      className="relative flex w-full items-center gap-2 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[13px] after:inset-x-0 hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
     >
       <span className="min-w-0 truncate">Show occupant names</span>
       <span

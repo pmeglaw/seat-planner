@@ -403,7 +403,7 @@ export function ViewerFindPalette({
                       onFocus={() => onZoneHoverChange(chip.name)}
                       onBlur={() => onZoneHoverChange(null)}
                       className={cx(
-                        "inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
+                        "relative inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-xs font-semibold transition after:absolute after:-inset-x-[3px] after:-inset-y-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
                         pinned
                           ? "border-[var(--sp-brand)] bg-[var(--sp-brand-wash)] text-[var(--sp-brand-text)]"
                           : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)] hover:border-[var(--sp-brand-border)]"

@@ -31,9 +31,16 @@ export function MapZoomControl({
   orientation = "vertical"
 }: MapZoomControlProps) {
   const horizontal = orientation === "horizontal";
+  // 44px touch reach (PR-2 / F-SP-4) under the no-overlap rule: the stack is
+  // zero-gap, so the cross axis expands fully and the stack axis expands on
+  // OUTWARD faces only (first/last button) — reach between siblings stays the
+  // visual 28/32 (adjacency-capped; see tests/touch-target-source.test.mjs).
   const zoomButtonClass = horizontal
-    ? `${zoomButtonBaseClass} h-7 w-7 border-r border-[var(--sp-border-subtle)] last:border-r-0`
-    : `${zoomButtonBaseClass} h-8 w-8 border-b border-[var(--sp-border-subtle)] last:border-b-0`;
+    ? `${zoomButtonBaseClass} relative after:absolute after:-inset-y-2 h-7 w-7 border-r border-[var(--sp-border-subtle)] last:border-r-0`
+    : `${zoomButtonBaseClass} relative after:absolute after:-inset-x-1.5 h-8 w-8 border-b border-[var(--sp-border-subtle)] last:border-b-0`;
+  const zoomEdgeFirst = horizontal ? "after:-left-2 after:right-0" : "after:-top-1.5 after:bottom-0";
+  const zoomEdgeMiddle = horizontal ? "after:left-0 after:right-0" : "after:top-0 after:bottom-0";
+  const zoomEdgeLast = horizontal ? "after:left-0 after:-right-2" : "after:top-0 after:-bottom-1.5";
 
   return (
     <div
@@ -52,13 +59,13 @@ export function MapZoomControl({
       >
         {label}
       </span>
-      <button type="button" onClick={onZoomIn} disabled={zoomInDisabled} aria-label="Zoom in" title="Zoom in" className={zoomButtonClass}>
+      <button type="button" onClick={onZoomIn} disabled={zoomInDisabled} aria-label="Zoom in" title="Zoom in" className={`${zoomButtonClass} ${zoomEdgeFirst}`}>
         +
       </button>
-      <button type="button" onClick={onZoomOut} disabled={zoomOutDisabled} aria-label="Zoom out" title="Zoom out" className={zoomButtonClass}>
+      <button type="button" onClick={onZoomOut} disabled={zoomOutDisabled} aria-label="Zoom out" title="Zoom out" className={`${zoomButtonClass} ${zoomEdgeMiddle}`}>
         −
       </button>
-      <button type="button" onClick={onFit} aria-label="Fit map to view" title="Fit to view" className={zoomButtonClass}>
+      <button type="button" onClick={onFit} aria-label="Fit map to view" title="Fit to view" className={`${zoomButtonClass} ${zoomEdgeLast}`}>
         <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
           <path d="M7 3.5H3.5V7M13 3.5h3.5V7M7 16.5H3.5V13M13 16.5h3.5V13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

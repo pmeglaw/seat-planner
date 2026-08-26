@@ -876,7 +876,7 @@ export function AdminManagementPanel({
                               <button
                                 type="button"
                                 onClick={() => toggleSort(column.key)}
-                                className="inline-flex items-center gap-1 outline-none hover:text-[var(--sp-text-primary)] focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+                                className="relative inline-flex items-center gap-1 outline-none after:absolute after:-inset-y-2 after:inset-x-0 hover:text-[var(--sp-text-primary)] focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
                               >
                                 <span>{column.label}</span>
                                 <span aria-hidden="true" className={isSorted ? "text-[var(--sp-text-primary)]" : "text-transparent"}>
@@ -941,7 +941,7 @@ export function AdminManagementPanel({
                                     // prefetch off — see AppRail's note.
                                     prefetch={false}
                                     onClick={event => event.stopPropagation()}
-                                    className="truncate font-semibold text-[var(--sp-text-primary)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+                                    className="relative truncate font-semibold text-[var(--sp-text-primary)] underline-offset-2 after:absolute after:-inset-y-3 after:inset-x-0 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
                                   >
                                     {displayName}
                                   </Link>
@@ -970,7 +970,7 @@ export function AdminManagementPanel({
                                   editEmployee(employee);
                                 }}
                                 aria-label={`Edit ${displayName}`}
-                                className="inline-flex h-7 w-7 items-center justify-center text-[var(--sp-status-neutral-mark)] transition-colors hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+                                className="relative inline-flex h-7 w-7 items-center justify-center text-[var(--sp-status-neutral-mark)] transition-colors after:absolute after:-inset-2 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
                               >
                                 <span aria-hidden="true" className="text-base leading-none">⋮</span>
                               </button>
@@ -1030,7 +1030,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteDepartment(row.name)}
                         disabled={pending}
                         aria-label={`Delete ${row.name}`}
-                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-strong)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                        className="relative inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2 hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-strong)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -1081,7 +1081,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteZone(name)}
                         disabled={pending}
                         aria-label={`Delete ${name}`}
-                        className="inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-strong)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                        className="relative inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2 hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-strong)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -1283,7 +1283,7 @@ export function AdminManagementPanel({
                 type="button"
                 onClick={closeEmployeeDialog}
                 disabled={pending}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close employee form"
               >
                 <CloseIcon />
@@ -1368,7 +1368,7 @@ export function AdminManagementPanel({
                 type="button"
                 onClick={closeManagementConfirm}
                 disabled={pending}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Cancel management confirmation"
               >
                 <CloseIcon />
