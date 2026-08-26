@@ -21,12 +21,12 @@ guard" means a regression there passes `npm test` today.**
 
 ## 0. The ten findings that matter most (cross-section ranking)
 
-1. **~5 production catch-paths display digest gibberish instead of their written recovery copy** — thrown expected errors in `createSeatAction`/`deleteSeatAction` violate the file's own returned-not-thrown rule (§8.3, F-ERR-1).
+1. ~~**~5 production catch-paths display digest gibberish instead of their written recovery copy**~~ **CLOSED — #471 v1.64.0 (2026-08-26):** returned unions + the `lib/clientActionError.ts` catch sweep; guarded by `action-error-contract-source` (§8.3, F-ERR-1).
 2. **`/auth/update-password` is broken in dark theme** — hardcoded white card, theme-flipped light-gray token text on it (§7, F-DK-1). The only shipped surface that is neither designed dark nor coherently light.
-3. **The launch-day states don't exist or are wrong.** Never-published viewer map: no empty state. Empty management directory: blames a search that isn't active. Empty reception: renders `No one matches ""` (§8.2). These are the exact states first users will see.
+3. ~~**The launch-day states don't exist or are wrong.**~~ **CLOSED — #471 v1.64.0:** all five first-run states shipped with ct/source guards (§8.2).
 4. **0 of 4 High-tier destructive actions require typing the resource name**, and the app's only toast — which is also publish's only success confirmation — auto-dismisses in 6 s while carrying an Undo action (§3, F-INT-1/2).
 5. **Employee-save server errors render behind the open modal** — the dialog appears to do nothing (§3 F-INT-4 / §4 F-FRM-1; found independently by two audit lines).
-6. **4 of 17 mutating flows have zero pending indication after their confirm step; 12 of 17 never announce busy to screen readers** (§8.1).
+6. **4 of 17 mutating flows have zero pending indication after their confirm step; 12 of 17 never announce busy to screen readers** (§8.1). **PARTIAL — #471** closed the double-click exposure (single-flight guards on create/delete); pending indication and SR busy announcements remain open.
 7. **Sense of place is largely absent** — no persistent draft-mode marker on a clean `/admin`, no environment indicator anywhere (in an app where local dev writes production), account identity always behind a click (§5, F-SH-1/2/3).
 8. **~96 % of eased motion sites run an off-Carbon curve**, the shared Button primitive answers at 200 ms where Carbon budgets 70 ms, and one keyframe bounces (§1).
 9. **Dark hover direction is inverted at 20 of 33 surface-hover sites** (controls sink below their resting surface), and white inks/glints are hardcoded in JSX over fills that dark brightens (§7, F-DK-3/4).
@@ -474,7 +474,9 @@ readers must be told when the app is loading, busy, stuck, or failed").
 - No pending state at all: **move to open seat** (`SeatMap.tsx:1944` closes the dialog
   *before* the transition), **create seat** (`:2019` — click canvas, then silence),
   **delete seat** (`:2137`), **vacate** (`:1364`). For the round-trip the UI is
-  indistinguishable from "the click did nothing"; a second click is possible on the canvas paths.
+  indistinguishable from "the click did nothing". (The second-click exposure is **CLOSED — #471**:
+  single-flight guards on the add-seat canvas path and the delete confirm, pinned in
+  `action-error-contract-source`. The missing pending indication itself remains open.)
 - In-flight live regions exist on only 3 flows: inspector save (`SeatInspector.tsx:1092`),
   publish (`SeatMapDialogs.tsx:239`), Ask Planner (`AskPlannerDrawer.tsx:356`). Everything
   else (management ×8, settings ×3, swap, discard, undo/redo) announces only the outcome.
@@ -484,7 +486,10 @@ readers must be told when the app is loading, busy, stuck, or failed").
 ### 8.2 Empty states
 
 20 emptyable surfaces: **3 have no empty state at all, 2 render a factually wrong one on
-first run, 1 names no next step** — and all five defects are first-run/zero-data states, the
+first run, 1 names no next step** — **ALL FIVE CLOSED #471 v1.64.0** (viewer + admin overlays,
+palette browse-zero, management "No employees yet", reception directory-empty; reception's
+zero-match message also gained an Esc next step), each with a ct or source guard. Original
+finding kept below for the frame — all five defects were first-run/zero-data states, the
 exact condition every surface will be in on launch day before the first publish:
 - **ABSENT — viewer map, never published**: no branch on zero seats in `ViewerSeatFinder.tsx`;
   the floor plan renders with no markers and a zeroed band. Nothing says "nothing has been
@@ -508,7 +513,10 @@ test-pinned.
 draft-fate copy, test-pinned; MLS02 alert + auto-reload; PUBLISH_BLOCKED routed to a plain
 banner; session expiry with a sign-in path; Ask Planner maps every failure class to
 what-to-do; auth callback → friendly notice). Two findings:
-- **F-ERR-1 — ~5 catch-paths are unactionable in production.** `createSeatAction`
+- **F-ERR-1 — CLOSED #471 v1.64.0** (returned unions; `clientActionErrorMessage` sweep across 7
+  files; AskPlannerDrawer ruled exempt — client-side network text, never a digest; guarded by
+  `action-error-contract-source` + `client-action-error`). Original finding:
+  **~5 catch-paths are unactionable in production.** `createSeatAction`
   (`app/actions.ts:338/371/377`) and `deleteSeatAction` (`:803-830`) **throw** expected
   failures despite the file's own returned-not-thrown rule at `:380-384` (thrown Server
   Action errors reach prod as an opaque digest string). Every generic catch prefers
@@ -516,7 +524,9 @@ what-to-do; auth callback → friendly notice). Two findings:
   `AdminManagementPanel.tsx:477`, `DataUtilitiesPanel.tsx:138`, `useDraftHistory.ts:177`,
   `usePublishReview.ts:135/165`) — so in prod the user reads Next's digest sentence and the
   friendly copy ("Could not create seat.") is dead code.
-- **F-ERR-2 — Silent no-op on confirmed vacate.** `SeatMap.tsx:1365`: if the seat became
+- **F-ERR-2 — CLOSED #471 v1.64.0** (ineligible-at-confirm now sets a named action error;
+  pinned in `action-error-contract-source`). Original finding:
+  **Silent no-op on confirmed vacate.** `SeatMap.tsx:1365`: if the seat became
   ineligible between opening and confirming, the handler returns after clearing every banner
   — the admin confirmed a destructive action and gets nothing.
 Deploy-skew silence is by design (`lib/deploySkew.ts` header) — noted, not a finding.
@@ -548,7 +558,7 @@ deactivate chain (F-KB-3).
 | Shell | Single bar+rail; skip-link-first + slot order; veto contract; rail Esc/scrim; identity+sign-out exists; portal teardown | Mode/env/account persistence, URL-state gaps, header-name link, help utility, viewer utility ordering (F-SH-1…6) |
 | Keyboard/landmarks | Esc dialogs-before-modes; roving tabindex; palette focus handoffs; dialog aria-modal pairing; nav label uniqueness (partial) | Skip links on `/login` + `/my-seat`, content-outside-landmarks ×2, heading hierarchy as a whole, deactivate-chain restore (F-KB-1…3) |
 | Dark parity | Theme mechanism + raster parity + toggle mounts (`theme.test.mjs`); chrome zone completeness (one direction) | Dark-completeness (reverse direction), hover direction, JSX-hardcoded inks/glints, scrims, per-route dark rulings (F-DK-1…6) |
-| Loading/empty/error | Error boundaries; session expiry; stale-draft plumbing; palette/viewer/reception empty *messages*; dialog focus | **Everything else in §8**: `loading.tsx` existence, any pending indication, SR busy announcements, first-run empty states, digest-leak throw sites (F-ERR-1), vacate no-op (F-ERR-2) |
+| Loading/empty/error | Error boundaries; session expiry; stale-draft plumbing; palette/viewer/reception empty *messages*; dialog focus; **since #471:** first-run empty states ×5, the returned-union/catch-sweep contract, vacate branch, single-flight guards | `loading.tsx` existence, pending indication, SR busy announcements (§8.1, still open) |
 
 The pattern across all seven sections: the territories previous passes ruled (tokens, markers,
 type, focus) are dense with guards and held; the territories this pass opened have almost
