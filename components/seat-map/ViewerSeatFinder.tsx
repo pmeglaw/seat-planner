@@ -1299,7 +1299,7 @@ export function ViewerSeatFinder({
             ) : paletteOpen || searchShortcutHint ? (
               // Open, the field advertises the way OUT rather than the way in —
               // the shortcut that got you here is spent.
-              <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--sp-border-subtle)] px-1 py-0.5 text-[10px] font-semibold text-[var(--sp-text-helper)]">{paletteOpen ? "Esc" : searchShortcutHint}</kbd>
+              <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--sp-border-subtle)] px-1 py-0.5 text-xs font-semibold text-[var(--sp-text-helper)]">{paletteOpen ? "Esc" : searchShortcutHint}</kbd>
             ) : null}
           </label>
         </div>
@@ -1400,7 +1400,7 @@ export function ViewerSeatFinder({
               {lastPublishedLabel && floor === "3" && (
                 <span
                   title={`The map everyone sees — last updated ${lastPublishedLabel}`}
-                  className="pointer-events-auto rounded-full bg-[var(--sp-layer-01)] px-2.5 py-1 text-[11px] font-semibold text-[var(--sp-text-secondary)] shadow-elevation-3 ring-1 ring-[var(--sp-border-subtle)]"
+                  className="pointer-events-auto rounded-full bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-text-secondary)] shadow-elevation-3 ring-1 ring-[var(--sp-border-subtle)]"
                 >
                   Updated {lastPublishedLabel}
                 </span>

@@ -1234,7 +1234,7 @@ export function SeatInspector({
                   {fieldErrorMap.employeeName && (
                     <p id={fieldErrorId("employeeName")} className="mt-1 text-xs font-semibold text-[var(--sp-editor-error-text)]">{fieldErrorMap.employeeName}</p>
                   )}
-                  <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold tracking-normal ring-1", employeeNameValue ? matchedEmployee ? successPillClassName : "bg-[var(--sp-editor-dirty-bg)] text-[var(--sp-editor-dirty-text)] ring-[var(--sp-editor-dirty-border)]" : neutralPillClassName].join(" ")}>
+                  <span id={employeeStateId} className={["mt-1 inline-flex rounded-full px-2 py-1 text-xs font-semibold tracking-normal ring-1", employeeNameValue ? matchedEmployee ? successPillClassName : "bg-[var(--sp-editor-dirty-bg)] text-[var(--sp-editor-dirty-text)] ring-[var(--sp-editor-dirty-border)]" : neutralPillClassName].join(" ")}>
                     {assignmentStateText}
                   </span>
                 </label>
@@ -1339,18 +1339,18 @@ export function SeatInspector({
                         {hasCurrentAssignment && onMove && (
                           <button type="button" onClick={onMove} disabled={pending || busy}
                             aria-label={selectedSeat.employee?.full_name ? `Move ${selectedSeat.employee.full_name} to another seat` : `Move ${selectedSeat.label}`}
-                            className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-[11px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] disabled:opacity-40">
+                            className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-xs font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] disabled:opacity-40">
                             <MoveGlyph />Move
                           </button>
                         )}
                         {onSwap && (
-                          <button type="button" onClick={onSwap} disabled={pending || busy} aria-label={`Swap ${selectedSeat.label}`} className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-[11px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] disabled:opacity-40">
+                          <button type="button" onClick={onSwap} disabled={pending || busy} aria-label={`Swap ${selectedSeat.label}`} className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-xs font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] disabled:opacity-40">
                             <SwapGlyph />Swap
                           </button>
                         )}
                         {hasCurrentAssignment && onVacate && (
                           <button type="button" onClick={onVacate} disabled={pending || busy} aria-label={`Vacate ${selectedSeat.label}`}
-                            className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-[11px] font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] disabled:opacity-40">
+                            className="flex h-[4.25rem] flex-1 flex-col items-center justify-center gap-1.5 bg-[var(--sp-layer-01)] text-xs font-semibold text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] disabled:opacity-40">
                             <VacateGlyph />Vacate
                           </button>
                         )}
@@ -1484,7 +1484,7 @@ export function SeatInspector({
               2026-07-10 sticky ACTION footer ban is about controls) — and the
               concurrency fence keeps sending updated_at back verbatim, never
               this formatted copy. */}
-          <footer id="seat-inspector-footer" className="flex items-center justify-between gap-2.5 border-t border-[var(--sp-border-subtle)] bg-[var(--sp-background)] px-4 py-2 text-[11px] text-[var(--sp-text-helper)]">
+          <footer id="seat-inspector-footer" className="flex items-center justify-between gap-2.5 border-t border-[var(--sp-border-subtle)] bg-[var(--sp-background)] px-4 py-2 text-xs text-[var(--sp-text-helper)]">
             <span className="min-w-0 truncate font-mono font-medium text-[var(--sp-text-secondary)]">ID: {selectedSeat.label}</span>
             {lastUpdatedLabel && <span className="min-w-0 truncate">Updated {lastUpdatedLabel}</span>}
           </footer>

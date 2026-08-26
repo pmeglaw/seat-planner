@@ -276,7 +276,7 @@ export function AskPlannerDrawer({
               </h2>
               <p id="ask-planner-description" className="mt-1 text-xs leading-5 text-[var(--sp-text-helper)]">Read-only answers from saved draft map data.</p>
             </div>
-            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="rounded-full px-3 py-1 text-[11px] font-medium text-[var(--sp-text-helper)] transition hover:bg-white/10 hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="rounded-full px-3 py-1 text-xs font-medium text-[var(--sp-text-helper)] transition hover:bg-white/10 hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
               Close
             </button>
           </div>
@@ -290,8 +290,8 @@ export function AskPlannerDrawer({
 
         <div className="shrink-0 border-b border-[var(--sp-border-subtle)] px-4 py-3">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <div className="text-[11px] font-medium text-[var(--sp-text-helper)]">Suggested prompts</div>
-            <div className="text-[11px] font-medium text-[var(--sp-text-helper)]">Saved draft only</div>
+            <div className="text-xs font-medium text-[var(--sp-text-helper)]">Suggested prompts</div>
+            <div className="text-xs font-medium text-[var(--sp-text-helper)]">Saved draft only</div>
           </div>
           <div className="mb-3 flex flex-wrap gap-2">
             {suggestedPrompts.map(promptOption => (
@@ -301,7 +301,7 @@ export function AskPlannerDrawer({
                 onClick={() => choosePrompt(promptOption.prompt)}
                 disabled={pending}
                 title={pending ? "Wait for Ask Planner to finish" : promptOption.prompt}
-                className="max-w-full rounded-full border border-[var(--sp-border-subtle)] bg-[var(--sp-field)] px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--sp-text-secondary)] transition hover:-translate-y-px hover:border-[var(--sp-brand)] hover:bg-[var(--sp-background-hover)] hover:text-white hover:shadow-elevation-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:hover:translate-y-0"
+                className="max-w-full rounded-full border border-[var(--sp-border-subtle)] bg-[var(--sp-field)] px-2.5 py-1.5 text-left text-xs font-medium leading-none text-[var(--sp-text-secondary)] transition hover:-translate-y-px hover:border-[var(--sp-brand)] hover:bg-[var(--sp-background-hover)] hover:text-white hover:shadow-elevation-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:hover:translate-y-0"
               >
                 {promptOption.label}
               </button>
@@ -335,7 +335,7 @@ export function AskPlannerDrawer({
               />
             </label>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-              <div className="truncate text-[11px] font-medium text-[var(--sp-text-helper)]">{question.trim().length}/800 · {submitShortcutHint} to ask</div>
+              <div className="truncate text-xs font-medium text-[var(--sp-text-helper)]">{question.trim().length}/800 · {submitShortcutHint} to ask</div>
               <Button type="submit" variant="primary" disabled={pending || !question.trim()} title={!question.trim() ? "Enter a question before asking" : undefined} className="rounded-full px-4">
                 {pending ? "Asking…" : "Ask"}
               </Button>
@@ -377,10 +377,10 @@ export function AskPlannerDrawer({
                   text is never mistaken for the app's own stated facts. */}
               <section className="rounded-xl border border-[var(--sp-ai-panel-border)] bg-[image:var(--sp-ai-aura)] bg-[var(--sp-background-hover)] bg-no-repeat p-3">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className={["rounded-full px-2 py-1 text-[10px] font-semibold ring-1", statusClassName(response.status)].join(" ")}>
+                  <span className={["rounded-full px-2 py-1 text-xs font-semibold ring-1", statusClassName(response.status)].join(" ")}>
                     {statusLabel(response.status)}
                   </span>
-                  <span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">
+                  <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">
                     {response.confidence} confidence
                   </span>
                   {/* Carbon for AI requires the provenance of an answer to be
@@ -403,13 +403,13 @@ export function AskPlannerDrawer({
 
                 {explainOpen && (
                   <div id="ask-planner-explain" className="mt-3 border border-[color-mix(in_srgb,var(--sp-ai-border)_40%,transparent)] bg-[var(--sp-background)] p-3">
-                    <div className="text-[11.5px] font-semibold text-[var(--sp-ai-chrome-text)]">How this answer was made</div>
+                    <div className="text-xs font-semibold text-[var(--sp-ai-chrome-text)]">How this answer was made</div>
                     <p className="mt-1.5 text-xs leading-5 text-[var(--sp-text-secondary)]">
                       Generated from the <b className="font-semibold text-[var(--sp-text-primary)]">saved draft layer only</b> — seats, directory, zones. The model reads the map; it cannot modify it. Unsaved inspector edits are excluded.
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--sp-text-secondary)]">Sources: draft seats · directory</span>
-                      <span className={["rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1", statusClassName(response.status)].join(" ")}>
+                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-[var(--sp-text-secondary)]">Sources: draft seats · directory</span>
+                      <span className={["rounded-full px-2 py-0.5 text-xs font-semibold ring-1", statusClassName(response.status)].join(" ")}>
                         {response.confidence} confidence
                       </span>
                     </div>
@@ -421,7 +421,7 @@ export function AskPlannerDrawer({
                 const visibleWarnings = response.warnings.filter(w => w !== BROAD_ANSWER_EMPTY_HIGHLIGHT_WARNING);
                 return visibleWarnings.length > 0 && (
                   <section className="rounded-xl border border-[color-mix(in_srgb,var(--sp-status-pending-mark)_40%,transparent)] bg-[color-mix(in_srgb,var(--sp-status-pending-mark)_10%,transparent)] p-3">
-                    <div className="text-[11px] font-semibold text-[var(--sp-status-pending-text)]">Warnings</div>
+                    <div className="text-xs font-semibold text-[var(--sp-status-pending-text)]">Warnings</div>
                     <ul className="mt-2 space-y-1 text-xs leading-5 text-[var(--sp-status-pending-text)]">
                       {visibleWarnings.map(warning => (
                         <li key={warning}>{warning}</li>
@@ -434,7 +434,7 @@ export function AskPlannerDrawer({
               <section className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-background-hover)] p-3">
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <div className="text-[11px] font-semibold text-[var(--sp-text-helper)]">Highlighted seats</div>
+                    <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Highlighted seats</div>
                     <div className="mt-0.5 text-xs font-medium text-[var(--sp-text-helper)]">
                       {response.highlights.length} in answer · {highlightedSeatIds.length} on map
                     </div>
@@ -444,7 +444,7 @@ export function AskPlannerDrawer({
                     onClick={onClearHighlights}
                     disabled={highlightedSeatIds.length === 0}
                     title={highlightedSeatIds.length === 0 ? "No highlighted seats to clear" : "Clear highlighted seats"}
-                    className="rounded-full border border-[color-mix(in_srgb,var(--sp-brand)_50%,transparent)] bg-[color-mix(in_srgb,var(--sp-brand)_10%,transparent)] px-3 py-1.5 text-[11px] font-semibold text-[var(--sp-brand)] transition hover:bg-[color-mix(in_srgb,var(--sp-brand)_20%,transparent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:border-[var(--sp-border-subtle)] disabled:bg-white/10 disabled:text-[var(--sp-text-helper)]"
+                    className="rounded-full border border-[color-mix(in_srgb,var(--sp-brand)_50%,transparent)] bg-[color-mix(in_srgb,var(--sp-brand)_10%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-brand)] transition hover:bg-[color-mix(in_srgb,var(--sp-brand)_20%,transparent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:border-[var(--sp-border-subtle)] disabled:bg-white/10 disabled:text-[var(--sp-text-helper)]"
                   >
                     Clear highlights
                   </button>
@@ -463,7 +463,7 @@ export function AskPlannerDrawer({
                           <span className="block text-sm font-semibold text-[var(--sp-text-primary)]">{highlight.label}</span>
                           <span className="mt-0.5 block text-xs leading-5 text-[var(--sp-text-secondary)]">{highlight.reason}</span>
                         </span>
-                        <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold text-[var(--sp-ai-chrome-text)] ring-1 ring-white/15">
+                        <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 text-xs font-semibold text-[var(--sp-ai-chrome-text)] ring-1 ring-white/15">
                           Select
                         </span>
                       </button>
@@ -476,7 +476,7 @@ export function AskPlannerDrawer({
 
               {response.followUps.length > 0 && (
                 <section className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-background-hover)] p-3">
-                  <div className="text-[11px] font-semibold text-[var(--sp-text-helper)]">Follow-ups</div>
+                  <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Follow-ups</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {response.followUps.map(followUp => (
                       <button
@@ -485,7 +485,7 @@ export function AskPlannerDrawer({
                         onClick={() => askFollowUp(followUp)}
                         disabled={pending}
                         title={pending ? "Wait for Ask Planner to finish" : followUp}
-                        className="max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-[11px] font-medium leading-none text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-border-subtle)] transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-xs font-medium leading-none text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-border-subtle)] transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {followUp}
                       </button>

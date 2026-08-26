@@ -64,7 +64,7 @@ export function ActiveFilterChips({
   return (
     <div aria-label="Active filters" className={["sp-zone-base flex flex-wrap items-center gap-1.5", className].filter(Boolean).join(" ")}>
       {chips.map(chip => (
-        <span key={chip.id} className="inline-flex max-w-full items-center gap-1 bg-[var(--sp-layer-01)] py-0.5 pl-2 pr-1 text-[11px] font-semibold text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-brand-border)]">
+        <span key={chip.id} className="inline-flex max-w-full items-center gap-1 bg-[var(--sp-layer-01)] py-0.5 pl-2 pr-1 text-xs font-semibold text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-brand-border)]">
           <span className="shrink-0 text-[var(--sp-text-helper)]">{chip.label}</span>
           <span className="min-w-0 truncate text-[var(--sp-button-primary)]">{chip.value}</span>
           <button
@@ -72,7 +72,7 @@ export function ActiveFilterChips({
             onClick={() => onRemove(chip.id)}
             aria-label={chip.removeLabel}
             title={chip.removeLabel}
-            className="ml-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-[10px] font-semibold text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-editor-neutral-bg)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+            className="ml-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition hover:bg-[var(--sp-editor-neutral-bg)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
           >
             <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
@@ -82,7 +82,7 @@ export function ActiveFilterChips({
         <button
           type="button"
           onClick={onClearAll}
-          className="inline-flex min-h-6 items-center border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-2.5 py-1 text-[11px] font-semibold text-[var(--sp-brand-text)] transition hover:bg-[rgba(255,87,21,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+          className="inline-flex min-h-6 items-center border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-brand-text)] transition hover:bg-[rgba(255,87,21,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
         >
           Clear all
         </button>
@@ -157,7 +157,7 @@ export function FilterPanel({
 
       <div className="grid grid-cols-1 gap-2">
         <label className="block">
-          <span className="text-[11px] font-medium text-[var(--sp-text-helper)]">Department</span>
+          <span className="text-xs font-medium text-[var(--sp-text-helper)]">Department</span>
           <select value={department} onChange={event => onDepartmentChange(event.target.value)} className={darkSelectClassName}>
             <option value="all">All departments</option>
             {departments.map(dep => (
@@ -171,7 +171,7 @@ export function FilterPanel({
             what makes "show me every Case Manager, then look at their zones"
             readable as one motion. */}
         <label className="block">
-          <span className="text-[11px] font-medium text-[var(--sp-text-helper)]">Position</span>
+          <span className="text-xs font-medium text-[var(--sp-text-helper)]">Position</span>
           <select value={position} onChange={event => onPositionChange(event.target.value)} className={darkSelectClassName}>
             <option value="all">All positions</option>
             {positions.map(value => (
@@ -185,7 +185,7 @@ export function FilterPanel({
             the preview is not a pointer-only affordance. aria-pressed carries
             the pinned state — the chips toggle a filter, they are not tabs. */}
         <div role="group" aria-label="Zone" onMouseLeave={() => onZoneHoverChange?.(null)}>
-          <span className="text-[11px] font-medium text-[var(--sp-text-helper)]">
+          <span className="text-xs font-medium text-[var(--sp-text-helper)]">
             Zone{onZoneHoverChange ? " — hover to preview on the map" : ""}
           </span>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -203,7 +203,7 @@ export function FilterPanel({
                   onFocus={() => onZoneHoverChange?.(previewZone)}
                   onBlur={() => onZoneHoverChange?.(null)}
                   className={[
-                    "max-w-full truncate rounded-full border px-2.5 py-1 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
+                    "max-w-full truncate rounded-full border px-2.5 py-1 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
                     active
                       ? "border-[var(--sp-brand)] bg-[rgba(255,87,21,0.15)] text-[var(--sp-brand)]"
                       : "border-white/20 bg-white/[0.06] text-[var(--sp-text-primary)] hover:border-[var(--sp-brand)]"
@@ -217,7 +217,7 @@ export function FilterPanel({
         </div>
 
         <label className="block">
-          <span className="text-[11px] font-medium text-[var(--sp-text-helper)]">Status</span>
+          <span className="text-xs font-medium text-[var(--sp-text-helper)]">Status</span>
           <select value={status} onChange={event => onStatusChange(event.target.value)} className={darkSelectClassName}>
             <option value="all">All statuses</option>
             <option value="available">{STATUS_LABELS.available}</option>
@@ -231,7 +231,7 @@ export function FilterPanel({
           changing a select shows its effect before the panel closes
           (2026-07-16 regrade, review 4). */}
       {matchSummary && (
-        <p aria-live="polite" className="mt-3 border-t border-white/10 pt-2.5 text-[11px] font-medium text-[var(--sp-text-helper)]">
+        <p aria-live="polite" className="mt-3 border-t border-white/10 pt-2.5 text-xs font-medium text-[var(--sp-text-helper)]">
           {matchSummary}
         </p>
       )}

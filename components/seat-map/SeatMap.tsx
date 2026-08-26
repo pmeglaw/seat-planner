@@ -2410,8 +2410,8 @@ export function SeatMap({
       : "border-[var(--sp-editor-saved-border)] bg-[var(--sp-editor-saved-bg)] text-[var(--sp-editor-saved-text)]",
     canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
-  const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-[11px] font-semibold text-[var(--sp-text-secondary)] transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-wash)] hover:text-[var(--sp-brand-text)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50";
-  const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-3 py-1.5 text-[11px] font-semibold text-[var(--sp-brand-text)] transition hover:border-[var(--sp-brand)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]";
+  const resultActionButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-wash)] hover:text-[var(--sp-brand-text)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50";
+  const resultClearButtonClassName = "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-brand-text)] transition hover:border-[var(--sp-brand)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]";
   const visibleMapSpan = Math.max(0, mapVisibleRange.right - mapVisibleRange.left);
   const mapPixelsPerNormalizedUnit = visibleMapSpan > 0 && mapVisibleRange.viewportWidth > 0
     ? mapVisibleRange.viewportWidth / visibleMapSpan
@@ -3091,7 +3091,7 @@ export function SeatMap({
                       <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
                   ) : searchShortcutHint ? (
-                    <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 border border-[var(--sp-border-subtle)] px-1 py-0.5 text-[10px] font-semibold text-[var(--sp-text-helper)] sm:block">{searchShortcutHint}</kbd>
+                    <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 border border-[var(--sp-border-subtle)] px-1 py-0.5 text-xs font-semibold text-[var(--sp-text-helper)] sm:block">{searchShortcutHint}</kbd>
                   ) : null}
                 </label>
               </div>
@@ -3123,7 +3123,7 @@ export function SeatMap({
                       type="button"
                       onClick={undoDraftEdit}
                       className={[
-                        "shrink-0 rounded-full border bg-[color-mix(in_srgb,var(--sp-layer-01)_80%,transparent)] px-3 py-1 text-[11px] font-semibold transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4",
+                        "shrink-0 rounded-full border bg-[color-mix(in_srgb,var(--sp-layer-01)_80%,transparent)] px-3 py-1 text-xs font-semibold transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4",
                         actionNoticeTone === "neutral"
                           ? "border-[var(--sp-border-strong)] text-[var(--sp-text-secondary)] focus-visible:ring-[var(--sp-border-strong)]"
                           : "border-[var(--sp-editor-saved-border)] text-[var(--sp-editor-saved-text)] focus-visible:ring-[var(--sp-editor-saved-border)]"
@@ -3417,13 +3417,13 @@ export function SeatMap({
           aria-label={`${activeMode.label} mode`}
           className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--sp-brand-border)] bg-[var(--sp-layer-01)] p-4 shadow-elevation-4 motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[var(--sp-chrome-height)] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
-          <div className="text-[10px] font-semibold text-[var(--sp-button-primary)]">{activeMode.label} mode</div>
+          <div className="text-xs font-semibold text-[var(--sp-button-primary)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--sp-text-primary)]">{activeMode.message}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-[var(--sp-brand-wash)] px-3 py-1.5 text-[11px] font-semibold text-[var(--sp-brand-text)] ring-1 ring-[var(--sp-brand-border)] transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+            <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-[var(--sp-brand-wash)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-brand-text)] ring-1 ring-[var(--sp-brand-border)] transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
               {activeMode.exitLabel}
             </button>
-            <span className="rounded-full bg-[var(--sp-background)] px-2 py-1 text-[10px] font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">Esc exits</span>
+            <span className="rounded-full bg-[var(--sp-background)] px-2 py-1 text-xs font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">Esc exits</span>
           </div>
         </aside>
       )}

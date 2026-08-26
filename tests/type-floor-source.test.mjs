@@ -13,8 +13,11 @@ import test from "node:test";
 //     desktop-seat-marker-system-source.test.mjs).
 //   - Map-canvas WORDS: pill/name labels pending the PR-2 zoom-threshold rule
 //     (marks below the threshold, 12px text at or above it).
-//   - Map-chrome instances not yet ruled on (Group 3 of the 2026-08-24
-//     inventory).
+//   - Group-3 editor chrome RULED 2026-08-26: all ~52 word sites (including
+//     the two kbd keycap hints — they render words) raised to the floor;
+//     nine mark analogs of the P3 palette exemptions stay exempt (initials
+//     monograms ×3, mono seat-code pill, numeric count badges ×3, mono zoom
+//     readout ×2) — named per file below.
 //   - SeatSheet: expressive architectural-sheet artifact, exempt-or-redesign
 //     pending the rendered-size report.
 //   - app/concepts/**: prototype-only, deliberately unscanned — but a concept
@@ -33,21 +36,20 @@ const SUB12_LEDGER = new Map(Object.entries({
   "app/login/page.tsx": 1,
   // Map canvas: marks + words pending the PR-2 zoom-threshold rule:
   "components/seat-map/SeatMarker.tsx": 16,
-  // Map chrome, not yet ruled (Group 3 of the 2026-08-24 inventory):
-  "components/seat-map/AskPlannerDrawer.tsx": 18,
-  "components/seat-map/FilterPanel.tsx": 9,
-  "components/seat-map/FloorSelector.tsx": 2,
-  "components/seat-map/MapStatusBand.tsx": 3,
-  "components/seat-map/MapWashLayer.tsx": 1,
+  // Group-3 ruling 2026-08-26 — remaining counts are EXEMPT marks only:
+  // AskPlannerDrawer = the two registry "AI" chrome badges (header + response
+  // chip); MapZoomControl = the mono tabular zoom readout (both orientation
+  // arms); SeatInspector = the registry "AI" badge, the two initials
+  // monograms (header + employee-option row), and the mono seat-code pill
+  // (same artifacts the P3 palette ruling exempted); SeatMap = the registry
+  // "AI" bar tenant plus the two numeric count badges (planner highlights,
+  // publish changes); ViewerSeatFinder = the filter count badge and the
+  // aria-hidden "V" brand monogram. Every WORD site in these files sits at
+  // the 12px floor now — a count going UP here means a new word slipped in.
+  "components/seat-map/AskPlannerDrawer.tsx": 2,
   "components/seat-map/MapZoomControl.tsx": 2,
-  "components/seat-map/NamesVisibilityToggle.tsx": 1,
-  "components/seat-map/ResultsPanel.tsx": 6,
-  // F6 ruling 2026-08-25: the three viewer read-path lines (status chip,
-  // seat-code · zone locator, contact field labels) were raised to the 12px
-  // floor — the inspector is the sanctioned read surface. Remaining 9 are
-  // editor chrome (action tiles, footer, monogram, pills), still Group 3.
-  "components/seat-map/SeatInspector.tsx": 9,
-  "components/seat-map/SeatMap.tsx": 10,
+  "components/seat-map/SeatInspector.tsx": 4,
+  "components/seat-map/SeatMap.tsx": 3,
   // P3 ruling 2026-08-25: the palette is the sanctioned FIND surface, so its
   // eight word sites (header count, kind badge — the 9px floor-breaker — result
   // meta, Clear search, zone chip labels, row subtitles, "No seat", footer)
@@ -55,8 +57,7 @@ const SUB12_LEDGER = new Map(Object.entries({
   // ruling: the mono seat-code pill, the two mono seat counts (chip + result
   // row), and the aria-hidden initials monogram.
   "components/seat-map/ViewerFindPalette.tsx": 4,
-  "components/seat-map/ViewerSeatFinder.tsx": 4,
-  "components/ui/design-system.tsx": 1,
+  "components/seat-map/ViewerSeatFinder.tsx": 2,
   // SeatSheet (owner rulings 2026-08-24): info-pane CSS promoted to the 12px
   // floor at all widths; SVG plan text raised to fontSize 13 viewBox units and
   // hidden below 1133px viewports where it would render sub-12 (legible-or-

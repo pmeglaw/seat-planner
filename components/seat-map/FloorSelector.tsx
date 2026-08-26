@@ -164,8 +164,8 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
                 <span
                   className={
                     chrome
-                      ? "shrink-0 border border-white/20 px-1.5 py-0.5 text-[9.5px] font-medium text-[var(--sp-text-helper)]"
-                      : "shrink-0 border border-[var(--sp-border-subtle)] px-1.5 py-0.5 text-[9.5px] font-medium text-[var(--sp-text-helper)]"
+                      ? "shrink-0 border border-white/20 px-1.5 py-0.5 text-xs font-medium text-[var(--sp-text-helper)]"
+                      : "shrink-0 border border-[var(--sp-border-subtle)] px-1.5 py-0.5 text-xs font-medium text-[var(--sp-text-helper)]"
                   }
                 >
                   SOON
