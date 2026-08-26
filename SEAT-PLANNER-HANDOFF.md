@@ -1,6 +1,6 @@
 # Seat Planner — design system pass, session handoff
 
-**As of 25 Aug 2026.** Written to seed a fresh Claude session. Lives in the repo beside `NOTES.md` / `PASS1-TOKENS.md` / `AUDIT.md` / `DOCS-DIFF.md`. Update it when you tag a release — the same reflex that already gets you `/api/build-id` verification.
+**As of 26 Aug 2026.** Written to seed a fresh Claude session. Lives in the repo beside `NOTES.md` / `PASS1-TOKENS.md` / `AUDIT.md` / `DOCS-DIFF.md`. Update it when you tag a release — the same reflex that already gets you `/api/build-id` verification.
 
 ---
 
@@ -11,14 +11,14 @@
 | App | `seat-planner` — Next.js App Router, React, Tailwind + CSS custom properties |
 | Repos | `E:/code/seat-planner` (Windows), `~/code/seat-planner` (Mac), from `github.com/pmeglaw/seat-planner` |
 | Plugin repo | `E:/code/claude-plugins` → `github.com/pmeglaw/claude-plugins`, private |
-| Skill | `/design-system:ibm-design-language` **v1.1.0**, installed per-machine |
+| Skill | `/design-system:ibm-design-language` **v1.2.1**, installed per-machine |
 | Deploy | Vercel → `seats.megeredchianlaw.com`; `/api/build-id` returns the live commit SHA |
-| App version | **v1.61.0** (merge `eec4a42`) |
+| App version | **v1.64.0** (merge `13d0946`) |
 
 **Two standing facts that change how decisions get made:**
 
 1. **No one has seen this app except the owner.** No change-management overhead, no staged rollouts, no user heads-ups. Merge on green checks. It also means **visual-vocabulary changes are free now and expensive later** — the reason PR-C and the type floor were done before granting access.
-2. **There is no staging database.** Local dev points at live Supabase. **Two machines now hold live credentials.** The publish guard shipped fail-closed in #443 (v1.58.0); draft edits stay deliberately unguarded.
+2. **There is no staging database.** Local dev points at live Supabase. **Two machines now hold live credentials.** The publish guard shipped fail-closed in #443 (v1.58.0); draft edits stay deliberately unguarded. **Merging to `main` also auto-applies `supabase/migrations/` to that same live database — every schema PR writes production on merge, and no guard equivalent to the publish guard exists on that path.**
 
 ---
 
@@ -224,7 +224,7 @@ Everything in §9 can happen after people are using the app.
 
 ## 11. Skill state
 
-`design-system` plugin **v1.1.0**, commit `49c64da`. Refreshed 24 Aug 2026 against `@carbon/react` 1.114.0.
+`design-system` plugin **v1.2.1**, commit `f6992ff`. Refreshed 24 Aug 2026 against `@carbon/react` 1.114.0; corrected 26 Aug 2026 (spacing scale re-read from `@carbon/layout` generated source — 12px/40px are real steps; 44px touch minimum beats the height ladder; Carbon numbers read from npm package source, never the JS-rendered docs site).
 
 **Verified negative** (recorded in `DOCS-DIFF.md`, referenced from `carbon-next.md` as the next refresh's baseline): across 1.112.0–1.114.0 — zero token renames, removals, or default value changes in skill scope; zero deprecations; every `enable-v12-*` flag still `enabled: false`; motion tokens unchanged; contrast trap table unchanged.
 
