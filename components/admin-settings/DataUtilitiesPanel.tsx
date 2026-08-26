@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { clientActionErrorMessage } from "@/lib/clientActionError";
 import { listActiveEmployeeExpectations, listDraftSeatExpectations, type DraftSeatExpectation, type EmployeeExpectation } from "@/lib/draftConcurrency";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
@@ -135,7 +136,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
 
   function reportError(caught: unknown, fallback: string) {
     setNotice(null);
-    setError(caught instanceof Error ? caught.message : fallback);
+    setError(clientActionErrorMessage(caught, fallback));
   }
 
   function resetMessages() {
@@ -234,8 +235,13 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
         const text = await file.text();
         const parsed = JSON.parse(text) as unknown;
 
+        // Returned, not thrown: this is CLIENT-side validation with written
+        // copy — routing it through the catch would let the digest-safe
+        // fallback (clientActionErrorMessage) swallow the specific message.
         if (!isDraftSnapshot(parsed)) {
-          throw new Error("Draft snapshot must include seats and employees arrays.");
+          setNotice(null);
+          setError("Draft snapshot must include seats and employees arrays.");
+          return;
         }
 
         setJsonReview({

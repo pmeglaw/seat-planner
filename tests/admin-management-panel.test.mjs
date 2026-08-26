@@ -241,3 +241,19 @@ test("the add-employee save stays disabled until a name is entered", async () =>
   });
   assert.equal(save.disabled, false);
 });
+
+// AUDIT-2 §8.2: with zero employees and no active search, the old empty branch
+// said "No employees match this search" — blaming a query that does not exist
+// and pointing nowhere. First-run names the actual state and the next step.
+test("an empty directory with no search shows the first-run state, not the search excuse", async () => {
+  await renderPanel({ ...defaultProps(), employees: [] });
+  assert.doesNotMatch(document.body.textContent, /No employees match this search/);
+  assert.match(document.body.textContent, /No employees yet/i);
+  assert.match(document.body.textContent, /Add employee|CSV/);
+});
+
+test("a search matching nobody still blames the search and suggests adjusting it", async () => {
+  await renderPanel();
+  fireEvent.change(screen.getByPlaceholderText("Search employees…"), { target: { value: "zzz-nobody" } });
+  assert.match(document.body.textContent, /No employees match this search/);
+});

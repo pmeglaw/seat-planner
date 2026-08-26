@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { ChangeEvent, FormEvent, KeyboardEvent, ReactNode } from "react";
+import { clientActionErrorMessage } from "@/lib/clientActionError";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
@@ -930,7 +931,7 @@ export function SeatInspector({
         focusPrimaryActionSoon();
       } catch (error) {
         // Only genuinely unexpected failures (network/auth) reach here now.
-        const message = error instanceof Error ? error.message : "Could not update assignment.";
+        const message = clientActionErrorMessage(error, "Could not update assignment.");
         const serverFieldErrors = fieldErrorFromServerMessage(message);
         setLocalError(message);
         setFieldErrors(serverFieldErrors);

@@ -320,12 +320,19 @@ async function upsertZoneOption(supabase: Awaited<ReturnType<typeof requireAdmin
   if (error) throw new Error(error.message);
 }
 
+export type CreateSeatResult =
+  | { ok: true; seat: SeatWithEmployee }
+  | { ok: false; message: string };
+
+// Expected failures are RETURNED, not thrown (F-ERR-1, AUDIT-2): production
+// digest-strips thrown Server Action messages, so the zone-detection and
+// label-collision text below only reaches the admin as a returned value.
 export async function createSeatAction(input: {
   x: number;
   y: number;
   visualX?: number;
   visualY?: number;
-}) {
+}): Promise<CreateSeatResult> {
   const supabase = await requireAdmin();
   const point = validateSeatCoordinates(input.x, input.y);
   const visualPoint = input.visualX === undefined || input.visualY === undefined
@@ -335,7 +342,7 @@ export async function createSeatAction(input: {
   const zoneResult = detectSeatZoneForPointResult(visualPoint, seatsToVisualSeats(draftSeats));
 
   if (zoneResult.status !== "detected") {
-    throw new Error(getSeatZoneDetectionFailureMessage(zoneResult) ?? "Could not detect a zone for this location.");
+    return { ok: false, message: getSeatZoneDetectionFailureMessage(zoneResult) ?? "Could not detect a zone for this location." };
   }
 
   const zone = zoneResult.zone;
@@ -364,17 +371,17 @@ export async function createSeatAction(input: {
 
     if (!error) {
       revalidatePath("/admin");
-      return data as SeatWithEmployee;
+      return { ok: true, seat: data as SeatWithEmployee };
     }
 
     if (!isUniqueLabelViolation(error) || attempt === 2) {
-      throw new Error(error.message);
+      return { ok: false, message: error.message };
     }
 
     draftSeats = await getDraftSeatZoneSources(supabase);
   }
 
-  throw new Error("Could not create a unique seat label for this zone.");
+  return { ok: false, message: "Could not create a unique seat label for this zone." };
 }
 
 // Expected/validation failures are RETURNED (not thrown). A thrown error inside a
@@ -794,13 +801,20 @@ export async function deleteZoneAction(zone: string): Promise<ZoneDeleteResult> 
   return { ok: true, zone: target };
 }
 
-export async function deleteSeatAction(seatId: string) {
+export type DeleteSeatResult =
+  | { ok: true; seatId: string }
+  | { ok: false; message: string };
+
+// Expected failures are RETURNED, not thrown (F-ERR-1, AUDIT-2) — the
+// protection reason ("Only available custom draft seats…") must survive
+// production's digest stripping.
+export async function deleteSeatAction(seatId: string): Promise<DeleteSeatResult> {
   const supabase = await requireAdmin();
 
-  // S-05: same boundary parse as the swap action; thrown for the same reason
-  // (the id comes from a rendered draft row, and this action throws throughout).
+  // S-05: same boundary parse as the swap action (the id comes from a
+  // rendered draft row); the failure is returned like every other one here.
   const parsedSeatId = parseUuid(seatId, "Seat id");
-  if (!parsedSeatId.ok) throw new Error(parsedSeatId.message);
+  if (!parsedSeatId.ok) return { ok: false, message: parsedSeatId.message };
   seatId = parsedSeatId.value;
 
   const { data: seat, error: seatError } = await supabase
@@ -809,10 +823,10 @@ export async function deleteSeatAction(seatId: string) {
     .eq("id", seatId)
     .single();
 
-  if (seatError) throw new Error(seatError.message);
+  if (seatError) return { ok: false, message: seatError.message };
 
   if (!canDeleteDraftSeat(seat)) {
-    throw new Error(getSeatDeleteBlockReason(seat) ?? "Only available custom draft seats can be deleted.");
+    return { ok: false, message: getSeatDeleteBlockReason(seat) ?? "Only available custom draft seats can be deleted." };
   }
 
   const { data: deletedRows, error } = await supabase
@@ -825,13 +839,13 @@ export async function deleteSeatAction(seatId: string) {
     .eq("status", "available")
     .select("id");
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
   if ((deletedRows ?? []).length !== 1) {
-    throw new Error("Seat is no longer eligible for deletion.");
+    return { ok: false, message: "Seat is no longer eligible for deletion." };
   }
 
   revalidatePath("/admin");
-  return { seatId };
+  return { ok: true, seatId };
 }
 
 export type ImportAssignmentsCsvResult =

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { clientActionErrorMessage } from "@/lib/clientActionError";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import {
   formatPublishChangeSummary,
@@ -450,7 +451,7 @@ export function AdminManagementPanel({
       setPublishHistoryState(current => ({
         ...current,
         status: "error",
-        error: errorValue instanceof Error ? errorValue.message : "Could not load publish history."
+        error: clientActionErrorMessage(errorValue, "Could not load publish history.")
       }));
     }
   }, []);
@@ -474,7 +475,7 @@ export function AdminManagementPanel({
       setError(errorValue);
       return;
     }
-    setError(errorValue instanceof Error ? errorValue.message : fallback);
+    setError(clientActionErrorMessage(errorValue, fallback));
   }
 
   function openAddEmployee() {
@@ -845,10 +846,19 @@ export function AdminManagementPanel({
               </button>
             </div>
               {sortedEmployees.length === 0 ? (
-                <div className="p-6 text-sm text-[var(--sp-text-secondary)]">
-                  <div className="font-semibold text-[var(--sp-text-primary)]">No employees match this search</div>
-                  <p className="mt-1">Try a different name, department, position, or seat label.</p>
-                </div>
+                activeEmployees.length === 0 ? (
+                  /* AUDIT-2 §8.2 first-run: an empty DIRECTORY is not a failed
+                     search — name the real state and the next step. */
+                  <div className="p-6 text-sm text-[var(--sp-text-secondary)]">
+                    <div className="font-semibold text-[var(--sp-text-primary)]">No employees yet</div>
+                    <p className="mt-1">Start with &ldquo;Add employee&rdquo; above, or bring the whole directory in at once with a CSV import in Settings.</p>
+                  </div>
+                ) : (
+                  <div className="p-6 text-sm text-[var(--sp-text-secondary)]">
+                    <div className="font-semibold text-[var(--sp-text-primary)]">No employees match this search</div>
+                    <p className="mt-1">Try a different name, department, position, or seat label.</p>
+                  </div>
+                )
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[760px] border-collapse text-left text-[13px]">

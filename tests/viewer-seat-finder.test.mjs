@@ -571,3 +571,11 @@ test("below the panel tier the band yields to the inspector sheet and returns on
   await flushFrames();
   assert.ok(statusBand() !== null, "the band returns once the sheet is dismissed");
 });
+
+// AUDIT-2 §8.2: a never-published map rendered the bare floor plan with zero
+// markers and a zeroed status band — nothing said why. First-run names it.
+test("zero published seats shows the never-published state instead of a bare floor plan", async () => {
+  await renderViewer({ seats: [], employees: [] });
+  assert.match(document.body.textContent, /Nothing has been published yet/i);
+  assert.match(document.body.textContent, /admin/i);
+});

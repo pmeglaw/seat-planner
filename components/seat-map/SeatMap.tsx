@@ -9,6 +9,7 @@ import {
   describeSeatUpdate,
   type DraftSnapshot
 } from "@/lib/draftHistory";
+import { clientActionErrorMessage } from "@/lib/clientActionError";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, swapSeatAssignmentsAction, updateSeatAction } from "@/app/actions";
@@ -1362,7 +1363,13 @@ export function SeatMap({
     // refresh between opening and confirming cannot commit a stale row.
     const seatToVacate = localSeats.find(seat => seat.id === vacateConfirm.seatId) ?? null;
     setVacateConfirm(null);
-    if (!seatToVacate || !canVacateSeat(seatToVacate)) return;
+    if (!seatToVacate || !canVacateSeat(seatToVacate)) {
+      // F-ERR-2: the admin confirmed a destructive action — a silent return
+      // here is indistinguishable from a broken button. Name what happened.
+      setActionNotice(null);
+      setActionError(`${vacateConfirm.label} can no longer be vacated — the draft changed after this dialog opened.`);
+      return;
+    }
 
     setActionError(null);
     setActionNotice(null);
@@ -1908,7 +1915,7 @@ export function SeatMap({
         setActionNotice(`Swapped ${buildSwapSummary(sourceSeat, targetSeat)}.`);
       } catch (error) {
         setActionNotice(null);
-        setActionError(error instanceof Error ? error.message : "Could not swap seats.");
+        setActionError(clientActionErrorMessage(error, "Could not swap seats."));
       } finally {
         setMutationInFlight(false);
       }
@@ -1989,7 +1996,7 @@ export function SeatMap({
         setActionNotice(`Moved ${formatDisplayName(mover.full_name)} to ${targetSeat.label}.`);
       } catch (error) {
         setActionNotice(null);
-        setActionError(error instanceof Error ? error.message : "Could not move the employee.");
+        setActionError(clientActionErrorMessage(error, "Could not move the employee."));
       } finally {
         setMutationInFlight(false);
       }
@@ -2001,6 +2008,11 @@ export function SeatMap({
     const seatTarget = target.closest<HTMLElement>("[data-seat-id]");
 
     if (canEdit && addSeatMode) {
+      // Single-flight: a second canvas click while the create round-trip is
+      // pending must not mint a second seat. The flag is set below in the
+      // event handler (a discrete update React flushes before the next
+      // pointer event), not inside the transition.
+      if (mutationInFlight) return;
       const visualPoint = eventToPoint(event);
       if (!visualPoint) return;
 
@@ -2016,8 +2028,8 @@ export function SeatMap({
 
       const beforeSnapshot = captureDraftSnapshot();
 
+      setMutationInFlight(true);
       startTransition(async () => {
-        setMutationInFlight(true);
         try {
           const savedPoint = visualPointToSavedPoint(visualPoint, { zone: targetZone });
           setActionError(null);
@@ -2028,17 +2040,23 @@ export function SeatMap({
             visualX: visualPoint.x,
             visualY: visualPoint.y
           });
-          const afterSeats = replaceSeat(beforeSnapshot.seats, created);
-          recordDraftHistory(addedSeatHistoryLabel(created.label), beforeSnapshot, afterSeats, beforeSnapshot.employees);
+          if (!created.ok) {
+            setActionNotice(null);
+            setActionError(created.message);
+            return;
+          }
+          const createdSeat = created.seat;
+          const afterSeats = replaceSeat(beforeSnapshot.seats, createdSeat);
+          recordDraftHistory(addedSeatHistoryLabel(createdSeat.label), beforeSnapshot, afterSeats, beforeSnapshot.employees);
           setLocalSeats(afterSeats);
-          setSelectedSeatId(created.id);
+          setSelectedSeatId(createdSeat.id);
           setInspectorDirty(false);
           setAddSeatMode(false);
           setInspectorCollapsed(false);
-          setActionNotice(`Added ${created.label} to ${created.zone ?? created.department ?? targetZone}.`);
+          setActionNotice(`Added ${createdSeat.label} to ${createdSeat.zone ?? createdSeat.department ?? targetZone}.`);
         } catch (error) {
           setActionNotice(null);
-          setActionError(error instanceof Error ? error.message : "Could not create seat.");
+          setActionError(clientActionErrorMessage(error, "Could not create seat."));
         } finally {
           setMutationInFlight(false);
         }
@@ -2115,6 +2133,7 @@ export function SeatMap({
   }
 
   function confirmDeleteSelectedSeat() {
+    if (mutationInFlight) return;
     if (!deleteSeatConfirm) return;
 
     const seatToDelete = localSeats.find(seat => seat.id === deleteSeatConfirm.seatId) ?? null;
@@ -2136,12 +2155,17 @@ export function SeatMap({
     const deletedSeatLabel = seatToDelete.label;
     setDeleteSeatConfirm(null);
 
+    setMutationInFlight(true);
     startTransition(async () => {
-      setMutationInFlight(true);
       try {
         setActionError(null);
         setActionNotice(null);
         const result = await deleteSeatAction(seatToDelete.id);
+        if (!result.ok) {
+          setActionNotice(null);
+          setActionError(result.message);
+          return;
+        }
         const afterSeats = beforeSnapshot.seats.filter(seat => seat.id !== result.seatId);
         recordDraftHistory(`Delete ${deletedSeatLabel}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
         setLocalSeats(afterSeats);
@@ -2154,7 +2178,7 @@ export function SeatMap({
         setActionNotice(`Deleted custom seat ${deletedSeatLabel}. Undo is available until publish.`);
       } catch (error) {
         setActionNotice(null);
-        setActionError(error instanceof Error ? error.message : "Could not delete custom seat.");
+        setActionError(clientActionErrorMessage(error, "Could not delete custom seat."));
       } finally {
         setMutationInFlight(false);
       }
@@ -3183,6 +3207,23 @@ export function SeatMap({
                     surface (MapWashLayer) — it documents the decorative /
                     pointer-inert contract both surfaces rely on. */}
                 <MapWashLayer zoneWash={zoneWash} officeRoomWashes={officeRoomWashes} />
+
+                {/* AUDIT-2 §8.2 first-run: a zero-seat draft is a bare floor
+                    plan — name the state and point at the affordance that
+                    fills it. Admins see the add path; a read-only session
+                    can only wait for one who has it. */}
+                {visualLocalSeats.length === 0 && (
+                  <div role="status" className="absolute inset-0 z-[6] flex items-center justify-center p-6">
+                    <div className="max-w-sm border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-center shadow-sm">
+                      <div className="text-sm font-semibold text-[var(--sp-text-primary)]">No seats in the draft yet</div>
+                      <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
+                        {canEdit
+                          ? "Use “Add seat” in the map tools, or import assignments from Settings."
+                          : "Seats appear once an admin adds them to the draft."}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Animated draft trail between a pending swap/move pair
                     (design_handoff_swap_trail). Above the washes, below the

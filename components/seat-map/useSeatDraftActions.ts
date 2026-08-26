@@ -2,6 +2,7 @@
 
 import { useCallback, useTransition } from "react";
 import { updateSeatAction } from "@/app/actions";
+import { clientActionErrorMessage } from "@/lib/clientActionError";
 import { buildVacateSeatInput, classifySeatUpdateResult, type SeatDraftOutcome } from "@/lib/seatDraftActions";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { SeatWithEmployee } from "@/lib/types";
@@ -80,7 +81,7 @@ export function useSeatDraftActions({
             // production's digest stripping.
             resolve({
               kind: "failed",
-              message: error instanceof Error ? error.message : "Could not vacate seat."
+              message: clientActionErrorMessage(error, "Could not vacate seat.")
             });
           }
         });

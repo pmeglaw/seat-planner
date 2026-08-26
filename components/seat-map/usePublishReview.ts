@@ -22,6 +22,7 @@ import {
   buildPublishDiffRows,
   type PublishDiffRowKind
 } from "@/lib/publishSummary";
+import { clientActionErrorMessage } from "@/lib/clientActionError";
 import { normalizeSeats } from "@/lib/seatNormalize";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 
@@ -132,7 +133,7 @@ export function usePublishReview({
         setActionNotice("Draft map published. Undo/Redo history was cleared.");
       } catch (error) {
         setActionNotice(null);
-        setActionError(error instanceof Error ? error.message : "Could not publish seat map.");
+        setActionError(clientActionErrorMessage(error, "Could not publish seat map."));
       } finally {
         setMutationInFlight(false);
       }
@@ -162,7 +163,7 @@ export function usePublishReview({
         setActionNotice("All draft changes discarded — the draft matches the published map again. Undo/Redo history was cleared.");
       } catch (error) {
         setActionNotice(null);
-        setActionError(error instanceof Error ? error.message : "Could not discard draft changes.");
+        setActionError(clientActionErrorMessage(error, "Could not discard draft changes."));
       } finally {
         setMutationInFlight(false);
       }
