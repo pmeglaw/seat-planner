@@ -197,7 +197,7 @@ Consequence: on laptop widths, hover disclosure and the inspector are the **prim
 | Arbitrary spacing values | 442 | Invisible to users; maintenance only |
 | Four near-identical greige hairlines | 4 | Needs an owner ruling |
 | `--admin-diff-vacated-text`, `--admin-paper`, §3.7 reception rows | 3 | Doc errors found during PR-B, parked under old names. See `NOTES.md` |
-| Dark AI accent on its hover wash: 4.31:1 | 1 hex or 1 alpha | `#a56eff` over `rgba(138,63,252,.16)`-on-`#1f1f1f` misses 4.5 (rest passes at 4.92). Pre-existing, found while measuring the §3 sanctioned variant. Fix is lighten the dark accent OR thin the dark wash — needs an owner ruling; touching the accent hex touches all five AI sites |
+| ~~Dark AI accent on its hover wash: 4.31:1~~ **RULED + FIXED 2026-08-25** | 1 hex | Owner ruled: dark `--sp-ai-accent` purple-50 `#a56eff` → purple-40 `#be95ff` (6.13:1 on the hover composite, 6.44 resting on `#262626`, 7.01 on `#1f1f1f`) over thinning the wash (which passed only at 4.55) or accepting. Scope correction found while fixing: the accent hex is used by ONE component — the SeatInspector Ask Planner card — not five AI sites; the five-site vocabulary shares the `--sp-ai-*` family, not this hex. Light pair untouched |
 
 ---
 

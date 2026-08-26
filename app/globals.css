@@ -438,9 +438,15 @@
      issue) rather than changed. */
   --sp-ai-text: #78a9ff;
   --sp-ai-marker-surface: #262626; /* AI pill/chip fill; #78a9ff text = 6.43:1 here */
-  /* Ask Planner card purple, dark partners: #a56eff on #161616 ≈ 6.0:1 (AA);
-     the soft wash is an alpha tint over the dark surface, no text on it. */
-  --sp-ai-accent: #a56eff;
+  /* Ask Planner card purple, dark partners. Owner ruling 2026-08-25 (handoff
+     §9): purple-40 #be95ff, one Carbon grade up from the original purple-50
+     #a56eff, which measured 4.31:1 on the card's HOVER wash composite
+     (rgba(138,63,252,.16) over #1f1f1f = #302442) — the wash DOES carry text,
+     the accent-coloured label sits on it while hovered. #be95ff measures
+     6.13:1 on that composite, 6.44:1 on the card's resting #262626, 7.01:1
+     on #1f1f1f. Change this hex or the wash alpha → re-measure all of those
+     (and the light pair's, in desktop-seat-marker-system-source). */
+  --sp-ai-accent: #be95ff;
   --sp-ai-accent-soft: rgba(138, 63, 252, 0.16);
 
   /* Marker LEGEND chips (the live pills are Task 6). */
