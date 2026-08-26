@@ -128,11 +128,12 @@ test("sanctioned eyebrow variant (2026-08-25): the Ask Planner label keeps the A
   // unify it to --sp-text-helper.
   // Measured 2026-08-25 per the hovered-surface rule (handoff §6): light
   // #8a3ffc on the hover wash #f6f2ff = 4.54:1 (12px text needs 4.5 — pass);
-  // on white at rest = 5.00. Dark #a56eff on #1f1f1f at rest = 4.92; on the
-  // dark hover wash composite (rgba(138,63,252,.16) over #1f1f1f = #302442)
-  // = 4.31 — pre-existing shortfall, recorded in handoff §9, ruled
-  // separately. Change the accent hexes or the wash alpha → re-measure all
-  // four numbers.
+  // on white at rest = 5.00. Dark accent RULED 2026-08-25 (handoff §9):
+  // purple-50 #a56eff measured 4.31 on the dark hover wash composite
+  // (rgba(138,63,252,.16) over #1f1f1f = #302442), so the dark
+  // --sp-ai-accent is purple-40 #be95ff — 6.13 on that composite, 6.44 on
+  // the resting #262626, 7.01 on #1f1f1f. Change the accent hexes or the
+  // wash alpha → re-measure all of these.
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
 
   assert.match(
