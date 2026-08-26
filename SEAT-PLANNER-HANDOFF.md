@@ -129,6 +129,8 @@ Most allowlist reasons are claims about today's component tree — "no chrome mo
 
 ## 5. Open work
 
+**Pass-2 audit landed 2026-08-26:** `docs/design-system/AUDIT-2.md` — motion, spacing, the seventeen patterns, shell, keyboard, dark parity, and absences; ranked findings in its §0, guard map in §9 (spacing findings corrected same day against the fixed Carbon scale, skill v1.2.0).
+
 The type-floor arc (#444 / #446 / #447) and the publish guard (#443 / #445) are **complete and prod-verified**. The SeatInspector label ruling landed as candidate B — recorded in §3, pinned in `desktop-seat-marker-system-source.test.mjs`. One item remains.
 
 ### Hover disclosure + inspector as a first-class read path — assessed 2026-08-25, ruled
