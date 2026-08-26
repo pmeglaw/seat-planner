@@ -95,23 +95,27 @@ all deferred minors triaged ship-as-is. Two items worth keeping:
 
 ## 2026-08-21 finding recorded but NOT planned (from the focus-follows-surface pass)
 
-- **B-04 Ask Planner drawer: suggested-prompt chips and the Close button never
-  paint their focus ring** — measured live 2026-08-21, and re-measured on main
-  via `git stash` (pre-existing, NOT introduced by the `data-chrome="dark"`
-  focus scoping): with the chip keyboard-focused and `:focus-visible`
-  matching, `--tw-ring-shadow` computes to the correct `0 0 0 4px <ring>` but
-  the element's `box-shadow` stays the transparent fallback stack, and the
-  rendered pixels show no ring. Pattern: `focus-visible:ring-4` with neither
-  `ring-inset` nor any `ring-offset-*` utility fails; rings WITH an offset
-  (design-system Button in the same drawer) and inset rings (chrome doctrine)
-  render fine. Keyboard users get zero visible focus on those chips today —
-  a real WCAG 2.4.7 gap. Fix candidate: add `ring-inset` or a
-  `ring-offset-2 ring-offset-[var(--admin-chrome-bg)]` pair to the drawer's
-  Close button (`AskPlannerDrawer.tsx:274`), prompt chips (`:299`), highlight
-  rows (`:455`), and recent-question chips (`:483`), then re-verify in the
-  live app (computed `box-shadow` AND a screenshot crop — computed ring vars
-  alone are not proof). Root cause of the var-set-but-unconsumed behavior
-  unexplained; diagnose before trusting any wider sweep. S / LOW.
+- **B-04 Ask Planner drawer focus rings — REFUTED 2026-08-26, measurement
+  artifact, no fix needed.** Re-measured live on main (dev server + Playwright,
+  keyboard focus, `:focus-visible` confirmed matching): the Close button AND
+  the suggested-prompt chips both paint the full `0 0 0 4px #ff8a5c` ring —
+  computed `box-shadow` correct at t+400ms and the ring visible in screenshot
+  pixels. The recorded symptom is reproducible **only at t=0**: these elements
+  carry the `transition` utility, whose property list includes `box-shadow`
+  (150ms), so on focus the ring FADES IN — custom properties don't animate
+  (`--tw-ring-shadow` flips instantly to the correct value) while `box-shadow`
+  interpolates from the all-transparent stack. A `getComputedStyle` read (or
+  screenshot) taken immediately after focusing reproduces the recorded
+  "var-set-but-unconsumed" fingerprint exactly — the known mid-transition
+  read trap (`live-qa-browser-tooling` memory). The "ring-4 without
+  inset/offset fails" theory is also mechanically refuted: the compiled CSS
+  emits the standard TW3 rule + universal ring-var defaults, and the same
+  transition applies to the offset/inset rings that were recorded as
+  "working". All four sites (`AskPlannerDrawer.tsx:279,304,460,488`) share
+  the identical pattern; two verified pixel-level, the other two need an AI
+  answer on screen and are mechanically identical. No WCAG 2.4.7 gap; do NOT
+  add `ring-inset`/`ring-offset` churn here. If a future focus-ring complaint
+  arrives, wait ≥200ms after focus before reading `box-shadow`.
 
 ## 2026-08-13 findings recorded but NOT planned this cycle
 
