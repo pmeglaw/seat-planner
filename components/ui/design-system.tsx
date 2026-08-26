@@ -197,7 +197,7 @@ export function StatusBadge({ children, className, icon, tone = "neutral" }: Sta
   return (
     <span
       className={cx(
-        "inline-flex min-h-7 items-center gap-1.5 rounded-[var(--sp-radius-full)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ring-1",
+        "inline-flex min-h-7 items-center gap-1.5 rounded-[var(--sp-radius-full)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ring-1",
         statusBadgeTones[tone],
         className
       )}

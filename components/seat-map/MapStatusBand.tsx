@@ -62,11 +62,11 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
         className="flex min-w-0 flex-1 items-center gap-2.5 overflow-x-auto px-3 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] md:gap-3"
       >
         <span className="map-status-band-wide shrink-0 text-[12px] font-semibold text-[var(--sp-text-primary)]">Legend</span>
-        <span className="map-status-band-wide shrink-0 text-[11.5px] font-semibold tabular-nums text-[var(--sp-text-secondary)]">{totalLabel}</span>
+        <span className="map-status-band-wide shrink-0 text-xs font-semibold tabular-nums text-[var(--sp-text-secondary)]">{totalLabel}</span>
         <span aria-hidden="true" className="map-status-band-wide h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
         <ul aria-label={ariaLabel} className="flex shrink-0 items-center gap-2.5 md:gap-3.5">
           {entries.map(entry => (
-            <li key={entry.key} className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--sp-text-secondary)]">
+            <li key={entry.key} className="flex items-center gap-1.5 text-xs font-semibold text-[var(--sp-text-secondary)]">
               <span aria-hidden="true" className={`h-[7px] w-[7px] shrink-0 rounded-full ${entry.dotClassName}`} />
               <span className="whitespace-nowrap">{entry.label}</span>
               <span className="tabular-nums text-[var(--sp-text-primary)]">{entry.count}</span>
@@ -76,7 +76,7 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
         {summary ? (
           <>
             <span aria-hidden="true" className="map-status-band-widest h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
-            <p className="map-status-band-widest min-w-0 truncate text-[11.5px] text-[var(--sp-text-secondary)]">{summary}</p>
+            <p className="map-status-band-widest min-w-0 truncate text-xs text-[var(--sp-text-secondary)]">{summary}</p>
           </>
         ) : null}
         {/* Actions stay present at every band width (unlike the prose
