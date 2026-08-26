@@ -297,7 +297,10 @@ test("a failed discard surfaces its error inside the discard dialog (002)", asyn
   const dialog = page.getByRole("dialog", { name: /Discard all draft changes/ });
   await expect(dialog).toBeAttached();                             // dialog stayed open on failure (not swallowed)
   await expect(dialog.getByRole("alert")).toBeAttached();          // the error renders INSIDE the dialog — plan 002's core fix
-  await expect(dialog.getByText(/Server error/)).toBeAttached();   // ...carrying the action's error text
+  // ...carrying the WRITTEN fallback, not the thrown text: a throw reaching a
+  // client catch is digest-stripped in prod (F-ERR-1, AUDIT-2), so
+  // clientActionErrorMessage surfaces the fallback copy instead.
+  await expect(dialog.getByText(/Could not discard draft changes/)).toBeAttached();
 
   // The confirm button relabels to "Retry discard" once useTransition's
   // `pending` clears — which it now does: SeatMap no longer re-renders forever
