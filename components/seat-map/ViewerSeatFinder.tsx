@@ -1284,14 +1284,20 @@ export function ViewerSeatFinder({
               // only tier that scans this surface signed in).
               aria-controls={paletteOpen ? "viewer-find-palette" : undefined}
               type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
-              className="h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-brand)]"
+              // relative z-[1]: the wrapping label's hit-expansion ::after
+              // paints above in-flow children, so without this the pseudo
+              // would swallow direct clicks on the field (caret placement,
+              // drag-select, the onClick reopen contract). The control rides
+              // above its label's pseudo; the pseudo keeps the strips outside
+              // the control's box.
+              className="relative z-[1] h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-brand)]"
             />
             {search.trim() ? (
               <button
                 type="button"
                 aria-label="Clear viewer search"
                 title="Clear search"
-                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-3 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
+                className="absolute right-1.5 top-1/2 z-[1] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-3 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
                 onClick={clearSearch}
               >
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>

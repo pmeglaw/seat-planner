@@ -97,8 +97,11 @@ export function ActiveFilterChips({
 // Native <select> keeps its semantics (disclosure pattern verified adversarially) —
 // only the chrome is styled: appearance-none + an inline SVG chevron (data-URI,
 // stroke #B8AEA2 to match --sp-text-helper) standing in for the native arrow.
+// relative z-[1]: each facet label carries a hit-expansion ::after that would
+// otherwise paint over its own select and swallow the click that opens the
+// native picker — the control rides above the pseudo (PR-2 / F-SP-4).
 const darkSelectClassName =
-  "mt-1 w-full min-w-0 cursor-pointer appearance-none border border-white/20 bg-white/[0.06] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2012%208%22%20fill=%22none%22%3E%3Cpolyline%20points=%221,1.5%206,6.5%2011,1.5%22%20stroke=%22%239a9a9a%22%20stroke-width=%221.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[length:12px_8px] bg-[position:right_8px_center] bg-no-repeat px-2.5 py-1.5 pr-8 text-sm text-[var(--sp-text-primary)] outline-none transition hover:border-white/30 focus:border-[var(--sp-brand)] focus:ring-2 focus:ring-[color:var(--sp-brand-border)] [&>option]:bg-[var(--sp-background-hover)] [&>option]:text-[var(--sp-text-primary)]";
+  "relative z-[1] mt-1 w-full min-w-0 cursor-pointer appearance-none border border-white/20 bg-white/[0.06] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2012%208%22%20fill=%22none%22%3E%3Cpolyline%20points=%221,1.5%206,6.5%2011,1.5%22%20stroke=%22%239a9a9a%22%20stroke-width=%221.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[length:12px_8px] bg-[position:right_8px_center] bg-no-repeat px-2.5 py-1.5 pr-8 text-sm text-[var(--sp-text-primary)] outline-none transition hover:border-white/30 focus:border-[var(--sp-brand)] focus:ring-2 focus:ring-[color:var(--sp-brand-border)] [&>option]:bg-[var(--sp-background-hover)] [&>option]:text-[var(--sp-text-primary)]";
 
 export function FilterPanel({
   department,
