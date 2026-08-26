@@ -120,8 +120,12 @@ const nextConfig = {
   images: {
     localPatterns: [
       {
+        // Must match MAP_IMAGE_SRC in lib/mapLayoutTransform.ts exactly —
+        // tests/map-image-pin-source.test.mjs fails when they drift. Inert
+        // while every <Image> is `unoptimized`, but a stale pin 400s the
+        // floor plan the moment optimization is turned back on.
         pathname: "/images/office-floor-plan.webp",
-        search: "?v=map-v2-warm-1911x867"
+        search: "?v=map-v2-cool-2x-3822x1734"
       }
     ]
   },
