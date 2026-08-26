@@ -224,10 +224,14 @@ re-audit from zero.
   Pin `^22`. S.
 - **DEP-03 `@testing-library/user-event` still unused** (2 refs: manifest +
   this file). Delete unless the ct tier plans to adopt it. S.
-- **X-03 no single-command local gate** — CI verify sequence
-  (lint → typecheck → coverage:check → build, `ci.yml:80-88`) exists only as
-  prose; plan 017's postmortem is literally titled around "a green local
-  gate". Add `"gate": "npm run lint && npm run typecheck && npm run coverage:check"`. S.
+- **X-03 no single-command local gate** — DONE, merged to main as `5bac4c8`
+  (PR #467, 2026-08-26). `npm run gate` = lint && typecheck && coverage:check
+  (build deliberately excluded — slowest step, CI still runs it);
+  `tests/local-gate-source.test.mjs` pins script↔ci.yml order both ways.
+  Along the way: eslint now ignores `output/**` — gitignored local scratch
+  carried 19 errors CI never sees, which made local lint red on a clean tree
+  (the earlier "lint exits 1 on baseline" observation, now root-caused).
+  `.design-sync/` is TRACKED and warnings-only, so it stays linted.
 - **P-02 all four vendored font cuts preload on every route** —
   `app/layout.tsx:20-33`; `/login` preloads ~45KB of mono it never paints
   (600 cut exists for Reception's 46px readout). Verify emitted preload tags
