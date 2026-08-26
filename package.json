@@ -22,7 +22,8 @@
     "db:stop": "supabase stop",
     "backup:prod": "node scripts/backup-prod.mjs",
     "coverage": "c8 node --test tests/*.test.mjs",
-    "coverage:check": "c8 --check-coverage --lines 90 --functions 95 --branches 80 node --test tests/*.test.mjs"
+    "coverage:check": "c8 --check-coverage --lines 90 --functions 95 --branches 80 node --test tests/*.test.mjs",
+    "gate": "npm run lint && npm run typecheck && npm run coverage:check"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

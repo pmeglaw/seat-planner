@@ -13,7 +13,11 @@ const eslintConfig = [
       "test-results/**",
       // design-sync build output + staged converter scripts (gitignored; absent in CI)
       "ds-bundle/**",
-      ".ds-sync/**"
+      ".ds-sync/**",
+      // local scratch (screenshots, repro rigs, qa harness bundles) — gitignored,
+      // absent in CI, and full of deliberately un-lintable throwaway code. With
+      // it linted, `npm run gate` fails locally on files CI never sees.
+      "output/**"
     ]
   },
   ...coreWebVitals,
