@@ -215,15 +215,13 @@ re-audit from zero.
   third divergent copy now in `ComponentStateBoard.tsx:1218`. Inert while all
   `<Image>`s are `unoptimized`; tripwire for whoever removes that. Fix +
   source test pinning config↔lib agreement. S.
-- **DEP-01 UPDATED: sharp override is now a no-op** — next 16.3.0 declares
-  `optionalDependencies.sharp: ^0.35.3` = root spec, and sharp is now a real
-  devDep (calibration generator + `tests/map-calibration.test.mjs`, which
-  runs in `npm test` → CI needs it). Remove the override; **keep the postcss
-  override** (it genuinely lifts next's pinned 8.5.23 to one tree copy). S.
-- **DEP-02 `@types/node` ^26 vs Node 22** engines/.nvmrc/CI — still open.
-  Pin `^22`. S.
-- **DEP-03 `@testing-library/user-event` still unused** (2 refs: manifest +
-  this file). Delete unless the ct tier plans to adopt it. S.
+- **DEP-01/02/03 — ALL DONE**, merged to main as `fa4e99e` (PR #468,
+  2026-08-26). Sharp override removed (installed sharp stayed 0.35.3 —
+  proven no-op; postcss override KEPT per the entry). `@types/node` pinned
+  `^24.10.1` — note the recorded "vs Node 22" was stale, engines/CI moved to
+  24.x with #441; the mismatch principle held, the number didn't.
+  `@testing-library/user-event` deleted (zero refs). Full `npm run gate`
+  green on the reinstalled tree.
 - **X-03 no single-command local gate** — DONE, merged to main as `5bac4c8`
   (PR #467, 2026-08-26). `npm run gate` = lint && typecheck && coverage:check
   (build deliberately excluded — slowest step, CI still runs it);
