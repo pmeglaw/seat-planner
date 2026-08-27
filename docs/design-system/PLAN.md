@@ -33,8 +33,8 @@ flowchart TD
     PR1[PR-1 #471 errors · empty states]:::done
     PR2[PR-2 #474 touch targets]:::done
     PR3[PR-3 #475 update-password dark]:::done
-    PR4[PR-4 error behind modal · queued next]:::todo
-    PR5[PR-5 pending + SR busy]:::todo
+    PR4[PR-4 #476 error behind modal]:::done
+    PR5[PR-5 pending + SR busy · queued next]:::todo
     R1{Ruling: destructive tiers}:::done --> PR6[PR-6 type-the-name · toast]:::todo
     R2{Ruling: sense of place}:::done --> PR7[PR-7 draft · env · identity]:::todo
     R3{Ruling: motion scale}:::done --> PR8a[PR-8a motion tokens · mechanical]:::todo --> PR8b[PR-8b timing default · site migration]:::todo --> PR8c[PR-8c motion sites · reduced-motion]:::todo
@@ -61,8 +61,8 @@ flowchart TD
 | R5 ruling — greige hairlines | 2 | handoff §9 parked | in progress — principle ruled, value deferred to the PR-11 brief's measurement report | — |
 | PR-2 touch targets (#474) | 3 | F-SP-4 (+ 28px family of F-SP-3) | **done** — 54 of 58 specs expanded to 44 or ledgered under the no-overlap rule | v1.65.0 |
 | PR-3 update-password dark (#475) | 3 | F-DK-1 | **done** — last pre-token auth surface joins the login vocabulary; `#D8D0C5` instance deleted (R5 value still open) | v1.66.0 |
-| PR-4 error-behind-modal | 3 | F-INT-4 / F-FRM-1 | not started — **queued next** | — |
-| PR-5 pending + SR busy | 3 | §8.1 remainder of §0 item 6 | not started | — |
+| PR-4 error-behind-modal (#476) | 3 | F-INT-4 / F-FRM-1 | **done** — 2 of 14 fixed (employee form + swap thrown path); 5 closes-before-resolve dialogs ledgered to PR-5; registry guard classifies all 14 | v1.67.0 |
+| PR-5 pending + SR busy | 3 | §8.1 remainder of §0 item 6 | not started — **queued next** (the guard's closes-before-resolve ledger lists its five dialogs) | — |
 | PR-6 destructive tiers + toast | 3 | F-INT-1/2 | not started · R1 ruled — unblocked | — |
 | PR-7 sense of place | 3 | F-SH-1/2/3 | not started · R2 ruled — unblocked | — |
 | PR-8a motion tokens (mechanical) | 3 | F-MO-5 values | not started · R3 ruled — unblocked | — |
@@ -128,7 +128,7 @@ These needed ruling **before code** because they change visual vocabulary (free 
 - **Entry per PR:** its ruling (where one is listed) is recorded; the preceding unblocked PR is merged or independent.
 - **Deliverables:** PR-2 … PR-11 below.
 - **Exit:** all AUDIT-2 §0 items closed or explicitly re-parked; every territory in the §9 guard map has a pin.
-- **Status: in progress** — PR-1 shipped (#471, v1.64.0); PR-2 shipped (#474, v1.65.0); PR-3 shipped (#475, v1.66.0); PR-4 queued next.
+- **Status: in progress** — PR-1 shipped (#471, v1.64.0); PR-2 shipped (#474, v1.65.0); PR-3 shipped (#475, v1.66.0); PR-4 shipped (#476, v1.67.0); PR-5 queued next.
 
 The reviewer's proposed order, validated against the repo — **it stands, no reorder**. R1–R4 were ruled with the plan review itself (2026-08-26), so PR-6/7/8a are already unblocked and can interleave with PR-2…PR-5 rather than queue behind them.
 

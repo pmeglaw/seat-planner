@@ -278,9 +278,14 @@ test("the management panel handles every returned option failure", async () => {
 test("the management panel surfaces a returned validation message", () => {
   const panel = new URL("../components/admin-management/AdminManagementPanel.tsx", import.meta.url);
   return readFile(panel, "utf8").then(source => {
-    // Without the string branch in showError, a returned message falls through
-    // to the generic fallback and the admin never learns which field is wrong.
+    // Without the string branch, a returned message falls through to the
+    // generic fallback and the admin never learns which field is wrong. Both
+    // sinks carry it: the page banner (showError) and the dialog-local path
+    // (dialogErrorMessage → showEmployeeDialogError, PR-4 — the save error
+    // renders inside the open dialog; tests/dialog-error-placement.test.mjs
+    // pins the placement, this pins that the returned string survives).
     assert.match(source, /if \(typeof errorValue === "string" && errorValue\.trim\(\)\)/);
-    assert.match(source, /if \(!result\.ok\) \{\s+showError\(result\.message, "Could not save employee\."\);\s+return;\s+\}/);
+    assert.match(source, /if \(typeof errorValue === "string" && errorValue\.trim\(\)\) return errorValue;/);
+    assert.match(source, /if \(!result\.ok\) \{[\s\S]{0,300}?showEmployeeDialogError\(result\.message, "Could not save employee\."\);\s+return;\s+\}/);
   });
 });
