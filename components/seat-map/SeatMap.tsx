@@ -389,6 +389,7 @@ export function SeatMap({
     nextRedoLabel,
     mutationInFlight,
     setMutationInFlight,
+    historyOpInFlight,
     captureDraftSnapshot,
     recordDraftHistory,
     undoDraftEdit,
@@ -1362,10 +1363,10 @@ export function SeatMap({
     // Re-resolve from live state: the dialog holds an id, not a seat, so a
     // refresh between opening and confirming cannot commit a stale row.
     const seatToVacate = localSeats.find(seat => seat.id === vacateConfirm.seatId) ?? null;
-    setVacateConfirm(null);
     if (!seatToVacate || !canVacateSeat(seatToVacate)) {
       // F-ERR-2: the admin confirmed a destructive action — a silent return
       // here is indistinguishable from a broken button. Name what happened.
+      setVacateConfirm(null);
       setActionNotice(null);
       setActionError(`${vacateConfirm.label} can no longer be vacated — the draft changed after this dialog opened.`);
       return;
@@ -1376,10 +1377,14 @@ export function SeatMap({
     setStaleDraftNotice(null);
     setMutationInFlight(true);
 
+    // PR-5 (§8.1): the dialog holds open through the round-trip — pending
+    // state lives on its confirm button. Close on success/stale; a failure
+    // keeps it open with the error rendered inline (canvas banner suppressed).
     void barSeatActions.vacateSeat(seatToVacate).then(outcome => {
       setMutationInFlight(false);
-      if (outcome.kind === "stale") return;
+      if (outcome.kind === "stale") return; // handleStaleDraft closes the dialog
       if (outcome.kind === "saved") {
+        setVacateConfirm(null);
         // applySeatUpdated already set the generic save notice; name the actual
         // verb, since "Saved changes to C01" reads oddly for a vacate.
         setActionNotice(`Vacated ${outcome.seat.label}.`);
@@ -1445,6 +1450,10 @@ export function SeatMap({
     setSwapConfirm(null);
     setMoveEmployeeSourceSeatId(null);
     setMoveEmployeeConfirm(null);
+    // PR-5: vacate/delete confirms now hold open through the round-trip, so
+    // the stale path has to close them too — the banner owns the story here.
+    setVacateConfirm(null);
+    setDeleteSeatConfirm(null);
     router.refresh();
   }
 
@@ -1931,8 +1940,9 @@ export function SeatMap({
     if (!moveEmployeeConfirm?.offerSwap || !moveEmployeeSourceSeatId) return;
     const targetSeatId = moveEmployeeConfirm.targetSeatId;
     const sourceSeatId = moveEmployeeSourceSeatId;
-    setMoveEmployeeConfirm(null);
-    setMoveEmployeeSourceSeatId(null);
+    // PR-5 (§8.1): the dialog holds open through executeSwap — its success
+    // path clears both confirm and source-mode state; a failure keeps the
+    // dialog open with the error rendered inline.
     executeSwap(sourceSeatId, targetSeatId);
   }
 
@@ -1948,7 +1958,8 @@ export function SeatMap({
     }
     const beforeSnapshot = captureDraftSnapshot();
     const moveLabel = `Move ${mover.full_name} to ${targetSeat.label}`;
-    setMoveEmployeeConfirm(null);
+    // PR-5 (§8.1): dialog holds open through the round-trip — closed on
+    // success below; stale closes via handleStaleDraft; errors keep it open.
     startTransition(async () => {
       setMutationInFlight(true);
       try {
@@ -1987,6 +1998,7 @@ export function SeatMap({
         const afterSeats = normalizeSeats(result.seats);
         const afterEmployees = result.employees;
         recordDraftHistory(moveLabel, beforeSnapshot, afterSeats, afterEmployees);
+        setMoveEmployeeConfirm(null);
         setLocalSeats(afterSeats);
         setLocalEmployees(afterEmployees);
         setSelectedSeatId(targetSeat.id);
@@ -2153,8 +2165,9 @@ export function SeatMap({
 
     const beforeSnapshot = captureDraftSnapshot();
     const deletedSeatLabel = seatToDelete.label;
-    setDeleteSeatConfirm(null);
 
+    // PR-5 (§8.1): the dialog holds open through the round-trip; success
+    // closes it, failure keeps it open with the error rendered inline.
     setMutationInFlight(true);
     startTransition(async () => {
       try {
@@ -2168,6 +2181,7 @@ export function SeatMap({
         }
         const afterSeats = beforeSnapshot.seats.filter(seat => seat.id !== result.seatId);
         recordDraftHistory(`Delete ${deletedSeatLabel}`, beforeSnapshot, afterSeats, beforeSnapshot.employees);
+        setDeleteSeatConfirm(null);
         setLocalSeats(afterSeats);
         setSelectedSeatId(null);
         setInspectorDirty(false);
@@ -2629,13 +2643,19 @@ export function SeatMap({
           title={undoTitle}
           className={`${chromeIconBtn} after:-left-4 after:right-0`}
         >
-          {/* SVG on the chrome icon grid (20-viewBox, stroke 1.5) — replaced
+          {/* PR-5 (§8.1): the spinner replaces the glyph while THIS op is in
+              flight — accessible name and title stay unchanged (ruled). */}
+          {historyOpInFlight === "Undo" ? (
+            <span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" />
+          ) : (
+          /* SVG on the chrome icon grid (20-viewBox, stroke 1.5) — replaced
               the literal ↺ glyph in the chrome-unification pass 2026-08-20:
-              font-rendered arrows couldn't track the 1.5-stroke icon system. */}
+              font-rendered arrows couldn't track the 1.5-stroke icon system. */
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
             <path d="M2.5 2.5v4.17h4.17" />
             <path d="M2.5 10a7.5 7.5 0 1 0 7.5-7.5 8.1 8.1 0 0 0-5.62 2.28L2.5 6.67" />
           </svg>
+          )}
         </button>
         <button
           type="button"
@@ -2645,11 +2665,15 @@ export function SeatMap({
           title={redoTitle}
           className={`${chromeIconBtn} after:-right-3 after:left-0`}
         >
-          {/* Mirrored twin of the Undo SVG above. */}
+          {historyOpInFlight === "Redo" ? (
+            <span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" />
+          ) : (
+          /* Mirrored twin of the Undo SVG above. */
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
             <path d="M17.5 2.5v4.17h-4.17" />
             <path d="M17.5 10a7.5 7.5 0 1 1-7.5-7.5 8.1 8.1 0 0 1 5.62 2.28L17.5 6.67" />
           </svg>
+          )}
         </button>
         {/* Group hairline (follow-up to the 2026-08-18 de-cram pass): the
             undo/redo history pair and the kebab overflow are separate groups
@@ -3033,11 +3057,11 @@ export function SeatMap({
               </div>
             )}
 
-            {/* One channel, not two (PR-4): while the swap dialog is open it
-                renders actionError inline, so the canvas banner stands down —
-                otherwise the same error paints once behind the scrim and once
-                inside the dialog. */}
-            {actionError && !sessionExpired && !swapConfirm && (
+            {/* One channel, not two (PR-4, extended by PR-5): while any
+                dialog that renders actionError inline is open, the canvas
+                banner stands down — otherwise the same error paints once
+                behind the scrim and once inside the dialog. */}
+            {actionError && !sessionExpired && !swapConfirm && !vacateConfirm && !deleteSeatConfirm && !moveEmployeeConfirm && (
               <div role="alert" className={actionErrorBannerClassName}>
                 {actionError}
               </div>
@@ -3148,6 +3172,16 @@ export function SeatMap({
                 </button>
               )}
               </div>
+              </div>
+              {/* PR-5 (§8.1): the surface's shared in-flight region — an
+                  always-mounted sr-only sibling of the visible outcome toast
+                  below (a region that mounts WITH its content is not reliably
+                  announced). "Working…" while any draft mutation round-trips;
+                  outcomes stay with the visible toast/error banners. */}
+              <div role="status" aria-live="polite" className="sr-only">
+                {/* publishReviewOpen excluded: the publish dialog keeps its own
+                    in-flight region (row 1) — one announcement, not two. */}
+                {(mutationInFlight || barSeatActions.pending || pending) && !publishReviewOpen ? "Working…" : ""}
               </div>
               {actionNotice && !swapSourceSeatId && !moveEmployeeSourceSeatId && (
                 <div role="status" aria-live="polite" className={actionNoticeBannerClassName}>
@@ -3421,8 +3455,14 @@ export function SeatMap({
         <VacateConfirmDialog
           label={vacateConfirm.label}
           occupantName={vacateConfirm.occupantName}
-          pending={pending}
-          onCancel={() => setVacateConfirm(null)}
+          actionError={actionError}
+          // barSeatActions owns the vacate transition, so SeatMap's own
+          // `pending` never covers this flight — mutationInFlight does.
+          pending={pending || mutationInFlight}
+          onCancel={() => {
+            setActionError(null);
+            setVacateConfirm(null);
+          }}
           onConfirm={confirmVacateFromBar}
         />
       )}
@@ -3430,8 +3470,12 @@ export function SeatMap({
       {deleteSeatConfirm && (
         <DeleteSeatConfirmDialog
           label={deleteSeatConfirm.label}
-          pending={pending}
-          onCancel={() => setDeleteSeatConfirm(null)}
+          actionError={actionError}
+          pending={pending || mutationInFlight}
+          onCancel={() => {
+            setActionError(null);
+            setDeleteSeatConfirm(null);
+          }}
           onConfirm={confirmDeleteSelectedSeat}
         />
       )}
@@ -3470,6 +3514,15 @@ export function SeatMap({
         >
           <div className="text-xs font-semibold text-[var(--sp-button-primary)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--sp-text-primary)]">{activeMode.message}</p>
+          {/* PR-5 (§8.1) row 11: create-seat has no confirm button to relabel
+              — the mode card carries the visible busy line while the create
+              round-trips (the card is already a polite live region). */}
+          {addSeatMode && mutationInFlight && (
+            <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-[var(--sp-text-secondary)]">
+              <span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" />
+              Adding seat…
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-[var(--sp-brand-wash)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-brand-text)] ring-1 ring-[var(--sp-brand-border)] transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
               {activeMode.exitLabel}
@@ -3560,7 +3613,7 @@ export function SeatMap({
           swapSourceSeat={swapSourceSeat}
           swapTargetSeat={swapTargetSeat}
           actionError={actionError}
-          pending={pending}
+          pending={pending || mutationInFlight}
           onCancel={() => {
             setActionError(null);
             setSwapConfirm(null);
@@ -3575,8 +3628,12 @@ export function SeatMap({
           moveEmployeeSourceSeat={moveEmployeeSourceSeat}
           moveEmployeeTargetSeat={moveEmployeeTargetSeat}
           sourceEmployeeName={moveEmployeeSourceSeat.employee.full_name}
-          pending={pending}
-          onCancel={() => setMoveEmployeeConfirm(null)}
+          actionError={actionError}
+          pending={pending || mutationInFlight}
+          onCancel={() => {
+            setActionError(null);
+            setMoveEmployeeConfirm(null);
+          }}
           onConfirmSwap={confirmMoveEmployeeAsSwap}
           onConfirmMove={confirmMoveEmployeeToOpenSeat}
         />

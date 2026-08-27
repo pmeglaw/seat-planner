@@ -104,8 +104,11 @@ test("management confirm dialog stays mounted until its destructive action settl
   // (blank "Add employee" form under the admin's typing — an accidental
   // create on Save). The dialog must stay mounted (buttons disabled on
   // `pending`) and close only when the action settles (review, 2026-08-20).
-  const preTransition = confirmFunction[0].slice(0, confirmFunction[0].indexOf("startTransition"));
-  assert.notEqual(preTransition.length, confirmFunction[0].length, "confirm flow should still run inside startTransition.");
+  // PR-5: the panel's transitions run through runManagementOp (a busy-op
+  // discriminator wrapper around startTransition) — the stays-mounted
+  // contract is unchanged.
+  const preTransition = confirmFunction[0].slice(0, confirmFunction[0].indexOf("runManagementOp"));
+  assert.notEqual(preTransition.length, confirmFunction[0].length, "confirm flow should still run inside runManagementOp's transition.");
   assert.doesNotMatch(preTransition, /setManagementConfirm\(null\)/, "the confirm dialog must not close before the action starts.");
   assert.match(confirmFunction[0], /\} finally \{\s*setManagementConfirm\(null\);/, "the confirm dialog should close in the transition's finally block.");
 });

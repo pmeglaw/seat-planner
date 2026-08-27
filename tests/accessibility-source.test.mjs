@@ -362,7 +362,7 @@ test("publish review summarizes draft changes before publish", async () => {
   assert.match(dialogsSource, /\{actionError && !pending && \(/);
   assert.match(dialogsSource, /Retry publish/);
   assert.match(dialogsSource, /No draft changes to publish/);
-  assert.match(dialogsSource, /disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
+  assert.match(dialogsSource, /loading=\{pending\}[\s\S]{0,200}?disabled=\{!publishSummary\.hasChanges\}|disabled=\{!publishSummary\.hasChanges\}[\s\S]{0,200}?loading=\{pending\}/);
   // The diff table's column contract and kind-tag tokens.
   assert.match(dialogsSource, /Published now/);
   assert.match(dialogsSource, /After publish/);
@@ -398,7 +398,7 @@ test("publish workflow stays server-action gated and clears review history state
   // disabled without reviewed changes.
   const dialogsSourceForPublish = await readSource("../components/seat-map/SeatMapDialogs.tsx");
   assert.match(seatMapSource, /onConfirm=\{confirmPublishDraftMap\}/);
-  assert.match(dialogsSourceForPublish, /onClick=\{onConfirm\}[\s\S]*disabled=\{pending \|\| !publishSummary\.hasChanges\}/);
+  assert.match(dialogsSourceForPublish, /onClick=\{onConfirm\}[\s\S]*disabled=\{!publishSummary\.hasChanges\}[\s\S]{0,40}loading=\{pending\}/);
   assert.match(confirmPublishFunction[0], /await publishSeatMapAction\(publishReviewExpectations, publishReviewEmployeeExpectations\)/);
   assert.match(confirmPublishFunction[0], /setLocalPublishedSeats\(nextPublishedSeats\)/);
   // Publish still drops the undo/redo stacks; they live in useDraftHistory now,
