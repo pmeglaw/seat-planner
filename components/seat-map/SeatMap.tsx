@@ -3033,7 +3033,11 @@ export function SeatMap({
               </div>
             )}
 
-            {actionError && !sessionExpired && (
+            {/* One channel, not two (PR-4): while the swap dialog is open it
+                renders actionError inline, so the canvas banner stands down —
+                otherwise the same error paints once behind the scrim and once
+                inside the dialog. */}
+            {actionError && !sessionExpired && !swapConfirm && (
               <div role="alert" className={actionErrorBannerClassName}>
                 {actionError}
               </div>
@@ -3555,8 +3559,12 @@ export function SeatMap({
         <SwapConfirmDialog
           swapSourceSeat={swapSourceSeat}
           swapTargetSeat={swapTargetSeat}
+          actionError={actionError}
           pending={pending}
-          onCancel={() => setSwapConfirm(null)}
+          onCancel={() => {
+            setActionError(null);
+            setSwapConfirm(null);
+          }}
           onConfirm={confirmSwapSeats}
         />
       )}

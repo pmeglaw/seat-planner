@@ -173,7 +173,12 @@ export function AdminManagementPanel({
   // v12 (#13): the directory card is full-width, so the add/edit form that used
   // to sit in a right-hand aside is now one dialog both entry points open.
   const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
+  // Dialog-local save error (PR-4 F-INT-4): the page-level `error` banner is
+  // occluded by the open dialog's scrim, so save failures render inline here.
+  const [employeeDialogError, setEmployeeDialogError] = useState<string | null>(null);
   const employeeDialogFocusRef = useDialogFocus<HTMLElement>();
+  const employeeDialogErrorRef = useRef<HTMLDivElement | null>(null);
+  const employeeSaveButtonRef = useRef<HTMLButtonElement | null>(null);
   const [localEmployees, setLocalEmployees] = useState(employees);
   const [localDepartmentOptions, setLocalDepartmentOptions] = useState(departmentOptions);
   const [localZoneOptions, setLocalZoneOptions] = useState(zoneOptions);
@@ -466,6 +471,23 @@ export function AdminManagementPanel({
     setMessage(nextMessage);
   }
 
+  // PR-4 (F-INT-4 / F-FRM-1): a save error must render INSIDE the open
+  // employee dialog — the page banner sits under the dialog's blurred scrim,
+  // so routing it there made the dialog look like it did nothing. The page
+  // banner keeps serving every non-dialog surface (renames, option creates,
+  // the closed-confirm deactivate path).
+  function dialogErrorMessage(errorValue: unknown, fallback: string) {
+    if (typeof errorValue === "string" && errorValue.trim()) return errorValue;
+    return clientActionErrorMessage(errorValue, fallback);
+  }
+
+  function showEmployeeDialogError(errorValue: unknown, fallback: string) {
+    setEmployeeDialogError(dialogErrorMessage(errorValue, fallback));
+    // Ruling: focus moves to the notification so the failure is the next
+    // thing a keyboard or screen-reader admin meets.
+    window.requestAnimationFrame(() => employeeDialogErrorRef.current?.focus());
+  }
+
   function showError(errorValue: unknown, fallback: string) {
     setMessage(null);
     // A plain string is a message an action *returned* (the validation path in
@@ -483,12 +505,14 @@ export function AdminManagementPanel({
     setEmployeeForm(emptyEmployeeForm);
     setMessage(null);
     setError(null);
+    setEmployeeDialogError(null);
     setEmployeeDialogOpen(true);
     window.requestAnimationFrame(() => employeeNameInputRef.current?.focus());
   }
 
   function closeEmployeeDialog() {
     setEmployeeDialogOpen(false);
+    setEmployeeDialogError(null);
   }
 
   function editEmployee(employee: Employee) {
@@ -497,6 +521,7 @@ export function AdminManagementPanel({
     setActiveTab("employees");
     setMessage(null);
     setError(null);
+    setEmployeeDialogError(null);
     setEmployeeDialogOpen(true);
     // Hand focus to the form the row just populated (critique action 8).
     window.requestAnimationFrame(() => employeeNameInputRef.current?.focus());
@@ -506,6 +531,7 @@ export function AdminManagementPanel({
     startTransition(async () => {
       try {
         setError(null);
+        setEmployeeDialogError(null);
         const payload = {
           fullName: employeeForm.fullName,
           position: employeeForm.position,
@@ -519,8 +545,10 @@ export function AdminManagementPanel({
 
         // Validation failures come back rather than throwing, so the field-level
         // message survives production's digest stripping — surface it and stop.
+        // Inside the still-open dialog (PR-4): the dialog stays open, values
+        // stay put, and Save re-enables for a retry.
         if (!result.ok) {
-          showError(result.message, "Could not save employee.");
+          showEmployeeDialogError(result.message, "Could not save employee.");
           return;
         }
 
@@ -538,7 +566,7 @@ export function AdminManagementPanel({
         setEmployeeDialogOpen(false);
         showSuccess(`${formatDisplayName(employee.full_name)} saved.`);
       } catch (errorValue) {
-        showError(errorValue, "Could not save employee.");
+        showEmployeeDialogError(errorValue, "Could not save employee.");
       }
     });
   }
@@ -1325,8 +1353,37 @@ export function AdminManagementPanel({
                 </div>
               </div>
             )}
+            {/* PR-4 (F-INT-4): the save error lives HERE, above the button
+                row — never on the page banner the scrim occludes. Icon + text
+                (two signals), role="alert", focused on arrival; dismissing
+                hands focus back to the submit button. */}
+            {employeeDialogError && (
+              <div
+                ref={employeeDialogErrorRef}
+                tabIndex={-1}
+                role="alert"
+                className="mt-4 flex items-start gap-2.5 border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] px-3 py-2.5 text-sm font-semibold leading-5 text-[var(--sp-editor-error-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+              >
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="mt-0.5 h-[15px] w-[15px] shrink-0">
+                  <circle cx="10" cy="10" r="8" fill="currentColor" />
+                  <path d="m7 7 6 6m0-6-6 6" stroke="var(--sp-editor-error-bg)" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+                <span className="min-w-0 flex-1">{employeeDialogError}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmployeeDialogError(null);
+                    employeeSaveButtonRef.current?.focus();
+                  }}
+                  aria-label="Dismiss save error"
+                  className="relative flex h-8 w-8 shrink-0 items-center justify-center text-[var(--sp-editor-error-text)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-editor-error-border)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+            )}
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button type="button" variant="primary" onClick={saveEmployee} disabled={pending || !employeeForm.fullName.trim()}>{selectedEmployee ? "Save employee" : "Add employee"}</Button>
+              <Button ref={employeeSaveButtonRef} type="button" variant="primary" onClick={saveEmployee} disabled={pending || !employeeForm.fullName.trim()}>{selectedEmployee ? "Save employee" : "Add employee"}</Button>
               <Button type="button" onClick={closeEmployeeDialog} disabled={pending}>Cancel</Button>
               {selectedEmployee && <Button type="button" variant="danger" onClick={deleteEmployee} disabled={pending}>Deactivate</Button>}
             </div>

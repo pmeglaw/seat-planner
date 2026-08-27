@@ -7,6 +7,7 @@
 // All state and mutation logic stays in SeatMap; these components receive
 // already-computed values and callbacks.
 
+import { useEffect, useRef } from "react";
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import type {
@@ -458,17 +459,28 @@ export function InspectorGuardDialog({
 export function SwapConfirmDialog({
   swapSourceSeat,
   swapTargetSeat,
+  actionError,
   pending,
   onCancel,
   onConfirm
 }: {
   swapSourceSeat: SeatWithEmployee;
   swapTargetSeat: SeatWithEmployee;
+  actionError: string | null;
   pending: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
   const swapConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
+  // PR-4 (F-INT-4 family): a thrown swap error used to paint the canvas
+  // banner UNDER this dialog's scrim — the dialog stayed open and looked
+  // dead. The error now renders inline (same channel publish/discard use;
+  // SeatMap suppresses the canvas banner while this dialog is open) and
+  // takes focus so the failure is announced where the admin is looking.
+  const swapErrorRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (actionError && !pending) swapErrorRef.current?.focus();
+  }, [actionError, pending]);
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
       <section
@@ -511,12 +523,23 @@ export function SwapConfirmDialog({
           {buildSwapSummary(swapSourceSeat, swapTargetSeat)}
         </div>
 
+        {actionError && !pending && (
+          <div
+            ref={swapErrorRef}
+            tabIndex={-1}
+            role="alert"
+            className="mt-4 rounded-xl border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-editor-error-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+          >
+            <span className="font-semibold">Swap did not complete.</span> {actionError}
+          </div>
+        )}
+
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Button type="button" onClick={onCancel} disabled={pending} className="w-full">
             Cancel
           </Button>
           <Button type="button" variant="primary" onClick={onConfirm} disabled={pending} className="w-full">
-            Confirm swap
+            {actionError ? "Retry swap" : "Confirm swap"}
           </Button>
         </div>
       </section>
