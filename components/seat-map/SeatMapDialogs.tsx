@@ -59,17 +59,26 @@ function PublishDiffChip({ kind, count }: { kind: PublishDiffRowKind; count: num
 export function VacateConfirmDialog({
   label,
   occupantName,
+  actionError,
   pending,
   onCancel,
   onConfirm
 }: {
   label: string;
   occupantName: string;
+  actionError: string | null;
   pending: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
   const vacateConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
+  // PR-5 (§8.1): the dialog now holds open until the action resolves, so a
+  // failure renders here (PR-4 inline-alert recipe) instead of on the canvas
+  // banner under the scrim; SeatMap suppresses that banner while this is open.
+  const vacateErrorRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (actionError && !pending) vacateErrorRef.current?.focus();
+  }, [actionError, pending]);
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
       <section
@@ -87,6 +96,16 @@ export function VacateConfirmDialog({
         <p id="vacate-seat-confirm-description" className="mt-2 text-sm leading-5 text-[var(--sp-text-secondary)]">
           This clears {formatDisplayName(occupantName)} from this draft seat. {PUBLISH_IMPACT_NOTE}
         </p>
+        {actionError && !pending && (
+          <div
+            ref={vacateErrorRef}
+            tabIndex={-1}
+            role="alert"
+            className="mt-3 rounded-xl border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-editor-error-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+          >
+            <span className="font-semibold">Vacate did not complete.</span> {actionError}
+          </div>
+        )}
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Button type="button" onClick={onCancel} disabled={pending} className={["w-full", focusRingClass].join(" ")}>
             Cancel
@@ -95,10 +114,10 @@ export function VacateConfirmDialog({
             type="button"
             variant="danger"
             onClick={onConfirm}
-            disabled={pending}
+            loading={pending}
             className={["w-full", adminDangerButtonClassName, focusRingClass].join(" ")}
           >
-            Vacate seat
+            {pending ? "Vacating…" : actionError ? "Retry vacate" : "Vacate seat"}
           </Button>
         </div>
       </section>
@@ -108,16 +127,23 @@ export function VacateConfirmDialog({
 
 export function DeleteSeatConfirmDialog({
   label,
+  actionError,
   pending,
   onCancel,
   onConfirm
 }: {
   label: string;
+  actionError: string | null;
   pending: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
   const deleteSeatDialogFocusRef = useDialogFocus<HTMLElement>();
+  // PR-5 (§8.1): stays open through the round-trip — see VacateConfirmDialog.
+  const deleteErrorRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (actionError && !pending) deleteErrorRef.current?.focus();
+  }, [actionError, pending]);
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
       <section
@@ -139,7 +165,8 @@ export function DeleteSeatConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+            disabled={pending}
+            className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
             aria-label="Cancel custom seat deletion"
           >
             <CloseIcon />
@@ -150,12 +177,23 @@ export function DeleteSeatConfirmDialog({
           This removes custom draft seats only. Published maps are unchanged until you publish.
         </div>
 
+        {actionError && !pending && (
+          <div
+            ref={deleteErrorRef}
+            tabIndex={-1}
+            role="alert"
+            className="mt-4 rounded-xl border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-editor-error-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+          >
+            <span className="font-semibold">Delete did not complete.</span> {actionError}
+          </div>
+        )}
+
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Button type="button" onClick={onCancel} disabled={pending} className="w-full">
             Cancel
           </Button>
-          <Button type="button" variant="danger" onClick={onConfirm} disabled={pending} className={`w-full ${adminDangerButtonClassName}`}>
-            Delete seat
+          <Button type="button" variant="danger" onClick={onConfirm} loading={pending} className={`w-full ${adminDangerButtonClassName}`}>
+            {pending ? "Deleting…" : actionError ? "Retry delete" : "Delete seat"}
           </Button>
         </div>
       </section>
@@ -329,7 +367,8 @@ export function PublishReviewDialog({
             type="button"
             variant="primary"
             onClick={onConfirm}
-            disabled={pending || !publishSummary.hasChanges}
+            disabled={!publishSummary.hasChanges}
+            loading={pending}
             title={publishSummary.hasChanges ? "Publish reviewed draft changes" : "No draft changes to publish"}
             className={["w-full h-12 !border-[var(--sp-button-primary)] !bg-[var(--sp-button-primary)] !text-white hover:!border-[var(--sp-button-primary-hover)] hover:!bg-[var(--sp-button-primary-hover)] disabled:!border-[var(--sp-editor-neutral-border)] disabled:!bg-[var(--sp-editor-neutral-bg)] disabled:!text-[var(--sp-text-helper)]", focusRingClass].join(" ")}
           >
@@ -396,7 +435,7 @@ export function DiscardDraftDialog({
             type="button"
             variant="danger"
             onClick={onConfirm}
-            disabled={pending}
+            loading={pending}
             className={["w-full", adminDangerButtonClassName, focusRingClass].join(" ")}
           >
             {pending ? "Discarding…" : actionError ? "Retry discard" : "Discard everything"}
@@ -499,7 +538,8 @@ export function SwapConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)]"
+            disabled={pending}
+            className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Cancel swap confirmation"
           >
             <CloseIcon />
@@ -538,8 +578,8 @@ export function SwapConfirmDialog({
           <Button type="button" onClick={onCancel} disabled={pending} className="w-full">
             Cancel
           </Button>
-          <Button type="button" variant="primary" onClick={onConfirm} disabled={pending} className="w-full">
-            {actionError ? "Retry swap" : "Confirm swap"}
+          <Button type="button" variant="primary" onClick={onConfirm} loading={pending} className="w-full">
+            {pending ? "Swapping…" : actionError ? "Retry swap" : "Confirm swap"}
           </Button>
         </div>
       </section>
@@ -552,6 +592,7 @@ export function MoveEmployeeConfirmDialog({
   moveEmployeeSourceSeat,
   moveEmployeeTargetSeat,
   sourceEmployeeName,
+  actionError,
   pending,
   onCancel,
   onConfirmSwap,
@@ -561,12 +602,29 @@ export function MoveEmployeeConfirmDialog({
   moveEmployeeSourceSeat: SeatWithEmployee;
   moveEmployeeTargetSeat: SeatWithEmployee;
   sourceEmployeeName: string;
+  actionError: string | null;
   pending: boolean;
   onCancel: () => void;
   onConfirmSwap: () => void;
   onConfirmMove: () => void;
 }) {
   const moveEmployeeConfirmDialogFocusRef = useDialogFocus<HTMLElement>();
+  // PR-5 (§8.1): stays open through the round-trip (both arms — the swap arm
+  // runs executeSwap dialog-less, so this surface carries its pending story).
+  const moveErrorRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (actionError && !pending) moveErrorRef.current?.focus();
+  }, [actionError, pending]);
+  const moveErrorAlert = actionError && !pending ? (
+    <div
+      ref={moveErrorRef}
+      tabIndex={-1}
+      role="alert"
+      className="mt-4 rounded-xl border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-editor-error-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+    >
+      <span className="font-semibold">Move did not complete.</span> {actionError}
+    </div>
+  ) : null;
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
       <section
@@ -589,9 +647,12 @@ export function MoveEmployeeConfirmDialog({
             <div className="mt-4 rounded-xl border border-[var(--sp-publish-viewer-impact-border)] bg-[var(--sp-publish-viewer-impact-bg)] p-3 text-sm font-semibold text-[var(--sp-publish-viewer-impact-text)]">
               {buildSwapSummary(moveEmployeeSourceSeat, moveEmployeeTargetSeat)}
             </div>
+            {moveErrorAlert}
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button type="button" onClick={onCancel} disabled={pending} className="w-full">Cancel</Button>
-              <Button type="button" variant="primary" onClick={onConfirmSwap} disabled={pending} className="w-full">Swap them</Button>
+              <Button type="button" variant="primary" onClick={onConfirmSwap} loading={pending} className="w-full">
+                {pending ? "Swapping…" : actionError ? "Retry swap" : "Swap them"}
+              </Button>
             </div>
           </>
         ) : (
@@ -602,9 +663,12 @@ export function MoveEmployeeConfirmDialog({
             <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
               They currently sit at {formatSeatCode(moveEmployeeSourceSeat.label)}. Moving frees {formatSeatCode(moveEmployeeSourceSeat.label)} (it becomes Open). {PUBLISH_IMPACT_NOTE}
             </p>
+            {moveErrorAlert}
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button type="button" onClick={onCancel} disabled={pending} className="w-full">Cancel</Button>
-              <Button type="button" variant="primary" onClick={onConfirmMove} disabled={pending} className="w-full">Move them</Button>
+              <Button type="button" variant="primary" onClick={onConfirmMove} loading={pending} className="w-full">
+                {pending ? "Moving…" : actionError ? "Retry move" : "Move them"}
+              </Button>
             </div>
           </>
         )}

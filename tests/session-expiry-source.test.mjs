@@ -18,7 +18,11 @@ test("a failed admin action probes the session and offers a sign-in path", async
   assert.match(source, /Your session expired/);
   assert.match(source, /href="\/login\?next=\/admin"/);
   // The masked generic error must not render alongside the expiry explanation.
-  // (The !swapConfirm arm is PR-4's one-channel rule: while the swap dialog
-  // shows the error inline, the canvas banner stands down.)
-  assert.match(source, /\{actionError && !sessionExpired && !swapConfirm && \(/);
+  // (The !*Confirm arms are PR-4's one-channel rule, extended by PR-5: while
+  // any dialog that renders the error inline is open, the canvas banner
+  // stands down.)
+  assert.match(
+    source,
+    /\{actionError && !sessionExpired && !swapConfirm && !vacateConfirm && !deleteSeatConfirm && !moveEmployeeConfirm && \(/
+  );
 });

@@ -28,15 +28,17 @@ import {
 //   2. A source scan that finds every role="dialog" in components/** and
 //      requires each to be classified in DIALOG_REGISTRY — ct-covered here,
 //      or ledgered under exactly one of two reasons:
-//        - closes-before-resolve: the dialog closes before the action runs;
-//          the missing in-flight state is PR-5's territory, NOT an error-
-//          placement bug (the error lands on a visible banner after close).
 //        - closes-after-resolve-by-design: the dialog deliberately closes on
 //          BOTH outcomes once the action resolves. For the Settings review
 //          dialogs this is the MLS02 stale-fence recovery: the action failed
 //          because the reviewed data went stale, the page refreshes, and
 //          re-reviewing IS the recovery — do not "fix" them by holding the
 //          dialog open over data it no longer shows.
+//        - closes-into-announcing-surface: the dialog closes into a surface
+//          that already carries the whole pending/error story (owner ruling,
+//          PR-5 — the inspector-guard Save arm).
+//      (PR-4's third lane, closes-before-resolve, was retired by PR-5: those
+//      dialogs now hold open through their action and are ct-covered.)
 //      A new dialog with a submit path must pick a lane or this scan fails.
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -45,13 +47,23 @@ let AdminManagementPanel;
 let SwapConfirmDialog;
 let PublishReviewDialog;
 let DiscardDraftDialog;
+let VacateConfirmDialog;
+let DeleteSeatConfirmDialog;
+let MoveEmployeeConfirmDialog;
 let AskPlannerDrawer;
+let SeatInspector;
 before(async () => {
   ({ AdminManagementPanel } = await loadComponent("@/components/admin-management/AdminManagementPanel"));
-  ({ SwapConfirmDialog, PublishReviewDialog, DiscardDraftDialog } = await loadComponent(
-    "@/components/seat-map/SeatMapDialogs"
-  ));
+  ({
+    SwapConfirmDialog,
+    PublishReviewDialog,
+    DiscardDraftDialog,
+    VacateConfirmDialog,
+    DeleteSeatConfirmDialog,
+    MoveEmployeeConfirmDialog
+  } = await loadComponent("@/components/seat-map/SeatMapDialogs"));
   ({ AskPlannerDrawer } = await loadComponent("@/components/seat-map/AskPlannerDrawer"));
+  ({ SeatInspector } = await loadComponent("@/components/seat-map/SeatInspector"));
 });
 beforeEach(() => configureContext({ actions: {} }));
 afterEach(() => cleanup());
@@ -213,6 +225,196 @@ test("swap dialog renders actionError inline, keeps confirm enabled as Retry, an
 });
 
 // ---------------------------------------------------------------------------
+// 2b. The dialogs PR-5 reopened (they now hold open until the action
+//     resolves): vacate, delete seat, move-employee (map, both arms), and the
+//     inspector move-conflict. Presentational renders for the SeatMapDialogs
+//     trio (SeatMap owns their state — the wiring pins live in
+//     pending-state-source.test.mjs); a real interaction test for the
+//     inspector conflict, which owns its own state.
+// ---------------------------------------------------------------------------
+
+test("vacate dialog renders actionError inline with an enabled Retry vacate, and shows Vacating… while pending", async () => {
+  await renderElement(
+    React.createElement(VacateConfirmDialog, {
+      label: "N01",
+      occupantName: "Jane Doe",
+      actionError: "Could not vacate seat.",
+      pending: false,
+      onCancel: noop,
+      onConfirm: noop
+    })
+  );
+  const { alert } = assertAlertInsideOpenDialog();
+  assert.match(alert.textContent, /Vacate did not complete\..*Could not vacate seat\./);
+  assert.equal(screen.getByRole("button", { name: "Retry vacate" }).disabled, false);
+  await assertFocusLandsIn(alert);
+
+  cleanup();
+  await renderElement(
+    React.createElement(VacateConfirmDialog, {
+      label: "N01",
+      occupantName: "Jane Doe",
+      actionError: null,
+      pending: true,
+      onCancel: noop,
+      onConfirm: noop
+    })
+  );
+  const busy = screen.getByRole("button", { name: "Vacating…" });
+  assert.equal(busy.disabled, true, "confirm must disable while the vacate is in flight");
+  assert.equal(screen.getByRole("button", { name: "Cancel" }).disabled, true, "cancel must not dismiss a dialog mid-flight");
+});
+
+test("delete-seat dialog renders actionError inline with an enabled Retry delete, and shows Deleting… while pending", async () => {
+  await renderElement(
+    React.createElement(DeleteSeatConfirmDialog, {
+      label: "S01",
+      actionError: "Could not delete custom seat.",
+      pending: false,
+      onCancel: noop,
+      onConfirm: noop
+    })
+  );
+  const { alert } = assertAlertInsideOpenDialog();
+  assert.match(alert.textContent, /Delete did not complete\..*Could not delete custom seat\./);
+  assert.equal(screen.getByRole("button", { name: "Retry delete" }).disabled, false);
+  await assertFocusLandsIn(alert);
+
+  cleanup();
+  await renderElement(
+    React.createElement(DeleteSeatConfirmDialog, {
+      label: "S01",
+      actionError: null,
+      pending: true,
+      onCancel: noop,
+      onConfirm: noop
+    })
+  );
+  assert.equal(screen.getByRole("button", { name: "Deleting…" }).disabled, true);
+});
+
+test("move-employee dialog renders actionError inline on both arms with retry labels and participles", async () => {
+  const jane = employee("emp-1", "Jane Doe");
+  const source = seat("N01", { status: "assigned", employee_id: "emp-1", employee: jane });
+  const target = seat("N02");
+  const baseProps = {
+    moveEmployeeSourceSeat: source,
+    moveEmployeeTargetSeat: target,
+    sourceEmployeeName: "Jane Doe",
+    pending: false,
+    onCancel: noop,
+    onConfirmSwap: noop,
+    onConfirmMove: noop
+  };
+
+  await renderElement(
+    React.createElement(MoveEmployeeConfirmDialog, {
+      ...baseProps,
+      offerSwap: false,
+      actionError: "Could not move the employee."
+    })
+  );
+  let { alert } = assertAlertInsideOpenDialog();
+  assert.match(alert.textContent, /Move did not complete\./);
+  assert.equal(screen.getByRole("button", { name: "Retry move" }).disabled, false);
+  await assertFocusLandsIn(alert);
+
+  cleanup();
+  const occupied = seat("N02", { status: "assigned", employee_id: "emp-2", employee: employee("emp-2", "Sam Roe") });
+  await renderElement(
+    React.createElement(MoveEmployeeConfirmDialog, {
+      ...baseProps,
+      moveEmployeeTargetSeat: occupied,
+      offerSwap: true,
+      actionError: "Could not swap seats."
+    })
+  );
+  ({ alert } = assertAlertInsideOpenDialog());
+  assert.equal(screen.getByRole("button", { name: "Retry swap" }).disabled, false);
+
+  cleanup();
+  await renderElement(
+    React.createElement(MoveEmployeeConfirmDialog, { ...baseProps, offerSwap: false, actionError: null, pending: true })
+  );
+  assert.equal(screen.getByRole("button", { name: "Moving…" }).disabled, true);
+});
+
+// The inspector move-conflict dialog owns its state, so this one is a real
+// interaction test: trigger EMPLOYEE_ALREADY_ASSIGNED, confirm the move, and
+// assert the dialog behavior around the resolving action.
+
+function inspectorSeat() {
+  return seat("S01", { id: "seat-s01", seat_key: "s01", is_custom: true, zone: "South Offices" });
+}
+
+async function openMoveConflict() {
+  globalThis.__ct.actions.updateSeatAction = async () => ({
+    ok: false,
+    code: "EMPLOYEE_ALREADY_ASSIGNED",
+    currentSeatLabel: "N01"
+  });
+  await renderElement(
+    React.createElement(SeatInspector, {
+      seat: inspectorSeat(),
+      seats: [inspectorSeat()],
+      employees: [employee("emp-1", "Jane Doe")],
+      departmentOptions: [option("dept-intake", "Intake")],
+      canEdit: true,
+      collapsed: false,
+      onClose: noop,
+      onBeforeSeatUpdate: () => ({ seats: [], employees: [] }),
+      onSeatUpdated: noop,
+      onError: noop,
+      onStaleDraft: noop,
+      onDirtyChange: noop
+    })
+  );
+  await act(async () => {
+    fireEvent.click(document.querySelector('[aria-label^="Assign an employee"]'));
+  });
+  await act(async () => {
+    fireEvent.change(document.querySelector('input[name="employeeName"]'), { target: { value: "Jane Doe" } });
+  });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: /Assign employee for S01/ }));
+  });
+  await waitFor(() => screen.getByRole("button", { name: /Move them|Retry move|Moving…/ }));
+}
+
+test("inspector move-conflict stays open with Moving… while the force move is unresolved", async () => {
+  await openMoveConflict();
+  // Swap the double for a deferred action: held unresolved while asserting,
+  // then settled before teardown (a promise that NEVER resolves leaves the
+  // React transition pending forever and poisons the tests that follow).
+  let settleMove;
+  globalThis.__ct.actions.updateSeatAction = () => new Promise(resolve => { settleMove = resolve; });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Move them" }));
+  });
+  const dialog = screen.getByRole("dialog");
+  assert.match(dialog.textContent, /Move Jane Doe to S01\?/);
+  const busy = screen.getByRole("button", { name: "Moving…" });
+  assert.equal(busy.disabled, true, "confirm must disable while the move is in flight");
+  await act(async () => {
+    settleMove({ ok: false, message: "settled for teardown" });
+  });
+});
+
+test("inspector move-conflict failure renders inside the still-open dialog with Retry move", async () => {
+  await openMoveConflict();
+  globalThis.__ct.actions.updateSeatAction = async () => ({ ok: false, message: "The move RPC refused." });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Move them" }));
+  });
+  await waitFor(() => screen.getByRole("alert"));
+  const { dialog, alert } = assertAlertInsideOpenDialog();
+  assert.match(dialog.textContent, /Move Jane Doe to S01\?/, "the conflict dialog must still be open");
+  assert.match(alert.textContent, /Move did not complete\..*The move RPC refused\./);
+  assert.equal(screen.getByRole("button", { name: "Retry move" }).disabled, false);
+  await assertFocusLandsIn(alert);
+});
+
+// ---------------------------------------------------------------------------
 // 3–5. Publish, discard, Ask Planner — already correct; pinned so the pattern
 //      cannot regress out of the dialogs that have it.
 // ---------------------------------------------------------------------------
@@ -297,7 +499,13 @@ const CT_COVERED = new Set([
   "swap-confirm-title",
   "publish-review-title",
   "discard-draft-title",
-  "ask-planner-title"
+  "ask-planner-title",
+  // PR-5: the closes-before-resolve four now hold open through the action
+  // and render errors in-dialog — ct-covered above.
+  "vacate-seat-confirm-title",
+  "delete-seat-confirm-title",
+  "move-employee-map-confirm-title",
+  "move-employee-confirm-title"
 ]);
 
 const DIALOG_REGISTRY = {
@@ -306,15 +514,21 @@ const DIALOG_REGISTRY = {
   "publish-review-title": { kind: "ct" },
   "discard-draft-title": { kind: "ct" },
   "ask-planner-title": { kind: "ct" },
+  "vacate-seat-confirm-title": { kind: "ct" },
+  "delete-seat-confirm-title": { kind: "ct" },
+  "move-employee-map-confirm-title": { kind: "ct" },
+  "move-employee-confirm-title": { kind: "ct" },
 
-  // PR-5 territory: these close BEFORE the action resolves; the error lands
-  // on a visible banner after close. The defect is missing in-flight state,
-  // not error placement — do not add in-dialog errors here piecemeal.
-  "vacate-seat-confirm-title": { kind: "closes-before-resolve" },
-  "delete-seat-confirm-title": { kind: "closes-before-resolve" },
-  "move-employee-map-confirm-title": { kind: "closes-before-resolve" },
-  "inspector-unsaved-title": { kind: "closes-before-resolve" },
-  "move-employee-confirm-title": { kind: "closes-before-resolve" },
+  // PR-5 owner ruling (2026-08-27): the guard dialog's Save arm KEEPS closing
+  // before resolve. It closes INTO the inspector, whose commit bar +
+  // "Saving draft…" sr region carry the whole pending/error story — holding a
+  // second dialog open over the surface doing the work would duplicate, not
+  // disclose. Do not "fix" this by reopening it; flow 9 in
+  // pending-state-source.test.mjs covers it.
+  "inspector-unsaved-title": {
+    kind: "closes-into-announcing-surface",
+    reason: "Save submits the inspector form; the inspector's own pending UI + sr region announce the flight"
+  },
 
   // Deliberate close-on-both-outcomes AFTER resolve.
   "management-confirm-title": {
@@ -365,15 +579,17 @@ test("every role=dialog is classified: ct-covered or ledgered under one of the t
     assert.ok(
       entry,
       `${file}: dialog "${id}" is not in DIALOG_REGISTRY — classify it: add a ct test here (kind "ct"), or ledger it as ` +
-        `"closes-before-resolve" (PR-5) / "closes-after-resolve-by-design" (with the reason)`
+        `"closes-after-resolve-by-design" / "closes-into-announcing-surface" (with the reason). ` +
+        `"closes-before-resolve" is no longer a lane — PR-5 fixed that shape; a new dialog must hold open through its action.`
     );
     if (entry.kind === "ct") {
       assert.ok(CT_COVERED.has(id), `dialog "${id}" is marked ct but missing from CT_COVERED`);
     } else {
       assert.ok(
-        entry.kind === "closes-before-resolve" || entry.kind === "closes-after-resolve-by-design",
+        entry.kind === "closes-after-resolve-by-design" || entry.kind === "closes-into-announcing-surface",
         `dialog "${id}" has unknown classification "${entry.kind}"`
       );
+      assert.ok(entry.reason, `dialog "${id}" is ledgered without a reason`);
     }
   }
 

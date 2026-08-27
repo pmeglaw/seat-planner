@@ -15,6 +15,7 @@ flowchart TD
   classDef done stroke-width:3px,stroke:#24a148
   classDef wip stroke-width:3px,stroke-dasharray:6 3,stroke:#f1c21b
   classDef todo stroke-width:1px,stroke:#8d8d8d
+  classDef frozen stroke-width:1px,stroke-dasharray:2 2,stroke:#8d8d8d,color:#8d8d8d
 
   S1[Stage 1 · Research & discovery<br/>AUDIT · PASS1 · AUDIT-2 · READ-PATH · PALETTE]:::done
   S2[Stage 2 · Design rulings]:::wip
@@ -34,14 +35,14 @@ flowchart TD
     PR2[PR-2 #474 touch targets]:::done
     PR3[PR-3 #475 update-password dark]:::done
     PR4[PR-4 #476 error behind modal]:::done
-    PR5[PR-5 pending + SR busy · queued next]:::todo
-    R1{Ruling: destructive tiers}:::done --> PR6[PR-6 type-the-name · toast]:::todo
-    R2{Ruling: sense of place}:::done --> PR7[PR-7 draft · env · identity]:::todo
-    R3{Ruling: motion scale}:::done --> PR8a[PR-8a motion tokens · mechanical]:::todo --> PR8b[PR-8b timing default · site migration]:::todo --> PR8c[PR-8c motion sites · reduced-motion]:::todo
-    R4{Ruling: dark hover}:::done --> PR9a[PR-9a dark hover sweep]:::todo
-    R5{Ruling: greige hairlines}:::wip --> PR11[PR-11 long tail]:::todo
-    PR9b[PR-9b JSX inks · glints]:::todo
-    PR10[PR-10 guard-only]:::todo
+    PR5[PR-5 #477 pending + SR busy]:::done
+    R1{Ruling: destructive tiers}:::done --> PR6[PR-6 type-the-name · toast · frozen]:::frozen
+    R2{Ruling: sense of place}:::done --> PR7[PR-7 draft · env · identity · frozen]:::frozen
+    R3{Ruling: motion scale}:::done --> PR8a[PR-8a motion tokens · mechanical · frozen]:::frozen --> PR8b[PR-8b timing default · site migration · frozen]:::frozen --> PR8c[PR-8c motion sites · reduced-motion · frozen]:::frozen
+    R4{Ruling: dark hover}:::done --> PR9a[PR-9a dark hover sweep · frozen]:::frozen
+    R5{Ruling: greige hairlines}:::wip --> PR11[PR-11 long tail · frozen]:::frozen
+    PR9b[PR-9b JSX inks · glints · frozen]:::frozen
+    PR10[PR-10 guard-only · frozen]:::frozen
     PR1 --> PR2 --> PR3 --> PR4 --> PR5
   end
 
@@ -62,16 +63,16 @@ flowchart TD
 | PR-2 touch targets (#474) | 3 | F-SP-4 (+ 28px family of F-SP-3) | **done** — 54 of 58 specs expanded to 44 or ledgered under the no-overlap rule | v1.65.0 |
 | PR-3 update-password dark (#475) | 3 | F-DK-1 | **done** — last pre-token auth surface joins the login vocabulary; `#D8D0C5` instance deleted (R5 value still open) | v1.66.0 |
 | PR-4 error-behind-modal (#476) | 3 | F-INT-4 / F-FRM-1 | **done** — 2 of 14 fixed (employee form + swap thrown path); 5 closes-before-resolve dialogs ledgered to PR-5; registry guard classifies all 14 | v1.67.0 |
-| PR-5 pending + SR busy | 3 | §8.1 remainder of §0 item 6 | not started — **queued next** (the guard's closes-before-resolve ledger lists its five dialogs) | — |
-| PR-6 destructive tiers + toast | 3 | F-INT-1/2 | not started · R1 ruled — unblocked | — |
-| PR-7 sense of place | 3 | F-SH-1/2/3 | not started · R2 ruled — unblocked | — |
-| PR-8a motion tokens (mechanical) | 3 | F-MO-5 values | not started · R3 ruled — unblocked | — |
-| PR-8b timing default + site migration (design) | 3 | F-MO-4/5 | not started · after PR-8a | — |
-| PR-8c motion sites | 3 | F-MO-1/2/3 | not started · after PR-8b | — |
-| PR-9a dark hover sweep | 3 | F-DK-3 | not started · R4 ruled — unblocked | — |
-| PR-9b JSX inks/glints | 3 | F-DK-4 | not started | — |
-| PR-10 guard-only | 3 | §0 item 10, handoff §4, axe `target-size` assessment | not started | — |
-| PR-11 long tail | 3 | F-SH-4/5/6 · F-KB-1/2/3 · F-FRM-2…8 · F-SP-1/2 · §9 doc errors · greige hairlines | not started | — |
+| PR-5 pending + SR busy (#477) | 3 | §8.1 remainder of §0 item 6 | **done** — 20-flow registry (supersedes the audit's 17), 4 dialogs reopened + inspector conflict, inspector-guard Save ledgered `closes-into-announcing-surface` (owner ruling 2026-08-27); §0 item 6 closed | v1.68.0 |
+| PR-6 destructive tiers + toast | 3 | F-INT-1/2 | **frozen — superseded pending redesign** (R1 ruling stands) | — |
+| PR-7 sense of place | 3 | F-SH-1/2/3 | **frozen — superseded pending redesign** (R2 ruling stands) | — |
+| PR-8a motion tokens (mechanical) | 3 | F-MO-5 values | **frozen — superseded pending redesign** (R3 ruling stands) | — |
+| PR-8b timing default + site migration (design) | 3 | F-MO-4/5 | **frozen — superseded pending redesign** · after PR-8a | — |
+| PR-8c motion sites | 3 | F-MO-1/2/3 | **frozen — superseded pending redesign** · after PR-8b | — |
+| PR-9a dark hover sweep | 3 | F-DK-3 | **frozen — superseded pending redesign** (R4 ruling stands) | — |
+| PR-9b JSX inks/glints | 3 | F-DK-4 | **frozen — superseded pending redesign** | — |
+| PR-10 guard-only | 3 | §0 item 10, handoff §4, axe `target-size` assessment | **frozen — superseded pending redesign** | — |
+| PR-11 long tail | 3 | F-SH-4/5/6 · F-KB-1/2/3 · F-FRM-2…8 · F-SP-1/2 · §9 doc errors · greige hairlines | **frozen — superseded pending redesign** (R5 measurement report still owed to its brief) | — |
 
 ---
 
@@ -128,7 +129,7 @@ These needed ruling **before code** because they change visual vocabulary (free 
 - **Entry per PR:** its ruling (where one is listed) is recorded; the preceding unblocked PR is merged or independent.
 - **Deliverables:** PR-2 … PR-11 below.
 - **Exit:** all AUDIT-2 §0 items closed or explicitly re-parked; every territory in the §9 guard map has a pin.
-- **Status: in progress** — PR-1 shipped (#471, v1.64.0); PR-2 shipped (#474, v1.65.0); PR-3 shipped (#475, v1.66.0); PR-4 shipped (#476, v1.67.0); PR-5 queued next.
+- **Status: paused at v1.68.0** — PR-1 shipped (#471, v1.64.0); PR-2 shipped (#474, v1.65.0); PR-3 shipped (#475, v1.66.0); PR-4 shipped (#476, v1.67.0); PR-5 shipped (#477, v1.68.0). **PR-6 through PR-11 are frozen — superseded pending the redesign** (owner ruling 2026-08-27): PR-5 was the last correctness PR of this arc; the redesign starts from the `docs/redesign` branch, and the frozen PRs' rulings (R1–R5) carry forward as inputs to it rather than as queued work here.
 
 The reviewer's proposed order, validated against the repo — **it stands, no reorder**. R1–R4 were ruled with the plan review itself (2026-08-26), so PR-6/7/8a are already unblocked and can interleave with PR-2…PR-5 rather than queue behind them.
 
@@ -138,7 +139,7 @@ The reviewer's proposed order, validated against the repo — **it stands, no re
 | PR-2 | **done #474 v1.65.0** — 44px hit expansion off the map canvas, no-overlap rule, adjacency-capped ledger | F-SP-4 (absorbs the 28px family of F-SP-3) | `touch-target-source` — arithmetic scan (reach = size + insets ≥ 44), reach-floored ledger, expansion pins (axe `target-size` enablement stays in PR-10) |
 | PR-3 | `/auth/update-password` dark theme | F-DK-1 | dark-completeness reverse-direction check |
 | PR-4 | Error-behind-modal | F-INT-4 / F-FRM-1 | ct test: server error visible inside the open dialog |
-| PR-5 | Pending indication + SR busy on all 17 mutating flows | §8.1 remainder of §0 item 6 | source test: every mutating flow has a live region + pending UI |
+| PR-5 | **done #477 v1.68.0** — pending indication + SR busy on all **20** mutating flows (re-measure superseded the audit's 17); 4 closes-before-resolve dialogs reopened + inspector conflict; inspector-guard Save ledgered `closes-into-announcing-surface` | §8.1 remainder of §0 item 6 | `pending-state-source` — 20-flow registry (participle + wired pending per flow, per-surface sr regions, reopen wiring, Button loading contract); ct over the reopened dialogs in `dialog-error-placement` |
 | PR-6 | Destructive tiers + toast timer | F-INT-1/2 (after R1) | source test: High-tier confirm requires typed name; no `role="alert"` on a timer with an action |
 | PR-7 | Sense of place — draft marker, env indicator, identity | F-SH-1/2/3 (after R2) | source test: marker present on every admin surface; env indicator when not `VERCEL_ENV=production` |
 | PR-8a | Motion tokens — **mechanical**: six Carbon-role tokens (`--sp-motion-fast-01`…`-slow-02`), added unused; old `--sp-duration-*` untouched | F-MO-5 values (R3 ruled) | test pins the six values; `resolved-map` proves nothing moved |

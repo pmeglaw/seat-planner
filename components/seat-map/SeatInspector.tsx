@@ -447,6 +447,11 @@ export function SeatInspector({
     input: Parameters<typeof updateSeatAction>[0];
     beforeSnapshot: DraftSnapshot;
   } | null>(null);
+  // PR-5 (§8.1): the move-conflict dialog holds open through the force_move
+  // round-trip, so its failure renders in-dialog (PR-4 recipe) — never on the
+  // inspector's error summary under the scrim.
+  const [moveConflictError, setMoveConflictError] = useState<string | null>(null);
+  const moveConflictErrorRef = useRef<HTMLDivElement | null>(null);
   const activeSeatIdRef = useRef<string | null>(null);
   const activeSeatSnapshotRef = useRef(formSnapshot(emptyForm));
   const resetSignalRef = useRef(resetSignal);
@@ -544,6 +549,7 @@ export function SeatInspector({
     setEmployeeComboboxOpen(false);
     setActiveEmployeeIndex(0);
     setMoveConflict(null);
+    setMoveConflictError(null);
     onError(null);
     onDirtyChange(false);
   }, [onDirtyChange, onError]);
@@ -561,6 +567,7 @@ export function SeatInspector({
       setEmployeeComboboxOpen(false);
       setActiveEmployeeIndex(0);
       setMoveConflict(null);
+      setMoveConflictError(null);
       onDirtyChange(false);
       return;
     }
@@ -882,6 +889,14 @@ export function SeatInspector({
   // one success/failure path. Expected failures arrive as data (not a thrown digest);
   // a double-booking conflict becomes an offer to move rather than an error banner.
   function runSeatAssignment(input: Parameters<typeof updateSeatAction>[0], beforeSnapshot: DraftSnapshot) {
+    // A force_move run is the move-conflict dialog's confirm (its only caller
+    // here): the dialog stays open through the flight, so failures route to
+    // its in-dialog alert instead of the error summary under the scrim (PR-5).
+    const fromMoveConflictDialog = Boolean(input.forceMove);
+    function showMoveConflictError(message: string) {
+      setMoveConflictError(message);
+      window.requestAnimationFrame(() => moveConflictErrorRef.current?.focus());
+    }
     startTransition(async () => {
       try {
         setLocalError(null);
@@ -894,6 +909,8 @@ export function SeatInspector({
             // Another admin changed this seat after we rendered it; the parent
             // reloads the draft and resets undo history.
             setEditingAssignment(false);
+            setMoveConflict(null);
+            setMoveConflictError(null);
             onDirtyChange(false);
             onStaleDraft(result.message);
             return;
@@ -908,6 +925,10 @@ export function SeatInspector({
             });
             return;
           }
+          if (fromMoveConflictDialog) {
+            showMoveConflictError(result.message);
+            return;
+          }
           setLocalError(result.message);
           setFieldErrors(fieldErrorFromServerMessage(result.message));
           setSaveFeedback(null);
@@ -916,6 +937,8 @@ export function SeatInspector({
           focusErrorSummary();
           return;
         }
+        setMoveConflict(null);
+        setMoveConflictError(null);
         const updated = result.seat;
         const nextForm = formFromSeat(updated);
         activeSeatSnapshotRef.current = formSnapshot(nextForm);
@@ -932,6 +955,10 @@ export function SeatInspector({
       } catch (error) {
         // Only genuinely unexpected failures (network/auth) reach here now.
         const message = clientActionErrorMessage(error, "Could not update assignment.");
+        if (fromMoveConflictDialog) {
+          showMoveConflictError(message);
+          return;
+        }
         const serverFieldErrors = fieldErrorFromServerMessage(message);
         setLocalError(message);
         setFieldErrors(serverFieldErrors);
@@ -946,7 +973,9 @@ export function SeatInspector({
   function confirmMoveEmployee() {
     if (!moveConflict || pending) return;
     const { input, beforeSnapshot } = moveConflict;
-    setMoveConflict(null);
+    // PR-5 (§8.1): the dialog holds open through the round-trip — success and
+    // stale close it inside runSeatAssignment, failure renders in-dialog.
+    setMoveConflictError(null);
     // Re-run the exact same assignment; force_move vacates the old seat atomically.
     runSeatAssignment({ ...input, forceMove: true }, beforeSnapshot);
   }
@@ -1468,13 +1497,14 @@ export function SeatInspector({
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={pending || !isDirty}
+                  disabled={!isDirty}
+                  loading={pending}
                   aria-label={`${primaryActionLabel} for ${selectedSeat.label}`}
                   aria-describedby={saveDisabledReason ? "seat-inspector-save-help" : undefined}
                   title={saveDisabledReason ?? `${primaryActionLabel} for ${selectedSeat.label}`}
                   className="min-w-0 w-full whitespace-normal !border-[var(--sp-button-primary)] !bg-[var(--sp-button-primary)] !text-white hover:!border-[var(--sp-button-primary-hover)] hover:!bg-[var(--sp-button-primary-hover)] disabled:!border-[var(--sp-editor-neutral-border)] disabled:!bg-[var(--sp-editor-neutral-bg)] disabled:!text-[var(--sp-text-helper)] disabled:shadow-none disabled:hover:!border-[var(--sp-editor-neutral-border)] disabled:hover:!bg-[var(--sp-editor-neutral-bg)]"
                 >
-                  {primaryActionLabel}
+                  {pending ? "Saving…" : primaryActionLabel}
                 </Button>
               </div>
             </div>
@@ -1544,9 +1574,10 @@ export function SeatInspector({
           aria-labelledby="move-employee-confirm-title"
           aria-describedby="move-employee-confirm-description"
           onKeyDown={event => {
-            if (event.key === "Escape") {
+            if (event.key === "Escape" && !pending) {
               event.stopPropagation();
               setMoveConflict(null);
+              setMoveConflictError(null);
             }
           }}
           className="w-full max-w-md rounded-[16px] border border-[var(--sp-border-subtle)] bg-[color-mix(in_srgb,var(--sp-layer-01)_95%,transparent)] p-4 text-[var(--sp-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
@@ -1560,8 +1591,12 @@ export function SeatInspector({
             </div>
             <button
               type="button"
-              onClick={() => setMoveConflict(null)}
-              className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+              onClick={() => {
+                setMoveConflict(null);
+                setMoveConflictError(null);
+              }}
+              disabled={pending}
+              className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
               aria-label="Cancel moving employee"
             >
               <CloseIcon />
@@ -1574,12 +1609,31 @@ export function SeatInspector({
             </div>
           </div>
 
+          {moveConflictError && !pending && (
+            <div
+              ref={moveConflictErrorRef}
+              tabIndex={-1}
+              role="alert"
+              className="mt-4 rounded-[12px] border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-editor-error-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+            >
+              <span className="font-semibold">Move did not complete.</span> {moveConflictError}
+            </div>
+          )}
+
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <Button type="button" onClick={() => setMoveConflict(null)} disabled={pending} className="w-full">
+            <Button
+              type="button"
+              onClick={() => {
+                setMoveConflict(null);
+                setMoveConflictError(null);
+              }}
+              disabled={pending}
+              className="w-full"
+            >
               Cancel
             </Button>
-            <Button type="button" variant="primary" onClick={confirmMoveEmployee} disabled={pending} className="w-full">
-              Move them
+            <Button type="button" variant="primary" onClick={confirmMoveEmployee} loading={pending} className="w-full">
+              {pending ? "Moving…" : moveConflictError ? "Retry move" : "Move them"}
             </Button>
           </div>
         </section>

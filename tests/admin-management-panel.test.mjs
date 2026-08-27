@@ -12,6 +12,11 @@ import {
   cleanup
 } from "./helpers/renderComponent.mjs";
 
+// PR-5 added an always-mounted sr-only in-flight status region, so role
+// "status" is no longer unique — these asserts target the visible outcome
+// banner (the region with rendered text, not the sr-only sibling).
+const visibleStatus = () => screen.getAllByRole("status").find(el => !el.className.includes("sr-only"));
+
 // Interaction tests for the real AdminManagementPanel (Management tab), the
 // surface fronting the directory's destructive actions. The
 // bulk-destructive-action-safety-source test pins that the confirmation
@@ -114,8 +119,8 @@ test("deactivation is double-gated: editor -> impact confirm -> action, and the 
   });
   await waitFor(() => assert.deepEqual(deleteCalls, [["emp-1"]]));
 
-  await waitFor(() => screen.getByRole("status"));
-  assert.match(screen.getByRole("status").textContent, /Jane Doe deactivated\./);
+  await waitFor(() => assert.ok(visibleStatus()));
+  assert.match(visibleStatus().textContent, /Jane Doe deactivated\./);
   // The directory row is gone; the untouched employee remains.
   assert.equal(screen.queryByRole("button", { name: "Edit Jane Doe" }), null);
   assert.ok(screen.getByRole("button", { name: "Edit Bob Field" }));
@@ -191,7 +196,7 @@ test("department delete states its blast radius and only calls the action on con
     fireEvent.click(screen.getByRole("button", { name: "Delete department" }));
   });
   await waitFor(() => assert.deepEqual(deleteCalls, [["Intake"]]));
-  assert.match(screen.getByRole("status").textContent, /Department Intake deleted\./);
+  assert.match(visibleStatus().textContent, /Department Intake deleted\./);
 });
 
 test("zone delete states the affected draft-seat count and only calls the action on confirm", async () => {
@@ -219,7 +224,7 @@ test("zone delete states the affected draft-seat count and only calls the action
     fireEvent.click(screen.getByRole("button", { name: "Delete zone" }));
   });
   await waitFor(() => assert.deepEqual(deleteCalls, [["North Pod"]]));
-  assert.match(screen.getByRole("status").textContent, /Zone North Pod deleted\./);
+  assert.match(visibleStatus().textContent, /Zone North Pod deleted\./);
 });
 
 test("the add-employee save stays disabled until a name is entered", async () => {

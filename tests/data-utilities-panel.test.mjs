@@ -12,6 +12,11 @@ import {
   cleanup
 } from "./helpers/renderComponent.mjs";
 
+// PR-5 added an always-mounted sr-only in-flight status region, so role
+// "status" is no longer unique — these asserts target the visible outcome
+// banner (the region with rendered text, not the sr-only sibling).
+const visibleStatus = () => screen.getAllByRole("status").find(el => !el.className.includes("sr-only"));
+
 // Interaction tests for the real DataUtilitiesPanel (Settings → data
 // utilities), the surface fronting the three bulk-destructive operations:
 // CSV import, draft-snapshot restore, and reset-to-published. The
@@ -138,8 +143,8 @@ test("CSV import: choosing a file only opens the review — no action call befor
   ]);
   assert.deepEqual(expectedEmployees, [{ id: "emp-1", updated_at: props.employees[0].updated_at }]);
 
-  await waitFor(() => screen.getByRole("status"));
-  assert.match(screen.getByRole("status").textContent, /CSV import applied\. 1 rows updated/);
+  await waitFor(() => assert.ok(visibleStatus()));
+  assert.match(visibleStatus().textContent, /CSV import applied\. 1 rows updated/);
   assert.equal(refreshCalls, 1);
 });
 
@@ -239,8 +244,8 @@ test("snapshot restore: a valid snapshot opens the review, and confirming sends 
     fence.map(({ id }) => id),
     ["seat-n01", "seat-n02"]
   );
-  await waitFor(() => screen.getByRole("status"));
-  assert.match(screen.getByRole("status").textContent, /Draft backup restored/);
+  await waitFor(() => assert.ok(visibleStatus()));
+  assert.match(visibleStatus().textContent, /Draft backup restored/);
 });
 
 test("snapshot restore: a payload without seats/employees arrays is rejected before any review", async () => {
@@ -272,7 +277,7 @@ test("reset to published: a clean draft short-circuits to a notice — no dialog
     fireEvent.click(screen.getByRole("button", { name: /Reset draft to published\./ }));
   });
 
-  assert.match(screen.getByRole("status").textContent, /already matches the published map/);
+  assert.match(visibleStatus().textContent, /already matches the published map/);
   assert.equal(screen.queryByRole("dialog"), null);
   assert.equal(called, false);
 });
@@ -316,8 +321,8 @@ test("reset to published: a dirty draft opens the review, cancel keeps the draft
     resetCalls[0][0].map(({ id }) => id),
     ["seat-n01", "seat-n02", "seat-n03"]
   );
-  await waitFor(() => screen.getByRole("status"));
-  assert.match(screen.getByRole("status").textContent, /people edits in Management were kept/i);
+  await waitFor(() => assert.ok(visibleStatus()));
+  assert.match(visibleStatus().textContent, /people edits in Management were kept/i);
   assert.equal(refreshCalls, 1);
 });
 

@@ -319,6 +319,13 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
 
   return (
     <div className="space-y-4">
+      {/* PR-5 (§8.1): the surface's shared in-flight region — always mounted
+          (a region that mounts WITH its content is not reliably announced),
+          sr-only sibling of the visible outcome banners below, which keep
+          owning outcomes. */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {busy ? "Working…" : ""}
+      </div>
       {error && (
         <div role="alert" className="whitespace-pre-wrap border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-sm font-medium text-[var(--sp-editor-error-text)]">
           {error}
@@ -415,7 +422,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
               <Button type="button" onClick={() => setResetReviewOpen(false)} disabled={busy} className="w-full">
                 Keep draft changes
               </Button>
-              <Button type="button" variant="danger" onClick={confirmResetToPublished} disabled={busy} className="w-full">
+              <Button type="button" variant="danger" onClick={confirmResetToPublished} loading={busy} className="w-full">
                 {busy ? "Resetting…" : "Reset to published"}
               </Button>
             </div>
@@ -498,11 +505,12 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 type="button"
                 variant="primary"
                 onClick={confirmCsvImport}
-                disabled={busy || csvReview.issues.length > 0}
+                disabled={csvReview.issues.length > 0}
+                loading={busy}
                 title={csvReview.issues.length > 0 ? "Fix blocking validation errors before importing" : "Apply CSV updates to the draft map"}
                 className="w-full"
               >
-                {csvReview.issues.length > 0 ? "Fix CSV first" : "Apply import"}
+                {busy ? "Applying…" : csvReview.issues.length > 0 ? "Fix CSV first" : "Apply import"}
               </Button>
             </div>
           </section>
@@ -559,8 +567,8 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
               <Button type="button" onClick={closeJsonReview} disabled={busy} className="w-full">
                 Cancel
               </Button>
-              <Button type="button" variant="danger" onClick={confirmJsonRestore} disabled={busy} className="w-full">
-                Restore draft snapshot
+              <Button type="button" variant="danger" onClick={confirmJsonRestore} loading={busy} className="w-full">
+                {busy ? "Restoring…" : "Restore draft snapshot"}
               </Button>
             </div>
           </section>

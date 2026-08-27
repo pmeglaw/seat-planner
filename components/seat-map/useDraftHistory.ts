@@ -54,6 +54,12 @@ export type UseDraftHistoryReturn = {
   nextRedoLabel: string | null;
   mutationInFlight: boolean;
   setMutationInFlight: (value: boolean) => void;
+  /**
+   * Which history restore is currently round-tripping ("Undo" / "Redo"),
+   * so the icon buttons can swap their glyph for a spinner (PR-5 §8.1 —
+   * `mutationInFlight` alone is true for EVERY mutation, not just these).
+   */
+  historyOpInFlight: "Undo" | "Redo" | null;
   captureDraftSnapshot: () => DraftSnapshot;
   recordDraftHistory: (
     label: string,
@@ -85,6 +91,7 @@ export function useDraftHistory({
 }: UseDraftHistoryArgs): UseDraftHistoryReturn {
   const [draftHistory, setDraftHistory] = useState(() => createDraftHistory());
   const [mutationInFlight, setMutationInFlight] = useState(false);
+  const [historyOpInFlight, setHistoryOpInFlight] = useState<"Undo" | "Redo" | null>(null);
   const [, startTransition] = useTransition();
 
   // --- Persistence (sessionStorage, per-tab) --------------------------------
@@ -146,7 +153,7 @@ export function useDraftHistory({
     (
       snapshot: DraftSnapshot,
       nextHistory: DraftHistoryState,
-      actionLabel: string,
+      actionLabel: "Undo" | "Redo",
       notice: string,
       selectRestoredSeatLabel?: string
     ) => {
@@ -158,6 +165,7 @@ export function useDraftHistory({
 
       startTransition(async () => {
         setMutationInFlight(true);
+        setHistoryOpInFlight(actionLabel);
         try {
           onError(null);
           onNotice(null);
@@ -178,6 +186,7 @@ export function useDraftHistory({
           onError(clientActionErrorMessage(error, `Could not ${actionLabel.toLowerCase()} draft edit.`));
         } finally {
           setMutationInFlight(false);
+          setHistoryOpInFlight(null);
         }
       });
     },
@@ -249,6 +258,7 @@ export function useDraftHistory({
     nextRedoLabel,
     mutationInFlight,
     setMutationInFlight,
+    historyOpInFlight,
     captureDraftSnapshot,
     recordDraftHistory,
     undoDraftEdit,

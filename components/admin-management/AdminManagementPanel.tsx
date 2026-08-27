@@ -212,6 +212,21 @@ export function AdminManagementPanel({
   const [error, setError] = useState<string | null>(null);
   const [managementConfirm, setManagementConfirm] = useState<ManagementConfirmState | null>(null);
   const [pending, startTransition] = useTransition();
+  // PR-5 (§8.1): the transition's `pending` is one shared flag, but several
+  // confirming controls are on screen at once — this names WHICH one is in
+  // flight so only the pressed control shows the spinner + participle. Set
+  // synchronously in the click handler, cleared when the transition settles.
+  const [busyOp, setBusyOp] = useState<string | null>(null);
+  function runManagementOp(op: string, work: () => Promise<void>) {
+    setBusyOp(op);
+    startTransition(async () => {
+      try {
+        await work();
+      } finally {
+        setBusyOp(null);
+      }
+    });
+  }
 
   const activeEmployees = useMemo(
     () => [...localEmployees].filter(employee => employee.active).sort((a, b) => a.full_name.localeCompare(b.full_name)),
@@ -528,7 +543,7 @@ export function AdminManagementPanel({
   }
 
   function saveEmployee() {
-    startTransition(async () => {
+    runManagementOp("employee-save", async () => {
       try {
         setError(null);
         setEmployeeDialogError(null);
@@ -582,7 +597,7 @@ export function AdminManagementPanel({
   }
 
   function createDepartment() {
-    startTransition(async () => {
+    runManagementOp("dept-create", async () => {
       try {
         setError(null);
         const result = await createDepartmentAction(newDepartmentName);
@@ -601,7 +616,7 @@ export function AdminManagementPanel({
   }
 
   function adoptDepartment(name: string) {
-    startTransition(async () => {
+    runManagementOp(`adopt-department:${name}`, async () => {
       try {
         setError(null);
         const result = await createDepartmentAction(name);
@@ -627,7 +642,7 @@ export function AdminManagementPanel({
 
   function renameDepartment() {
     if (!editingDepartment) return;
-    startTransition(async () => {
+    runManagementOp("dept-rename", async () => {
       try {
         setError(null);
         const result = await renameDepartmentAction({ from: editingDepartment, to: departmentDraft });
@@ -659,7 +674,7 @@ export function AdminManagementPanel({
   }
 
   function createZone() {
-    startTransition(async () => {
+    runManagementOp("zone-create", async () => {
       try {
         setError(null);
         const result = await createZoneAction(newZoneName);
@@ -686,7 +701,7 @@ export function AdminManagementPanel({
 
   function renameZone() {
     if (!editingZone) return;
-    startTransition(async () => {
+    runManagementOp("zone-rename", async () => {
       try {
         setError(null);
         const result = await renameZoneAction({ from: editingZone, to: zoneDraft });
@@ -730,7 +745,7 @@ export function AdminManagementPanel({
     // had its form clobbered by this handler's reset below. Same pattern as
     // DataUtilitiesPanel's review dialogs.
 
-    startTransition(async () => {
+    runManagementOp("management-confirm", async () => {
       try {
         setError(null);
 
@@ -798,6 +813,14 @@ export function AdminManagementPanel({
             People, departments, zones, and publish history.
           </p>
         </header>
+
+        {/* PR-5 (§8.1): the surface's shared in-flight region — always
+            mounted (a region that mounts WITH its content is not reliably
+            announced), sr-only sibling of the visible outcome banner below,
+            which keeps owning outcomes. */}
+        <div role="status" aria-live="polite" className="sr-only">
+          {pending ? "Working…" : ""}
+        </div>
 
         {(message || error) && (
           <div
@@ -1026,7 +1049,7 @@ export function AdminManagementPanel({
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <input value={newDepartmentName} onChange={event => setNewDepartmentName(event.target.value)} placeholder="New department" className="min-w-0 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--sp-button-primary)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
-                <Button type="button" variant="primary" onClick={createDepartment} disabled={pending || !newDepartmentName.trim()}>Add</Button>
+                <Button type="button" variant="primary" onClick={createDepartment} disabled={pending || !newDepartmentName.trim()} loading={pending && busyOp === "dept-create"}>{pending && busyOp === "dept-create" ? "Adding…" : "Add"}</Button>
               </div>
             </div>
             <div className="mt-4 divide-y divide-[var(--sp-border-subtle)] border border-[var(--sp-border-subtle)]">
@@ -1044,13 +1067,13 @@ export function AdminManagementPanel({
                   {editingDepartment === row.name ? (
                     <div className="flex flex-1 flex-col gap-2 md:max-w-md md:flex-row">
                       <input value={departmentDraft} onChange={event => setDepartmentDraft(event.target.value)} className={fieldClassName} />
-                      <Button type="button" onClick={renameDepartment} disabled={pending || !departmentDraft.trim()}>Save</Button>
+                      <Button type="button" onClick={renameDepartment} disabled={pending || !departmentDraft.trim()} loading={pending && busyOp === "dept-rename"}>{pending && busyOp === "dept-rename" ? "Renaming…" : "Save"}</Button>
                       <Button type="button" onClick={() => setEditingDepartment("")} disabled={pending}>Cancel</Button>
                     </div>
                   ) : (
                     <div className="flex flex-wrap items-center gap-2">
                       {!row.managed && (
-                        <Button type="button" onClick={() => adoptDepartment(row.name)} disabled={pending}>Add to list</Button>
+                        <Button type="button" onClick={() => adoptDepartment(row.name)} disabled={pending} loading={pending && busyOp === `adopt-department:${row.name}`}>{pending && busyOp === `adopt-department:${row.name}` ? "Adding…" : "Add to list"}</Button>
                       )}
                       <Button type="button" onClick={() => beginDepartmentRename(row.name)} disabled={pending}>Rename</Button>
                       <button
@@ -1085,7 +1108,7 @@ export function AdminManagementPanel({
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <input value={newZoneName} onChange={event => setNewZoneName(event.target.value)} placeholder="New zone" className="min-w-0 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--sp-button-primary)] focus:ring-2 focus:ring-[color:var(--sp-focus)]" />
-                <Button type="button" variant="primary" onClick={createZone} disabled={pending || !newZoneName.trim()}>Add</Button>
+                <Button type="button" variant="primary" onClick={createZone} disabled={pending || !newZoneName.trim()} loading={pending && busyOp === "zone-create"}>{pending && busyOp === "zone-create" ? "Adding…" : "Add"}</Button>
               </div>
             </div>
             <div className="mt-4 divide-y divide-[var(--sp-border-subtle)] border border-[var(--sp-border-subtle)]">
@@ -1098,7 +1121,7 @@ export function AdminManagementPanel({
                   {editingZone === name ? (
                     <div className="flex flex-1 flex-col gap-2 md:max-w-md md:flex-row">
                       <input value={zoneDraft} onChange={event => setZoneDraft(event.target.value)} className={fieldClassName} />
-                      <Button type="button" onClick={renameZone} disabled={pending || !zoneDraft.trim()}>Save</Button>
+                      <Button type="button" onClick={renameZone} disabled={pending || !zoneDraft.trim()} loading={pending && busyOp === "zone-rename"}>{pending && busyOp === "zone-rename" ? "Renaming…" : "Save"}</Button>
                       <Button type="button" onClick={() => setEditingZone("")} disabled={pending}>Cancel</Button>
                     </div>
                   ) : (
@@ -1383,7 +1406,11 @@ export function AdminManagementPanel({
               </div>
             )}
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button ref={employeeSaveButtonRef} type="button" variant="primary" onClick={saveEmployee} disabled={pending || !employeeForm.fullName.trim()}>{selectedEmployee ? "Save employee" : "Add employee"}</Button>
+              <Button ref={employeeSaveButtonRef} type="button" variant="primary" onClick={saveEmployee} disabled={pending || !employeeForm.fullName.trim()} loading={pending && busyOp === "employee-save"}>
+                {pending && busyOp === "employee-save"
+                  ? selectedEmployee ? "Saving…" : "Adding…"
+                  : selectedEmployee ? "Save employee" : "Add employee"}
+              </Button>
               <Button type="button" onClick={closeEmployeeDialog} disabled={pending}>Cancel</Button>
               {selectedEmployee && <Button type="button" variant="danger" onClick={deleteEmployee} disabled={pending}>Deactivate</Button>}
             </div>
@@ -1476,12 +1503,14 @@ export function AdminManagementPanel({
               <Button type="button" onClick={closeManagementConfirm} disabled={pending} className="w-full">
                 Cancel
               </Button>
-              <Button type="button" variant="danger" onClick={confirmManagementDestructiveAction} disabled={pending} className="w-full">
-                {managementConfirm.kind === "employee"
-                  ? "Deactivate employee"
-                  : managementConfirm.kind === "department"
-                    ? "Delete department"
-                    : "Delete zone"}
+              <Button type="button" variant="danger" onClick={confirmManagementDestructiveAction} loading={pending && busyOp === "management-confirm"} disabled={pending} className="w-full">
+                {pending && busyOp === "management-confirm"
+                  ? managementConfirm.kind === "employee" ? "Deactivating…" : "Deleting…"
+                  : managementConfirm.kind === "employee"
+                    ? "Deactivate employee"
+                    : managementConfirm.kind === "department"
+                      ? "Delete department"
+                      : "Delete zone"}
               </Button>
             </div>
           </section>
