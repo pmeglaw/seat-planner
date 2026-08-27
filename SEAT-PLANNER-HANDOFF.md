@@ -13,7 +13,7 @@
 | Plugin repo | `E:/code/claude-plugins` → `github.com/pmeglaw/claude-plugins`, private |
 | Skill | `/design-system:ibm-design-language` **v1.2.1**, installed per-machine |
 | Deploy | Vercel → `seats.megeredchianlaw.com`; `/api/build-id` returns the live commit SHA |
-| App version | **v1.64.0** (merge `13d0946`) |
+| App version | **v1.65.0** (merge `1cb066e`) |
 
 **Two standing facts that change how decisions get made:**
 
@@ -37,6 +37,7 @@
 | **#446** | v1.60.0 | Type floor part 2 — map-canvas text tier at the collision threshold |
 | **#447** | v1.61.0 | SeatSheet type floor — phone page below 880, plan text legible-or-absent above |
 | **#474 (PR-2)** | v1.65.0 | 44px touch targets off the map canvas — hit expansion (`after:-inset-*`), no visual size moved; no-overlap rule with an adjacency-capped ledger; guard `touch-target-source` (arithmetic scan + reach floors + pins) |
+| **#475 (PR-3)** | v1.66.0 | `/auth/update-password` joins the login token vocabulary (F-DK-1) — last pre-token surface; white card / `#D8D0C5` / orange focus glow deleted, LoginForm recipes reused byte-for-byte, page wrapped in `.login-theme`; guard `auth-theme-source` (pre-token class scan + reverse dark-resolution check) |
 
 ---
 
@@ -130,7 +131,7 @@ Most allowlist reasons are claims about today's component tree — "no chrome mo
 
 ## 5. Open work
 
-**Pass-2 audit landed 2026-08-26:** `docs/design-system/AUDIT-2.md` — motion, spacing, the seventeen patterns, shell, keyboard, dark parity, and absences; ranked findings in its §0, guard map in §9 (spacing findings corrected same day against the fixed Carbon scale, skill v1.2.0; the docs-site-unreliable rule added in v1.2.1). **PR-1 shipped same day (#471, v1.64.0):** digest-leak error paths, silent vacate, double-click single-flight, five first-run states — §0 items 1 and 3 closed, item 6 partial. **PR-2 shipped (#474, v1.65.0):** 44px touch-target hit expansion off the map canvas under the no-overlap rule (54 of 58 specs; capped sites ledgered in `tests/touch-target-source.test.mjs`); queued next: PR-3 `/auth/update-password` dark theme (F-DK-1). **The staged plan for the rest of the arc — ruling queue, PR sequence, status board — is `docs/design-system/PLAN.md`; its diagram updates in the same commit as every PR that lands.**
+**Pass-2 audit landed 2026-08-26:** `docs/design-system/AUDIT-2.md` — motion, spacing, the seventeen patterns, shell, keyboard, dark parity, and absences; ranked findings in its §0, guard map in §9 (spacing findings corrected same day against the fixed Carbon scale, skill v1.2.0; the docs-site-unreliable rule added in v1.2.1). **PR-1 shipped same day (#471, v1.64.0):** digest-leak error paths, silent vacate, double-click single-flight, five first-run states — §0 items 1 and 3 closed, item 6 partial. **PR-2 shipped (#474, v1.65.0):** 44px touch-target hit expansion off the map canvas under the no-overlap rule (54 of 58 specs; capped sites ledgered in `tests/touch-target-source.test.mjs`). **PR-3 shipped (#475, v1.66.0):** `/auth/update-password` dark theme (F-DK-1) — the auth scope is now guarded token-only by `tests/auth-theme-source.test.mjs`; queued next: PR-4 error-behind-modal (F-INT-4 / F-FRM-1). **The staged plan for the rest of the arc — ruling queue, PR sequence, status board — is `docs/design-system/PLAN.md`; its diagram updates in the same commit as every PR that lands.**
 
 The type-floor arc (#444 / #446 / #447) and the publish guard (#443 / #445) are **complete and prod-verified**. The SeatInspector label ruling landed as candidate B — recorded in §3, pinned in `desktop-seat-marker-system-source.test.mjs`. One item remains.
 
@@ -193,6 +194,7 @@ Consequence: on laptop widths, hover disclosure and the inspector are the **prim
 - **Footer "last updated" dates are build stamps.** Confirmed false alarms on 2026-08-21 and 2026-08-24. Authoritative checks: IDL → `/whats-new`; Carbon → `npm view @carbon/react time --json` + the changelog.
 - **Verify updates by loading the artifact, not by reading the repo.** A fresh subagent reading only the installed cache is the standard.
 - **Parallel sessions get parallel worktrees:** `git worktree add ../seat-planner-side main`. Two agents in one working tree caused two incidents; both were caught by a human, neither by git.
+- **A label-carried hit expansion paints above its own input** — the label's `::after` swallows direct clicks on the wrapped control (caret placement, drag-select, native pickers; Playwright's hit-target check refuses the click). Wrapped controls carry `relative z-[1]` or direct clicks die. Found #474.
 
 ---
 
