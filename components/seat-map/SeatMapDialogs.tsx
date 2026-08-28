@@ -223,7 +223,7 @@ export function PublishReviewDialog({
   const publishReadinessBadgeTone = publishSummary.hasChanges ? "draft" : "published";
   const publishReadinessBadgeLabel = publishSummary.hasChanges ? "Ready" : "No changes";
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-background)_48%,transparent)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_48%,transparent)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
       <section
         ref={publishReviewDialogFocusRef}
         tabIndex={-1}
