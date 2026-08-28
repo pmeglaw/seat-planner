@@ -2,7 +2,7 @@ import { MoveEmployeeConfirmDialog } from "seat-planner";
 
 // Two real branches: plain move to an open seat (canonical) and the
 // occupied-target swap offer. Admin-theme wrapper: impact banner + buttons
-// read --admin-* tokens.
+// read --sp-* role tokens.
 
 const employee = (id: string, name: string, position: string, department: string) => ({
   id,

@@ -5,7 +5,7 @@ import { VacateConfirmDialog } from "seat-planner";
 // height, which collapses the backdrop and centers the card on a zero line
 // (top half above the shot). Give the wrapper the stage explicitly: own
 // transform + 512px (560 viewport minus the 24px capture gutters).
-// Wrapped in .admin-theme: the card + danger CTA read --admin-* tokens.
+// Wrapped in .admin-theme: the card + danger CTA read --sp-* role tokens.
 
 const stage = { position: "relative" as const, height: 512, transform: "translateZ(0)" };
 

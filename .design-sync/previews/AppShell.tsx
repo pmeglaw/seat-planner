@@ -16,7 +16,7 @@ const frame: CSSProperties = {
   overflow: "hidden",
   width: "100%",
   height: 560,
-  background: "var(--sp-color-canvas, #F7F6F2)"
+  background: "var(--sp-background, #F7F6F2)"
 };
 
 const rowStyle: CSSProperties = {
@@ -24,7 +24,7 @@ const rowStyle: CSSProperties = {
   alignItems: "baseline",
   gap: 10,
   padding: "10px 14px",
-  borderTop: "1px solid var(--sp-color-border-subtle, #EDE8E0)",
+  borderTop: "1px solid var(--sp-border-subtle, #EDE8E0)",
   fontSize: 13
 };
 
@@ -34,13 +34,13 @@ export const AdminMapShell = () => (
       <div
         className="admin-theme"
         id="planning-canvas"
-        style={{ minHeight: 520, background: "var(--admin-map-workspace)", padding: "24px 24px 24px 72px" }}
+        style={{ minHeight: 520, background: "var(--sp-map-mat)", padding: "24px 24px 24px 72px" }}
       >
-        <div style={{ width: 460, background: "#fff", border: "1px solid var(--sp-color-border-strong, #BEB4A8)" }}>
+        <div style={{ width: 460, background: "#fff", border: "1px solid var(--sp-border-strong, #BEB4A8)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px" }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--sp-color-text-primary, #161616)" }}>Floor 3 — Litigation wing</div>
-              <div style={{ fontSize: 12, color: "var(--sp-color-text-muted, #6E655A)" }}>Draft layer · 2 pending moves</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--sp-text-primary, #161616)" }}>Floor 3 — Litigation wing</div>
+              <div style={{ fontSize: 12, color: "var(--sp-text-helper, #6E655A)" }}>Draft layer · 2 pending moves</div>
             </div>
             <StatusBadge tone="draft">Draft</StatusBadge>
           </div>
@@ -50,11 +50,11 @@ export const AdminMapShell = () => (
             ["C-07", "Vacant", "Reserved for Intake"]
           ].map(([seat, name, role]) => (
             <div key={seat} style={rowStyle}>
-              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 12, fontWeight: 600, color: "var(--sp-color-text-secondary, #55504A)" }}>
+              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 12, fontWeight: 600, color: "var(--sp-text-secondary, #55504A)" }}>
                 {seat}
               </span>
-              <span style={{ fontWeight: 600, color: "var(--sp-color-text-primary, #161616)" }}>{name}</span>
-              <span style={{ fontSize: 12, color: "var(--sp-color-text-muted, #6E655A)" }}>{role}</span>
+              <span style={{ fontWeight: 600, color: "var(--sp-text-primary, #161616)" }}>{name}</span>
+              <span style={{ fontSize: 12, color: "var(--sp-text-helper, #6E655A)" }}>{role}</span>
             </div>
           ))}
         </div>
@@ -69,22 +69,22 @@ export const ViewerReceptionShell = () => (
       <div
         className="reception-theme"
         id="reception-main"
-        style={{ minHeight: 520, background: "var(--r-bg)", padding: "24px 24px 24px 72px" }}
+        style={{ minHeight: 520, background: "var(--sp-background)", padding: "24px 24px 24px 72px" }}
       >
-        <div style={{ width: 480, background: "var(--r-card)", border: "1px solid var(--r-card-border)" }}>
+        <div style={{ width: 480, background: "var(--sp-layer-01)", border: "1px solid var(--sp-border-subtle)" }}>
           <div style={{ padding: "12px 14px" }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--r-text)" }}>Reception — call routing</div>
-            <div style={{ fontSize: 12, color: "var(--r-muted)" }}>Published directory · read only</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--sp-text-primary)" }}>Reception — call routing</div>
+            <div style={{ fontSize: 12, color: "var(--sp-text-helper)" }}>Published directory · read only</div>
           </div>
           {[
             ["Anahit Petrosyan", "Senior Paralegal · Litigation", "Ext 214"],
             ["Marcus Webb", "Associate Attorney · Litigation", "Ext 231"],
             ["Lusine Grigoryan", "Intake Coordinator · Intake", "Ext 203"]
           ].map(([name, role, ext]) => (
-            <div key={name} style={{ ...rowStyle, borderTop: "1px solid var(--r-rule)" }}>
-              <span style={{ fontWeight: 600, color: "var(--r-text)" }}>{name}</span>
-              <span style={{ fontSize: 12, color: "var(--r-muted)", flex: 1 }}>{role}</span>
-              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 11.5, color: "var(--r-ext-label)" }}>{ext}</span>
+            <div key={name} style={{ ...rowStyle, borderTop: "1px solid var(--sp-border-hairline)" }}>
+              <span style={{ fontWeight: 600, color: "var(--sp-text-primary)" }}>{name}</span>
+              <span style={{ fontSize: 12, color: "var(--sp-text-helper)", flex: 1 }}>{role}</span>
+              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 12, color: "var(--sp-extension-label)" }}>{ext}</span>
             </div>
           ))}
         </div>

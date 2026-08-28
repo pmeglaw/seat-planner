@@ -12,7 +12,7 @@ const noopSlot = () => {};
 const noopToggle = () => {};
 
 const frame: CSSProperties = { width: "100%" };
-const canvasBelow: CSSProperties = { height: 48, background: "var(--admin-bg)" };
+const canvasBelow: CSSProperties = { height: 48, background: "var(--sp-background)" };
 
 export const ManagementSection = () => (
   <div className="admin-theme" style={frame}>

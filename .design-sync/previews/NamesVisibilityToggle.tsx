@@ -12,7 +12,7 @@ const Cell = ({ label, children }: { label: string; children: ReactNode }) => (
       style={{
         display: "flex",
         width: 232,
-        background: "var(--admin-surface)",
+        background: "var(--sp-layer-01)",
         border: "1px solid #E7E1D8",
         padding: "10px 12px"
       }}

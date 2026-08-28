@@ -8,6 +8,16 @@ import type { ReactNode } from "react";
 // panel's only home; the cells wear `.shell-theme` (the viewer's token class,
 // token-identical to `.admin-theme`) and size the popover like its in-app
 // slot (~288px + the caller's padding) over the light map workspace.
+//
+// The panel is a DARK menu, and since the PASS1 token renames it is dark
+// only by INHERITANCE: it stopped naming --admin-chrome-* directly and now
+// asks for role names (--sp-layer-01, --sp-text-primary, --sp-border-subtle)
+// whose dark values come from the `sp-zone-chrome` class. In the app that
+// class sits on the viewer chrome <header> (ViewerSeatFinder.tsx) that the
+// popover drops out of, so the cells reproduce that nesting: light map mat
+// outside (the mat token is not zoned), chrome zone around the panel itself.
+// Without the inner zone the panel paints white and its white/20 select
+// borders vanish.
 
 const returnFocusRef = createRef<HTMLButtonElement>();
 const noop = () => {};
@@ -22,12 +32,12 @@ const Cell = ({ label, children }: { label: string; children: ReactNode }) => (
       className="shell-theme"
       style={{
         width: 344,
-        background: "var(--admin-map-workspace, #ECE8E0)",
+        background: "var(--sp-map-mat, #ECE8E0)",
         border: "1px solid #E7E1D8",
         padding: 12
       }}
     >
-      {children}
+      <div className="sp-zone-chrome">{children}</div>
     </div>
     <span style={{ fontSize: 11, color: "#6b6257", fontFamily: "var(--font-mono)" }}>{label}</span>
   </div>

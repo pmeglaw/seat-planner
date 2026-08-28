@@ -3,8 +3,8 @@ import { AskPlannerDrawer } from "seat-planner";
 // Answers only arrive via askPlannerAction (shimmed to throw in the preview
 // bundle), so these stories stay static: the open prompt state, never a
 // queuedRequest (that would invoke the action). Drawer anchors fixed
-// top-right on sm+ (top = --admin-chrome-h + 12px, a :root token). Wrapped in
-// .admin-theme for the chrome/AI --admin-* tokens.
+// top-right on sm+ (top = --sp-chrome-height + 12px, a :root token). Wrapped in
+// .admin-theme for the chrome/AI --sp-* role tokens.
 
 // Explicit stage: the harness story root is transformed, so the drawer's
 // `fixed` positioning resolves against this wrapper. Without a real height the

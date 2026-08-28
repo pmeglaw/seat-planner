@@ -1,38 +1,40 @@
 # Shell — build conventions
 
-Shell is the design system of a private law-office seat-planning app. Warm print-inspired palette (ivory/paper/copper), IBM Plex Sans + Mono, and a **flat shape language: square corners on all chrome and controls**. Rounded shapes appear only where components render them deliberately (seat pills, avatars). Don't add border-radius to layout glue.
+Shell is the design system of a private law-office seat-planning app. Warm print-inspired palette (ivory ground, copper accent), IBM Plex Sans + Mono, and a **flat shape language: square corners on all chrome and controls** — `--sp-radius-sm|md|lg|xl|sheet` are all literally `0px`; only `--sp-radius-full` rounds (seat pills, avatars). Don't add border-radius to layout glue.
 
 ## Setup
 
-No provider is required — every component is self-contained. Two scoping rules:
+No provider is required — every component is self-contained. What matters is **which wrapper class the composition sits in**, because Shell has ONE set of role token names and each zone re-declares their *values*:
 
-- **Admin and map surfaces**: any composition using admin components (`AdminManagementPanel`, `DataUtilitiesPanel`, the confirm dialogs, `AskPlannerDrawer`, `SeatInspector`) or seat-map pieces (`SeatMarker`, `MapWashLayer`, `MapZoomControl`, `MapStatusBand`, `DraftTrailOverlay`) must sit inside `<div className="admin-theme">…</div>` or `<div className="shell-theme">…</div>` — the two classes define the same `--admin-*` set, including the `--admin-marker-live-*` palette every seat pill paints from. Neither is on `:root`, so an unwrapped marker renders as an unpainted outline with invisible text.
-- **Auth surfaces**: `LoginForm` / `UpdatePasswordForm` must sit inside `<div className="login-theme">…</div>` — the `--login-*` tokens (including the primary button's fill) exist only in that scope, so an unwrapped form renders a white-on-white button. Reception surfaces use `.reception-theme` the same way.
-- **Page ground**: give pages an explicit background — `var(--sp-color-brand-ivory)` for viewer surfaces, `var(--admin-bg)` inside `.admin-theme`.
+- **Map, admin and viewer surfaces**: wrap in `<div className="shell-theme">` (viewer) or `<div className="admin-theme">` (admin) — the two are token-identical. Required for `SeatMap`, `SeatMarker`, `SeatInspector`, `MapWashLayer`, `MapZoomControl`, `MapStatusBand`, `DraftTrailOverlay`, the confirm dialogs, `AskPlannerDrawer` and the admin panels: the whole `--sp-marker-*` pill palette, `--sp-map-mat`, `--sp-text-inverse`, `--sp-text-on-brand` and the elevation ladder live only in that block. Unwrapped, a marker paints as an unfilled hairline with invisible text.
+- **Auth surfaces**: `LoginForm` / `UpdatePasswordForm` go inside `<div className="login-theme">` — it re-points the neutrals to a cool white/gray ramp and supplies the CTA ladder (`--sp-button-primary: #B85207`) and `--sp-link`. `ReceptionScreen` uses `.reception-theme` (which adds `--sp-accent`).
+- **Dark chrome regions** (top bar, rail, filter menus): put `sp-zone-chrome` on the region root — same role names, dark values (`--sp-background: #161616`, `--sp-layer-01: #1f1f1f`, `--sp-text-primary: #F7F6F2`, `--sp-field`, translucent borders). A light card nested inside a chrome region takes `sp-zone-base` to switch back.
+- **Page ground**: give pages an explicit `background: var(--sp-background)`.
 
-**Dark mode** is app-wide and attribute-driven: set `data-theme="dark"` on the root element and `:root[data-theme="dark"]` re-points the whole `--sp-color-*` ramp (canvas `#161616`, surface `#1f1f1f`, surface-raised `#262626`, text `#f4f4f4`). Admin and viewer chrome get their own refinements under `:root[data-theme="dark"] .admin-theme, :root[data-theme="dark"] .shell-theme`, and `.reception-theme` / `.login-theme` have theirs. Practical rule: wrap app surfaces in `.shell-theme` (or `.admin-theme`) so both themes resolve — an unwrapped surface keeps the light chrome values in dark mode. Never hardcode a hex where a token exists; the token is what flips.
+**Dark mode** is app-wide and attribute-driven: set `data-theme="dark"` on the root element and `:root[data-theme="dark"]` re-points the same role names (`--sp-background: #161616`, `--sp-layer-01: #1f1f1f`, `--sp-layer-02: #262626`, `--sp-text-primary: #f4f4f4`), with further refinements under `.admin-theme`/`.shell-theme`, `.login-theme`, `.reception-theme` and `.sp-zone-chrome`. Never hardcode a hex where a token exists — the token is what flips.
 
 Interactions that would hit the server (form submits, publish/save buttons) are stubbed in this environment — build the UI state you want to show; don't wire real submission flows.
 
-## Styling idiom — tokens via inline style, not new utility classes
+## Styling idiom — role tokens via inline style, not new utility classes
 
-The shipped stylesheet is **precompiled and purged**: only the utility classes the app itself uses exist in it. A Tailwind-looking class you invent (e.g. `bg-sp-brand-paper`, `p-7`) will silently do nothing. For your own layout glue, use inline styles referencing the semantic tokens:
+The shipped stylesheet is **precompiled and purged**: only the utility classes the app itself uses exist in it. A Tailwind-looking class you invent (`bg-sp-layer-01`, `p-7`) silently does nothing. For your own layout glue, use inline styles referencing the role tokens:
 
 ```jsx
-<section style={{ background: "var(--sp-color-surface)", color: "var(--sp-color-text-primary)", padding: 24, border: "1px solid var(--sp-color-border-subtle)" }}>
+<section style={{ background: "var(--sp-layer-01)", color: "var(--sp-text-primary)", padding: "var(--sp-space-5)", border: "1px solid var(--sp-border-subtle)" }}>
 ```
 
-Core token families (defined at `:root` in the shipped CSS — read `_ds_bundle.css` for the full set):
+The role vocabulary (77 tokens at `:root`; read `_ds_bundle.css` for values):
 
-- Brand: `--sp-color-brand-ivory`, `--sp-color-brand-paper`, `--sp-color-brand-copper`, `--sp-color-brand-accent`, `--sp-color-brand-clay`
-- Ground and surface: `--sp-color-canvas`, `--sp-color-surface`, `--sp-color-surface-raised`, `--sp-color-workspace`, `--sp-color-workspace-deep`
-- Borders: `--sp-color-border-subtle`, `--sp-color-border-strong` (there is no bare `--sp-color-border`)
-- Action: `--sp-color-action-primary`, `--sp-color-action-primary-hover`, `--sp-color-action-primary-pressed` (each also has an `-rgb` channel triple for `rgb(var(--…-rgb)/0.45)` alpha)
-- Text: `--sp-color-text-primary`, `--sp-color-text-secondary`, `--sp-color-text-muted`, `--sp-color-text-disabled`
-- State families — one per status, each with `-surface`, `-border`, `-on-soft` and `-rgb` variants: `--sp-color-state-{published,draft,success,warning,danger,info,selected,search,disabled}-*`. Use the trio together (surface fill + border ring + on-soft text) rather than mixing a state color with neutral text.
-- Radii: `--sp-radius-sm|md|lg|xl|full|sheet` — but chrome and controls are square by default; reach for a radius only where the component itself does.
-- Admin (inside `.admin-theme` only): `--admin-bg`, `--admin-chrome-bg`, `--admin-chrome-text`, `--admin-chrome-border`, `--admin-rail-bg`, `--admin-text-primary`, `--admin-text-secondary`, `--admin-border`, `--admin-border-strong`
-- Fonts: `--font-sans` (IBM Plex Sans), `--font-mono` (IBM Plex Mono — used for seat codes, phone extensions, data readouts)
+- Ground and surface: `--sp-background`, `--sp-layer-01`, `--sp-layer-02`, `--sp-layer-accent`, `--sp-surface-disabled` (zones add `--sp-background-hover`, `--sp-layer-hover`, `--sp-field`)
+- Text: `--sp-text-primary`, `--sp-text-secondary`, `--sp-text-helper`, `--sp-text-disabled`
+- Borders and neutrals: `--sp-border-subtle`, `--sp-border-strong`, `--sp-neutral-strong`, `--sp-neutral-muted`
+- Brand and actions: `--sp-brand` (#FF5715, indicator-only — underlines, selection, search highlight), `--sp-brand-subtle`, `--sp-brand-deep`, and the CTA ladder `--sp-button-primary` / `-hover` / `-active`
+- Status families: `--sp-status-{neutral,published,draft,success,danger,pending,search}-{surface,border,text}`, most also `-strong` (`search` is surface/border/text only). Use the trio together — surface fill + border ring + matching text — rather than pairing a status color with neutral text.
+- Seat markers (inside `.shell-theme`/`.admin-theme`) — two axes, fill = availability, glyph = reason: `--sp-marker-{positive,neutral,reserved,unavailable,draft,search}-{surface,border,text}`; `-ring` exists on `positive`, `neutral`, `draft`, `search` (plus `--sp-marker-pill-ring`, `--sp-marker-planner-ring`); glyph inks are `--sp-marker-ink`, `--sp-marker-glyph-ink`, `--sp-marker-valid-glyph`, `--sp-marker-invalid-glyph`, `--sp-marker-reserved-glyph`.
+- Space: `--sp-space-1…7` (4, 8, 12, 16, 24, 32, 48px)
+- Focus: `--sp-focus`, `--sp-focus-width`, `--sp-focus-offset`, `--sp-focus-offset-color`
+- Elevation and motion: `--sp-shadow-raised|floating|modal|sheet`, `--sp-elevation-2…5`, `--sp-duration-fast|standard|deliberate`
+- Fonts: `--font-sans` (IBM Plex Sans), `--font-mono` (IBM Plex Mono — seat codes, phone extensions, data readouts)
 
 Utility exports on the library: `cx(...classes)` merges class strings; `focusRingClass` is the standard focus-visible ring — spread it onto any custom interactive element you must build.
 
@@ -44,8 +46,8 @@ Utility exports on the library: `cx(...classes)` merges class strings; `focusRin
 ## Idiomatic example
 
 ```jsx
-<div className="admin-theme" style={{ background: "var(--admin-bg)", padding: 24 }}>
-  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+<div className="admin-theme" style={{ background: "var(--sp-background)", padding: "var(--sp-space-5)" }}>
+  <div style={{ display: "flex", gap: "var(--sp-space-3)", alignItems: "center" }}>
     <StatusBadge tone="draft">Draft — 3 unpublished changes</StatusBadge>
     <Button variant="secondary" size="small">Review changes</Button>
     <Button variant="primary" size="small">Publish seat map</Button>

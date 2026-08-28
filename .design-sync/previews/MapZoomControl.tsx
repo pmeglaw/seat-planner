@@ -15,7 +15,7 @@ const Cell = ({ label, children }: { label: string; children: ReactNode }) => (
         alignItems: "flex-start",
         width: 140,
         minHeight: 160,
-        background: "var(--admin-bg)",
+        background: "var(--sp-background)",
         border: "1px solid #E7E1D8",
         padding: 16
       }}

@@ -1,9 +1,9 @@
 import type { CSSProperties } from "react";
 import { AppRail } from "seat-planner";
 
-// The rail is position:fixed (top offset --admin-chrome-h, bottom 0). Each
+// The rail is position:fixed (top offset --sp-chrome-height, bottom 0). Each
 // cell wraps it in a transformed container, which becomes the fixed-position
-// containing block, and zeroes --admin-chrome-h so the rail fills the frame
+// containing block, and zeroes --sp-chrome-height so the rail fills the frame
 // (its AppTopBar normally sits in that 40px band — see the AppShell preview
 // for the composed chrome). skewDetector is stubbed so no probe fetches fire.
 
@@ -16,8 +16,8 @@ const frame = (width: number): CSSProperties => ({
   overflow: "hidden",
   width,
   height: 400,
-  background: "var(--admin-map-workspace)",
-  ["--admin-chrome-h" as never]: "0px"
+  background: "var(--sp-map-mat)",
+  ["--sp-chrome-height" as never]: "0px"
 });
 
 export const CollapsedAdmin = () => (

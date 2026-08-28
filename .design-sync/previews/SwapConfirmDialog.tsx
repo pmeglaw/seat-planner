@@ -2,7 +2,7 @@ import { SwapConfirmDialog } from "seat-planner";
 
 // SeatWithEmployee factories (lib/types.ts shapes) — same pattern as the
 // SeatMarker preview. Admin-theme wrapper: impact banner + buttons read
-// --admin-* tokens.
+// --sp-* role tokens.
 
 const employee = (id: string, name: string, position: string, department: string) => ({
   id,

@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 // a pending swap/move. It renders into a fixed 0 0 1000 H viewBox that
 // shares the map frame's box, so each cell is a relative frame at the plan's
 // ~2.2:1 aspect (svg preserveAspectRatio="none" fills it), wrapped in
-// .admin-theme so --admin-draft-trail resolves. The small anchor dots are
+// .admin-theme so --sp-trail resolves. The small anchor dots are
 // cell scaffolding standing in for the seat markers the trail runs between.
 const Anchor = ({ x, y }: { x: number; y: number }) => (
   <span
@@ -19,7 +19,7 @@ const Anchor = ({ x, y }: { x: number; y: number }) => (
       transform: "translate(-50%, -50%)",
       borderRadius: "50%",
       background: "#FFFFFF",
-      border: "2px solid var(--admin-status-ok, #1D6E41)",
+      border: "2px solid var(--sp-status-success-mark, #1D6E41)",
       zIndex: 10
     }}
   />
@@ -33,7 +33,7 @@ const Frame = ({ label, children }: { label: string; children: ReactNode }) => (
         width: 640,
         height: 290,
         maxWidth: "100%",
-        background: "var(--admin-map-workspace, #ECE8E0)",
+        background: "var(--sp-map-mat, #ECE8E0)",
         border: "1px solid #E7E1D8"
       }}
     >

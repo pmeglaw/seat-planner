@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 // renders at its deterministic fallback offset (left 12 / top 42) inside
 // the frame instead of escaping to the page viewport. Width then
 // shrink-wraps to content instead of the anchored 560px — geometry note,
-// not a defect. .shell-theme provides the --admin-* token set the viewer
+// not a defect. .shell-theme provides the --sp-* role token set the viewer
 // surfaces share.
 
 const nullAnchor = { current: null };
@@ -28,7 +28,7 @@ const Frame = ({ label, height, children }: { label: string; height: number; chi
         height,
         maxWidth: "100%",
         overflow: "hidden",
-        background: "var(--admin-map-workspace, #ECE8E0)",
+        background: "var(--sp-map-mat, #ECE8E0)",
         border: "1px solid #E7E1D8",
         transform: "translateZ(0)"
       }}

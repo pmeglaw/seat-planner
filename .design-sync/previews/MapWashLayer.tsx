@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 // sit between the floor-plan raster and the marker layer. Each cell is a
 // relative frame at the plan's ~2.2:1 aspect on the admin workspace tone
 // (the band the real plan sits on), wrapped in .admin-theme so the
-// --admin-* wash tokens resolve. Rects reuse the real measured office-room
+// --sp-* wash tokens resolve. Rects reuse the real measured office-room
 // geometry from lib/officeRoomWash.
 const Frame = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className="admin-theme" style={{ display: "grid", gap: 6 }}>
@@ -15,7 +15,7 @@ const Frame = ({ label, children }: { label: string; children: ReactNode }) => (
         width: 640,
         height: 290,
         maxWidth: "100%",
-        background: "var(--admin-map-workspace, #ECE8E0)",
+        background: "var(--sp-map-mat, #ECE8E0)",
         border: "1px solid #E7E1D8",
         overflow: "hidden"
       }}

@@ -153,6 +153,115 @@
   available/assigned/reserved/unavailable ride the `seat` row into SeatMarker).
   Added: the dark-mode contract and the `.login-theme` / marker-token scopes.
 
+## 2026-08-28 re-sync (38 components, full re-verify after the PASS1 token rename)
+
+- Scope call: repo had moved from ~#430 to #477 since the 08-20 upload (chrome
+  unification #432, PASS1 token renames #434–#441, two-axis markers #440, type
+  floors #444/#446/#447/#456/#462/#464, dark AI accent #463, AUDIT-2 PR-1…PR-5
+  #471–#477). Owner chose a FULL re-verify: `package-capture.mjs --force`,
+  38 components / 87 cells, graded by five parallel subagents. Every cell `good`.
+- **The whole preview corpus was stale against the token vocabulary and it was
+  invisible until grading.** #438 retired `--admin-*`, `--login-*`, `--r-*` and
+  the `--sp-color-*` names into a role vocabulary; 30 of 38 previews styled their
+  stages with the retired names, so those `var()`s resolved to nothing. The
+  orchestrator applied the rename centrally (the map is in the #438 commit body —
+  read it, don't guess) before fanning out, because it is one root cause, not 30.
+  Signature to look for after ANY token refactor: a stage that lost its
+  background, light-on-light text, a border that vanished.
+- **Doctrine that replaced the old "each zone has its own family" model:** there
+  is ONE set of role names; a zone class re-declares their VALUES. So a missing
+  wrapper never throws — it silently paints the wrong ladder. Three consequences
+  bit this run:
+  - `--sp-field` / `--sp-field-hover` have **no `:root` value** (only
+    `.login-theme` and `.admin-theme`/`.shell-theme`). A form preview with no
+    zone renders inputs with a transparent fill — bare underlines that read as a
+    styling bug, not a missing wrapper. `UpdatePasswordForm` hit exactly this.
+    Companion tell: `:root --sp-button-primary` is `#D23F0A` but `.login-theme`
+    re-points it to `#B85207` — an auth primary in orange-red means no wrapper.
+  - **Dark chrome is now INHERITED, not self-declared.** Pre-#438 the chrome
+    components named `--admin-chrome-*` directly, so any theme wrapper made them
+    dark; now their dark values come from `.sp-zone-chrome`. A preview that
+    *photographs* chrome must nest that class the way the app does — FilterPanel
+    sits under `ViewerSeatFinder`'s `<header className="sp-zone-chrome">`
+    (~line 1101), and its preview now mirrors that nesting (light map-mat cell
+    outside, `sp-zone-chrome` div around the panel). AccountMenu, CloseIcon and
+    FloorSelector needed the same for their faked bars. `AppTopBar`, `AppRail`,
+    `AskPlannerDrawer`, `SeatMap`, `SeatInspector`, `ViewerFindPalette` and
+    `ViewerSeatFinder` carry `sp-zone-chrome` on their OWN roots — no wrapper
+    needed there, and adding one is redundant.
+  - `--sp-ai-*` is theme-scoped too (`.admin-theme, .shell-theme`), not `:root`.
+  Diagnostic for any card that looks light-on-light:
+  `git show <last-verified-commit>:components/<path>.tsx | grep -o "var(--[a-z0-9-]*" | sort -u`
+  — old names `--admin-chrome-*` + new plain role names = zone-dependent.
+  `sp-zone-chrome` / `sp-zone-base` / `*-theme` are hand-written classes in
+  globals.css, NOT Tailwind utilities, so they are safe in previews.
+- **`sp-zone-base` re-entry is real**: `ActiveFilterChips` carries it, so
+  FilterPanel's chips are light on the dark panel by design. Don't "fix" it.
+- **The 12px type floor applies to preview-authored staging text**, not just
+  component output — captions, annotations, invented chrome labels. Four cells
+  were authored at 11/11.5px (CloseIcon size captions, AccountMenu "Autosaved",
+  AppShell "Ext ###", ThemeToggle header labels) and were raised. Rule: no inline
+  `fontSize` under 12 anywhere in a preview.
+- **App bug found by the cards and fixed: two inverted modal scrims** (PR #478).
+  #438 renamed `SeatMapDialogs.tsx:226` (PublishReviewDialog, was
+  `--admin-rail-bg`) and `AskPlannerDrawer.tsx:246` (was `--admin-chrome-bg`)
+  onto `--sp-background` — the LIGHT page ground — so both floated on a
+  near-white wash from v1.57.0 to v1.68.0. Correct target is `--sp-chrome-scrim`,
+  which globals.css documents as existing precisely because these overlays sit
+  outside any chrome-zone subtree. Each site kept its own alpha (48% / 30%)
+  rather than normalising to the siblings' 45%: the drawer's lighter wash is
+  deliberate. Note there are legitimately TWO scrim tokens in play —
+  `--sp-overlay-base` (six seat-map dialogs) and `--sp-chrome-scrim` (eight
+  sites) — differing greys between sheets is not drift.
+- MapStatusBand preview fixed: `label="Map zoom"` was being passed to
+  `MapZoomControl`, but `label` is the zoom *readout* (`Fit` / `125%`) — the
+  group's aria-label already lives inside the component. The literal wrapped to
+  two lines in the 36px slot and fringed visibly BLUE at 10.5px mono, which
+  impersonates a token failure. Stage width also dropped 880 → 840 (the grid host
+  indents ~24px, so 880 sliced the fit-to-view button off the card edge).
+- **MapStatusBand can never reach its wide tiers in a grid cell** (config-level,
+  left as-is): the band is a CSS size container keying on its OWN width —
+  `@container (min-width: 900px)` reveals Legend + seat total, `1140px` reveals
+  the prose summary — and a cell tops out near 850px in the 900x700 viewport. So
+  `summary` can be passed and will never render there. Not a coverage hole: the
+  full-width band shows in the SeatMap card (`viewport: "1280x800"`). Wanting it
+  on this card needs a `viewport` override (~1200x460).
+- **Grade-file naming trap:** `.design-sync/.cache/review/<Name>.json` is the
+  capture MANIFEST; grades go to `<Name>.grade.json`. Writing to the former
+  silently destroys the manifest and `.cache/` is gitignored, so there is no
+  `git checkout` back. Recovery is a `--components`-scoped `package-capture.mjs`
+  re-run to regenerate manifests, then place the `.grade.json` files.
+- Editing previews from a shell script: read AND write with explicit UTF-8. The
+  em-dash and middle-dot in these previews are real content
+  (`Megeredchian Law · 41 people`); a default-codepage rewrite mangles them, and
+  stdout shows `?` even when the file is fine — verify by reading the file back.
+- Confirmed NOT stale this run, do not "fix": StatusBadge's `info`/`pending`
+  render on the neutral surface and `blocked` equals `danger` — that is the
+  component's own tone map in `design-system.tsx`, not a fill lost in the rename;
+  `AppTopBar.MapSurface` has an empty centre because the slots are portal targets
+  SeatMap fills at runtime; `AppRail.ViewerModeExpanded`'s empty middle is the
+  whole viewer rail (two entries); SeatMarker's "AI highlighted" cell is GREEN
+  and correct (the blue AI aura only exists on the dormant `adminMarker` arm);
+  ResultsPanel's reserved dot is teal-slate per `--sp-legend-reserved-accent`;
+  PublishReviewDialog's peach READY panel is `--sp-brand-*` aliased through
+  `--sp-publish-ready-*`, not a danger family.
+- App-side observation recorded, NOT changed: FilterPanel's `Clear all` uses
+  `--sp-brand-wash` / `--sp-brand-text`, neither re-pinned by `sp-zone-base` or
+  `sp-zone-chrome`, so the translucent orange now composites over `#1f1f1f`
+  instead of white. Faithful card; a contrast pair worth re-measuring in app code.
+- Uncovered ground on SeatMarker (noted, not graded down): `SwapAndHighlight`'s
+  last cell passes `variant="viewer"`, already the default (SeatMarker.tsx:178),
+  so it duplicates the resting assigned marker; and the target-reason ✓/✕ glyphs
+  are never exercised because `swapCandidate` needs `swapMode` WITHOUT
+  `swapSource`/`swapTarget` and both cells set one. Replacing the redundant cell
+  with a candidate/invalid pair closes both in one edit.
+- `conventions.md` was rewritten this run, not merely spot-fixed: nearly every
+  token it named had been retired by #438. It now documents the role vocabulary,
+  the zone re-pointing model, the `sp-zone-chrome`/`sp-zone-base` mechanism, and
+  the fact that `--sp-radius-sm|md|lg|xl|sheet` are literally `0px`. Every class,
+  token, prop and component in it was grepped against the built artifacts before
+  commit — re-run that validation every sync.
+
 ## Preview-authoring playbook (from wave 1)
 
 - **Post-build asset copy (MANUAL, every package-build run):**
@@ -196,6 +305,11 @@
 
 ## App bugs surfaced by previews (all fixed)
 
+- **Two inverted modal scrims** (PublishReviewDialog, AskPlannerDrawer) — #438
+  renamed them onto `--sp-background` instead of `--sp-chrome-scrim`, so both
+  overlays washed near-white from v1.57.0. Found 2026-08-28 by grading their
+  cards; fixed in PR #478. Full account in the 2026-08-28 section above.
+
 - Dialog scrims never compiled app-wide (Tailwind v3.4 drops slash-opacity on
   arbitrary var colors) — fixed in #401 with `bg-[rgb(var(--…-rgb)/0.45)]`
   slash syntax (NOT `rgba(…, a)`: comma syntax over space-separated channel
@@ -207,6 +321,23 @@
   ring on the safe action), container fallback when all controls disabled.
 
 ## Re-sync risks
+
+- **A token refactor in app code silently rots every preview stage.** Preview
+  wrapper styling references token names directly, and nothing type-checks them:
+  a retired name just resolves to nothing. After any `--sp-*` rename, grep the
+  previews for the retired families BEFORE grading, and fix centrally from the
+  rename commit's own mapping rather than per-card.
+- **The verification partition still follows the RENDERED card, not the token
+  layer.** A vocabulary change that repaints every card can land wholly in
+  `unchanged`. Treat a large app-side design arc as grounds for `--force`
+  regardless of what the diff reports.
+- Zone-wrapper correctness is invisible to every mechanical gate — validate's
+  render check passes on a light-on-light card. Only a human or a grader reading
+  the sheet catches it.
+- The `--sp-marker-*`, `--sp-legend-*`, `--sp-ai-*`, `--sp-map-mat`, `--sp-trail`
+  and `--sp-field` families are theme-scoped with NO `:root` fallback. A new
+  preview for any component consuming them needs the wrapper, or it renders
+  unpainted.
 
 - `shims/app-actions.ts` export list mirrors app/actions.ts by hand — drifts
   when actions are added (build error is loud, fix is mechanical).

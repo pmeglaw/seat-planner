@@ -102,7 +102,7 @@ const Habitat = ({ label, children }: { label: string; children: ReactNode }) =>
         position: "relative",
         width: 364,
         height: 596,
-        background: "var(--admin-bg)",
+        background: "var(--sp-background)",
         border: "1px solid #E7E1D8",
         transform: "translateZ(0)",
         overflow: "hidden"

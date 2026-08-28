@@ -75,7 +75,7 @@ const draftSeats = [
 export const UtilityTiles = () => (
   <div
     className="admin-theme"
-    style={{ background: "var(--admin-bg, #F7F6F2)", padding: "24px 32px 40px" }}
+    style={{ background: "var(--sp-background, #F7F6F2)", padding: "24px 32px 40px" }}
   >
     <DataUtilitiesPanel seats={draftSeats} publishedSeats={publishedSeats} employees={employees} />
   </div>

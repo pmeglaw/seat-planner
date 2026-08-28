@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 // Publish review = the gate between the shared draft and the read-only viewer.
 // Shapes mirror lib/publishSummary.ts: PublishChangeSummary + PublishDiffRow[]
 // + a full Record of the six diff-row kinds. All stories wrapped in
-// .admin-theme (diff tags, ready panel, CTA all read --admin-* tokens).
+// .admin-theme (diff tags, ready panel, CTA all read --sp-* role tokens).
 
 type Item = { label: string; detail: string };
 

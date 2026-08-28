@@ -60,7 +60,7 @@ const base = {
   onSelect: () => {}
 };
 
-// The live seat-pill palette (--admin-marker-live-*) is defined ONLY inside
+// The live seat-pill palette (--sp-marker-*) is defined ONLY inside
 // `.admin-theme, .shell-theme` in app/globals.css. Without that class on an
 // ancestor every pill fill / ring / ink resolves to nothing and the markers
 // render as bare outlines. Both surfaces that mount SeatMarker carry one of
@@ -75,8 +75,8 @@ const Cell = ({ label, children }: { label: string; children: ReactNode }) => (
         height: 96,
         // The band behind the floor-plan raster — the ground a marker really
         // sits on, so pill fill/edge contrast reads the way it does in-app.
-        background: "var(--admin-map-workspace, #ECE8E0)",
-        border: "1px solid var(--admin-border, #E7E1D8)"
+        background: "var(--sp-map-mat, #ECE8E0)",
+        border: "1px solid var(--sp-border-subtle, #E7E1D8)"
       }}
     >
       {children}

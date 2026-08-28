@@ -34,8 +34,8 @@ export const FrontDeskDirectory = () => (
     className="reception-theme"
     style={{
       minHeight: 700,
-      background: "var(--r-bg, #EFECE6)",
-      color: "var(--r-text, #161616)"
+      background: "var(--sp-background, #EFECE6)",
+      color: "var(--sp-text-primary, #161616)"
     }}
   >
     <ReceptionScreen people={people} />

@@ -43,7 +43,7 @@ const Habitat = ({ label, height = 540, children }: { label: string; height?: nu
         position: "relative",
         width: 352,
         height,
-        background: "var(--admin-bg)",
+        background: "var(--sp-background)",
         border: "1px solid #E7E1D8",
         transform: "translateZ(0)",
         overflow: "hidden"

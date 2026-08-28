@@ -26,7 +26,7 @@ const CanvasCell = ({ label, minHeight = 72, children }: { label: string; minHei
         alignItems: "flex-start",
         width: 320,
         minHeight,
-        background: "var(--admin-bg)",
+        background: "var(--sp-background)",
         border: "1px solid #E7E1D8",
         padding: 16
       }}
@@ -43,14 +43,15 @@ const CanvasCell = ({ label, minHeight = 72, children }: { label: string; minHei
 // min-w-[230px], so a 320px strip pushed it out past the cell border.
 const ChromeCell = ({ label, menuRoom = 0, children }: { label: string; menuRoom?: number; children: ReactNode }) => (
   <div style={{ display: "grid", gap: 4 }}>
-    <div className="admin-theme" style={{ width: 400, border: "1px solid #E7E1D8", background: "var(--admin-bg)", paddingBottom: menuRoom }}>
+    <div className="admin-theme" style={{ width: 400, border: "1px solid #E7E1D8", background: "var(--sp-background)", paddingBottom: menuRoom }}>
       <div
+        className="sp-zone-chrome"
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           height: 40,
-          background: "var(--admin-chrome-bg)",
+          background: "var(--sp-background)",
           padding: "0 12px"
         }}
       >

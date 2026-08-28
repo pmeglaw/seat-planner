@@ -13,13 +13,13 @@ const strip: CSSProperties = {
   justifyContent: "flex-end",
   height: 40,
   paddingRight: 4,
-  background: "var(--admin-chrome-bg)"
+  background: "var(--sp-background)"
 };
 
 export const AdminIdentity = () => (
   <div className="admin-theme" style={{ width: 420 }}>
-    <div style={strip}>
-      <span style={{ fontSize: 11.5, color: "var(--admin-chrome-muted)", marginRight: 4 }}>Autosaved 2:14 PM</span>
+    <div className="sp-zone-chrome" style={strip}>
+      <span style={{ fontSize: 12, color: "var(--sp-text-helper)", marginRight: 4 }}>Autosaved 2:14 PM</span>
       <AccountMenu email="patrick@megeredchianlaw.com" roleLabel="Admin" />
     </div>
   </div>
@@ -34,10 +34,10 @@ export const OpenMenu = () => {
     <div
       className="admin-theme"
       ref={hostRef}
-      style={{ width: 420, paddingBottom: 160, background: "var(--admin-map-workspace)" }}
+      style={{ width: 420, paddingBottom: 160, background: "var(--sp-map-mat)" }}
     >
-      <div style={strip}>
-        <span style={{ fontSize: 11.5, color: "var(--admin-chrome-muted)", marginRight: 4 }}>Autosaved 2:14 PM</span>
+      <div className="sp-zone-chrome" style={strip}>
+        <span style={{ fontSize: 12, color: "var(--sp-text-helper)", marginRight: 4 }}>Autosaved 2:14 PM</span>
         <AccountMenu email="patrick@megeredchianlaw.com" roleLabel="Admin" />
       </div>
     </div>

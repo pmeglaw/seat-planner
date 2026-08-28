@@ -1,7 +1,7 @@
 import { DiscardDraftDialog } from "seat-planner";
 
 // Destructive whole-draft reset. Admin-theme wrapper: card, error panel and
-// danger CTA read --admin-* tokens. Explicit stage: the harness story root is
+// danger CTA read --sp-* role tokens. Explicit stage: the harness story root is
 // transformed, so the fixed overlay resolves against this wrapper — without a
 // real height the backdrop collapses and the card top clips above the shot.
 
