@@ -121,7 +121,7 @@ test("exit slack is jitter-sized — in-band overlap still de-collides", () => {
   // px tighter than the enter threshold still gets divergent rows.
   const pxPerNormX = 1000;
   const pxPerNormY = yScale(1000);
-  const pitchPx = TEXT_TIER_CODE_PILL_SIZE_PX.w - TEXT_TIER_EXIT_SLACK_PX + 1; // 47px — in-band
+  const pitchPx = TEXT_TIER_CODE_PILL_SIZE_PX.w - TEXT_TIER_EXIT_SLACK_PX + 1; // one footprint px inside the enter boundary — in-band
   const pair = [
     { id: "a", x: 0.5, y: 0.5 },
     { id: "b", x: 0.5 + pitchPx / pxPerNormX, y: 0.5 }

@@ -141,6 +141,8 @@ The type-floor arc (#444 / #446 / #447) and the publish guard (#443 / #445) are 
 
 Assessed (findings F1–F8 in `docs/design-system/READ-PATH-ASSESSMENT.md`, #450) and the framing ruled: **hover is a browse affordance, not the find path** (owner ruling 2026-08-25, recorded in the assessment doc). Search/palette answers "where does X sit"; the inspector is the sanctioned read surface. F1/F2/F5 closed cheap under that ruling. **F4 fixed** (double name announce — `accessibleSeatName` gated on `hasHoverDisclosure`, pinned in `seat-map-components`). **F8 fixed** (dead admin hover-wash state removed; contract #8 chip-preview recorded viewer-only per #432 — see §3). **F3 ruled 2026-08-25:** first-name ambiguity in the hover cue accepted (browse cue owes no disambiguation — inspector/palette carry full names; the always-append-initial fix would widen resting labels and reopen the PR-2 tier threshold), and the marker's native `title` tooltip removed (uncontrolled second disclosure channel; pinned no-`title=` in `status-label-source`). **F6 ruled + fixed 2026-08-25:** the inspector's three 11px read-path lines (status chip, seat-code · zone locator, contact field labels) raised to the 12px floor — words off the map canvas on the sanctioned read surface; the `type-floor-source` ledger ratchets SeatInspector 12 → 9 (remaining 9 are editor chrome, still Group 3). The follow-on palette assessment ran 2026-08-25 (`docs/design-system/PALETTE-ASSESSMENT.md`, findings P1–P6 against the live directory — now 101 people / 15 seated, not the 16-person placeholder): P1 keyboard chip-pin focus drop (**fixed** — handoff added, pinned in `focus-handoff-source`), P2 browse feed 85% disabled rows (contract #9 re-weigh, ruling), P3 palette type floor (ruling, extends F6's logic), P4 stale frame on resize (fix), P5 copy honesty (fixes). Esc layering, focus handoffs, counts, windowing, and both themes all measured sound.
 
+**2026-08-29:** the laptop premise under this ruling was corrected by the owner's hardware target (desktop, dual 27" FHD) — F1/F2/F3/F5 are reopened as redesign inputs; see the addendum in `docs/design-system/READ-PATH-ASSESSMENT.md`.
+
 ### Group-3 editor chrome — ruled + fixed 2026-08-26
 
 The last unruled tranche of the 2026-08-24 sub-12px inventory (the map-chrome files: AskPlannerDrawer, FilterPanel, FloorSelector, MapStatusBand, MapWashLayer, MapZoomControl, NamesVisibilityToggle, ResultsPanel, SeatInspector's editor chrome, SeatMap chrome, ViewerSeatFinder chrome, the StatusBadge primitive). Owner ruling: **all ~52 word sites raised to the 12px floor** — including the two `kbd` keycap shortcut hints (they render words) — and **nine mark analogs of the P3 palette exemptions stay exempt** (initials monograms ×3, the mono seat-code pill, numeric count badges ×3, the mono zoom readout ×2); one dead `text-[10px]` class on an icon-only button was deleted. The `type-floor-source` ledger now carries only marks for these files (AskPlannerDrawer 18→2, SeatInspector 9→4, SeatMap 10→3, ViewerSeatFinder 4→2, MapZoomControl 2 exempt; FilterPanel, FloorSelector, MapStatusBand, MapWashLayer, NamesVisibilityToggle, ResultsPanel, design-system all → 0 and removed). With this, **every word on every shipped surface sits at or above 12px** — the type-floor arc has no unruled group left.
@@ -166,7 +168,7 @@ The last unruled tranche of the 2026-08-24 sub-12px inventory (the map-chrome fi
 
 **The rule this keeps proving:** check a mark against the surface it lands on **when hovered**, not at rest.
 
-**Map geometry:** "CW05" @12px extrabold = 33.9px → 48px pill. Tightest prod pitch 40.4px at a 1376px fit frame (0.0294 normalized). Threshold ≈ 1634px rendered frame.
+**Map geometry:** "CW05" @12px extrabold = 33.9px → 48px pill. Tightest prod pitch 40.4px at a 1376px fit frame (0.0294 normalized). Threshold ≈ 1634px rendered frame. *(Superseded 2026-08-29, hardware-target correction: tier pill 42px (`px-0.5`; 33.9 + 4 padding + 2 borders = 39.9px, min-w governs), fresh-load enter ≈ 1428px frame, hysteresis exit ≈ 1361px — measured table in `NOTES.md`.)*
 
 ---
 
@@ -179,6 +181,8 @@ The map opens at **fit on every base, both surfaces**. Zoom does **not** persist
 Consequence: on laptop widths, hover disclosure and the inspector are the **primary read path**, not a fallback, and should be resourced accordingly.
 
 **Reframed by the read-path assessment, ruled 2026-08-25:** with 15 of 68 seats occupied, hover is a **browse** affordance — search/palette is the find path and the inspector is the read surface. "Primary read path" above stays true of the *surfaces* (marks at fit), but resourcing follows the ruling: palette and inspector first, hover disclosure stays a cue. See §5 and the assessment doc.
+
+**Corrected 2026-08-29:** the firm's hardware is desktop dual 27" FHD — fit IS above the text threshold there, names render at rest, and the laptop-premised rulings are reopened as redesign inputs; see the addendum in `docs/design-system/READ-PATH-ASSESSMENT.md`.
 
 ---
 
@@ -222,6 +226,8 @@ The design work is nearly out of runway. "Ready" means:
 - [x] **Hover disclosure and the inspector assessed + ruled** (2026-08-25) — hover is a browse affordance, inspector is the read surface, palette is the find path; F1–F8 all closed/fixed/recorded (F6 last, 2026-08-25). Only the palette assessment remains — see §5
 - [x] **SeatInspector label ruling** — candidate B, ruled + shipped 2026-08-25; recorded in §3, pinned in the marker-system source test
 - [ ] **A decision about who goes first and what you want to learn from them** — a product question, not a design one
+
+**2026-08-29:** the hover-ruling box above was laptop-premised — the owner's hardware target (desktop, dual 27" FHD) reopens F1/F2/F3/F5 as redesign inputs; addendum in `docs/design-system/READ-PATH-ASSESSMENT.md`.
 
 Everything in §9 can happen after people are using the app.
 

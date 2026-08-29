@@ -31,7 +31,7 @@ type SeatMarkerProps = {
   // PR-2 text tier (lib/seatCrowding textTierActive): at or above the
   // collision threshold canvas labels are TEXT and hold the 12px floor — the
   // hover-disclosure geometry made resting (code pills 12px on w-auto +
-  // min-w-[48px], inline names 12px at the widened hover width, office plate
+  // min-w-[42px], inline names 12px at the widened hover width, office plate
   // title 12px). Below the threshold (false, the default) everything renders
   // exactly as today: the labels function as marks.
   textTier?: boolean;
@@ -314,17 +314,22 @@ function SeatMarkerComponent({
             // 4-char code ("CW05" ≈ 27px in Plex extrabold at 9.5px). The
             // old px-2/pl-2.5 left 26px and ellipsized every CW label.
             // Text tier: the hover-disclosure width made resting — w-auto on a
-            // 48px min-width (= TEXT_TIER_CODE_PILL_SIZE_PX; the widest 4-char
-            // code at 12px extrabold ≈ 34px + padding + borders lands at
-            // ~48px, so min-w governs and every pill stays uniform).
+            // 42px min-width (= TEXT_TIER_CODE_PILL_SIZE_PX; the widest 4-char
+            // code at 12px extrabold measures 33.9px, + 2px padding each side
+            // + 2 borders = 39.9px, so min-w governs and every pill stays
+            // uniform). px-0.5 here, not the resting px-1.5: with the wider
+            // padding a 4-char code totals 43.9px and w-auto silently grows
+            // the pill past the footprint the tier gate and scorers model
+            // (2026-08-29 hardware-target correction, 48 → 42 — see
+            // lib/seatCrowding.ts).
             textTier
-              ? "h-[24px] min-h-[24px] w-auto min-w-[48px] rounded-full px-1.5 py-0 text-center"
+              ? "h-[24px] min-h-[24px] w-auto min-w-[42px] rounded-full px-0.5 py-0 text-center"
               : "h-[24px] min-h-[24px] w-[46px] rounded-full px-1.5 py-0 text-center",
             "group-hover:w-auto group-focus-visible:w-auto",
             hasHoverDisclosure
               ? "group-hover:min-w-[96px] group-hover:px-3 group-hover:text-left group-focus-visible:min-w-[96px] group-focus-visible:px-3 group-focus-visible:text-left"
               : textTier
-                ? "group-hover:min-w-[48px] group-focus-visible:min-w-[48px]"
+                ? "group-hover:min-w-[42px] group-focus-visible:min-w-[42px]"
                 : "group-hover:min-w-[46px] group-focus-visible:min-w-[46px]"
           ].filter(Boolean).join(" ");
 
