@@ -189,3 +189,16 @@ Worth settling before spending anything on F1/F2, because the answer changes wha
 | F8 | Admin zone hover-wash is dead code | low | **fixed** — dead state removed; contract #8 chip-preview is viewer-only per #432 |
 
 Nothing here blocks first users on its own. The §7 reframing is ruled (browse — see above). F1–F8 are all closed, fixed, or recorded; the only remaining item from this assessment is the palette assessment (`ViewerFindPalette` as the first-class find path).
+
+---
+
+## Addendum — 29 Aug 2026: the hardware premise was wrong for the firm
+
+This assessment was measured and ruled at a **1376px** fit frame on the premise that the firm uses laptops. The owner has since stated the actual hardware: **everyone uses a desktop with two 27" FHD monitors (Samsung S36GD, 1920×1080), Chrome maximized — no one uses a laptop.** Owner-observed ground truth on that hardware (2026-08-29): **at fit view the map shows both seat codes and occupant names** — the PR-2 text tier is on at rest.
+
+Consequences, recorded without rewriting the dated text above:
+
+- Everything above **stands as a laptop-width analysis** — the 1376px measurements are correct for what they measured; they just measured a frame the firm does not use. §"The finding that reframes §7" and the **2026-08-25 browse ruling** are laptop-width rulings.
+- On the target hardware, scanning the map is a legitimate first path; the palette is a shortcut, not the main road. Accordingly **F1, F2, F3, and F5 are REOPENED as inputs to the redesign** (`docs/redesign` branch) — *reopened, not reverted*: the 10px hover cue, the accepted graze, the removed marker `title`, and the touch-path framing were all priced under "hover is a browse affordance", and whether hover becomes a real disclosure again (and whether `title` returns) is a redesign question. Nothing shipped changes here.
+- The robustness follow-up landed the same day: the text-tier footprint narrowed 48 → 42px (`lib/seatCrowding.ts`, `SeatMarker.tsx`), moving the measured fresh-load enter threshold from ≈1634px to **≈1428px** rendered frame (hysteresis exit ≈1361px), so the tier holds across every realistic FHD window — maximized (≈1858px frame), bookmarks bar (≈1758px), 110% zoom (≈1670px) — while the 1376px laptop reference still rests at marks. Measured with this assessment's own harness method (real `ViewerSeatFinder`, compiled Tailwind, vendored Plex, real published geometry, synthetic names) at DPR 1; no seat coordinate or calibration constant moved.
+- Hardware target recorded in `CLAUDE.md` › Design system; redesign inputs updated in `PLAN.md`.

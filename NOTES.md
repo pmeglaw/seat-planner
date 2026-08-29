@@ -139,6 +139,28 @@ Rule for this branch: renames and twin deletion only — nothing here was acted 
   fact, not a mode fact — on a wide monitor the fit frame itself can cross
   the text threshold (≈1634px rendered for today's seat set), so wide
   displays get readable names at rest once the PR-2 tier lands.
+- **Correction (2026-08-29): the ruling above is superseded by the hardware
+  target.** The owner has stated the firm's actual machines — desktop, dual
+  27" FHD (1920×1080), Chrome maximized; no laptops — and observed that at
+  fit view the map shows codes *and* names (tier on at rest). "At working
+  density this tool cannot show readable names" was true of the 1376px
+  laptop frame it was measured on and false for the firm's hardware; the
+  nuance paragraph above (threshold is a rendered-width fact) was right and
+  stands. Recorded in `CLAUDE.md` › Design system; the derived read-path
+  rulings are reopened as redesign inputs (addendum in
+  `docs/design-system/READ-PATH-ASSESSMENT.md`). Same day, the text-tier
+  footprint narrowed 48 → 42px (`TEXT_TIER_CODE_PILL_SIZE_PX` /
+  `TEXT_TIER_CLEARANCE_PX`, marker `min-w-[42px]` + `px-0.5`) so the tier
+  holds on every realistic FHD window. New measured table (probe method from
+  the read-path assessment, DPR 1): fresh-load enter ≈**1428px** rendered
+  frame, hysteresis exit ≈1361px (the designed ~68px band); frames 1920×945
+  → 1858px · 1920×900 → 1758px · 1920×860 and 1745×860 → 1670px · 1376×768
+  → 1374px (tier off, laptop reference unchanged). Widest 4-char code
+  ("CW01" et al.) at 12px extrabold measures 33.89px → 39.9px in the 42px
+  pill, min-width governs, no truncation. Note the handoff §4b arithmetic
+  missed the pill's 2px of borders: at `px-1` a 4-char code totals 43.9px
+  and the w-auto pill would silently outgrow the modeled footprint — hence
+  `px-0.5`, not `px-1`.
 
 ## Read-path assessment (2026-08-25)
 

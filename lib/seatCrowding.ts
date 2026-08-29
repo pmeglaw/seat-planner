@@ -31,7 +31,7 @@ export const PILL_NUDGE_PX = 14;
 
 // PR-2 text tier (owner ruling 2026-08-24): canvas labels are MARKS below a
 // collision threshold and 12px TEXT at or above it. At the tier, code pills
-// rest at the hover-disclosure geometry — 12px type, w-auto with a 48px
+// rest at the hover-disclosure geometry — 12px type, w-auto with a 42px
 // min-width — and name/prominent tokens widen to the 124px hover width (~40px
 // tall at 12px type). These footprints exist so the tier gate and the nudge
 // scorers reason about the pills that are actually on screen when the tier is
@@ -40,15 +40,20 @@ export const PILL_NUDGE_PX = 14;
 // CODE_PILL_SIZE_PX above). The threshold itself is DERIVED at runtime from
 // the live scale — no hardcoded frame width, no per-base zoom table: add
 // seats that tighten pitch and the tier retreats by construction. (The
-// measured table — ≈1634px rendered frame for the 2026-08 seat set — lives in
-// NOTES.md as documentation only.)
-export const TEXT_TIER_CODE_PILL_SIZE_PX = { w: 48, h: 24 } as const;
+// measured table — ≈1430px rendered frame for the 2026-08 seat set — lives in
+// NOTES.md as documentation only.) The 42px footprint is the 2026-08-29
+// hardware-target correction (48 → 42): the firm's real machines are FHD
+// desktops whose fit frame is height-bound around 1670–1860px, and the old
+// ≈1634px enter threshold left only ~36px of margin at a 110%-zoom or
+// toolbar-shortened window — names at fit must hold for EVERY realistic FHD
+// window, not only a maximized one.
+export const TEXT_TIER_CODE_PILL_SIZE_PX = { w: 42, h: 24 } as const;
 export const TEXT_TIER_NAME_OBSTACLE_PX = { w: 124, h: 40 } as const;
-// The tier gate's collision clearance IS the footprint — two 48×24 boxes
-// centered on their seats overlap iff |dx| < 48 and |dy| < 24 — so the enter
-// threshold matches the measured table exactly (tightest pitch ≥ 48px; no
+// The tier gate's collision clearance IS the footprint — two 42×24 boxes
+// centered on their seats overlap iff |dx| < 42 and |dy| < 24 — so the enter
+// threshold matches the measured table exactly (tightest pitch ≥ 42px; no
 // extra breathing slack, that belongs to the resting-mark clearance only).
-export const TEXT_TIER_CLEARANCE_PX: CrowdingClearance = { x: 48, y: 24 };
+export const TEXT_TIER_CLEARANCE_PX: CrowdingClearance = { x: 42, y: 24 };
 // Deadband (hysteresis): fit mode keeps the rendered frame width CONTINUOUS
 // under window resize, so a single enter/exit boundary would flap the whole
 // marker layer while a user drags a window edge across it. The band only
