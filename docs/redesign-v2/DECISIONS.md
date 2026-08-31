@@ -6,6 +6,10 @@ Method: decisions derived from the `ibm-design-language` skill (design-system v1
 code and measured production data. Every ruling below traces to a named rule in that skill or to a
 measured number in §2/§3 — not to precedent.
 
+**Frame (owner, 2026-08-31):** the app adapts at **every viewport, 320px and up**, while **1920×1080
+remains the width the design is optimized for**. Design and measure at the hardware every user
+actually has; adapt downward from it.
+
 ---
 
 ## 1. Scope and exclusions
@@ -34,23 +38,43 @@ source for all four surfaces and the shell components; and three read-only produ
 
 ---
 
-## 2. The frame — a fixed 1920×1080 viewport
+## 2. The frame — 1920 primary, adaptive to 320
 
-Every user is at a desktop with two 27" 1920×1080 monitors, **browser on one monitor**. So the design
-target is one fixed 1920×1080 viewport. No spanning layout, no ultra-wide, no effort spent below
-desktop.
+### 2.1 The breakpoint contract
 
-**Usable height is not 1080.** Chrome maximized on Windows 11 spends roughly 92–126px on its own
-chrome (tab strip, toolbar, optional bookmarks bar, window border). Working viewport is **≈950–990px**.
-Everything below budgets against **950** so the tightest real configuration still works.
+The Carbon 2x Grid ladder is taken as given (`tokens.md`), with one addition at the top where the
+published grid ends:
 
-**Width against the Carbon grid.** The 2x Grid's largest breakpoint is `max` at **1584px** — 16 columns,
-24px margin, 32px gutter. A 1920 viewport is **336px past the end of the published grid**. That gap has
-to be ruled on, not drifted into; it is D0's second decision. (`tokens.md` does mention 1920×1080, but
-only as a *video artboard* with a 7.5px mini unit — that is not the UI grid and is not applied here.)
+| Breakpoint | Width | Columns | Margin | Gutter | Role here |
+|---|---|---|---|---|---|
+| sm | 320px | 4 | 0 | 32px | Reflow floor; phone |
+| md | 672px | 8 | 16px | 32px | Tablet portrait |
+| lg | 1056px | 16 | 16px | 32px | **The hinge — every layout switches here** |
+| xlg | 1312px | 16 | 16px | 32px | Small desktop |
+| max | 1584px | 16 | 24px | 32px | End of the published grid |
+| — | **1920px** | 16, fluid | 24px | 32px | **Primary target — ruled in D0** |
 
-**The height budget is genuinely tight, and it decides a component.** The floor plan is 1911×867 at its
-display cap (aspect 2.204:1). At full width it is **867px tall**:
+**`lg` (1056px) is the one hinge.** Every screen below changes layout at exactly that width and
+nowhere else. `ui-shell.md` argues this as performance, not aesthetics: inconsistency between screens
+costs re-orientation ("transitional volatility"), and users experience an inconsistent product as
+slower even when it isn't. One shared hinge is cheaper to learn than four bespoke ones.
+
+**320 is an obligation, not a nicety.** WCAG 1.4.10 Reflow is met at 320px-equivalent, which a user at
+400% browser zoom on their own 1920 monitor produces exactly. No horizontal scrolling, no loss of
+function, at any width down to 320.
+
+### 2.2 Above the grid: the 1920 primary target
+
+A 1920 viewport is **336px past `max`**. That gap is ruled in D0 rather than drifted into.
+(`tokens.md` does mention 1920×1080, but only as a *video artboard* with a 7.5px mini unit — that is
+not the UI grid and is not applied here.)
+
+### 2.3 The height budget at the primary target
+
+Usable height is not 1080. Chrome maximized on Windows 11 spends roughly 92–126px on its own chrome,
+leaving **≈950–990px**. Everything budgets against **950** so the tightest real configuration works.
+
+The floor plan is 1911×867 at its display cap (aspect 2.204:1):
 
 | Configuration | Map width | Map height | Fits in 950? |
 |---|---|---|---|
@@ -58,9 +82,26 @@ display cap (aspect 2.204:1). At full width it is **867px tall**:
 | 48px header + 40px bottom band | 1911 | 867 | 862 available — **no, 5px short** |
 | 48px header + 48px left rail | 1872 | 849 | 902 available — yes, 53px spare |
 
-**Reading:** at the hardware target the entire floor plan fits on screen at 100% with a header and
-nothing else. Adding a persistent bottom strip breaks that by single-digit pixels. This is the single
-most consequential number in the document and it constrains D1 and D2.
+**Reading:** at the primary target the entire floor plan fits on screen at 100% with a header and
+nothing else — a persistent bottom strip breaks that by single-digit pixels. This finding is
+**specific to 1920** and does not generalize down the ladder; §2.4 is where it stops holding.
+
+### 2.4 Where the plan stops fitting — and why `lg` is the hinge
+
+Plan height at each width, at the 2.204:1 aspect:
+
+| Viewport width | Plan height at full width | Legible as a floor plan? |
+|---|---|---|
+| 1920 | 867px (capped at 1911) | Yes — fits entirely |
+| 1584 (max) | 719px | Yes |
+| 1312 (xlg) | 595px | Yes |
+| **1056 (lg)** | **479px** | **Yes — the floor** |
+| 672 (md) | 305px | No — 68 markers unreadable |
+| 320 (sm) | **145px** | No — unusable |
+
+At 320 the plan is a 145px-tall strip. Sixty-eight seat markers in 145px is not a small map, it is a
+different product. **So the map cannot merely shrink; below `lg` the primary way to find a person
+changes** (D1). That is the single largest consequence of adapting to every viewport.
 
 ---
 
@@ -88,6 +129,9 @@ Three consequences the skill's "data first" step forces into the design:
 Also: the floor selector fronts a single real floor (a `FloorPlaceholder` component exists). It is
 chrome for a dimension the data does not have.
 
+**The people-to-seats ratio is what makes the small screen tractable.** A directory of 101 names is a
+perfectly good list at 320px. A floor plan is not. The narrow-width answer is already in the data.
+
 ---
 
 ## 4. The Hill
@@ -98,7 +142,7 @@ chrome for a dimension the data does not have.
 > publish it, **without ever wondering which version of the map they are looking at.**
 
 Every decision below is tested against that last clause — the draft/published split is this product's
-defining complexity, and `ui-shell.md` puts it in the header by name.
+defining complexity, and `ui-shell.md` puts it in the header by name. It survives to 320px.
 
 ---
 
@@ -114,59 +158,70 @@ Problem: "I need to move between the map, the directory and the admin tools with
 Primary task: orient — location, identity, and mode — then move.
 
 Options considered:
-  A. Header + left panel (256px expanded / 48px icon rail). What ships today: a 40px
-     bar plus a 48px fixed rail with overlay expansion.
-  B. Header only, with header links for the sections. ui-shell.md: "Header only — a
-     small number of main sections, no secondary navigation."
-  C. Header + right panel for system content, no left navigation.
+  A. Header + persistent left panel (256px expanded / 48px icon rail) at all widths.
+     What ships today: a 40px bar plus a 48px fixed rail with overlay expansion.
+  B. Header only at lg and up; header links collapse behind a hamburger into an
+     overlay panel below lg. ui-shell.md: "Header only — a small number of main
+     sections, no secondary navigation," plus its own narrow-width instruction that
+     header links "collapse into the left panel at narrow widths."
+  C. Header + right panel for system content, no left navigation at any width.
 
-Choice: B — header only, 48px, full width, fixed, on every surface including the
-  viewer map. The skill's own trigger for a left panel is "more than five secondary
-  items or users switch between them frequently." This product has FOUR sections
-  (Seat map, Management, Settings, Reception); an admin sees four, a viewer sees one.
-  Four sections do not earn a left panel, and at the 1920×1080 target the rail costs
-  48px of map width for navigation that fits in the header. It also removes the
-  second chrome: the viewer currently renders its own 36px header while shell routes
-  render a 40px bar — two implementations, neither at Carbon's 48px.
-Trade-off: no room for sub-menus that stay open, and no obvious home for a fifth
-  section. Adding one means either a header sub-menu or reopening this decision.
-  Deliberate: the fifth section does not exist and should not be designed for.
+Choice: B. The skill's trigger for a persistent left panel is "more than five
+  secondary items or users switch between them frequently." This product has FOUR
+  sections (Seat map, Management, Settings, Reception); an admin sees four, a viewer
+  sees one. Four sections do not earn a permanent rail, and at the 1920 primary
+  target that rail would cost 48px of map width for navigation that fits in the
+  header. Below lg the same four links have nowhere to sit inline, so they collapse
+  into a hamburger-triggered overlay panel — which is the skill's own narrow-width
+  behaviour, not an invention. It also removes today's second chrome: the viewer
+  renders its own 36px header while shell routes render a 40px bar — two
+  implementations, neither at Carbon's 48px.
+Trade-off: the navigation changes form at lg, so the shell is two things rather than
+  one, and there is no home for a fifth section at wide widths without a sub-menu.
+  Deliberate: the alternative is carrying a rail at 1920 that exists only to serve
+  320.
 Would change if: a fifth or sixth top-level section is committed to, or a section
-  grows secondary navigation of its own.
+  grows secondary navigation of its own — either reopens the persistent-panel option.
 ```
 
-**Second decision inside D0 — the 1920 grid.** Options: cap the live area at 1584 and centre it
-(168px dead margin each side); let the grid run fluid to 1920; or split by surface type.
+**Header height 48px, full width, fixed, at every breakpoint.** Non-negotiable in `ui-shell.md`, and
+it is also what makes the 44px touch-target floor reachable without the header growing on phones.
+
+**Second decision inside D0 — the grid across the full ladder.** Options: cap the live area at 1584
+everywhere and centre it (168px dead margin each side at 1920); let everything run fluid to 1920; or
+split by surface type.
 
 **Choice: split by surface type, and record it as a purposeful deviation.** The map stage is a
-*canvas* — every pixel is data, and capping it at 1584 would shrink the floor plan by 17% for no
-reason — so the map runs **fluid to the full 1920**, with the raster's own 1911px cap as the natural
-stop. Text-dense surfaces (reception detail, settings, management, login form column) hold a
-**1584px live area, centred**, on 16 columns with 24px margin and 32px gutter, because reading
-measure is a typographic constraint that does not improve with width. Trade-off: two width regimes in
-one product, which is exactly the inconsistency `ui-shell.md` warns costs re-orientation — accepted
-because the surfaces are visually distinct enough (canvas vs. document) that no user crosses between
-them expecting the same frame.
+*canvas* — every pixel is data, and capping it at 1584 would shrink the floor plan by 17% at the
+primary target for no reason — so the map runs **fluid at every breakpoint**, up to the raster's own
+1911px cap. Text-dense surfaces (reception detail, settings, management, the login form column) hold a
+**1584px live area, centred, above `max`**, and follow the standard column counts below it (16 / 8 / 4).
+Reading measure is a typographic constraint that does not improve with width. Trade-off: two width
+regimes in one product, the inconsistency `ui-shell.md` warns about — accepted because the surfaces
+are visually distinct enough (canvas vs. document) that no user crosses between them expecting the
+same frame.
 
 **Header anatomy** (fixed by `ui-shell.md`, not open to preference):
 
-| Slot | Content | Note |
+| Slot | `lg` and up | Below `lg` |
 |---|---|---|
-| Left | Firm wordmark → links to `/` | No hamburger — there is no collapsible panel |
-| Header links | Seat map · Management · Settings · Reception | Role-filtered; a viewer sees Reception only |
-| **Mode indicator** | **Draft / Published** | See below — persistent, every screen |
-| Utilities (flush right, no gaps, 48×48) | Theme · Help · Account | Product-specific first, then Help 4th-from-right, Account 2nd-from-right |
-| Switcher | **None** | Standalone product, not a platform — the system half stays nearly empty |
+| Left | Firm wordmark → links to `/` | Hamburger (48×48), then wordmark |
+| Header links | Seat map · Management · Settings · Reception, inline | Collapsed into the overlay panel, **above** any panel items |
+| **Mode indicator** | **"Draft — 3 unpublished changes" / "Published · <date>"** | Compressed, never dropped — see below |
+| Utilities (flush right, no gaps, 48×48) | Theme · Help · Account | Account only; Theme and Help move into the panel |
+| Switcher | **None** — standalone product, not a platform | None |
 
 **The mode indicator is a requirement, not a flourish.** `ui-shell.md` is explicit: "If a product has
 a draft/published split … the header is where that belongs, persistently, on every screen." This app's
-central invariant is that two-layer split. The header carries it on all four surfaces — on the viewer
-it reads *Published · <date>*, on admin *Draft — N unpublished changes*. This is the Hill's last
-clause made structural.
+central invariant is that two-layer split, and it is the Hill's last clause. It therefore **survives to
+320px** by degrading in three steps rather than disappearing: full sentence at `lg`+, `Draft · 3` at
+`md`, and a status mark plus count at `sm`. Dropping it on small screens would be dropping the one
+thing the product promises never to leave ambiguous.
 
 Two further shell rules taken as given: **no switcher, ever** (standalone), and **state goes in the
 URL** — view, filters, selection and mode — because `ui-shell.md` says persistence "is not part of
-the component and must be added during implementation."
+the component and must be added during implementation." The URL rule matters more now: it is what lets
+a person move between the narrow list view and the wide map view without losing their place.
 
 ---
 
@@ -178,32 +233,45 @@ Problem: "Where does Sarah sit?" and, less often, "who is sitting here?"
 Primary task: locate one named person on the floor plan.
 
 Options considered:
-  A. Map-first: the floor plan is the page; search floats over it.
-  B. Split: a persistent people list beside the plan, list-detail style.
-  C. Search-first: a search page that reveals the map once a person is chosen.
+  A. Map-first at every width: the floor plan is the page, search floats over it,
+     and the plan simply scales down.
+  B. Map-first at lg and up; directory-first below lg, with the plan reachable per
+     person.
+  C. Search-first at every width: a search page that reveals the map on demand.
 
-Choice: A — map-first, floor plan full-bleed and fluid to 1920, search as a single
-  floating Find affordance anchored top-left. The measured numbers decide it: at
-  1920×1080 the ENTIRE plan fits on screen at 100% under a 48px header (§2), so the
-  spatial answer is available without pan, zoom or scroll. That is the whole value of
-  the surface and no other layout preserves it. B spends 300–400px of that width on a
-  list of 101 names that is only ever used to pick one. C hides the map behind an
-  interaction, which status-and-dataviz.md rules out directly: "never hide something
-  important behind an interaction."
-Trade-off: browsing "who is in Litigation?" is weaker than a list would make it —
-  it becomes a filter that highlights markers rather than a readable roster. Accepted:
-  the firm has 14 departments over 68 seats; the roster question is what Reception is
-  for.
-Would change if: usage shows browse-by-department outweighing find-by-name, or the
-  floor plan grows past what fits at 1920 (a second floor, or seats past ~120).
+Choice: B — one layout switch at the lg hinge.
+  At lg and up the plan is the page, fluid to 1920, with search as a single floating
+  Find affordance. The measured numbers decide it: at 1920 the ENTIRE plan fits on
+  screen at 100% under a 48px header (§2.3), so the spatial answer needs no pan, zoom
+  or scroll. That is the whole value of the surface.
+  Below lg that is simply untrue — §2.4: 305px tall at md, 145px at sm, with 68
+  markers on it. A is therefore rejected on measurement, not taste: it ships an
+  unreadable map and calls it responsive. C is rejected at wide widths by
+  status-and-dataviz.md — "never hide something important behind an interaction" —
+  but that objection has no force at 320, where the map is not readable to begin
+  with. So the surface inverts at the hinge: the 101-person directory becomes the
+  page, and choosing a person opens their seat in the plan, zoomed to that seat with
+  its neighbours legible.
+Trade-off: two different primary layouts for one route, which is more to build and
+  more to learn than one. And browsing "who is in Litigation?" is weaker than a list
+  would make it at wide widths — it is a filter that highlights markers rather than a
+  readable roster. Accepted on both counts: the alternative to the first is a map
+  nobody can read, and the roster question is what Reception is for.
+Would change if: the plan gains a second floor or grows past ~120 seats (the wide
+  layout stops fitting and the hinge has to move up), or usage shows browse-by-
+  department outweighing find-by-name.
 ```
+
+**Pan and zoom change job at the hinge.** At 1920 the whole plan is visible, so zoom is an *inspection*
+convenience. Below `lg` — and at high browser zoom — it is the only way to read the plan at all, so it
+becomes load-bearing equipment and needs a real keyboard path, not just pointer gestures.
 
 **States, designed before styling** (`senior-workflow.md` step 5). The measured data makes one of
 these primary rather than exceptional:
 
 | State | Design |
 |---|---|
-| **Person has no seat** | **Primary path, not an edge case** — 86 of 101 employees are unseated. The result names the person, states plainly that they have no assigned seat, and offers their department and extension instead of a dead end. |
+| **Person has no seat** | **Primary path, not an edge case** — 86 of 101 employees are unseated. Names the person, states plainly that they have no assigned seat, and offers department and extension instead of a dead end. Identical wording in both layouts. |
 | Nothing published | Educational empty state over the plan, naming the next step. |
 | No search results | Distinct from the above; keeps the query visible and reports **zero** explicitly — `SKILL.md`: "Always publish the number of results, zero included." |
 | Loading | Skeleton over the plan area; the raster is preloaded from `/login` already. |
@@ -212,15 +280,14 @@ these primary rather than exceptional:
 **Seat status vocabulary.** Four enum states exist; **two have data**. `status-and-dataviz.md` is
 unambiguous where a spatial map forces one shape: "If a spatial map genuinely forces a constant shape
 (every seat is a square), compensate with a distinct symbol or texture per state and say so
-explicitly." So: seat markers keep one constant footprint (they are positions on a plan and cannot
-change shape without lying about geometry), and each state gets a **distinct interior symbol**, not a
-colour swap. Two live states — assigned and available — is well inside the five-indicator budget, and
-`reserved` / `unavailable` get symbols specified but not designed into the primary read until data
-exists.
+explicitly." So: markers keep one constant footprint (they are positions on a plan and cannot change
+shape without lying about geometry), and each state gets a **distinct interior symbol**, not a colour
+swap. Two live states is well inside the five-indicator budget; `reserved` / `unavailable` get symbols
+specified but not designed into the primary read until data exists.
 
 **Deliberate deviation, recorded:** the archetype table in `senior-workflow.md` has no "spatial
-canvas" entry. This screen is a hybrid — *search results* semantics over a fixed-coordinate canvas.
-Recorded here because the skill requires deviations be written down rather than absorbed.
+canvas" entry. This screen is a hybrid — *search results* semantics over a fixed-coordinate canvas —
+and below `lg` it resolves into the plain archetype the table does have.
 
 ---
 
@@ -233,27 +300,38 @@ Problem: "Someone moved desks. I need to change the map, check it looks right, a
 Primary task: assign or move one person to one seat.
 
 Options considered:
-  A. Overlay inspector floating over the plan (what ships today).
-  B. Slide-in side panel that pushes the map and does not trap focus.
+  A. Overlay inspector floating over the plan at all widths (what ships today).
+  B. Slide-in 480px side panel that pushes the map at lg and up; slide-over overlay
+     below lg.
   C. Modal per seat edit.
 
-Choice: B — a 480px slide-in side panel, pushing the map rather than covering it.
-  composition.md: "Side panel — medium complexity where the user needs the page
-  behind it," and the slide-in/slide-over split is explicit: slide-in "pushes page
-  content and does not trap focus" because it is part of the page. Editing a seat is
-  exactly that task — you assign someone while looking at who sits around them, so
-  occluding the neighbours defeats the check. The 1920 frame is what makes this
-  affordable: 1920 − 480 = 1440px of map, still wider than the 1056 `lg` breakpoint,
-  and the plan re-fits rather than being hidden. C is ruled out by the same file:
-  never more than four fields, and never a modal that might need a confirmation on
-  top of it.
-Trade-off: the map reflows when the panel opens, so marker positions shift under the
-  cursor mid-task. Mitigation is a decision for the build, not this document — but
-  the alternative (an overlay that hides the neighbours you are checking) is worse
-  for the primary task.
+Choice: B. composition.md: "Side panel — medium complexity where the user needs the
+  page behind it," and the slide-in/slide-over split is explicit — slide-in "pushes
+  page content and does not trap focus" because it is part of the page; slide-over
+  overlays and traps focus because it is a dialog. Editing a seat is the first case:
+  you assign someone while looking at who sits around them, so occluding the
+  neighbours defeats the check. The 1920 primary target is what makes the push
+  affordable: 1920 − 480 = 1440px of map, still wider than lg, and the plan re-fits
+  rather than hiding. Below lg it stops being affordable — 1056 − 480 = 576px of map,
+  which is under the md column count — so the panel becomes a slide-over overlay, and
+  a full-width sheet at sm. C is ruled out by the same file: never more than four
+  fields, and never a modal that might need a confirmation on top of it.
+Trade-off: the panel changes accessibility semantics at the hinge — focus is not
+  trapped at lg and up, and is trapped below it. That is a real inconsistency and it
+  is deliberate: the alternative is either trapping focus on a page that is still
+  usable behind the panel, or leaving focus loose in an overlay that covers
+  everything. Also, the map reflows when the panel opens at lg+, so markers shift
+  under the cursor mid-task.
 Would change if: the reflow measurably disrupts placement accuracy in use, in which
-  case the panel becomes an overlay and loses the push.
+  case the panel becomes slide-over everywhere and loses the push.
 ```
+
+**Drag placement requires `lg` and up.** Precise pointer placement against a plan needs the plan
+readable (§2.4) and a pointer that is not a fingertip. Below the hinge, seat assignment stays fully
+available but becomes **list-based** — choose a seat, choose a person — with no drag and no
+coordinate editing. This is a deliberate capability difference, not a degraded gesture: a
+drag-to-place interaction on a 145px-tall plan would produce wrong coordinates in live production
+data. See §8 Q3 — I have ruled this, but it is the ruling most worth your disagreement.
 
 **Publish is the product's most consequential action and gets ruled separately.** Publishing replaces
 what every viewer sees, and per `SKILL.md`'s destructive table it is at least **moderate** — "can't be
@@ -263,13 +341,14 @@ a small confirmation: it diffs seats *and* employee-detail changes and can run l
 **Choice: the publish review is a wide tearsheet, not a modal.** `SKILL.md` forbids the alternative in
 one line — "never put large or complex data in a dialog — that's a page" — and `composition.md` gives
 the tearsheet to "complex or interactive, or two or more distinct steps," with no top-right close, so
-leaving is a decision made through Cancel. Trade-off: heavier than a dialog for a two-seat change.
-Accepted, because the failure mode being designed against is an admin publishing a diff they did not
-read.
+leaving is a decision made through Cancel. Below `lg` the tearsheet goes full-screen, which is the
+standard narrow-width behaviour and keeps the diff readable rather than cramming it into a sheet.
+Trade-off: heavier than a dialog for a two-seat change. Accepted, because the failure mode being
+designed against is an admin publishing a diff they did not read.
 
 **Modes and unsaved work.** The header's Draft indicator (D0) carries the count of unpublished
-changes on every screen, so an admin who wanders to Management and back cannot lose track of pending
-edits. Per `ui-shell.md`, if state will be lost, say so before it is.
+changes on every screen and every width, so an admin who wanders to Management and back cannot lose
+track of pending edits. Per `ui-shell.md`, if state will be lost, say so before it is.
 
 **States:** empty draft; loading skeleton; per-action inline notification in the region being worked
 in (not a toast — `SKILL.md` makes inline "the default" for task-generated feedback); an explicit
@@ -285,27 +364,30 @@ Problem: "There's a call for Sarah. What's her extension, and is she at her desk
 Primary task: find one person and read their extension out loud, fast.
 
 Options considered:
-  A. List-detail split — results list beside a detail pane.
-  B. Table of all 101 people with inline extension column.
+  A. List-detail split at lg and up; single-column list with drill-down below lg.
+  B. Table of all 101 people with an inline extension column.
   C. Search-only: one field, one answer, no persistent list.
 
-Choice: A — list-detail. senior-workflow.md gives this archetype to "triage; users
-  move between items quickly," which is precisely a switchboard. 101 people is
-  list-cardinality, not table-cardinality: the receptionist compares nothing across
-  rows, they retrieve one value. B would put 101 rows and six columns on screen to
-  answer a one-value question. C loses the caller's place when a name is misheard
-  and has to be re-tried.
+Choice: A. senior-workflow.md gives list-detail to "triage; users move between items
+  quickly," which is precisely a switchboard. 101 people is list-cardinality, not
+  table-cardinality: the receptionist compares nothing across rows, they retrieve one
+  value. B would put 101 rows and six columns on screen to answer a one-value
+  question, and it is the layout that survives narrowing worst. C loses the caller's
+  place when a name is misheard and has to be re-tried.
+  Below lg the two panes stack into list → detail with an explicit back path, because
+  a 372px detail pane beside a list does not fit at md and cannot exist at sm.
 Trade-off: the detail pane is idle whenever nobody is selected — real screen area
-  spent on an empty state. Accepted: it is the readout the whole screen exists to
-  produce, and a pane that appears and disappears would move the number the
-  receptionist is reading aloud.
+  spent on an empty state at wide widths. And below lg the readout replaces the list
+  rather than sitting beside it, so the receptionist loses the queue while reading a
+  number aloud. Accepted: the pane is the readout the whole screen exists to produce,
+  and at 320 there is no arrangement that keeps both.
 Would change if: the directory outgrows roughly 300 people, at which point faceted
   filtering matters more than a persistent detail pane.
 ```
 
 **Density is resolved by zone, not by screen** (`senior-workflow.md`): the results list is **dense** —
 it is scanned — while the detail pane is **calm**, because it is read aloud under time pressure. That
-split is the reason not to apply one spacing rhythm across the surface.
+split holds at every width and is the reason not to apply one spacing rhythm across the surface.
 
 **Rules taken directly:** the result count is always published including zero; search is *active*
 (small data set, filters in place as you type, no results page) per `SKILL.md`'s search table; the
@@ -326,25 +408,32 @@ Problem: "Let me in."
 Primary task: sign in with email and password.
 
 Options considered:
-  A. Split screen — brand panel beside the form column.
-  B. Centred single card on a plain ground.
+  A. Split screen at lg and up — brand panel beside the form column — stacking to a
+     compact branded header above the form below lg.
+  B. Centred single card on a plain ground at every width.
   C. Full-bleed floor-plan background with the form floating over it.
 
-Choice: A — split screen, and it is the ONE expressive moment in the product.
+Choice: A — and it is the ONE expressive moment in the product.
   ui-shell.md draws the hard line here: "Scope: products only … the shell is the
   chrome of a tool a user is signed into." So the 48px header from D0 does not appear
-  on this screen, and login is therefore the only surface not bound to the productive
-  frame. composition.md allows "one full-bleed, container-free moment per flow at
-  most — that's an expressive moment, and it should be deliberate." This is that
-  moment, spent deliberately, once. B works and is duller; C fails because the map
-  behind auth is the product's private data and using it as decoration blurs what is
-  and isn't behind the login.
+  on this screen at any width, and login is the only surface not bound to the
+  productive frame. composition.md allows "one full-bleed, container-free moment per
+  flow at most — that's an expressive moment, and it should be deliberate." This is
+  that moment, spent once. Below lg the brand panel collapses to a compact header
+  (mark, wordmark, title) and the decorative graphic and status furniture drop, which
+  keeps the form column the whole screen where the screen is small. B works and is
+  duller; C fails because the map behind auth is the product's private data and using
+  it as decoration blurs what is and isn't behind the login.
 Trade-off: the split makes login the only screen not on the product's grid regime,
-  which is a consistency cost paid knowingly for the one screen every user sees
-  before they are a user.
+  a consistency cost paid knowingly for the one screen every user sees before they
+  are a user. The expressive half is also the half that disappears on a phone, so the
+  brand moment is exactly absent for the smallest screens.
 Would change if: sign-in frequency rises to daily-plus, at which point the expressive
   panel is friction on a high-frequency path and B wins on frequency × visibility.
 ```
+
+**The form column is 368px and does not grow with the viewport.** Single column, per
+`senior-workflow.md`'s form default — one reading path.
 
 **Security-shaped constraints carried forward unchanged** — these are existing product invariants, not
 style, and the redesign does not get to move them: no account-existence oracle (one identical error
@@ -363,10 +452,12 @@ session); invalid credentials; magic-link sent; reset requested; and a submittin
 
 | # | Deviation | Why |
 |---|---|---|
-| 1 | Two width regimes — map fluid to 1920, documents capped at 1584 | The grid ends at 1584; a canvas loses data when capped, a text column does not gain from width (D0) |
-| 2 | Spatial-canvas archetype not in the archetype table | The map is search-results semantics over fixed coordinates (D1) |
+| 1 | Two width regimes — map fluid at all widths, documents capped at 1584 above `max` | The published grid ends at 1584; a canvas loses data when capped, a text column does not gain from width (D0) |
+| 2 | Spatial-canvas archetype not in the archetype table | The map is search-results semantics over fixed coordinates; below `lg` it resolves to a plain list archetype (D1) |
 | 3 | Constant marker shape with per-state symbols | Explicitly sanctioned by `status-and-dataviz.md` for spatial maps, but must be stated (D1) |
-| 4 | Login off the product grid | The one sanctioned expressive moment (D4) |
+| 4 | Side panel changes focus semantics at the `lg` hinge | Slide-in (no trap) above, slide-over (trap) below — both are `composition.md` behaviours, but switching between them is not (D2) |
+| 5 | Admin drag placement is `lg`-and-up only | Coordinate accuracy against a 145px plan is not achievable; assignment stays available by list (D2) |
+| 6 | Login off the product grid | The one sanctioned expressive moment (D4) |
 
 ---
 
@@ -377,10 +468,14 @@ Stated plainly so nothing here reads as more settled than it is:
 - **No contrast checking has been run.** `scripts/check_contrast.py --preset all` is a build-phase
   gate and no colour values are chosen in this document. No ratio is asserted anywhere above.
 - **No components built, no CSS written, no tokens defined.** Per your instruction to stop here.
-- **The tight height budget (§2) is arithmetic, not a measurement.** It should be confirmed against
-  your actual Chrome window before the bottom-strip question is settled.
-- **Both themes** and the keyboard path (skip link, landmarks, arrow-key grid on the map, Escape)
-  are design obligations recorded here and verified at build.
+- **The height arithmetic (§2.3) and the plan-height table (§2.4) are arithmetic, not measurements.**
+  Both should be confirmed against your actual Chrome window before the bottom-strip question and the
+  `lg` hinge are locked.
+- **Every breakpoint must be verified, not just the primary one.** `senior-workflow.md` pre-release
+  pass 5: "Responsive — each breakpoint, not just the one you designed at." That now means five
+  widths plus a 400%-zoom reflow check, per surface.
+- **Both themes** and the keyboard path (skip link, landmarks, arrow-key grid on the map, Escape) are
+  design obligations recorded here and verified at build.
 
 ---
 
@@ -389,19 +484,23 @@ Stated plainly so nothing here reads as more settled than it is:
 1. **The visual target.** `shell-reference.html` was excluded because it only exists on the
    off-limits branch, so nothing above is checked against it. Do you want to re-supply it outside
    that branch, or is the skill-derived direction the target now?
-2. **The bottom strip.** §2 shows a 40px persistent bottom band and a full-height floor plan cannot
-   coexist at 1920×1080 — it misses by about 5px. Which wins: the plan fitting entirely on screen, or
-   a persistent status strip?
-3. **The floor selector.** There is one floor and no `floor` column. Keep the control as a promise of
+2. **The bottom strip.** §2.3 shows a 40px persistent bottom band and a full-height floor plan cannot
+   coexist at 1920×1080 — it misses by about 5px. Which wins: the plan fitting entirely on screen at
+   the primary target, or a persistent status strip?
+3. **Admin editing below `lg`.** I ruled that drag placement is wide-width-only and narrow widths get
+   list-based assignment (D2). The alternative is no admin editing at all below the hinge — simpler,
+   and arguably honest given nobody at the firm is on a phone. Which?
+4. **The floor selector.** There is one floor and no `floor` column. Keep the control as a promise of
    future floors, or remove it until the data exists?
-4. **`reserved` and `unavailable`.** Zero rows for both. Design the full four-state vocabulary now, or
+5. **`reserved` and `unavailable`.** Zero rows for both. Design the full four-state vocabulary now, or
    ship the two states that exist and add the others when they are used?
 
 ---
 
 ## 9. Recommended next step
 
-Answer Q1–Q4, then I write the shell specification (D0) alone and build it as one reviewable slice —
-header, mode indicator, navigation, and the two width regimes — before any screen work. The shell is
-the dependency for all four screens; getting it wrong is expensive in a way that getting one screen
-wrong is not.
+Answer Q1–Q5, then I write the shell specification (D0) alone and build it as one reviewable slice —
+header, mode indicator, the `lg` navigation collapse, and the two width regimes — before any screen
+work. The shell is the dependency for all four screens, and the `lg` hinge it establishes is what
+every other decision here is measured against; getting it wrong is expensive in a way that getting one
+screen wrong is not.
