@@ -107,6 +107,11 @@ changes** (D1). That is the single largest consequence of adapting to every view
 
 ## 3. Measured data (production, read-only, 2026-08-31)
 
+> ⚠ **SNAPSHOT — RE-MEASURE PENDING.** The owner is assigning employees to seats before the redesign
+> work begins (ruling, 2026-08-31). These numbers will move, and two of the three consequences below
+> invert when they do. Re-run the three read-only queries after the assignment, then revise this
+> section and the rulings flagged *(provisional)*. **Do not build against these numbers.**
+
 | Fact | Value |
 |---|---|
 | Published seats / draft seats | 68 / 68 |
@@ -119,12 +124,17 @@ changes** (D1). That is the single largest consequence of adapting to every view
 
 Three consequences the skill's "data first" step forces into the design:
 
-1. **The map is mostly empty.** 15 of 68 seats are occupied. A design that treats the map as a dense
-   grid of people is designing for data that does not exist.
-2. **Most people are not on the map.** 101 employees, 15 seated. The commonest outcome of "find
-   Sarah" is *Sarah has no seat* — so that is a primary state, not an edge case (D1).
+1. *(provisional)* **The map is mostly empty.** 15 of 68 seats are occupied. A design that treats the
+   map as a dense grid of people is designing for data that does not exist. **This inverts on
+   re-measure** — a filled map is up to 68 markers, 4.5× today's density, and marker legibility at the
+   `lg` floor (479px tall, §2.4) becomes a first-class problem rather than a hypothetical one.
+2. *(provisional)* **Most people are not on the map.** 101 employees, 15 seated. The commonest outcome
+   of "find Sarah" is *Sarah has no seat* — so that is a primary state, not an edge case (D1). **On a
+   filled map this drops to roughly a third of lookups** — still common, no longer dominant, and no
+   longer the state D1 optimizes for.
 3. **Two of four seat states are unused.** `reserved` and `unavailable` have zero rows. The live
-   status vocabulary is two states, not four (D1).
+   status vocabulary is two states, not four (D1). *Unaffected by the assignment pass — filling seats
+   moves rows between `available` and `assigned` only.*
 
 Also: the floor selector fronts a single real floor (a `FloorPlaceholder` component exists). It is
 chrome for a dimension the data does not have.
@@ -271,7 +281,7 @@ these primary rather than exceptional:
 
 | State | Design |
 |---|---|
-| **Person has no seat** | **Primary path, not an edge case** — 86 of 101 employees are unseated. Names the person, states plainly that they have no assigned seat, and offers department and extension instead of a dead end. Identical wording in both layouts. |
+| **Person has no seat** | *(provisional — see §3)* Currently the **primary path**: 86 of 101 employees are unseated. Names the person, states plainly that they have no assigned seat, and offers department and extension instead of a dead end. Identical wording in both layouts. After the assignment pass this becomes an ordinary state rather than the optimized one — the design stays, its prominence is re-decided. |
 | Nothing published | Educational empty state over the plan, naming the next step. |
 | No search results | Distinct from the above; keeps the query visible and reports **zero** explicitly — `SKILL.md`: "Always publish the number of results, zero included." |
 | Loading | Skeleton over the plan area; the raster is preloaded from `/login` already. |
@@ -482,6 +492,8 @@ Stated plainly so nothing here reads as more settled than it is:
   widths plus a 400%-zoom reflow check, per surface.
 - **Both themes** and the keyboard path (skip link, landmarks, arrow-key grid on the map, Escape) are
   design obligations recorded here and verified at build.
+- **§3 is a snapshot awaiting re-measure** (owner is assigning seats first). Marker density on a
+  filled map is the specific thing that cannot be designed until those numbers exist.
 
 ---
 
