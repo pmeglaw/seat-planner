@@ -301,37 +301,44 @@ Primary task: assign or move one person to one seat.
 
 Options considered:
   A. Overlay inspector floating over the plan at all widths (what ships today).
-  B. Slide-in 480px side panel that pushes the map at lg and up; slide-over overlay
-     below lg.
+  B. Slide-in 480px side panel that pushes the map, at lg and up only — editing does
+     not exist below the hinge.
   C. Modal per seat edit.
 
 Choice: B. composition.md: "Side panel — medium complexity where the user needs the
   page behind it," and the slide-in/slide-over split is explicit — slide-in "pushes
-  page content and does not trap focus" because it is part of the page; slide-over
-  overlays and traps focus because it is a dialog. Editing a seat is the first case:
-  you assign someone while looking at who sits around them, so occluding the
-  neighbours defeats the check. The 1920 primary target is what makes the push
-  affordable: 1920 − 480 = 1440px of map, still wider than lg, and the plan re-fits
-  rather than hiding. Below lg it stops being affordable — 1056 − 480 = 576px of map,
-  which is under the md column count — so the panel becomes a slide-over overlay, and
-  a full-width sheet at sm. C is ruled out by the same file: never more than four
+  page content and does not trap focus" because it is part of the page. Editing a
+  seat is exactly that: you assign someone while looking at who sits around them, so
+  occluding the neighbours defeats the check. The 1920 primary target is what makes
+  the push affordable: 1920 − 480 = 1440px of map, still wider than lg, and the plan
+  re-fits rather than hiding. C is ruled out by the same file: never more than four
   fields, and never a modal that might need a confirmation on top of it.
-Trade-off: the panel changes accessibility semantics at the hinge — focus is not
-  trapped at lg and up, and is trapped below it. That is a real inconsistency and it
-  is deliberate: the alternative is either trapping focus on a page that is still
-  usable behind the panel, or leaving focus loose in an overlay that covers
-  everything. Also, the map reflows when the panel opens at lg+, so markers shift
-  under the cursor mid-task.
+  Because editing is confined to lg and up (see below), the panel has ONE behaviour
+  at every width it exists at — always slide-in, never focus-trapping.
+Trade-off: the map reflows when the panel opens, so markers shift under the cursor
+  mid-task. Deliberate: the alternative — an overlay that hides the neighbours you
+  are checking — is worse for the primary task.
 Would change if: the reflow measurably disrupts placement accuracy in use, in which
-  case the panel becomes slide-over everywhere and loses the push.
+  case the panel becomes an overlay and loses the push.
 ```
 
-**Drag placement requires `lg` and up.** Precise pointer placement against a plan needs the plan
-readable (§2.4) and a pointer that is not a fingertip. Below the hinge, seat assignment stays fully
-available but becomes **list-based** — choose a seat, choose a person — with no drag and no
-coordinate editing. This is a deliberate capability difference, not a degraded gesture: a
-drag-to-place interaction on a 145px-tall plan would produce wrong coordinates in live production
-data. See §8 Q3 — I have ruled this, but it is the ruling most worth your disagreement.
+**Admin editing is `lg` and up. Below the hinge, `/admin` is read-only** (owner ruling, 2026-08-31:
+seat assignment is done up front, on a desktop, before the redesign work begins). Narrow widths render
+the draft map in the same read-only drill-down pattern D1 gives the viewer below `lg`, with the header
+Draft indicator intact and a plain statement that editing needs a wider window.
+
+This is the simplifying decision of the whole document, and it earns its place three times over:
+
+- **It removes a capability that could corrupt production data.** Drag-to-place against a 145px-tall
+  plan (§2.4) produces wrong coordinates in a live table.
+- **It removes the focus-semantics switch.** The panel is slide-in at every width it exists at, so
+  there is no width at which focus trapping appears — a recorded deviation that no longer needs
+  recording.
+- **It matches who actually does the work.** Every admin is at a 1920×1080 desktop; the narrow-width
+  editor would have been built for nobody.
+
+Read-only is the correct state here rather than disabled, per `SKILL.md`'s table: the content still
+needs to be read, and disabled components "are not read by screen readers and do not pass contrast."
 
 **Publish is the product's most consequential action and gets ruled separately.** Publishing replaces
 what every viewer sees, and per `SKILL.md`'s destructive table it is at least **moderate** — "can't be
@@ -341,10 +348,10 @@ a small confirmation: it diffs seats *and* employee-detail changes and can run l
 **Choice: the publish review is a wide tearsheet, not a modal.** `SKILL.md` forbids the alternative in
 one line — "never put large or complex data in a dialog — that's a page" — and `composition.md` gives
 the tearsheet to "complex or interactive, or two or more distinct steps," with no top-right close, so
-leaving is a decision made through Cancel. Below `lg` the tearsheet goes full-screen, which is the
-standard narrow-width behaviour and keeps the diff readable rather than cramming it into a sheet.
-Trade-off: heavier than a dialog for a two-seat change. Accepted, because the failure mode being
-designed against is an admin publishing a diff they did not read.
+leaving is a decision made through Cancel. Publishing is an editing action, so it inherits the
+`lg`-and-up confinement above and needs no narrow-width variant. Trade-off: heavier than a dialog for
+a two-seat change. Accepted, because the failure mode being designed against is an admin publishing a
+diff they did not read.
 
 **Modes and unsaved work.** The header's Draft indicator (D0) carries the count of unpublished
 changes on every screen and every width, so an admin who wanders to Management and back cannot lose
@@ -455,9 +462,8 @@ session); invalid credentials; magic-link sent; reset requested; and a submittin
 | 1 | Two width regimes — map fluid at all widths, documents capped at 1584 above `max` | The published grid ends at 1584; a canvas loses data when capped, a text column does not gain from width (D0) |
 | 2 | Spatial-canvas archetype not in the archetype table | The map is search-results semantics over fixed coordinates; below `lg` it resolves to a plain list archetype (D1) |
 | 3 | Constant marker shape with per-state symbols | Explicitly sanctioned by `status-and-dataviz.md` for spatial maps, but must be stated (D1) |
-| 4 | Side panel changes focus semantics at the `lg` hinge | Slide-in (no trap) above, slide-over (trap) below — both are `composition.md` behaviours, but switching between them is not (D2) |
-| 5 | Admin drag placement is `lg`-and-up only | Coordinate accuracy against a 145px plan is not achievable; assignment stays available by list (D2) |
-| 6 | Login off the product grid | The one sanctioned expressive moment (D4) |
+| 4 | Admin editing is `lg`-and-up; `/admin` is read-only below the hinge | Coordinate accuracy against a 145px plan is not achievable, and assignment is done up front on a desktop (D2). Read-only, not disabled, per `SKILL.md` |
+| 5 | Login off the product grid | The one sanctioned expressive moment (D4) |
 
 ---
 
@@ -487,19 +493,19 @@ Stated plainly so nothing here reads as more settled than it is:
 2. **The bottom strip.** §2.3 shows a 40px persistent bottom band and a full-height floor plan cannot
    coexist at 1920×1080 — it misses by about 5px. Which wins: the plan fitting entirely on screen at
    the primary target, or a persistent status strip?
-3. **Admin editing below `lg`.** I ruled that drag placement is wide-width-only and narrow widths get
-   list-based assignment (D2). The alternative is no admin editing at all below the hinge — simpler,
-   and arguably honest given nobody at the firm is on a phone. Which?
-4. **The floor selector.** There is one floor and no `floor` column. Keep the control as a promise of
+3. **The floor selector.** There is one floor and no `floor` column. Keep the control as a promise of
    future floors, or remove it until the data exists?
-5. **`reserved` and `unavailable`.** Zero rows for both. Design the full four-state vocabulary now, or
+4. **`reserved` and `unavailable`.** Zero rows for both. Design the full four-state vocabulary now, or
    ship the two states that exist and add the others when they are used?
+
+*Resolved 2026-08-31 — admin editing below `lg`: you assign employees to seats up front, on a desktop,
+so no narrow-width editing is designed. Recorded in D2 and deviation 4.*
 
 ---
 
 ## 9. Recommended next step
 
-Answer Q1–Q5, then I write the shell specification (D0) alone and build it as one reviewable slice —
+Answer Q1–Q4, then I write the shell specification (D0) alone and build it as one reviewable slice —
 header, mode indicator, the `lg` navigation collapse, and the two width regimes — before any screen
 work. The shell is the dependency for all four screens, and the `lg` hinge it establishes is what
 every other decision here is measured against; getting it wrong is expensive in a way that getting one
