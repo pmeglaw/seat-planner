@@ -34,7 +34,8 @@ shell decision (D0).
 
 **Sources actually read:** the skill's `SKILL.md`, `references/ui-shell.md`, `references/senior-workflow.md`,
 `references/composition.md`, `references/status-and-dataviz.md`, `references/tokens.md`; the shipped
-source for all four surfaces and the shell components; and three read-only production queries.
+source for all four surfaces and the shell components; and read-only production queries, re-run in
+full on 2026-08-31 after the owner's assignment pass (§3).
 
 ---
 
@@ -58,6 +59,11 @@ published grid ends:
 nowhere else. `ui-shell.md` argues this as performance, not aesthetics: inconsistency between screens
 costs re-orientation ("transitional volatility"), and users experience an inconsistent product as
 slower even when it isn't. One shared hinge is cheaper to learn than four bespoke ones.
+
+**One measured exception, recorded in §3.2: the *label* layer has no hinge.** Marker pitch falls
+continuously from 56.1px at 1920 to 9.4px at 320, and the name layer fails at the **primary target**
+rather than at any breakpoint. That is a density budget carried at every width, not a second layout
+switch — `lg` remains the one layout hinge.
 
 **320 is an obligation, not a nicety.** WCAG 1.4.10 Reflow is met at 320px-equivalent, which a user at
 400% browser zoom on their own 1920 monitor produces exactly. No horizontal scrolling, no loss of
@@ -90,57 +96,152 @@ nothing else — a persistent bottom strip breaks that by single-digit pixels. T
 
 Plan height at each width, at the 2.204:1 aspect:
 
-| Viewport width | Plan height at full width | Legible as a floor plan? |
-|---|---|---|
-| 1920 | 867px (capped at 1911) | Yes — fits entirely |
-| 1584 (max) | 719px | Yes |
-| 1312 (xlg) | 595px | Yes |
-| **1056 (lg)** | **479px** | **Yes — the floor** |
-| 672 (md) | 305px | No — 68 markers unreadable |
-| 320 (sm) | **145px** | No — unusable |
+| Viewport width | Plan height | Min marker pitch | Markers <44px apart | Markers <24px apart | Largest marker w/ 4px gap | Verdict |
+|---|---|---|---|---|---|---|
+| 1920 | 867px (capped at 1911) | 56.1px | 0 of 68 | 0 of 68 | 52.1px | Yes — fits entirely, and the only rung with room for a 44px target plus its gap |
+| 1584 (max) | 719px | 46.5px | 0 of 68 | 0 of 68 | 42.5px | Yes — the lowest rung at which no two markers sit closer than 44px |
+| 1312 (xlg) | 595px | 38.5px | 32 of 68 | 0 of 68 | 34.5px | Plan readable; markers are pointer-scale — 44px targets would overlap |
+| **1056 (lg)** | **479px** | **31.0px** | **50 of 68** | **0 of 68** | **27.0px** | **The floor — clears the 24px SC 2.5.8 target floor, not the 44px comfort figure** |
+| 672 (md) | 305px | 19.7px | 60 of 68 | **38 of 68** | 15.7px | No — conformance fails, not merely legibility |
+| 320 (sm) | **145px** | 9.4px | 68 of 68 | **61 of 68** | 5.4px | No — unusable |
+
+The three right-hand columns are measured, not judged — same method as §3.2: the live coordinates run
+through the repo's own calibration transform.
 
 At 320 the plan is a 145px-tall strip. Sixty-eight seat markers in 145px is not a small map, it is a
 different product. **So the map cannot merely shrink; below `lg` the primary way to find a person
 changes** (D1). That is the single largest consequence of adapting to every viewport.
 
+**And the hinge is geometric, not judged.** The first version of this table rated the bottom two rows
+"unreadable" and "unusable" from the raster alone. Counting markers whose nearest neighbour sits
+closer than **24px** — WCAG 2.5.8's minimum target size, and the same threshold its spacing exception
+tests — gives **0 of 68 at `lg` and above, 38 of 68 at `md`, 61 of 68 at `sm`**. A tappable marker
+layer is conformant at `lg` and up and geometrically impossible at `md` and below **at any marker
+size**, because the seats themselves sit closer together than a conformant target. That is why the
+surface inverts at the hinge instead of shrinking through it.
+
+**The 44px figure does not survive the ladder, and D0 should not assume it does.** It is reachable
+only at 1920 (12.1px of spare pitch) and marginally at `max` (2.5px). At `xlg` 32 of 68 markers would
+overlap at 44px, and at `lg` 50 of 68 would. Markers are pointer-scale below `max`; the 44px floor D0
+invokes belongs to the header's own controls, which are not bound by seat geometry.
+
 ---
 
-## 3. Measured data (production, read-only, 2026-08-31)
+## 3. Measured data (production, read-only)
 
-> ⚠ **SNAPSHOT — RE-MEASURE PENDING.** The owner is assigning employees to seats before the redesign
-> work begins (ruling, 2026-08-31). These numbers will move, and two of the three consequences below
-> invert when they do. Re-run the three read-only queries after the assignment, then revise this
-> section and the rulings flagged *(provisional)*. **Do not build against these numbers.**
+**Re-measured 2026-08-31**, after the owner's assignment pass and the publish that followed it
+(`publish_events` row 42, 21:35 UTC). The morning snapshot this replaces is kept in the right-hand
+column so the movement is visible. **These are the numbers to build against.**
 
-| Fact | Value |
-|---|---|
-| Published seats / draft seats | 68 / 68 |
-| Seats assigned | **15** |
-| Seats available | **53** |
-| Seats reserved / unavailable | **0 / 0** |
-| Active employees | **101** |
-| Departments / zones | 14 / 8 |
-| Floors | **1** — `seats` has no `floor` column |
+| Fact | Now | Snapshot it replaces |
+|---|---|---|
+| Published seats / draft seats | 68 / 68 — **identical**, nothing unpublished | 68 / 68 |
+| Seats assigned | **56** | 15 |
+| Seats available | **12** | 53 |
+| Seats reserved / unavailable | **0 / 0** | 0 / 0 |
+| Active employees | **99** (101 rows, 2 inactive) | 101 |
+| People seated / unseated | **56 / 43** | 15 / 86 |
+| `department_options` rows | **27**, of which **12 match nobody** | 14 |
+| `zone_options` rows | 8, all 8 in use | 8 |
+| `published_employees` drift | **none** — 99 rows, exact match to live | not recorded |
+| Custom seats (`is_custom`) | 8 of 68 | not recorded |
+| Floors | **1** — `seats` has no `floor` column | 1 |
 
-Three consequences the skill's "data first" step forces into the design:
+The floor is **82% occupied**. The twelve empty seats are scattered across six of the eight zones
+(North Pod 5, Center Desks 3, then one each in Northeast Pod, East Pod, Center West and Southeast
+Office); West Pod and South Offices are full.
 
-1. *(provisional)* **The map is mostly empty.** 15 of 68 seats are occupied. A design that treats the
-   map as a dense grid of people is designing for data that does not exist. **This inverts on
-   re-measure** — a filled map is up to 68 markers, 4.5× today's density, and marker legibility at the
-   `lg` floor (479px tall, §2.4) becomes a first-class problem rather than a hypothetical one.
-2. *(provisional)* **Most people are not on the map.** 101 employees, 15 seated. The commonest outcome
-   of "find Sarah" is *Sarah has no seat* — so that is a primary state, not an edge case (D1). **On a
-   filled map this drops to roughly a third of lookups** — still common, no longer dominant, and no
-   longer the state D1 optimizes for.
-3. **Two of four seat states are unused.** `reserved` and `unavailable` have zero rows. The live
-   status vocabulary is two states, not four (D1). *Unaffected by the assignment pass — filling seats
-   moves rows between `available` and `assigned` only.*
+### 3.1 The three consequences, re-decided
 
-Also: the floor selector fronts a single real floor (a `FloorPlaceholder` component exists). It is
-chrome for a dimension the data does not have.
+1. **Inverted, exactly as predicted.** "The map is mostly empty" is dead. 56 of 68 seats are
+   occupied, so the map *is* a dense field of people and a design may treat it as one. What the old
+   entry got wrong is where the cost lands: it expected marker legibility to become a problem at the
+   `lg` floor. It becomes a problem at **1920** — §3.2.
+2. **Weakened, not inverted — and it moved less than predicted.** 43 of 99 people have no seat: 43%,
+   not the "roughly a third" the old entry forecast. But the shape of the fact changed more than the
+   size did. The unseated are **not scattered, they are whole departments**: Litigation (20 people),
+   Medical Records (7), Front Office (3) and WIL (1) have **zero** seated members, which is 31 of the
+   43. So "person has no seat" is not an individual edge case being smoothed over — for a third of
+   the firm it is the normal, permanent answer, and it is predictable from their department. D1 must
+   still design the state properly; it should stop describing it as the *optimized* path and start
+   describing it as a **team-shaped** one.
+3. **Stands unchanged.** `reserved` and `unavailable` still have zero rows. The live status
+   vocabulary is two states, not four (D1). Filling seats moved rows between `available` and
+   `assigned` only, as the old entry said it would.
 
-**The people-to-seats ratio is what makes the small screen tractable.** A directory of 101 names is a
-perfectly good list at 320px. A floor plan is not. The narrow-width answer is already in the data.
+### 3.2 Marker density — the measurement this section was waiting for
+
+The old section named this as the one thing that could not be designed until these numbers existed.
+Method: the live published coordinates run through the repo's own `lib/mapLayoutTransform.ts`
+calibration, then scaled to each viewport at the plan's 1911×867 aspect — **visual** space, not saved
+space. Nearest-neighbour distance between markers:
+
+| Viewport | Min pitch | Median | Largest marker keeping a ≥4px gap | Markers under a 44px pitch |
+|---|---|---|---|---|
+| 1920 (plan capped at 1911) | **56.1px** | 66.2px | **52.1px** | 0 of 68 |
+| 1584 (max) | 46.5px | 54.9px | 42.5px | 0 of 68 |
+| 1312 (xlg) | 38.5px | 45.5px | 34.5px | 32 of 68 |
+| **1056 (lg)** | **31.0px** | 36.6px | **27.0px** | 50 of 68 |
+| 672 (md) | 19.7px | 23.3px | 15.7px | 60 of 68 |
+| 320 (sm) | 9.4px | 11.1px | 5.4px | 68 of 68 |
+
+**A 44px touch target is reachable only at 1920.** It survives at `max` by 2.5px and is impossible at
+`xlg` and below. The tightest pair on the floor is NE02/NE03 at 56.1px; Northeast Pod, East Pod and
+West Pod set the floor in that order. So marker size is not a free variable below the primary
+target — it is dictated by the pods.
+
+**The name layer is the casualty, and it fails at the primary target.** Taking the shipped resting
+geometry from `lib/seatCrowding.ts` (`TEXT_TIER_NAME_OBSTACLE_PX`, 124×40) over the 56 assigned seats:
+
+| Viewport | Name-pill collisions (124×40, 56 markers) | Code-pill collisions (46×24, 68 markers) |
+|---|---|---|
+| 1920 | **24 pairs — 39 of 56 markers (70%)** | 0 |
+| 1584 (max) | 29 pairs — 44 markers | 0 |
+| 1312 (xlg) | 38 pairs — 49 markers | 7 pairs — 14 markers |
+| 1056 (lg) | 87 pairs — 52 markers (93%) | 14 pairs — 28 markers |
+
+The same geometry on the **old 15-seat data** produced **zero** collisions at 1920, `max` and `xlg`.
+The name tier was collision-free on the snapshot and is not on the real floor.
+
+**The existing nudge cannot rescue it.** `PILL_NUDGE_PX` is 14 — ±14px vertical, so 28px of
+separation at best, against a 40px pill. Pod-mates share a row, so the overlap is almost purely
+horizontal: C01/C02 `dx=100 dy=1`, CW01/CW02 `dx=74 dy=0`, E02/E03 `dx=59 dy=0`. **All 24 collisions
+at 1920 are geometrically beyond its reach** (97% at `max` and `xlg`, 57% at `lg`). The code pill is
+the mirror image: nothing collides at 1920 or `max`, and every collision at `xlg` and `lg` is inside
+the nudge's reach.
+
+**Reading: a persistent name-per-marker layer is not available at any width on a filled floor.** The
+marker carries its code; the name is disclosed on hover, focus or selection, or read from a list
+beside the plan. That is a ruling the data forces rather than a preference, and it belongs in D1.
+
+*Method caveat: the collision counts are centred-rectangle overlaps of the resting footprints. They
+model the nudge's maximum reach, not the solver's actual placement search, so they bound the problem
+rather than describe the pixels the app currently paints.*
+
+### 3.3 Two facts the old snapshot did not record
+
+4. **The department filter is bimodal, and that is a design problem, not a data problem.**
+   `department_options` holds 27 rows, but 12 of them are already retired (`active = false`) — the
+   near-duplicates (`CM`, `Exec`, `IT & Admin`, `Records`), the umbrella groupings, and one **zone**
+   name that ended up in the department list (`West Pod`). The viewer filters on `active` when it
+   reads the table (`app/page.tsx:58`) and renders the result as a `<select>`, not a chip row, so the
+   dead options never reach a user. **The option list is clean.** What is not clean is what the live
+   options *do* over the map: of the 15 active departments, only **11 have anyone seated**. Choosing
+   Litigation — the second-largest department in the firm at 20 people — returns **zero seats** on a
+   map that is 82% full; Medical Records (7), Front Office (3) and WIL (1) do the same. At the other
+   end, Case Management holds **38 of the 56 occupied seats (68%)**, so the commonest selection
+   highlights two-thirds of the floor. A control whose outcomes are "nothing" or "most of the map"
+   discriminates poorly in both directions — §8, Q5.
+5. **The directory is complete and uniform.** Every active employee has a department, a position, an
+   extension and an email; **none** has an avatar. Names run to 22 characters, mean 13.5; the longest
+   department name in use is 17. Seat labels are at most 4 characters. One seat carries a note.
+
+Also unchanged: the floor selector fronts a single real floor (a `FloorPlaceholder` component
+exists). It is chrome for a dimension the data does not have.
+
+**The people-to-seats ratio still makes the small screen tractable.** A directory of 99 names is a
+perfectly good list at 320px. A floor plan is not. That argument never depended on how many people
+were seated, and it survives the re-measure intact.
 
 ---
 
@@ -259,7 +360,7 @@ Choice: B — one layout switch at the lg hinge.
   unreadable map and calls it responsive. C is rejected at wide widths by
   status-and-dataviz.md — "never hide something important behind an interaction" —
   but that objection has no force at 320, where the map is not readable to begin
-  with. So the surface inverts at the hinge: the 101-person directory becomes the
+  with. So the surface inverts at the hinge: the 99-person directory becomes the
   page, and choosing a person opens their seat in the plan, zoomed to that seat with
   its neighbours legible.
 Trade-off: two different primary layouts for one route, which is more to build and
@@ -272,6 +373,18 @@ Would change if: the plan gains a second floor or grows past ~120 seats (the wid
   department outweighing find-by-name.
 ```
 
+**The resting label is the seat code; names are a disclosure tier.** §3.2 measures why: the shipped
+124×40 name pill collides in 24 pairs across 39 of the 56 assigned markers at the 1920 primary
+target, and all 24 are beyond the ±14px reach of `seatCrowding`'s nudge because pod-mates share a
+row. The widest name pill that collides with nothing at 1920 is **59.5px** — against a 22-character
+longest name that is not a tuning gap, it is 2.1×. The 46×24 code pill, by contrast, collides zero
+times at 1920 and `max`, and every collision at `xlg` (7 pairs) and `lg` (14 pairs) sits inside the
+nudge's reach. The longest seat label is 4 characters, so the code pill is correctly sized for what it
+actually carries. Two riders make this a trade rather than a loss: **the searched or selected person's
+name always draws, and draws above its neighbours**, so the one name the task asked for never loses a
+z-fight; and a show-all-names overview stays available but **reports its own incompleteness** — at
+1920 it can place 39 of 56 names cleanly, 44 with a shorter 92×34 pill, and the rest need zoom.
+
 **Pan and zoom change job at the hinge.** At 1920 the whole plan is visible, so zoom is an *inspection*
 convenience. Below `lg` — and at high browser zoom — it is the only way to read the plan at all, so it
 becomes load-bearing equipment and needs a real keyboard path, not just pointer gestures.
@@ -281,7 +394,7 @@ these primary rather than exceptional:
 
 | State | Design |
 |---|---|
-| **Person has no seat** | *(provisional — see §3)* Currently the **primary path**: 86 of 101 employees are unseated. Names the person, states plainly that they have no assigned seat, and offers department and extension instead of a dead end. Identical wording in both layouts. After the assignment pass this becomes an ordinary state rather than the optimized one — the design stays, its prominence is re-decided. |
+| **Person has no seat** | Re-measured (§3.1): **43 of 99** employees are unseated — no longer the majority path, still 43% of lookups. And it is **team-shaped**, not scattered: Litigation, Medical Records, Front Office and WIL have zero seated members, which is 31 of the 43. So the state names the person, says plainly that they have no assigned seat, offers department and extension instead of a dead end, and — where their whole department is unseated — says that rather than implying an individual omission. Identical wording in both layouts. |
 | Nothing published | Educational empty state over the plan, naming the next step. |
 | No search results | Distinct from the above; keeps the query visible and reports **zero** explicitly — `SKILL.md`: "Always publish the number of results, zero included." |
 | Loading | Skeleton over the plan area; the raster is preloaded from `/login` already. |
@@ -332,6 +445,18 @@ Would change if: the reflow measurably disrupts placement accuracy in use, in wh
   case the panel becomes an overlay and loses the push.
 ```
 
+**The push has a measured cost the ruling should carry.** "Still wider than `lg`" is a width test
+standing in for a pitch test, and `lg` is not a bar that pitch passes — at 1056 the minimum pitch is
+31.0px. Shrinking the map region from its 1911px cap to 1440px scales pitch by the same ratio: the
+tightest pair (NE02/NE03) goes from 56.1px to **42.3px**, and the largest marker keeping a 4px gap
+from 52.1px to **38.3px** — a 26% smaller drag target, appearing exactly while the admin is doing
+pixel-accurate placement. It stays well clear of the 24px SC 2.5.8 floor, and admin editing is
+pointer-only by deviation 4, so this is a comfort cost rather than a conformance one. Two ways to
+spend less of it if the reflow proves disruptive: narrow the panel — the measured content is a
+22-character name, a 17-character department, a 4-character seat label, and notes used on 1 of 68
+seats, so 480px is not demanded by the data — or hold the marker hit-area at its unpushed size while
+the panel is open.
+
 **Admin editing is `lg` and up. Below the hinge, `/admin` is read-only** (owner ruling, 2026-08-31:
 seat assignment is done up front, on a desktop, before the redesign work begins). Narrow widths render
 the draft map in the same read-only drill-down pattern D1 gives the viewer below `lg`, with the header
@@ -340,7 +465,10 @@ Draft indicator intact and a plain statement that editing needs a wider window.
 This is the simplifying decision of the whole document, and it earns its place three times over:
 
 - **It removes a capability that could corrupt production data.** Drag-to-place against a 145px-tall
-  plan (§2.4) produces wrong coordinates in a live table.
+  plan (§2.4) produces wrong coordinates in a live table — now quantified: median marker separation
+  at 320 is 11.1px with **61 of 68** markers within 24px of a neighbour, and at `md` 23.3px median
+  with 38 within 24px. A drag at that scale cannot resolve which seat it is targeting. (Seat geometry,
+  invariant to assignment — 68 markers before the re-measure and 68 after.)
 - **It removes the focus-semantics switch.** The panel is slide-in at every width it exists at, so
   there is no width at which focus trapping appears — a recorded deviation that no longer needs
   recording.
@@ -382,13 +510,13 @@ Primary task: find one person and read their extension out loud, fast.
 
 Options considered:
   A. List-detail split at lg and up; single-column list with drill-down below lg.
-  B. Table of all 101 people with an inline extension column.
+  B. Table of all 99 people with an inline extension column.
   C. Search-only: one field, one answer, no persistent list.
 
 Choice: A. senior-workflow.md gives list-detail to "triage; users move between items
-  quickly," which is precisely a switchboard. 101 people is list-cardinality, not
+  quickly," which is precisely a switchboard. 99 people is list-cardinality, not
   table-cardinality: the receptionist compares nothing across rows, they retrieve one
-  value. B would put 101 rows and six columns on screen to answer a one-value
+  value. B would put 99 rows and six columns on screen to answer a one-value
   question, and it is the layout that survives narrowing worst. C loses the caller's
   place when a name is misheard and has to be re-tried.
   Below lg the two panes stack into list → detail with an explicit back path, because
@@ -412,7 +540,7 @@ search field is **not labelled**; recents are a secondary view, never the primar
 (`ui-shell.md` on "most recent": "loses logical grouping; better as a secondary view").
 
 **States:** first-run before any search (the list shows the full directory rather than an empty pane);
-zero results with the query preserved; a person with **no seat** (86 of 101 — the detail pane must
+zero results with the query preserved; a person with **no seat** (43 of 99 — the detail pane must
 read correctly with the seat line absent, not blank); and a person with no extension.
 
 ---
@@ -474,6 +602,7 @@ session); invalid credentials; magic-link sent; reset requested; and a submittin
 | 3 | Constant marker shape with per-state symbols | Explicitly sanctioned by `status-and-dataviz.md` for spatial maps, but must be stated (D1) |
 | 4 | Admin editing is `lg`-and-up; `/admin` is read-only below the hinge | Coordinate accuracy against a 145px plan is not achievable, and assignment is done up front on a desktop (D2). Read-only, not disabled, per `SKILL.md` |
 | 5 | Login off the product grid | The one sanctioned expressive moment (D4) |
+| 6 | Names disclosed on hover/focus/selection rather than drawn on every marker | `status-and-dataviz.md` says never hide something important behind an interaction. Geometry leaves no alternative: the widest collision-free name pill at the 1920 primary target is 59.5px against a 124px shipped pill and a 22-character longest name (§3.2). The searched name always draws, so the *answer* is never behind an interaction — only the names nobody asked for (D1) |
 
 ---
 
@@ -484,16 +613,21 @@ Stated plainly so nothing here reads as more settled than it is:
 - **No contrast checking has been run.** `scripts/check_contrast.py --preset all` is a build-phase
   gate and no colour values are chosen in this document. No ratio is asserted anywhere above.
 - **No components built, no CSS written, no tokens defined.** Per your instruction to stop here.
-- **The height arithmetic (§2.3) and the plan-height table (§2.4) are arithmetic, not measurements.**
-  Both should be confirmed against your actual Chrome window before the bottom-strip question and the
-  `lg` hinge are locked.
+- **The height arithmetic (§2.3) is arithmetic, not measurement.** It should be confirmed against
+  your actual Chrome window before the bottom-strip question (Q2) is locked. §2.4's plan heights are
+  arithmetic too, but its three right-hand columns are now measured from the live coordinates, so the
+  `lg` hinge no longer rests on judgement.
 - **Every breakpoint must be verified, not just the primary one.** `senior-workflow.md` pre-release
   pass 5: "Responsive — each breakpoint, not just the one you designed at." That now means five
   widths plus a 400%-zoom reflow check, per surface.
 - **Both themes** and the keyboard path (skip link, landmarks, arrow-key grid on the map, Escape) are
   design obligations recorded here and verified at build.
-- **§3 is a snapshot awaiting re-measure** (owner is assigning seats first). Marker density on a
-  filled map is the specific thing that cannot be designed until those numbers exist.
+- **§3 has been re-measured** (2026-08-31, after the assignment pass) and is no longer provisional.
+  The marker-density numbers in §3.2 are computed from the live coordinates through the repo's own
+  calibration transform, but they are still *geometry*, not pixels: they bound the collision problem
+  rather than describe what `SeatMarker` currently paints, because they model the nudge's maximum
+  reach and not its placement search. Confirm against the running app before the marker ruling is
+  locked.
 
 ---
 
@@ -505,10 +639,27 @@ Stated plainly so nothing here reads as more settled than it is:
 2. **The bottom strip.** §2.3 shows a 40px persistent bottom band and a full-height floor plan cannot
    coexist at 1920×1080 — it misses by about 5px. Which wins: the plan fitting entirely on screen at
    the primary target, or a persistent status strip?
-3. **The floor selector.** There is one floor and no `floor` column. Keep the control as a promise of
-   future floors, or remove it until the data exists?
-4. **`reserved` and `unavailable`.** Zero rows for both. Design the full four-state vocabulary now, or
-   ship the two states that exist and add the others when they are used?
+3. **The floor selector.** Unmoved by the assignment pass: still one floor, still no `floor` column
+   on `seats`, while the seat numbers around it moved hard (assigned 15 → 56, available 53 → 12).
+   This one was never waiting on data — the control fronts a dimension the schema does not have, and
+   only a migration adds it. Keep it as a promise of future floors, or remove it until the data
+   exists?
+4. **`reserved` and `unavailable`.** Still zero rows in **both layers** after the assignment pass —
+   the confirmation §3.1's third consequence predicted. Filling the map moved 41 rows from
+   `available` to `assigned` and produced no other state, so the two-state vocabulary now rests on
+   settled data rather than on an empty map. Design the full four-state vocabulary now, or ship the
+   two states that exist and add the others when they are used?
+5. **The department filter.** §3.3 measures it as bimodal: 4 of the 15 live departments return zero
+   seats (Litigation 20 people, Medical Records 7, Front Office 3, WIL 1), while Case Management
+   alone returns 38 of the 56 occupied seats. The dead options are already retired, so this is not a
+   clean-up job. Do you want the filter to keep offering departments that cannot appear on the map
+   — answering honestly with "Litigation: 20 people, none seated" — or to offer only the 11
+   departments that have someone on the floor?
+6. **Names on markers.** §3.2 measures that a persistent name-per-marker layer collides on 70% of
+   markers at the 1920 primary target on the filled floor, and that the existing ±14px nudge cannot
+   resolve any of it. The marker therefore carries its code, with the name disclosed on hover, focus
+   or selection. Confirm that trade — it is the one place where filling the floor took a capability
+   away rather than adding one.
 
 *Resolved 2026-08-31 — admin editing below `lg`: you assign employees to seats up front, on a desktop,
 so no narrow-width editing is designed. Recorded in D2 and deviation 4.*
@@ -517,8 +668,19 @@ so no narrow-width editing is designed. Recorded in D2 and deviation 4.*
 
 ## 9. Recommended next step
 
-Answer Q1–Q4, then I write the shell specification (D0) alone and build it as one reviewable slice —
-header, mode indicator, the `lg` navigation collapse, and the two width regimes — before any screen
-work. The shell is the dependency for all four screens, and the `lg` hinge it establishes is what
-every other decision here is measured against; getting it wrong is expensive in a way that getting one
-screen wrong is not.
+The re-measure is done and §3 is current, so Q3 and Q4 are decidable on settled data rather than
+deferred (Q1 and Q2 were never data-blocked). Answer Q1–Q6, then build in **two** slices rather than
+one:
+
+1. **The shell specification (D0), alone and first** — header, mode indicator, the `lg` navigation
+   collapse, the two width regimes. Its priority is unchanged: it is the dependency for all four
+   screens, and the `lg` hinge it establishes is what every other decision here is measured against.
+   Getting it wrong is expensive in a way that getting one screen wrong is not.
+2. **The marker and label layer (D1), immediately after.** The re-measure turned this from a
+   hypothetical about the `lg` floor into a measured failure at the **primary** target: 24 name-pill
+   collisions across 39 of 56 assigned markers at 1920, none of them rescuable by the shipped ±14px
+   nudge. Most of the brief is already fixed by measurement — seat code at rest, names on
+   hover/focus/selection, marker diameter ≤52px at 1920 and ≤27px at `lg`, the searched name always
+   drawn on top.
+
+Nothing else starts until those two land.
