@@ -13,6 +13,16 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # @types/node major tracks the Node runtime major, which is pinned to
+      # 24.x (package.json engines, CI node-version, Vercel follows engines).
+      # Types ahead of the runtime typecheck clean against APIs that do not
+      # exist at run time, and nothing in CI catches it -- DefinitelyTyped
+      # carries no per-Node-version annotation, so the failure is silent until
+      # the call executes. #94 shipped that bump, #468 pinned it back, #482
+      # re-proposed it. Bump this deliberately when engines moves off 24.x.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     labels:
       - dependencies
 
