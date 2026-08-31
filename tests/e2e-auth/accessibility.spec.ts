@@ -1,6 +1,12 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { expectNoAxeViolations, formatAxeViolations, waitForColorSettle, WCAG_A_AA_TAGS } from "../e2e/axe-helpers";
+import {
+  expectNoAxeViolations,
+  formatAxeViolations,
+  waitForColorSettle,
+  waitForOneShotAnimations,
+  WCAG_A_AA_TAGS
+} from "../e2e/axe-helpers";
 import { retryUntilVisible, SEEDED_ADMIN_EMAIL, SEEDED_VIEWER_EMAIL, signIn } from "./auth-helpers";
 
 // Runtime accessibility assertions for the ADMIN surfaces.
@@ -39,6 +45,7 @@ test.describe("admin surfaces have no WCAG A/AA violations", () => {
     // scanning before rows paint would scan an empty tbody.
     await expect(page.locator("[data-directory-row]").first()).toBeVisible();
 
+    await waitForOneShotAnimations(page);
     const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
     expect(formatAxeViolations(violations)).toEqual([]);
   });
@@ -58,6 +65,7 @@ test.describe("admin surfaces have no WCAG A/AA violations", () => {
     await expect(dialog).toBeVisible();
     await expect(page.getByRole("heading", { name: "Add employee" })).toBeVisible();
 
+    await waitForOneShotAnimations(page);
     const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
     expect(formatAxeViolations(violations)).toEqual([]);
   });
@@ -111,6 +119,7 @@ test.describe("admin surfaces have no WCAG A/AA violations", () => {
     await page.goto("/admin/settings");
     await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
 
+    await waitForOneShotAnimations(page);
     const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
     expect(formatAxeViolations(violations)).toEqual([]);
   });
@@ -235,6 +244,7 @@ test.describe("admin map editor has no WCAG A/AA violations", () => {
     // Inline liveness, mirroring the Management guard below: prove the scan
     // examined a real page and that the one structurally invisible defect
     // class (contrast) was actually evaluated here.
+    await waitForOneShotAnimations(page);
     const results = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
     expect(formatAxeViolations(results.violations)).toEqual([]);
     expect(results.passes.length).toBeGreaterThan(0);
@@ -366,6 +376,7 @@ test("the viewer map and its seat inspector have no WCAG A/AA violations", async
   await expect(page).toHaveURL(/localhost:\d+\/$/);
   await expect(page.locator("button[data-seat-id]").first()).toBeVisible();
 
+  await waitForOneShotAnimations(page);
   const results = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
   expect(formatAxeViolations(results.violations)).toEqual([]);
   expect(results.passes.length).toBeGreaterThan(0);
@@ -427,6 +438,7 @@ test("the admin scan actually inspects an admin page", async ({ page }) => {
   await page.goto("/admin/management");
   await expect(page.getByRole("heading", { name: "Management", level: 1 })).toBeVisible();
 
+  await waitForOneShotAnimations(page);
   const results = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
   expect(results.passes.length).toBeGreaterThan(0);
   // The one class of defect the source guardrails structurally cannot see.

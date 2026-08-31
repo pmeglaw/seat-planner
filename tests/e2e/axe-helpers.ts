@@ -87,12 +87,23 @@ export async function waitForOneShotAnimations(page: Page) {
 }
 
 /**
- * Run the standard WCAG A/AA scan against the page's CURRENT state and assert
- * zero violations. Callers are responsible for settling the UI first — axe
- * scans whatever is on screen, so a scan fired mid-transition or mid-animation
- * reports that transient paint, not the surface under test.
+ * Run the standard WCAG A/AA scan and assert zero violations, draining one-shot
+ * animations first so the scan reads the SETTLED surface.
+ *
+ * The drain is here rather than at each call site because forgetting it is
+ * invisible until it flakes: Playwright visibility resolves as soon as a node
+ * is in the DOM with a non-empty box, which is the FIRST frame of an entrance
+ * animation, not the last. ViewerFindPalette opens on sp-panel-in (150ms,
+ * opacity 0 → 1), so an unlucky scan sampled its eyebrows and chip counts at
+ * partial opacity and flagged color-contrast on nodes that measure 5.72:1 and
+ * 5.69:1 at rest. Five more surfaces carry the same entrance.
+ *
+ * Callers still own non-animation settling — waitForColorSettle for a
+ * transition-colors change, which is a transition rather than an Animation and
+ * so never appears in getAnimations().
  */
 export async function expectNoAxeViolations(page: Page) {
+  await waitForOneShotAnimations(page);
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
   expect(formatAxeViolations(violations)).toEqual([]);
 }
