@@ -24,10 +24,12 @@ actually has; adapt downward from it.
   documents beside them). Not read.
 - `docs/design-system/shell-reference.html`. **This file exists on exactly one branch — `docs/redesign`
   — the same branch as the excluded mockup work.** You ruled it out rather than have me cross that
-  boundary. Consequence: **this document contains no evaluation of your visual target.** Every visual
-  ruling below is derived from the skill alone. If the reference encodes a direction you want, it has
-  to re-enter the process (§8, Q1) — I have not seen it and cannot say whether these decisions agree
-  with it.
+  boundary, and on 2026-08-31 you closed the question rather than reopening it: **the skill-derived
+  direction is the target** (Q1, resolved). So the exclusion is permanent, not provisional. Nothing in
+  this document is checked against that reference and nothing will be; every visual ruling here traces
+  to the `ibm-design-language` skill, the shipped code, or a measured number. The practical
+  consequence for the build: the visual starting point is Carbon v12 as the skill describes it plus
+  the shipped `--sp-*` token vocabulary, with no external comp to reconcile against.
 
 `/admin/management`, `/admin/settings` and `/my-seat` get no entry of their own; they inherit the
 shell decision (D0).
@@ -633,9 +635,10 @@ Stated plainly so nothing here reads as more settled than it is:
 
 ## 8. Open questions for you
 
-1. **The visual target.** `shell-reference.html` was excluded because it only exists on the
-   off-limits branch, so nothing above is checked against it. Do you want to re-supply it outside
-   that branch, or is the skill-derived direction the target now?
+1. ~~**The visual target.**~~ **RESOLVED 2026-08-31 — the skill-derived direction is the target.**
+   `shell-reference.html` does not re-enter the process; the `docs/redesign` branch stays off-limits
+   permanently rather than for the duration of this document. Recorded in §1. (Numbering below is
+   left unchanged so existing cross-references still resolve.)
 2. **The bottom strip.** §2.3 shows a 40px persistent bottom band and a full-height floor plan cannot
    coexist at 1920×1080 — it misses by about 5px. Which wins: the plan fitting entirely on screen at
    the primary target, or a persistent status strip?
@@ -664,13 +667,17 @@ Stated plainly so nothing here reads as more settled than it is:
 *Resolved 2026-08-31 — admin editing below `lg`: you assign employees to seats up front, on a desktop,
 so no narrow-width editing is designed. Recorded in D2 and deviation 4.*
 
+*Resolved 2026-08-31 — Q1, the visual target: the skill-derived direction stands and
+`shell-reference.html` is not re-supplied. This closes the one gap §1 flagged as a hole in the
+reasoning; the remaining open questions are all narrow and all sit on measured data.*
+
 ---
 
 ## 9. Recommended next step
 
 The re-measure is done and §3 is current, so Q3 and Q4 are decidable on settled data rather than
-deferred (Q1 and Q2 were never data-blocked). Answer Q1–Q6, then build in **two** slices rather than
-one:
+deferred (Q2 was never data-blocked, and Q1 is now answered — the skill-derived direction is the
+target). Answer Q2–Q6, then build in **two** slices rather than one:
 
 1. **The shell specification (D0), alone and first** — header, mode indicator, the `lg` navigation
    collapse, the two width regimes. Its priority is unchanged: it is the dependency for all four
