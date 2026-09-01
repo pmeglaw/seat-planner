@@ -486,7 +486,7 @@ stay clear of the 44px one: at a 1440px map the governing axis gap falls to 42.3
 non-negotiable, narrowly, on the surface doing the most precise work.
 
 **Narrowing the panel closes it completely.** The floor holds at every pane width up to **420px** and
-breaks at 430px; a 400px panel leaves a 1511px map, a 44.4px governing gap and zero overlaps. The
+breaks at 430px; a 400px panel leaves a 1520px map, a 44.7px governing gap and zero overlaps. The
 measured content does not demand 480px either — a 22-character longest name, a 17-character
 department, a 4-character seat label, and notes used on 1 of 68 seats. **So the panel should be 400px,
 not 480px, and the reason is conformance rather than taste.** The alternative, if 480px turns out to
