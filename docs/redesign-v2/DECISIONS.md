@@ -159,45 +159,52 @@ governing gap clears 44px at `xlg`.
 
 ## 3. Measured data (production, read-only)
 
-**Re-measured 2026-08-31**, after the owner's assignment pass and the publish that followed it
-(`publish_events` row 42, 21:35 UTC). The morning snapshot this replaces is kept in the right-hand
-column so the movement is visible. **These are the numbers to build against.**
+**Re-measured 2026-09-01**, after the owner's second assignment pass and publish (`publish_events`
+row 44, 01:23 UTC). The 2026-08-31 morning snapshot is kept in the right-hand column so the movement
+is visible. **These are the numbers to build against.**
+
+**Read the whole section knowing this: the plan is the 3rd floor, and the firm occupies two.**
+Litigation is on the 2nd (owner, 2026-09-01), and the rule the owner states is absolute —
+**everyone without a seat is on the 2nd floor.** That single fact reorganises this section: the
+"unseated" are not a backlog, they are a different floor.
 
 | Fact | Now | Snapshot it replaces |
 |---|---|---|
 | Published seats / draft seats | 68 / 68 — **identical**, nothing unpublished | 68 / 68 |
-| Seats assigned | **56** | 15 |
-| Seats available | **12** | 53 |
+| Seats assigned | **58** | 15 |
+| Seats available | **10** | 53 |
 | Seats reserved / unavailable | **0 / 0** | 0 / 0 |
-| Active employees | **99** (101 rows, 2 inactive) | 101 |
-| People seated / unseated | **56 / 43** | 15 / 86 |
-| `department_options` rows | **27**, of which **12 match nobody** | 14 |
+| Active employees | **98** (101 rows, 3 inactive) | 101 |
+| People on the 3rd floor (seated) | **58** | 15 |
+| People on the **2nd floor** (no seat on this plan) | **40** | 86 |
+| `department_options` rows | **27**, of which **12 are retired** (`active = false`) | 14 |
 | `zone_options` rows | 8, all 8 in use | 8 |
-| `published_employees` drift | **none** — 99 rows, exact match to live | not recorded |
+| `published_employees` drift | **none** — exact match to live | not recorded |
 | Custom seats (`is_custom`) | 8 of 68 | not recorded |
-| Floors | **1** — `seats` has no `floor` column | 1 |
+| Floors the firm occupies | **2** — 3rd (this plan) and 2nd | recorded as 1 |
+| Floors the schema models | **1** — `seats` has no `floor` column | 1 |
 
-The floor is **82% occupied**. The twelve empty seats are scattered across six of the eight zones
-(North Pod 5, Center Desks 3, then one each in Northeast Pod, East Pod, Center West and Southeast
-Office); West Pod and South Offices are full.
+The 3rd floor is **85% occupied**. The ten empty desks are scattered across five of the eight zones
+(North Pod 4, Center Desks 3, then one each in Northeast Pod, East Pod and Southeast Office); West
+Pod, Center West and South Offices are full.
 
 ### 3.1 The three consequences, re-decided
 
-1. **Inverted, exactly as predicted.** "The map is mostly empty" is dead. 56 of 68 seats are
+1. **Inverted, exactly as predicted.** "The map is mostly empty" is dead. 58 of 68 desks are
    occupied, so the map *is* a dense field of people and a design may treat it as one. What the old
    entry got wrong is where the cost lands: it expected marker legibility to become a problem at the
    `lg` floor. It becomes a problem at **1920** — §3.2.
-2. **Weakened, not inverted — and it moved less than predicted.** 43 of 99 people have no seat: 43%,
-   not the "roughly a third" the old entry forecast. But the shape of the fact changed more than the
-   size did. The unseated are **not scattered, they are whole departments**: Litigation (20 people),
-   Medical Records (7), Front Office (3) and WIL (1) have **zero** seated members, which is 31 of the
-   43. So "person has no seat" is not an individual edge case being smoothed over — for a third of
-   the firm it is the normal, permanent answer, and it is predictable from their department. D1 must
-   still design the state properly; it should stop describing it as the *optimized* path and start
-   describing it as a **team-shaped** one.
-3. **Stands unchanged.** `reserved` and `unavailable` still have zero rows. The live status
-   vocabulary is two states, not four (D1). Filling seats moved rows between `available` and
-   `assigned` only, as the old entry said it would.
+2. **Not weakened — dissolved. The premise was wrong.** The old entry read 43 unseated people as a
+   design problem: *the commonest outcome of "find Sarah" is that Sarah has no seat.* The owner's
+   ruling removes the problem rather than shrinking it. **Nobody is unseated. The 40 people without a
+   desk on this plan work on the 2nd floor**, and the firm's rule is that the two sets are the same
+   set. So the state D1 has to design is not an absence at all — it is a **location**. "Sarah has no
+   assigned seat" is a dead end; "Sarah works on the 2nd floor" is an answer, and it is the *right*
+   answer for 40 of 98 people. This is a better outcome than any wording the previous framing could
+   have reached, and it is the single most valuable thing the re-measure turned up.
+3. **Stands unchanged, across two assignment passes now.** `reserved` and `unavailable` still have
+   zero rows in both layers. The live status vocabulary is two states, not four (D1). Both passes
+   moved rows between `available` and `assigned` only, as the original entry said they would.
 
 ### 3.2 Marker density — the measurement this section was waiting for
 
@@ -221,21 +228,24 @@ West Pod set the floor in that order. So marker size is not a free variable belo
 target — it is dictated by the pods.
 
 **The name layer is the casualty, and it fails at the primary target.** Taking the shipped resting
-geometry from `lib/seatCrowding.ts` (`TEXT_TIER_NAME_OBSTACLE_PX`, 124×40) over the 56 assigned seats:
+geometry from `lib/seatCrowding.ts` (`TEXT_TIER_NAME_OBSTACLE_PX`, 124×40) over the 58 assigned seats:
 
-| Viewport | Name-pill collisions (124×40, 56 markers) | Code-pill collisions (46×24, 68 markers) |
+| Viewport | Name-pill collisions (124×40, 58 markers) | Code-pill collisions (46×24, 68 markers) |
 |---|---|---|
-| 1920 | **24 pairs — 39 of 56 markers (70%)** | 0 |
-| 1584 (max) | 29 pairs — 44 markers | 0 |
-| 1312 (xlg) | 38 pairs — 49 markers | 7 pairs — 14 markers |
-| 1056 (lg) | 87 pairs — 52 markers (93%) | 14 pairs — 28 markers |
+| 1920 | **27 pairs — 43 of 58 markers (74%)** | 0 |
+| 1584 (max) | 32 pairs — 47 markers | 0 |
+| 1312 (xlg) | 41 pairs — 51 markers | 7 pairs — 14 markers |
+| 1056 (lg) | 93 pairs — 54 markers (93%) | 14 pairs — 28 markers |
+
+At 1920 the most names that can be drawn simultaneously without any overlap is **39 of 58** (44 with
+a shorter 92×34 pill), so a show-everything layer is short by nineteen however it is tuned.
 
 The same geometry on the **old 15-seat data** produced **zero** collisions at 1920, `max` and `xlg`.
 The name tier was collision-free on the snapshot and is not on the real floor.
 
 **The existing nudge cannot rescue it.** `PILL_NUDGE_PX` is 14 — ±14px vertical, so 28px of
 separation at best, against a 40px pill. Pod-mates share a row, so the overlap is almost purely
-horizontal: C01/C02 `dx=100 dy=1`, CW01/CW02 `dx=74 dy=0`, E02/E03 `dx=59 dy=0`. **All 24 collisions
+horizontal: C01/C02 `dx=100 dy=1`, CW01/CW02 `dx=74 dy=0`, E02/E03 `dx=59 dy=0`. **All 27 collisions
 at 1920 are geometrically beyond its reach** (97% at `max` and `xlg`, 57% at `lg`). The code pill is
 the mirror image: nothing collides at 1920 or `max`, and every collision at `xlg` and `lg` is inside
 the nudge's reach.
@@ -255,13 +265,16 @@ rather than describe the pixels the app currently paints.*
    near-duplicates (`CM`, `Exec`, `IT & Admin`, `Records`), the umbrella groupings, and one **zone**
    name that ended up in the department list (`West Pod`). The viewer filters on `active` when it
    reads the table (`app/page.tsx:58`) and renders the result as a `<select>`, not a chip row, so the
-   dead options never reach a user. **The option list is clean.** What is not clean is what the live
-   options *do* over the map: of the 15 active departments, only **11 have anyone seated**. Choosing
-   Litigation — the second-largest department in the firm at 20 people — returns **zero seats** on a
-   map that is 82% full; Medical Records (7), Front Office (3) and WIL (1) do the same. At the other
-   end, Case Management holds **38 of the 56 occupied seats (68%)**, so the commonest selection
-   highlights two-thirds of the floor. A control whose outcomes are "nothing" or "most of the map"
-   discriminates poorly in both directions — §8, Q5.
+   dead options never reach a user. **The option list is clean.** What the live options *do* over the map
+   was recorded here as a second defect, and the 2nd-floor ruling **retires half of it**: choosing
+   Litigation returns zero desks not because the filter is broken but because Litigation is
+   downstairs, and the same goes for Medical Records, Front Office and WIL. Four of the 15 active
+   departments are 2nd-floor teams; the map is right to show nothing, and the fault was only ever the
+   **silence** — the control must say *"Litigation works on the 2nd floor"*, not return an unchanged
+   map. What does survive is the imbalance at the other end: Case Management holds **38 of the 58
+   occupied desks (66%)**, so the commonest selection highlights two-thirds of the floor. A control
+   whose outcomes are "a whole other floor" or "most of this one" discriminates poorly either way —
+   §8, Q5.
 5. **The directory is complete and uniform.** Every active employee has a department, a position, an
    extension and an email; **none** has an avatar. Names run to 22 characters, mean 13.5; the longest
    department name in use is 17. Seat labels are at most 4 characters. One seat carries a note.
@@ -404,7 +417,7 @@ Would change if: the plan gains a second floor or grows past ~120 seats (the wid
 ```
 
 **The resting label is the seat code; names are a disclosure tier.** §3.2 measures why: the shipped
-124×40 name pill collides in 24 pairs across 39 of the 56 assigned markers at the 1920 primary
+124×40 name pill collides in 27 pairs across 43 of the 58 assigned markers at the 1920 primary
 target, and all 24 are beyond the ±14px reach of `seatCrowding`'s nudge because pod-mates share a
 row. The widest name pill that collides with nothing at 1920 is **59.5px** — against a 22-character
 longest name that is not a tuning gap, it is 2.1×. The 46×24 code pill, by contrast, collides zero
@@ -413,7 +426,7 @@ nudge's reach. The longest seat label is 4 characters, so the code pill is corre
 actually carries. Two riders make this a trade rather than a loss: **the searched or selected person's
 name always draws, and draws above its neighbours**, so the one name the task asked for never loses a
 z-fight; and a show-all-names overview stays available but **reports its own incompleteness** — at
-1920 it can place 39 of 56 names cleanly, 44 with a shorter 92×34 pill, and the rest need zoom.
+1920 it can place 39 of 58 names cleanly, 44 with a shorter 92×34 pill, and the rest need zoom.
 
 **Pan and zoom change job at the hinge.** At 1920 the whole plan is visible, so zoom is an *inspection*
 convenience. Below `lg` — and at high browser zoom — it is the only way to read the plan at all, so it
@@ -424,11 +437,21 @@ these primary rather than exceptional:
 
 | State | Design |
 |---|---|
-| **Person has no seat** | Re-measured (§3.1): **43 of 99** employees are unseated — no longer the majority path, still 43% of lookups. And it is **team-shaped**, not scattered: Litigation, Medical Records, Front Office and WIL have zero seated members, which is 31 of the 43. So the state names the person, says plainly that they have no assigned seat, offers department and extension instead of a dead end, and — where their whole department is unseated — says that rather than implying an individual omission. Identical wording in both layouts. |
+| **Person works on the 2nd floor** | Not an absence — a **location**. Owner ruling, 2026-09-01: everyone without a desk on this plan is on the 2nd floor, which is **40 of 98 people** (§3.1). So the state names the person and says where they work — *"Sarah works on the 2nd floor"* — with their department and extension, and never *"no assigned seat"*, which is a dead end for a question that has a real answer. Identical wording in both layouts, and identical whether the person was reached by search, by the department filter, or from the roster. **Depends on an inference, not on data** — see the risk note below. |
 | Nothing published | Educational empty state over the plan, naming the next step. |
 | No search results | Distinct from the above; keeps the query visible and reports **zero** explicitly — `SKILL.md`: "Always publish the number of results, zero included." |
 | Loading | Skeleton over the plan area; the raster is preloaded from `/login` already. |
 | Error | Inline notification in the map region, with retry. |
+
+**The 2nd-floor state rests on an inference, and that is worth writing down.** `seats` has no
+`floor` column, so nothing in the schema distinguishes *"works on the 2nd floor"* from *"3rd-floor
+person whose desk is not set up yet"*. The copy above is true only while the owner's rule holds — that
+the two sets are the same set. The day a 3rd-floor hire arrives before their desk does, the map will
+tell the front desk they are downstairs, confidently and wrongly. That is an acceptable trade today
+(it is cheap, and it is a better answer than the dead end it replaces) and an unacceptable one the
+moment the firm hires ahead of its furniture. **Whoever adds a `floor` column inherits this note**:
+the copy was relying on absence to encode location. Until then, the risk is bounded by how quickly
+Management assigns a new arrival — which is the same person doing both jobs.
 
 **Seat status vocabulary.** Four enum states exist; **two have data**. `status-and-dataviz.md` is
 unambiguous where a spatial map forces one shape: "If a spatial map genuinely forces a constant shape
@@ -575,7 +598,7 @@ search field is **not labelled**; recents are a secondary view, never the primar
 (`ui-shell.md` on "most recent": "loses logical grouping; better as a secondary view").
 
 **States:** first-run before any search (the list shows the full directory rather than an empty pane);
-zero results with the query preserved; a person with **no seat** (43 of 99 — the detail pane must
+zero results with the query preserved; a person **on the 2nd floor** (40 of 98 — the detail pane must
 read correctly with the seat line absent, not blank); and a person with no extension.
 
 ---
@@ -676,11 +699,16 @@ Stated plainly so nothing here reads as more settled than it is:
 2. **The bottom strip.** §2.3 shows a 40px persistent bottom band and a full-height floor plan cannot
    coexist at 1920×1080 — it misses by about 5px. Which wins: the plan fitting entirely on screen at
    the primary target, or a persistent status strip?
-3. **The floor selector.** Unmoved by the assignment pass: still one floor, still no `floor` column
-   on `seats`, while the seat numbers around it moved hard (assigned 15 → 56, available 53 → 12).
-   This one was never waiting on data — the control fronts a dimension the schema does not have, and
-   only a migration adds it. Keep it as a promise of future floors, or remove it until the data
-   exists?
+3. **The floor selector — the question inverted on 2026-09-01.** This document twice called the
+   control "chrome for a dimension the data does not have" and was heading for *remove it*. That was
+   wrong about the building. **The firm occupies two floors and 40 of its 98 people are on the one
+   this plan does not draw.** The dimension is real; it is the *schema* that cannot express it
+   (`seats` has no `floor` column), and the app currently infers the 2nd floor from the absence of a
+   seat. So the choice is no longer keep-or-remove, it is: **(a)** stay a 3rd-floor product that says
+   plainly where everyone else works — cheap, honest today, and carrying the inference risk recorded
+   in D1; or **(b)** become genuinely multi-floor — a `floor` column, a 2nd-floor plan raster, floor
+   threaded through the publish RPC and the viewer's joins — which is a migration and a real feature,
+   not a control. Which?
 4. **`reserved` and `unavailable`.** Still zero rows in **both layers** after the assignment pass —
    the confirmation §3.1's third consequence predicted. Filling the map moved 41 rows from
    `available` to `assigned` and produced no other state, so the two-state vocabulary now rests on
@@ -719,7 +747,7 @@ target). Answer Q2–Q6, then build in **two** slices rather than one:
    Getting it wrong is expensive in a way that getting one screen wrong is not.
 2. **The marker and label layer (D1), immediately after.** The re-measure turned this from a
    hypothetical about the `lg` floor into a measured failure at the **primary** target: 24 name-pill
-   collisions across 39 of 56 assigned markers at 1920, none of them rescuable by the shipped ±14px
+   collisions across 43 of 58 assigned markers at 1920, none of them rescuable by the shipped ±14px
    nudge. Most of the brief is already fixed by measurement — seat code at rest, names on
    hover/focus/selection, marker diameter ≤52px at 1920 and ≤27px at `lg`, the searched name always
    drawn on top.
