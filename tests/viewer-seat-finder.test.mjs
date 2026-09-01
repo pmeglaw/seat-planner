@@ -584,6 +584,29 @@ test("below the sm tier the band stays away and the floating zoom stack remains"
   assert.ok(screen.queryByRole("list", { name: "Seat status summary" }) === null, "no legend counts below sm — matches the shipped hidden-below-md legend");
 });
 
+// Below 640 the band (and its switch) is gone by owner call, so the names
+// flipper moves into the phone's floating cluster — same accessible name, same
+// pressed contract, same storage key, and exactly ONE such control in the
+// tree (getByRole throws on a duplicate).
+test("below the sm tier the names toggle lives in the floating stack and still drives the markers", async () => {
+  window.localStorage.removeItem(VIEWER_NAMES_KEY);
+  setViewportWidth(500);
+  await renderViewer();
+
+  const toggle = screen.getByRole("button", { name: "Show occupant names" });
+  assert.equal(toggle.getAttribute("aria-pressed"), "false");
+  assert.ok(toggle.closest('[role="group"][aria-label="Map zoom"]') === null, "it is a sibling of the zoom stack, not a zoom control");
+  assert.equal(seatMarker("A-01").getAttribute("data-token-mode"), "code");
+
+  fireEvent.click(toggle);
+  await flushFrames();
+
+  assert.equal(toggle.getAttribute("aria-pressed"), "true");
+  assert.equal(seatMarker("A-01").getAttribute("data-token-mode"), "name");
+  assert.equal(window.localStorage.getItem(VIEWER_NAMES_KEY), "true");
+  assert.deepEqual(actionCalls, [], "render-local — never a server action");
+});
+
 test("below the panel tier the band yields to the inspector sheet and returns on dismiss", async () => {
   setViewportWidth(820);
   await renderViewer();
