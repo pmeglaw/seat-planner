@@ -243,20 +243,58 @@ a shorter 92×34 pill), so a show-everything layer is short by nineteen however 
 The same geometry on the **old 15-seat data** produced **zero** collisions at 1920, `max` and `xlg`.
 The name tier was collision-free on the snapshot and is not on the real floor.
 
-**The existing nudge cannot rescue it.** `PILL_NUDGE_PX` is 14 — ±14px vertical, so 28px of
-separation at best, against a 40px pill. Pod-mates share a row, so the overlap is almost purely
-horizontal: C01/C02 `dx=100 dy=1`, CW01/CW02 `dx=74 dy=0`, E02/E03 `dx=59 dy=0`. **All 27 collisions
-at 1920 are geometrically beyond its reach** (97% at `max` and `xlg`, 57% at `lg`). The code pill is
-the mirror image: nothing collides at 1920 or `max`, and every collision at `xlg` and `lg` is inside
-the nudge's reach.
+**The existing nudge cannot rescue it — at the shipped pill height.** `PILL_NUDGE_PX` is 14, so ±14px
+vertical, 28px of separation at best, against a **40px** pill. Pod-mates share a row, so the overlap
+is almost purely horizontal: C01/C02 `dx=100 dy=1`, CW01/CW02 `dx=74 dy=0`, E02/E03 `dx=59 dy=0`.
+All 27 collisions at 1920 are beyond its reach.
 
-**Reading: a persistent name-per-marker layer is not available at any width on a filled floor.** The
-marker carries its code; the name is disclosed on hover, focus or selection, or read from a list
-beside the plan. That is a ruling the data forces rather than a preference, and it belongs in D1.
+### 3.2.1 The correction: the blocker is the pill, not the name
 
-*Method caveat: the collision counts are centred-rectangle overlaps of the resting footprints. They
-model the nudge's maximum reach, not the solver's actual placement search, so they bound the problem
-rather than describe the pixels the app currently paints.*
+The numbers above are true of the **shipped geometry** and were wrongly generalised, in an earlier
+version of this section, into a claim about names as such. Two owner observations (2026-09-01) forced
+a re-measure and reversed the conclusion. The 124×40 footprint is not what a name needs — it is two
+styling decisions stacked:
+
+1. **The pill is a flat 124px wide and the text is nowhere near that.** `SeatMarker.tsx` renders
+   `First L.` (owner call 2026-07-24), never the full name, and caps the text at `max-w-[96px]`, so
+   nothing ever truncates. Measured in the repo's own vendored IBM Plex Sans at the shipped 12px, the
+   58 live labels run **19.4–69.9px of text, mean 45.8** — a fit-width pill would be **45–96px, mean
+   72**. The shipped pill wastes **52px on the average marker**; on first-name-only labels, **61px**.
+2. **The pill stacks two lines** (`SeatMarker.tsx:662-673`): the seat code above, the name below.
+   That is the entire reason it is 40px tall. **The seat code is not what the viewer came for** —
+   "where does X sit" is answered by the name; the code serves the admin assigning desks, and belongs
+   in the inspector and on hover.
+
+**Height is the hinge, and the threshold is exact.** Two labels of height `H` clear each other under
+the nudge once `|dy| + 28 ≥ H`. Pod-mates sit at `dy ≈ 0`, so **`H` must be ≤ 28px**. At 29px the pod
+rows come straight back. That single number decides the whole question:
+
+| Pill height | Unresolvable pairs — 1920 / `max` / `xlg` / `lg` |
+|---|---|
+| **≤ 28px** (single line) | **0 / 0 / 0 / 0** |
+| 29px | 3 / 6 / 14 / 26 |
+| 40px (shipped, two-line) | 4 / 7 / 15 / 27 |
+
+Re-measured with a single-line, fit-width pill carrying the first name:
+
+| Viewport | Colliding pairs | Markers | Unresolvable | Clean of 58 |
+|---|---|---|---|---|
+| 1920 | 4 | 8 | **0** | **50** |
+| 1584 (max) | 7 | 14 | **0** | 44 |
+| 1312 (xlg) | 15 | 26 | **0** | 32 |
+| 1056 (lg) | 27 | 43 | **0** | 15 |
+
+**Reading: a persistent name-per-marker layer IS available, and the solver that ships can place it.**
+The residual collisions are not a defect — they are exactly the work `seatCrowding` exists to do, and
+at ≤28px it can do all of it. What was never available is the *shipped* two-line 124px pill on a
+filled floor. Deviation 6 and D1 are ruled on that basis.
+
+*Method caveat: the collision counts are centred-rectangle overlaps of resting footprints, and they
+model the nudge's maximum reach rather than the solver's actual placement search — so they bound the
+problem rather than describe the pixels the app paints. The 28px threshold is the arithmetic of that
+bound and should be confirmed against the running app before it is treated as a build constant. Text
+widths are measured, not estimated: Playwright + the vendored `ibm-plex-sans-latin-wght-normal.woff2`
+at 12px/500.*
 
 ### 3.3 Two facts the old snapshot did not record
 
@@ -416,17 +454,26 @@ Would change if: the plan gains a second floor or grows past ~120 seats (the wid
   department outweighing find-by-name.
 ```
 
-**The resting label is the seat code; names are a disclosure tier.** §3.2 measures why: the shipped
-124×40 name pill collides in 27 pairs across 43 of the 58 assigned markers at the 1920 primary
-target, and all 24 are beyond the ±14px reach of `seatCrowding`'s nudge because pod-mates share a
-row. The widest name pill that collides with nothing at 1920 is **59.5px** — against a 22-character
-longest name that is not a tuning gap, it is 2.1×. The 46×24 code pill, by contrast, collides zero
-times at 1920 and `max`, and every collision at `xlg` (7 pairs) and `lg` (14 pairs) sits inside the
-nudge's reach. The longest seat label is 4 characters, so the code pill is correctly sized for what it
-actually carries. Two riders make this a trade rather than a loss: **the searched or selected person's
-name always draws, and draws above its neighbours**, so the one name the task asked for never loses a
-z-fight; and a show-all-names overview stays available but **reports its own incompleteness** — at
-1920 it can place 39 of 58 names cleanly, 44 with a shorter 92×34 pill, and the rest need zoom.
+**The resting label is the person's name. The seat code is the disclosure tier** (ruled 2026-09-01,
+reversing an earlier ruling in this document that had it the other way round). §3.2.1 measures why:
+with a **single-line, fit-width** pill the name layer places cleanly on 50 of 58 markers at 1920 and
+**every** remaining collision is inside the existing nudge's reach, at every width down to `lg`. The
+seat code is what the *admin* needs while assigning desks; the viewer asking "where does X sit" is
+answered by the name, so the code moves to hover, selection and the inspector — where the admin
+already is.
+
+**The binding constraint is `≤ 28px` of pill height, and it is not a preference.** It is
+`PILL_NUDGE_PX × 2` measured against a pod row at `dy = 0`. Line-height, padding and border are
+budgeted inside that number; at 29px the pod-row collisions return and no amount of width tuning
+recovers them. **Record it beside `PILL_NUDGE_PX` in `lib/seatCrowding.ts`**, because it is the kind
+of constant that gets broken by a padding change three refactors later.
+
+Three riders. **The searched or selected person's name quiets its neighbours** rather than drawing
+over them — `taste.md`: "hierarchy problems are solved by making secondary things quieter, not the
+primary thing louder", and occluding at a 56px pitch is exactly the move it rejects. **No animation
+on the reveal and no layout shift** — the label band is reserved in the marker's own layout, so
+disclosure changes contrast, not geometry. And **search must publish its count, zero included**, now
+that it is a primary way to reach a name.
 
 **Pan and zoom change job at the hinge.** At 1920 the whole plan is visible, so zoom is an *inspection*
 convenience. Below `lg` — and at high browser zoom — it is the only way to read the plan at all, so it
@@ -660,8 +707,9 @@ session); invalid credentials; magic-link sent; reset requested; and a submittin
 | 3 | Constant marker shape with per-state symbols | Explicitly sanctioned by `status-and-dataviz.md` for spatial maps, but must be stated (D1) |
 | 4 | Admin editing is `lg`-and-up; `/admin` is read-only below the hinge | Coordinate accuracy against a 145px plan is not achievable, and assignment is done up front on a desktop (D2). Read-only, not disabled, per `SKILL.md` |
 | 5 | Login off the product grid | The one sanctioned expressive moment (D4) |
-| 6 | Names disclosed on hover/focus/selection rather than drawn on every marker | `status-and-dataviz.md` says never hide something important behind an interaction — but the same bullet mandates "details on demand", and `SKILL.md` resolves discoverability-vs-simplicity as progressive disclosure. Direct labelling is still the stated default, conditioned on fit, and geometry fails that condition: the widest collision-free name pill at 1920 is 59.5px against a 124px shipped pill and a 22-character longest name (§3.2). Recorded as a deviation rather than a neutral choice (D1) |
+| 6 | ~~Names disclosed on hover rather than drawn on every marker~~ **WITHDRAWN 2026-09-01 — this is no longer a deviation.** | It was recorded when the fit condition looked failed. Re-measured against a single-line fit-width pill, it passes: `status-and-dataviz.md`'s "put labels directly on the chart wherever they can replace a legend" is the stated default and the design now *follows* it (§3.2.1). The **seat code** moves to disclosure instead, which is not a deviation either — the code is admin information and `SKILL.md`'s "details on demand" is its proper home |
 | 7 | 44px touch targets not met at `xlg` and below | `SKILL.md` states the floor unqualified, and it is a hit-area rule the marker's drawn size cannot satisfy on its behalf. Below `xlg` the seats themselves sit closer together than a conformant target, so no marker size reaches it (§2.4). Met outright at 1920 and `max` |
+| 8 | Name pills are fit-width, so the resting footprint varies with the label | `SeatMarker.tsx` deliberately fixes the code pill's width "so label length never changes the resting footprint", and the name tier now breaks that symmetry on purpose: a flat width costs 52px of dead space per marker and is what made the name layer uncollidable-with (§3.2.1). Uniform-width alternatives were measured — 96px leaves 28 markers colliding at 1920, 72px leaves 12, fit-width leaves 8 — so the consistency is bought back nowhere near cheaply enough to keep. The **height** stays uniform and capped at 28px, which is the dimension the nudge actually reasons about |
 
 ---
 
@@ -720,11 +768,12 @@ Stated plainly so nothing here reads as more settled than it is:
    clean-up job. Do you want the filter to keep offering departments that cannot appear on the map
    — answering honestly with "Litigation: 20 people, none seated" — or to offer only the 11
    departments that have someone on the floor?
-6. **Names on markers.** §3.2 measures that a persistent name-per-marker layer collides on 70% of
-   markers at the 1920 primary target on the filled floor, and that the existing ±14px nudge cannot
-   resolve any of it. The marker therefore carries its code, with the name disclosed on hover, focus
-   or selection. Confirm that trade — it is the one place where filling the floor took a capability
-   away rather than adding one.
+6. ~~**Names on markers.**~~ **RESOLVED 2026-09-01 — the marker carries the name.** The original
+   entry here recorded the opposite, on a measurement of the shipped 124×40 two-line pill. Two owner
+   observations overturned it: the pill renders `First L.` in a fixed width more than twice the text
+   it holds, and it stacks a seat code the viewer never needed. Single-line and fit-width, the name
+   layer places on 50 of 58 markers at 1920 with **zero** collisions the existing nudge cannot
+   resolve (§3.2.1). Ruled in D1; the `≤ 28px` height ceiling comes with it.
 
 *Resolved 2026-08-31 — admin editing below `lg`: you assign employees to seats up front, on a desktop,
 so no narrow-width editing is designed. Recorded in D2 and deviation 4.*
@@ -745,11 +794,13 @@ target). Answer Q2–Q6, then build in **two** slices rather than one:
    collapse, the two width regimes. Its priority is unchanged: it is the dependency for all four
    screens, and the `lg` hinge it establishes is what every other decision here is measured against.
    Getting it wrong is expensive in a way that getting one screen wrong is not.
-2. **The marker and label layer (D1), immediately after.** The re-measure turned this from a
-   hypothetical about the `lg` floor into a measured failure at the **primary** target: 24 name-pill
-   collisions across 43 of 58 assigned markers at 1920, none of them rescuable by the shipped ±14px
-   nudge. Most of the brief is already fixed by measurement — seat code at rest, names on
-   hover/focus/selection, marker diameter ≤52px at 1920 and ≤27px at `lg`, the searched name always
-   drawn on top.
+2. **The marker and label layer (D1), immediately after.** Measurement has already written most of
+   this brief, and it changed direction once (§3.2.1), so build it from the numbers rather than from
+   the prose: the marker carries the **person's name**, single-line and fit-width, in a pill **≤ 28px
+   tall** — the ceiling is `PILL_NUDGE_PX × 2` against a `dy = 0` pod row, and at 29px the collisions
+   return. The **seat code** moves to hover, selection and the inspector. Marker hit regions are 44px
+   at 1920 and `max`, pointer-scale below (deviation 7). The searched name **quiets its neighbours**
+   rather than drawing over them. Expect 4 residual collisions at 1920 and let the existing solver
+   place them — that is what it is for.
 
 Nothing else starts until those two land.
