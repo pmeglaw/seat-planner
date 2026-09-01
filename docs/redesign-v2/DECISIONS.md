@@ -62,14 +62,28 @@ nowhere else. `ui-shell.md` argues this as performance, not aesthetics: inconsis
 costs re-orientation ("transitional volatility"), and users experience an inconsistent product as
 slower even when it isn't. One shared hinge is cheaper to learn than four bespoke ones.
 
-**One measured exception, recorded in §3.2: the *label* layer has no hinge.** Marker pitch falls
-continuously from 56.1px at 1920 to 9.4px at 320, and the name layer fails at the **primary target**
-rather than at any breakpoint. That is a density budget carried at every width, not a second layout
-switch — `lg` remains the one layout hinge.
+**One measured exception, recorded in §3.2: the *label* layer has no hinge.** Marker pitch falls from
+50.9px at 1920 to 18.7px at 640, and the name layer fails at the **primary target** rather than at any
+breakpoint. That is a density budget carried at every width, not a second layout switch — `lg` remains
+the one layout hinge *of this design*.
 
-**320 is an obligation, not a nicety.** WCAG 1.4.10 Reflow is met at 320px-equivalent, which a user at
-400% browser zoom on their own 1920 monitor produces exactly. No horizontal scrolling, no loss of
-function, at any width down to 320.
+**But the shipped app already hinges at 640, and the pitch does not fall monotonically** (§2.4,
+driven 2026-09-01). Below a 640px media query `ViewerSeatFinder` stops fitting the plan and pans a
+1040px canvas, so pitch **recovers** to 30.5px at 320 rather than continuing down to the 9.4px this
+paragraph used to claim. Three of the app's boundaries — 640 (fit/band/names toggle), 900
+(`VIEWER_PANEL_BREAKPOINT_PX`), 1024 (`lg` in Tailwind) — sit at none of the Carbon widths tabled
+above, and 1056 is not among them. Adopting `lg` as the single hinge is therefore a **move**, not a
+description: it means relocating three existing boundaries, and the build has to budget for that.
+
+**320 is an obligation, not a nicety — and the app does not currently meet it.** WCAG 1.4.10 Reflow
+has to hold at 320px-equivalent, which a user at 400% browser zoom on their own 1920 monitor produces
+exactly. Measured at 320: the header's content is **472px wide in a 320px viewport**, and the shell
+wrapper carries `overflow-x: clip`, so the surplus cannot be scrolled to. **Admin, the theme toggle
+and the account avatar are all off-edge**, and focusing the avatar by keyboard succeeds while leaving
+it out of view (`document.activeElement` is set; `scrollX` stays 0) — a focus that lands on something
+the user cannot see, which is SC 2.4.11 as well as 1.4.10. The map's own two-dimensional pan is a
+different matter and is likely exempt (1.4.10 excepts content that requires a two-dimensional layout,
+and names maps as the example); the **chrome** has no such exemption. Fixing this is D0's job.
 
 ### 2.2 Above the grid: the 1920 primary target
 
@@ -121,33 +135,46 @@ it — but the shipped marker's hit area is **32 × 32**, so the app does not cu
 That is an implementation gap to close in the build, not a constraint to design around, and it is the
 kind of thing only running the app reveals.
 
-### 2.4 Where the plan stops fitting — and why `lg` is the hinge
+### 2.4 Where the plan stops fitting — and where the hinge actually is
 
-Plan height at each width, at the 2.204:1 aspect:
+**Driven, not computed** (2026-09-01, Playwright against the running app, seeded viewer account,
+viewport height held at the measured 889px so width is the only variable). Every rung the arithmetic
+described, it described to within a pixel. One rung it described did not exist.
 
-| Viewport width | Plan height | Min marker pitch | Markers <44px apart | Markers <24px apart | Largest marker w/ 4px gap | Verdict |
-|---|---|---|---|---|---|---|
-| 1920 | **787px measured** — the app fits the plan to 1734 wide, well under the 1911 cap (§2.3) | **50.9px measured** | 0 of 68 | 0 of 68 | 46.9px | Yes — fits entirely, and the only rung with room for a 44px target plus its gap. The app ships 32×32 hit areas and does not yet use that room |
-| 1584 (max) | 719px | 46.5px | 0 of 68 | 0 of 68 | 42.5px | Yes — the lowest rung at which no two markers sit closer than 44px |
-| 1312 (xlg) | 595px | 38.5px | 32 of 68 | 0 of 68 | 34.5px | Plan readable; 44px hit regions start to overlap here — 22 pairs (deviation 7) |
-| **1056 (lg)** | **479px** | **31.0px** | **50 of 68** | **0 of 68** | **27.0px** | **The floor for reading the plan — clears the 24px SC 2.5.8 target floor; 44px hit regions overlap here (deviation 7)** |
-| 672 (md) | 305px | 19.7px | 60 of 68 | **38 of 68** | 15.7px | No — conformance fails, not merely legibility |
-| 320 (sm) | **145px** | 9.4px | 68 of 68 | **61 of 68** | 5.4px | No — unusable |
+| Viewport width | Plan rendered | Min axis gap | <44px apart | <24px apart | Chrome above the plan |
+|---|---|---|---|---|---|
+| 1920 | 1734 × 787 | 50.9px | 0 of 68 | 0 of 68 | 49px |
+| 1584 (max) | 1582 × 718 | 46.5px | 0 of 68 | 0 of 68 | 84px |
+| 1312 (xlg) | 1310 × 594 | 38.5px | 32 of 68 | 0 of 68 | 145px |
+| **1056 (lg)** | 1054 × 478 | 31.0px | 50 of 68 | 0 of 68 | 203px |
+| 1024 | 1022 × 464 | 30.0px | 51 of 68 | 0 of 68 | 211px |
+| 672 (md) | 670 × 304 | 19.7px | 60 of 68 | **41 of 68** | 291px |
+| **640** | 638 × 290 | **18.7px** | 60 of 68 | **48 of 68** | **298px** |
+| **639** | **1040 × 472, pans 401px** | **30.5px** | 51 of 68 | **0 of 68** | 227px |
+| 320 (sm) | **1040 × 472, pans 720px** | **30.5px** | 51 of 68 | **0 of 68** | 227px |
 
-The three right-hand columns are measured, not judged — same method as §3.2: the live coordinates run
-through the repo's own calibration transform.
+**The arithmetic was right at every rung from 640 up** — 719/717.7, 595/594.3, 479/478.2, 305/304,
+and the pitches match to the decimal. **It was wrong at 320, and wrong about a behaviour rather than a
+number.** `ViewerSeatFinder` stops fitting the plan below a 640px media query and hands the map to a
+**pannable 1040px canvas** instead (`updateFitMapWidth` returns `null`; the scroller reports 720px of
+horizontal travel at 320). There is no 145px strip. There never was one — the row modelled a product
+the app does not ship.
 
-At 320 the plan is a 145px-tall strip. Sixty-eight seat markers in 145px is not a small map, it is a
-different product. **So the map cannot merely shrink; below `lg` the primary way to find a person
-changes** (D1). That is the single largest consequence of adapting to every viewport.
+**So the shipped hinge is 640, not `lg`, and it is the app's own.** Five things flip between 640 and
+639, all at once: fit-to-width becomes a pan canvas, the status band disappears, the **occupant-names
+toggle disappears entirely**, the min axis gap jumps 18.7 → 30.5px, and markers closer than 24px go
+from **48 of 68 to none**.
 
-**And the hinge is geometric, not judged.** The first version of this table rated the bottom two rows
-"unreadable" and "unusable" from the raster alone. Counting markers whose nearest neighbour sits
-closer than **24px** — WCAG 2.5.8's minimum target size, and the same threshold its spacing exception
-tests — gives **0 of 68 at `lg` and above, 38 of 68 at `md`, 61 of 68 at `sm`**. A tappable marker
-layer is conformant at `lg` and up and geometrically impossible at `md` and below **at any marker
-size**, because the seats themselves sit closer together than a conformant target. That is why the
-surface inverts at the hinge instead of shrinking through it.
+**`md` is the worst rung in the product, and `sm` is better than `md`.** Conformance against WCAG
+2.5.8 fails only in the 640–1023 fit-to-width band and *recovers* below it. The 24px count is 0 at
+`lg` and above, **41 of 68 at `md`, 48 of 68 at 640 — and 0 again at 639 and below**. The document's
+claim that a tappable layer is "geometrically impossible at `md` and below at any marker size" is
+half right: impossible in one band of the ladder (640–1023), and comfortably possible underneath it.
+
+**And the chrome above the plan grows faster than the plan shrinks.** 49px at 1920, 145px at `xlg`,
+203px at `lg`, 298px at 640 — where **the chrome standing above the map is taller than the map**
+(290px). The floor selector, the "Office map · 68 seats" chip and the "Updated" chip wrap into three
+stacked rows and push the plan into the lower half of the screen, with dead mat above and below it.
 
 **Touch targets: met at 1920 and `max`, deviated below — recorded in §6.** An earlier draft of this
 section argued that markers are "pointer-scale" below `max` and that the 44px floor belongs to the
@@ -167,10 +194,17 @@ are within 44px on *both* axes, so the governing distance is the larger of `dx` 
 
 | Viewport | Governing axis gap | 44px hit regions that overlap |
 |---|---|---|
-| 1920 | 56.1px | **none** |
+| 1920 | **50.9px measured** | **none** |
 | 1584 (max) | 46.5px | **none** |
 | 1312 (xlg) | 38.5px | 22 pairs across 32 markers |
 | 1056 (lg) | 31.0px | 44 pairs across 50 markers |
+| 672 (md) | 19.7px | 116 pairs across 60 markers |
+| 640 | 18.7px | 118 pairs across 60 markers |
+| 639 and below | 30.5px | 45 pairs across 51 markers |
+
+Every row is now measured off the running app rather than computed. **The app ships a 32 × 32 hit
+area at every rung** — verified at all nine widths — so the two rows that have the room for a 44px
+target do not currently take it.
 
 At every width the tightest pair is essentially axis-aligned (`NE02`/`NE03`, `dx=56 dy=1` at 1920), so
 the square-target and circular-target results are identical and **we meet the floor at 1920 and at
@@ -249,10 +283,19 @@ space. Nearest-neighbour distance between markers:
 | 672 (md) | 19.7px | 23.3px | 15.7px | 60 of 68 |
 | 320 (sm) | 9.4px | 11.1px | 5.4px | 68 of 68 |
 
-**A 44px touch target is reachable only at 1920.** It survives at `max` by 2.5px and is impossible at
-`xlg` and below. The tightest pair on the floor is NE02/NE03 at 56.1px; Northeast Pod, East Pod and
-West Pod set the floor in that order. So marker size is not a free variable below the primary
-target — it is dictated by the pods.
+**Two rows of this table describe viewports the app does not produce, and §2.4 supersedes them.**
+Driven 2026-09-01: the 1920 row assumes the plan reaches its 1911px cap and it does not — the app
+fits it to 1734, so the real min pitch there is **50.9px**, not 56.1 (every other rung from 640 up
+matches this table to the decimal, so the method is sound and only the 1920 assumption was wrong).
+The 320 row is worse than wrong: below 640 the app stops shrinking and pans a 1040px canvas, so the
+measured pitch at 320 is **30.5px with 51 of 68 under 44px and none under 24px** — nothing like
+9.4px and 68 of 68. **Keep this table for the pod ordering and the median column**, which are
+scale-invariant; take the absolute pitches from §2.4.
+
+**A 44px touch target is reachable only at 1920 and `max`.** It survives at `max` by 2.5px and is
+impossible from `xlg` down to 640. The tightest pair on the floor is NE02/NE03; Northeast Pod, East
+Pod and West Pod set the floor in that order, at every width. So marker size is not a free variable
+below the primary target — it is dictated by the pods.
 
 **The name layer is the casualty, and it fails at the primary target.** Taking the shipped resting
 geometry from `lib/seatCrowding.ts` (`TEXT_TIER_NAME_OBSTACLE_PX`, 124×40) over the 58 assigned seats:
@@ -331,6 +374,39 @@ problem rather than describe the pixels the app paints. The 28px threshold is th
 bound and should be confirmed against the running app before it is treated as a build constant. Text
 widths are measured, not estimated: Playwright + the vendored `ibm-plex-sans-latin-wght-normal.woff2`
 at 12px/500.*
+
+**The label layer, driven down the whole ladder (2026-09-01).** The same pass that produced §2.4's
+table also read every marker's *painted* footprint — the union of the pill's descendant rectangles,
+not the `button` box, which is a bare 32 × 32 anchor the pill overflows at every width. Counting
+pairs that overlap by more than 4px on both axes:
+
+| Viewport | Names off | Names on | Painted name pill |
+|---|---|---|---|
+| 1920 | **0 pairs** | 35 pairs / 51 markers | 125 × 41 |
+| 1584 (max) | **0 pairs** | 38 pairs / 54 markers | 125 × 41 |
+| 1312 (xlg) | 8 pairs / 14 markers | 36 pairs / 51 markers | 87 × 35–47 |
+| 1056 (lg) | **27 pairs / 34 markers** | 56 pairs / 59 markers | 87 × 35–47 |
+| 1024 | 32 pairs / 40 markers | 63 pairs / 62 markers | 87 × 35–47 |
+| 672 (md) | **114 pairs / 67 of 68 markers** | 181 pairs / 67 markers | 87 × 47–48 |
+| 639 and below | 31 pairs / 40 markers | *toggle absent* | — |
+
+**Two things this changes.** First, it **confirms the §3.2.1 ruling at the widths the ruling is
+about**: at 1920 and `max` the code-pill layer collides with nothing at all, and every collision is
+introduced by the name tier — which is precisely the claim the two-line 124px pill was convicted on.
+Second, and new: **below `max` the label layer collides without any names at all.** Eight pairs at
+`xlg`, 27 at `lg`, 114 at `md`. The seat-code pills alone are already overlapping by the rung this
+document calls "the floor for reading the plan", because the type tier *grows* the label as the pitch
+*shrinks*. So a crowding solver is not a name-tier feature to be added later — it is load-bearing for
+the shipped surface at every width below 1584, names or no names.
+
+**And at `lg`, with names on, 59 of 68 markers are in an overlapping pair.** §2.4 calls 1056 the floor
+for reading the plan; measured, the *plan* is readable there and the *label layer* is not. Those are
+different claims and the document had been treating them as one.
+
+**Below 640 the occupant-names toggle does not exist.** It lives in the status band, the band is
+gated on the same 640px media query as fit-to-width, and both vanish together — so the feature D1
+rests on is unreachable on a phone, silently. That is a gap to close in the build, not a deviation to
+record: nothing chose it.
 
 ### 3.3 Two facts the old snapshot did not record
 
@@ -475,10 +551,15 @@ Choice: B — one layout switch at the lg hinge.
   Find affordance. The measured numbers decide it: at 1920 the ENTIRE plan is visible
   under a 48px header, so the spatial answer needs no pan, zoom or scroll. That is
   the whole value of the surface. Note it is NOT at 100%: the measured viewport is
-  889px tall, so height binds and the plan renders 1854 wide rather than reaching its
-  1911px cap (§2.3). Wholly visible, slightly under full size.
-  Below lg that is simply untrue — §2.4: 305px tall at md, 145px at sm, with 68
-  markers on it. A is therefore rejected on measurement, not taste: it ships an
+  889px tall, so height binds and the plan renders **1734** wide rather than reaching
+  its 1911px cap (measured in the running app, §2.3 — an earlier arithmetic estimate
+  here said 1854). Wholly visible, well under full size.
+  Below lg that is simply untrue — §2.4, driven: 304px tall at md with 68 markers
+  on it, and 41 of those markers closer together than a conformant touch target.
+  (The "145px at sm" this line used to cite was wrong: below 640 the app already
+  stops shrinking and pans a 1040px canvas instead. See §2.4 — the correction
+  strengthens B at md and weakens it at sm, where the app has arguably already
+  chosen A and made it work.) A is therefore rejected on measurement, not taste: it ships an
   unreadable map and calls it responsive. C is rejected at wide widths by
   status-and-dataviz.md — "never hide something important behind an interaction" —
   but that objection has no force at 320, where the map is not readable to begin
@@ -610,11 +691,15 @@ Draft indicator intact and a plain statement that editing needs a wider window.
 
 This is the simplifying decision of the whole document, and it earns its place three times over:
 
-- **It removes a capability that could corrupt production data.** Drag-to-place against a 145px-tall
-  plan (§2.4) produces wrong coordinates in a live table — now quantified: median marker separation
-  at 320 is 11.1px with **61 of 68** markers within 24px of a neighbour, and at `md` 23.3px median
-  with 38 within 24px. A drag at that scale cannot resolve which seat it is targeting. (Seat geometry,
-  invariant to assignment — 68 markers before the re-measure and 68 after.)
+- **It removes a capability that could corrupt production data.** Drag-to-place against a 290–304px
+  plan (§2.4) produces wrong coordinates in a live table — now measured in the running app rather than
+  computed: at `md` the minimum axis gap is **19.7px with 41 of 68** markers within 24px of a
+  neighbour, and at 640 it is 18.7px with 48 of 68. A drag at that scale cannot resolve which seat it
+  is targeting. Two corrections to the numbers this bullet used to carry: the "145px-tall plan at 320"
+  never existed (below 640 the app pans a full-size canvas, §2.4), and **at 320 the pitch is actually
+  30.5px with none inside 24px** — so the case against editing below `lg` rests on `md`, not on `sm`,
+  which is the reverse of how it read. It still holds: `md` is where the geometry is worst. (Seat
+  geometry, invariant to assignment — 68 markers before the re-measure and 68 after.)
 - **It removes the focus-semantics switch.** The panel is slide-in at every width it exists at, so
   there is no width at which focus trapping appears — a recorded deviation that no longer needs
   recording.
@@ -746,10 +831,10 @@ session); invalid credentials; magic-link sent; reset requested; and a submittin
 | 1 | Two width regimes — map fluid at all widths, documents capped at 1584 above `max` | The published grid ends at 1584; a canvas loses data when capped, a text column does not gain from width (D0) |
 | 2 | Spatial-canvas archetype not in the archetype table | The map is search-results semantics over fixed coordinates; below `lg` it resolves to a plain list archetype (D1) |
 | 3 | Constant marker shape with per-state symbols | Explicitly sanctioned by `status-and-dataviz.md` for spatial maps, but must be stated (D1) |
-| 4 | Admin editing is `lg`-and-up; `/admin` is read-only below the hinge | Coordinate accuracy against a 145px plan is not achievable, and assignment is done up front on a desktop (D2). Read-only, not disabled, per `SKILL.md` |
+| 4 | Admin editing is `lg`-and-up; `/admin` is read-only below the hinge | Coordinate accuracy against a 290–478px plan whose markers sit 19–31px apart is not achievable, and assignment is done up front on a desktop (D2). Read-only, not disabled, per `SKILL.md`. (The "145px plan" this line originally cited was the arithmetic row §2.4 has since retired — the real floor is worse than 145px in pitch and better in height) |
 | 5 | Login off the product grid | The one sanctioned expressive moment (D4) |
 | 6 | ~~Names disclosed on hover rather than drawn on every marker~~ **WITHDRAWN 2026-09-01 — this is no longer a deviation.** | It was recorded when the fit condition looked failed. Re-measured against a single-line fit-width pill, it passes: `status-and-dataviz.md`'s "put labels directly on the chart wherever they can replace a legend" is the stated default and the design now *follows* it (§3.2.1). The **seat code** moves to disclosure instead, which is not a deviation either — the code is admin information and `SKILL.md`'s "details on demand" is its proper home |
-| 7 | 44px touch targets not met at `xlg` and below | `SKILL.md` states the floor unqualified, and it is a hit-area rule the marker's drawn size cannot satisfy on its behalf. Below `xlg` the seats themselves sit closer together than a conformant target, so no marker size reaches it (§2.4). Met outright at 1920 and `max` |
+| 7 | 44px touch targets not met at `xlg` and below — **and not met anywhere, as shipped** | `SKILL.md` states the floor unqualified, and it is a hit-area rule the marker's drawn size cannot satisfy on its behalf. Below `xlg` the seats sit closer together than a conformant target, so no marker size reaches it (§2.4). The *geometry* has room at 1920 and `max`; driving the app found the shipped hit area is **32 × 32 at every one of nine widths**, so the deviation is currently universal and closing it at the two top rungs is a build task, not a design change. The 24px SC 2.5.8 floor is separately breached only in the 640–1023 band, and recovers below 640 (§2.4) |
 | 8 | Name pills are fit-width, so the resting footprint varies with the label | `SeatMarker.tsx` deliberately fixes the code pill's width "so label length never changes the resting footprint", and the name tier now breaks that symmetry on purpose: a flat width costs 52px of dead space per marker and is what made the name layer uncollidable-with (§3.2.1). Uniform-width alternatives were measured — 96px leaves 28 markers colliding at 1920, 72px leaves 12, fit-width leaves 8 — so the consistency is bought back nowhere near cheaply enough to keep. The **height** stays uniform and capped at 28px, which is the dimension the nudge actually reasons about |
 
 ---
@@ -764,13 +849,23 @@ Stated plainly so nothing here reads as more settled than it is:
 - ~~The height arithmetic (§2.3) is arithmetic, not measurement.~~ **Now measured** (2026-09-01,
   Playwright driving the real Chrome maximized at 1920×1080): viewport 1920×889, browser chrome 143px.
   The estimate it replaced was wrong by 17–51px and produced a conflict that does not exist (Q2, now
-  dissolved). §2.4's plan heights remain arithmetic, but its three right-hand columns are measured
-  from the live coordinates, so the `lg` hinge does not rest on judgement either. **The app itself has now been driven** (2026-09-01, Playwright at 1920×889 against the
+  dissolved). §2.4 is no longer arithmetic at all — every cell in it is now read off the running app. **The app itself has now been driven** (2026-09-01, Playwright at 1920×889 against the
   seeded viewer account): the marker-pitch pipeline predicted 50.9px and measured 50.9px, the 40px
   name-pill footprint is confirmed, and the collision problem reproduced larger than predicted
-  (§3.2.1). **Still unverified: every width below 1920**, both themes, the keyboard path, and any
-  admin surface — and the live check found one gap of our own making, the 32×32 hit area against a
-  44px requirement (§2.3).
+  (§3.2.1). **The full breakpoint ladder has now been driven too** (2026-09-01, nine widths from 1920
+  to 320 at the measured 889px height): §2.4 and §3.2.1 carry the results. The arithmetic held to the
+  decimal at every rung down to 640 and was wrong at 320 about a *behaviour* — the app pans a 1040px
+  canvas below 640 rather than shrinking the plan — which moved the shipped hinge from `lg` to 640 and
+  reversed the `md`-versus-`sm` verdict. **Still unverified: both themes, the keyboard path, the
+  400%-zoom reflow, and every admin surface at every width.** Three gaps of our own making surfaced in
+  the drive and are build tasks, not open questions: the 32 × 32 hit area against the 44px floor
+  (universal, §2.4), the occupant-names toggle disappearing below 640 (§3.2.1), and the **top bar
+  breaking below `md`** — measured by geometry rather than read off a screenshot: the `Ctrl K` keycap
+  overprints the Filter label by 37 × 26px at 672, 640, 480 and 320, and the right-hand utilities run
+  past the viewport edge at 640 (the avatar by 20px) and at 320 (the header's content is 142px wider
+  than the screen, so Admin, the theme toggle and the avatar are all clipped). None of that is a
+  design decision this document made; it is the current bar failing to reflow, and the shell spec (D0)
+  has to answer for it.
 - **Every breakpoint must be verified, not just the primary one.** `senior-workflow.md` pre-release
   pass 5: "Responsive — each breakpoint, not just the one you designed at." That now means five
   widths plus a 400%-zoom reflow check, per surface.
