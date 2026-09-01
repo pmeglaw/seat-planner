@@ -113,7 +113,7 @@ Treat the tokens and primitives as an **evolvable starting point, not fixed law*
 
 ## Data model (schema `public`)
 
-`seats` (per-row `layer` — the two-layer model above) · `employees` (admins' live working set, **not** a draft layer) · `published_employees` (viewer snapshot, publish-RPC-only) · `publish_events` (publish audit history) · `department_options` / `zone_options` (filter/lookup names) · `profiles` (auth roles). RLS is enabled on every table — never disable it or write bypassing policies as a "fix"; if a query unexpectedly returns nothing, suspect RLS before assuming missing data. This list is the schema reference — don't query the database or read migrations just to rediscover it. Production rows are live office data: don't modify or delete them unless explicitly asked; prefer read-only queries when debugging.
+`seats` (per-row `layer` — the two-layer model above; per-row `floor` text, default `'3'`, CHECK in `('2','3')` — `lib/floorIds.ts` mirrors the list) · `employees` (admins' live working set, **not** a draft layer) · `published_employees` (viewer snapshot, publish-RPC-only) · `publish_events` (publish audit history) · `department_options` / `zone_options` (filter/lookup names) · `profiles` (auth roles). RLS is enabled on every table — never disable it or write bypassing policies as a "fix"; if a query unexpectedly returns nothing, suspect RLS before assuming missing data. This list is the schema reference — don't query the database or read migrations just to rediscover it. Production rows are live office data: don't modify or delete them unless explicitly asked; prefer read-only queries when debugging.
 
 ## Owner working preferences
 

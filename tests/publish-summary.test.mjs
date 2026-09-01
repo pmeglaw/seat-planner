@@ -33,6 +33,7 @@ function seat(overrides) {
     department: overrides.department ?? null,
     notes: overrides.notes ?? null,
     is_custom: overrides.is_custom ?? false,
+    floor: overrides.floor ?? "3",
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z"
   };
@@ -364,4 +365,38 @@ test("employee detail diffs cover title, department, extension, and email", () =
     "Title Clerk -> Senior Clerk; Department Ops -> Legal; Ext. 101 -> 202; Email old@example.test -> new@example.test"
   );
   assert.equal(summary.hasChanges, true);
+});
+
+// Multi-floor PR-1 (2026-09-01): the client diff must count a floor change the
+// way the SQL change_summary does (seat_detail_changes gained
+// `d.floor is distinct from p.floor` in 20260901120100) — the Plan 005 parity
+// rule, extended to the new column.
+test("diff rows: a floor change is one updated row naming both floors", () => {
+  const rows = publishSummary.buildPublishDiffRows(
+    [seat({ label: "W01", floor: "2" })],
+    [seat({ label: "W01", layer: "published", floor: "3" })]
+  );
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].kind, "updated");
+  assert.equal(rows[0].detail, "Floor 3 -> Floor 2");
+});
+
+test("publish summary counts a floor-only change as one updated seat", () => {
+  const summary = publishSummary.buildPublishChangeSummary(
+    [seat({ label: "W01", floor: "2" })],
+    [seat({ label: "W01", layer: "published", floor: "3" })]
+  );
+
+  assert.equal(summary.updatedSeatCount, 1);
+  assert.equal(summary.totalChangeCount, 1);
+  assert.equal(summary.hasChanges, true);
+});
+
+test("diff rows: a seat without a floor value reads as Floor 3, so it never diffs against Floor 3", () => {
+  const legacy = seat({ label: "W01", layer: "published" });
+  delete legacy.floor;
+
+  const rows = publishSummary.buildPublishDiffRows([seat({ label: "W01", floor: "3" })], [legacy]);
+  assert.equal(rows.length, 0);
 });

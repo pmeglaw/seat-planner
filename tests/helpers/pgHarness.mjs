@@ -130,20 +130,30 @@ class SeatPlannerDb {
 
   // Returns the inserted row ({ id, updated_at, ... }) so tests can use updated_at
   // for concurrency-fence assertions.
-  async seedSeat({ label, key, x = 0.5, y = 0.5, status = "available", layer = "draft", employeeId = null, zone = null, isCustom = false } = {}) {
+  // `floor` defaults to "3" like the column itself (20260901120000), so every
+  // pre-multi-floor test keeps seeding Floor 3 rows unchanged.
+  async seedSeat({ label, key, x = 0.5, y = 0.5, status = "available", layer = "draft", employeeId = null, zone = null, isCustom = false, floor = "3" } = {}) {
     const { rows } = await this.db.query(
-      `insert into public.seats(seat_key, label, x, y, status, layer, employee_id, zone, is_custom)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `insert into public.seats(seat_key, label, x, y, status, layer, employee_id, zone, is_custom, floor)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        returning *`,
-      [key ?? label.toLowerCase(), label, x, y, status, layer, employeeId, zone, isCustom]
+      [key ?? label.toLowerCase(), label, x, y, status, layer, employeeId, zone, isCustom, floor]
     );
     return rows[0];
   }
 
-  // Convenience: read draft seats (id, label, status, employee_id) ordered by label.
+  // Convenience: read draft seats (id, label, status, employee_id, zone, floor) ordered by label.
   async draftSeats() {
     const { rows } = await this.db.query(
-      "select id, label, status, employee_id, zone from public.seats where layer = 'draft' order by label"
+      "select id, label, status, employee_id, zone, floor from public.seats where layer = 'draft' order by label"
+    );
+    return rows;
+  }
+
+  // Published twin of draftSeats(), for the publish/reset floor cases.
+  async publishedSeats() {
+    const { rows } = await this.db.query(
+      "select id, label, status, employee_id, zone, floor from public.seats where layer = 'published' order by label"
     );
     return rows;
   }

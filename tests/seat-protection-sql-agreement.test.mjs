@@ -6,8 +6,9 @@ import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 // Which seat labels are "protected originals" is implemented TWICE: in
 // lib/seatProtection.ts (the client/server guard) and again inside
 // restore_draft_snapshot, which refuses to drop a protected draft seat that a
-// snapshot omits (supabase/migrations/20260807120000, the protected_original_label
-// CASE). Two hand-maintained copies of the same ranges, and until this file
+// snapshot omits (supabase/migrations/20260901120200, the protected_original_label
+// CASE, carried verbatim from 20260807120000). Two hand-maintained copies of
+// the same ranges, and until this file
 // nothing checked that they agreed — a divergence would let the UI call a seat
 // protected while the database silently allowed a restore to delete it, or the
 // reverse.

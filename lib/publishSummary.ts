@@ -1,3 +1,4 @@
+import { floorOf } from "@/lib/floorIds";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 
 export type PublishChangeItem = {
@@ -94,6 +95,10 @@ function buildOtherChangeDetail(draftSeat: SeatWithEmployee, publishedSeat: Seat
   if (textChanged(publishedSeat.department, draftSeat.department)) changes.push(`Department ${publishedSeat.department ?? "None"} -> ${draftSeat.department ?? "None"}`);
   if (textChanged(publishedSeat.notes, draftSeat.notes)) changes.push("Notes changed");
   if (Boolean(publishedSeat.is_custom) !== Boolean(draftSeat.is_custom)) changes.push(`Custom flag ${Boolean(publishedSeat.is_custom) ? "yes" : "no"} -> ${Boolean(draftSeat.is_custom) ? "yes" : "no"}`);
+  // Client twin of the SQL seat_detail_changes clause (20260901120100). floorOf
+  // on both sides so a row that predates the column reads as Floor 3, never as
+  // a spurious "Floor undefined -> Floor 3" change.
+  if (floorOf(publishedSeat) !== floorOf(draftSeat)) changes.push(`Floor ${floorOf(publishedSeat)} -> Floor ${floorOf(draftSeat)}`);
 
   return changes.join("; ");
 }

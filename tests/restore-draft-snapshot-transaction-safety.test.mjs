@@ -2,17 +2,18 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-// 20260807120000_restore_draft_snapshot_staged_writes.sql redefines the RPC
-// again (stages label/seat_key writes so a permuted snapshot restores
-// cleanly), so it now holds the live definition — see that migration's
-// header for why.
-const migrationSql = await readFile(
-  new URL(
-    "../supabase/migrations/20260807120000_restore_draft_snapshot_staged_writes.sql",
-    import.meta.url
-  ),
-  "utf8"
-);
+// 20260901120200_restore_draft_snapshot_floor.sql (multi-floor PR-1) holds the
+// live definition: a verbatim copy of 20260807120000 (which staged label/
+// seat_key writes so a permuted snapshot restores cleanly) that also carries
+// seats.floor through the snapshot — absent/null defaults to Floor 3, anything
+// else must name a registered floor. See that migration's header for why.
+// CRLF is normalised because the anchors below are written with bare "\n".
+const migrationSql = (
+  await readFile(
+    new URL("../supabase/migrations/20260901120200_restore_draft_snapshot_floor.sql", import.meta.url),
+    "utf8"
+  )
+).replace(/\r\n/g, "\n");
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
 
 function extractFunctionSql(sql) {
@@ -75,7 +76,8 @@ test("draft snapshot restore RPC validates unsafe snapshots before mutating", ()
     /employee is assigned to multiple seats/,
     /assigned employee record is missing/,
     /Cannot restore protected original seat/,
-    /protected or occupied seats are missing from the snapshot/
+    /protected or occupied seats are missing from the snapshot/,
+    /Draft snapshot contains a seat on an unknown floor/
   ];
 
   for (const check of validationChecks) {
@@ -100,6 +102,17 @@ test("draft snapshot restore RPC validates unsafe snapshots before mutating", ()
   assert.ok(functionSql.indexOf("Cannot restore duplicate draft seat label") < firstMutation);
   assert.ok(functionSql.indexOf("assigned employee record is missing") < firstMutation);
   assert.ok(functionSql.indexOf("protected or occupied seats are missing from the snapshot") < firstMutation);
+  assert.ok(functionSql.indexOf("Draft snapshot contains a seat on an unknown floor") < firstMutation);
+});
+
+test("draft snapshot restore RPC carries seats.floor through the snapshot", () => {
+  // Only true NULL/absent defaults to Floor 3 (the column default); a blank
+  // or unknown value is refused above, before any mutation.
+  assert.match(functionSql, /source\.floor is not null and trim\(source\.floor\) not in \('2', '3'\)/);
+  assert.match(functionSql, /coalesce\(trim\(source\.floor\), '3'\) as floor/);
+  assert.match(functionSql, /floor = restore_row\.floor/);
+  assert.match(functionSql, /insert into public\.seats \([\s\S]+is_custom,\s+floor\s*\)/);
+  assert.match(functionSql, /restore_row\.is_custom,\s+restore_row\.floor\s*\)/);
 });
 
 test("draft snapshot restore RPC keeps all seat mutations draft-scoped", () => {
@@ -161,6 +174,9 @@ test("draft snapshot restore RPC preserves employee and option restore behavior"
 test("server draft snapshot restore action delegates dependent writes to the transaction-safe RPC", () => {
   assert.match(restoreActionSource, /Draft snapshot must include seats and employees arrays/);
   assert.match(restoreActionSource, /const seatsToRestore = snapshot\.seats\.map\(normalizeRestoreSeat\)/);
+  // The TS normalizer and the SQL recordset must move together: the restore
+  // record carries `floor` through the same absent -> Floor 3 rule.
+  assert.match(actionsSource, /function normalizeRestoreSeat[\s\S]+?floor: boundedFloor\(seat\.floor\)/);
   assert.match(restoreActionSource, /const employeesToRestore = snapshot\.employees\.map\(normalizeRestoreEmployee\)/);
   assert.match(restoreActionSource, /Cannot restore an empty draft map snapshot/);
   assert.match(restoreActionSource, /Cannot restore duplicate draft seat label/);

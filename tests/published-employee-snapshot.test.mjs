@@ -82,6 +82,11 @@ test("publish RPC replaces the employee snapshot atomically with the seat copy",
   assert.match(publishSql, /'employees_added'/);
   assert.match(publishSql, /'employees_removed'/);
   assert.match(publishSql, /'seat_detail_changes'/);
+
+  // Multi-floor PR-1: seats.floor travels with the published copy and a floor
+  // change counts as a seat detail change (lib/publishSummary.ts twin).
+  assert.match(publishSql, /d\.floor is distinct from p\.floor/);
+  assert.match(publishSql, /insert into public\.seats \([\s\S]+is_custom,\s+floor\s*\)/);
 });
 
 test("snapshot migration seeds the table so viewers are never blank pre-publish", () => {
