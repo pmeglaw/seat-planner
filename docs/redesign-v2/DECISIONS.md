@@ -865,7 +865,11 @@ Stated plainly so nothing here reads as more settled than it is:
   past the viewport edge at 640 (the avatar by 20px) and at 320 (the header's content is 142px wider
   than the screen, so Admin, the theme toggle and the avatar are all clipped). None of that is a
   design decision this document made; it is the current bar failing to reflow, and the shell spec (D0)
-  has to answer for it.
+  has to answer for it. **Top-bar gap CLOSED by PR #492 (2026-09-01):** tabs go mark-only (44px) below
+  `lg` and fold into the account menu below `sm`, the theme label goes `sr-only` below `md`, and the
+  keycap waits for `lg` — re-measured at all nine widths plus 639/767/1023, header content equals the
+  viewport at every rung and nothing is off-edge. The other two gaps (32 × 32 hit areas, the names
+  toggle below 640) remain open build tasks.
 - **Every breakpoint must be verified, not just the primary one.** `senior-workflow.md` pre-release
   pass 5: "Responsive — each breakpoint, not just the one you designed at." That now means five
   widths plus a 400%-zoom reflow check, per surface.
