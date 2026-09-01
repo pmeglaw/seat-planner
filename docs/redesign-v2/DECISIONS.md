@@ -873,7 +873,10 @@ Stated plainly so nothing here reads as more settled than it is:
   1920 / `max` / down to a ~1500px rendered frame (68 of 68 regions at 44px, zero overlapping, every
   21px-off-centre tap landing on its own marker), off from `xlg` down where the regions would overlap
   pod-mates (§6 row 7 stands as the recorded deviation). Same runtime derivation and 2px deadband as
-  the text tier. The names toggle below 640 remains the one open build task.
+  the text tier. **Names-toggle gap CLOSED by PR #494 (2026-09-01):** below 640 the viewer mounts an
+  icon-only names flipper (same accessible name, inline `aria-pressed`, 44px reach) in the floating
+  cluster above the zoom stack; the band and its switch are untouched, and exactly one names control is
+  in the tree at any width. **All three §7 build gaps are now closed (#492, #493, #494).**
 - **Every breakpoint must be verified, not just the primary one.** `senior-workflow.md` pre-release
   pass 5: "Responsive — each breakpoint, not just the one you designed at." That now means five
   widths plus a 400%-zoom reflow check, per surface.

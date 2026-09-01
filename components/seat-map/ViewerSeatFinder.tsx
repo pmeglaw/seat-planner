@@ -1641,7 +1641,41 @@ export function ViewerSeatFinder({
                 phone-gated but harmless; the home-indicator inset is the part
                 that matters — the safe area is still an obstruction (#198). */}
             {floor === "3" && !bandTier && (
-              <div className="absolute right-3 z-30 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] panel:bottom-3">
+              <div className="absolute right-3 z-30 flex flex-col items-end gap-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] panel:bottom-3">
+                {/* Below 640 the status band — and with it the shared
+                    NamesVisibilityToggle — does not render (owner call
+                    2026-08-17: band >=640 only), which left the feature D1
+                    rests on silently unreachable on a phone (DECISIONS.md
+                    §3.2.1, driven 2026-09-01). Same flipper, icon-only, in the
+                    one floating cluster phones already have. Inline
+                    aria-pressed carries the state (accessibility-source counts
+                    flippers against exposures relationally); the visible cue
+                    is the brand wash the surface already uses for a pressed
+                    control. gap-3 between this and the zoom stack is exactly
+                    the two 6px hit expansions (44px reach each, no overlap —
+                    touch-target no-overlap rule). Exactly one names control
+                    is mounted at any width: bandTier is JS matchMedia state,
+                    so this and the band's switch never coexist in the tree. */}
+                <button
+                  type="button"
+                  aria-pressed={showNames}
+                  aria-label="Show occupant names"
+                  title="Show occupant names"
+                  onClick={() => setShowNames(current => !current)}
+                  className={[
+                    "pointer-events-auto relative flex h-8 w-8 items-center justify-center border shadow-elevation-2 transition after:absolute after:-inset-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]",
+                    showNames
+                      ? "border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] text-[var(--sp-brand-text)]"
+                      : "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-primary)] hover:bg-[var(--sp-background)]"
+                  ].join(" ")}
+                >
+                  {/* Name tag: a badge with a name line and a detail line. */}
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2.5" y="5" width="15" height="10.5" rx="1.5" />
+                    <path d="M5.5 9h6M5.5 12h4" />
+                    <circle cx="14" cy="10.5" r="1.4" />
+                  </svg>
+                </button>
                 <MapZoomControl
                   label={mapZoomLabel}
                   onZoomIn={() => applyMapZoom(zoomFactor === null ? 1 : zoomFactor + MAP_ZOOM_STEP)}
