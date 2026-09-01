@@ -147,6 +147,14 @@ const PINS = {
     "after:absolute after:-inset-1.5"
   ],
   "components/seat-map/SeatMapDialogs.tsx": ["after:absolute after:-inset-1.5"],
+  // Seat markers: the canvas stays exempt from the sweep (SKIP_FILES), but
+  // the pitch-gated 44px hit region (lib/seatCrowding markerHitFloorMet,
+  // DECISIONS.md §2.4) is pinned per token box — 32/36/40 + 2×(6/4/2) = 44.
+  "components/seat-map/SeatMarker.tsx": [
+    "after:absolute after:-inset-1.5",
+    "after:absolute after:-inset-1\"",
+    "after:absolute after:-inset-0.5"
+  ],
   "components/admin-management/AdminManagementPanel.tsx": [
     "after:absolute after:-inset-2",
     "after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2",

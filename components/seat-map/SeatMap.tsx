@@ -43,7 +43,7 @@ import {
   seatsToVisualSeats,
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
-import { RESTING_PILL_GEOMETRY, TEXT_TIER_PILL_GEOMETRY, clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, textTierActive } from "@/lib/seatCrowding";
+import { RESTING_PILL_GEOMETRY, TEXT_TIER_PILL_GEOMETRY, clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, markerHitFloorMet, textTierActive } from "@/lib/seatCrowding";
 import { AiHighlightChip } from "@/components/seat-map/AiHighlightChip";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import { DraftTrailOverlay } from "@/components/seat-map/DraftTrailOverlay";
@@ -2479,6 +2479,21 @@ export function SeatMap({
     [mapPixelsPerNormalizedUnit, visualLocalSeats]
   );
   textTierWasActiveRef.current = textTier;
+  // 44px touch floor, same derivation and deadband (lib/seatCrowding
+  // markerHitFloorMet). Zoom-aware here too: zooming in widens pitch and lets
+  // the floor in; a docked panel that narrows the stage below ~1500px of
+  // rendered frame takes it back out (DECISIONS.md §2.4 / §5, 2026-09-01).
+  const hitFloorWasMetRef = useRef(false);
+  const hitFloor = useMemo(
+    () => markerHitFloorMet(
+      visualLocalSeats,
+      mapPixelsPerNormalizedUnit,
+      mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
+      hitFloorWasMetRef.current
+    ),
+    [mapPixelsPerNormalizedUnit, visualLocalSeats]
+  );
+  hitFloorWasMetRef.current = hitFloor;
   // Whenever the tier is on, the nudge scorers model the text-tier footprints
   // — the pills actually on screen — instead of the resting-mark geometry.
   const seatPillGeometry = textTier ? TEXT_TIER_PILL_GEOMETRY : RESTING_PILL_GEOMETRY;
@@ -3323,6 +3338,7 @@ export function SeatMap({
                         codeNudge={codePillNudges.get(seat.id) ?? 0}
                         nameNudge={nameLabelNudges.get(seat.id) ?? 0}
                         textTier={textTier}
+                        hitFloor={hitFloor}
                         swapMode={Boolean(swapSourceSeatId)}
                         moveEmployeeMode={Boolean(moveEmployeeSourceSeatId)}
                         officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}

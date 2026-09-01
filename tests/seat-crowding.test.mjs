@@ -6,11 +6,51 @@ const {
   CODE_PILL_SIZE_PX,
   CODE_PILL_DEFAULT_CLEARANCE,
   PILL_NUDGE_PX,
+  MARKER_HIT_FLOOR_PX,
+  MARKER_HIT_EXIT_SLACK_PX,
   clearanceFromScale,
+  markerHitFloorMet,
   computeCrowdedSeatIds,
   computeNameLabelNudges,
   computeCodePillNudges
 } = await importTsModule("lib/seatCrowding.ts");
+
+// 44px touch floor (DECISIONS.md §2.4): the gate is the same pairwise box test
+// at the live scale. The fixture is the floor's tightest real pair — NE02/NE03
+// at dx=56.1px on a 1911px frame (dy≈1px), which is 50.9px at the 1920
+// viewport's rendered width, 46.5 at max, 38.5 at xlg.
+const TIGHTEST_PAIR = [
+  { id: "ne02", x: 0.5, y: 0.4 },
+  { id: "ne03", x: 0.5 + 56.1 / 1911, y: 0.4 + 1 / 867 },
+  { id: "far", x: 0.9, y: 0.9 }
+];
+const ASPECT = 867 / 1911;
+
+test("the 44px hit floor is met at 1920 and max, not from xlg down", () => {
+  assert.equal(MARKER_HIT_FLOOR_PX, 44);
+  for (const frame of [1911, 1734, 1584]) {
+    assert.equal(markerHitFloorMet(TIGHTEST_PAIR, frame, frame * ASPECT), true, `frame ${frame}`);
+  }
+  for (const frame of [1312, 1056, 672, 640]) {
+    assert.equal(markerHitFloorMet(TIGHTEST_PAIR, frame, frame * ASPECT), false, `frame ${frame}`);
+  }
+});
+
+test("the hit floor holds across the exit slack once met, and does not enter inside it", () => {
+  // 1465px frame → 43.0px governing gap: under 44, over 44 − slack.
+  const frame = 1465;
+  const gap = (56.1 / 1911) * frame;
+  assert.ok(gap < MARKER_HIT_FLOOR_PX && gap >= MARKER_HIT_FLOOR_PX - MARKER_HIT_EXIT_SLACK_PX);
+  assert.equal(markerHitFloorMet(TIGHTEST_PAIR, frame, frame * ASPECT, true), true, "an entered floor survives jitter");
+  assert.equal(markerHitFloorMet(TIGHTEST_PAIR, frame, frame * ASPECT, false), false, "a resting layer does not enter inside the band");
+});
+
+test("the hit floor reads as unmet on an unmeasured scale", () => {
+  for (const scale of [0, -1, NaN, Infinity]) {
+    assert.equal(markerHitFloorMet(TIGHTEST_PAIR, scale, scale), false);
+  }
+  assert.equal(markerHitFloorMet([], 1911, 1911 * ASPECT), true, "no pairs, nothing to overlap");
+});
 
 test("adjacent seats inside the clearance box are both flagged", () => {
   const seats = [

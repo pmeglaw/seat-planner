@@ -167,6 +167,46 @@ export function textTierActive<T extends { id: string; x: number; y: number }>(
   return computeCrowdedSeatIds(seats, boundary).size === 0;
 }
 
+// Touch-target floor (skill Non-negotiables: "Touch targets 44px. A 16px icon
+// gets padding to reach it; the icon does not grow"). It is a HIT-AREA rule:
+// the marker's drawn mark stays as it is and the button grows an out-of-flow
+// 44×44 region around it (SeatMarker's after:-inset-* on `hitFloor`). Two
+// square 44px regions overlap only when their centres are within 44px on BOTH
+// axes, so the floor is reachable exactly when no seat pair sits inside that
+// box at the live scale — measured 2026-09-01 (docs/redesign-v2/DECISIONS.md
+// §2.4): met at 1920 and `max` (governing gap 50.9 / 46.5px, NE02/NE03), not
+// from `xlg` down (38.5px). Below the floor the regions would overlap their
+// neighbours and steal each other's taps, so the marker keeps its drawn box —
+// a deliberate, recorded deviation, not an oversight. Same runtime-derived
+// shape as the text tier: no frame-width constant, and the gate follows the
+// seat set (a re-render, fewer desks or a zoom layer that widens pitch lets
+// it in by construction). MARKER_HIT_EXIT_SLACK_PX is the same jitter
+// deadband as the text tier's — fit mode keeps the frame width continuous
+// under window resize, and a single boundary would flap every marker's hit
+// box while a user drags a window edge.
+export const MARKER_HIT_FLOOR_PX = 44;
+export const MARKER_HIT_EXIT_SLACK_PX = 2;
+
+export function markerHitFloorMet<T extends { id: string; x: number; y: number }>(
+  seats: ReadonlyArray<T>,
+  pixelsPerXUnit: number,
+  pixelsPerYUnit: number,
+  wasMet = false
+): boolean {
+  if (
+    !Number.isFinite(pixelsPerXUnit) || pixelsPerXUnit <= 0 ||
+    !Number.isFinite(pixelsPerYUnit) || pixelsPerYUnit <= 0
+  ) {
+    return false;
+  }
+  const boundaryPx = Math.max(1, wasMet ? MARKER_HIT_FLOOR_PX - MARKER_HIT_EXIT_SLACK_PX : MARKER_HIT_FLOOR_PX);
+  const boundary = { x: boundaryPx / pixelsPerXUnit, y: boundaryPx / pixelsPerYUnit };
+  if (!Number.isFinite(boundary.x) || !Number.isFinite(boundary.y)) {
+    return false;
+  }
+  return computeCrowdedSeatIds(seats, boundary).size === 0;
+}
+
 function isDegenerateClearance(clearance: CrowdingClearance): boolean {
   return (
     !Number.isFinite(clearance.x) || clearance.x <= 0 ||

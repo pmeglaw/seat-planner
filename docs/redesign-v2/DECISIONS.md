@@ -868,8 +868,12 @@ Stated plainly so nothing here reads as more settled than it is:
   has to answer for it. **Top-bar gap CLOSED by PR #492 (2026-09-01):** tabs go mark-only (44px) below
   `lg` and fold into the account menu below `sm`, the theme label goes `sr-only` below `md`, and the
   keycap waits for `lg` — re-measured at all nine widths plus 639/767/1023, header content equals the
-  viewport at every rung and nothing is off-edge. The other two gaps (32 × 32 hit areas, the names
-  toggle below 640) remain open build tasks.
+  viewport at every rung and nothing is off-edge. **Hit-area gap CLOSED by PR #493 (2026-09-01):**
+  `markerHitFloorMet` (lib/seatCrowding) gates a pitch-derived 44px hit region on every marker — on at
+  1920 / `max` / down to a ~1500px rendered frame (68 of 68 regions at 44px, zero overlapping, every
+  21px-off-centre tap landing on its own marker), off from `xlg` down where the regions would overlap
+  pod-mates (§6 row 7 stands as the recorded deviation). Same runtime derivation and 2px deadband as
+  the text tier. The names toggle below 640 remains the one open build task.
 - **Every breakpoint must be verified, not just the primary one.** `senior-workflow.md` pre-release
   pass 5: "Responsive — each breakpoint, not just the one you designed at." That now means five
   widths plus a 400%-zoom reflow check, per surface.

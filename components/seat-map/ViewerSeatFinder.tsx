@@ -42,7 +42,7 @@ import { SeatMarker } from "@/components/seat-map/SeatMarker";
 import { ViewerFindPalette } from "@/components/seat-map/ViewerFindPalette";
 import { MapStatusBand } from "@/components/seat-map/MapStatusBand";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
-import { RESTING_PILL_GEOMETRY, TEXT_TIER_PILL_GEOMETRY, clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, textTierActive } from "@/lib/seatCrowding";
+import { RESTING_PILL_GEOMETRY, TEXT_TIER_PILL_GEOMETRY, clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, markerHitFloorMet, textTierActive } from "@/lib/seatCrowding";
 import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
 import { buildZoneWash } from "@/lib/zoneWash";
 
@@ -323,6 +323,20 @@ export function ViewerSeatFinder({
     [mapRenderedWidth, visualSeats]
   );
   textTierWasActiveRef.current = textTier;
+  // 44px touch floor, same derivation and deadband (lib/seatCrowding
+  // markerHitFloorMet): on at 1920 and `max`, off from `xlg` down where 44px
+  // regions would overlap their pod-mates (DECISIONS.md §2.4, 2026-09-01).
+  const hitFloorWasMetRef = useRef(false);
+  const hitFloor = useMemo(
+    () => markerHitFloorMet(
+      visualSeats,
+      mapRenderedWidth ?? 0,
+      (mapRenderedWidth ?? 0) * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
+      hitFloorWasMetRef.current
+    ),
+    [mapRenderedWidth, visualSeats]
+  );
+  hitFloorWasMetRef.current = hitFloor;
   // Whenever the tier is on, the nudge scorers model the text-tier footprints
   // — the pills actually on screen — instead of the resting-mark geometry.
   const seatPillGeometry = textTier ? TEXT_TIER_PILL_GEOMETRY : RESTING_PILL_GEOMETRY;
@@ -1593,6 +1607,7 @@ export function ViewerSeatFinder({
                           codeNudge={codePillNudges.get(seat.id) ?? 0}
                           nameNudge={nameLabelNudges.get(seat.id) ?? 0}
                           textTier={textTier}
+                          hitFloor={hitFloor}
                           swapMode={false}
                           moveEmployeeMode={false}
                           officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}
