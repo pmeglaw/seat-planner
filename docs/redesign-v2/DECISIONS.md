@@ -102,8 +102,8 @@ Plan height at each width, at the 2.204:1 aspect:
 |---|---|---|---|---|---|---|
 | 1920 | 867px (capped at 1911) | 56.1px | 0 of 68 | 0 of 68 | 52.1px | Yes — fits entirely, and the only rung with room for a 44px target plus its gap |
 | 1584 (max) | 719px | 46.5px | 0 of 68 | 0 of 68 | 42.5px | Yes — the lowest rung at which no two markers sit closer than 44px |
-| 1312 (xlg) | 595px | 38.5px | 32 of 68 | 0 of 68 | 34.5px | Plan readable; markers are pointer-scale — 44px targets would overlap |
-| **1056 (lg)** | **479px** | **31.0px** | **50 of 68** | **0 of 68** | **27.0px** | **The floor — clears the 24px SC 2.5.8 target floor, not the 44px comfort figure** |
+| 1312 (xlg) | 595px | 38.5px | 32 of 68 | 0 of 68 | 34.5px | Plan readable; 44px hit regions start to overlap here — 22 pairs (deviation 7) |
+| **1056 (lg)** | **479px** | **31.0px** | **50 of 68** | **0 of 68** | **27.0px** | **The floor for reading the plan — clears the 24px SC 2.5.8 target floor; 44px hit regions overlap here (deviation 7)** |
 | 672 (md) | 305px | 19.7px | 60 of 68 | **38 of 68** | 15.7px | No — conformance fails, not merely legibility |
 | 320 (sm) | **145px** | 9.4px | 68 of 68 | **61 of 68** | 5.4px | No — unusable |
 
@@ -122,10 +122,38 @@ layer is conformant at `lg` and up and geometrically impossible at `md` and belo
 size**, because the seats themselves sit closer together than a conformant target. That is why the
 surface inverts at the hinge instead of shrinking through it.
 
-**The 44px figure does not survive the ladder, and D0 should not assume it does.** It is reachable
-only at 1920 (12.1px of spare pitch) and marginally at `max` (2.5px). At `xlg` 32 of 68 markers would
-overlap at 44px, and at `lg` 50 of 68 would. Markers are pointer-scale below `max`; the 44px floor D0
-invokes belongs to the header's own controls, which are not bound by seat geometry.
+**Touch targets: met at 1920 and `max`, deviated below — recorded in §6.** An earlier draft of this
+section argued that markers are "pointer-scale" below `max` and that the 44px floor belongs to the
+header's controls. Both were wrong, and the correction changes the reasoning rather than the boundary.
+
+`SKILL.md` states it flat, under Non-negotiables and with no viewport or input qualifier:
+**"Touch targets 44px. A 16px icon gets padding to reach it; the icon does not grow."** It is a
+**hit-area** rule, not a drawn-size rule — the skill ships `.cds-touch-target`, an out-of-flow 44×44
+overlay centred on a mark of any size, and `--cds-touch-target-min` sits in the unconditional `:root`
+block of a token file that is otherwise breakpoint-aware. So "the marker is small" is not an argument
+the system accepts; a small mark inside a padded 44px target is its stated shape of compliance. Nor
+can the header own the rule: `ui-shell.md` puts header utilities at **48×48**, which is stricter than
+44 and therefore cannot relocate the floor away from anything else.
+
+**The binding number is pitch, not marker size.** Two square 44px hit regions overlap only when they
+are within 44px on *both* axes, so the governing distance is the larger of `dx` and `dy`:
+
+| Viewport | Governing axis gap | 44px hit regions that overlap |
+|---|---|---|
+| 1920 | 56.1px | **none** |
+| 1584 (max) | 46.5px | **none** |
+| 1312 (xlg) | 38.5px | 22 pairs across 32 markers |
+| 1056 (lg) | 31.0px | 44 pairs across 50 markers |
+
+At every width the tightest pair is essentially axis-aligned (`NE02`/`NE03`, `dx=56 dy=1` at 1920), so
+the square-target and circular-target results are identical and **we meet the floor at 1920 and at
+`max` outright** — by giving each marker a hit region larger than its drawn mark, which is the skill's
+own mechanism. At `xlg` and below, 44px regions necessarily overlap their neighbours: the floor is
+geometrically unreachable rather than merely inconvenient, and the deviation is deliberate.
+Compensating paths there are the roving-tabindex keyboard traversal, search, and the inspector — none
+of which help a touch user, which is exactly why it is recorded as a deviation and not explained away.
+**Would change if** the plan gains pitch — a re-render, fewer desks, or a zoom layer — such that the
+governing gap clears 44px at `xlg`.
 
 ---
 
@@ -452,12 +480,17 @@ standing in for a pitch test, and `lg` is not a bar that pitch passes — at 105
 31.0px. Shrinking the map region from its 1911px cap to 1440px scales pitch by the same ratio: the
 tightest pair (NE02/NE03) goes from 56.1px to **42.3px**, and the largest marker keeping a 4px gap
 from 52.1px to **38.3px** — a 26% smaller drag target, appearing exactly while the admin is doing
-pixel-accurate placement. It stays well clear of the 24px SC 2.5.8 floor, and admin editing is
-pointer-only by deviation 4, so this is a comfort cost rather than a conformance one. Two ways to
-spend less of it if the reflow proves disruptive: narrow the panel — the measured content is a
-22-character name, a 17-character department, a 4-character seat label, and notes used on 1 of 68
-seats, so 480px is not demanded by the data — or hold the marker hit-area at its unpushed size while
-the panel is open.
+pixel-accurate placement. It stays well clear of the 24px SC 2.5.8 floor, but it does **not**
+stay clear of the 44px one: at a 1440px map the governing axis gap falls to 42.3px and **two pairs of
+44px hit regions overlap**, where at the unpushed 1911px none do. So opening the panel crosses a
+non-negotiable, narrowly, on the surface doing the most precise work.
+
+**Narrowing the panel closes it completely.** The floor holds at every pane width up to **420px** and
+breaks at 430px; a 400px panel leaves a 1511px map, a 44.4px governing gap and zero overlaps. The
+measured content does not demand 480px either — a 22-character longest name, a 17-character
+department, a 4-character seat label, and notes used on 1 of 68 seats. **So the panel should be 400px,
+not 480px, and the reason is conformance rather than taste.** The alternative, if 480px turns out to
+be needed, is to hold each marker's hit region at its unpushed size while the panel is open.
 
 **Admin editing is `lg` and up. Below the hinge, `/admin` is read-only** (owner ruling, 2026-08-31:
 seat assignment is done up front, on a desktop, before the redesign work begins). Narrow widths render
@@ -604,7 +637,8 @@ session); invalid credentials; magic-link sent; reset requested; and a submittin
 | 3 | Constant marker shape with per-state symbols | Explicitly sanctioned by `status-and-dataviz.md` for spatial maps, but must be stated (D1) |
 | 4 | Admin editing is `lg`-and-up; `/admin` is read-only below the hinge | Coordinate accuracy against a 145px plan is not achievable, and assignment is done up front on a desktop (D2). Read-only, not disabled, per `SKILL.md` |
 | 5 | Login off the product grid | The one sanctioned expressive moment (D4) |
-| 6 | Names disclosed on hover/focus/selection rather than drawn on every marker | `status-and-dataviz.md` says never hide something important behind an interaction. Geometry leaves no alternative: the widest collision-free name pill at the 1920 primary target is 59.5px against a 124px shipped pill and a 22-character longest name (§3.2). The searched name always draws, so the *answer* is never behind an interaction — only the names nobody asked for (D1) |
+| 6 | Names disclosed on hover/focus/selection rather than drawn on every marker | `status-and-dataviz.md` says never hide something important behind an interaction — but the same bullet mandates "details on demand", and `SKILL.md` resolves discoverability-vs-simplicity as progressive disclosure. Direct labelling is still the stated default, conditioned on fit, and geometry fails that condition: the widest collision-free name pill at 1920 is 59.5px against a 124px shipped pill and a 22-character longest name (§3.2). Recorded as a deviation rather than a neutral choice (D1) |
+| 7 | 44px touch targets not met at `xlg` and below | `SKILL.md` states the floor unqualified, and it is a hit-area rule the marker's drawn size cannot satisfy on its behalf. Below `xlg` the seats themselves sit closer together than a conformant target, so no marker size reaches it (§2.4). Met outright at 1920 and `max` |
 
 ---
 
