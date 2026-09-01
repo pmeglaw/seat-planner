@@ -90,6 +90,30 @@ test("SeatMarker renders the seat code and occupant name", async () => {
   assert.match(text, /Alice/);
 });
 
+// 44px touch floor (lib/seatCrowding markerHitFloorMet): the surface decides
+// for the whole layer and the marker grows an out-of-flow hit region only when
+// told to — its drawn 32px box is untouched either way, and the flag is
+// readable off the DOM for the live-geometry probes.
+test("SeatMarker grows a 44px hit region only when the surface says the floor is met", async () => {
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { hitFloor: true })));
+  let button = document.querySelector("button");
+  assert.ok(button.className.includes("h-8 w-8"), "the drawn box does not grow");
+  assert.ok(button.className.includes("after:absolute after:-inset-1.5"), "32 + 2×6 = 44");
+  assert.equal(button.getAttribute("data-hit-floor"), "true");
+  cleanup();
+
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { hitFloor: true, selected: true })));
+  button = document.querySelector("button");
+  assert.ok(button.className.includes("h-10 w-10"));
+  assert.ok(button.className.includes("after:absolute after:-inset-0.5"), "40 + 2×2 = 44");
+  cleanup();
+
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat())));
+  button = document.querySelector("button");
+  assert.ok(!button.className.includes("after:"), "below the floor the button keeps its drawn box");
+  assert.equal(button.getAttribute("data-hit-floor"), null);
+});
+
 test("SeatMarker's accessible label describes the seat, occupant, and status", async () => {
   await renderElement(React.createElement(SeatMarker, markerProps(makeSeat())));
   const label = document.querySelector("button").getAttribute("aria-label");

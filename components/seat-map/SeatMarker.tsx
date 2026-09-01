@@ -53,6 +53,12 @@ type SeatMarkerProps = {
   viewportEdge: "left" | "right" | "none";
   viewportEdgeOffsetPx: number;
   variant?: "admin" | "viewer";
+  // Touch-target floor (lib/seatCrowding markerHitFloorMet): when the live
+  // scale leaves every seat pair more than 44px apart on at least one axis,
+  // the button grows an out-of-flow 44×44 hit region around its drawn box.
+  // The surface decides once for the whole layer, so neighbouring regions
+  // never overlap; off, the button keeps its 32/36/40px box.
+  hitFloor?: boolean;
   // Roving tabindex: the map exposes ONE seat as a tab stop (0) and the rest
   // as -1; arrow keys move between seats (handled by the marker layer).
   tabIndex?: number;
@@ -176,6 +182,7 @@ function SeatMarkerComponent({
   viewportEdge,
   viewportEdgeOffsetPx,
   variant = "viewer",
+  hitFloor = false,
   tabIndex = 0,
   onSelect
 }: SeatMarkerProps) {
@@ -426,6 +433,15 @@ function SeatMarkerComponent({
     : "bg-[var(--sp-marker-draft-badge)] shadow-[0_2px_5px_rgba(23,26,29,0.24)]";
 
   const hitTargetSizeClass = tokenMode === "selected" ? "h-10 w-10" : tokenMode === "prominent" ? "h-9 w-9" : "h-8 w-8";
+  // The 44px floor as the skill ships it (.cds-touch-target): a padded hit
+  // region, not a bigger mark. Inset per box so every mode reaches exactly 44
+  // (40+2×2, 36+2×4, 32+2×6) — the surface gates `hitFloor` on pitch, so no
+  // two regions overlap when it is on. Pointer events on the pseudo-element
+  // resolve to the button itself, which is what every handler and the layer's
+  // closest("[data-seat-id]") lookups already target.
+  const hitFloorClass = hitFloor
+    ? tokenMode === "selected" ? "after:absolute after:-inset-0.5" : tokenMode === "prominent" ? "after:absolute after:-inset-1" : "after:absolute after:-inset-1.5"
+    : "";
   // Person-first hierarchy on the expanded name badge (2026-07-16 critique):
   // the seat code demotes to a small muted eyebrow so the occupant name below
   // it is the card's primary line. Code-only selected/prominent pills (open
@@ -537,6 +553,7 @@ function SeatMarkerComponent({
       data-seat-id={seat.id}
       data-marker-intent={markerIntent}
       data-token-mode={tokenMode}
+      data-hit-floor={hitFloor || undefined}
       data-draft-changed={draftChanged || undefined}
       aria-pressed={selected}
       // No title attribute — ruled off with F3 (read-path assessment,
@@ -549,6 +566,7 @@ function SeatMarkerComponent({
         "transition-[transform,opacity,filter] duration-150 ease-out hover:z-30 active:scale-[0.96] active:duration-75 motion-reduce:transition-none",
         markerFocusClass,
         hitTargetSizeClass,
+        hitFloorClass,
         selected ? "z-40 focus-visible:z-40" : "",
         prominentToken ? "z-30" : "",
         dimmed ? "opacity-45 saturate-50" : "",
