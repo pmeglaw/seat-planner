@@ -52,7 +52,12 @@ export function ThemeToggle({ className }: { className?: string }) {
           <path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7Z" />
         </svg>
       )}
-      {dark ? "Light mode" : "Dark mode"}
+      {/* sr-only below md, not `hidden`: the button carries no aria-label, so
+          display:none here would leave it nameless. Icon-only under 768px
+          because the label is ~66px of a bar that measured 472px of content in
+          a 320px viewport (2026-09-01) — and sr-only is position:absolute, so
+          the flex gap collapses with it and the control becomes square. */}
+      <span className="sr-only md:not-sr-only">{dark ? "Light mode" : "Dark mode"}</span>
     </button>
   );
 }

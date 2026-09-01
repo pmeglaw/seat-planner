@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 
 type AccountMenuProps = {
   email: string;
   roleLabel: string;
+  /** Chrome that does not fit the bar at narrow widths, folded in above the
+   *  account items. The viewer bar passes its surface shortcuts here below
+   *  `sm`, where three 64px tabs plus a usable search field cannot coexist in
+   *  320px (measured 2026-09-01: the bar's intrinsic content was 472px wide in
+   *  a 320px viewport, and `overflow-x: clip` made the surplus unreachable).
+   *  Items must carry `role="menuitem"` and `tabIndex={-1}` to join the roving
+   *  focus; CSS-hidden ones are skipped by focusItem below. */
+  navItems?: ReactNode;
   /** Persistent-chrome hosts (AppTopBar): pass the current pathname. When it
    *  changes, the menu closes so it can't linger over an incoming page, and —
    *  if closing stranded keyboard focus on <body> (back/forward with the menu
@@ -17,8 +25,12 @@ type AccountMenuProps = {
   autoCloseKey?: string;
 };
 
-const menuItemClassName =
+/** Exported so a host passing `navItems` styles them as this menu's own rows
+ *  rather than inventing a second look inside the same popover. */
+export const accountMenuItemClassName =
   "flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--sp-chrome-heading)] transition hover:bg-white/10 hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
+
+const menuItemClassName = accountMenuItemClassName;
 
 /**
  * The chrome bar's identity chip, opened into a small account menu: signed-in
@@ -26,7 +38,7 @@ const menuItemClassName =
  * first item focused on open, arrow-key roving, Escape/Tab close with trigger
  * refocus.
  */
-export function AccountMenu({ email, roleLabel, autoCloseKey }: AccountMenuProps) {
+export function AccountMenu({ email, roleLabel, autoCloseKey, navItems }: AccountMenuProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -59,10 +71,24 @@ export function AccountMenu({ email, roleLabel, autoCloseKey }: AccountMenuProps
     openLastCommitRef.current = open;
   });
 
+  // navItems are hidden by CSS at the widths where they belong in the bar
+  // instead, and .focus() on a display:none element is a silent no-op — so
+  // roving focus has to walk the RENDERED items, not every matching node, or
+  // the arrow keys stick on an invisible row. checkVisibility() is the
+  // browser's own "is this laid out" answer (false for display:none on the
+  // node or any ancestor). jsdom does not implement it and has no layout, so
+  // the component tests take the "everything is visible" branch — which is
+  // also the truth there, since no stylesheet is loaded to hide anything.
+  function menuItems() {
+    return Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []).filter(
+      item => (typeof item.checkVisibility === "function" ? item.checkVisibility() : true)
+    );
+  }
+
   function openMenu() {
     setOpen(true);
     window.requestAnimationFrame(() => {
-      menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+      menuItems()[0]?.focus();
     });
   }
 
@@ -72,7 +98,7 @@ export function AccountMenu({ email, roleLabel, autoCloseKey }: AccountMenuProps
   }
 
   function focusItem(target: "first" | "last" | 1 | -1) {
-    const items = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+    const items = menuItems();
     if (items.length === 0) return;
     const activeIndex = items.findIndex(item => item === document.activeElement);
     const nextIndex =
@@ -159,6 +185,10 @@ export function AccountMenu({ email, roleLabel, autoCloseKey }: AccountMenuProps
               <div className="truncate text-[12.5px] font-medium text-[var(--sp-text-primary)]">{email}</div>
               <div className="text-xs text-[var(--sp-text-helper)]">{roleLabel}</div>
             </div>
+            {/* Destinations first, account actions after — the same order the
+                bar reads left to right, so folding the shortcuts in here does
+                not reshuffle what the user already knows. */}
+            {navItems}
             <Link href="/my-seat" role="menuitem" tabIndex={-1} className={menuItemClassName} onClick={() => closeMenu(false)}>
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 shrink-0">
                 <rect x="4" y="6" width="12" height="7" rx="1" stroke="currentColor" strokeWidth="1.5" />

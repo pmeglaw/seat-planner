@@ -30,7 +30,7 @@ import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } 
 import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { buildViewerPaletteBrowse, getSeatZone, zoneKey } from "@/lib/viewerFindPalette";
 import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
-import { AccountMenu } from "@/components/ui/AccountMenu";
+import { AccountMenu, accountMenuItemClassName } from "@/components/ui/AccountMenu";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
@@ -80,6 +80,31 @@ const VIEWER_PANEL_BREAKPOINT_PX = 900;
 // the surfaces are different densities and audiences, so one preference must
 // not leak into the other's default.
 const VIEWER_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:viewer-names-visible";
+
+// The surface-shortcut glyphs, hoisted because each is drawn twice: once in
+// the bar (sm and up) and once inside the account menu (below sm), where the
+// same three destinations live after the bar runs out of room. One definition
+// so the two copies can never drift into different icons for one destination.
+const ReceptionGlyph = (
+  <svg aria-hidden="true" viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    <path d="M4 11V9.5a6 6 0 0 1 12 0V11" />
+    <path d="M4 11h2v3.5H4.6A.6.6 0 0 1 4 13.9V11ZM16 11h-2v3.5h1.4a.6.6 0 0 0 .6-.6V11Z" />
+    <path d="M16 14.5v1a2 2 0 0 1-2 2h-2.5" />
+  </svg>
+);
+const ViewerGlyph = (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    <circle cx="12" cy="12" r="8.2" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+const AdminGlyph = (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    <circle cx="9" cy="7" r="3.1" />
+    <path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6" />
+    <path d="M14.5 18.4l2 2 4.2-4.6" />
+  </svg>
+);
 
 // Keys the browser translates into native scrolling of the focused viewport
 // (mirrors SeatMap.tsx's VIEWPORT_NATIVE_SCROLL_KEYS, fix commit 49dc74f).
@@ -1083,7 +1108,63 @@ export function ViewerSeatFinder({
 
   // Type-floor Ruling 3 (2026-08-24): w-16, not w-12 — the 12px label
   // ("Reception" ≈ 56px) must fit; widen the tab, never truncate the word.
-  const chromeSurfaceShortcut = "relative flex h-9 w-16 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-xs font-medium tracking-[0.02em] transition-colors duration-150 after:absolute after:-inset-y-1 after:inset-x-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
+  // That ruling still governs wherever the word is drawn, which is lg and up.
+  // Below lg the tab drops to w-11 (44px, the touch floor) and shows the MARK alone — marks are exempt
+  // from the type floor, so this is not the w-12 truncation the ruling refused;
+  // it is the other branch of it. Three 64px tabs plus a usable search field do
+  // not fit under 1024px (measured 2026-09-01), and clipping the word was never
+  // on the table. The label rides `sr-only lg:not-sr-only`, not
+  // `hidden lg:block`, so the accessible name survives the visual collapse —
+  // sr-only is position:absolute, so it leaves the flex column entirely and the
+  // icon centres itself in the narrow cell.
+  const chromeSurfaceShortcut = "relative flex h-9 w-11 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-xs font-medium tracking-[0.02em] transition-colors duration-150 after:absolute after:-inset-y-1 after:inset-x-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)] lg:w-16";
+  const chromeSurfaceShortcutLabel = "sr-only lg:not-sr-only";
+
+  // Below `sm` even the marks do not fit, so the destinations fold into the
+  // account menu instead of being clipped. `sm:hidden` on each row, matched by
+  // `hidden sm:flex` on the bar cluster: exactly one copy of each destination
+  // is rendered at any width, so neither the tab order nor the accessibility
+  // tree ever sees a duplicate. AccountMenu's roving focus skips the copies
+  // CSS has hidden (see menuItems() there).
+  const surfaceMenuItems = accountEmail ? (
+    <>
+      <Link
+        href="/reception"
+        prefetch={false}
+        role="menuitem"
+        tabIndex={-1}
+        className={cx(accountMenuItemClassName, "sm:hidden")}
+      >
+        {ReceptionGlyph}
+        Reception
+      </Link>
+      {showAdminShortcut && (
+        <>
+          <Link
+            href="/"
+            prefetch={false}
+            aria-current="page"
+            role="menuitem"
+            tabIndex={-1}
+            className={cx(accountMenuItemClassName, "sm:hidden")}
+          >
+            {ViewerGlyph}
+            Viewer
+          </Link>
+          <Link
+            href="/admin"
+            prefetch={false}
+            role="menuitem"
+            tabIndex={-1}
+            className={cx(accountMenuItemClassName, "sm:hidden")}
+          >
+            {AdminGlyph}
+            Admin
+          </Link>
+        </>
+      )}
+    </>
+  ) : null;
 
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
@@ -1305,73 +1386,86 @@ export function ViewerSeatFinder({
             ) : paletteOpen || searchShortcutHint ? (
               // Open, the field advertises the way OUT rather than the way in —
               // the shortcut that got you here is spent.
-              <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 border border-[var(--sp-border-subtle)] px-1 py-0.5 text-xs font-semibold text-[var(--sp-text-helper)]">{paletteOpen ? "Esc" : searchShortcutHint}</kbd>
+              //
+              // hidden below lg: the keycap is absolutely positioned inside the
+              // field, and the field is the bar's only flexible child. When the
+              // bar ran out of room the field collapsed toward zero while the
+              // ~53px keycap kept its size, so it spilled LEFT out of its own
+              // field and printed over the Filter button — measured at 672, 640,
+              // 480 and 320 (2026-09-01, overlap 37 × 26px). With the cluster
+              // changes above the field keeps 96–223px between 640 and 1023,
+              // which holds the keycap but not the keycap AND the ~140px
+              // placeholder — the two overprinted at 640 and 768 — so the hint
+              // waits for lg, where the field measures 331px+. A physical-
+              // keyboard hint is desktop equipment anyway. Decorative either
+              // way (aria-hidden).
+              <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 border border-[var(--sp-border-subtle)] px-1 py-0.5 text-xs font-semibold text-[var(--sp-text-helper)] lg:block">{paletteOpen ? "Esc" : searchShortcutHint}</kbd>
             ) : null}
           </label>
         </div>
 
+        {/* The shortcuts leave the bar below `sm` and reappear inside the
+            account menu (`surfaceMenuItems`). Measured 2026-09-01: three 64px
+            tabs, the theme label and the avatar make the bar's intrinsic
+            content 472px wide in a 320px viewport, and the shell's
+            `overflow-x: clip` made the surplus unreachable rather than
+            scrollable — Admin, the theme toggle and the avatar were off-screen,
+            and keyboard focus landed on controls the user could not see. Only
+            one copy of each destination is ever rendered, so nothing is
+            duplicated in the accessibility tree. */}
         <div className="ml-auto flex h-full shrink-0 items-center">
-          {/* Reception is NOT admin equipment (unlike the surface tabs below):
-              the front-desk directory is read-only and role-safe, so every
-              signed-in user gets the shortcut (owner ruling 2026-08-05 —
-              viewers have no rail, this is their entry point). */}
-          {accountEmail && (
-            <Link
-              href="/reception"
-              // prefetch off on force-dynamic targets, same rationale as
-              // AppRail's prefetch={false} note: dynamic prefetches are pure
-              // serverless flood and collided with in-flight navigations.
-              prefetch={false}
-              aria-label="Open reception directory"
-              title="Reception — front-desk call routing"
-              className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]")}
-            >
-              <svg aria-hidden="true" viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 11V9.5a6 6 0 0 1 12 0V11" />
-                <path d="M4 11h2v3.5H4.6A.6.6 0 0 1 4 13.9V11ZM16 11h-2v3.5h1.4a.6.6 0 0 0 .6-.6V11Z" />
-                <path d="M16 14.5v1a2 2 0 0 1-2 2h-2.5" />
-              </svg>
-              Reception
-            </Link>
-          )}
-          {/* Surface tabs are admin equipment (2026-07-16 regrade, review 2):
-              non-admin staff would otherwise see one dead "tab" implying a
-              missing sibling. Their chrome ends at the account chip; surface
-              identity lives in the crumb and the menu's role line. */}
-          {showAdminShortcut && (
-            <div className="flex h-full items-center">
-              <span
-                aria-current="page"
-                title="Viewer — published map"
-                className={cx(chromeSurfaceShortcut, "border-[var(--sp-brand)] text-white")}
-              >
-                <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="8.2" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-                Viewer
-              </span>
+          <div className="hidden h-full items-center sm:flex">
+            {/* Reception is NOT admin equipment (unlike the surface tabs below):
+                the front-desk directory is read-only and role-safe, so every
+                signed-in user gets the shortcut (owner ruling 2026-08-05 —
+                viewers have no rail, this is their entry point). */}
+            {accountEmail && (
               <Link
-                href="/admin"
+                href="/reception"
+                // prefetch off on force-dynamic targets, same rationale as
+                // AppRail's prefetch={false} note: dynamic prefetches are pure
+                // serverless flood and collided with in-flight navigations.
                 prefetch={false}
-                aria-label="Open admin surface"
-                title="Admin — draft editing surface"
+                aria-label="Open reception directory"
+                title="Reception — front-desk call routing"
                 className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]")}
               >
-                <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="9" cy="7" r="3.1" />
-                  <path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6" />
-                  <path d="M14.5 18.4l2 2 4.2-4.6" />
-                </svg>
-                Admin
+                {ReceptionGlyph}
+                <span className={chromeSurfaceShortcutLabel}>Reception</span>
               </Link>
-            </div>
-          )}
+            )}
+            {/* Surface tabs are admin equipment (2026-07-16 regrade, review 2):
+                non-admin staff would otherwise see one dead "tab" implying a
+                missing sibling. Their chrome ends at the account chip; surface
+                identity lives in the crumb and the menu's role line. */}
+            {showAdminShortcut && (
+              <div className="flex h-full items-center">
+                <span
+                  aria-current="page"
+                  title="Viewer — published map"
+                  className={cx(chromeSurfaceShortcut, "border-[var(--sp-brand)] text-white")}
+                >
+                  {ViewerGlyph}
+                  <span className={chromeSurfaceShortcutLabel}>Viewer</span>
+                </span>
+                <Link
+                  href="/admin"
+                  prefetch={false}
+                  aria-label="Open admin surface"
+                  title="Admin — draft editing surface"
+                  className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]")}
+                >
+                  {AdminGlyph}
+                  <span className={chromeSurfaceShortcutLabel}>Admin</span>
+                </Link>
+              </div>
+            )}
+          </div>
           <ThemeToggle />
           {/* Account menu (identity + sign out); decorative fallback keeps
               unauthenticated prototype embeds rendering. */}
           {accountEmail ? (
-            <AccountMenu email={accountEmail} roleLabel={accountRoleLabel} />
+            <AccountMenu email={accountEmail} roleLabel={accountRoleLabel} navItems={surfaceMenuItems} />
           ) : (
             <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-brand)] text-[11px] font-semibold text-[var(--sp-text-on-brand)]">V</span>
           )}
