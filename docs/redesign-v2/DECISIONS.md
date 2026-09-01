@@ -79,20 +79,35 @@ not the UI grid and is not applied here.)
 
 ### 2.3 The height budget at the primary target
 
-Usable height is not 1080. Chrome maximized on Windows 11 spends roughly 92–126px on its own chrome,
-leaving **≈950–990px**. Everything budgets against **950** so the tightest real configuration works.
+**Measured 2026-09-01, not estimated** (Playwright driving the real installed Chrome, maximized on
+the owner's 1920×1080 display). An earlier version of this section estimated 92–126px of browser
+chrome and budgeted against ≈950px. Both numbers were wrong, and the conclusion drawn from them was
+wrong in a more interesting way.
 
-The floor plan is 1911×867 at its display cap (aspect 2.204:1):
+| | Measured |
+|---|---|
+| Screen | 1920 × 1080 |
+| Windows taskbar | 48px |
+| Chrome's own chrome (tab strip + address bar) | **143px** — the estimate said 92–126 |
+| **Viewport** | **1920 × 889** — the estimate said ≈950 |
+| A bookmarks bar, if shown, costs a further | ~34px |
 
-| Configuration | Map width | Map height | Fits in 950? |
-|---|---|---|---|
-| 48px header only | 1911 (capped) | 867 | 902 available — yes, 35px spare |
-| 48px header + 40px bottom band | 1911 | 867 | 862 available — **no, 5px short** |
-| 48px header + 48px left rail | 1872 | 849 | 902 available — yes, 53px spare |
+**The plan never reaches its 1911px display cap at this viewport — height binds first.** That is the
+correction the old table missed: the plan is aspect-locked at 2.204:1, so when height is the
+constraint it renders *narrower*, and the whole plan stays visible. It does not overflow, and there is
+nothing to scroll.
 
-**Reading:** at the primary target the entire floor plan fits on screen at 100% with a header and
-nothing else — a persistent bottom strip breaks that by single-digit pixels. This finding is
-**specific to 1920** and does not generalize down the ladder; §2.4 is where it stops holding.
+| Configuration | Available height | Plan renders at | Whole plan visible | Min axis gap | 44px targets overlapping |
+|---|---|---|---|---|---|
+| 48px header only | 841px | 1854 × 841 | yes | 54.5px | 0 |
+| 48px header + 40px bottom band | 801px | 1766 × 801 | yes | 51.9px | 0 |
+| + a bookmarks bar as well | 767px | 1691 × 767 | yes | 49.7px | 0 |
+
+**Reading — and it dissolves Q2 rather than answering it.** A persistent bottom strip and a
+wholly-visible floor plan do **not** conflict. The strip costs **4.8% of plan width** (1854 → 1766),
+not the plan's visibility, and every configuration above — bookmarks bar included — still clears the
+44px touch floor with zero overlapping hit regions. The old "misses by about 5px" was an artefact of
+assuming the plan must render at its 1911px cap. It never does here.
 
 ### 2.4 Where the plan stops fitting — and why `lg` is the hinge
 
@@ -100,7 +115,7 @@ Plan height at each width, at the 2.204:1 aspect:
 
 | Viewport width | Plan height | Min marker pitch | Markers <44px apart | Markers <24px apart | Largest marker w/ 4px gap | Verdict |
 |---|---|---|---|---|---|---|
-| 1920 | 867px (capped at 1911) | 56.1px | 0 of 68 | 0 of 68 | 52.1px | Yes — fits entirely, and the only rung with room for a 44px target plus its gap |
+| 1920 | **841px** — height binds, so the plan renders 1854 wide, not the 1911 cap (§2.3) | 54.5px | 0 of 68 | 0 of 68 | 50.5px | Yes — fits entirely, and the only rung with room for a 44px target plus its gap |
 | 1584 (max) | 719px | 46.5px | 0 of 68 | 0 of 68 | 42.5px | Yes — the lowest rung at which no two markers sit closer than 44px |
 | 1312 (xlg) | 595px | 38.5px | 32 of 68 | 0 of 68 | 34.5px | Plan readable; 44px hit regions start to overlap here — 22 pairs (deviation 7) |
 | **1056 (lg)** | **479px** | **31.0px** | **50 of 68** | **0 of 68** | **27.0px** | **The floor for reading the plan — clears the 24px SC 2.5.8 target floor; 44px hit regions overlap here (deviation 7)** |
@@ -433,9 +448,11 @@ Options considered:
 
 Choice: B — one layout switch at the lg hinge.
   At lg and up the plan is the page, fluid to 1920, with search as a single floating
-  Find affordance. The measured numbers decide it: at 1920 the ENTIRE plan fits on
-  screen at 100% under a 48px header (§2.3), so the spatial answer needs no pan, zoom
-  or scroll. That is the whole value of the surface.
+  Find affordance. The measured numbers decide it: at 1920 the ENTIRE plan is visible
+  under a 48px header, so the spatial answer needs no pan, zoom or scroll. That is
+  the whole value of the surface. Note it is NOT at 100%: the measured viewport is
+  889px tall, so height binds and the plan renders 1854 wide rather than reaching its
+  1911px cap (§2.3). Wholly visible, slightly under full size.
   Below lg that is simply untrue — §2.4: 305px tall at md, 145px at sm, with 68
   markers on it. A is therefore rejected on measurement, not taste: it ships an
   unreadable map and calls it responsive. C is rejected at wide widths by
@@ -720,10 +737,13 @@ Stated plainly so nothing here reads as more settled than it is:
 - **No contrast checking has been run.** `scripts/check_contrast.py --preset all` is a build-phase
   gate and no colour values are chosen in this document. No ratio is asserted anywhere above.
 - **No components built, no CSS written, no tokens defined.** Per your instruction to stop here.
-- **The height arithmetic (§2.3) is arithmetic, not measurement.** It should be confirmed against
-  your actual Chrome window before the bottom-strip question (Q2) is locked. §2.4's plan heights are
-  arithmetic too, but its three right-hand columns are now measured from the live coordinates, so the
-  `lg` hinge no longer rests on judgement.
+- ~~The height arithmetic (§2.3) is arithmetic, not measurement.~~ **Now measured** (2026-09-01,
+  Playwright driving the real Chrome maximized at 1920×1080): viewport 1920×889, browser chrome 143px.
+  The estimate it replaced was wrong by 17–51px and produced a conflict that does not exist (Q2, now
+  dissolved). §2.4's plan heights remain arithmetic, but its three right-hand columns are measured
+  from the live coordinates, so the `lg` hinge does not rest on judgement either. **What is still
+  unmeasured is the app itself** — every figure here is computed from coordinates and geometry, and
+  none of it has been confirmed against the running product at any width.
 - **Every breakpoint must be verified, not just the primary one.** `senior-workflow.md` pre-release
   pass 5: "Responsive — each breakpoint, not just the one you designed at." That now means five
   widths plus a 400%-zoom reflow check, per surface.
@@ -744,9 +764,13 @@ Stated plainly so nothing here reads as more settled than it is:
    `shell-reference.html` does not re-enter the process; the `docs/redesign` branch stays off-limits
    permanently rather than for the duration of this document. Recorded in §1. (Numbering below is
    left unchanged so existing cross-references still resolve.)
-2. **The bottom strip.** §2.3 shows a 40px persistent bottom band and a full-height floor plan cannot
-   coexist at 1920×1080 — it misses by about 5px. Which wins: the plan fitting entirely on screen at
-   the primary target, or a persistent status strip?
+2. ~~**The bottom strip.**~~ **DISSOLVED 2026-09-01 — there was never a conflict.** The question
+   assumed the plan must render at its 1911px cap, so a 40px band appeared to push it 5px off screen.
+   Measured (§2.3), the viewport is 889px, the plan is aspect-locked, and height binds long before
+   width: with a band it simply renders 1766 wide instead of 1854 and stays **wholly visible**. The
+   band costs **4.8% of plan width**, and the 44px touch floor survives it with zero overlapping hit
+   regions — even with a bookmarks bar as well. Whether to *have* a status strip is still a design
+   question, but it is no longer a geometric trade and does not belong in this list.
 3. **The floor selector — the question inverted on 2026-09-01.** This document twice called the
    control "chrome for a dimension the data does not have" and was heading for *remove it*. That was
    wrong about the building. **The firm occupies two floors and 40 of its 98 people are on the one
@@ -787,8 +811,10 @@ reasoning; the remaining open questions are all narrow and all sit on measured d
 ## 9. Recommended next step
 
 The re-measure is done and §3 is current, so Q3 and Q4 are decidable on settled data rather than
-deferred (Q2 was never data-blocked, and Q1 is now answered — the skill-derived direction is the
-target). Answer Q2–Q6, then build in **two** slices rather than one:
+deferred, and Q1, Q2 and Q6 are now answered — the skill-derived direction is the target (Q1), the
+bottom strip was never a geometric conflict (Q2), and the marker carries the name (Q6). **Only Q3,
+Q4 and Q5 remain open, and none of them blocks the shell.** Answer them, then build in **two** slices
+rather than one:
 
 1. **The shell specification (D0), alone and first** — header, mode indicator, the `lg` navigation
    collapse, the two width regimes. Its priority is unchanged: it is the dependency for all four
