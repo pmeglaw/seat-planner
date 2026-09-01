@@ -97,17 +97,29 @@ correction the old table missed: the plan is aspect-locked at 2.204:1, so when h
 constraint it renders *narrower*, and the whole plan stays visible. It does not overflow, and there is
 nothing to scroll.
 
-| Configuration | Available height | Plan renders at | Whole plan visible | Min axis gap | 44px targets overlapping |
-|---|---|---|---|---|---|
-| 48px header only | 841px | 1854 × 841 | yes | 54.5px | 0 |
-| 48px header + 40px bottom band | 801px | 1766 × 801 | yes | 51.9px | 0 |
-| + a bookmarks bar as well | 767px | 1691 × 767 | yes | 49.7px | 0 |
+Predicted from that viewport, assuming only a 48px header, the plan would render 1854 × 841. **The
+running app was then driven at exactly 1920 × 889 and measured** (2026-09-01, Playwright + the seeded
+viewer account). It is more conservative than the arithmetic, and the arithmetic was never the point:
 
-**Reading — and it dissolves Q2 rather than answering it.** A persistent bottom strip and a
-wholly-visible floor plan do **not** conflict. The strip costs **4.8% of plan width** (1854 → 1766),
-not the plan's visibility, and every configuration above — bookmarks bar included — still clears the
-44px touch floor with zero overlapping hit regions. The old "misses by about 5px" was an artefact of
-assuming the plan must render at its 1911px cap. It never does here.
+| | Predicted | **Measured in the running app** |
+|---|---|---|
+| Header | 48px (assumed) | **36px** — the viewer renders its own, not the shell's |
+| Plan renders at | 1854 × 841 | **1734 × 787**, top 49, bottom 836 |
+| Below the fold | none | **none** — `scrollHeight === clientHeight`, nothing clipped |
+| Min axis gap between markers | 54.5px | **50.9px** |
+| Status strip | hypothetical | **already ships** — bottom 862–878 |
+
+**Reading — Q2 was dissolved twice over.** A persistent bottom strip and a wholly-visible floor plan
+do not conflict, and the argument never needed making: the strip *already exists* (it reads "Assigned
+58 · Open 10 · Reserved 0"), the plan already fits above it, and nothing is below the fold. The old
+"misses by about 5px" was an artefact of assuming the plan renders at its 1911px cap. It never does
+here — the app fits it to the space it has, exactly as an aspect-locked canvas should.
+
+**The one thing the measurement contradicts is a claim of ours, not the app's.** §2.4 says the 44px
+touch floor is *met* at 1920. That is true of the **geometry** — the measured 50.9px gap has room for
+it — but the shipped marker's hit area is **32 × 32**, so the app does not currently take that room.
+That is an implementation gap to close in the build, not a constraint to design around, and it is the
+kind of thing only running the app reveals.
 
 ### 2.4 Where the plan stops fitting — and why `lg` is the hinge
 
@@ -115,7 +127,7 @@ Plan height at each width, at the 2.204:1 aspect:
 
 | Viewport width | Plan height | Min marker pitch | Markers <44px apart | Markers <24px apart | Largest marker w/ 4px gap | Verdict |
 |---|---|---|---|---|---|---|
-| 1920 | **841px** — height binds, so the plan renders 1854 wide, not the 1911 cap (§2.3) | 54.5px | 0 of 68 | 0 of 68 | 50.5px | Yes — fits entirely, and the only rung with room for a 44px target plus its gap |
+| 1920 | **787px measured** — the app fits the plan to 1734 wide, well under the 1911 cap (§2.3) | **50.9px measured** | 0 of 68 | 0 of 68 | 46.9px | Yes — fits entirely, and the only rung with room for a 44px target plus its gap. The app ships 32×32 hit areas and does not yet use that room |
 | 1584 (max) | 719px | 46.5px | 0 of 68 | 0 of 68 | 42.5px | Yes — the lowest rung at which no two markers sit closer than 44px |
 | 1312 (xlg) | 595px | 38.5px | 32 of 68 | 0 of 68 | 34.5px | Plan readable; 44px hit regions start to overlap here — 22 pairs (deviation 7) |
 | **1056 (lg)** | **479px** | **31.0px** | **50 of 68** | **0 of 68** | **27.0px** | **The floor for reading the plan — clears the 24px SC 2.5.8 target floor; 44px hit regions overlap here (deviation 7)** |
@@ -299,6 +311,15 @@ Re-measured with a single-line, fit-width pill carrying the first name:
 | 1312 (xlg) | 15 | 26 | **0** | 32 |
 | 1056 (lg) | 27 | 43 | **0** | 15 |
 
+**Confirmed against the running app, 2026-09-01.** Names toggled on at 1920 × 889, measuring rendered
+rectangles rather than arithmetic: **36 overlapping pairs across 52 of the 68 markers**, and **30 of
+those 36 overlap by more than 16px** — genuine overlap, not adjacency (`C01 Tsov P.` over
+`C02 Aris M.` by 34 × 39px, most of a pill). With names **off**, zero pairs overlap by more than 4px.
+So the problem is real, it is caused by the name layer, and it is **worse than this section's
+arithmetic predicted** (27 pairs / 43 markers) because the app renders at 1734 rather than the 1911
+cap the arithmetic assumed. The pill-height histogram also confirms the footprint used throughout:
+50 name pills at **40px**, 10 code pills at 32px, 8 office plates at 56px.
+
 **Reading: a persistent name-per-marker layer IS available, and the solver that ships can place it.**
 The residual collisions are not a defect — they are exactly the work `seatCrowding` exists to do, and
 at ≤28px it can do all of it. What was never available is the *shipped* two-line 124px pill on a
@@ -332,8 +353,11 @@ at 12px/500.*
    extension and an email; **none** has an avatar. Names run to 22 characters, mean 13.5; the longest
    department name in use is 17. Seat labels are at most 4 characters. One seat carries a note.
 
-Also unchanged: the floor selector fronts a single real floor (a `FloorPlaceholder` component
-exists). It is chrome for a dimension the data does not have.
+Also, and sharper than this section previously recorded: the floor control **already reads
+"Floor 3 · Pre-Litigation"** in the running app. It is not a placeholder fronting an absent dimension
+— it *asserts a floor number*, correctly, while the schema has no `floor` column to back it and no
+way to represent the 2nd floor where 40 of the firm's 98 people work. The control is right and the
+data underneath it is missing, which is the reverse of what this document assumed (§8, Q3).
 
 **The people-to-seats ratio still makes the small screen tractable.** A directory of 99 names is a
 perfectly good list at 320px. A floor plan is not. That argument never depended on how many people
@@ -741,9 +765,12 @@ Stated plainly so nothing here reads as more settled than it is:
   Playwright driving the real Chrome maximized at 1920×1080): viewport 1920×889, browser chrome 143px.
   The estimate it replaced was wrong by 17–51px and produced a conflict that does not exist (Q2, now
   dissolved). §2.4's plan heights remain arithmetic, but its three right-hand columns are measured
-  from the live coordinates, so the `lg` hinge does not rest on judgement either. **What is still
-  unmeasured is the app itself** — every figure here is computed from coordinates and geometry, and
-  none of it has been confirmed against the running product at any width.
+  from the live coordinates, so the `lg` hinge does not rest on judgement either. **The app itself has now been driven** (2026-09-01, Playwright at 1920×889 against the
+  seeded viewer account): the marker-pitch pipeline predicted 50.9px and measured 50.9px, the 40px
+  name-pill footprint is confirmed, and the collision problem reproduced larger than predicted
+  (§3.2.1). **Still unverified: every width below 1920**, both themes, the keyboard path, and any
+  admin surface — and the live check found one gap of our own making, the 32×32 hit area against a
+  44px requirement (§2.3).
 - **Every breakpoint must be verified, not just the primary one.** `senior-workflow.md` pre-release
   pass 5: "Responsive — each breakpoint, not just the one you designed at." That now means five
   widths plus a 400%-zoom reflow check, per surface.
