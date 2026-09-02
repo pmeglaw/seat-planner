@@ -245,14 +245,19 @@ export function FilterPanel({
           {matchSummary}
         </p>
       )}
-      {/* Same recipe as the chips' Clear all (sp-zone-base re-entry, brand
-          wash, 3px vertical hit expansion — the popover's wrap rows cap it). */}
+      {/* Shape of the chips' Clear all (sp-zone-base re-entry, 3px vertical
+          hit expansion — the popover's wrap rows cap it), but on an OPAQUE
+          layer-01 ground: the zone class re-enters the surface tokens, not
+          the translucent brand wash, so brand text over the wash on the dark
+          popover measured ~2:1 (2026-09-01 harness drive). layer-01 + brand
+          text is 7.4:1 light / 7.1:1 dark; the hover wash (brand-subtle)
+          keeps 6.2:1 in both. */}
       {matchSummaryAction && (
         <div className="sp-zone-base mt-2 flex">
           <button
             type="button"
             onClick={matchSummaryAction.onClick}
-            className="relative inline-flex min-h-6 items-center border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-brand-text)] transition after:absolute after:-inset-y-[3px] after:inset-x-0 hover:bg-[rgba(255,87,21,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+            className="relative inline-flex min-h-6 items-center border border-[var(--sp-brand-border)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-brand-text)] transition after:absolute after:-inset-y-[3px] after:inset-x-0 hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
           >
             {matchSummaryAction.label}
           </button>

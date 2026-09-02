@@ -52,6 +52,10 @@ export type FloorRosterProps = {
   helper: string;
   regionId?: string;
   onClearSearch?: () => void;
+  /** Extra top padding on the sticky header, in px — the viewer floats its
+   *  floor/crumb chip cluster over the stage's top-left corner, which is where
+   *  this header sits, so the caller passes the cluster's measured height. */
+  headerInsetPx?: number;
 };
 
 export function FloorRoster({
@@ -61,7 +65,8 @@ export function FloorRoster({
   highlightedPersonId = null,
   helper,
   regionId = DEFAULT_FLOOR_ROSTER_REGION_ID,
-  onClearSearch
+  onClearSearch,
+  headerInsetPx = 0
 }: FloorRosterProps) {
   const label = FLOORS[floor].label;
   const trimmedQuery = query.trim();
@@ -85,7 +90,10 @@ export function FloorRoster({
       aria-label={`${label} roster`}
       className="h-full w-full overflow-y-auto overscroll-contain bg-[var(--sp-layer-01)] text-left [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]"
     >
-      <div className="sticky top-0 z-10 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-4 py-3">
+      <div
+        className="sticky top-0 z-10 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-4 py-3"
+        style={headerInsetPx > 0 ? { paddingTop: headerInsetPx } : undefined}
+      >
         <h2 className="text-sm font-semibold text-[var(--sp-text-primary)]">
           {label} — {peopleLabel}
         </h2>
@@ -139,10 +147,16 @@ export function FloorRoster({
                       aria-current={highlighted ? "true" : undefined}
                       // Dense zone: one 40px line from md up (name | position ·
                       // extension | email), stacked below. No hover or focus
-                      // styling — the row is not a control.
+                      // styling — the row is not a control. The highlighted
+                      // row carries two signals: the brand wash and a 4px
+                      // left accent bar (button-primary: ≈4.0:1 on the wash,
+                      // 3.4:1 in dark — a 1px 40% brand ring measured 1.6:1
+                      // and failed the 3:1 graphic floor, 2026-09-01).
                       className={[
-                        "grid min-h-10 grid-cols-1 gap-x-4 gap-y-0.5 border-t border-[var(--sp-border-subtle)] px-4 py-2 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] md:items-center md:py-0",
-                        highlighted ? "bg-[var(--sp-brand-subtle)] ring-1 ring-inset ring-[var(--sp-brand-border)]" : ""
+                        "grid min-h-10 grid-cols-1 gap-x-4 gap-y-0.5 border-t border-[var(--sp-border-subtle)] py-2 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] md:items-center md:py-0",
+                        highlighted
+                          ? "border-l-4 border-l-[var(--sp-button-primary)] bg-[var(--sp-brand-subtle)] pl-3 pr-4"
+                          : "px-4"
                       ].join(" ")}
                     >
                       <span className="truncate text-[13px] font-semibold leading-5 text-[var(--sp-text-primary)]">

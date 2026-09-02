@@ -106,3 +106,12 @@ test("the highlighted person is the marked row and the region can take focus", a
   await flushFrames();
   assert.equal(document.activeElement, region());
 });
+
+// The viewer floats its floor/crumb chip cluster over the top-left of the
+// stage; on the roster that is exactly where the sticky header sits, so the
+// caller passes the cluster's measured height and the header clears it.
+test("a header inset pushes the sticky heading below the caller's floating chrome", async () => {
+  await renderRoster({ headerInsetPx: 64 });
+  const header = region().querySelector("h2").parentElement;
+  assert.equal(header.style.paddingTop, "64px");
+});

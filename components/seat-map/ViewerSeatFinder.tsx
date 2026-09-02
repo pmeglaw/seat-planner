@@ -368,6 +368,21 @@ export function ViewerSeatFinder({
     () => (surface === "roster" ? peopleOnFloor(floor, publishedSeats, employees) : []),
     [employees, floor, publishedSeats, surface]
   );
+  // The top-left chip cluster floats over the stage (see the render comment
+  // below). On the roster floor that corner is the roster's sticky header, so
+  // the header clears the cluster by its MEASURED height — the chips wrap on
+  // narrow frames and with active filters, so no static inset is right.
+  const chipClusterRef = useRef<HTMLDivElement | null>(null);
+  const [chipClusterHeight, setChipClusterHeight] = useState(0);
+  useEffect(() => {
+    const cluster = chipClusterRef.current;
+    if (!cluster) return;
+    const update = () => setChipClusterHeight(cluster.offsetHeight);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(cluster);
+    return () => observer.disconnect();
+  }, []);
   // Pill crowding at the live rendered scale (render-layer only, parity with
   // the admin map): code pills render at one uniform size, and the crowded
   // set feeds alternating vertical token nudges that keep tight pods from
@@ -1670,7 +1685,7 @@ export function ViewerSeatFinder({
                 card opting itself back in keeps the gaps between cards
                 draggable map. Ungated by floor on purpose — the floor pill IS
                 how you leave the roster floor. */}
-            <div className="pointer-events-none absolute left-3 top-3 z-40 flex flex-wrap items-center gap-2">
+            <div ref={chipClusterRef} className="pointer-events-none absolute left-3 top-3 z-40 flex flex-wrap items-center gap-2">
               <div className="pointer-events-auto">
                 <FloorSelector floor={floor} onChange={next => switchFloor(next)} />
               </div>
@@ -1713,6 +1728,8 @@ export function ViewerSeatFinder({
                   helper={floorMeta.mapped ? "Nothing on this floor has been published yet." : `The ${floorOrdinal(floor)}-floor plan is not mapped yet.`}
                   regionId={VIEWER_ROSTER_REGION_ID}
                   onClearSearch={clearSearch}
+                  // 12px cluster offset + its height + 8px breathing room.
+                  headerInsetPx={chipClusterHeight + 20}
                 />
               )}
               {surface === "plan" && plan && (
