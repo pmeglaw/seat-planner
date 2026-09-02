@@ -231,12 +231,17 @@ test("a seated person on another floor carries a floor tag beside the seat code;
   await renderPalette({ browse: { ...BROWSE, people: [ADA, benDownstairs, CASS] }, currentFloor: "3" });
   assert.match(browseRow("Ben Carter").textContent, /Floor 2/);
   assert.doesNotMatch(browseRow("Ada Lovelace").textContent, /Floor 3/);
+  // The row's explicit aria-label replaces its content, so the visual tag
+  // must be spoken too.
+  assert.match(browseRow("Ben Carter").getAttribute("aria-label"), /Floor 2/);
+  assert.doesNotMatch(browseRow("Ada Lovelace").getAttribute("aria-label"), /Floor 3/);
 });
 
 test("query results tag a seat on another floor too", async () => {
   await renderPalette({ query: "b", results: [{ ...SEAT_RESULT, floor: "2" }], resultCountLabel: "1 result", mappedSeatCount: 1, currentFloor: "3" });
   const list = screen.getByRole("list", { name: "Viewer search results" });
   assert.match(list.textContent, /Floor 2/);
+  assert.match(within(list).getByRole("button").getAttribute("aria-label"), /Floor 2/);
 });
 
 test("a seated row opens through the one selection path and lights its seat on hover", async () => {

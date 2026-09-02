@@ -308,7 +308,9 @@ export function ViewerFindPalette({
                     <button
                       type="button"
                       aria-current={selected ? "true" : undefined}
-                      aria-label={`${KIND_LABELS[result.kind]} result. ${result.title}. ${result.subtitle}. ${result.meta}.${selected ? " Selected." : ""}`}
+                      // The explicit label replaces the content, so the
+                      // off-floor tag is spoken here as well as drawn.
+                      aria-label={`${KIND_LABELS[result.kind]} result. ${result.title}. ${result.subtitle}. ${result.meta}.${result.floor && result.floor !== currentFloor ? ` ${FLOORS[result.floor].tag}.` : ""}${selected ? " Selected." : ""}`}
                       onClick={() => onOpenRow(result)}
                       // No hover-locate on result rows, deliberately: a seat
                       // lit from here would announce itself as "highlighted
@@ -362,7 +364,9 @@ export function ViewerFindPalette({
                 // argument, which is both a leaked DOM reference and an
                 // argument the prop's type never promised.
                 onClick={() => onClearSearch()}
-                className="mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+                // ≈30px content-sized; the 7px vertical expansion reaches 44
+                // (only the <p> above it is adjacent — touch-target-source pin).
+                className="relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
               >
                 Clear search
               </button>
@@ -488,7 +492,7 @@ export function ViewerFindPalette({
                       the reader via the result row's `meta` in query mode. */}
                   <button
                     type="button"
-                    aria-label={`${row.title}. ${row.subtitle}.`}
+                    aria-label={`${row.title}. ${row.subtitle}.${row.seatId && row.floor && row.floor !== currentFloor ? ` ${FLOORS[row.floor].tag}.` : ""}`}
                     onClick={() => onOpenRow(row)}
                     onPointerEnter={() => onRowHoverChange(row.seatId)}
                     onPointerLeave={() => onRowHoverChange(null)}

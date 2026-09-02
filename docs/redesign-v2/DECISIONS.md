@@ -697,8 +697,9 @@ beside the code.
 **Q5, closed:** the department filter keeps all 15 departments. On a plan floor a department with no
 seats here but people on the other floor reads *"0 of 68 seats on Floor 3 · 20 people in Litigation
 are on Floor 2"* with a **Show Floor 2** action; on the roster floor the same popover counts people
-(*"N of M people on Floor 2 match"*), department and position filter the rows, zone and status are
-inert.
+(*"N of M people on Floor 2 match"*), department and position filter the rows, and zone and status —
+seat facts — are **hidden** there with a one-line note (Hidden tier, never disabled). A filter that hides
+everyone says so and offers *Clear filters*; the first-run copy is reserved for a floor with no one on it.
 
 **Status band:** the title carries the floor (*"Floor 3 · 68 seats"*); on the roster floor it is
 title-only (*"Floor 2 · Litigation · 40 people"*) with the legend list, names switch and zoom

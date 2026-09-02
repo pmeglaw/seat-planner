@@ -23,6 +23,7 @@ import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOpti
 import { STATUS_LABELS } from "@/lib/types";
 import { normalizeSeat } from "@/lib/seatNormalize";
 import { cx } from "@/components/ui/design-system";
+import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 
 // MAP_IMAGE_WIDTH/HEIGHT stay the universal frame for the scale-dependent
 // tiers (every floor's plan is built to the same 1911×867 framing); the
@@ -254,6 +255,11 @@ export function ViewerSeatFinder({
   // The floor most recently switched to by a user action, for the live
   // region ("Showing Floor 2 · Litigation"); cleared by the next find.
   const [announcedFloor, setAnnouncedFloor] = useState<FloorId | null>(null);
+  // The person a find landed on in the roster. Held explicitly rather than
+  // derived from the query results: the palette's People directory opens
+  // rows with an EMPTY query, where the results feed is empty (review,
+  // 2026-09-01). Cleared by a manual switch and by the next find.
+  const [rosterHighlight, setRosterHighlight] = useState<{ employeeId: string; title: string } | null>(null);
   // Status-band tiers (Option A, owner call 2026-08-17): the band renders from
   // sm (640) up, and below the panel tier it yields to the inspector bottom
   // sheet. Desktop-first defaults keep SSR and the first client render in
@@ -478,19 +484,26 @@ export function ViewerSeatFinder({
   const structuredFilterCount = [department !== "all", position !== "all", zone !== "all", status !== "all"].filter(Boolean).length;
   const filtersActive = searchActive || structuredFiltersActive;
 
-  const seatPassesStructuredFilters = useCallback((seat: SeatWithEmployee) => {
+  // The PERSON facets alone (department, position) — what the roster floor
+  // filters by, and what decides whether a zero on this floor is the
+  // department's absence or a zone/status choice.
+  const seatPassesPersonFacets = useCallback((seat: SeatWithEmployee) => {
     // departmentKey on both sides (the same normalisation the facet options
     // and the roster use), not a bare toLowerCase — sweep defect 5.
     const departmentOk = department === "all" || departmentKey(getSeatDepartment(seat)) === departmentKey(department);
-    const positionOk = seatMatchesPosition(seat.employee?.position, position);
+    return departmentOk && seatMatchesPosition(seat.employee?.position, position);
+  }, [department, position]);
+
+  const seatPassesStructuredFilters = useCallback((seat: SeatWithEmployee) => {
+    const personOk = seatPassesPersonFacets(seat);
     // zoneKey on BOTH sides, not raw ===: the palette's chips aggregate on
     // that key and render the first spelling seen, so a chip built from an
     // active zone option could count a seat whose own `zone` differs only in
     // case or padding — and then filter that same seat out when pinned.
     const zoneOk = zone === "all" || zoneKey(getSeatZone(seat)) === zoneKey(zone);
     const statusOk = status === "all" || seat.status === (status as SeatStatus);
-    return departmentOk && positionOk && zoneOk && statusOk;
-  }, [department, position, status, zone]);
+    return personOk && zoneOk && statusOk;
+  }, [seatPassesPersonFacets, status, zone]);
 
   const resultSeatIdSet = useMemo(() => new Set(searchResults.resultSeatIds), [searchResults.resultSeatIds]);
   const activeResultSeatIdSet = useMemo(() => new Set(activeResult?.seatIds ?? []), [activeResult]);
@@ -540,11 +553,12 @@ export function ViewerSeatFinder({
       ? new Set(visualSeats.filter(seat => !highlightedSeatIdSet.has(seat.id) && seat.id !== selectedSeatId).map(seat => seat.id))
       : undefined;
     return buildOfficeRoomWashes({
+      floor,
       seats: visualSeats.map(seat => ({ id: seat.id, x: seat.x, y: seat.y, status: seat.status })),
       dimmedSeatIds,
       searchActiveSeatIds: filtersActive ? highlightedSeatIdSet : undefined
     });
-  }, [filtersActive, highlightedSeatIdSet, selectedSeatId, visualSeats]);
+  }, [filtersActive, floor, highlightedSeatIdSet, selectedSeatId, visualSeats]);
   // Zone hover-wash: the hovered chip wins over the pinned zone filter, so
   // running along the chip row previews each zone without changing what is
   // filtered. Visual seats — the box must frame the markers as rendered.
@@ -568,7 +582,14 @@ export function ViewerSeatFinder({
     [nameLabelNudges, namedSeatIdSet, seatDensityClearance, seatPillGeometry, visualSeats]
   );
 
-  const selectedResultTitle = activeResult?.title ?? selectedSeat?.label ?? null;
+  // "X selected on the map" is true for a selected seat (named by its result
+  // card when it came from one) and for a department/zone card that fit its
+  // set into view; a person card names no selection unless a seat is selected.
+  const selectedResultTitle = selectedSeat
+    ? activeResult?.title ?? selectedSeat.label
+    : activeResult && activeResult.kind !== "person"
+      ? activeResult.title
+      : null;
   // Legend counts follow the active filters — the one number row everyone
   // reads must not contradict a filtered map (2026-07-16 regrade, review 4).
   const statusCountSeats = structuredFiltersActive ? floorSeats.filter(seatPassesStructuredFilters) : floorSeats;
@@ -581,15 +602,18 @@ export function ViewerSeatFinder({
     department,
     position,
     floorMatchCount: statusCountSeats.length,
+    floorDepartmentMatchCount: floorSeats.filter(seatPassesPersonFacets).length,
     floorSeatCount: floorSeats.length,
     seats: publishedSeats,
     employees
   });
   // On the roster floor the department and position facets filter people
-  // (zone and status describe seats and are inert there).
+  // (zone and status describe seats and are hidden there). The person a
+  // find just landed on is exempt — the same rule that keeps the selected
+  // seat undimmed under a filter on the plan.
   const rosterRows = useMemo(
-    () => rosterPeople.filter(person => personPassesFilters(person, { department, position })),
-    [department, position, rosterPeople]
+    () => rosterPeople.filter(person => person.id === rosterHighlight?.employeeId || personPassesFilters(person, { department, position })),
+    [department, position, rosterHighlight, rosterPeople]
   );
   const assignedCount = statusCountSeats.filter(seat => seat.status === "assigned").length;
   const openCount = statusCountSeats.filter(seat => seat.status === "available").length;
@@ -845,14 +869,34 @@ export function ViewerSeatFinder({
     setHoverSeatId(null);
     setRovingSeatId(null);
     setZoomFactor(null);
-    setAnnouncedFloor(options.announce === false ? null : next);
+    if (options.announce === false) {
+      setAnnouncedFloor(null);
+    } else {
+      // A MANUAL switch (selector, Q5 action) leaves the find behind: the
+      // result card and the roster mark belong to the canvas being left,
+      // and the live region must say where the user is now, not what they
+      // found before.
+      setActiveResultId(null);
+      setRosterHighlight(null);
+      setAnnouncedFloor(next);
+    }
     window.requestAnimationFrame(() => {
       mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
     });
   }, [cancelNudge, floor]);
   const summarySwitchTo = departmentSummary.switchTo;
   const departmentSummaryAction = summarySwitchTo
-    ? { label: `Show ${FLOORS[summarySwitchTo].tag}`, onClick: () => switchFloor(summarySwitchTo) }
+    ? {
+        label: `Show ${FLOORS[summarySwitchTo].tag}`,
+        onClick: () => {
+          switchFloor(summarySwitchTo);
+          // The action unmounts with the switch (the roster summary has no
+          // cross-floor variant), so the popover closes and focus goes back
+          // to its trigger — the same hand-back Escape performs.
+          setFilterOpen(false);
+          returnFocusAfterClose(filterTriggerRef);
+        }
+      }
     : undefined;
 
   function applyMapZoom(nextZoom: number) {
@@ -922,6 +966,7 @@ export function ViewerSeatFinder({
     setActiveResultId(null);
     setInspectorCollapsed(false);
     setAnnouncedFloor(null);
+    setRosterHighlight(null);
   }
 
   function clearStructuredFilters() {
@@ -940,6 +985,7 @@ export function ViewerSeatFinder({
     setSearch(value);
     setActiveResultId(null);
     setAnnouncedFloor(null);
+    setRosterHighlight(null);
     // Typing is the fourth door onto the palette, alongside click, focus and
     // ⌘K (contract #2): a query with nowhere to show its results would be a
     // field that swallows keystrokes.
@@ -999,6 +1045,7 @@ export function ViewerSeatFinder({
     const targetSeat = seatById.get(seatId);
     if (targetSeat && floorOf(targetSeat) !== floor) switchFloor(floorOf(targetSeat), { announce: false });
     setAnnouncedFloor(null);
+    setRosterHighlight(null);
     // Finding 1 (v12 slice 4 final review): only arm the skip when the
     // selection is actually changing — reselecting the already-selected seat
     // leaves selectedSeatId unchanged, so the trigger effect's deps never
@@ -1081,6 +1128,7 @@ export function ViewerSeatFinder({
   function openResult(result: ViewerSearchResult) {
     setActiveResultId(result.id);
     setAnnouncedFloor(null);
+    setRosterHighlight(null);
     // Enter/click on a row selects, centers and closes the palette
     // (contract #5) — including the department/zone rows below, which fit
     // their whole match set into view instead of selecting one seat.
@@ -1124,10 +1172,12 @@ export function ViewerSeatFinder({
     }
 
     setSelectedSeatId(null);
-    if (result.kind === "person" && targetFloor) {
+    if (result.kind === "person" && targetFloor && result.employeeId) {
       // An unseated person on the roster floor: the row is the destination.
-      // activeResultId (set above) drives the roster highlight; focus lands
-      // on the roster region rather than falling to <body> with the palette.
+      // The target is held explicitly (browse rows have no query result to
+      // derive it from); focus lands on the roster region rather than
+      // falling to <body> with the palette.
+      setRosterHighlight({ employeeId: result.employeeId, title: result.title });
       setInspectorCollapsed(false);
       focusFloorRoster(VIEWER_ROSTER_REGION_ID);
       return;
@@ -1178,13 +1228,15 @@ export function ViewerSeatFinder({
 
   const resultCountLabel = searchResults.results.length === 1 ? "1 result" : `${searchResults.results.length} results`;
   // The roster row a find landed on (an unseated person opened from the
-  // palette): activeResult carries the person, the roster marks the row.
+  // palette, in either mode) — only while that person is actually listed.
   const rosterHighlightedPersonId =
-    surface === "roster" && activeResult?.kind === "person" && activeResult.employeeId ? activeResult.employeeId : null;
+    surface === "roster" && rosterHighlight && rosterRows.some(person => person.id === rosterHighlight.employeeId)
+      ? rosterHighlight.employeeId
+      : null;
   // Priority: highlighted roster row → selected seat → floor switch → search
   // count → what loaded.
-  const mapAnnouncement = rosterHighlightedPersonId && activeResult
-    ? `${activeResult.title} highlighted on the ${floorMeta.label} roster.`
+  const mapAnnouncement = rosterHighlightedPersonId && rosterHighlight
+    ? `${rosterHighlight.title} highlighted on the ${floorMeta.label} roster.`
     : selectedResultTitle
       ? `${selectedResultTitle} selected on the map.`
       : announcedFloor
@@ -1444,6 +1496,7 @@ export function ViewerSeatFinder({
                 onStatusChange={setStatus}
                 matchSummary={departmentSummary.text}
                 matchSummaryAction={departmentSummaryAction}
+                seatFacetsApply={surface === "plan"}
                 onRemoveActiveChip={removeActiveFilterChip}
                 onClearFilters={clearStructuredFilters}
               />
@@ -1728,6 +1781,9 @@ export function ViewerSeatFinder({
                   helper={floorMeta.mapped ? "Nothing on this floor has been published yet." : `The ${floorOrdinal(floor)}-floor plan is not mapped yet.`}
                   regionId={VIEWER_ROSTER_REGION_ID}
                   onClearSearch={clearSearch}
+                  totalCount={rosterPeople.length}
+                  filtersActive={structuredFiltersActive}
+                  onClearFilters={clearStructuredFilters}
                   // 12px cluster offset + its height + 8px breathing room.
                   headerInsetPx={chipClusterHeight + 20}
                 />

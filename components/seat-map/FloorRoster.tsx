@@ -19,17 +19,20 @@ import type { Employee } from "@/lib/types";
  * rendered inoperable holds by construction. The region is the keyboard tab stop so
  * the list stays scrollable (axe scrollable-region-focusable); a find that
  * lands here marks the person's row (`aria-current`) and focuses the region.
- * The one control is the zero-result "Clear search" button.
+ * The only controls are the two zero-state ways out: "Clear search" when a
+ * query matches no one, "Clear filters" when a structured filter hid everyone
+ * (never the first-run copy — the map IS published then).
  */
 
 // Same eyebrow as the palette's group headers (ViewerFindPalette) — one
 // department-header voice across the two viewer lists.
 const eyebrowClassName = "text-xs font-semibold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]";
 
-// The zero-result button, class-for-class the palette's own Clear search
-// (content-sized, so the touch-target sweep reads it as the palette's twin).
+// The zero-state buttons, the palette's own Clear search recipe: ≈30px
+// content-sized, so the 44px reach comes from the 7px vertical hit
+// expansion (only a <p> sits above; pinned in touch-target-source).
 const clearButtonClassName =
-  "mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]";
+  "relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]";
 
 export const DEFAULT_FLOOR_ROSTER_REGION_ID = "floor-roster";
 
@@ -52,6 +55,11 @@ export type FloorRosterProps = {
   helper: string;
   regionId?: string;
   onClearSearch?: () => void;
+  /** Everyone on the floor before the caller's structured filters narrowed
+   *  `people` — the heading always states the floor's real count. */
+  totalCount?: number;
+  filtersActive?: boolean;
+  onClearFilters?: () => void;
   /** Extra top padding on the sticky header, in px — the viewer floats its
    *  floor/crumb chip cluster over the stage's top-left corner, which is where
    *  this header sits, so the caller passes the cluster's measured height. */
@@ -66,13 +74,18 @@ export function FloorRoster({
   helper,
   regionId = DEFAULT_FLOOR_ROSTER_REGION_ID,
   onClearSearch,
+  totalCount,
+  filtersActive = false,
+  onClearFilters,
   headerInsetPx = 0
 }: FloorRosterProps) {
   const label = FLOORS[floor].label;
   const trimmedQuery = query.trim();
   const groups = groupRosterByDepartment(people, trimmedQuery);
   const matchCount = groups.reduce((count, group) => count + group.people.length, 0);
-  const peopleLabel = `${people.length} ${people.length === 1 ? "person" : "people"}`;
+  const total = totalCount ?? people.length;
+  const peopleLabel = `${total} ${total === 1 ? "person" : "people"}`;
+  const filtersNarrowed = filtersActive && people.length !== total;
 
   // A find that lands on a person scrolls their row into the middle of the
   // region. Guarded: jsdom (the ct tier) has no scrollIntoView.
@@ -98,20 +111,39 @@ export function FloorRoster({
           {label} — {peopleLabel}
         </h2>
         <p className="mt-0.5 text-xs text-[var(--sp-text-helper)]">{helper}</p>
-        {/* Search count, zero included (Carbon: never a silent search). */}
+        {/* Search count, zero included (Carbon: never a silent search); a
+            structured filter publishes its count the same way. */}
         {trimmedQuery ? (
           <p aria-live="polite" className="mt-1 text-xs font-medium tabular-nums text-[var(--sp-text-secondary)]">
             {matchCount} of {people.length} people match “{trimmedQuery}”
           </p>
+        ) : filtersNarrowed ? (
+          <p aria-live="polite" className="mt-1 text-xs font-medium tabular-nums text-[var(--sp-text-secondary)]">
+            {people.length} of {total} people match the active filters
+          </p>
         ) : null}
       </div>
 
-      {people.length === 0 && !trimmedQuery ? (
+      {total === 0 && !trimmedQuery ? (
         <div role="status" className="p-4">
           <div className="text-sm font-semibold text-[var(--sp-text-primary)]">No one is listed on {label} yet</div>
           <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
             People appear here after an admin publishes the seat map.
           </p>
+        </div>
+      ) : people.length === 0 && !trimmedQuery ? (
+        /* A structured filter hid everyone: the map IS published, the
+           emptiness is the filter — say so and offer the way out. */
+        <div role="status" aria-live="polite" className="p-4">
+          <div className="text-sm font-semibold text-[var(--sp-text-primary)]">No one on {label} matches the active filters</div>
+          <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
+            Department and position narrow this list; zone and status apply on mapped floors.
+          </p>
+          {onClearFilters ? (
+            <button type="button" onClick={() => onClearFilters()} className={clearButtonClassName}>
+              Clear filters
+            </button>
+          ) : null}
         </div>
       ) : matchCount === 0 ? (
         <div role="status" aria-live="polite" className="p-4">

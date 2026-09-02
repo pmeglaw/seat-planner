@@ -270,12 +270,17 @@ export function floorDepartmentSummary(input: {
   department: string;
   position: string;
   floorMatchCount: number;
+  /** Seats on this floor matching the DEPARTMENT and POSITION facets alone.
+   *  The cross-floor variant is offered only when this is zero — a zero
+   *  caused by the zone or status facet must not blame the other floor. */
+  floorDepartmentMatchCount?: number;
   floorSeatCount: number;
   seats: readonly SeatRow[];
   employees: readonly Employee[];
   registry?: FloorRegistry;
 }): { text: string; switchTo: FloorId | null } {
   const { floor, department, position, floorMatchCount, floorSeatCount, seats, employees, registry = FLOORS } = input;
+  const departmentSeatsHere = input.floorDepartmentMatchCount ?? floorMatchCount;
   const tag = registry[floor].tag;
 
   if (floorSurface(floor, seats, registry) === "roster") {
@@ -284,7 +289,7 @@ export function floorDepartmentSummary(input: {
     return { text: `${matched} of ${people.length} people on ${tag} match`, switchTo: null };
   }
 
-  if (department === FILTER_ALL || floorMatchCount > 0) {
+  if (department === FILTER_ALL || departmentSeatsHere > 0) {
     return { text: `${floorMatchCount} of ${floorSeatCount} seats on ${tag} match`, switchTo: null };
   }
 

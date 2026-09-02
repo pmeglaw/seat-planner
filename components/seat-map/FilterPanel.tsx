@@ -48,6 +48,12 @@ type FilterPanelProps = {
    * filter never returns an unchanged map in silence.
    */
   matchSummaryAction?: { label: string; onClick: () => void };
+  /**
+   * Multi-floor PR-2: zone and status describe SEATS. On a roster floor
+   * (no map) they would be inert, so the caller passes false and the panel
+   * hides them (Hidden tier, never disabled) and says why.
+   */
+  seatFacetsApply?: boolean;
 };
 
 export function ActiveFilterChips({
@@ -129,7 +135,8 @@ export function FilterPanel({
   onRemoveActiveChip,
   onClearFilters,
   matchSummary,
-  matchSummaryAction
+  matchSummaryAction,
+  seatFacetsApply = true
 }: FilterPanelProps) {
   const activeStructuredChips = activeChips.filter(chip => chip.id !== "search");
   // "All zones" clears the facet and previews nothing — only real zones wash.
@@ -194,6 +201,10 @@ export function FilterPanel({
             preview their zone on the map on hover AND on keyboard focus, so
             the preview is not a pointer-only affordance. aria-pressed carries
             the pinned state — the chips toggle a filter, they are not tabs. */}
+        {!seatFacetsApply && (
+          <p className="text-xs font-medium text-[var(--sp-text-helper)]">Zone and status filters apply on mapped floors.</p>
+        )}
+        {seatFacetsApply && (
         <div role="group" aria-label="Zone" onMouseLeave={() => onZoneHoverChange?.(null)}>
           <span className="text-xs font-medium text-[var(--sp-text-helper)]">
             Zone{onZoneHoverChange ? " — hover to preview on the map" : ""}
@@ -225,7 +236,9 @@ export function FilterPanel({
             })}
           </div>
         </div>
+        )}
 
+        {seatFacetsApply && (
         <label className="relative block after:absolute after:-inset-y-1 after:inset-x-0">
           <span className="text-xs font-medium text-[var(--sp-text-helper)]">Status</span>
           <select value={status} onChange={event => onStatusChange(event.target.value)} className={darkSelectClassName}>
@@ -236,6 +249,7 @@ export function FilterPanel({
             <option value="unavailable">{STATUS_LABELS.unavailable}</option>
           </select>
         </label>
+        )}
       </div>
       {/* Commit informed: the live match count sits inside the popover so
           changing a select shows its effect before the panel closes
@@ -245,19 +259,20 @@ export function FilterPanel({
           {matchSummary}
         </p>
       )}
-      {/* Shape of the chips' Clear all (sp-zone-base re-entry, 3px vertical
-          hit expansion — the popover's wrap rows cap it), but on an OPAQUE
+      {/* Shape of the chips' Clear all (sp-zone-base re-entry) on an OPAQUE
           layer-01 ground: the zone class re-enters the surface tokens, not
           the translucent brand wash, so brand text over the wash on the dark
           popover measured ~2:1 (2026-09-01 harness drive). layer-01 + brand
           text is 7.4:1 light / 7.1:1 dark; the hover wash (brand-subtle)
-          keeps 6.2:1 in both. */}
+          keeps 6.2:1 in both. Its OWN literal with a 10px vertical expansion
+          (24 + 20 = 44): the button stands alone under the summary line, so
+          the chips' adjacency-capped ruling does not describe it. */}
       {matchSummaryAction && (
         <div className="sp-zone-base mt-2 flex">
           <button
             type="button"
             onClick={matchSummaryAction.onClick}
-            className="relative inline-flex min-h-6 items-center border border-[var(--sp-brand-border)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-brand-text)] transition after:absolute after:-inset-y-[3px] after:inset-x-0 hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+            className="relative inline-flex items-center min-h-6 border border-[var(--sp-brand-border)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-brand-text)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
           >
             {matchSummaryAction.label}
           </button>

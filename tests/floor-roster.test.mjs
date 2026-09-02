@@ -115,3 +115,23 @@ test("a header inset pushes the sticky heading below the caller's floating chrom
   const header = region().querySelector("h2").parentElement;
   assert.equal(header.style.paddingTop, "64px");
 });
+
+// A structured filter that hides everyone is NOT first-run: the map has been
+// published, the emptiness is the filter — name it, keep the floor's real
+// count in the heading, and offer the way out (review finding, 2026-09-01).
+test("filters hiding everyone name the filter, keep the floor total, and offer Clear filters", async () => {
+  let cleared = 0;
+  await renderRoster({ people: [], totalCount: 4, filtersActive: true, onClearFilters: () => { cleared += 1; } });
+  assert.match(within(region()).getByRole("heading", { level: 2 }).textContent, /— 4 people/);
+  const status = within(region()).getByRole("status");
+  assert.match(status.textContent, /No one on Floor 2 · Litigation matches the active filters/);
+  assert.doesNotMatch(status.textContent, /No one is listed/);
+  fireEvent.click(within(region()).getByRole("button", { name: "Clear filters" }));
+  assert.equal(cleared, 1);
+});
+
+test("with filters narrowing the list the header publishes the visible count against the floor total", async () => {
+  await renderRoster({ people: PEOPLE.slice(0, 2), totalCount: 4, filtersActive: true });
+  assert.match(within(region()).getByRole("heading", { level: 2 }).textContent, /— 4 people/);
+  assert.match(region().querySelector('[aria-live="polite"]').textContent, /2 of 4 people match the active filters/);
+});
