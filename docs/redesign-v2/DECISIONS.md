@@ -43,6 +43,10 @@ full on 2026-08-31 after the owner's assignment pass (§3).
 
 ## 2. The frame — 1920 primary, adaptive to 320
 
+> **Amended 2026-09-02 (D0-e):** "adaptive to 320" is a *floor* — nothing breaks at any width — not a
+> mandate to design and test every screen at five breakpoints. Design and test at 1920 with one deliberate
+> narrow fallback. The measurements below stand; the per-breakpoint design obligations they implied do not.
+
 ### 2.1 The breakpoint contract
 
 The Carbon 2x Grid ladder is taken as given (`tokens.md`), with one addition at the top where the
@@ -524,23 +528,83 @@ same frame.
 
 | Slot | `lg` and up | Below `lg` |
 |---|---|---|
-| Left | Firm wordmark → links to `/` | Hamburger (48×48), then wordmark |
-| Header links | Seat map · Management · Settings · Reception, inline | Collapsed into the overlay panel, **above** any panel items |
-| **Mode indicator** | **"Draft — 3 unpublished changes" / "Published · <date>"** | Compressed, never dropped — see below |
-| Utilities (flush right, no gaps, 48×48) | Theme · Help · Account | Account only; Theme and Help move into the panel |
+| Left | **Hamburger (48×48, toggles the filter left panel — D0-c)**, then header name: organization name 14/400 + "Seat Planner" 14/600 (text, D0-d) → links to `/` | Hamburger (the same panel also carries the section links, above the filters), then header name |
+| Header links | Seat map · Reception · Management · Settings, inline (viewers see the first two) | Collapsed into the left panel, **above** the filters |
+| **Mode indicator** | **"Draft — N changes" / "Published · <date>"** — status only, two signals in the mark; pressing it opens the History panel (D0-a) | One graceful fallback, never dropped (D0-e) |
+| Utilities (flush right, no gaps, 48×48) | **Help · History · Account** (D0-a, D0-b) — Theme lives in the Account panel | Same three |
 | Switcher | **None** — standalone product, not a platform | None |
 
 **The mode indicator is a requirement, not a flourish.** `ui-shell.md` is explicit: "If a product has
 a draft/published split … the header is where that belongs, persistently, on every screen." This app's
 central invariant is that two-layer split, and it is the Hill's last clause. It therefore **survives to
-320px** by degrading in three steps rather than disappearing: full sentence at `lg`+, `Draft · 3` at
-`md`, and a status mark plus count at `sm`. Dropping it on small screens would be dropping the one
-thing the product promises never to leave ambiguous.
+320px** rather than disappearing: full sentence at `lg`+, and one compact fallback (status mark plus
+count) below — the three-step degradation originally written here was withdrawn on 2026-09-02 (D0-e).
+Dropping it on small screens would be dropping the one thing the product promises never to leave ambiguous.
 
 Two further shell rules taken as given: **no switcher, ever** (standalone), and **state goes in the
 URL** — view, filters, selection and mode — because `ui-shell.md` says persistence "is not part of
 the component and must be added during implementation." The URL rule matters more now: it is what lets
 a person move between the narrow list view and the wide map view without losing their place.
+
+---
+
+### D0 — amendments (2026-09-02, PHASE1IA.md rulings 17–24)
+
+#### D0-a · Right-panel family: Help, History, Account
+**Screen:** shell, every route.
+**Problem:** admins need the publish date, recent publish events and a way to switch between Published
+and Draft without leaving the map; everyone needs help and account actions; none of this is navigation.
+**Primary task:** orient (which mode am I in, what changed) and switch mode.
+**Options considered:** (1) mode indicator itself toggles the mode — fastest, but one header element
+displays and changes state, and a mis-tap changes the whole map; (2) "Published" / "Draft" as two header
+links — pure IBM navigation, but re-opens the one-section ruling (answer 2); (3) indicator is status only
+and opens a right panel whose first row is the switch.
+**Choice:** (3). Indicator in the centre slot, status only, two signals in the mark (square = Published,
+hollow diamond = Draft) plus text. A **History** utility icon sits in IBM's Notifications slot (3rd from
+right); pressing it or the indicator opens the same panel: mode switch first, publish events newest-first
+below. Viewers get the published date only (Draft is Hidden, `publish_events` is admin-only). **Help** and
+**Account** are right panels too. One open at a time, anchored to their icon, dark like the header, no
+selected state on items. Panel width 320px provisional (Carbon HeaderPanel 256, ibm-products
+NotificationsPanel 360).
+**Trade-off:** one extra click per mode switch.
+**Would change if:** admins switch mode many times per session and the click shows up in complaints.
+**Note:** the mode switch is a *control*, not a panel item, so ui-shell's "right panel items have no
+selected state" does not apply to it. Approved against mockups (PHASE1IA ruling 23).
+
+#### D0-b · Utilities are Help · History · Account; Theme lives in the Account panel
+**Problem:** the shipped one-press Theme utility acts directly; ui-shell utilities open panels.
+**Options:** keep the toggle and note it; move Theme into Account.
+**Choice:** Account panel: email + role, Theme (Light / Dark / System), My seat, Sign out. Utilities
+become Help · History · Account — IBM's exact standalone three.
+**Trade-off:** one extra click on a set-once setting.
+**Would change if:** never, realistically. (Ruling 20.)
+
+#### D0-c · Hamburger toggles the filter left panel
+**Problem:** department / zone / status filters must not sit inside one popover (patterns.md "must
+never"); people filter occasionally; the map wants its full width.
+**Options considered:** always-on 256px left rail (costs 256px of map on every view); horizontal strip
+merged into the map control row (always visible, costs a 40px chips row when filters are applied); the
+strip's collapsed state; hidden left panel toggled by the header hamburger.
+**Choice:** hidden left panel, 256px, header hamburger toggles it ("Option A2"). Slide-in: pushes the
+canvas, no focus trap; Esc or the icon closes; open/closed remembered per user. While closed, a
+"Filters N ×" button in the map control row shows the applied count and clears without reopening. Per
+category Clear, global Clear all at the top of the panel.
+**Trade-off:** every filter change is one click further away than the strip; and in other Carbon products
+the hamburger opens navigation — here it opens filters. Not a deviation (a header-only shell has no nav
+panel to conflict with) but product-specific, so it is recorded here. Below `lg` the section links fold
+into this same panel above the filters, exactly as ui-shell describes; the Account-menu fallback for links
+retires.
+**Would change if:** filtering becomes a many-times-a-day action; then the strip (mocked) is the answer.
+(Ruling 21.)
+
+#### D0-d · Header name anatomy
+Organization name (`body-compact-01`, 14/400) + "Seat Planner" (`heading-compact-01`, 14/600), text,
+links to `/`. No graphic wordmark. (PHASE1IA.md F2.)
+
+#### D0-e · Width ruling reworded
+"320+ adaptive, 1920 primary" becomes "works at any width; designed and tested at 1920 with one deliberate
+narrow fallback (links fold into the left panel, single-column pages, map read-only)". The floor is kept;
+the per-breakpoint design mandate is withdrawn. Reopens on first laptop use. (PHASE1IA.md F1, ruling 24.)
 
 ---
 
@@ -729,6 +793,21 @@ specified but not designed into the primary read until data exists.
 **Deliberate deviation, recorded:** the archetype table in `senior-workflow.md` has no "spatial
 canvas" entry. This screen is a hybrid — *search results* semantics over a fixed-coordinate canvas —
 and below `lg` it resolves into the plain archetype the table does have.
+
+---
+
+### D1 — amendments (2026-09-02)
+
+#### D1-a · Find me and Copy link
+Find me: viewer affordance on the map that lands on the viewer's floor and selects their seat (email
+match already exists). Copy link: on a selected seat → `?seat=<label>`; on a person → `?q=<name>`.
+Closes backlog DIR-1. (Answers 7, 9.)
+
+#### D1-b · Focused search with a scope control
+Search stays on the map surface, not in the header. Scope control "This floor / Whole building" with a
+count per scope ("7 on this floor · 11 in building"); a unique cross-floor match auto-switches floor,
+which is what `?q=` landing relies on. No global header search. (Ruling 17; E2.4 resolved, deviation 13
+not taken.)
 
 ---
 
@@ -992,6 +1071,21 @@ session); invalid credentials; magic-link sent; reset requested; and a submittin
 
 ---
 
+### D5 / D6 — new entries (2026-09-02)
+
+#### D5 · Management
+`/admin/management?tab=employees|departments|zones`. In-page tabs, no third tier (ui-shell; answer 5).
+Page header: title + one primary action on the 1584px centred live area. The `publishHistory` tab is
+removed — history lives in the History panel (D0-a).
+
+#### D6 · Settings
+`/admin/settings`. Settings archetype: single-column forms grouped by section. Contents: CSV import,
+JSON snapshot restore. **Reset draft is retired** (ruling 22) — too destructive to keep; undo history and
+snapshot restore cover the need. Snapshot restore is moderate impact: confirm with consequences spelled
+out, no typed confirmation. The reset-draft server action and its RPC come out in Phase 4.
+
+---
+
 ## 6. Deviations from Carbon, recorded
 
 `senior-workflow.md` requires purposeful deviations be written down rather than absorbed:
@@ -1008,6 +1102,10 @@ session); invalid credentials; magic-link sent; reset requested; and a submittin
 | 8 | Name pills are fit-width, so the resting footprint varies with the label | `SeatMarker.tsx` deliberately fixes the code pill's width "so label length never changes the resting footprint", and the name tier now breaks that symmetry on purpose: a flat width costs 52px of dead space per marker and is what made the name layer uncollidable-with (§3.2.1). Uniform-width alternatives were measured — 96px leaves 28 markers colliding at 1920, 72px leaves 12, fit-width leaves 8 — so the consistency is bought back nowhere near cheaply enough to keep. The **height** stays uniform and capped at 28px, which is the dimension the nudge actually reasons about |
 | 9 | Roster rows are non-interactive list items — no per-row disclosure or side panel (D1′; the admin editor mounts the same roster, D2′) | Every fact the inspector would show is already on the row, so a 40-row selection model would select nothing; a disabled row would misuse `disabled` where content must be read (`SKILL.md`'s disabled/read-only rule), and a read-only row would promise an operation that does not exist. Static rows are the honest shape, owner-confirmed 2026-09-01 |
 | 10 | Interim floor membership is inferred from seat absence (owner rule 2026-09-01) | The schema can now express the floor (`seats.floor`), but the 2nd-floor seats do not exist until slice B seeds and publishes them. The inference lives in ONE dated function (`lib/floors.ts` `rosterFloorForUnseated`) and retires by itself on the first 2nd-floor publish — liveness, not a flag, so nothing has to be remembered and flipped |
+| 11 | *(reserved — not taken)* | The option where the mode indicator itself toggles Published ⇄ Draft (PHASE1IA.md E2.1). Not chosen; number held so cross-references stay stable |
+| 12 | `/my-seat` renders without the shell | `ui-shell.md`: the shell is present on every signed-in surface. Kept chrome-free because it is a share card glanced at on a phone; a wordmark / back-link to `/` stands in for the header. **Would change if** the sheet gains any action beyond reading (PHASE1IA.md answers 11, 15; ruling 18) |
+| 13 | *(reserved — not taken)* | Per-floor search without a widen-to-building control (PHASE1IA.md E2.4). Not chosen — Focused search with a scope control ships instead (D1-b); the number re-enters only if that control slips |
+| 14 | Ask Planner opens from the map surface, not a header product icon | `ui-shell.md`: product-specific utilities sit in the header and open right panels. Kept in-surface because it exists on one route in one mode (admin, draft); a header icon would appear and disappear as admins navigate, breaking the "icons don't move" rule it was meant to satisfy. Phase 2 resolves right-edge stacking with the seat inspector and the shell panels; Phase 3 applies Carbon-for-AI labelling (D2; ruling 19) |
 
 ---
 
@@ -1120,6 +1218,12 @@ so no narrow-width editing is designed. Recorded in D2 and deviation 4.*
 reasoning; the remaining open questions are all narrow and all sit on measured data.*
 
 ---
+
+**Added 2026-09-02 (PHASE1IA.md second pass):**
+
+| # | Question | Default if unanswered |
+|---|---|---|
+| Q7 | Ruling 22 retires "Reset draft" on Settings. The map's "Discard draft changes" (`SeatMap.tsx` overflow menu, `/admin`) is the same `resetDraftToPublishedAction` behind a confirm dialog. Does it go too? | Keep it: scoped to the admin's current editing session, sits next to Publish, already confirms. Retire only the Settings entry |
 
 ## 9. Recommended next step
 
