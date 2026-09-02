@@ -711,12 +711,12 @@ sheet draws one floor (neighbours never cross floors) and carries a *Floor* fact
 unseated member on the interim floor gets *"You work on Floor 2 · Litigation"* in place of the
 no-seat notice.
 
-**Admin (D2′)** is built in PR-3: the canvas filters draft seats by floor, the same roster renders
-from the live working set, Add seat is absent on an unmapped floor, Move/Swap targets may be on the
-other floor (the canvas auto-switches), the publish review groups rows under floor eyebrows, and the
-whole building publishes in one RPC call. **Slice B** (the 2nd-floor raster, calibration, zone
-rectangles and the seeded, protected originals with new label prefixes) is blocked on the drawing,
-which is produced first.
+**Admin (D2′)** — built in PR-3, recorded under D2′ below: the canvas filters draft seats by floor,
+the same roster renders from the live working set, Add seat is absent on an unmapped floor, Move/Swap
+targets may be on the other floor (the canvas auto-switches), the publish review groups rows under
+floor eyebrows, and the whole building publishes in one RPC call. **Slice B** (the 2nd-floor raster,
+calibration, zone rectangles and the seeded, protected originals with new label prefixes) is blocked
+on the drawing, which is produced first.
 
 **Seat status vocabulary.** Four enum states exist; **two have data**. `status-and-dataviz.md` is
 unambiguous where a spatial map forces one shape: "If a spatial map genuinely forces a constant shape
@@ -825,6 +825,75 @@ track of pending edits. Per `ui-shell.md`, if state will be lost, say so before 
 **States:** empty draft; loading skeleton; per-action inline notification in the region being worked
 in (not a toast — `SKILL.md` makes inline "the default" for task-generated feedback); an explicit
 submitting state on publish; and a publish failure surfaced as a notification with the review intact.
+
+### D2′ — Admin, two floors (amends D2; ruled 2026-09-01, built in multi-floor PR-3)
+
+```
+Screen: Admin — the draft seat-map editor, two floors
+Problem: "Someone moved desks — possibly downstairs. I need to change the map,
+         check it looks right, and push BOTH floors live together."
+Primary task: assign or move one person to one seat, on whichever floor.
+
+Options considered:
+  A. Mirror the viewer exactly: one canvas per floor, a floor is a plan only
+     when it is LIVE (mapped and a draft seat carries it), else a roster.
+  B. One canvas per floor; a MAPPED floor is always the plan (live or not), an
+     unmapped floor is the roster; search, deep links, Move/Swap targets and
+     Ask Planner highlights span the building and switch the canvas; publish
+     stays one call for the whole building, reviewed under floor eyebrows.
+  C. Both floors' seats on one canvas, distinguished by marker style.
+
+Choice: B. The editor is where a floor BECOMES live — the first seat on a
+  mapped floor is placed here — so it must draw the plan before any seat
+  exists on it; liveness is the viewer's rule (a reader never gets an empty
+  plan) and stays there. C is rejected on the same measurement as D1′ C: one
+  plan fits under the header at 1920 × 889, and two floors' markers on one
+  raster would put Floor 2 desks at Floor 3 coordinates.
+Trade-off: the canvas changes under the admin when a find, a highlight or a
+  Move/Swap target resolves on the other floor. Mitigated exactly as D1′: the
+  selector and the band title name the floor, the switch is a status-role live
+  message ("Showing Floor 2 · Litigation"), and the selection, the query and a
+  running Move/Swap mode SURVIVE the switch — the source seat stays selected
+  while the target is reached downstairs.
+Would change if: the firm takes a third floor with a plan — as D1′.
+```
+
+**Canvas:** the plan renders only the current floor's **draft** seats — every render-layer derivation
+(markers, label nudges, washes, roving order, legend counts, the first-run "no seats" state) sees one
+floor; `localSeats` stays building-wide for search, history, the publish review and the concurrency
+fence. The band title carries the floor (*"Floor 3 · 68 seats"*); the raster comes from the registry.
+**Unmapped floor → roster**, the same `FloorRoster` the viewer mounts, fed from the **live working
+set** (`employees` + draft seats via `peopleOnFloor`) — never the published snapshot — with the
+search query filtering rows in place and the helper line naming the interim rule (*"Until a draft
+seat exists there, everyone without a draft seat is listed here."*). The viewport is no tab stop
+there; the roster region is. **Add seat is absent** on an unmapped floor — Hidden tier, never
+disabled — and the server holds the same line (`createSeatAction` refuses a floor with no plan). A
+new seat carries the canvas floor; zone detection and calibration run against that floor only.
+
+**Find spans the building.** Result rows on the other floor carry a *"Floor 2"* tag; opening one
+switches the canvas, then selects and centres. An unseated person is now **openable** (contract #9
+amended for the admin too): the row leads to the roster floor they work on, marks their row and hands
+it focus — inert only once the interim rule has retired. *Fit matches* pans this canvas only.
+**Move/Swap targets may be on the other floor:** the mode and the source selection survive a manual
+switch with the selector, so the target is the marker clicked on the other floor's plan (the mode card
+owns the panel slot while a mode runs — INV-4 — so result rows are not the in-mode path; a result row
+opened *outside* a mode still switches then selects). The confirm dialogs tag each seat's floor when
+the pair crosses floors (*"L02 · Floor 2"*); the draft trail draws only when both ends are on screen.
+**Ask Planner** learns floors: every seat and person the tools return names one, `search_seats` /
+`list_people` take a floor, the summary counts per floor from the registry, the instructions state
+the interim rule, and a highlight on the other floor is tagged in the drawer — selecting it switches
+the canvas. **Deep links:** `?seat=` lands on that seat's floor, else `?floor=`; the URL mirrors
+`?floor=` off the default, as the viewer does. No remembered floor for the admin — editing starts
+from the plan everyone publishes.
+
+**Publish is one call for the whole building.** `publish_seat_map()` already copies every draft row
+regardless of floor (PR-1); the review now **groups its rows under floor eyebrows** in registry order
+(*"Floor 3 · Pre-Litigation · 4 changes"*), so the admin reads which plan each change lands on before
+confirming. A floor with no changes has no group.
+
+**Selection survives a floor switch** (pinned in the real-browser tier since the placeholder era, and
+now load-bearing for cross-floor Move/Swap): the inspector stays open on a seat that is not on the
+canvas; its band clearance follows the band, not the floor it left.
 
 ---
 
@@ -937,7 +1006,7 @@ session); invalid credentials; magic-link sent; reset requested; and a submittin
 | 6 | ~~Names disclosed on hover rather than drawn on every marker~~ **WITHDRAWN 2026-09-01 — this is no longer a deviation.** | It was recorded when the fit condition looked failed. Re-measured against a single-line fit-width pill, it passes: `status-and-dataviz.md`'s "put labels directly on the chart wherever they can replace a legend" is the stated default and the design now *follows* it (§3.2.1). The **seat code** moves to disclosure instead, which is not a deviation either — the code is admin information and `SKILL.md`'s "details on demand" is its proper home |
 | 7 | 44px touch targets not met at `xlg` and below — **and not met anywhere, as shipped** | `SKILL.md` states the floor unqualified, and it is a hit-area rule the marker's drawn size cannot satisfy on its behalf. Below `xlg` the seats sit closer together than a conformant target, so no marker size reaches it (§2.4). The *geometry* has room at 1920 and `max`; driving the app found the shipped hit area is **32 × 32 at every one of nine widths**, so the deviation is currently universal and closing it at the two top rungs is a build task, not a design change. The 24px SC 2.5.8 floor is separately breached only in the 640–1023 band, and recovers below 640 (§2.4) |
 | 8 | Name pills are fit-width, so the resting footprint varies with the label | `SeatMarker.tsx` deliberately fixes the code pill's width "so label length never changes the resting footprint", and the name tier now breaks that symmetry on purpose: a flat width costs 52px of dead space per marker and is what made the name layer uncollidable-with (§3.2.1). Uniform-width alternatives were measured — 96px leaves 28 markers colliding at 1920, 72px leaves 12, fit-width leaves 8 — so the consistency is bought back nowhere near cheaply enough to keep. The **height** stays uniform and capped at 28px, which is the dimension the nudge actually reasons about |
-| 9 | Roster rows are non-interactive list items — no per-row disclosure or side panel (D1′) | Every fact the inspector would show is already on the row, so a 40-row selection model would select nothing; a disabled row would misuse `disabled` where content must be read (`SKILL.md`'s disabled/read-only rule), and a read-only row would promise an operation that does not exist. Static rows are the honest shape, owner-confirmed 2026-09-01 |
+| 9 | Roster rows are non-interactive list items — no per-row disclosure or side panel (D1′; the admin editor mounts the same roster, D2′) | Every fact the inspector would show is already on the row, so a 40-row selection model would select nothing; a disabled row would misuse `disabled` where content must be read (`SKILL.md`'s disabled/read-only rule), and a read-only row would promise an operation that does not exist. Static rows are the honest shape, owner-confirmed 2026-09-01 |
 | 10 | Interim floor membership is inferred from seat absence (owner rule 2026-09-01) | The schema can now express the floor (`seats.floor`), but the 2nd-floor seats do not exist until slice B seeds and publishes them. The inference lives in ONE dated function (`lib/floors.ts` `rosterFloorForUnseated`) and retires by itself on the first 2nd-floor publish — liveness, not a flag, so nothing has to be remembered and flipped |
 
 ---
@@ -1009,8 +1078,8 @@ Stated plainly so nothing here reads as more settled than it is:
    question, but it is no longer a geometric trade and does not belong in this list.
 3. ~~**The floor selector — the question inverted on 2026-09-01.**~~ **RESOLVED 2026-09-01 — (b),
    genuinely multi-floor.** Schema in PR-1 (`seats.floor` + the three RPCs, #495), viewer, reception,
-   my-seat and this document in PR-2 (D1′), the admin editor in PR-3, and the 2nd-floor raster —
-   produced first — gates slice B. *Original entry:* This document twice called the
+   my-seat and this document in PR-2 (D1′, #497), the admin editor + Ask Planner in PR-3 (D2′), and
+   the 2nd-floor raster — produced first — gates slice B. *Original entry:* This document twice called the
    control "chrome for a dimension the data does not have" and was heading for *remove it*. That was
    wrong about the building. **The firm occupies two floors and 40 of its 98 people are on the one
    this plan does not draw.** The dimension is real; it is the *schema* that cannot express it
@@ -1058,9 +1127,9 @@ The re-measure is done and §3 is current, so Q3 and Q4 are decidable on settled
 deferred, and Q1, Q2 and Q6 are now answered — the skill-derived direction is the target (Q1), the
 bottom strip was never a geometric conflict (Q2), and the marker carries the name (Q6). **Q3, Q4 and
 Q5 were answered on 2026-09-01** (§8): the multi-floor arc is building as four PRs — schema (PR-1,
-#495), viewer/reception/my-seat (PR-2, D1′), admin editor + Ask Planner (PR-3), and slice B (the
-2nd-floor raster, calibration and seed, blocked on the drawing, which is produced first). The shell
-sequence below is unchanged, in **two** slices rather than one:
+#495), viewer/reception/my-seat (PR-2, D1′, #497), admin editor + Ask Planner (PR-3, D2′ — built),
+and slice B (the 2nd-floor raster, calibration and seed, blocked on the drawing, which is produced
+first). The shell sequence below is unchanged, in **two** slices rather than one:
 
 1. **The shell specification (D0), alone and first** — header, mode indicator, the `lg` navigation
    collapse, the two width regimes. Its priority is unchanged: it is the dependency for all four

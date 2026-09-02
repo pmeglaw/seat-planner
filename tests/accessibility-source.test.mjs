@@ -964,7 +964,9 @@ test("admin search clear controls use one clear path with distinct accessible na
   assert.match(clearSearchFunction[0], /setSearch\(""\)/);
   assert.match(seatMapSource, /aria-label="Clear top search"[\s\S]*onClick=\{clearSearch\}/);
   assert.equal((seatMapSource.match(/searchActive \? "Clear search results"/g) ?? []).length, 1);
-  assert.equal((seatMapSource.match(/onClearSearch=\{clearSearch\}/g) ?? []).length, 1);
+  // Two call sites, ONE handler: the results panel's zero state and (multi-
+  // floor PR-3) the floor roster's zero state both clear through clearSearch.
+  assert.equal((seatMapSource.match(/onClearSearch=\{clearSearch\}/g) ?? []).length, 2);
   assert.match(seatMapSource, /onClearSearchContext=\{searchActive \? clearSearch : clearStructuredFilters\}/);
   assert.match(resultsPanelSource, /onClick=\{onClearSearch\}/);
 });
@@ -1323,4 +1325,14 @@ test("the floor roster is a focusable read-only region with exactly one control"
   assert.match(viewerSource, /Showing \$\{/);
   assert.match(viewerSource, /<FloorRoster/);
   assert.match(viewerSource, /tabIndex=\{surface === "plan" \? 0 : -1\}/);
+  // Multi-floor PR-3: the admin editor mounts the same roster for an
+  // unmapped floor, announces its own floor switches (a find or a Move/Swap
+  // target on the other floor changes the plan under the admin), and hands
+  // the tab stop to the roster region there — the viewport is no landmark on
+  // a floor with no map to pan.
+  const adminSource = await readSource("../components/seat-map/SeatMap.tsx");
+  assert.match(adminSource, /Showing \$\{FLOORS\[announcedFloor\]\.label\}\./);
+  assert.match(adminSource, /<FloorRoster/);
+  assert.match(adminSource, /tabIndex=\{canEdit && surface === "plan" \? 0 : undefined\}/);
+  assert.match(adminSource, /focusFloorRoster\(ADMIN_ROSTER_REGION_ID\)/);
 });

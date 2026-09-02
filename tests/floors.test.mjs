@@ -28,7 +28,8 @@ const {
   urlFloorFor,
   groupRosterByDepartment,
   floorDepartmentSummary,
-  floorSuffix
+  floorSuffix,
+  groupByFloor
 } = floors;
 
 function employee(id, full_name, overrides = {}) {
@@ -316,8 +317,44 @@ test("floorDepartmentSummary offers the other floor only when the DEPARTMENT has
 // The viewer's office-room wash must dispatch on the canvas floor: once slice
 // B publishes a floor-2 seat the floor-2 canvas would otherwise wash Floor 3's
 // rooms at Floor 3 coordinates (review finding, 2026-09-01).
-test("the viewer passes the canvas floor to buildOfficeRoomWashes", async () => {
+test("both map surfaces pass the canvas floor to buildOfficeRoomWashes", async () => {
   const { readFile } = await import("node:fs/promises");
   const source = await readFile(new URL("../components/seat-map/ViewerSeatFinder.tsx", import.meta.url), "utf8");
   assert.match(source, /buildOfficeRoomWashes\(\{\s*floor,/);
+  // The admin editor too (multi-floor PR-3) — its call site carries a comment
+  // line between the brace and `floor`, hence the looser match.
+  const adminSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  assert.match(adminSource, /buildOfficeRoomWashes\(\{[^}]*?\n\s*floor,/);
+});
+
+// ---- grouping (multi-floor PR-3: the publish review's floor eyebrows)
+
+test("groupByFloor buckets items in registry order, keeps item order, omits empty floors", () => {
+  const rows = [
+    { key: "b", floor: "2" },
+    { key: "a", floor: "3" },
+    { key: "c" }, // no floor value → Floor 3, like every pre-column row
+    { key: "d", floor: "2" }
+  ];
+  const groups = groupByFloor(rows);
+  assert.deepEqual(groups.map(group => group.floor), ["3", "2"]);
+  assert.deepEqual(groups.map(group => group.label), ["Floor 3 · Pre-Litigation", "Floor 2 · Litigation"]);
+  assert.deepEqual(groups[0].items.map(row => row.key), ["a", "c"]);
+  assert.deepEqual(groups[1].items.map(row => row.key), ["b", "d"]);
+  assert.deepEqual(groupByFloor([]), []);
+  assert.deepEqual(groupByFloor([{ floor: "2" }]).map(group => group.floor), ["2"]);
+});
+
+// The admin editor (PR-3) draws the plan for any MAPPED floor and the roster
+// for an unmapped one — its people come from the LIVE working set, and a
+// draft seat on a floor makes it live for the editor's interim rule.
+test("the admin editor mounts the roster from the live working set and gates Add seat on the plan surface", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  assert.match(source, /floorIsMapped\(floor\) \? "plan" : "roster"/);
+  assert.match(source, /peopleOnFloor\(floor, localSeats, localEmployees\)/);
+  assert.match(source, /canEdit && surface === "plan" && \(\s*<button/);
+  assert.match(source, /<FloorRoster/);
+  assert.doesNotMatch(source, /FloorPlaceholder/);
+  assert.doesNotMatch(source, /floor === "3"|floor === "2"/, "the canvas dispatches on the registry, never on a floor literal");
 });

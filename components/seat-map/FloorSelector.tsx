@@ -10,8 +10,9 @@ export type { FloorId };
 
 // Multi-floor PR-2: the options come from the registry (lib/floors) — one
 // home for what floors exist and what they are called. An unmapped floor is a
-// real destination now (the surfaces render a roster for it), so the old SOON
-// badge is gone; the roster header explains itself. The garage (Floor 1) is
+// real destination now (every map surface renders a roster for it — the admin
+// editor too, since PR-3 retired its placeholder), so the old SOON badge is
+// gone; the roster header explains itself. The garage (Floor 1) is
 // intentionally absent from the registry.
 
 type FloorSelectorProps = {
@@ -24,18 +25,6 @@ type FloorSelectorProps = {
    *  variant-independent. */
   variant?: "canvas" | "chrome";
 };
-
-// Still mounted by the admin map until multi-floor PR-3 gives it the roster.
-export function FloorPlaceholder() {
-  return (
-    <div role="status" className="grid min-h-[360px] w-full place-items-center p-6 text-center sm:min-h-[520px] lg:h-full lg:min-h-0">
-      <div>
-        <div className="text-sm font-semibold text-[var(--sp-text-primary)]">{FLOORS["2"].label}</div>
-        <p className="mt-1 text-xs text-[var(--sp-text-helper)]">Not yet mapped — reserved for a future rollout.</p>
-      </div>
-    </div>
-  );
-}
 
 export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSelectorProps) {
   const chrome = variant === "chrome";

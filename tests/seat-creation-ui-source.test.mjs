@@ -20,6 +20,12 @@ test("normal add-seat UI does not pass manual labels or zones", async () => {
   assert.doesNotMatch(source, /addSeatZone|onAddSeatZoneChange|buildNextSeatLabel/);
   assert.doesNotMatch(createCall[0], /\blabel\s*:/);
   assert.doesNotMatch(createCall[0], /\bzone\s*:/);
+  // Multi-floor PR-3: the seat lands on the canvas floor — the client passes
+  // it, detects the zone against THAT floor's rectangles and seats, and
+  // saves the point through that floor's calibration.
+  assert.match(createCall[0], /\bfloor\s*(?:,|\}|:\s*floor)/);
+  assert.match(source, /detectSeatZoneForPointResult\(visualPoint, visualLocalSeats, floor\)/);
+  assert.match(source, /visualPointToSavedPoint\(visualPoint, \{ zone: targetZone, floor \}\)/);
 });
 
 test("add-seat action creates custom draft seats without publishing", async () => {
@@ -30,8 +36,16 @@ test("add-seat action creates custom draft seats without publishing", async () =
   assert.match(source, /async function getDraftSeatZoneSources[\s\S]*\.eq\("layer", "draft"\)/);
   assert.match(createAction[0], /getDraftSeatZoneSources\(supabase\)/);
   assert.match(createAction[0], /detectSeatZoneForPointResult/);
-  assert.match(createAction[0], /label,\s*x:\s*point\.x,\s*y:\s*point\.y,\s*layer:\s*"draft",\s*status:\s*"available",\s*zone,\s*department:\s*null,\s*is_custom:\s*true/s);
+  assert.match(createAction[0], /label,\s*x:\s*point\.x,\s*y:\s*point\.y,\s*layer:\s*"draft",\s*status:\s*"available",\s*zone,\s*department:\s*null,\s*is_custom:\s*true,\s*floor/s);
   assert.doesNotMatch(createAction[0], /publishSeatMapAction|publish_seat_map|\.eq\("layer", "published"\)/);
+  // Multi-floor PR-3: the server parses the floor (Floor 3 when absent),
+  // refuses a floor with no plan, and detects the zone on that floor only —
+  // the zone-source read must carry `floor` or every row would read as
+  // Floor 3 and lend the other floor its zones.
+  assert.match(createAction[0], /parseFloorId\(input\.floor\)/);
+  assert.match(createAction[0], /if \(!floorIsMapped\(floor\)\)/);
+  assert.match(createAction[0], /detectSeatZoneForPointResult\(visualPoint, seatsToVisualSeats\(draftSeats\), floor\)/);
+  assert.match(source, /async function getDraftSeatZoneSources[\s\S]*\.select\("label,zone,department,x,y,floor"/);
 });
 
 test("custom-seat delete flow is draft-only and clearly guarded", async () => {

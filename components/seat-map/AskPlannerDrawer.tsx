@@ -18,6 +18,10 @@ type AskPlannerDrawerProps = {
   zones: string[];
   queuedRequest: AskPlannerQueuedRequest | null;
   highlightedSeatIds: string[];
+  /** "Floor 2" for a highlighted seat that is NOT on the canvas floor
+   *  (multi-floor PR-3): selecting it switches the canvas, so the row says
+   *  so before the click. Absent or undefined for same-floor seats. */
+  floorTagForSeat?: (seatId: string) => string | null | undefined;
   onClose: () => void;
   onHighlightSeats: (seatIds: string[]) => void;
   onClearHighlights: () => void;
@@ -119,6 +123,7 @@ export function AskPlannerDrawer({
   queuedRequest,
   highlightedSeatIds,
   onClose,
+  floorTagForSeat,
   onHighlightSeats,
   onClearHighlights,
   onSelectSeat
@@ -460,7 +465,14 @@ export function AskPlannerDrawer({
                         className="flex w-full items-start justify-between gap-3 rounded-lg border border-[var(--sp-ai-panel-border)] bg-[var(--sp-ai-row)] p-2 text-left transition hover:bg-[color-mix(in_srgb,var(--sp-ai-border)_16%,transparent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                       >
                         <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-[var(--sp-text-primary)]">{highlight.label}</span>
+                          <span className="flex items-center gap-2 text-sm font-semibold text-[var(--sp-text-primary)]">
+                            {highlight.label}
+                            {floorTagForSeat?.(highlight.seatId) ? (
+                              <span className="rounded-full px-1.5 py-0.5 text-xs font-semibold text-[var(--sp-ai-chrome-text)] ring-1 ring-white/15">
+                                {floorTagForSeat(highlight.seatId)}
+                              </span>
+                            ) : null}
+                          </span>
                           <span className="mt-0.5 block text-xs leading-5 text-[var(--sp-text-secondary)]">{highlight.reason}</span>
                         </span>
                         <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 text-xs font-semibold text-[var(--sp-ai-chrome-text)] ring-1 ring-white/15">
