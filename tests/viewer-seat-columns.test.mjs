@@ -21,7 +21,7 @@ const VIEWER_SEAT_READERS = [
 test("the viewer column list never includes notes and keeps the render-critical columns", () => {
   const columns = VIEWER_SEAT_COLUMNS.split(",");
   assert.ok(!columns.includes("notes"), "notes must never ship to viewer browsers");
-  for (const required of ["id", "label", "x", "y", "status", "employee_id", "zone", "department"]) {
+  for (const required of ["id", "label", "x", "y", "status", "employee_id", "zone", "department", "floor"]) {
     assert.ok(columns.includes(required), `viewer surfaces render from '${required}' — it must stay on the wire`);
   }
 });
@@ -32,14 +32,13 @@ test("withNullNotes keeps the Seat shape honest without resurrecting the column"
   assert.equal(row.id, "s1");
 });
 
-// Multi-floor PR-1: seats.floor exists in the schema but is deliberately not
-// on the viewer wire yet (PR-2 adds it to VIEWER_SEAT_COLUMNS, the first
-// consumer). Until then every published row IS Floor 3 by the column default,
-// so the helper supplies it — and it must never clobber a real value once the
-// column is selected.
-test("withNullNotes supplies the Floor 3 default until the column ships, and keeps a selected floor", () => {
-  assert.equal(withNullNotes({ id: "s1", label: "N01" }).floor, "3");
-  assert.equal(withNullNotes({ id: "s2", label: "L01", floor: "2" }).floor, "2");
+// Multi-floor PR-2: `floor` is on the viewer wire (the column list above), so
+// the helper passes a selected floor through untouched and no longer invents
+// one — the PR-1 default shim is gone with its reason.
+test("withNullNotes keeps a selected floor and adds nothing but notes", () => {
+  const row = withNullNotes({ id: "s2", label: "L01", floor: "2" });
+  assert.equal(row.floor, "2");
+  assert.deepEqual(Object.keys(row).sort(), ["floor", "id", "label", "notes"]);
 });
 
 for (const page of VIEWER_SEAT_READERS) {

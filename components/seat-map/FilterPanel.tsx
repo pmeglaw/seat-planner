@@ -42,6 +42,12 @@ type FilterPanelProps = {
   onClearFilters: () => void;
   // Live "N of M seats match" line rendered inside the popover.
   matchSummary?: string;
+  /**
+   * Multi-floor PR-2 (Q5): when the summary says a department's people are
+   * on the OTHER floor, this is the "Show Floor 2" action beside it — the
+   * filter never returns an unchanged map in silence.
+   */
+  matchSummaryAction?: { label: string; onClick: () => void };
 };
 
 export function ActiveFilterChips({
@@ -122,7 +128,8 @@ export function FilterPanel({
   onStatusChange,
   onRemoveActiveChip,
   onClearFilters,
-  matchSummary
+  matchSummary,
+  matchSummaryAction
 }: FilterPanelProps) {
   const activeStructuredChips = activeChips.filter(chip => chip.id !== "search");
   // "All zones" clears the facet and previews nothing — only real zones wash.
@@ -237,6 +244,19 @@ export function FilterPanel({
         <p aria-live="polite" className="mt-3 border-t border-white/10 pt-2.5 text-xs font-medium text-[var(--sp-text-helper)]">
           {matchSummary}
         </p>
+      )}
+      {/* Same recipe as the chips' Clear all (sp-zone-base re-entry, brand
+          wash, 3px vertical hit expansion — the popover's wrap rows cap it). */}
+      {matchSummaryAction && (
+        <div className="sp-zone-base mt-2 flex">
+          <button
+            type="button"
+            onClick={matchSummaryAction.onClick}
+            className="relative inline-flex min-h-6 items-center border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-brand-text)] transition after:absolute after:-inset-y-[3px] after:inset-x-0 hover:bg-[rgba(255,87,21,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+          >
+            {matchSummaryAction.label}
+          </button>
+        </div>
       )}
     </div>
   );

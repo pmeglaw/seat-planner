@@ -6,6 +6,11 @@
 
 export const SEAT_PARAM = "seat";
 export const TAB_PARAM = "tab";
+// `?floor=<id>` on the map surfaces (multi-floor PR-2). Read raw here —
+// callers sanitize through lib/floorIds isFloorId — so this module stays
+// free of the registry. Landing precedence (?seat= → ?floor= → remembered →
+// own seat → Floor 3) lives in lib/floors landingFloor.
+export const FLOOR_PARAM = "floor";
 
 type SeatLike = { id: string; label: string };
 
@@ -30,6 +35,19 @@ export function withSeatParam(search: string, label: string | null): string {
   const params = new URLSearchParams(search);
   if (label) params.set(SEAT_PARAM, label);
   else params.delete(SEAT_PARAM);
+  return serialize(params);
+}
+
+export function readFloorParam(search: string): string | null {
+  return new URLSearchParams(search).get(FLOOR_PARAM);
+}
+
+// Callers pass null for the default floor so the bare URL stays canonical —
+// the same rule withTabParam applies to the default tab.
+export function withFloorParam(search: string, floor: string | null): string {
+  const params = new URLSearchParams(search);
+  if (floor) params.set(FLOOR_PARAM, floor);
+  else params.delete(FLOOR_PARAM);
   return serialize(params);
 }
 

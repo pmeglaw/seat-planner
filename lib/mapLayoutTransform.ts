@@ -1,3 +1,6 @@
+import { FLOOR_2_GEOMETRY } from "@/lib/floorGeometry/floor2";
+import type { Bounds, CalibrationArea, LinearTransform } from "@/lib/floorGeometry/types";
+import { DEFAULT_FLOOR, floorOf, isFloorId, type FloorId } from "@/lib/floorIds";
 import { normalizePoint, type NormalizedPoint } from "@/lib/seatMath";
 import type { SeatWithEmployee } from "@/lib/types";
 
@@ -17,31 +20,10 @@ export const MAP_IMAGE_SRC = "/images/office-floor-plan.webp?v=map-v2-cool-2x-38
 export const MAP_IMAGE_BLUR_DATA_URL =
   "data:image/webp;base64,UklGRk4CAABXRUJQVlA4WAoAAAAgAAAAFwAACgAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDggYAAAALADAJ0BKhgACwA+7WKpTamlo6IwCAEwHYlnAABcY4HwTuoh5SxQAP7rHGwqKqLTIktldm+PPeJbBhu2dhji2KNaLmeFPma9BfaSGpyjjazhmvSiMNxTusJpnL3q6LkAAA==";
 
+// `floor` (multi-floor PR-2) selects WHICH floor's calibration applies; a
+// source without one is Floor 3, like every seat that predates the column.
 type SeatCalibrationSource = Pick<SeatWithEmployee, "x" | "y"> &
-  Partial<Pick<SeatWithEmployee, "label" | "zone" | "department">>;
-
-type Bounds = {
-  xMin: number;
-  xMax: number;
-  yMin: number;
-  yMax: number;
-};
-
-type LinearTransform = {
-  xScale: number;
-  xOffset: number;
-  yScale: number;
-  yOffset: number;
-};
-
-type CalibrationArea = {
-  id: string;
-  zones: string[];
-  labelPrefixes: string[];
-  savedBounds: Bounds;
-  visualBounds: Bounds;
-  transform: LinearTransform;
-};
+  Partial<Pick<SeatWithEmployee, "label" | "zone" | "department">> & { floor?: string | null };
 
 const DEFAULT_PREVIEW_TRANSFORM: LinearTransform = {
   xScale: 0.92,
@@ -141,6 +123,23 @@ const CALIBRATION_AREAS: CalibrationArea[] = [
   }
 ];
 
+// Per-floor dispatch (approach A, 2026-09-01): the floor-3 literals above are
+// untouched and referenced here BY IDENTITY; floor 2 reads the data module,
+// which ships empty (zero areas, identity preview) until slice B measures the
+// 2nd-floor drawing. Candidate lists are selected BEFORE any match/affinity/
+// nearest-bounds logic runs, so a floor-2 seat can never borrow a floor-3
+// area through the fallback search.
+type FloorCalibration = { areas: CalibrationArea[]; previewTransform: LinearTransform };
+
+const CALIBRATION_BY_FLOOR: Record<FloorId, FloorCalibration> = {
+  "3": { areas: CALIBRATION_AREAS, previewTransform: DEFAULT_PREVIEW_TRANSFORM },
+  "2": { areas: FLOOR_2_GEOMETRY.calibrationAreas, previewTransform: FLOOR_2_GEOMETRY.previewTransform }
+};
+
+function calibrationFor(floor: FloorId): FloorCalibration {
+  return CALIBRATION_BY_FLOOR[floor] ?? CALIBRATION_BY_FLOOR[DEFAULT_FLOOR];
+}
+
 function normalizeText(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? "";
 }
@@ -190,25 +189,31 @@ function areaAffinity(area: CalibrationArea, source?: SeatCalibrationSource | { 
 function getSavedCalibrationArea(source?: SeatCalibrationSource) {
   if (!source) return null;
 
-  const exactArea = CALIBRATION_AREAS.find(area => areaMatchesSource(area, source));
+  const { areas } = calibrationFor(floorOf(source));
+  const exactArea = areas.find(area => areaMatchesSource(area, source));
   if (exactArea) return exactArea;
 
   const point = source ? normalizePoint({ x: source.x, y: source.y }) : { x: 0.5, y: 0.5 };
-  return [...CALIBRATION_AREAS].sort((left, right) => {
+  return [...areas].sort((left, right) => {
     const affinityDelta = areaAffinity(right, source) - areaAffinity(left, source);
     if (affinityDelta !== 0) return affinityDelta;
     return squaredDistanceToBounds(point, left.savedBounds) - squaredDistanceToBounds(point, right.savedBounds);
   })[0] ?? null;
 }
 
-function getVisualCalibrationArea(
-  point: NormalizedPoint,
-  context?: { zone?: string | null; label?: string | null; source?: SeatCalibrationSource }
-) {
+type VisualContext = { zone?: string | null; label?: string | null; floor?: string | null; source?: SeatCalibrationSource };
+
+function contextFloor(context?: VisualContext): FloorId {
+  if (context?.source) return floorOf(context.source);
+  return isFloorId(context?.floor) ? context.floor : DEFAULT_FLOOR;
+}
+
+function getVisualCalibrationArea(point: NormalizedPoint, context?: VisualContext) {
   if (context?.source) return getSavedCalibrationArea(context.source);
   if (!context?.zone && !context?.label) return null;
 
-  const matchingAreas = CALIBRATION_AREAS.filter(area => {
+  const { areas } = calibrationFor(contextFloor(context));
+  const matchingAreas = areas.filter(area => {
     const affinity = areaAffinity(area, context);
     return affinity > 0 && pointInsideBounds(point, area.visualBounds, 0.015);
   });
@@ -219,7 +224,7 @@ function getVisualCalibrationArea(
     })[0];
   }
 
-  return [...CALIBRATION_AREAS].sort((left, right) => {
+  return [...areas].sort((left, right) => {
     const affinityDelta = areaAffinity(right, context) - areaAffinity(left, context);
     if (affinityDelta !== 0) return affinityDelta;
     return squaredDistanceToBounds(point, left.visualBounds) - squaredDistanceToBounds(point, right.visualBounds);
@@ -242,15 +247,12 @@ function applyInverseTransform(point: NormalizedPoint, transform: LinearTransfor
 
 export function savedPointToVisualPoint(point: NormalizedPoint, source?: SeatCalibrationSource) {
   const area = getSavedCalibrationArea(source);
-  return applyTransform(point, area?.transform ?? DEFAULT_PREVIEW_TRANSFORM);
+  return applyTransform(point, area?.transform ?? calibrationFor(floorOf(source)).previewTransform);
 }
 
-export function visualPointToSavedPoint(
-  point: NormalizedPoint,
-  context?: { zone?: string | null; label?: string | null; source?: SeatCalibrationSource }
-) {
+export function visualPointToSavedPoint(point: NormalizedPoint, context?: VisualContext) {
   const area = getVisualCalibrationArea(point, context);
-  return applyInverseTransform(point, area?.transform ?? DEFAULT_PREVIEW_TRANSFORM);
+  return applyInverseTransform(point, area?.transform ?? calibrationFor(contextFloor(context)).previewTransform);
 }
 
 export function seatToVisualSeat<T extends SeatCalibrationSource>(seat: T): T {

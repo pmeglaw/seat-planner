@@ -42,22 +42,24 @@ function personRow(overrides = {}) {
     seatId: "seat-1",
     seatIds: ["seat-1"],
     status: "assigned",
-    disabled: false,
+    floor: "3",
+    employeeId: `emp:${overrides.title}`,
     ...overrides
   };
 }
 
 const ADA = personRow({ title: "Ada Lovelace", id: "person:ada" });
 const BEN = personRow({ title: "Ben Carter", id: "person:ben", subtitle: "B-02 · South Offices", seatId: "seat-2", seatIds: ["seat-2"] });
-// Unseated: the contract #9 row — listed, honest, never openable.
+// Unseated: the contract #9 row — listed, honest, and (since the 2026-09-01
+// multi-floor amendment) openable: the person works on the unmapped floor.
 const CASS = personRow({
   title: "Cass Nolan",
   id: "person:cass",
-  subtitle: "No assigned seat",
+  subtitle: "Floor 2 · Litigation",
   seatId: null,
   seatIds: [],
   status: undefined,
-  disabled: true
+  floor: "2"
 });
 
 const BROWSE = {
@@ -213,14 +215,28 @@ test("closing the palette releases a live hover preview instead of stranding it 
   assert.deepEqual(spies.calls, [["zoneHover", null], ["rowHover", null]]);
 });
 
-test("an unseated person is listed and readable but can never be opened (contract #9)", async () => {
+test("an unseated person is listed, honest about their floor, and openable (contract #9, amended 2026-09-01)", async () => {
   const { spies } = await renderPalette();
   const row = browseRow("Cass Nolan");
 
-  assert.equal(row.disabled, true);
-  assert.match(row.textContent, /No seat/);
+  assert.equal(row.disabled, false, "never disabled — the content must be read, and the row now opens the floor");
+  assert.match(row.textContent, /Floor 2/);
+  assert.doesNotMatch(row.textContent, /No seat/);
   fireEvent.click(row);
-  assert.deepEqual(spies.calls, [], "a disabled row must reach no callback at all");
+  assert.deepEqual(spies.calls.at(-1), ["openRow", CASS]);
+});
+
+test("a seated person on another floor carries a floor tag beside the seat code; same-floor rows do not", async () => {
+  const benDownstairs = { ...BEN, floor: "2" };
+  await renderPalette({ browse: { ...BROWSE, people: [ADA, benDownstairs, CASS] }, currentFloor: "3" });
+  assert.match(browseRow("Ben Carter").textContent, /Floor 2/);
+  assert.doesNotMatch(browseRow("Ada Lovelace").textContent, /Floor 3/);
+});
+
+test("query results tag a seat on another floor too", async () => {
+  await renderPalette({ query: "b", results: [{ ...SEAT_RESULT, floor: "2" }], resultCountLabel: "1 result", mappedSeatCount: 1, currentFloor: "3" });
+  const list = screen.getByRole("list", { name: "Viewer search results" });
+  assert.match(list.textContent, /Floor 2/);
 });
 
 test("a seated row opens through the one selection path and lights its seat on hover", async () => {
@@ -277,11 +293,13 @@ test("arrow keys rove the browse feed and ArrowUp exits to the search field", as
   fireEvent.keyDown(browseList(), { key: "ArrowDown" });
   assert.equal(document.activeElement, browseRow("Ben Carter"));
 
-  // Down again would land on the disabled unseated row — roving skips it and
-  // stays put rather than parking focus somewhere Enter does nothing.
+  // The unseated row is openable now (contract #9, amended 2026-09-01), so
+  // roving reaches it instead of skipping it.
   fireEvent.keyDown(browseList(), { key: "ArrowDown" });
-  assert.equal(document.activeElement, browseRow("Ben Carter"));
+  assert.equal(document.activeElement, browseRow("Cass Nolan"));
 
+  fireEvent.keyDown(browseList(), { key: "ArrowUp" });
+  assert.equal(document.activeElement, browseRow("Ben Carter"));
   fireEvent.keyDown(browseList(), { key: "ArrowUp" });
   assert.equal(document.activeElement, browseRow("Ada Lovelace"));
   fireEvent.keyDown(browseList(), { key: "ArrowUp" });

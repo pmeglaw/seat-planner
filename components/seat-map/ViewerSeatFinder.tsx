@@ -2,7 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
-import { findSeatIdByParam, readSeatParam, withSeatParam } from "@/lib/deepLink";
+import { findSeatIdByParam, readFloorParam, readSeatParam, withFloorParam, withSeatParam } from "@/lib/deepLink";
+import { departmentKey } from "@/lib/departments";
+import { DEFAULT_FLOOR, floorOf, type FloorId } from "@/lib/floorIds";
+import {
+  FLOORS,
+  VIEWER_FLOOR_STORAGE_KEY,
+  floorDepartmentSummary,
+  floorOrdinal,
+  floorSurface,
+  landingFloor,
+  peopleOnFloor,
+  personPassesFilters,
+  urlFloorFor
+} from "@/lib/floors";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,13 +24,10 @@ import { STATUS_LABELS } from "@/lib/types";
 import { normalizeSeat } from "@/lib/seatNormalize";
 import { cx } from "@/components/ui/design-system";
 
-import {
-  MAP_IMAGE_BLUR_DATA_URL,
-  MAP_IMAGE_HEIGHT,
-  MAP_IMAGE_SRC,
-  MAP_IMAGE_WIDTH,
-  seatsToVisualSeats
-} from "@/lib/mapLayoutTransform";
+// MAP_IMAGE_WIDTH/HEIGHT stay the universal frame for the scale-dependent
+// tiers (every floor's plan is built to the same 1911×867 framing); the
+// rendered raster itself comes from the floor registry (lib/floors).
+import { MAP_IMAGE_HEIGHT, MAP_IMAGE_WIDTH, seatsToVisualSeats } from "@/lib/mapLayoutTransform";
 // Aliased: `fitMapWidth` is already this component's state for the resolved width.
 import {
   MAP_ZOOM_MAX,
@@ -33,7 +43,8 @@ import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
 import { AccountMenu, accountMenuItemClassName } from "@/components/ui/AccountMenu";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
-import { FloorPlaceholder, FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
+import { FloorRoster, focusFloorRoster } from "@/components/seat-map/FloorRoster";
+import { FloorSelector } from "@/components/seat-map/FloorSelector";
 import { NamesVisibilityToggle } from "@/components/seat-map/NamesVisibilityToggle";
 import { MapWashLayer } from "@/components/seat-map/MapWashLayer";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
@@ -60,6 +71,11 @@ type ViewerSeatFinderProps = {
   // Signed-in identity for the account menu (email + role + sign out).
   accountEmail?: string | null;
   accountRoleLabel?: string;
+  // Multi-floor (PR-2): the server's view of where to land — the floor a
+  // ?seat=/?floor= asks for, and the signed-in person's own floor. The
+  // remembered floor is client-only and slots in between (lib/floors
+  // landingFloor) once the mount effect has read storage.
+  landing?: { urlFloor: FloorId | null; ownFloor: FloorId | null };
 };
 
 type ViewerPanState = {
@@ -80,6 +96,12 @@ const VIEWER_PANEL_BREAKPOINT_PX = 900;
 // the surfaces are different densities and audiences, so one preference must
 // not leak into the other's default.
 const VIEWER_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:viewer-names-visible";
+
+// Multi-floor (PR-2): the roster region's id — the focus target when a find
+// lands on an unseated person — and the plan viewport's accessible name (the
+// roster floor has no map to pan, so the viewport carries none there).
+const VIEWER_ROSTER_REGION_ID = "viewer-floor-roster";
+const MAP_VIEWPORT_LABEL = "Office seat map. Drag to pan. Seat markers are read-only buttons.";
 
 // The surface-shortcut glyphs, hoisted because each is drawn twice: once in
 // the bar (sm and up) and once inside the account menu (below sm), where the
@@ -177,7 +199,8 @@ export function ViewerSeatFinder({
   showAdminShortcut = false,
   lastPublishedLabel = null,
   accountEmail = null,
-  accountRoleLabel = "Viewer"
+  accountRoleLabel = "Viewer",
+  landing
 }: ViewerSeatFinderProps) {
   const [search, setSearch] = useState("");
   const [searchShortcutHint, setSearchShortcutHint] = useState("");
@@ -219,7 +242,18 @@ export function ViewerSeatFinder({
       // Ignore unavailable storage; this is a local UI preference only.
     }
   }, [namesPreferenceHydrated, showNames]);
-  const [floor, setFloor] = useState<FloorId>("3");
+  // Multi-floor (PR-2). SSR and the first client render agree on the
+  // server's landing floor; the mount effect below then applies the URL and
+  // the remembered floor (landingFloor's precedence: ?seat=/?floor= →
+  // remembered → own seat → Floor 3) and only then lets the persist effect
+  // write — the same hydrated-flag pattern as the names toggle above.
+  const [floor, setFloorState] = useState<FloorId>(() =>
+    landingFloor({ urlFloor: landing?.urlFloor ?? null, storedFloor: null, ownFloor: landing?.ownFloor ?? null })
+  );
+  const [floorPreferenceHydrated, setFloorPreferenceHydrated] = useState(false);
+  // The floor most recently switched to by a user action, for the live
+  // region ("Showing Floor 2 · Litigation"); cleared by the next find.
+  const [announcedFloor, setAnnouncedFloor] = useState<FloorId | null>(null);
   // Status-band tiers (Option A, owner call 2026-08-17): the band renders from
   // sm (640) up, and below the panel tier it yields to the inspector bottom
   // sheet. Desktop-first defaults keep SSR and the first client render in
@@ -291,8 +325,49 @@ export function ViewerSeatFinder({
   const suppressPaletteReopenRef = useRef(false);
 
   const publishedSeats = useMemo(() => seats.map(normalizeSeat), [seats]);
-  const visualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
-  const visualSeatById = useMemo(() => new Map(visualSeats.map(seat => [seat.id, seat])), [visualSeats]);
+  useEffect(() => {
+    const urlFloor = urlFloorFor(publishedSeats, {
+      seat: readSeatParam(window.location.search),
+      floor: readFloorParam(window.location.search)
+    });
+    let storedFloor: string | null = null;
+    try {
+      storedFloor = window.localStorage.getItem(VIEWER_FLOOR_STORAGE_KEY);
+    } catch {
+      // Ignore unavailable storage; the server's landing floor stands.
+    }
+    setFloorState(landingFloor({ urlFloor, storedFloor, ownFloor: landing?.ownFloor ?? null }));
+    setFloorPreferenceHydrated(true);
+    // Mount-only by design: landing is a one-time server hint and the URL is
+    // read once, like the ?seat= effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!floorPreferenceHydrated) return;
+    try {
+      window.localStorage.setItem(VIEWER_FLOOR_STORAGE_KEY, floor);
+    } catch {
+      // Ignore unavailable storage; this is a local UI preference only.
+    }
+  }, [floorPreferenceHydrated, floor]);
+  // One canvas per floor (DECISIONS.md D1′): the plan and every render-layer
+  // derivation below (nudges, tiers, washes, arrow-key points, markers) see
+  // ONLY this floor's seats — `visualSeats` keeps its name and its meaning.
+  // The building-wide map exists for id lookups that cross floors (centring
+  // a seat a find just switched to, the inspector nudge).
+  const surface = floorSurface(floor, publishedSeats);
+  const floorMeta = FLOORS[floor];
+  const plan = floorMeta.plan;
+  const floorSeats = useMemo(() => publishedSeats.filter(seat => floorOf(seat) === floor), [floor, publishedSeats]);
+  const visualSeats = useMemo(() => seatsToVisualSeats(floorSeats), [floorSeats]);
+  const buildingVisualSeats = useMemo(() => seatsToVisualSeats(publishedSeats), [publishedSeats]);
+  const visualSeatById = useMemo(() => new Map(buildingVisualSeats.map(seat => [seat.id, seat])), [buildingVisualSeats]);
+  // The people an unmapped floor lists (lib/floors: seated there, plus — on
+  // the roster floor — everyone active with no published seat).
+  const rosterPeople = useMemo(
+    () => (surface === "roster" ? peopleOnFloor(floor, publishedSeats, employees) : []),
+    [employees, floor, publishedSeats, surface]
+  );
   // Pill crowding at the live rendered scale (render-layer only, parity with
   // the admin map): code pills render at one uniform size, and the crowded
   // set feeds alternating vertical token nudges that keep tight pods from
@@ -389,7 +464,9 @@ export function ViewerSeatFinder({
   const filtersActive = searchActive || structuredFiltersActive;
 
   const seatPassesStructuredFilters = useCallback((seat: SeatWithEmployee) => {
-    const departmentOk = department === "all" || getSeatDepartment(seat).toLowerCase() === department.toLowerCase();
+    // departmentKey on both sides (the same normalisation the facet options
+    // and the roster use), not a bare toLowerCase — sweep defect 5.
+    const departmentOk = department === "all" || departmentKey(getSeatDepartment(seat)) === departmentKey(department);
     const positionOk = seatMatchesPosition(seat.employee?.position, position);
     // zoneKey on BOTH sides, not raw ===: the palette's chips aggregate on
     // that key and render the first spelling seen, so a chip built from an
@@ -479,7 +556,26 @@ export function ViewerSeatFinder({
   const selectedResultTitle = activeResult?.title ?? selectedSeat?.label ?? null;
   // Legend counts follow the active filters — the one number row everyone
   // reads must not contradict a filtered map (2026-07-16 regrade, review 4).
-  const statusCountSeats = structuredFiltersActive ? publishedSeats.filter(seatPassesStructuredFilters) : publishedSeats;
+  const statusCountSeats = structuredFiltersActive ? floorSeats.filter(seatPassesStructuredFilters) : floorSeats;
+  const floorHighlightedCount = floorSeats.filter(seat => highlightedSeatIdSet.has(seat.id)).length;
+  // Q5 (closed 2026-09-01): the popover's match line is floor-aware — when a
+  // department has no seats on this floor but people on the other, it says so
+  // and offers the switch (lib/floors floorDepartmentSummary).
+  const departmentSummary = floorDepartmentSummary({
+    floor,
+    department,
+    position,
+    floorMatchCount: statusCountSeats.length,
+    floorSeatCount: floorSeats.length,
+    seats: publishedSeats,
+    employees
+  });
+  // On the roster floor the department and position facets filter people
+  // (zone and status describe seats and are inert there).
+  const rosterRows = useMemo(
+    () => rosterPeople.filter(person => personPassesFilters(person, { department, position })),
+    [department, position, rosterPeople]
+  );
   const assignedCount = statusCountSeats.filter(seat => seat.status === "assigned").length;
   const openCount = statusCountSeats.filter(seat => seat.status === "available").length;
   const reservedCount = statusCountSeats.filter(seat => seat.status === "reserved").length;
@@ -717,8 +813,32 @@ export function ViewerSeatFinder({
       }),
       { minX: 1, maxX: 0, minY: 1, maxY: 0 }
     );
-    scrollMapToPoint((bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2);
+    window.requestAnimationFrame(() => scrollMapToPoint((bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2));
   }, [centerSeatInMap, scrollMapToPoint, visualSeatById]);
+
+  // Multi-floor: one switch path for the selector, finds, deep links and the
+  // Q5 action. Selection, hover, roving anchor and zoom belong to the canvas
+  // being left; the query and the structured filters span the building and
+  // survive. Announced through the live region unless the caller is about to
+  // announce something more specific (a selected seat, a highlighted person).
+  const switchFloor = useCallback((next: FloorId, options: { announce?: boolean } = {}) => {
+    if (next === floor) return;
+    cancelNudge();
+    setFloorState(next);
+    setSelectedSeatId(null);
+    setInspectorCollapsed(false);
+    setHoverSeatId(null);
+    setRovingSeatId(null);
+    setZoomFactor(null);
+    setAnnouncedFloor(options.announce === false ? null : next);
+    window.requestAnimationFrame(() => {
+      mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    });
+  }, [cancelNudge, floor]);
+  const summarySwitchTo = departmentSummary.switchTo;
+  const departmentSummaryAction = summarySwitchTo
+    ? { label: `Show ${FLOORS[summarySwitchTo].tag}`, onClick: () => switchFloor(summarySwitchTo) }
+    : undefined;
 
   function applyMapZoom(nextZoom: number) {
     cancelNudge();
@@ -739,7 +859,7 @@ export function ViewerSeatFinder({
 
   function handleViewportPointerDown(event: PointerEvent<HTMLDivElement>) {
     cancelNudge();
-    if (floor !== "3" || event.button !== 0) return;
+    if (surface !== "plan" || event.button !== 0) return;
     if (isPanBlockedTarget(event.target)) return;
     const viewport = mapViewportRef.current;
     if (!viewport) return;
@@ -786,6 +906,7 @@ export function ViewerSeatFinder({
     setSelectedSeatId(null);
     setActiveResultId(null);
     setInspectorCollapsed(false);
+    setAnnouncedFloor(null);
   }
 
   function clearStructuredFilters() {
@@ -803,6 +924,7 @@ export function ViewerSeatFinder({
   function updateSearch(value: string) {
     setSearch(value);
     setActiveResultId(null);
+    setAnnouncedFloor(null);
     // Typing is the fourth door onto the palette, alongside click, focus and
     // ⌘K (contract #2): a query with nowhere to show its results would be a
     // field that swallows keystrokes.
@@ -856,6 +978,12 @@ export function ViewerSeatFinder({
   }, []);
 
   function selectSeat(seatId: string) {
+    // A deep link or a find can name a seat on the other floor: switch first,
+    // then select — the selection written below outlives the switch's clears
+    // because it lands later in the same batch.
+    const targetSeat = seatById.get(seatId);
+    if (targetSeat && floorOf(targetSeat) !== floor) switchFloor(floorOf(targetSeat), { announce: false });
+    setAnnouncedFloor(null);
     // Finding 1 (v12 slice 4 final review): only arm the skip when the
     // selection is actually changing — reselecting the already-selected seat
     // leaves selectedSeatId unchanged, so the trigger effect's deps never
@@ -892,14 +1020,17 @@ export function ViewerSeatFinder({
   }, []);
 
   useEffect(() => {
-    if (!seatParamAppliedRef.current) return;
+    if (!seatParamAppliedRef.current || !floorPreferenceHydrated) return;
     const label = selectedSeatId ? (publishedSeats.find(seat => seat.id === selectedSeatId)?.label ?? null) : null;
-    const next = `${window.location.pathname}${withSeatParam(window.location.search, label)}${window.location.hash}`;
+    // ?floor= only off the default floor, so the bare URL stays canonical;
+    // a remembered Floor 2 session therefore shares as ?floor=2.
+    const search = withFloorParam(withSeatParam(window.location.search, label), floor === DEFAULT_FLOOR ? null : floor);
+    const next = `${window.location.pathname}${search}${window.location.hash}`;
     const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     if (next !== current) window.history.replaceState(window.history.state, "", next);
     // publishedSeats omitted: a seat's label is stable for the life of its id.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSeatId]);
+  }, [floor, floorPreferenceHydrated, selectedSeatId]);
 
   // Delegated marker-layer keyboarding — same pattern as the admin map:
   // arrows rove between seats (preventDefault keeps the scroll viewport from
@@ -934,10 +1065,19 @@ export function ViewerSeatFinder({
 
   function openResult(result: ViewerSearchResult) {
     setActiveResultId(result.id);
+    setAnnouncedFloor(null);
     // Enter/click on a row selects, centers and closes the palette
     // (contract #5) — including the department/zone rows below, which fit
     // their whole match set into view instead of selecting one seat.
     setPaletteOpen(false);
+    // The find spans the building (D1′): a hit on the other floor switches
+    // the canvas first. A seat's floor is authoritative; an unseated person
+    // carries the floor they work on; a department/zone row carries a floor
+    // only when every seat in it shares one.
+    const targetSeat = result.seatId ? seatById.get(result.seatId) ?? null : null;
+    const targetFloor = targetSeat ? floorOf(targetSeat) : result.floor;
+    if (targetFloor && targetFloor !== floor) switchFloor(targetFloor, { announce: false });
+    const openedFloor = targetFloor ?? floor;
     if (result.seatId) {
       // Finding 1: same race as selectSeat above, same "only if actually
       // changing" guard (re-opening the currently selected seat's own
@@ -969,7 +1109,18 @@ export function ViewerSeatFinder({
     }
 
     setSelectedSeatId(null);
-    fitSeatIdsInMap(result.seatIds);
+    if (result.kind === "person" && targetFloor) {
+      // An unseated person on the roster floor: the row is the destination.
+      // activeResultId (set above) drives the roster highlight; focus lands
+      // on the roster region rather than falling to <body> with the palette.
+      setInspectorCollapsed(false);
+      focusFloorRoster(VIEWER_ROSTER_REGION_ID);
+      return;
+    }
+    fitSeatIdsInMap(result.seatIds.filter(seatId => {
+      const seat = seatById.get(seatId);
+      return seat ? floorOf(seat) === openedFloor : false;
+    }));
     // Department/zone rows open no panel, so there is nothing to hand focus
     // to — return it to the field, exactly as Escape does. The suppress flag
     // is load-bearing rather than defensive: the field's own onFocus re-opens
@@ -1011,14 +1162,26 @@ export function ViewerSeatFinder({
   }
 
   const resultCountLabel = searchResults.results.length === 1 ? "1 result" : `${searchResults.results.length} results`;
-  const mapAnnouncement = selectedResultTitle
-    ? `${selectedResultTitle} selected on the map.`
-    : searchActive
-      ? `${resultCountLabel} for ${search}.`
-      : `${publishedSeats.length} seats loaded.`;
-  const mapCrumbLabel = floor === "2"
-    ? "Not yet mapped"
-    : `Office map · ${publishedSeats.length} ${publishedSeats.length === 1 ? "seat" : "seats"}`;
+  // The roster row a find landed on (an unseated person opened from the
+  // palette): activeResult carries the person, the roster marks the row.
+  const rosterHighlightedPersonId =
+    surface === "roster" && activeResult?.kind === "person" && activeResult.employeeId ? activeResult.employeeId : null;
+  // Priority: highlighted roster row → selected seat → floor switch → search
+  // count → what loaded.
+  const mapAnnouncement = rosterHighlightedPersonId && activeResult
+    ? `${activeResult.title} highlighted on the ${floorMeta.label} roster.`
+    : selectedResultTitle
+      ? `${selectedResultTitle} selected on the map.`
+      : announcedFloor
+        ? `Showing ${FLOORS[announcedFloor].label}.`
+        : searchActive
+          ? `${resultCountLabel} for ${search}.`
+          : surface === "roster"
+            ? `${rosterRows.length} ${rosterRows.length === 1 ? "person" : "people"} listed on ${floorMeta.tag}.`
+            : `${floorSeats.length} seats loaded on ${floorMeta.tag}.`;
+  const mapCrumbLabel = surface === "roster"
+    ? `Directory · ${rosterRows.length} ${rosterRows.length === 1 ? "person" : "people"}`
+    : `Office map · ${floorSeats.length} ${floorSeats.length === 1 ? "seat" : "seats"}`;
   const mapZoomLabel = zoomFactor === null ? "Fit" : `${Math.round(zoomFactor * 100)}%`;
   // NOTHING reserves stage width any more (contract #1/#2): the results panel,
   // the People directory, its collapse rail and the mobile PEOPLE pill are all
@@ -1039,7 +1202,7 @@ export function ViewerSeatFinder({
   // band keeps rendering. The palette is not part of this: it hangs off the
   // TOP of the screen under the bar and never contends for the bottom.
   const bottomSheetOwnsBottom = Boolean(selectedSeat);
-  const statusBandVisible = floor === "3" && bandTier && (panelTier || !bottomSheetOwnsBottom);
+  const statusBandVisible = bandTier && (panelTier || !bottomSheetOwnsBottom);
 
   // `inspectorCollapsed` is purely the INV-1 auto-yield flag. An active query
   // owns the transient surface; once the query clears, the inspector returns
@@ -1062,7 +1225,10 @@ export function ViewerSeatFinder({
     // plan is layer-00: it runs edge to edge and the workspace band shows
     // through around it, so there is no card edge left to draw and everything
     // that reads over the map floats as a layer-01 white card instead.
-    "relative mx-auto w-full max-w-full overflow-auto overscroll-contain bg-[var(--sp-map-mat)]",
+    "relative mx-auto w-full max-w-full overscroll-contain bg-[var(--sp-map-mat)]",
+    // The plan scrolls in the viewport; the roster is its own scroll region
+    // (focusable, so the keyboard scrolls the list it is reading).
+    surface === "plan" ? "overflow-auto" : "overflow-hidden",
     // Below lg the viewport takes the whole screen under the 36px bar, rather
     // than the old content-driven min-h/82svh pair. That pair sized the box to
     // the plan (472px at the mobile frame width), which was fine while a
@@ -1090,7 +1256,7 @@ export function ViewerSeatFinder({
     // landscape phones, while auto margins collapse to 0 under overflow and
     // keep the scroll origin intact.
     zoomFactor === null ? "flex sm:items-center sm:justify-center" : "",
-    floor === "3" ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
+    surface === "plan" ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
     "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-background)]"
   );
   const mapFrameClassName = cx(
@@ -1261,7 +1427,8 @@ export function ViewerSeatFinder({
                 onZoneChange={setZone}
                 onZoneHoverChange={setHoverZone}
                 onStatusChange={setStatus}
-                matchSummary={`${statusCountSeats.length} of ${publishedSeats.length} seats match`}
+                matchSummary={departmentSummary.text}
+                matchSummaryAction={departmentSummaryAction}
                 onRemoveActiveChip={removeActiveFilterChip}
                 onClearFilters={clearStructuredFilters}
               />
@@ -1342,8 +1509,7 @@ export function ViewerSeatFinder({
                 }
                 // The palette is visually adjacent but far away in DOM order —
                 // ArrowDown hops focus straight into whichever list it is
-                // showing. `:not([disabled])` matters in browse mode, where
-                // the first row alphabetically can be an unseated person.
+                // showing.
                 if (event.key === "ArrowDown" && paletteOpen) {
                   event.preventDefault();
                   document.querySelector<HTMLButtonElement>(
@@ -1503,15 +1669,15 @@ export function ViewerSeatFinder({
                 and re-run the fit. pointer-events-none on the rail with each
                 card opting itself back in keeps the gaps between cards
                 draggable map. Ungated by floor on purpose — the floor pill IS
-                how you leave the Floor 2 placeholder. */}
+                how you leave the roster floor. */}
             <div className="pointer-events-none absolute left-3 top-3 z-40 flex flex-wrap items-center gap-2">
               <div className="pointer-events-auto">
-                <FloorSelector floor={floor} onChange={setFloor} />
+                <FloorSelector floor={floor} onChange={next => switchFloor(next)} />
               </div>
               <span className="pointer-events-auto border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12px] text-[var(--sp-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
               {/* Viewers don't need the layer model ("Published" / "Read-only"
                   badges) — a last-publish date answers the question they have. */}
-              {lastPublishedLabel && floor === "3" && (
+              {lastPublishedLabel && (
                 <span
                   title={`The map everyone sees — last updated ${lastPublishedLabel}`}
                   className="pointer-events-auto rounded-full bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-text-secondary)] shadow-elevation-3 ring-1 ring-[var(--sp-border-subtle)]"
@@ -1524,8 +1690,10 @@ export function ViewerSeatFinder({
             <div
               ref={mapViewportRef}
               id="viewer-seat-map"
-              tabIndex={0}
-              aria-label="Office seat map. Drag to pan. Seat markers are read-only buttons."
+              // The roster floor has no map to pan: the roster region inside
+              // is the tab stop instead (Hidden, not disabled).
+              tabIndex={surface === "plan" ? 0 : -1}
+              aria-label={surface === "plan" ? MAP_VIEWPORT_LABEL : undefined}
               className={mapViewportClassName}
               onPointerDown={handleViewportPointerDown}
               onPointerMove={handleViewportPointerMove}
@@ -1536,19 +1704,29 @@ export function ViewerSeatFinder({
                 if (VIEWPORT_NATIVE_SCROLL_KEYS.has(event.key)) cancelNudge();
               }}
             >
-              {floor === "2" && <FloorPlaceholder />}
-              {floor === "3" && (
+              {surface === "roster" && (
+                <FloorRoster
+                  floor={floor}
+                  people={rosterRows}
+                  query={search}
+                  highlightedPersonId={rosterHighlightedPersonId}
+                  helper={floorMeta.mapped ? "Nothing on this floor has been published yet." : `The ${floorOrdinal(floor)}-floor plan is not mapped yet.`}
+                  regionId={VIEWER_ROSTER_REGION_ID}
+                  onClearSearch={clearSearch}
+                />
+              )}
+              {surface === "plan" && plan && (
                 <div ref={mapRef} className={mapFrameClassName} style={mapFrameStyle}>
                   <Image
-                    src={MAP_IMAGE_SRC}
+                    src={plan.src}
                     alt="Office floor plan"
-                    width={MAP_IMAGE_WIDTH}
-                    height={MAP_IMAGE_HEIGHT}
+                    width={plan.width}
+                    height={plan.height}
                     priority
                     fetchPriority="high"
                     unoptimized
                     placeholder="blur"
-                    blurDataURL={MAP_IMAGE_BLUR_DATA_URL}
+                    blurDataURL={plan.blurDataUrl}
                     className="map-raster block h-auto w-full select-none"
                     draggable={false}
                   />
@@ -1559,20 +1737,10 @@ export function ViewerSeatFinder({
                       pointer-inert contract both surfaces rely on. */}
                   <MapWashLayer zoneWash={zoneWash} officeRoomWashes={officeRoomWashes} />
 
-                  {/* AUDIT-2 §8.2 first-run: a never-published map is a bare
-                      floor plan with zero markers and a zeroed band — nothing
-                      says why. Name the state; viewers can only wait, so the
-                      next step names who acts. */}
-                  {visualSeats.length === 0 && (
-                    <div role="status" className="absolute inset-0 flex items-center justify-center p-6">
-                      <div className="max-w-sm border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-center shadow-sm">
-                        <div className="text-sm font-semibold text-[var(--sp-text-primary)]">Nothing has been published yet</div>
-                        <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
-                          Seats appear here once an admin publishes the seat map.
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  {/* AUDIT-2 §8.2 first-run moved to the roster (multi-floor
+                      PR-2): a floor renders its plan only once a seat is
+                      published on it, so a never-published map is the roster's
+                      first-run state, which names the state and who acts. */}
 
                   <div
                     className="absolute inset-0"
@@ -1631,16 +1799,16 @@ export function ViewerSeatFinder({
               )}
             </div>
             {/* Lives beside the marker layer now that the status footer it used
-                to follow is gone. Stage-level, not inside the Floor 3 branch:
-                the announcement has to survive a floor switch (it still counts
-                the loaded seats on the placeholder floor). */}
+                to follow is gone. Stage-level, not inside the plan branch: the
+                announcement has to survive a floor switch — it is what says
+                "Showing Floor 2 · Litigation". */}
             <p className="sr-only" aria-live="polite">{mapAnnouncement}</p>
             {/* Phones only (band >=640 owns zoom there — owner call
                 2026-08-17): the shipped floating stack, unchanged. Flat
                 bottom-3 at the panel tier is vestigial while this is
                 phone-gated but harmless; the home-indicator inset is the part
                 that matters — the safe area is still an obstruction (#198). */}
-            {floor === "3" && !bandTier && (
+            {surface === "plan" && !bandTier && (
               <div className="absolute right-3 z-30 flex flex-col items-end gap-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] panel:bottom-3">
                 {/* Below 640 the status band — and with it the shared
                     NamesVisibilityToggle — does not render (owner call
@@ -1695,10 +1863,10 @@ export function ViewerSeatFinder({
                 and to statusBandVisible (band tier + sheet yield above).
                 Viewer-shaped: no draft entry and no data verbs; the names
                 toggle stays a render-local view control only. */}
-            {statusBandVisible && (
+            {statusBandVisible && surface === "plan" && (
               <MapStatusBand
                 ariaLabel="Seat status summary"
-                totalLabel={`${statusCountSeats.length} ${statusCountSeats.length === 1 ? "seat" : "seats"}`}
+                totalLabel={`${floorMeta.tag} · ${statusCountSeats.length} ${statusCountSeats.length === 1 ? "seat" : "seats"}`}
                 entries={[
                   { key: "assigned", label: STATUS_LABELS.assigned, dotClassName: "bg-[var(--sp-status-success-mark)]", count: assignedCount },
                   { key: "available", label: STATUS_LABELS.available, dotClassName: "bg-[var(--sp-status-neutral-mark)]", count: openCount },
@@ -1709,7 +1877,7 @@ export function ViewerSeatFinder({
                   : structuredFiltersActive
                     // Filters got no match count while search did (2026-07-16
                     // critique, minor 8) — same status-line home for both.
-                    ? `${highlightedSeatIdSet.size} of ${publishedSeats.length} seats ${highlightedSeatIdSet.size === 1 ? "matches" : "match"} filters`
+                    ? `${floorHighlightedCount} of ${floorSeats.length} seats on ${floorMeta.tag} ${floorHighlightedCount === 1 ? "matches" : "match"} filters`
                     : "Seating across people, seats, departments, and zones."}
                 controls={
                   <>
@@ -1726,6 +1894,16 @@ export function ViewerSeatFinder({
                     />
                   </>
                 }
+              />
+            )}
+            {/* Roster floor: title-only band (no map to control — Hidden
+                tier, not disabled); the count follows the active filters like
+                the plan's does. */}
+            {statusBandVisible && surface === "roster" && (
+              <MapStatusBand
+                ariaLabel="Floor summary"
+                totalLabel={`${floorMeta.label} · ${rosterRows.length} ${rosterRows.length === 1 ? "person" : "people"}`}
+                entries={[]}
               />
             )}
           </div>
@@ -1760,6 +1938,7 @@ export function ViewerSeatFinder({
           onRowHoverChange={setHoverSeatId}
           onOpenRow={openResult}
           onClearSearch={clearSearch}
+          currentFloor={floor}
         />
       )}
 

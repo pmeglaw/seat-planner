@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { SeatSheet, SeatSheetNotice } from "@/components/seat-map/SeatSheet";
 import { fetchAllRows } from "@/lib/fetchAllRows";
+import { floorOf } from "@/lib/floorIds";
+import { floorLabel, floorOfPerson, floorOrdinal } from "@/lib/floors";
 import { seatsToVisualSeats } from "@/lib/mapLayoutTransform";
 import { findEmployeeByEmail, findSeatForEmployee, pickNeighbors } from "@/lib/mySeat";
 import { createClient } from "@/lib/supabase/server";
@@ -76,6 +78,19 @@ export default async function MySeatPage() {
 
   const mySeat = findSeatForEmployee(seats, me.id);
   if (!mySeat) {
+    // Multi-floor PR-2: while the interim rule holds, a seat-less directory
+    // member works on the floor that is not mapped yet — a location, not an
+    // absence (lib/floors floorOfPerson, one home for the inference).
+    const interimFloor = floorOfPerson(null, seats);
+    if (interimFloor) {
+      return (
+        <SeatSheetNotice
+          heading={`You work on ${floorLabel(interimFloor)}`}
+          detail={`The ${floorOrdinal(interimFloor)}-floor plan is not mapped yet. Your extension and department are in the directory; a desk appears here once the floor is mapped and published.`}
+          issuedFor={me.full_name}
+        />
+      );
+    }
     return (
       <SeatSheetNotice
         heading="No seat assigned yet"
@@ -84,6 +99,11 @@ export default async function MySeatPage() {
       />
     );
   }
+
+  // The sheet draws ONE floor: neighbours and context desks come from the
+  // seat's own floor (a desk upstairs can share coordinates with one below).
+  const myFloor = floorOf(mySeat);
+  const floorSeats = seats.filter(seat => floorOf(seat) === myFloor);
 
   // Same derivation as app/page.tsx: publish re-inserts every row, so the max
   // updated_at over published seats IS the last publish time.
@@ -104,8 +124,9 @@ export default async function MySeatPage() {
     <SeatSheet
       employee={me}
       mySeat={mySeat}
-      neighbors={pickNeighbors(seats, mySeat)}
-      allSeats={seats}
+      neighbors={pickNeighbors(floorSeats, mySeat)}
+      allSeats={floorSeats}
+      floorLabel={floorLabel(myFloor)}
       lastPublishedLabel={lastPublishedLabel}
     />
   );

@@ -1,3 +1,5 @@
+import { floorOfPerson } from "@/lib/floors";
+import { floorOf, type FloorId } from "@/lib/floorIds";
 import type { Employee, Seat } from "@/lib/types";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 
@@ -15,6 +17,9 @@ export type ReceptionPerson = {
   extension: string | null;
   seatLabel: string | null;
   zone: string | null;
+  /** The seat's floor, or the floor an unseated person works on (lib/floors
+   *  floorOfPerson); null only when no floor is live yet. */
+  floor: FloorId | null;
 };
 
 /**
@@ -31,12 +36,12 @@ export type ReceptionPerson = {
  */
 export function buildReceptionDirectory(
   employees: Pick<Employee, "id" | "full_name" | "position" | "department" | "phone_extension">[],
-  seats: Pick<Seat, "label" | "employee_id" | "zone">[]
+  seats: (Pick<Seat, "label" | "employee_id" | "zone"> & { floor?: string | null })[]
 ): ReceptionPerson[] {
-  const seatByEmployee = new Map<string, { label: string; zone: string | null }>();
+  const seatByEmployee = new Map<string, { label: string; zone: string | null; floor: FloorId }>();
   for (const seat of [...seats].sort((a, b) => a.label.localeCompare(b.label))) {
     if (!seat.employee_id || seatByEmployee.has(seat.employee_id)) continue;
-    seatByEmployee.set(seat.employee_id, { label: formatSeatCode(seat.label), zone: seat.zone ?? null });
+    seatByEmployee.set(seat.employee_id, { label: formatSeatCode(seat.label), zone: seat.zone ?? null, floor: floorOf(seat) });
   }
   return employees
     .map(employee => {
@@ -48,7 +53,8 @@ export function buildReceptionDirectory(
         department: employee.department,
         extension: employee.phone_extension,
         seatLabel: seat?.label ?? null,
-        zone: seat?.zone ?? null
+        zone: seat?.zone ?? null,
+        floor: seat ? seat.floor : floorOfPerson(null, seats)
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));

@@ -11,6 +11,10 @@
 // the bottom sheets (each surface owns both decisions — this renders the row).
 // The retired MapStatusLegend was deleted once it had no caller left (owner
 // call 2026-08-19); its entry type lives here now.
+//
+// Multi-floor PR-2: a roster floor has no map to summarise, so a band with no
+// entries renders the TITLE alone — no Legend word, no list, and no controls
+// seam unless a caller passes controls (Hidden tier: absent, never disabled).
 import type { ReactNode } from "react";
 
 export type MapLegendEntry = {
@@ -30,6 +34,7 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
   /** Surface-owned right cluster (names switch, zoom) — rendered ml-auto. */
   controls?: ReactNode;
 }) {
+  const hasEntries = entries.length > 0;
   return (
     // The band is a CSS SIZE CONTAINER: its optional pieces (title/total,
     // summary — .map-status-band-* in globals.css) key on the band's own
@@ -61,18 +66,24 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
         tabIndex={0}
         className="flex min-w-0 flex-1 items-center gap-2.5 overflow-x-auto px-3 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] md:gap-3"
       >
-        <span className="map-status-band-wide shrink-0 text-[12px] font-semibold text-[var(--sp-text-primary)]">Legend</span>
-        <span className="map-status-band-wide shrink-0 text-xs font-semibold tabular-nums text-[var(--sp-text-secondary)]">{totalLabel}</span>
-        <span aria-hidden="true" className="map-status-band-wide h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
-        <ul aria-label={ariaLabel} className="flex shrink-0 items-center gap-2.5 md:gap-3.5">
-          {entries.map(entry => (
-            <li key={entry.key} className="flex items-center gap-1.5 text-xs font-semibold text-[var(--sp-text-secondary)]">
-              <span aria-hidden="true" className={`h-[7px] w-[7px] shrink-0 rounded-full ${entry.dotClassName}`} />
-              <span className="whitespace-nowrap">{entry.label}</span>
-              <span className="tabular-nums text-[var(--sp-text-primary)]">{entry.count}</span>
-            </li>
-          ))}
-        </ul>
+        {hasEntries && <span className="map-status-band-wide shrink-0 text-[12px] font-semibold text-[var(--sp-text-primary)]">Legend</span>}
+        {/* Title-only band: the total is the whole message, so it stays at
+            every band width instead of hiding below the wide tier. */}
+        <span className={`${hasEntries ? "map-status-band-wide " : ""}shrink-0 text-xs font-semibold tabular-nums text-[var(--sp-text-secondary)]`}>{totalLabel}</span>
+        {hasEntries && (
+          <>
+            <span aria-hidden="true" className="map-status-band-wide h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
+            <ul aria-label={ariaLabel} className="flex shrink-0 items-center gap-2.5 md:gap-3.5">
+              {entries.map(entry => (
+                <li key={entry.key} className="flex items-center gap-1.5 text-xs font-semibold text-[var(--sp-text-secondary)]">
+                  <span aria-hidden="true" className={`h-[7px] w-[7px] shrink-0 rounded-full ${entry.dotClassName}`} />
+                  <span className="whitespace-nowrap">{entry.label}</span>
+                  <span className="tabular-nums text-[var(--sp-text-primary)]">{entry.count}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
         {summary ? (
           <>
             <span aria-hidden="true" className="map-status-band-widest h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
@@ -85,7 +96,7 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions
       </div>
       {/* border-l draws the seam the scroll boundary otherwise lacks — under
           overflow, clipped content butts straight against these controls. */}
-      <div className="flex shrink-0 items-center gap-3 border-l border-[var(--sp-border-subtle)] pl-3 pr-3 md:gap-4">{controls}</div>
+      {controls ? <div className="flex shrink-0 items-center gap-3 border-l border-[var(--sp-border-subtle)] pl-3 pr-3 md:gap-4">{controls}</div> : null}
     </div>
   );
 }

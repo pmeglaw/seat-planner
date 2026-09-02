@@ -18,7 +18,12 @@ test("the filter popover states its live match count before you commit", async (
   // Viewer only: the admin canvas filter UI was removed 2026-08-20 (owner) —
   // SeatMap no longer mounts FilterPanel, so search is its only constraint.
   const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
-  assert.match(viewer, /matchSummary=\{`\$\{statusCountSeats\.length\} of \$\{publishedSeats\.length\} seats match`\}/);
+  // Multi-floor PR-2 (Q5): the line is composed by lib/floors
+  // floorDepartmentSummary — "N of M seats on Floor 3 match", the cross-floor
+  // "… · N people in X are on Floor 2" variant, or the roster floor's people
+  // count — so it stays a lib-tested string.
+  assert.match(viewer, /matchSummary=\{departmentSummary\.text\}/);
+  assert.match(viewer, /matchSummaryAction=\{/);
 
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
   assert.doesNotMatch(seatMap, /<FilterPanel/);
@@ -27,7 +32,9 @@ test("the filter popover states its live match count before you commit", async (
 
 test("legend counts follow the active constraints instead of contradicting the map", async () => {
   const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
-  assert.match(viewer, /structuredFiltersActive \? publishedSeats\.filter\(seatPassesStructuredFilters\) : publishedSeats/);
+  // Per floor since multi-floor PR-2: the legend describes the floor on the
+  // canvas, filtered or not.
+  assert.match(viewer, /structuredFiltersActive \? floorSeats\.filter\(seatPassesStructuredFilters\) : floorSeats/);
 
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
   assert.match(seatMap, /filtersActive \? localSeats\.filter\(matchesFilters\) : localSeats/);
