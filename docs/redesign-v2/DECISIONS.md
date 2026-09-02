@@ -874,9 +874,11 @@ new seat carries the canvas floor; zone detection and calibration run against th
 switches the canvas, then selects and centres. An unseated person is now **openable** (contract #9
 amended for the admin too): the row leads to the roster floor they work on, marks their row and hands
 it focus — inert only once the interim rule has retired. *Fit matches* pans this canvas only.
-**Move/Swap targets may be on the other floor:** the mode survives a manual switch, a result row on
-the other floor switches then targets, and the confirm dialogs tag each seat's floor when the pair
-crosses floors (*"L02 · Floor 2"*); the draft trail draws only when both ends are on screen.
+**Move/Swap targets may be on the other floor:** the mode and the source selection survive a manual
+switch with the selector, so the target is the marker clicked on the other floor's plan (the mode card
+owns the panel slot while a mode runs — INV-4 — so result rows are not the in-mode path; a result row
+opened *outside* a mode still switches then selects). The confirm dialogs tag each seat's floor when
+the pair crosses floors (*"L02 · Floor 2"*); the draft trail draws only when both ends are on screen.
 **Ask Planner** learns floors: every seat and person the tools return names one, `search_seats` /
 `list_people` take a floor, the summary counts per floor from the registry, the instructions state
 the interim rule, and a highlight on the other floor is tagged in the drawer — selecting it switches
