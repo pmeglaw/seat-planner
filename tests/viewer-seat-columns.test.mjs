@@ -32,6 +32,16 @@ test("withNullNotes keeps the Seat shape honest without resurrecting the column"
   assert.equal(row.id, "s1");
 });
 
+// Multi-floor PR-1: seats.floor exists in the schema but is deliberately not
+// on the viewer wire yet (PR-2 adds it to VIEWER_SEAT_COLUMNS, the first
+// consumer). Until then every published row IS Floor 3 by the column default,
+// so the helper supplies it — and it must never clobber a real value once the
+// column is selected.
+test("withNullNotes supplies the Floor 3 default until the column ships, and keeps a selected floor", () => {
+  assert.equal(withNullNotes({ id: "s1", label: "N01" }).floor, "3");
+  assert.equal(withNullNotes({ id: "s2", label: "L01", floor: "2" }).floor, "2");
+});
+
 for (const page of VIEWER_SEAT_READERS) {
   test(`${page} selects seats by explicit viewer columns, not *`, async () => {
     const source = await readFile(new URL(page, import.meta.url), "utf8");

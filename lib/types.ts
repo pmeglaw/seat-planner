@@ -1,3 +1,5 @@
+import type { FloorId } from "@/lib/floorIds";
+
 export type UserRole = "admin" | "viewer";
 export type SeatStatus = "available" | "assigned" | "reserved" | "unavailable";
 export type SeatLayer = "draft" | "published";
@@ -51,6 +53,11 @@ export type Seat = {
   department: string | null;
   notes: string | null;
   is_custom?: boolean | null;
+  // Required, not optional like zone/is_custom: the column is NOT NULL with a
+  // default (20260901120000), so every read returns it. A seat's floor is
+  // geometry — there is deliberately no floor on SeatUpdateInput; a person
+  // changes floor by changing seat.
+  floor: FloorId;
   created_at: string;
   updated_at: string;
 };
@@ -63,6 +70,7 @@ export type SeatCreateInput = {
   x: number;
   y: number;
   notes?: string | null;
+  floor?: FloorId;
 };
 
 export type SeatUpdateInput = {

@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import type { FloorId } from "@/lib/floorIds";
 
-export type FloorId = "3" | "2";
+// The union now lives in lib/floorIds (multi-floor PR-1); re-exported so the
+// map surfaces keep importing it from here.
+export type { FloorId };
 
 export const FLOOR_LABELS: Record<FloorId, string> = {
   "3": "Floor 3 · Pre-Litigation",

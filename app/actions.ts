@@ -26,6 +26,7 @@ import {
   MAX_SEAT_LABEL_LENGTH,
   MAX_SEAT_NOTES_LENGTH,
   parseEmployeeInput,
+  parseFloorId,
   parseOptionalMultilineText,
   parseOptionalText,
   parseRequiredText,
@@ -224,6 +225,15 @@ function boundedOptional(value: unknown, field: string, maxLength: number, multi
   return parsed.value;
 }
 
+// Snapshots exported before seats.floor existed carry no floor; absent means
+// Floor 3 (the column default), anything else must be a registered floor —
+// the same rule the restore RPC applies on its side (20260901120200).
+function boundedFloor(value: unknown) {
+  const parsed = parseFloorId(value);
+  if (!parsed.ok) throw new Error(parsed.message);
+  return parsed.value;
+}
+
 function isUniqueLabelViolation(error: SupabaseMutationError | null) {
   const message = error?.message ?? "";
   return error?.code === "23505" || /seats_unique_label_per_layer|duplicate key/i.test(message);
@@ -278,6 +288,7 @@ function normalizeRestoreSeat(seat: SeatWithEmployee): DraftSeatRestoreRecord {
     department: boundedOptional(seat.department ?? null, "Department", MAX_OPTION_NAME_LENGTH),
     notes: boundedOptional(seat.notes ?? null, "Notes", MAX_SEAT_NOTES_LENGTH, true),
     is_custom: Boolean(seat.is_custom),
+    floor: boundedFloor(seat.floor),
     created_at: seat.created_at,
     updated_at: seat.updated_at
   };

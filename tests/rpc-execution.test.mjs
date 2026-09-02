@@ -211,8 +211,58 @@ test("update_draft_seat: requires admin", async () => {
 });
 
 // ---------------------------------------------------------------------------
+// seats.floor (multi-floor PR-1, 20260901120000)
+// ---------------------------------------------------------------------------
+
+test("seats.floor: a row inserted without a floor is Floor 3", async () => {
+  const { rows } = await db.query(
+    "insert into public.seats(seat_key, label, x, y, status, layer) values ('n01', 'N01', 0.5, 0.5, 'available', 'draft') returning floor"
+  );
+  assert.equal(rows[0].floor, "3");
+});
+
+test("seats.floor: an unknown floor is rejected by the CHECK constraint", async () => {
+  const err = await expectThrow(
+    db.query(
+      "insert into public.seats(seat_key, label, x, y, status, layer, floor) values ('n01', 'N01', 0.5, 0.5, 'available', 'draft', '5')"
+    ),
+    { code: "23514" }
+  );
+  assert.match(err.message, /seats_floor_known/);
+});
+
+// ---------------------------------------------------------------------------
 // publish_seat_map
 // ---------------------------------------------------------------------------
+
+test("publish: copies each seat's floor onto the published layer", async () => {
+  await db.seedSeat({ label: "L01", floor: "2" });
+  await db.seedSeat({ label: "N01" });
+
+  await db.query("select public.publish_seat_map()");
+
+  const published = await db.publishedSeats();
+  assert.deepEqual(published.map(r => [r.label, r.floor]), [["L01", "2"], ["N01", "3"]]);
+});
+
+test("publish: change_summary counts a floor-only change as a seat detail change (parity with lib/publishSummary)", async () => {
+  const n01 = await db.seedSeat({ label: "N01" });
+  await db.query("select public.publish_seat_map()");
+  const baseline = await db.query("select id from public.publish_events");
+
+  await db.query("update public.seats set floor = '2' where id = $1", [n01.id]);
+  await db.query("select public.publish_seat_map()");
+
+  const second = await db.query("select change_summary from public.publish_events where id <> $1", [baseline.rows[0].id]);
+  assert.equal(second.rows.length, 1);
+  const summary = second.rows[0].change_summary;
+  assert.equal(summary.seat_detail_changes, 1, "the floor change is a seat detail change");
+  assert.equal(summary.assignments_changed, 0);
+  assert.equal(summary.seats_moved, 0);
+  assert.equal(summary.status_changes, 0);
+  assert.equal(summary.seats_added, 0);
+  assert.equal(summary.seats_removed, 0);
+});
 
 test("publish: copies the draft map onto the published layer", async () => {
   const alice = await db.seedEmployee({ fullName: "Alice" });
@@ -835,6 +885,60 @@ test("restore_draft_snapshot: converges the draft to the snapshot, preserving id
   assert.equal(Number(coords.rows[0].x), 0.5, "moved seat returns to the snapshot position");
 });
 
+test("restore_draft_snapshot: a snapshot without a floor value restores as Floor 3; an explicit floor is honoured", async () => {
+  const n01 = await db.seedSeat({ label: "N01" });
+  const l01 = await db.seedSeat({ label: "L01", floor: "2" });
+
+  // Snapshots exported before the column existed carry no floor at all;
+  // toSnapshotSeat omits it by default, so N01 exercises that shape.
+  const snapshotSeats = [toSnapshotSeat(n01), toSnapshotSeat(l01, { floor: "2" })];
+
+  // Diverge both floors so the restore has to write them back.
+  await db.query("update public.seats set floor = '2' where id = $1", [n01.id]);
+  await db.query("update public.seats set floor = '3' where id = $1", [l01.id]);
+
+  await db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb)", [
+    JSON.stringify(snapshotSeats),
+    JSON.stringify([])
+  ]);
+
+  const seats = await db.draftSeats();
+  const byLabel = Object.fromEntries(seats.map(s => [s.label, s]));
+  assert.equal(byLabel.N01.floor, "3", "a floor-less snapshot row is Floor 3");
+  assert.equal(byLabel.L01.floor, "2", "an explicit floor is restored");
+});
+
+test("restore_draft_snapshot: a null floor restores as Floor 3", async () => {
+  const n01 = await db.seedSeat({ label: "N01" });
+  await db.query("update public.seats set floor = '2' where id = $1", [n01.id]);
+
+  await db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb)", [
+    JSON.stringify([toSnapshotSeat(n01, { floor: null })]),
+    JSON.stringify([])
+  ]);
+
+  const seats = await db.draftSeats();
+  assert.equal(seats[0].floor, "3");
+});
+
+test("restore_draft_snapshot: rejects an unknown or blank floor before mutating", async () => {
+  const n01 = await db.seedSeat({ label: "N01" });
+
+  for (const bad of ["5", ""]) {
+    await expectThrow(
+      db.query("select public.restore_draft_snapshot($1::jsonb, $2::jsonb)", [
+        JSON.stringify([toSnapshotSeat(n01, { floor: bad, x: 0.9 })]),
+        JSON.stringify([])
+      ]),
+      { match: /unknown floor/ }
+    );
+  }
+
+  const row = await db.query("select x, floor from public.seats where id = $1", [n01.id]);
+  assert.equal(Number(row.rows[0].x), 0.5, "the whole restore rolled back");
+  assert.equal(row.rows[0].floor, "3");
+});
+
 test("restore_draft_snapshot: refuses when an original (non-custom) seat is missing from the snapshot", async () => {
   // N01 is deliberately left unbound: it only needs to exist in the draft
   // (excluded from the snapshot below is the point of the test) and its id
@@ -1163,6 +1267,74 @@ test("reset: converges the draft back to the published map, preserving draft ids
 
   const coords = await db.query("select x from public.seats where id = $1", [n01.id]);
   assert.equal(Number(coords.rows[0].x), 0.5, "moved seat returns to the published position");
+});
+
+test("reset: converges a diverged draft floor back to the published floor", async () => {
+  const n01 = await db.seedSeat({ label: "N01" });
+  await db.query("select public.publish_seat_map()");
+
+  await db.query("update public.seats set floor = '2' where id = $1", [n01.id]);
+
+  const { rows } = await db.query("select public.reset_draft_seats_to_published() as changed");
+  assert.equal(Number(rows[0].changed), 1, "the floor divergence counts as one change");
+
+  const seats = await db.draftSeats();
+  assert.equal(seats[0].floor, "3");
+  assert.equal(seats[0].id, n01.id, "surviving draft row keeps its id");
+});
+
+test("reset: re-inserts a published-only custom seat with its published floor", async () => {
+  const l01 = await db.seedSeat({ label: "L01", floor: "2", isCustom: true });
+  await db.query("select public.publish_seat_map()");
+
+  await db.query("delete from public.seats where id = $1", [l01.id]);
+  await db.query("select public.reset_draft_seats_to_published()");
+
+  const seats = await db.draftSeats();
+  assert.deepEqual(seats.map(s => [s.label, s.floor]), [["L01", "2"]]);
+});
+
+test("reset: a draft-only original survives while a draft-only custom seat is removed", async () => {
+  await db.seedSeat({ label: "N01" });
+  await db.query("select public.publish_seat_map()");
+
+  // A seeded original (is_custom=false) that exists only in the draft — the
+  // shape a floor's seed migration leaves before that floor's first publish.
+  // The seat-protection trigger refuses to delete it, so reset must leave it
+  // alone (it is a pending addition, which the publish review shows as +1)
+  // instead of aborting the whole reset on the trigger.
+  await db.seedSeat({ label: "L01", floor: "2" });
+  await db.seedSeat({ label: "CX01", key: "cx01", isCustom: true });
+
+  await db.query("select public.reset_draft_seats_to_published()");
+
+  const seats = await db.draftSeats();
+  assert.deepEqual(seats.map(s => s.label), ["L01", "N01"], "the custom squatter is gone, the original stays");
+});
+
+test("reset: vacates a draft-only original whose occupant has a published seat, then converges", async () => {
+  const eve = await db.seedEmployee({ fullName: "Eve" });
+  const n01 = await db.seedSeat({ label: "N01", status: "assigned", employeeId: eve });
+  await db.query("select public.publish_seat_map()");
+
+  // A seeded original on the other floor (draft-only, protected) — then Eve
+  // moves N01 -> L01 in the draft. Reset must give N01 back to Eve, which the
+  // non-deferrable one_draft_seat_per_employee index only allows once L01 has
+  // been vacated first. Vacating it IS discarding a draft change.
+  const l01 = await db.seedSeat({ label: "L01", floor: "2" });
+  await db.query("update public.seats set employee_id = null, status = 'available' where id = $1", [n01.id]);
+  await db.query("update public.seats set employee_id = $1, status = 'assigned' where id = $2", [eve, l01.id]);
+
+  const { rows } = await db.query("select public.reset_draft_seats_to_published() as changed");
+  assert.equal(Number(rows[0].changed), 2, "N01 converged + L01 vacated");
+
+  const seats = await db.draftSeats();
+  const byLabel = Object.fromEntries(seats.map(s => [s.label, s]));
+  assert.equal(byLabel.N01.employee_id, eve, "Eve is back on her published seat");
+  assert.equal(byLabel.N01.status, "assigned");
+  assert.equal(byLabel.L01.employee_id, null, "the draft-only original survives, vacated");
+  assert.equal(byLabel.L01.status, "available");
+  assert.equal(byLabel.L01.floor, "2");
 });
 
 test("reset: leaves the employee directory untouched", async () => {

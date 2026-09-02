@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SeatSheet, SeatSheetNotice } from "@/components/seat-map/SeatSheet";
+import { DEFAULT_FLOOR } from "@/lib/floorIds";
 import { seatsToVisualSeats } from "@/lib/mapLayoutTransform";
 import { pickNeighbors } from "@/lib/mySeat";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
@@ -50,6 +51,7 @@ function fixtureAsSeats(): SeatWithEmployee[] {
       department: null,
       notes: null,
       is_custom: seat.is_custom,
+      floor: DEFAULT_FLOOR,
       created_at: stamp,
       updated_at: stamp,
       employee

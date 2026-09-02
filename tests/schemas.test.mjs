@@ -15,6 +15,7 @@ const {
   parseOptionalEmail,
   parseSeatTextInput,
   parseUuid,
+  parseFloorId,
   MAX_EMPLOYEE_NAME_LENGTH,
   MAX_PHONE_EXTENSION_LENGTH,
   MAX_EMAIL_LENGTH,
@@ -337,4 +338,18 @@ test("extra keys are ignored rather than forwarded to the database", () => {
 
   assert.equal(result.ok, true);
   assert.deepEqual(Object.keys(result.value).sort(), ["department", "fullName", "phoneExtension", "position"]);
+});
+
+// Multi-floor PR-1 (2026-09-01): `floor` is wire input on the snapshot-restore
+// path. Absent means "predates the column", which is Floor 3 by definition —
+// the same default the column carries — while anything present must name a
+// registered floor.
+test("floor id parsing defaults absence to Floor 3 and rejects anything else", () => {
+  assert.deepEqual(parseFloorId(undefined), { ok: true, value: "3" });
+  assert.deepEqual(parseFloorId(null), { ok: true, value: "3" });
+  assert.deepEqual(parseFloorId("2"), { ok: true, value: "2" });
+  assert.deepEqual(parseFloorId(" 3 "), { ok: true, value: "3" });
+  assert.deepEqual(parseFloorId("5"), { ok: false, message: "Floor is not valid." });
+  assert.deepEqual(parseFloorId(""), { ok: false, message: "Floor is not valid." });
+  assert.deepEqual(parseFloorId(3), { ok: false, message: "Floor must be text." });
 });

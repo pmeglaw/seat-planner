@@ -30,6 +30,8 @@
  *    the coverage floors, and the client bundle unchanged.
  */
 
+import { DEFAULT_FLOOR, isFloorId, type FloorId } from "@/lib/floorIds";
+
 export type SchemaResult<T> =
   | { ok: true; value: T }
   | { ok: false; message: string };
@@ -159,6 +161,18 @@ export function parseUuid(value: unknown, field: string): SchemaResult<string> {
     return { ok: false, message: `${field} is not valid.` };
   }
   return parsed;
+}
+
+// seats.floor (multi-floor, 20260901120000). Absent or null means the value
+// predates the column, which is Floor 3 by definition — the same default the
+// column carries — while anything present must name a registered floor. The
+// CHECK constraint is the backstop (S-01); this is the one that says "Floor".
+export function parseFloorId(value: unknown): SchemaResult<FloorId> {
+  if (value === undefined || value === null) return { ok: true, value: DEFAULT_FLOOR };
+  if (typeof value !== "string") return { ok: false, message: "Floor must be text." };
+  const trimmed = value.trim();
+  if (!isFloorId(trimmed)) return { ok: false, message: "Floor is not valid." };
+  return { ok: true, value: trimmed };
 }
 
 export type SeatTextInput = {
