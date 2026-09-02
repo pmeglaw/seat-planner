@@ -169,3 +169,14 @@ test("display formatting is case-only, so contract #1 matching is unchanged", ()
   assert.equal(searchReceptionDirectory(formatted, "cw01")[0].id, "emp-caps");
   assert.equal(searchReceptionDirectory(formatted, "CW01")[0].id, "emp-caps");
 });
+
+// Multi-floor PR-2: the readout names the floor. Seated people are on their
+// seat's floor; unseated people are on the floor that is not live yet.
+test("directory rows carry a floor: the seat's floor, or the unmapped floor for the unseated", () => {
+  const dana = people.find(person => person.id === "emp-dana");
+  const remy = people.find(person => person.id === "emp-remote");
+  assert.equal(dana.floor, "3");
+  assert.equal(remy.floor, "2");
+  const nothingPublished = buildReceptionDirectory([unseated], []);
+  assert.equal(nothingPublished[0].floor, null);
+});

@@ -2,33 +2,17 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { FloorId } from "@/lib/floorIds";
+import { FLOORS, listFloors } from "@/lib/floors";
 
-// The union now lives in lib/floorIds (multi-floor PR-1); re-exported so the
-// map surfaces keep importing it from here.
+// The union lives in lib/floorIds (multi-floor PR-1); re-exported so the map
+// surfaces keep importing it from here.
 export type { FloorId };
 
-export const FLOOR_LABELS: Record<FloorId, string> = {
-  "3": "Floor 3 · Pre-Litigation",
-  "2": "Floor 2 · Litigation"
-};
-
-// Chrome-variant trigger label (owner calls 2026-08-14): the centered bar
-// title stays short and stable-width — first tried "Floor N", owner then
-// picked the practice-group name alone; the floor number stays in the
-// dropdown options and the trigger's aria-label.
-const FLOOR_SHORT_LABELS: Record<FloorId, string> = {
-  "3": "Pre-Litigation",
-  "2": "Litigation"
-};
-
-// Multi-floor is UI scaffolding only (redesign spec §4/§9): Floor 2 exists in
-// the selector but is not yet mapped — selecting it shows a placeholder. Real
-// Floor 2 support (seats, floor-plan image, calibration) is a separate future
-// project. The garage (Floor 1) is intentionally omitted.
-const FLOORS: { id: FloorId; label: string; soon?: boolean }[] = [
-  { id: "3", label: FLOOR_LABELS["3"] },
-  { id: "2", label: FLOOR_LABELS["2"], soon: true }
-];
+// Multi-floor PR-2: the options come from the registry (lib/floors) — one
+// home for what floors exist and what they are called. An unmapped floor is a
+// real destination now (the surfaces render a roster for it), so the old SOON
+// badge is gone; the roster header explains itself. The garage (Floor 1) is
+// intentionally absent from the registry.
 
 type FloorSelectorProps = {
   floor: FloorId;
@@ -41,11 +25,12 @@ type FloorSelectorProps = {
   variant?: "canvas" | "chrome";
 };
 
+// Still mounted by the admin map until multi-floor PR-3 gives it the roster.
 export function FloorPlaceholder() {
   return (
     <div role="status" className="grid min-h-[360px] w-full place-items-center p-6 text-center sm:min-h-[520px] lg:h-full lg:min-h-0">
       <div>
-        <div className="text-sm font-semibold text-[var(--sp-text-primary)]">{FLOOR_LABELS["2"]}</div>
+        <div className="text-sm font-semibold text-[var(--sp-text-primary)]">{FLOORS["2"].label}</div>
         <p className="mt-1 text-xs text-[var(--sp-text-helper)]">Not yet mapped — reserved for a future rollout.</p>
       </div>
     </div>
@@ -59,6 +44,8 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
+  const options = listFloors();
+  const current = FLOORS[floor];
 
   useEffect(() => {
     if (!open) return;
@@ -100,7 +87,7 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        aria-label={`Change floor. Current floor: ${FLOOR_LABELS[floor]}`}
+        aria-label={`Change floor. Current floor: ${current.label}`}
         onClick={() => setOpen(current => !current)}
         onKeyDown={event => {
           if (event.key === "ArrowDown" && !open) {
@@ -114,7 +101,10 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
             : "relative flex items-center gap-2 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] shadow-elevation-3 transition after:absolute after:-inset-y-2 after:inset-x-0 hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
         }
       >
-        {chrome ? FLOOR_SHORT_LABELS[floor] : FLOOR_LABELS[floor]}
+        {/* Chrome-variant trigger label (owner calls 2026-08-14): the centered
+            bar title stays short and stable-width — the practice-group name
+            alone; the floor number stays in the options and the aria-label. */}
+        {chrome ? current.shortLabel : current.label}
         <svg aria-hidden="true" viewBox="0 0 20 20" className={chrome ? "h-3 w-3 text-[var(--sp-text-helper)]" : "h-3 w-3 text-[var(--sp-text-helper)]"}>
           <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -146,7 +136,7 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
               : "absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] py-1 shadow-elevation-3"
           }
         >
-          {FLOORS.map(option => (
+          {options.map(option => (
             <button
               key={option.id}
               type="button"
@@ -163,17 +153,6 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
               }
             >
               <span className={option.id === floor ? "font-semibold" : undefined}>{option.label}</span>
-              {option.soon && (
-                <span
-                  className={
-                    chrome
-                      ? "shrink-0 border border-white/20 px-1.5 py-0.5 text-xs font-medium text-[var(--sp-text-helper)]"
-                      : "shrink-0 border border-[var(--sp-border-subtle)] px-1.5 py-0.5 text-xs font-medium text-[var(--sp-text-helper)]"
-                  }
-                >
-                  SOON
-                </span>
-              )}
             </button>
           ))}
         </div>

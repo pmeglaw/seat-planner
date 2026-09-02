@@ -1,4 +1,3 @@
-import { floorOf, type FloorId } from "@/lib/floorIds";
 import type { Seat } from "@/lib/types";
 
 // Viewer surfaces (/, /my-seat, /reception) read published seats through this
@@ -10,8 +9,12 @@ import type { Seat } from "@/lib/types";
 // Kept as a string literal (not an array .join) so supabase-js can parse the
 // selection at the type level — a plain `string` select degrades the row type
 // to GenericStringError.
+//
+// `floor` (20260901120000) joined the list in multi-floor PR-2, its first
+// consumer: every viewer surface dispatches on it (which plan, which roster,
+// which floor a find lands on).
 export const VIEWER_SEAT_COLUMNS =
-  "id,seat_key,label,x,y,status,layer,employee_id,zone,department,is_custom,created_at,updated_at";
+  "id,seat_key,label,x,y,status,layer,employee_id,zone,department,is_custom,floor,created_at,updated_at";
 
 type Split<S extends string> = S extends `${infer Head},${infer Rest}` ? Head | Split<Rest> : S;
 
@@ -23,17 +26,12 @@ const viewerColumnsAreSafe: Split<typeof VIEWER_SEAT_COLUMNS> extends Exclude<ke
   : never = true;
 void viewerColumnsAreSafe;
 
-// What a viewer seat query actually returns — Seat minus the columns the list
-// above deliberately omits. `floor` (20260901120000) is off the viewer wire
-// until multi-floor PR-2 adds it here as the first consumer; keeping PR-1 free
-// of any runtime read of the column means a Vercel deploy racing the Supabase
-// migration cannot fail a viewer page.
-export type ViewerSeatRow = Omit<Seat, "notes" | "floor">;
+// What a viewer seat query actually returns — Seat minus the one column the
+// list above deliberately omits.
+export type ViewerSeatRow = Omit<Seat, "notes">;
 
 // The shared Seat type still declares `notes`, so viewer rows carry an
-// explicit null instead of a silently missing property. The same goes for
-// `floor`: until PR-2 selects it, every published row IS Floor 3 by the column
-// default, and floorOf() keeps a real value once the column is on the wire.
-export function withNullNotes<Row extends object>(row: Row): Row & { notes: null; floor: FloorId } {
-  return { ...row, notes: null, floor: floorOf(row as { floor?: string | null }) };
+// explicit null instead of a silently missing property.
+export function withNullNotes<Row extends object>(row: Row): Row & { notes: null } {
+  return { ...row, notes: null };
 }

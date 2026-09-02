@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import sharp from "sharp";
-import ts from "typescript";
+import { importTsModule } from "./helpers/tsModuleLoader.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -61,31 +61,9 @@ const execFileAsync = promisify(execFile);
 // seats were hand-dragged in production; the calibration must fit the live
 // values, so re-capture these if those seats are ever moved again.
 
-function transpile(source) {
-  return ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.ESNext,
-      target: ts.ScriptTarget.ES2022,
-      moduleResolution: ts.ModuleResolutionKind.Bundler
-    }
-  }).outputText;
-}
-
-function toDataUrl(code) {
-  return `data:text/javascript;base64,${Buffer.from(code, "utf8").toString("base64")}`;
-}
-
-// mapLayoutTransform imports a runtime helper via the "@/lib/..." alias, which a
-// data: URL module cannot resolve. Inline the dependency as a nested data URL.
-async function importMapLayoutTransform() {
-  const seatMathUrl = toDataUrl(
-    transpile(await readFile(new URL("../lib/seatMath.ts", import.meta.url), "utf8"))
-  );
-  const source = await readFile(new URL("../lib/mapLayoutTransform.ts", import.meta.url), "utf8");
-  return import(toDataUrl(transpile(source).replace("@/lib/seatMath", seatMathUrl)));
-}
-
-const { savedPointToVisualPoint } = await importMapLayoutTransform();
+// mapLayoutTransform resolves its "@/lib/..." imports (seatMath, the floor
+// leaves) through the shared loader, which rewrites the whole alias chain.
+const { savedPointToVisualPoint } = await importTsModule("lib/mapLayoutTransform.ts");
 
 // Normalized x of each chair pad's centre in the rendered plan.
 const CHAIR_CENTRE_X = {

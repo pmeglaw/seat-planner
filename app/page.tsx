@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { ViewerSeatFinder } from "@/components/seat-map/ViewerSeatFinder";
 import { fetchAllRows } from "@/lib/fetchAllRows";
+import { floorOfPerson, urlFloorFor } from "@/lib/floors";
+import { findEmployeeByEmail, findSeatForEmployee } from "@/lib/mySeat";
 import { createClient } from "@/lib/supabase/server";
 import { VIEWER_SEAT_COLUMNS, withNullNotes, type ViewerSeatRow } from "@/lib/viewerSeatColumns";
 import type { DepartmentOption, Employee, ZoneOption } from "@/lib/types";
@@ -9,7 +11,16 @@ import type { DepartmentOption, Employee, ZoneOption } from "@/lib/types";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function HomePage() {
+function firstParam(value: string | string[] | undefined): string | null {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  return candidate ?? null;
+}
+
+export default async function HomePage({
+  searchParams
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await connection();
   const supabase = await createClient();
 
@@ -81,6 +92,18 @@ export default async function HomePage() {
     ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Los_Angeles" }).format(new Date(lastPublishedAt))
     : null;
 
+  // Multi-floor landing (owner ruling 2026-09-01: land on your own floor,
+  // remember the last one). The server contributes the two facts it can know
+  // — what the URL asks for (?seat= wins over ?floor=) and the signed-in
+  // person's own floor, matched by email against the SAME published snapshot
+  // (no second table read, no second auth probe; the remembered floor is
+  // client-only and slots in between on mount). An unseated directory member
+  // lands on the roster floor while the interim rule holds.
+  const params = (await searchParams) ?? {};
+  const urlFloor = urlFloorFor(seats, { seat: firstParam(params.seat), floor: firstParam(params.floor) });
+  const me = findEmployeeByEmail(employees, user.email);
+  const ownFloor = me ? floorOfPerson(findSeatForEmployee(seats, me.id), seats) : null;
+
   return (
     <ViewerSeatFinder
       seats={seats}
@@ -91,6 +114,7 @@ export default async function HomePage() {
       lastPublishedLabel={lastPublishedLabel}
       accountEmail={user.email ?? ""}
       accountRoleLabel={profile?.role === "admin" ? "Admin" : "Viewer"}
+      landing={{ urlFloor, ownFloor }}
     />
   );
 }

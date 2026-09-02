@@ -1,3 +1,5 @@
+import { floorOf, type FloorId } from "@/lib/floorIds";
+import { FLOORS, floorOfPerson } from "@/lib/floors";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
 // One placeholder for every seat-search input (admin chrome, admin canvas
@@ -18,7 +20,13 @@ export type ViewerSearchResult = {
   seatId: string | null;
   seatIds: string[];
   status?: SeatStatus;
-  disabled?: boolean;
+  /** The floor this result lives on: a seat's floor, the floor an unseated
+   *  person works on, or the one floor a department/zone's seats share. Null
+   *  when the row spans floors or no floor is live (multi-floor PR-2). */
+  floor: FloorId | null;
+  /** Person rows only — lets a surface open an unseated person on their floor
+   *  (contract #9, amended 2026-09-01: listed, honest, and openable). */
+  employeeId?: string;
 };
 
 export type ViewerSeatSearchResult = {
@@ -175,20 +183,36 @@ function mapAssignedSeats(seats: SeatWithEmployee[]) {
 }
 
 // Person-row builder shared by search results and the People directory — one
-// shape, one formatting point, so the two lists can never drift.
-function buildPersonRow(employee: Employee, assignedSeat: SeatWithEmployee | null): ViewerSearchResult {
+// shape, one formatting point, so the two lists can never drift. An unseated
+// person is placed on the floor that is not live yet (lib/floors, the interim
+// rule) and the subtitle names it; with no such floor the row stays honest
+// with "No assigned seat".
+function buildPersonRow(employee: Employee, assignedSeat: SeatWithEmployee | null, seats: SeatWithEmployee[]): ViewerSearchResult {
   const zone = assignedSeat ? getSeatZone(assignedSeat) : null;
+  const floor = floorOfPerson(assignedSeat, seats);
   return {
     id: `person:${employee.id}`,
     kind: "person",
     title: formatDisplayNameLocal(employee.full_name),
-    subtitle: assignedSeat ? `${formatSeatCodeLocal(assignedSeat.label)} · ${zone}` : "No assigned seat",
+    subtitle: assignedSeat
+      ? `${formatSeatCodeLocal(assignedSeat.label)} · ${zone}`
+      : floor
+        ? FLOORS[floor].label
+        : "No assigned seat",
     meta: [employee.position, employee.department].filter(Boolean).join(" · ") || "Active employee",
     seatId: assignedSeat?.id ?? null,
     seatIds: assignedSeat ? [assignedSeat.id] : [],
     status: assignedSeat?.status,
-    disabled: !assignedSeat
+    floor,
+    employeeId: employee.id
   };
+}
+
+// The one floor a set of seats shares, or null when they span floors (or the
+// set is empty) — department and zone rows use it.
+function singleFloor(seats: SeatWithEmployee[]): FloorId | null {
+  const floors = new Set(seats.map(seat => floorOf(seat)));
+  return floors.size === 1 ? [...floors][0] : null;
 }
 
 export type ViewerDirectory = {
@@ -207,11 +231,11 @@ export function buildViewerDirectory({ seats, employees }: { seats: SeatWithEmpl
   const assignedSeatByEmployeeId = mapAssignedSeats(seats);
   const rows = employees
     .filter(employee => employee.active)
-    .map(employee => buildPersonRow(employee, assignedSeatByEmployeeId.get(employee.id) ?? null));
+    .map(employee => buildPersonRow(employee, assignedSeatByEmployeeId.get(employee.id) ?? null, seats));
   return {
     rows,
     totalCount: rows.length,
-    seatedCount: rows.filter(row => !row.disabled).length
+    seatedCount: rows.filter(row => row.seatId !== null).length
   };
 }
 
@@ -243,7 +267,7 @@ export function buildViewerSeatSearch({
     const zone = assignedSeat ? getSeatZone(assignedSeat) : null;
     if (!matchesQuery(query, [employee.full_name, employee.position, employee.department, employee.phone_extension, assignedSeat?.label, zone])) return;
 
-    results.push(buildPersonRow(employee, assignedSeat));
+    results.push(buildPersonRow(employee, assignedSeat, seats));
   });
 
   seats.forEach(seat => {
@@ -260,7 +284,8 @@ export function buildViewerSeatSearch({
       meta: `${STATUS_LABELS[seat.status]} · ${department ?? "No department"} · ${zone}`,
       seatId: seat.id,
       seatIds: [seat.id],
-      status: seat.status
+      status: seat.status,
+      floor: floorOf(seat)
     });
   });
 
@@ -293,7 +318,8 @@ export function buildViewerSeatSearch({
       subtitle: "Department",
       meta: `${countLabel(departmentPeopleById.size, "person")} · ${countLabel(departmentSeats.length, "seat")}`,
       seatId: departmentSeats.length === 1 ? departmentSeats[0].id : null,
-      seatIds: departmentSeats.map(seat => seat.id)
+      seatIds: departmentSeats.map(seat => seat.id),
+      floor: singleFloor(departmentSeats)
     });
   });
 
@@ -315,7 +341,8 @@ export function buildViewerSeatSearch({
       subtitle: "Zone",
       meta: `${countLabel(zoneSeats.length, "seat")} · ${assignedCount} assigned · ${openCount} open`,
       seatId: zoneSeats.length === 1 ? zoneSeats[0].id : null,
-      seatIds: zoneSeats.map(seat => seat.id)
+      seatIds: zoneSeats.map(seat => seat.id),
+      floor: singleFloor(zoneSeats)
     });
   });
 

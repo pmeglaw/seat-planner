@@ -30,8 +30,8 @@ before(async () => {
 beforeEach(() => configureContext({}));
 afterEach(() => cleanup());
 
-function makePerson(id, name, department, extension, seatLabel, zone = "North Offices", position = "Attorney") {
-  return { id, name, position, department, extension, seatLabel, zone };
+function makePerson(id, name, department, extension, seatLabel, zone = "North Offices", position = "Attorney", floor = seatLabel ? "3" : null) {
+  return { id, name, position, department, extension, seatLabel, zone, floor };
 }
 
 // Alphabetical, matching what buildReceptionDirectory hands down — the search
@@ -292,21 +292,35 @@ test("clicking a recent lookup locks that person again", async () => {
 
 // --- The readout and the fallback list --------------------------------------
 
-test("the detail card reads out the extension and seat", async () => {
+test("the detail card reads out the extension, seat, floor and zone", async () => {
   await renderReception();
   type("Bob");
   press("Enter");
   const detail = detailCard().textContent;
   assert.match(detail, /102/);
-  assert.match(detail, /Seat B-02/);
-  assert.match(detail, /North Offices/);
+  assert.match(detail, /Seat B-02 · Floor 3 · North Offices/);
 });
 
-test("someone with no seat gets the voicemail warning, not a blank line", async () => {
+test("someone with no seat and no known floor gets the voicemail warning, not a blank line", async () => {
   await renderReception();
   type("Dan");
   press("Enter");
   assert.match(detailCard().textContent, /No assigned seat — reaches voicemail if away/);
+});
+
+// Multi-floor PR-2: an unseated person on the unmapped floor is a LOCATION,
+// not an absence — the readout names the floor and the list cell shows it in
+// place of a seat code.
+test("someone who works on the unmapped floor is read out by floor, with the voicemail warning", async () => {
+  const hal = makePerson("p8", "Hal Ho", "Litigation", "108", null, null, "Attorney", "2");
+  await renderReception([...PEOPLE, hal]);
+  const halRow = optionRows().find(row => /Hal Ho/.test(row.textContent));
+  assert.match(halRow.textContent, /Floor 2/);
+  assert.doesNotMatch(halRow.textContent, /—\s*108/, "the seat cell reads the floor, not a dash");
+
+  type("Hal");
+  press("Enter");
+  assert.match(detailCard().textContent, /Floor 2 · Litigation — reaches voicemail if away/);
 });
 
 test("same-department colleagues are offered as fallbacks, and one can be locked", async () => {

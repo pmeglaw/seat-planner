@@ -51,3 +51,16 @@ test("readSeatParam pulls the seat param out of a search string", () => {
   assert.equal(deepLink.readSeatParam(""), null);
   assert.equal(deepLink.readSeatParam("?floor=3"), null);
 });
+
+// ?floor= (multi-floor PR-2): raw read (callers sanitize through isFloorId so
+// this module stays free of the registry) and a set/clear that mirrors ?seat=.
+test("readFloorParam pulls the raw floor param; withFloorParam sets and clears it", () => {
+  assert.equal(deepLink.readFloorParam("?floor=2&seat=W08"), "2");
+  assert.equal(deepLink.readFloorParam("?seat=W08"), null);
+  assert.equal(deepLink.readFloorParam(""), null);
+  assert.equal(deepLink.withFloorParam("", "2"), "?floor=2");
+  assert.equal(deepLink.withFloorParam("?seat=W08", "2"), "?seat=W08&floor=2");
+  assert.equal(deepLink.withFloorParam("?floor=2&seat=W08", null), "?seat=W08");
+  assert.equal(deepLink.withFloorParam("?floor=2", null), "");
+  assert.equal(deepLink.FLOOR_PARAM, "floor");
+});

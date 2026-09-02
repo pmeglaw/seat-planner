@@ -14,6 +14,9 @@ test("viewer route renders the published map as read-only", async () => {
   assert.match(viewerSource, /\.eq\("layer", "published"\)/);
   assert.match(viewerSource, /<ViewerSeatFinder/);
   assert.doesNotMatch(viewerSource, /<SeatMap/);
+  // Multi-floor PR-2: the own-floor landing hint is matched by email against
+  // the published snapshot already in hand — ONE auth probe, no new table.
+  assert.equal((viewerSource.match(/auth\.getUser\(/g) ?? []).length, 1, "the viewer page makes exactly one auth probe");
   assert.match(viewerFinderSource, /Read-only/);
   assert.match(viewerFinderSource, /Published/);
   assert.doesNotMatch(viewerFinderSource, /createSeatAction|deleteSeatAction|publishSeatMapAction|restoreDraftSnapshotAction|swapSeatAssignmentsAction/);
@@ -168,6 +171,7 @@ test("Carbon-for-AI tokens (--sp-ai-*) stay exclusive to Ask Planner surfaces (c
   // Non-AI surfaces: zero AI-blue tokens, ever.
   assert.doesNotMatch(viewerFinderSource, /--sp-ai-/);
   assert.doesNotMatch(await readSource("../components/seat-map/ViewerFindPalette.tsx"), /--sp-ai-/);
+  assert.doesNotMatch(await readSource("../components/seat-map/FloorRoster.tsx"), /--sp-ai-/);
   assert.doesNotMatch(shellBarSource, /--sp-ai-/);
 });
 
@@ -199,8 +203,11 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   assert.match(findPaletteSource, /aria-label="Viewer search results"/);
   assert.match(viewerFinderSource, /aria-live="polite"/);
   assert.match(viewerFinderSource, /highlightedDescription=\{/);
-  // The palette is a viewer surface too — it inherits the same isolation.
-  for (const source of [viewerFinderSource, findPaletteSource]) {
+  // The palette is a viewer surface too — it inherits the same isolation, and
+  // so does the floor roster (multi-floor PR-2), which the viewer mounts for
+  // an unmapped floor.
+  const floorRosterSource = await readSource("../components/seat-map/FloorRoster.tsx");
+  for (const source of [viewerFinderSource, findPaletteSource, floorRosterSource]) {
     assert.doesNotMatch(source, /Map tools|Undo|Redo|CSV|JSON|Draft|Publish changes|Vacate|Delete seat|Ask Planner/);
   }
   // Top-bar-first chrome: the publish cluster lives in barActionCluster,
@@ -1291,4 +1298,26 @@ test("directory rows are a mouse shortcut, not a third tab stop per employee", a
   // The keyboard path must still exist through the two labelled controls.
   assert.match(managementSource, /aria-label=\{`Edit \$\{displayName\}`\}/);
   assert.match(managementSource, /href=\{`\/admin\$\{withSeatParam\("", seatLabel\)\}`\}/);
+});
+
+// Multi-floor PR-2: the floor roster is the surface an unmapped floor renders.
+// Its rows are static list items (DECISIONS.md deviation 9) — nothing to open,
+// so nothing is disabled where content must be read (Carbon's disabled/read-
+// only rule) — and the region itself is the keyboard tab stop so the list
+// stays scrollable (axe scrollable-region-focusable). Its ONE control is the
+// zero-result Clear search button.
+test("the floor roster is a focusable read-only region with exactly one control", async () => {
+  const source = await readSource("../components/seat-map/FloorRoster.tsx");
+  assert.match(source, /role="region"/);
+  assert.match(source, /tabIndex=\{0\}/);
+  assert.match(source, /data-roster-row/);
+  assert.match(source, /aria-current=\{/);
+  assert.match(source, /role="status"/);
+  assert.equal((source.match(/<button/g) ?? []).length, 1, "the zero-result Clear search button is the roster's only control");
+  assert.doesNotMatch(source, /disabled/);
+  // The viewer switches floors with an announcement, never silently.
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+  assert.match(viewerSource, /Showing \$\{/);
+  assert.match(viewerSource, /<FloorRoster/);
+  assert.match(viewerSource, /tabIndex=\{surface === "plan" \? 0 : -1\}/);
 });

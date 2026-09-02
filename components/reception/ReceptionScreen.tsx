@@ -2,6 +2,8 @@
 
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { DEFAULT_FLOOR } from "@/lib/floorIds";
+import { floorLabel, floorTag } from "@/lib/floors";
 import {
   pushRecentLookup,
   sameDepartmentFallback,
@@ -192,8 +194,10 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                         {[person.position, person.department].filter(Boolean).join(" · ") || "—"}
                       </span>
                     </span>
+                    {/* Seat code, or the floor an unseated person works on
+                        (multi-floor PR-2: a location, not an absence). */}
                     <span className="shrink-0 border border-[var(--sp-border-subtle)] px-1.5 py-0.5 font-mono text-xs text-[var(--sp-text-secondary)]">
-                      {person.seatLabel ?? "—"}
+                      {person.seatLabel ?? (person.floor ? floorTag(person.floor) : "—")}
                     </span>
                     <span className="w-[72px] shrink-0 text-right font-mono text-[20px] font-semibold text-[var(--sp-text-primary)]">
                       {person.extension ?? "—"}
@@ -243,8 +247,10 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                     <circle cx="10" cy="8.5" r="2" />
                   </svg>
                   {detail.seatLabel
-                    ? `Seat ${detail.seatLabel}${detail.zone ? ` · ${detail.zone}` : ""}`
-                    : "No assigned seat — reaches voicemail if away"}
+                    ? `Seat ${detail.seatLabel} · ${floorTag(detail.floor ?? DEFAULT_FLOOR)}${detail.zone ? ` · ${detail.zone}` : ""}`
+                    : detail.floor
+                      ? `${floorLabel(detail.floor)} — reaches voicemail if away`
+                      : "No assigned seat — reaches voicemail if away"}
                 </p>
               </div>
 
