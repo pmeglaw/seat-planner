@@ -1313,7 +1313,10 @@ test("the floor roster is a focusable read-only region with exactly one control"
   assert.match(source, /data-roster-row/);
   assert.match(source, /aria-current=\{/);
   assert.match(source, /role="status"/);
-  assert.equal((source.match(/<button/g) ?? []).length, 1, "the zero-result Clear search button is the roster's only control");
+  // Two ways out and nothing else: Clear search (query empty) and Clear
+  // filters (a structured filter hid everyone) — each rendered only in its
+  // own zero state.
+  assert.equal((source.match(/<button/g) ?? []).length, 2, "the zero-state Clear search / Clear filters buttons are the roster's only controls");
   assert.doesNotMatch(source, /disabled/);
   // The viewer switches floors with an announcement, never silently.
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");

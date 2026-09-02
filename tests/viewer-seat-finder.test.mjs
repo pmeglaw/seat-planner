@@ -817,9 +817,16 @@ test("a department with no seats on this floor says where its people are and off
   assert.match(group.textContent, /0 of 4 seats on Floor 3 · 1 person in Medical Records is on Floor 2/);
   fireEvent.click(within(group).getByRole("button", { name: "Show Floor 2" }));
   await flushFrames();
+  // returnFocusAfterClose hands focus back one macrotask later.
+  await new Promise(resolve => setTimeout(resolve, 5));
 
   assert.ok(roster(), "the switch action lands on the roster floor");
   assert.match(roster().textContent, /Linus Torvalds/);
+  // The action unmounts with the switch (the roster summary has no
+  // cross-floor variant), so it closes the popover and hands focus back to
+  // the trigger — never to <body> (review, 2026-09-01).
+  assert.ok(screen.queryByRole("group", { name: "Filter options" }) === null, "the popover closes with the switch");
+  assert.equal(document.activeElement, screen.getByRole("button", { name: /^Filter seating/ }));
 });
 
 test("on the roster floor the filter popover counts people, and department still filters the rows", async () => {
@@ -829,9 +836,83 @@ test("on the roster floor the filter popover counts people, and department still
   const group = screen.getByRole("group", { name: "Filter options" });
   assert.match(group.textContent, /1 of 1 people on Floor 2 match/);
 
+  // Zone and status describe seats; on the roster floor they are Hidden
+  // (not disabled) and the popover says why.
+  assert.equal(within(group).getAllByRole("combobox").length, 2, "department + position only");
+  assert.ok(within(group).queryByRole("group", { name: "Zone" }) === null, "no zone chips without a map");
+  assert.match(group.textContent, /Zone and status filters apply on mapped floors/);
+
   const departmentSelect = within(group).getAllByRole("combobox")[0];
   fireEvent.change(departmentSelect, { target: { value: "Corporate" } });
   await flushFrames();
   assert.match(group.textContent, /0 of 1 people on Floor 2 match/);
   assert.equal(roster().querySelectorAll("[data-roster-row]").length, 0);
+  // A filter that hides everyone is not first-run: name the filter, keep
+  // the floor's real count in the heading, offer the way out.
+  assert.match(roster().textContent, /No one on Floor 2 · Litigation matches the active filters/);
+  assert.doesNotMatch(roster().textContent, /No one is listed on/);
+  assert.match(within(roster()).getByRole("heading", { level: 2 }).textContent, /— 1 person/);
+  fireEvent.click(within(roster()).getByRole("button", { name: "Clear filters" }));
+  await flushFrames();
+  assert.equal(roster().querySelectorAll("[data-roster-row]").length, 1);
+});
+
+test("opening an unseated person from the People directory (no query) marks and announces them", async () => {
+  await renderTwoFloors();
+  openPalette();
+  const directory = screen.getByRole("list", { name: "People directory" });
+  fireEvent.click(within(directory).getByRole("button", { name: /^Linus Torvalds/ }));
+  await flushFrames();
+
+  assert.ok(roster(), "the canvas switched to the person's floor");
+  const marked = roster().querySelector('[data-roster-row][aria-current="true"]');
+  assert.ok(marked, "the browse path marks the row like the query path does");
+  assert.match(marked.textContent, /Linus Torvalds/);
+  assert.equal(document.activeElement, roster());
+  assert.match(liveText(), /Linus Torvalds highlighted on the Floor 2 · Litigation roster/);
+});
+
+test("a manual floor switch after a find announces the floor and drops the stale result", async () => {
+  await renderTwoFloors();
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Linus" } });
+  await flushFrames();
+  fireEvent.click(within(screen.getByRole("list", { name: "Viewer search results" })).getByRole("button", { name: /Linus Torvalds/ }));
+  await flushFrames();
+  assert.match(liveText(), /Linus Torvalds highlighted/);
+
+  await switchFloorTo("Floor 3 · Pre-Litigation");
+  assert.match(liveText(), /Showing Floor 3 · Pre-Litigation/);
+  assert.doesNotMatch(liveText(), /highlighted|selected on the map/);
+
+  // And the seat path: a selected seat's announcement must not outlive the
+  // switch that just deselected it.
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "B-02" } });
+  await flushFrames();
+  fireEvent.click(within(screen.getByRole("list", { name: "Viewer search results" })).getAllByRole("button")[0]);
+  await flushFrames();
+  assert.match(liveText(), /selected on the map/);
+  await switchFloorTo("Floor 2 · Litigation");
+  assert.match(liveText(), /Showing Floor 2 · Litigation/);
+  assert.doesNotMatch(liveText(), /selected on the map/);
+  assert.ok(openInspector() === null, "the switch deselects");
+});
+
+test("a found person stays marked on the roster even when a structured filter would hide them", async () => {
+  await renderTwoFloors();
+  fireEvent.click(screen.getByRole("button", { name: "Filter seating" }));
+  const group = screen.getByRole("group", { name: "Filter options" });
+  fireEvent.change(within(group).getAllByRole("combobox")[0], { target: { value: "Corporate" } });
+  fireEvent.keyDown(group, { key: "Escape" });
+  await flushFrames();
+
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Linus" } });
+  await flushFrames();
+  fireEvent.click(within(screen.getByRole("list", { name: "Viewer search results" })).getByRole("button", { name: /Linus Torvalds/ }));
+  await flushFrames();
+
+  assert.ok(roster());
+  const marked = roster().querySelector('[data-roster-row][aria-current="true"]');
+  assert.ok(marked, "the found person is exempt from the filter, like the selected seat is exempt from dimming");
+  assert.match(marked.textContent, /Linus Torvalds/);
+  assert.match(liveText(), /Linus Torvalds highlighted/);
 });

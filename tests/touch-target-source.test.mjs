@@ -180,10 +180,17 @@ const PINS = {
   "components/seat-map/NamesVisibilityToggle.tsx": ["after:absolute after:-inset-y-[13px]"],
   "components/seat-map/FilterPanel.tsx": [
     "after:absolute after:-inset-x-2.5 after:-inset-y-[3px]",
+    // Q5 "Show Floor N" action: 24 + 2×10 = 44, its own literal (never the
+    // chips' adjacency-capped token — review, 2026-09-01)
+    "after:absolute after:-inset-y-2.5",
     // facet select labels (selects are replaced controls; label ≈54px + 4px/side)
     "after:absolute after:-inset-y-1"
   ],
   "components/seat-map/ResultsPanel.tsx": ["after:absolute after:-inset-y-2"],
+  // Zero-result "Clear search" (≈30px content-sized; only a <p> sits above):
+  // 30 + 2×7 = 44 on both surfaces that render it.
+  "components/seat-map/FloorRoster.tsx": ["after:absolute after:-inset-y-[7px]"],
+  "components/seat-map/ViewerFindPalette.tsx": ["after:absolute after:-inset-y-[7px]"],
   "components/seat-map/AskPlannerDrawer.tsx": [
     "after:absolute after:-inset-y-2.5",
     "after:absolute after:-inset-y-1"

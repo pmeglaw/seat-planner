@@ -294,3 +294,30 @@ test("personPassesFilters applies the department and position facets to a person
   assert.equal(floors.personPassesFilters(cara, { department: "Litigation", position: "Attorney" }), false);
   assert.equal(floors.personPassesFilters(cara, { department: "Finance", position: "all" }), false);
 });
+
+test("floorDepartmentSummary offers the other floor only when the DEPARTMENT has no seats here — a zone/status zero stays plain", () => {
+  const summary = floors.floorDepartmentSummary({
+    floor: "3",
+    department: "Case Management",
+    position: "all",
+    floorMatchCount: 0,
+    floorDepartmentMatchCount: 5,
+    floorSeatCount: 68,
+    seats: publishedSeats,
+    // An unseated Case Management person on the roster floor: without the
+    // department-only count the summary would blame Floor 2 for a zero the
+    // zone/status facet caused.
+    employees: [alice, bob, cara, employee("emma", "Emma Case", { department: "Case Management", position: "Case Manager" })]
+  });
+  assert.equal(summary.text, "0 of 68 seats on Floor 3 match");
+  assert.equal(summary.switchTo, null);
+});
+
+// The viewer's office-room wash must dispatch on the canvas floor: once slice
+// B publishes a floor-2 seat the floor-2 canvas would otherwise wash Floor 3's
+// rooms at Floor 3 coordinates (review finding, 2026-09-01).
+test("the viewer passes the canvas floor to buildOfficeRoomWashes", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("../components/seat-map/ViewerSeatFinder.tsx", import.meta.url), "utf8");
+  assert.match(source, /buildOfficeRoomWashes\(\{\s*floor,/);
+});
