@@ -3,6 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, RefObject } from "react";
 import { cx } from "@/components/ui/design-system";
+import { DEFAULT_FLOOR, type FloorId } from "@/lib/floorIds";
+import { FLOORS } from "@/lib/floors";
 import { buildInitials } from "@/lib/validators";
 import { useVirtualListWindow } from "@/components/seat-map/useVirtualListWindow";
 import { stepFocusIndex } from "@/lib/virtualizedList";
@@ -120,6 +122,9 @@ export type ViewerFindPaletteProps = {
   onRowHoverChange: (seatId: string | null) => void;
   onOpenRow: (row: ViewerSearchResult) => void;
   onClearSearch: () => void;
+  /** The floor on the canvas (multi-floor PR-2): rows on any OTHER floor
+   *  carry a "Floor N" tag so a find never lands somewhere unannounced. */
+  currentFloor?: FloorId;
 };
 
 export function ViewerFindPalette({
@@ -138,7 +143,8 @@ export function ViewerFindPalette({
   onZonePin,
   onRowHoverChange,
   onOpenRow,
-  onClearSearch
+  onClearSearch,
+  currentFloor = DEFAULT_FLOOR
 }: ViewerFindPaletteProps) {
   const queryActive = Boolean(query);
   const [frame, setFrame] = useState<PaletteFrame | null>(null);
@@ -237,7 +243,9 @@ export function ViewerFindPalette({
       itemCount: rows.length,
       currentIndex: Number.isInteger(rawIndex) ? rawIndex : null,
       direction,
-      isDisabled: index => Boolean(rows[index]?.disabled),
+      // Every row opens since the 2026-09-01 contract #9 amendment (an
+      // unseated person opens their floor's roster), so nothing is skipped.
+      isDisabled: () => false,
       fallbackIndex: browseWindow.startIndex
     });
     if (target === null) {
@@ -284,9 +292,7 @@ export function ViewerFindPalette({
           </div>
 
           {/* List tabIndex: the region must stay keyboard-scrollable on its own
-              (axe scrollable-region-focusable) — every row is a <button>, but
-              rows for unseated people render disabled, and a list where ALL
-              rows are disabled otherwise has no tab stop at all. */}
+              (axe scrollable-region-focusable) independently of its rows. */}
           {results.length > 0 ? (
             <div
               role="list"
@@ -301,9 +307,10 @@ export function ViewerFindPalette({
                   <div role="listitem" key={result.id}>
                     <button
                       type="button"
-                      disabled={result.disabled}
                       aria-current={selected ? "true" : undefined}
-                      aria-label={`${KIND_LABELS[result.kind]} result. ${result.title}. ${result.subtitle}. ${result.meta}.${selected ? " Selected." : ""}`}
+                      // The explicit label replaces the content, so the
+                      // off-floor tag is spoken here as well as drawn.
+                      aria-label={`${KIND_LABELS[result.kind]} result. ${result.title}. ${result.subtitle}. ${result.meta}.${result.floor && result.floor !== currentFloor ? ` ${FLOORS[result.floor].tag}.` : ""}${selected ? " Selected." : ""}`}
                       onClick={() => onOpenRow(result)}
                       // No hover-locate on result rows, deliberately: a seat
                       // lit from here would announce itself as "highlighted
@@ -311,7 +318,7 @@ export function ViewerFindPalette({
                       // row, and the two causes are kept separately
                       // announceable on purpose (accessibility-source).
                       className={cx(
-                        "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-60",
+                        "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]",
                         selected ? "border-[var(--sp-brand-border)] bg-[var(--sp-brand-subtle)]" : "border-transparent"
                       )}
                     >
@@ -329,8 +336,15 @@ export function ViewerFindPalette({
                         <span className="mt-1 block truncate text-xs font-medium text-[var(--sp-text-secondary)]">{result.subtitle}</span>
                         <span className="mt-0.5 block truncate text-xs text-[var(--sp-text-helper)]">{result.meta}</span>
                       </span>
-                      <span className="shrink-0 rounded-full bg-[var(--sp-background)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">
-                        {result.seatIds.length || "-"}
+                      <span className="flex shrink-0 flex-col items-end gap-1">
+                        <span className="rounded-full bg-[var(--sp-background)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">
+                          {result.seatIds.length || "-"}
+                        </span>
+                        {/* Off-floor tag — a separate 12px word, never inside
+                            the 10px mono count pill (type floor: words ≥12). */}
+                        {result.floor && result.floor !== currentFloor ? (
+                          <span className="text-xs font-medium text-[var(--sp-text-helper)]">{FLOORS[result.floor].tag}</span>
+                        ) : null}
                       </span>
                     </button>
                   </div>
@@ -350,7 +364,9 @@ export function ViewerFindPalette({
                 // argument, which is both a leaked DOM reference and an
                 // argument the prop's type never promised.
                 onClick={() => onClearSearch()}
-                className="mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+                // ≈30px content-sized; the 7px vertical expansion reaches 44
+                // (only the <p> above it is adjacent — touch-target-source pin).
+                className="relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
               >
                 Clear search
               </button>
@@ -461,11 +477,14 @@ export function ViewerFindPalette({
                   data-vpinned={segment.pinned ? "" : undefined}
                   className="border-b border-[var(--sp-background)] last:border-b-0"
                 >
-                  {/* Unseated people stay listed and honest, never openable
-                      (contract #9): the row is disabled and its trailing cell
-                      says "No seat" instead of a code that does not exist.
-                      The sub line is the SHARED row's own subtitle (seat code ·
-                      zone) rather than a palette-local "seat · position"
+                  {/* Unseated people are listed, honest, and OPENABLE
+                      (contract #9, amended 2026-09-01 for multi-floor): the
+                      trailing cell names the floor they work on instead of a
+                      code that does not exist, and opening the row takes the
+                      map to that floor's roster. Never disabled — the content
+                      must be read, and now it also leads somewhere. The sub
+                      line is the SHARED row's own subtitle (seat code · zone,
+                      or the floor label) rather than a palette-local
                       recomposition — lib/viewerSeatSearch is the single
                       formatting point for these strings by design, and
                       tests/viewer-directory.test.mjs pins that browse rows and
@@ -473,8 +492,7 @@ export function ViewerFindPalette({
                       the reader via the result row's `meta` in query mode. */}
                   <button
                     type="button"
-                    disabled={row.disabled}
-                    aria-label={`${row.title}. ${row.subtitle}.`}
+                    aria-label={`${row.title}. ${row.subtitle}.${row.seatId && row.floor && row.floor !== currentFloor ? ` ${FLOORS[row.floor].tag}.` : ""}`}
                     onClick={() => onOpenRow(row)}
                     onPointerEnter={() => onRowHoverChange(row.seatId)}
                     onPointerLeave={() => onRowHoverChange(null)}
@@ -486,7 +504,7 @@ export function ViewerFindPalette({
                     // subtitle to the 12px floor, growing the row ~40→44px —
                     // an accepted cost (~10% fewer names per screen), chosen
                     // over tightening leading to hold 40.
-                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border border-transparent px-2 py-1.5 text-left transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border border-transparent px-2 py-1.5 text-left transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
                   >
                     <span aria-hidden="true" className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-background)] text-[10px] font-bold text-[var(--sp-text-secondary)]">
                       {buildInitials(row.title) || "?"}
@@ -496,11 +514,20 @@ export function ViewerFindPalette({
                       <span className="block truncate text-xs font-medium leading-[1.25] text-[var(--sp-text-helper)]">{row.subtitle}</span>
                     </span>
                     {row.seatId ? (
-                      <span className="shrink-0 rounded-full border border-[var(--sp-border-subtle)] bg-[var(--sp-background)] px-2 py-0.5 font-mono text-[10px] font-semibold text-[var(--sp-text-secondary)]">
-                        {row.subtitle.split(" · ")[0]}
+                      <span className="flex shrink-0 items-center gap-1.5">
+                        {/* Off-floor tag beside the code — a separate 12px
+                            word, never inside the 10px mono pill. */}
+                        {row.floor && row.floor !== currentFloor ? (
+                          <span className="text-xs font-medium text-[var(--sp-text-helper)]">{FLOORS[row.floor].tag}</span>
+                        ) : null}
+                        <span className="rounded-full border border-[var(--sp-border-subtle)] bg-[var(--sp-background)] px-2 py-0.5 font-mono text-[10px] font-semibold text-[var(--sp-text-secondary)]">
+                          {row.subtitle.split(" · ")[0]}
+                        </span>
                       </span>
                     ) : (
-                      <span className="shrink-0 text-xs font-medium text-[var(--sp-text-helper)]">No seat</span>
+                      <span className="shrink-0 text-xs font-medium text-[var(--sp-text-helper)]">
+                        {row.floor ? FLOORS[row.floor].tag : "No seat"}
+                      </span>
                     )}
                   </button>
                 </div>

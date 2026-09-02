@@ -138,3 +138,28 @@ test("visual selection: no source, zone, or label falls back to the default prev
   assert.ok(Math.abs(restored.x - 0.5) < 1e-5);
   assert.ok(Math.abs(restored.y - 0.5) < 1e-5);
 });
+
+// ---- Per-floor dispatch (multi-floor PR-2, approach A): the floor-3
+// calibration is untouched; a floor with no geometry yet resolves to identity.
+
+test("floor dispatch: a floor-3 seat resolves exactly as a seat that carries no floor", () => {
+  const withFloor = savedPointToVisualPoint({ x: northSeat.x, y: northSeat.y }, { ...northSeat, floor: "3" });
+  const without = savedPointToVisualPoint({ x: northSeat.x, y: northSeat.y }, northSeat);
+  assert.deepEqual(withFloor, without);
+});
+
+test("floor dispatch: a floor-2 seat never borrows floor-3 calibration — it round-trips through identity", () => {
+  const source = { ...northSeat, floor: "2" };
+  const visual = savedPointToVisualPoint({ x: northSeat.x, y: northSeat.y }, source);
+  assert.deepEqual(visual, { x: northSeat.x, y: northSeat.y });
+  const restored = visualPointToSavedPoint(visual, { source });
+  assert.deepEqual(restored, { x: northSeat.x, y: northSeat.y });
+  const byContext = visualPointToSavedPoint(visual, { zone: "north pod", label: "N01", floor: "2" });
+  assert.deepEqual(byContext, { x: northSeat.x, y: northSeat.y });
+});
+
+test("floor dispatch: seatsToVisualSeats handles a mixed-floor array per seat", () => {
+  const [three, two] = seatsToVisualSeats([{ ...northSeat, floor: "3" }, { ...northSeat, id: "s-l01", label: "L01", zone: "somewhere", floor: "2" }]);
+  assert.notDeepEqual({ x: three.x, y: three.y }, { x: northSeat.x, y: northSeat.y });
+  assert.deepEqual({ x: two.x, y: two.y }, { x: northSeat.x, y: northSeat.y });
+});

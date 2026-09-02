@@ -58,3 +58,22 @@ test("actions and controls slots render inside the band and stay wired", async (
   assert.equal(fits, 1, "action handlers stay wired through the slot");
   assert.ok([...band.querySelectorAll("button")].some(b => b.textContent === "Zoom in"), "controls slot renders in the band");
 });
+
+// Multi-floor PR-2: on a roster floor there is no map to summarise, so the
+// band is title-only — no Legend word, no entry list, no controls seam
+// (Hidden tier: the controls are absent, never disabled).
+test("with no entries the band renders the title alone: no Legend, no list, no controls cluster", async () => {
+  const { container } = await renderElement(
+    React.createElement(MapStatusBand, {
+      ariaLabel: "Floor summary",
+      totalLabel: "Floor 2 · Litigation · 40 people",
+      entries: []
+    })
+  );
+  const band = container.querySelector("[data-map-status-band]");
+  assert.match(band.textContent, /Floor 2 · Litigation · 40 people/);
+  assert.doesNotMatch(band.textContent, /Legend/);
+  assert.equal(band.querySelector("ul"), null, "no empty <ul> in the tree");
+  assert.equal(band.querySelectorAll("button").length, 0);
+  assert.ok(band.querySelector('[data-band-scroll-region][aria-label="Floor summary"]'), "the region keeps its name and focusability");
+});

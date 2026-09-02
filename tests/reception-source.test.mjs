@@ -64,4 +64,9 @@ test("the extension readout announces selection changes (aria-live output)", asy
 test("unseated people stay in the loop: null seat renders the voicemail line, never a hidden row", async () => {
   const source = await screenSource();
   assert.match(source, /No assigned seat — reaches voicemail if away/);
+  // Multi-floor PR-2: a person on the unmapped floor is a location, not an
+  // absence — the same voicemail warning, led by the floor label; and the
+  // seated readout names the floor between the seat code and the zone.
+  assert.match(source, /— reaches voicemail if away`/);
+  assert.match(source, /Seat \$\{detail\.seatLabel\} · \$\{/);
 });

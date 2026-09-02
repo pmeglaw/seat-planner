@@ -505,10 +505,12 @@ export type SeatSheetProps = {
   /** Every published seat in visual coordinates — context desks are culled
    *  to the drawn window here. */
   allSeats: SeatWithEmployee[];
+  /** "Floor 3 · Pre-Litigation" — the first fact row (multi-floor PR-2). */
+  floorLabel?: string | null;
   lastPublishedLabel: string | null;
 };
 
-export function SeatSheet({ employee, mySeat, neighbors, allSeats, lastPublishedLabel }: SeatSheetProps) {
+export function SeatSheet({ employee, mySeat, neighbors, allSeats, floorLabel = null, lastPublishedLabel }: SeatSheetProps) {
   const drawnIds = new Set([mySeat.id, ...neighbors.map(seat => seat.id)]);
   const frame = frameCluster([mySeat, ...neighbors]);
   const contextSeats = allSeats.filter(
@@ -526,6 +528,7 @@ export function SeatSheet({ employee, mySeat, neighbors, allSeats, lastPublished
 
   const roleLine = [employee.position, employee.department].filter(Boolean).join(" · ");
   const facts: Array<{ label: string; detail: string }> = [];
+  if (floorLabel) facts.push({ label: "Floor", detail: floorLabel });
   if (neighbors.length > 0) facts.push({ label: "Your neighbors", detail: neighborNames });
   if (employee.phone_extension) facts.push({ label: "Phone extension", detail: employee.phone_extension });
   if (employee.department) facts.push({ label: "Department", detail: employee.department });

@@ -1,3 +1,5 @@
+import { FLOOR_2_GEOMETRY } from "@/lib/floorGeometry/floor2";
+import { DEFAULT_FLOOR, floorOf, type FloorId } from "@/lib/floorIds";
 import type { SeatStatus } from "@/lib/types";
 import { MAP_IMAGE_HEIGHT, MAP_IMAGE_WIDTH } from "@/lib/mapLayoutTransform";
 
@@ -35,16 +37,29 @@ export const OFFICE_ROOM_VISUAL_RECTS: OfficeRoomRect[] = [
  * concept) — and the rect also drives the plate's room-centered offset and
  * room-fitted width in SeatMap.
  */
-export function findOfficeRoom(point: { x: number; y: number }): OfficeRoomRect | null {
+// Per-floor dispatch (approach A, 2026-09-01): floor 3's rooms are the
+// literal block above, by identity; floor 2 reads the data module (empty
+// until slice B). A point that carries its floor dispatches on it; a bare
+// point is Floor 3.
+export const OFFICE_ROOMS_BY_FLOOR: Record<FloorId, OfficeRoomRect[]> = {
+  "3": OFFICE_ROOM_VISUAL_RECTS,
+  "2": FLOOR_2_GEOMETRY.officeRooms
+};
+
+export function officeRoomsForFloor(floor: FloorId): OfficeRoomRect[] {
+  return OFFICE_ROOMS_BY_FLOOR[floor] ?? OFFICE_ROOM_VISUAL_RECTS;
+}
+
+export function findOfficeRoom(point: { x: number; y: number }, floor: FloorId = DEFAULT_FLOOR): OfficeRoomRect | null {
   return (
-    OFFICE_ROOM_VISUAL_RECTS.find(
+    officeRoomsForFloor(floor).find(
       rect => point.x >= rect.xMin && point.x <= rect.xMax && point.y >= rect.yMin && point.y <= rect.yMax
     ) ?? null
   );
 }
 
-export function isInsideOfficeRoom(point: { x: number; y: number }): boolean {
-  return findOfficeRoom(point) !== null;
+export function isInsideOfficeRoom(point: { x: number; y: number }, floor: FloorId = DEFAULT_FLOOR): boolean {
+  return findOfficeRoom(point, floor) !== null;
 }
 
 export type OfficePlateLayout = { offsetXPx: number; offsetYPx: number; widthPx: number };
@@ -59,10 +74,11 @@ export type OfficePlateLayout = { offsetXPx: number; offsetYPx: number; widthPx:
  * (first paint), which renders the plate at its default anchor/size.
  */
 export function getOfficePlateLayout(
-  point: { x: number; y: number },
-  pixelsPerNormalizedX: number
+  point: { x: number; y: number; floor?: string | null },
+  pixelsPerNormalizedX: number,
+  floor: FloorId = floorOf(point)
 ): OfficePlateLayout | null {
-  const room = findOfficeRoom(point);
+  const room = findOfficeRoom(point, floor);
   if (!room || pixelsPerNormalizedX <= 0) return null;
 
   const pixelsPerNormalizedY = pixelsPerNormalizedX * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH);
@@ -87,6 +103,8 @@ export type OfficeRoomWash = { key: string; rect: OfficeRoomRect; seatId: string
  */
 export function buildOfficeRoomWashes(input: {
   rooms?: OfficeRoomRect[];
+  /** Selects the room set when `rooms` is not given; Floor 3 by default. */
+  floor?: FloorId;
   seats: OfficeWashSeat[];
   dimmedSeatIds?: ReadonlySet<string>;
   searchActiveSeatIds?: ReadonlySet<string>;
@@ -94,7 +112,7 @@ export function buildOfficeRoomWashes(input: {
   draggingSeatId?: string | null;
 }): OfficeRoomWash[] {
   const {
-    rooms = OFFICE_ROOM_VISUAL_RECTS,
+    rooms = officeRoomsForFloor(input.floor ?? DEFAULT_FLOOR),
     seats,
     dimmedSeatIds,
     searchActiveSeatIds,

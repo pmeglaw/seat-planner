@@ -147,3 +147,15 @@ test("isInsideOfficeRoom accepts office points and rejects pod points", () => {
     assert.ok(!isInsideOfficeRoom(pod), JSON.stringify(pod));
   }
 });
+
+// ---- Per-floor dispatch (multi-floor PR-2, approach A)
+
+test("floor dispatch: floor 3 is the default; floor 2 has no rooms yet", () => {
+  assert.equal(findOfficeRoom({ x: 0.17, y: 0.955 })?.key, findOfficeRoom({ x: 0.17, y: 0.955 }, "3")?.key);
+  assert.equal(findOfficeRoom({ x: 0.17, y: 0.955 }, "2"), null);
+  assert.equal(isInsideOfficeRoom({ x: 0.17, y: 0.955 }, "2"), false);
+  assert.deepEqual(buildOfficeRoomWashes({ floor: "2", seats: [seat("a", LEFT)] }), []);
+  assert.equal(getOfficePlateLayout({ x: 0.6593, y: 0.168, floor: "2" }, 1000), null);
+  // A point that carries its floor dispatches on it; a bare point stays floor 3.
+  assert.equal(getOfficePlateLayout({ x: 0.6593, y: 0.168, floor: "3" }, 1000).widthPx, 96);
+});

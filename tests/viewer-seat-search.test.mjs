@@ -56,11 +56,14 @@ test("viewer search returns people with their published seat when assigned", () 
   assert.ok(person);
   assert.equal(person.seatId, "seat-w02");
   assert.deepEqual(person.seatIds, ["seat-w02"]);
-  assert.equal(person.disabled, false);
+  assert.equal(person.floor, "3");
+  assert.equal("disabled" in person, false, "rows no longer carry a disabled flag");
   assert.ok(result.resultSeatIds.includes("seat-w02"));
 });
 
-test("viewer search keeps unassigned people read-only without a map target", () => {
+// Contract #9 amended 2026-09-01 (multi-floor): an unseated person is listed,
+// honest and OPENABLE — they work on the floor that is not live yet.
+test("viewer search places unassigned people on the unmapped floor without a map target", () => {
   const result = viewerSearch.buildViewerSeatSearch({ query: "Jordan", seats, employees, departmentOptions, zoneOptions });
   const person = result.results.find(item => item.kind === "person");
 
@@ -68,8 +71,9 @@ test("viewer search keeps unassigned people read-only without a map target", () 
   assert.equal(person.title, "Jordan Brooks");
   assert.equal(person.seatId, null);
   assert.deepEqual(person.seatIds, []);
-  assert.equal(person.disabled, true);
-  assert.equal(person.subtitle, "No assigned seat");
+  assert.equal(person.floor, "2");
+  assert.equal(person.employeeId, "emp-jordan");
+  assert.equal(person.subtitle, "Floor 2 · Litigation");
 });
 
 test("viewer search distinguishes seat label results", () => {
@@ -223,4 +227,26 @@ test("INV-1: an active search keystroke hands the panel slot to results", () => 
   // Clearing or whitespace-only input is not an active search.
   assert.equal(handsOver("", true, false), false);
   assert.equal(handsOver("   ", true, false), false);
+});
+
+test("viewer search: seat rows carry their floor; department and zone rows carry a floor only when every seat agrees", () => {
+  const mixed = [
+    seat({ id: "seat-w02", label: "W02", employee: alex, zone: "West Pod" }),
+    { ...seat({ id: "seat-l01", label: "L01", employee: jordan, zone: "Litigation Pod" }), floor: "2" }
+  ];
+  const result = viewerSearch.buildViewerSeatSearch({ query: "Litigation", seats: mixed, employees, departmentOptions, zoneOptions });
+  const department = result.results.find(item => item.kind === "department");
+  const zone = result.results.find(item => item.kind === "zone" && item.title === "Litigation Pod");
+  const seatRow = viewerSearch.buildViewerSeatSearch({ query: "L01", seats: mixed, employees }).results.find(item => item.kind === "seat");
+  assert.ok(department && zone && seatRow);
+  assert.equal(department.floor, null, "Litigation has seats on both floors");
+  assert.equal(zone.floor, "2");
+  assert.equal(seatRow.floor, "2");
+});
+
+test("viewer search: with nothing published, an unseated person belongs to no floor and keeps the plain subtitle", () => {
+  const result = viewerSearch.buildViewerSeatSearch({ query: "Jordan", seats: [], employees });
+  const person = result.results.find(item => item.kind === "person");
+  assert.equal(person.floor, null);
+  assert.equal(person.subtitle, "No assigned seat");
 });

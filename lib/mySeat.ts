@@ -1,3 +1,4 @@
+import { floorOf } from "@/lib/floorIds";
 import { MAP_ASPECT_RATIO } from "@/lib/mapLayoutTransform";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 
@@ -44,7 +45,11 @@ export function pickNeighbors(
     const byDistance = physicalDistance(a, mySeat) - physicalDistance(b, mySeat);
     return byDistance !== 0 ? byDistance : a.label.localeCompare(b.label);
   };
-  const candidates = seats.filter(seat => seat.id !== mySeat.id && seat.employee_id && seat.employee);
+  // Neighbours never cross floors: a seat on the other floor can sit at the
+  // same coordinates and would otherwise rank as the physically closest desk.
+  const candidates = seats.filter(
+    seat => seat.id !== mySeat.id && seat.employee_id && seat.employee && floorOf(seat) === floorOf(mySeat)
+  );
   const sameZone = candidates.filter(seat => seat.zone != null && seat.zone === mySeat.zone).sort(compare);
   const otherZones = candidates.filter(seat => !(seat.zone != null && seat.zone === mySeat.zone)).sort(compare);
   return [...sameZone, ...otherZones].slice(0, count);

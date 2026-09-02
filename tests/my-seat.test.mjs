@@ -162,3 +162,13 @@ test("frameCluster clamps to the unit square", () => {
   assert.ok(frame.minX + frame.width <= 1);
   assert.ok(frame.minY + frame.height <= 1);
 });
+
+test("pickNeighbors never crosses floors, even when the other floor's seat is physically closest", () => {
+  const mine = seat({ id: "mine", x: 0.5, y: 0.5, zone: "East Pod", floor: "3" });
+  const seats = [
+    mine,
+    seat({ id: "downstairs", x: 0.501, y: 0.5, zone: "East Pod", floor: "2", employee_id: "e2", employee: employee({ id: "e2" }) }),
+    seat({ id: "upstairs-far", x: 0.6, y: 0.5, zone: "East Pod", employee_id: "e3", employee: employee({ id: "e3" }) })
+  ];
+  assert.deepEqual(pickNeighbors(seats, mine).map(s => s.id), ["upstairs-far"]);
+});

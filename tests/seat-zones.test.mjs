@@ -145,3 +145,19 @@ test("the bottom-band offices detect as South Offices (owner request 2026-07-23)
   // The corridor ABOVE the rooms must NOT be zoned (regression: old rect started at 0.845).
   assert.equal(inferSeatZoneFromPoint({ x: 0.25, y: 0.88 }), null);
 });
+
+// ---- Per-floor dispatch (multi-floor PR-2, approach A)
+
+test("floor dispatch: floor 3 is the default, floor 2 has no rectangles yet", () => {
+  assert.equal(inferSeatZoneFromPoint({ x: 0.337, y: 0.081 }), inferSeatZoneFromPoint({ x: 0.337, y: 0.081 }, "3"));
+  assert.deepEqual(inferSeatZoneFromPointResult({ x: 0.337, y: 0.081 }, "2"), { status: "none", zone: null });
+});
+
+test("floor dispatch: the nearby-seat fallback ignores seats on another floor", () => {
+  // A floor-2 seat sitting right on top of a floor-3 click must not lend it a zone.
+  const other = [{ ...seat("L01", 0.48, 0.35, "Litigation Pod"), floor: "2" }];
+  assert.deepEqual(detectSeatZoneForPointResult({ x: 0.48, y: 0.35 }, other, "3"), { status: "none", zone: null });
+  assert.deepEqual(detectSeatZoneForPointResult({ x: 0.48, y: 0.35 }, other, "2"), { status: "detected", zone: "Litigation Pod" });
+  // Seats that carry no floor are floor 3 (the column default), as before.
+  assert.deepEqual(detectSeatZoneForPointResult({ x: 0.48, y: 0.35 }, [seat("N09", 0.48, 0.35, "North Pod")]), { status: "detected", zone: "North Pod" });
+});

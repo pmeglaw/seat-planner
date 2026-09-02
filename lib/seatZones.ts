@@ -1,3 +1,5 @@
+import { FLOOR_2_GEOMETRY } from "@/lib/floorGeometry/floor2";
+import { DEFAULT_FLOOR, floorOf, type FloorId } from "@/lib/floorIds";
 import type { NormalizedPoint } from "@/lib/seatMath";
 import type { SeatWithEmployee } from "@/lib/types";
 
@@ -9,7 +11,9 @@ export type SeatZoneRect = {
   yMax: number;
 };
 
-type SeatZoneSource = Pick<SeatWithEmployee, "x" | "y"> & Partial<Pick<SeatWithEmployee, "zone" | "department">>;
+// `floor` selects the rectangle set; a seat without one is Floor 3.
+type SeatZoneSource = Pick<SeatWithEmployee, "x" | "y"> &
+  Partial<Pick<SeatWithEmployee, "zone" | "department">> & { floor?: string | null };
 
 const NEARBY_SEAT_ZONE_RADIUS = 0.085;
 const AMBIGUOUS_ZONE_DISTANCE_DELTA = 0.0001;
@@ -46,6 +50,19 @@ export const SEAT_ZONE_RECTS: SeatZoneRect[] = [
   { zone: "South Offices", xMin: 0.085, xMax: 0.455, yMin: 0.9, yMax: 1 }
 ];
 
+// Per-floor dispatch (approach A, 2026-09-01): floor 3's rectangles are the
+// literal block above, by identity; floor 2 reads the data module (empty
+// until slice B). Every detector below takes the floor and looks ONLY at that
+// floor's rectangles and seats.
+export const SEAT_ZONE_RECTS_BY_FLOOR: Record<FloorId, SeatZoneRect[]> = {
+  "3": SEAT_ZONE_RECTS,
+  "2": FLOOR_2_GEOMETRY.zoneRects
+};
+
+export function zoneRectsForFloor(floor: FloorId): SeatZoneRect[] {
+  return SEAT_ZONE_RECTS_BY_FLOOR[floor] ?? SEAT_ZONE_RECTS;
+}
+
 export function pointIsInsideSeatZone(point: NormalizedPoint, rect: SeatZoneRect) {
   return (
     point.x >= rect.xMin &&
@@ -55,13 +72,13 @@ export function pointIsInsideSeatZone(point: NormalizedPoint, rect: SeatZoneRect
   );
 }
 
-export function inferSeatZoneFromPoint(point: NormalizedPoint) {
-  const result = inferSeatZoneFromPointResult(point);
+export function inferSeatZoneFromPoint(point: NormalizedPoint, floor: FloorId = DEFAULT_FLOOR) {
+  const result = inferSeatZoneFromPointResult(point, floor);
   return result.status === "detected" ? result.zone : null;
 }
 
-export function inferSeatZoneFromPointResult(point: NormalizedPoint): SeatZoneDetectionResult {
-  const matches = SEAT_ZONE_RECTS.filter(rect => pointIsInsideSeatZone(point, rect));
+export function inferSeatZoneFromPointResult(point: NormalizedPoint, floor: FloorId = DEFAULT_FLOOR): SeatZoneDetectionResult {
+  const matches = zoneRectsForFloor(floor).filter(rect => pointIsInsideSeatZone(point, rect));
   const zones = new Set(matches.map(rect => rect.zone));
   if (zones.size === 1) return { status: "detected", zone: matches[0].zone };
   if (zones.size > 1) return { status: "ambiguous", zone: null };
@@ -76,18 +93,25 @@ function squaredDistance(left: NormalizedPoint, right: NormalizedPoint) {
   return ((left.x - right.x) ** 2) + ((left.y - right.y) ** 2);
 }
 
-export function detectSeatZoneForPoint(point: NormalizedPoint, seats: SeatZoneSource[]) {
-  const result = detectSeatZoneForPointResult(point, seats);
+export function detectSeatZoneForPoint(point: NormalizedPoint, seats: SeatZoneSource[], floor: FloorId = DEFAULT_FLOOR) {
+  const result = detectSeatZoneForPointResult(point, seats, floor);
   return result.status === "detected" ? result.zone : null;
 }
 
-export function detectSeatZoneForPointResult(point: NormalizedPoint, seats: SeatZoneSource[]): SeatZoneDetectionResult {
-  const rectResult = inferSeatZoneFromPointResult(point);
+export function detectSeatZoneForPointResult(
+  point: NormalizedPoint,
+  seats: SeatZoneSource[],
+  floor: FloorId = DEFAULT_FLOOR
+): SeatZoneDetectionResult {
+  const rectResult = inferSeatZoneFromPointResult(point, floor);
   if (rectResult.status !== "none") return rectResult;
 
   const closestByZone = new Map<string, number>();
 
   for (const seat of seats) {
+    // A seat on another floor can sit at the same coordinates; it must never
+    // lend this floor a zone.
+    if (floorOf(seat) !== floor) continue;
     const zone = getSeatZone(seat)?.trim();
     if (!zone) continue;
 

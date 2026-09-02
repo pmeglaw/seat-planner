@@ -62,9 +62,10 @@ test("directory rows are the same shape search produces — one builder, no drif
   assert.deepEqual(directory.rows[0], searchRow);
   // Seated row: canonical seat code + zone, clickable.
   assert.equal(directory.rows[0].subtitle, "W02 · West Pod");
-  assert.equal(directory.rows[0].disabled, false);
-  // Unseated row: honest subtitle, not clickable, no map target.
-  assert.equal(directory.rows[1].subtitle, "No assigned seat");
-  assert.equal(directory.rows[1].disabled, true);
+  assert.equal(directory.rows[0].floor, "3");
+  // Unseated row: honest subtitle naming the floor they work on (contract #9
+  // amended 2026-09-01), openable, no map target.
+  assert.equal(directory.rows[1].subtitle, "Floor 2 · Litigation");
+  assert.equal(directory.rows[1].floor, "2");
   assert.deepEqual(directory.rows[1].seatIds, []);
 });

@@ -334,6 +334,27 @@ test("FloorSelector renders a floor control", async () => {
   assert.ok(trigger, "floor control renders");
 });
 
+// Multi-floor PR-2: the options come from the registry (lib/floors), the
+// SOON badge is gone — an unmapped floor is a real destination now (it
+// renders a roster), and the roster header explains itself.
+test("FloorSelector lists the registry's floors without a SOON badge, in both variants", async () => {
+  const picks = [];
+  const { unmount } = await renderElement(React.createElement(FloorSelector, { floor: "3", onChange: floor => picks.push(floor) }));
+  await act(async () => fireEvent.click(document.querySelector('[aria-label^="Change floor"]')));
+  const options = [...document.querySelectorAll('[role="menuitemradio"]')];
+  assert.deepEqual(options.map(option => option.textContent), ["Floor 3 · Pre-Litigation", "Floor 2 · Litigation"]);
+  assert.deepEqual(options.map(option => option.getAttribute("aria-checked")), ["true", "false"]);
+  assert.doesNotMatch(document.body.textContent, /SOON/);
+  await act(async () => fireEvent.click(options[1]));
+  assert.deepEqual(picks, ["2"]);
+  unmount();
+
+  await renderElement(React.createElement(FloorSelector, { floor: "2", variant: "chrome", onChange() {} }));
+  const chromeTrigger = document.querySelector('[aria-label^="Change floor"]');
+  assert.equal(chromeTrigger.textContent.trim(), "Litigation", "the chrome trigger shows the practice-group name alone (owner call 2026-08-14)");
+  assert.match(chromeTrigger.getAttribute("aria-label"), /Floor 2 · Litigation/);
+});
+
 // --- DraftTrailOverlay -------------------------------------------------------
 // The animated route between a pending swap/move pair
 // (design_handoff_swap_trail, 2026-08-15). SeatMap renders it conditionally
