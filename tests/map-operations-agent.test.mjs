@@ -303,6 +303,63 @@ test("seat search filters by zone, status, occupancy, and caps results", () => {
   assert.equal(personResult.seats[0].label, "N02");
 });
 
+// Multi-floor PR-3: seats and people carry a floor; search_seats and
+// list_people accept one; the summary counts per floor from the registry.
+test("seat search filters by floor and every seat names its floor", () => {
+  const context = agent.createMapOperationsContext({
+    employees: [alice, bob],
+    seats: [
+      seat("seat-n01", "N01", "available", "North Pod"),
+      { ...seat("seat-l01", "L01", "assigned", "Litigation Pod", bob), floor: "2" }
+    ]
+  });
+  const floor2 = agent.runReadOnlyPlannerTool(context, "search_seats", {
+    query: "", status: "all", floor: "2", zone: "", department: "", occupied: null, customOnly: null, limit: 10
+  });
+  assert.equal(floor2.count, 1);
+  assert.equal(floor2.seats[0].label, "L01");
+  assert.equal(floor2.seats[0].floor, "2");
+  assert.equal(floor2.seats[0].floorLabel, "Floor 2 · Litigation");
+
+  const all = agent.runReadOnlyPlannerTool(context, "search_seats", {
+    query: "", status: "all", floor: "all", zone: "", department: "", occupied: null, customOnly: null, limit: 10
+  });
+  assert.deepEqual(all.seats.map(item => item.floor), ["2", "3"]);
+
+  // "floor 2" as free text reaches the same seat through the search text.
+  const byText = agent.runReadOnlyPlannerTool(context, "search_seats", {
+    query: "floor 2", status: "all", floor: "all", zone: "", department: "", occupied: null, customOnly: null, limit: 10
+  });
+  assert.deepEqual(byText.seats.map(item => item.label), ["L01"]);
+});
+
+test("list people names the floor a person works on, interim rule included, and filters by it", () => {
+  // Floor 2 is not live (no seat carries it), so every unseated person works
+  // there — the lib/floors interim rule, retiring by itself once a floor-2
+  // seat exists in the draft.
+  const people = agent.runReadOnlyPlannerTool(baseContext(), "list_people", {
+    assignment: "all", department: "", query: "", floor: "all", limit: 10
+  });
+  const byName = Object.fromEntries(people.people.map(person => [person.fullName, person]));
+  assert.equal(byName["Alice Adams"].floor, "3");
+  assert.equal(byName["Alice Adams"].assignedSeat.floor, "3");
+  assert.equal(byName["Bob Brown"].floor, "2");
+  assert.equal(byName["Bob Brown"].floorLabel, "Floor 2 · Litigation");
+
+  const floor2 = agent.runReadOnlyPlannerTool(baseContext(), "list_people", {
+    assignment: "all", department: "", query: "", floor: "2", limit: 10
+  });
+  assert.deepEqual(floor2.people.map(person => person.fullName).sort(), ["Bob Brown", "Cara Chen"]);
+
+  const summary = agent.runReadOnlyPlannerTool(baseContext(), "get_map_summary", {});
+  assert.deepEqual(summary.byFloor.map(entry => entry.floor), ["3", "2"]);
+  assert.equal(summary.byFloor[0].total, 4);
+  assert.equal(summary.byFloor[0].activeEmployees, 1);
+  assert.equal(summary.byFloor[1].total, 0);
+  assert.equal(summary.byFloor[1].mapped, false);
+  assert.equal(summary.byFloor[1].activeEmployees, 2);
+});
+
 test("list people reports assigned and unassigned active employees", () => {
   const unassigned = agent.runReadOnlyPlannerTool(baseContext(), "list_people", {
     assignment: "unassigned",

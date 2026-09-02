@@ -20,7 +20,10 @@ import type { Employee } from "@/lib/types";
  *   - `mapped` has ONE home: a floor is mapped exactly when it has a plan;
  *   - a floor is LIVE when it is mapped AND a seat in the caller's layer
  *     carries it — the viewer, reception and my-seat pass published rows, the
- *     admin editor passes draft rows;
+ *     admin editor passes draft rows. The EDITOR draws the plan for any MAPPED
+ *     floor, live or not (PR-3): it is the surface where a floor becomes live,
+ *     so it must show the plan before the first seat exists on it — liveness
+ *     is a viewer rule (never an empty plan for readers), not an editor one;
  *   - INTERIM RULE: until Floor 2 is live, every active person without a
  *     seat works on Floor 2 (owner, 2026-09-01: "everyone without a desk is
  *     on the 2nd floor"). It is an inference, not data, so it lives in exactly
@@ -309,6 +312,32 @@ export function floorDepartmentSummary(input: {
     text: `0 of ${floorSeatCount} seats on ${tag} · ${best.count} ${noun} in ${displayDepartment(employees, department)} ${verb} on ${registry[best.floor].tag}`,
     switchTo: best.floor
   };
+}
+
+// ---------------------------------------------------------------------------
+// Grouping (the publish review's floor eyebrows, multi-floor PR-3)
+// ---------------------------------------------------------------------------
+
+export type FloorGroup<T> = {
+  floor: FloorId;
+  /** The registry label — "Floor 3 · Pre-Litigation". */
+  label: string;
+  items: T[];
+};
+
+/** Items bucketed by floor in registry order; floors with no items are
+ *  omitted, and the order of items within a floor is preserved. */
+export function groupByFloor<T extends FloorRow>(items: readonly T[], registry: FloorRegistry = FLOORS): FloorGroup<T>[] {
+  const buckets = new Map<FloorId, T[]>();
+  for (const item of items) {
+    const floor = floorOf(item);
+    const bucket = buckets.get(floor);
+    if (bucket) bucket.push(item);
+    else buckets.set(floor, [item]);
+  }
+  return listFloors(registry)
+    .filter(definition => buckets.has(definition.id))
+    .map(definition => ({ floor: definition.id, label: definition.label, items: buckets.get(definition.id) ?? [] }));
 }
 
 // ---------------------------------------------------------------------------

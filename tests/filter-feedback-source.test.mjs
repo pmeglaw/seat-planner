@@ -37,7 +37,8 @@ test("legend counts follow the active constraints instead of contradicting the m
   assert.match(viewer, /structuredFiltersActive \? floorSeats\.filter\(seatPassesStructuredFilters\) : floorSeats/);
 
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
-  assert.match(seatMap, /filtersActive \? localSeats\.filter\(matchesFilters\) : localSeats/);
+  // Per floor since multi-floor PR-3, same as the viewer above.
+  assert.match(seatMap, /filtersActive \? floorSeats\.filter\(matchesFilters\) : floorSeats/);
 });
 
 test("active filter chips sit with the trigger's corner, not across the map", async () => {

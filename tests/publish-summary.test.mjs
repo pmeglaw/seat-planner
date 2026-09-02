@@ -400,3 +400,29 @@ test("diff rows: a seat without a floor value reads as Floor 3, so it never diff
   const rows = publishSummary.buildPublishDiffRows([seat({ label: "W01", floor: "3" })], [legacy]);
   assert.equal(rows.length, 0);
 });
+
+// Multi-floor PR-3: every diff row names its floor so the review can group
+// rows under floor eyebrows — the draft seat's floor, or the published seat's
+// for a removal (the only side that still has one).
+test("diff rows: every row carries a floor — draft side for changes, published side for removals", () => {
+  const rows = publishSummary.buildPublishDiffRows(
+    [
+      seat({ label: "L01", floor: "2", employee: employee("emp-1", "Lena Ito") }),
+      seat({ label: "W01", floor: "2" })
+    ],
+    [
+      seat({ label: "W01", layer: "published", floor: "3" }),
+      seat({ label: "W02", layer: "published", floor: "2" })
+    ]
+  );
+  const byLabel = Object.fromEntries(rows.map(row => [row.label, row]));
+  assert.equal(byLabel.L01.kind, "added");
+  assert.equal(byLabel.L01.floor, "2");
+  assert.equal(byLabel.W01.kind, "updated");
+  assert.equal(byLabel.W01.floor, "2");
+  assert.equal(byLabel.W02.kind, "removed");
+  assert.equal(byLabel.W02.floor, "2");
+  const legacy = seat({ label: "W03", layer: "published" });
+  delete legacy.floor;
+  assert.equal(publishSummary.buildPublishDiffRows([], [legacy])[0].floor, "3");
+});

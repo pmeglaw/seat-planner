@@ -375,3 +375,70 @@ test("the inspector's panel-tier band clearance follows the band, not the floor 
   await expect(page.locator("[data-map-status-band]")).not.toBeAttached();
   await expect(inspector).toHaveClass(/panel:bottom-3/);
 });
+
+// --- Multi-floor PR-3 (DECISIONS.md D2′) --------------------------------------
+// Real-browser tier: the surface switch, the live region and the results-panel
+// hand-off are SeatMap composition, which jsdom can't mount. Presence-based
+// assertions — the harness ships no CSS.
+const litigationSeat = seat({ id: "s-l01", seat_key: "l01", label: "L01", x: 0.4, y: 0.4, zone: "Litigation Pod", floor: "2" });
+const bob = { ...alice, id: "emp-2", full_name: "Bob Ito", department: "Litigation", phone_extension: "456" };
+
+test("an unmapped floor renders the roster from the live working set, with no Add seat and no viewport tab stop", async ({ page }) => {
+  // Bob has no draft seat, so under the interim rule he works on Floor 2 —
+  // the editor lists him from its live employees, never a published snapshot.
+  await mountSeatMap(page, { seats: [n01, n02], employees: [alice, bob], canEdit: true });
+  await expect(page.getByRole("button", { name: "Add seat" })).toBeAttached();
+  await expect(page.locator('[aria-label^="Admin seat map viewport"]')).toHaveAttribute("tabindex", "0");
+
+  await page.locator('button[aria-label^="Change floor"]').first().dispatchEvent("click");
+  await page.getByRole("menuitemradio", { name: /Floor 2/ }).first().dispatchEvent("click");
+
+  const roster = page.locator("#admin-floor-roster");
+  await expect(roster).toBeAttached();
+  await expect(roster.getByText("Bob Ito")).toBeAttached();
+  await expect(roster.getByText("Alice Smith")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Add seat" })).toHaveCount(0);
+  await expect(page.locator('button[aria-label*="Open details"]')).toHaveCount(0);
+  await expect(page.locator('[aria-label^="Admin seat map viewport"]')).toHaveCount(0);
+  await expect(page.getByText("Showing Floor 2 · Litigation.")).toBeAttached();
+});
+
+test("a result on the other floor switches the canvas, then selects; a person row lands on the roster", async ({ page }) => {
+  await mountSeatMap(page, { seats: [n01, litigationSeat], employees: [alice, bob], canEdit: true });
+  // Floor 3 on screen: the floor-2 seat has no marker here.
+  await expect(marker(page, "N01")).toBeAttached();
+  await expect(marker(page, "L01")).toHaveCount(0);
+
+  await page.locator('input[name="seat-search"]').first().fill("L01");
+  const results = page.locator('[aria-label="Admin search results"]');
+  await expect(results.getByText("Floor 2", { exact: true })).toBeAttached();
+  await results.locator("[data-result-card]").first().dispatchEvent("click");
+  // The canvas switched (Floor 2 is unmapped, so the roster renders) and the
+  // seat is selected — the inspector opens on it.
+  await expect(page.locator("#admin-floor-roster")).toBeAttached();
+  await expect(page.locator("#seat-inspector-panel")).toBeAttached();
+  await expect(page.locator('button[aria-label^="Change floor"]').first()).toHaveAttribute("aria-label", /Floor 2 · Litigation/);
+
+  // Back to Floor 3, then open Bob (unseated → Floor 2 roster row, marked).
+  await page.locator('button[aria-label^="Change floor"]').first().dispatchEvent("click");
+  await page.getByRole("menuitemradio", { name: /Floor 3/ }).first().dispatchEvent("click");
+  await page.locator('input[name="seat-search"]').first().fill("Bob");
+  const bobCard = results.locator("[data-result-card]", { hasText: "Bob Ito" }).first();
+  await expect(bobCard).toBeEnabled();
+  await bobCard.dispatchEvent("click");
+  await expect(page.locator('#admin-floor-roster [data-roster-row][aria-current="true"]')).toContainText("Bob Ito");
+  await expect(page.getByText("Bob Ito highlighted on the Floor 2 · Litigation roster.")).toBeAttached();
+});
+
+test("the publish review groups diff rows under floor eyebrows in registry order", async ({ page }) => {
+  const customDownstairs = seat({ id: "s-c2", seat_key: "l02", label: "L02", x: 0.5, y: 0.5, zone: "Litigation Pod", floor: "2", is_custom: true });
+  await mountSeatMap(page, { seats: [customDownstairs, custom], employees: [], canEdit: true, publishedSeats: [] });
+  await page.getByRole("button", { name: /unpublished change/ }).dispatchEvent("click");
+
+  const dialog = page.getByRole("dialog", { name: "Review draft before publishing" });
+  await expect(dialog.getByText("Floor 3 · Pre-Litigation · 1 change", { exact: true })).toBeAttached();
+  await expect(dialog.getByText("Floor 2 · Litigation · 1 change", { exact: true })).toBeAttached();
+  const eyebrows = await dialog.locator("[role='rowgroup'] > [role='row']:first-child").allTextContents();
+  expect(eyebrows.map(text => text.trim())).toEqual(["Floor 3 · Pre-Litigation · 1 change", "Floor 2 · Litigation · 1 change"]);
+  await expect(dialog.getByText("2 seat changes", { exact: true })).toBeAttached();
+});

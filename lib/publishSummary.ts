@@ -1,4 +1,4 @@
-import { floorOf } from "@/lib/floorIds";
+import { floorOf, type FloorId } from "@/lib/floorIds";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 
 export type PublishChangeItem = {
@@ -239,6 +239,10 @@ export type PublishDiffRowKind = "added" | "removed" | "assigned" | "vacated" | 
 export type PublishDiffRow = {
   key: string;
   label: string;
+  /** The floor the row belongs to after publish — the draft seat's floor, or
+   *  the published seat's for a removal (multi-floor PR-3: the review groups
+   *  rows under floor eyebrows; lib/floors groupByFloor does the bucketing). */
+  floor: FloorId;
   kind: PublishDiffRowKind;
   from: string;
   to: string;
@@ -275,6 +279,7 @@ export function buildPublishDiffRows(
       rows.push({
         key,
         label: draftSeat.label,
+        floor: floorOf(draftSeat),
         kind: "added",
         from: DIFF_ABSENT,
         to: getDiffOccupantLabel(draftSeat),
@@ -301,6 +306,7 @@ export function buildPublishDiffRows(
       rows.push({
         key,
         label: draftSeat.label,
+        floor: floorOf(draftSeat),
         kind: fromOpen ? "assigned" : toOpen ? "vacated" : "reassigned",
         from: getDiffOccupantLabel(publishedSeat),
         to: getDiffOccupantLabel(draftSeat),
@@ -311,7 +317,7 @@ export function buildPublishDiffRows(
 
     if (metadataDetail) {
       const occupant = getDiffOccupantLabel(draftSeat);
-      rows.push({ key, label: draftSeat.label, kind: "updated", from: occupant, to: occupant, detail: metadataDetail });
+      rows.push({ key, label: draftSeat.label, floor: floorOf(draftSeat), kind: "updated", from: occupant, to: occupant, detail: metadataDetail });
     }
   });
 
@@ -320,6 +326,7 @@ export function buildPublishDiffRows(
       rows.push({
         key,
         label: publishedSeat.label,
+        floor: floorOf(publishedSeat),
         kind: "removed",
         from: getDiffOccupantLabel(publishedSeat),
         to: DIFF_ABSENT,

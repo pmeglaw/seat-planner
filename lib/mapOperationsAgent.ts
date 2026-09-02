@@ -8,6 +8,8 @@ import type {
   SeatWithEmployee,
   ZoneOption
 } from "./types";
+import { FLOOR_IDS, floorOf } from "@/lib/floorIds";
+import { FLOORS, floorOfPerson, floorTag, listFloors, peopleOnFloor } from "@/lib/floors";
 
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 export const ASK_PLANNER_DEFAULT_MODEL = "gpt-5.5";
@@ -210,6 +212,7 @@ function seatSearchText(seat: SeatWithEmployee) {
     seat.label,
     seat.seat_key,
     seat.status,
+    floorTag(floorOf(seat)),
     getSeatZone(seat),
     getSeatDepartment(seat),
     seat.employee?.full_name,
@@ -269,6 +272,10 @@ function formatSeat(seat: SeatWithEmployee) {
   return {
     id: seat.id,
     label: seat.label,
+    // Multi-floor PR-3: every seat names its floor, so an answer can say
+    // "on Floor 2" and the drawer can tag a highlight on the other floor.
+    floor: floorOf(seat),
+    floorLabel: FLOORS[floorOf(seat)].label,
     status: seat.status,
     zone: getSeatZone(seat),
     department: getSeatDepartment(seat),
@@ -356,6 +363,16 @@ export function getMapSummary(context: MapOperationsContext) {
       assignedEmployees: context.employees.length - unassignedEmployees.length,
       unassignedActiveEmployees: unassignedEmployees.length
     },
+    // Registry order, every floor listed — an unmapped floor reports zero
+    // seats and the people who work there (lib/floors interim rule), so the
+    // model never infers "no seats" means "no one".
+    byFloor: listFloors().map(definition => ({
+      floor: definition.id,
+      name: definition.label,
+      mapped: definition.mapped,
+      ...statusCounts(context.seats.filter(seat => floorOf(seat) === definition.id)),
+      activeEmployees: peopleOnFloor(definition.id, context.seats, context.employees).length
+    })),
     byZone: sortByName(Array.from(zoneNames).map(name => ({
       name,
       ...statusCounts(context.seats.filter(seat => getSeatZoneLabel(seat) === name))
@@ -378,6 +395,7 @@ export function searchSeats(context: MapOperationsContext, rawArgs: unknown) {
   const args = parseArgs(rawArgs);
   const query = stringArg(args, "query").toLowerCase();
   const status = stringArg(args, "status");
+  const floor = stringArg(args, "floor");
   const zone = normalizeKey(stringArg(args, "zone"));
   const department = normalizeKey(stringArg(args, "department"));
   const occupied = nullableBooleanArg(args, "occupied");
@@ -387,6 +405,7 @@ export function searchSeats(context: MapOperationsContext, rawArgs: unknown) {
   const matches = context.seats.filter(seat => {
     if (query && !seatSearchText(seat).includes(query)) return false;
     if (status && status !== "all" && seat.status !== status) return false;
+    if (floor && floor !== "all" && floorOf(seat) !== floor) return false;
     if (zone && zone !== "all" && normalizeKey(getSeatZone(seat)) !== zone) return false;
     if (department && department !== "all" && normalizeKey(getSeatDepartment(seat)) !== department) return false;
     if (occupied !== null && hasEmployee(seat) !== occupied) return false;
@@ -407,6 +426,7 @@ export function listPeople(context: MapOperationsContext, rawArgs: unknown) {
   const query = stringArg(args, "query").toLowerCase();
   const department = normalizeKey(stringArg(args, "department"));
   const assignment = stringArg(args, "assignment") || "all";
+  const floor = stringArg(args, "floor");
   const limit = limitArg(args, 12);
   const assignments = assignedSeatByEmployeeId(context.seats);
 
@@ -416,6 +436,9 @@ export function listPeople(context: MapOperationsContext, rawArgs: unknown) {
     if (department && department !== "all" && normalizeKey(employee.department) !== department) return false;
     if (assignment === "assigned" && !assignedSeat) return false;
     if (assignment === "unassigned" && assignedSeat) return false;
+    // A person's floor is their seat's, else the interim roster floor
+    // (lib/floors floorOfPerson) — null while that is ambiguous.
+    if (floor && floor !== "all" && floorOfPerson(assignedSeat, context.seats) !== floor) return false;
     return true;
   });
 
@@ -426,14 +449,18 @@ export function listPeople(context: MapOperationsContext, rawArgs: unknown) {
     people: matches.slice(0, limit).map(employee => {
       const assignedSeats = assignments.get(employee.id) ?? [];
       const assignedSeat = assignedSeats[0] ?? null;
+      const personFloor = floorOfPerson(assignedSeat, context.seats);
       return {
         id: employee.id,
         fullName: employee.full_name,
         position: employee.position,
         department: employee.department,
+        floor: personFloor,
+        floorLabel: personFloor ? FLOORS[personFloor].label : null,
         assignedSeat: assignedSeat ? {
           id: assignedSeat.id,
           label: assignedSeat.label,
+          floor: floorOf(assignedSeat),
           zone: getSeatZone(assignedSeat),
           status: assignedSeat.status
         } : null,
@@ -835,7 +862,7 @@ function buildReadOnlyTools() {
     {
       type: "function",
       name: "get_map_summary",
-      description: "Return high-level draft map counts by seat status, zone, and department.",
+      description: "Return high-level draft map counts by seat status, floor, zone, and department.",
       parameters: {
         type: "object",
         properties: {},
@@ -847,19 +874,20 @@ function buildReadOnlyTools() {
     {
       type: "function",
       name: "search_seats",
-      description: "Search draft seats by label, zone, status, department, person, or occupancy. Returns only matching draft seats.",
+      description: "Search draft seats by label, floor, zone, status, department, person, or occupancy. Returns only matching draft seats.",
       parameters: {
         type: "object",
         properties: {
           query: { type: "string", description: "Optional text to match against seat labels, people, zones, departments, or status." },
           status: { type: "string", enum: ["all", "available", "assigned", "reserved", "unavailable"] },
+          floor: { type: "string", enum: ["all", ...FLOOR_IDS], description: "Restrict to one floor by id ('3' is Floor 3, '2' is Floor 2), or 'all'." },
           zone: { type: "string" },
           department: { type: "string" },
           occupied: { type: ["boolean", "null"] },
           customOnly: { type: ["boolean", "null"] },
           limit: { type: "number" }
         },
-        required: ["query", "status", "zone", "department", "occupied", "customOnly", "limit"],
+        required: ["query", "status", "floor", "zone", "department", "occupied", "customOnly", "limit"],
         additionalProperties: false
       },
       strict: true
@@ -867,16 +895,17 @@ function buildReadOnlyTools() {
     {
       type: "function",
       name: "list_people",
-      description: "List active employees and their draft seat assignment state.",
+      description: "List active employees with the floor they work on and their draft seat assignment state.",
       parameters: {
         type: "object",
         properties: {
           query: { type: "string" },
           department: { type: "string" },
           assignment: { type: "string", enum: ["all", "assigned", "unassigned"] },
+          floor: { type: "string", enum: ["all", ...FLOOR_IDS], description: "Restrict to the people who work on one floor by id, or 'all'." },
           limit: { type: "number" }
         },
-        required: ["query", "department", "assignment", "limit"],
+        required: ["query", "department", "assignment", "floor", "limit"],
         additionalProperties: false
       },
       strict: true
@@ -949,11 +978,18 @@ function buildResponseSchema() {
 }
 
 function buildInstructions(context: MapOperationsContext) {
-  const summary = getMapSummary(context).totals;
+  const mapSummary = getMapSummary(context);
+  const summary = mapSummary.totals;
+  // The floors, from the registry — never hard-coded here, so the copy follows
+  // the registry when the 2nd-floor plan lands (slice B).
+  const floorLine = mapSummary.byFloor
+    .map(entry => `${entry.name} (id '${entry.floor}', ${entry.mapped ? "mapped" : "plan not mapped yet"}: ${entry.total} seats, ${entry.activeEmployees} people)`)
+    .join("; ");
 
   return [
     "You are Ask Planner, a read-only map operations agent for an office seat-planning admin.",
-    "You can answer questions about draft seats, assignments, zones, departments, and map health.",
+    "You can answer questions about draft seats, assignments, floors, zones, departments, and map health.",
+    `The office has more than one floor and every seat carries one: ${floorLine}. A person without a draft seat works on the floor whose plan is not mapped yet, until a seat exists there. Name the floor when it is not the one the admin is asking about.`,
     "Use only the supplied read-only tools and their outputs for factual claims about the map.",
     "Never publish, move seats, assign employees, vacate seats, delete seats, import data, restore data, or change anything.",
     "If the user asks for a write action, refuse that action and offer read-only findings or next steps an admin can review manually.",

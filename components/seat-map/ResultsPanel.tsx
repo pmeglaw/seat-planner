@@ -8,12 +8,19 @@ import { useVirtualListWindow } from "@/components/seat-map/useVirtualListWindow
 export type AdminResultCard = {
   key: string;
   seatId: string | null;
+  /** A person card (no seat): the roster row the card opens (multi-floor
+   *  PR-3 — an unseated person is findable AND openable; the canvas switches
+   *  to the floor they work on and marks their row). */
+  employeeId?: string | null;
   // Callers must pre-format this (formatDisplayName for names, formatSeatCode
   // for seat codes) — rendered verbatim here so mixed name+code titles don't
   // get re-title-cased as a single "shouting" word (e.g. "CW01" -> "Cw01").
   title: string;
   subtitle: string;
   status: SeatStatus | null;
+  /** "Floor 2" when the card lives on a floor other than the canvas floor —
+   *  the search spans the building, so the row says where it will take you. */
+  floorTag?: string | null;
   disabled?: boolean;
 };
 
@@ -32,6 +39,8 @@ type ResultsPanelProps = {
   searchActive: boolean;
   structuredFiltersActive: boolean;
   onOpen: (seatId: string) => void;
+  /** Opens a person card (employeeId set, seatId null). */
+  onOpenPerson?: (employeeId: string) => void;
   onShowOnMap: (seatId: string) => void;
   onClearSearch: () => void;
   onClearFilters: () => void;
@@ -50,6 +59,7 @@ export function ResultsPanel({
   searchActive,
   structuredFiltersActive,
   onOpen,
+  onOpenPerson,
   onShowOnMap,
   onClearSearch,
   onClearFilters,
@@ -132,7 +142,10 @@ export function ResultsPanel({
                 type="button"
                 data-result-card
                 disabled={result.disabled}
-                onClick={() => result.seatId && onOpen(result.seatId)}
+                onClick={() => {
+                  if (result.seatId) onOpen(result.seatId);
+                  else if (result.employeeId && onOpenPerson) onOpenPerson(result.employeeId);
+                }}
                 title={result.disabled ? "No assigned seat to open" : `Open ${result.title}`}
                 className="flex min-w-0 flex-1 items-start gap-2.5 px-2.5 py-2 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-55"
               >
@@ -143,10 +156,15 @@ export function ResultsPanel({
                   ].join(" ")}
                   aria-hidden="true"
                 />
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-[var(--sp-text-primary)]">{result.title}</span>
                   <span className="block truncate text-xs font-medium text-[var(--sp-text-helper)]">{formatDisplayName(result.subtitle)}</span>
                 </span>
+                {result.floorTag && (
+                  <span className="mt-0.5 shrink-0 rounded-full border border-[var(--sp-border-subtle)] px-1.5 py-0.5 text-xs font-semibold text-[var(--sp-text-helper)]">
+                    {result.floorTag}
+                  </span>
+                )}
               </button>
               {result.seatId && (
                 <button

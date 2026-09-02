@@ -9,6 +9,8 @@
 
 import { useEffect, useRef } from "react";
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
+import { floorOf } from "@/lib/floorIds";
+import { FLOORS, groupByFloor } from "@/lib/floors";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import type {
   PublishChangeSummary,
@@ -27,6 +29,23 @@ export function seatPersonLabel(seat: SeatWithEmployee | null) {
 
 export function buildSwapSummary(sourceSeat: SeatWithEmployee, targetSeat: SeatWithEmployee) {
   return `${sourceSeat.label} (${seatPersonLabel(sourceSeat)}) ↔ ${targetSeat.label} (${seatPersonLabel(targetSeat)})`;
+}
+
+/** Multi-floor PR-3: a swap or move may pair seats on different floors (the
+ *  canvas auto-switches to reach the target). The confirm dialogs then name
+ *  each seat's floor, so the admin reads "L02 · Floor 2" rather than
+ *  wondering which plan a code belongs to. Same floor → no tag, as before. */
+function crossFloorTag(seat: SeatWithEmployee, other: SeatWithEmployee) {
+  return floorOf(seat) === floorOf(other) ? null : FLOORS[floorOf(seat)].tag;
+}
+
+function SeatFloorTag({ tag }: { tag: string | null }) {
+  if (!tag) return null;
+  return (
+    <span className="ml-2 inline-flex rounded-full border border-[var(--sp-border-subtle)] px-1.5 py-0.5 align-middle text-xs font-semibold text-[var(--sp-text-helper)]">
+      {tag}
+    </span>
+  );
 }
 
 const PUBLISH_DIFF_TAG_STYLES: Record<PublishDiffRowKind, { label: string; className: string }> = {
@@ -301,24 +320,37 @@ export function PublishReviewDialog({
                   <span role="columnheader" className="px-2.5 py-1.5 text-xs font-semibold text-[var(--sp-text-helper)]">After publish</span>
                   <span role="columnheader" className="px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-helper)]">Change</span>
                 </div>
-                {publishDiffRows.map(row => (
-                  <div key={row.key} role="rowgroup" className="border-b border-[var(--sp-border-soft)] last:border-b-0">
-                    <div role="row" className="grid grid-cols-[64px_1fr_1fr_96px] items-center">
-                      <span role="cell" translate="no" className="px-3 py-2 font-mono text-xs font-semibold text-[var(--sp-text-primary)]">{row.label}</span>
-                      <span role="cell" className="flex min-w-0 items-center gap-1.5 px-2.5 py-2 text-[12.5px] text-[var(--sp-text-helper)]">
-                        <span className="truncate">{row.from}</span>
-                        <span className="sr-only">changes to</span>
-                        <span aria-hidden="true" className="flex-shrink-0 text-[var(--sp-text-helper)]">→</span>
+                {/* Multi-floor PR-3: rows group under floor eyebrows in registry
+                    order (lib/floors groupByFloor) — the whole building
+                    publishes in ONE call, and the review says which plan each
+                    change lands on. A floor with no changes has no group. */}
+                {groupByFloor(publishDiffRows).map(group => (
+                  <div key={group.floor} role="rowgroup" className="border-b border-[var(--sp-border-soft)] last:border-b-0">
+                    <div role="row" className="grid grid-cols-[1fr] border-b border-[var(--sp-border-soft)] bg-[var(--sp-background)]">
+                      <span role="cell" aria-colspan={4} className="px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]">
+                        {group.label} · {group.items.length} {group.items.length === 1 ? "change" : "changes"}
                       </span>
-                      <span role="cell" className="truncate px-2.5 py-2 text-[12.5px] font-semibold text-[var(--sp-text-primary)]">{row.to}</span>
-                      <span role="cell" className="px-3 py-2"><PublishDiffTag kind={row.kind} /></span>
                     </div>
-                    {row.detail && (
-                      <div role="row" className="grid grid-cols-[64px_1fr]">
-                        <span role="cell" aria-hidden="true" />
-                        <span role="cell" aria-colspan={3} className="px-2.5 pb-2 text-xs leading-4 text-[var(--sp-text-helper)]">{row.detail}</span>
+                    {group.items.map(row => (
+                      <div key={row.key} className="border-b border-[var(--sp-border-soft)] last:border-b-0">
+                        <div role="row" className="grid grid-cols-[64px_1fr_1fr_96px] items-center">
+                          <span role="cell" translate="no" className="px-3 py-2 font-mono text-xs font-semibold text-[var(--sp-text-primary)]">{row.label}</span>
+                          <span role="cell" className="flex min-w-0 items-center gap-1.5 px-2.5 py-2 text-[12.5px] text-[var(--sp-text-helper)]">
+                            <span className="truncate">{row.from}</span>
+                            <span className="sr-only">changes to</span>
+                            <span aria-hidden="true" className="flex-shrink-0 text-[var(--sp-text-helper)]">→</span>
+                          </span>
+                          <span role="cell" className="truncate px-2.5 py-2 text-[12.5px] font-semibold text-[var(--sp-text-primary)]">{row.to}</span>
+                          <span role="cell" className="px-3 py-2"><PublishDiffTag kind={row.kind} /></span>
+                        </div>
+                        {row.detail && (
+                          <div role="row" className="grid grid-cols-[64px_1fr]">
+                            <span role="cell" aria-hidden="true" />
+                            <span role="cell" aria-colspan={3} className="px-2.5 pb-2 text-xs leading-4 text-[var(--sp-text-helper)]">{row.detail}</span>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
                 ))}
               </div>
@@ -549,12 +581,12 @@ export function SwapConfirmDialog({
         <div className="mt-4 grid gap-2">
           <div className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] p-3">
             <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Source</div>
-            <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapSourceSeat.label}</div>
+            <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapSourceSeat.label}<SeatFloorTag tag={crossFloorTag(swapSourceSeat, swapTargetSeat)} /></div>
             <div className="text-sm text-[var(--sp-text-helper)]">{seatPersonLabel(swapSourceSeat)}</div>
           </div>
           <div className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] p-3">
             <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Target</div>
-            <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapTargetSeat.label}</div>
+            <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapTargetSeat.label}<SeatFloorTag tag={crossFloorTag(swapTargetSeat, swapSourceSeat)} /></div>
             <div className="text-sm text-[var(--sp-text-helper)]">{seatPersonLabel(swapTargetSeat)}</div>
           </div>
         </div>
@@ -642,7 +674,7 @@ export function MoveEmployeeConfirmDialog({
               Swap {formatDisplayName(sourceEmployeeName)} and {formatDisplayName(seatPersonLabel(moveEmployeeTargetSeat))}?
             </h2>
             <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
-              {formatDisplayName(seatPersonLabel(moveEmployeeTargetSeat))} already sits at {formatSeatCode(moveEmployeeTargetSeat.label)}. Swapping moves them to {formatSeatCode(moveEmployeeSourceSeat.label)}. {PUBLISH_IMPACT_NOTE}
+              {formatDisplayName(seatPersonLabel(moveEmployeeTargetSeat))} already sits at {formatSeatCode(moveEmployeeTargetSeat.label)}<SeatFloorTag tag={crossFloorTag(moveEmployeeTargetSeat, moveEmployeeSourceSeat)} />. Swapping moves them to {formatSeatCode(moveEmployeeSourceSeat.label)}<SeatFloorTag tag={crossFloorTag(moveEmployeeSourceSeat, moveEmployeeTargetSeat)} />. {PUBLISH_IMPACT_NOTE}
             </p>
             <div className="mt-4 rounded-xl border border-[var(--sp-publish-viewer-impact-border)] bg-[var(--sp-publish-viewer-impact-bg)] p-3 text-sm font-semibold text-[var(--sp-publish-viewer-impact-text)]">
               {buildSwapSummary(moveEmployeeSourceSeat, moveEmployeeTargetSeat)}
@@ -658,10 +690,10 @@ export function MoveEmployeeConfirmDialog({
         ) : (
           <>
             <h2 id="move-employee-map-confirm-title" className="text-base font-semibold">
-              Move {formatDisplayName(sourceEmployeeName)} to {formatSeatCode(moveEmployeeTargetSeat.label)}?
+              Move {formatDisplayName(sourceEmployeeName)} to {formatSeatCode(moveEmployeeTargetSeat.label)}<SeatFloorTag tag={crossFloorTag(moveEmployeeTargetSeat, moveEmployeeSourceSeat)} />?
             </h2>
             <p id="move-employee-map-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
-              They currently sit at {formatSeatCode(moveEmployeeSourceSeat.label)}. Moving frees {formatSeatCode(moveEmployeeSourceSeat.label)} (it becomes Open). {PUBLISH_IMPACT_NOTE}
+              They currently sit at {formatSeatCode(moveEmployeeSourceSeat.label)}<SeatFloorTag tag={crossFloorTag(moveEmployeeSourceSeat, moveEmployeeTargetSeat)} />. Moving frees {formatSeatCode(moveEmployeeSourceSeat.label)} (it becomes Open). {PUBLISH_IMPACT_NOTE}
             </p>
             {moveErrorAlert}
             <div className="mt-4 grid grid-cols-2 gap-2">

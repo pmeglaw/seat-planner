@@ -13,6 +13,7 @@ import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/pu
 import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { canDeleteDraftSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { buildSeatSwapPlan, type SeatSwapPlan } from "@/lib/seatSwap";
+import { floorIsMapped, floorLabel } from "@/lib/floors";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
 import { savedPointToVisualPoint, seatsToVisualSeats } from "@/lib/mapLayoutTransform";
 import {
@@ -38,7 +39,7 @@ import { SEAT_STATUSES, type AskPlannerRequest, type AskPlannerResponse, type De
 
 type DraftSeatRestoreRecord = Omit<SeatWithEmployee, "employee">;
 type DraftEmployeeRestoreRecord = Employee;
-type DraftSeatZoneSource = Pick<SeatWithEmployee, "label" | "zone" | "department" | "x" | "y">;
+type DraftSeatZoneSource = Pick<SeatWithEmployee, "label" | "zone" | "department" | "x" | "y" | "floor">;
 type SupabaseMutationError = {
   code?: string | null;
   message?: string | null;
@@ -253,7 +254,10 @@ async function getDraftSeatZoneSources(supabase: Awaited<ReturnType<typeof requi
     (from, to) =>
       supabase
         .from("seats")
-        .select("label,zone,department,x,y", { count: "exact" })
+        // floor rides along (multi-floor PR-3): zone detection looks only at
+        // the target floor's seats, and a row without the column would read
+        // as Floor 3 by default.
+        .select("label,zone,department,x,y,floor", { count: "exact" })
         .eq("layer", "draft")
         .order("label")
         .range(from, to),
@@ -343,14 +347,26 @@ export async function createSeatAction(input: {
   y: number;
   visualX?: number;
   visualY?: number;
+  /** The canvas floor the admin clicked on (multi-floor PR-3); absent means
+   *  Floor 3, the column default. Only a MAPPED floor can take a seat — the
+   *  editor never offers Add seat on an unmapped one, and the server holds
+   *  the same line so a stale client cannot place a marker on a plan that
+   *  does not exist. */
+  floor?: string | null;
 }): Promise<CreateSeatResult> {
   const supabase = await requireAdmin();
+  const floorResult = parseFloorId(input.floor);
+  if (!floorResult.ok) return { ok: false, message: floorResult.message };
+  const floor = floorResult.value;
+  if (!floorIsMapped(floor)) {
+    return { ok: false, message: `${floorLabel(floor)} has no plan to place a seat on yet.` };
+  }
   const point = validateSeatCoordinates(input.x, input.y);
   const visualPoint = input.visualX === undefined || input.visualY === undefined
-    ? savedPointToVisualPoint(point)
+    ? savedPointToVisualPoint(point, { ...point, floor })
     : validateSeatCoordinates(input.visualX, input.visualY);
   let draftSeats = await getDraftSeatZoneSources(supabase);
-  const zoneResult = detectSeatZoneForPointResult(visualPoint, seatsToVisualSeats(draftSeats));
+  const zoneResult = detectSeatZoneForPointResult(visualPoint, seatsToVisualSeats(draftSeats), floor);
 
   if (zoneResult.status !== "detected") {
     return { ok: false, message: getSeatZoneDetectionFailureMessage(zoneResult) ?? "Could not detect a zone for this location." };
@@ -375,7 +391,8 @@ export async function createSeatAction(input: {
         status: "available",
         zone,
         department: null,
-        is_custom: true
+        is_custom: true,
+        floor
       })
       .select("*, employee:employees(*)")
       .single();
