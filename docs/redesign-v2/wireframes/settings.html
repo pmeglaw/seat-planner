@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Settings (Phase 2 wireframe)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Low-fi wireframe. Grayscale + Blue 60 for the ONE primary per section (Import CSV; Export draft snapshot; each tearsheet's primary). 8px grid, zero radius. */
+:root{--g10:#f4f4f4;--g20:#e0e0e0;--g30:#c6c6c6;--g50:#8d8d8d;--g60:#6f6f6f;--g70:#525252;--g80:#393939;--g90:#262626;--g100:#161616;--w:#fff;--b60:#0f62fe}
+*{box-sizing:border-box;border-radius:0;margin:0}
+body{font:400 14px/20px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.16px;color:var(--g100);background:var(--g20);padding:32px}
+h1{font-size:28px;line-height:36px;font-weight:400;margin-bottom:8px}
+h2{font-size:20px;line-height:28px;font-weight:400;margin:48px 0 8px}
+p,li{max-width:960px}
+ul{padding-left:20px;margin:8px 0}
+code{font-family:"IBM Plex Mono",monospace;font-size:12px}
+button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.fit{display:inline-flex;gap:8px;align-items:center;height:32px;margin:8px 0 16px}
+body:has(#fit:checked) .frame{zoom:.5}
+.frame{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--g10);outline:1px solid var(--g30);margin:8px 0 16px}
+.frame.narrow{width:1024px;height:768px}
+.dim{position:absolute;font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);background:rgba(255,255,255,.9);padding:0 4px;pointer-events:none;z-index:9}
+.hdr{position:absolute;left:0;right:0;top:0;height:48px;background:var(--g100);color:var(--g10);display:flex;align-items:center;border-bottom:1px solid var(--g80);z-index:8}
+.slot48{width:48px;height:48px;flex:none;display:grid;place-items:center}
+.slot48.res{outline:1px dashed var(--g70);outline-offset:-8px}
+.ham{width:16px;height:12px;background:linear-gradient(var(--g10) 0 2px,transparent 2px 5px,var(--g10) 5px 7px,transparent 7px 10px,var(--g10) 10px 12px)}
+.name{height:48px;line-height:48px;display:block;padding:0 16px;color:var(--g10);text-decoration:none;white-space:nowrap}
+.name b{font-weight:600}
+.nav{display:flex;height:48px}
+.nav a{display:flex;align-items:center;padding:0 16px;color:var(--g30);text-decoration:none;white-space:nowrap}
+.nav a[aria-current]{color:var(--g10);box-shadow:inset 0 -3px 0 var(--g10)}
+.mode{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;gap:8px;padding:0 16px;color:var(--g10);white-space:nowrap}
+.mk{width:12px;height:12px;flex:none}.mk-draft{border:2px solid var(--g10);transform:rotate(45deg) scale(.85)}
+.utils{margin-left:auto;display:flex;height:48px}
+.ub{width:48px;height:48px;display:grid;place-items:center;color:var(--g10)}
+/* page */
+.live{position:absolute;top:48px;left:168px;width:1584px;bottom:0;padding-top:32px}
+.narrow .live{left:0;width:1024px;padding:24px 16px 0}
+.col{width:776px;display:flex;flex-direction:column;gap:48px}
+.narrow .col{width:100%}
+.ph h3{font-size:28px;line-height:36px;font-weight:400}
+.ph p{color:var(--g70);margin-top:4px}
+.callout{border-left:3px solid var(--g70);background:var(--w);padding:16px}
+.callout b{font-weight:600}
+.sec{display:flex;flex-direction:column;gap:16px}
+.sec h4{font-size:20px;line-height:28px;font-weight:400}
+.sec .help{color:var(--g70)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.prim{height:40px;display:inline-flex;align-items:center;padding:0 16px;background:var(--b60);color:#fff;white-space:nowrap;gap:12px}
+.prim.busy{opacity:.7}
+.tert{height:40px;display:inline-flex;align-items:center;padding:0 16px;border:1px solid var(--g100);white-space:nowrap}
+.ghost{height:40px;display:inline-flex;align-items:center;padding:0 16px;color:var(--g70);white-space:nowrap}
+.lbl{font-size:12px;line-height:16px;color:var(--g60)}
+.status{border-left:3px solid var(--g70);background:var(--w);padding:12px 16px;display:flex;flex-direction:column;gap:4px}
+.status b{font-weight:600}
+.sk{background:var(--g20);height:16px}
+/* tearsheet */
+.scrim{position:absolute;top:48px;left:0;right:0;bottom:0;background:rgba(22,22,22,.5);z-index:6}
+.tear{position:absolute;left:600px;width:720px;top:112px;bottom:0;background:var(--w);z-index:7;display:flex;flex-direction:column}
+.narrow .tear{left:16px;width:992px}
+.tear .th{padding:24px 24px 16px;border-bottom:1px solid var(--g20)}
+.tear .th h4{font-size:20px;line-height:28px;font-weight:400}
+.tear .th p{color:var(--g70);margin-top:4px}
+.tear .tb{padding:24px;display:flex;flex-direction:column;gap:24px;overflow:auto;flex:1}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--g20)}
+.cards.two{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--g10);padding:16px;display:flex;flex-direction:column;gap:4px}
+.card b{font-size:20px;line-height:28px;font-weight:400}
+.card span{font-size:12px;line-height:16px;color:var(--g60)}
+.cons{display:flex;flex-direction:column;gap:8px}
+.cons h5{font-size:14px;line-height:18px;font-weight:600}
+.cons div{display:flex;gap:12px;align-items:flex-start}
+.cons div::before{content:"—";color:var(--g60)}
+.errs{border:1px solid var(--g20);max-height:200px;overflow-y:scroll}
+.errs div{height:32px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--g10);font-size:12px}
+.errs code{width:64px}
+.foot{display:flex;border-top:1px solid var(--g20)}
+.foot span{flex:1;height:64px;display:flex;align-items:center;padding:0 16px}
+.foot .g{color:var(--g70);background:var(--g10)}
+.foot .p{background:var(--b60);color:#fff}
+.foot .p.dis{background:var(--g30);color:var(--g60)}
+.done{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;color:var(--g100);white-space:nowrap;flex:none}
+.done::before{content:"✓"}
+.sheet{position:absolute;left:168px;top:96px;width:1584px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pane{background:var(--w);border:1px solid var(--g30);padding:16px;min-height:280px;display:flex;flex-direction:column;gap:16px}
+.cap{font:11px/16px "IBM Plex Mono",monospace;color:var(--g60)}
+.empty{padding:0}
+.empty b{display:block;font-size:20px;line-height:28px;font-weight:400;margin-bottom:8px}
+.empty p{color:var(--g70)}
+</style>
+</head>
+<body>
+<h1>Settings (<code>/admin/settings</code>)</h1>
+<p>Phase 2 wireframe, slice 5. Spec: <code>PHASE2UX.md</code> §1S. Decisions D6 (fixed: settings archetype, restore confirmed with consequences, no Reset draft) and D6-a…e (owner-approved 2026-09-03). Content in the left 8 columns of the 1584 live area; no page-level primary; one primary per section. Frame invariants: tearsheets exit via <b>Cancel only</b> (no ×); every file trigger states its accepted type and the 5 MB limit up front.</p>
+<label class="fit"><input type="checkbox" id="fit"> Fit frames to half size</label>
+
+<h2>1 · Default</h2>
+<ul>
+  <li>Reserved hamburger slot; Settings current; Draft indicator. Header: title + subtitle, no primary. Callout below (never dismissible).</li>
+  <li>CSV: <b>Import CSV · .csv up to 5 MB</b> (primary) · Export CSV · Download template; file line with the columns and an example row. Snapshots: <b>Export draft snapshot</b> (primary) · Restore draft snapshot… (.json up to 5 MB). No Reset draft; no danger styling.</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#" aria-current="page">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live"><div class="col">
+    <div class="ph"><h3>Settings</h3><p>Import, export and recovery. Everything here changes the draft only.</p></div>
+    <div class="callout" role="note"><b>The published map is never touched until you publish.</b> Restores replace the entire draft — review before confirming.</div>
+    <section class="sec" aria-labelledby="s1"><h4 id="s1">CSV assignments</h4><p class="help">Imports update draft assignments; seat positions don't move.</p>
+      <div class="acts"><span class="prim">Import CSV <span class="lbl" style="color:#fff;opacity:.85">.csv up to 5 MB</span></span><span class="tert">Export CSV</span><span class="ghost">Download template</span></div>
+      <div class="lbl">Columns: seat_label, employee_name, employee_email, position, department, zone, status, notes — e.g. <code>A-12, Jane Doe, , Associate, Litigation, North Wing, assigned, Window seat</code></div>
+    </section>
+    <section class="sec" aria-labelledby="s2"><h4 id="s2">Draft snapshots</h4><p class="help">Draft seats and employees only. Not a database backup — it does not include the published map, publish history or accounts.</p>
+      <div class="acts"><span class="prim">Export draft snapshot</span><span class="tert">Restore draft snapshot… <span class="lbl" style="margin-left:8px">.json up to 5 MB</span></span></div>
+      <div class="lbl">Restore takes a file exported from this page. You review the counts and the consequences before anything changes.</div>
+    </section>
+  </div></div>
+  <span class="dim" style="left:172px;top:52px">content column 776 (8 of 16) · no page primary · one primary per section (D6-a)</span>
+  <span class="dim" style="left:960px;top:52px">type + 5 MB limit stated on the trigger, before choosing a file · Reset draft gone (D6-d)</span>
+</div>
+
+<h2>2 · CSV review — valid (narrow tearsheet, D6-b)</h2>
+<ul><li>720 centred, anchored bottom, header visible above. Counts, consequence line, footer Cancel · <b>Apply import</b>. No ×.</li></ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#" aria-current="page">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live"><div class="col"><div class="ph"><h3>Settings</h3><p>Import, export and recovery. Everything here changes the draft only.</p></div></div></div>
+  <div class="scrim"></div>
+  <section class="tear" role="dialog" aria-modal="true" aria-labelledby="t1">
+    <div class="th"><h4 id="t1">Review CSV import</h4><p>assignments-sept.csv · 3.1 MB · applies to the draft only.</p></div>
+    <div class="tb">
+      <div class="cards"><div class="card"><b>68</b><span>Rows</span></div><div class="card"><b>41</b><span>Assignments</span></div><div class="card"><b>6</b><span>Cleared</span></div><div class="card"><b>2</b><span>Reserved</span></div><div class="card"><b>0</b><span>Unavailable</span></div></div>
+      <div class="cons"><h5>What applying does</h5><div>Updates draft assignments for these 68 seats; marker positions do not move.</div><div>Creates employees named in the file who are not in the directory yet.</div><div>The published map does not change until you publish.</div></div>
+    </div>
+    <div class="foot"><span class="g">Cancel</span><span class="p">Apply import</span></div>
+  </section>
+  <span class="dim" style="left:604px;top:116px">narrow tearsheet 720 · exit via Cancel only — no ×</span>
+</div>
+
+<h2>3 · CSV review — blocked (error list scrolls)</h2>
+<ul><li>Apply disabled <b>with the reason inline above it</b>; the row list scrolls inside the body; header and footer fixed. Cancel is the only exit.</li></ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#" aria-current="page">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span></header>
+  <div class="live"><div class="col"><div class="ph"><h3>Settings</h3><p>Import, export and recovery. Everything here changes the draft only.</p></div></div></div>
+  <div class="scrim"></div>
+  <section class="tear" role="dialog" aria-modal="true">
+    <div class="th"><h4>CSV import has blocking errors</h4><p>assignments-sept.csv · 3.1 MB · nothing has been applied.</p></div>
+    <div class="tb">
+      <div class="cards"><div class="card"><b>68</b><span>Rows</span></div><div class="card"><b>—</b><span>Assignments</span></div><div class="card"><b>—</b><span>Cleared</span></div><div class="card"><b>—</b><span>Reserved</span></div><div class="card"><b>—</b><span>Unavailable</span></div></div>
+      <div class="status" role="alert"><b>4 rows block this import</b><span>Fix these rows in the CSV, then import the file again. No draft data has changed.</span></div>
+      <div class="errs"><div><code>Row 3</code>Seat label is required.</div><div><code>Row 14</code>Invalid status 'away'.</div><div><code>Row 27</code>Assigned rows require employee_name.</div><div><code>Row 41</code>Duplicate seat row 'NE04'.</div><div><code>Row 52</code>Employee 'Sarah Reyes' appears as assigned more than once.</div><div><code>Row 60</code>employee_email requires employee_name.</div><div><code>Row 63</code>Rows with employee_name cannot be reserved.</div></div>
+    </div>
+    <div class="foot"><span class="g">Cancel</span><span class="p dis" aria-disabled="true">Apply import</span></div>
+  </section>
+</div>
+
+<h2>4 · Restore review — consequences + "Export the current draft first" (D6-c, D6-e)</h2>
+<ul>
+  <li>Counts with the file name and export date; consequences list, one line each; the <b>ghost button</b> Export the current draft first — pressing it downloads without closing or resetting the review, and its label becomes the done-state <b>"Exported 14:02"</b> in place (shown after press).</li>
+  <li>Footer Cancel · <b>Restore draft snapshot</b>. No typed confirmation (moderate impact). No ×.</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#" aria-current="page">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live"><div class="col"><div class="ph"><h3>Settings</h3><p>Import, export and recovery. Everything here changes the draft only.</p></div></div></div>
+  <div class="scrim"></div>
+  <section class="tear" role="dialog" aria-modal="true" aria-labelledby="t4">
+    <div class="th"><h4 id="t4">Review draft snapshot restore</h4><p>seat-map-export.json · exported 29 Aug 2026, 17:03 · 412 KB</p></div>
+    <div class="tb">
+      <div class="cards two"><div class="card"><b>68</b><span>Draft seats in the file</span></div><div class="card"><b>71</b><span>Employees in the file</span></div></div>
+      <div class="cons"><h5>What restoring does</h5>
+        <div>Replaces every draft seat assignment with the file's.</div>
+        <div>Deletes custom seats that are not in the file (original seats are never deleted).</div>
+        <div>Updates employee details from the file — employees are never deleted.</div>
+        <div>Leaves the published map untouched until you publish.</div>
+        <div>Clears Undo history.</div>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center"><span class="done">Exported 14:02</span><span class="lbl">was: ghost button "Export the current draft first" — downloads the current draft; the review stays open</span></div>
+    </div>
+    <div class="foot"><span class="g">Cancel</span><span class="p">Restore draft snapshot</span></div>
+  </section>
+  <span class="dim" style="left:604px;top:116px">D6-e: the export-first ghost button shows its done-state in place; the tearsheet does not close or reset</span>
+</div>
+
+<h2>5 · States — sheet</h2>
+<ul><li>Section-level unhappy paths before any tearsheet (wrong type, too large, empty, missing columns, invalid snapshot shape) · MLS02 inside the restore review (review intact) · success statuses · busy primaries · loading skeleton · shared 403 card.</li></ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#" aria-current="page">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span></header>
+  <div class="sheet">
+    <div class="pane"><span class="cap">CSV — file rejected before review (inline under the section)</span><div class="status" role="alert"><b>This file is 7.2 MB — the limit is 5 MB</b><span>Split the sheet or remove unused columns, then import again.</span></div><div class="status" role="alert"><b>Choose a .csv file</b><span>assignments.xlsx isn't a CSV. Export it as CSV first.</span></div><div class="status" role="alert"><b>Missing required columns: zone, status</b><span>Download the template to see the expected header row.</span></div><div class="status" role="alert"><b>The CSV is empty</b><span>The file has a header row and nothing else.</span></div></div>
+    <div class="pane"><span class="cap">SNAPSHOT — rejected before review · MLS02 inside the review</span><div class="status" role="alert"><b>The snapshot must include seats and employees arrays</b><span>Use a file exported from this page.</span></div><div class="status" role="alert"><b>Cannot restore an empty snapshot</b><span>The file has no draft seats.</span></div><div class="status" role="alert" style="margin-top:16px"><b>The draft map changed in another session after it was loaded</b><span>This page has been refreshed with the latest draft — review it and try the restore again if it is still what you want.</span></div><span class="lbl">↑ shown at the top of the review body; counts and consequences stay; Restore stays enabled</span></div>
+    <div class="pane"><span class="cap">SUCCESS (inline status under the section) · BUSY · LOADING · 403</span><div class="status" role="status"><b>CSV import applied</b><span>41 rows updated in the draft. Viewers see nothing until you publish.</span></div><div class="status" role="status"><b>Draft restored from seat-map-export.json</b><span>The draft now matches the snapshot. Undo history was cleared.</span></div><div class="acts"><span class="prim busy">Applying…</span><span class="tert" style="color:var(--g50);border-color:var(--g30)">Export CSV</span></div><div><div class="sk" style="width:200px;margin-bottom:8px"></div><div class="sk" style="width:60%;margin-bottom:8px"></div><div class="sk" style="width:320px;height:40px"></div></div><div class="empty"><b>Admin access required</b><p>You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to edit the seat map.</p><span class="tert" style="margin-top:8px">Back to seat map</span></div></div>
+  </div>
+</div>
+
+<h2>6 · Narrow fallback (1024)</h2>
+<ul><li>Content column full width; the tearsheet spans the width minus 32. Everything else unchanged.</li></ul>
+<div class="frame narrow">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><span class="mode"><span class="mk mk-draft"></span>Draft · 4</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live"><div class="col">
+    <div class="ph"><h3>Settings</h3><p>Import, export and recovery. Everything here changes the draft only.</p></div>
+    <div class="callout"><b>The published map is never touched until you publish.</b> Restores replace the entire draft — review before confirming.</div>
+    <section class="sec"><h4>CSV assignments</h4><p class="help">Imports update draft assignments; seat positions don't move.</p><div class="acts"><span class="prim">Import CSV <span class="lbl" style="color:#fff;opacity:.85">.csv up to 5 MB</span></span><span class="tert">Export CSV</span><span class="ghost">Download template</span></div></section>
+    <section class="sec"><h4>Draft snapshots</h4><p class="help">Draft seats and employees only. Not a database backup.</p><div class="acts"><span class="prim">Export draft snapshot</span><span class="tert">Restore draft snapshot… <span class="lbl" style="margin-left:8px">.json up to 5 MB</span></span></div></section>
+  </div></div>
+</div>
+</body>
+</html>

@@ -1212,6 +1212,40 @@ out, no typed confirmation. **Q7 ruled 2026-09-02 — the map's "Discard draft c
 "Reset draft" is retired.** `resetDraftToPublishedAction` and the `reset_draft_*` RPC family stay for the map;
 Phase 4 removes only the Settings entry in `components/admin-settings/DataUtilitiesPanel.tsx`.
 
+##### D6 — Phase 2 amendments (2026-09-03, Settings PR; owner-approved as written, D6-e added by ruling)
+
+**D6-a · Settings archetype on the 1584 live area; content in the left 8 columns (776px); no page-level
+primary.** The two sections are unlike tasks, so each carries its own one primary (senior-workflow: section
+primaries live in their sections). The standing guidance banner becomes a proper **callout** — loads with the
+page, never dismissible, no status (patterns: guidance before a task). **Would change if** a third recovery
+tool arrives (then a settings left-nav) or restores become frequent.
+
+**D6-b · CSV section: primary Import CSV; review in a narrow tearsheet.** Labelled trigger stating the type and
+limit up front ("Import CSV · .csv up to 5 MB"), columns and an example row on a file line under the actions.
+The review leaves the modal: the blocking-error list scrolls, and a scrolling list is complex data
+(SKILL.md: never in a dialog). Apply is disabled while blocked **with the reason inline above it**, never bare.
+Unhappy paths written in — wrong type, too large (5 MB guard, none ships today), empty, missing columns,
+MLS02 with the refreshed-directory note. All-or-nothing stays (as shipped).
+
+**D6-c · Snapshots section: primary Export draft snapshot; Restore is tertiary and reviewed.** The backup is
+the frequent act; restore is rare. Restore = moderate impact (D6): a narrow tearsheet with counts, the file's
+name and export date, and a **consequences list** — every draft assignment replaced; custom seats not in the
+file deleted; employee details updated, never deleted; the published map untouched until publish; Undo
+history cleared — then Cancel · Restore draft snapshot. No typed confirmation. MLS02 keeps the review open
+with the refreshed-draft note.
+
+**D6-d · Reset draft gone from Settings** (ruling 22; Q7 keeps the map's Discard). The snapshots section loses
+its danger styling — nothing destructive remains on the page. Not-admin uses the shared 403 card with the
+action; the route error keeps the admin voice; loading is section skeletons.
+
+**D6-e · "Export the current draft first" inside the restore review** (owner ruling 2026-09-03). A **ghost
+button** (an action, not a link) in the review body: downloads the current draft snapshot, does **not** close
+the tearsheet or reset the review, and shows its own done-state in place — "Exported 14:02" — so the admin
+can see it happened before pressing Restore. Reuses the section's export; nothing new is written.
+
+**Frame invariants (owner, 2026-09-03):** tearsheets exit via Cancel only — no close ×; file inputs get
+labelled triggers with the accepted type and the 5 MB limit stated up front, not only in the error.
+
 ---
 
 ## 6. Deviations from Carbon, recorded
