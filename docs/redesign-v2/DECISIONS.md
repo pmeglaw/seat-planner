@@ -1172,6 +1172,38 @@ session); invalid credentials; magic-link sent; reset requested; and a submittin
 Page header: title + one primary action on the 1584px centred live area. The `publishHistory` tab is
 removed — history lives in the History panel (D0-a).
 
+##### D5 — Phase 2 amendments (2026-09-03, Management PR; owner-approved with two edits to D5-b)
+
+**D5-a · The page header owns the one primary, and it follows the tab.** 1584 live area (D0). Title, subtitle,
+a real tablist (Employees · Departments · Zones; `?tab=` unchanged, default paramless), sticky on scroll.
+The primary is the current tab's create — Add employee / Add department / Add zone — never in the toolbar.
+The five summary tiles are **dropped** (owner, 2026-09-03): they linked nowhere; the employee counts fold into
+the Employees toolbar count ("68 employees · 56 assigned · 12 unassigned", replaced by "7 of 68 match" while
+filtering); draft-seat and zone counts already live on the map band and in the History panel. **Would change
+if** a tab grows a second create action.
+
+**D5-b · Employees is an index page; create/edit is a 480px slide-over side panel.** Compact sortable table
+(32px rows — scanned), kebab per row, name links to the map seat. The form moves out of the modal into a side
+panel because **the admin must keep referencing the table behind it** — the neighbours, the department
+spelling, who is already assigned — which is the side-panel criterion (five inputs sits exactly between the
+skill's "fewer than five → dialog" and "more than five → side panel", so field count decides nothing here).
+The panel is **slide-over, focus-trapped**: the form is self-contained and the table is context, not something
+operated mid-edit, so it behaves as a dialog (composition: slide-over overlays and traps focus). Width is
+Carbon's 480 — deviation 15's 400 was a marker-pitch argument for the map canvas and does not apply to a
+document page; recorded so the two are not "harmonised" later. Deactivate is moderate impact: a confirm dialog
+on top of the side panel with the consequences spelled out (a side panel may open a confirmation; a modal may
+not); the published-map refusal becomes an inline error in the panel with a link to the seat. No reactivate,
+bulk actions or delete are added.
+
+**D5-c · Departments and Zones are structured lists with visible actions.** Row: name · count · ghost Rename
+(inline) · overflow ⋯ with Delete (danger). The hover-revealed trash goes — hidden-until-hover actions are
+keyboard-undiscoverable and a taste tell. Create = the header primary opening a one-field modal. Delete keeps
+the shipped confirm copy (moderate impact, no typed confirmation). Names only; zone geometry stays on the map.
+
+**D5-d · Route boundaries.** Not-admin uses the same 403 card as `/admin`, gaining the "Back to seat map"
+action the shipped body-only variant lacks; the route error keeps its own admin voice; loading is skeleton
+rows under real column headers.
+
 #### D6 · Settings
 `/admin/settings`. Settings archetype: single-column forms grouped by section. Contents: CSV import,
 JSON snapshot restore. **Reset draft is retired** (ruling 22) — too destructive to keep; undo history and
