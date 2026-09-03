@@ -74,15 +74,15 @@
   <h3>Published — ■ filled square</h3>
   <div class="state"><span class="spec-note">rest</span><div class="band"><button class="sp-mode sp-mode--published" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
   <div class="state"><span class="spec-note">hover · #333333</span><div class="band"><button class="sp-mode sp-mode--published" data-state="hover" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
-  <div class="state"><span class="spec-note">pressed · #262626</span><div class="band"><button class="sp-mode sp-mode--published" data-state="pressed" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
-  <div class="state"><span class="spec-note">open · aria-expanded</span><div class="band"><button class="sp-mode sp-mode--published" aria-expanded="true"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
+  <div class="state"><span class="spec-note">pressed · #393939</span><div class="band"><button class="sp-mode sp-mode--published" data-state="pressed" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
+  <div class="state"><span class="spec-note">open · outlined, no bottom edge</span><div class="band"><button class="sp-mode sp-mode--published" aria-expanded="true"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
   <div class="state"><span class="spec-note">focus · 2px white inset</span><div class="band"><button class="sp-mode sp-mode--published" data-state="focus" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
 
   <h3>Draft — ◇ hollow diamond, 2px, orange 40</h3>
   <div class="state"><span class="spec-note">rest · N ≥ 1</span><div class="band"><button class="sp-mode sp-mode--draft" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</button></div></div>
   <div class="state"><span class="spec-note">rest · N = 0</span><div class="band"><button class="sp-mode sp-mode--draft" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — no changes</button></div></div>
   <div class="state"><span class="spec-note">hover · #333333</span><div class="band"><button class="sp-mode sp-mode--draft" data-state="hover" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</button></div></div>
-  <div class="state"><span class="spec-note">pressed · #262626</span><div class="band"><button class="sp-mode sp-mode--draft" data-state="pressed" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</button></div></div>
+  <div class="state"><span class="spec-note">pressed · #393939</span><div class="band"><button class="sp-mode sp-mode--draft" data-state="pressed" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</button></div></div>
   <div class="state"><span class="spec-note">open</span><div class="band"><button class="sp-mode sp-mode--draft" aria-expanded="true"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</button></div></div>
   <div class="state"><span class="spec-note">focus</span><div class="band"><button class="sp-mode sp-mode--draft" data-state="focus" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</button></div></div>
   <div class="state"><span class="spec-note">overflow · 120 fits (≤ 22 chars)</span><div class="band"><button class="sp-mode sp-mode--draft" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 120 changes</button></div></div>
@@ -121,35 +121,35 @@
   </div>
 
   <h2 id="seat">Seat status marks — <code>.sp-seat-mark</code>, <code>.sp-seat-legend</code>, <code>.sp-seat-footprint</code></h2>
-  <p class="spec-anatomy">Four enum states, one symbol each, grays only. Assigned ● (legend only — on the plan the name pill is the mark). Open ○ hollow ring 2px. Reserved lock — hollow shackle, filled body. Unavailable hatched square, 2px edge. 16px marks beside 14px type; label text-secondary. The constant 28px footprint is the empty-seat marker on the plan; the name pill and its interaction states are PR 3.</p>
+  <p class="spec-anatomy">Four enum states, one mark each, grays only. Assigned = a miniature of the name pill (● never appears on the plan). Open ○ hollow ring 2px. Reserved lock — hollow shackle, filled body. Unavailable hatched square, 2px edge. 16px marks beside 14px type; label text-secondary. The constant 28px footprint is the empty-seat marker on the plan; the name pill and its interaction states are PR 3.</p>
 
   <h3>Legend row on every surface it lands on</h3>
   <div class="surface"><span class="spec-note">background</span><div class="strip on-bg">
-    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned 55</span>
+    <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16" aria-hidden="true"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16" aria-hidden="true"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
   </div></div>
   <div class="surface"><span class="spec-note">layer-01 (band, inspector)</span><div class="strip on-layer">
-    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned 55</span>
+    <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16" aria-hidden="true"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16" aria-hidden="true"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
   </div></div>
   <div class="surface"><span class="spec-note">layer-hover-01 — worst case</span><div class="strip on-hover">
-    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned 55</span>
+    <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16" aria-hidden="true"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16" aria-hidden="true"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
   </div></div>
   <div class="surface"><span class="spec-note">layer-selected-01 (selected row)</span><div class="strip on-selected">
-    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned 55</span>
+    <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16" aria-hidden="true"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16" aria-hidden="true"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
   </div></div>
   <div class="surface"><span class="spec-note">grayscale · on layer-hover-01</span><div class="strip on-hover gray" aria-hidden="true">
-    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned 55</span>
+    <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
@@ -175,7 +175,7 @@
 
   <h3>Inside the dark right panel (History event rows never carry seat marks; the Account panel's My seat row does)</h3>
   <div class="surface"><span class="spec-note">panel-dark-bg · #161616</span><div class="strip on-dark">
-    <span class="sp-seat-legend" style="color:var(--sp-panel-dark-text)"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true" style="color:var(--sp-panel-dark-text)"><circle data-fill cx="8" cy="8" r="6"/></svg>NE04 · North-east pod</span>
+    <span class="sp-seat-legend" style="color:var(--sp-panel-dark-text)"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>NE04 · North-east pod</span>
     <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true" style="color:var(--sp-panel-dark-text-secondary)"><circle data-stroke cx="8" cy="8" r="6"/></svg>No seat published for you yet</span>
   </div></div>
 </main>

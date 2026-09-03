@@ -266,12 +266,12 @@
    5. TIER C — ZONE: the Gray 100 shell and the dark right panels.
       Theme-invariant by ruling. Palette references, by exception (see header).
       Surfaces checked in PHASE3DS §3: rest gray 100 · hover gray-90-hover ·
-      pressed gray 90 · panel rule gray 80.
+      pressed gray 80 (Carbon's dark ladder steps LIGHTER on active) · panel rule gray 80.
    -------------------------------------------------------------------------- */
 :root {
   --sp-shell-bg:            var(--gray-100);
   --sp-shell-bg-hover:      var(--gray-90-hover);   /* gray-90-hover — matches .cds-header-nav a:hover */
-  --sp-shell-bg-pressed:    var(--gray-90);         /* gray 90 — the pressed header surface (hand-off) */
+  --sp-shell-bg-pressed:    var(--gray-80);         /* gray 80 — active steps lighter than hover on the dark ladder (owner ruling, #507) */
   --sp-shell-rule:          var(--gray-80);         /* 1px bottom rule; panel left rule; utility outline */
   --sp-shell-text:          var(--gray-10);
   --sp-shell-text-secondary:var(--gray-30);

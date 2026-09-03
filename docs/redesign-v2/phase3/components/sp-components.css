@@ -22,8 +22,11 @@
       A status-only button on the Gray 100 header (PHASE2UX §1.2 slot 4, §1.5).
       Anatomy: [mark 12px] [gap 8] [text body-compact-01], 48px tall, 16px
       side padding, centred on x=960 by the header, never truncates.
-      States: rest · hover · pressed · open (aria-expanded) · focus · loading
-      (skeleton, not pressable) · error (still opens the panel).
+      States: rest · hover · pressed (gray 80, lighter than hover — the dark
+      ladder) · open (aria-expanded: OUTLINED, 1px rule top/left/right, no
+      bottom edge — it flows into the History panel's left rule; ui-shell.md)
+      · focus · loading (skeleton, not pressable) · error (still opens the
+      panel). The same outlined-open treatment is the utilities' (PR 2).
       Nearest asset class: .cds-header-utils button (icon-only, 48×48) — no
       text slot, no mark vocabulary, no skeleton; .cds-status (icon + label)
       is the right anatomy but sits on theme surfaces, not the shell zone.
@@ -37,8 +40,11 @@
   transition: background var(--sp-duration-fast-02) var(--sp-ease-standard);
 }
 .sp-mode:is(:hover, [data-state="hover"]) { background: var(--sp-shell-bg-hover); }
-.sp-mode:is(:active, [data-state="pressed"]),
-.sp-mode[aria-expanded="true"] { background: var(--sp-shell-bg-pressed); }
+.sp-mode:is(:active, [data-state="pressed"]) { background: var(--sp-shell-bg-pressed); }
+.sp-mode[aria-expanded="true"] {
+  background: var(--sp-shell-bg);
+  box-shadow: inset 1px 0 0 var(--sp-shell-rule), inset -1px 0 0 var(--sp-shell-rule), inset 0 1px 0 var(--sp-shell-rule);
+}
 .sp-mode:is(:focus-visible, [data-state="focus"]) {
   outline: var(--sp-focus-width) solid var(--sp-shell-focus);
   outline-offset: var(--sp-focus-offset);
@@ -74,17 +80,27 @@
       lacks is the symbol set itself and the constant 28px footprint the map
       needs. Four states (lib/types.ts SeatStatus), one symbol each, grays
       only — the symbol is the signal and survives grayscale:
-        assigned    ● filled circle (legend only — on the map the name pill IS the mark)
+        assigned    a miniature name pill (the real mark — ● never appears on the map)
         available   ○ hollow ring, 2px
         reserved    lock — hollow shackle, filled body
         unavailable hatched square, 2px edge
-      Marks are 16px beside 14px type; strokes 2px (status-and-dataviz sizing).
+      Marks are 16px beside 14px type; every stroke 2px, the hatch included
+      (1.5px straddled pixels at 16px in the rig).
    -------------------------------------------------------------------------- */
 .sp-seat-mark { width: var(--sp-seat-mark); height: var(--sp-seat-mark); flex: none; color: var(--sp-seat-mark-stroke-color); }
 .sp-seat-mark [data-stroke] { fill: none; stroke: currentColor; stroke-width: var(--sp-seat-mark-stroke); stroke-linecap: butt; }
-.sp-seat-mark [data-hatch]  { fill: none; stroke: currentColor; stroke-width: 1.5px; }
+.sp-seat-mark [data-hatch]  { fill: none; stroke: currentColor; stroke-width: var(--sp-seat-mark-stroke); }
 .sp-seat-mark [data-fill]   { fill: currentColor; }
-.sp-seat-mark--assigned { color: var(--sp-seat-mark-fill-color); }
+
+/* assigned, in a legend: a 28×16 miniature of the name pill — footprint fill + edge,
+   a 2px name-line in the fill colour. The full pill is PR 3. */
+.sp-seat-mark--pill {
+  display: inline-grid; place-items: center;
+  width: var(--sp-seat-footprint); height: var(--sp-seat-mark); flex: none;
+  background: var(--sp-seat-footprint-fill);
+  box-shadow: inset 0 0 0 1px var(--sp-seat-footprint-border);
+}
+.sp-seat-mark--pill::before { content: ""; width: var(--sp-space-05); height: var(--sp-space-01); background: var(--sp-seat-mark-fill-color); }
 
 /* legend row: mark + label, 32px, label text-secondary; sits in the band and the inspector header */
 .sp-seat-legend { display: inline-flex; align-items: center; gap: var(--sp-space-03); height: var(--sp-size-sm); padding: 0 var(--sp-space-03);

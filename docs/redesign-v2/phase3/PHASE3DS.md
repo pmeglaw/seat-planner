@@ -1,6 +1,6 @@
 # Seat Planner redesign — Phase 3: UI design system
 
-**Status: in progress — PR 1 of 5 (tokens + foundations).** Inputs: `PHASE2UX.md` (§1 geometry, §2 states,
+**Status: in progress — PR 1 of 5 (tokens + foundations) merged; PR 2 (shell) next.** Inputs: `PHASE2UX.md` (§1 geometry, §2 states,
 §3 component table, the close-out note), `DECISIONS.md` (D0–D6, §6 deviations 1–15), the `ibm-design-language`
 skill (`SKILL.md`, `tokens.md`, `design-engineering.md`, `status-and-dataviz.md`, `carbon-next.md`, `taste.md`) and
 its two assets, `app/globals.css` as an inventory of consumer names only. Nothing under `app/`, `components/`
@@ -64,7 +64,7 @@ forced attribute — three states, one definition each. Every specimen page runs
 eight lines) so the mechanism is proven before Phase 4 binds it; the Account panel's Theme radio (D0-b) drives
 it.
 **Trade-off.** Two attributes on `<html>` instead of one. **Would change if** the asset ever switches on
-`data-theme` natively.
+`data-theme` natively. **Ruled by the owner (#507): decided, not open.**
 
 ### 1.3 Mode indicator — Shell → `.sp-mode` (§3 "Mode indicator · hand-built")
 
@@ -78,13 +78,16 @@ not a control.
 padding. Marks, each two signals (shape + fill): **■** filled square gray 10 = Published; **◇** hollow
 diamond 2px orange 40 (`--cds-support-caution-major`, identical in both themes) = Draft; **□** hollow square
 gray 40 = never published; **⊗** filled circle red 50 with a 2px cut = error, still pressable. Surfaces:
-rest `#161616`, hover `#333333` (the asset's `.cds-header-nav a:hover` step), pressed `#262626` (hand-off),
-open = pressed. Focus 2px white inset. Loading = a 160×16 skeleton in the slot with `aria-busy`, not a
+rest `#161616`, hover `#333333` (the asset's `.cds-header-nav a:hover` step), pressed `#393939` — gray 80, the
+dark ladder steps *lighter* on active (owner ruling #507; the hand-off's `#262626` named a surface to test
+marks against, not the pressed design). **Open ≠ pressed:** `[aria-expanded="true"]` keeps the shell
+background and draws a 1px `--sp-shell-rule` on top, left and right with no bottom edge, so the outline
+flows into the History panel's left rule (`ui-shell.md`); the Help / History / Account utilities take the
+same treatment in PR 2. Focus 2px white inset. Loading = a 160×16 skeleton in the slot with `aria-busy`, not a
 disabled button. Narrow: mark + "Published" / "Draft · 4" (D0-e) is copy, not a variant class.
 **Trade-off.** Orange is the one non-gray hue in the shell; it is the product's Draft colour by ruling and
-clears 5.13:1 on the hover surface (§3). Pressed `#262626` sits *darker* than hover `#333333`, against
-Carbon's dark-ladder direction (active steps lighter) — kept as ruled, listed under "Open for the owner".
-**Would change if** the History panel gains a third mode, or the owner reverses the pressed grade.
+clears 5.13:1 on hover and 4.69:1 on pressed (§3) — gray 70 was rejected for pressed because orange 40
+lands near 3:1 on `#525252`. **Would change if** the History panel gains a third mode.
 
 ### 1.4 Seat status marks — Map → `.sp-seat-mark`, `.sp-seat-legend`, `.sp-seat-footprint` (§3 "Status marks", deviation 3)
 
@@ -95,10 +98,12 @@ header, and inside the dark Account panel — and survive grayscale on a hovered
 footprint. Colour per state (the shipped legend) was rejected: colour alone never carries meaning and five
 colours on 68 markers is exactly the "colourful screen" failure. Shape per state on the plan was rejected:
 seats are positions; changing the outline lies about geometry (D1).
-**Choice.** Constant footprint, distinct **symbol** per state, grays only — the symbol is the signal:
-● filled circle = assigned (legend only; on the plan the *name pill* is the mark, PR 3); ○ hollow ring 2px
-= open; lock (hollow shackle, filled body) = reserved; hatched square with a 2px edge = unavailable. Marks
-16px beside 14px type, strokes 2px (status-and-dataviz sizing at 16px). Stroke colour `--sp-icon-secondary`
+**Choice.** Constant footprint, distinct **mark** per state, grays only — the mark is the signal:
+assigned = a 28×16 **miniature of the name pill** (footprint fill + edge, a 2px name-line) because ● never
+appears on the plan and ○ vs ● differ by fill alone (owner ruling #507; `.sp-seat-mark--assigned` removed,
+nothing consumes it); ○ hollow ring 2px = open; lock (hollow shackle, filled body) = reserved; hatched
+square with a 2px edge = unavailable. Marks 16px beside 14px type, every stroke 2px including the hatch
+(1.5px straddled pixels at 16px in the rig). Stroke colour `--sp-icon-secondary`
 (gray 70 light / gray 30 dark), fill `--sp-icon-primary`. The empty-seat marker on the plan is a 28×28
 footprint (`--sp-seat-footprint`, deviation 8's height cap) with the symbol centred, fill `--sp-layer-02`,
 1px edge `--sp-icon-secondary`, hover fill `--sp-layer-hover-02`.
@@ -143,8 +148,9 @@ Filled per PR. Rows marked *pending* land in the PR named.
 
 Script: `scripts/check_contrast.py` from the `ibm-design-language` skill, run once at the end of PR 1.
 Surfaces checked: white, `layer-01`, `layer-hover-01` (the preset), plus — because this product has them —
-the shell / dark-panel surface `#161616`, the hover surface `#333333`, the pressed surface `#262626`, the
-dark-theme `layer-selected` `#393939`, and both themes' `highlight`.
+the shell / dark-panel surface `#161616`, the hover surface `#333333`, the pressed surface `#393939` (gray
+80, which is also the dark-theme `layer-selected` and footprint fill), the dark panel's raised row `#262626`,
+and both themes' `highlight`.
 
 **`--preset all` — summary line pasted verbatim:**
 
@@ -169,8 +175,8 @@ The six are Carbon's own known traps (`tokens.md`), none of which any `--sp-*` t
 52/52 pass
 ```
 
-Every mark on every surface it lands on: the four mode marks on `#161616` / `#333333` / `#262626`
-(lowest: error ⊗ red 50 on hover, 3.77:1); shell text, secondary, helper, current-link bar (blue 50,
+Every mark on every surface it lands on: the four mode marks on `#161616` / `#333333` / `#393939`
+(lowest: error ⊗ red 50 on pressed, 3.44:1; Draft ◇ orange 40 on pressed 4.69:1); shell text, secondary, helper, current-link bar (blue 50,
 5.41), white focus; panel link (blue 40, 7.68) and error mark; the seat stroke gray 70 on white / `layer-01` /
 `layer-hover-01` / `layer-selected` (lowest 5.92) and on both footprint fills; the dark-theme stroke gray 30
 on `#161616` / `#262626` / `#333333` / `#393939` / footprint hover `#474747` (lowest 5.44); the Draft orange
@@ -188,7 +194,7 @@ state (PR 2) must therefore not rely on the outline alone — the open panel and
 
 ## 4. Carbon conformance — Phase 3 (TRUE / DIFFERS / NOT COVERED)
 
-Next free deviation number: **16**.
+Next free deviation number: **16** (nothing ledgered in PR 1).
 
 | Decision | Verdict | Skill text |
 |---|---|---|
@@ -197,7 +203,7 @@ Next free deviation number: **16**.
 | `data-theme` kept, Carbon attribute derived | NOT COVERED | asset documents `data-carbon-theme` only; app attribute is an owner ruling |
 | Mode marks: ■ ◇ □ ⊗, shape + fill | TRUE | status-and-dataviz "two of colour, shape, symbol … in the mark itself" |
 | Draft = orange 40 on the shell | TRUE | status palette: orange 40 "serious warning" outline grade on dark; 5.13:1 on hover |
-| Pressed shell surface `#262626` darker than hover `#333333` | DIFFERS — *not ledgered* | tokens.md: dark themes step *up* on active. Kept per hand-off; owner decides (§6) — becomes deviation 16 only if kept |
+| Pressed shell surface gray 80, lighter than hover; open trigger outlined with the bottom edge open | TRUE | tokens.md: dark themes step *up* on active; ui-shell.md: open trigger outlined, flowing into the panel |
 | Seat states as symbols in a constant footprint | TRUE (deviation 3 already ledgered) | status-and-dataviz spatial-map clause |
 | Marks 16px / strokes 2px / grays only | TRUE | status-and-dataviz sizing; SKILL "grays dominate" |
 | `text-helper` replaced by `text-secondary` on hover rows | TRUE | tokens.md known traps — hover surface is the worst case |
@@ -243,12 +249,11 @@ indicator replaces the shipped `PublishStateChip`-style element; History panel w
 
 ---
 
-## 6. Open for the owner (batched; each with a default)
+## 6. Open for the owner
 
-1. **Pressed shell surface.** Hand-off names `#262626`; Carbon's dark ladder steps lighter on active
-   (`#393939`). Default: keep `#262626` and ledger it as deviation 16 at close-out.
-2. **Theme attribute.** Default: keep `data-theme`, derive `data-carbon-theme` (§1.2).
-3. **Seat symbols.** Default: ○ open · lock reserved · hatch unavailable; ● assigned in the legend only.
+None after PR 1. Ruled on #507: pressed shell = gray 80 and open = outlined (§1.3); theme attribute kept,
+Carbon attribute derived (§1.2); seat marks ○ / lock / hatch with the assigned legend entry as a miniature
+pill (§1.4).
 
 ---
 
@@ -256,4 +261,4 @@ indicator replaces the shipped `PublishStateChip`-style element; History panel w
 
 | PR | Branch | Contents |
 |---|---|---|
-| 1 | `docs/phase3-tokens` | assets copied; `sp-tokens.css`; `.sp-mode`, seat marks; specimens 00 + 05 + index + compare; §1.1–1.6, §2 (partial), §3, §4, §5 (partial) |
+| 1 | #507 (`docs/phase3-tokens`) | assets copied; `sp-tokens.css`; `.sp-mode`, seat marks; specimens 00 + 05 + index + compare; §1.1–1.6, §2 (partial), §3, §4, §5 (partial). Owner rulings folded in before merge: pressed gray 80 + outlined open, theme decided, assigned legend = mini pill |

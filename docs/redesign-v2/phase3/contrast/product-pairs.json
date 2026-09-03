@@ -12,9 +12,9 @@
   "kind": "text"
  },
  {
-  "name": "shell text gray-10 on shell pressed #262626",
+  "name": "shell text gray-10 on shell pressed #393939",
   "fg": "#f4f4f4",
-  "bg": "#262626",
+  "bg": "#393939",
   "kind": "text"
  },
  {
@@ -54,9 +54,9 @@
   "kind": "graphic"
  },
  {
-  "name": "shell focus white on pressed #262626",
+  "name": "shell focus white on pressed #393939",
   "fg": "#ffffff",
-  "bg": "#262626",
+  "bg": "#393939",
   "kind": "graphic"
  },
  {
@@ -72,9 +72,9 @@
   "kind": "graphic"
  },
  {
-  "name": "mode Published ■ gray-10 on pressed #262626",
+  "name": "mode Published ■ gray-10 on pressed #393939",
   "fg": "#f4f4f4",
-  "bg": "#262626",
+  "bg": "#393939",
   "kind": "graphic"
  },
  {
@@ -90,9 +90,9 @@
   "kind": "graphic"
  },
  {
-  "name": "mode Draft ◇ orange-40 on pressed #262626",
+  "name": "mode Draft ◇ orange-40 on pressed #393939",
   "fg": "#ff832b",
-  "bg": "#262626",
+  "bg": "#393939",
   "kind": "graphic"
  },
  {
@@ -108,9 +108,9 @@
   "kind": "graphic"
  },
  {
-  "name": "mode Not published □ gray-40 on pressed #262626",
+  "name": "mode Not published □ gray-40 on pressed #393939",
   "fg": "#a8a8a8",
-  "bg": "#262626",
+  "bg": "#393939",
   "kind": "graphic"
  },
  {
@@ -126,9 +126,9 @@
   "kind": "graphic"
  },
  {
-  "name": "mode Error ⊗ red-50 on pressed #262626",
+  "name": "mode Error ⊗ red-50 on pressed #393939",
   "fg": "#fa4d56",
-  "bg": "#262626",
+  "bg": "#393939",
   "kind": "graphic"
  },
  {
