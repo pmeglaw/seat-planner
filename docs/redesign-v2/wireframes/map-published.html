@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Map — Published mode (Phase 2 wireframe)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Low-fi wireframe. Grayscale; Published mode has no primary action, so no Blue 60. 8px grid, zero radius (tag excepted). */
+:root{--g10:#f4f4f4;--g20:#e0e0e0;--g30:#c6c6c6;--g50:#8d8d8d;--g60:#6f6f6f;--g70:#525252;--g80:#393939;--g90:#262626;--g100:#161616;--w:#fff}
+*{box-sizing:border-box;border-radius:0;margin:0}
+body{font:400 14px/20px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.16px;color:var(--g100);background:var(--g20);padding:32px}
+h1{font-size:28px;line-height:36px;font-weight:400;margin-bottom:8px}
+h2{font-size:20px;line-height:28px;font-weight:400;margin:48px 0 8px}
+p,li{max-width:960px}
+ul{padding-left:20px;margin:8px 0}
+code{font-family:"IBM Plex Mono",monospace;font-size:12px}
+button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.fit{display:inline-flex;gap:8px;align-items:center;height:32px;margin:8px 0 16px}
+body:has(#fit:checked) .frame{zoom:.5}
+.frame{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--g10);outline:1px solid var(--g30);margin:8px 0 16px}
+.dim{position:absolute;font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);background:rgba(255,255,255,.9);padding:0 4px;pointer-events:none;z-index:5}
+/* shell header (from slice 1) */
+.hdr{position:absolute;left:0;right:0;top:0;height:48px;background:var(--g100);color:var(--g10);display:flex;align-items:center;border-bottom:1px solid var(--g80)}
+.slot48{width:48px;height:48px;flex:none;display:grid;place-items:center}
+.ham{width:16px;height:12px;background:linear-gradient(var(--g10) 0 2px,transparent 2px 5px,var(--g10) 5px 7px,transparent 7px 10px,var(--g10) 10px 12px)}
+.name{height:48px;line-height:48px;display:block;padding:0 16px;color:var(--g10);text-decoration:none;white-space:nowrap}
+.name b{font-weight:600}
+.nav{display:flex;height:48px}
+.nav a{display:flex;align-items:center;padding:0 16px;color:var(--g30);text-decoration:none;white-space:nowrap}
+.nav a[aria-current]{color:var(--g10);box-shadow:inset 0 -3px 0 var(--g10)}
+.mode{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;gap:8px;padding:0 16px;color:var(--g10);white-space:nowrap}
+.mk{width:12px;height:12px;flex:none}.mk-pub{background:var(--g10)}
+.utils{margin-left:auto;display:flex;height:48px}
+.ub{width:48px;height:48px;display:grid;place-items:center;color:var(--g10)}
+/* control row */
+.ctl{position:absolute;top:48px;left:0;right:0;height:48px;background:var(--w);border-bottom:1px solid var(--g20);display:flex;align-items:center;padding:0 8px;gap:8px;z-index:2}
+.c{height:40px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid var(--g50);white-space:nowrap;color:var(--g100);gap:8px}
+.c.sel{width:224px;justify-content:space-between}
+.c.search{width:320px;padding-left:12px;color:var(--g60);justify-content:space-between}
+.c.search .scope{border-left:1px solid var(--g30);padding-left:8px;color:var(--g100)}
+.c.chip{border-color:var(--g70)}
+.c.ghost{border:0;color:var(--g70)}
+.txt{padding:0 8px;color:var(--g70);white-space:nowrap}
+.tog{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 8px;margin-left:auto}
+.trk{width:32px;height:16px;background:var(--g100);position:relative}
+.trk::after{content:"";position:absolute;right:2px;top:2px;width:12px;height:12px;background:var(--w)}
+.trk.off{background:var(--g50)}.trk.off::after{right:auto;left:2px}
+/* canvas + band + slot */
+.canvas{position:absolute;top:96px;left:0;right:0;bottom:40px;display:flex;align-items:center;justify-content:center;padding:16px}
+.canvas.push{right:400px}
+.plan{aspect-ratio:2.204;max-width:100%;max-height:100%;width:100%;position:relative;background:var(--w);outline:1px solid var(--g30);background-image:linear-gradient(var(--g20) 1px,transparent 1px),linear-gradient(90deg,var(--g20) 1px,transparent 1px);background-size:64px 64px}
+.plan .lab{position:absolute;left:16px;top:8px;color:var(--g50);font-size:12px}
+.seat{position:absolute;width:28px;height:28px;border:1px solid var(--g70);background:var(--w);display:flex;align-items:center}
+.seat span{position:absolute;left:32px;top:2px;height:24px;line-height:22px;padding:0 6px;border:1px solid var(--g70);background:var(--w);white-space:nowrap;font-size:12px}
+.seat.on{background:var(--g100);border-color:var(--g100)}
+.seat.on span{background:var(--g100);color:var(--w);border-color:var(--g100)}
+.seat.q{opacity:.35}
+.seat.open{border-style:dashed}
+.band{position:absolute;left:0;right:0;bottom:0;height:40px;background:var(--w);border-top:1px solid var(--g20);display:flex;align-items:center;padding:0 16px;gap:24px;color:var(--g70);z-index:2}
+.band.push{right:400px}
+.band .lg{display:inline-flex;gap:8px;align-items:center}
+.band .zoom{margin-left:auto;display:inline-flex;gap:8px}
+.band .zoom span{height:32px;min-width:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--g50);padding:0 8px}
+.rslot{position:absolute;top:96px;right:0;bottom:0;width:400px;background:var(--w);border-left:1px solid var(--g20);display:flex;flex-direction:column;z-index:3}
+.ins-h{padding:16px;border-bottom:1px solid var(--g20);display:grid;grid-template-columns:1fr auto auto;gap:8px 16px}
+.eyebrow{font-size:12px;line-height:16px;color:var(--g60);grid-column:1/-1}
+.ins-h h3{font-size:20px;line-height:28px;font-weight:400}
+.ico{width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--g30);font-size:12px}
+.st{display:inline-flex;align-items:center;gap:8px;grid-column:1/-1;color:var(--g70)}
+.st i{width:10px;height:10px;background:var(--g100);display:inline-block}
+.sec{padding:16px;display:flex;flex-direction:column;gap:12px}
+.sec h4{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.32px;color:var(--g60)}
+.row2{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
+.lbl{font-size:12px;line-height:16px;color:var(--g60)}
+/* palette */
+.pal{position:absolute;top:96px;left:240px;width:560px;background:var(--w);border:1px solid var(--g30);box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:4;display:flex;flex-direction:column}
+.pal .ph{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--g20);font-weight:600}
+.pal .ph span{font-weight:400;color:var(--g60)}
+.pr{height:48px;display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--g10)}
+.pr.on{background:var(--g10);box-shadow:inset 3px 0 0 var(--g100)}
+.pr small{display:block;color:var(--g60);font-size:12px;line-height:16px}
+.kind{font-size:12px;color:var(--g60)}
+.tag{display:inline-flex;height:24px;align-items:center;padding:0 8px;border-radius:12px;background:var(--g20);font-size:12px}
+.pf{height:40px;display:flex;align-items:center;padding:0 16px;font-size:12px;color:var(--g60)}
+.note{border-left:3px solid var(--g70);background:var(--w);padding:12px 16px;display:flex;flex-direction:column;gap:4px;max-width:480px}
+.note b{font-weight:600}
+.gb{height:32px;display:inline-flex;align-items:center;color:var(--g70)}
+.empty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:480px;background:var(--w);border:1px solid var(--g30);padding:24px}
+.empty h3{font-size:20px;line-height:28px;font-weight:400;margin-bottom:8px}
+.empty p{color:var(--g70)}
+.sk{background:var(--g20);height:16px}
+/* roster */
+.roster{position:absolute;top:96px;left:0;right:0;bottom:40px;padding:24px 168px;overflow:hidden}
+.roster h3{font-size:20px;line-height:28px;font-weight:400}
+.roster .help{color:var(--g70);margin:4px 0 16px}
+.grp{margin-top:16px}
+.grp h4{font-size:12px;line-height:16px;font-weight:600;color:var(--g60);height:32px;display:flex;align-items:center;border-bottom:1px solid var(--g20)}
+.rr{height:40px;display:grid;grid-template-columns:2fr 2fr 2fr 32px;align-items:center;gap:16px;border-bottom:1px solid var(--g10)}
+.rr.on{background:var(--g10);box-shadow:inset 4px 0 0 var(--g100)}
+.sheet{display:flex;gap:16px;position:absolute;left:16px;top:112px;right:16px}
+.card{flex:1;background:var(--w);border:1px solid var(--g30);padding:16px;min-height:280px}
+.card .cap{font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);margin-bottom:12px}
+</style>
+</head>
+<body>
+<h1>Map — Published mode (<code>/</code>)</h1>
+<p>Phase 2 wireframe, slice 2. Spec: <code>PHASE2UX.md</code> §1M. Decisions D1-c…g, D2-a. Same surface as Draft mode (<code>map-draft.html</code>): only the control row's right half and the inspector's editability differ. Frames 1920×1080; the plan is a placeholder grid with a few markers (marker design is D1/D1′, not this slice).</p>
+<label class="fit"><input type="checkbox" id="fit"> Fit frames to half size</label>
+
+<h2>1 · Default — viewer, Floor 3, nothing selected</h2>
+<ul>
+  <li>Control row (48px, 40px controls): floor selector · Focused search with scope segment · result count · Find me · Names toggle. "Filters N ×" is Hidden while N = 0.</li>
+  <li>Canvas: plan aspect-locked and wholly visible; band below with legend · counts · zoom/fit (D1-g).</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48" aria-label="Filters"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl" role="toolbar" aria-label="Map controls">
+    <span class="c sel">Floor 3 · Pre-Litigation <span>▾</span></span>
+    <span class="c search" role="search">🔍 Find a person or seat <span class="scope">This floor ▾</span></span>
+    <span class="txt">68 seats</span>
+    <span class="c ghost">Find me</span>
+    <label class="tog"><span class="trk"></span>Names</label>
+  </div>
+  <div class="canvas"><div class="plan"><span class="lab">Floor 3 plan — raster, markers per D1/D1′</span>
+    <div class="seat" style="left:12%;top:30%"><span>Sarah Reyes</span></div><div class="seat" style="left:12%;top:40%"><span>Daniel Ortiz</span></div><div class="seat open" style="left:12%;top:50%"></div>
+    <div class="seat" style="left:30%;top:30%"><span>Maya Chen</span></div><div class="seat" style="left:30%;top:40%"><span>Jordan Blake</span></div><div class="seat" style="left:30%;top:50%"><span>Priya Natarajan</span></div>
+    <div class="seat" style="left:55%;top:25%"><span>Alex Kim</span></div><div class="seat open" style="left:55%;top:35%"></div><div class="seat" style="left:55%;top:45%"><span>Lena Fischer</span></div>
+    <div class="seat" style="left:75%;top:60%"><span>Omar Haddad</span></div><div class="seat" style="left:75%;top:70%"><span>Grace Liu</span></div>
+  </div></div>
+  <div class="band"><span class="lg"><b>Floor 3 · 68 seats</b></span><span class="lg"><i class="mk" style="background:var(--g100)"></i>Assigned 56</span><span class="lg"><i class="mk" style="border:1px dashed var(--g70)"></i>Open 12</span><span class="zoom"><span>−</span><span>Fit</span><span>+</span></span></div>
+  <span class="dim" style="left:8px;top:100px">row x: selector 224 · search 320 · count · Find me · Names — "Filters N ×" Hidden at N = 0</span>
+  <span class="dim" style="left:1600px;top:1040px">band: legend · counts · zoom/fit (D1-g)</span>
+</div>
+
+<h2>2 · Search open — results with per-scope counts (D1-d)</h2>
+<ul>
+  <li>Palette (560px) anchored to the field's left edge. Header "Results · 7 on this floor · 11 in building". Rows: title · kind · subtitle · seat code or "Floor 2" tag. Footer with the key legend.</li>
+  <li>Scope "This floor" is selected; the header's building count is the widen affordance. Typing never switches floor.</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl">
+    <span class="c sel">Floor 3 · Pre-Litigation <span>▾</span></span>
+    <span class="c search" style="color:var(--g100);border-color:var(--g100)">🔍 rey<span style="border-left:1px solid var(--g100);height:20px"></span> <span class="scope">This floor ▾</span></span>
+    <span class="txt">7 of 68 seats match</span>
+    <span class="c ghost">Find me</span>
+    <label class="tog"><span class="trk"></span>Names</label>
+  </div>
+  <div class="canvas"><div class="plan"><span class="lab">matches prominent, others quieted (D1)</span>
+    <div class="seat on" style="left:12%;top:30%"><span>Sarah Reyes</span></div><div class="seat q" style="left:12%;top:40%"><span>Daniel Ortiz</span></div><div class="seat q" style="left:30%;top:30%"><span>Maya Chen</span></div><div class="seat on" style="left:55%;top:45%"><span>Tom Reyes</span></div><div class="seat q" style="left:75%;top:60%"><span>Omar Haddad</span></div>
+  </div></div>
+  <div class="band"><span class="lg"><b>Floor 3 · 68 seats</b></span><span class="lg">7 of 68 seats match "rey"</span><span class="zoom"><span>−</span><span>Fit</span><span>+</span></span></div>
+  <div class="pal" role="listbox" aria-label="Results">
+    <div class="ph">Results <span>7 on this floor · <u>11 in building</u></span></div>
+    <div class="pr on"><div>Sarah Reyes<small>Case Manager · Case Management</small></div><span class="kind">Person</span><code>NE04</code></div>
+    <div class="pr"><div>Tom Reyes<small>Paralegal · Pre-Litigation</small></div><span class="kind">Person</span><code>SW11</code></div>
+    <div class="pr"><div>Reyes pod<small>Zone · 6 seats</small></div><span class="kind">Zone</span><code>6</code></div>
+    <div class="pr"><div>Marta Reyes-Cole<small>Attorney · Litigation</small></div><span class="kind">Person</span><span class="tag">Floor 2</span></div>
+    <div class="pr"><div>Ana Reyes<small>Intake · Front Office</small></div><span class="kind">Person</span><code>NW02</code></div>
+    <div class="pf">↑↓ to move · Enter opens · Esc closes</div>
+  </div>
+  <span class="dim" style="left:820px;top:100px">560px palette, anchored at the field's left edge (x=240); "11 in building" = widen affordance; rows on the other floor carry a Floor 2 tag</span>
+</div>
+
+<h2>3 · Seat selected — inspector open (400px, read-only), canvas pushed</h2>
+<ul>
+  <li>Slot 400 (D2-a, deviation 15) below the control row; the row does not reflow. Canvas and band shrink to 1520; the plan re-fits.</li>
+  <li>Header: eyebrow "Seat NE04 · North-east pod", name, status, <b>Copy link</b> (→ <code>?seat=NE04</code>) and ×. Person block with contact rows and <b>Copy link</b> (→ <code>?q=Sarah Reyes</code>).</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl">
+    <span class="c sel">Floor 3 · Pre-Litigation <span>▾</span></span>
+    <span class="c search">🔍 Find a person or seat <span class="scope">This floor ▾</span></span>
+    <span class="txt">68 seats</span>
+    <span class="c ghost">Find me</span>
+    <label class="tog"><span class="trk"></span>Names</label>
+  </div>
+  <div class="canvas push"><div class="plan"><span class="lab">plan re-fits to 1520 — pitch stays above the 44px hit floor (D2)</span>
+    <div class="seat on" style="left:12%;top:30%"><span>Sarah Reyes</span></div><div class="seat" style="left:12%;top:40%"><span>Daniel Ortiz</span></div><div class="seat" style="left:30%;top:30%"><span>Maya Chen</span></div><div class="seat" style="left:55%;top:45%"><span>Lena Fischer</span></div><div class="seat" style="left:75%;top:60%"><span>Omar Haddad</span></div>
+  </div></div>
+  <div class="band push"><span class="lg"><b>Floor 3 · 68 seats</b></span><span class="lg"><i class="mk" style="background:var(--g100)"></i>Assigned 56</span><span class="lg"><i class="mk" style="border:1px dashed var(--g70)"></i>Open 12</span><span class="zoom"><span>−</span><span>Fit</span><span>+</span></span></div>
+  <aside class="rslot" aria-label="Seat NE04">
+    <div class="ins-h"><span class="eyebrow">Seat NE04 · North-east pod</span><h3>Sarah Reyes</h3><span class="ico" title="Copy link to this seat">⧉</span><span class="ico" aria-label="Close">×</span><span class="st"><i></i>Assigned</span></div>
+    <div class="sec"><div>Case Manager · Case Management</div>
+      <h4>CONTACT</h4>
+      <div class="row2"><div><div class="lbl">Email</div><u>s.reyes@megeredchianlaw.com</u></div></div>
+      <div class="row2"><div><div class="lbl">Extension</div>214</div><span class="ico" title="Copy extension">⧉</span></div>
+      <div class="row2"><div class="lbl">Link to this person</div><span class="ico" title="Copy link to Sarah Reyes">⧉</span></div>
+    </div>
+  </aside>
+  <span class="dim" style="left:1100px;top:1044px">400 · slide-in, pushes; top 96 (below the row)</span>
+</div>
+
+<h2>4 · <code>?q=</code> landing — unique match on the other floor (D1-d)</h2>
+<ul>
+  <li>Arrived at <code>/?q=Marta%20Reyes-Cole</code>: field pre-filled, results open, one match → auto-selected, floor auto-switched to Floor 2 (roster) with the status-role message. The person is unseated, so the roster row is highlighted and focused; no inspector.</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl">
+    <span class="c sel">Floor 2 · Litigation <span>▾</span></span>
+    <span class="c search" style="color:var(--g100)">🔍 Marta Reyes-Cole <span class="scope">Whole building ▾</span></span>
+    <span class="txt">1 of 40 people match</span>
+    <span class="c ghost">Find me</span>
+  </div>
+  <div class="roster" role="region" aria-label="Floor 2 roster">
+    <h3>Floor 2 · Litigation — 40 people</h3>
+    <div class="help">The 2nd-floor plan is not mapped yet.</div>
+    <div class="note" role="status"><b>Showing Floor 2 · Litigation</b><span class="lbl">Marta Reyes-Cole works on this floor.</span></div>
+    <div class="grp"><h4>LITIGATION · 20</h4>
+      <div class="rr on"><b>Marta Reyes-Cole</b><span>Attorney · ext. 231</span><span>m.reyes-cole@megeredchianlaw.com</span><span class="ico" title="Copy link to Marta Reyes-Cole">⧉</span></div>
+      <div class="rr" style="opacity:.4"><span>Jonas Adeyemi</span><span>Paralegal · ext. 233</span><span>j.adeyemi@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+      <div class="rr" style="opacity:.4"><span>Rita Costa</span><span>Attorney · ext. 240</span><span>r.costa@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+    </div>
+  </div>
+  <div class="band"><span class="lg"><b>Floor 2 · Litigation · 40 people</b></span></div>
+  <span class="dim" style="left:8px;top:100px">roster floor: Names and Filters-zone/status Hidden; band title-only; per-row Copy link (D1-e)</span>
+</div>
+
+<h2>5 · Floor 2 roster — the real state, no query</h2>
+<ul><li>Groups by department with counts, static 40px rows name · position · ext · email, Copy link per row. Result count counts people. Same in Draft mode with the admin helper line and Add seat Hidden (<code>map-draft.html</code> 5).</li></ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl">
+    <span class="c sel">Floor 2 · Litigation <span>▾</span></span>
+    <span class="c search">🔍 Find a person <span class="scope">This floor ▾</span></span>
+    <span class="txt">40 people</span>
+    <span class="c ghost">Find me</span>
+  </div>
+  <div class="roster" role="region" aria-label="Floor 2 roster">
+    <h3>Floor 2 · Litigation — 40 people</h3>
+    <div class="help">The 2nd-floor plan is not mapped yet.</div>
+    <div class="grp"><h4>LITIGATION · 20</h4>
+      <div class="rr"><span>Jonas Adeyemi</span><span>Paralegal · ext. 233</span><span>j.adeyemi@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+      <div class="rr"><span>Rita Costa</span><span>Attorney · ext. 240</span><span>r.costa@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+      <div class="rr"><span>Marta Reyes-Cole</span><span>Attorney · ext. 231</span><span>m.reyes-cole@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+      <div class="rr"><span>Yusuf Demir</span><span>Law clerk · —</span><span>y.demir@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+    </div>
+    <div class="grp"><h4>MEDICAL RECORDS · 7</h4>
+      <div class="rr"><span>Elena Petrova</span><span>Records specialist · ext. 260</span><span>e.petrova@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+      <div class="rr"><span>Hiro Tanaka</span><span>Records specialist · ext. 261</span><span>h.tanaka@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+    </div>
+    <div class="grp"><h4>FRONT OFFICE · 3</h4>
+      <div class="rr"><span>Nadia Aziz</span><span>Receptionist · ext. 200</span><span>n.aziz@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+    </div>
+  </div>
+  <div class="band"><span class="lg"><b>Floor 2 · Litigation · 40 people</b></span></div>
+</div>
+
+<h2>6 · Nothing published — educational empty state (viewer)</h2>
+<ul><li>The plan region is replaced by the empty state. Search, Find me and Names are Hidden — there is nothing to search or show; the row keeps the floor selector and the count. Indicator reads "Not yet published".</li></ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav><span class="mode"><span class="mk" style="border:2px solid var(--g10)"></span>Not yet published</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl"><span class="c sel">Floor 3 · Pre-Litigation <span>▾</span></span><span class="txt">0 seats</span></div>
+  <div class="canvas"><div class="plan" style="background-image:none;background:var(--g10);outline:1px dashed var(--g30)"></div></div>
+  <div class="empty"><h3>The seat map appears here once it is published</h3><p>An admin publishes the draft from Seat map → Draft. Until then there is nothing to show — ask an admin if you were expecting a map.</p></div>
+  <div class="band"><span class="lg"><b>Floor 3 · 0 seats</b></span></div>
+</div>
+
+<h2>7 · Canvas states — sheet</h2>
+<ul><li>Left to right: loading (skeleton plan, row real) · error (inline notification in the map region + Retry) · filters zero-match with the cross-floor answer (D1′ Q5) · Find me, not in the directory · search zero with a widen hint.</li></ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span></header>
+  <div class="ctl"><span class="c sel">Floor 3 · Pre-Litigation <span>▾</span></span><span class="c search">🔍 Find a person or seat <span class="scope">This floor ▾</span></span><span class="c chip">Filters 1 ×</span><span class="txt">0 of 68 seats match</span><span class="c ghost">Find me</span><label class="tog"><span class="trk"></span>Names</label></div>
+  <div class="sheet">
+    <div class="card"><div class="cap">LOADING</div><div class="sk" style="height:200px"></div><div class="lbl" style="margin-top:8px">sr-only: "Loading the seat map…"; row controls are real</div></div>
+    <div class="card"><div class="cap">ERROR</div><div class="note" role="alert"><b>The seat map couldn't load</b><span>The seating map itself is unchanged — this is a display problem, not a data one.</span><span class="gb">Retry</span></div></div>
+    <div class="card"><div class="cap">FILTERS — zero on this floor</div><div class="note"><b>0 of 68 seats on Floor 3 match</b><span>20 people in Litigation are on Floor 2.</span><span class="gb">Show Floor 2 &nbsp;·&nbsp; Clear filters</span></div></div>
+    <div class="card"><div class="cap">FIND ME — not in directory</div><div class="note"><b>Your account isn't in the published directory</b><span>Ask an admin to add you, then Find me will land on your seat.</span></div></div>
+    <div class="card"><div class="cap">SEARCH — zero, widen hint</div><div class="pal" style="position:static;width:auto;box-shadow:none"><div class="ph">Results <span>0 on this floor · <u>3 in building</u></span></div><div class="sec"><b>No results for “petrova” on Floor 3</b><span class="lbl">3 people match in the whole building.</span><span class="gb">Search the whole building &nbsp;·&nbsp; Clear search</span></div></div></div>
+  </div>
+</div>
+</body>
+</html>

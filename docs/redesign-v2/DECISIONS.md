@@ -833,6 +833,28 @@ count per scope ("7 on this floor · 11 in building"); a unique cross-floor matc
 which is what `?q=` landing relies on. No global header search. (Ruling 17; E2.4 resolved, deviation 13
 not taken.)
 
+### D1 — Phase 2 amendments (2026-09-02, map PR)
+
+#### D1-c · One right-edge slot on the map surface; shell panels float above it
+**Screen:** map, both modes (`/`, `/admin`).
+**Problem:** the seat inspector, the mode card (Move / Swap / Add seat), the Ask Planner drawer and the shell's Help / History / Account panels all want the right edge.
+**Options considered:** (A) one in-surface slot, slide-in, pushes the canvas, owned by exactly one of inspector / mode card / Ask Planner, last opened wins; shell panels float over it at 320; (B) inspector and drawer side by side (400 + 408 = 808px, canvas 1112 < `lg`, D2's pitch floor breaks); (C) Ask Planner as a bottom drawer (height binds at 1920 × 889 — §2.3 — so a bottom drawer shrinks the plan directly).
+**Choice:** A. The displaced occupant collapses to its re-entry point: a selected seat stays selected (reselect or press Enter on its marker reopens the inspector); Ask Planner keeps its control-row button with the highlight-count badge; a running mode is never displaced — it owns the slot until it ends (INV-4, as shipped). Shell panels are transient (Esc, one open) and never push. The control row spans the full width above both canvas and slot, so it never reflows when the slot opens.
+**Trade-off:** an admin cannot read an Ask Planner answer and edit a seat at the same time; the highlights stay on the canvas, which is what the answer is for.
+**Would change if:** admins report round-tripping between the drawer and the inspector many times per task.
+
+#### D1-d · Focused search — field, palette, scope, `?q=` landing
+Field in the control row (320px, never labelled, magnifier + placeholder, Ctrl/⌘ K). Results open in the existing 560px palette anchored to the field's left edge — a disclosure, results in place. A trailing scope segment **"This floor ▾ / Whole building"** sits inside the field; the results header always carries both counts ("7 on this floor · 11 in building"), zero included. Typing never changes the floor; opening a result on the other floor does (status-role announcement, D1′). `?q=` landing: field pre-filled and results open; a unique match auto-selects (seat → inspector; unseated person → roster row) and auto-switches floor; several matches stay a list; zero shows the zero state with the query kept. (Ruling 17; closes E2.4 for good.)
+
+#### D1-e · Copy link
+Copy icon with a "Copied" confirmation (patterns: Copy) on the inspector header → `?seat=<label>`; on the person block inside the inspector and on roster rows → `?q=<name>`. Roster rows stay non-opening (deviation 9 holds — an icon button on a static row is not a disclosure). Closes backlog DIR-1 (D1-a).
+
+#### D1-f · Find me
+Ghost button in the control row, every role. Seated → own floor, own seat selected, inspector open. Unseated → roster floor, own row highlighted. Not in the published directory → inline notification in the map region: "Your account isn't in the published directory. Ask an admin." Own seat comes from the email match already in `app/page.tsx`.
+
+#### D1-g · Status band kept; names toggle moves to the control row
+The 40px band (legend · counts · zoom/fit) already ships and Q2 dissolved its geometric objection. It stays as the map's footer; the names toggle moves up to the control row (PHASE1IA B4). Height budget at 1920 × 889: 48 header + 48 control row + 40 band → plan 753px tall, 1660 wide, wholly visible.
+
 ---
 
 ### D2 — Admin (`/admin`)
@@ -998,6 +1020,14 @@ confirming. A floor with no changes has no group.
 now load-bearing for cross-floor Move/Swap): the inspector stays open on a seat that is not on the
 canvas; its band clearance follows the band, not the floor it left.
 
+### D2 — Phase 2 amendments (2026-09-02, map PR; owner rulings Q1–Q2 the same day)
+
+#### D2-a · Seat inspector side panel is 400px — D2's own conclusion, now ruled
+D2's measured paragraph is the evidence: at a 480 push the tightest marker gap on the 1440px canvas falls to 42.3px and two 44px hit regions overlap; the floor holds to a 420 panel; the measured content (22-character longest name, 17-character department, 4-character label, notes on 1 of 68 seats) does not need 480. **Ruled 400** (owner, 2026-09-02); the alternative — 480 with hit regions held at unpushed size — is **not** taken. The inspector's overflow state must carry the ≤ 22-character name constraint so Phase 3 sizes the type for it. Slide-in, pushes; below the control row (top 96), full remaining height. Recorded as **deviation 15** (§6).
+
+#### D2-b · Draft-mode control row order (owner ruling Q2)
+After the shared controls (floor selector · search · "Filters N ×" · result count · Find me) and a divider: **Undo · Redo** as ghost icon buttons (tooltips carry the shortcuts; Redo disabled when its stack is empty) · **Add seat** as a ghost button *with its label* (creation, low frequency — not icon-only) · **Ask Planner** (tertiary) · **Publish N changes** (the row's one primary) · **⋯ overflow** · **Names** toggle. The overflow holds **Discard draft changes only**, last item, danger styling, divider above, disabled when nothing to discard (parity with what ships). Reset zoom is **not** in the overflow — it stays with the zoom/fit control on the canvas (a viewport action does not belong in a menu of document actions). Owner-approved mockups: "Seat Planner Shell Mockups" canvas, page "Phase 2 Q1–Q2". Recorded as PHASE1IA.md B4 amendment.
+
 ---
 
 ### D3 — Reception (`/reception`)
@@ -1132,6 +1162,7 @@ Phase 4 removes only the Settings entry in `components/admin-settings/DataUtilit
 | 12 | `/my-seat` renders without the shell | `ui-shell.md`: the shell is present on every signed-in surface. Kept chrome-free because it is a share card glanced at on a phone; a wordmark / back-link to `/` stands in for the header. **Would change if** the sheet gains any action beyond reading (PHASE1IA.md answers 11, 15; ruling 18) |
 | 13 | *(reserved — not taken)* | Per-floor search without a widen-to-building control (PHASE1IA.md E2.4). Not chosen — Focused search with a scope control ships instead (D1-b); the number re-enters only if that control slips |
 | 14 | Ask Planner opens from the map surface, not a header product icon | `ui-shell.md`: product-specific utilities sit in the header and open right panels. Kept in-surface because it exists on one route in one mode (admin, draft); a header icon would appear and disappear as admins navigate, breaking the "icons don't move" rule it was meant to satisfy. Phase 2 resolves right-edge stacking with the seat inspector and the shell panels; Phase 3 applies Carbon-for-AI labelling (D2; ruling 19) |
+| 15 | Seat inspector side panel is **400px**, not Carbon's 480 side-panel default | At 480 the pushed canvas's tightest marker gap falls to 42.3px and two 44px hit regions overlap; the floor holds to a 420 panel (D2, measured; D2-a). **Would change if** the marker pitch changes (a new floor plan) or the inspector gains content that cannot be read at 400. Ruled 2026-09-02 |
 
 ---
 
