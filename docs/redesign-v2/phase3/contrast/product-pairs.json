@@ -310,5 +310,161 @@
   "fg": "#f4f4f4",
   "bg": "#001d6c",
   "kind": "text"
+ },
+ {
+  "name": "tooltip text gray-10 on tooltip gray-80",
+  "fg": "#f4f4f4",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "switch selected text gray-100 on gray-10",
+  "fg": "#161616",
+  "bg": "#f4f4f4",
+  "kind": "text"
+ },
+ {
+  "name": "switch selected fill gray-10 vs panel gray-100",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "switch unselected text gray-10 on hover #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "tag text gray-10 on tag gray-80",
+  "fg": "#f4f4f4",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "ghost dark blue-40 on panel gray-100",
+  "fg": "#78a9ff",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "ghost dark hover blue-30 on gray-90-hover #333333",
+  "fg": "#a6c8ff",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "ghost dark pressed blue-30 on gray-80",
+  "fg": "#a6c8ff",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "ghost dark blue-40 on notification layer #262626",
+  "fg": "#78a9ff",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "panel text gray-10 on notification layer #262626",
+  "fg": "#f4f4f4",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "panel secondary gray-30 on row hover #333333",
+  "fg": "#c6c6c6",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "panel helper gray-40 on panel gray-100 (status, caption)",
+  "fg": "#a8a8a8",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "radio ring gray-10 on panel gray-100",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "radio ring gray-100 on white (light theme)",
+  "fg": "#161616",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "radio ring gray-10 on layer-hover-01 dark #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "focus white on gray-80 (pressed utility / ghost pressed)",
+  "fg": "#ffffff",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "left panel · text-primary on layer-hover-01 (light)",
+  "fg": "#161616",
+  "bg": "#e8e8e8",
+  "kind": "text"
+ },
+ {
+  "name": "left panel · count gray-70 on layer-hover-01 (light)",
+  "fg": "#525252",
+  "bg": "#e8e8e8",
+  "kind": "text"
+ },
+ {
+  "name": "left panel · current bar blue-60 on layer-selected #e0e0e0 (light)",
+  "fg": "#0f62fe",
+  "bg": "#e0e0e0",
+  "kind": "graphic"
+ },
+ {
+  "name": "left panel · text gray-10 on layer-hover-01 dark #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "left panel · count gray-30 on layer-hover-01 dark #333333",
+  "fg": "#c6c6c6",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "left panel · current bar blue-50 on layer-selected dark #393939",
+  "fg": "#4589ff",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "left panel · checkbox box gray-100 on layer-hover-01 (light)",
+  "fg": "#161616",
+  "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "nav link gray-30 on shell gray-100",
+  "fg": "#c6c6c6",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "nav link gray-30 on shell hover #333333",
+  "fg": "#c6c6c6",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "nav link gray-10 on shell pressed gray-80",
+  "fg": "#f4f4f4",
+  "bg": "#393939",
+  "kind": "text"
  }
 ]

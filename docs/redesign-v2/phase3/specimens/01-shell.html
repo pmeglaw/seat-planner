@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Phase 3 · 01 Shell — Seat Planner</title>
+<link rel="stylesheet" href="../tokens/carbon-tokens.css">
+<link rel="stylesheet" href="../tokens/sp-tokens.css">
+<link rel="stylesheet" href="../components/carbon-components.css">
+<link rel="stylesheet" href="../components/sp-components.css">
+<script>
+(function () {
+  var h = document.documentElement;
+  function apply(t) {
+    if (t === "light")      { h.dataset.theme = "light"; h.dataset.carbonTheme = "white"; }
+    else if (t === "dark")  { h.dataset.theme = "dark";  h.dataset.carbonTheme = "g100";  }
+    else                    { delete h.dataset.theme;    delete h.dataset.carbonTheme;     }
+  }
+  apply(new URLSearchParams(location.search).get("theme"));
+  window.spTheme = apply;
+})();
+</script>
+<style>
+.spec { max-width: none; margin: 0; padding: var(--sp-space-07) var(--sp-space-07) var(--sp-space-12); }   /* this page holds 1920-wide header frames */
+.spec-bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: var(--sp-space-05); height: var(--sp-size-lg); padding: 0 var(--sp-space-07); background: var(--sp-layer-01); border-bottom: 1px solid var(--sp-border-subtle); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); }
+.spec-bar nav { display: flex; gap: var(--sp-space-05); margin-left: auto; }
+.spec-bar .spec-theme { display: flex; }
+.spec h1 { font: var(--sp-type-heading-04); margin-bottom: var(--sp-space-03); }
+.spec h2 { font: var(--sp-type-heading-03); margin: var(--sp-space-10) 0 var(--sp-space-05); }
+.spec h2:first-of-type { margin-top: var(--sp-space-09); }
+.spec h3 { font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); margin: var(--sp-space-07) 0 var(--sp-space-03); }
+.spec p.lede { color: var(--sp-text-secondary); max-width: 66ch; }
+.spec-note { font: var(--sp-type-code-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); }
+.spec-anatomy { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); margin-top: var(--sp-space-02); max-width: 70ch; }
+.spec-row { display: flex; align-items: flex-start; gap: var(--sp-space-05); flex-wrap: wrap; }
+.spec-row > div > .spec-note { display: block; margin-bottom: var(--sp-space-02); }
+/* specimen-only: the real header is position: fixed; here it sits in a frame */
+.frame { overflow-x: auto; margin: 0 calc(-1 * var(--sp-space-07)) var(--sp-space-05); }   /* bleeds to the viewport edge so a 1920 frame fits a 1920 window */
+.frame .cds-header { position: relative; }
+.frame1920 { width: 1920px; }
+.frame1024 { width: 1024px; }
+.canvas { background: var(--sp-map-mat); color: var(--sp-text-helper); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); display: grid; place-items: center; }
+.strip48 { width: 400px; }
+.strip48 .cds-header { justify-content: flex-end; }
+.panel-grid { display: grid; grid-template-columns: repeat(auto-fill, 320px); gap: var(--sp-space-07) var(--sp-space-05); align-items: start; }
+.panel-grid .sp-panel { height: 720px; }
+.panel-grid .sp-panel.short { height: auto; }
+.lp-grid { display: grid; grid-template-columns: repeat(auto-fill, 256px); gap: var(--sp-space-07) var(--sp-space-05); align-items: start; }
+.lp-grid .sp-left-panel { height: 560px; }
+.cap { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); margin: var(--sp-space-02) 0 0; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-menu" viewBox="0 0 20 20"><path d="M2 5h16M2 10h16M2 15h16" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 20 20"><path d="M4 4l12 12M16 4L4 16" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-help" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7.5 8a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .8-1 1.7M10 14.5v.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-history" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 5v5l3.5 2" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-account" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 15.5c1-2.5 3-3.5 5-3.5s4 1 5 3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-error" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="M6.5 6.5l7 7M13.5 6.5l-7 7" fill="none" stroke="var(--sp-panel-dark-layer)" stroke-width="1.5"/></symbol>
+  <symbol id="i-error-light" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="M6.5 6.5l7 7M13.5 6.5l-7 7" fill="none" stroke="var(--sp-layer-02)" stroke-width="1.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-pub" viewBox="0 0 12 12"><rect x="0" y="0" width="12" height="12" fill="currentColor"/></symbol>
+  <symbol id="i-draft" viewBox="0 0 12 12"><path d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"/></symbol>
+</svg>
+
+<a class="cds-skip-link" href="#main">Skip to main content</a>
+<div class="spec-bar" role="toolbar" aria-label="Specimen controls">
+  <strong>Phase 3 · 01 Shell</strong>
+  <span class="spec-theme" role="group" aria-label="Theme">
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('light')">Light</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('dark')">Dark</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme(null)">System</button>
+  </span>
+  <nav aria-label="Specimens"><a href="index.html">Index</a><a href="compare.html?p=01-shell">Both themes</a><a href="00-foundations.html">00</a><a href="05-status-and-marks.html">05</a></nav>
+</div>
+
+<main id="main" class="spec">
+  <h1>Shell</h1>
+  <p class="lede">Header, hamburger, utilities and their tooltips, the three dark right panels with every state, the two-segment mode switch, the Theme radio group, and the 256px filter panel. The shell is Gray 100 in both themes (tier C); the left panel follows the theme. Switch the theme above and watch the header hold.</p>
+
+  <h2 id="header">Header — <code>.cds-header.sp-header</code> at 1920</h2>
+  <p class="spec-anatomy">48px, Gray 100, 1px gray 80 rule. Slots: hamburger 0–48 · name (padding 0 16) · section links (current = 3px blue 50 bar) · mode indicator centred on x=960 · utilities flush right 1776–1920. Type: body-compact-01 and heading-compact-01 only.</p>
+
+  <h3>Viewer on <code>/</code> — Published; two links; hamburger present</h3>
+  <div class="frame"><div class="frame1920">
+    <header class="cds-header sp-header">
+      <button class="sp-header-slot" aria-label="Filters" aria-expanded="false" aria-controls="lp"><svg class="sp-glyph-menu"><use href="#i-menu"/></svg><svg class="sp-glyph-close"><use href="#i-close"/></svg></button>
+      <a class="cds-header-name" href="#">Megeredchian Law <strong>Seat Planner</strong></a>
+      <nav class="cds-header-nav" aria-label="Sections"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav>
+      <div class="sp-header-center"><button class="sp-mode sp-mode--published" aria-expanded="false" aria-controls="history"><svg class="sp-mode-mark" aria-hidden="true"><use href="#i-pub"/></svg>Published · 2 Sep 2026</button></div>
+      <div class="cds-header-utils">
+        <span class="sp-has-tooltip"><button aria-label="Help"><svg><use href="#i-help"/></svg></button><span class="sp-tooltip" role="tooltip">Help</span></span>
+        <span class="sp-has-tooltip"><button aria-label="History"><svg><use href="#i-history"/></svg></button><span class="sp-tooltip" role="tooltip">History</span></span>
+        <span class="sp-has-tooltip"><button aria-label="Account"><svg><use href="#i-account"/></svg></button><span class="sp-tooltip" role="tooltip">Account</span></span>
+      </div>
+    </header>
+  </div></div>
+
+  <h3>Admin on <code>/admin</code> — Draft; four links; Reception link hovered, Settings pressed</h3>
+  <div class="frame"><div class="frame1920">
+    <header class="cds-header sp-header">
+      <button class="sp-header-slot" aria-label="Filters" aria-expanded="false"><svg class="sp-glyph-menu"><use href="#i-menu"/></svg><svg class="sp-glyph-close"><use href="#i-close"/></svg></button>
+      <a class="cds-header-name" href="#">Megeredchian Law <strong>Seat Planner</strong></a>
+      <nav class="cds-header-nav" aria-label="Sections"><a href="#" aria-current="page">Seat map</a><a href="#" data-state="hover">Reception</a><a href="#">Management</a><a href="#" data-state="pressed">Settings</a></nav>
+      <div class="sp-header-center"><button class="sp-mode sp-mode--draft" aria-expanded="false"><svg class="sp-mode-mark" aria-hidden="true"><use href="#i-draft"/></svg>Draft — 4 changes</button></div>
+      <div class="cds-header-utils">
+        <span class="sp-has-tooltip"><button aria-label="Help"><svg><use href="#i-help"/></svg></button><span class="sp-tooltip" role="tooltip">Help</span></span>
+        <span class="sp-has-tooltip"><button aria-label="History"><svg><use href="#i-history"/></svg></button><span class="sp-tooltip" role="tooltip">History</span></span>
+        <span class="sp-has-tooltip"><button aria-label="Account"><svg><use href="#i-account"/></svg></button><span class="sp-tooltip" role="tooltip">Account</span></span>
+      </div>
+    </header>
+  </div></div>
+
+  <h3>Admin on <code>/admin/management</code> — reserved slot (empty, D0-h); Management current; History open (outlined) with the indicator loading</h3>
+  <div class="frame"><div class="frame1920">
+    <header class="cds-header sp-header">
+      <span class="sp-header-slot sp-header-slot--reserved" aria-hidden="true"></span>
+      <a class="cds-header-name" href="#">Megeredchian Law <strong>Seat Planner</strong></a>
+      <nav class="cds-header-nav" aria-label="Sections"><a href="#">Seat map</a><a href="#">Reception</a><a href="#" aria-current="page">Management</a><a href="#">Settings</a></nav>
+      <div class="sp-header-center"><span class="sp-mode sp-mode--loading" aria-busy="true" aria-label="Loading publish state"><span class="sp-mode-skeleton"></span></span></div>
+      <div class="cds-header-utils">
+        <span class="sp-has-tooltip"><button aria-label="Help"><svg><use href="#i-help"/></svg></button><span class="sp-tooltip" role="tooltip">Help</span></span>
+        <span class="sp-has-tooltip"><button aria-label="History" aria-expanded="true" aria-controls="history"><svg><use href="#i-history"/></svg></button><span class="sp-tooltip" role="tooltip">History</span></span>
+        <span class="sp-has-tooltip"><button aria-label="Account"><svg><use href="#i-account"/></svg></button><span class="sp-tooltip" role="tooltip">Account</span></span>
+      </div>
+    </header>
+    <div style="display:flex;justify-content:flex-end"><div class="sp-panel short" style="height:96px"><h2>History</h2></div></div>
+  </div></div>
+  <p class="cap">The open utility's outline (1px gray 80, top / left / right) covers the header rule beneath it and continues into the panel's left rule — open ≠ pressed.</p>
+
+  <h2 id="hamburger">Hamburger — <code>.sp-header-slot</code></h2>
+  <p class="spec-anatomy">48×48 icon button, Menu glyph 20px. Open = Close glyph + <code>aria-expanded="true"</code>, no persistent fill; hover and pressed apply as normal. Reserved slot: same box, empty, on Reception / Management / Settings at lg+.</p>
+  <div class="spec-row">
+    <div><span class="spec-note">rest</span><div class="strip48" style="width:48px"><header class="cds-header sp-header" style="position:relative;justify-content:flex-start"><button class="sp-header-slot" aria-label="Filters" aria-expanded="false"><svg class="sp-glyph-menu"><use href="#i-menu"/></svg><svg class="sp-glyph-close"><use href="#i-close"/></svg></button></header></div></div>
+    <div><span class="spec-note">hover</span><div style="width:48px"><header class="cds-header sp-header" style="position:relative"><button class="sp-header-slot" data-state="hover" aria-label="Filters" aria-expanded="false"><svg class="sp-glyph-menu"><use href="#i-menu"/></svg><svg class="sp-glyph-close"><use href="#i-close"/></svg></button></header></div></div>
+    <div><span class="spec-note">pressed</span><div style="width:48px"><header class="cds-header sp-header" style="position:relative"><button class="sp-header-slot" data-state="pressed" aria-label="Filters" aria-expanded="false"><svg class="sp-glyph-menu"><use href="#i-menu"/></svg><svg class="sp-glyph-close"><use href="#i-close"/></svg></button></header></div></div>
+    <div><span class="spec-note">focus</span><div style="width:48px"><header class="cds-header sp-header" style="position:relative"><button class="sp-header-slot" data-state="focus" aria-label="Filters" aria-expanded="false"><svg class="sp-glyph-menu"><use href="#i-menu"/></svg><svg class="sp-glyph-close"><use href="#i-close"/></svg></button></header></div></div>
+    <div><span class="spec-note">open · Close glyph, no fill</span><div style="width:48px"><header class="cds-header sp-header" style="position:relative"><button class="sp-header-slot" aria-label="Filters" aria-expanded="true"><svg class="sp-glyph-menu"><use href="#i-menu"/></svg><svg class="sp-glyph-close"><use href="#i-close"/></svg></button></header></div></div>
+    <div><span class="spec-note">open + hover</span><div style="width:48px"><header class="cds-header sp-header" style="position:relative"><button class="sp-header-slot" data-state="hover" aria-label="Filters" aria-expanded="true"><svg class="sp-glyph-menu"><use href="#i-menu"/></svg><svg class="sp-glyph-close"><use href="#i-close"/></svg></button></header></div></div>
+    <div><span class="spec-note">reserved (empty)</span><div style="width:48px"><header class="cds-header sp-header" style="position:relative"><span class="sp-header-slot sp-header-slot--reserved" aria-hidden="true"></span></header></div></div>
+  </div>
+
+  <h2 id="utilities">Utilities — <code>.cds-header-utils button</code> + <code>.sp-tooltip</code></h2>
+  <p class="spec-anatomy">48×48, icon 20px, icon-only with <code>aria-label</code>; the tooltip repeats the label: gray 80 surface, gray 10 label-01, 24px tall, 8px below, centred, on hover and on focus, Esc dismisses. Rest · hover (#333333) · pressed (#393939, lighter) · focus (white 2px inset) · open (outlined).</p>
+  <div class="spec-row" style="padding-bottom:var(--sp-space-07)">
+    <div><span class="spec-note">rest</span><div style="width:48px"><header class="cds-header sp-header" style="position:relative"><div class="cds-header-utils"><span class="sp-has-tooltip"><button aria-label="Help"><svg><use href="#i-help"/></svg></button><span class="sp-tooltip" role="tooltip">Help</span></span></div></header></div></div>
+    <div><span class="spec-note">hover + tooltip</span><div style="width:48px"><header class="cds-header sp-header" style="position:relative"><div class="cds-header-utils"><span class="sp-has-tooltip" data-state="hover"><button data-state="hover" aria-label="Help"><svg><use href="#i-help"/></svg></button><span class="sp-tooltip" role="tooltip">Help</span></span></div></header></div></div>
+    <div><span class="spec-note">pressed</span><div style="width:48px"><header class="cds-header sp-header" style="position:relative"><div class="cds-header-utils"><span class="sp-has-tooltip"><button data-state="pressed" aria-label="History"><svg><use href="#i-history"/></svg></button><span class="sp-tooltip" role="tooltip">History</span></span></div></header></div></div>
+    <div><span class="spec-note">focus + tooltip</span><div style="width:48px"><header class="cds-header sp-header" style="position:relative"><div class="cds-header-utils"><span class="sp-has-tooltip" data-state="focus"><button data-state="focus" aria-label="History"><svg><use href="#i-history"/></svg></button><span class="sp-tooltip" role="tooltip">History</span></span></div></header></div></div>
+    <div><span class="spec-note">open (outlined) → panel</span><div style="width:48px"><header class="cds-header sp-header" style="position:relative"><div class="cds-header-utils"><span class="sp-has-tooltip"><button aria-label="Account" aria-expanded="true"><svg><use href="#i-account"/></svg></button><span class="sp-tooltip" role="tooltip">Account</span></span></div></header><div class="sp-panel short" style="width:48px;height:40px"></div></div></div>
+  </div>
+
+  <h2 id="panels">Right panels — <code>.sp-panel</code> (320, Gray 100, floats, one open at a time)</h2>
+  <p class="spec-anatomy">heading-03 title in 16px padding · content column 288 · rows 48 · events 72 = 10 / heading-01 20 + label-01 16 + 16 / 10 · 1px gray 80 left rule · moderate-02 on one axis · focus moves to the heading on open, returns to the trigger on close · no focus trap. Every ghost, tag, empty state, notification and skeleton inside is the same markup as on a light surface, restyled by the <code>.sp-panel</code> scope.</p>
+
+  <h3>History (admin) — full · empty · loading · error · partial · cap reached</h3>
+  <div class="panel-grid">
+    <section class="sp-panel" aria-labelledby="h1"><h2 id="h1">History</h2><div class="sp-panel-body">
+      <div class="sp-switch" role="group" aria-label="Mode"><button aria-pressed="false">Published</button><button aria-pressed="true">Draft</button></div>
+      <div class="sp-panel-status">4 unpublished changes · last edit 2 min ago</div>
+      <h3>Publish history</h3>
+      <ul class="sp-event-list">
+        <li class="sp-event"><div class="sp-event-what">3 seats changed · 2 people updated</div><div class="sp-event-when">2 Sep 2026, 14:12</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+        <li class="sp-event"><div class="sp-event-what">1 seat changed</div><div class="sp-event-when">29 Aug 2026, 09:40</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+        <li class="sp-event"><div class="sp-event-what">12 seats changed · 5 people updated · 1 department renamed</div><div class="sp-event-when">21 Aug 2026, 17:03</div><div class="sp-event-who">an admin</div></li>
+        <li class="sp-event"><div class="sp-event-what">2 seats changed</div><div class="sp-event-when">18 Aug 2026, 11:15</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+        <li class="sp-event"><div class="sp-event-what">6 seats changed · 1 person updated</div><div class="sp-event-when">12 Aug 2026, 16:48</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+        <li class="sp-event"><div class="sp-event-what">1 seat changed</div><div class="sp-event-when">8 Aug 2026, 10:02</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+        <li class="sp-event"><div class="sp-event-what">4 seats changed · 3 people updated</div><div class="sp-event-when">1 Aug 2026, 15:30</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+        <li class="sp-event"><div class="sp-event-what">2 seats changed</div><div class="sp-event-when">25 Jul 2026, 09:12</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+        <li class="sp-event"><div class="sp-event-what">41 seats changed · 41 people updated</div><div class="sp-event-when">22 Jul 2026, 13:55</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+        <li class="sp-event"><div class="sp-event-what">Initial publish · 68 seats</div><div class="sp-event-when">20 Jul 2026, 08:30</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+      </ul>
+      <button class="cds-btn cds-btn--ghost cds-btn--md" style="margin-top:var(--sp-space-03)">Show more</button>
+    </div></section>
+
+    <section class="sp-panel" aria-labelledby="h2"><h2 id="h2">History</h2><div class="sp-panel-body">
+      <div class="sp-switch" role="group" aria-label="Mode"><button aria-pressed="false">Published</button><button aria-pressed="true">Draft</button></div>
+      <div class="sp-panel-status">Nothing published yet</div>
+      <h3>Publish history</h3>
+      <div class="cds-empty"><h3>Publish the draft to start the history</h3><p>Your first publish appears here.</p></div>
+    </div></section>
+
+    <section class="sp-panel" aria-labelledby="h3"><h2 id="h3">History</h2><div class="sp-panel-body" aria-busy="true">
+      <div class="sp-switch" role="group" aria-label="Mode"><button aria-pressed="false">Published</button><button aria-pressed="true">Draft</button></div>
+      <div class="sp-panel-status">4 unpublished changes · last edit 2 min ago</div>
+      <h3>Publish history</h3>
+      <div class="sp-skeleton-event"><span class="sp-skeleton sp-skeleton--w3"></span><span class="sp-skeleton sp-skeleton--w2"></span><span class="sp-skeleton"></span></div>
+      <div class="sp-skeleton-event"><span class="sp-skeleton"></span><span class="sp-skeleton sp-skeleton--w2"></span><span class="sp-skeleton"></span></div>
+      <div class="sp-skeleton-event"><span class="sp-skeleton sp-skeleton--w3"></span><span class="sp-skeleton sp-skeleton--w2"></span><span class="sp-skeleton"></span></div>
+    </div></section>
+
+    <section class="sp-panel" aria-labelledby="h4"><h2 id="h4">History</h2><div class="sp-panel-body">
+      <div class="sp-switch" role="group" aria-label="Mode"><button aria-pressed="false">Published</button><button aria-pressed="true">Draft</button></div>
+      <div class="sp-panel-status">4 unpublished changes · last edit 2 min ago</div>
+      <h3>Publish history</h3>
+      <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error"/></svg><div class="cds-notification-text"><strong>Publish history couldn't load</strong><p>The switch above still works.</p></div><button class="cds-btn cds-btn--ghost">Retry</button></div>
+    </div></section>
+
+    <section class="sp-panel" aria-labelledby="h5"><h2 id="h5">History</h2><div class="sp-panel-body">
+      <div class="sp-switch" role="group" aria-label="Mode"><button aria-pressed="true">Published</button><button aria-pressed="false">Draft</button></div>
+      <div class="sp-panel-status">Showing what everyone sees</div>
+      <h3>Publish history</h3>
+      <ul class="sp-event-list">
+        <li class="sp-event"><div class="sp-event-what">3 seats changed · 2 people updated</div><div class="sp-event-when">2 Sep 2026, 14:12</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+        <li class="sp-event"><div class="sp-event-what">12 seats changed · 5 people updated · 1 department renamed</div><div class="sp-event-when">21 Aug 2026, 17:03</div><div class="sp-event-who">an admin</div></li>
+        <li class="sp-event"><div class="sp-event-what">1 seat changed</div><div class="sp-event-when">3 Jun 2026, 12:20</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+        <li class="sp-event"><div class="sp-event-what">Initial publish · 68 seats</div><div class="sp-event-when">1 Jun 2026, 08:30</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+      </ul>
+      <div class="sp-panel-caption">Showing the 25 most recent publishes.</div>
+    </div></section>
+  </div>
+  <p class="cap">Partial: the third event's actor is “an admin” — the existing fallback when a <code>published_by</code> profile does not resolve. Cap: after 25 the ghost is replaced by the helper caption. Long summaries wrap; they are the content.</p>
+
+  <h3>History (viewer) — published · never published. No switch (Hidden), no events</h3>
+  <div class="panel-grid">
+    <section class="sp-panel short" aria-labelledby="hv1"><h2 id="hv1">History</h2><div class="sp-panel-body">
+      <div class="sp-panel-fact">Published · 2 Sep 2026, 14:12</div>
+      <div class="sp-panel-caption">Publish history is available to admins.</div>
+    </div></section>
+    <section class="sp-panel short" aria-labelledby="hv2"><h2 id="hv2">History</h2><div class="sp-panel-body">
+      <div class="sp-panel-fact">Nothing has been published yet</div>
+      <div class="sp-panel-caption">Ask an admin.</div>
+    </div></section>
+  </div>
+
+  <h3>Help — static; same for viewers and admins</h3>
+  <div class="panel-grid">
+    <section class="sp-panel" aria-labelledby="hh"><h2 id="hh">Help</h2><div class="sp-panel-body">
+      <h3>Keyboard shortcuts</h3>
+      <dl class="sp-panel-dl">
+        <dt>Ctrl / ⌘ K</dt><dd>Find a person or seat</dd>
+        <dt>Esc</dt><dd>Close a panel / clear the selection</dd>
+        <dt>↑ ↓</dt><dd>Move through results</dd>
+        <dt>Enter</dt><dd>Open the result</dd>
+        <dt>Home / End</dt><dd>First / last result</dd>
+        <dt>← ↑ → ↓</dt><dd>Move between seats on the plan</dd>
+      </dl>
+      <h3>Draft and Published</h3>
+      <p>Everyone sees the published map. Admins edit a draft that only they can see. Publish replaces what everyone sees with the draft.</p>
+      <h3>Who to ask</h3>
+      <p>Your office administrators publish the map; ask them for changes.</p>
+    </div></section>
+
+    <section class="sp-panel" aria-labelledby="ha1"><h2 id="ha1">Account</h2><div class="sp-panel-body">
+      <div class="sp-panel-email">patrick@megeredchianlaw.com <span class="cds-tag">Admin</span></div>
+      <fieldset class="sp-radio-group"><legend>Theme</legend>
+        <label class="sp-radio"><input type="radio" name="t1" checked><span class="sp-radio-mark"></span>Light</label>
+        <label class="sp-radio"><input type="radio" name="t1"><span class="sp-radio-mark"></span>Dark</label>
+        <label class="sp-radio"><input type="radio" name="t1"><span class="sp-radio-mark"></span>System</label>
+      </fieldset>
+      <div class="sp-panel-divider"></div>
+      <a class="sp-panel-row" href="#">My seat — NE04 · Floor 3 <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      <div class="sp-panel-divider"></div>
+      <button class="cds-btn cds-btn--ghost cds-btn--md">Sign out</button>
+    </div></section>
+
+    <section class="sp-panel" aria-labelledby="ha2"><h2 id="ha2">Account</h2><div class="sp-panel-body">
+      <div class="sp-panel-email">sofia.ramirez-delgado@megeredchianlaw.com <span class="cds-tag">Viewer</span></div>
+      <fieldset class="sp-radio-group"><legend>Theme</legend>
+        <label class="sp-radio"><input type="radio" name="t2"><span class="sp-radio-mark"></span>Light</label>
+        <label class="sp-radio"><input type="radio" name="t2" checked><span class="sp-radio-mark"></span>Dark</label>
+        <label class="sp-radio" data-state="hover"><input type="radio" name="t2"><span class="sp-radio-mark"></span>System</label>
+      </fieldset>
+      <div class="sp-panel-divider"></div>
+      <div class="sp-panel-row sp-panel-row--static">No seat published for you yet</div>
+      <div class="sp-panel-divider"></div>
+      <button class="cds-btn cds-btn--ghost cds-btn--md" aria-busy="true">Signing out…</button>
+    </div></section>
+
+    <section class="sp-panel" aria-labelledby="ha3"><h2 id="ha3">Account</h2><div class="sp-panel-body">
+      <div class="sp-panel-email">patrick@megeredchianlaw.com <span class="cds-tag">Admin</span></div>
+      <fieldset class="sp-radio-group"><legend>Theme</legend>
+        <label class="sp-radio"><input type="radio" name="t3"><span class="sp-radio-mark"></span>Light</label>
+        <label class="sp-radio"><input type="radio" name="t3"><span class="sp-radio-mark"></span>Dark</label>
+        <label class="sp-radio" data-state="focus"><input type="radio" name="t3" checked><span class="sp-radio-mark"></span>System</label>
+      </fieldset>
+      <div class="sp-panel-divider"></div>
+      <a class="sp-panel-row" href="#" data-state="hover">My seat — NE04 · Floor 3 <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      <div class="sp-panel-divider"></div>
+      <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error"/></svg><div class="cds-notification-text"><strong>Sign-out didn't complete</strong><p>You are still signed in.</p></div><button class="cds-btn cds-btn--ghost">Retry</button></div>
+    </div></section>
+  </div>
+  <p class="cap">Account: email body-compact-01 (a long email wraps, never truncates) · role tag — the one rounded element, gray 80 / gray 10 on the panel · Theme radio, instant · My seat link row 48 (unseated: read-only text, not a disabled control) · divider · Sign out ghost (submitting, failure).</p>
+
+  <h2 id="switch">Mode switch — <code>.sp-switch</code></h2>
+  <p class="spec-anatomy">Two segments, 40px, full content width. Selected gray 10 fill / gray 100 text; unselected gray 100 with a 1px gray 80 edge; unselected hover gray-90-hover; pressed gray 80; focus white 2px inset. Carbon's inverse-selected content switcher on g100 — compliant, not a deviation. Pressing the other segment navigates <code>/</code> ⇄ <code>/admin</code> and closes the panel.</p>
+  <div class="panel-grid">
+    <div class="sp-panel short" style="padding:var(--sp-space-05)"><span class="spec-note" style="color:var(--sp-panel-dark-text-helper)">Draft selected · rest</span><div class="sp-switch" role="group" aria-label="Mode"><button aria-pressed="false">Published</button><button aria-pressed="true">Draft</button></div></div>
+    <div class="sp-panel short" style="padding:var(--sp-space-05)"><span class="spec-note" style="color:var(--sp-panel-dark-text-helper)">Published selected · Draft hovered</span><div class="sp-switch" role="group" aria-label="Mode"><button aria-pressed="true">Published</button><button aria-pressed="false" data-state="hover">Draft</button></div></div>
+    <div class="sp-panel short" style="padding:var(--sp-space-05)"><span class="spec-note" style="color:var(--sp-panel-dark-text-helper)">Published pressed</span><div class="sp-switch" role="group" aria-label="Mode"><button aria-pressed="false" data-state="pressed">Published</button><button aria-pressed="true">Draft</button></div></div>
+    <div class="sp-panel short" style="padding:var(--sp-space-05)"><span class="spec-note" style="color:var(--sp-panel-dark-text-helper)">Published focused</span><div class="sp-switch" role="group" aria-label="Mode"><button aria-pressed="false" data-state="focus">Published</button><button aria-pressed="true">Draft</button></div></div>
+  </div>
+
+  <h2 id="radio">Radio group — <code>.sp-radio-group</code> / <code>.sp-radio</code></h2>
+  <p class="spec-anatomy">Native <code>input[type=radio]</code> in a <code>fieldset</code> with a <code>legend</code>. 16px ring, 1px border, 8px dot; 32px items; label body-compact-01. Light surface (PR 4 reuses this) and inside the dark panel. Never disabled here — Theme is always available.</p>
+  <div class="spec-row">
+    <div style="width:288px"><span class="spec-note">light · rest / hover / checked / focus</span>
+      <fieldset class="sp-radio-group"><legend>Theme</legend>
+        <label class="sp-radio"><input type="radio" name="r1"><span class="sp-radio-mark"></span>Light</label>
+        <label class="sp-radio" data-state="hover"><input type="radio" name="r1"><span class="sp-radio-mark"></span>Dark (hover)</label>
+        <label class="sp-radio"><input type="radio" name="r1" checked><span class="sp-radio-mark"></span>System (checked)</label>
+        <label class="sp-radio" data-state="focus"><input type="radio" name="r1"><span class="sp-radio-mark"></span>Focus</label>
+      </fieldset>
+    </div>
+    <div class="sp-panel short" style="padding:0 var(--sp-space-05) var(--sp-space-05)"><span class="spec-note" style="color:var(--sp-panel-dark-text-helper)">dark panel · same markup</span>
+      <fieldset class="sp-radio-group"><legend>Theme</legend>
+        <label class="sp-radio"><input type="radio" name="r2"><span class="sp-radio-mark"></span>Light</label>
+        <label class="sp-radio" data-state="hover"><input type="radio" name="r2"><span class="sp-radio-mark"></span>Dark (hover)</label>
+        <label class="sp-radio"><input type="radio" name="r2" checked><span class="sp-radio-mark"></span>System (checked)</label>
+        <label class="sp-radio" data-state="focus"><input type="radio" name="r2"><span class="sp-radio-mark"></span>Focus</label>
+      </fieldset>
+    </div>
+    <div style="width:288px"><span class="spec-note">live — click and Tab</span>
+      <fieldset class="sp-radio-group"><legend>Theme</legend>
+        <label class="sp-radio"><input type="radio" name="r3" checked><span class="sp-radio-mark"></span>Light</label>
+        <label class="sp-radio"><input type="radio" name="r3"><span class="sp-radio-mark"></span>Dark</label>
+        <label class="sp-radio"><input type="radio" name="r3"><span class="sp-radio-mark"></span>System</label>
+      </fieldset>
+    </div>
+  </div>
+
+  <h2 id="left">Left filter panel — <code>.sp-left-panel</code> (256, layer-01, slide-in, pushes)</h2>
+  <p class="spec-anatomy">Header row 48 pinned: “Filters” heading-compact-01 + ghost Clear all (Hidden while nothing is applied). Groups = <code>fieldset</code>/<code>legend</code> 32px with a ghost Clear (Hidden while the group is empty); items 32px: <code>.cds-checkbox</code> + name (truncates with <code>title</code>) + count in helper style, text-secondary because the row hovers. Instant updates. Esc closes; no focus trap; motion fast-02 on one axis.</p>
+  <div class="lp-grid">
+    <div><span class="spec-note">applied · Department ×2, Status ×1 · first item hovered</span>
+    <div class="sp-left-panel" id="lp" role="complementary" aria-label="Filters">
+      <div class="sp-left-panel-header">Filters<button class="cds-btn cds-btn--ghost cds-btn--sm">Clear all</button></div>
+      <div class="sp-left-panel-body">
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Department<button class="cds-btn cds-btn--ghost cds-btn--sm">Clear</button></span></legend>
+          <label class="sp-filter-item" data-state="hover"><span class="cds-checkbox"><input type="checkbox" checked><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name" title="Case Management">Case Management</span><span class="sp-filter-count">38</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox" checked><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Litigation</span><span class="sp-filter-count">20</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Pre-Litigation</span><span class="sp-filter-count">9</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Medical Records</span><span class="sp-filter-count">7</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Intake</span><span class="sp-filter-count">5</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Front Office</span><span class="sp-filter-count">3</span></label>
+        </fieldset>
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Zone</span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">North-east pod</span><span class="sp-filter-count">12</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">North-west pod</span><span class="sp-filter-count">12</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Attorney offices</span><span class="sp-filter-count">18</span></label>
+        </fieldset>
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Status<button class="cds-btn cds-btn--ghost cds-btn--sm">Clear</button></span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox" checked><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Assigned</span><span class="sp-filter-count">56</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Open</span><span class="sp-filter-count">12</span></label>
+        </fieldset>
+      </div>
+    </div></div>
+
+    <div><span class="spec-note">empty · admin (viewer reads “Ask an admin.”)</span>
+    <div class="sp-left-panel" role="complementary" aria-label="Filters">
+      <div class="sp-left-panel-header">Filters</div>
+      <div class="sp-left-panel-body">
+        <div class="cds-empty"><h3>Filters appear once departments and zones exist</h3><p>Add them in Management.</p><div class="cds-empty-actions"><a class="cds-btn cds-btn--tertiary cds-btn--md" href="#">Go to Management</a></div></div>
+      </div>
+    </div></div>
+
+    <div><span class="spec-note">loading · titles real, three skeleton rows per group</span>
+    <div class="sp-left-panel" role="complementary" aria-label="Filters" aria-busy="true">
+      <div class="sp-left-panel-header">Filters</div>
+      <div class="sp-left-panel-body">
+        <div class="sp-filter-group-row">Department</div>
+        <div class="sp-skeleton-row"><span class="sp-skeleton"></span></div><div class="sp-skeleton-row"><span class="sp-skeleton sp-skeleton--w2"></span></div><div class="sp-skeleton-row"><span class="sp-skeleton sp-skeleton--w3"></span></div>
+        <div class="sp-filter-group-row">Zone</div>
+        <div class="sp-skeleton-row"><span class="sp-skeleton"></span></div><div class="sp-skeleton-row"><span class="sp-skeleton sp-skeleton--w2"></span></div><div class="sp-skeleton-row"><span class="sp-skeleton sp-skeleton--w3"></span></div>
+        <div class="sp-filter-group-row">Status</div>
+        <div class="sp-skeleton-row"><span class="sp-skeleton"></span></div><div class="sp-skeleton-row"><span class="sp-skeleton sp-skeleton--w2"></span></div>
+      </div>
+    </div></div>
+
+    <div><span class="spec-note">partial · Zone failed; the others work</span>
+    <div class="sp-left-panel" role="complementary" aria-label="Filters">
+      <div class="sp-left-panel-header">Filters</div>
+      <div class="sp-left-panel-body">
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Department</span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Case Management</span><span class="sp-filter-count">38</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Litigation</span><span class="sp-filter-count">20</span></label>
+        </fieldset>
+        <div class="sp-filter-group-row">Zone</div>
+        <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>Zones couldn't load</strong><p>Department and status still work.</p></div><button class="cds-btn cds-btn--ghost">Retry</button></div>
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Status</span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Assigned</span><span class="sp-filter-count">56</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Open</span><span class="sp-filter-count">12</span></label>
+        </fieldset>
+      </div>
+    </div></div>
+
+    <div><span class="spec-note">overflow · body scrolls, header pinned; long names truncate</span>
+    <div class="sp-left-panel" role="complementary" aria-label="Filters">
+      <div class="sp-left-panel-header">Filters<button class="cds-btn cds-btn--ghost cds-btn--sm">Clear all</button></div>
+      <div class="sp-left-panel-body">
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Department<button class="cds-btn cds-btn--ghost cds-btn--sm">Clear</button></span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox" checked><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Case Management</span><span class="sp-filter-count">38</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Litigation</span><span class="sp-filter-count">20</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Pre-Litigation</span><span class="sp-filter-count">9</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Medical Records</span><span class="sp-filter-count">7</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Intake</span><span class="sp-filter-count">5</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Front Office</span><span class="sp-filter-count">3</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Accounting</span><span class="sp-filter-count">3</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name" title="Human Resources and Office Administration">Human Resources and Office Administration</span><span class="sp-filter-count">2</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">IT</span><span class="sp-filter-count">2</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Marketing</span><span class="sp-filter-count">2</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">WIL</span><span class="sp-filter-count">1</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Records Retention</span><span class="sp-filter-count">1</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Facilities</span><span class="sp-filter-count">1</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Compliance</span><span class="sp-filter-count">1</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Billing</span><span class="sp-filter-count">1</span></label>
+        </fieldset>
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Zone</span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">North-east pod</span><span class="sp-filter-count">12</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">North-west pod</span><span class="sp-filter-count">12</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Litigation pod</span><span class="sp-filter-count">10</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Attorney offices</span><span class="sp-filter-count">18</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Reception</span><span class="sp-filter-count">2</span></label>
+        </fieldset>
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Status</span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Assigned</span><span class="sp-filter-count">56</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Open</span><span class="sp-filter-count">12</span></label>
+        </fieldset>
+      </div>
+    </div></div>
+
+    <div><span class="spec-note">roster floor (Floor 2) · Zone and Status Hidden</span>
+    <div class="sp-left-panel" role="complementary" aria-label="Filters">
+      <div class="sp-left-panel-header">Filters</div>
+      <div class="sp-left-panel-body">
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Department</span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Litigation</span><span class="sp-filter-count">20</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Case Management</span><span class="sp-filter-count">12</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Intake</span><span class="sp-filter-count">8</span></label>
+        </fieldset>
+        <div class="sp-left-panel-note">Zone and status are seat facts — Floor 2 has no seats yet.</div>
+      </div>
+    </div></div>
+
+    <div><span class="spec-note">below lg · section links above the filters</span>
+    <div class="sp-left-panel" role="complementary" aria-label="Filters">
+      <div class="sp-left-panel-header">Filters<button class="cds-btn cds-btn--ghost cds-btn--sm">Clear all</button></div>
+      <div class="sp-left-panel-body">
+        <nav aria-label="Sections"><ul class="sp-left-nav"><li><a href="#" aria-current="page">Seat map</a></li><li><a href="#">Reception</a></li><li><a href="#" data-state="hover">Management</a></li><li><a href="#">Settings</a></li></ul></nav>
+        <div class="sp-left-divider"></div>
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Department<button class="cds-btn cds-btn--ghost cds-btn--sm">Clear</button></span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox" checked><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Case Management</span><span class="sp-filter-count">38</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Litigation</span><span class="sp-filter-count">20</span></label>
+        </fieldset>
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Status</span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Assigned</span><span class="sp-filter-count">56</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Open</span><span class="sp-filter-count">12</span></label>
+        </fieldset>
+      </div>
+    </div></div>
+  </div>
+
+  <h2 id="narrow">Narrow fallback — 1024, admin on <code>/admin</code>, left panel open, History open</h2>
+  <p class="spec-anatomy">Header links absent; hamburger open (Close glyph); compact indicator ◇ “Draft · 4” (mark + count, never dropped); utilities unchanged with History outlined; left panel carries the links above the filters and pushes the canvas to 768; the right panel keeps 320 and floats.</p>
+  <div class="frame"><div class="frame1024">
+    <header class="cds-header sp-header">
+      <button class="sp-header-slot" aria-label="Filters" aria-expanded="true"><svg class="sp-glyph-menu"><use href="#i-menu"/></svg><svg class="sp-glyph-close"><use href="#i-close"/></svg></button>
+      <a class="cds-header-name" href="#">Megeredchian Law <strong>Seat Planner</strong></a>
+      <div class="sp-header-center"><button class="sp-mode sp-mode--draft" aria-expanded="true"><svg class="sp-mode-mark" aria-hidden="true"><use href="#i-draft"/></svg>Draft · 4</button></div>
+      <div class="cds-header-utils">
+        <span class="sp-has-tooltip"><button aria-label="Help"><svg><use href="#i-help"/></svg></button><span class="sp-tooltip" role="tooltip">Help</span></span>
+        <span class="sp-has-tooltip"><button aria-label="History" aria-expanded="true"><svg><use href="#i-history"/></svg></button><span class="sp-tooltip" role="tooltip">History</span></span>
+        <span class="sp-has-tooltip"><button aria-label="Account"><svg><use href="#i-account"/></svg></button><span class="sp-tooltip" role="tooltip">Account</span></span>
+      </div>
+    </header>
+    <div style="display:flex;height:400px;position:relative">
+      <div class="sp-left-panel" role="complementary" aria-label="Filters" style="height:100%">
+        <div class="sp-left-panel-header">Filters<button class="cds-btn cds-btn--ghost cds-btn--sm">Clear all</button></div>
+        <div class="sp-left-panel-body">
+          <nav aria-label="Sections"><ul class="sp-left-nav"><li><a href="#" aria-current="page">Seat map</a></li><li><a href="#">Reception</a></li><li><a href="#">Management</a></li><li><a href="#">Settings</a></li></ul></nav>
+          <div class="sp-left-divider"></div>
+          <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Department<button class="cds-btn cds-btn--ghost cds-btn--sm">Clear</button></span></legend>
+            <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox" checked><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Case Management</span><span class="sp-filter-count">38</span></label>
+            <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Litigation</span><span class="sp-filter-count">20</span></label>
+          </fieldset>
+        </div>
+      </div>
+      <div class="canvas" style="flex:1">Draft floor plan, read-only below lg — 768 wide</div>
+      <div class="sp-panel" style="position:absolute;right:0;top:0;height:100%"><h2>History</h2><div class="sp-panel-body">
+        <div class="sp-switch" role="group" aria-label="Mode"><button aria-pressed="false">Published</button><button aria-pressed="true">Draft</button></div>
+        <div class="sp-panel-status">4 unpublished changes · last edit 2 min ago</div>
+        <h3>Publish history</h3>
+        <ul class="sp-event-list">
+          <li class="sp-event"><div class="sp-event-what">3 seats changed · 2 people updated</div><div class="sp-event-when">2 Sep 2026, 14:12</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+          <li class="sp-event"><div class="sp-event-what">1 seat changed</div><div class="sp-event-when">29 Aug 2026, 09:40</div><div class="sp-event-who">patrick@megeredchianlaw.com</div></li>
+        </ul>
+      </div></div>
+    </div>
+  </div></div>
+</main>
+</body>
+</html>

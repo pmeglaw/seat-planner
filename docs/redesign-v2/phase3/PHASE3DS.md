@@ -1,6 +1,6 @@
 # Seat Planner redesign — Phase 3: UI design system
 
-**Status: in progress — PR 1 of 5 (tokens + foundations) merged; PR 2 (shell) next.** Inputs: `PHASE2UX.md` (§1 geometry, §2 states,
+**Status: in progress — PR 1 (tokens + foundations) merged v1.73.4; PR 2 (shell) open; PR 3 (map) next.** Inputs: `PHASE2UX.md` (§1 geometry, §2 states,
 §3 component table, the close-out note), `DECISIONS.md` (D0–D6, §6 deviations 1–15), the `ibm-design-language`
 skill (`SKILL.md`, `tokens.md`, `design-engineering.md`, `status-and-dataviz.md`, `carbon-next.md`, `taste.md`) and
 its two assets, `app/globals.css` as an inventory of consumer names only. Nothing under `app/`, `components/`
@@ -126,6 +126,111 @@ left-panel option counts ("Case Management · 38") and any other helper-*style* 
 that hovers use `--sp-text-helper-on-row` (= `text-secondary`, 6.38:1). `text-helper` itself stays for
 field helper lines and captions, which never sit on a hover surface.
 
+### 1.7 Header overrides — Shell → `.sp-header` on `.cds-header` (§3 "Header · exists", "Hamburger", "Utility · outlined when open")
+
+**Problem.** The asset's header is right in geometry (48, Gray 100, gray 80 rule, utilities flush right) but
+applies `--cds-button-primary` (blue 60) to the current link, pads the name 0 32 0 16, has no hamburger
+slot, no pressed state, and no open state for a panel trigger.
+**Options.** Fork the header into `sp-components.css` (a second 48px header to maintain) — rejected. Or add
+one class and override only what the shell zone needs.
+**Choice.** `.sp-header` overrides: current bar 3px `--sp-shell-current-bar` (blue 50 — what
+`$border-interactive` resolves to on g100; applying a theme token the asset didn't, not a deviation); name
+padding 0 16 (PHASE2UX §1.2); nav pressed gray 80. `.sp-header-slot` is the 48×48 hamburger / reserved slot:
+Menu glyph 20px; open = Close glyph + `aria-expanded="true"` with **no persistent fill** (hover / pressed
+apply as normal — the outlined-open treatment belongs to right-panel triggers only, `ui-shell.md`);
+`--reserved` is the same box, empty, on Reception / Management / Settings at lg+ (D0-h). Utilities: rest ·
+hover gray-90-hover (asset) · pressed gray 80 · focus white · **open = outlined**: shell background, 1px
+`--sp-shell-rule` top / left / right, and a 1px outer shadow in the shell colour that covers the header's
+bottom rule so the outline opens into the panel's left rule. `.sp-mode` takes the same open treatment.
+**Trade-off.** The open outline is gray 80 on gray 100 (1.57:1, measured, not gated): the open state is also
+carried by the panel itself and `aria-expanded`. **Would change if** Carbon ships an invariant-shell token
+set.
+
+### 1.8 Tooltip — Shell → `.sp-tooltip` (§3 "Tooltip on icon buttons · hand-built")
+
+**Problem.** Icon-only 48px utilities need their name on hover and on focus. **Options.** Carbon's tooltip
+uses `$background-inverse`, which flips to gray 80 → light in the dark theme and would go pale on the
+invariant dark header — rejected. A `title` attribute — not styled, not on focus — rejected.
+**Choice.** Tier C: gray 80 surface, gray 10 `label-01`, 24px tall, 8px below the control, centred, shown
+on `:hover` and `:focus-within`, Esc dismisses (behaviour), suppressed under `(hover: none)`. The text is
+the control's `aria-label`, never interactive content. **No caret** (owner ruling on PR 2): 8px below a 48px
+target leaves no ambiguity about the anchor, and a caret adds a shape nothing else in the system uses.
+**Would change if** a tooltip is needed on a theme surface (then a theme-following variant, not this one).
+
+### 1.9 Right panel — Shell → `.sp-panel` (§3 "Right panel (dark, 320, floats) · hand-built" + dark variants)
+
+**Problem.** Help / History / Account share one 320 panel on Gray 100 that floats over content in both
+themes, and everything inside — ghost buttons, tag, empty state, notification, skeleton — exists in the
+asset only for theme surfaces. **Options.** `.cds-side-panel` (480, `layer-02`, slide-in form container
+with a footer) — wrong width, theme surface, wrong role. A separate dark component set — rejected; the
+markup should not know which surface it is on.
+**Choice.** `.sp-panel`: heading-03 in 16px padding, content column 288, rows 48, 1px gray 80 left rule,
+moderate-02 on one axis via `.sp-panel-host[data-open]`. **Zone-scoped variants** restyle the asset's
+markup: `.sp-panel .cds-btn--ghost` → `--sp-panel-dark-link` (blue 40), hover fill gray-90-hover with
+blue 30 text, pressed gray 80 (one step lighter again, the header's direction), focus white;
+`.sp-panel .cds-tag` → gray 80 / gray 10, the one rounded element; `.sp-panel .cds-empty` → gray 10 title,
+gray 30 body, no page padding; `.sp-panel .cds-notification--error` → low-contrast: layer
+`--sp-panel-dark-layer` (gray 90), 3px left border `--sp-panel-dark-error-mark` (red 50), ⊗ mark, Retry as
+the ghost variant inside it — never a filled danger button in a notification; `.sp-panel .sp-skeleton` →
+gray-100-hover / gray 80 sweep. **Event rows** are 72px = 10 / 52 / 10: line 1 is `heading-01` (14/20 — a
+heading over a 20px rhythm, not a compact label; owner ruling on PR 2), lines 2–3 `label-01` (12/16); 20 +
+16 + 16 = 52 and the 10px pads are the symmetric remainder (`--sp-event-pad`, deliberately not a spacing
+step). Measured in the rig at exactly 72 / 10 / 10. The first draft used `body-compact-01` (18) and landed
+on 12 / 50 / 10 — asymmetric padding, the tell `taste.md` names; the fix was inside the type set. Show more is the ghost (an action), the cap
+caption is `--sp-panel-dark-text-helper`. Width 320 is recorded under DECISIONS D0-f (Phase 3
+confirmation), not §6. Viewers' History has no switch (Hidden) — the fact line stands alone.
+**Trade-off.** Nine zone-scoped rules instead of nine dark components. **Would change if** the panels ever
+follow the theme (then the scope collapses into tier A).
+
+### 1.10 Mode switch — History panel → `.sp-switch` (§3 "Two-segment mode switch · hand-built")
+
+**Problem.** Published ⇄ Draft, a control that shows the current mode on a Gray 100 surface, 40px, full
+content width. **Options.** Two ghost buttons (no selected state); a toggle (Draft is not "on");
+Carbon's content switcher — the right pattern, absent from the asset.
+**Choice.** Carbon's inverse-selected content switcher on g100: selected gray 10 fill / gray 100 text;
+unselected gray 100 with a 1px gray 80 edge; unselected hover gray-90-hover; pressed gray 80; focus white
+2px inset; `aria-pressed` marks the current mode. Compliant, not a deviation. Pressing the other segment
+navigates `/` ⇄ `/admin` keeping `?floor=` and `?seat=` and closes the panel (D0-a). **Would change if** a
+third mode appears (then a real tablist).
+
+### 1.11 Radio group — Account panel → `.sp-radio-group` / `.sp-radio` (§3 "Radio group (Theme) · hand-built")
+
+**Problem.** Theme = Light · Dark · System, instant, persisted; the asset has a checkbox and no radio.
+Built here (PR 2) because the Account specimen is incomplete without it; PR 4 references it.
+**Choice.** Native `input[type=radio]` under a `fieldset`/`legend`, 16px ring (1px) + 8px dot — the
+asset's checkbox geometry — 32px items, `body-compact-01` label, hover = 4px halo in the layer-hover
+colour, focus 2px `$focus` with 1px offset (the checkbox's own ring). Inside `.sp-panel` the ring and dot
+take the panel text colour and the focus ring goes white (specificity note: the zone rule must name
+`span.sp-radio-mark` to beat the base rule — caught in the rig, §7). **16px, not Carbon's 18** — a product
+decision: the radio shares 32px rows and panels with the asset's 16px checkbox, and one control size
+outranks matching Carbon for one control (owner ruling on PR 2). No skill text states 18, so nothing is
+ledgered. Never disabled: Theme is always available. **Would change if** a radio is needed on a `layer-01` surface in a modal (the halo colour would
+need `layer-hover-02`).
+
+### 1.12 Left filter panel — Shell → `.sp-left-panel` (§3 "Left filter panel (slide-in, pushes) · hand-built")
+
+**Problem.** 256px, `layer-01`, below the header, pushes the canvas, no focus trap, pinned header row,
+scrolling body, three checkbox groups with per-group Clear and counts, section links above it below lg.
+**Options.** `.cds-side-panel` — right, 480, slide-over, focus-trapped; wrong on every axis. A Carbon side
+nav — right idea, absent from the asset.
+**Choice.** `.sp-left-panel`: header row 48 (`heading-compact-01` + ghost Clear all, Hidden while nothing
+is applied), body scrolls; `fieldset.sp-filter-group` with the legend laid out as a 32px row (title + ghost
+Clear, Hidden while the group is empty); items 32px = `.cds-checkbox` + name (truncates with `title`) +
+count in `label-01` coloured `--sp-text-helper-on-row` (§1.6) because the row hovers to `layer-hover-01`;
+`.sp-left-nav` items 32px with a 3px `--sp-border-interactive` left bar and `layer-selected` fill on the
+current one (owner ruling on PR 2: 3px so the product has one current-mark thickness, header and panel
+alike; blue 50 on `layer-selected` dark = 3.45:1 is the lowest passing pair in §3); empty / loading / partial / overflow / roster-floor states are the asset's empty state,
+`.sp-skeleton-row`, and `.cds-notification--error` with ghost Retry, each scoped to the panel's padding;
+slide-in fast-02 on one axis via `.sp-left-panel-host[data-open]`. **Trade-off.** Counts are 12px on a
+14px row; they read as secondary by size and colour, which is the intent. **Would change if** the filter
+set grows past three groups (then collapsible groups).
+
+### 1.13 Skeleton line — `.sp-skeleton` (§3 "Skeleton rows · exists (needs a dark variant)")
+
+The asset's skeleton is `td::after` — table cells only. Panels and lists need a bare 12px line with the
+same sweep; `.sp-skeleton-row` (32px) and `.sp-skeleton-event` (72px, three lines) reserve the dimensions
+of what they replace so nothing jumps. Dark variant by the `.sp-panel` scope.
+
 ---
 
 ## 2. Component index (PHASE2UX §3 → class → specimen anchor)
@@ -137,7 +242,24 @@ Filled per PR. Rows marked *pending* land in the PR named.
 | Foundations: type · spacing · sizes · grid · focus · motion · theme roles · grayscale strip | tokens only (`--sp-type-*`, `--sp-space-*`, `--sp-size-*`, `--sp-focus-*`, `--sp-duration-*`) | `00-foundations.html#type` … `#grayscale` | 1 |
 | Mode indicator | `.sp-mode`, `.sp-mode--published / --draft / --unpublished / --error / --loading`, `.sp-mode-mark`, `.sp-mode-skeleton` | `05-status-and-marks.html#mode` | 1 |
 | Status marks (seat legend) | `.sp-seat-mark`, `.sp-seat-mark--assigned / --available / --reserved / --unavailable`, `.sp-seat-legend`, `.sp-seat-footprint` | `05-status-and-marks.html#seat` | 1 |
-| Skip link · header · hamburger · utilities · left panel · right panel · mode switch · tooltip · dark skeleton / empty / notification | *pending* | `01-shell.html` | 2 |
+| Skip link | `.cds-skip-link` (asset) | `01-shell.html` (first focusable) | 2 |
+| Header, name, nav, utils | `.cds-header.sp-header`, `.cds-header-name`, `.cds-header-nav`, `.cds-header-utils`, `.sp-header-center` | `01-shell.html#header` | 2 |
+| Hamburger / reserved slot | `.sp-header-slot`, `.sp-header-slot--reserved`, `.sp-glyph-menu` / `.sp-glyph-close` | `01-shell.html#hamburger` | 2 |
+| Utility icon button, outlined when open | `.sp-header .cds-header-utils button[aria-expanded="true"]` | `01-shell.html#utilities` | 2 |
+| Tooltip on icon buttons | `.sp-has-tooltip` > `.sp-tooltip[role=tooltip]` | `01-shell.html#utilities` | 2 |
+| Right panel (dark, 320, floats) | `.sp-panel`, `.sp-panel-host[data-open]`, `.sp-panel-body`, `.sp-panel-status`, `.sp-panel-caption`, `.sp-panel-fact`, `.sp-panel-divider`, `.sp-panel-row` (+`--static`), `.sp-panel-email`, `.sp-panel-dl` | `01-shell.html#panels` | 2 |
+| Two-segment mode switch | `.sp-switch` > `button[aria-pressed]` | `01-shell.html#switch` | 2 |
+| Event list (static rows) | `.sp-event-list` > `.sp-event` (`-what` / `-when` / `-who`) | `01-shell.html#panels` | 2 |
+| Show more (ghost) · Ghost on dark | `.sp-panel .cds-btn--ghost` | `01-shell.html#panels` | 2 |
+| Skeleton rows (+ dark) | `.sp-skeleton`, `.sp-skeleton-row`, `.sp-skeleton-event`; `.sp-panel .sp-skeleton` | `01-shell.html#panels`, `#left` | 2 |
+| Empty state (+ dark) | `.cds-empty`; `.sp-panel .cds-empty`; `.sp-left-panel .cds-empty` | `01-shell.html#panels`, `#left` | 2 |
+| Inline notification (error) + ghost Retry (+ dark) | `.cds-notification--error`; `.sp-panel .cds-notification--error` | `01-shell.html#panels`, `#left` | 2 |
+| Tag (role) | `.cds-tag`; `.sp-panel .cds-tag` | `01-shell.html#panels` | 2 |
+| Radio group (Theme) | `fieldset.sp-radio-group` > `label.sp-radio` > `input` + `.sp-radio-mark` | `01-shell.html#radio` | 2 |
+| Read-only row text | `.sp-panel-row.sp-panel-row--static` | `01-shell.html#panels` | 2 |
+| Left filter panel | `.sp-left-panel`, `.sp-left-panel-host[data-open]`, `-header`, `-body`, `.sp-filter-group` / `-row`, `.sp-filter-item` (`-name`, `-count`), `.sp-left-nav`, `.sp-left-divider`, `.sp-left-panel-note` | `01-shell.html#left` | 2 |
+| Checkbox group with per-group Clear + counts | `.sp-filter-group` + `.cds-checkbox` + `.cds-btn--ghost.cds-btn--sm` | `01-shell.html#left` | 2 |
+| Narrow fallback (1024) | composition of the above | `01-shell.html#narrow` | 2 |
 | Control row … roster rows (map) | *pending* | `02-map.html` | 3 |
 | Side panel 480 · modals · narrow tearsheet · callout | *pending* | `03-panels-and-sheets.html` | 4 |
 | Page header + tabs · table · structured list · radio · file trigger · count cards · readout · ghost done-state | *pending* | `04-forms-and-tables.html` | 4 |
@@ -183,12 +305,29 @@ on `#161616` / `#262626` / `#333333` / `#393939` / footprint hover `#474747` (lo
 on both themes' hover surfaces (light orange 60: 4.10; dark orange 40: 5.13); the search highlight pair in
 both themes.
 
-**Measured, not gated (`contrast/surface-pairs-not-gated.json`, 3 pairs)** — dividers, a skeleton and a
+**PR 2 pairs (added to `product-pairs.json`, now 78 pairs) — summary line pasted verbatim:**
+
+```
+78/78 pass
+```
+
+Every new dark surface: tooltip gray 10 on gray 80 (10.50); switch selected gray 100 on gray 10 (16.45) and
+unselected gray 10 on hover (11.49); tag gray 10 on gray 80 (10.50); ghost blue 40 on gray 100 (7.68), blue
+30 on hover gray-90-hover (7.42) and on pressed gray 80 (6.78), blue 40 on the notification layer gray 90
+(6.43); panel text and secondary on the layer and row-hover surfaces; radio ring gray 10 on gray 100 /
+hover (16.45 / 11.49) and gray 100 on white; nav link gray 30 on gray 100 / hover (10.59 / 7.40); left
+panel text, count and checkbox on `layer-hover-01` in both themes; the current-nav bar blue 60 on
+`layer-selected` light (3.79) and blue 50 on dark (3.45) — **the lowest passing pair in the set**, above the
+3:1 non-text floor; it is the below-lg nav mark only.
+
+**Measured, not gated (`contrast/surface-pairs-not-gated.json`, 6 pairs)** — dividers, a skeleton and a
 hover step, none of which is a mark or text: shell rule gray 80 on `#161616` = 1.57:1 (a separator; Carbon's
 own g100 `border-subtle` is the same pair), skeleton element on skeleton background = 1.26:1 (a
 placeholder, deliberately quiet, Carbon's g100 values), panel row hover `#333333` on `#161616` = 1.43:1
-(a hover step; the focus ring, not the fill, identifies the control). The utility "outlined when open"
-state (PR 2) must therefore not rely on the outline alone — the open panel and `aria-expanded` carry it.
+(a hover step; the focus ring, not the fill, identifies the control); PR 2 adds the tag fill gray 80 on gray
+100 (1.57 — the text carries it), the switch's unselected edge (1.57 — identity is the selected fill + text),
+and the left panel's rule. The utility "outlined when open" state does not rely on the outline alone — the
+open panel and `aria-expanded` carry it.
 
 ---
 
@@ -210,6 +349,19 @@ Next free deviation number: **16** (nothing ledgered in PR 1).
 | Focus 2px inset, white on Gray 100 | TRUE | SKILL non-negotiable; tokens.md "focus flips to white on dark" |
 | Tag radius 12px on 24px, radius 0 elsewhere | TRUE | SKILL |
 | Motion tokens only; skeleton sweep 3000ms linear | TRUE | asset precedent for the skeleton; design-engineering "never linear except progress" applies to interface motion, not a loading texture |
+| Current-link bar blue 50 (theme token the asset didn't apply) | TRUE | tokens.md: `border-interactive` on g100 = 4589ff |
+| Hamburger open = Close glyph, no persistent fill | TRUE | ui-shell.md: the outlined-open treatment is the right panel trigger's |
+| Utility / mode indicator open = outlined, bottom flows into the panel | TRUE | ui-shell.md Right panel |
+| Tooltip on gray 80, invariant | NOT COVERED | Carbon tooltips use `$background-inverse`; the invariant header needs a zone value. Reopens if a tooltip lands on a theme surface |
+| Right panel 320, one width | TRUE | ui-shell.md "consistent width" — no number; D0-f Phase 3 confirmation |
+| Mode switch = inverse-selected content switcher on g100 | TRUE | Carbon ContentSwitcher (g100 selected = `layer-selected-inverse`) |
+| Viewers: no switch (Hidden, not disabled) | TRUE | SKILL disabled / read-only / hidden table |
+| Ghost on dark = blue 40 / hover blue 30 / pressed gray 80 | TRUE | tokens.md g100 `link-primary` / `link-primary-hover`; active steps lighter |
+| Dark notification: layer + 3px error border + ⊗, ghost Retry inside | TRUE | patterns: inline notification, task feedback; no filled primary inside a notification |
+| Radio 16px, the asset checkbox's size | NOT COVERED — product decision | no skill text states a radio size; the checkbox in the same rows is 16 |
+| Event row 72 = 10 / 52 / 10 with heading-01 | TRUE | every line-height a type token; symmetric padding (taste.md) |
+| Tooltip without caret | NOT COVERED — product decision | 8px below a 48px target; no other shape in the system |
+| Left panel pushes, no focus trap; Esc closes; counts text-secondary | TRUE | composition slide-in; tokens.md hover trap |
 
 ---
 
@@ -229,6 +381,18 @@ alongside `data-theme` (§1.2); the Account panel's Theme radio group (PR 2) rep
 indicator replaces the shipped `PublishStateChip`-style element; History panel wiring is PR 2).
 `.sp-seat-mark` / `.sp-seat-legend` / `.sp-seat-footprint` → `components/seat-map/` (legend in
 `MapStatusBand`, footprint in `SeatMarker.tsx`, marks in the inspector header and the Account panel).
+
+**Landing files (PR 2 scope).** `.sp-header`, `.sp-header-slot`, utilities + `.sp-tooltip` → `AppTopBar.tsx`
+(the rail in `AppRail.tsx` retires — the shell is a top bar with a hamburger, D0); `.sp-panel` family +
+`.sp-switch` + `.sp-radio` → new `components/ui/ShellPanels.tsx` (Help / History / Account), mounted once
+by `AppShell.tsx`; `ThemeToggle.tsx` retires into the Account panel's radio; `.sp-left-panel` →
+`FilterPanel.tsx` is **retired** and replaced by a shell-owned `LeftPanel.tsx` (filters + below-lg section
+links) driven by `useAppShellNavigation`; `.sp-skeleton*` → `loading.tsx` skeletons for the panels. The
+`--sp-chrome-*` names (`action`, `commit`, `danger-raised`, `heading`, `height`, `info`, `info-text`,
+`label`, `scrim`, `value`, `wash`) retire: `--sp-chrome-height` → *`--sp-shell-header-h`*, `--sp-chrome-heading`
+/ `-label` / `-value` → *`--sp-panel-dark-text`* / *`-text-secondary`* / *`-text`*, `--sp-chrome-info` /
+`-info-text` → *`--sp-panel-dark-layer`* / *`-text`*, `--sp-chrome-scrim` → *`--sp-overlay`*, `--sp-chrome-action`
+/ `-commit` / `-danger-raised` / `-wash` → retired (no raised or washed chrome surfaces remain).
 
 **Retired `--sp-*` names (PR 1 — primitives, theme roles, brand, status).** *Replaced by* in italics.
 
@@ -251,9 +415,28 @@ indicator replaces the shipped `PublishStateChip`-style element; History panel w
 
 ## 6. Open for the owner
 
-None after PR 1. Ruled on #507: pressed shell = gray 80 and open = outlined (§1.3); theme attribute kept,
+None after PR 2. Ruled on PR 2: event row 10 / 52 / 10 with `heading-01` (§1.9); radio 16 (§1.11); tooltip
+without caret (§1.8); below-lg current nav item 3px bar + `layer-selected` (§1.12).
+
+Closed after PR 1: Ruled on #507: pressed shell = gray 80 and open = outlined (§1.3); theme attribute kept,
 Carbon attribute derived (§1.2); seat marks ○ / lock / hatch with the assigned legend entry as a miniature
 pill (§1.4).
+
+---
+
+## 7. What I'd tell Phase 4 (grows per PR)
+
+1. **Zone rules must match the base rule's element names.** `.sp-panel .sp-radio-mark` (0,2,0) silently lost
+   to `.sp-radio span.sp-radio-mark` (0,2,1) and the rings vanished on the dark panel in the light theme;
+   only the rig showed it. Every dark-panel restyle of an asset class — ghost, tag, empty, notification,
+   skeleton, radio, checkbox — must repeat the asset selector's element names (or exceed its specificity),
+   and every such override gets a light-theme render of the dark panel before it is called done. This
+   recurs with every component that lands inside `.sp-panel`.
+2. **The outlined-open trigger is four shadows**, not a border (see the Phase 4 note in `.sp-mode`): three
+   inset 1px rules plus one outer 1px shadow in the shell colour over the header rule, with
+   `position: relative; z-index: 1`. A CSS-in-JS port that drops the outer shadow closes the outline.
+3. **`--sp-event-pad` is 10px on purpose** — the symmetric remainder of 72 − 52 — and is the one geometry
+   value not on the spacing scale; don't "fix" it to 8 or 12.
 
 ---
 
@@ -261,4 +444,5 @@ pill (§1.4).
 
 | PR | Branch | Contents |
 |---|---|---|
+| 2 | `docs/phase3-shell` | `.sp-header` overrides, `.sp-header-slot`, `.sp-tooltip`, `.sp-panel` + zone-scoped variants, `.sp-switch`, `.sp-radio`, `.sp-left-panel`, `.sp-skeleton`; specimen `01-shell` (header ×3, hamburger ×7, utilities ×5, panels ×12, switch ×4, radio ×3, left panel ×7, narrow 1024); §1.7–1.13, §2, §3 (78/78), §4, §5; D0-f Phase 3 confirmation; PHASE2UX §3 ghost-on-dark row |
 | 1 | #507 (`docs/phase3-tokens`) | assets copied; `sp-tokens.css`; `.sp-mode`, seat marks; specimens 00 + 05 + index + compare; §1.1–1.6, §2 (partial), §3, §4, §5 (partial). Owner rulings folded in before merge: pressed gray 80 + outlined open, theme decided, assigned legend = mini pill |

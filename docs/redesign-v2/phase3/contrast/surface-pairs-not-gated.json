@@ -16,5 +16,23 @@
   "fg": "#333333",
   "bg": "#161616",
   "kind": "graphic"
+ },
+ {
+  "name": "tag fill gray-80 vs panel gray-100 (the text carries it)",
+  "fg": "#393939",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "switch unselected edge gray-80 vs gray-100 (segment identity carried by the selected fill + text)",
+  "fg": "#393939",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "left panel rule gray-30 vs layer-01 (divider)",
+  "fg": "#c6c6c6",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
  }
 ]

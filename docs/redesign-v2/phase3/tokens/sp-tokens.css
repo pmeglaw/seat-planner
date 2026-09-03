@@ -271,7 +271,7 @@
 :root {
   --sp-shell-bg:            var(--gray-100);
   --sp-shell-bg-hover:      var(--gray-90-hover);   /* gray-90-hover — matches .cds-header-nav a:hover */
-  --sp-shell-bg-pressed:    var(--gray-80);         /* gray 80 — active steps lighter than hover on the dark ladder (owner ruling, #507) */
+  --sp-shell-bg-pressed:    var(--gray-80);         /* gray 80 — active steps lighter than hover on the dark ladder (owner ruling, PR 1 review) */
   --sp-shell-rule:          var(--gray-80);         /* 1px bottom rule; panel left rule; utility outline */
   --sp-shell-text:          var(--gray-10);
   --sp-shell-text-secondary:var(--gray-30);
@@ -295,6 +295,46 @@
   --sp-panel-dark-error-surface: var(--gray-90);    /* g100 subtle = layer-01 */
   --sp-panel-dark-skeleton-bg:   var(--gray-100-hover);
   --sp-panel-dark-skeleton-element: var(--gray-80);
+  /* PR 2 additions (owner rulings on the PR 2 proposal) */
+  --sp-panel-dark-layer-pressed: var(--gray-80);    /* one step lighter than hover, same direction as the header */
+  --sp-panel-dark-link-hover:    var(--blue-30);    /* $link-primary-hover on g100 */
+  --sp-panel-dark-tag-bg:        var(--gray-80);    /* $layer-selected-01 on g100 — the asset's gray tag, zone-pinned */
+  --sp-panel-dark-tag-text:      var(--gray-10);
+  --sp-panel-dark-row-hover:     var(--gray-90-hover);
+
+  /* tooltip — sits on the shell, so invariant (never $background-inverse, which flips) */
+  --sp-tooltip-bg:     var(--gray-80);
+  --sp-tooltip-text:   var(--gray-10);
+  --sp-tooltip-offset: var(--cds-spacing-03);       /* 8 */
+  --sp-tooltip-h:      var(--cds-size-xs);          /* 24 */
+
+  /* two-segment mode switch on the dark panel — Carbon's inverse-selected content switcher on g100 */
+  --sp-switch-h:             var(--cds-size-md);    /* 40 */
+  --sp-switch-bg:            var(--gray-100);
+  --sp-switch-edge:          var(--gray-80);
+  --sp-switch-hover:         var(--gray-90-hover);
+  --sp-switch-selected-bg:   var(--gray-10);
+  --sp-switch-selected-text: var(--gray-100);
+  --sp-switch-text:          var(--gray-10);
+}
+
+/* -----------------------------------------------------------------------------
+   5b. TIER B — SHELL COMPONENTS (PR 2): left filter panel, history events, radio
+   -------------------------------------------------------------------------- */
+:root {
+  --sp-panel-left-bg:      var(--cds-layer-01);
+  --sp-panel-left-rule:    var(--cds-border-subtle-01);
+  --sp-panel-left-hover:   var(--cds-layer-hover-01);
+  --sp-nav-current-bar:    var(--cds-border-interactive);   /* 3px left bar on the current nav item below lg */
+  --sp-nav-current-bg:     var(--cds-layer-selected-01);
+  --sp-nav-item-h:         var(--cds-size-sm);              /* 32 */
+  --sp-event-min-h:        72px;                            /* three lines: heading-01 20 + label-01 16 + 16 = 52 (PHASE3DS §1.9) */
+  --sp-event-pad:          10px;                            /* (72 − 52) / 2 — symmetric remainder, not a spacing step */
+  --sp-radio-size:         var(--cds-icon-size-01);         /* 16, as the asset's checkbox */
+  --sp-radio-dot:          var(--cds-spacing-03);           /* 8 */
+  --sp-radio-border:       var(--cds-icon-primary);
+  --sp-radio-fill:         var(--cds-icon-primary);
+  --sp-radio-item-h:       var(--cds-size-sm);
 }
 
 /* -----------------------------------------------------------------------------
