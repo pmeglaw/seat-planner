@@ -172,7 +172,7 @@ export function ResultsPanel({
                   onClick={() => onShowOnMap(result.seatId as string)}
                   aria-label={`Show ${result.title} on the map`}
                   title={`Show ${result.title} on the map`}
-                  className="relative my-1 mr-1 flex shrink-0 items-center self-center whitespace-nowrap rounded-lg border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-button-primary)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                  className="relative my-1 mr-1 flex shrink-0 items-center self-center whitespace-nowrap rounded-lg border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-button-primary)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 >
                   Show on map
                 </button>
@@ -197,7 +197,7 @@ export function ResultsPanel({
               </button>
             )}
             {searchActive && structuredFiltersActive && (
-              <button type="button" onClick={onClearAll} className="relative rounded-lg border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-link)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-interactive)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+              <button type="button" onClick={onClearAll} className="relative rounded-lg border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-link-hover)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-interactive)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
                 Clear all
               </button>
             )}

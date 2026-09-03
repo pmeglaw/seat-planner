@@ -580,14 +580,14 @@ export function SwapConfirmDialog({
 
         <div className="mt-4 grid gap-2">
           <div className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] p-3">
-            <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Source</div>
+            <div className="text-xs font-semibold text-[var(--sp-text-secondary)]">Source</div>
             <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapSourceSeat.label}<SeatFloorTag tag={crossFloorTag(swapSourceSeat, swapTargetSeat)} /></div>
-            <div className="text-sm text-[var(--sp-text-helper)]">{seatPersonLabel(swapSourceSeat)}</div>
+            <div className="text-sm text-[var(--sp-text-secondary)]">{seatPersonLabel(swapSourceSeat)}</div>
           </div>
           <div className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] p-3">
-            <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Target</div>
+            <div className="text-xs font-semibold text-[var(--sp-text-secondary)]">Target</div>
             <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapTargetSeat.label}<SeatFloorTag tag={crossFloorTag(swapTargetSeat, swapSourceSeat)} /></div>
-            <div className="text-sm text-[var(--sp-text-helper)]">{seatPersonLabel(swapTargetSeat)}</div>
+            <div className="text-sm text-[var(--sp-text-secondary)]">{seatPersonLabel(swapTargetSeat)}</div>
           </div>
         </div>
 

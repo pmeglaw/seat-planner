@@ -126,6 +126,19 @@ PR 5. The brand-orange `rgba(255,87,21,α)` / `rgba(210,63,10,α)` washes (8 sit
 MapWashLayer, SeatMarker) became `color-mix(in srgb, var(--sp-interactive) α, transparent)`; the six SVG
 `#fff` attributes in `LoginForm` became `stroke-[var(--sp-text-on-color)]` / `fill-[…]` classes; the
 publish-diff `--admin-diff-vacated-text` (defined in the deleted block) → `--sp-status-error-text`.
+Three placeholders were corrected by the `e2e-auth` axe scan (CI run 1 on #513 — 28 colour-contrast failures,
+one cause): the old chrome now follows the theme (light in the light theme), so aliases that assumed a dark
+surface fail on white — `--sp-chrome-heading` / `-value` / `-info-text` → `--sp-text-primary`,
+`--sp-chrome-label` → `--sp-text-secondary`, `--sp-chrome-info` → `--sp-layer-02`, `--sp-ai-chrome-border` →
+`--sp-ai-border-start`, `--sp-ai-chrome-text` → `--sp-ai-label-text-hover` (blue 70: blue 60 is 4.42:1 on the
+hovered chrome fill, PHASE3DS §3 instance 2); and the Management monogram's `--sp-brand-text` placeholder
+became `--sp-text-primary` (blue 60 on `layer-hover` is 4.08:1 at 12px bold). Reproduced and cleared locally
+with an axe scan on the Docker stack before the re-push. A local `test:e2e:auth` run then caught three
+more: blue 60 link text on the `layer-hover` fill (4.08:1) — every className that pairs the two now uses
+`--sp-link-hover` (17 sites); helper text inside the swap dialog's `layer-accent` cards (3.8:1) →
+`--sp-text-secondary`; and the dimmed (45 %) available markers, whose new opaque `layer-01` fill can never
+clear 4.5:1 under the dim — the alias is a translucent `color-mix(… 55 %, transparent)` like the old 55 %
+frost (PR 3 replaces the marker; the pill's quiet state is designed for this).
 
 ---
 

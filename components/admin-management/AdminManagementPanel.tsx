@@ -982,7 +982,7 @@ export function AdminManagementPanel({
                           >
                             <td className={[cellClass, "pl-4"].join(" ")}>
                               <div className="flex items-center gap-2.5">
-                                <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--sp-layer-hover)] text-xs font-bold text-[var(--sp-link)]">{getInitials(employee.full_name)}</span>
+                                <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--sp-layer-hover)] text-xs font-bold text-[var(--sp-text-primary)]">{getInitials(employee.full_name)}</span>
                                 {/* Contract #13: the name is the map affordance —
                                     a real link so it is shareable and middle-clickable.
                                     Unseated people have nothing to show, so they stay text. */}

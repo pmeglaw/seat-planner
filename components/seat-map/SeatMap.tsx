@@ -2566,8 +2566,8 @@ export function SeatMap({
       : "border-[var(--sp-editor-saved-border)] bg-[var(--sp-editor-saved-bg)] text-[var(--sp-editor-saved-text)]",
     canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
-  const resultActionButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50";
-  const resultClearButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-link)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-interactive)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]";
+  const resultActionButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link-hover)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50";
+  const resultClearButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-link-hover)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-interactive)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]";
   const visibleMapSpan = Math.max(0, mapVisibleRange.right - mapVisibleRange.left);
   const mapPixelsPerNormalizedUnit = visibleMapSpan > 0 && mapVisibleRange.viewportWidth > 0
     ? mapVisibleRange.viewportWidth / visibleMapSpan
@@ -3299,7 +3299,7 @@ export function SeatMap({
                   className={[
                     "pointer-events-auto relative flex h-8 items-center gap-1.5 border px-3 text-[12.5px] font-semibold shadow-sp transition after:absolute after:-inset-y-1.5 after:inset-x-0 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]",
                     addSeatMode
-                      ? "border-[var(--sp-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link)]"
+                      ? "border-[var(--sp-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link-hover)]"
                       : "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-secondary)] hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)]"
                   ].join(" ")}
                 >
@@ -3696,7 +3696,7 @@ export function SeatMap({
             </p>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-[var(--sp-layer-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-link)] ring-1 ring-[var(--sp-border-interactive)] transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+            <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-[var(--sp-layer-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-link-hover)] ring-1 ring-[var(--sp-border-interactive)] transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
               {activeMode.exitLabel}
             </button>
             <span className="rounded-full bg-[var(--sp-background)] px-2 py-1 text-xs font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">Esc exits</span>

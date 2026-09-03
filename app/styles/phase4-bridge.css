@@ -45,9 +45,9 @@
   --sp-ai-accent-soft: var(--sp-ai-border-start);
   --sp-ai-aura: transparent;
   --sp-ai-border: var(--sp-ai-border-start);
-  --sp-ai-chrome-border: var(--sp-ai-border-end);
-  --sp-ai-chrome-text: var(--sp-panel-dark-link);
-  --sp-ai-chrome-text-hover: var(--sp-panel-dark-link-hover);
+  --sp-ai-chrome-border: var(--sp-ai-border-start);
+  --sp-ai-chrome-text: var(--sp-ai-label-text-hover); /* blue 70: blue 60 is 4.42 on the hovered chrome fill (PHASE3DS §3 instance 2) */
+  --sp-ai-chrome-text-hover: var(--sp-ai-label-text-hover);
   --sp-ai-glow: transparent;
   --sp-ai-marker-aura: transparent;
   --sp-ai-marker-shadow: none;
@@ -55,10 +55,10 @@
   --sp-ai-panel-border: var(--sp-ai-border-start);
   --sp-ai-row: var(--sp-layer-hover);
   --sp-ai-text: var(--sp-ai-label-text);
-  --sp-chrome-heading: var(--sp-panel-dark-text);
+  --sp-chrome-heading: var(--sp-text-primary);
   --sp-chrome-height: var(--sp-shell-header-h);
-  --sp-chrome-info: var(--sp-panel-dark-layer);
-  --sp-chrome-info-text: var(--sp-panel-dark-text);
+  --sp-chrome-info: var(--sp-layer-02);
+  --sp-chrome-info-text: var(--sp-text-primary);
   --sp-chrome-scrim: var(--sp-overlay);
   --sp-editor-clean-bg: var(--sp-status-neutral-surface);
   --sp-editor-clean-border: var(--sp-status-neutral-mark);
@@ -125,7 +125,7 @@
   --sp-marker-assigned-surface: var(--sp-pill-fill);
   --sp-marker-assigned-text: var(--sp-pill-text);
   --sp-marker-available-border: var(--sp-seat-mark-stroke-color);
-  --sp-marker-available-surface: var(--sp-layer-01);
+  --sp-marker-available-surface: color-mix(in srgb, var(--sp-layer-01) 55%, transparent); /* translucent like the old 55% frost: an opaque fill under the 45% dim cannot clear 4.5:1 */
   --sp-marker-draft-badge: var(--sp-pill-badge);
   --sp-marker-draft-border: var(--sp-pill-badge);
   --sp-marker-draft-ring: var(--sp-pill-badge);

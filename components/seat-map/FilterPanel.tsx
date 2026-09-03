@@ -94,7 +94,7 @@ export function ActiveFilterChips({
         <button
           type="button"
           onClick={onClearAll}
-          className="relative inline-flex min-h-6 items-center border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-link)] transition after:absolute after:-inset-y-[3px] after:inset-x-0 hover:bg-[color-mix(in_srgb,var(--sp-interactive)_16%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+          className="relative inline-flex min-h-6 items-center border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-link-hover)] transition after:absolute after:-inset-y-[3px] after:inset-x-0 hover:bg-[color-mix(in_srgb,var(--sp-interactive)_16%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
         >
           Clear all
         </button>
@@ -272,7 +272,7 @@ export function FilterPanel({
           <button
             type="button"
             onClick={matchSummaryAction.onClick}
-            className="relative inline-flex items-center min-h-6 border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-link)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+            className="relative inline-flex items-center min-h-6 border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-link-hover)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
           >
             {matchSummaryAction.label}
           </button>

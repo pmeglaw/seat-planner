@@ -421,7 +421,7 @@ export function ViewerFindPalette({
                       className={cx(
                         "relative inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-xs font-semibold transition after:absolute after:-inset-x-[3px] after:-inset-y-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
                         pinned
-                          ? "border-[var(--sp-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link)]"
+                          ? "border-[var(--sp-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link-hover)]"
                           : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)] hover:border-[var(--sp-border-interactive)]"
                       )}
                     >

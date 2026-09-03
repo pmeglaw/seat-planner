@@ -27,7 +27,7 @@ const buttonVariants: Record<ButtonVariant, string> = {
   primary:
     "border-[var(--sp-button-primary)] bg-[var(--sp-button-primary)] text-white hover:border-[var(--sp-button-primary-hover)] hover:bg-[var(--sp-button-primary-hover)] active:border-[var(--sp-button-primary-active)] active:bg-[var(--sp-button-primary-active)]",
   secondary:
-    "border-[var(--sp-border-strong)] bg-[var(--sp-layer-02)] text-[var(--sp-text-primary)] hover:border-[var(--sp-button-primary)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link)] active:border-[var(--sp-button-primary)] active:bg-[var(--sp-layer-active)]",
+    "border-[var(--sp-border-strong)] bg-[var(--sp-layer-02)] text-[var(--sp-text-primary)] hover:border-[var(--sp-button-primary)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link-hover)] active:border-[var(--sp-button-primary)] active:bg-[var(--sp-layer-active)]",
   quiet:
     "border-transparent bg-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] active:bg-[var(--sp-text-secondary)] active:text-[var(--sp-text-secondary)]",
   destructive:
@@ -111,7 +111,7 @@ export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "ari
 
 const iconButtonVariants: Record<IconButtonVariant, string> = {
   neutral:
-    "border-[var(--sp-border-strong)] bg-[var(--sp-layer-02)] text-[var(--sp-text-secondary)] hover:border-[var(--sp-button-primary)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link)]",
+    "border-[var(--sp-border-strong)] bg-[var(--sp-layer-02)] text-[var(--sp-text-secondary)] hover:border-[var(--sp-button-primary)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link-hover)]",
   primary:
     "border-[var(--sp-button-primary)] bg-[var(--sp-button-primary)] text-white hover:border-[var(--sp-button-primary-hover)] hover:bg-[var(--sp-button-primary-hover)]",
   destructive:

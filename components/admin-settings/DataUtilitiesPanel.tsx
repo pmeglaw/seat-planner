@@ -491,7 +491,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                   </ul>
                 </div>
               ) : (
-                <div className="mt-3 border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] p-3 text-sm font-semibold leading-5 text-[var(--sp-link)]">
+                <div className="mt-3 border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] p-3 text-sm font-semibold leading-5 text-[var(--sp-link-hover)]">
                   This applies the CSV to the draft map only. Viewers will not see these changes until you publish.
                 </div>
               )}
@@ -558,7 +558,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 <ReviewCountCard label="Employees" value={jsonReview.employeeCount} tone="warn" />
               </div>
 
-              <div className="mt-3 border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] p-3 text-sm font-semibold leading-5 text-[var(--sp-link)]">
+              <div className="mt-3 border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] p-3 text-sm font-semibold leading-5 text-[var(--sp-link-hover)]">
                 This can replace draft assignments, custom seats, notes, and employee details in the draft. Viewers will not see restored data until publish.
               </div>
             </div>

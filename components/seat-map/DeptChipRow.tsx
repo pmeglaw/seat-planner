@@ -34,7 +34,7 @@ export function DeptChipRow({ departments, counts, activeDepartment, onSelectDep
               // brought to 44 anyway; re-check adjacency before reviving.
               "relative flex h-8 items-center gap-1.5 border px-2.5 text-[12px] font-semibold shadow-sp transition after:absolute after:-inset-1.5 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]",
               active
-                ? "border-[var(--sp-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link)]"
+                ? "border-[var(--sp-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link-hover)]"
                 : "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-secondary)] hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)]"
             ].join(" ")}
           >

@@ -1906,7 +1906,7 @@ export function ViewerSeatFinder({
                   className={[
                     "pointer-events-auto relative flex h-8 w-8 items-center justify-center border shadow-sp transition after:absolute after:-inset-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]",
                     showNames
-                      ? "border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link)]"
+                      ? "border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link-hover)]"
                       : "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-primary)] hover:bg-[var(--sp-background)]"
                   ].join(" ")}
                 >

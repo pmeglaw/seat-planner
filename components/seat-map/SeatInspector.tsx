@@ -353,7 +353,7 @@ function ContactFacts({ rows, canEdit }: { rows: ContactFactRow[]; canEdit: bool
               onClick={() => copyExtension(row.value)}
               aria-label={`Copy extension ${row.value}`}
               title={copiedValue === row.value ? "Copied" : `Copy extension ${row.value}`}
-              className="relative flex h-8 w-8 shrink-0 items-center justify-center bg-[var(--sp-background)] text-[var(--sp-link)] transition after:absolute after:-inset-x-1.5 after:-inset-y-[5px] hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+              className="relative flex h-8 w-8 shrink-0 items-center justify-center bg-[var(--sp-background)] text-[var(--sp-link-hover)] transition after:absolute after:-inset-x-1.5 after:-inset-y-[5px] hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
             >
               {copiedValue === row.value ? <CheckGlyph /> : <CopyGlyph />}
               {/* Live confirmation for screen readers (and the ct test's
@@ -1241,7 +1241,7 @@ export function SeatInspector({
                               index === activeEmployeeIndex ? "bg-[var(--sp-background)] text-[var(--sp-text-primary)]" : "text-[var(--sp-text-secondary)] hover:bg-[var(--sp-layer-hover)]"
                             ].join(" ")}
                           >
-                            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--sp-layer-hover)] text-[11px] font-bold text-[var(--sp-link)]">
+                            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--sp-layer-hover)] text-[11px] font-bold text-[var(--sp-link-hover)]">
                               {buildInitials(option.employee.full_name) || "?"}
                             </span>
                             <span className="min-w-0 flex-1">
