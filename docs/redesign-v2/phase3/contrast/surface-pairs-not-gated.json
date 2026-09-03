@@ -52,5 +52,17 @@
   "fg": "#78a9ff",
   "bg": "#262626",
   "kind": "graphic"
+ },
+ {
+  "name": "dark · asset danger ghost red-60 on layer-02 #393939 — the value PR 4 replaces (fails 4.5)",
+  "fg": "#da1e28",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "light · scrim overlay over the page (a dimming layer, not a mark)",
+  "fg": "#161616",
+  "bg": "#ffffff",
+  "kind": "graphic"
  }
 ]

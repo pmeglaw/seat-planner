@@ -1018,5 +1018,149 @@
   "fg": "#ffffff",
   "bg": "#0f62fe",
   "kind": "text"
+ },
+ {
+  "name": "light · seat link blue-60 on table row layer-01",
+  "fg": "#0f62fe",
+  "bg": "#f4f4f4",
+  "kind": "text"
+ },
+ {
+  "name": "light · seat link hover blue-70 on layer-hover-01 (row hovered)",
+  "fg": "#0043ce",
+  "bg": "#e8e8e8",
+  "kind": "text"
+ },
+ {
+  "name": "light · row bar / tab bar blue-60 on layer-hover-01 (Reception highlighted row)",
+  "fg": "#0f62fe",
+  "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · tab hover bar gray-50 on white",
+  "fg": "#8d8d8d",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · tab text gray-70 on the sticky strip (background white)",
+  "fg": "#525252",
+  "bg": "#ffffff",
+  "kind": "text"
+ },
+ {
+  "name": "light · callout edge gray-50 on layer-01",
+  "fg": "#8d8d8d",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · count card / readout numeral gray-100 on layer-01",
+  "fg": "#161616",
+  "bg": "#f4f4f4",
+  "kind": "text"
+ },
+ {
+  "name": "light · count card label / readout eyebrow gray-70 on layer-01",
+  "fg": "#525252",
+  "bg": "#f4f4f4",
+  "kind": "text"
+ },
+ {
+  "name": "light · Reception locked row meta gray-70 on layer-selected",
+  "fg": "#525252",
+  "bg": "#e0e0e0",
+  "kind": "text"
+ },
+ {
+  "name": "light · danger ghost text red-60 on layer-02 white (side panel)",
+  "fg": "#da1e28",
+  "bg": "#ffffff",
+  "kind": "text"
+ },
+ {
+  "name": "light · danger ghost text red-60 on layer-01 (inspector)",
+  "fg": "#da1e28",
+  "bg": "#f4f4f4",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-on-color white on danger red-60",
+  "fg": "#ffffff",
+  "bg": "#da1e28",
+  "kind": "text"
+ },
+ {
+  "name": "dark · seat link blue-40 on table row layer-01 #262626",
+  "fg": "#78a9ff",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "dark · seat link hover blue-30 on layer-hover-01 #333333",
+  "fg": "#a6c8ff",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "dark · row bar / tab bar blue-50 on layer-hover-01 #333333",
+  "fg": "#4589ff",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · tab hover bar gray-60 on background #161616",
+  "fg": "#6f6f6f",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · tab text gray-30 on the sticky strip (background #161616)",
+  "fg": "#c6c6c6",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "dark · callout edge gray-60 on layer-01 #262626",
+  "fg": "#6f6f6f",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · count card / readout numeral gray-10 on layer-01 #262626",
+  "fg": "#f4f4f4",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "dark · count card label / readout eyebrow gray-30 on layer-01 #262626",
+  "fg": "#c6c6c6",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "dark · Reception locked row meta gray-30 on layer-selected #393939",
+  "fg": "#c6c6c6",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "dark · danger ghost text red-40 on layer-02 #393939 (side panel)",
+  "fg": "#ff8389",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "dark · danger ghost text red-40 on layer-01 #262626 (inspector)",
+  "fg": "#ff8389",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-on-color white on danger red-60",
+  "fg": "#ffffff",
+  "bg": "#da1e28",
+  "kind": "text"
  }
 ]

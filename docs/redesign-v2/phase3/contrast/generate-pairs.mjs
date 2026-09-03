@@ -17,7 +17,7 @@ const P = { // palette, as carbon-tokens.css
   white: "#ffffff", g10: "#f4f4f4", g20: "#e0e0e0", g30: "#c6c6c6", g40: "#a8a8a8", g50: "#8d8d8d", g60: "#6f6f6f", g70: "#525252", g80: "#393939", g90: "#262626", g100: "#161616",
   hoverWhite: "#e8e8e8", hoverG90: "#333333", hoverG100: "#292929", hoverG80: "#474747",
   b20: "#d0e2ff", b30: "#a6c8ff", b40: "#78a9ff", b50: "#4589ff", b60: "#0f62fe", b70: "#0043ce", b90: "#001d6c",
-  o40: "#ff832b", o60: "#ba4e00", r50: "#fa4d56", r60: "#da1e28", gr40: "#42be65", gr60: "#198038", gr10: "#defbe6", y30: "#f1c21b", y60: "#8e6a00",
+  r40: "#ff8389", o40: "#ff832b", o60: "#ba4e00", r50: "#fa4d56", r60: "#da1e28", gr40: "#42be65", gr60: "#198038", gr10: "#defbe6", y30: "#f1c21b", y60: "#8e6a00",
 };
 
 const gated = [];
@@ -88,6 +88,34 @@ marks(gated, "dark", { name: "AI label text blue-40", hex: P.b40 }, "text", [D.b
 add(gated, "dark · AI border start blue-50 on field #262626", P.b50, P.g90, "graphic");
 add(gated, "dark · text-on-color white on primary blue-60", P.white, P.b60, "text");
 add(notGated, "dark · AI border end blue-40 on layer-01 #262626 (gradient's low stop)", P.b40, P.g90, "graphic");
+
+// ---- PR 4: pages (Management table + side panel, Settings, Reception) -----------
+add(gated, "light · seat link blue-60 on table row layer-01", P.b60, P.g10, "text");
+add(gated, "light · seat link hover blue-70 on layer-hover-01 (row hovered)", P.b70, P.hoverWhite, "text");
+add(gated, "light · row bar / tab bar blue-60 on layer-hover-01 (Reception highlighted row)", P.b60, P.hoverWhite, "graphic");
+add(gated, "light · tab hover bar gray-50 on white", P.g50, P.white, "graphic");
+add(gated, "light · tab text gray-70 on the sticky strip (background white)", P.g70, P.white, "text");
+add(gated, "light · callout edge gray-50 on layer-01", P.g50, P.g10, "graphic");
+add(gated, "light · count card / readout numeral gray-100 on layer-01", P.g100, P.g10, "text");
+add(gated, "light · count card label / readout eyebrow gray-70 on layer-01", P.g70, P.g10, "text");
+add(gated, "light · Reception locked row meta gray-70 on layer-selected", P.g70, P.g20, "text");
+add(gated, "light · danger ghost text red-60 on layer-02 white (side panel)", P.r60, P.white, "text");
+add(gated, "light · danger ghost text red-60 on layer-01 (inspector)", P.r60, P.g10, "text");
+add(gated, "light · text-on-color white on danger red-60", P.white, P.r60, "text");
+add(gated, "dark · seat link blue-40 on table row layer-01 #262626", P.b40, P.g90, "text");
+add(gated, "dark · seat link hover blue-30 on layer-hover-01 #333333", P.b30, P.hoverG90, "text");
+add(gated, "dark · row bar / tab bar blue-50 on layer-hover-01 #333333", P.b50, P.hoverG90, "graphic");
+add(gated, "dark · tab hover bar gray-60 on background #161616", P.g60, P.g100, "graphic");
+add(gated, "dark · tab text gray-30 on the sticky strip (background #161616)", P.g30, P.g100, "text");
+add(gated, "dark · callout edge gray-60 on layer-01 #262626", P.g60, P.g90, "graphic");
+add(gated, "dark · count card / readout numeral gray-10 on layer-01 #262626", P.g10, P.g90, "text");
+add(gated, "dark · count card label / readout eyebrow gray-30 on layer-01 #262626", P.g30, P.g90, "text");
+add(gated, "dark · Reception locked row meta gray-30 on layer-selected #393939", P.g30, P.g80, "text");
+add(gated, "dark · danger ghost text red-40 on layer-02 #393939 (side panel)", P.r40, P.g80, "text");
+add(gated, "dark · danger ghost text red-40 on layer-01 #262626 (inspector)", P.r40, P.g90, "text");
+add(gated, "dark · text-on-color white on danger red-60", P.white, P.r60, "text");
+add(notGated, "dark · asset danger ghost red-60 on layer-02 #393939 — the value PR 4 replaces (fails 4.5)", P.r60, P.g80, "text");
+add(notGated, "light · scrim overlay over the page (a dimming layer, not a mark)", P.g100, P.white, "graphic");
 
 const dir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 fs.writeFileSync(path.join(dir, "product-pairs.json"), JSON.stringify(gated, null, 1) + "\n");

@@ -375,8 +375,8 @@ Would change if: the directory outgrows ~300 people (D3's line) — faceted filt
 
 ### 1R.3 List (dense zone)
 
-Row: 32px initials avatar · name `body-compact-01` 600 + `label-01` "position · department" ("—" when both
-missing) · seat chip (mono, bordered: `L02`) or floor tag ("Floor 2") or "—" · extension right-aligned,
+Row: name `body-compact-01` 600 + `label-01` "position · department" ("—" when both
+missing) · seat code (plain `code-01` text-secondary: `L02` — *Phase 3 PR 4 amendment: no chip, no avatar; a 32px initials disc is decoration and a circle is a radius the system lacks; the chip would be the row's only rounded shape and Management renders the seat as mono text*) or floor tag ("Floor 2") or "—" · extension right-aligned,
 tabular, 96px column, "—" when missing. Highlighted row (typing) = layer-hover + 3px inset bar; locked row =
 layer-selected + bar. Count copy: "68 people" at rest; "7 matches" / "1 match" / **"0 matches"** while
 typing. Keyboard as shipped: ↑ ↓ clamp, Enter locks (only while typing), Esc clears; mousedown on a row
@@ -400,7 +400,7 @@ Overflow: names and departments truncate end-line with `title`; the list is the 
 6. **Show on map** — ghost link → `/?q=<name>` (the D1-d landing: field pre-filled, unique match selected, floor
    switched). Owner-approved 2026-09-03. One link, no new data; gives the front desk the seat's location when a
    visitor asks. Absent while nothing is locked.
-7. **Recent lookups** (D3: secondary view): heading `heading-compact-01`, up to 4 rows (26px avatar · name
+7. **Recent lookups** (D3: secondary view): heading `heading-compact-01`, up to 4 rows (name — *PR 4: no avatar*
    · extension), current selection excluded, in-memory only (ruled 2026-08-05). Hidden while empty.
 
 ### 1R.5 `?q=` and URL (D3-c)
@@ -477,7 +477,7 @@ Would change if: a tab grows a second create action, or the directory outgrows w
 ### 1G.3 Employees (D5-b)
 
 - **Toolbar count** (`aria-live="polite"`): at rest "68 employees · 56 assigned · 12 unassigned"; while filtering "7 of 68 match" / "0 of 68 match". This replaces the summary tiles; draft-seat and zone counts already live on the map band and in the History panel.
-- **Table**: columns Name · Department · Position · Extension · Seat · Status; sortable headers (`aria-sort`); numbers right-aligned tabular; Status = two-signal mark + label (Assigned ■ / Unassigned □); Seat = mono label, name links to `/admin?seat=<label>` when assigned; row kebab ⋯ → Edit. Rows are not tab stops; the name link and the kebab are (two stops per row, as shipped); row click also opens Edit. Virtualised as shipped.
+- **Table**: columns Name · Department · Position · Extension · Seat · Status; sortable headers (`aria-sort`); numbers right-aligned tabular; Status = two-signal mark + label (Assigned ● / Unassigned ○ — *Phase 3 PR 4 amendment: the seat vocabulary, because ■ / □ are the mode marks and one shape must not carry two meanings*); Seat = mono link to `/admin?seat=<label>` when assigned; one row action, Edit, as a ghost icon button with a tooltip (*PR 4: a kebab holding one item is a tell — an overflow appears only once a row carries two or more actions; Deactivate lives in the side panel*). Rows are not tab stops; the seat link and the Edit button are (two stops per row); row click also opens Edit. Virtualised as shipped.
 - **Create / edit = 480px side panel, slide-over.** The admin keeps referencing the table behind it (the neighbours, the department spelling, who is already assigned), which is the side-panel criterion; the form itself is self-contained and the table is context, not something operated mid-edit — so the panel **overlays and traps focus** (composition: slide-over is a dialog). Scrim over the page; Esc closes (asks first when dirty); focus returns to the opener. Title "Add employee" / "Edit employee"; helper "Changes reach the map and Reception at the next publish." Fields, single column: **Name (required)** — the one required field is marked, the form is mostly optional; Position; Phone extension; Email; Department (combobox over the managed list, free text allowed). Edit shows a read-only fact row "Draft seat · NE04 · Open on the map". Validation on blur; server errors as an inline notification at the top of the panel plus field messages, values intact. Commit bar bleeds to the bottom: **Cancel** · **Save employee** / **Add employee** (the panel's one primary). Edit also carries **Deactivate…** as a danger ghost above the commit bar.
 - **Deactivate** = moderate impact: confirm dialog **on top of the side panel** (a side panel may open a confirmation; a modal never nests) — "Deactivate Sarah Reyes?" · impact line with the seat ("Clears her draft seat NE04 and keeps the record inactive." / "Removes her from the active directory.") · "The published map everyone sees won't change until you publish again." · Cancel · **Deactivate employee** (danger). Refused because the person is still on the published map → inline error in the panel: "Sarah Reyes is still on the published map at NE04. Vacate the seat in the draft and publish before deactivating." + link "Open NE04 on the map". No reactivate, no bulk actions, no delete (as shipped — not added).
 
@@ -557,7 +557,7 @@ Would change if: a third recovery tool arrives (then a settings left-nav), or re
 | Page header | title `heading-04` "Settings" · subtitle "Import, export and recovery. Everything here changes the draft only." | **no primary** (D6-a) |
 | Callout | full content width, loads with the page, never dismissible, no status icon | "The published map is never touched until you publish. Restores replace the entire draft — review before confirming." |
 | Sections | `heading-03` + helper `body-01` + one action row (40px buttons, 8px gaps) + a `label-01` file line | 48px between sections |
-| Narrow tearsheet | 720 centred, top 112, anchored bottom; header · scrolling body · 64px footer | Cancel · primary, 50/50 bleed; **no ×** |
+| Narrow tearsheet | 720 centred, top 112, anchored bottom; header · scrolling body · 64px footer | Cancel · primary, **right-aligned** in the footer bar (*Phase 3 PR 4 amendment: 50/50 bleed is the modal's and side panel's footer; tearsheets right-align so the containers read apart by their footers alone*); **no ×** |
 
 ### 1S.3 CSV assignments (D6-b)
 
@@ -704,11 +704,11 @@ add it to the component layer (and say so in its decision log).
 | Page header (title + subtitle, no action) | Reception | exists `.cds-page-header` | Zero primaries is allowed |
 | Search input `lg` with clear × | Reception | exists `.cds-text-input` | Clear icon = **hand-built** state |
 | Listbox rows (combobox pattern) | Reception | none needed | Plain list; `.cds-status`-free |
-| Readout tile with display numeral | Reception | **hand-built** | Tinted block, `heading-06` tabular |
+| Readout tile with display numeral | Reception | **hand-built** | `layer-01` block, `heading-06` **Light 300** tabular (Phase 3 PR 4: verified at 50%; 400 is the only fallback, never 600); no avatar anywhere in Reception |
 | Row-buttons (same-department fallback) | Reception | exists `.cds-btn--ghost` | 40px, full width |
 | Error boundary card | Reception | exists `.cds-empty` (error kind) | Own copy |
-| Page header with tabs + one primary | Management | exists `.cds-page-header`; tabs **hand-built** (index has none) | Primary follows the tab; sticky tabs |
-| Data table, sortable, kebab per row | Management | exists `.cds-table`, `.cds-sort`, overflow menu | Short (32px) rows; status via `.cds-status` |
+| Page header with tabs + one primary | Management | exists `.cds-page-header`; tabs **hand-built** (index has none) | Primary follows the tab; sticky tabs — Carbon **line** tabs, 40 tall, 2px bar (Phase 3 PR 4: 48 is the contained variant's height) |
+| Data table, sortable, one row action | Management | exists `.cds-table`, `.cds-sort` | 32px rows, 40 header; status = seat marks ● / ○ + label; the row action is a ghost icon button with a tooltip — no kebab until a row carries two actions (Phase 3 PR 4) |
 | Toolbar with search + live count | Management | exists `.cds-toolbar` | Count replaces the tiles |
 | Side panel 480, slide-over (focus-trapped) | Management | partial `.cds-side-panel` (slide-in) | **hand-built** the slide-over variant + scrim |
 | Combobox (department) | Management | **hand-built** | Managed list + free text |
@@ -718,8 +718,8 @@ add it to the component layer (and say so in its decision log).
 | Tag "Not in list" | Management | exists `.cds-tag` | — |
 | Callout (non-dismissible, no status) | Settings | partial `.cds-notification` | **hand-built** the callout variant (no icon, no close) |
 | Section with one primary + file line | Settings | exists `.cds-btn` set | Labelled file trigger = button + hidden input with the same name |
-| Narrow tearsheet | Settings | **hand-built** (the map's wide tearsheet, narrow variant) | 720 centred; Cancel · primary 50/50; no × |
-| Count cards | Settings tearsheets | none needed | Tiles, `heading-03` numeral |
+| Narrow tearsheet | Settings | **hand-built** (the map's wide tearsheet, narrow variant) | 720 centred; Cancel · primary **right-aligned** (Phase 3 PR 4 — see §1S.3); no × |
+| Count cards | Settings tearsheets | none needed | `layer-01`, `heading-03` numeral, `label-01` label — a reading surface, not a tile (D5-d): no border, no hover (Phase 3 PR 4) |
 | Consequences list | Settings restore | none needed | Plain list, one line each |
 | Ghost button with in-place done-state | Settings restore (D6-e) | exists `.cds-btn--ghost` | Done-state text replaces the label; not disabled |
 | Inline status / error under a section | Settings | exists `.cds-notification` | Task-generated → inline |

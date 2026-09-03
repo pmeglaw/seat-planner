@@ -216,6 +216,8 @@
   --sp-button-danger-hover:     var(--cds-button-danger-hover);
   --sp-button-danger-active:    var(--cds-button-danger-active);
   --sp-button-disabled:         var(--cds-button-disabled);
+  --sp-button-danger-ghost-text:var(--cds-text-error);     /* $button-danger-secondary: red 60 light / red 40 on g100. The asset's danger ghost
+                                                              uses danger-primary (red 60) = 2.3:1 on the dark layer-02 — PR 4 override (PHASE3DS §3) */
   --sp-text-on-color-disabled:  var(--cds-text-on-color-disabled);
 }
 
@@ -440,4 +442,92 @@
   --sp-band-bg:            var(--cds-layer-01);
   --sp-band-rule:          var(--cds-border-subtle-00);
   --sp-canvas-plan-bg:     var(--cds-layer-02);             /* stands in for the raster in specimens */
+}
+
+/* -----------------------------------------------------------------------------
+   7c. TIER B — PAGES (PR 4): page frame, tabs, Management table + side panel,
+       structured list, Settings callout / sections / file trigger, narrow
+       tearsheet, count cards, Reception search / list / readout.
+       PHASE2UX §1G, §1R, §1S; PHASE3DS §1.22–1.29.
+   -------------------------------------------------------------------------- */
+:root {
+  /* page frame (PHASE2UX §1G.2, §1R.2, §1S.2): live area 1584 inside 32 padding */
+  --sp-page-pad:              var(--cds-spacing-07);      /* 32 */
+  --sp-settings-col-w:        776px;                      /* Settings content column, left-aligned */
+  --sp-reception-list-w:      1072px;
+  --sp-reception-readout-w:   480px;
+  --sp-page-header-h:         var(--cds-size-2xl);        /* 80 — title + subtitle block */
+
+  /* tabs — Carbon LINE tabs: 40 tall, 2px bottom bar (owner ruling, PR 4 — 48 is the contained variant) */
+  --sp-tab-h:                 var(--cds-size-md);
+  --sp-tab-bar-h:             var(--cds-spacing-01);      /* 2 */
+  --sp-tab-bar:               var(--cds-border-interactive);
+  --sp-tab-bar-hover:         var(--cds-border-strong-01);
+  --sp-tab-rule:              var(--cds-border-subtle-01);
+  --sp-tab-text:              var(--cds-text-secondary);
+  --sp-tab-text-selected:     var(--cds-text-primary);
+  --sp-tabs-bg:               var(--cds-background);      /* sticky strip paints over the scrolling table */
+
+  /* Management table — asset rows 32 (--sp-table-row-h, §0); header 40 */
+  --sp-table-header-h:        var(--cds-size-md);
+  --sp-table-link:            var(--cds-link-primary);
+  --sp-table-link-on-hover-row: var(--cds-link-primary-hover);   /* blue 60 is 4.08 on layer-hover-01 — third hover-surface trap (PHASE3DS §3) */
+  --sp-toolbar-search-w:      320px;
+
+  /* side panel 480 slide-over (Management) — asset .cds-side-panel + scrim */
+  --sp-side-panel-bg:         var(--cds-layer-02);
+  --sp-side-panel-rule:       var(--cds-border-subtle-01);
+  --sp-side-panel-pad:        var(--cds-spacing-07);
+  --sp-side-panel-footer-h:   var(--cds-size-xl);
+  --sp-scrim:                 var(--cds-overlay);
+  --sp-fact-row-h:            var(--cds-size-lg);
+
+  /* structured list (departments / zones) */
+  --sp-list-row-h:            var(--cds-size-lg);         /* 48 */
+  --sp-list-rule:             var(--cds-border-subtle-01);
+  --sp-list-count:            var(--cds-text-secondary);
+  --sp-list-hover:            var(--cds-layer-hover-01);
+
+  /* callout (Settings) — guidance read before acting: no icon, no close, no status colour */
+  --sp-callout-bg:            var(--cds-layer-01);
+  --sp-callout-edge:          var(--cds-border-strong-01);
+  --sp-callout-edge-w:        3px;                        /* the notification family's edge width */
+
+  /* Settings sections */
+  --sp-section-gap:           var(--cds-spacing-09);      /* 48 between sections */
+  --sp-action-row-gap:        var(--cds-spacing-03);      /* 8 between 40px buttons */
+  --sp-file-line:             var(--cds-text-secondary);
+
+  /* narrow tearsheet 720, centred, top 112 (PHASE2UX §1S.3); footer buttons right-aligned (owner ruling) */
+  --sp-tearsheet-narrow-top:  112px;
+  --sp-tearsheet-narrow-pad:  var(--cds-spacing-07);
+
+  /* count cards — a reading surface, not a tile (D5-d): no border, no hover */
+  --sp-count-card-bg:         var(--cds-layer-01);
+  --sp-count-card-min-w:      112px;                      /* five across inside the 720 sheet (656 inner) */
+  --sp-count-card-pad:        var(--cds-spacing-05);
+  --sp-count-card-numeral:    var(--cds-text-primary);
+  --sp-count-card-label:      var(--cds-text-secondary);
+
+  /* Reception search — the asset field at lg (48) with a clear × */
+  --sp-search-lg-h:           var(--cds-size-lg);
+
+  /* Reception list rows 48, header 32; highlighted = hover surface + bar, locked = selected + bar */
+  --sp-recep-row-h:           var(--cds-size-lg);
+  --sp-recep-header-h:        var(--cds-size-sm);
+  --sp-recep-row-highlight:   var(--cds-layer-hover-01);
+  --sp-recep-row-locked:      var(--cds-layer-selected-01);
+  --sp-recep-row-bar:         var(--cds-border-interactive);
+  --sp-recep-row-bar-w:       3px;
+  --sp-recep-ext-w:           96px;
+  --sp-recep-seat-code:       var(--cds-text-secondary);  /* plain code-01, no chip, not a link (owner ruling) */
+  --sp-recep-recent-row-h:    var(--cds-size-md);
+
+  /* readout tile — the calm zone: layer-01 tint, heading-06 Light numeral, tabular */
+  --sp-readout-bg:            var(--cds-layer-01);
+  --sp-readout-pad:           var(--cds-spacing-06);
+  --sp-readout-numeral:       var(--cds-text-primary);
+  --sp-readout-eyebrow:       var(--cds-text-secondary);
+  --sp-readout-hint:          var(--cds-text-helper);
+  --sp-row-button-h:          var(--cds-size-md);         /* same-department fallback buttons */
 }
