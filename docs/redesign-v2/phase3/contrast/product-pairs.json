@@ -1050,12 +1050,6 @@
   "kind": "text"
  },
  {
-  "name": "light · callout edge gray-50 on layer-01",
-  "fg": "#8d8d8d",
-  "bg": "#f4f4f4",
-  "kind": "graphic"
- },
- {
   "name": "light · count card / readout numeral gray-100 on layer-01",
   "fg": "#161616",
   "bg": "#f4f4f4",
@@ -1120,12 +1114,6 @@
   "fg": "#c6c6c6",
   "bg": "#161616",
   "kind": "text"
- },
- {
-  "name": "dark · callout edge gray-60 on layer-01 #262626",
-  "fg": "#6f6f6f",
-  "bg": "#262626",
-  "kind": "graphic"
  },
  {
   "name": "dark · count card / readout numeral gray-10 on layer-01 #262626",

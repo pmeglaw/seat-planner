@@ -95,7 +95,6 @@ add(gated, "light · seat link hover blue-70 on layer-hover-01 (row hovered)", P
 add(gated, "light · row bar / tab bar blue-60 on layer-hover-01 (Reception highlighted row)", P.b60, P.hoverWhite, "graphic");
 add(gated, "light · tab hover bar gray-50 on white", P.g50, P.white, "graphic");
 add(gated, "light · tab text gray-70 on the sticky strip (background white)", P.g70, P.white, "text");
-add(gated, "light · callout edge gray-50 on layer-01", P.g50, P.g10, "graphic");
 add(gated, "light · count card / readout numeral gray-100 on layer-01", P.g100, P.g10, "text");
 add(gated, "light · count card label / readout eyebrow gray-70 on layer-01", P.g70, P.g10, "text");
 add(gated, "light · Reception locked row meta gray-70 on layer-selected", P.g70, P.g20, "text");
@@ -107,13 +106,14 @@ add(gated, "dark · seat link hover blue-30 on layer-hover-01 #333333", P.b30, P
 add(gated, "dark · row bar / tab bar blue-50 on layer-hover-01 #333333", P.b50, P.hoverG90, "graphic");
 add(gated, "dark · tab hover bar gray-60 on background #161616", P.g60, P.g100, "graphic");
 add(gated, "dark · tab text gray-30 on the sticky strip (background #161616)", P.g30, P.g100, "text");
-add(gated, "dark · callout edge gray-60 on layer-01 #262626", P.g60, P.g90, "graphic");
 add(gated, "dark · count card / readout numeral gray-10 on layer-01 #262626", P.g10, P.g90, "text");
 add(gated, "dark · count card label / readout eyebrow gray-30 on layer-01 #262626", P.g30, P.g90, "text");
 add(gated, "dark · Reception locked row meta gray-30 on layer-selected #393939", P.g30, P.g80, "text");
 add(gated, "dark · danger ghost text red-40 on layer-02 #393939 (side panel)", P.r40, P.g80, "text");
 add(gated, "dark · danger ghost text red-40 on layer-01 #262626 (inspector)", P.r40, P.g90, "text");
 add(gated, "dark · text-on-color white on danger red-60", P.white, P.r60, "text");
+add(notGated, "light · callout edge gray-50 on layer-01 (a decorative edge on a non-interactive, no-status container — no 3:1 obligation)", P.g50, P.g10, "graphic");
+add(notGated, "dark · callout edge gray-60 on layer-01 #262626 (decorative, as above)", P.g60, P.g90, "graphic");
 add(notGated, "dark · asset danger ghost red-60 on layer-02 #393939 — the value PR 4 replaces (fails 4.5)", P.r60, P.g80, "text");
 add(notGated, "light · scrim overlay over the page (a dimming layer, not a mark)", P.g100, P.white, "graphic");
 

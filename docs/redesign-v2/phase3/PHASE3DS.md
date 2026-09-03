@@ -435,7 +435,8 @@ a tertiary Add to list in the action column. Empty state per list.
 
 Guidance read before acting (patterns.md): loads with the page, never dismissed, never triggered. Hand-built
 on the notification's geometry — `layer-01`, a 3px **gray** (`border-strong`) edge, body-01 — with no icon,
-no close and no status colour. The edge measures 3.02 / 3.01 (§3): gated as a graphic, on the floor.
+no close and no status colour. The edge is a decorative border on a non-interactive, no-status container —
+no 3:1 obligation — so it is measured (3.02 / 3.01) and **not gated** (§3); a token nudge must not fail the build over it.
 **Would change if** the callout ever carries a status; then it is a notification.
 
 ### 1.27 Settings sections and the file trigger — `.sp-settings`, `.sp-section` (§3 "Section with one primary + file line · exists")
@@ -637,16 +638,15 @@ and the quiet pill's edge (quiet is the intent).
 **PR 4 (pages) — regenerated, summary line pasted verbatim:**
 
 ```
-product-pairs.json: 194 pairs · surface-pairs-not-gated.json: 11 pairs
-194/194 pass
+product-pairs.json: 192 pairs · surface-pairs-not-gated.json: 13 pairs
+192/192 pass
 ```
 
-The 24 new pairs are the surfaces the owner asked for and the ones the build added: the count cards and
+The 22 new pairs are the surfaces the owner asked for and the ones the build added: the count cards and
 the readout tile (`layer-01` under text-primary 16.45 / 13.76 and text-secondary 7.10 / 8.86); the Reception
 highlighted row's 3px bar (blue 60 on `layer-hover-01` 4.08; blue 50 on `#333333` 3.78) and the locked row's
 meta (gray 70 on `layer-selected` 5.92; gray 30 on `#393939` 6.76); the sticky tab strip's text on the page
-background and the tab hover bar (gray 50 on white 3.32; gray 60 on `#161616` 3.60); the callout's gray edge
-(3.02 / 3.01 — on the floor, gated as a graphic); the seat link on the `layer-01` table row (blue 60 = 4.55)
+background and the tab hover bar (gray 50 on white 3.32; gray 60 on `#161616` 3.60); the seat link on the `layer-01` table row (blue 60 = 4.55)
 and its hover step (blue 70 on `layer-hover-01` 6.36) — **the third hover-surface trap** after helper-on-row
 and the AI label: the link on a row that hovers steps to `link-primary-hover`, exactly as §3 predicted for
 Phase 4; white on the danger primary (5.00). **One asset failure found and fixed by token:** the asset's
@@ -654,7 +654,9 @@ danger ghost text is `button-danger-primary` (red 60), 2.3:1 on the dark `layer-
 the dark `layer-01` (the PR 3 inspector, which had not been gated as text). `--sp-button-danger-ghost-text`
 aliases `text-error` — Carbon's `$button-danger-secondary` value in both themes (red 60 / red 40) — and the
 product overrides the asset class: 5.00 / 4.55 light, 4.87 / 6.38 dark. The failing value is kept in the
-not-gated file as a record. Also not gated: the scrim (a dimming layer, not a mark).
+not-gated file as a record. Also not gated: the callout's gray edge (3.02 / 3.01 — a decorative border on a
+non-interactive, no-status container has no 3:1 obligation; owner ruling on #510) and the scrim (a dimming
+layer, not a mark).
 
 **PR 2 pairs (added to `product-pairs.json`, now 78 pairs) — summary line pasted verbatim:**
 
@@ -884,7 +886,11 @@ pill (§1.4).
    **It bit again in PR 4:** the ○ Unassigned mark rendered filled because `[data-stroke]` inside a `<use>`d
    symbol is unreachable — the seat marks (`.sp-seat-mark [data-stroke]` / `[data-fill]` / `[data-hatch]`)
    must be **inlined** in the `<svg>`, never `<use>`d. In React that is a `SeatMark` component that emits
-   the paths, not a sprite reference.
+   the paths, not a sprite reference. **Which symbols the rule applies to:** any symbol whose look depends
+   on a *descendant* selector (the three seat marks, with their `data-*` parts). A symbol styled only by
+   `fill` / `stroke` / `stroke-width` on the `<svg>` itself — the ◇ badge, the mode marks, the notification
+   glyphs — inherits those and may stay a `<use>`. (The 02 map specimen carried seven `<use>`d seat marks
+   through PR 3; caught on the #510 review and inlined.)
 7. **`generate-pairs.mjs` is the contrast source of truth.** Add a mark or a surface there, regenerate,
    re-run the checker; never edit the JSON.
 8. **The asset's danger ghost fails on dark layers** (§1.24). Keep the global `.cds-btn--danger-ghost` /
@@ -904,7 +910,7 @@ pill (§1.4).
 
 | PR | Branch | Contents |
 |---|---|---|
-| 4 | (`docs/phase3-pages`) | `.sp-page` + line tabs; `.sp-table` (● ○ status, seat link hover step, one row action); side panel 480 slide-over + scrim, fact row, danger zone, confirm modal on top; `.sp-list` inline rename; `.sp-callout`; `.sp-settings` / `.sp-section` + file trigger + unhappy paths + busy; `.sp-tearsheet--narrow` (right-aligned footer), count cards, consequences, row list, ghost done-state; `.sp-recep` family (search lg, rows, readout tile heading-06 verified at 50%, row-buttons, recent, every state); route cards; the danger-ghost asset override; specimens `03-panels-and-sheets` + `04-forms-and-tables`; §1.22–1.29, §2 (+24 rows), §3 (194/194), §4, §5 (PR 4 landing files + every shipped name retired), §6, §7 (items 8–11); PHASE2UX §1R.3, §1S.3, §3 amendments. Owner rulings folded in before build: heading-06 300, line tabs 40, seat code plain text, count cards, ● ○, no kebab, tearsheet footer right-aligned, no avatar |
+| 4 | #510 (`docs/phase3-pages`) | `.sp-page` + line tabs; `.sp-table` (● ○ status, seat link hover step, one row action); side panel 480 slide-over + scrim, fact row, danger zone, confirm modal on top; `.sp-list` inline rename; `.sp-callout`; `.sp-settings` / `.sp-section` + file trigger + unhappy paths + busy; `.sp-tearsheet--narrow` (right-aligned footer), count cards, consequences, row list, ghost done-state; `.sp-recep` family (search lg, rows, readout tile heading-06 verified at 50%, row-buttons, recent, every state); route cards; the danger-ghost asset override; specimens `03-panels-and-sheets` + `04-forms-and-tables`; §1.22–1.29, §2 (+24 rows), §3 (192/192, callout edge not gated), §4, §5 (PR 4 landing files + every shipped name retired), §6, §7 (items 8–11); PHASE2UX §1R.3, §1S.3, §3 amendments. Owner rulings folded in before build: heading-06 300, line tabs 40, seat code plain text, count cards, ● ○, no kebab, tearsheet footer right-aligned, no avatar |
 | 3 | #509 (`docs/phase3-map`) | control row + floor menu + search/palette + Filters split control + toggle; `.sp-pill` (11 states) + ◇ + names-off; `.sp-slot` inspector / mode card / Ask Planner (Carbon for AI); wide tearsheet + group rows; roster; band; canvas states; specimen `02-map`; §1.14–1.21, §2, §3 (generated, 170/170), §4, §5, §6, §7; PHASE2UX §3 amendments (Filters control, two-primaries justification, Delete hidden for originals, roster hover on the button). Owner rulings folded in before merge: stroke rule, invalid target in the error family, seven error strings |
 | 2 | #508 (`docs/phase3-shell`) | `.sp-header` overrides, `.sp-header-slot`, `.sp-tooltip`, `.sp-panel` + zone-scoped variants, `.sp-switch`, `.sp-radio`, `.sp-left-panel`, `.sp-skeleton`; specimen `01-shell` (header ×3, hamburger ×7, utilities ×5, panels ×12, switch ×4, radio ×3, left panel ×7, narrow 1024); §1.7–1.13, §2, §3 (78/78), §4, §5; D0-f Phase 3 confirmation; PHASE2UX §3 ghost-on-dark row |
 | 1 | #507 (`docs/phase3-tokens`) | assets copied; `sp-tokens.css`; `.sp-mode`, seat marks; specimens 00 + 05 + index + compare; §1.1–1.6, §2 (partial), §3, §4, §5 (partial). Owner rulings folded in before merge: pressed gray 80 + outlined open, theme decided, assigned legend = mini pill |
