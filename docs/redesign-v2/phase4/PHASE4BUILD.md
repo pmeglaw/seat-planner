@@ -1,6 +1,6 @@
 # Seat Planner redesign — Phase 4: code
 
-**Status: in progress — PR 0 (test triage + scaffolding) open. PR 1–6 not started.** Inputs, in reading order:
+**Status: in progress — PR 0 #512 (test triage + scaffolding) open. PR 1–6 not started.** Inputs, in reading order:
 `CLAUDE.md` / `AGENTS.md`; `phase3/PHASE3DS.md` §5 (20 obligations with landing files, landing files by PR, retired
 names) and §7 (what Phase 3 learned); `PHASE2UX.md` §3 (component checklist), §5 (nine obligations), the per-screen
 decision logs and the wireframes under `wireframes/`; `PHASE1IA.md` §B–§C; `DECISIONS.md` D0–D6 + §6 (deviations
@@ -139,7 +139,7 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 
 | PR | GitHub | Branch | Tag | Scope | Status |
 |---|---|---|---|---|---|
-| 0 | — | `docs/phase4-triage` | — | `TEST-TRIAGE.md`; this scaffold; `tests/phase4-token-layer-source.test.mjs` | open |
+| 0 | #512 | `docs/phase4-triage` | — | `TEST-TRIAGE.md`; this scaffold; `tests/phase4-token-layer-source.test.mjs` | open |
 | 1 | — | — | — | tokens + CSS landing (P3-1, 2, 3, 19, 20) | not started |
 | 2 | — | — | — | shell (P3-2, 6, 9, 10; P2-2; route-group move on confirmation) | not started |
 | 3 | — | — | — | map (P3-4, 5, 7, 11–14; P2-1, 3, 4, 9); split 3a / 3b if the diff passes ~1,500 lines | not started |
