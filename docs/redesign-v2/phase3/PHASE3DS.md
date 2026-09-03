@@ -1,6 +1,6 @@
 # Seat Planner redesign — Phase 3: UI design system
 
-**Status: in progress — PR 1 merged v1.73.4; PR 2 merged v1.73.5; PR 3 (map) open; PR 4 (pages) next.** Inputs: `PHASE2UX.md` (§1 geometry, §2 states,
+**Status: in progress — PR 1 merged v1.73.4; PR 2 merged v1.73.5; PR 3 merged v1.73.6; PR 4 (pages) open; PR 5 (close-out) next.** Inputs: `PHASE2UX.md` (§1 geometry, §2 states,
 §3 component table, the close-out note), `DECISIONS.md` (D0–D6, §6 deviations 1–15), the `ibm-design-language`
 skill (`SKILL.md`, `tokens.md`, `design-engineering.md`, `status-and-dataviz.md`, `carbon-next.md`, `taste.md`) and
 its two assets, `app/globals.css` as an inventory of consumer names only. Nothing under `app/`, `components/`
@@ -367,6 +367,128 @@ a status region (`role="status"`, top-left) for inline notifications — the MLS
 the empty states over the plan (published-empty in the viewer's and the admin's voice, draft-empty),
 skeleton plan, error + Retry, the 403 card. One narrow (1024) read-only frame.
 
+### 1.22 Page frame and tabs — Management / Settings / Reception → `.sp-page`, `.sp-tabs` (§3 "Page header (title + subtitle, no action) · exists", "Page header with tabs + one primary · tabs hand-built")
+
+**Problem.** Three pages share one frame (32 padding, live area 1584) and one header shape; Management adds
+tabs and a primary that follows the tab, the other two have no primary at all. The asset has the page header
+and no tabs.
+**Options.** (a) Contained tabs at 48 (the tab row is the toolbar's height); (b) line tabs at 40 with a 2px
+bar; (c) line styling at contained height. **Choice.** (b) — Carbon's line tabs are 40; 48 is the contained
+variant's height, and mixing the two is the half-measure the taste rubric catches (owner ruling, PR 4).
+Selected = `heading-compact-01` + a 2px `$border-interactive` bar; others `body-compact-01` text-secondary;
+hover = text-primary + a 2px `border-strong` bar; focus the 2px inset ring; a 1px rule under the list. The
+strip is sticky under the header (`top: --sp-shell-header-h`), painted `background` so the table scrolls
+under it. The page primary is a 40px control — every control in the product is 40 (§0 ladder comment); a
+48 button beside a `heading-04` would be the one 48 control outside the shell.
+**Trade-off.** A 2px bar is thinner than the shell's 3px current bars — one family (blue, bottom or left),
+two weights: the shell mark is the heavier because it sits on Gray 100. **Would change if** Phase 4 puts a
+tab row on Gray 100 (then 3px).
+
+### 1.23 Management table — `.sp-table` on the asset `.cds-table` (§3 "Data table, sortable, kebab per row · exists", "Toolbar with search + live count · exists")
+
+**Problem.** The asset rows are 32 and the header 32; Phase 2 asks for a 40 header, ● / ○ status, a mono
+seat link, a per-row action. **Choice.** Header 40 (`--sp-table-header-h`), rows stay 32 (the table is the
+scanning zone). Status = the **seat vocabulary**: ● Assigned (filled, `icon-primary`) / ○ Unassigned
+(2px ring, `icon-secondary`), 16px with the label beside — not ■ / □, which are the mode marks; one shape
+must not carry two meanings across the product (owner ruling). The set survives grayscale (rendered).
+Seat = `code-02` link that steps to `link-primary-hover` on the hovered row (`--sp-table-link-on-hover-row`)
+— blue 60 measures 4.08 on `layer-hover-01`, the **third hover-surface trap** (§3). **One row action**
+(Edit) = a 40×32 ghost icon button with the tier-C tooltip; an overflow menu holding one item is a tell, so
+a kebab appears only once a row carries two or more actions — Deactivate lives in the side panel, so today
+there are none (owner ruling). Toolbar: the asset's, search 320, count `aria-live` with zero included; the
+saved-status banner is an inline `role="status"` notification under the toolbar. Narrow: the table scrolls
+inside `.sp-table-scroll`, never the page.
+**Trade-off.** The tooltip on the last column would leave the table on the right; it is right-anchored there.
+
+### 1.24 Side panel 480 slide-over — `.sp-side-panel-host` on the asset `.cds-side-panel` (§3 "Side panel 480, slide-over (focus-trapped) · partial")
+
+**Problem.** The asset panel slides *in* beside the page with no overlay; Management's form is a task with
+more than five fields that must keep the table behind for reference — a slide-**over** with a scrim
+(composition.md). **Choice.** The asset's catch element becomes the scrim (`--sp-scrim` = `overlay`); the
+panel is `layer-02` with a 1px left rule, `role="dialog"`, focus-trapped, Esc asks when dirty. Header
+`heading-03` + the one helper line ("Changes reach the map and Reception at the next publish."); body =
+the form (Name is the one field marked — required is the minority), the read-only **fact row** ("Draft seat ·
+NE04 · Floor 3 · Open on the map" — a `dl` with a 32px ghost, not a disabled field), and the **danger zone**:
+Deactivate… as a danger ghost above the footer with its block reason as helper text. Footer 64 keeps the
+asset's **50/50 bleed** (Cancel secondary · primary): that is the side panel's own footer, the modal shares
+it, and the tearsheet does not (§1.28) — containers read apart by their footers alone. No ×.
+The confirm modal (asset `.cds-modal`, z 8500) opens **on top of** the open panel (z 7001): a modal over a
+side panel is allowed; a modal over a modal is not. States: saving (primary `aria-busy`, fields read-only,
+never disabled), server error (inline notification above the form, ghost Retry inside), deactivate refused
+(inline error at the danger zone with the map link), dirty-close ask.
+**Danger ghost on dark surfaces.** The asset paints `.cds-btn--danger-ghost` `button-danger-primary` (red
+60) — 2.3:1 on the dark `layer-02` (this panel) and 3.0:1 on the dark `layer-01` (the PR 3 inspector).
+Carbon's own token for it is `$button-danger-secondary`, which equals `$text-error` in both themes (red 60
+light, red 40 g100); the asset lacks the name, so `--sp-button-danger-ghost-text` aliases `text-error` and
+the product overrides the asset class (and the overflow menu's danger item) globally. Hover stays the
+filled danger surface. 4.87 / 6.38 dark, 5.00 / 4.55 light (§3).
+
+### 1.25 Structured list with inline rename — `.sp-list` (§3 "Structured list with inline rename · none needed")
+
+48px rows: name · count (text-secondary, tabular, 96) · ghost Rename · ⋯ overflow holding Delete (danger) —
+two actions per row, so the overflow is earned here. Rename swaps the name for a 40px field + Save
+(primary 40) · Cancel (ghost); Enter saves, Esc cancels; a duplicate name is invalid on blur with the
+primary disabled. A department people carry that the list lacks shows the `outline` tag "Not in list" and
+a tertiary Add to list in the action column. Empty state per list.
+
+### 1.26 Callout — `.sp-callout` (§3 "Callout (non-dismissible, no status) · partial .cds-notification")
+
+Guidance read before acting (patterns.md): loads with the page, never dismissed, never triggered. Hand-built
+on the notification's geometry — `layer-01`, a 3px **gray** (`border-strong`) edge, body-01 — with no icon,
+no close and no status colour. The edge is a decorative border on a non-interactive, no-status container —
+no 3:1 obligation — so it is measured (3.02 / 3.01) and **not gated** (§3); a token nudge must not fail the build over it.
+**Would change if** the callout ever carries a status; then it is a notification.
+
+### 1.27 Settings sections and the file trigger — `.sp-settings`, `.sp-section` (§3 "Section with one primary + file line · exists")
+
+Column 776, left-aligned; callout first; 48 between sections. Section = `heading-03` · helper body-01 ·
+action row (40px buttons, 8 gaps) · `label-01` file line. The **file trigger** is a button + a hidden input
+with the same name; the label states type and limit up front ("Import CSV · .csv up to 5 MB"). Every
+unhappy path (wrong type, too large with the size named, empty, missing columns) is an inline error under
+the section *before* any tearsheet opens; MLS02 is a `status`; success is an inline `status` with the map
+link. Busy: the primary keeps its label with `aria-busy`, the tertiary beside it is disabled for the
+transaction, and a progress line with an sr-only "Working…" replaces the file line.
+
+### 1.28 Narrow tearsheet 720 — `.sp-tearsheet--narrow` (§3 "Narrow tearsheet · hand-built"); count cards; consequences; ghost done-state
+
+Centred, top 112 under the header, no rail; body scrolls; **footer 64 with right-aligned buttons** (Cancel
+secondary · primary 224 min) — tearsheet footers align right, modal and side-panel footers bleed 50/50
+(owner ruling; PHASE2UX §1S.3 and §3 amended). No ×. **Count cards** (`.sp-count-card`): `layer-01`,
+`heading-03` tabular numeral, `label-01` label, five across inside the 656 inner width (`--sp-count-card-min-w`
+112) — a reading surface, not a tile (D5-d): no border, no hover, no link. Consequence line (CSV) or
+consequences list (restore), one line each. The row list scrolls inside the body (256 = eight 32px rows);
+in the blocked state an `alert` notification sits above it, the blocked rows carry the error family's 3px
+edge and tint, and the primary is disabled with its reason in a line above the footer. The **ghost with
+a done-state** ("Export the current draft first" → "✓ Exported 14:02") swaps its label for the outcome,
+takes text-secondary with a success-mark check, and stays a button — never disabled. Applying: primary
+`aria-busy`, Cancel disabled for the transaction.
+
+### 1.29 Reception — `.sp-recep` family (§3 "Search input lg with clear ×", "Listbox rows", "Readout tile with display numeral", "Row-buttons", "Error boundary card"); route cards
+
+Two zones. **List (dense):** search `lg` — the asset field at 48 with a leading glyph, a 40 clear × once
+typed, the platform hint (Ctrl K / ⌘ K — Phase 4 obligation from PR 3), unlabelled (the placeholder is the
+label; "never label a search field"), autofocus. 32px header row with the live count (zero included) and
+"Ext". 48px rows: name `heading-compact-01` + meta `label-01` (position · department); **seat code as
+plain `code-01` text-secondary** — no chip (it would be the only rounded shape in the row and Management
+renders the seat as mono text), not a link (the row's map action is Show on map); a Floor 2 tag where the
+floor differs; extension right-aligned tabular 96 with "—" for none. Highlighted (keyboard cursor) = hover
+surface + 3px bar; locked (↵) = selected surface + bar; meta on both steps to `text-helper-on-row`. **No
+avatar** (owner ruling): a 32px initials disc is decoration and a circle is a radius the system does not
+have; name + meta carry the row, and the seat column already gives the scan rhythm.
+**Readout (calm):** sticky 480 column, 32 padding, a 1px left rule: `heading-03` name · role · the tile
+(`layer-01`, `label-01` eyebrow, **`heading-06` Light 300 at 42/50 tabular**, the ↵ / Esc hint) · seat
+line with the pin glyph · "If no answer — same department" with up to three 40px full-width ghost
+row-buttons (name left, extension right) · Show on map (ghost) · Recent lookups (`heading-compact-01`,
+up to four 40px ghost rows). "No extension on file" is body-01 in the tile; partial = "Seat unknown right
+now — the map is still loading."
+**Numeral weight.** Rendered at 1× and at 50% (the arm's-length proxy) beside 400: at 50% the 300 numeral
+keeps distinct strokes and counters (the crops read "214" without effort), so **300 ships** — a bolder 42px
+numeral is the dashboard-number tell; 400 is the only fallback if a real desk reading disagrees, never 600.
+States: first run ("Waiting for a call"), zero (count says 0, ghost Clear search), empty directory, loading
+(six skeleton rows under the header), error boundary card (Try again tertiary · Open the seat map ghost ·
+`code-01` digest). Route cards for the admin pages: 403 and "This admin page could not load" on the asset
+empty state with a digest line. Narrow 1024: one column, readout below the list with Back to the list.
+
 ---
 
 ## 2. Component index (PHASE2UX §3 → class → specimen anchor)
@@ -419,8 +541,29 @@ Filled per PR. Rows marked *pending* land in the PR named.
 | Canvas states · status region · empty / skeleton | `.sp-canvas` (+`--skeleton`), `.sp-canvas-plan`, `.sp-canvas-status[role=status]`, `.sp-canvas-empty`, `.sp-marker` | `02-map.html#canvas` | 3 |
 | 403 card | asset `.cds-empty` + one tertiary | `02-map.html#canvas` | 3 |
 | Narrow fallback (1024, read-only) | composition of the above | `02-map.html#narrow` | 3 |
-| Side panel 480 · modals · narrow tearsheet · callout | *pending* | `03-panels-and-sheets.html` | 4 |
-| Page header + tabs · table · structured list · radio · file trigger · count cards · readout · ghost done-state | *pending* | `04-forms-and-tables.html` | 4 |
+| Page header (title + subtitle, no action) · with tabs + one primary | `.sp-page` + asset `.cds-page-header`, `.sp-page-actions`; `.sp-tabs-host` > `.sp-tabs[role=tablist]` > `.sp-tab[aria-selected]` (+`.sp-tab-count`) | `04-forms-and-tables.html#header` | 4 |
+| Toolbar with search + live count · inline saved status | asset `.cds-toolbar.sp-toolbar`, `.cds-toolbar-count[aria-live]`, `.sp-search-clear`; `.cds-notification--success[role=status]` | `04-forms-and-tables.html#table` | 4 |
+| Data table, sortable, one row action (no kebab until two actions) · ● ○ status · mono seat link | `.sp-table` + asset `.cds-table` / `.cds-sort`, `.sp-table-scroll`, `.sp-col-seat` / `.sp-col-ext`, `.sp-seat-link`, `.sp-seat-legend` + `.sp-seat-mark--assigned` / ring, `.cds-col-actions` + `.sp-has-tooltip` | `04-forms-and-tables.html#table` | 4 |
+| Table states: grayscale · zero search · loading · empty | asset `.cds-skeleton-row`, `.cds-empty` | `04-forms-and-tables.html#table` | 4 |
+| Side panel 480, slide-over (focus-trapped) + scrim · fact row · danger zone | `.sp-side-panel-host[data-panel=open]` > asset `.cds-side-panel-catch` (scrim) + `.cds-side-panel[role=dialog]`, `.sp-fact-row`, `.sp-danger-zone`, `.sp-required-note` | `03-panels-and-sheets.html#side-panel` | 4 |
+| Combobox (department; managed list + free text) | PR 3 `.sp-combobox` + `.sp-listbox` (`.sp-listbox-create`) | `03-panels-and-sheets.html#side-panel` | 4 |
+| Confirm modal over a side panel · dirty-close · one-field create modal · delete confirm | asset `.cds-modal` (+`--danger` primary, `role=alertdialog`) | `03-panels-and-sheets.html#confirm` | 4 |
+| Structured list with inline rename · Tag "Not in list" | `.sp-list-header`, `.sp-list` > `.sp-list-row` (`-name`, `-count`; `--editing`), asset `.cds-overflow` + `.cds-danger`, `.cds-tag--outline` | `04-forms-and-tables.html#list` | 4 |
+| Danger ghost on every surface (asset override) | `.cds-btn--danger-ghost`, `.cds-overflow-menu .cds-danger` → `--sp-button-danger-ghost-text` | `03-panels-and-sheets.html#side-panel`, `04-forms-and-tables.html#list` | 4 |
+| Callout (non-dismissible, no status) | `.sp-callout` | `03-panels-and-sheets.html#callout`, `04-forms-and-tables.html#settings` | 4 |
+| Section with one primary + file line · file trigger · busy | `.sp-settings`, `.sp-section` (`-helper`), `.sp-action-row`, `.sp-file-line`, `.sp-progress-line`, `.cds-btn[aria-busy]` | `04-forms-and-tables.html#settings` | 4 |
+| Inline status / error under a section | asset `.cds-notification` (`--error[role=alert]`, `[role=status]`, `--success[role=status]`) | `04-forms-and-tables.html#settings` | 4 |
+| Narrow tearsheet (CSV review · snapshot restore) · blocked · applying | `.sp-tearsheet.sp-tearsheet--narrow` (+`--static`), `.sp-tearsheet-reason`, `.sp-consequence`, `.sp-consequence-list`, `.sp-row-list` (`li[data-blocked]`, `.sp-row-meta`) | `03-panels-and-sheets.html#tearsheet` | 4 |
+| Count cards | `.sp-count-cards` > `.sp-count-card` (`.sp-count-numeral`, `.sp-count-label`) | `03-panels-and-sheets.html#tearsheet`, `04-forms-and-tables.html#settings` | 4 |
+| Ghost button with in-place done-state | `.cds-btn--ghost[data-done]` | `03-panels-and-sheets.html#tearsheet`, `04-forms-and-tables.html#settings` | 4 |
+| Search input `lg` with clear × · platform hint | `.sp-search-lg` > asset `.cds-text-input` + `.sp-search-trailing` (`.sp-kbd`, `.sp-search-clear`) | `04-forms-and-tables.html#reception` | 4 |
+| Listbox rows (Reception) · highlighted · locked · Floor tag · no seat / no extension | `.sp-recep`, `.sp-recep-list`, `.sp-recep-header` (`.sp-recep-count[aria-live]`, `.sp-recep-ext-head`), `.sp-recep-rows[role=listbox]` > `.sp-recep-row[role=option]` (`-name`, `-meta`, `-seat`, `-ext`; `[data-highlight]`, `[aria-selected=true]`) | `04-forms-and-tables.html#reception` | 4 |
+| Readout tile with display numeral · seat line · hints | `.sp-recep-readout[aria-live]`, `.sp-recep-role`, `.sp-readout` (`-eyebrow`, `-numeral`, `-hint`, `-none`), `.sp-recep-seatline` (`.sp-seat-code`, `.sp-recep-partial`) | `04-forms-and-tables.html#reception` | 4 |
+| Row-buttons (same-department fallback) · Recent lookups | `.sp-recep-fallback` > `.sp-row-buttons` > `.cds-btn--ghost` (`.sp-row-button-ext`); `.sp-recep-recent` | `04-forms-and-tables.html#reception` | 4 |
+| Reception states: first run · zero · empty · loading · error boundary | `.sp-recep-waiting`, asset `.cds-empty`, `.sp-recep-skeleton-row` + `.sp-skeleton`, `.sp-route-card` + `.sp-digest` | `04-forms-and-tables.html#reception` | 4 |
+| 403 card · route error card (admin pages) | `.sp-route-card` > asset `.cds-empty` + `.sp-digest` | `04-forms-and-tables.html#route` | 4 |
+| Radio group (reference) | PR 2 `.sp-radio-group` — unchanged | `01-shell.html#radio` | 2 |
+| Narrow fallback (1024): table scrolls in its container · Reception one column · tearsheet full width − 32 | composition of the above | `04-forms-and-tables.html#narrow`, `03-panels-and-sheets.html#narrow` | 4 |
 
 ---
 
@@ -492,6 +635,29 @@ on the primary. **Measured, not gated (9):** the PR 1–2 dividers and steps plu
 stop (blue 40 — Carbon's own light `ai-border-start`; the label carries the meaning), the left-panel rule
 and the quiet pill's edge (quiet is the intent).
 
+**PR 4 (pages) — regenerated, summary line pasted verbatim:**
+
+```
+product-pairs.json: 192 pairs · surface-pairs-not-gated.json: 13 pairs
+192/192 pass
+```
+
+The 22 new pairs are the surfaces the owner asked for and the ones the build added: the count cards and
+the readout tile (`layer-01` under text-primary 16.45 / 13.76 and text-secondary 7.10 / 8.86); the Reception
+highlighted row's 3px bar (blue 60 on `layer-hover-01` 4.08; blue 50 on `#333333` 3.78) and the locked row's
+meta (gray 70 on `layer-selected` 5.92; gray 30 on `#393939` 6.76); the sticky tab strip's text on the page
+background and the tab hover bar (gray 50 on white 3.32; gray 60 on `#161616` 3.60); the seat link on the `layer-01` table row (blue 60 = 4.55)
+and its hover step (blue 70 on `layer-hover-01` 6.36) — **the third hover-surface trap** after helper-on-row
+and the AI label: the link on a row that hovers steps to `link-primary-hover`, exactly as §3 predicted for
+Phase 4; white on the danger primary (5.00). **One asset failure found and fixed by token:** the asset's
+danger ghost text is `button-danger-primary` (red 60), 2.3:1 on the dark `layer-02` (side panel) and 3.0:1 on
+the dark `layer-01` (the PR 3 inspector, which had not been gated as text). `--sp-button-danger-ghost-text`
+aliases `text-error` — Carbon's `$button-danger-secondary` value in both themes (red 60 / red 40) — and the
+product overrides the asset class: 5.00 / 4.55 light, 4.87 / 6.38 dark. The failing value is kept in the
+not-gated file as a record. Also not gated: the callout's gray edge (3.02 / 3.01 — a decorative border on a
+non-interactive, no-status container has no 3:1 obligation; owner ruling on #510) and the scrim (a dimming
+layer, not a mark).
+
 **PR 2 pairs (added to `product-pairs.json`, now 78 pairs) — summary line pasted verbatim:**
 
 ```
@@ -561,6 +727,24 @@ Next free deviation number: **16** (nothing ledgered in PR 1).
 | MLS02 as an inline status notification, self-clearing | TRUE | patterns Notifications: task-generated → inline; toasts are for system messages the user caused |
 | Roster rows static; hover on the button only | TRUE | deviation 9; taste.md: a row that hovers promises an action |
 | Platform-aware ⌘K / Ctrl K hint | NOT COVERED | Phase 4 detects the platform (§5) |
+| Line tabs, 40 tall, 2px bar; sticky | TRUE | Carbon line tabs are 40 (contained are 48); taste.md: no half-measures |
+| Page primary at 40, not 48 | NOT COVERED — product decision | the ladder comment: every control 40; the shell holds the only 48 controls |
+| Table header 40, rows 32 | TRUE | asset comment: compact rows where the user scans |
+| Status ● / ○ = the seat vocabulary, never ■ / □ | TRUE | status-and-dataviz: one shape, one meaning; grayscale-safe |
+| One row action as a ghost icon + tooltip; kebab only at two or more | TRUE | taste.md tells: an overflow holding one item |
+| Seat link steps to link-hover on the hovered row | TRUE | tokens.md hover trap; the asset's ghost does the same |
+| Side panel as a slide-over with a scrim | TRUE | composition.md: >5 fields, keep the reference behind; the asset's slide-in is the no-reference case |
+| Side panel / modal footers 50/50; tearsheet footer right-aligned | TRUE | composition.md container guide; asset footers |
+| Modal on top of the open side panel | TRUE | SKILL: never nest modals — a side panel is not a modal |
+| Danger ghost text = `text-error` (asset override) | TRUE | Carbon `$button-danger-secondary` = `$text-error`; tokens.md dark ladder |
+| Deactivate = danger ghost above the footer, moderate-impact confirm (no typed name) | TRUE | SKILL destructive actions: moderate → spell out consequences |
+| Callout: layer + gray 3px edge, no icon / close / status | TRUE | patterns.md Callout: read before acting, never dismissible, no status |
+| File trigger label states type and limit; unhappy paths inline before the sheet | TRUE | patterns.md forms: state constraints up front; inline notification for task feedback |
+| Count cards: layer-01, no border, no hover | NOT COVERED — product decision | D5-d retired tiles; a reading surface, not a tile |
+| Readout numeral `heading-06` Light 300 | TRUE (verified at 50%) | SKILL type table: display sizes get lighter |
+| No avatar in Reception rows | TRUE | SKILL: grays dominate; zero radius except tags |
+| Seat code as plain mono text, not a tag, not a link | TRUE | tags are metadata (patterns.md); one map action per row |
+| Search `lg` unlabelled, count published with zero | TRUE | SKILL search: never label; always publish the count |
 
 ---
 
@@ -605,6 +789,27 @@ legend is the marker); `--sp-selection`, `-border`, `-surface` → *`--sp-pill-s
 (the move trail is the origin's dashed edge and the target's solid one); `--sp-wash-zone` → *`--sp-highlight`*
 (zone hit = the search surface); `--sp-map-mat` keeps its name.
 
+**Landing files (PR 4 scope).** `.sp-page` + `.sp-tabs` → the `(shell)` layout's content pane and
+`app/(shell)/admin/management/page.tsx` (the tab strip replaces the shipped tab component; the primary follows
+`?tab=`); `.sp-table` → the Management employees table (`components/management/*`; rows 32, header 40, the
+shipped kebab retires for one Edit icon button); `.sp-side-panel-host` → the employee editor (the shipped
+dialog becomes the 480 slide-over; focus trap + dirty-close ask are behaviour); `.sp-list` → the departments
+and zones lists (inline rename replaces the shipped rename dialog); `.sp-callout`, `.sp-settings`,
+`.sp-section`, `.sp-tearsheet--narrow`, `.sp-count-card` → `app/(shell)/admin/settings/page.tsx` and the CSV /
+snapshot review dialogs (`bulk-destructive-action-safety-source` keeps its review-before-mutate anchors: the
+tearsheet IS the review); `.sp-recep` family → `app/(shell)/reception/page.tsx` and its components (the
+shipped avatar and seat chip retire; the readout tile and row-buttons replace the shipped extension block);
+`.sp-route-card` → the `error.tsx` / 403 surfaces. **Phase 4 obligations added:** the file trigger forwards
+the button click to the hidden input (`tabindex=-1`, `aria-hidden`) so focus stays on the button; the sticky
+tab strip offsets by `--sp-shell-header-h`; the danger-ghost override applies to every `.cds-btn--danger-ghost`
+(the PR 3 inspector's Delete seat included); the seat link's hover step is the row's `:hover`, not the link's;
+Reception's keyboard path (↑ ↓ move the highlight, ↵ locks, Esc unlocks / clears) drives `[data-highlight]` and
+`aria-selected`. **Retired `--sp-*` names (PR 4):** `--sp-tag-bg` / `--sp-tag-text` → the asset `.cds-tag`
+(light) and *`--sp-panel-dark-tag-bg`* / *`-text`* (dark panels); `--sp-table-header` → *`--sp-layer-selected`*
+(the asset's `thead`), `--sp-table-row-border` → *`--sp-border-subtle`*; `--sp-extension-bg` / `-border` /
+`-label` → *`--sp-readout-bg`* / retired (no border) / *`--sp-readout-eyebrow`*; `--sp-identity-avatar-bg` /
+`-avatar-fg` / `-gradient` → retired (no avatar, no gradient — owner ruling).
+
 **Landing files (PR 2 scope).** `.sp-header`, `.sp-header-slot`, utilities + `.sp-tooltip` → `AppTopBar.tsx`
 (the rail in `AppRail.tsx` retires — the shell is a top bar with a hamburger, D0); `.sp-panel` family +
 `.sp-switch` + `.sp-radio` → new `components/ui/ShellPanels.tsx` (Help / History / Account), mounted once
@@ -632,13 +837,19 @@ links) driven by `useAppShellNavigation`; `.sp-skeleton*` → `loading.tsx` skel
 - `--sp-button-secondary-soft` → retired
 - `--sp-status-danger-*` → *`--sp-status-error-*`*; `--sp-status-pending-*` and `--sp-status-draft-*` → *`--sp-status-draft-*`*; `--sp-status-published-*` → *`--sp-status-success-*`*; `--sp-status-neutral-*`, `--sp-status-search-*` keep their families; roles collapse to `-mark / -surface / -text` (+ `-fill` for warning)
 - `--sp-color-*`, `--sp-color-workspace`, `--sp-color-workspace-deep`, `--sp-color-state-planner-*` → retired (grouped prefixes; `--sp-map-mat` covers the workspace surface)
-- Deferred to their component PRs: `--sp-chrome-*` (PR 2), `--sp-marker-*`, `--sp-legend-*`, `--sp-selection*`, `--sp-ai-*`, `--sp-editor-*`, `--sp-publish-*`, `--sp-trail*`, `--sp-wash-zone` (PR 3), `--sp-tag-*`, `--sp-table-*`, `--sp-extension-*`, `--sp-identity-*` (PR 4)
+- Retired in their component PRs: `--sp-chrome-*` (PR 2), `--sp-marker-*`, `--sp-legend-*`, `--sp-selection*`, `--sp-ai-*`, `--sp-editor-*`, `--sp-publish-*`, `--sp-trail*`, `--sp-wash-zone` (PR 3), `--sp-tag-*`, `--sp-table-*`, `--sp-extension-*`, `--sp-identity-*` (PR 4) — every shipped `--sp-*` name now has a replacement or a retirement above
 
 ---
 
 ## 6. Open for the owner
 
-None after PR 3. Ruled on PR 3: stroke rule + ◇ at 1.5px verified (§1.16); move target / invalid target
+None after PR 4. Ruled on the PR 4 proposal and folded in: `heading-06` at 300, verified at 50% (§1.29);
+line tabs at 40 with a 2px bar (§1.22); seat code as plain `code-01` text (§1.29); count cards as a reading
+surface (§1.28); ● / ○ for Assigned / Unassigned (§1.23); one row action, no kebab (§1.23); tearsheet footer
+right-aligned (§1.28); no avatar (§1.29). Found and fixed during the build, recorded not asked: the asset's
+danger ghost on dark layers (§1.24, §3).
+
+Closed after PR 3. Ruled on PR 3: stroke rule + ◇ at 1.5px verified (§1.16); move target / invalid target
 as one construction in two families differing by shape (§1.16); one error notification, seven strings
 with alert / status roles (§1.18).
 
@@ -664,17 +875,34 @@ pill (§1.4).
    `position: relative; z-index: 1`. A CSS-in-JS port that drops the outer shadow closes the outline.
 3. **`--sp-event-pad` is 10px on purpose** — the symmetric remainder of 72 − 52 — and is the one geometry
    value not on the spacing scale; don't "fix" it to 8 or 12.
-
 4. **The seat code tooltip is the tier-C tooltip**, gray 80 on the light canvas too. Do not theme it; the
    canvas mat and the raster are light in both themes' light regions and the box must read on either.
 5. **`.sp-pill` widths come from the label**; the nudge (`SeatMarker.tsx`) reasons about height, which is
    the constant 28. Never set a width on a pill; never let the code render inline (it widens the pill
    into its neighbours — the reason the tooltip exists).
-7. **Styling a `<use>`d symbol: set `fill` / `stroke` / `stroke-width` on the `<svg>` (they inherit), never
+6. **Styling a `<use>`d symbol: set `fill` / `stroke` / `stroke-width` on the `<svg>` (they inherit), never
    on a `path` selector — CSS cannot reach a use's shadow tree. The ◇ badge rendered filled until this
    was fixed; every icon that takes a state colour (marks, badges, notification glyphs) is affected.
-6. **`generate-pairs.mjs` is the contrast source of truth.** Add a mark or a surface there, regenerate,
+   **It bit again in PR 4:** the ○ Unassigned mark rendered filled because `[data-stroke]` inside a `<use>`d
+   symbol is unreachable — the seat marks (`.sp-seat-mark [data-stroke]` / `[data-fill]` / `[data-hatch]`)
+   must be **inlined** in the `<svg>`, never `<use>`d. In React that is a `SeatMark` component that emits
+   the paths, not a sprite reference. **Which symbols the rule applies to:** any symbol whose look depends
+   on a *descendant* selector (the three seat marks, with their `data-*` parts). A symbol styled only by
+   `fill` / `stroke` / `stroke-width` on the `<svg>` itself — the ◇ badge, the mode marks, the notification
+   glyphs — inherits those and may stay a `<use>`. (The 02 map specimen carried seven `<use>`d seat marks
+   through PR 3; caught on the #510 review and inlined.)
+7. **`generate-pairs.mjs` is the contrast source of truth.** Add a mark or a surface there, regenerate,
    re-run the checker; never edit the JSON.
+8. **The asset's danger ghost fails on dark layers** (§1.24). Keep the global `.cds-btn--danger-ghost` /
+   `.cds-overflow-menu .cds-danger` override that paints it `--sp-button-danger-ghost-text`; if the asset is
+   ever refreshed with a `--cds-button-danger-secondary`, re-point the token and drop the override.
+9. **Containers are told apart by their footers.** Modal and side panel bleed 50/50 (asset); tearsheets
+   right-align in the 64 bar (`.sp-tearsheet-footer`). A tearsheet ported onto the modal footer, or a side
+   panel given right-aligned buttons, collapses the distinction the owner ruled on.
+10. **The sticky tab strip needs the header offset and a painted background** (`--sp-tabs-bg`); a
+    transparent strip lets the table's rows show through the tab labels as they scroll under.
+11. **Links on rows that hover step to `link-primary-hover`** — the seat link in the Management table is
+    the third instance (§3); every future row with a link in it gets the same `tr:hover a` rule.
 
 ---
 
@@ -682,6 +910,7 @@ pill (§1.4).
 
 | PR | Branch | Contents |
 |---|---|---|
+| 4 | #510 (`docs/phase3-pages`) | `.sp-page` + line tabs; `.sp-table` (● ○ status, seat link hover step, one row action); side panel 480 slide-over + scrim, fact row, danger zone, confirm modal on top; `.sp-list` inline rename; `.sp-callout`; `.sp-settings` / `.sp-section` + file trigger + unhappy paths + busy; `.sp-tearsheet--narrow` (right-aligned footer), count cards, consequences, row list, ghost done-state; `.sp-recep` family (search lg, rows, readout tile heading-06 verified at 50%, row-buttons, recent, every state); route cards; the danger-ghost asset override; specimens `03-panels-and-sheets` + `04-forms-and-tables`; §1.22–1.29, §2 (+24 rows), §3 (192/192, callout edge not gated), §4, §5 (PR 4 landing files + every shipped name retired), §6, §7 (items 8–11); PHASE2UX §1R.3, §1S.3, §3 amendments. Owner rulings folded in before build: heading-06 300, line tabs 40, seat code plain text, count cards, ● ○, no kebab, tearsheet footer right-aligned, no avatar |
 | 3 | #509 (`docs/phase3-map`) | control row + floor menu + search/palette + Filters split control + toggle; `.sp-pill` (11 states) + ◇ + names-off; `.sp-slot` inspector / mode card / Ask Planner (Carbon for AI); wide tearsheet + group rows; roster; band; canvas states; specimen `02-map`; §1.14–1.21, §2, §3 (generated, 170/170), §4, §5, §6, §7; PHASE2UX §3 amendments (Filters control, two-primaries justification, Delete hidden for originals, roster hover on the button). Owner rulings folded in before merge: stroke rule, invalid target in the error family, seven error strings |
 | 2 | #508 (`docs/phase3-shell`) | `.sp-header` overrides, `.sp-header-slot`, `.sp-tooltip`, `.sp-panel` + zone-scoped variants, `.sp-switch`, `.sp-radio`, `.sp-left-panel`, `.sp-skeleton`; specimen `01-shell` (header ×3, hamburger ×7, utilities ×5, panels ×12, switch ×4, radio ×3, left panel ×7, narrow 1024); §1.7–1.13, §2, §3 (78/78), §4, §5; D0-f Phase 3 confirmation; PHASE2UX §3 ghost-on-dark row |
 | 1 | #507 (`docs/phase3-tokens`) | assets copied; `sp-tokens.css`; `.sp-mode`, seat marks; specimens 00 + 05 + index + compare; §1.1–1.6, §2 (partial), §3, §4, §5 (partial). Owner rulings folded in before merge: pressed gray 80 + outlined open, theme decided, assigned legend = mini pill |

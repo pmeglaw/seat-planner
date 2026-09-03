@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Phase 3 · 04 Forms and tables — Seat Planner</title>
+<link rel="stylesheet" href="../tokens/carbon-tokens.css">
+<link rel="stylesheet" href="../tokens/sp-tokens.css">
+<link rel="stylesheet" href="../components/carbon-components.css">
+<link rel="stylesheet" href="../components/sp-components.css">
+<script>
+(function () {
+  var h = document.documentElement;
+  function apply(t) {
+    if (t === "light")      { h.dataset.theme = "light"; h.dataset.carbonTheme = "white"; }
+    else if (t === "dark")  { h.dataset.theme = "dark";  h.dataset.carbonTheme = "g100";  }
+    else                    { delete h.dataset.theme;    delete h.dataset.carbonTheme;     }
+  }
+  apply(new URLSearchParams(location.search).get("theme"));
+  window.spTheme = apply;
+})();
+</script>
+<style>
+.spec { max-width: none; margin: 0; padding: var(--sp-space-07) var(--sp-space-07) var(--sp-space-12); }
+.spec-bar { position: sticky; top: 0; z-index: 9500; display: flex; align-items: center; gap: var(--sp-space-05); height: var(--sp-size-lg); padding: 0 var(--sp-space-07); background: var(--sp-layer-01); border-bottom: 1px solid var(--sp-border-subtle); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); }
+.spec-bar nav { display: flex; gap: var(--sp-space-05); margin-left: auto; }
+.spec-bar .spec-theme { display: flex; }
+.spec h1 { font: var(--sp-type-heading-04); margin-bottom: var(--sp-space-03); }
+.spec h2 { font: var(--sp-type-heading-03); margin: var(--sp-space-10) 0 var(--sp-space-05); }
+.spec h2:first-of-type { margin-top: var(--sp-space-09); }
+.spec h3 { font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); margin: var(--sp-space-07) 0 var(--sp-space-03); }
+.spec p.lede { color: var(--sp-text-secondary); max-width: 66ch; }
+.spec-note { font: var(--sp-type-code-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); }
+.spec-anatomy { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); margin-top: var(--sp-space-02); max-width: 70ch; }
+.spec-row { display: flex; align-items: flex-start; gap: var(--sp-space-05); flex-wrap: wrap; }
+.spec-row > div > .spec-note { display: block; margin-bottom: var(--sp-space-02); }
+.cap { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); margin: var(--sp-space-02) 0 0; }
+.frame { overflow-x: auto; margin: 0 calc(-1 * var(--sp-space-07)) var(--sp-space-05); }
+.frame1920 { width: 1920px; }
+.frame1024 { width: 1024px; }
+.pageframe { background: var(--sp-background); box-shadow: inset 0 0 0 1px var(--sp-border-subtle-00); }
+.pageframe .sp-page { padding-bottom: var(--sp-space-07); }
+.pageframe .sp-tabs-host { position: static; }
+.w776 { width: 776px; }
+.w1072 { width: 1072px; }
+.w480 { width: 480px; }
+.w640 { width: 640px; }
+.list-grid { display: grid; grid-template-columns: repeat(auto-fill, 720px); gap: var(--sp-space-07) var(--sp-space-05); align-items: start; }
+.recep-grid { display: grid; grid-template-columns: repeat(auto-fill, 480px); gap: var(--sp-space-07) var(--sp-space-05); align-items: start; }
+.recep-grid .sp-recep-readout { position: static; }
+.half { zoom: .5; }
+.numeral-test { display: flex; gap: var(--sp-space-07); align-items: flex-start; flex-wrap: wrap; }
+.numeral-test .sp-readout { width: 416px; }
+.gray { filter: grayscale(1); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-close" viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 16 16"><path d="M8 3v10M4 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 16 16"><path d="M2 14h12M3 11l8-8 2 2-8 8H3z" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-more" viewBox="0 0 16 16"><circle cx="3" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="13" cy="8" r="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-check" viewBox="0 0 16 16"><path d="M3 8.5l3 3L13 4.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 16 16"><path d="M8 14s4-4.2 4-7.5a4 4 0 0 0-8 0C4 9.8 8 14 8 14z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="6.5" r="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 16 16"><path d="M8 11V3M4.5 6.5L8 3l3.5 3.5M3 13h10" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 16 16"><path d="M8 3v8M4.5 7.5L8 11l3.5-3.5M3 13h10" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-error-light" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="M6.5 6.5l7 7M13.5 6.5l-7 7" fill="none" stroke="var(--sp-layer-02)" stroke-width="1.5"/></symbol>
+  <symbol id="i-error20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="M6.5 6.5l7 7M13.5 6.5l-7 7" fill="none" stroke="var(--sp-layer-01)" stroke-width="1.5"/></symbol>
+  <symbol id="i-check20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="M5.5 10.5l3 3L14.5 7" fill="none" stroke="var(--sp-layer-02)" stroke-width="1.5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="M10 9v5M10 6v.5" fill="none" stroke="var(--sp-layer-02)" stroke-width="1.8"/></symbol>
+</svg>
+
+<a class="cds-skip-link" href="#main">Skip to main content</a>
+<div class="spec-bar" role="toolbar" aria-label="Specimen controls">
+  <strong>Phase 3 · 04 Forms and tables</strong>
+  <span class="spec-theme" role="group" aria-label="Theme">
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('light')">Light</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('dark')">Dark</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme(null)">System</button>
+  </span>
+  <nav aria-label="Specimens"><a href="index.html">Index</a><a href="compare.html?p=04-forms-and-tables">Both themes</a><a href="03-panels-and-sheets.html">03</a><a href="01-shell.html">01</a></nav>
+</div>
+
+<main id="main" class="spec">
+  <h1>Forms and tables</h1>
+  <p class="lede">The page-level components of Management, Settings and Reception: page headers (with and without a primary; with line tabs), the toolbar with its live count, the sortable 32px table, the structured list with inline rename, the Settings sections with their file triggers, count cards, the ghost with a done-state, and the whole of Reception — search, list, readout tile, row-buttons, recent lookups — with every state. Radio group: see <a href="01-shell.html#radio">01 Shell</a>; it is unchanged here.</p>
+
+  <h2 id="header">Page headers — asset <code>.cds-page-header</code> in the <code>.sp-page</code> frame at 1920</h2>
+  <p class="spec-anatomy">Title heading-04 + subtitle text-secondary; the primary (40px, right, bottom-aligned) exists only on Management and follows the tab. Tabs: Carbon line tabs, 40 tall, 2px bar — selected heading-compact-01 with the $border-interactive bar, hover text-primary with a border-strong bar, focus the 2px inset ring; a 1px rule runs under the whole list. The tab strip is sticky under the header.</p>
+  <h3>Reception — no primary</h3>
+  <div class="frame"><div class="frame1920 pageframe"><div class="sp-page"><div class="cds-page-header"><div><h1 class="cds-page-title">Reception</h1><p class="cds-page-subtitle">Find the person, read the extension.</p></div></div></div></div></div>
+  <h3>Settings — no primary</h3>
+  <div class="frame"><div class="frame1920 pageframe"><div class="sp-page"><div class="cds-page-header"><div><h1 class="cds-page-title">Settings</h1><p class="cds-page-subtitle">Data utilities for the draft.</p></div></div></div></div></div>
+  <h3>Management — tabs; primary follows the tab (Employees → Add employee); tab states: selected · hover · focus</h3>
+  <div class="frame"><div class="frame1920 pageframe"><div class="sp-page">
+    <div class="cds-page-header"><div><h1 class="cds-page-title">Management</h1><p class="cds-page-subtitle">People, departments and zones.</p></div><div class="sp-page-actions"><button class="cds-btn cds-btn--primary">Add employee</button></div></div>
+    <div class="sp-tabs-host"><ul class="sp-tabs" role="tablist" aria-label="Management sections"><li role="presentation"><button class="sp-tab" role="tab" aria-selected="true" id="t1" aria-controls="p1">Employees<span class="sp-tab-count">68</span></button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false" data-state="hover">Departments<span class="sp-tab-count">7</span></button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false" data-state="focus">Zones<span class="sp-tab-count">5</span></button></li></ul></div>
+  </div></div></div>
+  <h3>Management — Departments tab (primary → Add department)</h3>
+  <div class="frame"><div class="frame1920 pageframe"><div class="sp-page">
+    <div class="cds-page-header"><div><h1 class="cds-page-title">Management</h1><p class="cds-page-subtitle">People, departments and zones.</p></div><div class="sp-page-actions"><button class="cds-btn cds-btn--primary">Add department</button></div></div>
+    <div class="sp-tabs-host"><ul class="sp-tabs" role="tablist"><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false">Employees<span class="sp-tab-count">68</span></button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="true">Departments<span class="sp-tab-count">7</span></button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false">Zones<span class="sp-tab-count">5</span></button></li></ul></div>
+  </div></div></div>
+
+  <h2 id="table">Employees — toolbar + live count, sortable table — asset <code>.cds-toolbar</code>, <code>.cds-table</code> in <code>.sp-table</code></h2>
+  <p class="spec-anatomy">Toolbar 48: search 320 + count aria-live, zero included. Header 40, rows 32. Columns Name · Department · Position · Extension · Seat · Status · one action. Status marks are the seat vocabulary — ● Assigned (filled) / ○ Unassigned (ring) — 16px, label beside; the set survives grayscale (■ / □ stay the mode marks). Seat is a mono link that steps to link-hover on the hovered row (blue 60 would be 4.08:1 on layer-hover-01). The row action is one ghost icon button with the tier-C tooltip — a kebab only appears once a row carries two or more actions.</p>
+  <div class="frame"><div class="frame1920 pageframe"><div class="sp-page">
+    <div class="sp-table"><div class="cds-toolbar sp-toolbar"><div class="cds-toolbar-search"><svg><use href="#i-search"/></svg><input type="search" placeholder="Search people" aria-label="Search people"></div><span class="cds-toolbar-count" aria-live="polite">68 employees · 56 assigned · 12 unassigned</span></div>
+    <div class="sp-table-scroll"><table class="cds-table" aria-label="Employees">
+      <colgroup><col style="width:22%"><col style="width:18%"><col style="width:18%"><col style="width:10%"><col style="width:12%"><col style="width:16%"><col style="width:40px"></colgroup>
+      <thead><tr><th aria-sort="ascending"><button class="cds-sort">Name<svg><use href="#i-sort"/></svg></button></th><th><button class="cds-sort">Department<svg><use href="#i-sort"/></svg></button></th><th><button class="cds-sort">Position<svg><use href="#i-sort"/></svg></button></th><th class="sp-col-ext"><button class="cds-sort">Extension<svg><use href="#i-sort"/></svg></button></th><th><button class="cds-sort">Seat<svg><use href="#i-sort"/></svg></button></th><th><button class="cds-sort">Status<svg><use href="#i-sort"/></svg></button></th><th class="cds-col-actions"><span class="cds-visually-hidden">Actions</span></th></tr></thead>
+      <tbody>
+        <tr><td>Alex Kim</td><td>Litigation</td><td>Attorney</td><td class="sp-col-ext">105</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">AO03</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"><span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Edit Alex Kim"><svg><use href="#i-edit"/></svg></button><span class="sp-tooltip" role="tooltip">Edit</span></span></td></tr>
+        <tr data-state="hover"><td>Ana Reyes</td><td>Front Office</td><td>Intake</td><td class="sp-col-ext">200</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">NW02</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"><span class="sp-has-tooltip" data-state="hover"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Edit Ana Reyes"><svg><use href="#i-edit"/></svg></button><span class="sp-tooltip" role="tooltip">Edit</span></span></td></tr>
+        <tr><td>Dana Whitfield</td><td>Litigation</td><td>Paralegal</td><td class="sp-col-ext">240</td><td class="sp-col-seat"></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Unassigned</span></td><td class="cds-col-actions"><span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Edit Dana Whitfield"><svg><use href="#i-edit"/></svg></button><span class="sp-tooltip" role="tooltip">Edit</span></span></td></tr>
+        <tr><td>Luis Ortega</td><td>Pre-Litigation</td><td>Attorney</td><td class="sp-col-ext">112</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">AO07</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"><span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Edit Luis Ortega"><svg><use href="#i-edit"/></svg></button><span class="sp-tooltip" role="tooltip">Edit</span></span></td></tr>
+        <tr><td>Marta Reyes-Cole</td><td>Litigation</td><td>Attorney</td><td class="sp-col-ext">118</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">L02</a> <span class="cds-tag">Floor 2</span></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"><span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Edit Marta Reyes-Cole"><svg><use href="#i-edit"/></svg></button><span class="sp-tooltip" role="tooltip">Edit</span></span></td></tr>
+        <tr><td>Priya Natarajan</td><td>Operations</td><td>Office Manager</td><td class="sp-col-ext">101</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">AO01</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"><span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Edit Priya Natarajan"><svg><use href="#i-edit"/></svg></button><span class="sp-tooltip" role="tooltip">Edit</span></span></td></tr>
+        <tr><td>Sarah Reyes</td><td>Case Management</td><td>Case Manager</td><td class="sp-col-ext">214</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">NE04</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"><span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Edit Sarah Reyes"><svg><use href="#i-edit"/></svg></button><span class="sp-tooltip" role="tooltip">Edit</span></span></td></tr>
+        <tr><td>Tom Reyes</td><td>Pre-Litigation</td><td>Paralegal</td><td class="sp-col-ext"></td><td class="sp-col-seat"><a class="sp-seat-link" href="#">SW11</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"><span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Edit Tom Reyes"><svg><use href="#i-edit"/></svg></button><span class="sp-tooltip" role="tooltip">Edit</span></span></td></tr>
+      </tbody></table></div></div>
+  </div></div></div>
+
+  <h3>Table states — grayscale check · saved status · zero search · loading · empty</h3>
+  <div class="spec-row">
+    <div class="w480"><span class="spec-note">status marks in grayscale — ● / ○ survive</span><div class="gray"><table class="cds-table"><tbody><tr><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Unassigned</span></td></tr></tbody></table></div></div>
+    <div class="w640"><span class="spec-note">inline status under the toolbar · role=status · self-clears</span><div class="sp-page" style="padding:0"><div class="cds-notification cds-notification--success" role="status" style="margin:0"><svg><use href="#i-check20"/></svg><div class="cds-notification-text"><strong>Sarah Reyes saved.</strong> Reaches the map and Reception at the next publish.</div></div></div></div>
+  </div>
+  <div class="frame"><div class="frame1920 pageframe"><div class="sp-page"><div class="sp-table">
+    <div class="cds-toolbar sp-toolbar"><div class="cds-toolbar-search"><svg><use href="#i-search"/></svg><input type="search" value="xyz" aria-label="Search people"><button class="cds-btn cds-btn--icon sp-search-clear" aria-label="Clear search"><svg><use href="#i-close"/></svg></button></div><span class="cds-toolbar-count" aria-live="polite">0 of 68 match</span></div>
+    <table class="cds-table"><thead><tr><th><span class="cds-th-static">Name</span></th><th><span class="cds-th-static">Department</span></th><th><span class="cds-th-static">Position</span></th><th class="sp-col-ext"><span class="cds-th-static" style="justify-content:flex-end">Extension</span></th><th><span class="cds-th-static">Seat</span></th><th><span class="cds-th-static">Status</span></th><th class="cds-col-actions"></th></tr></thead></table>
+    <div class="cds-empty"><h3>No one matches “xyz”</h3><p>Check the spelling, or search by department.</p><div class="cds-empty-actions"><button class="cds-btn cds-btn--ghost cds-btn--sm">Clear search</button></div></div>
+  </div></div></div></div>
+  <div class="spec-row">
+    <div class="w1072"><span class="spec-note">loading · six skeleton rows under real headers · aria-busy</span><div class="sp-table" aria-busy="true"><table class="cds-table"><thead><tr><th><span class="cds-th-static">Name</span></th><th><span class="cds-th-static">Department</span></th><th><span class="cds-th-static">Position</span></th><th><span class="cds-th-static">Seat</span></th><th><span class="cds-th-static">Status</span></th></tr></thead><tbody><tr class="cds-skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="cds-skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="cds-skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="cds-skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="cds-skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr><tr class="cds-skeleton-row"><td></td><td></td><td></td><td></td><td></td></tr></tbody></table></div></div>
+    <div class="w640"><span class="spec-note">empty directory · tertiary to Settings (CSV import)</span><div class="sp-table"><div class="cds-empty"><h3>No employees yet</h3><p>Add people one at a time, or import a CSV of assignments from Settings.</p><div class="cds-empty-actions"><button class="cds-btn cds-btn--tertiary cds-btn--md">Add employee</button><a class="cds-btn cds-btn--ghost cds-btn--md" href="#">Import from Settings</a></div></div></div></div>
+  </div>
+
+  <h2 id="list">Departments / Zones — structured list with inline rename — <code>.sp-list</code></h2>
+  <p class="spec-anatomy">48px rows: name · count (text-secondary, tabular) · ghost Rename · ⋯ overflow holding Delete (danger) — two actions, so the overflow is earned. Renaming swaps the name for a 40px field with Save (primary) · Cancel (ghost); Enter saves, Esc cancels. A department people carry that the list lacks shows the "Not in list" tag and a tertiary Add to list.</p>
+  <div class="list-grid">
+    <div><span class="spec-note">departments · rest · one row hovered · one overflow open</span>
+      <div class="sp-list-header">Department<span class="sp-list-count">People</span></div>
+      <ul class="sp-list">
+        <li class="sp-list-row"><span class="sp-list-name">Case Management</span><span class="sp-list-count">9</span><button class="cds-btn cds-btn--ghost">Rename</button><div class="cds-overflow"><button class="cds-btn cds-btn--icon" aria-label="More actions for Case Management" aria-expanded="false"><svg><use href="#i-more"/></svg></button></div></li>
+        <li class="sp-list-row" data-state="hover"><span class="sp-list-name">Front Office</span><span class="sp-list-count">4</span><button class="cds-btn cds-btn--ghost" data-state="hover">Rename</button><div class="cds-overflow"><button class="cds-btn cds-btn--icon" aria-label="More actions for Front Office" aria-expanded="false"><svg><use href="#i-more"/></svg></button></div></li>
+        <li class="sp-list-row"><span class="sp-list-name">Litigation</span><span class="sp-list-count">22</span><button class="cds-btn cds-btn--ghost">Rename</button><div class="cds-overflow" data-open><button class="cds-btn cds-btn--icon" aria-label="More actions for Litigation" aria-expanded="true"><svg><use href="#i-more"/></svg></button><div class="cds-overflow-menu" role="menu"><button role="menuitem" class="cds-danger">Delete…</button></div></div></li>
+        <li class="sp-list-row"><span class="sp-list-name">Operations</span><span class="sp-list-count">6</span><button class="cds-btn cds-btn--ghost">Rename</button><div class="cds-overflow"><button class="cds-btn cds-btn--icon" aria-label="More actions for Operations" aria-expanded="false"><svg><use href="#i-more"/></svg></button></div></li>
+        <li class="sp-list-row"><span class="sp-list-name">Pre-Litigation</span><span class="sp-list-count">12</span><button class="cds-btn cds-btn--ghost">Rename</button><div class="cds-overflow"><button class="cds-btn cds-btn--icon" aria-label="More actions for Pre-Litigation" aria-expanded="false"><svg><use href="#i-more"/></svg></button></div></li>
+        <li class="sp-list-row"><span class="sp-list-name">Compliance <span class="cds-tag cds-tag--outline">Not in list</span></span><span class="sp-list-count">3</span><button class="cds-btn cds-btn--tertiary" style="padding:0 var(--sp-space-05)">Add to list</button><span></span></li>
+      </ul></div>
+    <div><span class="spec-note">inline rename · Enter saves · Esc cancels · duplicate name invalid</span>
+      <div class="sp-list-header">Zone<span class="sp-list-count">Seats</span></div>
+      <ul class="sp-list">
+        <li class="sp-list-row"><span class="sp-list-name">Attorney offices</span><span class="sp-list-count">18</span><button class="cds-btn cds-btn--ghost">Rename</button><div class="cds-overflow"><button class="cds-btn cds-btn--icon" aria-label="More actions for Attorney offices"><svg><use href="#i-more"/></svg></button></div></li>
+        <li class="sp-list-row sp-list-row--editing"><div class="cds-form-item"><label class="cds-visually-hidden" for="rn1">Zone name</label><input id="rn1" class="cds-text-input" value="North-east pod"></div><button class="cds-btn cds-btn--primary">Save</button><button class="cds-btn cds-btn--ghost">Cancel</button></li>
+        <li class="sp-list-row sp-list-row--editing"><div class="cds-form-item" data-invalid><label class="cds-visually-hidden" for="rn2">Zone name</label><input id="rn2" class="cds-text-input" value="Attorney offices" aria-invalid="true" aria-describedby="rn2h"><div class="cds-helper" id="rn2h">A zone named “Attorney offices” already exists.</div></div><button class="cds-btn cds-btn--primary" disabled>Save</button><button class="cds-btn cds-btn--ghost">Cancel</button></li>
+        <li class="sp-list-row"><span class="sp-list-name">Reyes pod</span><span class="sp-list-count">6</span><button class="cds-btn cds-btn--ghost">Rename</button><div class="cds-overflow"><button class="cds-btn cds-btn--icon" aria-label="More actions for Reyes pod"><svg><use href="#i-more"/></svg></button></div></li>
+      </ul>
+      <div class="cds-empty" style="padding-top:var(--sp-space-07)"><h3>No zones yet</h3><p>Zones group seats for the map filters. Add the first one.</p><div class="cds-empty-actions"><button class="cds-btn cds-btn--tertiary cds-btn--md">Add zone</button></div></div></div>
+  </div>
+
+  <h2 id="settings">Settings — sections, file trigger, unhappy paths — <code>.sp-settings</code>, <code>.sp-section</code></h2>
+  <p class="spec-anatomy">Content column 776, left-aligned. Callout first. Each section: heading-03 · helper body-01 · action row (40px buttons, 8 gaps) · label-01 file line; 48 between sections. The file trigger states type and limit in its label ("Import CSV · .csv up to 5 MB") — button + hidden input with the same name. Every unhappy path is an inline error under the section, before any tearsheet opens. Busy: the primary keeps its label with aria-busy and a progress line replaces the file line, with an sr-only "Working…".</p>
+  <div class="spec-row">
+    <div class="w776"><span class="spec-note">rest</span>
+      <div class="sp-settings">
+        <div class="sp-callout"><p>The published map is never touched until you publish. Restores replace the entire draft — review before confirming.</p></div>
+        <section class="sp-section" aria-labelledby="s1"><h2 id="s1">CSV assignments</h2><p class="sp-section-helper">Import seat assignments into the draft, or export the draft as it is now.</p>
+          <div class="sp-action-row"><button class="cds-btn cds-btn--primary" id="csv-trigger">Import CSV · .csv up to 5 MB<svg><use href="#i-upload"/></svg></button><input type="file" id="csv-input" name="csv" accept=".csv" class="cds-visually-hidden" tabindex="-1" aria-hidden="true"><button class="cds-btn cds-btn--tertiary">Export CSV<svg><use href="#i-download"/></svg></button><button class="cds-btn cds-btn--ghost">Download template</button></div>
+          <p class="sp-file-line">Columns: <code>seat_code, employee_name, status</code> · status is one of assigned · cleared · reserved · unavailable</p></section>
+        <section class="sp-section" aria-labelledby="s2"><h2 id="s2">Draft snapshots</h2><p class="sp-section-helper">Save the whole draft as a file, or bring a saved draft back. A restore replaces every draft seat.</p>
+          <div class="sp-action-row"><button class="cds-btn cds-btn--primary">Export draft snapshot<svg><use href="#i-download"/></svg></button><button class="cds-btn cds-btn--tertiary">Restore… · .json up to 5 MB<svg><use href="#i-upload"/></svg></button></div>
+          <p class="sp-file-line">Last export: draft-2026-09-02.json · today 09:14</p></section>
+      </div></div>
+    <div class="w776"><span class="spec-note">unhappy paths · inline, before any tearsheet · busy · success</span>
+      <div class="sp-settings">
+        <section class="sp-section"><h2>CSV assignments</h2><p class="sp-section-helper">Import seat assignments into the draft, or export the draft as it is now.</p>
+          <div class="sp-action-row"><button class="cds-btn cds-btn--primary">Import CSV · .csv up to 5 MB<svg><use href="#i-upload"/></svg></button><button class="cds-btn cds-btn--tertiary">Export CSV<svg><use href="#i-download"/></svg></button><button class="cds-btn cds-btn--ghost">Download template</button></div>
+          <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>That file is not a CSV.</strong> Choose a .csv exported from a spreadsheet, or download the template.</div></div>
+          <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>This file is 7.2 MB — the limit is 5 MB.</strong> Split it, or remove columns you don’t need.</div></div>
+          <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>The file is empty.</strong> It needs a header row and at least one assignment.</div></div>
+          <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>Missing columns: employee_name.</strong> The header row must include seat_code, employee_name and status.</div></div>
+          <div class="cds-notification" role="status"><svg><use href="#i-info"/></svg><div class="cds-notification-text"><strong>The draft changed in another window.</strong> Refresh, then import again.</div><button class="cds-btn cds-btn--ghost">Refresh</button></div>
+          <div class="cds-notification cds-notification--success" role="status"><svg><use href="#i-check20"/></svg><div class="cds-notification-text"><strong>68 rows applied to the draft.</strong> Review on the map, then Publish when ready.</div><a class="cds-btn cds-btn--ghost" href="#">Open the map</a></div></section>
+        <section class="sp-section"><h2>Draft snapshots</h2><p class="sp-section-helper">Save the whole draft as a file, or bring a saved draft back.</p>
+          <div class="sp-action-row"><button class="cds-btn cds-btn--primary" aria-busy="true">Export draft snapshot<svg><use href="#i-download"/></svg></button><button class="cds-btn cds-btn--tertiary" disabled>Restore… · .json up to 5 MB</button></div>
+          <p class="sp-progress-line"><span class="sp-skeleton" aria-hidden="true"></span>Preparing 71 seats…<span class="cds-visually-hidden">Working…</span></p></section>
+      </div></div>
+  </div>
+
+  <h3>Count cards and the ghost with a done-state (detail)</h3>
+  <div class="spec-row">
+    <div class="w640"><span class="spec-note">count cards · layer-01 · heading-03 numeral · label-01 · zero shown</span><div class="sp-count-cards"><div class="sp-count-card"><span class="sp-count-numeral">68</span><span class="sp-count-label">Rows</span></div><div class="sp-count-card"><span class="sp-count-numeral">54</span><span class="sp-count-label">Assignments</span></div><div class="sp-count-card"><span class="sp-count-numeral">9</span><span class="sp-count-label">Cleared</span></div><div class="sp-count-card"><span class="sp-count-numeral">3</span><span class="sp-count-label">Reserved</span></div><div class="sp-count-card"><span class="sp-count-numeral">0</span><span class="sp-count-label">Unavailable</span></div></div><p class="cap">Reading surface, not a tile (D5-d): no border, no hover, no link.</p></div>
+    <div class="w480"><span class="spec-note">ghost · rest → done-state; never disabled</span><div class="spec-row"><button class="cds-btn cds-btn--ghost cds-btn--md">Export the current draft first</button><button class="cds-btn cds-btn--ghost cds-btn--md" data-done aria-live="polite"><svg><use href="#i-check"/></svg>Exported 14:02</button></div></div>
+  </div>
+
+  <h2 id="reception">Reception — search, list, readout — <code>.sp-recep</code></h2>
+  <p class="spec-anatomy">1584 live area: list 1072 + readout 480, 32 gap. Search lg 48 unlabelled (placeholder is the label), autofocus, clear × once typed, platform hint. List: 32px header row (count aria-live · Ext) + 48px rows: name heading-compact-01 + meta label-01 (position · department), seat code code-01 text-secondary (no chip, not a link), Floor 2 tag where the floor differs, extension right-aligned tabular 96. Highlighted = keyboard cursor: hover surface + 3px bar; locked (↵) = selected surface + bar. Readout column sticky, 32 padding: heading-03 name · role · the tinted tile with the heading-06 numeral · seat line · same-department fallback · Show on map · Recent lookups.</p>
+  <div class="frame"><div class="frame1920 pageframe"><div class="sp-page">
+    <div class="cds-page-header"><div><h1 class="cds-page-title">Reception</h1><p class="cds-page-subtitle">Find the person, read the extension.</p></div></div>
+    <div class="sp-recep">
+      <div class="sp-recep-list">
+        <div class="sp-search-lg"><svg><use href="#i-search"/></svg><input class="cds-text-input" type="search" value="reyes" aria-label="Find a person" placeholder="Find a person"><span class="sp-search-trailing"><span class="sp-kbd" aria-hidden="true">Ctrl K</span><button class="cds-btn cds-btn--icon sp-search-clear" aria-label="Clear search"><svg><use href="#i-close"/></svg></button></span></div>
+        <div class="sp-recep-header"><span class="sp-recep-count" aria-live="polite">5 of 68 match “reyes”</span><span class="sp-recep-ext-head">Ext</span></div>
+        <ul class="sp-recep-rows" role="listbox" aria-label="People">
+          <li class="sp-recep-row" role="option" aria-selected="false" data-highlight><span><span class="sp-recep-name">Sarah Reyes</span><br><span class="sp-recep-meta">Case Manager · Case Management</span></span><span class="sp-recep-seat">NE04</span><span class="sp-recep-ext">214</span></li>
+          <li class="sp-recep-row" role="option" aria-selected="false"><span><span class="sp-recep-name">Tom Reyes</span><br><span class="sp-recep-meta">Paralegal · Pre-Litigation</span></span><span class="sp-recep-seat">SW11</span><span class="sp-recep-ext"></span></li>
+          <li class="sp-recep-row" role="option" aria-selected="false"><span><span class="sp-recep-name">Marta Reyes-Cole</span><br><span class="sp-recep-meta">Attorney · Litigation</span></span><span class="cds-tag">Floor 2</span><span class="sp-recep-ext">118</span></li>
+          <li class="sp-recep-row" role="option" aria-selected="false" data-state="hover"><span><span class="sp-recep-name">Ana Reyes</span><br><span class="sp-recep-meta">Intake · Front Office</span></span><span class="sp-recep-seat">NW02</span><span class="sp-recep-ext">200</span></li>
+          <li class="sp-recep-row" role="option" aria-selected="false"><span><span class="sp-recep-name">Diego Reyes</span><br><span class="sp-recep-meta">Runner · Operations</span></span><span class="sp-recep-seat"></span><span class="sp-recep-ext">233</span></li>
+        </ul>
+      </div>
+      <aside class="sp-recep-readout" aria-live="polite" aria-label="Readout">
+        <div><h2>Sarah Reyes</h2><p class="sp-recep-role">Case Manager · Case Management</p></div>
+        <div class="sp-readout"><span class="sp-readout-eyebrow">Extension</span><span class="sp-readout-numeral">214</span><span class="sp-readout-hint"><span class="sp-kbd" aria-hidden="true">↵</span>to lock</span></div>
+        <div class="sp-recep-seatline"><svg><use href="#i-pin"/></svg><span class="sp-seat-code">NE04</span><span style="color:var(--sp-text-secondary)">· Floor 3 · North-east pod</span></div>
+        <a class="cds-btn cds-btn--ghost" href="#">Show on map</a>
+        <div class="sp-recep-recent"><h3>Recent lookups</h3><ul><li><button class="cds-btn cds-btn--ghost">Alex Kim<span class="sp-recep-ext">105</span></button></li><li><button class="cds-btn cds-btn--ghost">Priya Natarajan<span class="sp-recep-ext">101</span></button></li><li><button class="cds-btn cds-btn--ghost">Luis Ortega<span class="sp-recep-ext">112</span></button></li></ul></div>
+      </aside>
+    </div>
+  </div></div></div>
+
+  <h3>Search field states — rest · autofocus (focus ring) · typed with clear × · platform hint (Ctrl K / ⌘ K)</h3>
+  <div class="spec-row">
+    <div class="w480"><span class="spec-note">rest · placeholder is the label · Ctrl K</span><div class="sp-search-lg"><svg><use href="#i-search"/></svg><input class="cds-text-input" type="search" aria-label="Find a person" placeholder="Find a person"><span class="sp-search-trailing"><span class="sp-kbd" aria-hidden="true">Ctrl K</span></span></div></div>
+    <div class="w480"><span class="spec-note">focus · 2px inset · ⌘ K on a Mac</span><div class="sp-search-lg"><svg><use href="#i-search"/></svg><input class="cds-text-input" type="search" aria-label="Find a person" placeholder="Find a person" data-state="focus"><span class="sp-search-trailing"><span class="sp-kbd" aria-hidden="true">⌘ K</span></span></div></div>
+    <div class="w480"><span class="spec-note">typed · clear × (40) · hint stays</span><div class="sp-search-lg"><svg><use href="#i-search"/></svg><input class="cds-text-input" type="search" value="nat" aria-label="Find a person"><span class="sp-search-trailing"><span class="sp-kbd" aria-hidden="true">Ctrl K</span><button class="cds-btn cds-btn--icon sp-search-clear" aria-label="Clear search"><svg><use href="#i-close"/></svg></button></span></div></div>
+  </div>
+
+  <h3>List rows — rest · hover · highlighted (cursor) · locked · Floor 2 · no seat · no extension</h3>
+  <div class="w1072">
+    <div class="sp-recep-header"><span class="sp-recep-count" aria-live="polite">68 people</span><span class="sp-recep-ext-head">Ext</span></div>
+    <ul class="sp-recep-rows" role="listbox" aria-label="People">
+      <li class="sp-recep-row" role="option" aria-selected="false"><span><span class="sp-recep-name">Alex Kim</span><br><span class="sp-recep-meta">Attorney · Litigation</span></span><span class="sp-recep-seat">AO03</span><span class="sp-recep-ext">105</span></li>
+      <li class="sp-recep-row" role="option" aria-selected="false" data-state="hover"><span><span class="sp-recep-name">Ana Reyes</span><br><span class="sp-recep-meta">Intake · Front Office</span></span><span class="sp-recep-seat">NW02</span><span class="sp-recep-ext">200</span></li>
+      <li class="sp-recep-row" role="option" aria-selected="false" data-highlight><span><span class="sp-recep-name">Dana Whitfield</span><br><span class="sp-recep-meta">Paralegal · Litigation</span></span><span class="sp-recep-seat"></span><span class="sp-recep-ext">240</span></li>
+      <li class="sp-recep-row" role="option" aria-selected="true"><span><span class="sp-recep-name">Luis Ortega</span><br><span class="sp-recep-meta">Attorney · Pre-Litigation</span></span><span class="sp-recep-seat">AO07</span><span class="sp-recep-ext">112</span></li>
+      <li class="sp-recep-row" role="option" aria-selected="false"><span><span class="sp-recep-name">Marta Reyes-Cole</span><br><span class="sp-recep-meta">Attorney · Litigation</span></span><span class="cds-tag">Floor 2</span><span class="sp-recep-ext">118</span></li>
+      <li class="sp-recep-row" role="option" aria-selected="false"><span><span class="sp-recep-name">Tom Reyes</span><br><span class="sp-recep-meta">Paralegal · Pre-Litigation</span></span><span class="sp-recep-seat">SW11</span><span class="sp-recep-ext"></span></li>
+    </ul>
+  </div>
+
+  <h3>Readout states — 480 column</h3>
+  <div class="recep-grid">
+    <div><span class="spec-note">locked · extension · seat line · Show on map</span><aside class="sp-recep-readout"><div><h2>Luis Ortega</h2><p class="sp-recep-role">Attorney · Pre-Litigation</p></div><div class="sp-readout"><span class="sp-readout-eyebrow">Extension · locked</span><span class="sp-readout-numeral">112</span><span class="sp-readout-hint"><span class="sp-kbd" aria-hidden="true">Esc</span>to unlock</span></div><div class="sp-recep-seatline"><svg><use href="#i-pin"/></svg><span class="sp-seat-code">AO07</span><span style="color:var(--sp-text-secondary)">· Floor 3 · Attorney offices</span></div><a class="cds-btn cds-btn--ghost" href="#">Show on map</a></aside></div>
+    <div><span class="spec-note">no extension on file · same-department fallback · up to 3 row-buttons</span><aside class="sp-recep-readout"><div><h2>Tom Reyes</h2><p class="sp-recep-role">Paralegal · Pre-Litigation</p></div><div class="sp-readout"><span class="sp-readout-eyebrow">Extension</span><span class="sp-readout-none">No extension on file</span></div><div class="sp-recep-seatline"><svg><use href="#i-pin"/></svg><span class="sp-seat-code">SW11</span><span style="color:var(--sp-text-secondary)">· Floor 3</span></div><div class="sp-recep-fallback"><h3>If no answer — same department</h3><div class="sp-row-buttons"><button class="cds-btn cds-btn--ghost">Luis Ortega<span class="sp-row-button-ext">112</span></button><button class="cds-btn cds-btn--ghost" data-state="hover">Nadia Haddad<span class="sp-row-button-ext">117</span></button><button class="cds-btn cds-btn--ghost">Omar Siddiqui<span class="sp-row-button-ext">121</span></button></div></div><a class="cds-btn cds-btn--ghost" href="#">Show on map</a></aside></div>
+    <div><span class="spec-note">partial · seat unknown right now · extension still reads</span><aside class="sp-recep-readout"><div><h2>Dana Whitfield</h2><p class="sp-recep-role">Paralegal · Litigation</p></div><div class="sp-readout"><span class="sp-readout-eyebrow">Extension</span><span class="sp-readout-numeral">240</span><span class="sp-readout-hint"><span class="sp-kbd" aria-hidden="true">↵</span>to lock</span></div><div class="sp-recep-seatline"><svg><use href="#i-pin"/></svg><span class="sp-recep-partial">Seat unknown right now — the map is still loading.</span></div></aside></div>
+    <div><span class="spec-note">first run · waiting for a call · recent lookups empty</span><aside class="sp-recep-readout"><p class="sp-recep-waiting">Waiting for a call. Start typing a name — the extension shows here.</p><div class="sp-recep-recent"><h3>Recent lookups</h3><p class="sp-recep-waiting">None yet this session.</p></div></aside></div>
+  </div>
+
+  <h3>Numeral weight check — heading-06 Light (300) at 1× and at 50% (the arm’s-length proxy), beside 400 for comparison</h3>
+  <div class="numeral-test">
+    <div><span class="spec-note">300 · shipped</span><div class="sp-readout"><span class="sp-readout-eyebrow">Extension</span><span class="sp-readout-numeral">214</span></div></div>
+    <div><span class="spec-note">400 · comparison only</span><div class="sp-readout"><span class="sp-readout-eyebrow">Extension</span><span class="sp-readout-numeral" style="font-weight:400">214</span></div></div>
+    <div><span class="spec-note">300 at 50%</span><div class="half"><div class="sp-readout"><span class="sp-readout-eyebrow">Extension</span><span class="sp-readout-numeral">214</span></div></div></div>
+    <div><span class="spec-note">400 at 50%</span><div class="half"><div class="sp-readout"><span class="sp-readout-eyebrow">Extension</span><span class="sp-readout-numeral" style="font-weight:400">214</span></div></div></div>
+  </div>
+
+  <h3>List states — zero · empty directory · loading · error boundary</h3>
+  <div class="spec-row">
+    <div class="w1072"><span class="spec-note">zero · count says 0 · ghost Clear search</span><div class="sp-recep-list"><div class="sp-search-lg"><svg><use href="#i-search"/></svg><input class="cds-text-input" type="search" value="xyz" aria-label="Find a person"><span class="sp-search-trailing"><span class="sp-kbd" aria-hidden="true">Ctrl K</span><button class="cds-btn cds-btn--icon sp-search-clear" aria-label="Clear search"><svg><use href="#i-close"/></svg></button></span></div><div class="sp-recep-header"><span class="sp-recep-count" aria-live="polite">0 of 68 match “xyz”</span><span class="sp-recep-ext-head">Ext</span></div><div class="cds-empty"><h3>No one matches “xyz”</h3><p>Try the surname alone, or a department name.</p><div class="cds-empty-actions"><button class="cds-btn cds-btn--ghost cds-btn--sm">Clear search</button></div></div></div></div>
+    <div class="w480"><span class="spec-note">empty directory · nothing published yet</span><div class="sp-recep-list"><div class="sp-recep-header"><span class="sp-recep-count" aria-live="polite">0 people</span></div><div class="cds-empty"><h3>No one is listed yet</h3><p>Reception reads the published directory. People appear after an admin publishes the seat map.</p></div></div></div>
+  </div>
+  <div class="spec-row">
+    <div class="w1072"><span class="spec-note">loading · six skeleton rows · aria-busy · header keeps its shape</span><div class="sp-recep-list" aria-busy="true"><div class="sp-recep-header"><span class="sp-recep-count">Loading people…</span><span class="sp-recep-ext-head">Ext</span></div><div class="sp-recep-skeleton-row"><span class="sp-skeleton"></span><span class="sp-skeleton"></span><span class="sp-skeleton"></span></div><div class="sp-recep-skeleton-row"><span class="sp-skeleton"></span><span class="sp-skeleton"></span><span class="sp-skeleton"></span></div><div class="sp-recep-skeleton-row"><span class="sp-skeleton"></span><span class="sp-skeleton"></span><span class="sp-skeleton"></span></div><div class="sp-recep-skeleton-row"><span class="sp-skeleton"></span><span class="sp-skeleton"></span><span class="sp-skeleton"></span></div><div class="sp-recep-skeleton-row"><span class="sp-skeleton"></span><span class="sp-skeleton"></span><span class="sp-skeleton"></span></div><div class="sp-recep-skeleton-row"><span class="sp-skeleton"></span><span class="sp-skeleton"></span><span class="sp-skeleton"></span></div></div></div>
+    <div class="w640"><span class="spec-note">error boundary · Try again (tertiary) · Open the seat map (ghost) · digest</span><div class="sp-route-card"><div class="cds-empty"><h2><svg aria-hidden="true"><use href="#i-error20"/></svg>Reception couldn’t load</h2><p>The directory didn’t come back. Try again — if it keeps failing, the seat map still shows everyone.</p><div class="cds-empty-actions"><button class="cds-btn cds-btn--tertiary cds-btn--md">Try again</button><a class="cds-btn cds-btn--ghost cds-btn--md" href="#">Open the seat map</a></div><p class="sp-digest">digest 4f2a9c1e · 09:41</p></div></div></div>
+  </div>
+
+  <h2 id="route">Route cards — 403 · route error (admin pages)</h2>
+  <div class="spec-row">
+    <div class="w640"><span class="spec-note">403 · viewer on /admin/management</span><div class="sp-route-card"><div class="cds-empty"><h2>Admin access required</h2><p>You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to manage people.</p><div class="cds-empty-actions"><a class="cds-btn cds-btn--tertiary cds-btn--md" href="#">Back to seat map</a></div></div></div></div>
+    <div class="w640"><span class="spec-note">route error · Try again · digest</span><div class="sp-route-card"><div class="cds-empty"><h2><svg aria-hidden="true"><use href="#i-error20"/></svg>This admin page could not load</h2><p>Nothing was changed. Try again — if it keeps failing, send the digest below to whoever runs the app.</p><div class="cds-empty-actions"><button class="cds-btn cds-btn--tertiary cds-btn--md">Try again</button><a class="cds-btn cds-btn--ghost cds-btn--md" href="#">Back to seat map</a></div><p class="sp-digest">digest 8b13e07d · 09:41</p></div></div></div>
+  </div>
+
+  <h2 id="narrow">Narrow fallback — 1024</h2>
+  <p class="spec-anatomy">Management: the table scrolls horizontally inside its container, the page never does. Reception: one column — the list, then the readout below with a "Back to the list" ghost.</p>
+  <div class="frame"><div class="frame1024 pageframe"><div class="sp-page">
+    <div class="cds-page-header"><div><h1 class="cds-page-title">Management</h1><p class="cds-page-subtitle">People, departments and zones.</p></div><div class="sp-page-actions"><button class="cds-btn cds-btn--primary">Add employee</button></div></div>
+    <div class="sp-tabs-host"><ul class="sp-tabs" role="tablist"><li role="presentation"><button class="sp-tab" role="tab" aria-selected="true">Employees</button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false">Departments</button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false">Zones</button></li></ul></div>
+    <div class="sp-table"><div class="cds-toolbar sp-toolbar"><div class="cds-toolbar-search"><svg><use href="#i-search"/></svg><input type="search" placeholder="Search people" aria-label="Search people"></div><span class="cds-toolbar-count" aria-live="polite">68 employees · 56 assigned · 12 unassigned</span></div>
+    <div class="sp-table-scroll"><table class="cds-table" style="min-width:1200px"><thead><tr><th><span class="cds-th-static">Name</span></th><th><span class="cds-th-static">Department</span></th><th><span class="cds-th-static">Position</span></th><th class="sp-col-ext"><span class="cds-th-static">Extension</span></th><th><span class="cds-th-static">Seat</span></th><th><span class="cds-th-static">Status</span></th><th class="cds-col-actions"></th></tr></thead><tbody>
+      <tr><td>Alex Kim</td><td>Litigation</td><td>Attorney</td><td class="sp-col-ext">105</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">AO03</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Edit Alex Kim"><svg><use href="#i-edit"/></svg></button></td></tr>
+      <tr><td>Dana Whitfield</td><td>Litigation</td><td>Paralegal</td><td class="sp-col-ext">240</td><td class="sp-col-seat"></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Unassigned</span></td><td class="cds-col-actions"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Edit Dana Whitfield"><svg><use href="#i-edit"/></svg></button></td></tr>
+    </tbody></table></div></div>
+  </div></div></div>
+  <div class="frame"><div class="frame1024 pageframe"><div class="sp-page">
+    <div class="cds-page-header"><div><h1 class="cds-page-title">Reception</h1><p class="cds-page-subtitle">Find the person, read the extension.</p></div></div>
+    <div class="sp-recep" style="grid-template-columns:minmax(0,1fr)">
+      <div class="sp-recep-list"><div class="sp-search-lg"><svg><use href="#i-search"/></svg><input class="cds-text-input" type="search" value="reyes" aria-label="Find a person"><span class="sp-search-trailing"><button class="cds-btn cds-btn--icon sp-search-clear" aria-label="Clear search"><svg><use href="#i-close"/></svg></button></span></div><div class="sp-recep-header"><span class="sp-recep-count" aria-live="polite">5 of 68 match “reyes”</span><span class="sp-recep-ext-head">Ext</span></div><ul class="sp-recep-rows" role="listbox" aria-label="People"><li class="sp-recep-row" role="option" aria-selected="true"><span><span class="sp-recep-name">Sarah Reyes</span><br><span class="sp-recep-meta">Case Manager · Case Management</span></span><span class="sp-recep-seat">NE04</span><span class="sp-recep-ext">214</span></li><li class="sp-recep-row" role="option" aria-selected="false"><span><span class="sp-recep-name">Tom Reyes</span><br><span class="sp-recep-meta">Paralegal · Pre-Litigation</span></span><span class="sp-recep-seat">SW11</span><span class="sp-recep-ext"></span></li></ul></div>
+      <aside class="sp-recep-readout" style="position:static;box-shadow:inset 0 1px 0 var(--sp-border-subtle-00);padding-left:0;padding-right:0"><div><h2>Sarah Reyes</h2><p class="sp-recep-role">Case Manager · Case Management</p></div><div class="sp-readout"><span class="sp-readout-eyebrow">Extension · locked</span><span class="sp-readout-numeral">214</span></div><div class="sp-recep-seatline"><svg><use href="#i-pin"/></svg><span class="sp-seat-code">NE04</span><span style="color:var(--sp-text-secondary)">· Floor 3</span></div><a class="cds-btn cds-btn--ghost" href="#">Back to the list</a></aside>
+    </div>
+  </div></div></div>
+</main>
+</body>
+</html>

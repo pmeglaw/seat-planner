@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Phase 3 · 03 Panels and sheets — Seat Planner</title>
+<link rel="stylesheet" href="../tokens/carbon-tokens.css">
+<link rel="stylesheet" href="../tokens/sp-tokens.css">
+<link rel="stylesheet" href="../components/carbon-components.css">
+<link rel="stylesheet" href="../components/sp-components.css">
+<script>
+(function () {
+  var h = document.documentElement;
+  function apply(t) {
+    if (t === "light")      { h.dataset.theme = "light"; h.dataset.carbonTheme = "white"; }
+    else if (t === "dark")  { h.dataset.theme = "dark";  h.dataset.carbonTheme = "g100";  }
+    else                    { delete h.dataset.theme;    delete h.dataset.carbonTheme;     }
+  }
+  apply(new URLSearchParams(location.search).get("theme"));
+  window.spTheme = apply;
+})();
+</script>
+<style>
+.spec { max-width: none; margin: 0; padding: var(--sp-space-07) var(--sp-space-07) var(--sp-space-12); }
+.spec-bar { position: sticky; top: 0; z-index: 9500; display: flex; align-items: center; gap: var(--sp-space-05); height: var(--sp-size-lg); padding: 0 var(--sp-space-07); background: var(--sp-layer-01); border-bottom: 1px solid var(--sp-border-subtle); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); }
+.spec-bar nav { display: flex; gap: var(--sp-space-05); margin-left: auto; }
+.spec-bar .spec-theme { display: flex; }
+.spec h1 { font: var(--sp-type-heading-04); margin-bottom: var(--sp-space-03); }
+.spec h2 { font: var(--sp-type-heading-03); margin: var(--sp-space-10) 0 var(--sp-space-05); }
+.spec h2:first-of-type { margin-top: var(--sp-space-09); }
+.spec h3 { font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); margin: var(--sp-space-07) 0 var(--sp-space-03); }
+.spec p.lede { color: var(--sp-text-secondary); max-width: 66ch; }
+.spec-note { font: var(--sp-type-code-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); }
+.spec-anatomy { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); margin-top: var(--sp-space-02); max-width: 70ch; }
+.spec-row { display: flex; align-items: flex-start; gap: var(--sp-space-05); flex-wrap: wrap; }
+.spec-row > div > .spec-note { display: block; margin-bottom: var(--sp-space-02); }
+.cap { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); margin: var(--sp-space-02) 0 0; }
+/* specimen frames: the page behind a panel is a 1024×720 stage; fixed-position parts become absolute inside it */
+.stage { position: relative; width: 1024px; height: 720px; overflow: hidden; background: var(--sp-background); box-shadow: inset 0 0 0 1px var(--sp-border-subtle-00); }
+.stage.tall { height: 800px; }
+.stage .cds-side-panel, .stage .cds-side-panel-catch, .stage .cds-modal-overlay, .stage .sp-tearsheet-host { position: absolute; }
+.stage .cds-side-panel { top: 0; }
+.stage .cds-side-panel-catch { inset: 0; }
+.stage .sp-tearsheet--narrow { top: var(--sp-tearsheet-narrow-top); max-height: calc(100% - var(--sp-tearsheet-narrow-top)); max-width: calc(100% - 2 * var(--sp-space-05)); }
+.stage .sp-page { padding-top: 0; }
+.stage .sp-tabs-host { top: 0; }
+.stage-grid { display: grid; grid-template-columns: repeat(auto-fill, 1024px); gap: var(--sp-space-07) var(--sp-space-05); align-items: start; }
+.modal-grid { display: grid; grid-template-columns: repeat(auto-fill, 480px); gap: var(--sp-space-07) var(--sp-space-05); align-items: start; }
+.modal-grid .cds-modal { max-width: 480px; }
+.sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, 720px); gap: var(--sp-space-07) var(--sp-space-05); align-items: start; }
+.sheet-grid .sp-tearsheet--narrow.sp-tearsheet--static { max-width: none; margin: 0; }
+.col776 { width: 776px; }
+.narrow-frame { width: 1024px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-close" viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 16 16"><path d="M8 3v10M4 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 16 16"><path d="M2 14h12M3 11l8-8 2 2-8 8H3z" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-more" viewBox="0 0 16 16"><circle cx="3" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="13" cy="8" r="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-check" viewBox="0 0 16 16"><path d="M3 8.5l3 3L13 4.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-error-light" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="M6.5 6.5l7 7M13.5 6.5l-7 7" fill="none" stroke="var(--sp-layer-02)" stroke-width="1.5"/></symbol>
+  <symbol id="i-check20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="M5.5 10.5l3 3L14.5 7" fill="none" stroke="var(--sp-layer-02)" stroke-width="1.5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="M10 9v5M10 6v.5" fill="none" stroke="var(--sp-layer-02)" stroke-width="1.8"/></symbol>
+</svg>
+
+<a class="cds-skip-link" href="#main">Skip to main content</a>
+<div class="spec-bar" role="toolbar" aria-label="Specimen controls">
+  <strong>Phase 3 · 03 Panels and sheets</strong>
+  <span class="spec-theme" role="group" aria-label="Theme">
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('light')">Light</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('dark')">Dark</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme(null)">System</button>
+  </span>
+  <nav aria-label="Specimens"><a href="index.html">Index</a><a href="compare.html?p=03-panels-and-sheets">Both themes</a><a href="02-map.html">02</a><a href="04-forms-and-tables.html">04</a></nav>
+</div>
+
+<main id="main" class="spec">
+  <h1>Panels and sheets</h1>
+  <p class="lede">The containers Management and Settings open over their pages: the 480 slide-over side panel with its scrim, the confirm modal on top of it, the one-field create modal, the 720 narrow tearsheet for CSV import and snapshot restore, and the Settings callout. Each container is told apart by its footer alone: side panel and modal bleed 50/50, tearsheets right-align.</p>
+
+  <h2 id="side-panel">Side panel 480 — slide-over on the asset <code>.cds-side-panel</code></h2>
+  <p class="spec-anatomy">Stage 1024: the Management table behind, the scrim (<code>--sp-scrim</code>) over it, the panel at the right. Header: heading-03 title + helper "Changes reach the map and Reception at the next publish." Body: the form (Name required — the one marked; Position; Phone extension; Email; Department combobox), the read-only Draft seat fact row, Deactivate… as a danger ghost above the footer. Footer 64: Cancel (secondary) · Save employee (primary), 50/50 bleed. No ×. Focus-trapped; Esc asks when dirty.</p>
+
+  <div class="stage-grid">
+    <div><span class="spec-note">Edit employee · filled · fact row · Deactivate…</span>
+    <div class="stage tall sp-side-panel-host" data-panel="open">
+      <div class="sp-page"><div class="cds-page-header"><div><h1 class="cds-page-title">Management</h1><p class="cds-page-subtitle">People, departments and zones.</p></div><div class="sp-page-actions"><button class="cds-btn cds-btn--primary">Add employee</button></div></div>
+        <div class="sp-tabs-host"><ul class="sp-tabs" role="tablist"><li role="presentation"><button class="sp-tab" role="tab" aria-selected="true">Employees</button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false">Departments</button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false">Zones</button></li></ul></div>
+        <div class="sp-table"><div class="cds-toolbar sp-toolbar"><div class="cds-toolbar-search"><svg><use href="#i-search"/></svg><input type="search" placeholder="Search people" aria-label="Search people"></div><span class="cds-toolbar-count" aria-live="polite">68 employees · 56 assigned · 12 unassigned</span></div>
+        <table class="cds-table"><thead><tr><th aria-sort="ascending"><button class="cds-sort">Name<svg><use href="#i-sort"/></svg></button></th><th><button class="cds-sort">Department<svg><use href="#i-sort"/></svg></button></th><th><button class="cds-sort">Seat<svg><use href="#i-sort"/></svg></button></th><th><button class="cds-sort">Status<svg><use href="#i-sort"/></svg></button></th><th class="cds-col-actions"><span class="cds-visually-hidden">Actions</span></th></tr></thead>
+        <tbody>
+          <tr><td>Alex Kim</td><td>Litigation</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">AO03</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"></td></tr>
+          <tr aria-selected="true"><td>Sarah Reyes</td><td>Case Management</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">NE04</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"></td></tr>
+          <tr><td>Dana Whitfield</td><td>Litigation</td><td class="sp-col-seat"></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Unassigned</span></td><td class="cds-col-actions"></td></tr>
+          <tr><td>Priya Natarajan</td><td>Operations</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">AO01</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"></td></tr>
+        </tbody></table></div>
+      </div>
+      <div class="cds-side-panel-catch"></div>
+      <aside class="cds-side-panel" role="dialog" aria-modal="true" aria-labelledby="sp1t">
+        <div class="cds-side-panel-header"><h2 id="sp1t">Edit employee</h2><p>Changes reach the map and Reception at the next publish.</p></div>
+        <div class="cds-side-panel-body">
+          <form class="cds-form" onsubmit="return false">
+            <div class="cds-form-item"><label for="f1n">Name <span class="cds-optional" aria-hidden="true">— required</span></label><input id="f1n" class="cds-text-input" value="Sarah Reyes" required></div>
+            <div class="cds-form-item"><label for="f1p">Position</label><input id="f1p" class="cds-text-input" value="Case Manager"></div>
+            <div class="cds-form-item"><label for="f1x">Phone extension</label><input id="f1x" class="cds-text-input" value="214" inputmode="numeric" style="max-width:160px"></div>
+            <div class="cds-form-item"><label for="f1e">Email</label><input id="f1e" class="cds-text-input" value="sreyes@megeredchianlaw.com" type="email"></div>
+            <div class="cds-form-item"><label for="f1d">Department</label><div class="sp-combobox"><input id="f1d" class="cds-text-input" role="combobox" aria-expanded="false" aria-autocomplete="list" value="Case Management"><svg><use href="#i-chev"/></svg></div><div class="cds-helper">Pick from the list, or type a new name and it is added at save.</div></div>
+          </form>
+          <dl class="sp-fact-row"><dt>Draft seat</dt><dd><span class="sp-seat-code">NE04</span><span style="color:var(--sp-text-secondary)">· Floor 3</span><button class="cds-btn cds-btn--ghost cds-btn--sm">Open on the map</button></dd></dl>
+          <div class="sp-danger-zone"><button class="cds-btn cds-btn--danger-ghost">Deactivate…</button><p class="sp-block-reason">Removes Sarah from the directory and clears NE04 in the draft. Reversible from Settings → Restore.</p></div>
+        </div>
+        <div class="cds-side-panel-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary">Save employee</button></div>
+      </aside>
+    </div></div>
+
+    <div><span class="spec-note">Add employee · empty · department typed as new · Name invalid on blur</span>
+    <div class="stage tall sp-side-panel-host" data-panel="open">
+      <div class="sp-page"><div class="cds-page-header"><div><h1 class="cds-page-title">Management</h1><p class="cds-page-subtitle">People, departments and zones.</p></div><div class="sp-page-actions"><button class="cds-btn cds-btn--primary">Add employee</button></div></div>
+        <div class="sp-tabs-host"><ul class="sp-tabs" role="tablist"><li role="presentation"><button class="sp-tab" role="tab" aria-selected="true">Employees</button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false">Departments</button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false">Zones</button></li></ul></div>
+        <div class="sp-table"><div class="cds-toolbar sp-toolbar"><div class="cds-toolbar-search"><svg><use href="#i-search"/></svg><input type="search" placeholder="Search people" aria-label="Search people"></div><span class="cds-toolbar-count" aria-live="polite">68 employees · 56 assigned · 12 unassigned</span></div>
+        <table class="cds-table"><thead><tr><th aria-sort="ascending"><button class="cds-sort">Name<svg><use href="#i-sort"/></svg></button></th><th><button class="cds-sort">Department<svg><use href="#i-sort"/></svg></button></th><th><button class="cds-sort">Seat<svg><use href="#i-sort"/></svg></button></th><th><button class="cds-sort">Status<svg><use href="#i-sort"/></svg></button></th><th class="cds-col-actions"><span class="cds-visually-hidden">Actions</span></th></tr></thead>
+        <tbody>
+          <tr><td>Alex Kim</td><td>Litigation</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">AO03</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"></td></tr>
+          <tr><td>Sarah Reyes</td><td>Case Management</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">NE04</a></td><td><span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--assigned" viewBox="0 0 16 16" aria-hidden="true"><circle data-fill cx="8" cy="8" r="6"/></svg>Assigned</span></td><td class="cds-col-actions"></td></tr>
+        </tbody></table></div>
+      </div>
+      <div class="cds-side-panel-catch"></div>
+      <aside class="cds-side-panel" role="dialog" aria-modal="true" aria-labelledby="sp2t">
+        <div class="cds-side-panel-header"><h2 id="sp2t">Add employee</h2><p>Changes reach the map and Reception at the next publish.</p></div>
+        <div class="cds-side-panel-body">
+          <form class="cds-form" onsubmit="return false">
+            <div class="cds-form-item" data-invalid><label for="f2n">Name <span class="cds-optional" aria-hidden="true">— required</span></label><input id="f2n" class="cds-text-input" value="" required aria-invalid="true" aria-describedby="f2nh"><div class="cds-helper" id="f2nh">Enter the person’s name to add them.</div></div>
+            <div class="cds-form-item"><label for="f2p">Position</label><input id="f2p" class="cds-text-input" placeholder="Attorney, Paralegal…"></div>
+            <div class="cds-form-item"><label for="f2x">Phone extension</label><input id="f2x" class="cds-text-input" placeholder="3 digits" inputmode="numeric" style="max-width:160px"></div>
+            <div class="cds-form-item"><label for="f2e">Email</label><input id="f2e" class="cds-text-input" type="email" placeholder="name@megeredchianlaw.com"></div>
+            <div class="cds-form-item"><label for="f2d">Department</label><div class="sp-combobox"><input id="f2d" class="cds-text-input" role="combobox" aria-expanded="true" aria-autocomplete="list" value="Compli"><svg><use href="#i-chev"/></svg>
+              <ul class="sp-listbox" role="listbox"><li role="option" aria-selected="true">Compliance<span class="sp-listbox-meta">4 people</span></li><li role="option" class="sp-listbox-create">Add “Compli” as a new department</li></ul></div></div>
+          </form>
+          <dl class="sp-fact-row"><dt>Draft seat</dt><dd><span style="color:var(--sp-text-secondary)">None yet — assign one on the map after saving.</span></dd></dl>
+        </div>
+        <div class="cds-side-panel-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary">Add employee</button></div>
+      </aside>
+    </div></div>
+  </div>
+
+  <h3>Panel states — saving · server error · deactivate refused (the panel body only, 480)</h3>
+  <div class="spec-row">
+    <div style="width:480px"><span class="spec-note">saving · primary aria-busy · fields stay readable</span>
+      <div class="sp-side-panel-host"><aside class="cds-side-panel" style="position:relative;top:auto;transform:none;height:auto;width:480px">
+        <div class="cds-side-panel-header"><h2>Edit employee</h2><p>Changes reach the map and Reception at the next publish.</p></div>
+        <div class="cds-side-panel-body"><form class="cds-form" onsubmit="return false"><div class="cds-form-item"><label>Name</label><input class="cds-text-input" value="Sarah Reyes" readonly></div><div class="cds-form-item"><label>Position</label><input class="cds-text-input" value="Case Manager" readonly></div></form></div>
+        <div class="cds-side-panel-footer"><button class="cds-btn cds-btn--secondary" disabled>Cancel</button><button class="cds-btn cds-btn--primary" aria-busy="true">Saving…</button></div>
+      </aside></div></div>
+    <div style="width:480px"><span class="spec-note">server error · inline, above the form · Retry ghost inside</span>
+      <div class="sp-side-panel-host"><aside class="cds-side-panel" style="position:relative;top:auto;transform:none;height:auto;width:480px">
+        <div class="cds-side-panel-header"><h2>Edit employee</h2><p>Changes reach the map and Reception at the next publish.</p></div>
+        <div class="cds-side-panel-body"><div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>Couldn’t save Sarah Reyes.</strong> Your edits are still here — try again.</div><button class="cds-btn cds-btn--ghost">Retry</button></div>
+          <form class="cds-form" onsubmit="return false"><div class="cds-form-item"><label>Name</label><input class="cds-text-input" value="Sarah Reyes"></div><div class="cds-form-item"><label>Position</label><input class="cds-text-input" value="Senior Case Manager"></div></form></div>
+        <div class="cds-side-panel-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary">Save employee</button></div>
+      </aside></div></div>
+    <div style="width:480px"><span class="spec-note">deactivate refused · inline error at the danger zone · map link</span>
+      <div class="sp-side-panel-host"><aside class="cds-side-panel" style="position:relative;top:auto;transform:none;height:auto;width:480px">
+        <div class="cds-side-panel-header"><h2>Edit employee</h2><p>Changes reach the map and Reception at the next publish.</p></div>
+        <div class="cds-side-panel-body"><form class="cds-form" onsubmit="return false"><div class="cds-form-item"><label>Name</label><input class="cds-text-input" value="Sarah Reyes"></div></form>
+          <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>Sarah Reyes still holds NE04 in the draft.</strong> Clear the seat first, then deactivate.</div><a class="cds-btn cds-btn--ghost" href="#">Open NE04 on the map</a></div>
+          <div class="sp-danger-zone"><button class="cds-btn cds-btn--danger-ghost">Deactivate…</button></div></div>
+        <div class="cds-side-panel-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary">Save employee</button></div>
+      </aside></div></div>
+  </div>
+
+  <h2 id="confirm">Confirm modal over the side panel — asset <code>.cds-modal</code>, danger primary</h2>
+  <p class="spec-anatomy">The modal (z 8500) opens on top of the open side panel (z 7001); the panel keeps the person’s name visible behind. Eyebrow label-01 · heading-03 question · impact lines · footer 50/50 bleed: Cancel (secondary) · Deactivate employee (danger). Moderate impact: consequences spelled out, no typed confirmation. The dirty-close ask uses the same container with a plain primary.</p>
+  <div class="stage-grid">
+    <div><span class="spec-note">Deactivate Sarah Reyes? — over the Edit panel</span>
+    <div class="stage sp-side-panel-host" data-panel="open" data-modal>
+      <div class="sp-page"><div class="cds-page-header"><div><h1 class="cds-page-title">Management</h1><p class="cds-page-subtitle">People, departments and zones.</p></div><div class="sp-page-actions"><button class="cds-btn cds-btn--primary">Add employee</button></div></div>
+        <div class="sp-tabs-host"><ul class="sp-tabs" role="tablist"><li role="presentation"><button class="sp-tab" role="tab" aria-selected="true">Employees</button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false">Departments</button></li><li role="presentation"><button class="sp-tab" role="tab" aria-selected="false">Zones</button></li></ul></div>
+        <div class="sp-table"><table class="cds-table"><thead><tr><th><span class="cds-th-static">Name</span></th><th><span class="cds-th-static">Department</span></th><th><span class="cds-th-static">Seat</span></th><th><span class="cds-th-static">Status</span></th></tr></thead><tbody><tr><td>Alex Kim</td><td>Litigation</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">AO03</a></td><td>Assigned</td></tr><tr aria-selected="true"><td>Sarah Reyes</td><td>Case Management</td><td class="sp-col-seat"><a class="sp-seat-link" href="#">NE04</a></td><td>Assigned</td></tr></tbody></table></div>
+      </div>
+      <div class="cds-side-panel-catch"></div>
+      <aside class="cds-side-panel" aria-hidden="true">
+        <div class="cds-side-panel-header"><h2>Edit employee</h2><p>Changes reach the map and Reception at the next publish.</p></div>
+        <div class="cds-side-panel-body"><form class="cds-form"><div class="cds-form-item"><label>Name</label><input class="cds-text-input" value="Sarah Reyes"></div><div class="cds-form-item"><label>Position</label><input class="cds-text-input" value="Case Manager"></div></form><div class="sp-danger-zone"><button class="cds-btn cds-btn--danger-ghost" aria-expanded="true">Deactivate…</button></div></div>
+        <div class="cds-side-panel-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary">Save employee</button></div>
+      </aside>
+      <div class="cds-modal-overlay"><div class="cds-modal" role="alertdialog" aria-modal="true" aria-labelledby="dm1" style="max-width:480px">
+        <div class="cds-modal-header"><div class="cds-modal-eyebrow">Deactivate employee</div><h2 id="dm1">Deactivate Sarah Reyes?</h2></div>
+        <div class="cds-modal-body">Sarah leaves the directory and the draft clears NE04. Viewers keep seeing her until the next publish.<ul><li>Draft seat NE04 becomes open</li><li>Reception stops listing her at the next publish</li><li>Restorable from Settings → Restore draft snapshot</li></ul></div>
+        <div class="cds-modal-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--danger">Deactivate employee</button></div>
+      </div></div>
+    </div></div>
+  </div>
+
+  <h3>Modal set — 480 wide, footers 50/50</h3>
+  <div class="modal-grid">
+    <div><span class="spec-note">dirty close · Esc or Cancel with unsaved edits</span><div class="cds-modal" role="alertdialog" aria-modal="true" aria-labelledby="dm2"><div class="cds-modal-header"><div class="cds-modal-eyebrow">Unsaved edits</div><h2 id="dm2">Discard changes to Sarah Reyes?</h2></div><div class="cds-modal-body">The edits in this panel are not saved. Keep editing to return to them.</div><div class="cds-modal-footer"><button class="cds-btn cds-btn--secondary">Keep editing</button><button class="cds-btn cds-btn--danger">Discard changes</button></div></div></div>
+    <div><span class="spec-note">one-field create · Add department · typed name</span><div class="cds-modal" role="dialog" aria-modal="true" aria-labelledby="dm3"><div class="cds-modal-header"><div class="cds-modal-eyebrow">Departments</div><h2 id="dm3">Add department</h2></div><div class="cds-modal-body"><form class="cds-form" onsubmit="return false"><div class="cds-form-item"><label for="nd1">Name</label><input id="nd1" class="cds-text-input" value="Compliance" style="width:100%"><div class="cds-helper">Appears in the map filters and on employee records after the next publish.</div></div></form></div><div class="cds-modal-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary">Add department</button></div></div></div>
+    <div><span class="spec-note">one-field create · duplicate name · invalid on blur</span><div class="cds-modal" role="dialog" aria-modal="true" aria-labelledby="dm4"><div class="cds-modal-header"><div class="cds-modal-eyebrow">Zones</div><h2 id="dm4">Add zone</h2></div><div class="cds-modal-body"><form class="cds-form" onsubmit="return false"><div class="cds-form-item" data-invalid><label for="nz1">Name</label><input id="nz1" class="cds-text-input" value="North-east pod" aria-invalid="true" aria-describedby="nz1h" style="width:100%"><div class="cds-helper" id="nz1h">A zone named “North-east pod” already exists. Rename it from the list instead.</div></div></form></div><div class="cds-modal-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary" disabled>Add zone</button></div></div></div>
+    <div><span class="spec-note">delete department · danger · the count is the consequence</span><div class="cds-modal" role="alertdialog" aria-modal="true" aria-labelledby="dm5"><div class="cds-modal-header"><div class="cds-modal-eyebrow">Delete department</div><h2 id="dm5">Delete Pre-Litigation?</h2></div><div class="cds-modal-body">12 people are in this department. They keep their seats and lose the department label until you set a new one.<ul><li>The map filter loses the Pre-Litigation option</li><li>Reception keeps showing the label until the next publish</li></ul></div><div class="cds-modal-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--danger">Delete department</button></div></div></div>
+  </div>
+
+  <h2 id="tearsheet">Narrow tearsheet 720 — <code>.sp-tearsheet.sp-tearsheet--narrow</code></h2>
+  <p class="spec-anatomy">Centred, top 112 under the header, over the overlay. Header heading-03 + helper; body scrolls (count cards · consequence line · row list); footer 64 right-aligned: Cancel (secondary) · Apply import (primary, 224 min). No ×. A blocking error sits above the row list, the blocked rows carry the error edge, and the primary is disabled with its reason above the footer — a task-stopping failure is <code>role="alert"</code>. MLS02 is <code>role="status"</code> and self-clears.</p>
+
+  <div class="stage-grid">
+    <div><span class="spec-note">Review CSV import · ready · over Settings</span>
+    <div class="stage tall">
+      <div class="sp-page"><div class="cds-page-header"><div><h1 class="cds-page-title">Settings</h1><p class="cds-page-subtitle">Data utilities for the draft.</p></div></div>
+        <div class="sp-settings"><div class="sp-callout"><p>The published map is never touched until you publish. Restores replace the entire draft — review before confirming.</p></div>
+          <section class="sp-section"><h2>CSV assignments</h2><p class="sp-section-helper">Import seat assignments for the draft, or export the current draft.</p><div class="sp-action-row"><button class="cds-btn cds-btn--primary">Import CSV · .csv up to 5 MB</button><button class="cds-btn cds-btn--tertiary">Export CSV</button><button class="cds-btn cds-btn--ghost">Download template</button></div><p class="sp-file-line">Columns: <code>seat_code, employee_name, status</code></p></section></div>
+      </div>
+      <div class="sp-tearsheet-host" data-open><div class="sp-tearsheet-overlay"></div>
+        <div class="sp-tearsheet sp-tearsheet--narrow" role="dialog" aria-modal="true" aria-labelledby="ts1">
+          <div class="sp-tearsheet-header"><h2 id="ts1">Review CSV import</h2><p>assignments-sept.csv · 68 rows read</p></div>
+          <div class="sp-tearsheet-body">
+            <div class="sp-count-cards"><div class="sp-count-card"><span class="sp-count-numeral">68</span><span class="sp-count-label">Rows</span></div><div class="sp-count-card"><span class="sp-count-numeral">54</span><span class="sp-count-label">Assignments</span></div><div class="sp-count-card"><span class="sp-count-numeral">9</span><span class="sp-count-label">Cleared</span></div><div class="sp-count-card"><span class="sp-count-numeral">3</span><span class="sp-count-label">Reserved</span></div><div class="sp-count-card"><span class="sp-count-numeral">0</span><span class="sp-count-label">Unavailable</span></div></div>
+            <p class="sp-consequence">Applying replaces every draft assignment with these rows. The published map does not change until you publish.</p>
+            <ul class="sp-row-list" aria-label="Rows"><li><span>NE04</span><span>Sarah Reyes</span><span class="sp-row-meta">assigned</span></li><li><span>AO03</span><span>Alex Kim</span><span class="sp-row-meta">assigned</span></li><li><span>SW11</span><span>Tom Reyes</span><span class="sp-row-meta">assigned</span></li><li><span>NW02</span><span>—</span><span class="sp-row-meta">cleared</span></li><li><span>AO07</span><span>Luis Ortega</span><span class="sp-row-meta">assigned</span></li><li><span>L02</span><span>Marta Reyes-Cole</span><span class="sp-row-meta">assigned · Floor 2</span></li><li><span>AO09</span><span>—</span><span class="sp-row-meta">reserved</span></li><li><span>AO01</span><span>Priya Natarajan</span><span class="sp-row-meta">assigned</span></li></ul>
+          </div>
+          <div class="sp-tearsheet-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary">Apply import</button></div>
+        </div></div>
+    </div></div>
+  </div>
+
+  <h3>Tearsheet states — static, 720</h3>
+  <div class="sheet-grid">
+    <div><span class="spec-note">blocked · alert above the list · rows carry the edge · primary disabled with the reason</span>
+      <div class="sp-tearsheet sp-tearsheet--narrow sp-tearsheet--static" role="dialog" aria-labelledby="ts2">
+        <div class="sp-tearsheet-header"><h2 id="ts2">CSV import has blocking errors</h2><p>assignments-sept.csv · 68 rows read · 2 blocked</p></div>
+        <div class="sp-tearsheet-body">
+          <div class="sp-count-cards"><div class="sp-count-card"><span class="sp-count-numeral">68</span><span class="sp-count-label">Rows</span></div><div class="sp-count-card"><span class="sp-count-numeral">52</span><span class="sp-count-label">Assignments</span></div><div class="sp-count-card"><span class="sp-count-numeral">9</span><span class="sp-count-label">Cleared</span></div><div class="sp-count-card"><span class="sp-count-numeral">3</span><span class="sp-count-label">Reserved</span></div><div class="sp-count-card"><span class="sp-count-numeral">2</span><span class="sp-count-label">Unavailable</span></div></div>
+          <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>2 rows can’t be applied.</strong> Fix them in the file and import again — nothing has changed.</div></div>
+          <ul class="sp-row-list" aria-label="Rows"><li data-blocked><span>Row 14</span><span>Invalid status ‘away’</span><span class="sp-row-meta">use assigned · cleared · reserved · unavailable</span></li><li data-blocked><span>Row 41</span><span>Seat ZZ99 doesn’t exist</span><span class="sp-row-meta">check the seat code</span></li><li><span>NE04</span><span>Sarah Reyes</span><span class="sp-row-meta">assigned</span></li><li><span>AO03</span><span>Alex Kim</span><span class="sp-row-meta">assigned</span></li><li><span>SW11</span><span>Tom Reyes</span><span class="sp-row-meta">assigned</span></li></ul>
+        </div>
+        <p class="sp-tearsheet-reason">Apply is unavailable while rows are blocked.</p>
+        <div class="sp-tearsheet-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary" disabled>Apply import</button></div>
+      </div></div>
+    <div><span class="spec-note">Review draft snapshot restore · consequences list · export-first ghost</span>
+      <div class="sp-tearsheet sp-tearsheet--narrow sp-tearsheet--static" role="dialog" aria-labelledby="ts3">
+        <div class="sp-tearsheet-header"><h2 id="ts3">Review draft snapshot restore</h2><p>draft-2026-08-28.json · saved 28 Aug 2026, 17:40</p></div>
+        <div class="sp-tearsheet-body">
+          <div class="sp-count-cards" style="grid-template-columns:repeat(2,minmax(128px,1fr))"><div class="sp-count-card"><span class="sp-count-numeral">64</span><span class="sp-count-label">Seats in the snapshot</span></div><div class="sp-count-card"><span class="sp-count-numeral">71</span><span class="sp-count-label">Seats in the draft now</span></div></div>
+          <ul class="sp-consequence-list"><li>Every draft seat is replaced by the snapshot — 7 seats added since it was saved are removed.</li><li>People created since then stay in the directory (restores never delete a person).</li><li>The published map is untouched until you publish.</li></ul>
+          <button class="cds-btn cds-btn--ghost">Export the current draft first</button>
+        </div>
+        <div class="sp-tearsheet-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary">Restore draft snapshot</button></div>
+      </div></div>
+    <div><span class="spec-note">restore · ghost done-state "Exported 14:02" (still a button) · MLS02 status</span>
+      <div class="sp-tearsheet sp-tearsheet--narrow sp-tearsheet--static" role="dialog" aria-labelledby="ts4">
+        <div class="sp-tearsheet-header"><h2 id="ts4">Review draft snapshot restore</h2><p>draft-2026-08-28.json · saved 28 Aug 2026, 17:40</p></div>
+        <div class="sp-tearsheet-body">
+          <div class="cds-notification" role="status"><svg><use href="#i-info"/></svg><div class="cds-notification-text"><strong>The draft changed while you were reviewing.</strong> Counts refreshed — check them and confirm again.</div></div>
+          <div class="sp-count-cards" style="grid-template-columns:repeat(2,minmax(128px,1fr))"><div class="sp-count-card"><span class="sp-count-numeral">64</span><span class="sp-count-label">Seats in the snapshot</span></div><div class="sp-count-card"><span class="sp-count-numeral">72</span><span class="sp-count-label">Seats in the draft now</span></div></div>
+          <ul class="sp-consequence-list"><li>Every draft seat is replaced by the snapshot — 8 seats added since it was saved are removed.</li><li>People created since then stay in the directory (restores never delete a person).</li><li>The published map is untouched until you publish.</li></ul>
+          <button class="cds-btn cds-btn--ghost" data-done aria-live="polite"><svg><use href="#i-check"/></svg>Exported 14:02</button>
+        </div>
+        <div class="sp-tearsheet-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary">Restore draft snapshot</button></div>
+      </div></div>
+    <div><span class="spec-note">applying · primary aria-busy · Cancel disabled for the transaction</span>
+      <div class="sp-tearsheet sp-tearsheet--narrow sp-tearsheet--static" role="dialog" aria-labelledby="ts5" aria-busy="true">
+        <div class="sp-tearsheet-header"><h2 id="ts5">Review CSV import</h2><p>assignments-sept.csv · 68 rows read</p></div>
+        <div class="sp-tearsheet-body">
+          <div class="sp-count-cards"><div class="sp-count-card"><span class="sp-count-numeral">68</span><span class="sp-count-label">Rows</span></div><div class="sp-count-card"><span class="sp-count-numeral">54</span><span class="sp-count-label">Assignments</span></div><div class="sp-count-card"><span class="sp-count-numeral">9</span><span class="sp-count-label">Cleared</span></div><div class="sp-count-card"><span class="sp-count-numeral">3</span><span class="sp-count-label">Reserved</span></div><div class="sp-count-card"><span class="sp-count-numeral">0</span><span class="sp-count-label">Unavailable</span></div></div>
+          <p class="sp-consequence">Applying replaces every draft assignment with these rows. The published map does not change until you publish.</p>
+          <p class="sp-progress-line"><span class="sp-skeleton" aria-hidden="true"></span>Applying 68 rows…<span class="cds-visually-hidden">Working…</span></p>
+        </div>
+        <div class="sp-tearsheet-footer"><button class="cds-btn cds-btn--secondary" disabled>Cancel</button><button class="cds-btn cds-btn--primary" aria-busy="true">Applying…</button></div>
+      </div></div>
+  </div>
+
+  <h2 id="callout">Callout — <code>.sp-callout</code> (hand-built on the notification’s geometry)</h2>
+  <p class="spec-anatomy">Guidance read before acting: loads with the page, never dismissed, never triggered. layer-01, 3px gray edge, body-01. No icon, no close, no status colour — beside the error notification to show the family resemblance and the difference.</p>
+  <div class="spec-row">
+    <div class="col776"><span class="spec-note">callout · Settings, full column width (776)</span><div class="sp-callout"><p>The published map is never touched until you publish. Restores replace the entire draft — review before confirming.</p></div></div>
+    <div class="col776"><span class="spec-note">for comparison · inline error notification (asset)</span><div class="cds-notification cds-notification--error" role="alert" style="margin:0;max-width:none"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>That file is not a CSV.</strong> Choose a .csv file exported from a spreadsheet.</div></div></div>
+  </div>
+
+  <h2 id="narrow">Narrow fallback — 1024: the tearsheet takes the full width minus 32</h2>
+  <div class="narrow-frame"><div class="stage">
+    <div class="sp-page"><div class="cds-page-header"><div><h1 class="cds-page-title">Settings</h1><p class="cds-page-subtitle">Data utilities for the draft.</p></div></div>
+      <div class="sp-settings" style="max-width:none"><div class="sp-callout"><p>The published map is never touched until you publish. Restores replace the entire draft — review before confirming.</p></div></div></div>
+    <div class="sp-tearsheet-host" data-open><div class="sp-tearsheet-overlay"></div>
+      <div class="sp-tearsheet sp-tearsheet--narrow" role="dialog" aria-modal="true" aria-labelledby="ts6" style="width:calc(100% - 32px)">
+        <div class="sp-tearsheet-header"><h2 id="ts6">Review CSV import</h2><p>assignments-sept.csv · 68 rows read</p></div>
+        <div class="sp-tearsheet-body"><div class="sp-count-cards"><div class="sp-count-card"><span class="sp-count-numeral">68</span><span class="sp-count-label">Rows</span></div><div class="sp-count-card"><span class="sp-count-numeral">54</span><span class="sp-count-label">Assignments</span></div><div class="sp-count-card"><span class="sp-count-numeral">9</span><span class="sp-count-label">Cleared</span></div><div class="sp-count-card"><span class="sp-count-numeral">3</span><span class="sp-count-label">Reserved</span></div><div class="sp-count-card"><span class="sp-count-numeral">0</span><span class="sp-count-label">Unavailable</span></div></div><p class="sp-consequence">Applying replaces every draft assignment with these rows. The published map does not change until you publish.</p></div>
+        <div class="sp-tearsheet-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary">Apply import</button></div>
+      </div></div>
+  </div></div>
+</main>
+</body>
+</html>
