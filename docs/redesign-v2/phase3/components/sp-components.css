@@ -36,6 +36,11 @@
       bottom edge — it flows into the History panel's left rule; ui-shell.md)
       · focus · loading (skeleton, not pressable) · error (still opens the
       panel). The same outlined-open treatment is the utilities' (PR 2).
+      PHASE 4 NOTE — the open outline is three inset 1px shadows PLUS one
+      outer `0 1px 0 0 <shell bg>` shadow with position: relative; z-index: 1:
+      the outer shadow paints over the header's 1px bottom rule directly
+      beneath the trigger, so the outline reads as open into the panel's
+      left rule. Reproduce all four shadows; a border-bottom: 0 does not do it.
       Nearest asset class: .cds-header-utils button (icon-only, 48×48) — no
       text slot, no mark vocabulary, no skeleton; .cds-status (icon + label)
       is the right anatomy but sits on theme surfaces, not the shell zone.
@@ -160,7 +165,8 @@
 .sp-header-slot[aria-expanded="true"] .sp-glyph-close { display: block; }
 .sp-header-slot--reserved { pointer-events: none; }
 
-/* utilities: rest / hover (asset) / pressed / open-outlined / focus */
+/* utilities: rest / hover (asset) / pressed / open-outlined / focus.
+   Open = the same four-shadow technique as .sp-mode (see the Phase 4 note there). */
 .sp-header .cds-header-utils button:is(:active, [data-state="pressed"]) { background: var(--sp-shell-bg-pressed); }
 .sp-header .cds-header-utils button[data-state="hover"] { background: var(--sp-shell-bg-hover); }
 .sp-header .cds-header-utils button:is(:focus-visible, [data-state="focus"]) { outline: var(--sp-focus-width) solid var(--sp-shell-focus); outline-offset: var(--sp-focus-offset); }
@@ -217,10 +223,12 @@
 .sp-panel-divider { height: 1px; background: var(--sp-panel-dark-rule); margin: var(--sp-space-03) 0; }
 .sp-panel :focus-visible { outline-color: var(--sp-panel-dark-focus); }
 
-/* event rows — three lines, static, newest first (D0-g). 12 / 50 / 10 = 72 (§1.9) */
+/* event rows — three lines, static, newest first (D0-g). 10 / 52 / 10 = 72: line 1 is heading-01
+   (14/20 — a heading over a 20px rhythm, not a compact label), lines 2–3 label-01 (12/16); the
+   10px pads are the remainder, symmetric (owner ruling, PR 2 review; §1.9) */
 .sp-event-list { list-style: none; margin: 0; padding: 0; }
-.sp-event { min-height: var(--sp-event-min-h); padding: var(--sp-space-04) 0 10px; box-shadow: inset 0 -1px 0 var(--sp-panel-dark-rule); }
-.sp-event-what { color: var(--sp-panel-dark-text); }
+.sp-event { min-height: var(--sp-event-min-h); padding: var(--sp-event-pad) 0; box-shadow: inset 0 -1px 0 var(--sp-panel-dark-rule); }
+.sp-event-what { color: var(--sp-panel-dark-text); font: var(--sp-type-heading-01); letter-spacing: var(--sp-tracking-body); }
 .sp-event-when, .sp-event-who { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-panel-dark-text-secondary); font-variant-numeric: tabular-nums; }
 
 /* link row (My seat) and read-only row (unseated) */
@@ -283,6 +291,10 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
       PHASE3DS §1.11. Native input, 16px ring 1px + 8px dot (the asset's
       checkbox geometry), 32px items, label body-compact-01. Light surface by
       default; inside .sp-panel the ring and dot take the panel text colour.
+      16px, not Carbon's 18: it shares 32px rows with the asset's 16px checkbox
+      (product decision, §1.11). Zone rules below name `span.sp-radio-mark`
+      because the base rule does — a zone rule that names fewer elements
+      loses (PHASE3DS §7).
    -------------------------------------------------------------------------- */
 .sp-radio-group { display: flex; flex-direction: column; gap: 0; border: 0; padding: 0; margin: 0; }
 .sp-radio-group legend { font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); height: var(--sp-panel-row-h); display: flex; align-items: center; padding: 0; }
@@ -349,7 +361,7 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-skeleton { display: block; height: var(--sp-space-04); width: 70%; background: var(--sp-skeleton-bg); }
 .sp-skeleton--w2 { width: 45%; } .sp-skeleton--w3 { width: 85%; }
 .sp-skeleton-row { display: flex; align-items: center; height: var(--sp-nav-item-h); padding: 0 var(--sp-space-05); clear: both; }
-.sp-skeleton-event { min-height: var(--sp-event-min-h); padding: var(--sp-space-04) 0 10px; display: flex; flex-direction: column; gap: var(--sp-space-03); box-shadow: inset 0 -1px 0 var(--sp-panel-dark-rule); }
+.sp-skeleton-event { min-height: var(--sp-event-min-h); padding: var(--sp-event-pad) 0; display: flex; flex-direction: column; gap: var(--sp-space-03); box-shadow: inset 0 -1px 0 var(--sp-panel-dark-rule); }
 @media (prefers-reduced-motion: no-preference) {
   .sp-skeleton { background: linear-gradient(90deg, var(--sp-skeleton-bg) 0 40%, var(--sp-skeleton-element) 50%, var(--sp-skeleton-bg) 60% 100%); background-size: 300% 100%; animation: sp-skeleton-sweep 3000ms linear infinite; }
 }

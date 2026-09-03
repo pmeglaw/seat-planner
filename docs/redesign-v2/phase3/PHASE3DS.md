@@ -153,8 +153,9 @@ uses `$background-inverse`, which flips to gray 80 → light in the dark theme a
 invariant dark header — rejected. A `title` attribute — not styled, not on focus — rejected.
 **Choice.** Tier C: gray 80 surface, gray 10 `label-01`, 24px tall, 8px below the control, centred, shown
 on `:hover` and `:focus-within`, Esc dismisses (behaviour), suppressed under `(hover: none)`. The text is
-the control's `aria-label`, never interactive content. **Would change if** a tooltip is needed on a theme
-surface (then a theme-following variant, not this one).
+the control's `aria-label`, never interactive content. **No caret** (owner ruling on PR 2): 8px below a 48px
+target leaves no ambiguity about the anchor, and a caret adds a shape nothing else in the system uses.
+**Would change if** a tooltip is needed on a theme surface (then a theme-following variant, not this one).
 
 ### 1.9 Right panel — Shell → `.sp-panel` (§3 "Right panel (dark, 320, floats) · hand-built" + dark variants)
 
@@ -171,9 +172,11 @@ blue 30 text, pressed gray 80 (one step lighter again, the header's direction), 
 gray 30 body, no page padding; `.sp-panel .cds-notification--error` → low-contrast: layer
 `--sp-panel-dark-layer` (gray 90), 3px left border `--sp-panel-dark-error-mark` (red 50), ⊗ mark, Retry as
 the ghost variant inside it — never a filled danger button in a notification; `.sp-panel .sp-skeleton` →
-gray-100-hover / gray 80 sweep. **Event rows** are 72px: 12 top · 18 + 16 + 16 · 10 bottom — the three
-token line-heights sum to 50, so neither 12/48/12 nor 16/40/16 is reachable without a non-token
-line-height; measured in the rig at exactly 72 / 12 / 10. Show more is the ghost (an action), the cap
+gray-100-hover / gray 80 sweep. **Event rows** are 72px = 10 / 52 / 10: line 1 is `heading-01` (14/20 — a
+heading over a 20px rhythm, not a compact label; owner ruling on PR 2), lines 2–3 `label-01` (12/16); 20 +
+16 + 16 = 52 and the 10px pads are the symmetric remainder (`--sp-event-pad`, deliberately not a spacing
+step). Measured in the rig at exactly 72 / 10 / 10. The first draft used `body-compact-01` (18) and landed
+on 12 / 50 / 10 — asymmetric padding, the tell `taste.md` names; the fix was inside the type set. Show more is the ghost (an action), the cap
 caption is `--sp-panel-dark-text-helper`. Width 320 is recorded under DECISIONS D0-f (Phase 3
 confirmation), not §6. Viewers' History has no switch (Hidden) — the fact line stands alone.
 **Trade-off.** Nine zone-scoped rules instead of nine dark components. **Would change if** the panels ever
@@ -198,8 +201,10 @@ Built here (PR 2) because the Account specimen is incomplete without it; PR 4 re
 asset's checkbox geometry — 32px items, `body-compact-01` label, hover = 4px halo in the layer-hover
 colour, focus 2px `$focus` with 1px offset (the checkbox's own ring). Inside `.sp-panel` the ring and dot
 take the panel text colour and the focus ring goes white (specificity note: the zone rule must name
-`span.sp-radio-mark` to beat the base rule — caught in the rig). Never disabled: Theme is always
-available. **Would change if** a radio is needed on a `layer-01` surface in a modal (the halo colour would
+`span.sp-radio-mark` to beat the base rule — caught in the rig, §7). **16px, not Carbon's 18** — a product
+decision: the radio shares 32px rows and panels with the asset's 16px checkbox, and one control size
+outranks matching Carbon for one control (owner ruling on PR 2). No skill text states 18, so nothing is
+ledgered. Never disabled: Theme is always available. **Would change if** a radio is needed on a `layer-01` surface in a modal (the halo colour would
 need `layer-hover-02`).
 
 ### 1.12 Left filter panel — Shell → `.sp-left-panel` (§3 "Left filter panel (slide-in, pushes) · hand-built")
@@ -213,7 +218,8 @@ is applied), body scrolls; `fieldset.sp-filter-group` with the legend laid out a
 Clear, Hidden while the group is empty); items 32px = `.cds-checkbox` + name (truncates with `title`) +
 count in `label-01` coloured `--sp-text-helper-on-row` (§1.6) because the row hovers to `layer-hover-01`;
 `.sp-left-nav` items 32px with a 3px `--sp-border-interactive` left bar and `layer-selected` fill on the
-current one; empty / loading / partial / overflow / roster-floor states are the asset's empty state,
+current one (owner ruling on PR 2: 3px so the product has one current-mark thickness, header and panel
+alike; blue 50 on `layer-selected` dark = 3.45:1 is the lowest passing pair in §3); empty / loading / partial / overflow / roster-floor states are the asset's empty state,
 `.sp-skeleton-row`, and `.cds-notification--error` with ghost Retry, each scoped to the panel's padding;
 slide-in fast-02 on one axis via `.sp-left-panel-host[data-open]`. **Trade-off.** Counts are 12px on a
 14px row; they read as secondary by size and colour, which is the intent. **Would change if** the filter
@@ -311,7 +317,8 @@ unselected gray 10 on hover (11.49); tag gray 10 on gray 80 (10.50); ghost blue 
 (6.43); panel text and secondary on the layer and row-hover surfaces; radio ring gray 10 on gray 100 /
 hover (16.45 / 11.49) and gray 100 on white; nav link gray 30 on gray 100 / hover (10.59 / 7.40); left
 panel text, count and checkbox on `layer-hover-01` in both themes; the current-nav bar blue 60 on
-`layer-selected` light (3.79) and blue 50 on dark (3.45) — the two lowest, both above 3:1.
+`layer-selected` light (3.79) and blue 50 on dark (3.45) — **the lowest passing pair in the set**, above the
+3:1 non-text floor; it is the below-lg nav mark only.
 
 **Measured, not gated (`contrast/surface-pairs-not-gated.json`, 6 pairs)** — dividers, a skeleton and a
 hover step, none of which is a mark or text: shell rule gray 80 on `#161616` = 1.57:1 (a separator; Carbon's
@@ -351,8 +358,9 @@ Next free deviation number: **16** (nothing ledgered in PR 1).
 | Viewers: no switch (Hidden, not disabled) | TRUE | SKILL disabled / read-only / hidden table |
 | Ghost on dark = blue 40 / hover blue 30 / pressed gray 80 | TRUE | tokens.md g100 `link-primary` / `link-primary-hover`; active steps lighter |
 | Dark notification: layer + 3px error border + ⊗, ghost Retry inside | TRUE | patterns: inline notification, task feedback; no filled primary inside a notification |
-| Radio built from a native input with the checkbox's geometry | NOT COVERED | asset has no radio; Carbon's is 18px — 16 keeps the asset's checkbox parity. Reopens if the two sit side by side and read unequal |
-| Event row 72 = 12 / 50 / 10 | NOT COVERED | three token line-heights sum to 50; neither 8px rhythm is reachable without a non-token line-height (§6 default) |
+| Radio 16px, the asset checkbox's size | NOT COVERED — product decision | no skill text states a radio size; the checkbox in the same rows is 16 |
+| Event row 72 = 10 / 52 / 10 with heading-01 | TRUE | every line-height a type token; symmetric padding (taste.md) |
+| Tooltip without caret | NOT COVERED — product decision | 8px below a 48px target; no other shape in the system |
 | Left panel pushes, no focus trap; Esc closes; counts text-secondary | TRUE | composition slide-in; tokens.md hover trap |
 
 ---
@@ -405,20 +413,30 @@ links) driven by `useAppShellNavigation`; `.sp-skeleton*` → `loading.tsx` skel
 
 ---
 
-## 6. Open for the owner (PR 2; defaults included)
+## 6. Open for the owner
 
-1. **Event row rhythm.** 72px with token line-heights gives 12 / 50 / 10, not 12/48/12 or 16/40/16. Default:
-   keep 12 / 50 / 10 (top edge on the grid, 2px asymmetry at the bottom, no non-token line-height).
-2. **Radio 16px** (the asset's checkbox size) rather than Carbon's 18. Default: 16 — the two controls sit in
-   the same panels and should share a size.
-3. **Tooltip has no caret.** Carbon's has one; the square, caret-less box is the smaller deviation from
-   "zero radius, no decoration". Default: no caret.
-4. **Left-panel current nav item** uses a 3px `$border-interactive` bar + `layer-selected` (Carbon side nav).
-   Below lg only. Default: yes.
+None after PR 2. Ruled on PR 2: event row 10 / 52 / 10 with `heading-01` (§1.9); radio 16 (§1.11); tooltip
+without caret (§1.8); below-lg current nav item 3px bar + `layer-selected` (§1.12).
 
 Closed after PR 1: Ruled on #507: pressed shell = gray 80 and open = outlined (§1.3); theme attribute kept,
 Carbon attribute derived (§1.2); seat marks ○ / lock / hatch with the assigned legend entry as a miniature
 pill (§1.4).
+
+---
+
+## 7. What I'd tell Phase 4 (grows per PR)
+
+1. **Zone rules must match the base rule's element names.** `.sp-panel .sp-radio-mark` (0,2,0) silently lost
+   to `.sp-radio span.sp-radio-mark` (0,2,1) and the rings vanished on the dark panel in the light theme;
+   only the rig showed it. Every dark-panel restyle of an asset class — ghost, tag, empty, notification,
+   skeleton, radio, checkbox — must repeat the asset selector's element names (or exceed its specificity),
+   and every such override gets a light-theme render of the dark panel before it is called done. This
+   recurs with every component that lands inside `.sp-panel`.
+2. **The outlined-open trigger is four shadows**, not a border (see the Phase 4 note in `.sp-mode`): three
+   inset 1px rules plus one outer 1px shadow in the shell colour over the header rule, with
+   `position: relative; z-index: 1`. A CSS-in-JS port that drops the outer shadow closes the outline.
+3. **`--sp-event-pad` is 10px on purpose** — the symmetric remainder of 72 − 52 — and is the one geometry
+   value not on the spacing scale; don't "fix" it to 8 or 12.
 
 ---
 

@@ -328,7 +328,8 @@
   --sp-nav-current-bar:    var(--cds-border-interactive);   /* 3px left bar on the current nav item below lg */
   --sp-nav-current-bg:     var(--cds-layer-selected-01);
   --sp-nav-item-h:         var(--cds-size-sm);              /* 32 */
-  --sp-event-min-h:        72px;                            /* three lines: 18 + 16 + 16 = 50, padded 12 / 10 (PHASE3DS §1.9) */
+  --sp-event-min-h:        72px;                            /* three lines: heading-01 20 + label-01 16 + 16 = 52 (PHASE3DS §1.9) */
+  --sp-event-pad:          10px;                            /* (72 − 52) / 2 — symmetric remainder, not a spacing step */
   --sp-radio-size:         var(--cds-icon-size-01);         /* 16, as the asset's checkbox */
   --sp-radio-dot:          var(--cds-spacing-03);           /* 8 */
   --sp-radio-border:       var(--cds-icon-primary);
