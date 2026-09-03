@@ -19,6 +19,7 @@ Layout of `docs/redesign-v2/phase4/`:
 | `PHASE4BUILD.md` | this file — decision log, obligations checklist, test-triage outcomes, contrast line, lessons, slice log |
 | `TEST-TRIAGE.md` | every source / component / text-reading / Playwright test classified guardrail · contract · look-pinning · mixed, with its disposition and PR |
 | `audit/runtime-audit.mjs` | the runtime audit every PR reruns against the local Docker stack: zero undefined `var()` in matched rules on six routes × two themes, the system-state attribute check, console errors — and it takes the screenshots |
+| `audit/marker-contrast.mjs` | the marker-state contrast audit (every PR that touches the pill or its tokens): drives the real seat marker into every interaction state on both map surfaces × two themes and measures text-vs-fill contrast on the rendered pill — a same-token pair is 1:1; shrink-only `LEDGER` for states the shipped component cannot pass until its rebuild PR |
 | `screenshots/<pr>/` | per-PR captures (1920×1080 both themes + the one 1024 narrow frame per screen) with a provenance README — sample data only, never production names |
 
 Rules of the phase (from the hand-off, restated so a later session cannot miss them): the four CSS files land
@@ -140,6 +141,36 @@ more: blue 60 link text on the `layer-hover` fill (4.08:1) — every className t
 clear 4.5:1 under the dim — the alias is a translucent `color-mix(… 55 %, transparent)` like the old 55 %
 frost (PR 3 replaces the marker; the pill's quiet state is designed for this).
 
+### 1.6 PR 1 — the selected pill's text, and the marker-state contrast audit
+
+**Problem.** The owner's preview walk found the selected marker rendering as an empty white pill with a dark
+outline in the light theme: the shipped viewer arm (live on both surfaces — the `adminMarker` arm is dormant)
+pairs a literal `text-white` with `--sp-marker-selected-surface`, and the bridge maps that surface onto the
+Phase 3 pill fill (`--sp-pill-fill` → `layer-02` = white). Same collision on the search-selected arm (white on
+`--cds-highlight`). The dark theme masked both (white on `#393939`). Neither the token test, the runtime
+audit (every var resolved) nor axe (the marker's translucent frost hides the fill from it) could see it: the
+pair only collides once the bridge resolves both sides.
+
+**Options.** (a) Text → `--sp-text-primary`: the pair Phase 3 intends — `.sp-pill[aria-selected]` keeps
+`--sp-pill-text` and carries selection on the 2px inverse edge. (b) Text → `--sp-text-inverse` with the surface
+re-aliased to `background-inverse`: the pair the OLD recipe intended (dark pill, white text) — a look Phase 3
+retired; the bridge would be inventing an inverse pill no token defines.
+
+**Decision.** (a), both arms. Plus a mechanical guard, `audit/marker-contrast.mjs`: it drives the real marker
+into rest / hover / keyboard focus / selected / search hit / search-selected / filtered-out / admin selected /
+move origin / move-candidate hover / swap origin / swap-candidate hover / swap target / changed-in-draft, on
+both surfaces and both themes, and measures the rendered text against the rendered fill (span opacity, the
+marker's ancestor opacity and a translucent fill are all composited before the ratio). The first run caught a
+second pair: the swap target's code eyebrow at 70 % (3.47:1 light) — the target now joins
+`lightProminentSurface` (90 %, 5.53:1). It also measures what the shipped 45 % dim actually does to the
+filtered-out pill (2.95:1 light, 3.53:1 dark): a `LEDGER` row carries that state to PR 3, where the opacity dim
+retires for the Phase 3 quiet pill (`sp-components.css` §12); the ledger is shrink-only, so a row that starts
+passing fails the run. Not driven: invalid-target (`SeatMap` never passes `invalidTarget`) and planner
+highlight (needs Ask Planner; its viewer arm reuses the move-origin pair).
+
+**Would change if** PR 3 keeps any opacity-based state: then the ledger row becomes a design decision to raise
+with the owner (60 % is the floor at which `text-primary` clears 4.5:1 on both themes), not a rebuild note.
+
 ---
 
 ## 2. Obligations checklist
@@ -213,6 +244,24 @@ product-pairs.json: 192 pairs · surface-pairs-not-gated.json: 13 pairs
 192/192 pass
 ```
 
+Marker states (`audit/marker-contrast.mjs`, local Docker stack, seed data, 2026-09-03 after the §1.6 fix) —
+worst text span per state, light / dark:
+
+| State | Light | Dark | | State | Light | Dark |
+|---|---|---|---|---|---|---|
+| rest (assigned) | 18.1 | 10.5 | | admin selected | 6.7 | 6.07 |
+| rest (open) | 18.1 | 16.45 | | move origin | 12.64 | 11.4 |
+| hover | 13.71 | 8.86 | | move-candidate hover | 13.71 | 8.86 |
+| keyboard focus | 18.1 | 16.45 | | swap origin | 12.64 | 11.4 |
+| selected | 6.7 | 6.07 | | swap-candidate hover | 13.71 | 8.86 |
+| search hit | 10.9 | 11.26 | | swap target | 5.53 | 7.46 |
+| search-selected | 5.88 | 7.24 | | changed-in-draft | 18.1 | 6.07 |
+| filtered-out (ledgered → PR 3) | **2.95** | **3.53** | | | | |
+
+```
+30 measurements, 2 under 4.5:1, 0 outside the ledger
+```
+
 ---
 
 ## 5. What Phase 4 learned
@@ -226,7 +275,7 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 | PR | GitHub | Branch | Tag | Scope | Status |
 |---|---|---|---|---|---|
 | 0 | #512 | `docs/phase4-triage` | v1.74.0 | `TEST-TRIAGE.md`; this scaffold; `tests/phase4-token-layer-source.test.mjs` | merged |
-| 1 | #513 | `feat/phase4-tokens` | — | tokens + CSS landing (P3-1, 2 boot half, 3, 19, 20); `app/styles/` ×4 + `phase4-bridge.css`; group-1 sweep 297 sites / 29 files; theme three-state; `tailwind.config.ts`; DECISIONS D4 confirmation + D1-h / D1-i; `screenshots/pr1/` | open |
+| 1 | #513 | `feat/phase4-tokens` | — | tokens + CSS landing (P3-1, 2 boot half, 3, 19, 20); `app/styles/` ×4 + `phase4-bridge.css`; group-1 sweep 297 sites / 29 files; theme three-state; `tailwind.config.ts`; DECISIONS D4 confirmation + D1-h / D1-i; `screenshots/pr1/`; preview-walk fix (§1.6) + `audit/marker-contrast.mjs` | open |
 | 2 | — | — | — | shell (P3-2, 6, 9, 10; P2-2; route-group move on confirmation) | not started |
 | 3 | — | — | — | map (P3-4, 5, 7, 11–14; P2-1, 3, 4, 9); split 3a / 3b if the diff passes ~1,500 lines | not started |
 | 4 | — | — | — | Management + Settings (P3-15, 16, 17; P2-6, 7, 8) | not started |

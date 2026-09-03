@@ -356,20 +356,21 @@ function SeatMarkerComponent({
     searchSelected && !swapSource && !moveEmployeeSource
       ? adminMarker
         ? "border-[var(--sp-legend-selected-border)] bg-[var(--sp-legend-selected-surface)] text-[var(--sp-legend-selected-text)] ring-2 ring-[var(--sp-legend-selected-border)] outline outline-2 outline-offset-2 outline-[var(--sp-legend-search-border)] shadow-[0_12px_28px_rgba(16,17,20,0.34),0_0_0_5px_var(--sp-legend-search-halo),inset_0_1px_0_rgba(255,255,255,0.14)]"
-        : "border-[var(--sp-marker-active-edge)] bg-[var(--sp-marker-search-selected-surface)] text-white ring-2 ring-[var(--sp-marker-active-edge-strong)] outline outline-2 outline-offset-2 outline-[var(--sp-marker-active-edge-soft)] shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_color-mix(in_srgb,var(--sp-interactive)_45%,transparent),inset_0_1px_0_rgba(255,255,255,0.14)]"
+        : "border-[var(--sp-marker-active-edge)] bg-[var(--sp-marker-search-selected-surface)] text-[var(--sp-text-primary)] ring-2 ring-[var(--sp-marker-active-edge-strong)] outline outline-2 outline-offset-2 outline-[var(--sp-marker-active-edge-soft)] shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_color-mix(in_srgb,var(--sp-interactive)_45%,transparent),inset_0_1px_0_rgba(255,255,255,0.14)]"
       : "",
     // Arming swap/move keeps the seat SELECTED (applyStartSwapSeatAction never
     // clears selection), so without the source-state exclusion this dark pill
     // and the green source tint below land on the same token and CSS order —
-    // not JSX order — picks per property: the positive-surface bg (mint) beats
-    // the dark selected surface but text-white beats the positive text,
-    // rendering white-on-mint (~1.1:1).
+    // not JSX order — picks per property, so the two arms' bg/text pairs
+    // would interleave. Phase 4 PR 1: the selected pill is the Phase 3 pill
+    // (fill + inverse edge carry selection; text stays --sp-text-primary) —
+    // text-white here rendered white-on-white in the light theme (1:1).
     tokenMode === "selected" && !swapSource && !moveEmployeeSource
       ? searchSelected
         ? ""
         : adminMarker
           ? "border-[var(--sp-legend-selected-border)] bg-[var(--sp-legend-selected-surface)] text-[var(--sp-legend-selected-text)] ring-2 ring-[var(--sp-legend-selected-border)] shadow-sp"
-          : "border-[var(--sp-marker-active-edge)] bg-[var(--sp-marker-selected-surface)] text-white ring-2 ring-[var(--sp-marker-active-edge-strong)] shadow-[0_10px_24px_rgba(31,35,39,0.30),inset_0_1px_0_rgba(255,255,255,0.16)]"
+          : "border-[var(--sp-marker-active-edge)] bg-[var(--sp-marker-selected-surface)] text-[var(--sp-text-primary)] ring-2 ring-[var(--sp-marker-active-edge-strong)] shadow-[0_10px_24px_rgba(31,35,39,0.30),inset_0_1px_0_rgba(255,255,255,0.16)]"
       : "",
     searchProminent && !selected
       ? adminMarker
@@ -451,7 +452,10 @@ function SeatMarkerComponent({
   // surfaces dips under AA (#284C3B@70 on the #DEF3E4 source/highlight tint =
   // 3.84:1, #9E2F06@70 on the #FBEAE1 search tint = 3.51:1); 90% keeps the
   // demoted look while measuring 6.35:1 / 5.22:1 there.
-  const lightProminentSurface = swapSource || moveEmployeeSource || plannerHighlighted || (searchProminent && !selected);
+  // Phase 4 PR 1 (marker-contrast audit): the swap TARGET joins the list —
+  // its quiet pill (text-secondary on layer-01) holds 5.6:1 at 90% but only
+  // 3.47:1 at 70% in the light theme.
+  const lightProminentSurface = swapSource || moveEmployeeSource || plannerHighlighted || swapTarget || (searchProminent && !selected);
   // Type-floor Ruling 3 (2026-08-24): the expanded badge is the engaged,
   // reading state, so its code eyebrow holds the 12px floor and demotes via
   // WEIGHT (medium vs the name's bold) + the opacity above, not via size.
