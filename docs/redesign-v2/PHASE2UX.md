@@ -1,7 +1,8 @@
 # Seat Planner redesign — Phase 2: UX and wireframes
 
-**Status: complete — five slices, 2026-09-02 → 2026-09-03 (shell #500, map #501, Reception #502, Management
-#503, Settings — this PR). Carbon conformance record in §4; Phase 3 hand-off in §3; Phase 4 obligations in §5.**
+**Status: complete and retired 2026-09-03 (tag `v1.73.1`) — five slices, 2026-09-02 → 2026-09-03 (shell #500,
+map #501, Reception #502, Management #503, Settings #504). Carbon conformance record in §4; Phase 3 hand-off
+in §3; Phase 4 obligations in §5; the close-out note for Phase 3 is at the end of the slice log.**
 Companion to `PHASE1IA.md` (the fixed IA) and
 `DECISIONS.md` (the decision log; Phase 2 appends D0-f…, D1-c…, D3/D5/D6 amendments, §6 deviations).
 Wireframes live in `wireframes/*.html` — low-fi, static, grayscale, framed at 1920×1080 with one
@@ -784,8 +785,32 @@ Phase 3 gates (nothing here asserts a ratio).
 
 | Slice | PR | Status |
 |---|---|---|
-| 1 Shell | `docs/phase2-shell` | wireframes: `shell-header.html`, `shell-left-panel.html`, `shell-right-panels.html`, `shell-narrow.html` |
-| 2 Map | `docs/phase2-map` | wireframes: `map-published.html`, `map-draft.html`, `map-publish-review.html`, `map-fallbacks.html` |
-| 3 Reception | `docs/phase2-reception` | wireframe: `reception.html` |
-| 4 Management | `docs/phase2-management` | wireframe: `management.html` |
-| 5 Settings | `docs/phase2-settings` | wireframe: `settings.html` |
+| 1 Shell | #500 (`docs/phase2-shell`) | wireframes: `shell-header.html`, `shell-left-panel.html`, `shell-right-panels.html`, `shell-narrow.html` |
+| 2 Map | #501 (`docs/phase2-map`) | wireframes: `map-published.html`, `map-draft.html`, `map-publish-review.html`, `map-fallbacks.html` |
+| 3 Reception | #502 (`docs/phase2-reception`) | wireframe: `reception.html` |
+| 4 Management | #503 (`docs/phase2-management`) | wireframe: `management.html` |
+| 5 Settings | #504 (`docs/phase2-settings`) | wireframe: `settings.html` |
+
+**What I'd tell Phase 3 (written at close-out, 2026-09-03).** Things Phase 2 learned that the sections above
+only imply. (1) Height binds, not width: at the measured 1920×889 the plan's 2.204:1 aspect leaves 753px of
+canvas, and every width ruling (320 shell panels, the one 400 right slot, deviation 15) was settled by what it
+did to marker pitch, not by column count — re-measure pitch before moving any right-edge width, and size the
+inspector's name type for a ≤22-character name inside 400 minus padding. (2) Nothing geometric survived
+unrendered: D0-f's first justification was wrong until the Help panel was actually drawn, the History event
+needed a third line (72px) once real date · email text went in, and every annotation overlap was found in a
+screenshot, never by reading the HTML — render Phase 3 specimens through the same headless-Chrome rig
+(localhost static server + Playwright `chromium.launch({ channel: "chrome" })`; the browser extension refuses
+`file://` and times out on 1920px pages) before making any conformance claim. (3) The four frame invariants the
+owner checked at merge — a disabled control's reason stated beside it, never only in a tooltip; counts show
+zero, never blank; tearsheets exit via Cancel only, no close ×; file triggers state the accepted type and the
+5 MB limit up front — are component defaults, not per-screen notes: encode them once in the Phase 3 layer so
+Phase 4 cannot forget them screen by screen. (4) Two places the Carbon tables do not settle: exactly five fields
+sits between "fewer than five → dialog" and "more than five → side panel" (D5-b was justified by the admin
+needing to keep referencing the table behind the panel — reuse that argument, never the field count), and a
+surface can legitimately have no page primary (Reception, D3 — don't manufacture one). (5) §3's
+exists-vs-hand-built column was classified from the `carbon-components.css` class index by name only, because
+reading the file body was forbidden in Phase 2; verify each "exists" against the real class before building on
+it, and expect the hand-built rows (the export-first ghost with its in-place done-state and the publish-review
+summary rail among them) to need their own specimens. (6) Ask Planner shares the 400 slot with the inspector
+and must carry Carbon-for-AI labelling — a token and label decision Phase 2 deliberately left to you; the
+drawer's 408 → 400 width change is already a Phase 4 item in §5.
