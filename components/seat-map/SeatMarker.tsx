@@ -189,7 +189,7 @@ function SeatMarkerComponent({
   // NOTE: no caller passes variant="admin" — both the admin map (SeatMap.tsx,
   // variant="viewer" by owner preference) and the viewer render the "viewer"
   // branch. Every `adminMarker ? … : …` below therefore takes the ELSE arm in
-  // the live app; the admin-token arms (incl. shadow-marker-selected/-hover)
+  // the live app; the admin-token arms (incl. shadow-sp/-hover)
   // are correct-but-dormant, kept for a future admin variant. Don't assume a
   // change to an `adminMarker` arm is visible without first flipping a caller.
   const adminMarker = variant === "admin";
@@ -356,7 +356,7 @@ function SeatMarkerComponent({
     searchSelected && !swapSource && !moveEmployeeSource
       ? adminMarker
         ? "border-[var(--sp-legend-selected-border)] bg-[var(--sp-legend-selected-surface)] text-[var(--sp-legend-selected-text)] ring-2 ring-[var(--sp-legend-selected-border)] outline outline-2 outline-offset-2 outline-[var(--sp-legend-search-border)] shadow-[0_12px_28px_rgba(16,17,20,0.34),0_0_0_5px_var(--sp-legend-search-halo),inset_0_1px_0_rgba(255,255,255,0.14)]"
-        : "border-[var(--sp-marker-active-edge)] bg-[var(--sp-marker-search-selected-surface)] text-white ring-2 ring-[var(--sp-marker-active-edge-strong)] outline outline-2 outline-offset-2 outline-[var(--sp-marker-active-edge-soft)] shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_rgba(255,87,21,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
+        : "border-[var(--sp-marker-active-edge)] bg-[var(--sp-marker-search-selected-surface)] text-white ring-2 ring-[var(--sp-marker-active-edge-strong)] outline outline-2 outline-offset-2 outline-[var(--sp-marker-active-edge-soft)] shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_color-mix(in_srgb,var(--sp-interactive)_45%,transparent),inset_0_1px_0_rgba(255,255,255,0.14)]"
       : "",
     // Arming swap/move keeps the seat SELECTED (applyStartSwapSeatAction never
     // clears selection), so without the source-state exclusion this dark pill
@@ -368,7 +368,7 @@ function SeatMarkerComponent({
       ? searchSelected
         ? ""
         : adminMarker
-          ? "border-[var(--sp-legend-selected-border)] bg-[var(--sp-legend-selected-surface)] text-[var(--sp-legend-selected-text)] ring-2 ring-[var(--sp-legend-selected-border)] shadow-marker-selected"
+          ? "border-[var(--sp-legend-selected-border)] bg-[var(--sp-legend-selected-surface)] text-[var(--sp-legend-selected-text)] ring-2 ring-[var(--sp-legend-selected-border)] shadow-sp"
           : "border-[var(--sp-marker-active-edge)] bg-[var(--sp-marker-selected-surface)] text-white ring-2 ring-[var(--sp-marker-active-edge-strong)] shadow-[0_10px_24px_rgba(31,35,39,0.30),inset_0_1px_0_rgba(255,255,255,0.16)]"
       : "",
     searchProminent && !selected
@@ -380,7 +380,7 @@ function SeatMarkerComponent({
         // against both the cream floor plan and its own surface. The bright
         // #FF5715 stays in the outer glow only — at 2.71:1 on the fill it is
         // decoration, never the boundary that identifies the match.
-        : "border-[var(--sp-marker-search-border)] bg-[var(--sp-marker-search-surface)] text-[var(--sp-marker-search-text)] ring-2 ring-[var(--sp-marker-search-ring)] shadow-[0_0_0_4px_rgba(255,87,21,0.20),0_10px_20px_-4px_rgba(210,63,10,0.35),inset_0_1px_0_rgba(255,255,255,0.78)]"
+        : "border-[var(--sp-marker-search-border)] bg-[var(--sp-marker-search-surface)] text-[var(--sp-marker-search-text)] ring-2 ring-[var(--sp-marker-search-ring)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--sp-interactive)_20%,transparent),0_10px_20px_-4px_color-mix(in_srgb,var(--sp-interactive)_35%,transparent),inset_0_1px_0_rgba(255,255,255,0.78)]"
       : "",
     highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--sp-legend-search-ring)]" : "outline outline-2 outline-offset-2 outline-[var(--sp-marker-positive-outline)]" : "",
     swapSource || moveEmployeeSource ? adminMarker ? "border-[var(--sp-legend-search-border)] bg-[var(--sp-legend-search-surface)] text-[var(--sp-legend-search-text)] ring-4 ring-[var(--sp-legend-search-ring)]" : "border-[var(--sp-marker-positive-border)] bg-[var(--sp-marker-positive-surface)] text-[var(--sp-marker-positive-text)] ring-4 ring-[var(--sp-marker-positive-ring)]" : "",
@@ -389,13 +389,13 @@ function SeatMarkerComponent({
     // it wears the AI aura — the only place AI blue touches a pill. The viewer
     // branch keeps its green: there `highlighted` means a search hit or a
     // people-list hover, which is not AI presence and must never look like it.
-    plannerHighlighted ? adminMarker ? "border-[var(--sp-ai-border)] bg-[var(--sp-ai-marker-surface)] bg-[image:var(--sp-ai-marker-aura)] bg-no-repeat text-[var(--sp-ai-text)] shadow-marker-ai" : "border-[var(--sp-marker-positive-border)] bg-[var(--sp-marker-positive-surface)] text-[var(--sp-marker-positive-text)] ring-2 ring-[var(--sp-marker-planner-ring)] shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
+    plannerHighlighted ? adminMarker ? "border-[var(--sp-ai-border)] bg-[var(--sp-ai-marker-surface)] bg-[image:var(--sp-ai-marker-aura)] bg-no-repeat text-[var(--sp-ai-text)] shadow-sp" : "border-[var(--sp-marker-positive-border)] bg-[var(--sp-marker-positive-surface)] text-[var(--sp-marker-positive-text)] ring-2 ring-[var(--sp-marker-planner-ring)] shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
     // PR-C (PASS1 §8 `:346` fix): invalid targets are excluded — the hover
     // affordance ring must fire on seats the drop can land on, never on ✕.
     (swapMode && !swapSource && !invalidTarget) || (moveEmployeeMode && !moveEmployeeSource && !invalidTarget) ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--sp-legend-search-ring)]" : "group-hover:ring-4 group-hover:ring-[var(--sp-marker-positive-ring)]" : ""
   ].join(" ");
   const markerFocusClass = adminMarker
-    ? "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-focus-marker-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-focus-marker-offset)]"
+    ? "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-focus-offset)]"
     : "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-marker-active-edge-soft)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/70";
   // Hover repaints the pill's BORDER, and on the SHIPPED path it does so
   // unconditionally. Read that before editing either arm below. The `selected ?`
@@ -426,7 +426,7 @@ function SeatMarkerComponent({
   // font-size doesn't transition through inheritance, so the token entry only
   // covers token-level sizes while width/min-width move immediately here.
   const tokenInteractionClass = adminMarker
-    ? `transition-[width,min-width,font-size,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)] ${selected ? "" : "group-hover:border-[var(--sp-legend-hover-border)] "}group-hover:brightness-105 group-hover:shadow-marker-hover group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--sp-focus-marker-ring)] motion-reduce:transition-none`
+    ? `transition-[width,min-width,font-size,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)] ${selected ? "" : "group-hover:border-[var(--sp-legend-hover-border)] "}group-hover:brightness-105 group-hover:shadow-sp group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--sp-focus)] motion-reduce:transition-none`
     : "transition-[width,min-width,font-size,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)] group-hover:border-[var(--sp-marker-active-edge)] group-hover:brightness-105 group-hover:shadow-[0_6px_14px_rgba(23,26,29,0.20),inset_0_1px_0_rgba(255,255,255,0.82)] group-active:shadow-[0_2px_6px_rgba(23,26,29,0.16),inset_0_2px_4px_rgba(23,26,29,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--sp-marker-active-edge-soft)] motion-reduce:transition-none";
   const draftBadgeClass = adminMarker
     ? "bg-[var(--sp-legend-draft-accent)] shadow-[0_2px_5px_rgba(16,17,20,0.24)]"

@@ -1,0 +1,200 @@
+/* =============================================================================
+   Seat Planner — Phase 4 bridge (TEMPORARY; redesign-v2 PR 1, 2026-09-03)
+
+   Loads LAST: globals.css → carbon-tokens.css → sp-tokens.css →
+   carbon-components.css → sp-components.css → phase4-bridge.css.
+
+   Three things live here and nowhere else, each deleted piece by piece as the
+   Phase 4 PRs land (docs/redesign-v2/phase4/PHASE4BUILD.md §1):
+
+   1. The font bridge. next/font/local emits a HASHED family name and exposes
+      it through --font-sans / --font-mono (app/layout.tsx). The asset's
+      --cds-font-sans names "IBM Plex Sans" literally, which no @font-face
+      declares, so the two Carbon font tokens are re-pointed at the variables.
+      This is the ONE sanctioned --cds-* reference outside sp-tokens.css and
+      the two assets (tests/phase4-token-layer-source.test.mjs allows exactly
+      these two names in this file). Permanent in effect, but it stays in
+      this file so the rule "assets untouched" holds.
+
+   2. Retired --sp-* names still consumed by the shipped components (PHASE3DS
+      §5 "Retired names", groups 2–4). Each alias points at its replacement so
+      no var() is undefined while old components sit on the new tokens. Group 2
+      (--sp-chrome-*) leaves with PR 2, group 3 (marker / legend / selection /
+      ai / editor / publish / trail / wash) with PR 3, group 4 (tag / table /
+      extension / identity) with PR 4. The token test asserts every alias here
+      references a defined --sp-* name (or a literal) and is gone once its
+      group is swept.
+
+   3. Rules keyed on the theme that pre-date the three-state model. The raster
+      lightbox filter (owner decision 2026-08-19) used to key on
+      :root[data-theme="dark"] alone; with "nothing stored" now meaning
+      system, it takes the same three-state shape as the tokens — light on
+      bare :root, dark under the prefers-color-scheme guard, dark again under
+      the forced attribute. PR 3 rebuilds the raster and removes these.
+   ========================================================================== */
+
+/* 1. Font bridge ----------------------------------------------------------- */
+:root {
+  --cds-font-sans: var(--font-sans), "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --cds-font-mono: var(--font-mono), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* 2. Retired-name aliases (old: var(new)) ---------------------------------- */
+:root {
+  --sp-ai-accent: var(--sp-ai-label-text);
+  --sp-ai-accent-soft: var(--sp-ai-border-start);
+  --sp-ai-aura: transparent;
+  --sp-ai-border: var(--sp-ai-border-start);
+  --sp-ai-chrome-border: var(--sp-ai-border-end);
+  --sp-ai-chrome-text: var(--sp-panel-dark-link);
+  --sp-ai-chrome-text-hover: var(--sp-panel-dark-link-hover);
+  --sp-ai-glow: transparent;
+  --sp-ai-marker-aura: transparent;
+  --sp-ai-marker-shadow: none;
+  --sp-ai-marker-surface: var(--sp-pill-fill);
+  --sp-ai-panel-border: var(--sp-ai-border-start);
+  --sp-ai-row: var(--sp-layer-hover);
+  --sp-ai-text: var(--sp-ai-label-text);
+  --sp-chrome-heading: var(--sp-panel-dark-text);
+  --sp-chrome-height: var(--sp-shell-header-h);
+  --sp-chrome-info: var(--sp-panel-dark-layer);
+  --sp-chrome-info-text: var(--sp-panel-dark-text);
+  --sp-chrome-scrim: var(--sp-overlay);
+  --sp-editor-clean-bg: var(--sp-status-neutral-surface);
+  --sp-editor-clean-border: var(--sp-status-neutral-mark);
+  --sp-editor-clean-text: var(--sp-status-neutral-text);
+  --sp-editor-danger-bg: var(--sp-status-error-surface);
+  --sp-editor-danger-border: var(--sp-status-error-mark);
+  --sp-editor-danger-text: var(--sp-status-error-text);
+  --sp-editor-dirty-bg: var(--sp-status-draft-surface);
+  --sp-editor-dirty-border: var(--sp-status-draft-mark);
+  --sp-editor-dirty-text: var(--sp-status-draft-text);
+  --sp-editor-error-bg: var(--sp-status-error-surface);
+  --sp-editor-error-border: var(--sp-status-error-mark);
+  --sp-editor-error-text: var(--sp-status-error-text);
+  --sp-editor-neutral-bg: var(--sp-status-neutral-surface);
+  --sp-editor-neutral-border: var(--sp-status-neutral-mark);
+  --sp-editor-neutral-text: var(--sp-status-neutral-text);
+  --sp-editor-saved-bg: var(--sp-status-success-surface);
+  --sp-editor-saved-border: var(--sp-status-success-mark);
+  --sp-editor-saved-text: var(--sp-status-success-text);
+  --sp-editor-saving-bg: var(--sp-status-info-surface);
+  --sp-editor-saving-border: var(--sp-status-info-mark);
+  --sp-editor-saving-text: var(--sp-status-info-text);
+  --sp-extension-bg: var(--sp-readout-bg);
+  --sp-extension-border: var(--sp-border-subtle);
+  --sp-extension-label: var(--sp-readout-eyebrow);
+  --sp-identity-avatar-bg: var(--sp-layer-accent);
+  --sp-identity-avatar-fg: var(--sp-text-primary);
+  --sp-legend-assigned-accent: var(--sp-pill-edge);
+  --sp-legend-assigned-border: var(--sp-pill-edge);
+  --sp-legend-assigned-surface: var(--sp-pill-fill);
+  --sp-legend-assigned-text: var(--sp-pill-text);
+  --sp-legend-available-accent: var(--sp-seat-mark-stroke-color);
+  --sp-legend-available-border: var(--sp-seat-mark-stroke-color);
+  --sp-legend-available-surface: var(--sp-layer-01);
+  --sp-legend-available-text: var(--sp-seat-mark-text);
+  --sp-legend-draft-accent: var(--sp-pill-badge);
+  --sp-legend-draft-border: var(--sp-pill-badge);
+  --sp-legend-draft-surface: var(--sp-pill-fill);
+  --sp-legend-draft-text: var(--sp-pill-text);
+  --sp-legend-hover-border: var(--sp-pill-edge);
+  --sp-legend-hover-shadow: none;
+  --sp-legend-reserved-accent: var(--sp-pill-quiet-edge);
+  --sp-legend-reserved-border: var(--sp-pill-quiet-edge);
+  --sp-legend-reserved-surface: var(--sp-pill-quiet-fill);
+  --sp-legend-reserved-text: var(--sp-pill-quiet-text);
+  --sp-legend-search-border: var(--sp-pill-search-edge);
+  --sp-legend-search-halo: var(--sp-pill-search-edge);
+  --sp-legend-search-ring: var(--sp-pill-search-edge);
+  --sp-legend-search-surface: var(--sp-pill-search-fill);
+  --sp-legend-search-text: var(--sp-pill-text);
+  --sp-legend-selected-border: var(--sp-pill-selected-edge);
+  --sp-legend-selected-shadow: none;
+  --sp-legend-selected-surface: var(--sp-pill-fill);
+  --sp-legend-selected-text: var(--sp-pill-text);
+  --sp-legend-unavailable-accent: var(--sp-pill-quiet-edge);
+  --sp-legend-unavailable-border: var(--sp-pill-quiet-edge);
+  --sp-legend-unavailable-surface: var(--sp-pill-quiet-fill);
+  --sp-legend-unavailable-text: var(--sp-pill-quiet-text);
+  --sp-marker-active-edge: var(--sp-pill-selected-edge);
+  --sp-marker-active-edge-soft: var(--sp-pill-selected-edge);
+  --sp-marker-active-edge-strong: var(--sp-pill-selected-edge);
+  --sp-marker-assigned-border: var(--sp-pill-edge);
+  --sp-marker-assigned-glyph: var(--sp-pill-text);
+  --sp-marker-assigned-surface: var(--sp-pill-fill);
+  --sp-marker-assigned-text: var(--sp-pill-text);
+  --sp-marker-available-border: var(--sp-seat-mark-stroke-color);
+  --sp-marker-available-surface: var(--sp-layer-01);
+  --sp-marker-draft-badge: var(--sp-pill-badge);
+  --sp-marker-draft-border: var(--sp-pill-badge);
+  --sp-marker-draft-ring: var(--sp-pill-badge);
+  --sp-marker-draft-surface: var(--sp-pill-fill);
+  --sp-marker-draft-text: var(--sp-pill-text);
+  --sp-marker-glyph-ink: var(--sp-pill-text);
+  --sp-marker-ink: var(--sp-pill-text);
+  --sp-marker-invalid-glyph: var(--sp-pill-invalid-text);
+  --sp-marker-neutral-border: var(--sp-pill-quiet-edge);
+  --sp-marker-neutral-ring: var(--sp-pill-quiet-edge);
+  --sp-marker-neutral-surface: var(--sp-pill-quiet-fill);
+  --sp-marker-neutral-text: var(--sp-pill-quiet-text);
+  --sp-marker-pill-ring: var(--sp-pill-selected-edge);
+  --sp-marker-planner-ring: var(--sp-ai-border-end);
+  --sp-marker-positive-border: var(--sp-pill-target-edge);
+  --sp-marker-positive-outline: var(--sp-pill-target-edge);
+  --sp-marker-positive-ring: var(--sp-pill-target-edge);
+  --sp-marker-positive-surface: var(--sp-pill-target-fill);
+  --sp-marker-positive-text: var(--sp-pill-text);
+  --sp-marker-reserved-border: var(--sp-pill-quiet-edge);
+  --sp-marker-reserved-glyph: var(--sp-pill-quiet-text);
+  --sp-marker-reserved-surface: var(--sp-pill-quiet-fill);
+  --sp-marker-reserved-text: var(--sp-pill-quiet-text);
+  --sp-marker-search-border: var(--sp-pill-search-edge);
+  --sp-marker-search-ring: var(--sp-pill-search-edge);
+  --sp-marker-search-selected-surface: var(--sp-pill-search-fill);
+  --sp-marker-search-surface: var(--sp-pill-search-fill);
+  --sp-marker-search-text: var(--sp-pill-text);
+  --sp-marker-selected-surface: var(--sp-pill-fill);
+  --sp-marker-unavailable-border: var(--sp-pill-quiet-edge);
+  --sp-marker-unavailable-hatch: none;
+  --sp-marker-unavailable-surface: var(--sp-pill-quiet-fill);
+  --sp-marker-unavailable-text: var(--sp-pill-quiet-text);
+  --sp-marker-valid-glyph: var(--sp-status-success-mark);
+  --sp-publish-no-change-bg: var(--sp-status-neutral-surface);
+  --sp-publish-no-change-border: var(--sp-status-neutral-mark);
+  --sp-publish-no-change-text: var(--sp-status-neutral-text);
+  --sp-publish-ready-bg: var(--sp-status-success-surface);
+  --sp-publish-ready-border: var(--sp-status-success-mark);
+  --sp-publish-ready-text: var(--sp-status-success-text);
+  --sp-publish-viewer-impact-bg: var(--sp-status-warning-surface);
+  --sp-publish-viewer-impact-border: var(--sp-status-warning-mark);
+  --sp-publish-viewer-impact-text: var(--sp-status-warning-text);
+  --sp-selection: var(--sp-pill-selected-edge);
+  --sp-table-header: var(--sp-layer-selected);
+  --sp-table-row-border: var(--sp-border-subtle);
+  --sp-tag-bg: var(--sp-layer-accent);
+  --sp-tag-text: var(--sp-text-primary);
+  --sp-trail: var(--sp-pill-origin-edge);
+  --sp-trail-origin: var(--sp-pill-origin-edge);
+  --sp-wash-zone: var(--sp-highlight);
+}
+
+/* 3. Theme-keyed rules in the three-state shape ---------------------------- */
+/* Floor-plan raster on dark: CSS-only lightbox treatment (no dark asset, so no
+   ?v= bump). Applies to the <img> only; markers sit above it unfiltered. The
+   Ask-Planner dim restates the whole chain with the dim folded in
+   (0.45 × 0.8 = 0.36) — `filter` is a single property. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .map-raster {
+    filter: invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95);
+  }
+  :root:not([data-theme="light"]) .map-raster-dim {
+    filter: invert(0.93) hue-rotate(180deg) saturate(0.36) contrast(0.95);
+  }
+}
+:root[data-theme="dark"] .map-raster {
+  filter: invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95);
+}
+:root[data-theme="dark"] .map-raster-dim {
+  filter: invert(0.93) hue-rotate(180deg) saturate(0.36) contrast(0.95);
+}

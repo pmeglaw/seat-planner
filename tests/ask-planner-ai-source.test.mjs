@@ -66,7 +66,11 @@ test("the map's AI emphasis only engages while seats are actually highlighted", 
 
   // The dim itself lives in CSS so the dark lightbox filter can restate it —
   // `filter` is one property, so an inline saturate() would erase the invert.
-  const globalsSource = await readSource("../app/globals.css");
+  // The light dim rule lives in globals.css; the dark variants (the lightbox
+  // chain with the dim folded in) sit in the Phase 4 bridge until PR 3
+  // rebuilds the raster — read both.
+  const globalsSource =
+    (await readSource("../app/globals.css")) + (await readSource("../app/styles/phase4-bridge.css"));
   const dimRules = globalsSource.match(/\.map-raster-dim\s*{[^}]*saturate\([^}]*}/g) ?? [];
   assert.ok(dimRules.length >= 2,
     "globals.css must define .map-raster-dim saturate rules for BOTH themes (light + dark restatement)");

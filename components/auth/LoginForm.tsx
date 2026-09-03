@@ -321,7 +321,7 @@ export function LoginForm() {
   // fill), the single line that says "this is an input". The email field's
   // rest rule is the handoff's --sp-border-subtle #e0e0e0: an internal
   // DIVIDER between two flush fills, never the stack's sole boundary. Focus
-  // doubles the rule in the 1e copper, error in --sp-status-danger-mark — the thickness
+  // doubles the rule in the 1e copper, error in --sp-status-error-mark — the thickness
   // change is the second, non-colour cue.
   const fieldShellClass = (invalid: boolean, options?: { withTrailing?: boolean; restRule?: "subtle" | "strong" }) =>
     cx(
@@ -335,7 +335,7 @@ export function LoginForm() {
       // and the focus variant lost silently, leaving a 2px rule still painted
       // #8d8d8d. Measured, not assumed. Keep the explicit longhand.
       invalid
-        ? "border-b-2 border-b-[color:var(--sp-status-danger-mark)]"
+        ? "border-b-2 border-b-[color:var(--sp-status-error-mark)]"
         : cx(
             options?.restRule === "subtle"
               ? "border-b border-b-[color:var(--sp-border-subtle)]"
@@ -352,14 +352,14 @@ export function LoginForm() {
   // outline-none is safe only because the shell above draws the focus rule.
   const fieldInputClass =
     "mt-1 w-full border-0 bg-transparent p-0 text-[13.5px] font-normal leading-[1.4] text-[var(--sp-text-primary)] caret-[var(--sp-button-primary)] outline-none placeholder:text-[var(--sp-text-placeholder)]";
-  const fieldErrorClass = "mt-1.5 text-[12px] leading-[1.4] text-[var(--sp-status-danger-text)]";
+  const fieldErrorClass = "mt-1.5 text-[12px] leading-[1.4] text-[var(--sp-status-error-text)]";
   // 1e links are plain copper (no resting underline, per the reference);
   // hover restores the underline so the affordance survives.
   //
   // TWO colour roles, deliberately: --sp-link (#B85207) is background-only —
   // it measures 4.49:1 on the field fill and 4.50:1 on the error tint, so a
   // link that sits ON a fill (the notification's recovery action) takes
-  // --sp-link-on-field (#9F4605, 5.70:1 on both). The e2e axe scan flagged
+  // --sp-link (#9F4605, 5.70:1 on both). The e2e axe scan flagged
   // the split's absence at 4.49:1.
   // Split base + colour rather than stacking a second text-[...] utility:
   // two same-specificity arbitrary utilities resolve by stylesheet order,
@@ -370,7 +370,7 @@ export function LoginForm() {
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
   );
   const inlineLinkClass = cx(inlineLinkBaseClass, "text-[var(--sp-link)]");
-  const onFieldLinkClass = cx(inlineLinkBaseClass, "text-[var(--sp-link-on-field)]");
+  const onFieldLinkClass = cx(inlineLinkBaseClass, "text-[var(--sp-link)]");
   const primaryButtonClass = cx(
     // No colour transition: hydration flips this button from disabled to
     // enabled on every load, and a 150ms tween made it fade up through a
@@ -421,16 +421,16 @@ export function LoginForm() {
           className={cx(
             "mt-6 flex items-start gap-2.5 border-l-[3px] px-3.5 py-3",
             notice.tone === "error"
-              ? "border-[var(--sp-status-danger-mark)] bg-[var(--sp-status-danger-surface)]"
+              ? "border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)]"
               : "border-[var(--sp-status-success-mark)] bg-[var(--sp-status-success-surface)]"
           )}
         >
           <svg aria-hidden="true" viewBox="0 0 20 20" className="mt-px h-[15px] w-[15px] shrink-0">
-            <circle cx="10" cy="10" r="8" fill={notice.tone === "error" ? "var(--sp-status-danger-mark)" : "var(--sp-status-success-mark)"} />
+            <circle cx="10" cy="10" r="8" fill={notice.tone === "error" ? "var(--sp-status-error-mark)" : "var(--sp-status-success-mark)"} />
             {notice.tone === "error" ? (
-              <path d="m7 7 6 6m0-6-6 6" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
+              <path d="m7 7 6 6m0-6-6 6" className="stroke-[var(--sp-text-on-color)]" strokeWidth="1.6" strokeLinecap="round" />
             ) : (
-              <path d="m6.5 10.2 2.4 2.4 4.6-5.2" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="m6.5 10.2 2.4 2.4 4.6-5.2" fill="none" className="stroke-[var(--sp-text-on-color)]" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             )}
           </svg>
           <div className="text-[12.5px] leading-[1.5] text-[var(--sp-text-primary)]">
@@ -481,9 +481,9 @@ export function LoginForm() {
             />
             {emailError && (
               <svg aria-hidden="true" viewBox="0 0 20 20" className="absolute right-3.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2">
-                <circle cx="10" cy="10" r="8" fill="var(--sp-status-danger-mark)" />
-                <path d="M10 5.5v5.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
-                <circle cx="10" cy="14" r="1.1" fill="#fff" />
+                <circle cx="10" cy="10" r="8" fill="var(--sp-status-error-mark)" />
+                <path d="M10 5.5v5.5" className="stroke-[var(--sp-text-on-color)]" strokeWidth="1.8" strokeLinecap="round" />
+                <circle cx="10" cy="14" r="1.1" className="fill-[var(--sp-text-on-color)]" />
               </svg>
             )}
           </div>
@@ -518,9 +518,9 @@ export function LoginForm() {
             </span>
             {passwordError && (
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-[15px] w-[15px] shrink-0">
-                <circle cx="10" cy="10" r="8" fill="var(--sp-status-danger-mark)" />
-                <path d="M10 5.5v5.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
-                <circle cx="10" cy="14" r="1.1" fill="#fff" />
+                <circle cx="10" cy="10" r="8" fill="var(--sp-status-error-mark)" />
+                <path d="M10 5.5v5.5" className="stroke-[var(--sp-text-on-color)]" strokeWidth="1.8" strokeLinecap="round" />
+                <circle cx="10" cy="14" r="1.1" className="fill-[var(--sp-text-on-color)]" />
               </svg>
             )}
             <button

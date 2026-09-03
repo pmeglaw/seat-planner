@@ -1,5 +1,13 @@
 import type { Config } from "tailwindcss";
 
+// Tailwind supplies layout utilities only. Every colour, shadow, radius and
+// duration it exposes is a var() into the semantic token layer
+// (app/styles/sp-tokens.css) — no literal values here
+// (tests/phase4-token-layer-source.test.mjs). The named keys below are the
+// ones the shipped components still consume; each retires with the component
+// PR that stops using it (redesign-v2 Phase 4). `shadow-sp` in particular is a
+// bridge — depth is layers in the design system — and must be gone by the end
+// of PR 5.
 const config: Config = {
   content: [
     "./app/**/*.{ts,tsx}",
@@ -7,10 +15,8 @@ const config: Config = {
     "./lib/**/*.{ts,tsx}"
   ],
   theme: {
-    // Shell shape language: flat, square corners on chrome/controls. The named
-    // radius scale is zeroed globally; components that must stay rounded (seat
-    // pills, avatars, dots) use arbitrary values or `rounded-full`, which this
-    // scale does not touch.
+    // Carbon: zero radius on boxes. The named scale is zeroed globally; the
+    // only rounded things are tags and marks (`rounded-full`).
     borderRadius: {
       none: "0px",
       sm: "0px",
@@ -21,18 +27,14 @@ const config: Config = {
       "2xl": "0px",
       "3xl": "0px",
       full: "9999px",
-      "sp-sm": "var(--sp-radius-sm)",
-      "sp-md": "var(--sp-radius-md)",
-      "sp-lg": "var(--sp-radius-lg)",
-      "sp-xl": "var(--sp-radius-xl)",
-      "sp-sheet": "var(--sp-radius-sheet)",
-      "sp-full": "var(--sp-radius-full)"
+      sp: "var(--sp-radius)",
+      "sp-tag": "var(--sp-radius-tag)"
     },
     extend: {
-      // Default border color follows the greige neutral ramp instead of
-      // Tailwind cool gray-200 — recolors every unqualified `border` (2026-07-23).
+      // Default border colour follows the token layer — recolors every
+      // unqualified `border`.
       borderColor: {
-        DEFAULT: "#E7E1D8"
+        DEFAULT: "var(--sp-border-subtle)"
       },
       fontFamily: {
         sans: ["var(--font-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
@@ -44,72 +46,41 @@ const config: Config = {
         panel: "900px"
       },
       colors: {
-        brand: {
-          DEFAULT: "#f97316",
-          dark: "#c2410c"
-        },
-        // Every entry points at the hex token directly — the -rgb channel
-        // twins were fully deleted (twin-resolution 2026-08-21 + PASS1 §4.1).
         // Alpha modifiers (e.g. text-sp-secondary/50) are NOT supported here;
         // derive washes with color-mix(in srgb, var(--…) N%, transparent).
-        // Utility names keep their pre-PASS1 keys (bg-sp-surface, …) — only
-        // the vars behind them were renamed; key renames are a Pass-2 call.
         sp: {
-          "brand-paper": "var(--sp-brand-subtle)",
-          "brand-accent": "var(--sp-brand)",
           "action-primary": "var(--sp-button-primary)",
           "action-primary-hover": "var(--sp-button-primary-hover)",
           "action-primary-pressed": "var(--sp-button-primary-active)",
           primary: "var(--sp-text-primary)",
           secondary: "var(--sp-text-secondary)",
           muted: "var(--sp-text-helper)",
-          disabled: "var(--sp-surface-disabled)",
+          disabled: "var(--sp-button-disabled)",
           canvas: "var(--sp-background)",
           surface: "var(--sp-layer-01)",
           "surface-raised": "var(--sp-layer-02)",
           subtle: "var(--sp-border-subtle)",
           strong: "var(--sp-border-strong)",
-          selected: "var(--sp-selection)",
-          published: "var(--sp-status-published-strong)",
-          draft: "var(--sp-status-draft-strong)",
-          success: "var(--sp-status-success-strong)",
-          warning: "var(--sp-status-pending-strong)",
-          danger: "var(--sp-status-danger-strong)",
-          info: "var(--sp-status-neutral-strong)",
+          selected: "var(--sp-layer-selected)",
+          published: "var(--sp-status-success-mark)",
+          draft: "var(--sp-status-draft-mark)",
+          success: "var(--sp-status-success-mark)",
+          warning: "var(--sp-status-warning-mark)",
+          danger: "var(--sp-status-error-mark)",
+          info: "var(--sp-status-info-mark)",
           search: "var(--sp-status-search-text)"
         }
       },
-      spacing: {
-        "sp-1": "var(--sp-space-1)",
-        "sp-2": "var(--sp-space-2)",
-        "sp-3": "var(--sp-space-3)",
-        "sp-4": "var(--sp-space-4)",
-        "sp-5": "var(--sp-space-5)",
-        "sp-6": "var(--sp-space-6)",
-        "sp-7": "var(--sp-space-7)"
-      },
       boxShadow: {
-        soft: "0 18px 50px rgba(15, 23, 42, 0.16)",
-        // Elevation tiers must be NAMED utilities: Tailwind v3 drops arbitrary
+        // ONE named shadow utility. Tailwind v3 drops arbitrary
         // shadow-[var(--…)] candidates (box-shadow vs shadow-color ambiguity),
-        // so that form silently ships box-shadow: none.
-        "rail-overlay": "var(--sp-elevation-rail)",
-        "elevation-2": "var(--sp-elevation-2)",
-        "elevation-3": "var(--sp-elevation-3)",
-        "elevation-4": "var(--sp-elevation-4)",
-        panel: "var(--sp-elevation-panel)",
-        "marker-selected": "var(--sp-legend-selected-shadow)",
-        "marker-hover": "var(--sp-legend-hover-shadow)",
-        "marker-ai": "var(--sp-ai-marker-shadow)",
-        "sp-raised": "var(--sp-shadow-raised)",
-        "sp-floating": "var(--sp-shadow-floating)",
-        "sp-sheet": "var(--sp-shadow-sheet)",
-        "sp-modal": "var(--sp-shadow-modal)"
+        // so a var-backed shadow must be a named key. Bridge: retires by PR 5.
+        sp: "var(--sp-shadow)"
       },
       transitionDuration: {
-        "sp-fast": "var(--sp-duration-fast)",
-        "sp-standard": "var(--sp-duration-standard)",
-        "sp-deliberate": "var(--sp-duration-deliberate)"
+        "sp-fast": "var(--sp-duration-fast-01)",
+        "sp-standard": "var(--sp-duration-fast-02)",
+        "sp-deliberate": "var(--sp-duration-moderate-02)"
       }
     }
   },

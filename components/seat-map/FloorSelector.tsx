@@ -86,8 +86,8 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
         }}
         className={
           chrome
-            ? "relative flex h-7 items-center gap-2 px-2.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:bg-[var(--sp-background-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]"
-            : "relative flex items-center gap-2 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] shadow-elevation-3 transition after:absolute after:-inset-y-2 after:inset-x-0 hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+            ? "relative flex h-7 items-center gap-2 px-2.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:bg-[var(--sp-background-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]"
+            : "relative flex items-center gap-2 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)] shadow-sp transition after:absolute after:-inset-y-2 after:inset-x-0 hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
         }
       >
         {/* Chrome-variant trigger label (owner calls 2026-08-14): the centered
@@ -121,8 +121,8 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
           }}
           className={
             chrome
-              ? "absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] py-1 shadow-elevation-3"
-              : "absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] py-1 shadow-elevation-3"
+              ? "absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] py-1 shadow-sp"
+              : "absolute left-0 top-[calc(100%+4px)] z-40 min-w-[230px] border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] py-1 shadow-sp"
           }
         >
           {options.map(option => (
@@ -137,7 +137,7 @@ export function FloorSelector({ floor, onChange, variant = "canvas" }: FloorSele
               }}
               className={
                 chrome
-                  ? "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--sp-text-primary)] transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]"
+                  ? "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--sp-text-primary)] transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]"
                   : "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[12.5px] text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]"
               }
             >

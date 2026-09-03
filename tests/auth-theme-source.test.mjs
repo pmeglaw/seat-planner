@@ -200,51 +200,42 @@ test("the exception ledger is not stale", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Reverse-direction dark check: every --sp-* token the auth files reference
-// resolves in dark. Zone-scoped tokens must appear in BOTH .login-theme
-// blocks (light + dark) unless deliberately theme-constant; tokens outside
-// the zone must be defined in the global :root and re-declared in a
-// data-theme="dark" block. zone-wash covers dark→chrome; this covers "the
-// tokens this surface uses exist in dark at all".
+// Reverse-direction theme check (rewritten for the token layer, redesign-v2
+// Phase 4 PR 1): every --sp-* token the auth files reference is defined in
+// app/styles/sp-tokens.css, and every Carbon token it aliases is declared for
+// the light theme AND the forced dark theme in app/styles/carbon-tokens.css.
+// Tier A names alias --cds-* (both themes by construction); tier C names
+// alias the palette (theme-invariant by ruling) and pass without a dark
+// block. This covers "the tokens this surface uses exist in dark at all".
 // ---------------------------------------------------------------------------
 
-// Ruled theme-constant in app/globals.css §3.8 (comments there explain each):
-// the 1e copper CTA ladder never re-themes, and the danger MARK keeps Carbon
-// red 60 in both themes (only danger TEXT lightens).
-const THEME_CONSTANT = new Set(["--sp-button-primary", "--sp-button-primary-hover", "--sp-status-danger-mark"]);
+function stripComments(css) {
+  return css.replace(/\/\*[\s\S]*?\*\//g, "");
+}
 
 function cssBlocks(css) {
-  // Naive but sufficient: top-level `selector { body }` pairs. Comments are
-  // stripped FIRST — the prose above a block otherwise rides along in the
-  // selector capture and misclassifies it (measured: the .login-theme block's
-  // preceding comment mentions data-theme). Nested structures (@media) are
-  // treated as flat blocks, which is fine for a token-presence check.
   const blocks = [];
-  const stripped = css.replace(/\/\*[\s\S]*?\*\//g, "");
-  for (const match of stripped.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    // The capture runs from the previous closing brace, so take only the
-    // final line — the actual selector.
+  for (const match of stripComments(css).matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     const selector = match[1].trim().split("\n").pop().trim();
     blocks.push({ selector, body: match[2] });
   }
   return blocks;
 }
 
-test("every --sp token the auth surfaces reference resolves in dark", () => {
-  const css = readFileSync(path.join(repoRoot, "app/globals.css"), "utf8");
-  const blocks = cssBlocks(css);
+function declarationsIn(blocks, predicate) {
+  const out = new Map();
+  for (const block of blocks.filter(b => predicate(b.selector))) {
+    for (const match of block.body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) out.set(match[1], match[2].trim());
+  }
+  return out;
+}
 
-  const definedIn = predicate =>
-    new Set(
-      blocks
-        .filter(predicate)
-        .flatMap(block => [...block.body.matchAll(/(--sp-[\w-]+)\s*:/g)].map(match => match[1]))
-    );
-
-  const loginLight = definedIn(b => b.selector.includes(".login-theme") && !b.selector.includes("data-theme"));
-  const loginDark = definedIn(b => b.selector.includes(".login-theme") && b.selector.includes('data-theme="dark"'));
-  const globalLight = definedIn(b => !b.selector.includes("data-theme") && !b.selector.includes(".login-theme"));
-  const globalDark = definedIn(b => b.selector.includes('data-theme="dark"') && !b.selector.includes(".login-theme"));
+test("every --sp token the auth surfaces reference resolves in both themes", () => {
+  const spBlocks = cssBlocks(readFileSync(path.join(repoRoot, "app/styles/sp-tokens.css"), "utf8"));
+  const carbonBlocks = cssBlocks(readFileSync(path.join(repoRoot, "app/styles/carbon-tokens.css"), "utf8"));
+  const sp = declarationsIn(spBlocks, () => true);
+  const carbonLight = declarationsIn(carbonBlocks, s => s === ":root");
+  const carbonDark = declarationsIn(carbonBlocks, s => s === ':root[data-carbon-theme="g100"]');
 
   const referenced = new Set();
   for (const file of files) {
@@ -257,16 +248,22 @@ test("every --sp token the auth surfaces reference resolves in dark", () => {
 
   const problems = [];
   for (const token of referenced) {
-    if (THEME_CONSTANT.has(token)) continue;
-    if (loginLight.has(token)) {
-      // Zone-scoped: the dark zone block must re-theme it.
-      if (!loginDark.has(token)) problems.push(`${token} is login-zone scoped but missing from the dark .login-theme block`);
-    } else if (globalLight.has(token)) {
-      if (!globalDark.has(token)) problems.push(`${token} has no data-theme="dark" definition`);
-    } else {
-      problems.push(`${token} is not defined in app/globals.css at all`);
+    const value = sp.get(token);
+    if (value === undefined) {
+      problems.push(`${token} is not defined in app/styles/sp-tokens.css`);
+      continue;
+    }
+    for (const ref of value.matchAll(/var\((--cds-[\w-]+)\)/g)) {
+      const cds = ref[1];
+      // Palette and geometry tokens are theme-invariant (declared once);
+      // theme roles must be declared in the light root AND the g100 block.
+      if (carbonLight.has(cds) && !carbonDark.has(cds) && /^--cds-(?!spacing|font|layout|border-subtle-00$)/.test(cds)) {
+        if (/^--cds-(background|layer|field|border|text|link|icon|button|support|focus|interactive|highlight|overlay|skeleton|toggle|shadow)/.test(cds)) {
+          problems.push(`${token} → ${cds} has no dark (g100) definition`);
+        }
+      }
     }
   }
 
-  assert.deepEqual(problems, [], `Auth tokens that do not resolve in dark:\n${problems.join("\n")}`);
+  assert.deepEqual(problems, [], `Auth tokens that do not resolve in both themes:\n${problems.join("\n")}`);
 });

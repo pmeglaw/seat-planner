@@ -94,13 +94,13 @@ function UtilityTile({ label, description, tone = "default", affordance = "revie
         "relative min-h-[96px] p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50",
         wide ? "sm:col-span-full" : "",
         isDanger
-          ? "bg-[var(--sp-status-danger-surface)] hover:bg-[var(--sp-status-danger-surface-hover)]"
+          ? "bg-[var(--sp-status-error-surface)] hover:bg-[var(--sp-status-error-surface)]"
           : "bg-[var(--sp-layer-01)] hover:bg-[var(--sp-layer-hover)]"
       ].join(" ")}
     >
-      <span className={["block text-[13.5px] font-semibold", isDanger ? "text-[var(--sp-status-danger-strong)]" : "text-[var(--sp-text-primary)]"].join(" ")}>{label}</span>
-      <span className={["mt-1 block max-w-[38ch] pr-6 text-[12.5px] leading-5", isDanger ? "text-[var(--sp-status-danger-text)]" : "text-[var(--sp-text-helper)]"].join(" ")}>{description}</span>
-      <span aria-hidden="true" className={["absolute bottom-3 right-3", isDanger ? "text-[var(--sp-status-danger-strong)]" : "text-[var(--sp-status-neutral-mark)]"].join(" ")}>
+      <span className={["block text-[13.5px] font-semibold", isDanger ? "text-[var(--sp-status-error-mark)]" : "text-[var(--sp-text-primary)]"].join(" ")}>{label}</span>
+      <span className={["mt-1 block max-w-[38ch] pr-6 text-[12.5px] leading-5", isDanger ? "text-[var(--sp-status-error-text)]" : "text-[var(--sp-text-helper)]"].join(" ")}>{description}</span>
+      <span aria-hidden="true" className={["absolute bottom-3 right-3", isDanger ? "text-[var(--sp-status-error-mark)]" : "text-[var(--sp-status-neutral-mark)]"].join(" ")}>
         {affordance === "download" ? (
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
             <path d="M10 3v9M6.5 9 10 12.5 13.5 9M4 16.5h12" />
@@ -340,8 +340,8 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
 
       {/* White fill, not an amber wash: this is standing guidance, and a tinted
           banner would read as an active warning every time the page loads. */}
-      <div className="flex items-start gap-2.5 border-l-[3px] border-[var(--sp-status-pending-strong)] bg-[var(--sp-layer-01)] px-3.5 py-3 shadow-[0_1px_2px_rgba(22,22,22,0.06)]">
-        <span aria-hidden="true" className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--sp-status-pending-mark)] text-xs font-bold leading-none text-[var(--sp-text-primary)]">!</span>
+      <div className="flex items-start gap-2.5 border-l-[3px] border-[var(--sp-status-draft-mark)] bg-[var(--sp-layer-01)] px-3.5 py-3 shadow-[0_1px_2px_rgba(22,22,22,0.06)]">
+        <span aria-hidden="true" className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--sp-status-draft-mark)] text-xs font-bold leading-none text-[var(--sp-text-primary)]">!</span>
         <p className="text-[12.5px] leading-5 text-[var(--sp-text-primary)]">
           <strong className="font-semibold">The published map is never touched until you publish.</strong>{" "}
           Restores replace the entire draft — review before confirming.
@@ -364,7 +364,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
       </section>
 
       <section>
-        <h2 className="text-xs font-semibold uppercase tracking-[0.04em] text-[var(--sp-status-danger-strong)]">Draft working-copy snapshots</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.04em] text-[var(--sp-status-error-mark)]">Draft working-copy snapshots</h2>
         <p className="mb-2 mt-1 text-xs leading-5 text-[var(--sp-text-helper)]">
           Draft seats and employees only. Restoring replaces the entire draft map, so review carefully before confirming.
           These snapshots are not a database backup: they do not include the published map, publish history, or user accounts.
@@ -392,7 +392,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 setResetReviewOpen(false);
               }
             }}
-            className="w-full max-w-lg overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel"
+            className="w-full max-w-lg overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -445,7 +445,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 closeCsvReview();
               }
             }}
-            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel"
+            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp"
           >
             <div className="flex items-start justify-between gap-3 border-b border-[var(--sp-border-subtle)] pb-3">
               <div>
@@ -491,7 +491,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                   </ul>
                 </div>
               ) : (
-                <div className="mt-3 border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] p-3 text-sm font-semibold leading-5 text-[var(--sp-brand-text)]">
+                <div className="mt-3 border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] p-3 text-sm font-semibold leading-5 text-[var(--sp-link)]">
                   This applies the CSV to the draft map only. Viewers will not see these changes until you publish.
                 </div>
               )}
@@ -532,7 +532,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 closeJsonReview();
               }
             }}
-            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel"
+            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp"
           >
             <div className="flex items-start justify-between gap-3 border-b border-[var(--sp-border-subtle)] pb-3">
               <div>
@@ -558,7 +558,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 <ReviewCountCard label="Employees" value={jsonReview.employeeCount} tone="warn" />
               </div>
 
-              <div className="mt-3 border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] p-3 text-sm font-semibold leading-5 text-[var(--sp-brand-text)]">
+              <div className="mt-3 border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] p-3 text-sm font-semibold leading-5 text-[var(--sp-link)]">
                 This can replace draft assignments, custom seats, notes, and employee details in the draft. Viewers will not see restored data until publish.
               </div>
             </div>

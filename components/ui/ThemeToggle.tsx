@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 // Shared with app/layout.tsx's boot script — the two halves of the theme
 // switch must agree on these strings (see lib/theme.ts).
-import { THEME_DARK, THEME_LIGHT, THEME_STORAGE_KEY } from "@/lib/theme";
+import { THEME_DARK, THEME_LIGHT, applyTheme } from "@/lib/theme";
 
-// App-wide light/dark switch: flips html[data-theme] and persists to
-// localStorage; app/layout.tsx's boot script replays the stored value before
-// paint on the next load. Shared chrome across the viewer bar, both shell top
+// App-wide light/dark switch: applies the theme through lib/theme.ts (both
+// attributes + the stored choice); the boot script replays the stored value before
+// paint on the next load. Retires into the Account panel's Theme radio in
+// redesign-v2 PR 2. Shared chrome across the viewer bar, both shell top
 // bars, and Reception — each mounts this one component, passing its own
 // className seam for surfaces whose tokens aren't chrome-default.
 
@@ -23,13 +24,10 @@ export function ThemeToggle({ className }: { className?: string }) {
   function toggle() {
     const next = !dark;
     setDark(next);
-    if (next) document.documentElement.dataset.theme = THEME_DARK;
-    else delete document.documentElement.dataset.theme;
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, next ? THEME_DARK : THEME_LIGHT);
-    } catch {
-      // Storage unavailable (private mode) — the in-page toggle still works.
-    }
+    // Sets data-theme AND the derived data-carbon-theme, and persists — one
+    // function shared with the boot replay (lib/theme.ts). The toggle knows
+    // two states; the Account panel's radio (redesign-v2 PR 2) adds System.
+    applyTheme(next ? THEME_DARK : THEME_LIGHT);
   }
 
   return (
@@ -39,7 +37,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-pressed={dark}
       className={
         className ??
-        "relative flex h-7 items-center gap-1.5 border border-[var(--sp-border-strong)] bg-transparent px-2.5 text-xs font-medium text-[var(--sp-text-secondary)] transition-colors after:absolute after:-inset-y-2 after:inset-x-0 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]"
+        "relative flex h-7 items-center gap-1.5 border border-[var(--sp-border-strong)] bg-transparent px-2.5 text-xs font-medium text-[var(--sp-text-secondary)] transition-colors after:absolute after:-inset-y-2 after:inset-x-0 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]"
       }
     >
       {dark ? (

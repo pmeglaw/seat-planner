@@ -2558,7 +2558,7 @@ export function SeatMap({
     // (CodeRabbit, PR #404). In-flow below the cluster row, wrapped chips
     // push the toast down automatically. pointer-events-auto because the
     // cluster rail is pointer-events-none with each card opting back in.
-    "pointer-events-auto self-center w-fit max-w-sm shadow-elevation-3",
+    "pointer-events-auto self-center w-fit max-w-sm shadow-sp",
     "flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold",
     "motion-safe:animate-[sp-toast-drop_200ms_ease-out]",
     actionNoticeTone === "neutral"
@@ -2566,8 +2566,8 @@ export function SeatMap({
       : "border-[var(--sp-editor-saved-border)] bg-[var(--sp-editor-saved-bg)] text-[var(--sp-editor-saved-text)]",
     canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
-  const resultActionButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-wash)] hover:text-[var(--sp-brand-text)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50";
-  const resultClearButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-brand-text)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-brand)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]";
+  const resultActionButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50";
+  const resultClearButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-link)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-interactive)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]";
   const visibleMapSpan = Math.max(0, mapVisibleRange.right - mapVisibleRange.left);
   const mapPixelsPerNormalizedUnit = visibleMapSpan > 0 && mapVisibleRange.viewportWidth > 0
     ? mapVisibleRange.viewportWidth / visibleMapSpan
@@ -2740,7 +2740,7 @@ export function SeatMap({
   // carries the vertical expansion only and each call site adds its OUTWARD
   // horizontal face (undo -left-4 = 44 wide; redo -right-3 = 40, capped at
   // half the gap to the kebab — ledgered in tests/touch-target-source).
-  const chromeIconBtn = "relative flex h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 after:absolute after:-inset-y-2 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--sp-text-helper)]";
+  const chromeIconBtn = "relative flex h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 after:absolute after:-inset-y-2 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--sp-text-helper)]";
   // v12: the kebab is now the bar's ONLY overflow surface, visible at every
   // width. The old below-lg/below-xl chromeToolbarBtnCollapsible* derivations
   // (and the adminChromeTool/Active/Disabled imports that fed them) are
@@ -2748,9 +2748,9 @@ export function SeatMap({
   // and the flat-tool Ask Planner all moved to the rail or the kebab. See
   // components/ui/adminChrome.ts's updated header comment. The kebab trigger
   // gets its own fixed 32px-wide grid cell instead, since it is icon-only.
-  const chromeKebabBtn = "relative flex h-full w-8 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 after:absolute after:-inset-x-1.5 after:-inset-y-0.5 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
-  const chromeKebabBtnActive = "relative flex h-full w-8 shrink-0 items-center justify-center bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)] after:absolute after:-inset-x-1.5 after:-inset-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
-  const chromeMenuItem = "flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
+  const chromeKebabBtn = "relative flex h-full w-8 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 after:absolute after:-inset-x-1.5 after:-inset-y-0.5 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]";
+  const chromeKebabBtnActive = "relative flex h-full w-8 shrink-0 items-center justify-center bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)] after:absolute after:-inset-x-1.5 after:-inset-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]";
+  const chromeMenuItem = "flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]";
 
   // --- Top-bar tenants (top-bar-first chrome, 2026-08-14) -----------------
   // Three clusters portal into AppTopBar's slots when a shell ancestor
@@ -2852,7 +2852,7 @@ export function SeatMap({
                   returnFocusAfterClose(chromeMenuButtonRef);
                 }
               }}
-              className="absolute left-0 top-full z-50 w-[230px] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] py-1 shadow-elevation-3"
+              className="absolute left-0 top-full z-50 w-[230px] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] py-1 shadow-sp"
             >
               {/* The label must NOT flip to the inverse verb when active: a
                   flipping label with no pressed state is what left the
@@ -2921,7 +2921,7 @@ export function SeatMap({
                 Zoom to 100%
               </button>
               <div className="mx-0 my-1 h-px bg-white/10" />
-              {/* Danger text #ff8389 (Carbon red-30, --sp-status-danger-text):
+              {/* Danger text #ff8389 (Carbon red-30, --sp-status-error-text):
                   6.95:1 measured on this menu's own #1f1f1f
                   (--sp-layer-01) background, 6.38:1 on
                   #262626 (--sp-background-hover, in case this class ever
@@ -2946,7 +2946,7 @@ export function SeatMap({
                   setChromeMenuOpen(false);
                   setDiscardDraftConfirmOpen(true);
                 }}
-                className={[chromeMenuItem, "text-[var(--sp-status-danger-text)] disabled:cursor-not-allowed disabled:text-[var(--sp-text-disabled)] disabled:hover:bg-transparent"].join(" ")}
+                className={[chromeMenuItem, "text-[var(--sp-status-error-text)] disabled:cursor-not-allowed disabled:text-[var(--sp-text-disabled)] disabled:hover:bg-transparent"].join(" ")}
               >
                 Discard draft changes
               </button>
@@ -3001,7 +3001,7 @@ export function SeatMap({
         aria-haspopup="dialog"
         onClick={openAskPlannerDrawer}
         className={[
-          "inline-flex h-full shrink-0 items-center gap-1.5 border-b-2 px-3 text-[12.5px] font-medium leading-none text-[var(--sp-ai-chrome-text)] transition-colors duration-150 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-ai-chrome-text-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]",
+          "inline-flex h-full shrink-0 items-center gap-1.5 border-b-2 px-3 text-[12.5px] font-medium leading-none text-[var(--sp-ai-chrome-text)] transition-colors duration-150 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-ai-chrome-text-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]",
           askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? "border-[var(--sp-ai-chrome-border)] bg-[var(--sp-background-hover)]" : "border-transparent"
         ].join(" ")}
       >
@@ -3049,7 +3049,7 @@ export function SeatMap({
               className="inline-flex h-full shrink-0 items-center gap-1.5 bg-[var(--sp-button-primary)] px-[15px] text-[12.5px] font-semibold leading-none text-white transition hover:bg-[var(--sp-button-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
             >
               <span>Publish</span>
-              <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold tabular-nums text-[var(--sp-text-on-brand)]">{publishSummary.totalChangeCount}</span>
+              <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold tabular-nums text-[var(--sp-text-on-color)]">{publishSummary.totalChangeCount}</span>
             </button>
           </div>
         </>
@@ -3144,7 +3144,7 @@ export function SeatMap({
                 type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
                 // relative z-[1]: rides above the label's hit-expansion ::after
                 // so direct clicks (caret, drag-select) still reach the field.
-                className="relative z-[1] h-9 w-full border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] pl-11 pr-10 text-sm font-medium text-[var(--sp-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--sp-text-helper)] hover:border-[var(--sp-border-strong)] focus:border-[var(--sp-brand)] focus:ring-2 focus:ring-[color:var(--sp-brand-border)]"
+                className="relative z-[1] h-9 w-full border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] pl-11 pr-10 text-sm font-medium text-[var(--sp-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--sp-text-helper)] hover:border-[var(--sp-border-strong)] focus:border-[var(--sp-interactive)] focus:ring-2 focus:ring-[color:var(--sp-border-interactive)]"
               />
               {search.trim() && (
                 <button
@@ -3245,7 +3245,7 @@ export function SeatMap({
                   the stage, so the reserved inspector column slides it inboard
                   automatically. */}
               <div className="flex shrink-0 items-start gap-2">
-              <div role="search" aria-label="Command search" className="pointer-events-auto hidden w-[300px] border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-elevation-3 lg:block">
+              <div role="search" aria-label="Command search" className="pointer-events-auto hidden w-[300px] border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-sp lg:block">
                 <label className="relative flex h-8 w-full min-w-0 items-center after:absolute after:-inset-y-1.5 after:inset-x-0">
                   <span className="sr-only">Search employee, seat, job title, department, or zone</span>
                   <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--sp-text-helper)]">
@@ -3272,14 +3272,14 @@ export function SeatMap({
                     type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
                     // relative z-[1]: above the label's hit-expansion ::after
                     // (same contract as the viewer field).
-                    className="relative z-[1] h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-[var(--sp-background)] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-brand)]"
+                    className="relative z-[1] h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-[var(--sp-background)] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-interactive)]"
                   />
                   {search.trim() ? (
                     <button
                       type="button"
                       aria-label="Clear search"
                       title="Clear search"
-                      className="absolute right-1.5 top-1/2 z-[1] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-3 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
+                      className="absolute right-1.5 top-1/2 z-[1] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-3 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-interactive)]"
                       onClick={clearSearch}
                     >
                       <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -3297,9 +3297,9 @@ export function SeatMap({
                   aria-pressed={addSeatMode}
                   onClick={addSeatMode ? cancelAddSeatMode : startAddSeatMode}
                   className={[
-                    "pointer-events-auto relative flex h-8 items-center gap-1.5 border px-3 text-[12.5px] font-semibold shadow-elevation-3 transition after:absolute after:-inset-y-1.5 after:inset-x-0 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]",
+                    "pointer-events-auto relative flex h-8 items-center gap-1.5 border px-3 text-[12.5px] font-semibold shadow-sp transition after:absolute after:-inset-y-1.5 after:inset-x-0 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]",
                     addSeatMode
-                      ? "border-[var(--sp-brand)] bg-[var(--sp-brand-wash)] text-[var(--sp-brand-text)]"
+                      ? "border-[var(--sp-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link)]"
                       : "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-secondary)] hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)]"
                   ].join(" ")}
                 >
@@ -3682,7 +3682,7 @@ export function SeatMap({
           role="status"
           aria-live="polite"
           aria-label={`${activeMode.label} mode`}
-          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--sp-brand-border)] bg-[var(--sp-layer-01)] p-4 shadow-elevation-4 motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[var(--sp-chrome-height)] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-01)] p-4 shadow-sp motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[var(--sp-chrome-height)] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="text-xs font-semibold text-[var(--sp-button-primary)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--sp-text-primary)]">{activeMode.message}</p>
@@ -3696,7 +3696,7 @@ export function SeatMap({
             </p>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-[var(--sp-brand-wash)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-brand-text)] ring-1 ring-[var(--sp-brand-border)] transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+            <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-[var(--sp-layer-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-link)] ring-1 ring-[var(--sp-border-interactive)] transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
               {activeMode.exitLabel}
             </button>
             <span className="rounded-full bg-[var(--sp-background)] px-2 py-1 text-xs font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">Esc exits</span>

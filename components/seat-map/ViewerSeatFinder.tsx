@@ -1364,7 +1364,7 @@ export function ViewerSeatFinder({
   // `hidden lg:block`, so the accessible name survives the visual collapse —
   // sr-only is position:absolute, so it leaves the flex column entirely and the
   // icon centres itself in the narrow cell.
-  const chromeSurfaceShortcut = "relative flex h-9 w-11 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-xs font-medium tracking-[0.02em] transition-colors duration-150 after:absolute after:-inset-y-1 after:inset-x-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)] lg:w-16";
+  const chromeSurfaceShortcut = "relative flex h-9 w-11 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-xs font-medium tracking-[0.02em] transition-colors duration-150 after:absolute after:-inset-y-1 after:inset-x-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)] lg:w-16";
   const chromeSurfaceShortcutLabel = "sr-only lg:not-sr-only";
 
   // Below `sm` even the marks do not fit, so the destinations fold into the
@@ -1420,7 +1420,7 @@ export function ViewerSeatFinder({
       <a
         href="#viewer-seat-map"
         data-chrome="dark"
-        className="sp-zone-chrome sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--sp-brand)] focus:bg-[var(--sp-background)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--sp-text-primary)] focus:outline-none"
+        className="sp-zone-chrome sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--sp-interactive)] focus:bg-[var(--sp-background)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--sp-text-primary)] focus:outline-none"
       >
         Skip to seat map
       </a>
@@ -1456,9 +1456,9 @@ export function ViewerSeatFinder({
             aria-haspopup="true"
             aria-label={structuredFilterCount ? `Filter seating, ${structuredFilterCount} active` : "Filter seating"}
             className={[
-              "relative flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 after:absolute after:-inset-y-2 after:inset-x-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]",
+              "relative flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 after:absolute after:-inset-y-2 after:inset-x-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]",
               structuredFilterCount > 0 || filterOpen
-                ? "border-b-[var(--sp-brand)] bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)]"
+                ? "border-b-[var(--sp-interactive)] bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)]"
                 : "border-b-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]"
             ].join(" ")}
           >
@@ -1516,7 +1516,7 @@ export function ViewerSeatFinder({
             // Open field: the 2px inset accent (both chrome themes) is what
             // ties the palette below to the field it belongs to.
             paletteOpen
-              ? "border-transparent shadow-[inset_0_0_0_2px_var(--sp-brand)]"
+              ? "border-transparent shadow-[inset_0_0_0_2px_var(--sp-interactive)]"
               : "border-[var(--sp-border-subtle)]"
           )}
         >
@@ -1619,14 +1619,14 @@ export function ViewerSeatFinder({
               // drag-select, the onClick reopen contract). The control rides
               // above its label's pseudo; the pseudo keeps the strips outside
               // the control's box.
-              className="relative z-[1] h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-brand)]"
+              className="relative z-[1] h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-interactive)]"
             />
             {search.trim() ? (
               <button
                 type="button"
                 aria-label="Clear viewer search"
                 title="Clear search"
-                className="absolute right-1.5 top-1/2 z-[1] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-3 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
+                className="absolute right-1.5 top-1/2 z-[1] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-3 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-interactive)]"
                 onClick={clearSearch}
               >
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -1691,7 +1691,7 @@ export function ViewerSeatFinder({
                 <span
                   aria-current="page"
                   title="Viewer — published map"
-                  className={cx(chromeSurfaceShortcut, "border-[var(--sp-brand)] text-white")}
+                  className={cx(chromeSurfaceShortcut, "border-[var(--sp-interactive)] text-white")}
                 >
                   {ViewerGlyph}
                   <span className={chromeSurfaceShortcutLabel}>Viewer</span>
@@ -1715,7 +1715,7 @@ export function ViewerSeatFinder({
           {accountEmail ? (
             <AccountMenu email={accountEmail} roleLabel={accountRoleLabel} navItems={surfaceMenuItems} />
           ) : (
-            <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-brand)] text-[11px] font-semibold text-[var(--sp-text-on-brand)]">V</span>
+            <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-interactive)] text-[11px] font-semibold text-[var(--sp-text-on-color)]">V</span>
           )}
         </div>
       </header>
@@ -1742,13 +1742,13 @@ export function ViewerSeatFinder({
               <div className="pointer-events-auto">
                 <FloorSelector floor={floor} onChange={next => switchFloor(next)} />
               </div>
-              <span className="pointer-events-auto border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12px] text-[var(--sp-text-secondary)] shadow-elevation-3">{mapCrumbLabel}</span>
+              <span className="pointer-events-auto border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12px] text-[var(--sp-text-secondary)] shadow-sp">{mapCrumbLabel}</span>
               {/* Viewers don't need the layer model ("Published" / "Read-only"
                   badges) — a last-publish date answers the question they have. */}
               {lastPublishedLabel && (
                 <span
                   title={`The map everyone sees — last updated ${lastPublishedLabel}`}
-                  className="pointer-events-auto rounded-full bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-text-secondary)] shadow-elevation-3 ring-1 ring-[var(--sp-border-subtle)]"
+                  className="pointer-events-auto rounded-full bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-text-secondary)] shadow-sp ring-1 ring-[var(--sp-border-subtle)]"
                 >
                   Updated {lastPublishedLabel}
                 </span>
@@ -1904,9 +1904,9 @@ export function ViewerSeatFinder({
                   title="Show occupant names"
                   onClick={() => setShowNames(current => !current)}
                   className={[
-                    "pointer-events-auto relative flex h-8 w-8 items-center justify-center border shadow-elevation-2 transition after:absolute after:-inset-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]",
+                    "pointer-events-auto relative flex h-8 w-8 items-center justify-center border shadow-sp transition after:absolute after:-inset-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]",
                     showNames
-                      ? "border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] text-[var(--sp-brand-text)]"
+                      ? "border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link)]"
                       : "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-primary)] hover:bg-[var(--sp-background)]"
                   ].join(" ")}
                 >
@@ -1943,7 +1943,7 @@ export function ViewerSeatFinder({
                 entries={[
                   { key: "assigned", label: STATUS_LABELS.assigned, dotClassName: "bg-[var(--sp-status-success-mark)]", count: assignedCount },
                   { key: "available", label: STATUS_LABELS.available, dotClassName: "bg-[var(--sp-status-neutral-mark)]", count: openCount },
-                  { key: "reserved", label: STATUS_LABELS.reserved, dotClassName: "bg-[var(--sp-status-pending-mark)]", count: reservedCount }
+                  { key: "reserved", label: STATUS_LABELS.reserved, dotClassName: "bg-[var(--sp-status-draft-mark)]", count: reservedCount }
                 ]}
                 summary={searchActive
                   ? `${resultCountLabel} · ${searchResults.resultSeatIds.length} mapped`

@@ -32,7 +32,7 @@ const eyebrowClassName = "text-xs font-semibold uppercase tracking-[0.12em] text
 // content-sized, so the 44px reach comes from the 7px vertical hit
 // expansion (only a <p> sits above; pinned in touch-target-source).
 const clearButtonClassName =
-  "relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]";
+  "relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]";
 
 export const DEFAULT_FLOOR_ROSTER_REGION_ID = "floor-roster";
 
@@ -187,7 +187,7 @@ export function FloorRoster({
                       className={[
                         "grid min-h-10 grid-cols-1 gap-x-4 gap-y-0.5 border-t border-[var(--sp-border-subtle)] py-2 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] md:items-center md:py-0",
                         highlighted
-                          ? "border-l-4 border-l-[var(--sp-button-primary)] bg-[var(--sp-brand-subtle)] pl-3 pr-4"
+                          ? "border-l-4 border-l-[var(--sp-button-primary)] bg-[var(--sp-layer-hover)] pl-3 pr-4"
                           : "px-4"
                       ].join(" ")}
                     >

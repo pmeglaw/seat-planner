@@ -31,7 +31,7 @@ export function MapWashLayer({ zoneWash, officeRoomWashes }: MapWashLayerProps) 
         <div
           aria-hidden="true"
           data-zone-wash={zoneWash.zone}
-          className="pointer-events-none absolute z-[5] border-[1.5px] border-[rgba(210,63,10,0.55)] bg-[rgba(255,87,21,0.09)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)]"
+          className="pointer-events-none absolute z-[5] border-[1.5px] border-[color-mix(in_srgb,var(--sp-interactive)_55%,transparent)] bg-[color-mix(in_srgb,var(--sp-interactive)_9%,transparent)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)]"
           style={{
             left: `${zoneWash.xMin * 100}%`,
             top: `${zoneWash.yMin * 100}%`,

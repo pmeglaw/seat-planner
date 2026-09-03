@@ -12,7 +12,7 @@ export default async function AdminSettingsPage() {
   if (!isAdmin) {
     return (
       <main className="admin-theme flex min-h-[calc(100svh-var(--sp-chrome-height))] items-center justify-center bg-[var(--sp-background)] p-6 text-[var(--sp-text-primary)]">
-        <section className="max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-6 shadow-elevation-2">
+        <section className="max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-6 shadow-sp">
           <h1 className="text-lg font-semibold text-[var(--sp-text-primary)]">Admin access required</h1>
           <p className="mt-2 text-sm text-[var(--sp-text-secondary)]">
             You are signed in, but your profile does not have admin permissions.
