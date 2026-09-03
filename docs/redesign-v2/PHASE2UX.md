@@ -677,6 +677,7 @@ add it to the component layer (and say so in its decision log).
 | Empty state | left panel, History | exists `.cds-empty` | Dark-surface variant for the panels |
 | Inline notification (error) + ghost Retry | panels | exists `.cds-notification--error` | Dark-surface variant |
 | Tag (role) | Account | exists `.cds-tag` | The one rounded element |
+| Ghost button on the dark panels | History (Show more, Retry), Account (Sign out), left-panel errors never | **hand-built** dark variant, zone-scoped (`.sp-panel .cds-btn--ghost`) | Added in Phase 3 PR 2: `.cds-btn--ghost` text is blue 60 = 3.0:1 on gray 100 in the light theme; the variant uses `--sp-panel-dark-link` (blue 40) |
 | Radio group (Theme) | Account | **hand-built** (the index has `.cds-checkbox`, no radio) | Native radios, Carbon styling |
 | Read-only row text | Account (unseated) | none needed | Static text, not a disabled control |
 | Tooltip on icon buttons | utilities, Undo/Redo | **hand-built** | Hover + focus, `label-01` |
