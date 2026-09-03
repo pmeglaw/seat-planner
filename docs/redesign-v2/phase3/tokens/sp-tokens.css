@@ -366,3 +366,78 @@
   --sp-seat-mark-text:         var(--cds-text-secondary);   /* label beside a mark */
   --sp-map-mat:                var(--cds-layer-01);         /* canvas behind the plan */
 }
+
+/* -----------------------------------------------------------------------------
+   7b. TIER B — MAP (PR 3): control row, search, palette, seat pill, slot,
+       inspector, mode card, Ask Planner (Carbon for AI), tearsheet, roster, band
+   -------------------------------------------------------------------------- */
+:root {
+  /* control row */
+  --sp-control-divider:    var(--cds-border-subtle-01);
+  --sp-control-divider-h:  var(--cds-spacing-06);            /* 24 */
+  --sp-kbd-h:              var(--cds-spacing-06);            /* 24 — the ⌘K / Ctrl K hint */
+  --sp-menu-w:             224px;                            /* floor selector */
+  --sp-search-w:           320px;
+  --sp-search-scope-w:     var(--cds-spacing-13);            /* 160 — the trailing scope segment */
+
+  /* Names toggle — Carbon toggle, small: 32×16 track, 12 knob; on = $support-success mark grade */
+  --sp-toggle-track-w:     var(--cds-size-sm);
+  --sp-toggle-track-h:     var(--cds-spacing-05);
+  --sp-toggle-knob:        var(--cds-spacing-04);
+  --sp-toggle-on:          var(--cds-status-success-mark);
+  --sp-toggle-off-color:   var(--cds-toggle-off);
+  --sp-toggle-knob-color:  var(--cds-icon-on-color);
+
+  /* seat pill — ≤ 28 (deviation 8), fit-width, constant height = the empty-seat footprint */
+  --sp-pill-h:             var(--sp-seat-footprint);
+  --sp-pill-pad:           var(--cds-spacing-03);
+  --sp-pill-fill:          var(--cds-layer-02);
+  --sp-pill-fill-hover:    var(--cds-layer-hover-02);
+  --sp-pill-edge:          var(--cds-icon-secondary);
+  --sp-pill-text:          var(--cds-text-primary);
+  --sp-pill-selected-edge: var(--cds-border-inverse);
+  --sp-pill-search-fill:   var(--cds-highlight);
+  --sp-pill-search-edge:   var(--cds-support-info);
+  --sp-pill-quiet-fill:    var(--cds-layer-01);
+  --sp-pill-quiet-edge:    var(--cds-border-subtle-01);
+  --sp-pill-quiet-text:    var(--cds-text-secondary);       /* not text-helper: 4.10 on the hovered fill */
+  --sp-pill-origin-edge:   var(--cds-icon-secondary);       /* dashed */
+  --sp-pill-target-edge:   var(--cds-status-success-mark);
+  --sp-pill-target-fill:   var(--cds-support-success-subtle);
+  --sp-pill-invalid-edge:  var(--cds-status-error-mark);    /* same construction as target, error family, dashed */
+  --sp-pill-invalid-fill:  var(--cds-support-error-subtle);
+  --sp-pill-invalid-text:  var(--cds-text-primary);
+  --sp-pill-badge:         var(--cds-status-caution-mark);  /* ◇ changed in draft — the Draft family's shape */
+  --sp-pill-badge-size:    var(--cds-spacing-03);           /* 8 */
+  --sp-pill-badge-stroke:  1.5px;                           /* the one stroke under 2: a 2px stroke closes an 8px hollow diamond (PHASE3DS §1.16) */
+  --sp-pill-names-off:     var(--cds-icon-primary);         /* names off: assigned = filled footprint */
+
+  /* right slot (inspector · mode card · Ask Planner) and the commit bar */
+  --sp-slot-bg:            var(--cds-layer-01);
+  --sp-slot-rule:          var(--cds-border-subtle-01);
+  --sp-slot-pad:           var(--cds-spacing-05);
+  --sp-commit-bar-h:       var(--cds-size-xl);              /* 64 */
+  --sp-contact-row-h:      var(--cds-size-lg);
+  --sp-listbox-row-h:      var(--cds-size-md);
+  --sp-textarea-min-h:     var(--cds-size-2xl);             /* 80 = two field heights */
+
+  /* Carbon for AI — the asset predates Carbon for AI, so the gradient end is a palette
+     reference (tier-C exception 2, PHASE3DS §1.18). Label text and border only; no aura. */
+  --sp-ai-label-text:      var(--cds-link-primary);
+  --sp-ai-label-text-hover:var(--cds-link-primary-hover);   /* blue 70: blue 60 is 4.08 on the hovered fill */
+  --sp-ai-border-start:    var(--cds-border-interactive);
+  --sp-ai-border-end:      var(--blue-40);
+
+  /* publish review — wide tearsheet */
+  --sp-tearsheet-top:      var(--cds-size-lg);              /* the header stays visible above */
+  --sp-tearsheet-bg:       var(--cds-layer-02);
+  --sp-tearsheet-rail-w:   256px;
+  --sp-tearsheet-footer-h: var(--cds-size-xl);
+  --sp-group-row-bg:       var(--cds-layer-accent-01);      /* floor / department eyebrow rows */
+
+  /* roster and band */
+  --sp-roster-row-h:       var(--cds-size-md);
+  --sp-band-bg:            var(--cds-layer-01);
+  --sp-band-rule:          var(--cds-border-subtle-00);
+  --sp-canvas-plan-bg:     var(--cds-layer-02);             /* stands in for the raster in specimens */
+}

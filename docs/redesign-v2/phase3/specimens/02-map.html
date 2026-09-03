@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Phase 3 · 02 Map — Seat Planner</title>
+<link rel="stylesheet" href="../tokens/carbon-tokens.css">
+<link rel="stylesheet" href="../tokens/sp-tokens.css">
+<link rel="stylesheet" href="../components/carbon-components.css">
+<link rel="stylesheet" href="../components/sp-components.css">
+<script>
+(function () {
+  var h = document.documentElement;
+  function apply(t) {
+    if (t === "light")      { h.dataset.theme = "light"; h.dataset.carbonTheme = "white"; }
+    else if (t === "dark")  { h.dataset.theme = "dark";  h.dataset.carbonTheme = "g100";  }
+    else                    { delete h.dataset.theme;    delete h.dataset.carbonTheme;     }
+  }
+  apply(new URLSearchParams(location.search).get("theme"));
+  window.spTheme = apply;
+})();
+</script>
+<style>
+.spec { max-width: none; margin: 0; padding: var(--sp-space-07) var(--sp-space-07) var(--sp-space-12); }
+.spec-bar { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: var(--sp-space-05); height: var(--sp-size-lg); padding: 0 var(--sp-space-07); background: var(--sp-layer-01); border-bottom: 1px solid var(--sp-border-subtle); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); }
+.spec-bar nav { display: flex; gap: var(--sp-space-05); margin-left: auto; }
+.spec-bar .spec-theme { display: flex; }
+.spec h1 { font: var(--sp-type-heading-04); margin-bottom: var(--sp-space-03); }
+.spec h2 { font: var(--sp-type-heading-03); margin: var(--sp-space-10) 0 var(--sp-space-05); }
+.spec h2:first-of-type { margin-top: var(--sp-space-09); }
+.spec h3 { font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); margin: var(--sp-space-07) 0 var(--sp-space-03); }
+.spec p.lede { color: var(--sp-text-secondary); max-width: 66ch; }
+.spec-note { font: var(--sp-type-code-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); }
+.spec-anatomy { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); margin-top: var(--sp-space-02); max-width: 70ch; }
+.spec-row { display: flex; align-items: flex-start; gap: var(--sp-space-05); flex-wrap: wrap; }
+.spec-row > div > .spec-note { display: block; margin-bottom: var(--sp-space-02); }
+.frame { overflow-x: auto; margin: 0 calc(-1 * var(--sp-space-07)) var(--sp-space-05); }
+.frame1920 { width: 1920px; }
+.frame1024 { width: 1024px; }
+.cap { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); margin: var(--sp-space-02) 0 0; }
+.mat { position: relative; background: var(--sp-map-mat); padding: var(--sp-space-05) var(--sp-space-05) var(--sp-space-09); display: flex; align-items: center; gap: var(--sp-space-07); flex-wrap: wrap; min-height: var(--sp-size-2xl); }   /* bottom room for the code tooltips */
+.mat.plan { background: var(--sp-canvas-plan-bg); box-shadow: inset 0 0 0 1px var(--sp-border-subtle-00); }
+.gray { filter: grayscale(1); }
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, 400px); gap: var(--sp-space-07) var(--sp-space-05); align-items: start; }
+.slot-grid .sp-slot { height: 720px; }
+.slot-grid .sp-slot.short { height: auto; }
+.sheet-frame { position: relative; height: 640px; margin-bottom: var(--sp-space-05); background: var(--sp-map-mat); }
+.sheet-frame .sp-tearsheet-host { position: absolute; }
+.sheet-frame .sp-tearsheet { top: var(--sp-space-09); }
+.canvas-demo { width: 720px; height: 300px; }
+.spec-row .canvas-demo { flex: none; }
+.lbl { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); display: block; margin-bottom: var(--sp-space-02); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-menu" viewBox="0 0 20 20"><path d="M2 5h16M2 10h16M2 15h16" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-help" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7.5 8a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .8-1 1.7M10 14.5v.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-history" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 5v5l3.5 2" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-account" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 15.5c1-2.5 3-3.5 5-3.5s4 1 5 3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 16 16"><path d="M8 14s4-4.2 4-7.5a4 4 0 0 0-8 0C4 9.8 8 14 8 14z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="6.5" r="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 16 16"><path d="M6 4L2.5 7.5 6 11M3 7.5h6.5a3 3 0 0 1 0 6H8" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 16 16"><path d="M10 4l3.5 3.5L10 11M13 7.5H6.5a3 3 0 0 0 0 6H8" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-more" viewBox="0 0 16 16"><circle cx="3" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="13" cy="8" r="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-link" viewBox="0 0 16 16"><path d="M6.5 9.5l3-3M5 11a2.5 2.5 0 0 1 0-3.5l1.5-1.5M11 5a2.5 2.5 0 0 1 0 3.5L9.5 10" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 16 16"><rect x="5" y="5" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 11V3h8" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 16 16"><path d="M3 8h10" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 16 16"><path d="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-error-light" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="M6.5 6.5l7 7M13.5 6.5l-7 7" fill="none" stroke="var(--sp-layer-02)" stroke-width="1.5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="M10 9v5M10 6v.5" fill="none" stroke="var(--sp-layer-02)" stroke-width="1.8"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 20 20"><path d="M10 2l9 16H1z" fill="currentColor"/><path d="M10 8v5M10 15v.5" fill="none" stroke="var(--sp-layer-02)" stroke-width="1.8"/></symbol>
+  <symbol id="i-check16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.5 8.5l2.5 2.5L11.5 6" fill="none" stroke="var(--sp-layer-02)" stroke-width="1.5"/></symbol>
+  <symbol id="i-diamond" viewBox="0 0 8 8"><path d="M4 .75L7.25 4 4 7.25.75 4z"/></symbol>
+  <symbol id="i-draft12" viewBox="0 0 12 12"><path d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"/></symbol>
+  <symbol id="i-pub12" viewBox="0 0 12 12"><rect x="0" y="0" width="12" height="12" fill="currentColor"/></symbol>
+  <symbol id="i-open" viewBox="0 0 16 16"><circle data-stroke cx="8" cy="8" r="6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 16 16"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></symbol>
+  <symbol id="i-unavail" viewBox="0 0 16 16"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></symbol>
+</svg>
+
+<a class="cds-skip-link" href="#main">Skip to main content</a>
+<div class="spec-bar" role="toolbar" aria-label="Specimen controls">
+  <strong>Phase 3 · 02 Map</strong>
+  <span class="spec-theme" role="group" aria-label="Theme">
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('light')">Light</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('dark')">Dark</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme(null)">System</button>
+  </span>
+  <nav aria-label="Specimens"><a href="index.html">Index</a><a href="compare.html?p=02-map">Both themes</a><a href="00-foundations.html">00</a><a href="01-shell.html">01</a><a href="05-status-and-marks.html">05</a></nav>
+</div>
+
+<main id="main" class="spec">
+  <h1>Map</h1>
+  <p class="lede">The control row and its controls, the search palette, the seat pill and every state it takes, the 400px right slot in its three owners (inspector, mode card, Ask Planner), the publish-review tearsheet, the Floor 2 roster, the status band, and the canvas states. All theme-following; the tier-C tooltip carries the seat code.</p>
+
+  <h2 id="row">Control row — <code>.sp-control-row</code> at 1920</h2>
+  <p class="spec-anatomy">48px, controls 40, gaps 8. Published: floor selector 224 · search 320 with scope segment · Filters (Hidden at N = 0) · result count · Find me · Names. Draft continues after a divider: Undo · Redo · Add seat · Ask Planner · <strong>Publish N changes</strong> (the row's one primary) · ⋯ · Names. Disabled Publish states its reason beside it.</p>
+
+  <h3>Published — viewer, three filters applied, search hovered</h3>
+  <div class="frame"><div class="frame1920">
+    <div class="sp-control-row">
+      <button class="sp-menu-button" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-pin"/></svg><span class="sp-menu-button-label">Floor 3 · Pre-Litigation</span><svg class="sp-chevron"><use href="#i-chev"/></svg></button>
+      <div class="sp-search" role="search" data-state="hover"><svg><use href="#i-search"/></svg><input type="search" placeholder="Find a person or seat" aria-label="Find a person or seat"><span class="sp-kbd">Ctrl K</span><button class="sp-search-scope" aria-haspopup="menu" aria-expanded="false">This floor <svg><use href="#i-chev"/></svg></button></div>
+      <span class="sp-filters"><button class="cds-btn cds-btn--tertiary cds-btn--md" aria-expanded="false" aria-controls="lp">Filters · 3</button><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Clear filters"><svg><use href="#i-close"/></svg></button></span>
+      <span class="sp-control-count">22 of 68 seats match</span>
+      <button class="cds-btn cds-btn--ghost cds-btn--md">Find me</button>
+      <button class="sp-toggle" aria-pressed="true"><span>Names</span><span class="sp-toggle-track"></span><span class="sp-toggle-state">On</span></button>
+    </div>
+  </div></div>
+
+  <h3>Draft — admin, 4 changes; Redo disabled (empty stack); Ask Planner carrying 3 highlights</h3>
+  <div class="frame"><div class="frame1920">
+    <div class="sp-control-row">
+      <button class="sp-menu-button" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-pin"/></svg><span class="sp-menu-button-label">Floor 3 · Pre-Litigation</span><svg class="sp-chevron"><use href="#i-chev"/></svg></button>
+      <div class="sp-search" role="search"><svg><use href="#i-search"/></svg><input type="search" placeholder="Find a person or seat" aria-label="Find a person or seat"><span class="sp-kbd">⌘ K</span><button class="sp-search-scope" aria-haspopup="menu" aria-expanded="false">This floor <svg><use href="#i-chev"/></svg></button></div>
+      <span class="sp-control-count">68 seats</span>
+      <button class="cds-btn cds-btn--ghost cds-btn--md">Find me</button>
+      <span class="sp-control-divider" role="separator"></span>
+      <span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Undo move Sarah Reyes · Ctrl Z"><svg><use href="#i-undo"/></svg></button><span class="sp-tooltip" role="tooltip">Undo move Sarah Reyes · Ctrl Z</span></span>
+      <button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Redo · Ctrl Shift Z" disabled><svg><use href="#i-redo"/></svg></button>
+      <button class="cds-btn cds-btn--ghost cds-btn--md"><svg style="position:static;width:16px;height:16px"><use href="#i-plus"/></svg>Add seat</button>
+      <button class="cds-btn cds-btn--tertiary cds-btn--md" data-count="3">Ask Planner</button>
+      <button class="cds-btn cds-btn--primary cds-btn--md" style="min-width:176px">Publish 4 changes</button>
+      <span class="cds-overflow"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="More actions" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-more"/></svg></button></span>
+      <button class="sp-toggle" aria-pressed="true"><span>Names</span><span class="sp-toggle-track"></span><span class="sp-toggle-state">On</span></button>
+    </div>
+  </div></div>
+
+  <h3>Draft — no changes: Publish disabled with the reason beside it; Add seat toggled to “Exit add seat”; overflow open with the danger item</h3>
+  <div class="frame"><div class="frame1920" style="height:160px">
+    <div class="sp-control-row">
+      <button class="sp-menu-button" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-pin"/></svg><span class="sp-menu-button-label">Floor 3 · Pre-Litigation</span><svg class="sp-chevron"><use href="#i-chev"/></svg></button>
+      <div class="sp-search" role="search"><svg><use href="#i-search"/></svg><input type="search" placeholder="Find a person or seat" aria-label="Find a person or seat"><span class="sp-kbd">Ctrl K</span><button class="sp-search-scope" aria-haspopup="menu" aria-expanded="false">This floor <svg><use href="#i-chev"/></svg></button></div>
+      <span class="sp-control-count">68 seats</span>
+      <button class="cds-btn cds-btn--ghost cds-btn--md">Find me</button>
+      <span class="sp-control-divider" role="separator"></span>
+      <button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Undo · Ctrl Z" disabled><svg><use href="#i-undo"/></svg></button>
+      <button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Redo · Ctrl Shift Z" disabled><svg><use href="#i-redo"/></svg></button>
+      <button class="cds-btn cds-btn--ghost cds-btn--md" aria-pressed="true" data-state="pressed">Exit add seat</button>
+      <button class="cds-btn cds-btn--tertiary cds-btn--md">Ask Planner</button>
+      <button class="cds-btn cds-btn--primary cds-btn--md" style="min-width:176px" disabled aria-describedby="pub-reason">Publish</button><span class="sp-control-reason" id="pub-reason">No changes to publish</span>
+      <span class="cds-overflow" data-open><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="More actions" aria-haspopup="menu" aria-expanded="true"><svg><use href="#i-more"/></svg></button>
+        <div class="cds-overflow-menu" role="menu"><button role="menuitem" class="cds-danger" disabled>Discard draft changes</button></div></span>
+      <button class="sp-toggle" aria-pressed="false"><span>Names</span><span class="sp-toggle-track"></span><span class="sp-toggle-state">Off</span></button>
+    </div>
+  </div></div>
+  <p class="cap">Discard draft changes is disabled too while nothing is discardable; its reason is the same “No changes” the indicator already states. Names off collapses assigned pills to the filled footprint (below).</p>
+
+  <h3>Roster floor (Floor 2) — Names and Add seat Hidden; count counts people</h3>
+  <div class="frame"><div class="frame1920">
+    <div class="sp-control-row">
+      <button class="sp-menu-button" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-pin"/></svg><span class="sp-menu-button-label">Floor 2 · Litigation</span><svg class="sp-chevron"><use href="#i-chev"/></svg></button>
+      <div class="sp-search" role="search"><svg><use href="#i-search"/></svg><input type="search" placeholder="Find a person" aria-label="Find a person"><span class="sp-kbd">Ctrl K</span><button class="sp-search-scope" aria-haspopup="menu" aria-expanded="false">This floor <svg><use href="#i-chev"/></svg></button></div>
+      <span class="sp-control-count">40 people</span>
+      <button class="cds-btn cds-btn--ghost cds-btn--md">Find me</button>
+      <span class="sp-control-divider" role="separator"></span>
+      <button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Undo · Ctrl Z"><svg><use href="#i-undo"/></svg></button>
+      <button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Redo · Ctrl Shift Z" disabled><svg><use href="#i-redo"/></svg></button>
+      <button class="cds-btn cds-btn--tertiary cds-btn--md">Ask Planner</button>
+      <button class="cds-btn cds-btn--primary cds-btn--md" style="min-width:176px">Publish 4 changes</button>
+      <span class="cds-overflow"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="More actions" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-more"/></svg></button></span>
+    </div>
+  </div></div>
+
+  <h3>Floor selector open — the registry's floors; current marked</h3>
+  <div class="spec-row" style="min-height:160px">
+    <div><span class="spec-note">open</span><div style="position:relative;width:224px"><button class="sp-menu-button" aria-haspopup="menu" aria-expanded="true"><svg><use href="#i-pin"/></svg><span class="sp-menu-button-label">Floor 3 · Pre-Litigation</span><svg class="sp-chevron"><use href="#i-chev"/></svg></button>
+      <div class="sp-menu" role="menu"><button role="menuitem" aria-current="true">Floor 3 · Pre-Litigation <span class="sp-menu-meta">68 seats</span></button><button role="menuitem" data-state="hover">Floor 2 · Litigation <span class="sp-menu-meta">40 people</span></button></div></div></div>
+    <div><span class="spec-note">focus</span><button class="sp-menu-button" data-state="focus" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-pin"/></svg><span class="sp-menu-button-label">Floor 3 · Pre-Litigation</span><svg class="sp-chevron"><use href="#i-chev"/></svg></button></div>
+    <div><span class="spec-note">hover</span><button class="sp-menu-button" data-state="hover" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-pin"/></svg><span class="sp-menu-button-label">Floor 3 · Pre-Litigation</span><svg class="sp-chevron"><use href="#i-chev"/></svg></button></div>
+  </div>
+
+  <h3>Names toggle — <code>.sp-toggle</code> · Filters split control — <code>.sp-filters</code></h3>
+  <div class="spec-row">
+    <div><span class="spec-note">on · off · hover · focus</span><div class="spec-row" style="gap:var(--sp-space-03)">
+      <button class="sp-toggle" aria-pressed="true"><span>Names</span><span class="sp-toggle-track"></span><span class="sp-toggle-state">On</span></button>
+      <button class="sp-toggle" aria-pressed="false"><span>Names</span><span class="sp-toggle-track"></span><span class="sp-toggle-state">Off</span></button>
+      <button class="sp-toggle" aria-pressed="true" data-state="hover"><span>Names</span><span class="sp-toggle-track"></span><span class="sp-toggle-state">On</span></button>
+      <button class="sp-toggle" aria-pressed="false" data-state="focus"><span>Names</span><span class="sp-toggle-track"></span><span class="sp-toggle-state">Off</span></button>
+    </div></div>
+    <div><span class="spec-note">Filters · N (opens the left panel) + Clear filters (40×40) · clear hovered · Hidden at N = 0</span><div class="spec-row" style="gap:var(--sp-space-05)">
+      <span class="sp-filters"><button class="cds-btn cds-btn--tertiary cds-btn--md" aria-expanded="false">Filters · 3</button><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Clear filters"><svg><use href="#i-close"/></svg></button></span>
+      <span class="sp-filters"><button class="cds-btn cds-btn--tertiary cds-btn--md" aria-expanded="false">Filters · 1</button><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Clear filters" data-state="hover"><svg><use href="#i-close"/></svg></button></span>
+      <span class="sp-filters"><button class="cds-btn cds-btn--tertiary cds-btn--md" aria-expanded="true" data-state="focus">Filters · 3</button><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Clear filters"><svg><use href="#i-close"/></svg></button></span>
+    </div></div>
+  </div>
+  <p class="cap">Two interactive elements, never a × nested inside the button. The badge count is the applied-filter count (patterns.md: a collapsed filter shows its count and a way to clear without reopening).</p>
+
+  <h2 id="search">Search — <code>.sp-search</code> + palette <code>.sp-palette</code> (560)</h2>
+  <p class="spec-anatomy">Focused search: the field never gets a label; the scope segment offers This floor / Whole building; the palette header carries both counts, zero included; typing never switches floor. The keyboard hint is platform-aware: Ctrl K on Windows, ⌘ K on Mac (Phase 4 obligation) — both shown.</p>
+  <div class="spec-row" style="align-items:flex-start">
+    <div><span class="spec-note">results · “rey” · 7 on this floor · 11 in building · first row selected</span>
+      <div class="sp-search" role="search" data-state="focus" style="margin-bottom:var(--sp-space-02)"><svg><use href="#i-search"/></svg><input type="search" value="rey" aria-label="Find a person or seat"><button class="sp-search-clear" aria-label="Clear search"><svg><use href="#i-close"/></svg></button><button class="sp-search-scope" aria-haspopup="menu" aria-expanded="false">This floor <svg><use href="#i-chev"/></svg></button></div>
+      <div class="sp-palette" role="listbox" aria-label="Results">
+        <div class="sp-palette-header"><strong>Results</strong> · 7 on this floor · <a href="#">11 in building</a></div>
+        <ul class="sp-palette-list">
+          <li class="sp-palette-row" role="option" aria-selected="true"><span><span class="sp-palette-title">Sarah Reyes</span><br><span class="sp-palette-sub">Case Manager · Case Management</span></span><span class="cds-tag cds-tag--outline">Person</span><span class="sp-palette-code">NE04</span></li>
+          <li class="sp-palette-row" role="option"><span><span class="sp-palette-title">Tom Reyes</span><br><span class="sp-palette-sub">Paralegal · Pre-Litigation</span></span><span class="cds-tag cds-tag--outline">Person</span><span class="sp-palette-code">SW11</span></li>
+          <li class="sp-palette-row" role="option" data-state="hover"><span><span class="sp-palette-title">Reyes pod</span><br><span class="sp-palette-sub">Zone · 6 seats</span></span><span class="cds-tag cds-tag--outline">Zone</span><span class="sp-palette-code">6</span></li>
+          <li class="sp-palette-row" role="option"><span><span class="sp-palette-title">Marta Reyes-Cole</span><br><span class="sp-palette-sub">Attorney · Litigation</span></span><span class="cds-tag cds-tag--outline">Person</span><span class="cds-tag">Floor 2</span></li>
+          <li class="sp-palette-row" role="option"><span><span class="sp-palette-title">Ana Reyes</span><br><span class="sp-palette-sub">Intake · Front Office</span></span><span class="cds-tag cds-tag--outline">Person</span><span class="sp-palette-code">NW02</span></li>
+        </ul>
+        <div class="sp-palette-footer"><span>↑↓ to move</span><span>Enter opens</span><span>Esc closes</span></div>
+      </div>
+    </div>
+    <div><span class="spec-note">browse (empty query) — zones, then people seated-first</span>
+      <div class="sp-palette" role="listbox" aria-label="Browse">
+        <div class="sp-palette-header"><strong>Browse</strong> · 68 seats on this floor</div>
+        <div class="sp-palette-group">Zones</div>
+        <ul class="sp-palette-list" style="max-height:none">
+          <li class="sp-palette-row" role="option"><span><span class="sp-palette-title">North-east pod</span><br><span class="sp-palette-sub">12 seats</span></span><span class="cds-tag cds-tag--outline">Zone</span><span class="sp-palette-code">12</span></li>
+          <li class="sp-palette-row" role="option"><span><span class="sp-palette-title">Attorney offices</span><br><span class="sp-palette-sub">18 seats</span></span><span class="cds-tag cds-tag--outline">Zone</span><span class="sp-palette-code">18</span></li>
+        </ul>
+        <div class="sp-palette-group">People</div>
+        <ul class="sp-palette-list" style="max-height:none">
+          <li class="sp-palette-row" role="option"><span><span class="sp-palette-title">Alex Kim</span><br><span class="sp-palette-sub">Attorney · Litigation</span></span><span class="cds-tag cds-tag--outline">Person</span><span class="sp-palette-code">AO03</span></li>
+        </ul>
+        <div class="sp-palette-footer"><span>↑↓ to move</span><span>Enter opens</span><span>Esc closes</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="spec-row" style="margin-top:var(--sp-space-05)">
+    <div><span class="spec-note">zero · other scope has hits → Widen</span>
+      <div class="sp-palette"><div class="sp-palette-header"><strong>Results</strong> · 0 on this floor · <a href="#">3 in building</a></div>
+        <div class="sp-palette-empty"><strong>No results for “xyz” on this floor</strong>0 on this floor · 3 in building<div class="cds-empty-actions" style="margin-top:var(--sp-space-03)"><button class="cds-btn cds-btn--ghost cds-btn--sm">Widen to whole building</button><button class="cds-btn cds-btn--ghost cds-btn--sm">Clear search</button></div></div></div></div>
+    <div><span class="spec-note">zero · nowhere</span>
+      <div class="sp-palette"><div class="sp-palette-header"><strong>Results</strong> · 0 on this floor · 0 in building</div>
+        <div class="sp-palette-empty"><strong>No results for “xyz”</strong>0 on this floor · 0 in building<div class="cds-empty-actions" style="margin-top:var(--sp-space-03)"><button class="cds-btn cds-btn--ghost cds-btn--sm">Clear search</button></div></div></div></div>
+    <div><span class="spec-note">loading · shown only past 300ms</span>
+      <div class="sp-palette"><div class="sp-palette-header"><strong>Results</strong></div><div class="sp-palette-loading" aria-busy="true"><span class="sp-skeleton" style="width:160px"></span></div></div></div>
+    <div><span class="spec-note">error</span>
+      <div class="sp-palette"><div class="sp-palette-header"><strong>Results</strong></div><div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>Search couldn't run</strong><p>Try again in a moment.</p></div><button class="cds-btn cds-btn--ghost">Retry</button></div></div></div>
+  </div>
+
+  <h2 id="pill">Seat pill — <code>.sp-pill</code> (28 tall, fit-width, constant height)</h2>
+  <p class="spec-anatomy">Name <code>First L.</code> in label-01, 8px pads, 1px edge on the layer-02 fill. Hover / focus show the seat code in the tier-C tooltip 8px below; selection shows it in the inspector eyebrow. Quiet = filtered out. ◇ = changed in draft (the inspector also says “Changed in draft”). Names off = filled 28 footprint. Every pill carries the 44px hit region (deviation 7).</p>
+  <div class="mat plan">
+    <span><span class="lbl">rest</span><button class="sp-pill cds-touch-target">Sarah R.</button></span>
+    <span><span class="lbl">hover + code</span><span class="sp-has-tooltip" data-state="hover"><button class="sp-pill cds-touch-target" data-state="hover">Sarah R.</button><span class="sp-tooltip" role="tooltip">NE04</span></span></span>
+    <span><span class="lbl">focus + code</span><span class="sp-has-tooltip" data-state="focus"><button class="sp-pill cds-touch-target" data-state="focus">Sarah R.</button><span class="sp-tooltip" role="tooltip">NE04</span></span></span>
+    <span><span class="lbl">selected (2px inverse)</span><button class="sp-pill cds-touch-target" aria-selected="true">Sarah R.</button></span>
+    <span><span class="lbl">search hit</span><button class="sp-pill sp-pill--search cds-touch-target">Tom R.</button></span>
+    <span><span class="lbl">quiet (filtered out)</span><button class="sp-pill sp-pill--quiet cds-touch-target">Daniel O.</button></span>
+    <span><span class="lbl">move origin</span><button class="sp-pill sp-pill--origin cds-touch-target">Sarah R.</button></span>
+    <span><span class="lbl">move target · solid 2px + success tint</span><button class="sp-pill sp-pill--target cds-touch-target">NE06</button></span>
+    <span><span class="lbl">invalid target · dashed 2px + error tint</span><button class="sp-pill sp-pill--invalid cds-touch-target" aria-disabled="true">Maya C.</button></span>
+    <span><span class="lbl">changed in draft ◇</span><button class="sp-pill cds-touch-target">Kai M.<svg class="sp-pill-badge" aria-hidden="true"><use href="#i-diamond"/></svg></button></span>
+    <span><span class="lbl">search + changed</span><button class="sp-pill sp-pill--search cds-touch-target">Tom R.<svg class="sp-pill-badge" aria-hidden="true"><use href="#i-diamond"/></svg></button></span>
+    <span><span class="lbl">longest label (fit-width, no truncation)</span><button class="sp-pill cds-touch-target">Priya N.</button></span>
+  </div>
+  <div class="mat plan" style="margin-top:var(--sp-space-03)">
+    <span><span class="lbl">names off · assigned</span><button class="sp-pill sp-pill--names-off cds-touch-target" aria-label="Sarah Reyes">Sarah R.</button></span>
+    <span><span class="lbl">names off · assigned + changed</span><button class="sp-pill sp-pill--names-off cds-touch-target" aria-label="Kai Morrison">Kai M.<svg class="sp-pill-badge" aria-hidden="true" style="color:var(--sp-pill-badge)"><use href="#i-diamond"/></svg></button></span>
+    <span><span class="lbl">open</span><span class="sp-seat-footprint cds-touch-target" title="Open seat"><svg class="sp-seat-mark" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-open"/></svg></span></span>
+    <span><span class="lbl">reserved</span><span class="sp-seat-footprint cds-touch-target"><svg class="sp-seat-mark" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-lock"/></svg></span></span>
+    <span><span class="lbl">unavailable</span><span class="sp-seat-footprint cds-touch-target"><svg class="sp-seat-mark" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-unavail"/></svg></span></span>
+    <span><span class="lbl">legend follows the toggle</span><span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 56</span><span class="sp-seat-legend"><span class="sp-seat-footprint" style="width:16px;height:16px;background:var(--sp-pill-names-off);box-shadow:none" aria-hidden="true"></span>Assigned 56 (names off)</span></span>
+  </div>
+  <div class="mat plan gray" aria-hidden="true" style="margin-top:var(--sp-space-03)">
+    <span><span class="lbl">grayscale</span></span>
+    <button class="sp-pill">Sarah R.</button><button class="sp-pill" aria-selected="true">Sarah R.</button><button class="sp-pill sp-pill--search">Tom R.</button><button class="sp-pill sp-pill--quiet">Daniel O.</button><button class="sp-pill sp-pill--origin">Sarah R.</button><button class="sp-pill sp-pill--target">NE06</button><button class="sp-pill sp-pill--invalid">Maya C.</button><button class="sp-pill">Kai M.<svg class="sp-pill-badge"><use href="#i-diamond"/></svg></button><button class="sp-pill sp-pill--names-off">Sarah R.</button>
+  </div>
+  <p class="cap">Grayscale: rest (1px edge) · selected (2px edge) · search (filled + 1px) · quiet (light edge, lighter text) · origin (dashed 2px, no tint) · target (solid 2px, tinted) · invalid (dashed 2px, tinted) · ◇ badge · names-off (solid). No two states share a silhouette. Stroke rule: only the 8px ◇ goes under 2px (1.5px — a 2px stroke closes it); verified crisp at 1x and 3x.</p>
+
+  <h2 id="slot">Right slot (400) — <code>.sp-slot</code>: inspector · mode card · Ask Planner</h2>
+  <p class="spec-anatomy">One owner at a time; the canvas is pushed to 1520 and the control row never reflows. Header: eyebrow · title (≤ 22 chars on one line) · legend row · Copy link · ×. Commit bar 64 bleeds to the edge: Cancel ghost · primary. The primary here is this container's own — a side panel is its own container, so it does not compete with Publish in the row.</p>
+
+  <h3>Inspector — Published (read-only) · Draft editing with inline create · open seat in Draft</h3>
+  <div class="slot-grid">
+    <section class="sp-slot" aria-labelledby="ins1">
+      <div class="sp-slot-header"><div><div class="sp-slot-eyebrow">Seat NE04 · North-east pod</div><h2 class="sp-slot-title" id="ins1">Sarah Reyes</h2></div>
+        <div class="sp-slot-actions"><span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Copy link to this seat"><svg><use href="#i-link"/></svg></button><span class="sp-tooltip" role="tooltip">Copy link to this seat</span></span><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Close"><svg><use href="#i-close"/></svg></button></div></div>
+      <div class="sp-slot-body">
+        <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned</span>
+        <div class="sp-slot-section">Person</div>
+        <div class="sp-person-role">Case Manager · Case Management</div>
+        <dl>
+          <div class="sp-contact-row"><dt>Email</dt><dd><a href="mailto:s.reyes@megeredchianlaw.com">s.reyes@megeredchianlaw.com</a></dd><span></span></div>
+          <div class="sp-contact-row"><dt>Extension</dt><dd>214</dd><span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon" aria-label="Copy extension"><svg><use href="#i-copy"/></svg></button><span class="sp-tooltip" role="tooltip">Copy extension</span></span></div>
+          <div class="sp-contact-row"><dt>Link</dt><dd class="sp-person-role" style="margin:0">Link to this person</dd><span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon" aria-label="Copy link to this person"><svg><use href="#i-link"/></svg></button><span class="sp-tooltip" role="tooltip">Copy link to this person</span></span></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="sp-slot" aria-labelledby="ins2">
+      <div class="sp-slot-header"><div><div class="sp-slot-eyebrow">Seat NE06 · North-east pod</div><h2 class="sp-slot-title" id="ins2">Open seat</h2></div>
+        <div class="sp-slot-actions"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Copy link to this seat"><svg><use href="#i-link"/></svg></button><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Close"><svg><use href="#i-close"/></svg></button></div></div>
+      <div class="sp-slot-body">
+        <span class="sp-seat-legend"><svg class="sp-seat-mark" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-open"/></svg>Open · no employee assigned</span>
+        <form class="cds-form" style="margin-top:var(--sp-space-03)">
+          <div class="cds-form-item"><label for="emp">Employee name</label><div class="sp-combobox" data-open><input id="emp" class="cds-text-input" role="combobox" aria-expanded="true" value="Kai Morrison"><svg><use href="#i-chev"/></svg>
+            <ul class="sp-listbox" role="listbox"><li role="option" class="sp-listbox-create" aria-selected="true">Create “Kai Morrison”<span class="sp-listbox-meta">new employee</span></li></ul></div>
+            <div class="sp-create-note"><span class="cds-tag">Create new employee on save</span><span class="cds-helper">No existing employee matches. Saving creates “Kai Morrison” and assigns this draft seat. Viewers see it only after publish.</span></div></div>
+          <div class="cds-form-item"><label for="jt">Job title <span class="cds-optional">(optional)</span></label><input id="jt" class="cds-text-input" placeholder="e.g. Case Manager"></div>
+          <div class="cds-form-item"><label for="ext">Phone extension <span class="cds-optional">(optional)</span></label><input id="ext" class="cds-text-input" placeholder="e.g. 202"></div>
+          <div class="cds-form-item"><label for="dep">Department</label><select id="dep" class="cds-select"><option>No department</option><option>Case Management</option></select></div>
+          <div class="cds-form-item"><label for="note">Seat note <span class="cds-optional">(optional)</span></label><textarea id="note" class="sp-textarea" placeholder="Add a seat note…"></textarea></div>
+        </form>
+        <div class="sp-slot-section">Actions</div>
+        <div class="sp-actions"><button class="cds-btn cds-btn--ghost">Move</button><button class="cds-btn cds-btn--ghost">Swap</button></div>
+        <div class="sp-block-reason">Delete seat: original seats are protected. Only custom draft seats can be deleted.</div>
+      </div>
+      <div class="sp-commit-bar"><button class="cds-btn cds-btn--ghost">Cancel</button><button class="cds-btn cds-btn--primary">Assign employee</button></div>
+    </section>
+
+    <section class="sp-slot" aria-labelledby="ins3">
+      <div class="sp-slot-header"><div><div class="sp-slot-eyebrow">Seat NE04 · North-east pod</div><h2 class="sp-slot-title" id="ins3">Sarah Reyes</h2></div>
+        <div class="sp-slot-actions"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Copy link to this seat"><svg><use href="#i-link"/></svg></button><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Close"><svg><use href="#i-close"/></svg></button></div></div>
+      <div class="sp-slot-body">
+        <div class="spec-row" style="gap:var(--sp-space-05)"><span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned</span><span class="sp-draft-note"><svg viewBox="0 0 8 8" aria-hidden="true"><use href="#i-diamond"/></svg>Changed in draft</span></div>
+        <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>Couldn't save this seat</strong><p>Fix the field below and try again.</p></div></div>
+        <form class="cds-form">
+          <div class="cds-form-item"><label for="emp2">Employee name</label><div class="sp-combobox"><input id="emp2" class="cds-text-input" role="combobox" aria-expanded="false" value="Sarah Reyes"><svg><use href="#i-chev"/></svg></div></div>
+          <div class="cds-form-item"><label for="jt2">Job title <span class="cds-optional">(optional)</span></label><input id="jt2" class="cds-text-input" value="Case Manager"></div>
+          <div class="cds-form-item" data-invalid><label for="ext2">Phone extension <span class="cds-optional">(optional)</span></label><input id="ext2" class="cds-text-input" value="21A" aria-invalid="true" aria-describedby="ext2-err"><div class="cds-helper" id="ext2-err">Extensions are digits only.</div></div>
+          <div class="cds-form-item"><label for="dep2">Department</label><select id="dep2" class="cds-select"><option>Case Management</option></select></div>
+          <div class="cds-form-item"><label for="note2">Seat note <span class="cds-optional">(optional)</span></label><textarea id="note2" class="sp-textarea">Near the printer.</textarea></div>
+        </form>
+        <div class="sp-slot-section">Actions</div>
+        <div class="sp-actions"><button class="cds-btn cds-btn--ghost">Move</button><button class="cds-btn cds-btn--ghost">Swap</button><button class="cds-btn cds-btn--ghost">Vacate</button></div>
+        <div class="sp-actions" style="margin-top:var(--sp-space-05)"><button class="cds-btn cds-btn--danger-ghost">Delete seat</button></div>
+        <div class="sp-block-reason">Custom seat — deleting removes it from the draft; it never existed on the published map.</div>
+      </div>
+      <div class="sp-commit-bar"><button class="cds-btn cds-btn--ghost">Cancel</button><button class="cds-btn cds-btn--primary">Save draft changes</button></div>
+    </section>
+  </div>
+  <p class="cap">Delete seat is a danger ghost, shown only for <code>is_custom</code> seats (original seats: Hidden, never disabled — the seatProtection rule); the block reason is helper text outside the button. Status select is Hidden while a person is assigned. The 22-character name “Marta Reyes-Cole (she)” still sits on one line at heading-03 inside 368.</p>
+
+  <h3>Inspector — loading · raced Vacate · saving</h3>
+  <div class="slot-grid">
+    <section class="sp-slot" aria-busy="true"><div class="sp-slot-header"><div><div class="sp-slot-eyebrow">Seat NE04 · North-east pod</div><span class="sp-skeleton" style="width:160px;height:20px;margin-top:4px"></span></div><div class="sp-slot-actions"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Close"><svg><use href="#i-close"/></svg></button></div></div>
+      <div class="sp-slot-body"><div class="sp-skeleton-row" style="padding:0"><span class="sp-skeleton sp-skeleton--w2"></span></div><div class="sp-skeleton-row" style="padding:0"><span class="sp-skeleton"></span></div><div class="sp-skeleton-row" style="padding:0"><span class="sp-skeleton sp-skeleton--w3"></span></div></div></section>
+    <section class="sp-slot"><div class="sp-slot-header"><div><div class="sp-slot-eyebrow">Seat NE04 · North-east pod</div><h2 class="sp-slot-title">Sarah Reyes</h2></div><div class="sp-slot-actions"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Close"><svg><use href="#i-close"/></svg></button></div></div>
+      <div class="sp-slot-body"><span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned</span>
+        <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>NE04 can no longer be vacated</strong><p>The draft changed in another session. This seat was refreshed with the latest draft.</p></div></div>
+        <div class="sp-slot-section">Actions</div><div class="sp-actions"><button class="cds-btn cds-btn--ghost">Move</button><button class="cds-btn cds-btn--ghost">Swap</button><button class="cds-btn cds-btn--ghost">Vacate</button></div></div></section>
+    <section class="sp-slot"><div class="sp-slot-header"><div><div class="sp-slot-eyebrow">Seat NE06 · North-east pod</div><h2 class="sp-slot-title">Open seat</h2></div><div class="sp-slot-actions"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Close" disabled><svg><use href="#i-close"/></svg></button></div></div>
+      <div class="sp-slot-body"><form class="cds-form"><div class="cds-form-item"><label>Employee name</label><input class="cds-text-input" value="Kai Morrison" readonly></div></form></div>
+      <div class="sp-commit-bar"><button class="cds-btn cds-btn--ghost" disabled>Cancel</button><button class="cds-btn cds-btn--primary" aria-busy="true" disabled>Saving…</button></div></section>
+  </div>
+
+  <h3>Mode card — <code>.sp-mode-card</code> · Move confirm (modal, fewer than five inputs)</h3>
+  <div class="slot-grid">
+    <section class="sp-slot short"><div class="sp-mode-card"><div class="sp-slot-eyebrow">Move employee mode</div><div class="sp-mode-card-title">Moving Sarah Reyes from NE04</div><p>Select the destination seat — on this floor, or switch floors with the selector.</p><button class="cds-btn cds-btn--ghost">Exit move employee</button><span class="sp-esc-note">Esc also exits.</span></div></section>
+    <section class="sp-slot short"><div class="sp-mode-card"><div class="sp-slot-eyebrow">Add seat mode</div><div class="sp-mode-card-title">Click the plan to place a seat</div><p>New seats are custom draft seats; they reach viewers at the next publish.</p><button class="cds-btn cds-btn--ghost">Exit add seat</button></div>
+      <div class="cds-notification cds-notification--info" style="margin:0 var(--sp-space-05) var(--sp-space-05)"><svg><use href="#i-info"/></svg><div class="cds-notification-text">Move canceled — no changes made.</div></div></section>
+    <div style="width:400px"><div class="cds-modal" role="dialog" aria-labelledby="mv" aria-modal="true"><div class="cds-modal-header"><div class="cds-modal-eyebrow">Move employee</div><h2 id="mv">Move Sarah Reyes to L02?</h2></div><div class="cds-modal-body">From NE04 · Floor 3 to L02 · Floor 2. The draft changes now; viewers see it after publish.</div><div class="cds-modal-footer"><button class="cds-btn cds-btn--secondary">Cancel</button><button class="cds-btn cds-btn--primary">Move</button></div></div></div>
+  </div>
+  <p class="cap">The confirm may open over the inspector (a side panel is not a modal). It never opens from inside the publish tearsheet: nothing in the publish flow chains into a second modal.</p>
+
+  <h3>Ask Planner drawer — Carbon for AI label + explainability; the drawer's Ask is its own primary</h3>
+  <div class="slot-grid">
+    <section class="sp-slot" aria-labelledby="ask1">
+      <div class="sp-slot-header"><div><div class="sp-slot-eyebrow" style="display:flex;align-items:center;gap:var(--sp-space-03)"><span class="sp-ai-popover-host"><button class="sp-ai-label" aria-expanded="false" aria-haspopup="dialog">AI</button></span>read-only answers</div><h2 class="sp-slot-title" id="ask1">Ask Planner</h2></div>
+        <div class="sp-slot-actions"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Close"><svg><use href="#i-close"/></svg></button></div></div>
+      <div class="sp-slot-body">
+        <div class="sp-drawer-subline">Read-only answers from saved draft map data.</div>
+        <div class="sp-slot-section">Suggested</div>
+        <div class="sp-prompt-list"><button class="cds-btn cds-btn--ghost">Who sits in the north-east pod?</button><button class="cds-btn cds-btn--ghost">Open seats near Litigation</button></div>
+        <div class="cds-form-item"><label for="q1">Your question</label><textarea id="q1" class="sp-textarea sp-textarea--ai" placeholder="Ask about seats, assignments, zones, or departments…" maxlength="800"></textarea><div class="sp-field-counter"><span>Ctrl+Enter to ask</span><span>0 / 800</span></div></div>
+      </div>
+      <div class="sp-commit-bar"><button class="cds-btn cds-btn--ghost">Clear</button><button class="cds-btn cds-btn--primary">Ask</button></div>
+    </section>
+
+    <section class="sp-slot" aria-labelledby="ask2">
+      <div class="sp-slot-header"><div><div class="sp-slot-eyebrow" style="display:flex;align-items:center;gap:var(--sp-space-03)"><span class="sp-ai-popover-host" data-open><button class="sp-ai-label" aria-expanded="true" aria-haspopup="dialog">AI</button><div class="sp-ai-popover" role="dialog" aria-label="About AI answers"><h4>Generated answers</h4><p>Ask Planner reads the saved draft map and answers in text. It never changes seats, people, or the published map.</p><p>Highlights on the plan are the seats the answer names.</p><a href="#">How Ask Planner works</a></div></span>read-only answers</div><h2 class="sp-slot-title" id="ask2">Ask Planner</h2></div>
+        <div class="sp-slot-actions"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Close"><svg><use href="#i-close"/></svg></button></div></div>
+      <div class="sp-slot-body">
+        <div class="cds-notification cds-notification--warning"><svg><use href="#i-warn"/></svg><div class="cds-notification-text"><strong>Unsaved seat edits</strong><p>Answers use the saved draft, not the edits open in the inspector.</p></div></div>
+        <div class="cds-form-item"><label for="q2">Your question</label><textarea id="q2" class="sp-textarea sp-textarea--ai" maxlength="800">Which Case Management people sit near NE04?</textarea><div class="sp-field-counter"><span>Ctrl+Enter to ask</span><span>41 / 800</span></div></div>
+        <div class="sp-answer">Three Case Management people sit in the north-east pod next to NE04.</div>
+        <div class="sp-slot-section">Highlighted seats · 3 in answer · 3 on map</div>
+        <ul class="sp-highlight-list"><li><span class="sp-palette-code">NE04</span> Sarah Reyes<span class="sp-highlight-floor">Floor 3</span></li><li><span class="sp-palette-code">NE05</span> Daniel Ortiz<span class="sp-highlight-floor">Floor 3</span></li><li><span class="sp-palette-code">NW03</span> Jordan Blake<span class="sp-highlight-floor">Floor 3</span></li></ul>
+        <button class="cds-btn cds-btn--ghost cds-btn--md" style="margin-top:var(--sp-space-03)">Clear highlights</button>
+      </div>
+      <div class="sp-commit-bar"><button class="cds-btn cds-btn--ghost">Clear</button><button class="cds-btn cds-btn--primary">Ask</button></div>
+    </section>
+
+    <section class="sp-slot" aria-labelledby="ask3">
+      <div class="sp-slot-header"><div><div class="sp-slot-eyebrow" style="display:flex;align-items:center;gap:var(--sp-space-03)"><span class="sp-ai-popover-host"><button class="sp-ai-label" aria-expanded="false">AI</button></span>read-only answers</div><h2 class="sp-slot-title" id="ask3">Ask Planner</h2></div>
+        <div class="sp-slot-actions"><button class="cds-btn cds-btn--icon cds-btn--md" aria-label="Close"><svg><use href="#i-close"/></svg></button></div></div>
+      <div class="sp-slot-body">
+        <div class="cds-form-item"><label for="q3">Your question</label><textarea id="q3" class="sp-textarea sp-textarea--ai" maxlength="800">Who is on Floor 2?</textarea><div class="sp-field-counter"><span>Ctrl+Enter to ask</span><span>18 / 800</span></div></div>
+        <div class="sp-drawer-loading" aria-busy="true"><span class="sp-skeleton" style="width:200px"></span></div>
+        <div class="sp-drawer-subline">Checking saved draft map data</div>
+        <div class="sp-slot-section">Earlier</div>
+        <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>The planner service timed out</strong><p>Try again, or ask something shorter.</p></div><button class="cds-btn cds-btn--ghost">Retry</button></div>
+        <div class="cds-notification cds-notification--info"><svg><use href="#i-info"/></svg><div class="cds-notification-text">No seats highlighted for this broad answer — ask about a zone, a department, or a person to see seats on the plan.</div></div>
+      </div>
+      <div class="sp-commit-bar"><button class="cds-btn cds-btn--ghost">Clear</button><button class="cds-btn cds-btn--primary" disabled>Ask</button></div>
+    </section>
+  </div>
+  <p class="cap">Gradient appears on exactly two things: the AI label (marker and entry to the explainability popover) and the textarea's border. One error component, seven strings — each ends in the next step; <code>role="alert"</code> only where the failure stops the task, <code>role="status"</code> for the rest.</p>
+  <table class="spec-table" style="max-width:960px;border-collapse:collapse;width:100%;font:var(--sp-type-body-compact-01);letter-spacing:var(--sp-tracking-body)">
+    <thead><tr><th style="text-align:left;height:32px;padding:0 16px;background:var(--sp-layer-selected)">Error</th><th style="text-align:left;height:32px;padding:0 16px;background:var(--sp-layer-selected)">String (title · body)</th><th style="text-align:left;height:32px;padding:0 16px;background:var(--sp-layer-selected)">Role</th></tr></thead>
+    <tbody>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">unreachable</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">Ask Planner couldn't reach the planner service · Try again.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">alert</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">timeout</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">The planner service timed out · Try again, or ask something shorter.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">alert</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">rate limited</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">Ask Planner is rate limited right now · Try again in a minute.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">alert</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">not configured</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">Ask Planner is not set up on this server · Ask the office manager.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">alert</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">model unavailable</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">The configured model isn't available · Ask the office manager.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">alert</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">question too long</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">That question is over 800 characters · Ask something shorter.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">status</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">fallback</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">Ask Planner couldn't answer that · Try rephrasing, or ask about a zone, department, or person.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">status</td></tr>
+    </tbody></table>
+
+  <h2 id="review">Publish review — wide tearsheet <code>.sp-tearsheet</code></h2>
+  <p class="spec-anatomy">Anchored bottom, the header stays visible above, the overlay dims the page, no ×: leaving is Cancel. Rail 256 = readiness summary; body = the diff under floor group rows, then People details; footer 64 = facts left, Cancel · Publish right. No modal ever opens from inside it.</p>
+  <div class="sheet-frame"><div class="sp-tearsheet-host" data-open><div class="sp-tearsheet-overlay"></div>
+    <div class="sp-tearsheet" role="dialog" aria-labelledby="rv1" aria-modal="true">
+      <div class="sp-tearsheet-header"><h2 id="rv1">Review draft before publishing</h2><p>Saved draft changes only — unsaved inspector edits are excluded.</p></div>
+      <div class="sp-tearsheet-body">
+        <aside class="sp-tearsheet-rail">
+          <div class="sp-readiness"><div class="sp-readiness-title"><svg style="color:var(--sp-status-success-mark)"><use href="#i-check16"/></svg>Ready · 4 changes</div><div class="sp-readiness-facts">Draft 68 seats · Published 68 seats</div>
+            <div class="cds-tag-set"><span class="cds-tag">2 assigned</span><span class="cds-tag">1 vacated</span><span class="cds-tag">1 reassigned</span><span class="cds-tag">1 person updated</span></div></div>
+          <div><div class="sp-rail-heading">What publishing does</div><div class="sp-rail-text">Replaces what everyone sees — both floors, in one step — and clears Undo/Redo. Viewers keep the current map until it finishes.</div></div>
+        </aside>
+        <div class="sp-tearsheet-main">
+          <table class="cds-table"><thead><tr><th><span class="cds-th-static">Seat</span></th><th><span class="cds-th-static">Published now</span></th><th><span class="cds-th-static">After publish</span></th><th><span class="cds-th-static">Change</span></th></tr></thead>
+            <tbody>
+              <tr class="sp-table-group"><td colspan="4">Floor 3 · Pre-Litigation · 3 changes</td></tr>
+              <tr><td><code class="sp-palette-code">NE04</code></td><td class="cds-col-muted">Open</td><td>Sarah Reyes</td><td>Assigned</td></tr>
+              <tr><td><code class="sp-palette-code">NE06</code></td><td class="cds-col-muted">Open</td><td>Kai Morrison <span class="cds-tag">new person</span></td><td>Assigned</td></tr>
+              <tr><td><code class="sp-palette-code">SW11</code></td><td>Tom Reyes</td><td class="cds-col-muted">Open</td><td>Vacated</td></tr>
+              <tr class="sp-table-group"><td colspan="4">Floor 2 · Litigation · 1 change</td></tr>
+              <tr><td><code class="sp-palette-code">L02</code></td><td>Rita Costa</td><td>Marta Reyes-Cole</td><td>Reassigned</td></tr>
+            </tbody></table>
+          <div class="sp-tearsheet-section">People details · 1</div>
+          <ul class="sp-detail-list"><li>Daniel Ortiz — extension 233 → 235</li></ul>
+        </div>
+      </div>
+      <div class="sp-tearsheet-footer"><span class="sp-tearsheet-facts">Draft 68 seats · Published 68 seats · Total changes 4</span><button class="cds-btn cds-btn--ghost">Cancel</button><button class="cds-btn cds-btn--primary">Publish 4 changes</button></div>
+    </div></div></div>
+
+  <div class="spec-row" style="align-items:stretch">
+    <div style="flex:1 1 560px"><span class="spec-note">no changes — reached only when the draft reverts while the sheet is open</span>
+      <div class="sp-tearsheet sp-tearsheet--static" style="height:360px"><div class="sp-tearsheet-header"><h2>Review draft before publishing</h2><p>Saved draft changes only — unsaved inspector edits are excluded.</p></div>
+        <div class="sp-tearsheet-body"><aside class="sp-tearsheet-rail"><div class="sp-readiness"><div class="sp-readiness-title">No changes</div><div class="sp-readiness-facts">Draft and published map are in sync.</div></div></aside>
+          <div class="sp-tearsheet-main"><div class="cds-empty"><h3>No draft changes to publish</h3><p>The saved draft already matches the map everyone sees. Make a change on the map, then review again.</p></div></div></div>
+        <div class="sp-tearsheet-footer"><span class="sp-tearsheet-facts">Draft 68 seats · Published 68 seats · Total changes 0</span><button class="cds-btn cds-btn--ghost">Cancel</button><button class="cds-btn cds-btn--primary" disabled aria-describedby="nc">No changes to publish</button></div></div></div>
+    <div style="flex:1 1 560px"><span class="spec-note">submitting · failure (review intact)</span>
+      <div class="sp-tearsheet sp-tearsheet--static" style="height:360px"><div class="sp-tearsheet-header"><h2>Review draft before publishing</h2></div>
+        <div class="sp-tearsheet-body" style="grid-template-columns:1fr"><div class="sp-tearsheet-main">
+          <div class="cds-notification cds-notification--info" role="status"><svg><use href="#i-info"/></svg><div class="cds-notification-text"><strong>Publishing reviewed draft changes</strong><p>Viewers keep the current map until this finishes.</p></div></div>
+          <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>Publish did not complete</strong><p>The draft map changed in another session after this page loaded it. Reload to pick up the latest draft, then try again.</p></div><button class="cds-btn cds-btn--ghost">Retry publish</button></div>
+        </div></div>
+        <div class="sp-tearsheet-footer"><span class="sp-tearsheet-facts">Draft 68 seats · Published 68 seats · Total changes 4</span><button class="cds-btn cds-btn--ghost" disabled>Cancel</button><button class="cds-btn cds-btn--primary" aria-busy="true" disabled>Publishing…</button></div></div></div>
+  </div>
+
+  <h2 id="roster">Floor 2 roster — <code>.sp-roster</code></h2>
+  <p class="spec-anatomy">Heading, helper line (viewer / admin voices), department groups with counts, 40px static rows name · position · ext · email + a copy-link icon button. The row is not interactive: hover lives on the button only. A <code>?q=</code> landing highlights the matched row.</p>
+  <div class="spec-row" style="align-items:flex-start">
+    <div style="flex:1 1 720px;background:var(--sp-background)">
+      <section class="sp-roster" aria-labelledby="ro1"><h2 id="ro1">Floor 2 · Litigation — 40 people</h2><div class="sp-roster-helper">The 2nd-floor plan is not mapped yet. Until a draft seat exists there, everyone without a draft seat is listed here.</div>
+        <div class="sp-roster-group">Litigation<span class="sp-roster-count">20</span></div>
+        <ul class="sp-roster-list">
+          <li class="sp-roster-row" data-highlight><span>Marta Reyes-Cole</span><span class="sp-roster-meta">Attorney · ext. 231</span><span class="sp-roster-meta">m.reyes-cole@megeredchianlaw.com</span><span class="sp-has-tooltip"><button class="cds-btn cds-btn--icon" aria-label="Copy link to this person"><svg><use href="#i-link"/></svg></button><span class="sp-tooltip" role="tooltip">Copy link</span></span></li>
+          <li class="sp-roster-row"><span>Jonas Adeyemi</span><span class="sp-roster-meta">Paralegal · ext. 233</span><span class="sp-roster-meta">j.adeyemi@megeredchianlaw.com</span><span class="sp-has-tooltip" data-state="hover"><button class="cds-btn cds-btn--icon" data-state="hover" aria-label="Copy link to this person"><svg><use href="#i-link"/></svg></button><span class="sp-tooltip" role="tooltip">Copy link</span></span></li>
+          <li class="sp-roster-row"><span>Rita Costa</span><span class="sp-roster-meta">Attorney · ext. 240</span><span class="sp-roster-meta">r.costa@megeredchianlaw.com</span><span style="position:relative"><button class="cds-btn cds-btn--icon" aria-label="Copy link to this person" data-done="Copied"><svg><use href="#i-link"/></svg></button></span></li>
+          <li class="sp-roster-row"><span>Yusuf Demir</span><span class="sp-roster-meta">Law clerk · —</span><span class="sp-roster-meta">y.demir@megeredchianlaw.com</span><span><button class="cds-btn cds-btn--icon" aria-label="Copy link to this person"><svg><use href="#i-link"/></svg></button></span></li>
+        </ul>
+        <div class="sp-roster-group">Medical Records<span class="sp-roster-count">7</span></div>
+        <ul class="sp-roster-list">
+          <li class="sp-roster-row"><span>Elena Petrova</span><span class="sp-roster-meta">Records specialist · ext. 260</span><span class="sp-roster-meta">e.petrova@megeredchianlaw.com</span><span><button class="cds-btn cds-btn--icon" aria-label="Copy link to this person"><svg><use href="#i-link"/></svg></button></span></li>
+        </ul>
+      </section>
+    </div>
+    <div style="flex:1 1 480px">
+      <section class="sp-roster"><h2>Floor 2 · Litigation — 0 people</h2><div class="cds-empty"><h3>No one is listed on Floor 2 · Litigation yet</h3><p>People appear here after an admin publishes.</p></div></section>
+      <section class="sp-roster"><h2>Floor 2 · Litigation — 40 people</h2><div class="cds-empty"><h3>No one on Floor 2 matches the active filters</h3><div class="cds-empty-actions"><button class="cds-btn cds-btn--ghost cds-btn--sm">Clear filters</button></div></div></section>
+      <section class="sp-roster" aria-busy="true"><h2>Floor 2 · Litigation</h2><div class="sp-roster-group"><span class="sp-skeleton" style="width:120px"></span></div><div class="sp-skeleton-row" style="padding:0;height:40px"><span class="sp-skeleton"></span></div><div class="sp-skeleton-row" style="padding:0;height:40px"><span class="sp-skeleton sp-skeleton--w3"></span></div></section>
+      <section class="sp-roster"><h2>Floor 2 · Litigation</h2><div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>The roster couldn't load</strong><p>The seating map itself is unchanged.</p></div><button class="cds-btn cds-btn--ghost">Retry</button></div></section>
+    </div>
+  </div>
+
+  <h2 id="band">Status band — <code>.sp-band</code> (40)</h2>
+  <div class="spec-row" style="flex-direction:column;align-items:stretch">
+    <div class="sp-band"><span class="sp-band-title">Floor 3 · 68 seats</span><span class="sp-band-legend"><span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 56</span><span class="sp-seat-legend"><svg class="sp-seat-mark" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-open"/></svg>Open 12</span></span><span class="sp-band-count">68 seats</span><span class="sp-band-zoom"><button class="cds-btn cds-btn--icon cds-btn--sm" aria-label="Zoom out"><svg><use href="#i-minus"/></svg></button><button class="cds-btn cds-btn--ghost cds-btn--sm">Fit</button><button class="cds-btn cds-btn--icon cds-btn--sm" aria-label="Zoom in"><svg><use href="#i-plus"/></svg></button></span></div>
+    <div class="sp-band"><span class="sp-band-title">Floor 3 · 68 seats</span><span class="sp-band-legend"><span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 56</span><span class="sp-seat-legend"><svg class="sp-seat-mark" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-open"/></svg>Open 12</span></span><span class="sp-band-count">0 of 68 seats match</span><button class="cds-btn cds-btn--ghost cds-btn--sm">Clear filters</button><span class="sp-band-note">20 people in Litigation are on Floor 2</span><button class="cds-btn cds-btn--ghost cds-btn--sm">Show Floor 2</button><span class="sp-band-zoom"><button class="cds-btn cds-btn--icon cds-btn--sm" aria-label="Zoom out"><svg><use href="#i-minus"/></svg></button><button class="cds-btn cds-btn--ghost cds-btn--sm">Fit</button><button class="cds-btn cds-btn--icon cds-btn--sm" aria-label="Zoom in"><svg><use href="#i-plus"/></svg></button></span></div>
+    <div class="sp-band"><span class="sp-band-title">Floor 3 · 68 seats</span><span class="sp-band-note">Editing needs a wider window.</span><span class="sp-band-count">68 seats</span><span class="sp-band-zoom"><button class="cds-btn cds-btn--icon cds-btn--sm" aria-label="Zoom out"><svg><use href="#i-minus"/></svg></button><button class="cds-btn cds-btn--ghost cds-btn--sm">Fit</button><button class="cds-btn cds-btn--icon cds-btn--sm" aria-label="Zoom in"><svg><use href="#i-plus"/></svg></button></span></div>
+    <div class="sp-band"><span class="sp-band-title">Floor 2 · Litigation · 40 people</span></div>
+  </div>
+
+  <h2 id="canvas">Canvas states — <code>.sp-canvas</code></h2>
+  <div class="spec-row">
+    <div><span class="spec-note">published · empty (viewer) — educational</span><div class="sp-canvas canvas-demo"><div class="sp-canvas-plan"></div><div class="sp-canvas-empty"><div class="cds-empty"><h3>Nothing has been published yet</h3><p>Ask an admin — the seat map appears here once they publish the draft.</p></div></div></div></div>
+    <div><span class="spec-note">published · empty (admin)</span><div class="sp-canvas canvas-demo"><div class="sp-canvas-plan"></div><div class="sp-canvas-empty"><div class="cds-empty"><h3>Nothing has been published yet</h3><p>Open the draft, assign seats, then Publish. Viewers see the map only after the first publish.</p><div class="cds-empty-actions"><a class="cds-btn cds-btn--tertiary cds-btn--md" href="#">Open the draft</a></div></div></div></div></div>
+    <div><span class="spec-note">draft · empty</span><div class="sp-canvas canvas-demo"><div class="sp-canvas-plan"></div><div class="sp-canvas-empty"><div class="cds-empty"><h3>No seats in the draft yet</h3><p>Use Add seat, or import assignments from Settings.</p></div></div></div></div>
+    <div><span class="spec-note">loading · skeleton plan, row controls real</span><div class="sp-canvas sp-canvas--skeleton canvas-demo" aria-busy="true"><div class="sp-canvas-plan"></div></div></div>
+    <div><span class="spec-note">error</span><div class="sp-canvas canvas-demo"><div class="sp-canvas-plan"></div><div class="sp-canvas-status" role="status"><div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>The seat map couldn't load</strong><p>The seating map itself is unchanged.</p></div><button class="cds-btn cds-btn--ghost">Retry</button></div></div></div></div>
+    <div><span class="spec-note">partial · raster loaded, snapshot failed</span><div class="sp-canvas canvas-demo"><div class="sp-canvas-plan"><button class="sp-pill sp-pill--names-off sp-marker" style="left:120px;top:80px" aria-label="Seat">·</button><button class="sp-pill sp-pill--names-off sp-marker" style="left:180px;top:80px" aria-label="Seat">·</button><span class="sp-seat-footprint sp-marker" style="left:240px;top:80px"><svg class="sp-seat-mark" viewBox="0 0 16 16"><use href="#i-open"/></svg></span></div><div class="sp-canvas-status" role="status"><div class="cds-notification cds-notification--info"><svg><use href="#i-info"/></svg><div class="cds-notification-text">Names couldn't load — seats are shown without people.</div><button class="cds-btn cds-btn--ghost">Retry</button></div></div></div></div>
+    <div><span class="spec-note">stale draft (MLS02) · inline, role=status, self-clearing</span><div class="sp-canvas canvas-demo"><div class="sp-canvas-plan"></div><div class="sp-canvas-status" role="status"><div class="cds-notification cds-notification--info"><svg><use href="#i-info"/></svg><div class="cds-notification-text">The draft changed in another session — this page was refreshed with the latest draft.</div></div></div></div></div>
+    <div><span class="spec-note">PUBLISH_BLOCKED · the tearsheet closed; server text inline</span><div class="sp-canvas canvas-demo"><div class="sp-canvas-plan"></div><div class="sp-canvas-status" role="status"><div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>Publish blocked</strong><p>This server is not the production deployment, but it is pointed at the production database — publishing would update the live map for real viewers. Use the local stack (npm run db:start, then point .env.local at it), or set SEAT_PLANNER_ALLOW_PROD_PUBLISH=true deliberately.</p></div></div></div></div></div>
+    <div><span class="spec-note">403 · viewer on /admin</span><div class="sp-canvas canvas-demo" style="background:var(--sp-background)"><div class="cds-empty"><h3>Admin access required</h3><p>You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to edit the seat map.</p><div class="cds-empty-actions"><a class="cds-btn cds-btn--tertiary cds-btn--md" href="#">Back to seat map</a></div></div></div></div>
+  </div>
+
+  <h2 id="narrow">Narrow fallback — 1024, <code>/admin</code> read-only</h2>
+  <p class="spec-anatomy">Shared controls only (search 240); no divider, no editor controls, no slot; the band states it once. Selecting a seat opens the inspector as a read-only bottom sheet (D1 below the hinge).</p>
+  <div class="frame"><div class="frame1024">
+    <div class="sp-control-row">
+      <button class="sp-menu-button" aria-haspopup="menu" aria-expanded="false" style="width:120px"><svg><use href="#i-pin"/></svg><span class="sp-menu-button-label">Floor 3</span><svg class="sp-chevron"><use href="#i-chev"/></svg></button>
+      <div class="sp-search" role="search" style="width:240px"><svg><use href="#i-search"/></svg><input type="search" placeholder="Find" aria-label="Find a person or seat"><button class="sp-search-scope" aria-haspopup="menu" aria-expanded="false">This floor <svg><use href="#i-chev"/></svg></button></div>
+      <span class="sp-control-count">68 seats</span>
+      <button class="cds-btn cds-btn--ghost cds-btn--md">Find me</button>
+      <button class="sp-toggle" aria-pressed="true"><span>Names</span><span class="sp-toggle-track"></span><span class="sp-toggle-state">On</span></button>
+    </div>
+    <div class="sp-canvas" style="height:280px"><div class="sp-canvas-plan"><button class="sp-pill sp-marker" style="left:200px;top:100px">Sarah R.</button><button class="sp-pill sp-marker" style="left:300px;top:100px">Maya C.</button></div></div>
+    <div class="sp-band"><span class="sp-band-title">Floor 3 · 68 seats</span><span class="sp-band-note">Editing needs a wider window.</span><span class="sp-band-count">68 seats</span><span class="sp-band-zoom"><button class="cds-btn cds-btn--icon cds-btn--sm" aria-label="Zoom out"><svg><use href="#i-minus"/></svg></button><button class="cds-btn cds-btn--ghost cds-btn--sm">Fit</button><button class="cds-btn cds-btn--icon cds-btn--sm" aria-label="Zoom in"><svg><use href="#i-plus"/></svg></button></span></div>
+  </div></div>
+</main>
+</body>
+</html>

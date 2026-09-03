@@ -24,6 +24,7 @@
      7. .sp-radio       — radio group (native input, Carbon styling), light + dark
      8. .sp-left-panel  — 256 filter panel: pinned header, groups, items, nav items
      9. .sp-skeleton    — skeleton line for non-table content (light + dark)
+   PR 3 (map) blocks 10–19: see the PR 3 header further down.
    ========================================================================== */
 
 /* -----------------------------------------------------------------------------
@@ -365,3 +366,357 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 @media (prefers-reduced-motion: no-preference) {
   .sp-skeleton { background: linear-gradient(90deg, var(--sp-skeleton-bg) 0 40%, var(--sp-skeleton-element) 50%, var(--sp-skeleton-bg) 60% 100%); background-size: 300% 100%; animation: sp-skeleton-sweep 3000ms linear infinite; }
 }
+
+/* =============================================================================
+   PR 3 (map) blocks — PHASE3DS §1.14–§1.24
+     10. .sp-control-row  — 48 row, 40 controls, divider, ONE primary; menu button;
+                            search with scope segment; Filters split control; toggle; kbd
+     11. .sp-palette      — 560 search palette
+     12. .sp-pill         — the seat name pill and its states; ◇ badge; names-off
+     13. .sp-slot         — the 400 right slot: header, body, commit bar; inspector parts
+                            (contact rows, combobox + listbox, text area, actions)
+     14. .sp-mode-card
+     15. .sp-ai-label / .sp-ai-popover / .sp-textarea--ai — Carbon for AI; drawer parts
+     16. .sp-tearsheet    — wide (PR 4 adds --narrow); readiness rail; table group rows
+     17. .sp-roster       — heading, group eyebrows, 40px static rows, copy-link button
+     18. .sp-band         — 40px status band
+     19. .sp-canvas       — mat, plan, status region, empty / skeleton overlays
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------------
+   10. CONTROL ROW — §3 "Control row (toolbar) · hand-built" (the asset's
+       .cds-toolbar is the table toolbar). PHASE3DS §1.14.
+       48px, controls 40, gaps 8, 8px side padding; a 1px × 24 divider before
+       the editor's controls; ONE primary (Publish); disabled Publish states
+       its reason beside it in label-01 (aria-describedby), never only a tooltip.
+   -------------------------------------------------------------------------- */
+.sp-control-row { display: flex; align-items: center; gap: var(--sp-control-gap); height: var(--sp-control-row-h); padding: 0 var(--sp-space-03);
+  background: var(--sp-background); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); white-space: nowrap; }
+.sp-control-row .cds-btn { height: var(--sp-control-h); }
+.sp-control-row .cds-btn--icon { width: var(--sp-control-h); }
+.sp-control-divider { width: 1px; height: var(--sp-control-divider-h); background: var(--sp-control-divider); margin: 0 var(--sp-space-03); flex: none; }
+.sp-control-count { padding: 0 var(--sp-space-03); color: var(--sp-text-secondary); font-variant-numeric: tabular-nums; }
+.sp-control-reason { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); padding: 0 var(--sp-space-03); }   /* the reason beside a disabled Publish */
+.sp-control-row .cds-btn--ghost:is(:active, [data-state="pressed"]) { background: var(--sp-layer-active); }
+.sp-control-row .cds-btn--ghost[data-state="hover"] { background: var(--sp-layer-hover); color: var(--sp-link-hover); }
+.sp-control-row .cds-btn--primary[data-state="hover"] { background: var(--sp-button-primary-hover); }
+.sp-control-row .cds-btn[data-state="focus"] { outline: var(--sp-focus-width) solid var(--sp-focus); outline-offset: var(--sp-focus-offset); }
+.sp-control-row .cds-btn--tertiary[data-count]::after { content: attr(data-count); margin-left: var(--sp-space-03); min-width: var(--sp-space-05); height: var(--sp-space-05); padding: 0 var(--sp-space-02);
+  display: inline-grid; place-items: center; background: var(--sp-button-primary); color: var(--sp-text-on-color); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); font-variant-numeric: tabular-nums; }
+.sp-control-row .cds-btn--tertiary { padding: 0 var(--sp-space-05); min-width: 0; }
+
+/* menu button (floor selector): field surface, place marker, chevron; opens the asset's overflow menu */
+.sp-menu-button { position: relative; display: inline-flex; align-items: center; gap: var(--sp-space-03); width: var(--sp-menu-w); height: var(--sp-control-h); padding: 0 var(--sp-space-09) 0 var(--sp-space-05);
+  background: var(--sp-field); box-shadow: inset 0 -1px 0 var(--sp-field-border); color: var(--sp-text-primary); text-align: left; }
+.sp-menu-button svg { width: var(--sp-icon-01); height: var(--sp-icon-01); flex: none; color: var(--sp-icon-secondary); }
+.sp-menu-button .sp-chevron { position: absolute; right: var(--sp-space-05); color: var(--sp-icon-primary); }
+.sp-menu-button:is(:hover, [data-state="hover"]) { background: var(--sp-field-hover); }
+.sp-menu-button[aria-expanded="true"] { box-shadow: inset 0 -1px 0 var(--sp-border-interactive); }
+.sp-menu-button[aria-expanded="true"] .sp-chevron { transform: rotate(180deg); }
+.sp-menu-button:is(:focus-visible, [data-state="focus"]) { outline: var(--sp-focus-width) solid var(--sp-focus); outline-offset: var(--sp-focus-offset); }
+.sp-menu-button-label { overflow: hidden; text-overflow: ellipsis; }
+.sp-menu { position: absolute; left: 0; top: 100%; z-index: 20; width: 100%; background: var(--sp-layer-02); box-shadow: 0 2px 6px var(--sp-shadow); display: none; }
+.sp-menu-button[aria-expanded="true"] + .sp-menu, .sp-menu[data-open] { display: block; }
+.sp-menu button { display: flex; align-items: center; gap: var(--sp-space-03); width: 100%; height: var(--sp-control-h); padding: 0 var(--sp-space-05); text-align: left; }
+.sp-menu button:is(:hover, [data-state="hover"]) { background: var(--sp-layer-hover-02); }
+.sp-menu button[aria-current="true"] { background: var(--sp-layer-selected); box-shadow: inset 3px 0 0 var(--sp-border-interactive); font-weight: var(--sp-weight-semibold); }
+.sp-menu-meta { margin-left: auto; color: var(--sp-text-secondary); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); }
+
+/* search field with trailing scope segment (Focused search, D1-d) */
+.sp-search { position: relative; display: flex; align-items: stretch; width: var(--sp-search-w); height: var(--sp-control-h); background: var(--sp-field); box-shadow: inset 0 -1px 0 var(--sp-field-border); }
+.sp-search > svg { position: absolute; left: var(--sp-space-04); top: var(--sp-space-04); width: var(--sp-icon-01); height: var(--sp-icon-01); color: var(--sp-icon-secondary); pointer-events: none; }
+.sp-search input { flex: 1 1 auto; min-width: 0; height: 100%; padding: 0 var(--sp-space-03) 0 var(--sp-space-08); border: 0; background: transparent; color: var(--sp-text-primary); font: inherit; letter-spacing: inherit; }
+.sp-search input::placeholder { color: var(--sp-text-placeholder); }
+.sp-search:is(:hover, [data-state="hover"]) { background: var(--sp-field-hover); }
+.sp-search:is(:focus-within, [data-state="focus"]) { outline: var(--sp-focus-width) solid var(--sp-focus); outline-offset: var(--sp-focus-offset); }
+.sp-search-scope { flex: none; display: inline-flex; align-items: center; gap: var(--sp-space-02); height: 100%; padding: 0 var(--sp-space-03) 0 var(--sp-space-04);
+  box-shadow: inset 1px 0 0 var(--sp-border-subtle); color: var(--sp-text-secondary); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); white-space: nowrap; }
+.sp-search-scope svg { width: var(--sp-icon-01); height: var(--sp-icon-01); }
+.sp-search-scope:is(:hover, [data-state="hover"]) { background: var(--sp-layer-hover); color: var(--sp-text-primary); }
+.sp-search-clear { flex: none; width: var(--sp-control-h); height: 100%; display: grid; place-items: center; color: var(--sp-icon-primary); }
+.sp-search-clear svg { width: var(--sp-icon-01); height: var(--sp-icon-01); }
+.sp-search-clear:is(:hover, [data-state="hover"]) { background: var(--sp-layer-hover); }
+.sp-kbd { display: inline-flex; align-items: center; height: var(--sp-kbd-h); padding: 0 var(--sp-space-02); margin-right: var(--sp-space-02); align-self: center;
+  box-shadow: inset 0 0 0 1px var(--sp-border-subtle); color: var(--sp-text-helper); font: var(--sp-type-code-01); letter-spacing: var(--sp-tracking-label); }
+
+/* Filters split control: "Filters · 3" opens the left panel; a separate 40×40 "Clear filters" icon button.
+   One interactive element per control (owner ruling); Hidden while N = 0. */
+.sp-filters { display: inline-flex; height: var(--sp-control-h); }
+.sp-filters .cds-btn--tertiary { gap: var(--sp-space-03); }
+.sp-filters .cds-btn--icon { box-shadow: inset 0 0 0 1px var(--sp-button-tertiary); margin-left: -1px; color: var(--sp-button-tertiary); }
+.sp-filters .cds-btn--icon:is(:hover, [data-state="hover"]) { background: var(--sp-button-tertiary-hover); color: var(--sp-text-on-color); }
+
+/* Names toggle — Carbon toggle (small): 32×16 track, 12 knob, label left, aria-pressed */
+.sp-toggle { display: inline-flex; align-items: center; gap: var(--sp-space-03); height: var(--sp-control-h); padding: 0 var(--sp-space-03); color: var(--sp-text-primary); }
+.sp-toggle-track { position: relative; width: var(--sp-toggle-track-w); height: var(--sp-toggle-track-h); border-radius: var(--sp-toggle-track-h); background: var(--sp-toggle-off-color); flex: none;
+  transition: background var(--sp-duration-fast-01) var(--sp-ease-standard); }
+.sp-toggle-track::after { content: ""; position: absolute; top: var(--sp-space-01); left: var(--sp-space-01); width: var(--sp-toggle-knob); height: var(--sp-toggle-knob); border-radius: 50%; background: var(--sp-toggle-knob-color);
+  transition: transform var(--sp-duration-fast-01) var(--sp-ease-standard); }
+.sp-toggle[aria-pressed="true"] .sp-toggle-track { background: var(--sp-toggle-on); }
+.sp-toggle[aria-pressed="true"] .sp-toggle-track::after { transform: translateX(var(--sp-space-05)); }
+.sp-toggle:is(:hover, [data-state="hover"]) { background: var(--sp-layer-hover); }
+.sp-toggle:is(:focus-visible, [data-state="focus"]) { outline: var(--sp-focus-width) solid var(--sp-focus); outline-offset: var(--sp-focus-offset); }
+.sp-toggle-state { color: var(--sp-text-secondary); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); }
+
+/* -----------------------------------------------------------------------------
+   11. SEARCH PALETTE — §3 "Search palette (560) · hand-built". PHASE3DS §1.15.
+       Anchored to the field's left edge; header = results line with both
+       scope counts (zero included); rows 48: title · kind tag · subtitle ·
+       code or Floor tag; footer = key legend. Browse / results / zero /
+       zero-with-widen / loading (past 300ms) / error.
+   -------------------------------------------------------------------------- */
+.sp-palette { width: var(--sp-palette-w); background: var(--sp-layer-02); box-shadow: 0 2px 6px var(--sp-shadow), inset 0 0 0 1px var(--sp-border-subtle-00); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); }
+.sp-palette-header { display: flex; align-items: center; gap: var(--sp-space-03); height: var(--sp-size-md); padding: 0 var(--sp-space-05); color: var(--sp-text-secondary); box-shadow: inset 0 -1px 0 var(--sp-border-subtle-00); font-variant-numeric: tabular-nums; }
+.sp-palette-header strong { color: var(--sp-text-primary); font-weight: var(--sp-weight-semibold); }
+.sp-palette-group { height: var(--sp-size-sm); display: flex; align-items: center; padding: 0 var(--sp-space-05); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); }
+.sp-palette-list { list-style: none; margin: 0; padding: 0; max-height: 400px; overflow: auto; }
+.sp-palette-row { display: grid; grid-template-columns: 1fr auto auto; column-gap: var(--sp-space-05); align-items: center; height: var(--sp-size-lg); padding: 0 var(--sp-space-05); cursor: pointer; }
+.sp-palette-row:is(:hover, [data-state="hover"]) { background: var(--sp-layer-hover-02); }
+.sp-palette-row[aria-selected="true"] { background: var(--sp-layer-selected); box-shadow: inset 3px 0 0 var(--sp-border-interactive); }
+.sp-palette-row .sp-palette-title { color: var(--sp-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-palette-row .sp-palette-sub { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-palette-row .sp-palette-code { font: var(--sp-type-code-02); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); }
+.sp-palette-footer { display: flex; align-items: center; gap: var(--sp-space-05); height: var(--sp-size-sm); padding: 0 var(--sp-space-05); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); box-shadow: inset 0 1px 0 var(--sp-border-subtle-00); }
+.sp-palette-empty { padding: var(--sp-space-05); color: var(--sp-text-secondary); }
+.sp-palette-empty strong { color: var(--sp-text-primary); font-weight: var(--sp-weight-regular); display: block; margin-bottom: var(--sp-space-02); }
+.sp-palette .cds-notification { margin: var(--sp-space-03) var(--sp-space-05); max-width: none; }
+.sp-palette-loading { display: flex; align-items: center; gap: var(--sp-space-03); height: var(--sp-size-lg); padding: 0 var(--sp-space-05); color: var(--sp-text-secondary); }
+
+/* -----------------------------------------------------------------------------
+   12. SEAT PILL — §3 "Status marks" + DECISIONS §3.2.1, deviations 3, 7, 8.
+       PHASE3DS §1.16. Height = the 28 footprint (constant), fit-width, name
+       `First L.` in label-01, 8px pads, 1px edge. Code on hover / focus via
+       the tier-C tooltip (PR 2); selection shows it in the inspector eyebrow.
+       States: rest · hover · focus · selected · search hit · quiet (filtered
+       out) · move origin · move target · invalid target · changed-in-draft ◇
+       · names off (filled footprint). 44px hit region: .cds-touch-target.
+       Move target / invalid target share one construction — 2px edge + subtle
+       tint — in the success and error families, and differ by SHAPE too:
+       target solid, invalid dashed. Both are transient interaction states.
+       STROKE RULE: strokes go below 2px only where a 2px stroke would close
+       the shape — the 8px hollow ◇ badge (1.5px, verified crisp at 1x and 3x
+       in the rig). The 16px hatch stays at 2px (1.5 straddled pixels; 2 is
+       crisp at 3x). Nothing else in the system draws under 2px.
+   -------------------------------------------------------------------------- */
+.sp-pill { position: relative; display: inline-flex; align-items: center; height: var(--sp-pill-h); padding: 0 var(--sp-pill-pad);
+  background: var(--sp-pill-fill); box-shadow: inset 0 0 0 1px var(--sp-pill-edge); color: var(--sp-pill-text);
+  font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); white-space: nowrap; user-select: none; cursor: pointer;
+  transition: background var(--sp-duration-fast-01) var(--sp-ease-standard); }
+.sp-pill:is(:hover, [data-state="hover"]) { background: var(--sp-pill-fill-hover); }
+.sp-pill:is(:focus-visible, [data-state="focus"]) { outline: var(--sp-focus-width) solid var(--sp-focus); outline-offset: var(--sp-focus-offset); }
+.sp-pill[aria-selected="true"], .sp-pill[data-state="selected"] { box-shadow: inset 0 0 0 var(--sp-space-01) var(--sp-pill-selected-edge); }
+.sp-pill--search { background: var(--sp-pill-search-fill); box-shadow: inset 0 0 0 1px var(--sp-pill-search-edge); }
+.sp-pill--search:is(:hover, [data-state="hover"]) { background: var(--sp-pill-search-fill); }
+.sp-pill--quiet { background: var(--sp-pill-quiet-fill); box-shadow: inset 0 0 0 1px var(--sp-pill-quiet-edge); color: var(--sp-pill-quiet-text); }
+.sp-pill--origin { box-shadow: none; outline: var(--sp-space-01) dashed var(--sp-pill-origin-edge); outline-offset: calc(-1 * var(--sp-space-01)); background: var(--sp-pill-quiet-fill); }
+.sp-pill--target { background: var(--sp-pill-target-fill); box-shadow: inset 0 0 0 var(--sp-space-01) var(--sp-pill-target-edge); }
+.sp-pill--invalid { background: var(--sp-pill-invalid-fill); box-shadow: none; outline: var(--sp-space-01) dashed var(--sp-pill-invalid-edge); outline-offset: calc(-1 * var(--sp-space-01)); color: var(--sp-pill-invalid-text); cursor: not-allowed; }
+/* ◇ changed in draft — 8px hollow diamond, top-right, in the Draft family; the inspector says "Changed in draft" in text */
+/* fill / stroke are set on the <svg> so they INHERIT into a <use>d symbol — a `path` selector cannot reach a use's shadow tree (caught in the rig) */
+.sp-pill-badge { position: absolute; top: calc(-1 * var(--sp-space-02)); right: calc(-1 * var(--sp-space-02)); width: var(--sp-pill-badge-size); height: var(--sp-pill-badge-size); overflow: visible;
+  color: var(--sp-pill-badge); fill: var(--sp-pill-fill); stroke: currentColor; stroke-width: var(--sp-pill-badge-stroke); stroke-linejoin: miter; }
+.sp-pill--search .sp-pill-badge { fill: var(--sp-pill-search-fill); }
+.sp-pill--names-off .sp-pill-badge { fill: var(--sp-pill-names-off); }
+/* names off: assigned collapses to the filled 28 footprint; empty seats keep their symbols */
+.sp-pill--names-off { width: var(--sp-seat-footprint); padding: 0; justify-content: center; background: var(--sp-pill-names-off); box-shadow: none; color: transparent; overflow: hidden; }
+.sp-pill--names-off:is(:hover, [data-state="hover"]) { background: var(--sp-pill-names-off); }
+/* 44px hit region (deviation 7): the asset's touch-target pseudo, on every marker */
+.sp-pill.cds-touch-target::after, .sp-seat-footprint.cds-touch-target::after { content: ""; }
+.sp-seat-footprint.cds-touch-target { position: relative; }
+.sp-pill--assigned-legend { pointer-events: none; }
+
+/* -----------------------------------------------------------------------------
+   13. RIGHT SLOT (400) — §3 "Seat inspector side panel, 400 · hand-built width +
+       push + commit bar" (asset: .cds-side-panel 480 slide-in). PHASE3DS §1.17.
+       One owner at a time: inspector · mode card · Ask Planner drawer. The
+       canvas is pushed, the control row never reflows. layer-01, 1px left rule.
+       Header: eyebrow label-01 · title heading-03 (≤ 22 chars on one line at
+       368) · legend row · 40px icon buttons (Copy link, ×). Commit bar 64,
+       bleeds: Cancel ghost · primary. Its primary is the container's own —
+       a side panel is its own container (PHASE2UX §3 note), so Publish in the
+       row and Save here do not compete.
+   -------------------------------------------------------------------------- */
+.sp-slot { width: var(--sp-slot-w); display: flex; flex-direction: column; background: var(--sp-slot-bg); box-shadow: inset 1px 0 0 var(--sp-slot-rule);
+  font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); color: var(--sp-text-primary); }
+.sp-slot-host { position: absolute; top: 0; right: 0; bottom: 0; z-index: 30; transform: translateX(100%); transition: transform var(--sp-duration-moderate-02) var(--sp-ease-exit); }
+.sp-slot-host[data-open] { transform: none; transition-timing-function: var(--sp-ease-entrance); }
+.sp-slot-host .sp-slot { height: 100%; }
+.sp-slot-header { display: grid; grid-template-columns: 1fr auto; column-gap: var(--sp-space-03); padding: var(--sp-space-05) var(--sp-space-03) var(--sp-space-03) var(--sp-slot-pad); }
+.sp-slot-eyebrow { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); margin-bottom: var(--sp-space-02); }
+.sp-slot-title { font: var(--sp-type-heading-03); overflow-wrap: anywhere; }
+.sp-slot-actions { display: flex; align-self: start; }
+.sp-slot-body { flex: 1 1 auto; overflow: auto; padding: 0 var(--sp-slot-pad) var(--sp-slot-pad); }
+.sp-slot-section { font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); height: var(--sp-size-lg); display: flex; align-items: center; }
+.sp-slot .sp-seat-legend { padding: 0; height: var(--sp-size-sm); }
+.sp-slot .sp-draft-note { display: inline-flex; align-items: center; gap: var(--sp-space-02); color: var(--sp-text-secondary); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); }
+.sp-slot .sp-draft-note svg { width: var(--sp-space-03); height: var(--sp-space-03); overflow: visible; color: var(--sp-pill-badge); }
+.sp-slot .sp-draft-note svg { fill: none; stroke: currentColor; stroke-width: var(--sp-pill-badge-stroke); }
+.sp-person-role { color: var(--sp-text-secondary); margin-bottom: var(--sp-space-03); }
+.sp-contact-row { display: grid; grid-template-columns: 96px 1fr auto; align-items: center; column-gap: var(--sp-space-03); min-height: var(--sp-contact-row-h); box-shadow: inset 0 -1px 0 var(--sp-border-subtle-00); }
+.sp-contact-row dt { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); }
+.sp-contact-row dd { margin: 0; overflow-wrap: anywhere; }
+.sp-contact-row .cds-btn--icon { width: var(--sp-size-md); height: var(--sp-size-md); }
+.sp-commit-bar { flex: none; display: flex; height: var(--sp-commit-bar-h); }
+.sp-commit-bar .cds-btn { height: 100%; }
+.sp-commit-bar .cds-btn--ghost { flex: 0 0 auto; padding: 0 var(--sp-space-05); }
+.sp-commit-bar .cds-btn--primary { flex: 1 1 auto; }
+.sp-commit-bar .cds-btn--primary[aria-busy="true"] { background: var(--sp-button-primary-active); }
+/* form pieces the asset lacks: combobox + listbox, text area, actions row, block reason */
+.sp-slot .cds-form { gap: var(--sp-space-05); }
+.sp-slot .cds-text-input, .sp-slot .cds-select, .sp-slot .sp-textarea { width: 100%; }
+.sp-combobox { position: relative; }
+.sp-combobox .cds-text-input { padding-right: var(--sp-space-09); }
+.sp-combobox > svg { position: absolute; right: var(--sp-space-05); top: var(--sp-space-04); width: var(--sp-icon-01); height: var(--sp-icon-01); color: var(--sp-icon-primary); pointer-events: none; }
+.sp-listbox { position: absolute; left: 0; right: 0; top: 100%; z-index: 20; background: var(--sp-layer-02); box-shadow: 0 2px 6px var(--sp-shadow); list-style: none; margin: 0; padding: 0; max-height: 200px; overflow: auto; }
+.sp-listbox li { display: flex; align-items: center; gap: var(--sp-space-03); height: var(--sp-listbox-row-h); padding: 0 var(--sp-space-05); cursor: pointer; }
+.sp-listbox li:is(:hover, [data-state="hover"]) { background: var(--sp-layer-hover-02); }
+.sp-listbox li[aria-selected="true"] { background: var(--sp-layer-selected); }
+.sp-listbox .sp-listbox-meta { margin-left: auto; font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); }
+.sp-listbox .sp-listbox-create { color: var(--sp-link); }
+.sp-create-note { display: flex; flex-direction: column; gap: var(--sp-space-02); margin-top: var(--sp-space-02); }
+.sp-textarea { min-height: var(--sp-textarea-min-h); padding: var(--sp-space-04) var(--sp-space-05); border: 0; border-bottom: 1px solid var(--sp-field-border); background: var(--sp-field); color: var(--sp-text-primary); font: var(--sp-type-body-01); letter-spacing: var(--sp-tracking-body); resize: vertical; }
+.sp-textarea::placeholder { color: var(--sp-text-placeholder); }
+.sp-textarea:hover { background: var(--sp-field-hover); }
+.sp-field-counter { display: flex; justify-content: space-between; gap: var(--sp-space-03); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); margin-top: var(--sp-space-02); font-variant-numeric: tabular-nums; }
+.sp-actions { display: flex; gap: var(--sp-space-03); flex-wrap: wrap; }
+.sp-actions .cds-btn { min-width: 0; height: var(--sp-size-md); padding: 0 var(--sp-space-05); }
+.sp-block-reason { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); margin-top: var(--sp-space-02); }
+.sp-slot .cds-notification { max-width: none; margin: var(--sp-space-03) 0 var(--sp-space-05); }
+.sp-slot .cds-form-item[data-invalid] .cds-helper { color: var(--sp-text-error); }
+
+/* -----------------------------------------------------------------------------
+   14. MODE CARD — §3 "Mode card · hand-built". PHASE3DS §1.18. Owns the slot
+       while a mode runs: eyebrow · message body-01 · ghost exit · Esc note.
+   -------------------------------------------------------------------------- */
+.sp-mode-card { padding: var(--sp-slot-pad); display: flex; flex-direction: column; gap: var(--sp-space-03); }
+.sp-mode-card .sp-mode-card-title { font: var(--sp-type-heading-03); }
+.sp-mode-card p { font: var(--sp-type-body-01); letter-spacing: var(--sp-tracking-body); color: var(--sp-text-secondary); margin: 0; }
+.sp-mode-card .cds-btn--ghost { align-self: flex-start; margin-top: var(--sp-space-03); }
+.sp-mode-card .sp-esc-note { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); }
+
+/* -----------------------------------------------------------------------------
+   15. ASK PLANNER — §3 "Ask Planner drawer · hand-built, Carbon-for-AI label in
+       Phase 3". PHASE3DS §1.19. The AI label is the marker AND the entry point
+       to explainability (carbon-next.md); the textarea takes the AI border.
+       Nothing else is gradient. The drawer's Ask is its own container's primary.
+   -------------------------------------------------------------------------- */
+.sp-ai-label { display: inline-flex; align-items: center; justify-content: center; height: var(--sp-size-xs); padding: 0 var(--sp-space-03);
+  color: var(--sp-ai-label-text); font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body);
+  background: linear-gradient(var(--sp-layer-01), var(--sp-layer-01)) padding-box, linear-gradient(90deg, var(--sp-ai-border-start), var(--sp-ai-border-end)) border-box;
+  border: 1px solid transparent; cursor: pointer; }
+.sp-ai-label:is(:hover, [data-state="hover"]) { color: var(--sp-ai-label-text-hover); background: linear-gradient(var(--sp-layer-hover), var(--sp-layer-hover)) padding-box, linear-gradient(90deg, var(--sp-ai-border-start), var(--sp-ai-border-end)) border-box; }
+.sp-ai-label:is(:focus-visible, [data-state="focus"]) { outline: var(--sp-focus-width) solid var(--sp-focus); outline-offset: var(--sp-focus-offset); }
+.sp-ai-popover-host { position: relative; display: inline-block; }
+.sp-ai-popover { position: absolute; top: calc(100% + var(--sp-space-03)); right: 0; z-index: 40; width: 288px; padding: var(--sp-space-05); display: none;
+  background: var(--sp-layer-02); box-shadow: 0 2px 6px var(--sp-shadow), inset 0 0 0 1px var(--sp-border-subtle-00); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); color: var(--sp-text-primary); }
+.sp-ai-popover-host[data-open] .sp-ai-popover, .sp-ai-label[aria-expanded="true"] + .sp-ai-popover { display: block; }
+.sp-ai-popover h4 { font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); margin-bottom: var(--sp-space-03); }
+.sp-ai-popover p { color: var(--sp-text-secondary); margin: 0 0 var(--sp-space-03); }
+.sp-textarea--ai { border: 1px solid transparent; border-bottom-width: 1px;
+  background: linear-gradient(var(--sp-field), var(--sp-field)) padding-box, linear-gradient(90deg, var(--sp-ai-border-start), var(--sp-ai-border-end)) border-box; }
+.sp-textarea--ai:hover { background: linear-gradient(var(--sp-field-hover), var(--sp-field-hover)) padding-box, linear-gradient(90deg, var(--sp-ai-border-start), var(--sp-ai-border-end)) border-box; }
+.sp-drawer-subline { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); }
+.sp-prompt-list { display: flex; flex-direction: column; gap: 0; margin: var(--sp-space-03) 0 var(--sp-space-05); }
+.sp-prompt-list .cds-btn--ghost { justify-content: flex-start; text-align: left; height: var(--sp-size-md); padding: 0 var(--sp-space-03); white-space: normal; }
+.sp-answer { font: var(--sp-type-body-01); letter-spacing: var(--sp-tracking-body); margin: var(--sp-space-05) 0; }
+.sp-highlight-list { list-style: none; margin: 0; padding: 0; }
+.sp-highlight-list li { display: flex; align-items: center; gap: var(--sp-space-03); height: var(--sp-size-md); box-shadow: inset 0 -1px 0 var(--sp-border-subtle-00); }
+.sp-highlight-list .sp-highlight-floor { margin-left: auto; font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); }
+.sp-drawer-loading { display: flex; align-items: center; gap: var(--sp-space-03); color: var(--sp-text-secondary); min-height: var(--sp-size-lg); }
+
+/* -----------------------------------------------------------------------------
+   16. TEARSHEET (wide) — §3 "Wide tearsheet (publish review) · hand-built".
+       PHASE3DS §1.20. Anchored bottom, the header stays visible above, the
+       overlay dims the page, NO ×: leaving is Cancel. Rail 256 = readiness
+       summary (the wide rail otherwise holds a progress indicator — a single
+       step has none, PHASE2UX §4). Body: .cds-table with floor group rows,
+       then People details. Footer 64: facts left, Cancel · primary right.
+       A modal never opens from inside the tearsheet (owner ruling).
+   -------------------------------------------------------------------------- */
+.sp-tearsheet-host { position: fixed; inset: 0; z-index: 8000; display: none; }
+.sp-tearsheet-host[data-open] { display: block; }
+.sp-tearsheet-overlay { position: absolute; inset: 0; background: var(--sp-overlay); }
+.sp-tearsheet { position: absolute; left: 0; right: 0; bottom: 0; top: calc(var(--sp-shell-header-h) + var(--sp-tearsheet-top)); display: flex; flex-direction: column;
+  background: var(--sp-tearsheet-bg); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); color: var(--sp-text-primary);
+  transform: translateY(100%); transition: transform var(--sp-duration-moderate-02) var(--sp-ease-exit); }
+.sp-tearsheet-host[data-open] .sp-tearsheet { transform: none; transition-timing-function: var(--sp-ease-entrance); }
+.sp-tearsheet--static { position: relative; top: auto; transform: none; }   /* specimens */
+.sp-tearsheet-header { padding: var(--sp-space-06) var(--sp-space-07) var(--sp-space-05); box-shadow: inset 0 -1px 0 var(--sp-border-subtle-00); }
+.sp-tearsheet-header h2 { font: var(--sp-type-heading-03); }
+.sp-tearsheet-header p { color: var(--sp-text-secondary); margin-top: var(--sp-space-02); }
+.sp-tearsheet-body { flex: 1 1 auto; display: grid; grid-template-columns: var(--sp-tearsheet-rail-w) 1fr; min-height: 0; }
+.sp-tearsheet-rail { padding: var(--sp-space-05) var(--sp-space-05) var(--sp-space-05) var(--sp-space-07); box-shadow: inset -1px 0 0 var(--sp-border-subtle-00); display: flex; flex-direction: column; gap: var(--sp-space-05); }
+.sp-tearsheet-main { overflow: auto; padding: var(--sp-space-05) var(--sp-space-07); }
+.sp-readiness { display: flex; flex-direction: column; gap: var(--sp-space-03); }
+.sp-readiness-title { font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); display: flex; align-items: center; gap: var(--sp-space-03); }
+.sp-readiness-title svg { width: var(--sp-icon-01); height: var(--sp-icon-01); }
+.sp-readiness-facts { color: var(--sp-text-secondary); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); }
+.sp-readiness .cds-tag-set { flex-wrap: wrap; gap: var(--sp-space-02); }
+.sp-rail-heading { font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); margin-bottom: var(--sp-space-02); }
+.sp-rail-text { color: var(--sp-text-secondary); }
+.sp-tearsheet-footer { flex: none; display: flex; align-items: center; gap: var(--sp-space-03); height: var(--sp-tearsheet-footer-h); padding: 0 0 0 var(--sp-space-07); box-shadow: inset 0 1px 0 var(--sp-border-subtle-00); }
+.sp-tearsheet-facts { color: var(--sp-text-secondary); font-variant-numeric: tabular-nums; margin-right: auto; }
+.sp-tearsheet-footer .cds-btn { height: 100%; }
+.sp-tearsheet-footer .cds-btn--primary { min-width: 224px; }
+.sp-tearsheet-footer .cds-btn--ghost { padding: 0 var(--sp-space-05); }
+.sp-tearsheet .cds-notification { max-width: none; margin: 0 0 var(--sp-space-05); }
+.sp-tearsheet .cds-empty { padding: var(--sp-space-05) 0; }
+.sp-tearsheet-section { font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); height: var(--sp-size-lg); display: flex; align-items: center; }
+.sp-detail-list { list-style: none; margin: 0; padding: 0; }
+.sp-detail-list li { min-height: var(--sp-size-md); display: flex; align-items: center; box-shadow: inset 0 -1px 0 var(--sp-border-subtle-00); }
+/* group (eyebrow) rows inside .cds-table — floor / department headers; rows 32 (Management) or 40 */
+.cds-table tr.sp-table-group td { background: var(--sp-group-row-bg); font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); color: var(--sp-text-primary); height: var(--sp-size-sm); }
+.cds-table tr.sp-table-group:hover td, .cds-table tr.sp-table-group:hover { background: var(--sp-group-row-bg); }
+.cds-table td .cds-tag { vertical-align: middle; margin-left: var(--sp-space-02); }
+
+/* -----------------------------------------------------------------------------
+   17. ROSTER — §3 "Roster region + static rows · none needed" — the region
+       needs its own layout: heading-03 + helper, department eyebrows with
+       counts, 40px STATIC rows name · position · ext · email + a copy-link icon
+       button. The row is not interactive: hover lives on the button only.
+   -------------------------------------------------------------------------- */
+.sp-roster { padding: var(--sp-space-05) var(--sp-space-07); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); }
+.sp-roster h2 { font: var(--sp-type-heading-03); }
+.sp-roster-helper { color: var(--sp-text-secondary); margin: var(--sp-space-02) 0 var(--sp-space-05); }
+.sp-roster-group { display: flex; align-items: center; height: var(--sp-size-sm); margin-top: var(--sp-space-03); font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); }
+.sp-roster-group .sp-roster-count { color: var(--sp-text-secondary); font-weight: var(--sp-weight-regular); margin-left: var(--sp-space-03); }
+.sp-roster-list { list-style: none; margin: 0; padding: 0; }
+.sp-roster-row { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) minmax(200px, 1.4fr) var(--sp-size-md); align-items: center; column-gap: var(--sp-space-05); height: var(--sp-roster-row-h); box-shadow: inset 0 -1px 0 var(--sp-border-subtle-00); }
+.sp-roster-row > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-roster-row .sp-roster-meta { color: var(--sp-text-secondary); }
+.sp-roster-row[data-highlight] { background: var(--sp-status-search-surface); box-shadow: inset 3px 0 0 var(--sp-status-search-mark), inset 0 -1px 0 var(--sp-border-subtle-00); }
+.sp-roster-row .cds-btn--icon { width: var(--sp-size-md); height: var(--sp-size-md); }
+.sp-roster-row .cds-btn--icon[data-done]::after { content: attr(data-done); position: absolute; right: 100%; margin-right: var(--sp-space-02); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); white-space: nowrap; }
+.sp-roster .cds-empty { padding: var(--sp-space-05) 0; }
+.sp-roster .cds-notification { margin: var(--sp-space-03) 0; }
+
+/* -----------------------------------------------------------------------------
+   18. STATUS BAND — 40px under the canvas (D1-g): legend · counts · zoom/fit.
+       Spans the canvas, not the slot. PHASE3DS §1.22.
+   -------------------------------------------------------------------------- */
+.sp-band { display: flex; align-items: center; gap: var(--sp-space-05); height: var(--sp-band-h); padding: 0 var(--sp-space-03) 0 var(--sp-space-05);
+  background: var(--sp-band-bg); box-shadow: inset 0 1px 0 var(--sp-band-rule); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); color: var(--sp-text-secondary); white-space: nowrap; }
+.sp-band-title { color: var(--sp-text-primary); }
+.sp-band-legend { display: flex; }
+.sp-band-count { margin-left: auto; font-variant-numeric: tabular-nums; }
+.sp-band-zoom { display: flex; }
+.sp-band .cds-btn--icon, .sp-band .cds-btn--ghost { height: var(--sp-size-sm); }
+.sp-band .cds-btn--icon { width: var(--sp-size-sm); }
+.sp-band .cds-btn--ghost { padding: 0 var(--sp-space-03); }
+.sp-band-note { color: var(--sp-text-secondary); }
+
+/* -----------------------------------------------------------------------------
+   19. CANVAS — mat, plan, status region (role=status, inline notifications
+       over the canvas: MLS02 refresh, PUBLISH_BLOCKED), empty / skeleton overlays.
+   -------------------------------------------------------------------------- */
+.sp-canvas { position: relative; background: var(--sp-map-mat); overflow: hidden; }
+.sp-canvas-plan { position: absolute; inset: var(--sp-space-05); background: var(--sp-canvas-plan-bg); box-shadow: inset 0 0 0 1px var(--sp-border-subtle-00); }
+.sp-canvas-status { position: absolute; top: var(--sp-space-03); left: var(--sp-space-03); right: var(--sp-space-03); z-index: 5; display: flex; flex-direction: column; gap: var(--sp-space-03); }
+.sp-canvas-status .cds-notification { margin: 0; max-width: 640px; }
+.sp-canvas-empty { position: absolute; inset: 0; display: grid; place-items: center; }
+.sp-canvas-empty .cds-empty { background: var(--sp-layer-02); box-shadow: inset 0 0 0 1px var(--sp-border-subtle-00); padding: var(--sp-space-06) var(--sp-space-06) var(--sp-space-06); }
+.sp-canvas--skeleton .sp-canvas-plan { background: var(--sp-skeleton-bg); }
+@media (prefers-reduced-motion: no-preference) {
+  .sp-canvas--skeleton .sp-canvas-plan { background: linear-gradient(90deg, var(--sp-skeleton-bg) 0 40%, var(--sp-skeleton-element) 50%, var(--sp-skeleton-bg) 60% 100%); background-size: 300% 100%; animation: sp-skeleton-sweep 3000ms linear infinite; }
+}
+.sp-marker { position: absolute; }   /* specimens place markers by inline left/top; the app uses the calibration transform */
