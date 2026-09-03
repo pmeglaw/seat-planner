@@ -1082,7 +1082,9 @@ removed — history lives in the History panel (D0-a).
 `/admin/settings`. Settings archetype: single-column forms grouped by section. Contents: CSV import,
 JSON snapshot restore. **Reset draft is retired** (ruling 22) — too destructive to keep; undo history and
 snapshot restore cover the need. Snapshot restore is moderate impact: confirm with consequences spelled
-out, no typed confirmation. The reset-draft server action and its RPC come out in Phase 4.
+out, no typed confirmation. **Q7 ruled 2026-09-02 — the map's "Discard draft changes" stays; only Settings'
+"Reset draft" is retired.** `resetDraftToPublishedAction` and the `reset_draft_*` RPC family stay for the map;
+Phase 4 removes only the Settings entry in `components/admin-settings/DataUtilitiesPanel.tsx`.
 
 ---
 
@@ -1221,9 +1223,9 @@ reasoning; the remaining open questions are all narrow and all sit on measured d
 
 **Added 2026-09-02 (PHASE1IA.md second pass):**
 
-| # | Question | Default if unanswered |
+| # | Question | Ruling |
 |---|---|---|
-| Q7 | Ruling 22 retires "Reset draft" on Settings. The map's "Discard draft changes" (`SeatMap.tsx` overflow menu, `/admin`) is the same `resetDraftToPublishedAction` behind a confirm dialog. Does it go too? | Keep it: scoped to the admin's current editing session, sits next to Publish, already confirms. Retire only the Settings entry |
+| Q7 | Ruling 22 retires "Reset draft" on Settings. The map's "Discard draft changes" (`SeatMap.tsx` overflow menu, `/admin`) is the same `resetDraftToPublishedAction` behind a confirm dialog. Does it go too? | **Ruled 2026-09-02 — no.** The map's "Discard draft changes" stays (scoped to the admin's editing session, sits next to Publish, already confirms); only Settings' "Reset draft" is retired. Action and `reset_draft_*` RPCs stay; Phase 4 removes the Settings entry only |
 
 ## 9. Recommended next step
 

@@ -75,7 +75,7 @@ A second pass the same day (rulings 17–24, section C) was made against the con
 | **Seat map** (home) | `/` published · `/admin` draft | everyone · admins | wordmark → `/`; "Seat map" link; **mode switch Published ⇄ Draft in the D0 mode indicator** (admins); indicator informational for viewers |
 | **Reception** | `/reception` | any signed-in | link (viewer's one section besides home) |
 | **Management** | `/admin/management?tab=employees\|departments\|zones` | admin | link; in-page tabs, no third tier |
-| **Settings** | `/admin/settings` | admin | link; CSV import / JSON snapshot restore (kept separate: irreversible ops own a page). **Reset draft retired — ruling 22.** Snapshot restore gets a confirm-with-consequences dialog (moderate impact). Open: the map's "Discard draft changes" (SeatMap overflow menu) calls the same `resetDraftToPublishedAction` — see Q7 |
+| **Settings** | `/admin/settings` | admin | link; CSV import / JSON snapshot restore (kept separate: irreversible ops own a page). **Reset draft retired from Settings — ruling 22.** Snapshot restore gets a confirm-with-consequences dialog (moderate impact). **Q7 ruled 2026-09-02:** the map's "Discard draft changes" (SeatMap overflow menu, `/admin`) stays; it keeps calling `resetDraftToPublishedAction` |
 
 Utilities (ui-shell order, flush right, 48×48, no gaps): **Help · History · Account** — IBM's exact standalone three (History occupies IBM's Notifications slot). **Theme is no longer a utility — ruling 20**; it is a row in the Account panel.
 - **Help** = right panel, static content (shortcuts, Draft vs Published, who to ask). No route, no data.
@@ -127,7 +127,7 @@ Never a history entry per state change. Theme and login email stay localStorage.
 | Ask Planner | — | Hidden | `/admin` only |
 | Publish | — | — | admin + `lib/publishGuard.ts` env attestation |
 | Snapshot restore | — | — | admin; confirm with consequences spelled out |
-| Reset draft (Settings) | — | — | **retired (ruling 22)** — `resetDraftToPublishedAction` + `reset_draft_*` RPC removed in Phase 4 unless Q7 keeps the map's discard control |
+| Reset draft (Settings) | — | — | **retired (ruling 22)** — Phase 4 removes only the Settings entry in `components/admin-settings/DataUtilitiesPanel.tsx`; `resetDraftToPublishedAction` and the `reset_draft_*` RPC family **stay** for the map's "Discard draft changes" (Q7, ruled 2026-09-02) |
 
 Roles stay `admin | viewer`. No front-desk role (ruled; slot noted, no schema reservation).
 
@@ -137,7 +137,7 @@ Roles stay `admin | viewer`. No front-desk role (ruled; slot noted, no schema re
 
 ### B7. Data architecture impact
 - **No migration required by the IA.** Floor stays column + code registry; whole-building publish; MLS02 fence shape untouched (any per-floor fetch would break the `count(*)` assertion — do not partial-load the draft).
-- Server actions: none added; **`resetDraftToPublishedAction` and the `reset_draft_*` RPC family are removed in Phase 4 (ruling 22)** — the MLS02 fence is unaffected since reset was whole-building too. Two call sites today: `DataUtilitiesPanel.tsx` (Settings — retires) and `SeatMap.tsx`'s "Discard draft changes" menu item (Q7). `getPublishHistoryAction` re-homed to the panel; option/employee actions keep `revalidatePath("/")` because viewer options are live.
+- Server actions: none added, none removed. **`resetDraftToPublishedAction` and the `reset_draft_*` RPC family stay (Q7, ruled 2026-09-02)** — `SeatMap.tsx`'s "Discard draft changes" menu item still uses them. Phase 4 removes only the Settings call site in `components/admin-settings/DataUtilitiesPanel.tsx` (ruling 22). The MLS02 fence is unaffected. `getPublishHistoryAction` re-homed to the panel; option/employee actions keep `revalidatePath("/")` because viewer options are live.
 - `?q=` landing uses the published snapshot only (viewer) / draft payload (admin) — no new read path.
 - Deferred cleanups, not IA-blocking: `seats.department` vestigial column; `set_updated_at()` dead function; `GUARDED_NAVIGATION_HREFS` dangling `?tab=publishHistory` entry (retires with the tab).
 
@@ -177,11 +177,11 @@ Second pass, same day, after the conformance review (section E) and the "Seat Pl
 | 23 | E2.1 + E2.2 mockups (indicator, History panel admin + viewer) | **Approved** as mocked |
 | 24 | "320+ adaptive" standing ruling | Reworded, not dropped — see F1 |
 
-Open after the second pass:
+Raised after the second pass, ruled the same day:
 
-| # | Question | Default if unanswered |
+| # | Question | Ruling |
 |---|---|---|
-| Q7 | Ruling 22 retires "Reset draft" on Settings. The map's "Discard draft changes" (SeatMap overflow menu, `/admin`) is the same action behind a confirm dialog. Does it go too? | Keep it: it is scoped to the admin's current editing session, sits next to Publish, and already confirms. Retire only the Settings entry and keep the action for the map |
+| Q7 | Ruling 22 retires "Reset draft" on Settings. The map's "Discard draft changes" (SeatMap overflow menu, `/admin`) is the same action behind a confirm dialog. Does it go too? | **Ruled 2026-09-02 — no.** The map's "Discard draft changes" stays (scoped to the admin's editing session, sits next to Publish, already confirms); only Settings' "Reset draft" is retired. `resetDraftToPublishedAction` and the `reset_draft_*` RPCs stay |
 
 Standing rulings honoured, not re-asked: Carbon v12 skill-derived target; works at any width, designed and tested at 1920 (F1); `lg` hinge (D0); marker carries the name (Q6); admin editing `lg`+ read-only below; viewer never gets Ask Planner; Reception link for all viewers; in-memory recents; whole-building publish; code floor registry; undo never deletes employees; no SVG floor-plan replacement; no `@carbon/*` dependency; branch + Vercel preview per PR.
 
