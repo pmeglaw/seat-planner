@@ -606,6 +606,30 @@ links to `/`. No graphic wordmark. (PHASE1IA.md F2.)
 narrow fallback (links fold into the left panel, single-column pages, map read-only)". The floor is kept;
 the per-breakpoint design mandate is withdrawn. Reopens on first laptop use. (PHASE1IA.md F1, ruling 24.)
 
+### D0 — Phase 2 amendments (2026-09-02, shell PR)
+
+#### D0-f · Right-panel width is 320px
+**Screen:** shell — Help, History, Account panels.
+**Problem:** the width was provisional (PHASE1IA B1); Carbon's HeaderPanel is 256, ibm-products' NotificationsPanel 360.
+**Options considered:** (1) 256 — matches the filter left panel and Carbon's own header panel; (2) 320 — the width the approved mockups (ruling 23) were drawn at; (3) 360 — sized for notification bodies.
+**Choice:** 320. Drawn and checked in the wireframe: the History event (what changed / date / who on three lines) fits either width, so content does not decide it — what does is the Help panel's two-column shortcut list (a 96px key column plus a definition; 288px of content holds "Move between seats on the plan" on one line, 224px does not), the two-segment mode switch keeping ≥ 128px per segment, and the fact that ruling 23 approved the panels as mocked at 320. 360 buys nothing — no panel here carries body text. 320 sits on the 8px grid (40 × 8). Applies to all three panels — one width, per ui-shell "consistent width".
+**Trade-off:** 64px more of the map covered while a panel is open. Panels float and close on Esc, so the cost is transient.
+**Would change if:** publish events gain a body paragraph (then 360), or the History panel is retired to a page.
+
+#### D0-g · History panel depth: 10 events, then Show more to 25
+**Problem:** `publish_events` is unbounded; ui-shell forbids unbounded content in a side panel; patterns prefers "Show more" over scrolling, gradients or fades.
+**Choice:** the panel lists the 10 newest events (the shipped `getPublishHistoryAction` default) and offers one ghost **Show more** that fetches to the action's 25 cap; after that the panel says "Showing the 25 most recent publishes." No paging, no infinite scroll — positions in a publish log are not addressable.
+**Trade-off:** older history is unreachable from the UI. Accepted: it was already capped at 25 on the retired Management tab.
+**Would change if:** anyone asks for a publish older than the 25th — then the log becomes a Management tab with pagination.
+
+#### D0-h · Hamburger only where the left panel has content; its slot is always reserved
+**Screen:** shell, every route.
+**Problem:** the hamburger toggles the *filter* panel (D0-c), and filters belong to the map. Reception, Management and Settings have no left-panel content at `lg`+; ui-shell puts a hamburger "only when there's a collapsible left panel".
+**Options considered:** (A) hamburger only where the panel has content — `/` and `/admin` at every width, every route below `lg` (the panel then carries the section links) — with the 48px slot **reserved and empty** elsewhere so the header name never moves; (B) hamburger everywhere, the panel on non-map routes holding only the section links — a duplicate of the header links at `lg`+; (C) hamburger on map routes only, header name flush left elsewhere.
+**Choice:** A (owner, 2026-09-02). It is the literal ui-shell rule, and reserving the slot keeps "icons don't move" — the header name starts at x=48 on every route.
+**Trade-off:** a 48px empty square at the left of the header on three routes. Invisible in practice (the header is one dark band), and cheaper than a control that opens an empty panel.
+**Would change if:** Reception or Management grow filters of their own — then the panel has content there and the hamburger appears, with no layout shift.
+
 ---
 
 ### D1 — Map (`/`, viewer)

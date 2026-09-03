@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Shell — filter left panel (Phase 2 wireframe)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Low-fi wireframe. Grayscale only; no primary action on the shell, so no Blue 60. 8px grid, zero radius. */
+:root{--g10:#f4f4f4;--g20:#e0e0e0;--g30:#c6c6c6;--g50:#8d8d8d;--g60:#6f6f6f;--g70:#525252;--g80:#393939;--g90:#262626;--g100:#161616;--w:#fff}
+*{box-sizing:border-box;border-radius:0;margin:0}
+body{font:400 14px/20px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.16px;color:var(--g100);background:var(--g20);padding:32px}
+h1{font-size:28px;line-height:36px;font-weight:400;margin-bottom:8px}
+h2{font-size:20px;line-height:28px;font-weight:400;margin:48px 0 8px}
+p,li{max-width:960px}
+ul{padding-left:20px;margin:8px 0}
+code{font-family:"IBM Plex Mono",monospace;font-size:12px}
+button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.fit{display:inline-flex;gap:8px;align-items:center;height:32px;margin:8px 0 16px}
+body:has(#fit:checked) .frame{zoom:.5}
+.frame{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--g10);outline:1px solid var(--g30);margin:8px 0 16px}
+.dim{position:absolute;font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);background:rgba(255,255,255,.9);padding:0 4px;pointer-events:none}
+/* header */
+.hdr{position:absolute;left:0;right:0;top:0;height:48px;background:var(--g100);color:var(--g10);display:flex;align-items:center;border-bottom:1px solid var(--g80)}
+.slot{width:48px;height:48px;flex:none;display:grid;place-items:center}
+.slot[aria-expanded="true"]{background:var(--g90);box-shadow:inset 0 0 0 1px var(--g80)}
+.ham{width:16px;height:12px;background:linear-gradient(var(--g10) 0 2px,transparent 2px 5px,var(--g10) 5px 7px,transparent 7px 10px,var(--g10) 10px 12px)}
+.x{width:14px;height:14px;position:relative}
+.x::before,.x::after{content:"";position:absolute;left:6px;top:-1px;width:2px;height:16px;background:var(--g10);transform:rotate(45deg)}
+.x::after{transform:rotate(-45deg)}
+.name{height:48px;line-height:48px;display:block;padding:0 16px;color:var(--g10);text-decoration:none;white-space:nowrap}
+.name b{font-weight:600}
+.nav{display:flex;height:48px}
+.nav a{display:flex;align-items:center;padding:0 16px;color:var(--g30);text-decoration:none;white-space:nowrap}
+.nav a[aria-current]{color:var(--g10);box-shadow:inset 0 -3px 0 var(--g10)}
+.mode{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;gap:8px;padding:0 16px;color:var(--g10);white-space:nowrap}
+.mk{width:12px;height:12px;flex:none}
+.mk-pub{background:var(--g10)}
+.utils{margin-left:auto;display:flex;height:48px}
+.ub{width:48px;height:48px;display:grid;place-items:center;color:var(--g10)}
+.ub svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
+/* canvas + control row (context only — designed in the map slice) */
+.canvas{position:absolute;top:48px;left:0;right:0;bottom:0}
+.canvas.push{left:256px}
+.ctl{height:48px;background:var(--w);border-bottom:1px solid var(--g20);display:flex;align-items:center;padding:0 16px;gap:16px;color:var(--g60)}
+.ctl .ph{height:32px;display:inline-flex;align-items:center;padding:0 12px;border:1px dashed var(--g30)}
+.chip{height:32px;display:inline-flex;align-items:center;padding:0 8px 0 12px;border:1px solid var(--g70);color:var(--g100);gap:8px}
+.chip i{font-style:normal;width:16px;text-align:center}
+.plan{position:absolute;top:48px;left:0;right:0;bottom:0;display:grid;place-items:center;color:var(--g50);background:linear-gradient(to top right,transparent calc(50% - .5px),var(--g30) 50%,transparent calc(50% + .5px)),linear-gradient(to top left,transparent calc(50% - .5px),var(--g30) 50%,transparent calc(50% + .5px))}
+/* left panel */
+.lp{position:absolute;top:48px;left:0;bottom:0;width:256px;background:var(--w);border-right:1px solid var(--g20);display:flex;flex-direction:column}
+.lp-h{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 16px;font-weight:600;border-bottom:1px solid var(--g20);flex:none}
+.lp-b{overflow:auto;flex:1}
+.lp-b.scroll{overflow-y:scroll}
+.gb{height:32px;padding:0 12px;display:inline-flex;align-items:center;color:var(--g70);font-weight:400}
+.grp{padding:8px 0}
+.grp-h{height:32px;display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 16px;font-weight:600}
+.opt{height:32px;display:flex;align-items:center;gap:8px;padding:0 16px;white-space:nowrap}
+.opt .n{color:var(--g60)}
+.cb{width:16px;height:16px;border:1px solid var(--g100);flex:none}
+.cb.on{background:var(--g100);box-shadow:inset 0 0 0 2px var(--w)}
+.hint{padding:8px 16px;color:var(--g60);font-size:12px;line-height:16px}
+.sk{height:16px;background:var(--g20);margin:8px 16px}
+.empty{padding:16px}
+.empty h3{font-size:14px;line-height:18px;font-weight:600;margin-bottom:8px}
+.empty p{color:var(--g70)}
+.empty a{display:inline-flex;height:32px;align-items:center;margin-top:8px;color:var(--g100);text-decoration:underline}
+.note{border-left:3px solid var(--g70);background:var(--g10);padding:12px 16px;margin:8px 16px}
+.note b{display:block;font-weight:600}
+.note .gb{padding:0;margin-top:4px}
+</style>
+</head>
+<body>
+<h1>Shell — filter left panel</h1>
+<p>Phase 2 wireframe, slice 1. Spec: <code>PHASE2UX.md</code> §1.3. Decision: D0-c (ruling 21, "Option A2"). 256px, hidden by default, hamburger toggles; slide-in that <b>pushes</b> the canvas, no focus trap; Esc closes; open/closed remembered per user. The map control row is drawn as context only — it is designed in slice 2.</p>
+<label class="fit"><input type="checkbox" id="fit"> Fit frames to half size</label>
+
+<h2>1 · Closed (default) — <code>/</code>, three filters applied</h2>
+<ul>
+  <li>Map keeps its full width. The control row carries <b>"Filters 3 ×"</b>: the count of applied filters, and × clears them without reopening (collapsed-container rule).</li>
+  <li>Hamburger <code>aria-expanded="false"</code>. Everything else in the control row is a placeholder for slice 2.</li>
+</ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-label="Filters" aria-expanded="false"><span class="ham"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav>
+    <span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span>
+    <div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div>
+  </header>
+  <div class="canvas">
+    <div class="ctl"><span class="ph">Floor 3 ▾</span><span class="ph">🔍 Find a person or seat · This floor ▾</span><span class="chip">Filters 3 <i>×</i></span><span>22 of 68 seats match</span><span class="ph">Find me</span><span class="ph">Names</span></div>
+    <div class="plan">Floor plan, full width 1920 — slice 2</div>
+  </div>
+  <span class="dim" style="left:16px;top:100px">control row = slice 2 context; only "Filters 3 ×" is this slice's</span>
+</div>
+
+<h2>2 · Open — applied (Department ×2, Status ×1)</h2>
+<ul>
+  <li>Panel pushes the canvas to 1664px; the plan re-fits. Header row "Filters" + ghost <b>Clear all</b> (visible because N &gt; 0), pinned.</li>
+  <li>Three checkbox groups, each with its own ghost <b>Clear</b> (visible only when that group has a selection). Counts in helper style. Instant updates.</li>
+  <li>Hamburger shows <code>aria-expanded="true"</code> and its icon becomes ×; Esc closes.</li>
+</ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-label="Filters" aria-expanded="true"><span class="x"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav>
+    <span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span>
+    <div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div>
+  </header>
+  <aside class="lp" aria-label="Filters">
+    <div class="lp-h">Filters <button class="gb">Clear all</button></div>
+    <div class="lp-b">
+      <fieldset class="grp" style="border:0;padding:8px 0"><div class="grp-h">Department <button class="gb">Clear</button></div>
+        <label class="opt"><span class="cb on"></span>Case Management <span class="n">· 38</span></label>
+        <label class="opt"><span class="cb on"></span>Litigation <span class="n">· 20</span></label>
+        <label class="opt"><span class="cb"></span>Pre-Litigation <span class="n">· 9</span></label>
+        <label class="opt"><span class="cb"></span>Medical Records <span class="n">· 7</span></label>
+        <label class="opt"><span class="cb"></span>Intake <span class="n">· 5</span></label>
+        <label class="opt"><span class="cb"></span>Front Office <span class="n">· 3</span></label>
+        <label class="opt"><span class="cb"></span>Accounting <span class="n">· 3</span></label>
+        <label class="opt"><span class="cb"></span>Human Resources <span class="n">· 2</span></label>
+        <label class="opt"><span class="cb"></span>IT <span class="n">· 2</span></label>
+        <label class="opt"><span class="cb"></span>Marketing <span class="n">· 2</span></label>
+        <label class="opt"><span class="cb"></span>WIL <span class="n">· 1</span></label>
+      </fieldset>
+      <fieldset class="grp" style="border:0;padding:8px 0"><div class="grp-h">Zone</div>
+        <label class="opt"><span class="cb"></span>North-east pod <span class="n">· 12</span></label>
+        <label class="opt"><span class="cb"></span>North-west pod <span class="n">· 12</span></label>
+        <label class="opt"><span class="cb"></span>Litigation pod <span class="n">· 10</span></label>
+        <label class="opt"><span class="cb"></span>Attorney offices <span class="n">· 18</span></label>
+        <label class="opt"><span class="cb"></span>Reception <span class="n">· 2</span></label>
+      </fieldset>
+      <fieldset class="grp" style="border:0;padding:8px 0"><div class="grp-h">Status <button class="gb">Clear</button></div>
+        <label class="opt"><span class="cb on"></span>Assigned <span class="n">· 56</span></label>
+        <label class="opt"><span class="cb"></span>Available <span class="n">· 12</span></label>
+      </fieldset>
+    </div>
+  </aside>
+  <div class="canvas push">
+    <div class="ctl"><span class="ph">Floor 3 ▾</span><span class="ph">🔍 Find a person or seat · This floor ▾</span><span class="chip">Filters 3 <i>×</i></span><span>22 of 68 seats match</span><span class="ph">Find me</span><span class="ph">Names</span></div>
+    <div class="plan">Floor plan re-fits to 1664 — slice 2</div>
+  </div>
+  <span class="dim" style="left:260px;top:1052px">256 · pushes, no overlay, no focus trap</span>
+  <span class="dim" style="left:4px;top:100px">48px header row, pinned</span>
+</div>
+
+<h2>3 · Open — empty (no departments or zones yet)</h2>
+<ul>
+  <li>The groups are replaced by one empty state that names the next step. Admin copy shown; viewers read "Ask an admin." instead of the link. Clear all is Hidden.</li>
+</ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-expanded="true"><span class="x"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#">Settings</a></nav>
+    <span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span>
+    <div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div>
+  </header>
+  <aside class="lp" aria-label="Filters">
+    <div class="lp-h">Filters</div>
+    <div class="lp-b">
+      <div class="empty"><h3>Filters appear once departments and zones exist</h3><p>Add them in Management.</p><a href="#">Go to Management → Departments</a></div>
+    </div>
+  </aside>
+  <div class="canvas push">
+    <div class="ctl"><span class="ph">Floor 3 ▾</span><span class="ph">🔍 Find a person or seat · This floor ▾</span><span class="ph">Find me</span><span class="ph">Names</span></div>
+    <div class="plan">Floor plan — slice 2</div>
+  </div>
+</div>
+
+<h2>4 · Open — loading</h2>
+<ul><li>Group titles are real; three skeleton rows per group. No Clear controls yet.</li></ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-expanded="true"><span class="x"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav>
+    <span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span>
+    <div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div>
+  </header>
+  <aside class="lp" aria-label="Filters" aria-busy="true">
+    <div class="lp-h">Filters</div>
+    <div class="lp-b">
+      <div class="grp"><div class="grp-h">Department</div><div class="sk" style="width:160px"></div><div class="sk" style="width:120px"></div><div class="sk" style="width:140px"></div></div>
+      <div class="grp"><div class="grp-h">Zone</div><div class="sk" style="width:140px"></div><div class="sk" style="width:120px"></div><div class="sk" style="width:160px"></div></div>
+      <div class="grp"><div class="grp-h">Status</div><div class="sk" style="width:100px"></div><div class="sk" style="width:100px"></div></div>
+    </div>
+  </aside>
+  <div class="canvas push"><div class="ctl"><span class="ph">Floor 3 ▾</span><span class="ph">🔍 Find a person or seat · This floor ▾</span><span class="ph">Find me</span><span class="ph">Names</span></div><div class="plan">Floor plan — slice 2</div></div>
+</div>
+
+<h2>5 · Open — partial (Zone failed to load)</h2>
+<ul><li>Department and Status work; the failed group shows an inline error notification with a ghost Retry. The map stays usable.</li></ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-expanded="true"><span class="x"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav>
+    <span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span>
+    <div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div>
+  </header>
+  <aside class="lp" aria-label="Filters">
+    <div class="lp-h">Filters</div>
+    <div class="lp-b">
+      <div class="grp"><div class="grp-h">Department</div>
+        <label class="opt"><span class="cb"></span>Case Management <span class="n">· 38</span></label>
+        <label class="opt"><span class="cb"></span>Litigation <span class="n">· 20</span></label>
+        <label class="opt"><span class="cb"></span>Pre-Litigation <span class="n">· 9</span></label>
+        <label class="opt"><span class="cb"></span>Medical Records <span class="n">· 7</span></label>
+      </div>
+      <div class="grp"><div class="grp-h">Zone</div>
+        <div class="note" role="alert"><b>Zones couldn't load</b>Department and status still work.<button class="gb">Retry</button></div>
+      </div>
+      <div class="grp"><div class="grp-h">Status</div>
+        <label class="opt"><span class="cb"></span>Assigned <span class="n">· 56</span></label>
+        <label class="opt"><span class="cb"></span>Available <span class="n">· 12</span></label>
+      </div>
+    </div>
+  </aside>
+  <div class="canvas push"><div class="ctl"><span class="ph">Floor 3 ▾</span><span class="ph">🔍 Find a person or seat · This floor ▾</span><span class="ph">Find me</span><span class="ph">Names</span></div><div class="plan">Floor plan — slice 2</div></div>
+</div>
+
+<h2>6 · Open — overflow (15 departments + zones; body scrolls, header pinned)</h2>
+<ul><li>The body scrolls inside the panel; "Filters / Clear all" stays put. Long names truncate end-line with a <code>title</code>.</li></ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-expanded="true"><span class="x"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav>
+    <span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span>
+    <div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div>
+  </header>
+  <aside class="lp" aria-label="Filters">
+    <div class="lp-h">Filters</div>
+    <div class="lp-b scroll">
+      <div class="grp"><div class="grp-h">Department</div>
+        <label class="opt"><span class="cb"></span>Case Management <span class="n">· 38</span></label>
+        <label class="opt"><span class="cb"></span>Litigation <span class="n">· 20</span></label>
+        <label class="opt"><span class="cb"></span>Pre-Litigation <span class="n">· 9</span></label>
+        <label class="opt"><span class="cb"></span>Medical Records <span class="n">· 7</span></label>
+        <label class="opt"><span class="cb"></span>Intake <span class="n">· 5</span></label>
+        <label class="opt"><span class="cb"></span>Front Office <span class="n">· 3</span></label>
+        <label class="opt"><span class="cb"></span>Accounting <span class="n">· 3</span></label>
+        <label class="opt"><span class="cb"></span>Human Resources <span class="n">· 2</span></label>
+        <label class="opt"><span class="cb"></span>IT <span class="n">· 2</span></label>
+        <label class="opt"><span class="cb"></span>Marketing <span class="n">· 2</span></label>
+        <label class="opt"><span class="cb"></span>Paralegal Support Services and Case… <span class="n">· 2</span></label>
+        <label class="opt"><span class="cb"></span>Records <span class="n">· 2</span></label>
+        <label class="opt"><span class="cb"></span>Operations <span class="n">· 1</span></label>
+        <label class="opt"><span class="cb"></span>Compliance <span class="n">· 1</span></label>
+        <label class="opt"><span class="cb"></span>WIL <span class="n">· 1</span></label>
+      </div>
+      <div class="grp"><div class="grp-h">Zone</div>
+        <label class="opt"><span class="cb"></span>North-east pod <span class="n">· 12</span></label>
+        <label class="opt"><span class="cb"></span>North-west pod <span class="n">· 12</span></label>
+        <label class="opt"><span class="cb"></span>South-east pod <span class="n">· 12</span></label>
+        <label class="opt"><span class="cb"></span>South-west pod <span class="n">· 12</span></label>
+        <label class="opt"><span class="cb"></span>Litigation pod <span class="n">· 10</span></label>
+        <label class="opt"><span class="cb"></span>Attorney offices <span class="n">· 18</span></label>
+        <label class="opt"><span class="cb"></span>Reception <span class="n">· 2</span></label>
+        <label class="opt"><span class="cb"></span>Conference <span class="n">· 4</span></label>
+        <label class="opt"><span class="cb"></span>Records room <span class="n">· 3</span></label>
+        <label class="opt"><span class="cb"></span>Mail room <span class="n">· 1</span></label>
+        <label class="opt"><span class="cb"></span>Kitchen <span class="n">· 0</span></label>
+      </div>
+      <div class="grp"><div class="grp-h">Status</div>
+        <label class="opt"><span class="cb"></span>Assigned <span class="n">· 56</span></label>
+        <label class="opt"><span class="cb"></span>Available <span class="n">· 12</span></label>
+      </div>
+    </div>
+  </aside>
+  <div class="canvas push"><div class="ctl"><span class="ph">Floor 3 ▾</span><span class="ph">🔍 Find a person or seat · This floor ▾</span><span class="ph">Find me</span><span class="ph">Names</span></div><div class="plan">Floor plan — slice 2</div></div>
+</div>
+
+<h2>7 · Open — roster floor (Floor 2 today)</h2>
+<ul><li>Zone and Status are Hidden (not disabled) with one note; Department counts count people, not seats (D1′ Q5). The canvas is the roster surface (slice 2).</li></ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-expanded="true"><span class="x"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav>
+    <span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span>
+    <div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div>
+  </header>
+  <aside class="lp" aria-label="Filters">
+    <div class="lp-h">Filters</div>
+    <div class="lp-b">
+      <div class="grp"><div class="grp-h">Department</div>
+        <label class="opt"><span class="cb"></span>Litigation <span class="n">· 20 people</span></label>
+        <label class="opt"><span class="cb"></span>Medical Records <span class="n">· 7 people</span></label>
+        <label class="opt"><span class="cb"></span>Front Office <span class="n">· 3 people</span></label>
+        <label class="opt"><span class="cb"></span>WIL <span class="n">· 1 person</span></label>
+        <div class="hint">Zone and status are seat facts — Floor 2 has no seats yet.</div>
+      </div>
+    </div>
+  </aside>
+  <div class="canvas push"><div class="ctl"><span class="ph">Floor 2 ▾</span><span class="ph">🔍 Find a person · This floor ▾</span><span class="ph">Find me</span></div><div class="plan">Floor 2 · Litigation — roster surface, 40 people — slice 2</div></div>
+</div>
+</body>
+</html>

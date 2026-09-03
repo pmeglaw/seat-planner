@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Shell — narrow fallback at 1024 (Phase 2 wireframe)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Low-fi wireframe. Grayscale only. The ONE deliberate narrow fallback (D0-e / F1): links fold into the left panel, compact indicator, pages single-column, map read-only. Not a breakpoint ladder. */
+:root{--g10:#f4f4f4;--g20:#e0e0e0;--g30:#c6c6c6;--g50:#8d8d8d;--g60:#6f6f6f;--g70:#525252;--g80:#393939;--g90:#262626;--g100:#161616;--w:#fff}
+*{box-sizing:border-box;border-radius:0;margin:0}
+body{font:400 14px/20px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.16px;color:var(--g100);background:var(--g20);padding:32px}
+h1{font-size:28px;line-height:36px;font-weight:400;margin-bottom:8px}
+h2{font-size:20px;line-height:28px;font-weight:400;margin:48px 0 8px}
+p,li{max-width:960px}
+ul{padding-left:20px;margin:8px 0}
+code{font-family:"IBM Plex Mono",monospace;font-size:12px}
+button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.frame{width:1024px;height:768px;position:relative;overflow:hidden;background:var(--g10);outline:1px solid var(--g30);margin:8px 0 16px}
+.dim{position:absolute;font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);background:rgba(255,255,255,.9);padding:0 4px;pointer-events:none}
+.hdr{position:absolute;left:0;right:0;top:0;height:48px;background:var(--g100);color:var(--g10);display:flex;align-items:center;border-bottom:1px solid var(--g80)}
+.slot{width:48px;height:48px;flex:none;display:grid;place-items:center}
+.slot[aria-expanded="true"]{background:var(--g90);box-shadow:inset 0 0 0 1px var(--g80)}
+.ham{width:16px;height:12px;background:linear-gradient(var(--g10) 0 2px,transparent 2px 5px,var(--g10) 5px 7px,transparent 7px 10px,var(--g10) 10px 12px)}
+.x{width:14px;height:14px;position:relative}
+.x::before,.x::after{content:"";position:absolute;left:6px;top:-1px;width:2px;height:16px;background:var(--g10);transform:rotate(45deg)}
+.x::after{transform:rotate(-45deg)}
+.name{height:48px;line-height:48px;display:block;padding:0 16px;color:var(--g10);text-decoration:none;white-space:nowrap}
+.name b{font-weight:600}
+.mode{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;gap:8px;padding:0 16px;color:var(--g10);white-space:nowrap}
+.mode.on{background:var(--g90);box-shadow:inset 0 0 0 1px var(--g80)}
+.mk{width:12px;height:12px;flex:none}
+.mk-pub{background:var(--g10)}
+.mk-draft{border:2px solid var(--g10);transform:rotate(45deg) scale(.85)}
+.utils{margin-left:auto;display:flex;height:48px}
+.ub{width:48px;height:48px;display:grid;place-items:center;color:var(--g10)}
+.ub.on{background:var(--g100);box-shadow:inset 1px 0 var(--g80),inset -1px 0 var(--g80),inset 0 1px var(--g80);position:relative;z-index:2}
+.ub svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
+.canvas{position:absolute;top:48px;left:0;right:0;bottom:0}
+.canvas.push{left:256px}
+.ctl{height:48px;background:var(--w);border-bottom:1px solid var(--g20);display:flex;align-items:center;padding:0 16px;gap:16px;color:var(--g60)}
+.ctl .ph{height:32px;display:inline-flex;align-items:center;padding:0 12px;border:1px dashed var(--g30);white-space:nowrap}
+.chip{height:32px;display:inline-flex;align-items:center;padding:0 8px 0 12px;border:1px solid var(--g70);color:var(--g100);gap:8px}
+.plan{position:absolute;top:48px;left:0;right:0;bottom:0;display:grid;place-items:center;text-align:center;color:var(--g50);background:linear-gradient(to top right,transparent calc(50% - .5px),var(--g30) 50%,transparent calc(50% + .5px)),linear-gradient(to top left,transparent calc(50% - .5px),var(--g30) 50%,transparent calc(50% + .5px))}
+.lp{position:absolute;top:48px;left:0;bottom:0;width:256px;background:var(--w);border-right:1px solid var(--g20);display:flex;flex-direction:column}
+.lp-h{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 16px;font-weight:600;border-bottom:1px solid var(--g20);flex:none}
+.lp-b{overflow:auto;flex:1}
+.gb{height:32px;padding:0 12px;display:inline-flex;align-items:center;color:var(--g70);font-weight:400}
+.ni{height:32px;display:flex;align-items:center;padding:0 16px;color:var(--g100);text-decoration:none}
+.ni[aria-current]{box-shadow:inset 3px 0 0 var(--g100);background:var(--g10);font-weight:600}
+.div{height:1px;background:var(--g20);margin:8px 16px}
+.grp{padding:8px 0}
+.grp-h{height:32px;display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 16px;font-weight:600}
+.opt{height:32px;display:flex;align-items:center;gap:8px;padding:0 16px;white-space:nowrap}
+.opt .n{color:var(--g60)}
+.cb{width:16px;height:16px;border:1px solid var(--g100);flex:none}
+.cb.on{background:var(--g100);box-shadow:inset 0 0 0 2px var(--w)}
+.rp{position:absolute;top:48px;right:0;bottom:0;width:320px;background:var(--g100);color:var(--g10);border-left:1px solid var(--g80);padding:16px;display:flex;flex-direction:column;gap:16px;z-index:1}
+.rp h2{font-size:20px;line-height:28px;font-weight:400;margin:0}
+.rp h3{font-size:14px;line-height:18px;font-weight:600;margin:0}
+.rp .lbl{font-size:12px;line-height:16px;color:var(--g30)}
+.sw{display:flex;height:40px;border:1px solid var(--g70)}
+.sw button{flex:1;display:grid;place-items:center;color:var(--g30)}
+.sw button[aria-pressed="true"]{background:var(--g10);color:var(--g100)}
+.ev{padding:8px 0;border-top:1px solid var(--g80);min-height:72px;display:flex;flex-direction:column;gap:4px}
+.ev:first-of-type{border-top:0}
+</style>
+</head>
+<body>
+<h1>Shell — the narrow fallback (1024 × 768)</h1>
+<p>Phase 2 wireframe, slice 1. Spec: <code>PHASE2UX.md</code> §1.6. This is the one deliberate fallback below <code>lg</code> (D0-e, F1), not a breakpoint ladder: header links fold into the left panel above the filters; the indicator goes compact (mark + count, never dropped); utilities unchanged; right panels stay 320. Pages go single-column and the map is read-only — slices 2–5 own those.</p>
+
+<h2>1 · Admin on <code>/admin</code>, panel closed</h2>
+<ul>
+  <li>No inline links. Hamburger present on every route below <code>lg</code> (D0-h). Compact indicator: ◇ "Draft · 4".</li>
+  <li>The map is read-only at this width (D2, deviation 4): the control row loses Publish and Ask Planner; the read-only statement is the map's (slice 2).</li>
+</ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-label="Menu and filters" aria-expanded="false"><span class="ham"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <button class="mode" aria-expanded="false"><span class="mk mk-draft"></span>Draft · 4</button>
+    <div class="utils">
+      <button class="ub" aria-label="Help"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M7.5 8a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .8-1 1.7M10 14.5v.5"/></svg></button>
+      <button class="ub" aria-label="History"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3.5 2"/></svg></button>
+      <button class="ub" aria-label="Account"><svg viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.5"/><path d="M3 18a7 5 0 0 1 14 0"/></svg></button>
+    </div>
+  </header>
+  <div class="canvas">
+    <div class="ctl"><span class="ph">Floor 3 ▾</span><span class="ph">🔍 Find · This floor ▾</span><span class="chip">Filters 1 ×</span><span class="ph">Names</span></div>
+    <div class="plan">Draft floor plan, read-only below lg — slice 2<br><span style="font-size:12px">"Editing needs a wider window."</span></div>
+  </div>
+  <span class="dim" style="left:400px;top:104px">compact indicator: mark + count</span>
+</div>
+
+<h2>2 · Viewer on <code>/</code>, panel open — links above filters</h2>
+<ul>
+  <li>Section links (role-filtered: viewer sees two) as 32px nav items with the current one marked, then a divider, then the filter groups. Same panel, same width, pushes the canvas to 768.</li>
+  <li>On a non-map route at this width the same panel holds the links only.</li>
+</ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-label="Menu and filters" aria-expanded="true"><span class="x"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <button class="mode" aria-expanded="false"><span class="mk mk-pub"></span>Published</button>
+    <div class="utils">
+      <button class="ub" aria-label="Help"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M7.5 8a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .8-1 1.7M10 14.5v.5"/></svg></button>
+      <button class="ub" aria-label="History"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3.5 2"/></svg></button>
+      <button class="ub" aria-label="Account"><svg viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.5"/><path d="M3 18a7 5 0 0 1 14 0"/></svg></button>
+    </div>
+  </header>
+  <aside class="lp">
+    <nav aria-label="Sections" style="padding:8px 0"><a class="ni" href="#" aria-current="page">Seat map</a><a class="ni" href="#">Reception</a></nav>
+    <div class="div"></div>
+    <div class="lp-h" style="border:0">Filters <button class="gb">Clear all</button></div>
+    <div class="lp-b">
+      <div class="grp"><div class="grp-h">Department <button class="gb">Clear</button></div>
+        <label class="opt"><span class="cb on"></span>Case Management <span class="n">· 38</span></label>
+        <label class="opt"><span class="cb"></span>Litigation <span class="n">· 20</span></label>
+        <label class="opt"><span class="cb"></span>Pre-Litigation <span class="n">· 9</span></label>
+        <label class="opt"><span class="cb"></span>Medical Records <span class="n">· 7</span></label>
+      </div>
+      <div class="grp"><div class="grp-h">Zone</div>
+        <label class="opt"><span class="cb"></span>North-east pod <span class="n">· 12</span></label>
+        <label class="opt"><span class="cb"></span>Attorney offices <span class="n">· 18</span></label>
+      </div>
+      <div class="grp"><div class="grp-h">Status</div>
+        <label class="opt"><span class="cb"></span>Assigned <span class="n">· 56</span></label>
+        <label class="opt"><span class="cb"></span>Available <span class="n">· 12</span></label>
+      </div>
+    </div>
+  </aside>
+  <div class="canvas push">
+    <div class="ctl"><span class="ph">Floor 3 ▾</span><span class="ph">🔍 Find · This floor ▾</span><span class="chip">Filters 1 ×</span></div>
+    <div class="plan">Floor plan at 768 wide — slice 2</div>
+  </div>
+  <span class="dim" style="left:260px;top:104px">links above filters (ui-shell), same 256px panel</span>
+</div>
+
+<h2>3 · Admin on <code>/admin</code>, History panel at 1024</h2>
+<ul><li>Right panel keeps its 320px; it floats over the map. Content identical to the wide frame.</li></ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-label="Menu and filters" aria-expanded="false"><span class="ham"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <button class="mode on" aria-expanded="true"><span class="mk mk-draft"></span>Draft · 4</button>
+    <div class="utils">
+      <button class="ub" aria-label="Help"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M7.5 8a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .8-1 1.7M10 14.5v.5"/></svg></button>
+      <button class="ub on" aria-label="History" aria-expanded="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3.5 2"/></svg></button>
+      <button class="ub" aria-label="Account"><svg viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.5"/><path d="M3 18a7 5 0 0 1 14 0"/></svg></button>
+    </div>
+  </header>
+  <div class="canvas"><div class="ctl"><span class="ph">Floor 3 ▾</span><span class="ph">🔍 Find · This floor ▾</span><span class="ph">Names</span></div><div class="plan">Draft floor plan, read-only — slice 2</div></div>
+  <aside class="rp" aria-label="History">
+    <h2 tabindex="-1">History</h2>
+    <div class="sw" role="group" aria-label="Mode"><button aria-pressed="false">Published</button><button aria-pressed="true">Draft</button></div>
+    <div class="lbl">4 unpublished changes · last edit 2 min ago</div>
+    <h3>Publish history</h3>
+    <div>
+      <div class="ev"><div>3 seats changed · 2 people updated</div><div class="lbl">2 Sep 2026, 14:12</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+      <div class="ev"><div>1 seat changed</div><div class="lbl">29 Aug 2026, 09:40</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+      <div class="ev"><div>12 seats changed · 5 people updated · 1 department renamed</div><div class="lbl">21 Aug 2026, 17:03</div><div class="lbl">an admin</div></div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

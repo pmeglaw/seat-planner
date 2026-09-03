@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Shell — right panels: Help, History, Account (Phase 2 wireframe)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Low-fi wireframe. Grayscale only; no primary action on the shell, so no Blue 60. 8px grid, zero radius (role tag excepted). */
+:root{--g10:#f4f4f4;--g20:#e0e0e0;--g30:#c6c6c6;--g50:#8d8d8d;--g60:#6f6f6f;--g70:#525252;--g80:#393939;--g90:#262626;--g100:#161616;--w:#fff}
+*{box-sizing:border-box;border-radius:0;margin:0}
+body{font:400 14px/20px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.16px;color:var(--g100);background:var(--g20);padding:32px}
+h1{font-size:28px;line-height:36px;font-weight:400;margin-bottom:8px}
+h2{font-size:20px;line-height:28px;font-weight:400;margin:48px 0 8px}
+p,li{max-width:960px}
+ul{padding-left:20px;margin:8px 0}
+code{font-family:"IBM Plex Mono",monospace;font-size:12px}
+button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.fit{display:inline-flex;gap:8px;align-items:center;height:32px;margin:8px 0 16px}
+body:has(#fit:checked) .frame{zoom:.5}
+.frame{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--g10);outline:1px solid var(--g30);margin:8px 0 16px}
+.dim{position:absolute;font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);background:rgba(255,255,255,.9);padding:0 4px;pointer-events:none}
+/* header */
+.hdr{position:absolute;left:0;right:0;top:0;height:48px;background:var(--g100);color:var(--g10);display:flex;align-items:center;border-bottom:1px solid var(--g80)}
+.slot{width:48px;height:48px;flex:none;display:grid;place-items:center}
+.slot.res{outline:1px dashed var(--g70);outline-offset:-8px}
+.ham{width:16px;height:12px;background:linear-gradient(var(--g10) 0 2px,transparent 2px 5px,var(--g10) 5px 7px,transparent 7px 10px,var(--g10) 10px 12px)}
+.name{height:48px;line-height:48px;display:block;padding:0 16px;color:var(--g10);text-decoration:none;white-space:nowrap}
+.name b{font-weight:600}
+.nav{display:flex;height:48px}
+.nav a{display:flex;align-items:center;padding:0 16px;color:var(--g30);text-decoration:none;white-space:nowrap}
+.nav a[aria-current]{color:var(--g10);box-shadow:inset 0 -3px 0 var(--g10)}
+.mode{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;gap:8px;padding:0 16px;color:var(--g10);white-space:nowrap}
+.mode.on{background:var(--g90);box-shadow:inset 0 0 0 1px var(--g80)}
+.mk{width:12px;height:12px;flex:none}
+.mk-pub{background:var(--g10)}
+.mk-draft{border:2px solid var(--g10);transform:rotate(45deg) scale(.85)}
+.utils{margin-left:auto;display:flex;height:48px}
+.ub{width:48px;height:48px;display:grid;place-items:center;color:var(--g10)}
+.ub.on{background:var(--g100);box-shadow:inset 1px 0 var(--g80),inset -1px 0 var(--g80),inset 0 1px var(--g80);position:relative;z-index:2}
+.ub svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
+/* canvas placeholder */
+.canvas{position:absolute;top:48px;left:0;right:0;bottom:0}
+.plan{position:absolute;inset:0;display:grid;place-items:center;color:var(--g50);background:linear-gradient(to top right,transparent calc(50% - .5px),var(--g30) 50%,transparent calc(50% + .5px)),linear-gradient(to top left,transparent calc(50% - .5px),var(--g30) 50%,transparent calc(50% + .5px))}
+/* right panel */
+.rp{position:absolute;top:48px;right:0;bottom:0;width:320px;background:var(--g100);color:var(--g10);border-left:1px solid var(--g80);padding:16px;display:flex;flex-direction:column;gap:16px;overflow:auto;z-index:1}
+.rp.at{position:relative;top:auto;right:auto;bottom:auto;height:1000px;flex:none;border-right:1px solid var(--g80)}
+.rp h2{font-size:20px;line-height:28px;font-weight:400;margin:0}
+.rp h3{font-size:14px;line-height:18px;font-weight:600;margin:0}
+.rp .lbl{font-size:12px;line-height:16px;color:var(--g30)}
+.sw{display:flex;height:40px;border:1px solid var(--g70)}
+.sw button{flex:1;display:grid;place-items:center;color:var(--g30)}
+.sw button[aria-pressed="true"]{background:var(--g10);color:var(--g100)}
+.ev{padding:8px 0;border-top:1px solid var(--g80);min-height:72px;display:flex;flex-direction:column;gap:4px}
+.ev:first-of-type{border-top:0}
+.gb{height:32px;padding:0 16px;display:inline-flex;align-items:center;color:var(--g30);align-self:flex-start}
+.sk{height:16px;background:var(--g80);margin:4px 0}
+.note{border-left:3px solid var(--g30);background:var(--g90);padding:12px 16px;display:flex;flex-direction:column;gap:4px}
+.note b{font-weight:600}
+.tag{display:inline-flex;height:24px;align-items:center;padding:0 8px;border-radius:12px;background:var(--g80);color:var(--g10);font-size:12px}
+.row{display:flex;align-items:center;gap:8px;min-height:32px}
+.row.link{text-decoration:underline}
+.radio{width:16px;height:16px;border:1px solid var(--g10);border-radius:50%;flex:none;display:grid;place-items:center}
+.radio.on::after{content:"";width:8px;height:8px;background:var(--g10);border-radius:50%}
+.hr{height:1px;background:var(--g80)}
+dl{display:grid;grid-template-columns:96px 1fr;gap:8px 16px}
+dt{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--g30)}
+.sheet{display:flex;gap:0;position:absolute;left:0;top:48px}
+.cap{font:11px/16px "IBM Plex Mono",monospace;color:var(--g30);text-transform:none}
+</style>
+</head>
+<body>
+<h1>Shell — right panels: Help, History, Account</h1>
+<p>Phase 2 wireframe, slice 1. Spec: <code>PHASE2UX.md</code> §1.4. Decisions: D0-a, D0-b, D0-f (320px), D0-g (10 events + Show more to 25). One panel open at a time; anchored to its icon (icon outlined, bottom edge open into the panel); dark like the header; full height; <b>floats</b> over content; Esc or the icon closes and focus returns to the trigger.</p>
+<label class="fit"><input type="checkbox" id="fit"> Fit frames to half size</label>
+
+<h2>1 · History (admin) — in context on <code>/admin</code>, Draft</h2>
+<ul>
+  <li>Two triggers, one panel: the History utility (outlined here) and the mode indicator (also shown in its pressed style).</li>
+  <li>Row 1 is the <b>Published ⇄ Draft</b> switch — a control, so it shows the current mode. Pressing "Published" goes to <code>/</code>, keeping <code>?floor=</code> and <code>?seat=</code>, and closes the panel.</li>
+  <li>Status line, then "Publish history", newest first: what changed · date · who. Rows are static. Ghost <b>Show more</b> after 10.</li>
+</ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-label="Filters"><span class="ham"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#">Settings</a></nav>
+    <button class="mode on" aria-expanded="true"><span class="mk mk-draft"></span>Draft — 4 changes</button>
+    <div class="utils">
+      <button class="ub" aria-label="Help"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M7.5 8a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .8-1 1.7M10 14.5v.5"/></svg></button>
+      <button class="ub on" aria-label="History" aria-expanded="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3.5 2"/></svg></button>
+      <button class="ub" aria-label="Account"><svg viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.5"/><path d="M3 18a7 5 0 0 1 14 0"/></svg></button>
+    </div>
+  </header>
+  <div class="canvas"><div class="plan">Draft floor plan — slice 2 (panel floats over it)</div></div>
+  <aside class="rp" aria-label="History">
+    <h2 tabindex="-1">History</h2>
+    <div class="sw" role="group" aria-label="Mode"><button aria-pressed="false">Published</button><button aria-pressed="true">Draft</button></div>
+    <div class="lbl">4 unpublished changes · last edit 2 min ago</div>
+    <h3>Publish history</h3>
+    <div>
+      <div class="ev"><div>3 seats changed · 2 people updated</div><div class="lbl">2 Sep 2026, 14:12</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+      <div class="ev"><div>1 seat changed</div><div class="lbl">29 Aug 2026, 09:40</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+      <div class="ev"><div>12 seats changed · 5 people updated · 1 department renamed</div><div class="lbl">21 Aug 2026, 17:03</div><div class="lbl">an admin</div></div>
+      <div class="ev"><div>2 seats changed</div><div class="lbl">18 Aug 2026, 11:15</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+      <div class="ev"><div>6 seats changed · 1 person updated</div><div class="lbl">12 Aug 2026, 16:48</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+      <div class="ev"><div>1 seat changed</div><div class="lbl">8 Aug 2026, 10:02</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+      <div class="ev"><div>4 seats changed · 3 people updated</div><div class="lbl">1 Aug 2026, 15:30</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+      <div class="ev"><div>2 seats changed</div><div class="lbl">25 Jul 2026, 09:12</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+      <div class="ev"><div>41 seats changed · 41 people updated</div><div class="lbl">22 Jul 2026, 13:55</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+      <div class="ev"><div>Initial publish · 68 seats</div><div class="lbl">20 Jul 2026, 08:30</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+    </div>
+    <button class="gb">Show more</button>
+  </aside>
+  <span class="dim" style="right:324px;top:52px">320 · floats, does not push</span>
+  <span class="dim" style="left:16px;top:52px">the "an admin" row = partial state (actor profile unresolved)</span>
+</div>
+
+<h2>2 · History (viewer) — in context on <code>/</code></h2>
+<ul><li>No switch, no events. One fact line and the ruled sentence. Draft is Hidden for viewers — nothing hints it exists.</li></ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-label="Filters"><span class="ham"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav>
+    <button class="mode on" aria-expanded="true"><span class="mk mk-pub"></span>Published · 2 Sep 2026</button>
+    <div class="utils">
+      <button class="ub" aria-label="Help"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M7.5 8a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .8-1 1.7M10 14.5v.5"/></svg></button>
+      <button class="ub on" aria-label="History" aria-expanded="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3.5 2"/></svg></button>
+      <button class="ub" aria-label="Account"><svg viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.5"/><path d="M3 18a7 5 0 0 1 14 0"/></svg></button>
+    </div>
+  </header>
+  <div class="canvas"><div class="plan">Floor plan — slice 2</div></div>
+  <aside class="rp" aria-label="History">
+    <h2 tabindex="-1">History</h2>
+    <div class="row"><span class="mk mk-pub"></span>Published · 2 Sep 2026, 14:12</div>
+    <div class="lbl">Publish history is available to admins.</div>
+  </aside>
+</div>
+
+<h2>3 · Account — in context on <code>/</code> (admin, seated)</h2>
+<ul><li>Email + role tag (the one rounded element) · Theme radio group, instant · My seat link row → <code>/my-seat</code> · divider · Sign out (ghost).</li></ul>
+<div class="frame">
+  <header class="hdr">
+    <button class="slot" aria-label="Filters"><span class="ham"></span></button>
+    <a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a>
+    <nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#">Settings</a></nav>
+    <span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span>
+    <div class="utils">
+      <button class="ub" aria-label="Help"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M7.5 8a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .8-1 1.7M10 14.5v.5"/></svg></button>
+      <button class="ub" aria-label="History"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3.5 2"/></svg></button>
+      <button class="ub on" aria-label="Account" aria-expanded="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.5"/><path d="M3 18a7 5 0 0 1 14 0"/></svg></button>
+    </div>
+  </header>
+  <div class="canvas"><div class="plan">Floor plan — slice 2</div></div>
+  <aside class="rp" aria-label="Account">
+    <h2 tabindex="-1">Account</h2>
+    <div><div>patrick@megeredchianlaw.com</div><div class="row"><span class="tag">Admin</span></div></div>
+    <div class="hr"></div>
+    <fieldset style="border:0;padding:0;display:flex;flex-direction:column;gap:0"><h3 style="margin-bottom:8px">Theme</h3>
+      <label class="row"><span class="radio on"></span>Light</label>
+      <label class="row"><span class="radio"></span>Dark</label>
+      <label class="row"><span class="radio"></span>System</label>
+    </fieldset>
+    <div class="hr"></div>
+    <a class="row link" href="#" style="color:inherit">My seat — NE04 · Floor 3 →</a>
+    <div class="hr"></div>
+    <button class="gb" style="padding:0">Sign out</button>
+  </aside>
+</div>
+
+<h2>4 · History — state sheet (admin)</h2>
+<ul><li>Left to right: empty (never published) · loading · error with Retry · cap reached (25) · partial actor shown in frame 1. Each column is the 320px panel at full height; the switch keeps working in every state.</li></ul>
+<div class="frame">
+  <header class="hdr"><button class="slot"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span></header>
+  <div class="sheet">
+    <aside class="rp at" aria-label="History"><span class="cap">EMPTY — never published</span>
+      <h2>History</h2>
+      <div class="sw"><button aria-pressed="false">Published</button><button aria-pressed="true">Draft</button></div>
+      <div class="lbl">Nothing published yet</div>
+      <h3>Publish history</h3>
+      <div><h3 style="font-weight:600">Publish the draft to start the history</h3><div class="lbl" style="margin-top:8px">Your first publish appears here.</div></div>
+    </aside>
+    <aside class="rp at" aria-label="History" aria-busy="true"><span class="cap">LOADING</span>
+      <h2>History</h2>
+      <div class="sw"><button aria-pressed="false">Published</button><button aria-pressed="true">Draft</button></div>
+      <div class="lbl">4 unpublished changes · last edit 2 min ago</div>
+      <h3>Publish history</h3>
+      <div><div class="sk" style="width:220px"></div><div class="sk" style="width:260px;height:12px"></div><div class="sk" style="width:120px;margin-top:20px"></div><div class="sk" style="width:260px;height:12px"></div><div class="sk" style="width:200px;margin-top:20px"></div><div class="sk" style="width:260px;height:12px"></div></div>
+    </aside>
+    <aside class="rp at" aria-label="History"><span class="cap">ERROR</span>
+      <h2>History</h2>
+      <div class="sw"><button aria-pressed="false">Published</button><button aria-pressed="true">Draft</button></div>
+      <div class="lbl">4 unpublished changes · last edit 2 min ago</div>
+      <h3>Publish history</h3>
+      <div class="note" role="alert"><b>Publish history couldn't load</b><span class="lbl">The switch above still works.</span><button class="gb" style="padding:0">Retry</button></div>
+    </aside>
+    <aside class="rp at" aria-label="History"><span class="cap">OVERFLOW — cap reached</span>
+      <h2>History</h2>
+      <div class="sw"><button aria-pressed="true">Published</button><button aria-pressed="false">Draft</button></div>
+      <div class="lbl">Showing what everyone sees</div>
+      <h3>Publish history</h3>
+      <div>
+        <div class="ev"><div>…</div><div class="lbl">event 23</div></div>
+        <div class="ev"><div>1 seat changed</div><div class="lbl">3 Jun 2026, 12:20</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+        <div class="ev"><div>Initial publish · 68 seats</div><div class="lbl">1 Jun 2026, 08:30</div><div class="lbl">patrick@megeredchianlaw.com</div></div>
+      </div>
+      <div class="lbl">Showing the 25 most recent publishes.</div>
+    </aside>
+    <aside class="rp at" aria-label="History"><span class="cap">VIEWER — never published</span>
+      <h2>History</h2>
+      <div>Nothing has been published yet</div>
+      <div class="lbl">Ask an admin.</div>
+    </aside>
+  </div>
+</div>
+
+<h2>5 · Help and Account — state sheet</h2>
+<ul><li>Left to right: Help (static; same for every role) · Account, viewer, unseated (read-only text row, not a disabled control) · Account, signing out (submitting state) · Account, sign-out failed (inline error).</li></ul>
+<div class="frame">
+  <header class="hdr"><button class="slot"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span></header>
+  <div class="sheet">
+    <aside class="rp at" aria-label="Help"><span class="cap">HELP</span>
+      <h2>Help</h2>
+      <h3>Keyboard shortcuts</h3>
+      <dl>
+        <dt>Ctrl / ⌘ K</dt><dd>Find a person or seat</dd>
+        <dt>Esc</dt><dd>Close a panel, clear the selection</dd>
+        <dt>↑ ↓</dt><dd>Move through results</dd>
+        <dt>Enter</dt><dd>Open the result</dd>
+        <dt>Home / End</dt><dd>First / last result</dd>
+        <dt>← ↑ → ↓</dt><dd>Move between seats on the plan</dd>
+      </dl>
+      <div class="hr"></div>
+      <h3>Draft and Published</h3>
+      <div class="lbl" style="font-size:14px;line-height:20px;color:var(--g10)">Everyone sees the <b>Published</b> map. Admins edit a separate <b>Draft</b>, which no one else sees. <b>Publish</b> copies the draft over the published map for everyone, in one step.</div>
+      <div class="hr"></div>
+      <h3>Who to ask</h3>
+      <div>Your office administrators publish the map. Ask them for a seat change or a directory correction.</div>
+    </aside>
+    <aside class="rp at" aria-label="Account"><span class="cap">ACCOUNT — viewer, unseated</span>
+      <h2>Account</h2>
+      <div><div>s.reyes@megeredchianlaw.com</div><div class="row"><span class="tag">Viewer</span></div></div>
+      <div class="hr"></div>
+      <fieldset style="border:0;padding:0"><h3 style="margin-bottom:8px">Theme</h3>
+        <label class="row"><span class="radio"></span>Light</label>
+        <label class="row"><span class="radio"></span>Dark</label>
+        <label class="row"><span class="radio on"></span>System</label>
+      </fieldset>
+      <div class="hr"></div>
+      <div class="row">My seat — no seat published for you yet</div>
+      <div class="hr"></div>
+      <button class="gb" style="padding:0">Sign out</button>
+    </aside>
+    <aside class="rp at" aria-label="Account"><span class="cap">ACCOUNT — signing out</span>
+      <h2>Account</h2>
+      <div><div>patrick@megeredchianlaw.com</div><div class="row"><span class="tag">Admin</span></div></div>
+      <div class="hr"></div>
+      <fieldset style="border:0;padding:0"><h3 style="margin-bottom:8px">Theme</h3>
+        <label class="row"><span class="radio on"></span>Light</label>
+        <label class="row"><span class="radio"></span>Dark</label>
+        <label class="row"><span class="radio"></span>System</label>
+      </fieldset>
+      <div class="hr"></div>
+      <a class="row link" href="#" style="color:inherit">My seat — NE04 · Floor 3 →</a>
+      <div class="hr"></div>
+      <button class="gb" style="padding:0;color:var(--g50)" aria-busy="true" disabled>Signing out…</button>
+    </aside>
+    <aside class="rp at" aria-label="Account"><span class="cap">ACCOUNT — sign-out failed</span>
+      <h2>Account</h2>
+      <div><div>patrick@megeredchianlaw.com</div><div class="row"><span class="tag">Admin</span></div></div>
+      <div class="hr"></div>
+      <fieldset style="border:0;padding:0"><h3 style="margin-bottom:8px">Theme</h3>
+        <label class="row"><span class="radio on"></span>Light</label>
+        <label class="row"><span class="radio"></span>Dark</label>
+        <label class="row"><span class="radio"></span>System</label>
+      </fieldset>
+      <div class="hr"></div>
+      <a class="row link" href="#" style="color:inherit">My seat — NE04 · Floor 3 →</a>
+      <div class="hr"></div>
+      <div class="note" role="alert"><b>Couldn't sign you out</b><span class="lbl">Check your connection and try again.</span></div>
+      <button class="gb" style="padding:0">Sign out</button>
+    </aside>
+  </div>
+</div>
+</body>
+</html>
