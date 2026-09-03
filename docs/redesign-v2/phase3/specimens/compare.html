@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Both themes — Phase 3 specimens</title>
+<link rel="stylesheet" href="../tokens/carbon-tokens.css">
+<link rel="stylesheet" href="../tokens/sp-tokens.css">
+<link rel="stylesheet" href="../components/carbon-components.css">
+<link rel="stylesheet" href="../components/sp-components.css">
+<style>
+html, body { height: 100%; }
+.cmp { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: var(--sp-size-lg) 1fr; height: 100%; }
+.cmp-bar { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--sp-space-05); padding: 0 var(--sp-space-05); background: var(--sp-layer-01); border-bottom: 1px solid var(--sp-border-subtle); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); }
+.cmp iframe { width: 100%; height: 100%; border: 0; }
+.cmp .light { border-right: 1px solid var(--sp-border-subtle); }
+</style>
+</head>
+<body>
+<div class="cmp">
+  <div class="cmp-bar"><strong id="title">Both themes</strong><a href="index.html">Index</a><span style="margin-left:auto;color:var(--sp-text-secondary)">left: light · right: dark</span></div>
+  <iframe class="light" id="l" title="Light theme"></iframe>
+  <iframe id="d" title="Dark theme"></iframe>
+</div>
+<script>
+(function () {
+  var p = new URLSearchParams(location.search).get("p") || "00-foundations";
+  if (!/^[a-z0-9-]+$/.test(p)) p = "00-foundations";
+  document.getElementById("title").textContent = "Both themes · " + p;
+  document.getElementById("l").src = p + ".html?theme=light";
+  document.getElementById("d").src = p + ".html?theme=dark";
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+[
+ {
+  "name": "shell text gray-10 on shell rest #161616",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "shell text gray-10 on shell hover #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "shell text gray-10 on shell pressed #393939",
+  "fg": "#f4f4f4",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "shell secondary gray-30 on #161616",
+  "fg": "#c6c6c6",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "shell secondary gray-30 on hover #333333",
+  "fg": "#c6c6c6",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "shell helper gray-40 on #161616 (label-01)",
+  "fg": "#a8a8a8",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "shell helper gray-40 on hover #333333",
+  "fg": "#a8a8a8",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "shell current bar blue-50 on #161616",
+  "fg": "#4589ff",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell focus white on #161616",
+  "fg": "#ffffff",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell focus white on pressed #393939",
+  "fg": "#ffffff",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Published ■ gray-10 on #161616",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Published ■ gray-10 on hover #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Published ■ gray-10 on pressed #393939",
+  "fg": "#f4f4f4",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Draft ◇ orange-40 on #161616",
+  "fg": "#ff832b",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Draft ◇ orange-40 on hover #333333",
+  "fg": "#ff832b",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Draft ◇ orange-40 on pressed #393939",
+  "fg": "#ff832b",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Not published □ gray-40 on #161616",
+  "fg": "#a8a8a8",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Not published □ gray-40 on hover #333333",
+  "fg": "#a8a8a8",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Not published □ gray-40 on pressed #393939",
+  "fg": "#a8a8a8",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Error ⊗ red-50 on #161616",
+  "fg": "#fa4d56",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Error ⊗ red-50 on hover #333333",
+  "fg": "#fa4d56",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode Error ⊗ red-50 on pressed #393939",
+  "fg": "#fa4d56",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel link blue-40 on panel #161616",
+  "fg": "#78a9ff",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "panel error mark red-50 on panel #161616",
+  "fg": "#fa4d56",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel error mark red-50 on panel layer #262626",
+  "fg": "#fa4d56",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · seat stroke gray-70 on white",
+  "fg": "#525252",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · seat stroke gray-70 on layer-01 #f4f4f4",
+  "fg": "#525252",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · seat stroke gray-70 on layer-hover-01 #e8e8e8",
+  "fg": "#525252",
+  "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · seat stroke gray-70 on layer-selected #e0e0e0",
+  "fg": "#525252",
+  "bg": "#e0e0e0",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · seat fill gray-100 on layer-hover-01",
+  "fg": "#161616",
+  "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · legend label gray-70 on layer-hover-01",
+  "fg": "#525252",
+  "bg": "#e8e8e8",
+  "kind": "text"
+ },
+ {
+  "name": "light · legend label gray-70 on layer-selected",
+  "fg": "#525252",
+  "bg": "#e0e0e0",
+  "kind": "text"
+ },
+ {
+  "name": "light · footprint edge gray-70 on footprint fill white",
+  "fg": "#525252",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · footprint edge gray-70 on footprint hover #e8e8e8",
+  "fg": "#525252",
+  "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · footprint fill white vs map mat #f4f4f4 (edge carries it)",
+  "fg": "#525252",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · draft mark orange-60 on white",
+  "fg": "#ba4e00",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · draft mark orange-60 on layer-hover-01",
+  "fg": "#ba4e00",
+  "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · search mark blue-70 on highlight #d0e2ff",
+  "fg": "#0043ce",
+  "bg": "#d0e2ff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · text-primary on highlight #d0e2ff",
+  "fg": "#161616",
+  "bg": "#d0e2ff",
+  "kind": "text"
+ },
+ {
+  "name": "dark · seat stroke gray-30 on background #161616",
+  "fg": "#c6c6c6",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · seat stroke gray-30 on layer-01 #262626",
+  "fg": "#c6c6c6",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · seat stroke gray-30 on layer-hover-01 #333333",
+  "fg": "#c6c6c6",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · seat stroke gray-30 on layer-selected #393939",
+  "fg": "#c6c6c6",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · seat stroke gray-30 on footprint fill #393939",
+  "fg": "#c6c6c6",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · seat stroke gray-30 on footprint hover #474747",
+  "fg": "#c6c6c6",
+  "bg": "#474747",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · seat fill gray-10 on layer-hover-01 #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · legend label gray-30 on layer-hover-01",
+  "fg": "#c6c6c6",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "dark · legend label gray-30 on layer-selected #393939",
+  "fg": "#c6c6c6",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "dark · draft mark orange-40 on background #161616",
+  "fg": "#ff832b",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · draft mark orange-40 on layer-hover-01 #333333",
+  "fg": "#ff832b",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · search mark blue-50 on highlight #001d6c",
+  "fg": "#4589ff",
+  "bg": "#001d6c",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · text-primary on highlight #001d6c",
+  "fg": "#f4f4f4",
+  "bg": "#001d6c",
+  "kind": "text"
+ }
+]

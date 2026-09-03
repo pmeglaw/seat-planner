@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Phase 3 · 05 Status and marks — Seat Planner</title>
+<link rel="stylesheet" href="../tokens/carbon-tokens.css">
+<link rel="stylesheet" href="../tokens/sp-tokens.css">
+<link rel="stylesheet" href="../components/carbon-components.css">
+<link rel="stylesheet" href="../components/sp-components.css">
+<script>
+(function () {
+  var h = document.documentElement;
+  function apply(t) {
+    if (t === "light")      { h.dataset.theme = "light"; h.dataset.carbonTheme = "white"; }
+    else if (t === "dark")  { h.dataset.theme = "dark";  h.dataset.carbonTheme = "g100";  }
+    else                    { delete h.dataset.theme;    delete h.dataset.carbonTheme;     }
+  }
+  apply(new URLSearchParams(location.search).get("theme"));
+  window.spTheme = apply;
+})();
+</script>
+<style>
+.spec { max-width: var(--sp-page-max-w); margin: 0 auto; padding: var(--sp-space-07) var(--sp-space-07) var(--sp-space-12); }
+.spec-bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: var(--sp-space-05); height: var(--sp-size-lg); padding: 0 var(--sp-space-07); background: var(--sp-layer-01); border-bottom: 1px solid var(--sp-border-subtle); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); }
+.spec-bar nav { display: flex; gap: var(--sp-space-05); margin-left: auto; }
+.spec-bar .spec-theme { display: flex; }
+.spec h1 { font: var(--sp-type-heading-04); margin-bottom: var(--sp-space-03); }
+.spec h2 { font: var(--sp-type-heading-03); margin: var(--sp-space-10) 0 var(--sp-space-05); }
+.spec h2:first-of-type { margin-top: var(--sp-space-09); }
+.spec h3 { font: var(--sp-type-heading-compact-01); letter-spacing: var(--sp-tracking-body); margin: var(--sp-space-07) 0 var(--sp-space-03); }
+.spec p.lede { color: var(--sp-text-secondary); max-width: 66ch; }
+.spec-note { font: var(--sp-type-code-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); }
+.spec-anatomy { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); margin-top: var(--sp-space-02); max-width: 70ch; }
+.spec-row { display: flex; align-items: center; gap: var(--sp-space-05); flex-wrap: wrap; }
+/* a header strip: label column + a 48px Gray 100 band holding the indicator */
+.state { display: grid; grid-template-columns: 200px 1fr; align-items: center; border-bottom: 1px solid var(--sp-border-subtle-00); }
+.state .band { background: var(--sp-shell-bg); height: var(--sp-size-lg); display: flex; align-items: center; padding: 0 var(--sp-space-05); }
+.state .band.narrow { width: 400px; }
+/* surface strips for seat marks */
+.surface { display: grid; grid-template-columns: 200px 1fr; align-items: center; }
+.surface .strip { display: flex; align-items: center; gap: var(--sp-space-06); height: var(--sp-size-lg); padding: 0 var(--sp-space-05); }
+.strip.on-bg { background: var(--sp-background); }
+.strip.on-layer { background: var(--sp-layer-01); }
+.strip.on-hover { background: var(--sp-layer-hover); }
+.strip.on-selected { background: var(--sp-layer-selected); }
+.strip.on-mat { background: var(--sp-map-mat); }
+.strip.on-dark { background: var(--sp-panel-dark-bg); color: var(--sp-panel-dark-text-secondary); }
+.strip.on-dark .sp-seat-legend { color: var(--sp-panel-dark-text-secondary); }
+.gray { filter: grayscale(1); }
+.pill-label { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); }
+</style>
+</head>
+<body>
+<a class="cds-skip-link" href="#main">Skip to main content</a>
+<div class="spec-bar" role="toolbar" aria-label="Specimen controls">
+  <strong>Phase 3 · 05 Status and marks</strong>
+  <span class="spec-theme" role="group" aria-label="Theme">
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('light')">Light</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('dark')">Dark</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme(null)">System</button>
+  </span>
+  <nav aria-label="Specimens"><a href="index.html">Index</a><a href="compare.html?p=05-status-and-marks">Both themes</a><a href="00-foundations.html">00 Foundations</a></nav>
+</div>
+
+<main id="main" class="spec">
+  <h1>Status and marks</h1>
+  <p class="lede">The two mark sets everything else is built around: the shell's mode indicator (PHASE2UX §1.5) and the seat status symbols (DECISIONS deviation 3). Each carries two signals in the mark itself and is checked on the surface it lands on when hovered or pressed, not at rest.</p>
+
+  <h2 id="mode">Mode indicator — <code>.sp-mode</code></h2>
+  <p class="spec-anatomy">Anatomy: mark 12px · gap 8 · text body-compact-01, tabular numerals · 48px tall · 16px side padding · centred on x=960 by the header. Status-only button: press opens the History panel (<code>aria-expanded</code>, <code>aria-controls</code>). Two signals: shape + fill. Loading is the only header element with a skeleton.</p>
+
+  <h3>Published — ■ filled square</h3>
+  <div class="state"><span class="spec-note">rest</span><div class="band"><button class="sp-mode sp-mode--published" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
+  <div class="state"><span class="spec-note">hover · #333333</span><div class="band"><button class="sp-mode sp-mode--published" data-state="hover" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
+  <div class="state"><span class="spec-note">pressed · #393939</span><div class="band"><button class="sp-mode sp-mode--published" data-state="pressed" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
+  <div class="state"><span class="spec-note">open · outlined, no bottom edge</span><div class="band"><button class="sp-mode sp-mode--published" aria-expanded="true"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
+  <div class="state"><span class="spec-note">focus · 2px white inset</span><div class="band"><button class="sp-mode sp-mode--published" data-state="focus" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</button></div></div>
+
+  <h3>Draft — ◇ hollow diamond, 2px, orange 40</h3>
+  <div class="state"><span class="spec-note">rest · N ≥ 1</span><div class="band"><button class="sp-mode sp-mode--draft" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</button></div></div>
+  <div class="state"><span class="spec-note">rest · N = 0</span><div class="band"><button class="sp-mode sp-mode--draft" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — no changes</button></div></div>
+  <div class="state"><span class="spec-note">hover · #333333</span><div class="band"><button class="sp-mode sp-mode--draft" data-state="hover" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</button></div></div>
+  <div class="state"><span class="spec-note">pressed · #393939</span><div class="band"><button class="sp-mode sp-mode--draft" data-state="pressed" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</button></div></div>
+  <div class="state"><span class="spec-note">open</span><div class="band"><button class="sp-mode sp-mode--draft" aria-expanded="true"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</button></div></div>
+  <div class="state"><span class="spec-note">focus</span><div class="band"><button class="sp-mode sp-mode--draft" data-state="focus" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</button></div></div>
+  <div class="state"><span class="spec-note">overflow · 120 fits (≤ 22 chars)</span><div class="band"><button class="sp-mode sp-mode--draft" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 120 changes</button></div></div>
+
+  <h3>Never published — □ hollow square, gray 40</h3>
+  <div class="state"><span class="spec-note">rest</span><div class="band"><button class="sp-mode sp-mode--unpublished" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-stroke x="1" y="1" width="10" height="10"/></svg>Not yet published</button></div></div>
+  <div class="state"><span class="spec-note">hover</span><div class="band"><button class="sp-mode sp-mode--unpublished" data-state="hover" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-stroke x="1" y="1" width="10" height="10"/></svg>Not yet published</button></div></div>
+  <div class="state"><span class="spec-note">pressed</span><div class="band"><button class="sp-mode sp-mode--unpublished" data-state="pressed" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-stroke x="1" y="1" width="10" height="10"/></svg>Not yet published</button></div></div>
+
+  <h3>Error — ⊗ filled circle with a cut, red 50; still opens the panel</h3>
+  <div class="state"><span class="spec-note">rest</span><div class="band"><button class="sp-mode sp-mode--error" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><circle data-fill cx="6" cy="6" r="6"/><path data-cut d="M3.5 3.5 L8.5 8.5 M8.5 3.5 L3.5 8.5"/></svg>Publish state unavailable</button></div></div>
+  <div class="state"><span class="spec-note">hover</span><div class="band"><button class="sp-mode sp-mode--error" data-state="hover" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><circle data-fill cx="6" cy="6" r="6"/><path data-cut d="M3.5 3.5 L8.5 8.5 M8.5 3.5 L3.5 8.5"/></svg>Publish state unavailable</button></div></div>
+  <div class="state"><span class="spec-note">pressed</span><div class="band"><button class="sp-mode sp-mode--error" data-state="pressed" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><circle data-fill cx="6" cy="6" r="6"/><path data-cut d="M3.5 3.5 L8.5 8.5 M8.5 3.5 L3.5 8.5"/></svg>Publish state unavailable</button></div></div>
+
+  <h3>Loading — 160×16 skeleton in the slot; not yet pressable</h3>
+  <div class="state"><span class="spec-note">aria-busy</span><div class="band"><span class="sp-mode sp-mode--loading" aria-busy="true" aria-label="Loading publish state"><span class="sp-mode-skeleton"></span></span></div></div>
+
+  <h3>Narrow fallback (1024) — mark + count, never dropped (D0-e)</h3>
+  <div class="state"><span class="spec-note">compact · Published</span><div class="band narrow"><button class="sp-mode sp-mode--published" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published</button></div></div>
+  <div class="state"><span class="spec-note">compact · Draft</span><div class="band narrow"><button class="sp-mode sp-mode--draft" aria-expanded="false"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft · 4</button></div></div>
+
+  <h3>Grayscale — the four marks, side by side</h3>
+  <div class="spec-row">
+    <div class="band" style="background:var(--sp-shell-bg);height:var(--sp-size-lg);display:flex;align-items:center;gap:var(--sp-space-07);padding:0 var(--sp-space-05)">
+      <span class="sp-mode sp-mode--published" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published</span>
+      <span class="sp-mode sp-mode--draft" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft</span>
+      <span class="sp-mode sp-mode--unpublished" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-stroke x="1" y="1" width="10" height="10"/></svg>Not yet published</span>
+      <span class="sp-mode sp-mode--error" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><circle data-fill cx="6" cy="6" r="6"/><path data-cut d="M3.5 3.5 L8.5 8.5 M8.5 3.5 L3.5 8.5"/></svg>Unavailable</span>
+    </div>
+    <div class="band gray" aria-hidden="true" style="background:var(--sp-shell-bg);height:var(--sp-size-lg);display:flex;align-items:center;gap:var(--sp-space-07);padding:0 var(--sp-space-05)">
+      <span class="sp-mode sp-mode--published" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published</span>
+      <span class="sp-mode sp-mode--draft" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft</span>
+      <span class="sp-mode sp-mode--unpublished" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12"><rect data-stroke x="1" y="1" width="10" height="10"/></svg>Not yet published</span>
+      <span class="sp-mode sp-mode--error" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12"><circle data-fill cx="6" cy="6" r="6"/><path data-cut d="M3.5 3.5 L8.5 8.5 M8.5 3.5 L3.5 8.5"/></svg>Unavailable</span>
+    </div>
+  </div>
+
+  <h2 id="seat">Seat status marks — <code>.sp-seat-mark</code>, <code>.sp-seat-legend</code>, <code>.sp-seat-footprint</code></h2>
+  <p class="spec-anatomy">Four enum states, one mark each, grays only. Assigned = a miniature of the name pill (● never appears on the plan). Open ○ hollow ring 2px. Reserved lock — hollow shackle, filled body. Unavailable hatched square, 2px edge. 16px marks beside 14px type; label text-secondary. The constant 28px footprint is the empty-seat marker on the plan; the name pill and its interaction states are PR 3.</p>
+
+  <h3>Legend row on every surface it lands on</h3>
+  <div class="surface"><span class="spec-note">background</span><div class="strip on-bg">
+    <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16" aria-hidden="true"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16" aria-hidden="true"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
+  </div></div>
+  <div class="surface"><span class="spec-note">layer-01 (band, inspector)</span><div class="strip on-layer">
+    <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16" aria-hidden="true"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16" aria-hidden="true"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
+  </div></div>
+  <div class="surface"><span class="spec-note">layer-hover-01 — worst case</span><div class="strip on-hover">
+    <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16" aria-hidden="true"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16" aria-hidden="true"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
+  </div></div>
+  <div class="surface"><span class="spec-note">layer-selected-01 (selected row)</span><div class="strip on-selected">
+    <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16" aria-hidden="true"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16" aria-hidden="true"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
+  </div></div>
+  <div class="surface"><span class="spec-note">grayscale · on layer-hover-01</span><div class="strip on-hover gray" aria-hidden="true">
+    <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
+  </div></div>
+
+  <h3>Constant footprint — the empty-seat marker on the plan (28 × 28, symbol centred)</h3>
+  <div class="surface"><span class="spec-note">on the map mat · rest</span><div class="strip on-mat">
+    <span class="sp-seat-footprint" title="Open seat"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg></span>
+    <span class="sp-seat-footprint" title="Reserved"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16" aria-hidden="true"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg></span>
+    <span class="sp-seat-footprint" title="Unavailable"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16" aria-hidden="true"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg></span>
+    <span class="pill-label">Open · Reserved · Unavailable — no name, so the symbol is the only content</span>
+  </div></div>
+  <div class="surface"><span class="spec-note">hover (footprint fill → layer-hover-02)</span><div class="strip on-mat">
+    <span class="sp-seat-footprint" data-state="hover" title="Open seat"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg></span>
+    <span class="sp-seat-footprint" data-state="hover" title="Reserved"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16" aria-hidden="true"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg></span>
+    <span class="sp-seat-footprint" data-state="hover" title="Unavailable"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16" aria-hidden="true"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg></span>
+  </div></div>
+  <div class="surface"><span class="spec-note">grayscale</span><div class="strip on-mat gray" aria-hidden="true">
+    <span class="sp-seat-footprint"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16"><circle data-stroke cx="8" cy="8" r="6"/></svg></span>
+    <span class="sp-seat-footprint"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg></span>
+    <span class="sp-seat-footprint"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg></span>
+  </div></div>
+
+  <h3>Inside the dark right panel (History event rows never carry seat marks; the Account panel's My seat row does)</h3>
+  <div class="surface"><span class="spec-note">panel-dark-bg · #161616</span><div class="strip on-dark">
+    <span class="sp-seat-legend" style="color:var(--sp-panel-dark-text)"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>NE04 · North-east pod</span>
+    <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true" style="color:var(--sp-panel-dark-text-secondary)"><circle data-stroke cx="8" cy="8" r="6"/></svg>No seat published for you yet</span>
+  </div></div>
+</main>
+</body>
+</html>

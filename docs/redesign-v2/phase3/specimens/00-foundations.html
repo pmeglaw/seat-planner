@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Phase 3 · 00 Foundations — Seat Planner</title>
+<link rel="stylesheet" href="../tokens/carbon-tokens.css">
+<link rel="stylesheet" href="../tokens/sp-tokens.css">
+<link rel="stylesheet" href="../components/carbon-components.css">
+<link rel="stylesheet" href="../components/sp-components.css">
+<script>
+/* Specimen theme switch — the Phase 4 mechanism in miniature: the app keeps
+   html[data-theme]; the Carbon attribute is derived from it. ?theme=light|dark|system */
+(function () {
+  var h = document.documentElement;
+  function apply(t) {
+    if (t === "light")      { h.dataset.theme = "light"; h.dataset.carbonTheme = "white"; }
+    else if (t === "dark")  { h.dataset.theme = "dark";  h.dataset.carbonTheme = "g100";  }
+    else                    { delete h.dataset.theme;    delete h.dataset.carbonTheme;     }
+  }
+  apply(new URLSearchParams(location.search).get("theme"));
+  window.spTheme = apply;
+})();
+</script>
+<style>
+/* specimen chrome only — tokens, no values */
+.spec { max-width: var(--sp-page-max-w); margin: 0 auto; padding: var(--sp-space-07) var(--sp-space-07) var(--sp-space-12); }
+.spec-bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: var(--sp-space-05); height: var(--sp-size-lg); padding: 0 var(--sp-space-07); background: var(--sp-layer-01); border-bottom: 1px solid var(--sp-border-subtle); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); }
+.spec-bar nav { display: flex; gap: var(--sp-space-05); margin-left: auto; }
+.spec-bar .spec-theme { display: flex; }
+.spec h1 { font: var(--sp-type-heading-04); margin-bottom: var(--sp-space-03); }
+.spec h2 { font: var(--sp-type-heading-03); margin: var(--sp-space-10) 0 var(--sp-space-05); }
+.spec h2:first-of-type { margin-top: var(--sp-space-09); }
+.spec p.lede { color: var(--sp-text-secondary); max-width: 66ch; }
+.spec-note { font: var(--sp-type-code-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); }
+.spec-anatomy { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); margin-top: var(--sp-space-02); max-width: 70ch; }
+.spec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--sp-space-05) var(--sp-space-07); }
+.spec-card { background: var(--sp-layer-01); padding: var(--sp-space-05); }
+.spec-card .spec-note { display: block; margin-bottom: var(--sp-space-03); }
+.spec-row { display: flex; align-items: center; gap: var(--sp-space-05); flex-wrap: wrap; }
+.spec-shell { background: var(--sp-shell-bg); color: var(--sp-shell-text); height: var(--sp-size-lg); display: flex; align-items: center; padding: 0 var(--sp-space-05); gap: var(--sp-space-05); }
+table.spec-table { border-collapse: collapse; width: 100%; font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); }
+table.spec-table th { text-align: left; font: var(--sp-type-heading-compact-01); height: var(--sp-size-sm); padding: 0 var(--sp-space-05); background: var(--sp-layer-selected); }
+table.spec-table td { height: var(--sp-size-sm); padding: 0 var(--sp-space-05); border-bottom: 1px solid var(--sp-border-subtle); white-space: nowrap; vertical-align: middle; }
+/* type ladder */
+.type-ladder .sample { padding: var(--sp-space-04) 0; border-bottom: 1px solid var(--sp-border-subtle-00); display: grid; grid-template-columns: 240px 1fr; gap: var(--sp-space-05); align-items: baseline; }
+/* spacing */
+.space-bar { height: var(--sp-space-05); background: var(--sp-interactive); }
+.size-box { display: inline-grid; place-items: center; background: var(--sp-layer-selected); color: var(--sp-text-secondary); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); }
+/* grid demo */
+.grid-demo { background-color: var(--sp-layer-02); background-image: linear-gradient(var(--sp-border-subtle-00) 1px, transparent 1px), linear-gradient(90deg, var(--sp-border-subtle-00) 1px, transparent 1px); background-size: var(--sp-space-03) var(--sp-space-03); padding: var(--sp-space-03); }
+.grid-demo .row { display: flex; align-items: center; gap: var(--sp-control-gap); height: var(--sp-control-row-h); padding: 0 var(--sp-space-03); }
+.grid-demo .ctl { height: var(--sp-control-h); background: var(--sp-field); box-shadow: inset 0 -1px 0 var(--sp-field-border); display: flex; align-items: center; padding: 0 var(--sp-space-05); white-space: nowrap; }
+.grid-demo .ctl.primary { background: var(--sp-button-primary); color: var(--sp-text-on-color); }
+/* swatches */
+.swatch { width: var(--sp-size-md); height: var(--sp-size-xs); box-shadow: inset 0 0 0 1px var(--sp-border-subtle); }
+/* motion demo */
+.motion-track { position: relative; height: var(--sp-size-sm); display: flex; align-items: center; gap: var(--sp-space-05); }
+.motion-track .label { width: 200px; }
+.motion-track .bar { width: var(--sp-space-11); height: var(--sp-space-05); background: var(--sp-interactive); transition-property: transform; transition-timing-function: var(--sp-ease-standard); }
+.motion-track.moved .bar { transform: translateX(var(--sp-space-13)); }
+/* grayscale test strip */
+.gray { filter: grayscale(1); }
+.strip { display: flex; gap: var(--sp-space-07); align-items: center; padding: var(--sp-space-05); }
+.strip.on-hover { background: var(--sp-layer-hover); }
+</style>
+</head>
+<body>
+<a class="cds-skip-link" href="#main">Skip to main content</a>
+<div class="spec-bar" role="toolbar" aria-label="Specimen controls">
+  <strong>Phase 3 · 00 Foundations</strong>
+  <span class="spec-theme" role="group" aria-label="Theme">
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('light')">Light</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme('dark')">Dark</button>
+    <button class="cds-btn cds-btn--ghost cds-btn--sm" onclick="spTheme(null)">System</button>
+  </span>
+  <nav aria-label="Specimens"><a href="index.html">Index</a><a href="compare.html?p=00-foundations">Both themes</a><a href="05-status-and-marks.html">05 Status and marks</a></nav>
+</div>
+
+<main id="main" class="spec">
+  <h1>Foundations</h1>
+  <p class="lede">The fixed type set, the 8px spacing scale and size ladder, the grid the control row sits on, the focus ring, the motion table, and the theme roles resolved live from <code>sp-tokens.css</code>. Switch the theme above; nothing on this page is written in a hex.</p>
+
+  <h2 id="type">Type — fixed (productive) set, IBM Plex Sans / Mono</h2>
+  <div class="type-ladder">
+    <div class="sample"><span class="spec-note">label-01 · 12/16 · 400 · .32</span><span style="font:var(--sp-type-label-01);letter-spacing:var(--sp-tracking-label)">4 unpublished changes · last edit 2 min ago</span></div>
+    <div class="sample"><span class="spec-note">code-01 · Mono 12/16</span><span style="font:var(--sp-type-code-01);letter-spacing:var(--sp-tracking-label)">?floor=3&amp;seat=NE04</span></div>
+    <div class="sample"><span class="spec-note">body-compact-01 · 14/18 · 400 · .16</span><span style="font:var(--sp-type-body-compact-01);letter-spacing:var(--sp-tracking-body)">Sarah Reyes · Case Management · ext 214</span></div>
+    <div class="sample"><span class="spec-note">body-01 · 14/20 · 400 · .16</span><span style="font:var(--sp-type-body-01);letter-spacing:var(--sp-tracking-body)">Publishing replaces what everyone sees and clears Undo/Redo.</span></div>
+    <div class="sample"><span class="spec-note">code-02 · Mono 14/20</span><span style="font:var(--sp-type-code-02);letter-spacing:var(--sp-tracking-label)">MLS02 · STALE_DRAFT</span></div>
+    <div class="sample"><span class="spec-note">heading-compact-01 · 14/18 · 600</span><span style="font:var(--sp-type-heading-compact-01);letter-spacing:var(--sp-tracking-body)">Publish history</span></div>
+    <div class="sample"><span class="spec-note">heading-01 · 14/20 · 600</span><span style="font:var(--sp-type-heading-01);letter-spacing:var(--sp-tracking-body)">Filters</span></div>
+    <div class="sample"><span class="spec-note">body-02 · 16/24 · 400</span><span style="font:var(--sp-type-body-02)">Read-only answers from saved draft map data.</span></div>
+    <div class="sample"><span class="spec-note">heading-02 · 16/24 · 600</span><span style="font:var(--sp-type-heading-02)">Draft and Published</span></div>
+    <div class="sample"><span class="spec-note">heading-03 · 20/28 · 400</span><span style="font:var(--sp-type-heading-03)">Review draft before publishing</span></div>
+    <div class="sample"><span class="spec-note">heading-04 · 28/36 · 400</span><span style="font:var(--sp-type-heading-04)">Management</span></div>
+    <div class="sample"><span class="spec-note">heading-05 · 32/40 · 400</span><span style="font:var(--sp-type-heading-05)">Floor 2 · Litigation — 40 people</span></div>
+    <div class="sample"><span class="spec-note">heading-06 · 42/50 · 300 · tabular</span><span style="font:var(--sp-type-heading-06);font-variant-numeric:tabular-nums">214</span></div>
+  </div>
+  <p class="spec-anatomy">Two or three sizes per screen; hierarchy from weight and space. Display sizes get lighter (heading-06 is Light 300), never bolder. Tabular figures on anything that changes or aligns. Flush left, sentence case.</p>
+
+  <h2 id="space">Spacing scale — 8px mini unit</h2>
+  <table class="spec-table" aria-describedby="space-note">
+    <thead><tr><th>Token</th><th>px</th><th style="width:60%">Bar</th></tr></thead>
+    <tbody id="space-rows"></tbody>
+  </table>
+  <p id="space-note" class="spec-anatomy">Permitted layout multiples: 1x 2x 3x 4x 6x 8x 10x 12x (8 · 16 · 24 · 32 · 48 · 64 · 80 · 96). Inside a component, 2 and 4 and 12 are allowed (spacing-01, -02, -04). Never a value off the scale.</p>
+
+  <h2 id="size">Size ladder — element heights, never padding math</h2>
+  <div class="spec-row" style="align-items:flex-end">
+    <span class="size-box" style="width:var(--sp-size-xs);height:var(--sp-size-xs)">24</span>
+    <span class="size-box" style="width:var(--sp-size-sm);height:var(--sp-size-sm)">32</span>
+    <span class="size-box" style="width:var(--sp-size-md);height:var(--sp-size-md)">40</span>
+    <span class="size-box" style="width:var(--sp-size-lg);height:var(--sp-size-lg)">48</span>
+    <span class="size-box" style="width:var(--sp-size-xl);height:var(--sp-size-xl)">64</span>
+    <span class="size-box" style="width:var(--sp-size-2xl);height:var(--sp-size-2xl)">80</span>
+  </div>
+  <p class="spec-anatomy">24 tag · 32 table row, nav item, checkbox target · 40 every control · 48 header, control row, panel rows, utilities · 64 modal and side-panel footer · 80 empty-state illustration. Hit regions reach 44px through padding (deviation 7); the icon does not grow.</p>
+
+  <h2 id="grid">Grid — the control row on the 8px grid (48 row · 40 controls · 8 gaps)</h2>
+  <div class="grid-demo">
+    <div class="row">
+      <div class="ctl" style="width:224px">Floor 3 · Pre-Litigation ▾</div>
+      <div class="ctl" style="width:320px">Find a person or seat</div>
+      <div class="ctl" style="width:112px">Filters 2 ×</div>
+      <div class="ctl" style="width:176px;background:none;box-shadow:none">22 of 68 seats match</div>
+      <div class="ctl primary" style="width:176px">Publish 4 changes</div>
+    </div>
+  </div>
+  <p class="spec-anatomy">Widths from PHASE2UX §1M.3; each is a mini-unit multiple. The row is 48, controls 40, so 4px of air sits above and below every control and the row's rule never touches a control edge.</p>
+
+  <h2 id="focus">Focus — 2px, $focus, inset; white on the Gray 100 zone</h2>
+  <div class="spec-grid">
+    <div class="spec-card"><span class="spec-note">primary · focus (inner white ring + outer $focus)</span><button class="cds-btn cds-btn--primary cds-btn--md" data-state="focus" style="outline:var(--sp-focus-width) solid var(--sp-focus);outline-offset:var(--sp-focus-offset);box-shadow:inset 0 0 0 4px var(--sp-focus-inset)">Publish 4 changes</button></div>
+    <div class="spec-card"><span class="spec-note">ghost · focus</span><button class="cds-btn cds-btn--ghost cds-btn--md" style="outline:var(--sp-focus-width) solid var(--sp-focus);outline-offset:var(--sp-focus-offset)">Clear all</button></div>
+    <div class="spec-card"><span class="spec-note">text input · focus</span><input class="cds-text-input" style="width:100%;outline:var(--sp-focus-width) solid var(--sp-focus);outline-offset:var(--sp-focus-offset)" value="Sarah Reyes" aria-label="Employee name"></div>
+    <div class="spec-card"><span class="spec-note">link · focus</span><a href="#focus" style="outline:var(--sp-focus-width) solid var(--sp-focus);outline-offset:var(--sp-focus-offset)">Show Floor 2</a></div>
+    <div class="spec-card" style="padding:0"><div class="spec-shell"><span class="spec-note" style="color:var(--sp-shell-text-helper)">shell · utility focus (white)</span><button class="cds-btn cds-btn--icon" aria-label="Help" style="width:var(--sp-size-lg);height:var(--sp-size-lg);color:var(--sp-shell-text);outline:var(--sp-focus-width) solid var(--sp-shell-focus);outline-offset:var(--sp-focus-offset)"><svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M7.5 8a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .8-1 1.7M10 14.5v.5"/></svg></button></div></div>
+    <div class="spec-card"><span class="spec-note">live — Tab into this field</span><input class="cds-text-input" style="width:100%" placeholder="Tab here to see the real ring" aria-label="Focus test"></div>
+  </div>
+  <p class="spec-anatomy">The ring is drawn with <code>outline</code>, never a box-shadow glow, never rounded, never removed. It replaces the shipped 4px offset ring; <code>--sp-focus-width</code> / <code>--sp-focus-offset</code> are the only geometry tokens Phase 4 needs.</p>
+
+  <h2 id="motion">Motion — productive curves, one axis</h2>
+  <div class="spec-row" style="margin-bottom:var(--sp-space-05)"><button class="cds-btn cds-btn--tertiary cds-btn--md" onclick="document.querySelectorAll('.motion-track').forEach(function(t){t.classList.toggle('moved')})">Play all</button><span class="spec-note">standard cubic-bezier(.2,0,.38,.9) · entrance (0,0,.38,.9) · exit (.2,0,1,.9)</span></div>
+  <div class="motion-track"><span class="label spec-note">fast-01 · 70ms · marker hover, toggles</span><span class="bar" style="transition-duration:var(--sp-duration-fast-01)"></span></div>
+  <div class="motion-track"><span class="label spec-note">fast-02 · 110ms · hover colour, left panel</span><span class="bar" style="transition-duration:var(--sp-duration-fast-02)"></span></div>
+  <div class="motion-track"><span class="label spec-note">moderate-01 · 150ms · small expansion</span><span class="bar" style="transition-duration:var(--sp-duration-moderate-01)"></span></div>
+  <div class="motion-track"><span class="label spec-note">moderate-02 · 240ms · panels, slot, tearsheets</span><span class="bar" style="transition-duration:var(--sp-duration-moderate-02)"></span></div>
+  <div class="motion-track"><span class="label spec-note">slow-01 · 400ms · large expansion</span><span class="bar" style="transition-duration:var(--sp-duration-slow-01)"></span></div>
+  <div class="motion-track"><span class="label spec-note">slow-02 · 700ms · overlay dimming</span><span class="bar" style="transition-duration:var(--sp-duration-slow-02)"></span></div>
+  <p class="spec-anatomy">Panels slide on one axis with the entrance curve and leave on the exit curve. Keyboard-initiated and hundred-times-a-day actions (marker hover, palette open) do not animate at all. Under <code>prefers-reduced-motion</code> the asset collapses every duration to 1ms — nothing here needs a second query.</p>
+
+  <h2 id="roles">Theme roles — resolved live</h2>
+  <p class="spec-anatomy" style="margin-bottom:var(--sp-space-05)">Every <code>--sp-*</code> colour below aliases a <code>--cds-*</code> token; the hex column is computed by the browser, not written anywhere. Tier C (shell, dark panels) is theme-invariant by ruling — switch the theme and watch those rows hold.</p>
+  <table class="spec-table"><thead><tr><th>Token</th><th>Swatch</th><th>Resolves to</th><th>Role</th></tr></thead><tbody id="role-rows"></tbody></table>
+
+  <h2 id="grayscale">Grayscale test strip — every mark survives without colour</h2>
+  <p class="spec-anatomy" style="margin-bottom:var(--sp-space-05)">Left: the marks as drawn. Right: the same marks through <code>filter: grayscale(1)</code>. Shape + fill (mode) and symbol (seat) carry the meaning; the label is the third signal, not the second.</p>
+  <div class="spec-row" style="align-items:stretch">
+    <div style="flex:1 1 480px">
+      <div class="spec-shell" style="gap:var(--sp-space-07)">
+        <span class="sp-mode sp-mode--published" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</span>
+        <span class="sp-mode sp-mode--draft" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</span>
+        <span class="sp-mode sp-mode--unpublished" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><rect data-stroke x="1" y="1" width="10" height="10"/></svg>Not yet published</span>
+        <span class="sp-mode sp-mode--error" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true"><circle data-fill cx="6" cy="6" r="6"/><path data-cut d="M3.5 3.5 L8.5 8.5 M8.5 3.5 L3.5 8.5"/></svg>Publish state unavailable</span>
+      </div>
+      <div class="strip on-hover">
+        <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
+        <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16" aria-hidden="true"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
+        <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16" aria-hidden="true"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
+        <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16" aria-hidden="true"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
+      </div>
+    </div>
+    <div class="gray" style="flex:1 1 480px" aria-hidden="true">
+      <div class="spec-shell" style="gap:var(--sp-space-07)">
+        <span class="sp-mode sp-mode--published" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12"><rect data-fill x="0" y="0" width="12" height="12"/></svg>Published · 2 Sep 2026</span>
+        <span class="sp-mode sp-mode--draft" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12"><path data-stroke d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z"/></svg>Draft — 4 changes</span>
+        <span class="sp-mode sp-mode--unpublished" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12"><rect data-stroke x="1" y="1" width="10" height="10"/></svg>Not yet published</span>
+        <span class="sp-mode sp-mode--error" style="padding:0"><svg class="sp-mode-mark" viewBox="0 0 12 12"><circle data-fill cx="6" cy="6" r="6"/><path data-cut d="M3.5 3.5 L8.5 8.5 M8.5 3.5 L3.5 8.5"/></svg>Publish state unavailable</span>
+      </div>
+      <div class="strip on-hover">
+        <span class="sp-seat-legend"><span class="sp-seat-mark sp-seat-mark--pill" aria-hidden="true"></span>Assigned 55</span>
+        <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--available" viewBox="0 0 16 16"><circle data-stroke cx="8" cy="8" r="6"/></svg>Open 9</span>
+        <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--reserved" viewBox="0 0 16 16"><path data-stroke d="M5 7.5V5a3 3 0 0 1 6 0v2.5"/><rect data-fill x="3" y="7" width="10" height="8"/></svg>Reserved 3</span>
+        <span class="sp-seat-legend"><svg class="sp-seat-mark sp-seat-mark--unavailable" viewBox="0 0 16 16"><rect data-stroke x="2" y="2" width="12" height="12"/><path data-hatch d="M2.5 9.5 9.5 2.5M6.5 13.5 13.5 6.5"/></svg>Unavailable 1</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+(function () {
+  // spacing rows
+  var spaces = [["01",2],["02",4],["03",8],["04",12],["05",16],["06",24],["07",32],["08",40],["09",48],["10",64],["11",80],["12",96],["13",160]];
+  var tb = document.getElementById("space-rows");
+  spaces.forEach(function (s) {
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td><code>--sp-space-" + s[0] + "</code></td><td style='font-variant-numeric:tabular-nums'>" + s[1] + "</td><td><div class='space-bar' style='width:var(--sp-space-" + s[0] + ")'></div></td>";
+    tb.appendChild(tr);
+  });
+  // theme roles, resolved by the browser
+  var roles = [
+    ["--sp-background","page"],["--sp-layer-01","first layer"],["--sp-layer-02","second layer / field on layer"],["--sp-layer-hover","hovered row — the worst-case surface for marks"],["--sp-layer-selected","selected row, table header"],["--sp-layer-active","pressed layer"],
+    ["--sp-field","field on background"],["--sp-field-border","field bottom rule"],["--sp-border-subtle","dividers"],["--sp-border-strong","strong rule"],["--sp-border-interactive","current tab / active field"],["--sp-border-inverse","selected marker edge"],
+    ["--sp-text-primary","body"],["--sp-text-secondary","secondary"],["--sp-text-helper","helper — 12px labels"],["--sp-text-error","field error"],["--sp-link","link"],["--sp-icon-primary","icon"],["--sp-icon-secondary","icon, quieter"],
+    ["--sp-focus","focus ring"],["--sp-interactive","one blue action"],["--sp-highlight","search highlight"],["--sp-button-primary","the ONE primary"],["--sp-button-danger","danger"],
+    ["--sp-status-success-mark","success mark (hover-safe grade)"],["--sp-status-error-mark","error mark"],["--sp-status-warning-mark","warning mark (never yellow 30 on light)"],["--sp-status-info-mark","info mark"],["--sp-status-draft-mark","draft / pending mark"],["--sp-status-neutral-mark","not started / open"],["--sp-status-search-surface","search hit surface"],
+    ["--sp-shell-bg","zone · shell (invariant)"],["--sp-shell-bg-hover","zone · shell hover"],["--sp-shell-bg-pressed","zone · shell pressed"],["--sp-shell-rule","zone · shell rule"],["--sp-shell-text","zone · shell text"],["--sp-shell-current-bar","zone · current link bar"],["--sp-shell-focus","zone · focus"],
+    ["--sp-panel-dark-bg","zone · right panel"],["--sp-panel-dark-text-secondary","zone · panel secondary"],["--sp-panel-dark-link","zone · panel link"],["--sp-panel-dark-error-mark","zone · panel error mark"],
+    ["--sp-mode-published-mark","mode · ■"],["--sp-mode-draft-mark","mode · ◇"],["--sp-mode-unpublished-mark","mode · □"],["--sp-mode-error-mark","mode · ⊗"],
+    ["--sp-seat-mark-stroke-color","seat · hollow / lock / hatch"],["--sp-seat-mark-fill-color","seat · ● assigned"],["--sp-seat-footprint-fill","seat · footprint"],["--sp-map-mat","map · mat behind the plan"]
+  ];
+  var probe = document.createElement("span"); probe.style.position = "absolute"; probe.style.visibility = "hidden"; document.body.appendChild(probe);
+  function hex(rgb) { var m = rgb.match(/[\d.]+/g); if (!m) return rgb; if (m.length >= 4 && +m[3] < 1) return rgb; return "#" + m.slice(0,3).map(function(n){return ("0"+(+n).toString(16)).slice(-2);}).join(""); }
+  var rt = document.getElementById("role-rows");
+  function render() {
+    rt.innerHTML = "";
+    roles.forEach(function (r) {
+      probe.style.color = "var(" + r[0] + ")";
+      var v = hex(getComputedStyle(probe).color);
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td><code>" + r[0] + "</code></td><td><span class='swatch' style='display:block;background:var(" + r[0] + ")'></span></td><td><code>" + v + "</code></td><td style='white-space:normal'>" + r[1] + "</td>";
+      rt.appendChild(tr);
+    });
+  }
+  render();
+  var apply = window.spTheme; window.spTheme = function (t) { apply(t); render(); };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+})();
+</script>
+</body>
+</html>

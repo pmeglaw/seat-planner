@@ -1,0 +1,328 @@
+/* =============================================================================
+   Seat Planner — product semantic token layer (Phase 3, redesign-v2)
+
+   LOAD ORDER   tokens/carbon-tokens.css → tokens/sp-tokens.css
+                → components/carbon-components.css → components/sp-components.css
+
+   RULES (PHASE3HANDOFF, PHASE3DS §1 "Token tiers")
+   - Every name is --sp-*. Every colour value is a var() reference into
+     carbon-tokens.css or carbon-components.css. No hex anywhere in this file.
+   - Components consume --sp-* only. The --cds-* names appear here and in the
+     two vendored assets, nowhere else.
+   - Three tiers: A theme roles (Carbon-shaped names, flip with the theme),
+     B component roles (product meaning), C zone overrides (surfaces that do
+     not follow the theme — the Gray 100 shell and right panels).
+   - Tier C is the ONE place a --sp-* value points at the palette tier
+     (--gray-*, --blue-*, --red-*) instead of a --cds-* theme token: those
+     surfaces are theme-invariant by ruling (D0, PHASE2UX §1.2/§1.4) and no
+     theme token is invariant. carbon-components.css does the same for its
+     own .cds-header. Recorded in PHASE3DS §1.
+
+   THEME MECHANISM (PHASE3DS §1 "Theme")
+   carbon-tokens.css flips on html[data-carbon-theme]. The app keeps
+   html[data-theme] (light | dark | absent = system); Phase 4 derives the
+   Carbon attribute from it in the same boot script and toggle that set
+   data-theme today (light → "white", dark → "g100", system → removed).
+   Because every tier-A value aliases a --cds-* token, this file carries no
+   theme blocks of its own: light on bare :root, dark under the asset's
+   prefers-color-scheme guard, dark again under the forced attribute — three
+   states, one definition each.
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------------
+   0. GEOMETRY — 8px grid; heights from the ladder; product widths from the
+      Phase 2 rulings (PHASE2UX §1.2, §1.3, §1.4, §1M.2, §1M.5, §1G, §1S).
+   -------------------------------------------------------------------------- */
+:root {
+  --sp-space-01: var(--cds-spacing-01);   /* 2  */
+  --sp-space-02: var(--cds-spacing-02);   /* 4  */
+  --sp-space-03: var(--cds-spacing-03);   /* 8  */
+  --sp-space-04: var(--cds-spacing-04);   /* 12 */
+  --sp-space-05: var(--cds-spacing-05);   /* 16 */
+  --sp-space-06: var(--cds-spacing-06);   /* 24 */
+  --sp-space-07: var(--cds-spacing-07);   /* 32 */
+  --sp-space-08: var(--cds-spacing-08);   /* 40 */
+  --sp-space-09: var(--cds-spacing-09);   /* 48 */
+  --sp-space-10: var(--cds-spacing-10);   /* 64 */
+  --sp-space-11: var(--cds-spacing-11);   /* 80 */
+  --sp-space-12: var(--cds-spacing-12);   /* 96 */
+  --sp-space-13: var(--cds-spacing-13);   /* 160 */
+
+  --sp-size-xs:  var(--cds-size-xs);      /* 24 — tag */
+  --sp-size-sm:  var(--cds-size-sm);      /* 32 — table row, nav item, checkbox target */
+  --sp-size-md:  var(--cds-size-md);      /* 40 — every control */
+  --sp-size-lg:  var(--cds-size-lg);      /* 48 — header, control row, panel rows, utilities */
+  --sp-size-xl:  var(--cds-size-xl);      /* 64 — modal / side-panel footer */
+  --sp-size-2xl: var(--cds-size-2xl);     /* 80 */
+
+  --sp-icon-01: var(--cds-icon-size-01);  /* 16 — beside 14px type; legend marks */
+  --sp-icon-02: var(--cds-icon-size-02);  /* 20 — header utilities, notification glyph */
+  --sp-icon-03: var(--cds-icon-size-03);  /* 24 */
+
+  --sp-radius:     var(--cds-radius);     /* 0 — square everywhere … */
+  --sp-radius-tag: 12px;                  /* … except the 24px tag (ruling: zero radius except tags) */
+
+  --sp-hit-min: var(--cds-touch-target-min);   /* 44 — deviation 7: padding grows, the icon does not */
+
+  /* focus: 2px, $focus, inset — replaces the shipped 4px offset ring */
+  --sp-focus-width:  var(--cds-spacing-01);
+  --sp-focus-offset: calc(-1 * var(--cds-spacing-01));
+
+  /* shell (PHASE2UX §1.2–§1.4, D0-f, D0-h) */
+  --sp-shell-header-h:   var(--cds-size-lg);   /* 48 */
+  --sp-shell-slot-w:     var(--cds-size-lg);   /* 48 — hamburger / reserved slot, utilities */
+  --sp-panel-left-w:     256px;                /* filters, slide-in, pushes */
+  --sp-panel-right-w:    320px;                /* Help · History · Account, floats */
+  --sp-panel-content-w:  288px;                /* 320 − 2×16 */
+  --sp-panel-row-h:      var(--cds-size-lg);   /* 48 */
+  --sp-panel-item-h:     var(--cds-size-sm);   /* 32 — checkbox items, nav items below lg */
+  --sp-current-bar-h:    3px;                  /* current section link */
+
+  /* map (PHASE2UX §1M.2–§1M.5, D1-c, D2-a = deviation 15) */
+  --sp-control-row-h:    var(--cds-size-lg);   /* 48 */
+  --sp-control-h:        var(--cds-size-md);   /* 40 */
+  --sp-control-gap:      var(--cds-spacing-03);/* 8  */
+  --sp-band-h:           var(--cds-size-md);   /* 40 — status band */
+  --sp-slot-w:           400px;                /* inspector · mode card · Ask Planner */
+  --sp-palette-w:        560px;                /* search palette */
+  --sp-marker-h-max:     28px;                 /* ≤ 28 pill (deviation 8) */
+  --sp-seat-footprint:   28px;                 /* constant empty-seat footprint (deviation 3) */
+  --sp-seat-mark:        var(--cds-icon-size-01);   /* 16 — status symbol, legend and pill */
+  --sp-seat-mark-stroke: var(--cds-spacing-01);     /* 2 — outline at 16px (status-and-dataviz) */
+
+  /* pages (PHASE2UX §1G, §1S) */
+  --sp-table-row-h:      var(--cds-size-sm);   /* 32 — Management */
+  --sp-side-panel-w:     480px;                /* slide-over, focus-trapped */
+  --sp-tearsheet-narrow-w: 720px;
+  --sp-page-max-w:       1584px;               /* deviation 1: documents cap at max */
+}
+
+/* -----------------------------------------------------------------------------
+   1. TYPE — the fixed (productive) set only. Use as
+        font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body);
+   -------------------------------------------------------------------------- */
+:root {
+  --sp-font-sans: var(--cds-font-sans);
+  --sp-font-mono: var(--cds-font-mono);
+  --sp-weight-light:    var(--cds-weight-light);
+  --sp-weight-regular:  var(--cds-weight-regular);
+  --sp-weight-semibold: var(--cds-weight-semibold);
+
+  --sp-type-label-01:           400 12px/16px var(--cds-font-sans);
+  --sp-type-code-01:            400 12px/16px var(--cds-font-mono);
+  --sp-type-code-02:            400 14px/20px var(--cds-font-mono);
+  --sp-type-body-compact-01:    400 14px/18px var(--cds-font-sans);
+  --sp-type-body-01:            400 14px/20px var(--cds-font-sans);
+  --sp-type-heading-compact-01: 600 14px/18px var(--cds-font-sans);
+  --sp-type-heading-01:         600 14px/20px var(--cds-font-sans);
+  --sp-type-body-02:            400 16px/24px var(--cds-font-sans);
+  --sp-type-heading-02:         600 16px/24px var(--cds-font-sans);
+  --sp-type-heading-03:         400 20px/28px var(--cds-font-sans);
+  --sp-type-heading-04:         400 28px/36px var(--cds-font-sans);
+  --sp-type-heading-05:         400 32px/40px var(--cds-font-sans);
+  --sp-type-heading-06:         300 42px/50px var(--cds-font-sans);   /* readout numeral — Light */
+
+  --sp-tracking-label: .32px;   /* 12px */
+  --sp-tracking-body:  .16px;   /* 14px */
+  --sp-tracking-none:  0;       /* ≥ 16px */
+}
+
+/* -----------------------------------------------------------------------------
+   2. MOTION — productive curves only; durations from the table.
+      Reduced motion collapses the durations in carbon-tokens.css, so every
+      transition built on these tokens honours it without a second query.
+   -------------------------------------------------------------------------- */
+:root {
+  --sp-duration-fast-01:     var(--cds-duration-fast-01);      /* 70  — buttons, toggles, marker hover */
+  --sp-duration-fast-02:     var(--cds-duration-fast-02);      /* 110 — fades, hover colour, left panel */
+  --sp-duration-moderate-01: var(--cds-duration-moderate-01);  /* 150 — small expansion */
+  --sp-duration-moderate-02: var(--cds-duration-moderate-02);  /* 240 — right panels, slot, tearsheets */
+  --sp-duration-slow-01:     var(--cds-duration-slow-01);      /* 400 — large expansion */
+  --sp-duration-slow-02:     var(--cds-duration-slow-02);      /* 700 — overlay dimming */
+  --sp-ease-standard: var(--cds-ease-productive-standard);
+  --sp-ease-entrance: var(--cds-ease-productive-entrance);
+  --sp-ease-exit:     var(--cds-ease-productive-exit);
+}
+
+/* -----------------------------------------------------------------------------
+   3. TIER A — THEME ROLES. Flip with the theme through the asset.
+   -------------------------------------------------------------------------- */
+:root {
+  --sp-background:          var(--cds-background);
+  --sp-background-hover:    var(--cds-background-hover);
+  --sp-background-active:   var(--cds-background-active);
+  --sp-background-selected: var(--cds-background-selected);
+  --sp-background-inverse:  var(--cds-background-inverse);
+
+  --sp-layer-01:             var(--cds-layer-01);
+  --sp-layer-02:             var(--cds-layer-02);
+  --sp-layer-hover:          var(--cds-layer-hover-01);
+  --sp-layer-hover-02:       var(--cds-layer-hover-02);
+  --sp-layer-active:         var(--cds-layer-active-01);
+  --sp-layer-selected:       var(--cds-layer-selected-01);
+  --sp-layer-selected-hover: var(--cds-layer-selected-hover-01);
+  --sp-layer-accent:         var(--cds-layer-accent-01);
+
+  --sp-field:        var(--cds-field-01);
+  --sp-field-hover:  var(--cds-field-hover-01);
+  --sp-field-border: var(--cds-border-strong-01);
+
+  --sp-border-subtle:      var(--cds-border-subtle-01);
+  --sp-border-subtle-00:   var(--cds-border-subtle-00);   /* hairline on background */
+  --sp-border-strong:      var(--cds-border-strong-01);
+  --sp-border-inverse:     var(--cds-border-inverse);
+  --sp-border-interactive: var(--cds-border-interactive);
+  --sp-border-disabled:    var(--cds-border-disabled);
+
+  --sp-text-primary:     var(--cds-text-primary);
+  --sp-text-secondary:   var(--cds-text-secondary);
+  --sp-text-helper:      var(--cds-text-helper);
+  --sp-text-helper-on-row: var(--cds-text-secondary);   /* helper STYLE on a hoverable row: gray 60 is 4.10:1 on layer-hover-01 (PHASE3DS §3) */
+  --sp-text-placeholder: var(--cds-text-placeholder);
+  --sp-text-disabled:    var(--cds-text-disabled);
+  --sp-text-inverse:     var(--cds-text-inverse);
+  --sp-text-on-color:    var(--cds-text-on-color);
+  --sp-text-error:       var(--cds-text-error);
+
+  --sp-link:       var(--cds-link-primary);
+  --sp-link-hover: var(--cds-link-primary-hover);
+
+  --sp-icon-primary:   var(--cds-icon-primary);
+  --sp-icon-secondary: var(--cds-icon-secondary);
+  --sp-icon-disabled:  var(--cds-icon-disabled);
+  --sp-icon-inverse:   var(--cds-icon-inverse);
+
+  --sp-focus:       var(--cds-focus);
+  --sp-focus-inset: var(--cds-focus-inset);    /* inner white ring on a primary button */
+  --sp-interactive: var(--cds-interactive);
+  --sp-highlight:   var(--cds-highlight);
+  --sp-overlay:     var(--cds-overlay);
+  --sp-shadow:      var(--cds-shadow);          /* overflow menu only — depth is layers, not shadows */
+
+  --sp-skeleton-bg:      var(--cds-skeleton-background);
+  --sp-skeleton-element: var(--cds-skeleton-element);
+  --sp-toggle-off:       var(--cds-toggle-off);
+
+  --sp-button-primary:          var(--cds-button-primary);
+  --sp-button-primary-hover:    var(--cds-button-primary-hover);
+  --sp-button-primary-active:   var(--cds-button-primary-active);
+  --sp-button-secondary:        var(--cds-button-secondary);
+  --sp-button-secondary-hover:  var(--cds-button-secondary-hover);
+  --sp-button-secondary-active: var(--cds-button-secondary-active);
+  --sp-button-tertiary:         var(--cds-button-tertiary);
+  --sp-button-tertiary-hover:   var(--cds-button-tertiary-hover);
+  --sp-button-tertiary-active:  var(--cds-button-tertiary-active);
+  --sp-button-danger:           var(--cds-button-danger-primary);
+  --sp-button-danger-hover:     var(--cds-button-danger-hover);
+  --sp-button-danger-active:    var(--cds-button-danger-active);
+  --sp-button-disabled:         var(--cds-button-disabled);
+  --sp-text-on-color-disabled:  var(--cds-text-on-color-disabled);
+}
+
+/* -----------------------------------------------------------------------------
+   4. TIER A — STATUS FAMILIES.  --sp-status-<family>-<role>
+      roles: mark (the drawn part — clears 3:1 on the HOVERED light surface),
+      surface (fill behind text), text.
+      Families: success · error · warning · info · draft · neutral · search.
+      "published" ≡ success and "draft" ≡ pending are the product's names for
+      the two families the mode indicator and publish flow use.
+   -------------------------------------------------------------------------- */
+:root {
+  --sp-status-success-mark:    var(--cds-status-success-mark);     /* green 60 light / green 40 dark */
+  --sp-status-success-surface: var(--cds-support-success-subtle);
+  --sp-status-success-text:    var(--cds-text-primary);
+
+  --sp-status-error-mark:      var(--cds-status-error-mark);       /* red 60 / red 50 */
+  --sp-status-error-surface:   var(--cds-support-error-subtle);
+  --sp-status-error-text:      var(--cds-text-error);
+
+  --sp-status-warning-mark:    var(--cds-status-warning-mark);     /* yellow 60 / yellow 30 — never yellow 30 on light */
+  --sp-status-warning-fill:    var(--cds-support-warning);         /* fill only, behind a dark glyph */
+  --sp-status-warning-surface: var(--cds-support-warning-subtle);
+  --sp-status-warning-text:    var(--cds-text-primary);
+
+  --sp-status-info-mark:       var(--cds-status-info-mark);        /* blue 70 / blue 50 */
+  --sp-status-info-surface:    var(--cds-support-info-subtle);
+  --sp-status-info-text:       var(--cds-text-primary);
+
+  /* draft / pending — Carbon's "caution" orange as the drawn mark
+     (orange 60 on light, orange 40 on dark); the shell's Draft diamond is
+     the zone-invariant orange 40 in tier C. */
+  --sp-status-draft-mark:      var(--cds-status-caution-mark);
+  --sp-status-draft-surface:   var(--cds-layer-01);
+  --sp-status-draft-text:      var(--cds-text-primary);
+
+  --sp-status-neutral-mark:    var(--cds-status-inactive-mark);    /* gray 60 / gray 40 — "not started", "open" */
+  --sp-status-neutral-surface: var(--cds-layer-01);
+  --sp-status-neutral-text:    var(--cds-text-secondary);
+
+  /* search / filter hit — Carbon's highlight, not a brand colour */
+  --sp-status-search-surface:  var(--cds-highlight);
+  --sp-status-search-mark:     var(--cds-support-info);
+  --sp-status-search-text:     var(--cds-text-primary);
+}
+
+/* -----------------------------------------------------------------------------
+   5. TIER C — ZONE: the Gray 100 shell and the dark right panels.
+      Theme-invariant by ruling. Palette references, by exception (see header).
+      Surfaces checked in PHASE3DS §3: rest gray 100 · hover gray-90-hover ·
+      pressed gray 80 (Carbon's dark ladder steps LIGHTER on active) · panel rule gray 80.
+   -------------------------------------------------------------------------- */
+:root {
+  --sp-shell-bg:            var(--gray-100);
+  --sp-shell-bg-hover:      var(--gray-90-hover);   /* gray-90-hover — matches .cds-header-nav a:hover */
+  --sp-shell-bg-pressed:    var(--gray-80);         /* gray 80 — active steps lighter than hover on the dark ladder (owner ruling, #507) */
+  --sp-shell-rule:          var(--gray-80);         /* 1px bottom rule; panel left rule; utility outline */
+  --sp-shell-text:          var(--gray-10);
+  --sp-shell-text-secondary:var(--gray-30);
+  --sp-shell-text-helper:   var(--gray-40);
+  --sp-shell-current-bar:   var(--blue-50);         /* $border-interactive on g100 — the one blue in the shell */
+  --sp-shell-focus:         var(--white-0);         /* $focus flips to white on Gray 100 */
+  --sp-shell-skeleton-bg:   var(--gray-100-hover);
+  --sp-shell-skeleton-element: var(--gray-80);
+
+  --sp-panel-dark-bg:            var(--gray-100);
+  --sp-panel-dark-rule:          var(--gray-80);
+  --sp-panel-dark-layer:         var(--gray-90);    /* a raised row inside the panel */
+  --sp-panel-dark-layer-hover:   var(--gray-90-hover);
+  --sp-panel-dark-text:          var(--gray-10);
+  --sp-panel-dark-text-secondary:var(--gray-30);
+  --sp-panel-dark-text-helper:   var(--gray-40);
+  --sp-panel-dark-link:          var(--blue-40);    /* $link-primary on g100 */
+  --sp-panel-dark-field:         var(--gray-90);
+  --sp-panel-dark-focus:         var(--white-0);
+  --sp-panel-dark-error-mark:    var(--red-50);     /* $support-error on g100 */
+  --sp-panel-dark-error-surface: var(--gray-90);    /* g100 subtle = layer-01 */
+  --sp-panel-dark-skeleton-bg:   var(--gray-100-hover);
+  --sp-panel-dark-skeleton-element: var(--gray-80);
+}
+
+/* -----------------------------------------------------------------------------
+   6. TIER B — MODE INDICATOR (PHASE2UX §1.5, D0-a; PHASE3DS §1 "Mode indicator")
+      Two signals in the mark: shape + fill. Sits on the shell zone.
+   -------------------------------------------------------------------------- */
+:root {
+  --sp-mode-mark-size:        12px;
+  --sp-mode-mark-stroke:      var(--cds-spacing-01);         /* 2px */
+  --sp-mode-text:             var(--sp-shell-text);
+  --sp-mode-published-mark:   var(--gray-10);                /* ■ filled square */
+  --sp-mode-draft-mark:       var(--cds-support-caution-major); /* ◇ hollow diamond — orange 40, invariant in both themes */
+  --sp-mode-unpublished-mark: var(--gray-40);                /* □ hollow square — $status-inactive on g100 */
+  --sp-mode-error-mark:       var(--red-50);                 /* ⊗ — $support-error on g100 */
+  --sp-mode-skeleton-w:       160px;
+  --sp-mode-skeleton-h:       var(--cds-spacing-05);         /* 16 */
+}
+
+/* -----------------------------------------------------------------------------
+   7. TIER B — SEAT STATUS MARKS (DECISIONS deviation 3; PHASE3DS §1 "Seat marks")
+      Four enum states (lib/types.ts SeatStatus). Grays only: the symbol is
+      the signal. The name pill's fill and interaction states are PR 3.
+   -------------------------------------------------------------------------- */
+:root {
+  --sp-seat-mark-stroke-color: var(--cds-icon-secondary);   /* hollow ring, lock, hatch — 6.3:1 on layer-hover-01 */
+  --sp-seat-mark-fill-color:   var(--cds-icon-primary);     /* ● assigned (legend) */
+  --sp-seat-footprint-fill:    var(--cds-layer-02);
+  --sp-seat-footprint-border:  var(--cds-icon-secondary);
+  --sp-seat-mark-text:         var(--cds-text-secondary);   /* label beside a mark */
+  --sp-map-mat:                var(--cds-layer-01);         /* canvas behind the plan */
+}
