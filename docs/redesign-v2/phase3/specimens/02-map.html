@@ -247,8 +247,8 @@
     <span><span class="lbl">search hit</span><button class="sp-pill sp-pill--search cds-touch-target">Tom R.</button></span>
     <span><span class="lbl">quiet (filtered out)</span><button class="sp-pill sp-pill--quiet cds-touch-target">Daniel O.</button></span>
     <span><span class="lbl">move origin</span><button class="sp-pill sp-pill--origin cds-touch-target">Sarah R.</button></span>
-    <span><span class="lbl">move target (open seat)</span><button class="sp-pill sp-pill--target cds-touch-target">NE06</button></span>
-    <span><span class="lbl">invalid target</span><button class="sp-pill sp-pill--invalid cds-touch-target" aria-disabled="true">Maya C.</button></span>
+    <span><span class="lbl">move target · solid 2px + success tint</span><button class="sp-pill sp-pill--target cds-touch-target">NE06</button></span>
+    <span><span class="lbl">invalid target · dashed 2px + error tint</span><button class="sp-pill sp-pill--invalid cds-touch-target" aria-disabled="true">Maya C.</button></span>
     <span><span class="lbl">changed in draft ◇</span><button class="sp-pill cds-touch-target">Kai M.<svg class="sp-pill-badge" aria-hidden="true"><use href="#i-diamond"/></svg></button></span>
     <span><span class="lbl">search + changed</span><button class="sp-pill sp-pill--search cds-touch-target">Tom R.<svg class="sp-pill-badge" aria-hidden="true"><use href="#i-diamond"/></svg></button></span>
     <span><span class="lbl">longest label (fit-width, no truncation)</span><button class="sp-pill cds-touch-target">Priya N.</button></span>
@@ -265,7 +265,7 @@
     <span><span class="lbl">grayscale</span></span>
     <button class="sp-pill">Sarah R.</button><button class="sp-pill" aria-selected="true">Sarah R.</button><button class="sp-pill sp-pill--search">Tom R.</button><button class="sp-pill sp-pill--quiet">Daniel O.</button><button class="sp-pill sp-pill--origin">Sarah R.</button><button class="sp-pill sp-pill--target">NE06</button><button class="sp-pill sp-pill--invalid">Maya C.</button><button class="sp-pill">Kai M.<svg class="sp-pill-badge"><use href="#i-diamond"/></svg></button><button class="sp-pill sp-pill--names-off">Sarah R.</button>
   </div>
-  <p class="cap">Grayscale: rest (1px edge) · selected (2px edge) · search (filled + 1px) · quiet (light edge, lighter text) · origin (dashed) · target (2px, tinted) · invalid (faint) · ◇ badge · names-off (solid). No two states share a silhouette.</p>
+  <p class="cap">Grayscale: rest (1px edge) · selected (2px edge) · search (filled + 1px) · quiet (light edge, lighter text) · origin (dashed 2px, no tint) · target (solid 2px, tinted) · invalid (dashed 2px, tinted) · ◇ badge · names-off (solid). No two states share a silhouette. Stroke rule: only the 8px ◇ goes under 2px (1.5px — a 2px stroke closes it); verified crisp at 1x and 3x.</p>
 
   <h2 id="slot">Right slot (400) — <code>.sp-slot</code>: inspector · mode card · Ask Planner</h2>
   <p class="spec-anatomy">One owner at a time; the canvas is pushed to 1520 and the control row never reflows. Header: eyebrow · title (≤ 22 chars on one line) · legend row · Copy link · ×. Commit bar 64 bleeds to the edge: Cancel ghost · primary. The primary here is this container's own — a side panel is its own container, so it does not compete with Publish in the row.</p>
@@ -389,13 +389,24 @@
         <div class="sp-drawer-loading" aria-busy="true"><span class="sp-skeleton" style="width:200px"></span></div>
         <div class="sp-drawer-subline">Checking saved draft map data</div>
         <div class="sp-slot-section">Earlier</div>
-        <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>Ask Planner couldn't answer</strong><p>The planner service timed out. Nothing on the map changed.</p></div><button class="cds-btn cds-btn--ghost">Retry</button></div>
+        <div class="cds-notification cds-notification--error" role="alert"><svg><use href="#i-error-light"/></svg><div class="cds-notification-text"><strong>The planner service timed out</strong><p>Try again, or ask something shorter.</p></div><button class="cds-btn cds-btn--ghost">Retry</button></div>
         <div class="cds-notification cds-notification--info"><svg><use href="#i-info"/></svg><div class="cds-notification-text">No seats highlighted for this broad answer — ask about a zone, a department, or a person to see seats on the plan.</div></div>
       </div>
       <div class="sp-commit-bar"><button class="cds-btn cds-btn--ghost">Clear</button><button class="cds-btn cds-btn--primary" disabled>Ask</button></div>
     </section>
   </div>
-  <p class="cap">Gradient appears on exactly two things: the AI label (marker and entry to the explainability popover) and the textarea's border. The six named errors and the fallback all render as the error notification with Retry; the broad-answer note is an info notification.</p>
+  <p class="cap">Gradient appears on exactly two things: the AI label (marker and entry to the explainability popover) and the textarea's border. One error component, seven strings — each ends in the next step; <code>role="alert"</code> only where the failure stops the task, <code>role="status"</code> for the rest.</p>
+  <table class="spec-table" style="max-width:960px;border-collapse:collapse;width:100%;font:var(--sp-type-body-compact-01);letter-spacing:var(--sp-tracking-body)">
+    <thead><tr><th style="text-align:left;height:32px;padding:0 16px;background:var(--sp-layer-selected)">Error</th><th style="text-align:left;height:32px;padding:0 16px;background:var(--sp-layer-selected)">String (title · body)</th><th style="text-align:left;height:32px;padding:0 16px;background:var(--sp-layer-selected)">Role</th></tr></thead>
+    <tbody>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">unreachable</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">Ask Planner couldn't reach the planner service · Try again.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">alert</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">timeout</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">The planner service timed out · Try again, or ask something shorter.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">alert</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">rate limited</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">Ask Planner is rate limited right now · Try again in a minute.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">alert</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">not configured</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">Ask Planner is not set up on this server · Ask the office manager.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">alert</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">model unavailable</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">The configured model isn't available · Ask the office manager.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">alert</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">question too long</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">That question is over 800 characters · Ask something shorter.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">status</td></tr>
+      <tr><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">fallback</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">Ask Planner couldn't answer that · Try rephrasing, or ask about a zone, department, or person.</td><td style="padding:0 16px;height:32px;border-bottom:1px solid var(--sp-border-subtle)">status</td></tr>
+    </tbody></table>
 
   <h2 id="review">Publish review — wide tearsheet <code>.sp-tearsheet</code></h2>
   <p class="spec-anatomy">Anchored bottom, the header stays visible above, the overlay dims the page, no ×: leaving is Cancel. Rail 256 = readiness summary; body = the diff under floor group rows, then People details; footer 64 = facts left, Cancel · Publish right. No modal ever opens from inside it.</p>

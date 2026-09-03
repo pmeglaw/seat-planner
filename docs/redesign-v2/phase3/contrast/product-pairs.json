@@ -612,22 +612,40 @@
   "kind": "graphic"
  },
  {
-  "name": "light · error mark red-60 on white",
+  "name": "light · error mark red-60 (invalid-target edge, notification) on white",
   "fg": "#da1e28",
   "bg": "#ffffff",
   "kind": "graphic"
  },
  {
-  "name": "light · error mark red-60 on layer-01 #f4f4f4",
+  "name": "light · error mark red-60 (invalid-target edge, notification) on layer-01 #f4f4f4",
   "fg": "#da1e28",
   "bg": "#f4f4f4",
   "kind": "graphic"
  },
  {
-  "name": "light · error mark red-60 on layer-hover-01 #e8e8e8",
+  "name": "light · error mark red-60 (invalid-target edge, notification) on layer-hover-01 #e8e8e8",
   "fg": "#da1e28",
   "bg": "#e8e8e8",
   "kind": "graphic"
+ },
+ {
+  "name": "light · error mark red-60 (invalid-target edge, notification) on error-subtle #fff1f1",
+  "fg": "#da1e28",
+  "bg": "#fff1f1",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · text-primary on error-subtle #fff1f1 (invalid target label)",
+  "fg": "#161616",
+  "bg": "#fff1f1",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-primary on success-subtle #defbe6 (target label)",
+  "fg": "#161616",
+  "bg": "#defbe6",
+  "kind": "text"
  },
  {
   "name": "light · warning mark yellow-60 on white",
@@ -930,22 +948,28 @@
   "kind": "graphic"
  },
  {
-  "name": "dark · error mark red-50 on background #161616",
+  "name": "dark · error mark red-50 (invalid-target edge on error-subtle = layer-01) on background #161616",
   "fg": "#fa4d56",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
-  "name": "dark · error mark red-50 on layer-01 #262626",
+  "name": "dark · error mark red-50 (invalid-target edge on error-subtle = layer-01) on layer-01 #262626",
   "fg": "#fa4d56",
   "bg": "#262626",
   "kind": "graphic"
  },
  {
-  "name": "dark · error mark red-50 on layer-hover-01 #333333",
+  "name": "dark · error mark red-50 (invalid-target edge on error-subtle = layer-01) on layer-hover-01 #333333",
   "fg": "#fa4d56",
   "bg": "#333333",
   "kind": "graphic"
+ },
+ {
+  "name": "dark · text-primary gray-10 on error-subtle / success-subtle #262626",
+  "fg": "#f4f4f4",
+  "bg": "#262626",
+  "kind": "text"
  },
  {
   "name": "dark · warning mark yellow-30 on background #161616",

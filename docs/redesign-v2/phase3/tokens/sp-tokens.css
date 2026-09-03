@@ -404,10 +404,12 @@
   --sp-pill-origin-edge:   var(--cds-icon-secondary);       /* dashed */
   --sp-pill-target-edge:   var(--cds-status-success-mark);
   --sp-pill-target-fill:   var(--cds-support-success-subtle);
-  --sp-pill-invalid-edge:  var(--cds-border-disabled);
-  --sp-pill-invalid-text:  var(--cds-text-disabled);
+  --sp-pill-invalid-edge:  var(--cds-status-error-mark);    /* same construction as target, error family, dashed */
+  --sp-pill-invalid-fill:  var(--cds-support-error-subtle);
+  --sp-pill-invalid-text:  var(--cds-text-primary);
   --sp-pill-badge:         var(--cds-status-caution-mark);  /* ◇ changed in draft — the Draft family's shape */
   --sp-pill-badge-size:    var(--cds-spacing-03);           /* 8 */
+  --sp-pill-badge-stroke:  1.5px;                           /* the one stroke under 2: a 2px stroke closes an 8px hollow diamond (PHASE3DS §1.16) */
   --sp-pill-names-off:     var(--cds-icon-primary);         /* names off: assigned = filled footprint */
 
   /* right slot (inspector · mode card · Ask Planner) and the commit bar */

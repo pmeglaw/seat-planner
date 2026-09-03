@@ -50,7 +50,7 @@ add(notGated, "panel tag fill gray-80 vs g100 (text carries it)", P.g80, P.g100,
 add(notGated, "switch unselected edge gray-80 vs g100 (selected fill + text carry identity)", P.g80, P.g100, "graphic");
 
 // ---- Light theme surfaces ---------------------------------------------------------
-const L = { bg: ["white", P.white], l1: ["layer-01 #f4f4f4", P.g10], hover: ["layer-hover-01 #e8e8e8", P.hoverWhite], sel: ["layer-selected #e0e0e0", P.g20], hi: ["highlight #d0e2ff", P.b20], ok: ["success-subtle #defbe6", P.gr10] };
+const L = { bg: ["white", P.white], l1: ["layer-01 #f4f4f4", P.g10], hover: ["layer-hover-01 #e8e8e8", P.hoverWhite], sel: ["layer-selected #e0e0e0", P.g20], hi: ["highlight #d0e2ff", P.b20], ok: ["success-subtle #defbe6", P.gr10], err: ["error-subtle #fff1f1", "#fff1f1"] };
 const lightRows = [L.bg, L.l1, L.hover, L.sel];
 for (const m of [{ name: "text-primary gray-100", hex: P.g100 }, { name: "text-secondary gray-70", hex: P.g70 }]) marks(gated, "light", m, "text", [...lightRows, L.hi]);
 for (const m of [{ name: "seat stroke gray-70", hex: P.g70 }, { name: "seat fill gray-100", hex: P.g100 }, { name: "checkbox gray-100", hex: P.g100 }, { name: "radio ring gray-100", hex: P.g100 }]) marks(gated, "light", m, "graphic", lightRows);
@@ -58,7 +58,9 @@ marks(gated, "light", { name: "draft mark orange-60", hex: P.o60 }, "graphic", [
 marks(gated, "light", { name: "search mark blue-70", hex: P.b70 }, "graphic", [L.hi, L.bg, L.l1]);
 marks(gated, "light", { name: "current bar blue-60", hex: P.b60 }, "graphic", [L.sel, L.bg]);
 marks(gated, "light", { name: "success mark green-60 (target edge, toggle on)", hex: P.gr60 }, "graphic", [L.bg, L.l1, L.hover, L.ok]);
-marks(gated, "light", { name: "error mark red-60", hex: P.r60 }, "graphic", [L.bg, L.l1, L.hover]);
+marks(gated, "light", { name: "error mark red-60 (invalid-target edge, notification)", hex: P.r60 }, "graphic", [L.bg, L.l1, L.hover, L.err]);
+add(gated, "light · text-primary on error-subtle #fff1f1 (invalid target label)", P.g100, "#fff1f1", "text");
+add(gated, "light · text-primary on success-subtle #defbe6 (target label)", P.g100, P.gr10, "text");
 marks(gated, "light", { name: "warning mark yellow-60", hex: P.y60 }, "graphic", [L.bg, L.l1, L.hover]);
 marks(gated, "light", { name: "AI label text blue-60", hex: P.b60 }, "text", [L.bg, L.l1]);
 add(gated, "light · AI label hover text blue-70 on layer-hover-01", P.b70, P.hoverWhite, "text");
@@ -79,7 +81,8 @@ marks(gated, "dark", { name: "draft mark orange-40", hex: P.o40 }, "graphic", [D
 marks(gated, "dark", { name: "search mark blue-50", hex: P.b50 }, "graphic", [D.hi, D.bg, D.fill2]);
 marks(gated, "dark", { name: "current bar blue-50", hex: P.b50 }, "graphic", [D.sel, D.bg]);
 marks(gated, "dark", { name: "success mark green-40 (target edge, toggle on)", hex: P.gr40 }, "graphic", [D.bg, D.l1, D.hover, D.fill2]);
-marks(gated, "dark", { name: "error mark red-50", hex: P.r50 }, "graphic", [D.bg, D.l1, D.hover]);
+marks(gated, "dark", { name: "error mark red-50 (invalid-target edge on error-subtle = layer-01)", hex: P.r50 }, "graphic", [D.bg, D.l1, D.hover]);
+add(gated, "dark · text-primary gray-10 on error-subtle / success-subtle #262626", P.g10, P.g90, "text");
 marks(gated, "dark", { name: "warning mark yellow-30", hex: P.y30 }, "graphic", [D.bg, D.l1, D.hover]);
 marks(gated, "dark", { name: "AI label text blue-40", hex: P.b40 }, "text", [D.bg, D.l1, D.hover]);
 add(gated, "dark · AI border start blue-50 on field #262626", P.b50, P.g90, "graphic");

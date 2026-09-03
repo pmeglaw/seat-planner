@@ -490,6 +490,13 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
        States: rest · hover · focus · selected · search hit · quiet (filtered
        out) · move origin · move target · invalid target · changed-in-draft ◇
        · names off (filled footprint). 44px hit region: .cds-touch-target.
+       Move target / invalid target share one construction — 2px edge + subtle
+       tint — in the success and error families, and differ by SHAPE too:
+       target solid, invalid dashed. Both are transient interaction states.
+       STROKE RULE: strokes go below 2px only where a 2px stroke would close
+       the shape — the 8px hollow ◇ badge (1.5px, verified crisp at 1x and 3x
+       in the rig). The 16px hatch stays at 2px (1.5 straddled pixels; 2 is
+       crisp at 3x). Nothing else in the system draws under 2px.
    -------------------------------------------------------------------------- */
 .sp-pill { position: relative; display: inline-flex; align-items: center; height: var(--sp-pill-h); padding: 0 var(--sp-pill-pad);
   background: var(--sp-pill-fill); box-shadow: inset 0 0 0 1px var(--sp-pill-edge); color: var(--sp-pill-text);
@@ -503,11 +510,13 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-pill--quiet { background: var(--sp-pill-quiet-fill); box-shadow: inset 0 0 0 1px var(--sp-pill-quiet-edge); color: var(--sp-pill-quiet-text); }
 .sp-pill--origin { box-shadow: none; outline: var(--sp-space-01) dashed var(--sp-pill-origin-edge); outline-offset: calc(-1 * var(--sp-space-01)); background: var(--sp-pill-quiet-fill); }
 .sp-pill--target { background: var(--sp-pill-target-fill); box-shadow: inset 0 0 0 var(--sp-space-01) var(--sp-pill-target-edge); }
-.sp-pill--invalid { box-shadow: inset 0 0 0 1px var(--sp-pill-invalid-edge); color: var(--sp-pill-invalid-text); cursor: not-allowed; }
+.sp-pill--invalid { background: var(--sp-pill-invalid-fill); box-shadow: none; outline: var(--sp-space-01) dashed var(--sp-pill-invalid-edge); outline-offset: calc(-1 * var(--sp-space-01)); color: var(--sp-pill-invalid-text); cursor: not-allowed; }
 /* ◇ changed in draft — 8px hollow diamond, top-right, in the Draft family; the inspector says "Changed in draft" in text */
-.sp-pill-badge { position: absolute; top: calc(-1 * var(--sp-space-02)); right: calc(-1 * var(--sp-space-02)); width: var(--sp-pill-badge-size); height: var(--sp-pill-badge-size); overflow: visible; color: var(--sp-pill-badge); }
-.sp-pill-badge path { fill: var(--sp-pill-fill); stroke: currentColor; stroke-width: 1.5px; stroke-linejoin: miter; }
-.sp-pill--search .sp-pill-badge path { fill: var(--sp-pill-search-fill); }
+/* fill / stroke are set on the <svg> so they INHERIT into a <use>d symbol — a `path` selector cannot reach a use's shadow tree (caught in the rig) */
+.sp-pill-badge { position: absolute; top: calc(-1 * var(--sp-space-02)); right: calc(-1 * var(--sp-space-02)); width: var(--sp-pill-badge-size); height: var(--sp-pill-badge-size); overflow: visible;
+  color: var(--sp-pill-badge); fill: var(--sp-pill-fill); stroke: currentColor; stroke-width: var(--sp-pill-badge-stroke); stroke-linejoin: miter; }
+.sp-pill--search .sp-pill-badge { fill: var(--sp-pill-search-fill); }
+.sp-pill--names-off .sp-pill-badge { fill: var(--sp-pill-names-off); }
 /* names off: assigned collapses to the filled 28 footprint; empty seats keep their symbols */
 .sp-pill--names-off { width: var(--sp-seat-footprint); padding: 0; justify-content: center; background: var(--sp-pill-names-off); box-shadow: none; color: transparent; overflow: hidden; }
 .sp-pill--names-off:is(:hover, [data-state="hover"]) { background: var(--sp-pill-names-off); }
@@ -541,7 +550,7 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-slot .sp-seat-legend { padding: 0; height: var(--sp-size-sm); }
 .sp-slot .sp-draft-note { display: inline-flex; align-items: center; gap: var(--sp-space-02); color: var(--sp-text-secondary); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); }
 .sp-slot .sp-draft-note svg { width: var(--sp-space-03); height: var(--sp-space-03); overflow: visible; color: var(--sp-pill-badge); }
-.sp-slot .sp-draft-note path { fill: none; stroke: currentColor; stroke-width: 1.5px; }
+.sp-slot .sp-draft-note svg { fill: none; stroke: currentColor; stroke-width: var(--sp-pill-badge-stroke); }
 .sp-person-role { color: var(--sp-text-secondary); margin-bottom: var(--sp-space-03); }
 .sp-contact-row { display: grid; grid-template-columns: 96px 1fr auto; align-items: center; column-gap: var(--sp-space-03); min-height: var(--sp-contact-row-h); box-shadow: inset 0 -1px 0 var(--sp-border-subtle-00); }
 .sp-contact-row dt { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); }

@@ -281,9 +281,17 @@ own shape; 3.83–7.35:1 on every fill it lands on, §3) with the inspector sayi
 text so the badge is never the only carrier · **names off** = the assigned pill collapses to the filled
 28 footprint (`--sp-icon-primary`) while empty seats keep their symbols, and **the legend follows the
 toggle** (pill miniature when names are on, ● when off — PR 1's legend ruling amended). Every marker
-carries the asset's 44px `.cds-touch-target` pseudo (deviation 7). **Trade-off.** The 1.5px badge stroke
-is the one stroke under 2px — at 8px a 2px stroke fills the diamond. **Would change if** the marker
-pitch changes (a new plan) or a state is added past the five-indicator budget.
+carries the asset's 44px `.cds-touch-target` pseudo (deviation 7). **Move target / invalid target** share
+one construction (owner ruling): a 2px edge + a subtle tint, in the success and the error family, and
+differ by shape as well as colour — target solid, invalid dashed; both transient interaction states, so
+"grays dominate" does not apply. Pairs for each edge on each tint in both themes are in §3. **Stroke
+rule** (owner ruling, replacing two exceptions): strokes go below 2px only where a 2px stroke would
+close the shape — the 8px hollow ◇ at 1.5px, **verified crisp at 1x and 3x in the rig** (`badge-1x.png`,
+`badge-3x.png`); the 16px hatch, which the rule would also admit, stays at 2px because 2px proved
+crisp at 3x and 1.5 straddled pixels at 1x. Rig lesson: the badge's fill and stroke are set on the
+`<svg>` so they inherit into the `<use>`d symbol — a `path` selector cannot reach a use's shadow tree,
+and the first render showed a filled diamond (§7). **Would change if** the marker pitch changes (a new
+plan) or a state is added past the five-indicator budget.
 
 ### 1.17 Right slot and inspector — Map → `.sp-slot`, commit bar, combobox, text area (§3 rows "Seat inspector side panel, 400", "Combobox", "text area", "Danger button")
 
@@ -320,8 +328,10 @@ the Help panel) and the textarea's 1px border. Label hover text steps to blue 70
 hovered fill — caught by the pair run). Drawer: subline, dirty banner (warning notification), suggested
 prompts as stacked ghosts, textarea 800 with a counter and the Ctrl+Enter hint, Ask as the drawer's own
 primary in the commit bar, empty / loading ("Checking saved draft map data") / answer + highlighted-seat
-list / the six named errors + fallback as the error notification with Retry / broad-answer info note /
-Clear highlights. **Would change if** Carbon ships AI tokens in the asset (then the palette reference
+list / **one error notification, seven strings** (the six named errors + the fallback; each ends in the
+next step — Try again · Ask something shorter · Ask the office manager; `role="alert"` only for the
+five that stop the task, `role="status"` for question-too-long and the fallback; owner ruling) /
+broad-answer info note / Clear highlights. **Would change if** Carbon ships AI tokens in the asset (then the palette reference
 retires).
 
 ### 1.19 Publish review — Map → `.sp-tearsheet` wide (§3 "Wide tearsheet (publish review) · hand-built")
@@ -465,15 +475,19 @@ python <skill>/scripts/check_contrast.py --pairs docs/redesign-v2/phase3/contras
 pressed, selected, highlight — per zone (shell, dark panel) and per theme. **Summary line pasted verbatim:**
 
 ```
-product-pairs.json: 166 pairs · surface-pairs-not-gated.json: 9 pairs
-166/166 pass
+product-pairs.json: 170 pairs · surface-pairs-not-gated.json: 9 pairs
+170/170 pass
 ```
 
 PR 3 additions: the seat-pill fills (rest / hover / search highlight) under the ◇ badge orange 60 (3.83 on
 the light highlight is the lowest) and orange 40; the move-target edge and toggle-on green 60 / green 40
 on white, layer-01, hover and the success-subtle fill (4.09 lowest); the search edge blue 70 / blue 50;
 the AI label text blue 60 / blue 40 and its hover step blue 70 (blue 60 measured 4.08 on `layer-hover-01`
-and was fixed by the token, not the surface); the AI border start blue 60 / blue 50 on the field; white
+and was fixed by the token, not the surface — **the second hover-surface trap after helper-on-row,
+§1.6: any blue-60 text that sits on something that hovers steps to blue 70, exactly as the asset's ghost
+button does; Phase 4 will meet this shape again on every hoverable row with a link in it**); the
+invalid-target edge red 60 on the error-subtle tint (light) and red 50 on `layer-01` (dark), the target
+and invalid labels text-primary on both tints; the AI border start blue 60 / blue 50 on the field; white
 on the primary. **Measured, not gated (9):** the PR 1–2 dividers and steps plus the AI gradient's low
 stop (blue 40 — Carbon's own light `ai-border-start`; the label carries the meaning), the left-panel rule
 and the quiet pill's edge (quiet is the intent).
@@ -622,15 +636,11 @@ links) driven by `useAppShellNavigation`; `.sp-skeleton*` → `loading.tsx` skel
 
 ---
 
-## 6. Open for the owner (PR 3; defaults included)
+## 6. Open for the owner
 
-1. **Badge stroke 1.5px.** The ◇ changed-in-draft badge is 8px; a 2px stroke fills it. Default: 1.5px, the
-   one stroke under 2 in the system, recorded in §1.16.
-2. **Move-target tint.** The valid target uses the success-subtle fill under a 2px success edge — the only
-   green on the map, present only during a move. Default: keep (the edge alone, in grayscale, already
-   separates it from selected by fill).
-3. **Ask Planner errors.** All six named errors render as one error notification with Retry, the text
-   carrying the difference. Default: one component, six strings (no per-error icon).
+None after PR 3. Ruled on PR 3: stroke rule + ◇ at 1.5px verified (§1.16); move target / invalid target
+as one construction in two families differing by shape (§1.16); one error notification, seven strings
+with alert / status roles (§1.18).
 
 Closed after PR 2: event row 10 / 52 / 10 with `heading-01` (§1.9); radio 16 (§1.11); tooltip without
 caret (§1.8); below-lg current nav item 3px bar + `layer-selected` (§1.12).
@@ -660,6 +670,9 @@ pill (§1.4).
 5. **`.sp-pill` widths come from the label**; the nudge (`SeatMarker.tsx`) reasons about height, which is
    the constant 28. Never set a width on a pill; never let the code render inline (it widens the pill
    into its neighbours — the reason the tooltip exists).
+7. **Styling a `<use>`d symbol: set `fill` / `stroke` / `stroke-width` on the `<svg>` (they inherit), never
+   on a `path` selector — CSS cannot reach a use's shadow tree. The ◇ badge rendered filled until this
+   was fixed; every icon that takes a state colour (marks, badges, notification glyphs) is affected.
 6. **`generate-pairs.mjs` is the contrast source of truth.** Add a mark or a surface there, regenerate,
    re-run the checker; never edit the JSON.
 
@@ -669,6 +682,6 @@ pill (§1.4).
 
 | PR | Branch | Contents |
 |---|---|---|
-| 3 | `docs/phase3-map` | control row + floor menu + search/palette + Filters split control + toggle; `.sp-pill` (11 states) + ◇ + names-off; `.sp-slot` inspector / mode card / Ask Planner (Carbon for AI); wide tearsheet + group rows; roster; band; canvas states; specimen `02-map`; §1.14–1.21, §2, §3 (generated, 166/166), §4, §5, §6, §7; PHASE2UX §3 amendments (Filters control, two-primaries justification, Delete hidden for originals, roster hover on the button) |
+| 3 | #509 (`docs/phase3-map`) | control row + floor menu + search/palette + Filters split control + toggle; `.sp-pill` (11 states) + ◇ + names-off; `.sp-slot` inspector / mode card / Ask Planner (Carbon for AI); wide tearsheet + group rows; roster; band; canvas states; specimen `02-map`; §1.14–1.21, §2, §3 (generated, 170/170), §4, §5, §6, §7; PHASE2UX §3 amendments (Filters control, two-primaries justification, Delete hidden for originals, roster hover on the button). Owner rulings folded in before merge: stroke rule, invalid target in the error family, seven error strings |
 | 2 | #508 (`docs/phase3-shell`) | `.sp-header` overrides, `.sp-header-slot`, `.sp-tooltip`, `.sp-panel` + zone-scoped variants, `.sp-switch`, `.sp-radio`, `.sp-left-panel`, `.sp-skeleton`; specimen `01-shell` (header ×3, hamburger ×7, utilities ×5, panels ×12, switch ×4, radio ×3, left panel ×7, narrow 1024); §1.7–1.13, §2, §3 (78/78), §4, §5; D0-f Phase 3 confirmation; PHASE2UX §3 ghost-on-dark row |
 | 1 | #507 (`docs/phase3-tokens`) | assets copied; `sp-tokens.css`; `.sp-mode`, seat marks; specimens 00 + 05 + index + compare; §1.1–1.6, §2 (partial), §3, §4, §5 (partial). Owner rulings folded in before merge: pressed gray 80 + outlined open, theme decided, assigned legend = mini pill |
