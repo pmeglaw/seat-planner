@@ -394,7 +394,9 @@ Overflow: names and departments truncate end-line with `title`; the list is the 
    line stays, and the fallback list below becomes the next step.
 5. "If no answer — same department": up to 3 colleagues with extensions, each a 40px row-button (name ·
    extension), pressing one locks that colleague (as shipped).
-6. *(pending owner)* "Show on map" ghost link → `/?q=<name>` — drawn only if approved.
+6. **Show on map** — ghost link → `/?q=<name>` (the D1-d landing: field pre-filled, unique match selected, floor
+   switched). Owner-approved 2026-09-03. One link, no new data; gives the front desk the seat's location when a
+   visitor asks. Absent while nothing is locked.
 7. **Recent lookups** (D3: secondary view): heading `heading-compact-01`, up to 4 rows (26px avatar · name
    · extension), current selection excluded, in-memory only (ruled 2026-08-05). Hidden while empty.
 

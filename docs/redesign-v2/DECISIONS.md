@@ -1106,7 +1106,9 @@ changes. Recents stay in-memory (ruled 2026-08-05, not re-asked). No other URL s
 Name block → extension in display type (`heading-06` 42/50, tabular; weight set in Phase 3 for arm's-length
 reading) → seat line with the D3′ copy → "If no answer — same department" (≤ 3, as shipped) → recents.
 **No extension** is a stated state — "No extension on file" with the fallback list as the next step — never
-a bare dash (patterns: an empty state names the next action).
+a bare dash (patterns: an empty state names the next action). A **Show on map** ghost link (→ `/?q=<name>`, the
+D1-d landing) follows the extension block — owner-approved 2026-09-03; one link, no new data, answers "where do
+I send the visitor?" without leaving the desk.
 
 #### D3-e · Own error boundary in Reception's voice
 `app/(shell)/reception/error.tsx` (Phase 4): "Reception couldn't load" / "The directory is unchanged — this
