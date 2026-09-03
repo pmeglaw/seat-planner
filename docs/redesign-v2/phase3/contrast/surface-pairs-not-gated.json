@@ -1,38 +1,56 @@
 [
  {
-  "name": "shell rule gray-80 on #161616 (utility outline)",
+  "name": "shell rule gray-80 on g100 (divider; utility outline)",
   "fg": "#393939",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
-  "name": "mode skeleton element gray-80 on skeleton bg #292929",
+  "name": "shell skeleton element gray-80 on skeleton bg #292929",
   "fg": "#393939",
   "bg": "#292929",
   "kind": "graphic"
  },
  {
-  "name": "panel layer hover #333333 vs panel #161616",
+  "name": "panel row hover #333333 vs panel g100 (hover step)",
   "fg": "#333333",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
-  "name": "tag fill gray-80 vs panel gray-100 (the text carries it)",
+  "name": "panel tag fill gray-80 vs g100 (text carries it)",
   "fg": "#393939",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
-  "name": "switch unselected edge gray-80 vs gray-100 (segment identity carried by the selected fill + text)",
+  "name": "switch unselected edge gray-80 vs g100 (selected fill + text carry identity)",
   "fg": "#393939",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
-  "name": "left panel rule gray-30 vs layer-01 (divider)",
+  "name": "light · AI border end blue-40 on white (gradient's low stop; the label carries meaning)",
+  "fg": "#78a9ff",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · left panel rule gray-30 vs layer-01 (divider)",
   "fg": "#c6c6c6",
   "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · quiet pill edge gray-30 on layer-01 (quiet is the intent)",
+  "fg": "#c6c6c6",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · AI border end blue-40 on layer-01 #262626 (gradient's low stop)",
+  "fg": "#78a9ff",
+  "bg": "#262626",
   "kind": "graphic"
  }
 ]

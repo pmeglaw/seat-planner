@@ -684,22 +684,22 @@ add it to the component layer (and say so in its decision log).
 | Control row (toolbar) | map | none (`.cds-toolbar` is the table toolbar) | **hand-built** — 48px row, 40px controls, divider, one primary |
 | Floor selector dropdown | map | exists `.cds-select` (as a menu button: hand-built) | Place marker; options from the registry |
 | Search field with scope segment | map | partial `.cds-text-input` | **hand-built** the trailing scope segment; palette is hand-built (exists today) |
-| Filter chip-button "Filters N ×" | map | exists `.cds-tag--filter` | Behaviour: × clears |
+| Filter split control "Filters · N" + Clear filters | map | **hand-built** (Phase 3 PR 2/3 amendment: a tag is metadata, this is a control — a 24px `.cds-tag--filter` in a 40px row was the wrong component) | 40px tertiary "Filters · N" opens the left panel (the hamburger's target) + a separate 40×40 Clear filters icon button; one interactive element per control; Hidden at N = 0 (patterns: a collapsed filter shows its count and a way to clear) |
 | Ghost / tertiary / primary buttons | map row | exists `.cds-btn --ghost --tertiary --primary --icon` | — |
 | Toggle (Names) | map row | **hand-built** (index has no toggle) | Carbon toggle, labelled |
 | Overflow menu ⋯ | map row | exists (index lists overflow menu) | Danger item styling |
-| Seat inspector side panel, 400 | map | partial `.cds-side-panel` (480) | **hand-built** width + push + commit bar |
+| Seat inspector side panel, 400 | map | partial `.cds-side-panel` (480) | **hand-built** width + push + commit bar. Its Save is a second primary in view beside the row's Publish — acceptable because a side panel is its own container (SKILL "one primary per section"; composition: containers own their actions) |
 | Combobox (employee name) | inspector | **hand-built** | Creates inline; option rows with meta |
 | Select, text input, text area | inspector | exists `.cds-select`, `.cds-text-input`; text area **hand-built** | — |
-| Danger button (Delete seat) | inspector | exists `.cds-btn--danger` | — |
+| Danger button (Delete seat) | inspector | exists `.cds-btn--danger-ghost` | Danger ghost; shown only for `is_custom` seats — original seats show no Delete at all (Hidden, not disabled; seatProtection); the block reason is helper text outside the button |
 | Modal (Move / Swap / Delete confirms) | map | exists `.cds-modal` | Never nested; Cancel left, primary right |
 | Wide tearsheet (publish review) | map | **hand-built** | Anchored bottom, overlay, no × |
 | Data table (publish review) | tearsheet | exists `.cds-table` | Floor eyebrow rows are group headers |
 | Status marks (seat legend) | band | exists `.cds-status` | Constant marker footprint, per-state symbol (deviation 3) |
 | Mode card | slot | **hand-built** | Eyebrow + message + ghost exit |
-| Ask Planner drawer | slot | **hand-built** | Carbon-for-AI label in Phase 3 |
+| Ask Planner drawer | slot | **hand-built** | Carbon-for-AI label + explainability popover + AI textarea border (Phase 3 PR 3). Its Ask is the drawer's own primary, beside the row's Publish — same container justification as the inspector |
 | Search palette (560) | map | **hand-built** (exists in code) | Rows, kind badge, floor tag |
-| Roster region + static rows | map | none needed | Plain list with group eyebrows; copy-link icon button per row |
+| Roster region + static rows | map | none needed (`.sp-roster` lays it out) | Plain list with group eyebrows; the ROW is not interactive — hover lives on the copy-link icon button only, never on the row |
 | 403 card | `/admin` viewer | exists `.cds-empty` (as FullPageError 403) | One tertiary action |
 | Page header (title + subtitle, no action) | Reception | exists `.cds-page-header` | Zero primaries is allowed |
 | Search input `lg` with clear × | Reception | exists `.cds-text-input` | Clear icon = **hand-built** state |

@@ -1,153 +1,441 @@
 [
  {
-  "name": "shell text gray-10 on shell rest #161616",
+  "name": "shell · text gray-10 on shell rest g100",
   "fg": "#f4f4f4",
   "bg": "#161616",
   "kind": "text"
  },
  {
-  "name": "shell text gray-10 on shell hover #333333",
+  "name": "shell · text gray-10 on shell hover #333333",
   "fg": "#f4f4f4",
   "bg": "#333333",
   "kind": "text"
  },
  {
-  "name": "shell text gray-10 on shell pressed #393939",
+  "name": "shell · text gray-10 on shell pressed g80",
   "fg": "#f4f4f4",
   "bg": "#393939",
   "kind": "text"
  },
  {
-  "name": "shell secondary gray-30 on #161616",
+  "name": "shell · secondary gray-30 on shell rest g100",
   "fg": "#c6c6c6",
   "bg": "#161616",
   "kind": "text"
  },
  {
-  "name": "shell secondary gray-30 on hover #333333",
+  "name": "shell · secondary gray-30 on shell hover #333333",
   "fg": "#c6c6c6",
   "bg": "#333333",
   "kind": "text"
  },
  {
-  "name": "shell helper gray-40 on #161616 (label-01)",
+  "name": "shell · secondary gray-30 on shell pressed g80",
+  "fg": "#c6c6c6",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "shell · helper gray-40 on shell rest g100",
   "fg": "#a8a8a8",
   "bg": "#161616",
   "kind": "text"
  },
  {
-  "name": "shell helper gray-40 on hover #333333",
+  "name": "shell · helper gray-40 on shell hover #333333",
   "fg": "#a8a8a8",
   "bg": "#333333",
   "kind": "text"
  },
  {
-  "name": "shell current bar blue-50 on #161616",
+  "name": "shell · helper gray-40 on shell pressed g80",
+  "fg": "#a8a8a8",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "shell · mode Published ■ gray-10 on shell rest g100",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · mode Published ■ gray-10 on shell hover #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · mode Published ■ gray-10 on shell pressed g80",
+  "fg": "#f4f4f4",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · mode Draft ◇ orange-40 on shell rest g100",
+  "fg": "#ff832b",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · mode Draft ◇ orange-40 on shell hover #333333",
+  "fg": "#ff832b",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · mode Draft ◇ orange-40 on shell pressed g80",
+  "fg": "#ff832b",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · mode Not published □ gray-40 on shell rest g100",
+  "fg": "#a8a8a8",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · mode Not published □ gray-40 on shell hover #333333",
+  "fg": "#a8a8a8",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · mode Not published □ gray-40 on shell pressed g80",
+  "fg": "#a8a8a8",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · mode Error ⊗ red-50 on shell rest g100",
+  "fg": "#fa4d56",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · mode Error ⊗ red-50 on shell hover #333333",
+  "fg": "#fa4d56",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · mode Error ⊗ red-50 on shell pressed g80",
+  "fg": "#fa4d56",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · focus white on shell rest g100",
+  "fg": "#ffffff",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · focus white on shell hover #333333",
+  "fg": "#ffffff",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · focus white on shell pressed g80",
+  "fg": "#ffffff",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · current bar blue-50 on shell g100",
   "fg": "#4589ff",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
-  "name": "shell focus white on #161616",
-  "fg": "#ffffff",
+  "name": "shell · nav link gray-30 on shell g100",
+  "fg": "#c6c6c6",
   "bg": "#161616",
-  "kind": "graphic"
+  "kind": "text"
  },
  {
-  "name": "shell focus white on pressed #393939",
-  "fg": "#ffffff",
-  "bg": "#393939",
-  "kind": "graphic"
- },
- {
-  "name": "mode Published ■ gray-10 on #161616",
-  "fg": "#f4f4f4",
-  "bg": "#161616",
-  "kind": "graphic"
- },
- {
-  "name": "mode Published ■ gray-10 on hover #333333",
-  "fg": "#f4f4f4",
+  "name": "shell · nav link gray-30 on shell hover",
+  "fg": "#c6c6c6",
   "bg": "#333333",
-  "kind": "graphic"
+  "kind": "text"
  },
  {
-  "name": "mode Published ■ gray-10 on pressed #393939",
+  "name": "shell · nav link gray-10 on shell pressed g80",
   "fg": "#f4f4f4",
   "bg": "#393939",
-  "kind": "graphic"
+  "kind": "text"
  },
  {
-  "name": "mode Draft ◇ orange-40 on #161616",
-  "fg": "#ff832b",
-  "bg": "#161616",
-  "kind": "graphic"
- },
- {
-  "name": "mode Draft ◇ orange-40 on hover #333333",
-  "fg": "#ff832b",
-  "bg": "#333333",
-  "kind": "graphic"
- },
- {
-  "name": "mode Draft ◇ orange-40 on pressed #393939",
-  "fg": "#ff832b",
+  "name": "shell · tooltip text gray-10 on tooltip gray-80",
+  "fg": "#f4f4f4",
   "bg": "#393939",
-  "kind": "graphic"
+  "kind": "text"
  },
  {
-  "name": "mode Not published □ gray-40 on #161616",
+  "name": "panel · text gray-10 on panel g100",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "panel · text gray-10 on panel layer g90",
+  "fg": "#f4f4f4",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "panel · text gray-10 on panel row hover #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "panel · text gray-10 on panel pressed g80",
+  "fg": "#f4f4f4",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "panel · secondary gray-30 on panel g100",
+  "fg": "#c6c6c6",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "panel · secondary gray-30 on panel layer g90",
+  "fg": "#c6c6c6",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "panel · secondary gray-30 on panel row hover #333333",
+  "fg": "#c6c6c6",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "panel · secondary gray-30 on panel pressed g80",
+  "fg": "#c6c6c6",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "panel · helper gray-40 on panel g100",
   "fg": "#a8a8a8",
   "bg": "#161616",
-  "kind": "graphic"
+  "kind": "text"
  },
  {
-  "name": "mode Not published □ gray-40 on hover #333333",
+  "name": "panel · helper gray-40 on panel layer g90",
+  "fg": "#a8a8a8",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "panel · helper gray-40 on panel row hover #333333",
   "fg": "#a8a8a8",
   "bg": "#333333",
-  "kind": "graphic"
+  "kind": "text"
  },
  {
-  "name": "mode Not published □ gray-40 on pressed #393939",
+  "name": "panel · helper gray-40 on panel pressed g80",
   "fg": "#a8a8a8",
   "bg": "#393939",
-  "kind": "graphic"
+  "kind": "text"
  },
  {
-  "name": "mode Error ⊗ red-50 on #161616",
-  "fg": "#fa4d56",
-  "bg": "#161616",
-  "kind": "graphic"
- },
- {
-  "name": "mode Error ⊗ red-50 on hover #333333",
-  "fg": "#fa4d56",
-  "bg": "#333333",
-  "kind": "graphic"
- },
- {
-  "name": "mode Error ⊗ red-50 on pressed #393939",
-  "fg": "#fa4d56",
-  "bg": "#393939",
-  "kind": "graphic"
- },
- {
-  "name": "panel link blue-40 on panel #161616",
+  "name": "panel · ghost blue-40 on panel g100",
   "fg": "#78a9ff",
   "bg": "#161616",
   "kind": "text"
  },
  {
-  "name": "panel error mark red-50 on panel #161616",
+  "name": "panel · ghost blue-40 on panel layer g90",
+  "fg": "#78a9ff",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "panel · ghost blue-40 on panel row hover #333333",
+  "fg": "#78a9ff",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "panel · ghost blue-40 on panel pressed g80",
+  "fg": "#78a9ff",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "panel · ghost hover blue-30 on row hover #333333",
+  "fg": "#a6c8ff",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "panel · ghost pressed blue-30 on g80",
+  "fg": "#a6c8ff",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "panel · tag text gray-10 on tag gray-80",
+  "fg": "#f4f4f4",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "panel · switch selected text gray-100 on gray-10",
+  "fg": "#161616",
+  "bg": "#f4f4f4",
+  "kind": "text"
+ },
+ {
+  "name": "panel · switch selected fill gray-10 vs panel g100",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel · switch unselected text gray-10 on hover #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "panel · error mark red-50 on panel g100",
   "fg": "#fa4d56",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
-  "name": "panel error mark red-50 on panel layer #262626",
+  "name": "panel · error mark red-50 on panel layer g90",
   "fg": "#fa4d56",
   "bg": "#262626",
   "kind": "graphic"
+ },
+ {
+  "name": "panel · error mark red-50 on panel row hover #333333",
+  "fg": "#fa4d56",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel · error mark red-50 on panel pressed g80",
+  "fg": "#fa4d56",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel · radio ring gray-10 on panel g100",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel · radio ring gray-10 on panel layer g90",
+  "fg": "#f4f4f4",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel · radio ring gray-10 on panel row hover #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel · radio ring gray-10 on panel pressed g80",
+  "fg": "#f4f4f4",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel · focus white on panel g100",
+  "fg": "#ffffff",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel · focus white on panel layer g90",
+  "fg": "#ffffff",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel · focus white on panel row hover #333333",
+  "fg": "#ffffff",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel · focus white on panel pressed g80",
+  "fg": "#ffffff",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · text-primary gray-100 on white",
+  "fg": "#161616",
+  "bg": "#ffffff",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-primary gray-100 on layer-01 #f4f4f4",
+  "fg": "#161616",
+  "bg": "#f4f4f4",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-primary gray-100 on layer-hover-01 #e8e8e8",
+  "fg": "#161616",
+  "bg": "#e8e8e8",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-primary gray-100 on layer-selected #e0e0e0",
+  "fg": "#161616",
+  "bg": "#e0e0e0",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-primary gray-100 on highlight #d0e2ff",
+  "fg": "#161616",
+  "bg": "#d0e2ff",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-secondary gray-70 on white",
+  "fg": "#525252",
+  "bg": "#ffffff",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-secondary gray-70 on layer-01 #f4f4f4",
+  "fg": "#525252",
+  "bg": "#f4f4f4",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-secondary gray-70 on layer-hover-01 #e8e8e8",
+  "fg": "#525252",
+  "bg": "#e8e8e8",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-secondary gray-70 on layer-selected #e0e0e0",
+  "fg": "#525252",
+  "bg": "#e0e0e0",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-secondary gray-70 on highlight #d0e2ff",
+  "fg": "#525252",
+  "bg": "#d0e2ff",
+  "kind": "text"
  },
  {
   "name": "light · seat stroke gray-70 on white",
@@ -174,39 +462,75 @@
   "kind": "graphic"
  },
  {
-  "name": "light · seat fill gray-100 on layer-hover-01",
+  "name": "light · seat fill gray-100 on white",
+  "fg": "#161616",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · seat fill gray-100 on layer-01 #f4f4f4",
+  "fg": "#161616",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · seat fill gray-100 on layer-hover-01 #e8e8e8",
   "fg": "#161616",
   "bg": "#e8e8e8",
   "kind": "graphic"
  },
  {
-  "name": "light · legend label gray-70 on layer-hover-01",
-  "fg": "#525252",
-  "bg": "#e8e8e8",
-  "kind": "text"
- },
- {
-  "name": "light · legend label gray-70 on layer-selected",
-  "fg": "#525252",
+  "name": "light · seat fill gray-100 on layer-selected #e0e0e0",
+  "fg": "#161616",
   "bg": "#e0e0e0",
-  "kind": "text"
+  "kind": "graphic"
  },
  {
-  "name": "light · footprint edge gray-70 on footprint fill white",
-  "fg": "#525252",
+  "name": "light · checkbox gray-100 on white",
+  "fg": "#161616",
   "bg": "#ffffff",
   "kind": "graphic"
  },
  {
-  "name": "light · footprint edge gray-70 on footprint hover #e8e8e8",
-  "fg": "#525252",
+  "name": "light · checkbox gray-100 on layer-01 #f4f4f4",
+  "fg": "#161616",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · checkbox gray-100 on layer-hover-01 #e8e8e8",
+  "fg": "#161616",
   "bg": "#e8e8e8",
   "kind": "graphic"
  },
  {
-  "name": "light · footprint fill white vs map mat #f4f4f4 (edge carries it)",
-  "fg": "#525252",
+  "name": "light · checkbox gray-100 on layer-selected #e0e0e0",
+  "fg": "#161616",
+  "bg": "#e0e0e0",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · radio ring gray-100 on white",
+  "fg": "#161616",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · radio ring gray-100 on layer-01 #f4f4f4",
+  "fg": "#161616",
   "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · radio ring gray-100 on layer-hover-01 #e8e8e8",
+  "fg": "#161616",
+  "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · radio ring gray-100 on layer-selected #e0e0e0",
+  "fg": "#161616",
+  "bg": "#e0e0e0",
   "kind": "graphic"
  },
  {
@@ -216,9 +540,21 @@
   "kind": "graphic"
  },
  {
-  "name": "light · draft mark orange-60 on layer-hover-01",
+  "name": "light · draft mark orange-60 on layer-01 #f4f4f4",
+  "fg": "#ba4e00",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · draft mark orange-60 on layer-hover-01 #e8e8e8",
   "fg": "#ba4e00",
   "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · draft mark orange-60 on highlight #d0e2ff",
+  "fg": "#ba4e00",
+  "bg": "#d0e2ff",
   "kind": "graphic"
  },
  {
@@ -228,9 +564,201 @@
   "kind": "graphic"
  },
  {
-  "name": "light · text-primary on highlight #d0e2ff",
-  "fg": "#161616",
-  "bg": "#d0e2ff",
+  "name": "light · search mark blue-70 on white",
+  "fg": "#0043ce",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · search mark blue-70 on layer-01 #f4f4f4",
+  "fg": "#0043ce",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · current bar blue-60 on layer-selected #e0e0e0",
+  "fg": "#0f62fe",
+  "bg": "#e0e0e0",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · current bar blue-60 on white",
+  "fg": "#0f62fe",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · success mark green-60 (target edge, toggle on) on white",
+  "fg": "#198038",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · success mark green-60 (target edge, toggle on) on layer-01 #f4f4f4",
+  "fg": "#198038",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · success mark green-60 (target edge, toggle on) on layer-hover-01 #e8e8e8",
+  "fg": "#198038",
+  "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · success mark green-60 (target edge, toggle on) on success-subtle #defbe6",
+  "fg": "#198038",
+  "bg": "#defbe6",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · error mark red-60 on white",
+  "fg": "#da1e28",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · error mark red-60 on layer-01 #f4f4f4",
+  "fg": "#da1e28",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · error mark red-60 on layer-hover-01 #e8e8e8",
+  "fg": "#da1e28",
+  "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · warning mark yellow-60 on white",
+  "fg": "#8e6a00",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · warning mark yellow-60 on layer-01 #f4f4f4",
+  "fg": "#8e6a00",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · warning mark yellow-60 on layer-hover-01 #e8e8e8",
+  "fg": "#8e6a00",
+  "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · AI label text blue-60 on white",
+  "fg": "#0f62fe",
+  "bg": "#ffffff",
+  "kind": "text"
+ },
+ {
+  "name": "light · AI label text blue-60 on layer-01 #f4f4f4",
+  "fg": "#0f62fe",
+  "bg": "#f4f4f4",
+  "kind": "text"
+ },
+ {
+  "name": "light · AI label hover text blue-70 on layer-hover-01",
+  "fg": "#0043ce",
+  "bg": "#e8e8e8",
+  "kind": "text"
+ },
+ {
+  "name": "light · AI border start blue-60 on field #f4f4f4",
+  "fg": "#0f62fe",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · helper-on-row gray-70 on layer-hover-01",
+  "fg": "#525252",
+  "bg": "#e8e8e8",
+  "kind": "text"
+ },
+ {
+  "name": "light · quiet pill text gray-70 on layer-01 / hover",
+  "fg": "#525252",
+  "bg": "#e8e8e8",
+  "kind": "text"
+ },
+ {
+  "name": "light · text-on-color white on primary blue-60",
+  "fg": "#ffffff",
+  "bg": "#0f62fe",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-primary gray-10 on background #161616",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-primary gray-10 on layer-01 #262626",
+  "fg": "#f4f4f4",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-primary gray-10 on layer-hover-01 #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-primary gray-10 on layer-selected #393939",
+  "fg": "#f4f4f4",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-primary gray-10 on layer-hover-02 #474747",
+  "fg": "#f4f4f4",
+  "bg": "#474747",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-primary gray-10 on highlight #001d6c",
+  "fg": "#f4f4f4",
+  "bg": "#001d6c",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-secondary gray-30 on background #161616",
+  "fg": "#c6c6c6",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-secondary gray-30 on layer-01 #262626",
+  "fg": "#c6c6c6",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-secondary gray-30 on layer-hover-01 #333333",
+  "fg": "#c6c6c6",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-secondary gray-30 on layer-selected #393939",
+  "fg": "#c6c6c6",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-secondary gray-30 on layer-hover-02 #474747",
+  "fg": "#c6c6c6",
+  "bg": "#474747",
+  "kind": "text"
+ },
+ {
+  "name": "dark · text-secondary gray-30 on highlight #001d6c",
+  "fg": "#c6c6c6",
+  "bg": "#001d6c",
   "kind": "text"
  },
  {
@@ -258,15 +786,21 @@
   "kind": "graphic"
  },
  {
-  "name": "dark · seat stroke gray-30 on footprint fill #393939",
+  "name": "dark · seat stroke gray-30 on layer-hover-02 #474747",
   "fg": "#c6c6c6",
-  "bg": "#393939",
+  "bg": "#474747",
   "kind": "graphic"
  },
  {
-  "name": "dark · seat stroke gray-30 on footprint hover #474747",
-  "fg": "#c6c6c6",
-  "bg": "#474747",
+  "name": "dark · seat fill gray-10 on background #161616",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · seat fill gray-10 on layer-01 #262626",
+  "fg": "#f4f4f4",
+  "bg": "#262626",
   "kind": "graphic"
  },
  {
@@ -276,16 +810,46 @@
   "kind": "graphic"
  },
  {
-  "name": "dark · legend label gray-30 on layer-hover-01",
-  "fg": "#c6c6c6",
-  "bg": "#333333",
-  "kind": "text"
+  "name": "dark · seat fill gray-10 on layer-selected #393939",
+  "fg": "#f4f4f4",
+  "bg": "#393939",
+  "kind": "graphic"
  },
  {
-  "name": "dark · legend label gray-30 on layer-selected #393939",
-  "fg": "#c6c6c6",
+  "name": "dark · seat fill gray-10 on layer-hover-02 #474747",
+  "fg": "#f4f4f4",
+  "bg": "#474747",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · radio ring gray-10 on background #161616",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · radio ring gray-10 on layer-01 #262626",
+  "fg": "#f4f4f4",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · radio ring gray-10 on layer-hover-01 #333333",
+  "fg": "#f4f4f4",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · radio ring gray-10 on layer-selected #393939",
+  "fg": "#f4f4f4",
   "bg": "#393939",
-  "kind": "text"
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · radio ring gray-10 on layer-hover-02 #474747",
+  "fg": "#f4f4f4",
+  "bg": "#474747",
+  "kind": "graphic"
  },
  {
   "name": "dark · draft mark orange-40 on background #161616",
@@ -294,9 +858,21 @@
   "kind": "graphic"
  },
  {
-  "name": "dark · draft mark orange-40 on layer-hover-01 #333333",
+  "name": "dark · draft mark orange-40 on layer-02 / pill fill #393939",
   "fg": "#ff832b",
-  "bg": "#333333",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · draft mark orange-40 on layer-hover-02 #474747",
+  "fg": "#ff832b",
+  "bg": "#474747",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · draft mark orange-40 on highlight #001d6c",
+  "fg": "#ff832b",
+  "bg": "#001d6c",
   "kind": "graphic"
  },
  {
@@ -306,165 +882,117 @@
   "kind": "graphic"
  },
  {
-  "name": "dark · text-primary on highlight #001d6c",
-  "fg": "#f4f4f4",
-  "bg": "#001d6c",
-  "kind": "text"
- },
- {
-  "name": "tooltip text gray-10 on tooltip gray-80",
-  "fg": "#f4f4f4",
-  "bg": "#393939",
-  "kind": "text"
- },
- {
-  "name": "switch selected text gray-100 on gray-10",
-  "fg": "#161616",
-  "bg": "#f4f4f4",
-  "kind": "text"
- },
- {
-  "name": "switch selected fill gray-10 vs panel gray-100",
-  "fg": "#f4f4f4",
+  "name": "dark · search mark blue-50 on background #161616",
+  "fg": "#4589ff",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
-  "name": "switch unselected text gray-10 on hover #333333",
-  "fg": "#f4f4f4",
-  "bg": "#333333",
-  "kind": "text"
- },
- {
-  "name": "tag text gray-10 on tag gray-80",
-  "fg": "#f4f4f4",
-  "bg": "#393939",
-  "kind": "text"
- },
- {
-  "name": "ghost dark blue-40 on panel gray-100",
-  "fg": "#78a9ff",
-  "bg": "#161616",
-  "kind": "text"
- },
- {
-  "name": "ghost dark hover blue-30 on gray-90-hover #333333",
-  "fg": "#a6c8ff",
-  "bg": "#333333",
-  "kind": "text"
- },
- {
-  "name": "ghost dark pressed blue-30 on gray-80",
-  "fg": "#a6c8ff",
-  "bg": "#393939",
-  "kind": "text"
- },
- {
-  "name": "ghost dark blue-40 on notification layer #262626",
-  "fg": "#78a9ff",
-  "bg": "#262626",
-  "kind": "text"
- },
- {
-  "name": "panel text gray-10 on notification layer #262626",
-  "fg": "#f4f4f4",
-  "bg": "#262626",
-  "kind": "text"
- },
- {
-  "name": "panel secondary gray-30 on row hover #333333",
-  "fg": "#c6c6c6",
-  "bg": "#333333",
-  "kind": "text"
- },
- {
-  "name": "panel helper gray-40 on panel gray-100 (status, caption)",
-  "fg": "#a8a8a8",
-  "bg": "#161616",
-  "kind": "text"
- },
- {
-  "name": "radio ring gray-10 on panel gray-100",
-  "fg": "#f4f4f4",
-  "bg": "#161616",
-  "kind": "graphic"
- },
- {
-  "name": "radio ring gray-100 on white (light theme)",
-  "fg": "#161616",
-  "bg": "#ffffff",
-  "kind": "graphic"
- },
- {
-  "name": "radio ring gray-10 on layer-hover-01 dark #333333",
-  "fg": "#f4f4f4",
-  "bg": "#333333",
-  "kind": "graphic"
- },
- {
-  "name": "focus white on gray-80 (pressed utility / ghost pressed)",
-  "fg": "#ffffff",
-  "bg": "#393939",
-  "kind": "graphic"
- },
- {
-  "name": "left panel · text-primary on layer-hover-01 (light)",
-  "fg": "#161616",
-  "bg": "#e8e8e8",
-  "kind": "text"
- },
- {
-  "name": "left panel · count gray-70 on layer-hover-01 (light)",
-  "fg": "#525252",
-  "bg": "#e8e8e8",
-  "kind": "text"
- },
- {
-  "name": "left panel · current bar blue-60 on layer-selected #e0e0e0 (light)",
-  "fg": "#0f62fe",
-  "bg": "#e0e0e0",
-  "kind": "graphic"
- },
- {
-  "name": "left panel · text gray-10 on layer-hover-01 dark #333333",
-  "fg": "#f4f4f4",
-  "bg": "#333333",
-  "kind": "text"
- },
- {
-  "name": "left panel · count gray-30 on layer-hover-01 dark #333333",
-  "fg": "#c6c6c6",
-  "bg": "#333333",
-  "kind": "text"
- },
- {
-  "name": "left panel · current bar blue-50 on layer-selected dark #393939",
+  "name": "dark · search mark blue-50 on layer-02 / pill fill #393939",
   "fg": "#4589ff",
   "bg": "#393939",
   "kind": "graphic"
  },
  {
-  "name": "left panel · checkbox box gray-100 on layer-hover-01 (light)",
-  "fg": "#161616",
-  "bg": "#e8e8e8",
+  "name": "dark · current bar blue-50 on layer-selected #393939",
+  "fg": "#4589ff",
+  "bg": "#393939",
   "kind": "graphic"
  },
  {
-  "name": "nav link gray-30 on shell gray-100",
-  "fg": "#c6c6c6",
+  "name": "dark · current bar blue-50 on background #161616",
+  "fg": "#4589ff",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · success mark green-40 (target edge, toggle on) on background #161616",
+  "fg": "#42be65",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · success mark green-40 (target edge, toggle on) on layer-01 #262626",
+  "fg": "#42be65",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · success mark green-40 (target edge, toggle on) on layer-hover-01 #333333",
+  "fg": "#42be65",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · success mark green-40 (target edge, toggle on) on layer-02 / pill fill #393939",
+  "fg": "#42be65",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · error mark red-50 on background #161616",
+  "fg": "#fa4d56",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · error mark red-50 on layer-01 #262626",
+  "fg": "#fa4d56",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · error mark red-50 on layer-hover-01 #333333",
+  "fg": "#fa4d56",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · warning mark yellow-30 on background #161616",
+  "fg": "#f1c21b",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · warning mark yellow-30 on layer-01 #262626",
+  "fg": "#f1c21b",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · warning mark yellow-30 on layer-hover-01 #333333",
+  "fg": "#f1c21b",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · AI label text blue-40 on background #161616",
+  "fg": "#78a9ff",
   "bg": "#161616",
   "kind": "text"
  },
  {
-  "name": "nav link gray-30 on shell hover #333333",
-  "fg": "#c6c6c6",
+  "name": "dark · AI label text blue-40 on layer-01 #262626",
+  "fg": "#78a9ff",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "dark · AI label text blue-40 on layer-hover-01 #333333",
+  "fg": "#78a9ff",
   "bg": "#333333",
   "kind": "text"
  },
  {
-  "name": "nav link gray-10 on shell pressed gray-80",
-  "fg": "#f4f4f4",
-  "bg": "#393939",
+  "name": "dark · AI border start blue-50 on field #262626",
+  "fg": "#4589ff",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · text-on-color white on primary blue-60",
+  "fg": "#ffffff",
+  "bg": "#0f62fe",
   "kind": "text"
  }
 ]

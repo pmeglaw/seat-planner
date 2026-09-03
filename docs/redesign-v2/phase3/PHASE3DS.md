@@ -1,6 +1,6 @@
 # Seat Planner redesign — Phase 3: UI design system
 
-**Status: in progress — PR 1 (tokens + foundations) merged v1.73.4; PR 2 (shell) open; PR 3 (map) next.** Inputs: `PHASE2UX.md` (§1 geometry, §2 states,
+**Status: in progress — PR 1 merged v1.73.4; PR 2 merged v1.73.5; PR 3 (map) open; PR 4 (pages) next.** Inputs: `PHASE2UX.md` (§1 geometry, §2 states,
 §3 component table, the close-out note), `DECISIONS.md` (D0–D6, §6 deviations 1–15), the `ibm-design-language`
 skill (`SKILL.md`, `tokens.md`, `design-engineering.md`, `status-and-dataviz.md`, `carbon-next.md`, `taste.md`) and
 its two assets, `app/globals.css` as an inventory of consumer names only. Nothing under `app/`, `components/`
@@ -15,7 +15,7 @@ Layout of `docs/redesign-v2/phase3/`:
 | `components/carbon-components.css` | skill asset, copied verbatim (sha1 `0c3f28e…`) — never edited |
 | `components/sp-components.css` | hand-built components from PHASE2UX §3 only |
 | `specimens/*.html` | one static page per group + `index.html` + `compare.html` (light beside dark); four CSS files, nothing else |
-| `contrast/*.json` | the product pairs fed to `scripts/check_contrast.py` (§3) |
+| `contrast/generate-pairs.mjs` → `*.json` | the pair generator (marks × the surfaces they land on) and its output, fed to `scripts/check_contrast.py` (§3) |
 
 Verification method (close-out note, lesson 2): every specimen is rendered through the headless-Chrome rig
 (static server on localhost + Playwright `chromium.launch({ channel: "chrome" })`, 1920×1080, both themes) and
@@ -231,6 +231,132 @@ The asset's skeleton is `td::after` — table cells only. Panels and lists need 
 same sweep; `.sp-skeleton-row` (32px) and `.sp-skeleton-event` (72px, three lines) reserve the dimensions
 of what they replace so nothing jumps. Dark variant by the `.sp-panel` scope.
 
+### 1.14 Control row — Map → `.sp-control-row` (§3 "Control row (toolbar) · hand-built")
+
+**Problem.** A 48px row of 40px controls that never reflows when the slot opens, carrying ONE primary
+(Publish) and the editor's controls after a divider (D2-b). **Options.** The asset's `.cds-toolbar` is the
+data-table toolbar (search + batch bar); wrong semantics. **Choice.** Flex row, 8px gaps and side padding,
+1px × 24 divider; Publish is the only `.cds-btn--primary`; disabled Publish keeps its place and states the
+reason in `label-01` beside it (`aria-describedby`), never only a tooltip; Undo / Redo are icon ghosts with
+PR 2 tooltips; Add seat is a ghost whose label flips; Ask Planner is tertiary with the asset's
+`[data-count]` badge; ⋯ is the asset's overflow with a disabled danger Discard. **Floor selector**
+`.sp-menu-button`: a menu button on the field surface with a place marker and chevron, opening a
+`.sp-menu` (the asset's overflow-menu geometry) whose current item takes the 3px bar + `layer-selected`.
+**Names toggle** `.sp-toggle`: Carbon's small toggle (32×16 track, 12 knob), on = `--sp-status-success-mark`
+(the hover-safe grade of Carbon's `$support-success` toggle colour), `aria-pressed`, state word beside it.
+**"Filters · N" split control** `.sp-filters` (owner ruling): a tag is metadata, this is a control — a 40px
+tertiary "Filters · N" that opens the left panel (the hamburger's target) plus a separate 40×40 Clear
+filters icon button; one interactive element per control; Hidden at N = 0. `patterns.md`: a collapsed
+filter shows its count and a way to clear without reopening. Not a deviation. **Would change if** the
+row gains a second section that needs its own primary (then it is two toolbars).
+
+### 1.15 Search field and palette — Map → `.sp-search`, `.sp-palette` (§3 "Search field with scope segment", "Search palette (560)")
+
+**Problem.** Focused search (D1-d): an unlabelled field with a trailing scope segment, results in a
+560px palette anchored to the field's left edge, both scope counts always shown. **Choice.** Field 40 on
+the field surface with a leading icon, a `.sp-kbd` hint (24px, `code-01`) and the scope segment as a
+button inside the field (1px left rule, `label-01`); a clear × replaces the hint while a query exists.
+Palette: header = "Results · 7 on this floor · 11 in building" (the building count is the widen
+affordance); rows 48 = title `body-compact-01` + subtitle `label-01`, kind as `.cds-tag--outline`, seat
+code in `code-02` or a Floor tag; selected row = `layer-selected` + 3px bar; footer = the key legend.
+States: browse (zones, then people seated-first) · results · zero with Widen · zero nowhere · loading
+(only past 300ms) · error. **Platform-aware hint:** Ctrl K on Windows (the firm's machines), ⌘ K on Mac
+— both rendered; detection is a Phase 4 obligation (§5). **Would change if** search gains a third scope.
+
+### 1.16 Seat pill — Map → `.sp-pill` (§3 "Status marks"; DECISIONS §3.2.1, deviations 3, 7, 8)
+
+**Problem.** The name marker: ≤ 28 tall, fit-width, one line, no truncation, the code on demand, and a
+state set that survives grayscale on a raster. **Options.** Two-line pill with the code (the shipped 40px
+— retired by §3.2.1); an inline code suffix on hover (rejected: widens the pill into its neighbours); a
+4px tooltip variant (rejected: don't mint a variant).
+**Choice.** Height = the 28 footprint (constant), `label-01` `First L.`, 8px pads, 1px `--sp-pill-edge`
+on `layer-02`. **Code on hover / focus** via the tier-C tooltip at its 8px offset; selection shows the
+code in the inspector eyebrow, so the tooltip is hover / focus only. States, each a distinct silhouette:
+rest (1px edge) · hover (`layer-hover-02`) · focus (2px `$focus` inset) · selected (2px `border-inverse`)
+· search hit (`highlight` fill + `support-info` edge) · quiet / filtered out (`layer-01`, subtle edge,
+`text-secondary` — not helper, 4.10 on the hovered fill) · move origin (2px dashed) · move target (2px
+`success` mark edge + subtle fill) · invalid target (`border-disabled`, `text-disabled`, not-allowed) ·
+**changed in draft** = an 8px hollow ◇ in `--sp-status-draft-mark` at the top-right (the Draft family's
+own shape; 3.83–7.35:1 on every fill it lands on, §3) with the inspector saying "Changed in draft" in
+text so the badge is never the only carrier · **names off** = the assigned pill collapses to the filled
+28 footprint (`--sp-icon-primary`) while empty seats keep their symbols, and **the legend follows the
+toggle** (pill miniature when names are on, ● when off — PR 1's legend ruling amended). Every marker
+carries the asset's 44px `.cds-touch-target` pseudo (deviation 7). **Trade-off.** The 1.5px badge stroke
+is the one stroke under 2px — at 8px a 2px stroke fills the diamond. **Would change if** the marker
+pitch changes (a new plan) or a state is added past the five-indicator budget.
+
+### 1.17 Right slot and inspector — Map → `.sp-slot`, commit bar, combobox, text area (§3 rows "Seat inspector side panel, 400", "Combobox", "text area", "Danger button")
+
+**Problem.** One 400px slot (deviation 15) with three owners; the inspector reads in Published and edits
+in Draft, with a commit bar and a form the asset only partly supplies. **Options.** `.cds-side-panel`
+(480, `layer-02`, slide-over with footer) — wrong width and it traps focus; the slot pushes and doesn't.
+**Choice.** `.sp-slot` on `layer-01` with a 1px left rule, header (eyebrow `label-01` · title `heading-03`
+sized for ≤ 22 characters inside 368 · legend row · Copy link + × icon buttons), scrolling body, and a
+64px commit bar that bleeds: Cancel ghost · primary (Save draft changes / Assign employee; Saving…).
+**Two primaries in view** — Publish in the row and Save here — are acceptable because a side panel is its
+own container (the same reasoning covers the drawer's Ask; both §3 rows say so). Form pieces the asset
+lacks: `.sp-combobox` (text input + `.sp-listbox` 40px rows with meta, a Create row, and the "Create new
+employee on save" tag + helper); `.sp-textarea` (80 min, the field surface, vertical resize; a counter
+line for the AI drawer); `.sp-actions` ghost row Move · Swap · Vacate; **Delete seat** = `.cds-btn--danger-ghost`,
+shown only for `is_custom` seats — original seats show no Delete at all (Hidden, never disabled; the
+seatProtection rule) — with the block reason as helper text outside the button. Contact rows 48 with a
+label column and an icon action. Status select is Hidden while a person is assigned. **Mode card**
+`.sp-mode-card`: eyebrow · title · body-01 message · ghost exit · Esc note; the cancel message is an
+info notification. The Move / Swap confirm is the asset's modal and may open over the inspector (a side
+panel is not a modal) — never from inside the tearsheet. **Would change if** the inspector gains a
+second step (then a tearsheet, not a longer panel).
+
+### 1.18 Ask Planner — Map → `.sp-ai-label`, `.sp-ai-popover`, `.sp-textarea--ai`, drawer parts (§3 "Ask Planner drawer · Carbon-for-AI label")
+
+**Problem.** The one AI surface must be marked as AI and explain itself (`carbon-next.md`: the AI label
+is both the marker and the entry point to explainability) without a "magic" treatment. **Options.** A
+sparkle icon; the full Carbon-for-AI set (label, aura, gradient fields); the label + border only.
+**Choice (owner ruling).** Label text and border-start/end only — no aura ("grays dominate"). Because
+the asset predates Carbon for AI, `--sp-ai-border-end` is a palette reference (blue 40) — **the second
+tier-C exception**, recorded; `--sp-ai-label-text` is `$link-primary` and `--sp-ai-border-start`
+`$border-interactive`, so both follow the theme. The gradient appears on exactly two things: the 24px
+"AI" label (a button opening the explainability popover: what it reads, what it never changes, a link to
+the Help panel) and the textarea's 1px border. Label hover text steps to blue 70 (blue 60 is 4.08 on the
+hovered fill — caught by the pair run). Drawer: subline, dirty banner (warning notification), suggested
+prompts as stacked ghosts, textarea 800 with a counter and the Ctrl+Enter hint, Ask as the drawer's own
+primary in the commit bar, empty / loading ("Checking saved draft map data") / answer + highlighted-seat
+list / the six named errors + fallback as the error notification with Retry / broad-answer info note /
+Clear highlights. **Would change if** Carbon ships AI tokens in the asset (then the palette reference
+retires).
+
+### 1.19 Publish review — Map → `.sp-tearsheet` wide (§3 "Wide tearsheet (publish review) · hand-built")
+
+**Problem.** A review of a 68-row diff plus people details, with one decision at the end — too large
+for a dialog (SKILL). **Options.** Modal (rejected: large data); full page (rejected: the map behind is
+the context). **Choice.** Anchored bottom below the visible header, overlay dims the page, **no ×**
+(Cancel is the exit — the frame invariant); rail 256 carries the readiness summary (the wide rail
+otherwise holds a progress indicator; a single step has none, PHASE2UX §4), the body a `.cds-table`
+with **group rows** (`tr.sp-table-group`, `layer-accent`) per floor and a People details list, the
+footer 64 with facts left and Cancel · Publish right. States: ready · no changes (empty state + disabled
+primary "No changes to publish") · submitting (info notification, Cancel disabled, "Publishing…") ·
+failure (error notification + Retry publish, review intact) · PUBLISH_BLOCKED (the sheet closes; the
+server text lands as an error notification in the canvas status region). Nothing in the flow chains
+into a second modal. `.sp-table-group` is shared with PR 4's Management tables. **Would change if** the
+review gains steps (then the rail is a progress indicator).
+
+### 1.20 Roster — Map → `.sp-roster` (§3 "Roster region + static rows")
+
+Heading `heading-03`, helper line, department groups (`heading-compact-01` + count), 40px **static** rows
+name · position · ext · email + a copy-link icon button with tooltip and an in-place "Copied" done-state.
+The row is not interactive: hover lives on the button only (owner ruling; a hovering row would promise a
+row action that does not exist — deviation 9). A `?q=` landing highlights the matched row with the
+search surface + 3px mark. Empty / filtered-empty / loading / error states each name the next step.
+
+### 1.21 Status band and canvas — Map → `.sp-band`, `.sp-canvas`
+
+Band 40 on `layer-01` with a top rule: title · legend (PR 1 marks, following the Names toggle) · count
+(zero included, with Clear filters and the cross-floor hint) · zoom/fit as 32px controls; the read-only
+line "Editing needs a wider window." and the title-only roster variant. Canvas: the mat behind the plan,
+a status region (`role="status"`, top-left) for inline notifications — the MLS02 stale-draft refresh
+(inline and self-clearing, not a toast: it happened *to* the user), PUBLISH_BLOCKED, partial-load — and
+the empty states over the plan (published-empty in the viewer's and the admin's voice, draft-empty),
+skeleton plan, error + Retry, the 403 card. One narrow (1024) read-only frame.
+
 ---
 
 ## 2. Component index (PHASE2UX §3 → class → specimen anchor)
@@ -260,7 +386,29 @@ Filled per PR. Rows marked *pending* land in the PR named.
 | Left filter panel | `.sp-left-panel`, `.sp-left-panel-host[data-open]`, `-header`, `-body`, `.sp-filter-group` / `-row`, `.sp-filter-item` (`-name`, `-count`), `.sp-left-nav`, `.sp-left-divider`, `.sp-left-panel-note` | `01-shell.html#left` | 2 |
 | Checkbox group with per-group Clear + counts | `.sp-filter-group` + `.cds-checkbox` + `.cds-btn--ghost.cds-btn--sm` | `01-shell.html#left` | 2 |
 | Narrow fallback (1024) | composition of the above | `01-shell.html#narrow` | 2 |
-| Control row … roster rows (map) | *pending* | `02-map.html` | 3 |
+| Control row (toolbar) · divider · result count · disabled-Publish reason | `.sp-control-row`, `.sp-control-divider`, `.sp-control-count`, `.sp-control-reason` | `02-map.html#row` | 3 |
+| Floor selector (menu button + menu) | `.sp-menu-button` (+`.sp-chevron`, `-label`), `.sp-menu` (+`.sp-menu-meta`) | `02-map.html#row` | 3 |
+| Search field with scope segment · keyboard hint · clear | `.sp-search`, `.sp-search-scope`, `.sp-search-clear`, `.sp-kbd` | `02-map.html#search` | 3 |
+| Search palette (560) | `.sp-palette`, `-header`, `-group`, `-list` > `.sp-palette-row` (`-title`, `-sub`, `-code`), `-footer`, `-empty`, `-loading` | `02-map.html#search` | 3 |
+| Filters split control "Filters · N" + Clear filters | `.sp-filters` > `.cds-btn--tertiary` + `.cds-btn--icon` | `02-map.html#row` | 3 |
+| Ghost / tertiary / primary / icon buttons in the row · Ask Planner count badge | asset `.cds-btn` set; `.cds-btn--tertiary[data-count]` | `02-map.html#row` | 3 |
+| Toggle (Names) | `.sp-toggle` (+`.sp-toggle-track`, `-state`) | `02-map.html#row` | 3 |
+| Overflow menu ⋯ with danger item | asset `.cds-overflow` / `.cds-overflow-menu` / `.cds-danger` | `02-map.html#row` | 3 |
+| Seat pill (name marker) and states · ◇ changed-in-draft · names-off · 44px hit | `.sp-pill` (+`--search`, `--quiet`, `--origin`, `--target`, `--invalid`, `--names-off`), `.sp-pill-badge`, `.cds-touch-target` | `02-map.html#pill` | 3 |
+| Seat inspector side panel (400) · commit bar · contact rows | `.sp-slot`, `.sp-slot-host[data-open]`, `-header`, `-eyebrow`, `-title`, `-actions`, `-body`, `-section`, `.sp-commit-bar`, `.sp-contact-row`, `.sp-person-role`, `.sp-draft-note` | `02-map.html#slot` | 3 |
+| Combobox (employee name; inline create) | `.sp-combobox` > `.cds-text-input[role=combobox]` + `.sp-listbox` (`.sp-listbox-create`, `-meta`), `.sp-create-note` | `02-map.html#slot` | 3 |
+| Select · text input · text area · counter | asset `.cds-select`, `.cds-text-input`; `.sp-textarea`, `.sp-field-counter` | `02-map.html#slot` | 3 |
+| Actions row · Danger button (Delete seat, custom only) · block reason | `.sp-actions`, `.cds-btn--danger-ghost`, `.sp-block-reason` | `02-map.html#slot` | 3 |
+| Modal (Move / Swap / Delete confirms) | asset `.cds-modal` | `02-map.html#slot` | 3 |
+| Mode card | `.sp-mode-card` (+`-title`, `.sp-esc-note`) | `02-map.html#slot` | 3 |
+| Ask Planner drawer · AI label · explainability popover · AI textarea | `.sp-ai-label`, `.sp-ai-popover-host[data-open]` > `.sp-ai-popover`, `.sp-textarea--ai`, `.sp-drawer-subline`, `.sp-prompt-list`, `.sp-answer`, `.sp-highlight-list`, `.sp-drawer-loading` | `02-map.html#slot` | 3 |
+| Wide tearsheet (publish review) · readiness rail · group rows | `.sp-tearsheet-host[data-open]` > `.sp-tearsheet-overlay` + `.sp-tearsheet` (`-header`, `-body`, `-rail`, `-main`, `-footer`, `-facts`, `-section`), `.sp-readiness` (+`-title`, `-facts`), `.sp-rail-heading` / `-text`, `.sp-detail-list`, `tr.sp-table-group` | `02-map.html#review` | 3 |
+| Data table (publish review) with floor eyebrow rows | asset `.cds-table` + `tr.sp-table-group` | `02-map.html#review` | 3 |
+| Roster region + static rows · copy-link button with done-state | `.sp-roster`, `-helper`, `-group` (+`-count`), `-list` > `.sp-roster-row[data-highlight]` (`-meta`), `.cds-btn--icon[data-done]` | `02-map.html#roster` | 3 |
+| Status band (legend · counts · zoom/fit) | `.sp-band`, `-title`, `-legend`, `-count`, `-zoom`, `-note` | `02-map.html#band` | 3 |
+| Canvas states · status region · empty / skeleton | `.sp-canvas` (+`--skeleton`), `.sp-canvas-plan`, `.sp-canvas-status[role=status]`, `.sp-canvas-empty`, `.sp-marker` | `02-map.html#canvas` | 3 |
+| 403 card | asset `.cds-empty` + one tertiary | `02-map.html#canvas` | 3 |
+| Narrow fallback (1024, read-only) | composition of the above | `02-map.html#narrow` | 3 |
 | Side panel 480 · modals · narrow tearsheet · callout | *pending* | `03-panels-and-sheets.html` | 4 |
 | Page header + tabs · table · structured list · radio · file trigger · count cards · readout · ghost done-state | *pending* | `04-forms-and-tables.html` | 4 |
 
@@ -304,6 +452,31 @@ Every mark on every surface it lands on: the four mode marks on `#161616` / `#33
 on `#161616` / `#262626` / `#333333` / `#393939` / footprint hover `#474747` (lowest 5.44); the Draft orange
 on both themes' hover surfaces (light orange 60: 4.10; dark orange 40: 5.13); the search highlight pair in
 both themes.
+
+**Pairs are generated, not hand-appended (from PR 3).** One command regenerates both files and the
+checker gates the first:
+
+```
+node docs/redesign-v2/phase3/contrast/generate-pairs.mjs
+python <skill>/scripts/check_contrast.py --pairs docs/redesign-v2/phase3/contrast/product-pairs.json
+```
+
+`generate-pairs.mjs` lists every drawn mark with the surfaces it actually lands on — rest, hover,
+pressed, selected, highlight — per zone (shell, dark panel) and per theme. **Summary line pasted verbatim:**
+
+```
+product-pairs.json: 166 pairs · surface-pairs-not-gated.json: 9 pairs
+166/166 pass
+```
+
+PR 3 additions: the seat-pill fills (rest / hover / search highlight) under the ◇ badge orange 60 (3.83 on
+the light highlight is the lowest) and orange 40; the move-target edge and toggle-on green 60 / green 40
+on white, layer-01, hover and the success-subtle fill (4.09 lowest); the search edge blue 70 / blue 50;
+the AI label text blue 60 / blue 40 and its hover step blue 70 (blue 60 measured 4.08 on `layer-hover-01`
+and was fixed by the token, not the surface); the AI border start blue 60 / blue 50 on the field; white
+on the primary. **Measured, not gated (9):** the PR 1–2 dividers and steps plus the AI gradient's low
+stop (blue 40 — Carbon's own light `ai-border-start`; the label carries the meaning), the left-panel rule
+and the quiet pill's edge (quiet is the intent).
 
 **PR 2 pairs (added to `product-pairs.json`, now 78 pairs) — summary line pasted verbatim:**
 
@@ -362,6 +535,18 @@ Next free deviation number: **16** (nothing ledgered in PR 1).
 | Event row 72 = 10 / 52 / 10 with heading-01 | TRUE | every line-height a type token; symmetric padding (taste.md) |
 | Tooltip without caret | NOT COVERED — product decision | 8px below a 48px target; no other shape in the system |
 | Left panel pushes, no focus trap; Esc closes; counts text-secondary | TRUE | composition slide-in; tokens.md hover trap |
+| Filters as a 40px split control, not a tag | TRUE | patterns.md collapsed filter: count + clear without reopening; a tag is metadata |
+| Disabled Publish keeps its place with the reason beside it | TRUE | patterns Disabled: pair with an inline explanation |
+| Two primaries in view (row + side panel / drawer) | TRUE | SKILL one primary per section; a side panel / drawer is its own container |
+| Seat code via the tier-C tooltip, hover / focus only | TRUE | SKILL details on demand; design-engineering: tooltips never carry interactive content |
+| ◇ changed-in-draft badge + "Changed in draft" text | TRUE | status-and-dataviz: colour + shape in the mark; the label is the third signal |
+| Names-off legend follows the toggle | TRUE | status-and-dataviz: label what the chart draws |
+| Carbon for AI: label + border only, no aura | TRUE (carbon-next) / NOT COVERED (tokens) | carbon-next: use the AI label; asset has no AI tokens → tier-C exception 2 |
+| Delete seat Hidden for original seats | TRUE | SKILL hidden table: the user lacks permission to act; seatProtection |
+| Tearsheet: no ×, Cancel exits; no nested modal | TRUE | composition: containers omit the close X; modals never nest |
+| MLS02 as an inline status notification, self-clearing | TRUE | patterns Notifications: task-generated → inline; toasts are for system messages the user caused |
+| Roster rows static; hover on the button only | TRUE | deviation 9; taste.md: a row that hovers promises an action |
+| Platform-aware ⌘K / Ctrl K hint | NOT COVERED | Phase 4 detects the platform (§5) |
 
 ---
 
@@ -381,6 +566,30 @@ alongside `data-theme` (§1.2); the Account panel's Theme radio group (PR 2) rep
 indicator replaces the shipped `PublishStateChip`-style element; History panel wiring is PR 2).
 `.sp-seat-mark` / `.sp-seat-legend` / `.sp-seat-footprint` → `components/seat-map/` (legend in
 `MapStatusBand`, footprint in `SeatMarker.tsx`, marks in the inspector header and the Account panel).
+
+**Landing files (PR 3 scope).** `.sp-control-row` and its controls → `SeatMap.tsx`'s toolbar (the
+shipped `MapStatusBand` keeps the band, restyled as `.sp-band`); `.sp-menu-button` → the floor selector;
+`.sp-search` + `.sp-palette` → `ViewerSeatFinder.tsx`'s header is **retired** and the palette component
+keeps its virtualisation; `.sp-filters` → the control row, driving the shell's `LeftPanel.tsx` (PR 2);
+`.sp-pill` / `.sp-seat-footprint` → `SeatMarker.tsx` (the two-line 124×40 pill retires; the nudge keeps
+28 as `H`); `.sp-slot` family → the inspector (`SeatInspector` / `SeatSheet` siblings in
+`components/seat-map/`), the mode card, and `AskPlannerDrawer.tsx` (408 → 400 is PHASE2UX §5's item);
+`.sp-tearsheet` → the publish review (replacing the shipped review dialog); `.sp-roster` → the roster
+region; `.sp-canvas-status` → the map region's notification slot (MLS02 banner, PUBLISH_BLOCKED).
+**Phase 4 obligations added:** platform-aware keyboard hint (⌘ on Mac, Ctrl elsewhere, from
+`navigator.platform` / UA-CH at hydration); the tooltip carries the seat code on hover and focus only;
+the legend re-renders on the Names toggle; the inspector's "Changed in draft" line derives from the
+publish diff (`lib/publishSummary.ts`). **Retired `--sp-*` names (PR 3):** `--sp-marker-*` (30 names) →
+*`--sp-pill-*`* (fill, fill-hover, edge, text, selected-edge, search-fill/edge, quiet-*, origin-edge,
+target-*, invalid-*, badge, names-off); `--sp-legend-*` (24) → *`--sp-seat-mark-*`* + the pill tokens (the
+legend is the marker); `--sp-selection`, `-border`, `-surface` → *`--sp-pill-selected-edge`* / *`--sp-layer-selected`*;
+`--sp-ai-*` (16: accent, aura, glow, ring, marker-*, chrome-*, panel-border, row, text) → *`--sp-ai-label-text`*,
+*`--sp-ai-border-start`*, *`--sp-ai-border-end`* (aura, glow, ring, marker halos retired — no decoration);
+`--sp-editor-*` (21 save-state chips) → the notification kinds + the commit-bar states (Saving… is
+`aria-busy` on the primary); `--sp-publish-ready-*` / `-no-change-*` / `-viewer-impact-*` → *`--sp-status-success-mark`*
++ text tokens in the readiness rail; `--sp-trail`, `--sp-trail-origin` → *`--sp-pill-origin-edge`* / *`--sp-pill-target-edge`*
+(the move trail is the origin's dashed edge and the target's solid one); `--sp-wash-zone` → *`--sp-highlight`*
+(zone hit = the search surface); `--sp-map-mat` keeps its name.
 
 **Landing files (PR 2 scope).** `.sp-header`, `.sp-header-slot`, utilities + `.sp-tooltip` → `AppTopBar.tsx`
 (the rail in `AppRail.tsx` retires — the shell is a top bar with a hamburger, D0); `.sp-panel` family +
@@ -413,10 +622,18 @@ links) driven by `useAppShellNavigation`; `.sp-skeleton*` → `loading.tsx` skel
 
 ---
 
-## 6. Open for the owner
+## 6. Open for the owner (PR 3; defaults included)
 
-None after PR 2. Ruled on PR 2: event row 10 / 52 / 10 with `heading-01` (§1.9); radio 16 (§1.11); tooltip
-without caret (§1.8); below-lg current nav item 3px bar + `layer-selected` (§1.12).
+1. **Badge stroke 1.5px.** The ◇ changed-in-draft badge is 8px; a 2px stroke fills it. Default: 1.5px, the
+   one stroke under 2 in the system, recorded in §1.16.
+2. **Move-target tint.** The valid target uses the success-subtle fill under a 2px success edge — the only
+   green on the map, present only during a move. Default: keep (the edge alone, in grayscale, already
+   separates it from selected by fill).
+3. **Ask Planner errors.** All six named errors render as one error notification with Retry, the text
+   carrying the difference. Default: one component, six strings (no per-error icon).
+
+Closed after PR 2: event row 10 / 52 / 10 with `heading-01` (§1.9); radio 16 (§1.11); tooltip without
+caret (§1.8); below-lg current nav item 3px bar + `layer-selected` (§1.12).
 
 Closed after PR 1: Ruled on #507: pressed shell = gray 80 and open = outlined (§1.3); theme attribute kept,
 Carbon attribute derived (§1.2); seat marks ○ / lock / hatch with the assigned legend entry as a miniature
@@ -438,11 +655,20 @@ pill (§1.4).
 3. **`--sp-event-pad` is 10px on purpose** — the symmetric remainder of 72 − 52 — and is the one geometry
    value not on the spacing scale; don't "fix" it to 8 or 12.
 
+4. **The seat code tooltip is the tier-C tooltip**, gray 80 on the light canvas too. Do not theme it; the
+   canvas mat and the raster are light in both themes' light regions and the box must read on either.
+5. **`.sp-pill` widths come from the label**; the nudge (`SeatMarker.tsx`) reasons about height, which is
+   the constant 28. Never set a width on a pill; never let the code render inline (it widens the pill
+   into its neighbours — the reason the tooltip exists).
+6. **`generate-pairs.mjs` is the contrast source of truth.** Add a mark or a surface there, regenerate,
+   re-run the checker; never edit the JSON.
+
 ---
 
 ## Slice log
 
 | PR | Branch | Contents |
 |---|---|---|
-| 2 | `docs/phase3-shell` | `.sp-header` overrides, `.sp-header-slot`, `.sp-tooltip`, `.sp-panel` + zone-scoped variants, `.sp-switch`, `.sp-radio`, `.sp-left-panel`, `.sp-skeleton`; specimen `01-shell` (header ×3, hamburger ×7, utilities ×5, panels ×12, switch ×4, radio ×3, left panel ×7, narrow 1024); §1.7–1.13, §2, §3 (78/78), §4, §5; D0-f Phase 3 confirmation; PHASE2UX §3 ghost-on-dark row |
+| 3 | `docs/phase3-map` | control row + floor menu + search/palette + Filters split control + toggle; `.sp-pill` (11 states) + ◇ + names-off; `.sp-slot` inspector / mode card / Ask Planner (Carbon for AI); wide tearsheet + group rows; roster; band; canvas states; specimen `02-map`; §1.14–1.21, §2, §3 (generated, 166/166), §4, §5, §6, §7; PHASE2UX §3 amendments (Filters control, two-primaries justification, Delete hidden for originals, roster hover on the button) |
+| 2 | #508 (`docs/phase3-shell`) | `.sp-header` overrides, `.sp-header-slot`, `.sp-tooltip`, `.sp-panel` + zone-scoped variants, `.sp-switch`, `.sp-radio`, `.sp-left-panel`, `.sp-skeleton`; specimen `01-shell` (header ×3, hamburger ×7, utilities ×5, panels ×12, switch ×4, radio ×3, left panel ×7, narrow 1024); §1.7–1.13, §2, §3 (78/78), §4, §5; D0-f Phase 3 confirmation; PHASE2UX §3 ghost-on-dark row |
 | 1 | #507 (`docs/phase3-tokens`) | assets copied; `sp-tokens.css`; `.sp-mode`, seat marks; specimens 00 + 05 + index + compare; §1.1–1.6, §2 (partial), §3, §4, §5 (partial). Owner rulings folded in before merge: pressed gray 80 + outlined open, theme decided, assigned legend = mini pill |
