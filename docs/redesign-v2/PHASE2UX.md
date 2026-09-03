@@ -1,6 +1,8 @@
 # Seat Planner redesign — Phase 2: UX and wireframes
 
-**Status: in progress. Slice 1 (shell) — 2026-09-02.** Companion to `PHASE1IA.md` (the fixed IA) and
+**Status: complete — five slices, 2026-09-02 → 2026-09-03 (shell #500, map #501, Reception #502, Management
+#503, Settings — this PR). Carbon conformance record in §4; Phase 3 hand-off in §3; Phase 4 obligations in §5.**
+Companion to `PHASE1IA.md` (the fixed IA) and
 `DECISIONS.md` (the decision log; Phase 2 appends D0-f…, D1-c…, D3/D5/D6 amendments, §6 deviations).
 Wireframes live in `wireframes/*.html` — low-fi, static, grayscale, framed at 1920×1080 with one
 narrow frame at 1024. **No application code, tokens, components or `@carbon/*` dependency.** Phase 3
@@ -515,6 +517,110 @@ dialog: focus to Cancel, trapped, Esc = Cancel. Landmarks: `main`, `navigation` 
 
 ---
 
+## 1S. Settings (`/admin/settings`)
+
+D6 governs: Settings archetype, single column grouped by section; CSV import and JSON snapshot restore;
+restore = moderate impact, confirm with consequences, no typed confirmation; **no Reset draft** (ruling 22,
+Q7). Decisions made in this slice: D6-a…e (owner-approved 2026-09-03). Wireframe: `settings.html`.
+
+### 1S.1 Decision log
+
+```
+Screen: Settings — import, export and recovery
+Problem: "Bring the whole directory in from a spreadsheet" / "Back the draft up before I try
+         something" / "Put the draft back the way it was from a file."
+Primary task: per section — CSV: import; Snapshots: export (the frequent act; restore is rare).
+
+Options considered:
+  A. What ships: 760px column, tile-buttons, review modals with count cards, hidden unlabeled
+     file inputs, a reset tile.
+  B. Settings archetype on the 1584 frame (content in the left 8 columns), a callout, each
+     section with its own one primary and labelled file triggers stating type and size limit,
+     reviews as narrow tearsheets (the error list and the consequences list scroll), reset gone.
+  C. Fold import/export into Management's toolbar. Rejected: irreversible operations own a page
+     (PHASE1IA B1).
+
+Choice: B. Two unlike sections do not share a primary, so the page header has none and each
+  section carries one. Reviews leave the modal because a scrolling list is complex data.
+Trade-off: three container types on one small page (callout, section, tearsheet). Accepted —
+  each is the sanctioned one for its job, and the page is visited rarely.
+Would change if: a third recovery tool arrives (then a settings left-nav), or restores become
+  frequent (then restore earns the section primary).
+```
+
+### 1S.2 Geometry at 1920 × 889
+
+| Region | Size | Notes |
+|---|---|---|
+| Live area | 1584 centred; content column **776** (8 of 16), left-aligned | Settings archetype: single column |
+| Page header | title `heading-04` "Settings" · subtitle "Import, export and recovery. Everything here changes the draft only." | **no primary** (D6-a) |
+| Callout | full content width, loads with the page, never dismissible, no status icon | "The published map is never touched until you publish. Restores replace the entire draft — review before confirming." |
+| Sections | `heading-03` + helper `body-01` + one action row (40px buttons, 8px gaps) + a `label-01` file line | 48px between sections |
+| Narrow tearsheet | 720 centred, top 112, anchored bottom; header · scrolling body · 64px footer | Cancel · primary, 50/50 bleed; **no ×** |
+
+### 1S.3 CSV assignments (D6-b)
+
+Helper: "Imports update draft assignments; seat positions don't move." Actions: **Import CSV** (primary,
+labelled trigger "Import CSV · .csv up to 5 MB") · Export CSV (tertiary, downloads `seat-assignments.csv`,
+draft only) · Download template (ghost, headers only). File line under the row, `label-01`: "Columns:
+seat_label, employee_name, employee_email, position, department, zone, status, notes — e.g.
+A-12, Jane Doe, , Associate, Litigation, North Wing, assigned, Window seat". The type and the 5 MB limit
+are stated **before** choosing a file, not only in the error.
+
+**Review — narrow tearsheet** "Review CSV import" / "CSV import has blocking errors". Body: five count cards
+(Rows · Assignments · Cleared · Reserved · Unavailable); consequence line "Applies to the draft only. Marker
+positions and the published map do not change until you publish."; when blocked, an inline error
+"Fix these rows in the CSV, then import the file again. No draft data has changed." above the scrolling
+list "Row 14 · Invalid status 'away'". Footer: **Cancel** · **Apply import** ("Applying…"; disabled while
+blocked with the inline reason above — never a bare disabled button). Exit is Cancel only.
+
+Unhappy paths (senior-workflow step 6), all inline in the section before any tearsheet opens: wrong type
+("Choose a .csv file"), **too large** ("This file is 7.2 MB — the limit is 5 MB"), empty ("The CSV is
+empty"), missing columns ("Missing required columns: zone, status"). MLS02 on apply: "The employee directory
+changed in another session… This page has been refreshed with the latest directory — review and import again."
+Success: inline status under the section, "CSV import applied — 41 rows updated in the draft." Partial
+validity stays unsupported: all-or-nothing, as shipped.
+
+### 1S.4 Draft snapshots (D6-c, D6-e)
+
+Helper: "Draft seats and employees only. Not a database backup — it does not include the published map,
+publish history or accounts." Actions: **Export draft snapshot** (primary, downloads `seat-map-export.json`)
+· Restore draft snapshot… (tertiary, labelled trigger ".json up to 5 MB — a file exported from this page").
+No danger styling on the section (D6-d): nothing destructive remains.
+
+**Review — narrow tearsheet** "Review draft snapshot restore". Body: two count cards (Draft seats ·
+Employees) with the file name and export date; **consequences list**, each a line: every draft seat
+assignment is replaced · custom seats not in the file are deleted · employee details are updated — never
+deleted · the published map is untouched until you publish · Undo history is cleared. Then **Export the
+current draft first** — a **ghost button** (D6-e): downloads the current draft snapshot without closing the
+tearsheet or resetting the review, and shows its done-state in place, "Exported 14:02", so the admin can see
+it happened before pressing Restore. Footer: **Cancel** · **Restore draft snapshot** ("Restoring…").
+Exit is Cancel only. MLS02: inline error at the top of the body with the server text and "This page has
+been refreshed with the latest draft — review it and try the restore again if it is still what you want.";
+the review stays. Invalid shape ("The snapshot must include seats and employees arrays"), unreadable,
+empty ("Cannot restore an empty snapshot"), too large — inline in the section, before any tearsheet.
+Success: inline status "Draft restored from seat-map-export.json — the draft now matches the snapshot."
+
+### 1S.5 Route states (D6-d)
+
+| State | Design |
+|---|---|
+| Not admin | shared 403 card + Back to seat map |
+| Route error | admin voice as shipped ("This admin page could not load…") |
+| Loading | header real; two section skeletons (heading real, action row skeleton) |
+| Busy | the pressed primary shows its progress label; the sr-only live region says "Working…" |
+| Overflow | error list scrolls inside the tearsheet, header and footer fixed; long file names truncate mid-line (`title`) |
+| Narrow (1024) | content column full width; tearsheet 720 → full width minus 32 |
+
+### 1S.6 Keyboard
+
+Skip link → page header → callout (not focusable) → section 1 actions → section 2 actions. Tearsheet: focus
+to the first control (Cancel when nothing else accepts input), trapped, Esc = Cancel (not while busy),
+focus returns to the trigger. The file pickers are native, opened by the labelled buttons; the hidden input
+carries the same accessible name. Landmarks: `main`; each section a `region` labelled by its heading.
+
+---
+
 ## 2. States matrix
 
 | Screen / element | Empty | Loading | Error | Partial | Overflow |
@@ -542,7 +648,9 @@ dialog: focus to Cancel, trapped, Esc = Cancel. Landmarks: `main`, `navigation` 
 | Management · employee panel | — | — | save error inline + field messages, values intact; deactivate refused (published) → inline error + map link | — | body scrolls, header/commit bar fixed |
 | Management · departments / zones | "No departments yet" / "No zones yet" + the header primary | skeleton rows | inline error + Retry | rename conflict → inline "A department with that name already exists" | long names truncate; list scrolls |
 | Management · route | — | header + tabs real, table skeleton | "This admin page could not load" (as shipped) | not admin → 403 card + Back to seat map | — |
-| Settings | *slice 5* | | | | |
+| Settings · CSV | empty file → "The CSV is empty" inline | tearsheet parse indicator past 300ms | wrong type / too large / missing columns inline; blocked review with row list; MLS02 refreshed note | — (all-or-nothing by design) | error list scrolls in the tearsheet |
+| Settings · snapshot | empty snapshot → "Cannot restore an empty snapshot" | — | invalid shape / unreadable / too large inline; MLS02 in the review, review intact | export-first done-state "Exported 14:02" | consequences list fixed, body scrolls |
+| Settings · route | — | section skeletons | "This admin page could not load" | not admin → 403 card + Back to seat map | — |
 
 ---
 
@@ -606,9 +714,69 @@ add it to the component layer (and say so in its decision log).
 | One-field create modal | Management | exists `.cds-modal`, `.cds-text-input` | 50/50 bleed buttons |
 | Structured list with inline rename | Management | none needed | Rows 48px; ghost + overflow |
 | Tag "Not in list" | Management | exists `.cds-tag` | — |
+| Callout (non-dismissible, no status) | Settings | partial `.cds-notification` | **hand-built** the callout variant (no icon, no close) |
+| Section with one primary + file line | Settings | exists `.cds-btn` set | Labelled file trigger = button + hidden input with the same name |
+| Narrow tearsheet | Settings | **hand-built** (the map's wide tearsheet, narrow variant) | 720 centred; Cancel · primary 50/50; no × |
+| Count cards | Settings tearsheets | none needed | Tiles, `heading-03` numeral |
+| Consequences list | Settings restore | none needed | Plain list, one line each |
+| Ghost button with in-place done-state | Settings restore (D6-e) | exists `.cds-btn--ghost` | Done-state text replaces the label; not disabled |
+| Inline status / error under a section | Settings | exists `.cds-notification` | Task-generated → inline |
 
 Nothing in the shell uses Blue 60: the shell has no primary action. Phase 3 assigns `$border-interactive`
 to the current-link bar and `$focus` to the ring.
+
+---
+
+## 4. Carbon conformance of Phase 2 — what is true to IBM, what differs
+
+Method as PHASE1IA §E: each Phase 2 decision checked against the skill text read this phase (`SKILL.md`,
+`senior-workflow.md`, `ui-shell.md`, `patterns.md`, `composition.md`). **TRUE** = direct application;
+**DIFFERS** = ledgered as a deviation; **NOT COVERED** = product judgment, recorded with its reopen line.
+
+| Decision | Verdict | Skill text |
+|---|---|---|
+| D0-f one 320 width for all right panels | TRUE | ui-shell right panel: "consistent width… only one may be open" |
+| D0-g History depth 10 + Show more | TRUE | patterns Overflow: "prefer a Show more button over scrolling, gradients or fades"; ui-shell: never unbounded content in a side panel |
+| D0-h hamburger only where the panel has content; slot reserved | TRUE | ui-shell: hamburger "only when there's a collapsible left panel"; "icons don't move" |
+| D1-c one right slot, slide-in pushes; shell panels float | TRUE | composition: slide-in "pushes page content and does not trap focus"; ui-shell right panel "floats over page content" |
+| D1-d Focused search, both scope counts incl. zero, scope offers the wider set | TRUE | patterns Search: Focused; "Always display the number of results, including zero — and per scope" |
+| D1-e Copy link with a "Copied" confirmation | TRUE | patterns Common actions: Copy |
+| D1-f Find me not-in-directory → inline notification | TRUE | patterns Notifications: task-generated → inline |
+| Publish disabled at N = 0 with the reason beside it | TRUE | patterns Disabled: "pair it with an inline warning explaining how to enable it" |
+| Publish review as a wide tearsheet with the rail used for the summary | NOT COVERED | composition gives the wide rail to a progress indicator; a single-step review has none, so the rail carries the readiness summary. Reopens if the review gains steps |
+| D2-a inspector 400, not 480 | **DIFFERS — deviation 15** | composition side panel 480 |
+| D2-b one primary in the row; Undo/Redo/Add seat ghost; ⋯ holds Discard only | TRUE | SKILL "One primary action per section… everything else tertiary or ghost"; senior-workflow progressive disclosure |
+| D3-a no page-level primary on Reception | NOT COVERED | composition: the page header carries "the page's one primary action" — it assumes one exists; Reception creates nothing. Reopens if Reception gains a task |
+| D3-a density by zone (list dense, readout calm) | TRUE | senior-workflow: "Resolve by zone, not by screen" |
+| D3-b unlabelled search with clear ×; count incl. zero | TRUE | patterns Search: "Never label a search field"; Common actions: Clear = close icon right of the field |
+| D3-c `?q=` written on lock | TRUE | ui-shell: "encode view, filters, selection and mode in the URL" |
+| D3-d "No extension on file" + fallback | TRUE | patterns Empty states: "Never lead into a dead end" |
+| D3-e own error boundary copy | TRUE | patterns Empty states — error management: "why there's no data and what to do" |
+| D5-a page header owns the one primary; tabs for peer facets | TRUE | composition Page anatomy; senior-workflow "tabs for peer facets of one object" |
+| D5-b side panel because the table is referenced; slide-over, focus-trapped | TRUE | SKILL form table: side panel when "the user must keep referencing what's behind it"; composition: slide-over "overlays and traps focus (it's a dialog)" |
+| D5-b confirm dialog on top of a side panel | TRUE | composition: "a modal never nests" — side panels and tearsheets "may open a confirmation" |
+| D5-c one-field create modal; visible row actions | TRUE | patterns Dialogs / composition Modal: "One or two fields"; taste: hover-only actions are a tell |
+| D6-a callout for standing guidance | TRUE | patterns Callout: "Loads with the page. Not triggered, not dismissible" |
+| D6-b/c reviews as narrow tearsheets | TRUE | SKILL: "never put large or complex data in a dialog"; composition narrow tearsheet: "medium complexity with scrolling or sections; no distinct steps" |
+| D6-c restore = confirm with consequences, no typed confirmation | TRUE | SKILL destructive table: moderate |
+| D6-e export-first ghost action with in-place done-state | NOT COVERED | product safety affordance; keeps the review open (no nested container). Reopens if restores gain an automatic pre-export |
+| No new §6 deviation beyond 15 | — | 11 and 13 stay reserved |
+
+Every empty state names a next step; every search reports a count including zero; no screen interrupts
+without a user action; one primary per section throughout; contrast, motion tokens and both themes are
+Phase 3 gates (nothing here asserts a ratio).
+
+## 5. Phase 4 obligations surfaced by Phase 2 (build items, not open questions)
+
+- Undo / Redo keyboard shortcuts (none ship) — tooltips in D2-b promise them.
+- History panel "last edit N min ago" — derive from max draft `updated_at` (trigger-maintained).
+- Roving tabindex + arrow keys across markers; Esc cancel ladder (D1, §1M.11).
+- `?q=` on `/`, `/admin`, `/reception`; `?dept=/?zone=/?status=`, `?names=` (B3).
+- Reception `error.tsx` in its own voice; loading skeleton on the real layout (D3-e).
+- 5 MB client guard on CSV and snapshot files; labelled file triggers (D6-b, frame invariant).
+- Management: real tablist; not-admin 403 card gains its action; tiles removed (D5-a/d).
+- Settings: Reset draft entry removed (ruling 22; Q7 keeps the map's Discard).
+- Ask Planner drawer 408 → 400 (D1-c slot width).
 
 ---
 
@@ -620,4 +788,4 @@ to the current-link bar and `$focus` to the ring.
 | 2 Map | `docs/phase2-map` | wireframes: `map-published.html`, `map-draft.html`, `map-publish-review.html`, `map-fallbacks.html` |
 | 3 Reception | `docs/phase2-reception` | wireframe: `reception.html` |
 | 4 Management | `docs/phase2-management` | wireframe: `management.html` |
-| 5 Settings | — | — |
+| 5 Settings | `docs/phase2-settings` | wireframe: `settings.html` |
