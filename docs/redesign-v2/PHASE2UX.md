@@ -427,6 +427,94 @@ actions → recents. Ctrl/⌘ K refocuses the field from anywhere on the page. L
 
 ---
 
+## 1G. Management (`/admin/management?tab=employees|departments|zones`)
+
+D5 governs the archetype (in-page tabs, no third tier; page header + one primary on the 1584 live area) — not
+reopened. Decisions made in this slice: D5-a…d (owner-approved 2026-09-03 with two edits to D5-b and the
+summary tiles dropped). Wireframe: `management.html`.
+
+### 1G.1 Decision log
+
+```
+Screen: Management — people, departments, zones
+Problem: "A new hire started / someone left / a department was renamed. Fix the directory so the
+         map and Reception say the right thing after the next publish."
+Primary task: add or edit one employee record (departments and zones are occasional housekeeping).
+
+Options considered:
+  A. What ships: four tab-buttons on a 1240 frame, five non-link summary tiles, a modal for the
+     five-field employee form, hover-revealed delete on lists, CTA in the toolbar.
+  B. Index-page archetype on the 1584 frame: page header owns the one primary (it follows the
+     tab), a real tablist, employees as a compact sortable table with a slide-over side panel for
+     create/edit, departments/zones as structured lists with visible actions, tiles folded into
+     the toolbar count.
+  C. Three routes (/management/employees …) with their own headers. Re-opens ruling 5 (tabs).
+
+Choice: B. The table is the page; the admin edits one record while checking it against the rows
+  around it, so the form sits beside the table, not over it. One primary per section, and the
+  section is the tab. Tiles go: they link nowhere, and the two numbers an admin needs while
+  editing people (assigned / unassigned) belong beside the table they describe.
+Trade-off: the primary changes label when the tab changes — a control that "moves" — accepted
+  because it never changes position, only its verb, and each tab has exactly one create.
+Would change if: a tab grows a second create action, or the directory outgrows what a
+  virtualised single table scans well (~1,000 rows).
+```
+
+### 1G.2 Geometry at 1920 × 889
+
+| Region | Size | Notes |
+|---|---|---|
+| Live area | 1584 centred | D0 document regime; page scrolls |
+| Page header | title `heading-04` "Management" + subtitle `body-01` "People, departments and zones."; **primary at the right**: Add employee / Add department / Add zone (follows the tab); tabs row 48px below, sticky on scroll | one primary per section (D5-a) |
+| Toolbar | 48px: search (320) · count `body-compact-01` | Employees only; lists have no toolbar (create is the header primary) |
+| Table | full width; rows **32px** (short — scanned); header row 40 | Employees |
+| Side panel | **480**, slide-over, scrim, focus trapped | D5-b |
+| Lists | rows 48px, full width | Departments, Zones |
+
+### 1G.3 Employees (D5-b)
+
+- **Toolbar count** (`aria-live="polite"`): at rest "68 employees · 56 assigned · 12 unassigned"; while filtering "7 of 68 match" / "0 of 68 match". This replaces the summary tiles; draft-seat and zone counts already live on the map band and in the History panel.
+- **Table**: columns Name · Department · Position · Extension · Seat · Status; sortable headers (`aria-sort`); numbers right-aligned tabular; Status = two-signal mark + label (Assigned ■ / Unassigned □); Seat = mono label, name links to `/admin?seat=<label>` when assigned; row kebab ⋯ → Edit. Rows are not tab stops; the name link and the kebab are (two stops per row, as shipped); row click also opens Edit. Virtualised as shipped.
+- **Create / edit = 480px side panel, slide-over.** The admin keeps referencing the table behind it (the neighbours, the department spelling, who is already assigned), which is the side-panel criterion; the form itself is self-contained and the table is context, not something operated mid-edit — so the panel **overlays and traps focus** (composition: slide-over is a dialog). Scrim over the page; Esc closes (asks first when dirty); focus returns to the opener. Title "Add employee" / "Edit employee"; helper "Changes reach the map and Reception at the next publish." Fields, single column: **Name (required)** — the one required field is marked, the form is mostly optional; Position; Phone extension; Email; Department (combobox over the managed list, free text allowed). Edit shows a read-only fact row "Draft seat · NE04 · Open on the map". Validation on blur; server errors as an inline notification at the top of the panel plus field messages, values intact. Commit bar bleeds to the bottom: **Cancel** · **Save employee** / **Add employee** (the panel's one primary). Edit also carries **Deactivate…** as a danger ghost above the commit bar.
+- **Deactivate** = moderate impact: confirm dialog **on top of the side panel** (a side panel may open a confirmation; a modal never nests) — "Deactivate Sarah Reyes?" · impact line with the seat ("Clears her draft seat NE04 and keeps the record inactive." / "Removes her from the active directory.") · "The published map everyone sees won't change until you publish again." · Cancel · **Deactivate employee** (danger). Refused because the person is still on the published map → inline error in the panel: "Sarah Reyes is still on the published map at NE04. Vacate the seat in the draft and publish before deactivating." + link "Open NE04 on the map". No reactivate, no bulk actions, no delete (as shipped — not added).
+
+### 1G.4 Departments and Zones (D5-c)
+
+Structured list, 48px rows: name · count ("38 employees" / "12 draft seats") · ghost **Rename** (inline: input +
+Save / Cancel, Enter / Esc) · overflow ⋯ holding **Delete** (danger). Unmanaged names (used by people but not in
+the list) carry a tag "Not in list" and a tertiary **Add to list**. Create = header primary → one-field modal
+("Add department" · Name · Cancel / Add department, 50/50 bleed). Delete = moderate impact, confirm with the
+shipped copy: "Delete department “Intake”?" · "Clears this department from **5 active employees**. Employee
+records remain active and physical seat zones are unchanged." · "Viewers keep seeing current people details
+until you publish." · Cancel / **Delete department**. Zones: same shape, "Clears this physical zone from **12
+draft seats**. Seat markers and employees remain in place." Subtitles as shipped ("Employee departments are
+separate from physical seating zones." / "Zones are physical map areas used for filtering and custom-seat
+label prefixes."). Names only — no zone geometry here.
+
+### 1G.5 Route states (D5-d)
+
+| State | Design |
+|---|---|
+| Not admin | the shared 403 card ("Admin access required" + **Back to seat map**) — the shipped body-only variant gains the action |
+| Route error | own admin voice as shipped: "This admin page could not load" / "…any edit you had open and unsaved is gone." + Try again · Back to the published map |
+| Loading | page header real, tabs real, six skeleton rows under real column headers |
+| Empty directory | column headers stay; body: "No employees yet" / "Start with Add employee, or bring the whole directory in at once with a CSV import in Settings." + tertiary link to Settings. The primary stays in its permanent header position |
+| Zero search | "No employees match this search" / "Try a different name, department, position, or seat label." + ghost Clear search; count "0 of 68 match" |
+| No departments / zones | "No departments yet" / "Add a department to keep employee records easier to scan." (zones: "Add a zone to organize map filters and custom-seat labels.") — the primary is the next step |
+| Success | inline status banner under the toolbar: "Sarah Reyes saved." / "Intake deleted." (task-generated → inline, not toast) |
+| Overflow | long names truncate with `title`; 300+ rows virtualised; the side panel body scrolls, header and commit bar fixed |
+| Narrow (1024) | single column; header primary stays; table scrolls horizontally inside its container with a visible edge; side panel 480 over 544 of content |
+
+### 1G.6 Keyboard
+
+Skip link → page header → primary → tablist (← → between tabs, Tab into the panel) → toolbar search → table
+(name link, kebab per row; sortable headers are buttons) → lists (Rename, ⋯). Side panel: focus to the first
+field, trapped, Esc closes (confirms when dirty), focus back to the row's kebab or the header primary. Confirm
+dialog: focus to Cancel, trapped, Esc = Cancel. Landmarks: `main`, `navigation` "Management sections"
+(the tablist's region), `search` (toolbar), `dialog` for panel and confirms.
+
+---
+
 ## 2. States matrix
 
 | Screen / element | Empty | Loading | Error | Partial | Overflow |
@@ -450,7 +538,10 @@ actions → recents. Ctrl/⌘ K refocuses the field from anywhere on the page. L
 | Reception · search | zero → "No one matches “xyz”" + Clear search; count "0 matches" | — | — | — | long query stays visible; field scrolls |
 | Reception · readout | first run → "Waiting for a call" | skeleton block | — | no extension → "No extension on file" + same-department fallback; seats failed → "Seat unknown right now" | name wraps to two lines |
 | Reception · recents | Hidden while empty | — | — | — | max 4 shown |
-| Management | *slice 4* | | | | |
+| Management · employees table | headers stay; "No employees yet" + Add employee / CSV in Settings | six skeleton rows | inline error + Retry (route error in its own voice) | zero search → "No employees match this search" + Clear search, count "0 of 68 match" | virtualised; names truncate with `title` |
+| Management · employee panel | — | — | save error inline + field messages, values intact; deactivate refused (published) → inline error + map link | — | body scrolls, header/commit bar fixed |
+| Management · departments / zones | "No departments yet" / "No zones yet" + the header primary | skeleton rows | inline error + Retry | rename conflict → inline "A department with that name already exists" | long names truncate; list scrolls |
+| Management · route | — | header + tabs real, table skeleton | "This admin page could not load" (as shipped) | not admin → 403 card + Back to seat map | — |
 | Settings | *slice 5* | | | | |
 
 ---
@@ -506,6 +597,15 @@ add it to the component layer (and say so in its decision log).
 | Readout tile with display numeral | Reception | **hand-built** | Tinted block, `heading-06` tabular |
 | Row-buttons (same-department fallback) | Reception | exists `.cds-btn--ghost` | 40px, full width |
 | Error boundary card | Reception | exists `.cds-empty` (error kind) | Own copy |
+| Page header with tabs + one primary | Management | exists `.cds-page-header`; tabs **hand-built** (index has none) | Primary follows the tab; sticky tabs |
+| Data table, sortable, kebab per row | Management | exists `.cds-table`, `.cds-sort`, overflow menu | Short (32px) rows; status via `.cds-status` |
+| Toolbar with search + live count | Management | exists `.cds-toolbar` | Count replaces the tiles |
+| Side panel 480, slide-over (focus-trapped) | Management | partial `.cds-side-panel` (slide-in) | **hand-built** the slide-over variant + scrim |
+| Combobox (department) | Management | **hand-built** | Managed list + free text |
+| Confirm modal over a side panel | Management | exists `.cds-modal` | Danger primary; never a modal over a modal |
+| One-field create modal | Management | exists `.cds-modal`, `.cds-text-input` | 50/50 bleed buttons |
+| Structured list with inline rename | Management | none needed | Rows 48px; ghost + overflow |
+| Tag "Not in list" | Management | exists `.cds-tag` | — |
 
 Nothing in the shell uses Blue 60: the shell has no primary action. Phase 3 assigns `$border-interactive`
 to the current-link bar and `$focus` to the ring.
@@ -519,5 +619,5 @@ to the current-link bar and `$focus` to the ring.
 | 1 Shell | `docs/phase2-shell` | wireframes: `shell-header.html`, `shell-left-panel.html`, `shell-right-panels.html`, `shell-narrow.html` |
 | 2 Map | `docs/phase2-map` | wireframes: `map-published.html`, `map-draft.html`, `map-publish-review.html`, `map-fallbacks.html` |
 | 3 Reception | `docs/phase2-reception` | wireframe: `reception.html` |
-| 4 Management | — | — |
+| 4 Management | `docs/phase2-management` | wireframe: `management.html` |
 | 5 Settings | — | — |

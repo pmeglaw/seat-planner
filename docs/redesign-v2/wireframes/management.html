@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Management (Phase 2 wireframe)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Low-fi wireframe. Grayscale + Blue 60 for the ONE primary per section (page-header create; panel Save). 8px grid, zero radius (tag excepted). */
+:root{--g10:#f4f4f4;--g20:#e0e0e0;--g30:#c6c6c6;--g50:#8d8d8d;--g60:#6f6f6f;--g70:#525252;--g80:#393939;--g90:#262626;--g100:#161616;--w:#fff;--b60:#0f62fe}
+*{box-sizing:border-box;border-radius:0;margin:0}
+body{font:400 14px/20px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.16px;color:var(--g100);background:var(--g20);padding:32px}
+h1{font-size:28px;line-height:36px;font-weight:400;margin-bottom:8px}
+h2{font-size:20px;line-height:28px;font-weight:400;margin:48px 0 8px}
+p,li{max-width:960px}
+ul{padding-left:20px;margin:8px 0}
+code{font-family:"IBM Plex Mono",monospace;font-size:12px}
+button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.fit{display:inline-flex;gap:8px;align-items:center;height:32px;margin:8px 0 16px}
+body:has(#fit:checked) .frame{zoom:.5}
+.frame{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--g10);outline:1px solid var(--g30);margin:8px 0 16px}
+.frame.narrow{width:1024px;height:768px}
+.dim{position:absolute;font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);background:rgba(255,255,255,.9);padding:0 4px;pointer-events:none;z-index:9}
+.hdr{position:absolute;left:0;right:0;top:0;height:48px;background:var(--g100);color:var(--g10);display:flex;align-items:center;border-bottom:1px solid var(--g80);z-index:8}
+.slot48{width:48px;height:48px;flex:none;display:grid;place-items:center}
+.slot48.res{outline:1px dashed var(--g70);outline-offset:-8px}
+.ham{width:16px;height:12px;background:linear-gradient(var(--g10) 0 2px,transparent 2px 5px,var(--g10) 5px 7px,transparent 7px 10px,var(--g10) 10px 12px)}
+.name{height:48px;line-height:48px;display:block;padding:0 16px;color:var(--g10);text-decoration:none;white-space:nowrap}
+.name b{font-weight:600}
+.nav{display:flex;height:48px}
+.nav a{display:flex;align-items:center;padding:0 16px;color:var(--g30);text-decoration:none;white-space:nowrap}
+.nav a[aria-current]{color:var(--g10);box-shadow:inset 0 -3px 0 var(--g10)}
+.mode{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;gap:8px;padding:0 16px;color:var(--g10);white-space:nowrap}
+.mk{width:12px;height:12px;flex:none}.mk-draft{border:2px solid var(--g10);transform:rotate(45deg) scale(.85)}
+.utils{margin-left:auto;display:flex;height:48px}
+.ub{width:48px;height:48px;display:grid;place-items:center;color:var(--g10)}
+/* page */
+.live{position:absolute;top:48px;left:168px;width:1584px;bottom:0;padding-top:32px}
+.narrow .live{left:0;width:1024px;padding:24px 16px 0}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.ph h3{font-size:28px;line-height:36px;font-weight:400}
+.ph p{color:var(--g70);margin-top:4px}
+.prim{height:40px;display:inline-flex;align-items:center;padding:0 16px 0 16px;background:var(--b60);color:#fff;gap:24px;white-space:nowrap}
+.tabs{display:flex;height:48px;border-bottom:1px solid var(--g30);margin-bottom:16px}
+.tabs span{display:flex;align-items:center;padding:0 16px;color:var(--g70)}
+.tabs span[aria-selected="true"]{color:var(--g100);box-shadow:inset 0 -2px 0 var(--g100);font-weight:600}
+.tb{height:48px;display:flex;align-items:center;gap:16px;background:var(--w);border-bottom:1px solid var(--g20);padding:0 8px}
+.tb .search{width:320px;height:40px;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--g10);border-bottom:1px solid var(--g50);color:var(--g60)}
+.tb .search.on{color:var(--g100);border-bottom:2px solid var(--g100)}
+.tb .cnt{color:var(--g70)}
+table{width:100%;border-collapse:collapse;background:var(--w)}
+th{height:40px;text-align:left;padding:0 16px;background:var(--g20);font-weight:600;white-space:nowrap}
+th.n,td.n{text-align:right;font-variant-numeric:tabular-nums}
+td{height:32px;padding:0 16px;border-bottom:1px solid var(--g10);white-space:nowrap}
+td a{color:var(--g100);text-decoration:underline}
+td .st{display:inline-flex;align-items:center;gap:8px}
+td .st i{width:10px;height:10px;display:inline-block;background:var(--g100)}
+td .st i.o{background:none;border:1px solid var(--g70)}
+td .kb{width:32px;text-align:center;color:var(--g70)}
+tr.hl td{background:var(--g10)}
+.status{height:40px;display:flex;align-items:center;gap:8px;padding:0 16px;border-left:3px solid var(--g70);background:var(--w);margin-bottom:8px}
+.empty{padding:48px 24px;background:var(--w)}
+.empty b{display:block;font-size:20px;line-height:28px;font-weight:400;margin-bottom:8px}
+.empty p{color:var(--g70)}
+.gb{height:32px;display:inline-flex;align-items:center;color:var(--g70)}
+.tert{height:40px;display:inline-flex;align-items:center;padding:0 16px;border:1px solid var(--g100)}
+.sk{background:var(--g20);height:16px}
+/* lists */
+.lst{background:var(--w)}
+.lr{height:48px;display:grid;grid-template-columns:1fr 160px 96px 40px;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--g10)}
+.lr .c{color:var(--g70)}
+.lr .tag{display:inline-flex;height:24px;align-items:center;padding:0 8px;border-radius:12px;background:var(--g20);font-size:12px;margin-left:8px}
+.lr input{height:32px;border:0;border-bottom:2px solid var(--g100);background:var(--g10);padding:0 8px;font:inherit;width:320px}
+.menu{position:absolute;width:200px;background:var(--w);border:1px solid var(--g30);box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:6}
+.menu div{height:40px;display:flex;align-items:center;padding:0 16px}
+.menu .d{font-weight:600}
+/* side panel + modal */
+.scrim{position:absolute;top:48px;left:0;right:0;bottom:0;background:rgba(22,22,22,.5);z-index:6}
+.sp{position:absolute;top:48px;right:0;bottom:0;width:480px;background:var(--w);z-index:7;display:flex;flex-direction:column}
+.sp .h{padding:24px 24px 16px;border-bottom:1px solid var(--g20)}
+.sp .h h4{font-size:20px;line-height:28px;font-weight:400}
+.sp .h p{color:var(--g70);margin-top:4px}
+.sp .b{padding:24px;display:flex;flex-direction:column;gap:24px;overflow:auto;flex:1}
+.fld .l{font-size:12px;line-height:16px;color:var(--g60);margin-bottom:8px}
+.inp{height:40px;border-bottom:1px solid var(--g50);background:var(--g10);display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.inp.err{border-bottom:2px solid var(--g100)}
+.help{font-size:12px;line-height:16px;color:var(--g60);margin-top:4px}
+.fact{display:flex;justify-content:space-between;color:var(--g70);padding:8px 0;border-top:1px solid var(--g20);border-bottom:1px solid var(--g20)}
+.dng{height:40px;display:inline-flex;align-items:center;color:var(--g100);font-weight:600;align-self:flex-start;border:1px solid var(--g100);padding:0 16px}
+.commit{display:flex;border-top:1px solid var(--g20)}
+.commit span{flex:1;height:64px;display:flex;align-items:center;padding:0 16px}
+.commit .p{background:var(--b60);color:#fff}
+.commit .g{color:var(--g70)}
+.note{border-left:3px solid var(--g70);background:var(--g10);padding:12px 16px;display:flex;flex-direction:column;gap:4px}
+.note b{font-weight:600}
+.modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:480px;background:var(--w);z-index:8;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.modal .mh{padding:24px 24px 8px}
+.modal .mh small{display:block;font-size:12px;line-height:16px;color:var(--g60);margin-bottom:8px}
+.modal .mh h4{font-size:20px;line-height:28px;font-weight:400}
+.modal .mb{padding:8px 24px 24px;display:flex;flex-direction:column;gap:12px;color:var(--g70)}
+.modal .mf{display:flex}
+.modal .mf span{flex:1;height:64px;display:flex;align-items:center;padding:0 16px}
+.modal .mf .g{color:var(--g70);background:var(--g10)}
+.modal .mf .d{background:var(--g100);color:#fff}
+.modal .mf .p{background:var(--b60);color:#fff}
+.sheet{position:absolute;left:168px;top:96px;width:1584px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.col{background:var(--w);border:1px solid var(--g30);padding:16px;min-height:300px}
+.cap{font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);margin-bottom:8px}
+</style>
+</head>
+<body>
+<h1>Management (<code>/admin/management</code>)</h1>
+<p>Phase 2 wireframe, slice 4. Spec: <code>PHASE2UX.md</code> §1G. Decisions D5 (fixed) and D5-a…d (owner-approved 2026-09-03; tiles dropped). Index-page archetype on the 1584 live area: page header with a real tablist and the one primary that follows the tab; employees as a compact sortable table with a slide-over side panel; departments and zones as structured lists with visible actions. Blue 60 appears once per section.</p>
+<label class="fit"><input type="checkbox" id="fit"> Fit frames to half size</label>
+
+<h2>1 · Employees — default</h2>
+<ul>
+  <li>Reserved hamburger slot; Management current; indicator Draft (an admin route). Header: title + subtitle + <b>Add employee</b>; tabs below, sticky.</li>
+  <li>Toolbar count "68 employees · 56 assigned · 12 unassigned" (replaces the tiles). Rows 32px, sortable headers, name links to the seat, kebab per row.</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#">Reception</a><a href="#" aria-current="page">Management</a><a href="#">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live">
+    <div class="ph"><div><h3>Management</h3><p>People, departments and zones.</p></div><span class="prim">Add employee <span>+</span></span></div>
+    <div class="tabs" role="tablist"><span role="tab" aria-selected="true">Employees</span><span role="tab">Departments</span><span role="tab">Zones</span></div>
+    <div class="tb"><span class="search" role="search">🔍 Search employees…</span><span class="cnt" aria-live="polite">68 employees · 56 assigned · 12 unassigned</span></div>
+    <table>
+      <thead><tr><th aria-sort="ascending">Name ▲</th><th>Department</th><th>Position</th><th class="n">Extension</th><th>Seat</th><th>Status</th><th><span class="sr">Row actions</span></th></tr></thead>
+      <tbody>
+        <tr><td><a href="#">Jonas Adeyemi</a></td><td>Litigation</td><td>Paralegal</td><td class="n">233</td><td>—</td><td><span class="st"><i class="o"></i>Unassigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Nadia Aziz</a></td><td>Front Office</td><td>Receptionist</td><td class="n">200</td><td><code>R01</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Jordan Blake</a></td><td>Case Management</td><td>Case Manager</td><td class="n">218</td><td><code>NW03</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Maya Chen</a></td><td>Case Management</td><td>Case Manager</td><td class="n">216</td><td><code>NW01</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Rita Costa</a></td><td>Litigation</td><td>Attorney</td><td class="n">240</td><td>—</td><td><span class="st"><i class="o"></i>Unassigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td>Yusuf Demir</td><td>Litigation</td><td>Law clerk</td><td class="n">—</td><td>—</td><td><span class="st"><i class="o"></i>Unassigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Lena Fischer</a></td><td>Pre-Litigation</td><td>Attorney</td><td class="n">251</td><td><code>SE02</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Omar Haddad</a></td><td>Front Office</td><td>Intake</td><td class="n">204</td><td><code>SW04</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Alex Kim</a></td><td>Accounting</td><td>—</td><td class="n">270</td><td><code>NE10</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Alexandra Konstantinou</a></td><td>Litigation</td><td>Senior Attorney</td><td class="n">214</td><td><code>NE04</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Grace Liu</a></td><td>Pre-Litigation</td><td>Paralegal</td><td class="n">253</td><td><code>SE05</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Kai Morrison</a></td><td>—</td><td>—</td><td class="n">—</td><td><code>NE06</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Priya Natarajan</a></td><td>Case Management</td><td>Case Manager</td><td class="n">219</td><td><code>NW05</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Daniel Ortiz</a></td><td>Case Management</td><td>Case Manager</td><td class="n">235</td><td><code>NE05</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td>Elena Petrova</td><td>Medical Records</td><td>Records specialist</td><td class="n">260</td><td>—</td><td><span class="st"><i class="o"></i>Unassigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Sarah Reyes</a></td><td>Case Management</td><td>Case Manager</td><td class="n">214</td><td><code>NE04</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td><a href="#">Tom Reyes</a></td><td>Pre-Litigation</td><td>Paralegal</td><td class="n">247</td><td><code>SW11</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+        <tr><td>Marta Reyes-Cole</td><td>Litigation</td><td>Attorney</td><td class="n">231</td><td>—</td><td><span class="st"><i class="o"></i>Unassigned</span></td><td class="kb">⋮</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <span class="dim" style="left:172px;top:52px">1584 live area · header primary follows the tab (D5-a) · rows 32 short — scanned</span>
+</div>
+
+<h2>2 · Edit employee — 480px slide-over side panel (D5-b)</h2>
+<ul>
+  <li>Opened from a row's kebab (or row click). Scrim over the page, <b>focus trapped</b>; the table stays visible as context. Esc closes (asks if dirty); focus returns to the kebab.</li>
+  <li>Single column; Name is the only required field and the only one marked. Read-only fact "Draft seat · NE04 · Open on the map". <b>Deactivate…</b> as a danger ghost above the commit bar. Commit bar: Cancel · <b>Save employee</b>.</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#">Reception</a><a href="#" aria-current="page">Management</a><a href="#">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live">
+    <div class="ph"><div><h3>Management</h3><p>People, departments and zones.</p></div><span class="prim">Add employee <span>+</span></span></div>
+    <div class="tabs"><span aria-selected="true">Employees</span><span>Departments</span><span>Zones</span></div>
+    <div class="tb"><span class="search">🔍 Search employees…</span><span class="cnt">68 employees · 56 assigned · 12 unassigned</span></div>
+    <table><thead><tr><th>Name ▲</th><th>Department</th><th>Position</th><th class="n">Extension</th><th>Seat</th><th>Status</th><th></th></tr></thead><tbody>
+      <tr><td><a href="#">Priya Natarajan</a></td><td>Case Management</td><td>Case Manager</td><td class="n">219</td><td><code>NW05</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+      <tr><td><a href="#">Daniel Ortiz</a></td><td>Case Management</td><td>Case Manager</td><td class="n">235</td><td><code>NE05</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+      <tr class="hl"><td><a href="#">Sarah Reyes</a></td><td>Case Management</td><td>Case Manager</td><td class="n">214</td><td><code>NE04</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+      <tr><td><a href="#">Tom Reyes</a></td><td>Pre-Litigation</td><td>Paralegal</td><td class="n">247</td><td><code>SW11</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+    </tbody></table>
+  </div>
+  <div class="scrim"></div>
+  <aside class="sp" role="dialog" aria-modal="true" aria-labelledby="e1">
+    <div class="h"><h4 id="e1">Edit employee</h4><p>Changes reach the map and Reception at the next publish.</p></div>
+    <div class="b">
+      <div class="fld"><div class="l">Name (required)</div><div class="inp">Sarah Reyes</div></div>
+      <div class="fld"><div class="l">Position</div><div class="inp">Case Manager</div></div>
+      <div class="fld"><div class="l">Phone extension</div><div class="inp">214</div></div>
+      <div class="fld"><div class="l">Email</div><div class="inp">s.reyes@megeredchianlaw.com</div></div>
+      <div class="fld"><div class="l">Department</div><div class="inp">Case Management <span>▾</span></div><div class="help">Pick from the list or type a new one.</div></div>
+      <div class="fact"><span>Draft seat</span><span><code>NE04</code> · <u>Open on the map</u></span></div>
+      <span class="dng">Deactivate…</span>
+    </div>
+    <div class="commit"><span class="g">Cancel</span><span class="p">Save employee</span></div>
+  </aside>
+  <span class="dim" style="left:172px;top:1044px">480 · slide-over (scrim, focus trap) — the table behind is context, not operated mid-edit (D5-b)</span>
+</div>
+
+<h2>3 · Deactivate — confirm on top of the side panel (moderate impact)</h2>
+<ul><li>A side panel may open a confirmation; a modal may not. Consequences spelled out with the seat; publish note; Cancel · <b>Deactivate employee</b> (danger). Focus to Cancel; Esc = Cancel.</li></ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#">Reception</a><a href="#" aria-current="page">Management</a><a href="#">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span></header>
+  <div class="live"><div class="ph"><div><h3>Management</h3><p>People, departments and zones.</p></div><span class="prim">Add employee <span>+</span></span></div><div class="tabs"><span aria-selected="true">Employees</span><span>Departments</span><span>Zones</span></div><div class="tb"><span class="search">🔍 Search employees…</span><span class="cnt">68 employees · 56 assigned · 12 unassigned</span></div></div>
+  <div class="scrim"></div>
+  <aside class="sp" aria-hidden="true" style="opacity:.6"><div class="h"><h4>Edit employee</h4></div><div class="b"><div class="fld"><div class="l">Name (required)</div><div class="inp">Sarah Reyes</div></div><div class="fld"><div class="l">Position</div><div class="inp">Case Manager</div></div></div><div class="commit"><span class="g">Cancel</span><span class="p">Save employee</span></div></aside>
+  <div class="modal" role="alertdialog" aria-modal="true">
+    <div class="mh"><small>Employees</small><h4>Deactivate Sarah Reyes?</h4></div>
+    <div class="mb"><div>Clears her draft seat <b>NE04</b> and keeps the record inactive. She disappears from Management and from Reception.</div><div>The published map everyone sees won't change until you publish again.</div></div>
+    <div class="mf"><span class="g">Cancel</span><span class="d">Deactivate employee</span></div>
+  </div>
+</div>
+
+<h2>4 · Departments — structured list, ⋯ open (D5-c)</h2>
+<ul><li>Header primary is now <b>Add department</b>. Rows: name · count · ghost Rename · ⋯ → Delete. An unmanaged name carries the tag "Not in list" + tertiary Add to list. One row shows inline rename.</li></ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#">Reception</a><a href="#" aria-current="page">Management</a><a href="#">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live">
+    <div class="ph"><div><h3>Management</h3><p>People, departments and zones.</p></div><span class="prim">Add department <span>+</span></span></div>
+    <div class="tabs"><span>Employees</span><span aria-selected="true">Departments</span><span>Zones</span></div>
+    <p style="color:var(--g70);margin-bottom:16px">Employee departments are separate from physical seating zones. 15 departments.</p>
+    <div class="lst">
+      <div class="lr"><span>Accounting</span><span class="c">3 employees</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+      <div class="lr"><span>Case Management</span><span class="c">38 employees</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+      <div class="lr"><span>Front Office</span><span class="c">3 employees</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+      <div class="lr"><span>Intake</span><span class="c">5 employees</span><span class="gb">Rename</span><span class="kb" style="background:var(--g20)">⋮</span></div>
+      <div class="lr"><span><input value="Litigation — Trial" aria-label="Rename Litigation"> <span class="gb">Save</span> <span class="gb">Cancel</span></span><span class="c">20 employees</span><span></span><span></span></div>
+      <div class="lr"><span>Marketing<span class="tag">Not in list</span></span><span class="c">2 employees</span><span class="gb">Add to list</span><span></span></div>
+      <div class="lr"><span>Medical Records</span><span class="c">7 employees</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+      <div class="lr"><span>Pre-Litigation</span><span class="c">9 employees</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+      <div class="lr"><span>WIL</span><span class="c">1 employee</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+    </div>
+  </div>
+  <div class="menu" style="left:1512px;top:392px"><div class="d">Delete</div></div>
+  <span class="dim" style="left:172px;top:52px">visible actions: Rename (ghost) · ⋯ Delete (danger) — no hover-revealed trash</span>
+</div>
+
+<h2>5 · Zones + delete confirm + add modal — sheet</h2>
+<ul><li>Zones list (same shape, "N draft seats"); the delete confirm with the shipped consequences; the one-field Add zone modal (header primary).</li></ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#">Reception</a><a href="#" aria-current="page">Management</a><a href="#">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span></header>
+  <div class="live">
+    <div class="ph"><div><h3>Management</h3><p>People, departments and zones.</p></div><span class="prim">Add zone <span>+</span></span></div>
+    <div class="tabs"><span>Employees</span><span>Departments</span><span aria-selected="true">Zones</span></div>
+    <div style="display:grid;grid-template-columns:1fr 480px 480px;gap:32px;align-items:start">
+      <div><p style="color:var(--g70);margin-bottom:16px">Zones are physical map areas used for filtering and custom-seat label prefixes. 11 zones.</p>
+        <div class="lst">
+          <div class="lr"><span>Attorney offices</span><span class="c">18 draft seats</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+          <div class="lr"><span>Conference</span><span class="c">4 draft seats</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+          <div class="lr"><span>Kitchen</span><span class="c">0 draft seats</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+          <div class="lr"><span>Litigation pod</span><span class="c">10 draft seats</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+          <div class="lr"><span>North-east pod</span><span class="c">12 draft seats</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+          <div class="lr"><span>North-west pod</span><span class="c">12 draft seats</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+          <div class="lr"><span>Reception</span><span class="c">2 draft seats</span><span class="gb">Rename</span><span class="kb">⋮</span></div>
+        </div></div>
+      <div class="modal" style="position:static;transform:none;box-shadow:none;border:1px solid var(--g30)"><div class="mh"><small>Zones</small><h4>Delete zone “Kitchen”?</h4></div><div class="mb"><div>Clears this physical zone from <b>0 draft seats</b>. Seat markers and employees remain in place.</div><div>This updates draft zone metadata only. The published viewer map is unchanged until publish.</div></div><div class="mf"><span class="g">Cancel</span><span class="d">Delete zone</span></div></div>
+      <div class="modal" style="position:static;transform:none;box-shadow:none;border:1px solid var(--g30)"><div class="mh"><small>Zones</small><h4>Add zone</h4></div><div class="mb"><div class="fld"><div class="l">Name</div><div class="inp" style="color:var(--g60)">e.g. South-east pod</div></div></div><div class="mf"><span class="g">Cancel</span><span class="p">Add zone</span></div></div>
+    </div>
+  </div>
+  <span class="dim" style="left:800px;top:1040px">one-field create = modal (patterns: one or two fields); delete = confirm with consequences, no typed confirmation (moderate)</span>
+</div>
+
+<h2>6 · States — sheet</h2>
+<ul><li>Empty directory (headers stay, primary in its permanent place) · zero search · loading · panel save error · deactivate refused (still published) · not admin (shared 403 card with the action).</li></ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#">Reception</a><a href="#" aria-current="page">Management</a><a href="#">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — no changes</span></header>
+  <div class="sheet">
+    <div class="col"><div class="cap">EMPTY DIRECTORY</div><div class="tb" style="padding:0"><span class="search">🔍 Search employees…</span><span class="cnt">0 employees</span></div><table><thead><tr><th>Name</th><th>Department</th><th>Seat</th><th>Status</th></tr></thead></table><div class="empty"><b>No employees yet</b><p>Start with Add employee, or bring the whole directory in at once with a CSV import in Settings.</p><span class="gb">Go to Settings → CSV import</span></div></div>
+    <div class="col"><div class="cap">ZERO SEARCH</div><div class="tb" style="padding:0"><span class="search on">🔍 zzzz</span><span class="cnt">0 of 68 match</span></div><div class="empty"><b>No employees match this search</b><p>Try a different name, department, position, or seat label.</p><span class="gb">Clear search</span></div></div>
+    <div class="col" aria-busy="true"><div class="cap">LOADING</div><table><thead><tr><th>Name</th><th>Department</th><th>Seat</th><th>Status</th></tr></thead></table><div style="display:flex;flex-direction:column;gap:16px;padding:16px 0"><div class="sk" style="width:70%"></div><div class="sk" style="width:60%"></div><div class="sk" style="width:65%"></div><div class="sk" style="width:55%"></div><div class="sk" style="width:68%"></div><div class="sk" style="width:62%"></div></div></div>
+    <div class="col"><div class="cap">PANEL — save error, values intact</div><div class="note" role="alert"><b>Couldn't save employee</b><span>Enter a valid email address.</span></div><div class="fld" style="margin-top:16px"><div class="l">Email</div><div class="inp err">s.reyes@megeredchianlaw</div><div class="help">Enter a valid email address.</div></div></div>
+    <div class="col"><div class="cap">PANEL — deactivate refused (still published)</div><div class="note" role="alert"><b>Sarah Reyes is still on the published map at NE04</b><span>Vacate the seat in the draft and publish before deactivating.</span><span class="gb">Open NE04 on the map</span></div></div>
+    <div class="col"><div class="cap">NOT ADMIN — shared 403 card</div><div class="empty" style="padding:24px 0"><b>Admin access required</b><p>You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to edit the seat map.</p><span class="tert" style="margin-top:8px">Back to seat map</span></div></div>
+  </div>
+</div>
+
+<h2>7 · Narrow fallback (1024)</h2>
+<ul><li>Header primary stays; table scrolls horizontally inside its container (visible edge); side panel stays 480 over 544 of content.</li></ul>
+<div class="frame narrow">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><span class="mode"><span class="mk mk-draft"></span>Draft · 4</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live">
+    <div class="ph"><div><h3>Management</h3><p>People, departments and zones.</p></div><span class="prim">Add employee <span>+</span></span></div>
+    <div class="tabs"><span aria-selected="true">Employees</span><span>Departments</span><span>Zones</span></div>
+    <div class="tb"><span class="search">🔍 Search employees…</span><span class="cnt">68 employees · 56 assigned · 12 unassigned</span></div>
+    <div style="overflow:hidden;position:relative"><table style="width:1300px"><thead><tr><th>Name</th><th>Department</th><th>Position</th><th class="n">Extension</th><th>Seat</th><th>Status</th><th></th></tr></thead><tbody>
+      <tr><td><a href="#">Nadia Aziz</a></td><td>Front Office</td><td>Receptionist</td><td class="n">200</td><td><code>R01</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+      <tr><td><a href="#">Jordan Blake</a></td><td>Case Management</td><td>Case Manager</td><td class="n">218</td><td><code>NW03</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+      <tr><td><a href="#">Maya Chen</a></td><td>Case Management</td><td>Case Manager</td><td class="n">216</td><td><code>NW01</code></td><td><span class="st"><i></i>Assigned</span></td><td class="kb">⋮</td></tr>
+    </tbody></table><div style="position:absolute;right:0;top:0;bottom:0;width:32px;background:linear-gradient(90deg,transparent,var(--g20))"></div></div>
+    <div class="help" style="margin-top:8px">Table scrolls sideways — 1300px of columns in 992.</div>
+  </div>
+</div>
+</body>
+</html>
