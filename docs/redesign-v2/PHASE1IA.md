@@ -117,6 +117,8 @@ Never a history entry per state change. Theme and login email stay localStorage.
 - Left panel: filters (B1). 256px, slide-in, pushes the canvas; hidden by default.
 - Map surface control row (one 48px row): floor selector + focused search ("This floor ▾" scope) + **"Filters N ×"** button + result count + Find me + names toggle + mode-specific controls (Ask Planner and Publish in draft mode; Ask Planner drawer is deviation 14). The old popover `FilterPanel` retires (E2.5). D1/D1′/D2 govern the rest — Phase 2 territory.
 
+  **B4 amendment (owner ruling, 2026-09-02, Phase 2 map PR — B4 enumerated the row before the editor's own controls were listed):** in Draft mode the row continues, after a divider, with **Undo · Redo** (ghost icon buttons; tooltips carry the shortcuts; Redo disabled when its stack is empty) · **Add seat** (ghost, with label) · **Ask Planner** (tertiary) · **Publish N changes** (the one primary) · **⋯ overflow** (holds *Discard draft changes* only — last, danger, divider above, disabled when nothing to discard) · **Names** toggle. Reset zoom stays with the canvas zoom/fit control, not in the overflow. The seat inspector is a **400px** slide-in side panel (D2-a, deviation 15). Mockups: "Seat Planner Shell Mockups" canvas, page "Phase 2 Q1–Q2". Recorded in `DECISIONS.md` D2-a / D2-b.
+
 ### B5. Permissions matrix
 
 | Surface / action | anon | viewer | admin |

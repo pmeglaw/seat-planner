@@ -187,6 +187,148 @@ editing is read-only — those are the other slices' concern; the shell itself h
 
 ---
 
+## 1M. Map — Published mode (`/`) and Draft mode (`/admin`)
+
+One surface, two modes. D1 / D1′ / D2 / D2′ govern markers, names-on-marker, floors and the roster — not
+reopened here. Decisions made in this slice: D1-c…g, D2-a/b, deviation 15, PHASE1IA B4 amendment.
+Wireframes: `map-published.html`, `map-draft.html`, `map-publish-review.html`, `map-fallbacks.html`.
+
+### 1M.1 Decision log
+
+```
+Screen: Map — Published mode (viewer and admin) / Draft mode (admin)
+Problem: Published — "Where does Sarah sit?" Draft — "Someone moved desks. Change the map,
+         check it, push it live for everyone."
+Primary task: Published — locate one named person on whichever floor.
+              Draft — assign or move one person to one seat.
+
+Options considered:
+  A. One canvas, one control row, one right-edge slot; mode changes only what the row
+     carries after the divider and whether the inspector edits. (D0 "one section, two modes".)
+  B. Two surfaces with their own chrome (what ships: viewer header 36px vs shell 40px).
+     Re-opens ruling 2.
+  C. Draft mode as an overlay on the published map (diff view). A different product.
+
+Choice: A. Everything a viewer learns on / is true on /admin — same row, same search, same
+  inspector shape — so an admin switching mode re-learns nothing (ui-shell: transitional
+  volatility). The mode is carried by the header indicator (D0) and by the one primary.
+Trade-off: the published row is 40% empty at 1920. Accepted: calm where the user decides;
+  the empty run is where draft controls appear, so nothing moves between modes.
+Would change if: D0's reopen conditions, or a fifth per-mode control that will not fit
+  the 1920 row (it fits with 270px to spare today).
+```
+
+### 1M.2 Geometry at 1920 × 889 (the measured viewport)
+
+| Region | y | Notes |
+|---|---|---|
+| Header | 0–48 | shell (§1) |
+| Control row | 48–96 | full width, **above** canvas and slot — never reflows when the slot opens |
+| Canvas | 96–849 | plan 753 tall → 1660 wide, aspect-locked 2.204:1, wholly visible; **pushed** to 1520 when the slot is open (plan 690 tall) |
+| Right slot | 96–889, x 1520–1920 | 400px (D2-a), one owner (D1-c) |
+| Status band | 849–889 | legend · counts · zoom/fit (D1-g) |
+
+The plan is centred in the canvas; the band spans the canvas, not the slot.
+
+### 1M.3 Control row (48px, controls 40px, 8px gaps)
+
+Shared, both modes, left to right — x-budget in px at 1920:
+
+| Control | Width | Kind | Behaviour |
+|---|---|---|---|
+| Floor selector "Floor 3 · Pre-Litigation ▾" | 224 | dropdown, place marker | Options from the registry; the current floor named in full; switching keeps query, filters, selection (D1′/D2′) |
+| Search | 320 | Focused search field, unlabelled, Ctrl/⌘ K | Trailing scope segment "This floor ▾ / Whole building"; results in the 560px palette (D1-d) |
+| Filters N × | 112 | chip-button | Applied-filter count; × clears all without opening the panel; Hidden when N = 0 (nothing to clear) |
+| Result count | 176 | text, `body-compact-01` | "22 of 68 seats match" while search or filters are active; "68 seats" otherwise; roster floor counts people |
+| Find me | 96 | ghost | D1-f |
+
+Draft mode continues after a **divider** (D2-b): Undo 40 · Redo 40 · Add seat 112 · Ask Planner 136 ·
+**Publish 4 changes** 176 (primary, 40px) · ⋯ 40 · Names 152. Published mode: Names 152 directly after
+Find me. Totals: published ≈ 1096, draft ≈ 1650 with gaps — fits 1920 with 270 to spare.
+
+- **Publish** is present and **disabled** when N = 0, with the reason **stated beside the control**: `label-01` "No changes to publish" in the row (referenced by `aria-describedby`), never only a tooltip — patterns: a disabled control that blocks a primary action pairs with an inline explanation. The indicator also reads "Draft — no changes". Parity with Discard, and the row does not jump when the first edit lands.
+- **Undo / Redo** tooltips: "Undo <last change> · Ctrl Z", "Redo · Ctrl Shift Z" — shortcuts are a Phase 4 obligation (none ship today). Both disabled while a mutation is in flight or the inspector is dirty (as shipped); Redo disabled when its stack is empty.
+- **Add seat** toggles the mode (label flips to "Exit add seat"); **Hidden** on a roster floor (D2′).
+- **Ask Planner** (tertiary) carries the highlight-count badge while highlights exist (re-entry point, D1-c). **Hidden** for viewers, absent in Published mode.
+- **⋯** holds *Discard draft changes* only (danger, divider above, disabled when nothing to discard). Reset zoom lives on the canvas zoom control.
+- **Names** toggle: switch with label "Names", `aria-pressed`; Hidden on a roster floor.
+
+### 1M.4 Search (D1-d)
+
+Palette states: browse (empty query — zones, then people seated-first, as shipped); results (header
+"Results · 7 on this floor · 11 in building"; rows = title · kind · subtitle · seat code or "Floor 2" tag;
+footer "↑↓ to move · Enter opens · Esc closes"); zero ("No results for “xyz” on this floor · 0 in building"
++ **Clear search**, and when the other scope has hits, the line reads "0 on this floor · **3 in building** →
+Widen"). Scope "Whole building" lists cross-floor rows with their floor tag; opening one switches the floor
+then selects. `?q=` landing per D1-d. Loading indicator only past ~300ms.
+
+### 1M.5 Seat inspector (400px, D2-a)
+
+| Row | Published mode (read-only) | Draft mode (edit) |
+|---|---|---|
+| Header | eyebrow "Seat NE04 · North-east pod"; title = name or "Open seat"; status mark + label; **Copy link** icon (`?seat=`); close × | same; while dirty the × asks "Discard unsaved seat edits?" |
+| Person block | name · role · department; contact rows Email (mailto), Extension (+ Copy extension); **Copy link** icon (`?q=`) | Employee name combobox (creates a person inline: pill "Create new employee on save" + note), Job title, Phone extension, Department select, Status select (Hidden while assigned — Open / Reserved / Unavailable), Seat note |
+| Actions | — | group "Move · Swap · Vacate" (Vacate only when assigned); **Delete seat** (danger, only for an available custom seat; the block reason shows as helper text otherwise) |
+| Commit bar | — | bottom, bleeds to the edge: **Cancel** (ghost, left) · **Save draft changes** / **Assign employee** (primary, right); "Saving…" state; server errors return as an inline notification + field messages |
+
+Empty (open) seat: header + status + "No employee assigned"; Draft adds the form. Overflow: the name line
+is sized for **≤ 22 characters** on one line (Phase 3 sizes the type); longer names wrap to two, never
+truncate. Judgment recorded: composition says create containers omit the ×; this panel is a record view
+that also edits, so it keeps the × (patterns: Close = icon, upper right) and adds Cancel only while dirty.
+
+### 1M.6 Mode card (Move / Swap / Add seat)
+
+Owns the slot while a mode runs (INV-4). Card: eyebrow "Move employee mode", message ("Moving Sarah Reyes
+from NE04. Select the destination seat."), ghost **Exit move employee**; Esc exits ("Move canceled — no
+changes made." inline). Confirm dialogs stay modal (fewer than five inputs, a decision) with the shipped
+copy ("Move Sarah Reyes to L02?" / "Swap them"), floors tagged when the pair crosses floors (D2′).
+
+### 1M.7 Ask Planner drawer (deviation 14) in the slot
+
+**400px — the same slot at the same width** as the inspector and the mode card, so the canvas never reflows when one replaces another; the selected seat stays highlighted on the map while the drawer is open. Header "Ask Planner" + AI label (Phase 3: Carbon-for-AI), subline "Read-only answers
+from saved draft map data.", dirty banner when the inspector had unsaved edits, suggested prompts,
+textarea (800 chars, Ctrl/⌘ Enter), **Ask** (the drawer's one primary — the row's Publish is a different
+section). Empty / loading / error / answer states as shipped; highlights on the canvas with the count
+badge on the row button; "Clear highlights". Never for viewers.
+
+### 1M.8 Publish review — wide tearsheet (D2)
+
+Anchored bottom, header visible above, overlay dims the page, **no ×**. Title "Review draft before
+publishing"; readiness line ("Ready · 4 changes" / "No changes — the draft matches the published map");
+counts chips; table *Seat · Published now · After publish · Change*, rows grouped under **floor eyebrows**
+("Floor 3 · Pre-Litigation · 3 changes"); "People details" list; footer facts ("Draft 68 seats · Published
+68 seats · Total changes 4" and the one-line consequence "Publishing replaces what everyone sees and clears
+Undo/Redo."). Buttons: **Cancel** · **Publish 4 changes** (primary, right). States: no changes (button
+disabled "No changes to publish"); submitting ("Publishing…", inline banner "Viewers keep the current map
+until this finishes"); failure (inline error "Publish did not complete — <error>", **Retry publish**,
+review intact); **PUBLISH_BLOCKED** (tearsheet closes; canvas inline error with the server's text — this is a
+feature, not a failure).
+
+### 1M.9 Floor 2 roster (the real state, both modes)
+
+Canvas replaced by the roster region: heading "Floor 2 · Litigation — 40 people", helper line (viewer:
+"The 2nd-floor plan is not mapped yet."; admin: "… Until a draft seat exists there, everyone without a draft
+seat is listed here."), groups by department with counts, 40px static rows name · position · ext · email
++ **Copy link** icon (D1-e). Control row: Names and Add seat Hidden; result count counts people; band
+title-only. Left panel: Zone/Status Hidden (§1.3).
+
+### 1M.10 Fallbacks
+
+Viewer on `/admin`: shell present, indicator "Published · date" (a viewer never sees Draft), canvas replaced
+by the 403 card — "Admin access required" / "You are signed in, but your profile does not have admin
+permissions. Ask an admin to upgrade your role if you need to edit the seat map." / **Back to seat map**.
+Below `lg` (`/admin`): read-only — the draft plan, the shared controls only, no slot; one line in the
+band "Editing needs a wider window." (read-only, not disabled — D2).
+
+### 1M.11 Keyboard
+
+Control row Tab order = visual order; the canvas is one tab stop with **roving tabindex + arrow keys**
+across markers (Phase 4 obligation), Enter opens the inspector, Esc = cancel ladder (mode → dialog →
+inspector → selection → search). Palette: ↑↓ Enter Esc, Home/End. Landmarks: `main` = canvas + band,
+`complementary` = inspector / drawer, `search` = the field.
+
+---
+
 ## 2. States matrix
 
 | Screen / element | Empty | Loading | Error | Partial | Overflow |
@@ -197,7 +339,15 @@ editing is read-only — those are the other slices' concern; the shell itself h
 | Shell · History (viewer) | "Nothing has been published yet · Ask an admin" | skeleton line | inline error | — | — |
 | Shell · Account | unseated → read-only "No seat published for you yet" | — | sign-out failure → inline error | — | long email wraps, never truncates |
 | Shell · Help | — | — | — | — | body scrolls |
-| Map (both modes) | *slice 2* | | | | |
+| Map · canvas (Published) | nothing published → educational empty state over the plan naming the admin's next step; viewer copy "Nothing has been published yet — ask an admin" | skeleton plan + row controls real | inline error in the map region + Retry; "The seating map itself is unchanged" | raster loaded, snapshot failed → markers without names + inline note | 120 seats → same plan, the label nudge handles it (D1) |
+| Map · canvas (Draft) | "No seats in the draft yet" + "Use Add seat, or import assignments from Settings" | skeleton | inline error + Retry | stale draft (MLS02) → self-clearing banner "The draft changed in another session… refreshed with the latest draft" | — |
+| Map · search | zero: "No results for “x” · 0 on this floor · 0 in building" + Clear search | indicator past 300ms | "Search couldn't run" inline in the palette | other scope has hits → "0 on this floor · 3 in building → Widen" | > 200 rows virtualised (as shipped) |
+| Map · filters (zero-match) | "0 of 68 seats match" + Clear filters in the band; dept with people elsewhere → "20 people in Litigation are on Floor 2 · Show Floor 2" | — | — | — | — |
+| Map · inspector | open seat: "No employee assigned" | skeleton rows | save error → inline notification + field messages, form intact | Vacate raced by another session → "NE04 can no longer be vacated — the draft changed" | name > 22 chars wraps, never truncates |
+| Map · Ask Planner | "Ask about seats, assignments, zones, or departments…" | "Checking saved draft map data" | the six named errors + fallback, Retry | broad answer → "No seats highlighted for this broad answer…" | long answer scrolls inside the drawer |
+| Map · publish review | "No changes — the draft matches the published map", button disabled | — | "Publish did not complete — <error>" + Retry, review intact | PUBLISH_BLOCKED → closes, canvas inline error with server text | 68-row table scrolls inside the tearsheet, header and buttons fixed |
+| Map · Floor 2 roster | "No one is listed on Floor 2 · Litigation yet" + "People appear here after an admin publishes" | skeleton rows | inline error | filters hide everyone → "No one on Floor 2 matches the active filters" + Clear filters | 40+ rows scroll; groups keep their eyebrows |
+| Map · Find me | not in directory → inline "Your account isn't in the published directory. Ask an admin." | — | — | unseated → roster row highlight | — |
 | Reception | *slice 3* | | | | |
 | Management | *slice 4* | | | | |
 | Settings | *slice 5* | | | | |
@@ -228,7 +378,27 @@ add it to the component layer (and say so in its decision log).
 | Tag (role) | Account | exists `.cds-tag` | The one rounded element |
 | Radio group (Theme) | Account | **hand-built** (the index has `.cds-checkbox`, no radio) | Native radios, Carbon styling |
 | Read-only row text | Account (unseated) | none needed | Static text, not a disabled control |
-| Tooltip on icon buttons | utilities | **hand-built** | Hover + focus, `label-01` |
+| Tooltip on icon buttons | utilities, Undo/Redo | **hand-built** | Hover + focus, `label-01` |
+| Control row (toolbar) | map | none (`.cds-toolbar` is the table toolbar) | **hand-built** — 48px row, 40px controls, divider, one primary |
+| Floor selector dropdown | map | exists `.cds-select` (as a menu button: hand-built) | Place marker; options from the registry |
+| Search field with scope segment | map | partial `.cds-text-input` | **hand-built** the trailing scope segment; palette is hand-built (exists today) |
+| Filter chip-button "Filters N ×" | map | exists `.cds-tag--filter` | Behaviour: × clears |
+| Ghost / tertiary / primary buttons | map row | exists `.cds-btn --ghost --tertiary --primary --icon` | — |
+| Toggle (Names) | map row | **hand-built** (index has no toggle) | Carbon toggle, labelled |
+| Overflow menu ⋯ | map row | exists (index lists overflow menu) | Danger item styling |
+| Seat inspector side panel, 400 | map | partial `.cds-side-panel` (480) | **hand-built** width + push + commit bar |
+| Combobox (employee name) | inspector | **hand-built** | Creates inline; option rows with meta |
+| Select, text input, text area | inspector | exists `.cds-select`, `.cds-text-input`; text area **hand-built** | — |
+| Danger button (Delete seat) | inspector | exists `.cds-btn--danger` | — |
+| Modal (Move / Swap / Delete confirms) | map | exists `.cds-modal` | Never nested; Cancel left, primary right |
+| Wide tearsheet (publish review) | map | **hand-built** | Anchored bottom, overlay, no × |
+| Data table (publish review) | tearsheet | exists `.cds-table` | Floor eyebrow rows are group headers |
+| Status marks (seat legend) | band | exists `.cds-status` | Constant marker footprint, per-state symbol (deviation 3) |
+| Mode card | slot | **hand-built** | Eyebrow + message + ghost exit |
+| Ask Planner drawer | slot | **hand-built** | Carbon-for-AI label in Phase 3 |
+| Search palette (560) | map | **hand-built** (exists in code) | Rows, kind badge, floor tag |
+| Roster region + static rows | map | none needed | Plain list with group eyebrows; copy-link icon button per row |
+| 403 card | `/admin` viewer | exists `.cds-empty` (as FullPageError 403) | One tertiary action |
 
 Nothing in the shell uses Blue 60: the shell has no primary action. Phase 3 assigns `$border-interactive`
 to the current-link bar and `$focus` to the ring.
@@ -240,7 +410,7 @@ to the current-link bar and `$focus` to the ring.
 | Slice | PR | Status |
 |---|---|---|
 | 1 Shell | `docs/phase2-shell` | wireframes: `shell-header.html`, `shell-left-panel.html`, `shell-right-panels.html`, `shell-narrow.html` |
-| 2 Map | — | not started (waits for slice 1 to merge) |
+| 2 Map | `docs/phase2-map` | wireframes: `map-published.html`, `map-draft.html`, `map-publish-review.html`, `map-fallbacks.html` |
 | 3 Reception | — | — |
 | 4 Management | — | — |
 | 5 Settings | — | — |

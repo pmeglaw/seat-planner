@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Map — fallbacks: viewer on /admin, 1024 read-only (Phase 2 wireframe)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Low-fi wireframe. Grayscale. 8px grid, zero radius. */
+:root{--g10:#f4f4f4;--g20:#e0e0e0;--g30:#c6c6c6;--g50:#8d8d8d;--g60:#6f6f6f;--g70:#525252;--g80:#393939;--g90:#262626;--g100:#161616;--w:#fff}
+*{box-sizing:border-box;border-radius:0;margin:0}
+body{font:400 14px/20px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.16px;color:var(--g100);background:var(--g20);padding:32px}
+h1{font-size:28px;line-height:36px;font-weight:400;margin-bottom:8px}
+h2{font-size:20px;line-height:28px;font-weight:400;margin:48px 0 8px}
+p,li{max-width:960px}
+ul{padding-left:20px;margin:8px 0}
+code{font-family:"IBM Plex Mono",monospace;font-size:12px}
+button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.fit{display:inline-flex;gap:8px;align-items:center;height:32px;margin:8px 0 16px}
+body:has(#fit:checked) .frame{zoom:.5}
+.frame{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--g10);outline:1px solid var(--g30);margin:8px 0 16px}
+.frame.narrow{width:1024px;height:768px}
+.dim{position:absolute;font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);background:rgba(255,255,255,.9);padding:0 4px;pointer-events:none;z-index:5}
+.hdr{position:absolute;left:0;right:0;top:0;height:48px;background:var(--g100);color:var(--g10);display:flex;align-items:center;border-bottom:1px solid var(--g80)}
+.slot48{width:48px;height:48px;flex:none;display:grid;place-items:center}
+.slot48.res{outline:1px dashed var(--g70);outline-offset:-8px}
+.ham{width:16px;height:12px;background:linear-gradient(var(--g10) 0 2px,transparent 2px 5px,var(--g10) 5px 7px,transparent 7px 10px,var(--g10) 10px 12px)}
+.name{height:48px;line-height:48px;display:block;padding:0 16px;color:var(--g10);text-decoration:none;white-space:nowrap}
+.name b{font-weight:600}
+.nav{display:flex;height:48px}
+.nav a{display:flex;align-items:center;padding:0 16px;color:var(--g30);text-decoration:none;white-space:nowrap}
+.nav a[aria-current]{color:var(--g10);box-shadow:inset 0 -3px 0 var(--g10)}
+.mode{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;gap:8px;padding:0 16px;color:var(--g10);white-space:nowrap}
+.mk{width:12px;height:12px;flex:none}.mk-pub{background:var(--g10)}.mk-draft{border:2px solid var(--g10);transform:rotate(45deg) scale(.85)}
+.utils{margin-left:auto;display:flex;height:48px}
+.ub{width:48px;height:48px;display:grid;place-items:center;color:var(--g10)}
+.doc{position:absolute;top:48px;left:168px;width:1584px;bottom:0;display:flex;align-items:flex-start;justify-content:center;padding-top:96px}
+.card{width:480px;background:var(--w);border:1px solid var(--g30);padding:24px;display:flex;flex-direction:column;gap:16px}
+.card h3{font-size:20px;line-height:28px;font-weight:400}
+.card p{color:var(--g70)}
+.card .t{height:40px;display:inline-flex;align-items:center;padding:0 16px;border:1px solid var(--g100);align-self:flex-start}
+.ctl{position:absolute;top:48px;left:0;right:0;height:48px;background:var(--w);border-bottom:1px solid var(--g20);display:flex;align-items:center;padding:0 8px;gap:8px;z-index:2}
+.c{height:40px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid var(--g50);white-space:nowrap;color:var(--g100);gap:8px}
+.c.ghost{border:0;color:var(--g70)}
+.c.search{width:240px;color:var(--g60);justify-content:space-between}
+.c.search .scope{border-left:1px solid var(--g30);padding-left:8px;color:var(--g100)}
+.txt{padding:0 8px;color:var(--g70);white-space:nowrap}
+.tog{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 8px;margin-left:auto}
+.trk{width:32px;height:16px;background:var(--g100);position:relative}
+.trk::after{content:"";position:absolute;right:2px;top:2px;width:12px;height:12px;background:var(--w)}
+.canvas{position:absolute;top:96px;left:0;right:0;bottom:40px;display:flex;align-items:center;justify-content:center;padding:16px}
+.plan{aspect-ratio:2.204;max-width:100%;max-height:100%;width:100%;position:relative;background:var(--w);outline:1px solid var(--g30);background-image:linear-gradient(var(--g20) 1px,transparent 1px),linear-gradient(90deg,var(--g20) 1px,transparent 1px);background-size:64px 64px}
+.plan .lab{position:absolute;left:16px;top:8px;color:var(--g50);font-size:12px}
+.seat{position:absolute;width:24px;height:24px;border:1px solid var(--g70);background:var(--w)}
+.band{position:absolute;left:0;right:0;bottom:0;height:40px;background:var(--w);border-top:1px solid var(--g20);display:flex;align-items:center;padding:0 16px;gap:24px;color:var(--g70)}
+.band .zoom{margin-left:auto;display:inline-flex;gap:8px}
+.band .zoom span{height:32px;min-width:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--g50);padding:0 8px}
+</style>
+</head>
+<body>
+<h1>Map — fallbacks</h1>
+<p>Phase 2 wireframe, slice 2. Spec: <code>PHASE2UX.md</code> §1M.10. Two frames: a viewer who opens <code>/admin</code> (composition <code>FullPageError</code> 403 with a recovery path, PHASE1IA ruling 12) and the one deliberate narrow fallback for <code>/admin</code> at 1024 (read-only — D2, deviation 4).</p>
+<label class="fit"><input type="checkbox" id="fit"> Fit frames to half size</label>
+
+<h2>1 · Viewer on <code>/admin</code> — "Admin access required"</h2>
+<ul>
+  <li>Shell present; the indicator reads Published (a viewer never sees Draft); Management and Settings Hidden. Reserved hamburger slot — no map, so no filter panel.</li>
+  <li>Card on the 1584px live area, left-aligned block (patterns: empty states), one tertiary action <b>Back to seat map</b> → <code>/</code>. Copy as shipped.</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res" aria-hidden="true"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a></nav><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="doc"><div class="card" role="region" aria-labelledby="e1"><h3 id="e1">Admin access required</h3><p>You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to edit the seat map.</p><a class="t" href="#">Back to seat map</a></div></div>
+  <span class="dim" style="left:172px;top:52px">1584 live area, centred (document regime, D0)</span>
+</div>
+
+<h2>2 · <code>/admin</code> at 1024 — read-only draft map</h2>
+<ul>
+  <li>Below <code>lg</code> the editor is read-only (not disabled): the draft plan renders with the shared controls only — floor, search (240), result count, Find me, Names. No divider, no editor controls, no slot; selecting a seat opens the inspector as a read-only bottom sheet (as D1 below the hinge).</li>
+  <li>The band states it once: "Editing needs a wider window." Indicator compact: ◇ Draft · 4.</li>
+</ul>
+<div class="frame narrow">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><span class="mode"><span class="mk mk-draft"></span>Draft · 4</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl"><span class="c">Floor 3 ▾</span><span class="c search">🔍 Find <span class="scope">This floor ▾</span></span><span class="txt">68 seats</span><span class="c ghost">Find me</span><label class="tog"><span class="trk"></span>Names</label></div>
+  <div class="canvas"><div class="plan"><span class="lab">draft plan, read-only — markers keep D1's shape</span><div class="seat" style="left:12%;top:30%"></div><div class="seat" style="left:12%;top:42%"></div><div class="seat" style="left:30%;top:30%"></div><div class="seat" style="left:55%;top:40%"></div><div class="seat" style="left:75%;top:60%"></div></div></div>
+  <div class="band"><span><b>Floor 3 · 68 seats</b></span><span>Editing needs a wider window.</span><span class="zoom"><span>−</span><span>Fit</span><span>+</span></span></div>
+  <span class="dim" style="left:8px;top:100px">read-only, never disabled (D2, deviation 4); the only narrow frame for this surface</span>
+</div>
+</body>
+</html>

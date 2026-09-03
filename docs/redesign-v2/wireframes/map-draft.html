@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Map — Draft mode (Phase 2 wireframe)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Low-fi wireframe. Grayscale + Blue 60 for the ONE primary (Publish N changes). 8px grid, zero radius (tag excepted). */
+:root{--g10:#f4f4f4;--g20:#e0e0e0;--g30:#c6c6c6;--g50:#8d8d8d;--g60:#6f6f6f;--g70:#525252;--g80:#393939;--g90:#262626;--g100:#161616;--w:#fff;--b60:#0f62fe}
+*{box-sizing:border-box;border-radius:0;margin:0}
+body{font:400 14px/20px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.16px;color:var(--g100);background:var(--g20);padding:32px}
+h1{font-size:28px;line-height:36px;font-weight:400;margin-bottom:8px}
+h2{font-size:20px;line-height:28px;font-weight:400;margin:48px 0 8px}
+p,li{max-width:960px}
+ul{padding-left:20px;margin:8px 0}
+code{font-family:"IBM Plex Mono",monospace;font-size:12px}
+button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.fit{display:inline-flex;gap:8px;align-items:center;height:32px;margin:8px 0 16px}
+body:has(#fit:checked) .frame{zoom:.5}
+.frame{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--g10);outline:1px solid var(--g30);margin:8px 0 16px}
+.dim{position:absolute;font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);background:rgba(255,255,255,.9);padding:0 4px;pointer-events:none;z-index:5}
+.hdr{position:absolute;left:0;right:0;top:0;height:48px;background:var(--g100);color:var(--g10);display:flex;align-items:center;border-bottom:1px solid var(--g80)}
+.slot48{width:48px;height:48px;flex:none;display:grid;place-items:center}
+.ham{width:16px;height:12px;background:linear-gradient(var(--g10) 0 2px,transparent 2px 5px,var(--g10) 5px 7px,transparent 7px 10px,var(--g10) 10px 12px)}
+.name{height:48px;line-height:48px;display:block;padding:0 16px;color:var(--g10);text-decoration:none;white-space:nowrap}
+.name b{font-weight:600}
+.nav{display:flex;height:48px}
+.nav a{display:flex;align-items:center;padding:0 16px;color:var(--g30);text-decoration:none;white-space:nowrap}
+.nav a[aria-current]{color:var(--g10);box-shadow:inset 0 -3px 0 var(--g10)}
+.mode{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;gap:8px;padding:0 16px;color:var(--g10);white-space:nowrap}
+.mk{width:12px;height:12px;flex:none}.mk-draft{border:2px solid var(--g10);transform:rotate(45deg) scale(.85)}
+.utils{margin-left:auto;display:flex;height:48px}
+.ub{width:48px;height:48px;display:grid;place-items:center;color:var(--g10)}
+.ctl{position:absolute;top:48px;left:0;right:0;height:48px;background:var(--w);border-bottom:1px solid var(--g20);display:flex;align-items:center;padding:0 8px;gap:8px;z-index:2}
+.c{height:40px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid var(--g50);white-space:nowrap;color:var(--g100);gap:8px;position:relative}
+.c.sel{width:224px;justify-content:space-between}
+.c.search{width:320px;color:var(--g60);justify-content:space-between}
+.c.search .scope{border-left:1px solid var(--g30);padding-left:8px;color:var(--g100)}
+.c.chip{border-color:var(--g70)}
+.c.ghost{border:0;color:var(--g70)}
+.c.icon{width:40px;padding:0;justify-content:center;border:0;color:var(--g70)}
+.c.dis{color:var(--g30)}
+.c.tert{border-color:var(--g100)}
+.c.prim{background:var(--b60);color:#fff;border:0;padding:0 16px}
+.c.prim.dis{background:var(--g30);color:var(--g60)}
+.badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;font-size:11px;line-height:16px;text-align:center;background:var(--g100);color:var(--w);padding:0 4px}
+.txt{padding:0 8px;color:var(--g70);white-space:nowrap}
+.div{width:1px;height:24px;background:var(--g30);margin:0 4px}
+.tog{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 8px;margin-left:auto}
+.trk{width:32px;height:16px;background:var(--g100);position:relative}
+.trk::after{content:"";position:absolute;right:2px;top:2px;width:12px;height:12px;background:var(--w)}
+.canvas{position:absolute;top:96px;left:0;right:0;bottom:40px;display:flex;align-items:center;justify-content:center;padding:16px}
+.canvas.push{right:400px}
+.plan{aspect-ratio:2.204;max-width:100%;max-height:100%;width:100%;position:relative;background:var(--w);outline:1px solid var(--g30);background-image:linear-gradient(var(--g20) 1px,transparent 1px),linear-gradient(90deg,var(--g20) 1px,transparent 1px);background-size:64px 64px}
+.plan .lab{position:absolute;left:16px;top:8px;color:var(--g50);font-size:12px}
+.seat{position:absolute;width:28px;height:28px;border:1px solid var(--g70);background:var(--w)}
+.seat span{position:absolute;left:32px;top:2px;height:24px;line-height:22px;padding:0 6px;border:1px solid var(--g70);background:var(--w);white-space:nowrap;font-size:12px}
+.seat.on{background:var(--g100);border-color:var(--g100)}.seat.on span{background:var(--g100);color:var(--w);border-color:var(--g100)}
+.seat.open{border-style:dashed}
+.seat.hi{outline:3px solid var(--g50);outline-offset:2px}
+.band{position:absolute;left:0;right:0;bottom:0;height:40px;background:var(--w);border-top:1px solid var(--g20);display:flex;align-items:center;padding:0 16px;gap:24px;color:var(--g70);z-index:2}
+.band.push{right:400px}
+.band .lg{display:inline-flex;gap:8px;align-items:center}
+.band .zoom{margin-left:auto;display:inline-flex;gap:8px}
+.band .zoom span{height:32px;min-width:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--g50);padding:0 8px}
+.rslot{position:absolute;top:96px;right:0;bottom:0;width:400px;background:var(--w);border-left:1px solid var(--g20);display:flex;flex-direction:column;z-index:3}
+.rslot.at{position:relative;top:auto;right:auto;bottom:auto;height:920px;flex:none;border:1px solid var(--g30)}
+.ins-h{padding:16px;border-bottom:1px solid var(--g20);display:grid;grid-template-columns:1fr auto auto;gap:8px 16px}
+.eyebrow{font-size:12px;line-height:16px;color:var(--g60);grid-column:1/-1}
+.ins-h h3{font-size:20px;line-height:28px;font-weight:400}
+.ico{width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--g30);font-size:12px}
+.st{display:inline-flex;align-items:center;gap:8px;grid-column:1/-1;color:var(--g70)}
+.st i{width:10px;height:10px;background:var(--g100);display:inline-block}
+.st i.open{background:none;border:1px dashed var(--g70)}
+.sec{padding:16px;display:flex;flex-direction:column;gap:16px;overflow:auto}
+.sec h4{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.32px;color:var(--g60)}
+.lbl{font-size:12px;line-height:16px;color:var(--g60)}
+.fld .lbl{margin-bottom:8px}
+.inp{height:40px;border-bottom:1px solid var(--g50);background:var(--g10);display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.inp.ta{height:80px;align-items:flex-start;padding-top:8px}
+.help{font-size:12px;line-height:16px;color:var(--g60);margin-top:4px}
+.pill{display:inline-flex;height:24px;align-items:center;padding:0 8px;border-radius:12px;background:var(--g20);font-size:12px}
+.acts{display:flex;gap:8px}
+.acts span,.dng{height:40px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid var(--g100);flex:1;justify-content:center}
+.dng{border-color:var(--g100);color:var(--g100);width:100%}
+.commit{margin-top:auto;display:flex;border-top:1px solid var(--g20)}
+.commit span{flex:1;height:64px;display:flex;align-items:center;padding:0 16px}
+.commit .p{background:var(--b60);color:#fff}
+.commit .p.dis{background:var(--g30);color:var(--g60)}
+.commit .g{color:var(--g70)}
+.note{border-left:3px solid var(--g70);background:var(--g10);padding:12px 16px;display:flex;flex-direction:column;gap:4px}
+.note b{font-weight:600}
+.gb{height:32px;display:inline-flex;align-items:center;color:var(--g70)}
+.card{padding:16px;display:flex;flex-direction:column;gap:12px}
+.card h3{font-size:20px;line-height:28px;font-weight:400}
+.menu{position:absolute;top:96px;right:212px;width:240px;background:var(--w);border:1px solid var(--g30);box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:6}
+.menu div{height:40px;display:flex;align-items:center;padding:0 16px}
+.menu hr{border:0;border-top:1px solid var(--g20);margin:0}
+.menu .d{color:var(--g100);font-weight:600}
+.menu .d.dis{color:var(--g50);font-weight:400}
+.empty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:480px;background:var(--w);border:1px solid var(--g30);padding:24px}
+.empty h3{font-size:20px;line-height:28px;font-weight:400;margin-bottom:8px}
+.empty p{color:var(--g70)}
+.roster{position:absolute;top:96px;left:0;right:0;bottom:40px;padding:24px 168px}
+.roster h3{font-size:20px;line-height:28px;font-weight:400}
+.roster .rh{color:var(--g70);margin:4px 0 16px}
+.grp h4{font-size:12px;line-height:16px;font-weight:600;color:var(--g60);height:32px;display:flex;align-items:center;border-bottom:1px solid var(--g20);margin-top:16px}
+.rr{height:40px;display:grid;grid-template-columns:2fr 2fr 2fr 32px;align-items:center;gap:16px;border-bottom:1px solid var(--g10)}
+.sheet{display:flex;gap:16px;position:absolute;left:16px;top:112px}
+.cap{font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);padding:4px 16px;background:var(--g10)}
+.ta-ai{height:96px;border:1px solid var(--g50);padding:12px 16px;color:var(--g60)}
+.ans{padding:16px;background:var(--g10);display:flex;flex-direction:column;gap:8px}
+.hl{height:40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--g20)}
+</style>
+</head>
+<body>
+<h1>Map — Draft mode (<code>/admin</code>)</h1>
+<p>Phase 2 wireframe, slice 2. Spec: <code>PHASE2UX.md</code> §1M. Decisions D1-c…g, D2-a/b, deviation 15, PHASE1IA B4 amendment (owner rulings Q1–Q2, 2026-09-02). Same surface as Published mode; the row continues after a divider with the editor's controls; the inspector edits. <b>Blue 60 appears exactly once per section: Publish N changes in the row, Save in the inspector's own commit bar.</b></p>
+<label class="fit"><input type="checkbox" id="fit"> Fit frames to half size</label>
+
+<h2>1 · Default — admin, Draft, 4 unpublished changes</h2>
+<ul>
+  <li>Row after the divider (D2-b): Undo · Redo (ghost icons; tooltips "Undo move Sarah Reyes · Ctrl Z" / "Redo · Ctrl Shift Z"; Redo disabled — empty stack) · Add seat (ghost, labelled) · Ask Planner (tertiary) · <b>Publish 4 changes</b> (primary) · ⋯ · Names.</li>
+  <li>Indicator "Draft — 4 changes" (D0). Total ≈ 1650px; 270px to spare at 1920.</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl" role="toolbar" aria-label="Map controls">
+    <span class="c sel">Floor 3 · Pre-Litigation <span>▾</span></span>
+    <span class="c search">🔍 Find a person or seat <span class="scope">This floor ▾</span></span>
+    <span class="txt">68 seats</span>
+    <span class="c ghost">Find me</span>
+    <span class="div"></span>
+    <span class="c icon" title="Undo move Sarah Reyes · Ctrl Z">↶</span>
+    <span class="c icon dis" title="Redo · Ctrl Shift Z" aria-disabled="true">↷</span>
+    <span class="c ghost">+ Add seat</span>
+    <span class="c tert">Ask Planner</span>
+    <span class="c prim">Publish 4 changes</span>
+    <span class="c icon" aria-label="More">⋯</span>
+    <label class="tog"><span class="trk"></span>Names</label>
+  </div>
+  <div class="canvas"><div class="plan"><span class="lab">Draft floor plan — draft-layer seats only</span>
+    <div class="seat" style="left:12%;top:30%"><span>Sarah Reyes</span></div><div class="seat" style="left:12%;top:40%"><span>Daniel Ortiz</span></div><div class="seat open" style="left:12%;top:50%"></div>
+    <div class="seat" style="left:30%;top:30%"><span>Maya Chen</span></div><div class="seat" style="left:30%;top:40%"><span>Jordan Blake</span></div><div class="seat open" style="left:55%;top:35%"></div><div class="seat" style="left:55%;top:45%"><span>Lena Fischer</span></div><div class="seat" style="left:75%;top:60%"><span>Omar Haddad</span></div>
+  </div></div>
+  <div class="band"><span class="lg"><b>Floor 3 · 68 seats</b></span><span class="lg"><i class="mk" style="background:var(--g100)"></i>Assigned 56</span><span class="lg"><i class="mk" style="border:1px dashed var(--g70)"></i>Open 12</span><span class="zoom"><span>−</span><span>Fit</span><span>+</span></span></div>
+  <span class="dim" style="left:1040px;top:100px">divider · Undo · Redo · Add seat · Ask Planner · Publish (primary) · ⋯ · Names (D2-b)</span>
+</div>
+
+<h2>2 · Seat selected — inspector editing (400px), inline person creation</h2>
+<ul>
+  <li>Header as Published plus × asks "Discard unsaved seat edits?" while dirty. Fields: Employee name (combobox), Job title, Phone extension, Department, Seat note. Status select is Hidden while a person is assigned.</li>
+  <li>Unmatched name → pill "Create new employee on save" + helper. Actions Move · Swap · Vacate. Commit bar bleeds to the bottom: Cancel · <b>Save draft changes</b>.</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl"><span class="c sel">Floor 3 · Pre-Litigation <span>▾</span></span><span class="c search">🔍 Find a person or seat <span class="scope">This floor ▾</span></span><span class="txt">68 seats</span><span class="c ghost">Find me</span><span class="div"></span><span class="c icon dis">↶</span><span class="c icon dis">↷</span><span class="c ghost">+ Add seat</span><span class="c tert">Ask Planner</span><span class="c prim">Publish 4 changes</span><span class="c icon">⋯</span><label class="tog"><span class="trk"></span>Names</label></div>
+  <div class="canvas push"><div class="plan"><span class="lab">canvas 1520 — Undo/Redo disabled while the inspector is dirty (as shipped)</span><div class="seat on" style="left:12%;top:50%"><span>NE06</span></div><div class="seat" style="left:12%;top:30%"><span>Sarah Reyes</span></div><div class="seat" style="left:30%;top:30%"><span>Maya Chen</span></div></div></div>
+  <div class="band push"><span class="lg"><b>Floor 3 · 68 seats</b></span><span class="zoom"><span>−</span><span>Fit</span><span>+</span></span></div>
+  <aside class="rslot" aria-label="Seat NE06">
+    <div class="ins-h"><span class="eyebrow">Seat NE06 · North-east pod</span><h3>Open seat</h3><span class="ico" title="Copy link to this seat">⧉</span><span class="ico" aria-label="Close">×</span><span class="st"><i class="open"></i>Open · no employee assigned</span></div>
+    <div class="sec">
+      <div class="fld"><div class="lbl">Employee name</div><div class="inp">Kai Morrison <span>▾</span></div><div class="help"><span class="pill">Create new employee on save</span></div><div class="help">No existing employee matches. Saving creates “Kai Morrison” and assigns this draft seat. Viewers see it only after publish.</div></div>
+      <div class="fld"><div class="lbl">Job title</div><div class="inp" style="color:var(--g60)">e.g. Case Manager</div></div>
+      <div class="fld"><div class="lbl">Phone extension</div><div class="inp" style="color:var(--g60)">e.g. 202</div></div>
+      <div class="fld"><div class="lbl">Department</div><div class="inp">No department <span>▾</span></div></div>
+      <div class="fld"><div class="lbl">Seat note</div><div class="inp ta" style="color:var(--g60)">Add a seat note…</div></div>
+      <h4>ACTIONS</h4>
+      <div class="acts"><span>Move</span><span>Swap</span></div>
+      <div class="help">Delete seat: original seats are protected. Only custom draft seats can be deleted.</div>
+    </div>
+    <div class="commit"><span class="g">Cancel</span><span class="p">Assign employee</span></div>
+  </aside>
+  <span class="dim" style="left:1100px;top:1044px">400 (D2-a, deviation 15) · name line sized for ≤ 22 chars</span>
+</div>
+
+<h2>3 · Move mode — the mode card owns the slot (INV-4)</h2>
+<ul><li>Started from the inspector's Move. Card: eyebrow, message, ghost Exit. Esc exits with "Move canceled — no changes made." Clicking a marker on either floor is the target (D2′); the confirm dialog is modal (fewer than five inputs) and tags floors when they differ.</li></ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl"><span class="c sel">Floor 3 · Pre-Litigation <span>▾</span></span><span class="c search">🔍 Find a person or seat <span class="scope">This floor ▾</span></span><span class="txt">68 seats</span><span class="c ghost">Find me</span><span class="div"></span><span class="c icon dis">↶</span><span class="c icon dis">↷</span><span class="c ghost dis">+ Add seat</span><span class="c tert">Ask Planner</span><span class="c prim">Publish 4 changes</span><span class="c icon">⋯</span><label class="tog"><span class="trk"></span>Names</label></div>
+  <div class="canvas push"><div class="plan"><span class="lab">source stays selected; open seats read as targets</span><div class="seat on" style="left:12%;top:30%"><span>Sarah Reyes · source</span></div><div class="seat open hi" style="left:12%;top:50%"></div><div class="seat open hi" style="left:55%;top:35%"></div><div class="seat" style="left:30%;top:30%"><span>Maya Chen</span></div></div></div>
+  <div class="band push"><span class="lg"><b>Floor 3 · 68 seats</b></span><span class="zoom"><span>−</span><span>Fit</span><span>+</span></span></div>
+  <aside class="rslot" aria-label="Move employee mode">
+    <div class="card"><span class="eyebrow">MOVE EMPLOYEE MODE</span><h3>Moving Sarah Reyes from NE04</h3><p>Select the destination seat — on this floor, or switch floors with the selector.</p><span class="gb">Exit move employee</span><div class="lbl">Esc also exits.</div></div>
+  </aside>
+  <span class="dim" style="left:1100px;top:1044px">mode card owns the slot until the mode ends (D1-c)</span>
+</div>
+
+<h2>4 · Ask Planner open — same slot (D1-c, deviation 14)</h2>
+<ul><li>Opened from the row's Ask Planner (tertiary). The drawer takes the <b>same 400px slot</b> the inspector had, so the canvas does not reflow; the inspector collapsed and NE04 <b>stays selected</b> on the map (reselect or Enter reopens it). Answer + highlights on the canvas; the row button carries the highlight count as the re-entry badge. "Ask" is the drawer's own primary; Publish stays the row's.</li></ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl"><span class="c sel">Floor 3 · Pre-Litigation <span>▾</span></span><span class="c search">🔍 Find a person or seat <span class="scope">This floor ▾</span></span><span class="txt">68 seats</span><span class="c ghost">Find me</span><span class="div"></span><span class="c icon">↶</span><span class="c icon dis">↷</span><span class="c ghost">+ Add seat</span><span class="c tert" style="background:var(--g100);color:var(--w)">Ask Planner<span class="badge">3</span></span><span class="c prim">Publish 4 changes</span><span class="c icon">⋯</span><label class="tog"><span class="trk"></span>Names</label></div>
+  <div class="canvas push"><div class="plan"><span class="lab">3 highlighted seats · NE04 stays SELECTED (it was open in the inspector before the drawer took the slot)</span><div class="seat on hi" style="left:12%;top:30%"><span>Sarah Reyes · selected</span></div><div class="seat hi" style="left:12%;top:40%"><span>Daniel Ortiz</span></div><div class="seat hi" style="left:30%;top:40%"><span>Jordan Blake</span></div><div class="seat" style="left:55%;top:45%"><span>Lena Fischer</span></div></div></div>
+  <div class="band push"><span class="lg"><b>Floor 3 · 68 seats</b></span><span class="zoom"><span>−</span><span>Fit</span><span>+</span></span></div>
+  <aside class="rslot" role="dialog" aria-label="Ask Planner">
+    <div class="ins-h"><span class="eyebrow">AI · read-only answers from saved draft map data</span><h3>Ask Planner</h3><span></span><span class="ico" aria-label="Close">×</span></div>
+    <div class="sec">
+      <div class="lbl">Suggested: “Who sits in the north-east pod?” · “Open seats near Litigation”</div>
+      <div class="ta-ai">Which Case Management people sit near NE04?</div>
+      <div class="lbl" style="text-align:right">41/800 · Ctrl+Enter to ask</div>
+      <span class="c prim" style="align-self:flex-end;background:var(--g100)">Ask</span>
+      <div class="ans"><b>Three Case Management people sit in the north-east pod next to NE04.</b><span class="lbl">Explain ▾</span></div>
+      <h4>HIGHLIGHTED SEATS · 3 in answer · 3 on map</h4>
+      <div class="hl"><span>NE04 · Sarah Reyes</span><span class="lbl">Floor 3</span></div>
+      <div class="hl"><span>NE05 · Daniel Ortiz</span><span class="lbl">Floor 3</span></div>
+      <div class="hl"><span>NW03 · Jordan Blake</span><span class="lbl">Floor 3</span></div>
+      <span class="gb">Clear highlights</span>
+    </div>
+  </aside>
+  <span class="dim" style="left:1100px;top:1044px">drawer in the one slot; "Ask" is dark here only because the wireframe keeps Blue 60 for the row's Publish — Phase 3 applies Carbon-for-AI</span>
+</div>
+
+<h2>5 · Floor 2 roster in Draft mode — Add seat Hidden, live working set</h2>
+<ul><li>Admin helper line names the interim rule. Add seat and Names are Hidden (never disabled) — there is no plan. Rows from live employees + draft seats. Publish still covers the whole building.</li></ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#" aria-current="page">Seat map</a><a href="#">Reception</a><a href="#">Management</a><a href="#">Settings</a></nav><span class="mode"><span class="mk mk-draft"></span>Draft — 4 changes</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="ctl"><span class="c sel">Floor 2 · Litigation <span>▾</span></span><span class="c search">🔍 Find a person <span class="scope">This floor ▾</span></span><span class="txt">40 people</span><span class="c ghost">Find me</span><span class="div"></span><span class="c icon">↶</span><span class="c icon dis">↷</span><span class="c tert">Ask Planner</span><span class="c prim">Publish 4 changes</span><span class="c icon">⋯</span></div>
+  <div class="roster" role="region" aria-label="Floor 2 roster">
+    <h3>Floor 2 · Litigation — 40 people</h3>
+    <div class="rh">The 2nd-floor plan is not mapped yet. Until a draft seat exists there, everyone without a draft seat is listed here.</div>
+    <div class="grp"><h4>LITIGATION · 20</h4>
+      <div class="rr"><span>Jonas Adeyemi</span><span>Paralegal · ext. 233</span><span>j.adeyemi@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+      <div class="rr"><span>Rita Costa</span><span>Attorney · ext. 240</span><span>r.costa@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+      <div class="rr"><span>Marta Reyes-Cole</span><span>Attorney · ext. 231</span><span>m.reyes-cole@megeredchianlaw.com</span><span class="ico">⧉</span></div>
+    </div>
+    <div class="grp"><h4>MEDICAL RECORDS · 7</h4><div class="rr"><span>Elena Petrova</span><span>Records specialist · ext. 260</span><span>e.petrova@megeredchianlaw.com</span><span class="ico">⧉</span></div></div>
+  </div>
+  <div class="band"><span class="lg"><b>Floor 2 · Litigation · 40 people</b></span></div>
+  <span class="dim" style="left:1040px;top:100px">Add seat and Names Hidden on a roster floor (D2′) — the row keeps its order</span>
+</div>
+
+<h2>6 · Draft states — sheet</h2>
+<ul><li>Row: Publish disabled at N = 0 with its reason <b>stated beside the control</b> ("No changes to publish", <code>label-01</code>, referenced by <code>aria-describedby</code>) — not only in a tooltip (patterns: a disabled control that blocks a primary action pairs with an inline explanation).</li>
+<li>Left to right: inspector, assigned seat with the ≤ 22-char name and Delete blocked · inspector, available custom seat (Delete allowed) · inspector, save error (inline + field message, form intact) · ⋯ overflow open (Discard last, danger, divider above; disabled variant beside) · stale-draft (MLS02) banner · empty draft.</li></ul>
+<div class="frame">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><span class="mode"><span class="mk mk-draft"></span>Draft — no changes</span></header>
+  <div class="ctl"><span class="c sel">Floor 3 · Pre-Litigation <span>▾</span></span><span class="c search">🔍 Find a person or seat <span class="scope">This floor ▾</span></span><span class="txt">68 seats</span><span class="c ghost">Find me</span><span class="div"></span><span class="c icon dis">↶</span><span class="c icon dis">↷</span><span class="c ghost">+ Add seat</span><span class="c tert">Ask Planner</span><span class="c prim dis" aria-disabled="true">Publish</span><span class="txt" style="font-size:12px" id="publish-reason">No changes to publish</span><span class="c icon" style="background:var(--g20)">⋯</span><label class="tog"><span class="trk"></span>Names</label></div>
+  <div class="menu" role="menu"><div class="lbl" style="height:auto;padding:8px 16px">One item only. Reset zoom is NOT here (D2-b) — it lives on the canvas zoom control.</div><hr><div class="d dis" title="No draft changes to discard">Discard draft changes</div></div>
+  <div class="sheet">
+    <aside class="rslot at"><div class="cap">ASSIGNED · Delete blocked</div>
+      <div class="ins-h"><span class="eyebrow">Seat NE04 · North-east pod</span><h3>Alexandra Konstantinou</h3><span class="ico">⧉</span><span class="ico">×</span><span class="st"><i></i>Assigned</span></div>
+      <div class="sec"><div class="fld"><div class="lbl">Employee name</div><div class="inp">Alexandra Konstantinou <span>▾</span></div></div><div class="fld"><div class="lbl">Job title</div><div class="inp">Senior Attorney</div></div><div class="fld"><div class="lbl">Phone extension</div><div class="inp">214</div></div><div class="fld"><div class="lbl">Department</div><div class="inp">Litigation <span>▾</span></div></div><div class="fld"><div class="lbl">Seat note</div><div class="inp" style="color:var(--g60)">Add a seat note…</div></div><h4>ACTIONS</h4><div class="acts"><span>Move</span><span>Swap</span><span>Vacate</span></div><div class="help">Delete seat: assigned seats cannot be deleted. Vacate the seat first.</div></div>
+      <div class="commit"><span class="g">Cancel</span><span class="p dis">Save draft changes</span></div>
+    </aside>
+    <aside class="rslot at"><div class="cap">CUSTOM SEAT · Delete allowed</div>
+      <div class="ins-h"><span class="eyebrow">Seat NE-09 · North-east pod · custom</span><h3>Open seat</h3><span class="ico">⧉</span><span class="ico">×</span><span class="st"><i class="open"></i>Open</span></div>
+      <div class="sec"><div class="fld"><div class="lbl">Employee name</div><div class="inp" style="color:var(--g60)">Search or enter a name… <span>▾</span></div></div><div class="fld"><div class="lbl">Status</div><div class="inp">Open <span>▾</span></div></div><div class="fld"><div class="lbl">Seat note</div><div class="inp" style="color:var(--g60)">Add a seat note…</div></div><h4>ACTIONS</h4><div class="acts"><span>Move</span><span>Swap</span></div><span class="dng">Delete seat</span><div class="help">Available custom draft seat can be deleted. Confirms first: “Delete custom seat NE-09?”</div></div>
+      <div class="commit"><span class="g">Cancel</span><span class="p dis">Save draft changes</span></div>
+    </aside>
+    <aside class="rslot at"><div class="cap">SAVE ERROR · form intact</div>
+      <div class="ins-h"><span class="eyebrow">Seat NE06 · North-east pod</span><h3>Open seat</h3><span class="ico">⧉</span><span class="ico">×</span><span class="st"><i class="open"></i>Open</span></div>
+      <div class="sec"><div class="note" role="alert"><b>Review inspector fields</b><span>Phone extension must be 2–4 digits.</span></div><div class="fld"><div class="lbl">Employee name</div><div class="inp">Kai Morrison <span>▾</span></div></div><div class="fld"><div class="lbl">Phone extension</div><div class="inp" style="border-bottom:2px solid var(--g100)">20a</div><div class="help">2–4 digits.</div></div></div>
+      <div class="commit"><span class="g">Cancel</span><span class="p">Assign employee</span></div>
+    </aside>
+    <div style="width:520px;display:flex;flex-direction:column;gap:16px;margin-top:112px">
+      <div class="note" role="alert" style="background:var(--w)"><b>The draft changed in another session</b><span>This page has been refreshed with the latest draft. Undo history was cleared; your last edit was not saved — check the seat and try again.</span></div>
+      <div class="cap">STALE DRAFT (MLS02) — self-clearing banner in the map region</div>
+      <div class="empty" style="position:static;transform:none;width:auto"><h3>No seats in the draft yet</h3><p>Use Add seat in the map controls, or import assignments from Settings.</p></div>
+      <div class="cap">EMPTY DRAFT — educational, names both next steps (primary resource)</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
