@@ -1,0 +1,20 @@
+[
+ {
+  "name": "shell rule gray-80 on #161616 (utility outline)",
+  "fg": "#393939",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "mode skeleton element gray-80 on skeleton bg #292929",
+  "fg": "#393939",
+  "bg": "#292929",
+  "kind": "graphic"
+ },
+ {
+  "name": "panel layer hover #333333 vs panel #161616",
+  "fg": "#333333",
+  "bg": "#161616",
+  "kind": "graphic"
+ }
+]

@@ -1,0 +1,101 @@
+/* =============================================================================
+   Seat Planner — hand-built component layer (Phase 3, redesign-v2)
+
+   Loads AFTER carbon-components.css. Only the PHASE2UX §3 rows marked
+   hand-built (or the dark-surface variants it calls for) live here; each
+   block opens with the §3 row it satisfies and the PHASE3DS §1 entry that
+   records it. Consumes --sp-* tokens only (sp-tokens.css owns every --cds-*
+   reference).
+
+   State hooks: every interactive block styles hover / active / focus through
+   `:is(:hover, [data-state="hover"])` etc. so the specimen sheets can pin a
+   state without scripting. Phase 4 keeps the selectors; the attribute is
+   simply never set in the app. (PHASE3DS §1 "Specimen state hooks".)
+
+   PR 1 (tokens + foundations) blocks:
+     1. .sp-mode        — mode indicator (shell)
+     2. .sp-seat-mark   — seat status marks, legend row, constant footprint
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------------
+   1. MODE INDICATOR  — §3 "Mode indicator · hand-built".  PHASE3DS §1.3.
+      A status-only button on the Gray 100 header (PHASE2UX §1.2 slot 4, §1.5).
+      Anatomy: [mark 12px] [gap 8] [text body-compact-01], 48px tall, 16px
+      side padding, centred on x=960 by the header, never truncates.
+      States: rest · hover · pressed · open (aria-expanded) · focus · loading
+      (skeleton, not pressable) · error (still opens the panel).
+      Nearest asset class: .cds-header-utils button (icon-only, 48×48) — no
+      text slot, no mark vocabulary, no skeleton; .cds-status (icon + label)
+      is the right anatomy but sits on theme surfaces, not the shell zone.
+   -------------------------------------------------------------------------- */
+.sp-mode {
+  display: inline-flex; align-items: center; gap: var(--sp-space-03);
+  height: var(--sp-shell-header-h); padding: 0 var(--sp-space-05);
+  color: var(--sp-mode-text); background: var(--sp-shell-bg);
+  font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body);
+  font-variant-numeric: tabular-nums; white-space: nowrap; user-select: none;
+  transition: background var(--sp-duration-fast-02) var(--sp-ease-standard);
+}
+.sp-mode:is(:hover, [data-state="hover"]) { background: var(--sp-shell-bg-hover); }
+.sp-mode:is(:active, [data-state="pressed"]),
+.sp-mode[aria-expanded="true"] { background: var(--sp-shell-bg-pressed); }
+.sp-mode:is(:focus-visible, [data-state="focus"]) {
+  outline: var(--sp-focus-width) solid var(--sp-shell-focus);
+  outline-offset: var(--sp-focus-offset);
+}
+.sp-mode-mark { width: var(--sp-mode-mark-size); height: var(--sp-mode-mark-size); flex: none; overflow: visible; }
+.sp-mode-mark [data-stroke] { fill: none; stroke: currentColor; stroke-width: var(--sp-mode-mark-stroke); stroke-linejoin: miter; }
+.sp-mode-mark [data-fill]   { fill: currentColor; }
+.sp-mode-mark [data-cut]    { fill: none; stroke: var(--sp-shell-bg); stroke-width: var(--sp-mode-mark-stroke); stroke-linecap: square; }
+.sp-mode--published   .sp-mode-mark { color: var(--sp-mode-published-mark); }    /* ■ filled square   */
+.sp-mode--draft       .sp-mode-mark { color: var(--sp-mode-draft-mark); }        /* ◇ hollow diamond  */
+.sp-mode--unpublished .sp-mode-mark { color: var(--sp-mode-unpublished-mark); }  /* □ hollow square   */
+.sp-mode--error       .sp-mode-mark { color: var(--sp-mode-error-mark); }        /* ⊗ filled circle, cut */
+
+/* loading: the slot keeps its 48px height; a 160×16 skeleton replaces the
+   mark + text; the element is not a button while loading (aria-busy, not disabled) */
+.sp-mode--loading { pointer-events: none; }
+.sp-mode-skeleton {
+  width: var(--sp-mode-skeleton-w); height: var(--sp-mode-skeleton-h);
+  background: var(--sp-shell-skeleton-bg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sp-mode-skeleton {
+    background: linear-gradient(90deg, var(--sp-shell-skeleton-bg) 0 40%, var(--sp-shell-skeleton-element) 50%, var(--sp-shell-skeleton-bg) 60% 100%);
+    background-size: 300% 100%; animation: sp-skeleton-sweep 3000ms linear infinite;
+  }
+  @keyframes sp-skeleton-sweep { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+}
+
+/* -----------------------------------------------------------------------------
+   2. SEAT STATUS MARKS — §3 "Status marks (seat legend) · exists .cds-status"
+      + DECISIONS deviation 3 (constant footprint, per-state symbol). PHASE3DS §1.4.
+      .cds-status gives icon + label + the hover-safe mark colours; what it
+      lacks is the symbol set itself and the constant 28px footprint the map
+      needs. Four states (lib/types.ts SeatStatus), one symbol each, grays
+      only — the symbol is the signal and survives grayscale:
+        assigned    ● filled circle (legend only — on the map the name pill IS the mark)
+        available   ○ hollow ring, 2px
+        reserved    lock — hollow shackle, filled body
+        unavailable hatched square, 2px edge
+      Marks are 16px beside 14px type; strokes 2px (status-and-dataviz sizing).
+   -------------------------------------------------------------------------- */
+.sp-seat-mark { width: var(--sp-seat-mark); height: var(--sp-seat-mark); flex: none; color: var(--sp-seat-mark-stroke-color); }
+.sp-seat-mark [data-stroke] { fill: none; stroke: currentColor; stroke-width: var(--sp-seat-mark-stroke); stroke-linecap: butt; }
+.sp-seat-mark [data-hatch]  { fill: none; stroke: currentColor; stroke-width: 1.5px; }
+.sp-seat-mark [data-fill]   { fill: currentColor; }
+.sp-seat-mark--assigned { color: var(--sp-seat-mark-fill-color); }
+
+/* legend row: mark + label, 32px, label text-secondary; sits in the band and the inspector header */
+.sp-seat-legend { display: inline-flex; align-items: center; gap: var(--sp-space-03); height: var(--sp-size-sm); padding: 0 var(--sp-space-03);
+  color: var(--sp-seat-mark-text); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); white-space: nowrap; }
+
+/* constant footprint: the empty-seat marker on the plan — 28×28, the symbol centred.
+   Fill and 1px edge from the footprint tokens; the name pill (assigned) is PR 3. */
+.sp-seat-footprint {
+  display: inline-grid; place-items: center;
+  width: var(--sp-seat-footprint); height: var(--sp-seat-footprint);
+  background: var(--sp-seat-footprint-fill);
+  box-shadow: inset 0 0 0 1px var(--sp-seat-footprint-border);
+}
+.sp-seat-footprint:is(:hover, [data-state="hover"]) { background: var(--sp-layer-hover-02); }
