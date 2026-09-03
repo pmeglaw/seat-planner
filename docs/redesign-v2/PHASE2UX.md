@@ -329,6 +329,104 @@ inspector → selection → search). Palette: ↑↓ Enter Esc, Home/End. Landma
 
 ---
 
+## 1R. Reception (`/reception`)
+
+D3 / D3′ govern the archetype (list–detail), density by zone and the floor-aware readout copy — not reopened.
+Decisions made in this slice: D3-a…e. Wireframe: `reception.html`.
+
+### 1R.1 Decision log
+
+```
+Screen: Reception — front-desk call routing
+Problem: "There's a call for Sarah. What's her extension, and is she at her desk?"
+Primary task: find one person and read their extension out loud, fast.
+
+Options considered:
+  A. Keep the shipped 1060px frame and 372px sidebar; add the shell, error boundary and ?q=.
+  B. The D0 document regime: 1584 live area, list pane 1072 (dense) + readout 480 (calm),
+     readout sticky; shell, error boundary, ?q=, clear ×, Ctrl/⌘ K.
+  C. Readout-first: one big search, the list only as type-ahead. Rejected in D3 (option C).
+
+Choice: B. D0 puts every text-dense surface on the same 1584 frame; a bespoke 1060 is the
+  inconsistency ui-shell warns about, and the extra width goes where D3 wants it — a calmer
+  readout that is read aloud under time pressure. Every control keeps its shipped behaviour
+  (highlight-preview, Enter locks, Esc clears, arrows clamp); the additions are the ones the
+  map already taught: clear ×, Ctrl/⌘ K, ?q=.
+Trade-off: rows get longer at 1072 — the eye travels further from name to extension.
+  Mitigated: extension right-aligned in a fixed 96px column with tabular figures, hairline
+  rows, 48px pitch.
+Would change if: the directory outgrows ~300 people (D3's line) — faceted filters replace
+  the persistent readout.
+```
+
+### 1R.2 Geometry at 1920 × 889
+
+| Region | Size | Notes |
+|---|---|---|
+| Live area | 1584 centred (x 168–1752) | D0 document regime; page scrolls normally |
+| Page header | 32px top pad · title `heading-04` 28/36 "Reception" · subtitle `body-01` "Front-desk directory — type what the caller gives you, read the extension, transfer." · 24px below | **No primary action** (D3-a) |
+| Search | 48px (`lg` input), spans the list column | Unlabelled; magnifier; placeholder "Name, department, seat, or extension…"; clear × when non-empty; Ctrl/⌘ K focuses; autofocus on entry |
+| List column | 1072 | header row 32px: count (`aria-live`) left · "Ext" right; rows 48px |
+| Readout column | 480, sticky under the header | calm zone; 32px padding |
+| Gap | 32 | grid gutter |
+
+### 1R.3 List (dense zone)
+
+Row: 32px initials avatar · name `body-compact-01` 600 + `label-01` "position · department" ("—" when both
+missing) · seat chip (mono, bordered: `L02`) or floor tag ("Floor 2") or "—" · extension right-aligned,
+tabular, 96px column, "—" when missing. Highlighted row (typing) = layer-hover + 3px inset bar; locked row =
+layer-selected + bar. Count copy: "68 people" at rest; "7 matches" / "1 match" / **"0 matches"** while
+typing. Keyboard as shipped: ↑ ↓ clamp, Enter locks (only while typing), Esc clears; mousedown on a row
+never steals focus from the field. Ranking as shipped (name starts-with → name contains → other fields).
+Overflow: names and departments truncate end-line with `title`; the list is the page's scroll.
+
+### 1R.4 Readout (calm zone) — D3-d
+
+1. Avatar 48 · name `heading-03` 20/28 · "position · department" `body-compact-01`.
+2. Extension block (tinted, `aria-live="polite"`): eyebrow "Extension" `label-01`; number in
+   `heading-06` 42/50, tabular figures — weight set in Phase 3 for arm's-length reading (the fixed scale's
+   light weight at display size is the system default; legibility at 2 m is the constraint to check);
+   while typing, "↵ to lock" hint at the right of the eyebrow.
+3. Seat line with pin icon, `body-compact-01`: seated → "Seat L02 · Floor 2 · Litigation Pod"; unseated on a
+   floor → "Floor 2 · Litigation — reaches voicemail if away"; no floor → "No assigned seat — reaches
+   voicemail if away" (D3′ copy, unchanged).
+4. **No extension** → the number slot reads "No extension on file" in `body-01` (not a dash), the seat
+   line stays, and the fallback list below becomes the next step.
+5. "If no answer — same department": up to 3 colleagues with extensions, each a 40px row-button (name ·
+   extension), pressing one locks that colleague (as shipped).
+6. **Show on map** — ghost link → `/?q=<name>` (the D1-d landing: field pre-filled, unique match selected, floor
+   switched). Owner-approved 2026-09-03. One link, no new data; gives the front desk the seat's location when a
+   visitor asks. Absent while nothing is locked.
+7. **Recent lookups** (D3: secondary view): heading `heading-compact-01`, up to 4 rows (26px avatar · name
+   · extension), current selection excluded, in-memory only (ruled 2026-08-05). Hidden while empty.
+
+### 1R.5 `?q=` and URL (D3-c)
+
+Landing on `/reception?q=<text>`: field pre-filled, list filtered, count shown; a unique match locks the
+readout; several matches leave the highlight on the first row; zero shows the zero state with the query
+kept. Locking writes `?q=<name>` with `replaceState`; clearing removes it. Nothing else in the URL.
+
+### 1R.6 Error boundary (D3-e) and other states
+
+| State | Design |
+|---|---|
+| First run | Full directory alphabetically; readout empty state "Waiting for a call" / "Start typing what the caller gives you — a name, department, seat, or extension." |
+| Zero matches | List body: "No one matches “xyz”" + ghost **Clear search**; count reads "0 matches"; readout keeps the last locked person (the call may still be live) |
+| Empty directory | List body: "The directory is empty" / "It fills in when an admin publishes the seat map."; readout empty state; search present (nothing to find, but nothing to hide either — it is the page) |
+| Loading | Skeleton matching the 1584 layout: header text real, search real, six skeleton rows, readout skeleton |
+| Error (own `error.tsx`) | Card on the live area in Reception's voice: "Reception couldn't load" / "The directory is unchanged — this is a display problem. Try again, or use the seat map's search meanwhile." Actions: **Try again** (tertiary) · Open the seat map (ghost). Reference digest in `label-01` |
+| Partial | Snapshot loaded, seats failed → seat cells read "—", seat line "Seat unknown right now", one inline notification above the list |
+| Overflow | 300+ rows scroll; long names truncate with `title`; the readout name wraps to two lines |
+| Narrow (1024) | Single column: header, search, list; locking scrolls to the readout below with a **Back to the list** ghost link at its top (D3's explicit back path); readout not sticky |
+
+### 1R.7 Keyboard
+
+Field first (autofocus); Tab → clear × (when shown) → list (roving: ↑ ↓ within, Enter locks) → readout
+actions → recents. Ctrl/⌘ K refocuses the field from anywhere on the page. Landmarks: `search` (field),
+`main` (list + readout), `complementary` "Recent lookups". Skip link lands on the field.
+
+---
+
 ## 2. States matrix
 
 | Screen / element | Empty | Loading | Error | Partial | Overflow |
@@ -348,7 +446,10 @@ inspector → selection → search). Palette: ↑↓ Enter Esc, Home/End. Landma
 | Map · publish review | "No changes — the draft matches the published map", button disabled | — | "Publish did not complete — <error>" + Retry, review intact | PUBLISH_BLOCKED → closes, canvas inline error with server text | 68-row table scrolls inside the tearsheet, header and buttons fixed |
 | Map · Floor 2 roster | "No one is listed on Floor 2 · Litigation yet" + "People appear here after an admin publishes" | skeleton rows | inline error | filters hide everyone → "No one on Floor 2 matches the active filters" + Clear filters | 40+ rows scroll; groups keep their eyebrows |
 | Map · Find me | not in directory → inline "Your account isn't in the published directory. Ask an admin." | — | — | unseated → roster row highlight | — |
-| Reception | *slice 3* | | | | |
+| Reception · list | empty directory → "The directory is empty · It fills in when an admin publishes the seat map" | six skeleton rows on the real layout | own boundary: "Reception couldn't load" + Try again · Open the seat map | seats failed → seat cells "—", inline notification | 300+ rows scroll; names truncate with `title` |
+| Reception · search | zero → "No one matches “xyz”" + Clear search; count "0 matches" | — | — | — | long query stays visible; field scrolls |
+| Reception · readout | first run → "Waiting for a call" | skeleton block | — | no extension → "No extension on file" + same-department fallback; seats failed → "Seat unknown right now" | name wraps to two lines |
+| Reception · recents | Hidden while empty | — | — | — | max 4 shown |
 | Management | *slice 4* | | | | |
 | Settings | *slice 5* | | | | |
 
@@ -399,6 +500,12 @@ add it to the component layer (and say so in its decision log).
 | Search palette (560) | map | **hand-built** (exists in code) | Rows, kind badge, floor tag |
 | Roster region + static rows | map | none needed | Plain list with group eyebrows; copy-link icon button per row |
 | 403 card | `/admin` viewer | exists `.cds-empty` (as FullPageError 403) | One tertiary action |
+| Page header (title + subtitle, no action) | Reception | exists `.cds-page-header` | Zero primaries is allowed |
+| Search input `lg` with clear × | Reception | exists `.cds-text-input` | Clear icon = **hand-built** state |
+| Listbox rows (combobox pattern) | Reception | none needed | Plain list; `.cds-status`-free |
+| Readout tile with display numeral | Reception | **hand-built** | Tinted block, `heading-06` tabular |
+| Row-buttons (same-department fallback) | Reception | exists `.cds-btn--ghost` | 40px, full width |
+| Error boundary card | Reception | exists `.cds-empty` (error kind) | Own copy |
 
 Nothing in the shell uses Blue 60: the shell has no primary action. Phase 3 assigns `$border-interactive`
 to the current-link bar and `$focus` to the ring.
@@ -411,6 +518,6 @@ to the current-link bar and `$focus` to the ring.
 |---|---|---|
 | 1 Shell | `docs/phase2-shell` | wireframes: `shell-header.html`, `shell-left-panel.html`, `shell-right-panels.html`, `shell-narrow.html` |
 | 2 Map | `docs/phase2-map` | wireframes: `map-published.html`, `map-draft.html`, `map-publish-review.html`, `map-fallbacks.html` |
-| 3 Reception | — | — |
+| 3 Reception | `docs/phase2-reception` | wireframe: `reception.html` |
 | 4 Management | — | — |
 | 5 Settings | — | — |
