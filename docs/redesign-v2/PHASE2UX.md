@@ -246,7 +246,7 @@ Draft mode continues after a **divider** (D2-b): Undo 40 · Redo 40 · Add seat 
 **Publish 4 changes** 176 (primary, 40px) · ⋯ 40 · Names 152. Published mode: Names 152 directly after
 Find me. Totals: published ≈ 1096, draft ≈ 1650 with gaps — fits 1920 with 270 to spare.
 
-- **Publish** is present and **disabled** when N = 0 (tooltip "No draft changes to publish"; the indicator already reads "Draft — no changes"). Parity with Discard, and the row does not jump when the first edit lands.
+- **Publish** is present and **disabled** when N = 0, with the reason **stated beside the control**: `label-01` "No changes to publish" in the row (referenced by `aria-describedby`), never only a tooltip — patterns: a disabled control that blocks a primary action pairs with an inline explanation. The indicator also reads "Draft — no changes". Parity with Discard, and the row does not jump when the first edit lands.
 - **Undo / Redo** tooltips: "Undo <last change> · Ctrl Z", "Redo · Ctrl Shift Z" — shortcuts are a Phase 4 obligation (none ship today). Both disabled while a mutation is in flight or the inspector is dirty (as shipped); Redo disabled when its stack is empty.
 - **Add seat** toggles the mode (label flips to "Exit add seat"); **Hidden** on a roster floor (D2′).
 - **Ask Planner** (tertiary) carries the highlight-count badge while highlights exist (re-entry point, D1-c). **Hidden** for viewers, absent in Published mode.
@@ -285,7 +285,7 @@ copy ("Move Sarah Reyes to L02?" / "Swap them"), floors tagged when the pair cro
 
 ### 1M.7 Ask Planner drawer (deviation 14) in the slot
 
-400px, same slot, header "Ask Planner" + AI label (Phase 3: Carbon-for-AI), subline "Read-only answers
+**400px — the same slot at the same width** as the inspector and the mode card, so the canvas never reflows when one replaces another; the selected seat stays highlighted on the map while the drawer is open. Header "Ask Planner" + AI label (Phase 3: Carbon-for-AI), subline "Read-only answers
 from saved draft map data.", dirty banner when the inspector had unsaved edits, suggested prompts,
 textarea (800 chars, Ctrl/⌘ Enter), **Ask** (the drawer's one primary — the row's Publish is a different
 section). Empty / loading / error / answer states as shipped; highlights on the canvas with the count
