@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Reception (Phase 2 wireframe)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap">
+<style>
+/* Low-fi wireframe. Grayscale — Reception has no primary action, so no Blue 60. 8px grid, zero radius (tag excepted). */
+:root{--g10:#f4f4f4;--g20:#e0e0e0;--g30:#c6c6c6;--g50:#8d8d8d;--g60:#6f6f6f;--g70:#525252;--g80:#393939;--g90:#262626;--g100:#161616;--w:#fff}
+*{box-sizing:border-box;border-radius:0;margin:0}
+body{font:400 14px/20px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.16px;color:var(--g100);background:var(--g20);padding:32px}
+h1{font-size:28px;line-height:36px;font-weight:400;margin-bottom:8px}
+h2{font-size:20px;line-height:28px;font-weight:400;margin:48px 0 8px}
+p,li{max-width:960px}
+ul{padding-left:20px;margin:8px 0}
+code{font-family:"IBM Plex Mono",monospace;font-size:12px}
+button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.fit{display:inline-flex;gap:8px;align-items:center;height:32px;margin:8px 0 16px}
+body:has(#fit:checked) .frame{zoom:.5}
+.frame{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--g10);outline:1px solid var(--g30);margin:8px 0 16px}
+.frame.narrow{width:1024px;height:768px}
+.dim{position:absolute;font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);background:rgba(255,255,255,.9);padding:0 4px;pointer-events:none;z-index:5}
+.hdr{position:absolute;left:0;right:0;top:0;height:48px;background:var(--g100);color:var(--g10);display:flex;align-items:center;border-bottom:1px solid var(--g80)}
+.slot48{width:48px;height:48px;flex:none;display:grid;place-items:center}
+.slot48.res{outline:1px dashed var(--g70);outline-offset:-8px}
+.ham{width:16px;height:12px;background:linear-gradient(var(--g10) 0 2px,transparent 2px 5px,var(--g10) 5px 7px,transparent 7px 10px,var(--g10) 10px 12px)}
+.name{height:48px;line-height:48px;display:block;padding:0 16px;color:var(--g10);text-decoration:none;white-space:nowrap}
+.name b{font-weight:600}
+.nav{display:flex;height:48px}
+.nav a{display:flex;align-items:center;padding:0 16px;color:var(--g30);text-decoration:none;white-space:nowrap}
+.nav a[aria-current]{color:var(--g10);box-shadow:inset 0 -3px 0 var(--g10)}
+.mode{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;gap:8px;padding:0 16px;color:var(--g10);white-space:nowrap}
+.mk{width:12px;height:12px;flex:none}.mk-pub{background:var(--g10)}
+.utils{margin-left:auto;display:flex;height:48px}
+.ub{width:48px;height:48px;display:grid;place-items:center;color:var(--g10)}
+/* page */
+.live{position:absolute;top:48px;left:168px;width:1584px;bottom:0;padding-top:32px;display:grid;grid-template-columns:1072px 480px;column-gap:32px;grid-template-rows:auto auto 1fr}
+.narrow .live{left:0;width:1024px;padding:24px 16px 0;grid-template-columns:1fr;column-gap:0}
+.ph{grid-column:1/-1;margin-bottom:24px}
+.ph h3{font-size:28px;line-height:36px;font-weight:400}
+.ph p{color:var(--g70);margin-top:4px}
+.search{height:48px;border-bottom:1px solid var(--g50);background:var(--w);display:flex;align-items:center;padding:0 16px;gap:12px;color:var(--g60);margin-bottom:8px}
+.search.on{color:var(--g100);border-bottom:2px solid var(--g100)}
+.search .x{margin-left:auto;width:32px;height:32px;display:grid;place-items:center;color:var(--g100)}
+.search kbd{font:11px/16px "IBM Plex Mono",monospace;border:1px solid var(--g30);padding:0 4px;color:var(--g60)}
+.lh{height:32px;display:flex;align-items:center;justify-content:space-between;color:var(--g60);font-size:12px;padding:0 16px;border-bottom:1px solid var(--g20)}
+.list{background:var(--w)}
+.rw{height:48px;display:grid;grid-template-columns:32px 1fr 120px 96px;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--g10)}
+.rw .av{width:32px;height:32px;background:var(--g20);display:grid;place-items:center;font-size:12px;color:var(--g70)}
+.rw .nm b{font-weight:600}
+.rw .nm small{display:block;font-size:12px;line-height:16px;color:var(--g60)}
+.rw .seat{font-family:"IBM Plex Mono",monospace;font-size:12px}
+.rw .seat span{border:1px solid var(--g30);padding:2px 6px}
+.rw .ext{font-family:"IBM Plex Mono",monospace;font-size:20px;text-align:right;font-variant-numeric:tabular-nums}
+.rw.hi{background:var(--g10);box-shadow:inset 3px 0 0 var(--g50)}
+.rw.on{background:var(--g20);box-shadow:inset 3px 0 0 var(--g100)}
+.rd{grid-column:2;grid-row:2/4;background:var(--w);border:1px solid var(--g20);padding:32px;display:flex;flex-direction:column;gap:24px;align-self:start;position:sticky;top:0}
+.narrow .rd{grid-column:1;grid-row:auto;position:static;margin-top:24px}
+.rd .id{display:flex;gap:16px;align-items:center}
+.rd .id .av{width:48px;height:48px;background:var(--g100);color:var(--w);display:grid;place-items:center}
+.rd h4{font-size:20px;line-height:28px;font-weight:400}
+.rd .sub{color:var(--g70)}
+.extb{background:var(--g10);padding:16px 24px;display:flex;flex-direction:column;gap:8px}
+.extb .eb{display:flex;justify-content:space-between;font-size:12px;line-height:16px;color:var(--g60);letter-spacing:.32px}
+.extb .num{font:300 42px/50px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.extb .none{font-size:14px;line-height:20px;color:var(--g100);padding:12px 0}
+.seatline{display:flex;gap:8px;align-items:center;color:var(--g70)}
+.fb h5{font-size:14px;line-height:18px;font-weight:600;margin-bottom:8px}
+.fb .b{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border:1px solid var(--g30);margin-bottom:8px}
+.fb .b code{font-size:16px}
+.rec h5{font-size:14px;line-height:18px;font-weight:600;margin-bottom:8px}
+.rec .r{height:32px;display:flex;align-items:center;gap:12px}
+.rec .r .av{width:24px;height:24px;background:var(--g20);font-size:11px;display:grid;place-items:center}
+.rec .r code{margin-left:auto;font-size:14px}
+.gb{height:32px;display:inline-flex;align-items:center;color:var(--g70)}
+.tert{height:40px;display:inline-flex;align-items:center;padding:0 16px;border:1px solid var(--g100)}
+.empty{padding:48px 32px;color:var(--g70)}
+.empty b{display:block;color:var(--g100);font-size:20px;line-height:28px;font-weight:400;margin-bottom:8px}
+.sk{background:var(--g20);height:16px}
+.note{border-left:3px solid var(--g70);background:var(--g10);padding:12px 16px;display:flex;flex-direction:column;gap:4px}
+.note b{font-weight:600}
+.card{width:640px;background:var(--w);border:1px solid var(--g30);padding:24px;display:flex;flex-direction:column;gap:16px}
+.card h3{font-size:20px;line-height:28px;font-weight:400}
+.card p{color:var(--g70)}
+.sheet{position:absolute;left:168px;top:96px;width:1584px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.cap{font:11px/16px "IBM Plex Mono",monospace;color:var(--g60);margin-bottom:8px}
+.col{background:var(--w);border:1px solid var(--g30);padding:16px;min-height:320px}
+</style>
+</head>
+<body>
+<h1>Reception (<code>/reception</code>)</h1>
+<p>Phase 2 wireframe, slice 3. Spec: <code>PHASE2UX.md</code> §1R. Decisions D3 / D3′ (archetype, density by zone, floor-aware copy — fixed) and D3-a…e (this slice). 1584 live area: list 1072 (dense, scanned) · readout 480 (calm, read aloud). No primary action, so no Blue 60.</p>
+<label class="fit"><input type="checkbox" id="fit"> Fit frames to half size</label>
+
+<h2>1 · First run — full directory, "Waiting for a call"</h2>
+<ul>
+  <li>Reserved hamburger slot (no filter panel on this route, D0-h); Reception current; Published indicator.</li>
+  <li>Page header: title + subtitle, no action (D3-a). Search autofocused, unlabelled, placeholder; ↑↓ ↵ hints at the right; count "68 people".</li>
+</ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#" aria-current="page">Reception</a></nav><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live">
+    <div class="ph"><h3>Reception</h3><p>Front-desk directory — type what the caller gives you, read the extension, transfer.</p></div>
+    <div>
+      <div class="search on" role="search">🔍 <span style="color:var(--g60)">Name, department, seat, or extension…</span><span style="margin-left:auto;display:flex;gap:8px"><kbd>↑↓</kbd><kbd>↵ select</kbd><kbd>Ctrl K</kbd></span></div>
+      <div class="lh"><span aria-live="polite">68 people</span><span>Ext</span></div>
+      <div class="list">
+        <div class="rw"><span class="av">JA</span><span class="nm"><b>Jonas Adeyemi</b><small>Paralegal · Litigation</small></span><span class="seat">Floor 2</span><span class="ext">233</span></div>
+        <div class="rw"><span class="av">NA</span><span class="nm"><b>Nadia Aziz</b><small>Receptionist · Front Office</small></span><span class="seat"><span>R01</span></span><span class="ext">200</span></div>
+        <div class="rw"><span class="av">JB</span><span class="nm"><b>Jordan Blake</b><small>Case Manager · Case Management</small></span><span class="seat"><span>NW03</span></span><span class="ext">218</span></div>
+        <div class="rw"><span class="av">MC</span><span class="nm"><b>Maya Chen</b><small>Case Manager · Case Management</small></span><span class="seat"><span>NW01</span></span><span class="ext">216</span></div>
+        <div class="rw"><span class="av">RC</span><span class="nm"><b>Rita Costa</b><small>Attorney · Litigation</small></span><span class="seat">Floor 2</span><span class="ext">240</span></div>
+        <div class="rw"><span class="av">YD</span><span class="nm"><b>Yusuf Demir</b><small>Law clerk · Litigation</small></span><span class="seat">Floor 2</span><span class="ext">—</span></div>
+        <div class="rw"><span class="av">LF</span><span class="nm"><b>Lena Fischer</b><small>Attorney · Pre-Litigation</small></span><span class="seat"><span>SE02</span></span><span class="ext">251</span></div>
+        <div class="rw"><span class="av">OH</span><span class="nm"><b>Omar Haddad</b><small>Intake · Front Office</small></span><span class="seat"><span>SW04</span></span><span class="ext">204</span></div>
+        <div class="rw"><span class="av">AK</span><span class="nm"><b>Alex Kim</b><small>Accounting · —</small></span><span class="seat"><span>NE10</span></span><span class="ext">270</span></div>
+        <div class="rw"><span class="av">AK</span><span class="nm"><b>Alexandra Konstantinou</b><small>Senior Attorney · Litigation</small></span><span class="seat"><span>NE04</span></span><span class="ext">214</span></div>
+        <div class="rw"><span class="av">GL</span><span class="nm"><b>Grace Liu</b><small>Paralegal · Pre-Litigation</small></span><span class="seat"><span>SE05</span></span><span class="ext">253</span></div>
+        <div class="rw"><span class="av">KM</span><span class="nm"><b>Kai Morrison</b><small>—</small></span><span class="seat"><span>NE06</span></span><span class="ext">—</span></div>
+        <div class="rw"><span class="av">PN</span><span class="nm"><b>Priya Natarajan</b><small>Case Manager · Case Management</small></span><span class="seat"><span>NW05</span></span><span class="ext">219</span></div>
+        <div class="rw"><span class="av">DO</span><span class="nm"><b>Daniel Ortiz</b><small>Case Manager · Case Management</small></span><span class="seat"><span>NE05</span></span><span class="ext">235</span></div>
+        <div class="rw"><span class="av">EP</span><span class="nm"><b>Elena Petrova</b><small>Records specialist · Medical Records</small></span><span class="seat">Floor 2</span><span class="ext">260</span></div>
+        <div class="rw"><span class="av">SR</span><span class="nm"><b>Sarah Reyes</b><small>Case Manager · Case Management</small></span><span class="seat"><span>NE04</span></span><span class="ext">214</span></div>
+      </div>
+    </div>
+    <aside class="rd" aria-label="Caller detail"><div class="empty" style="padding:24px 0"><b>Waiting for a call</b>Start typing what the caller gives you — a name, department, seat, or extension.</div></aside>
+  </div>
+  <span class="dim" style="left:172px;top:52px">1584 live area · list 1072 · gap 32 · readout 480 sticky</span>
+</div>
+
+<h2>2 · Typing — highlight preview, count, "↵ to lock"</h2>
+<ul><li>"rey" → "3 matches"; the first row is highlighted (preview) and the readout previews it with the "↵ to lock" hint; clear × visible; Esc clears.</li></ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#" aria-current="page">Reception</a></nav><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live">
+    <div class="ph"><h3>Reception</h3><p>Front-desk directory — type what the caller gives you, read the extension, transfer.</p></div>
+    <div>
+      <div class="search on" role="search">🔍 rey<span class="x" aria-label="Clear search">×</span></div>
+      <div class="lh"><span aria-live="polite">3 matches</span><span>Ext</span></div>
+      <div class="list">
+        <div class="rw hi"><span class="av">SR</span><span class="nm"><b>Sarah Reyes</b><small>Case Manager · Case Management</small></span><span class="seat"><span>NE04</span></span><span class="ext">214</span></div>
+        <div class="rw"><span class="av">TR</span><span class="nm"><b>Tom Reyes</b><small>Paralegal · Pre-Litigation</small></span><span class="seat"><span>SW11</span></span><span class="ext">247</span></div>
+        <div class="rw"><span class="av">MR</span><span class="nm"><b>Marta Reyes-Cole</b><small>Attorney · Litigation</small></span><span class="seat">Floor 2</span><span class="ext">231</span></div>
+      </div>
+    </div>
+    <aside class="rd" aria-label="Caller detail">
+      <div class="id"><span class="av">SR</span><div><h4>Sarah Reyes</h4><div class="sub">Case Manager · Case Management</div></div></div>
+      <div class="extb"><div class="eb"><span>EXTENSION</span><span>↵ to lock</span></div><div class="num">214</div><div class="seatline">📍 Seat NE04 · Floor 3 · North-east pod</div></div>
+      <div class="fb"><h5>If no answer — same department</h5><div class="b"><span>Daniel Ortiz</span><code>235</code></div><div class="b"><span>Maya Chen</span><code>216</code></div><div class="b"><span>Jordan Blake</span><code>218</code></div></div>
+    </aside>
+  </div>
+</div>
+
+<h2>3 · Locked — Floor 2, unseated (D3′ copy), recents present</h2>
+<ul><li>Enter locked Marta Reyes-Cole: query cleared, row selected, URL becomes <code>?q=Marta%20Reyes-Cole</code> (D3-c). Seat line reads the location, not an absence. Recent lookups below (max 4, current excluded, in-memory).</li></ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#" aria-current="page">Reception</a></nav><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live">
+    <div class="ph"><h3>Reception</h3><p>Front-desk directory — type what the caller gives you, read the extension, transfer.</p></div>
+    <div>
+      <div class="search on" role="search">🔍 <span style="color:var(--g60)">Name, department, seat, or extension…</span><span style="margin-left:auto;display:flex;gap:8px"><kbd>↑↓</kbd><kbd>↵ select</kbd><kbd>Ctrl K</kbd></span></div>
+      <div class="lh"><span aria-live="polite">68 people</span><span>Ext</span></div>
+      <div class="list">
+        <div class="rw"><span class="av">JA</span><span class="nm"><b>Jonas Adeyemi</b><small>Paralegal · Litigation</small></span><span class="seat">Floor 2</span><span class="ext">233</span></div>
+        <div class="rw"><span class="av">NA</span><span class="nm"><b>Nadia Aziz</b><small>Receptionist · Front Office</small></span><span class="seat"><span>R01</span></span><span class="ext">200</span></div>
+        <div class="rw"><span class="av">RC</span><span class="nm"><b>Rita Costa</b><small>Attorney · Litigation</small></span><span class="seat">Floor 2</span><span class="ext">240</span></div>
+        <div class="rw on" aria-selected="true"><span class="av">MR</span><span class="nm"><b>Marta Reyes-Cole</b><small>Attorney · Litigation</small></span><span class="seat">Floor 2</span><span class="ext">231</span></div>
+        <div class="rw"><span class="av">SR</span><span class="nm"><b>Sarah Reyes</b><small>Case Manager · Case Management</small></span><span class="seat"><span>NE04</span></span><span class="ext">214</span></div>
+      </div>
+    </div>
+    <aside class="rd" aria-label="Caller detail">
+      <div class="id"><span class="av">MR</span><div><h4>Marta Reyes-Cole</h4><div class="sub">Attorney · Litigation</div></div></div>
+      <div class="extb"><div class="eb"><span>EXTENSION</span></div><div class="num">231</div><div class="seatline">📍 Floor 2 · Litigation — reaches voicemail if away</div></div>
+      <div class="fb"><h5>If no answer — same department</h5><div class="b"><span>Rita Costa</span><code>240</code></div><div class="b"><span>Jonas Adeyemi</span><code>233</code></div></div>
+      <div class="rec" aria-label="Recent lookups"><h5>Recent lookups</h5><div class="r"><span class="av">SR</span>Sarah Reyes<code>214</code></div><div class="r"><span class="av">OH</span>Omar Haddad<code>204</code></div></div>
+    </aside>
+  </div>
+  <span class="dim" style="left:1272px;top:52px">readout: calm zone — extension heading-06 42/50 tabular; the seat line is a LOCATION (D3′)</span>
+</div>
+
+<h2>4 · No extension on file — a stated state, not a dash</h2>
+<ul><li>The number slot reads "No extension on file"; the seat line stays; the same-department fallback is the next step. (Today: a bare "—".)</li></ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#" aria-current="page">Reception</a></nav><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live">
+    <div class="ph"><h3>Reception</h3><p>Front-desk directory — type what the caller gives you, read the extension, transfer.</p></div>
+    <div>
+      <div class="search on" role="search">🔍 <span style="color:var(--g60)">Name, department, seat, or extension…</span></div>
+      <div class="lh"><span aria-live="polite">68 people</span><span>Ext</span></div>
+      <div class="list">
+        <div class="rw"><span class="av">RC</span><span class="nm"><b>Rita Costa</b><small>Attorney · Litigation</small></span><span class="seat">Floor 2</span><span class="ext">240</span></div>
+        <div class="rw on"><span class="av">YD</span><span class="nm"><b>Yusuf Demir</b><small>Law clerk · Litigation</small></span><span class="seat">Floor 2</span><span class="ext">—</span></div>
+        <div class="rw"><span class="av">LF</span><span class="nm"><b>Lena Fischer</b><small>Attorney · Pre-Litigation</small></span><span class="seat"><span>SE02</span></span><span class="ext">251</span></div>
+      </div>
+    </div>
+    <aside class="rd" aria-label="Caller detail">
+      <div class="id"><span class="av">YD</span><div><h4>Yusuf Demir</h4><div class="sub">Law clerk · Litigation</div></div></div>
+      <div class="extb"><div class="eb"><span>EXTENSION</span></div><div class="none">No extension on file</div><div class="seatline">📍 Floor 2 · Litigation — reaches voicemail if away</div></div>
+      <div class="fb"><h5>If no answer — same department</h5><div class="b"><span>Rita Costa</span><code>240</code></div><div class="b"><span>Jonas Adeyemi</span><code>233</code></div><div class="b"><span>Marta Reyes-Cole</span><code>231</code></div></div>
+    </aside>
+  </div>
+</div>
+
+<h2>5 · States — sheet</h2>
+<ul><li>Left to right: zero matches (query kept, "0 matches", Clear search; readout keeps the last locked person) · empty directory · loading skeleton on the real layout · error boundary in Reception's voice (D3-e).</li></ul>
+<div class="frame">
+  <header class="hdr"><span class="slot48 res"></span><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><nav class="nav"><a href="#">Seat map</a><a href="#" aria-current="page">Reception</a></nav><span class="mode"><span class="mk mk-pub"></span>Published · 2 Sep 2026</span></header>
+  <div class="sheet">
+    <div class="col"><div class="cap">ZERO MATCHES</div><div class="search on">🔍 zzzz<span class="x">×</span></div><div class="lh"><span>0 matches</span><span>Ext</span></div><div class="empty"><b>No one matches “zzzz”</b>Try a name, department, seat code or extension.<div><span class="gb">Clear search</span></div></div></div>
+    <div class="col"><div class="cap">EMPTY DIRECTORY (nothing published)</div><div class="search">🔍 <span>Name, department, seat, or extension…</span></div><div class="lh"><span>0 people</span><span>Ext</span></div><div class="empty"><b>The directory is empty</b>It fills in when an admin publishes the seat map.</div></div>
+    <div class="col" aria-busy="true"><div class="cap">LOADING — skeleton on the real layout</div><div class="search">🔍 <span>Name, department, seat, or extension…</span></div><div class="lh"><span class="sk" style="width:64px"></span><span>Ext</span></div><div style="display:flex;flex-direction:column;gap:16px;padding:16px 0"><div class="sk" style="width:60%"></div><div class="sk" style="width:70%"></div><div class="sk" style="width:55%"></div><div class="sk" style="width:65%"></div><div class="sk" style="width:50%"></div><div class="sk" style="width:68%"></div></div><div class="cap" style="margin-top:8px">readout column: one skeleton block; sr-only "Loading reception…"</div></div>
+    <div class="col"><div class="cap">ERROR — own error.tsx (D3-e)</div><div class="card" style="width:auto;border:0;padding:0"><h3>Reception couldn't load</h3><p>The directory is unchanged — this is a display problem. Try again, or use the seat map's search meanwhile.</p><div style="display:flex;gap:16px;align-items:center"><span class="tert">Try again</span><span class="gb">Open the seat map</span></div><div class="cap">Reference: 4f1c…</div></div></div>
+  </div>
+</div>
+
+<h2>6 · Narrow fallback (1024) — single column, back path</h2>
+<ul><li>Header, search, list stacked; locking scrolls to the readout below with a "Back to the list" ghost link at its top (D3's explicit back path). Readout not sticky.</li></ul>
+<div class="frame narrow">
+  <header class="hdr"><button class="slot48"><span class="ham"></span></button><a class="name" href="#">Megeredchian Law <b>Seat Planner</b></a><span class="mode"><span class="mk mk-pub"></span>Published</span><div class="utils"><span class="ub">?</span><span class="ub">⏲</span><span class="ub">☺</span></div></header>
+  <div class="live">
+    <div class="ph"><h3>Reception</h3><p>Front-desk directory — type what the caller gives you, read the extension, transfer.</p></div>
+    <div>
+      <div class="search on">🔍 <span style="color:var(--g60)">Name, department, seat, or extension…</span></div>
+      <div class="lh"><span>68 people</span><span>Ext</span></div>
+      <div class="list">
+        <div class="rw"><span class="av">JA</span><span class="nm"><b>Jonas Adeyemi</b><small>Paralegal · Litigation</small></span><span class="seat">Floor 2</span><span class="ext">233</span></div>
+        <div class="rw on"><span class="av">NA</span><span class="nm"><b>Nadia Aziz</b><small>Receptionist · Front Office</small></span><span class="seat"><span>R01</span></span><span class="ext">200</span></div>
+        <div class="rw"><span class="av">JB</span><span class="nm"><b>Jordan Blake</b><small>Case Manager · Case Management</small></span><span class="seat"><span>NW03</span></span><span class="ext">218</span></div>
+      </div>
+    </div>
+    <aside class="rd" aria-label="Caller detail" style="padding:24px">
+      <span class="gb">← Back to the list</span>
+      <div class="id"><span class="av">NA</span><div><h4>Nadia Aziz</h4><div class="sub">Receptionist · Front Office</div></div></div>
+      <div class="extb"><div class="eb"><span>EXTENSION</span></div><div class="num">200</div><div class="seatline">📍 Seat R01 · Floor 3 · Reception</div></div>
+    </aside>
+  </div>
+</div>
+</body>
+</html>

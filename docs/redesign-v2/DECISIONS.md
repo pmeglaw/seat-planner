@@ -1077,6 +1077,44 @@ readout — *"Floor 2 · Litigation — reaches voicemail if away"* — and the 
 floor in place of a code; a seated person reads *"Seat L02 · Floor 2 · Litigation Pod"*. Data stays
 published-only.
 
+### D3 — Phase 2 amendments (2026-09-02, Reception PR)
+
+#### D3-a · Reception sits on the 1584 live area; list 1072 · readout 480; no primary action
+**Problem:** the shipped page is a bespoke 1060px frame with a 372px sidebar; D0 puts every text-dense
+surface on the 1584 document regime.
+**Options:** keep 1060 (one less reflow to build, one more frame to learn); 1584 with the width spent on
+the readout (list 1072 dense, readout 480 calm, sticky); 1584 with the width spent on the list.
+**Choice:** 1584, width to the readout — it is the zone read aloud under time pressure (D3's density-by-zone).
+The page header is title + subtitle and **no primary action**: nothing is created on Reception, and the
+archetype allows zero. **Trade-off:** longer rows; mitigated by a fixed right-aligned 96px extension column
+with tabular figures and a 48px pitch. **Would change if:** Reception gains a task (a call log), or the
+directory passes ~300 people (D3).
+
+#### D3-b · Reception keeps its own search; clear × and Ctrl/⌘ K added for parity with the map
+Unlabelled, magnifier + placeholder, autofocus on entry, active search as shipped (ranking, highlight-preview,
+Enter locks, Esc clears, arrows clamp, rows never steal focus). Additions: a clear × when the field is
+non-empty (patterns: Clear = close icon at the right of the field — today only Esc clears, which a
+receptionist on the phone does not discover) and Ctrl/⌘ K to focus, the same key the map uses. Count always
+shown: "68 people" / "7 matches" / "0 matches". Not a header search (ruling 17).
+
+#### D3-c · `?q=` on Reception
+Landing pre-fills the field and filters; a unique match locks the readout; locking writes `?q=<name>` with
+`replaceState`, clearing removes it. A lookup becomes linkable and survives a reload — today the URL never
+changes. Recents stay in-memory (ruled 2026-08-05, not re-asked). No other URL state.
+
+#### D3-d · Readout order and the no-extension state
+Name block → extension in display type (`heading-06` 42/50, tabular; weight set in Phase 3 for arm's-length
+reading) → seat line with the D3′ copy → "If no answer — same department" (≤ 3, as shipped) → recents.
+**No extension** is a stated state — "No extension on file" with the fallback list as the next step — never
+a bare dash (patterns: an empty state names the next action).
+
+#### D3-e · Own error boundary in Reception's voice
+`app/(shell)/reception/error.tsx` (Phase 4): "Reception couldn't load" / "The directory is unchanged — this
+is a display problem. Try again, or use the seat map's search meanwhile." Actions **Try again** · Open the
+seat map. Today the segment falls through to the root boundary and says "The seat map could not load" —
+wrong surface, wrong voice (PHASE1IA B2). The loading skeleton is rebuilt to the 1584 layout (today's is 720
+wide against 1060 of content).
+
 ---
 
 ### D4 — Login (`/login`)
