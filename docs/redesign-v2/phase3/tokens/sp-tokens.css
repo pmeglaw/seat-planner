@@ -270,8 +270,8 @@
    -------------------------------------------------------------------------- */
 :root {
   --sp-shell-bg:            var(--gray-100);
-  --sp-shell-bg-hover:      var(--gray-90-hover);   /* #333333 — matches .cds-header-nav a:hover */
-  --sp-shell-bg-pressed:    var(--gray-90);         /* #262626 — the pressed header surface (hand-off) */
+  --sp-shell-bg-hover:      var(--gray-90-hover);   /* gray-90-hover — matches .cds-header-nav a:hover */
+  --sp-shell-bg-pressed:    var(--gray-90);         /* gray 90 — the pressed header surface (hand-off) */
   --sp-shell-rule:          var(--gray-80);         /* 1px bottom rule; panel left rule; utility outline */
   --sp-shell-text:          var(--gray-10);
   --sp-shell-text-secondary:var(--gray-30);

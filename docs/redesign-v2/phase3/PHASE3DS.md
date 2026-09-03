@@ -10,7 +10,7 @@ Layout of `docs/redesign-v2/phase3/`:
 
 | Path | What |
 |---|---|
-| `tokens/carbon-tokens.css` | skill asset, copied verbatim (sha1 `13493d0…`), both themes — never edited |
+| `tokens/carbon-tokens.css` | skill asset, copied verbatim (sha1 `13493d0…` before git's CRLF→LF normalisation; byte-identical modulo line endings), both themes — never edited |
 | `tokens/sp-tokens.css` | the product semantic layer — every name `--sp-*`, no hex |
 | `components/carbon-components.css` | skill asset, copied verbatim (sha1 `0c3f28e…`) — never edited |
 | `components/sp-components.css` | hand-built components from PHASE2UX §3 only |
