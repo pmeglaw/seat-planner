@@ -1,0 +1,238 @@
+import assert from "node:assert/strict";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import test from "node:test";
+
+// Phase 4 token-layer guard (docs/redesign-v2/phase4/TEST-TRIAGE.md, PR 0).
+// The redesign lands the Phase 3 design system as four CSS files —
+// `carbon-tokens.css` and `carbon-components.css` (skill assets, never
+// edited), `sp-tokens.css` (the product semantic layer) and
+// `sp-components.css` — and every product surface consumes `--sp-*` names
+// only. PHASE3DS §5 / the Phase 4 hand-off state the three rules this file
+// enforces:
+//
+//   1. No hex literal outside the two asset files. Product code never
+//      references a raw colour (skill "Token discipline").
+//   2. No `--cds-*` reference outside `sp-tokens.css` and the two assets —
+//      the semantic layer is the only bridge to Carbon, so a v12 rename
+//      touches one file.
+//   3. No retired `--sp-*` name (PHASE3DS §5 "Retired names") once the PR
+//      that sweeps it has merged.
+//
+// The rules are phased because PR 0 lands before any component moves: rule 1
+// runs against a per-file HEX_LEDGER that records today's counts and may only
+// shrink (a stale entry — a file that now carries fewer — fails, so the ledger
+// stays the record); rule 3 checks only the retired-name groups whose sweep
+// PR is in SWEPT. Each Phase 4 PR that lands a sweep removes its ledger rows
+// and adds its group number. When the phase closes, HEX_LEDGER is empty and
+// SWEPT holds every group.
+//
+// Mechanics mirror tests/auth-theme-source.test.mjs: TypeScript sources are
+// scanned by string literal (comments never reach the rules); CSS is scanned
+// with comments stripped. `app/concepts/` (prototypes, superseded) and
+// `app/fonts/` are outside the scan.
+
+const repoRoot = fileURLToPath(new URL("..", import.meta.url));
+
+const SCAN_ROOTS = ["app", "components", "lib"];
+const SCAN_FILES = ["tailwind.config.ts"];
+const EXCLUDED_DIRS = new Set(["app/concepts", "app/fonts"]);
+
+// The skill assets: copied verbatim, the only files allowed to hold a hex.
+const ASSET_BASENAMES = new Set(["carbon-tokens.css", "carbon-components.css"]);
+// The semantic layer: the only non-asset file allowed to reference `--cds-*`.
+const CDS_BRIDGE_BASENAMES = new Set([...ASSET_BASENAMES, "sp-tokens.css"]);
+
+function collectFiles(root) {
+  const abs = path.join(repoRoot, root);
+  const out = [];
+  for (const entry of readdirSync(abs)) {
+    const rel = path.posix.join(root, entry);
+    if (EXCLUDED_DIRS.has(rel)) continue;
+    const p = path.join(abs, entry);
+    if (statSync(p).isDirectory()) {
+      out.push(...collectFiles(rel));
+    } else if (/\.(ts|tsx|css)$/.test(entry)) {
+      out.push(rel);
+    }
+  }
+  return out;
+}
+
+const files = [...SCAN_ROOTS.flatMap(collectFiles), ...SCAN_FILES].sort();
+
+function read(rel) {
+  return readFileSync(path.join(repoRoot, rel), "utf8");
+}
+
+// Every double-quoted / single-quoted string literal plus every template
+// chunk, with `${…}` interpolations stripped.
+function stringLiterals(source) {
+  const literals = [];
+  for (const match of source.matchAll(/"((?:[^"\\\n]|\\.)*)"/g)) literals.push(match[1]);
+  for (const match of source.matchAll(/'((?:[^'\\\n]|\\.)*)'/g)) literals.push(match[1]);
+  for (const match of source.matchAll(/`((?:[^`\\]|\\.)*)`/g)) {
+    literals.push(match[1].replace(/\$\{[^}]*\}/g, " "));
+  }
+  return literals;
+}
+
+function stripCssComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//g, "");
+}
+
+// The text the rules see for a file: CSS minus comments, TS by literal.
+function scannable(rel) {
+  const source = read(rel);
+  return rel.endsWith(".css") ? [stripCssComments(source)] : stringLiterals(source);
+}
+
+function countMatches(chunks, re) {
+  let n = 0;
+  for (const chunk of chunks) n += (chunk.match(re) ?? []).length;
+  return n;
+}
+
+// ---------------------------------------------------------------------------
+// Rule 1 — no hex outside the assets.
+// ---------------------------------------------------------------------------
+
+// A `#` followed by 3–8 hex digits and then a non-word character. Id
+// selectors like `#seat-inspector-actions` never match (the run must end at a
+// word boundary), and the ledger absorbs any that do.
+const HEX = /#[0-9a-fA-F]{3,8}(?![\w-])/g;
+
+// PR 0 snapshot (2026-09-03, main @ c36f216). Rows leave in the PR that
+// re-tokenises the file — PR 1 for globals.css / tailwind / design-system,
+// then the component PRs (TEST-TRIAGE.md names the PR per file). A row may
+// only go down or out; it may never appear.
+const HEX_LEDGER = {
+  "app/global-error.tsx": 10, // PR 5 (route cards)
+  "app/globals.css": 271, // PR 1 (the --sp-* block is replaced wholesale)
+  "app/layout.tsx": 1, // PR 1 (themeColor meta)
+  "components/auth/LoginForm.tsx": 6, // PR 1 sweep — login layout unchanged (D4)
+  "components/seat-map/SeatSheet.tsx": 12, // PR 3 (inspector)
+  "components/ui/design-system.tsx": 54, // PR 1 (primitive palette → tokens)
+  "tailwind.config.ts": 3, // PR 1 (re-pointed at the new names)
+};
+
+test("no hex literal outside the two asset files (ledger only shrinks)", () => {
+  const actual = {};
+  for (const rel of files) {
+    if (ASSET_BASENAMES.has(path.posix.basename(rel))) continue;
+    const n = countMatches(scannable(rel), HEX);
+    if (n > 0) actual[rel] = n;
+  }
+  const problems = [];
+  for (const [rel, n] of Object.entries(actual)) {
+    const allowed = HEX_LEDGER[rel];
+    if (allowed === undefined) problems.push(`${rel}: ${n} hex literal(s), not in HEX_LEDGER`);
+    else if (n > allowed) problems.push(`${rel}: ${n} hex literal(s), ledger allows ${allowed}`);
+    else if (n < allowed) problems.push(`${rel}: ${n} hex literal(s), ledger says ${allowed} — shrink the ledger row`);
+  }
+  for (const rel of Object.keys(HEX_LEDGER)) {
+    if (!(rel in actual)) problems.push(`${rel}: ledger row is stale (file has no hex, or no longer exists) — remove it`);
+  }
+  assert.deepEqual(problems, [], problems.join("\n"));
+});
+
+// ---------------------------------------------------------------------------
+// Rule 2 — `--cds-*` only through the semantic layer.
+// ---------------------------------------------------------------------------
+
+test("no --cds- reference outside sp-tokens.css and the two asset files", () => {
+  const offenders = [];
+  for (const rel of files) {
+    if (CDS_BRIDGE_BASENAMES.has(path.posix.basename(rel))) continue;
+    const n = countMatches(scannable(rel), /--cds-[a-z0-9-]+/g);
+    if (n > 0) offenders.push(`${rel}: ${n}`);
+  }
+  assert.deepEqual(offenders, [], `--cds-* must be consumed via --sp-* names:\n${offenders.join("\n")}`);
+});
+
+// ---------------------------------------------------------------------------
+// Rule 3 — retired `--sp-*` names, by sweep PR (PHASE3DS §5 "Retired names").
+// ---------------------------------------------------------------------------
+
+// `(?![\w-])` ends the name: `--sp-duration-fast` is retired, its replacement
+// `--sp-duration-fast-01` is not; `--sp-space-1` is retired, `--sp-space-10`
+// is not.
+const RETIRED = {
+  1: [
+    /--sp-space-[1-7](?![\w-])/g,
+    /--sp-radius-(sm|md|lg|xl|full|sheet)(?![\w-])/g,
+    /--sp-shadow-(floating|modal|raised|sheet)(?![\w-])/g,
+    /--sp-elevation-(2|3|4|5|panel|rail)(?![\w-])/g,
+    /--sp-duration-(fast|standard|deliberate)(?![\w-])/g,
+    /--sp-focus-(offset-color|marker-ring|marker-offset)(?![\w-])/g,
+    /--sp-border-(hairline|hairline-soft|soft)(?![\w-])/g,
+    /--sp-text-on-brand(?![\w-])/g,
+    /--sp-link-on-field(?![\w-])/g,
+    /--sp-overlay-base(?![\w-])/g,
+    /--sp-neutral-(strong|muted)(?![\w-])/g,
+    /--sp-surface-disabled(?![\w-])/g,
+    /--sp-brand(?![\w])/g, // --sp-brand and every --sp-brand-* — no brand orange in the system
+    /--sp-accent(?![\w-])/g,
+    /--sp-button-secondary-soft(?![\w-])/g,
+    /--sp-status-(danger|pending|published)(?![\w])/g,
+    /--sp-color-/g,
+  ],
+  2: [/--sp-chrome-/g],
+  3: [
+    /--sp-marker-/g,
+    /--sp-legend-/g,
+    /--sp-selection(?![\w])/g,
+    /--sp-ai-(?!label-text|border-start|border-end)/g,
+    /--sp-editor-/g,
+    /--sp-publish-(ready|no-change|viewer-impact)(?![\w])/g,
+    /--sp-trail(?![\w])/g,
+    /--sp-wash-zone(?![\w-])/g,
+  ],
+  4: [
+    /--sp-tag-(bg|text)(?![\w-])/g,
+    /--sp-table-(header|row-border)(?![\w-])/g,
+    /--sp-extension-/g,
+    /--sp-identity-/g,
+  ],
+};
+
+// Sweep PRs that have merged. PR 1 adds 1, PR 2 adds 2, PR 3 adds 3, PR 4
+// adds 4. Until a group is swept its names are still the shipped vocabulary
+// and the rule stays silent for them.
+const SWEPT = new Set([]);
+
+test("retired --sp-* names are gone once their sweep PR has merged", () => {
+  const offenders = [];
+  for (const rel of files) {
+    const chunks = scannable(rel);
+    for (const group of SWEPT) {
+      for (const re of RETIRED[group]) {
+        const n = countMatches(chunks, re);
+        if (n > 0) offenders.push(`${rel}: ${n} × ${re.source} (retired in PR ${group})`);
+      }
+    }
+  }
+  assert.deepEqual(offenders, [], `retired names still in use:\n${offenders.join("\n")}`);
+});
+
+test("every retired-name group is a known sweep PR", () => {
+  for (const group of SWEPT) assert.ok(RETIRED[group], `SWEPT names unknown group ${group}`);
+  assert.deepEqual(Object.keys(RETIRED), ["1", "2", "3", "4"]);
+});
+
+// ---------------------------------------------------------------------------
+// Carried rule — Tailwind v3 drops `shadow-[var(--…)]` silently (was
+// tests/elevation-shadow-tokens-source.test.mjs, which retires in PR 1 with
+// the elevation tokens; the build-correctness half lives on here).
+// ---------------------------------------------------------------------------
+
+test("no shadow-[var( arbitrary class (Tailwind v3 drops it silently)", () => {
+  const offenders = [];
+  for (const rel of files) {
+    if (!/\.(ts|tsx)$/.test(rel)) continue;
+    const n = countMatches(stringLiterals(read(rel)), /shadow-\[var\(/g);
+    if (n > 0) offenders.push(`${rel}: ${n}`);
+  }
+  assert.deepEqual(offenders, [], offenders.join("\n"));
+});
