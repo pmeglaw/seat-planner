@@ -51,6 +51,48 @@ export function withFloorParam(search: string, floor: string | null): string {
   return serialize(params);
 }
 
+// ?q=<text> on / and /admin (PHASE1IA B3; DECISIONS D1-d landing rule; Phase 4
+// PR 3a): the search text is shareable. Empty or whitespace = absent. The
+// landing behaviour (field pre-filled, palette open, a unique match
+// auto-selects) lives in the surfaces; this module only carries the string.
+export const QUERY_PARAM = "q";
+
+export function readQueryParam(search: string): string {
+  return new URLSearchParams(search).get(QUERY_PARAM)?.trim() ?? "";
+}
+
+export function withQueryParam(search: string, query: string): string {
+  const params = new URLSearchParams(search);
+  const value = query.trim();
+  if (value) params.set(QUERY_PARAM, value);
+  else params.delete(QUERY_PARAM);
+  return serialize(params);
+}
+
+// ?names=off (B3): the names-on-markers toggle is shareable in its OFF
+// state only — on is the default and the stored preference, so the bare URL
+// stays canonical and a shared link never forces names on for someone who
+// turned them off. readNamesParam returns null when the URL says nothing.
+export const NAMES_PARAM = "names";
+
+export function readNamesParam(search: string): boolean | null {
+  const value = new URLSearchParams(search).get(NAMES_PARAM)?.trim().toLowerCase();
+  if (value === "off") return false;
+  if (value === "on") return true;
+  return null;
+}
+
+export function withNamesParam(search: string, namesVisible: boolean): string {
+  const params = new URLSearchParams(search);
+  if (namesVisible) params.delete(NAMES_PARAM);
+  else params.set(NAMES_PARAM, "off");
+  return serialize(params);
+}
+
+// The registry's default floor as the URL sees it; lib/floors owns the
+// registry, this module only needs the one value the bare URL implies.
+export const DEFAULT_FLOOR_PARAM_VALUE = "3";
+
 // The default tab stays paramless so the bare /admin/management URL remains
 // canonical (and existing ?tab= reads keep working unchanged).
 export function withTabParam(search: string, tab: string, defaultTab: string): string {
