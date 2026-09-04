@@ -32,7 +32,7 @@ const eyebrowClassName = "text-xs font-semibold uppercase tracking-[0.12em] text
 // content-sized, so the 44px reach comes from the 7px vertical hit
 // expansion (only a <p> sits above; pinned in touch-target-source).
 const clearButtonClassName =
-  "relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]";
+  "relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-link)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]";
 
 export const DEFAULT_FLOOR_ROSTER_REGION_ID = "floor-roster";
 

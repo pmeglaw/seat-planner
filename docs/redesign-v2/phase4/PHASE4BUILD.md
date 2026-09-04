@@ -4,7 +4,7 @@
 `CLAUDE.md` / `AGENTS.md`; `phase3/PHASE3DS.md` §5 (20 obligations with landing files, landing files by PR, retired
 names) and §7 (what Phase 3 learned); `PHASE2UX.md` §3 (component checklist), §5 (nine obligations), the per-screen
 decision logs and the wireframes under `wireframes/`; `PHASE1IA.md` §B–§C; `DECISIONS.md` D0–D6 + §6 (deviations
-1–15, next free **16**) + §8; the `ibm-design-language` skill (`SKILL.md`, `references/senior-workflow.md`) — plugin
+1–16 — no. 16 is the brand terracotta primary, 2026-09-03; next free **17**) + §8; the `ibm-design-language` skill (`SKILL.md`, `references/senior-workflow.md`) — plugin
 `megeredchian/design-system` 1.3.0, fingerprint **`f997ee525800e755`**, 193,908 bytes LF, verified at the start of
 this phase (2026-09-03) with the PHASE3DS §0 recipe. Off-limits as inputs: `docs/design-system/AUDIT*.md`, `PLAN.md`,
 `shell-reference.html`, the `docs/redesign` branch, everything under `app/concepts/`.
@@ -173,6 +173,10 @@ with the owner (60 % is the floor at which `text-primary` clears 4.5:1 on both t
 
 ---
 
+### 1.7 PR 1b — the brand layer (owner ruling 2026-09-03; DECISIONS §6 no. 16)
+
+**Screen** every surface · **Problem** the firm's brand hand-off (`docs/brand/`) makes terracotta #B85C2E the primary-action colour; the hand-off's CSS keyed its overrides to `[data-carbon-theme="g10"]`, a state this app never sets · **Choice** one brand file, `app/styles/brand/megeredchian-law-tokens.css`, loaded after `sp-tokens.css` and before the component layers, carrying the hand-off's values verbatim under this app's three theme selectors (bare `:root` + `[white]`, the `prefers-color-scheme` guard, `[g100]`) and re-pointing the three tier-C zone tokens that read the palette directly (`--sp-shell-current-bar`, `--sp-panel-dark-link`, `--sp-ai-border-end`) · **Trade-off** a second file may hold hex and `--cds-*` (the token test allowlists it by name and gates the brand rules instead); `--cds-highlight` stays blue 20 / blue 90 until the owner rules a terracotta tint; the Draft mark's orange 40 now sits near the brand hue — two signals keep it distinct, re-measured in the PR 3 marker rig · **Would change if** the brand changes or the 4.56:1 primary measures illegible in use. The zip's generic `CLAUDE.md` was NOT dropped over the repo's (it described `src/`, `_app.tsx`, a left rail and a `g10` state); its content became the locked "Brand System" section of the real `CLAUDE.md`, corrected to this repo, with the original kept at `docs/brand/CLAUDE.brand-handoff.md`.
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
@@ -276,6 +280,7 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 |---|---|---|---|---|---|
 | 0 | #512 | `docs/phase4-triage` | v1.74.0 | `TEST-TRIAGE.md`; this scaffold; `tests/phase4-token-layer-source.test.mjs` | merged |
 | 1 | #513 | `feat/phase4-tokens` | — | tokens + CSS landing (P3-1, 2 boot half, 3, 19, 20); `app/styles/` ×4 + `phase4-bridge.css`; group-1 sweep 297 sites / 29 files; theme three-state; `tailwind.config.ts`; DECISIONS D4 confirmation + D1-h / D1-i; `screenshots/pr1/`; preview-walk fix (§1.6) + `audit/marker-contrast.mjs` | open |
+| 1b | — | `feat/brand-terracotta` | v1.74.2 | brand layer: `app/styles/brand/megeredchian-law-tokens.css` (+ `.json`), `public/Logo-Megeredchian-Law.jpg`, `docs/brand/`, CLAUDE.md "Brand System", DECISIONS §6 no. 16, token test brand rules | open |
 | 2 | — | — | — | shell (P3-2, 6, 9, 10; P2-2; route-group move on confirmation) | not started |
 | 3 | — | — | — | map (P3-4, 5, 7, 11–14; P2-1, 3, 4, 9); split 3a / 3b if the diff passes ~1,500 lines | not started |
 | 4 | — | — | — | Management + Settings (P3-15, 16, 17; P2-6, 7, 8) | not started |

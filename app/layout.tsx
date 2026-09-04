@@ -10,6 +10,7 @@ import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 import "./styles/carbon-tokens.css";
 import "./styles/sp-tokens.css";
+import "./styles/brand/megeredchian-law-tokens.css"; // brand layer: AFTER carbon + sp tokens, BEFORE components
 import "./styles/carbon-components.css";
 import "./styles/sp-components.css";
 import "./styles/phase4-bridge.css";

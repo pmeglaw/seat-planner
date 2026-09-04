@@ -1,0 +1,51 @@
+{
+  "brand": {
+    "orangeLogo": {
+      "value": "#EB7C35",
+      "rgb": "235,124,53",
+      "usage": "Logo mark only, fails AA 2.81:1",
+      "wcag": "fail"
+    },
+    "terracotta": {
+      "value": "#B85C2E",
+      "rgb": "184,92,46",
+      "usage": "Primary UI",
+      "wcag": "4.56:1 AA PASS on white",
+      "carbon": [
+        "--cds-button-primary",
+        "--cds-border-interactive",
+        "--cds-ai-border-strong"
+      ]
+    },
+    "terracottaHover": {
+      "value": "#8F4521",
+      "usage": "Hover/active"
+    },
+    "terracottaLight": {
+      "value": "#F5DDD1",
+      "usage": "Tint / AI aura bg"
+    },
+    "charcoal": {
+      "value": "#5D5C5B",
+      "rgb": "93,92,91",
+      "usage": "Secondary text / back M"
+    },
+    "paper": {
+      "value": "#FFFBF7"
+    }
+  },
+  "carbonMapping": {
+    "g10": {
+      "--cds-button-primary": "#B85C2E",
+      "--cds-button-primary-hover": "#8F4521",
+      "--cds-border-interactive": "#B85C2E",
+      "--cds-link-primary": "#8F4521",
+      "--cds-ai-border-strong": "#B85C2E"
+    },
+    "g100": {
+      "--cds-button-primary": "#B85C2E",
+      "--cds-link-primary": "#E8A07A",
+      "--cds-ai-border-strong": "#B85C2E"
+    }
+  }
+}

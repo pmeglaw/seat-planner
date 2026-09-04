@@ -3684,7 +3684,7 @@ export function SeatMap({
           aria-label={`${activeMode.label} mode`}
           className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-01)] p-4 shadow-sp motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[var(--sp-chrome-height)] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
-          <div className="text-xs font-semibold text-[var(--sp-button-primary)]">{activeMode.label} mode</div>
+          <div className="text-xs font-semibold text-[var(--sp-link)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--sp-text-primary)]">{activeMode.message}</p>
           {/* PR-5 (§8.1) row 11: create-seat has no confirm button to relabel
               — the mode card carries the visible busy line while the create

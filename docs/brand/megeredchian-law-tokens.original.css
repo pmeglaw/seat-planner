@@ -1,0 +1,48 @@
+:root {
+  --brand-orange-logo: #EB7C35;
+  --brand-terracotta: #B85C2E;
+  --brand-terracotta-hover: #8F4521;
+  --brand-terracotta-active: #7A3A1C;
+  --brand-terracotta-light: #F5DDD1;
+  --brand-terracotta-lighter: #FBE8DC;
+  --brand-charcoal: #5D5C5B;
+  --brand-charcoal-dark: #3F3E3D;
+  --brand-paper: #FFFBF7;
+}
+
+/* LIGHT - g10 canvas */
+[data-carbon-theme="g10"] {
+  --cds-button-primary: #B85C2E;
+  --cds-button-primary-hover: #8F4521;
+  --cds-button-primary-active: #7A3A1C;
+  --cds-border-interactive: #B85C2E;
+  --cds-interactive: #B85C2E;
+  --cds-link-primary: #8F4521;
+  --cds-link-primary-hover: #7A3A1C;
+  --cds-focus: #B85C2E;
+  --cds-background-brand: #B85C2E;
+  --cds-ai-border-strong: #B85C2E;
+  --cds-ai-border-start: rgba(184,92,46,0.64);
+  --cds-ai-border-end: #B85C2E;
+  --cds-ai-aura-start: rgba(184,92,46,0.06);
+  --cds-ai-aura-start-sm: rgba(184,92,46,0.12);
+  --cds-ai-aura-end: transparent;
+}
+
+/* DARK - g100 header / rails / inspector */
+[data-carbon-theme="g100"] {
+  --cds-button-primary: #B85C2E;
+  --cds-button-primary-hover: #8F4521;
+  --cds-button-primary-active: #7A3A1C;
+  --cds-border-interactive: #B85C2E;
+  --cds-interactive: #B85C2E;
+  --cds-link-primary: #E8A07A;
+  --cds-link-primary-hover: #F5DDD1;
+  --cds-focus: #B85C2E;
+  --cds-background-brand: #B85C2E;
+  --cds-ai-border-strong: #B85C2E;
+  --cds-ai-border-start: rgba(184,92,46,0.64);
+  --cds-ai-border-end: #B85C2E;
+  --cds-ai-aura-start: rgba(184,92,46,0.10);
+  --cds-ai-aura-start-sm: rgba(184,92,46,0.16);
+}
