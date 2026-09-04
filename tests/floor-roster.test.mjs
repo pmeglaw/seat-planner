@@ -67,7 +67,11 @@ test("groups people by department A→Z with No department last, and people A→
 
 test("rows are static list items — nothing to open, nothing disabled (deviation 9)", async () => {
   await renderRoster();
-  assert.equal(region().querySelectorAll("button").length, 0, "no buttons at rest");
+  // PR 3a (D1-e): the only controls at rest are the rows' Copy link icon
+  // buttons — one per person, named for the person, never a row action.
+  const copyButtons = [...region().querySelectorAll("button")];
+  assert.equal(copyButtons.length, 4, "one Copy link per row, nothing else");
+  assert.ok(copyButtons.every(button => /^Copy link for /.test(button.getAttribute("aria-label") ?? "")));
   assert.equal(region().querySelectorAll("[disabled]").length, 0);
   assert.equal(region().querySelectorAll('[role="listitem"]').length, 4);
 });
@@ -134,4 +138,18 @@ test("with filters narrowing the list the header publishes the visible count aga
   await renderRoster({ people: PEOPLE.slice(0, 2), totalCount: 4, filtersActive: true });
   assert.match(within(region()).getByRole("heading", { level: 2 }).textContent, /— 4 people/);
   assert.match(region().querySelector('[aria-live="polite"]').textContent, /2 of 4 people match the active filters/);
+});
+
+test("Copy link writes a ?q= landing URL for the person and shows an in-place Copied done-state", async () => {
+  const written = [];
+  Object.defineProperty(window.navigator, "clipboard", { configurable: true, value: { writeText: async text => { written.push(text); } } });
+  await renderRoster();
+  const button = within(region()).getByRole("button", { name: "Copy link for Bob Ito" });
+  fireEvent.click(button);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  await flushFrames();
+  assert.equal(written.length, 1);
+  assert.match(written[0], /\?q=Bob\+Ito$/);
+  assert.equal(button.getAttribute("data-done"), "Copied");
+  assert.match(region().textContent, /Link copied for Bob Ito\./);
 });

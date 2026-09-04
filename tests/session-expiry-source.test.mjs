@@ -16,13 +16,14 @@ test("a failed admin action probes the session and offers a sign-in path", async
   // ...and an expired session swaps the generic error for a banner that says
   // what happened and links straight back to sign-in with a return path.
   assert.match(source, /Your session expired/);
-  assert.match(source, /href="\/login\?next=\/admin"/);
+  assert.match(source, /href: "\/login\?next=\/admin"/);
   // The masked generic error must not render alongside the expiry explanation.
   // (The !*Confirm arms are PR-4's one-channel rule, extended by PR-5: while
   // any dialog that renders the error inline is open, the canvas banner
   // stands down.)
   assert.match(
     source,
-    /\{actionError && !sessionExpired && !swapConfirm && !vacateConfirm && !deleteSeatConfirm && !moveEmployeeConfirm && \(/
+    // PR 3a: the guard now decides whether the error joins the canvas status region's notices.
+    /if \(actionError && !sessionExpired && !swapConfirm && !vacateConfirm && !deleteSeatConfirm && !moveEmployeeConfirm\) \{/
   );
 });

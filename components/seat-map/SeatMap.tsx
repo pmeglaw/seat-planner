@@ -56,6 +56,7 @@ import { DraftTrailOverlay } from "@/components/seat-map/DraftTrailOverlay";
 import { FloorRoster, focusFloorRoster } from "@/components/seat-map/FloorRoster";
 import type { FloorId } from "@/lib/floorIds";
 import { MapControlRow } from "@/components/seat-map/MapControlRow";
+import { CanvasStatus, type CanvasNotice } from "@/components/seat-map/CanvasStatus";
 import { ViewerFindPalette } from "@/components/seat-map/ViewerFindPalette";
 import { MapStatusBand } from "@/components/seat-map/MapStatusBand";
 import type { SeatMarkKind } from "@/components/seat-map/SeatMark";
@@ -2495,8 +2496,6 @@ export function SeatMap({
   // column resizes the viewport and the overview ResizeObserver re-fits the
   // frame width automatically; a zoomed (detail) view keeps its zoom.
 
-  // Floating panels intentionally overlay the canvas, so banners need no safe area.
-  const canvasBannerSafeAreaClassName = "";
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
     askPlannerOpen ||
@@ -2619,32 +2618,6 @@ export function SeatMap({
   const mapMarkerLayerClassName = [
     "absolute inset-0",
     mobileMapControlsHidden ? "hidden sm:block" : ""
-  ].filter(Boolean).join(" ");
-  const actionErrorBannerClassName = [
-    // pointer-events-auto: the alerts now sit in a pointer-events-none overlay
-    // layer above the canvas, so each banner has to opt its own box back in.
-    "pointer-events-auto min-w-0 whitespace-pre-wrap break-words rounded-xl border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] px-3 py-2 text-sm font-semibold text-[var(--sp-editor-error-text)]",
-    canvasBannerSafeAreaClassName
-  ].filter(Boolean).join(" ");
-  const actionNoticeBannerClassName = [
-    // Overlay, not layout: the toast's 6s lifetime must never shift the map
-    // column height mid-session. Compact top-center drop-in toast (owner call
-    // 2026-08-16, round 2 — bottom-right collided with the docked inspector
-    // and its neighbouring controls). It renders as a second row INSIDE the
-    // floating top-cluster overlay rather than at a fixed top offset: the
-    // cluster's left half wraps (chips), so any hardcoded clearance (the old
-    // top-14) is wrong the moment chips take a second row — the toast then
-    // sat on the chips and, being later-painted, intercepted their clicks
-    // (CodeRabbit, PR #404). In-flow below the cluster row, wrapped chips
-    // push the toast down automatically. pointer-events-auto because the
-    // cluster rail is pointer-events-none with each card opting back in.
-    "pointer-events-auto self-center w-fit max-w-sm shadow-sp",
-    "flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold",
-    "motion-safe:animate-[sp-toast-drop_200ms_ease-out]",
-    actionNoticeTone === "neutral"
-      ? "border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] text-[var(--sp-text-secondary)]"
-      : "border-[var(--sp-editor-saved-border)] bg-[var(--sp-editor-saved-bg)] text-[var(--sp-editor-saved-text)]",
-    canvasBannerSafeAreaClassName
   ].filter(Boolean).join(" ");
   const resultActionButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link-hover)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50";
   const resultClearButtonClassName = "relative inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-link-hover)] transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-interactive)] hover:bg-[rgba(242,110,34,0.16)] active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]";
@@ -2895,6 +2868,28 @@ export function SeatMap({
     : filtersActive
       ? `${floorMatchingSeats.length} of ${floorSeats.length} seats match`
       : `${floorSeats.length} ${floorSeats.length === 1 ? "seat" : "seats"}`;
+  const canvasNotices: CanvasNotice[] = [];
+  if (staleDraftNotice) canvasNotices.push({ id: "stale-draft", kind: "info", text: staleDraftNotice });
+  if (sessionExpired && actionError) {
+    canvasNotices.push({
+      id: "session-expired",
+      kind: "error",
+      alert: true,
+      text: "Your session expired — sign in again to keep editing. Unsaved changes stay in this tab until you leave.",
+      action: { label: "Sign in", href: "/login?next=/admin" }
+    });
+  }
+  if (actionError && !sessionExpired && !swapConfirm && !vacateConfirm && !deleteSeatConfirm && !moveEmployeeConfirm) {
+    canvasNotices.push({ id: "action-error", kind: "error", alert: true, text: actionError });
+  }
+  if (actionNotice && !swapSourceSeatId && !moveEmployeeSourceSeatId) {
+    canvasNotices.push({
+      id: "action-notice",
+      kind: actionNoticeTone === "neutral" ? "info" : "success",
+      text: actionNotice,
+      action: canEdit && undoAvailable && lastUndoLabel && !mutationInFlight && !inspectorDirty ? { label: `Undo ${lastUndoLabel}`, onClick: undoDraftEdit } : undefined
+    });
+  }
   const draftControls = canEdit && editTier
     ? {
         undo: { label: undoAvailable ? `${lastUndoLabel ? `Undo ${lastUndoLabel}` : "Undo last map change"} · ${undoShortcutHint(platform)}` : "No map changes to undo", disabled: !undoAvailable || mutationInFlight || inspectorDirty || Boolean(historyOpInFlight), busy: historyOpInFlight === "Undo", onClick: undoDraftEdit },
@@ -2983,40 +2978,6 @@ export function SeatMap({
             {filtersActive ? searchStatusTitle : "Planning canvas"}
           </h2>
 
-          {/* Alerts overlay the canvas instead of pushing the map down: a
-              banner arriving mid-session must not resize the map and re-run
-              the overview fit. pointer-events-auto per alert so the layer
-              itself never eats map drags. top-14 (not top-3) clears the
-              floating top clusters below — they occupy 12px + a 32px card
-              row, so 56px lands the first banner just under them instead of
-              on top of the floor pill. */}
-          <div className="pointer-events-none absolute inset-x-3 top-14 z-50 flex flex-col gap-2">
-            {staleDraftNotice && (
-              <div role="alert" className={actionErrorBannerClassName}>
-                {staleDraftNotice}
-              </div>
-            )}
-
-            {sessionExpired && actionError && (
-              <div role="alert" className={actionErrorBannerClassName}>
-                Your session expired — sign in again to keep editing. Unsaved changes stay in this tab until you leave.{" "}
-                <a href="/login?next=/admin" className="font-semibold underline underline-offset-2">
-                  Sign in
-                </a>
-              </div>
-            )}
-
-            {/* One channel, not two (PR-4, extended by PR-5): while any
-                dialog that renders actionError inline is open, the canvas
-                banner stands down — otherwise the same error paints once
-                behind the scrim and once inside the dialog. */}
-            {actionError && !sessionExpired && !swapConfirm && !vacateConfirm && !deleteSeatConfirm && !moveEmployeeConfirm && (
-              <div role="alert" className={actionErrorBannerClassName}>
-                {actionError}
-              </div>
-            )}
-          </div>
-
           <div className={mapStageClassName}>
             {/* Top-left cluster (v12 slice 3): floor pill and the AI
                 highlight chip float over the full-bleed plan as layer-01
@@ -3053,25 +3014,13 @@ export function SeatMap({
                     ? `Showing ${FLOORS[announcedFloor].label}.`
                     : ""}
               </div>
-              {actionNotice && !swapSourceSeatId && !moveEmployeeSourceSeatId && (
-                <div role="status" aria-live="polite" className={actionNoticeBannerClassName}>
-                  <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{actionNotice}</span>
-                  {canEdit && undoAvailable && lastUndoLabel && !mutationInFlight && !inspectorDirty && (
-                    <button
-                      type="button"
-                      onClick={undoDraftEdit}
-                      className={[
-                        "shrink-0 rounded-full border bg-[color-mix(in_srgb,var(--sp-layer-01)_80%,transparent)] px-3 py-1 text-xs font-semibold transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4",
-                        actionNoticeTone === "neutral"
-                          ? "border-[var(--sp-border-strong)] text-[var(--sp-text-secondary)] focus-visible:ring-[var(--sp-border-strong)]"
-                          : "border-[var(--sp-editor-saved-border)] text-[var(--sp-editor-saved-text)] focus-visible:ring-[var(--sp-editor-saved-border)]"
-                      ].join(" ")}
-                    >
-                      Undo {lastUndoLabel}
-                    </button>
-                  )}
-                </div>
-              )}
+              {/* Inline notices in the region being worked in (PHASE3DS §1.21
+                  .sp-canvas-status; SKILL: inline is the default, never a
+                  toast): the MLS02 stale-draft refresh (self-clearing), the
+                  expired session, action errors — one channel: while a dialog
+                  that renders actionError inline is open, the canvas stands
+                  down — and the outcome notice with its inline Undo. */}
+              <CanvasStatus notices={canvasNotices} />
             </div>
             <div
               ref={mapViewportRef}
@@ -3143,12 +3092,12 @@ export function SeatMap({
                     fills it. Admins see the add path; a read-only session
                     can only wait for one who has it. */}
                 {visualLocalSeats.length === 0 && (
-                  <div role="status" className="absolute inset-0 z-[6] flex items-center justify-center p-6">
-                    <div className="max-w-sm border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-center shadow-sm">
-                      <div className="text-sm font-semibold text-[var(--sp-text-primary)]">No seats in the draft yet</div>
-                      <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
+                  <div role="status" className="sp-canvas-empty z-[6]">
+                    <div className="cds-empty">
+                      <h3>No seats in the draft yet</h3>
+                      <p>
                         {canEdit
-                          ? "Use “Add seat” in the map tools, or import assignments from Settings."
+                          ? "Use Add seat, or import assignments from Settings."
                           : "Seats appear once an admin adds them to the draft."}
                       </p>
                     </div>

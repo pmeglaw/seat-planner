@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { withQueryParam } from "@/lib/deepLink";
+import { CopyIcon } from "@/components/seat-map/mapIcons";
 import type { FloorId } from "@/lib/floorIds";
 import { FLOORS, groupRosterByDepartment } from "@/lib/floors";
 import { formatDisplayName } from "@/lib/formatName";
@@ -26,13 +28,10 @@ import type { Employee } from "@/lib/types";
 
 // Same eyebrow as the palette's group headers (ViewerFindPalette) — one
 // department-header voice across the two viewer lists.
-const eyebrowClassName = "text-xs font-semibold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]";
 
 // The zero-state buttons, the palette's own Clear search recipe: ≈30px
 // content-sized, so the 44px reach comes from the 7px vertical hit
 // expansion (only a <p> sits above; pinned in touch-target-source).
-const clearButtonClassName =
-  "relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-link)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]";
 
 export const DEFAULT_FLOOR_ROSTER_REGION_ID = "floor-roster";
 
@@ -94,6 +93,25 @@ export function FloorRoster({
     const row = document.getElementById(`${regionId}-person-${highlightedPersonId}`);
     row?.scrollIntoView?.({ block: "center" });
   }, [highlightedPersonId, regionId]);
+  // Copy link (D1-e): a share URL that lands on this person (`?q=<name>`,
+  // D1-d landing rule) — an icon button on a static row is not a disclosure
+  // (deviation 9 holds). The done-state is in place, 2s, and announced.
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!copiedId) return;
+    const timer = window.setTimeout(() => setCopiedId(null), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copiedId]);
+  const copyLinkFor = async (person: Employee) => {
+    const href = `${window.location.origin}${window.location.pathname}${withQueryParam("", person.full_name)}`;
+    try {
+      await window.navigator.clipboard.writeText(href);
+      setCopiedId(person.id);
+    } catch {
+      // Clipboard unavailable (insecure context / permissions): nothing to undo.
+    }
+  };
+  const copiedPerson = copiedId ? people.find(person => person.id === copiedId) ?? null : null;
 
   return (
     <section
@@ -101,73 +119,68 @@ export function FloorRoster({
       id={regionId}
       tabIndex={0}
       aria-label={`${label} roster`}
-      className="h-full w-full overflow-y-auto overscroll-contain bg-[var(--sp-layer-01)] text-left [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]"
+      className="sp-roster h-full w-full overflow-y-auto overscroll-contain bg-[var(--sp-layer-01)] text-left [scrollbar-width:thin] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--sp-focus)]"
     >
       <div
-        className="sticky top-0 z-10 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-4 py-3"
+        className="sticky top-0 z-10 bg-[var(--sp-layer-01)]"
         style={headerInsetPx > 0 ? { paddingTop: headerInsetPx } : undefined}
       >
-        <h2 className="text-sm font-semibold text-[var(--sp-text-primary)]">
+        <h2>
           {label} — {peopleLabel}
         </h2>
-        <p className="mt-0.5 text-xs text-[var(--sp-text-helper)]">{helper}</p>
+        <p className="sp-roster-helper">{helper}</p>
         {/* Search count, zero included (Carbon: never a silent search); a
             structured filter publishes its count the same way. */}
         {trimmedQuery ? (
-          <p aria-live="polite" className="mt-1 text-xs font-medium tabular-nums text-[var(--sp-text-secondary)]">
+          <p aria-live="polite" className="sp-roster-helper tabular-nums">
             {matchCount} of {people.length} people match “{trimmedQuery}”
           </p>
         ) : filtersNarrowed ? (
-          <p aria-live="polite" className="mt-1 text-xs font-medium tabular-nums text-[var(--sp-text-secondary)]">
+          <p aria-live="polite" className="sp-roster-helper tabular-nums">
             {people.length} of {total} people match the active filters
           </p>
         ) : null}
       </div>
+      <span aria-live="polite" aria-atomic="true" className="sr-only">
+        {copiedPerson ? `Link copied for ${formatDisplayName(copiedPerson.full_name)}.` : ""}
+      </span>
 
       {total === 0 && !trimmedQuery ? (
-        <div role="status" className="p-4">
-          <div className="text-sm font-semibold text-[var(--sp-text-primary)]">No one is listed on {label} yet</div>
-          <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
-            People appear here after an admin publishes the seat map.
-          </p>
+        <div role="status" className="cds-empty">
+          <h3>No one is listed on {label} yet</h3>
+          <p>People appear here after an admin publishes the seat map.</p>
         </div>
       ) : people.length === 0 && !trimmedQuery ? (
         /* A structured filter hid everyone: the map IS published, the
            emptiness is the filter — say so and offer the way out. */
-        <div role="status" aria-live="polite" className="p-4">
-          <div className="text-sm font-semibold text-[var(--sp-text-primary)]">No one on {label} matches the active filters</div>
-          <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
-            Department and position narrow this list; zone and status apply on mapped floors.
-          </p>
+        <div role="status" aria-live="polite" className="cds-empty">
+          <h3>No one on {label} matches the active filters</h3>
+          <p>Department and position narrow this list; zone and status apply on mapped floors.</p>
           {onClearFilters ? (
-            <button type="button" onClick={() => onClearFilters()} className={clearButtonClassName}>
-              Clear filters
-            </button>
+            <div className="cds-empty-actions">
+              <button type="button" className="cds-btn cds-btn--ghost cds-btn--sm" onClick={() => onClearFilters()}>Clear filters</button>
+            </div>
           ) : null}
         </div>
       ) : matchCount === 0 ? (
-        <div role="status" aria-live="polite" className="p-4">
-          <div className="text-sm font-semibold text-[var(--sp-text-primary)]">
-            No results for “{trimmedQuery}” on {label}
-          </div>
-          <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
-            No one on this floor matches by name, position, department, extension or email.
-          </p>
+        <div role="status" aria-live="polite" className="cds-empty">
+          <h3>No results for “{trimmedQuery}” on {label}</h3>
+          <p>No one on this floor matches by name, position, department, extension or email.</p>
           {onClearSearch ? (
-            <button type="button" onClick={() => onClearSearch()} className={clearButtonClassName}>
-              Clear search
-            </button>
+            <div className="cds-empty-actions">
+              <button type="button" className="cds-btn cds-btn--ghost cds-btn--sm" onClick={() => onClearSearch()}>Clear search</button>
+            </div>
           ) : null}
         </div>
       ) : (
-        <ul role="list" aria-label={`People on ${label}`} className="pb-4">
+        <ul role="list" aria-label={`People on ${label}`} className="sp-roster-list">
           {groups.map(group => (
-            <li key={group.key || "no-department"} data-roster-group={group.department} className="pt-3">
-              <div className="flex items-baseline gap-2 px-4 pb-1">
-                <span className={eyebrowClassName}>{group.department}</span>
-                <span className="text-xs font-medium tabular-nums text-[var(--sp-text-helper)]">· {group.people.length}</span>
+            <li key={group.key || "no-department"} data-roster-group={group.department}>
+              <div className="sp-roster-group">
+                {group.department}
+                <span className="sp-roster-count">{group.people.length}</span>
               </div>
-              <ul role="list">
+              <ul role="list" className="sp-roster-list">
                 {group.people.map(person => {
                   const highlighted = person.id === highlightedPersonId;
                   return (
@@ -176,29 +189,31 @@ export function FloorRoster({
                       id={`${regionId}-person-${person.id}`}
                       role="listitem"
                       data-roster-row={person.id}
+                      data-highlight={highlighted ? "" : undefined}
                       aria-current={highlighted ? "true" : undefined}
-                      // Dense zone: one 40px line from md up (name | position ·
-                      // extension | email), stacked below. No hover or focus
-                      // styling — the row is not a control. The highlighted
-                      // row carries two signals: the brand wash and a 4px
-                      // left accent bar (button-primary: ≈4.0:1 on the wash,
-                      // 3.4:1 in dark — a 1px 40% brand ring measured 1.6:1
-                      // and failed the 3:1 graphic floor, 2026-09-01).
-                      className={[
-                        "grid min-h-10 grid-cols-1 gap-x-4 gap-y-0.5 border-t border-[var(--sp-border-subtle)] py-2 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] md:items-center md:py-0",
-                        highlighted
-                          ? "border-l-4 border-l-[var(--sp-button-primary)] bg-[var(--sp-layer-hover)] pl-3 pr-4"
-                          : "px-4"
-                      ].join(" ")}
+                      // 40px STATIC row: name · position · ext · email + the
+                      // copy-link icon button (PHASE3DS §1.20). No hover on the
+                      // row — it is not a control; hover lives on the button.
+                      // The highlighted row (a ?q= landing) takes the search
+                      // surface + the 3px mark through [data-highlight].
+                      className="sp-roster-row"
                     >
-                      <span className="truncate text-[13px] font-semibold leading-5 text-[var(--sp-text-primary)]">
-                        {formatDisplayName(person.full_name)}
-                      </span>
-                      <span className="truncate text-xs font-medium leading-5 text-[var(--sp-text-secondary)]">
+                      <span>{formatDisplayName(person.full_name)}</span>
+                      <span className="sp-roster-meta">
                         {[person.position, person.phone_extension ? `ext. ${person.phone_extension}` : null].filter(Boolean).join(" · ") || "—"}
                       </span>
-                      <span className="truncate text-xs leading-5 text-[var(--sp-text-helper)] md:text-right">
-                        {person.email ?? ""}
+                      <span className="sp-roster-meta">{person.email ?? ""}</span>
+                      <span className="sp-has-tooltip">
+                        <button
+                          type="button"
+                          className="cds-btn cds-btn--icon cds-btn--sm"
+                          aria-label={`Copy link for ${formatDisplayName(person.full_name)}`}
+                          data-done={copiedId === person.id ? "Copied" : undefined}
+                          onClick={() => void copyLinkFor(person)}
+                        >
+                          <CopyIcon />
+                        </button>
+                        <span className="sp-tooltip" role="tooltip">Copy link</span>
                       </span>
                     </li>
                   );

@@ -107,8 +107,8 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(controlRowSource, /disabled=\{draft\.publish\.count === 0\}/);
   assert.match(controlRowSource, /aria-describedby=\{draft\.publish\.count === 0 \? reasonId : undefined\}/);
   assert.match(controlRowSource, /No changes to publish/);
-  assert.match(source, /Undo \{lastUndoLabel\}/);
-  assert.match(source, /onClick=\{undoDraftEdit\}/);
+  // The outcome notice's inline Undo rides the canvas status region (PR 3a).
+  assert.match(source, /label: `Undo \$\{lastUndoLabel\}`, onClick: undoDraftEdit/);
 });
 
 test("Carbon-for-AI tokens (--sp-ai-*) stay exclusive to Ask Planner surfaces (contract #9)", async () => {
@@ -656,7 +656,6 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   const viewerFinderForInv1 = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   assert.match(viewerFinderForInv1, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), false\)\) \{\s*setInspectorCollapsed\(true\);/);
   assert.doesNotMatch(seatMapSource, /mapKeyPanelOpen|desktopInspectorReserveMarginClassName|dock:/);
-  assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = ""/);
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title" className="order-1 min-w-0 overflow-hidden/);
   assert.match(seatMapSource, /const mobileMapInteractionSurfaceOpen = canEdit && \(/);
   assert.match(seatMapSource, /const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;/);
@@ -666,20 +665,16 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /const modeCardOpen = canEdit && Boolean\(activeMode\) && \(!selectedSeat \|\| inspectorCollapsed\)/);
   assert.match(seatMapSource, /\{modeCardOpen && activeMode && \(/);
   assert.match(seatMapSource, /\{paletteOpen && \(\s*<ViewerFindPalette/);
-  assert.doesNotMatch(seatMapSource, /activeModeBannerClassName/);
-  assert.match(seatMapSource, /const actionErrorBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
-  assert.match(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
+  // PR 3a: action errors, the stale-draft refresh and the outcome notice ride the canvas status region (PHASE3DS §1.21).
+  assert.match(seatMapSource, /<CanvasStatus notices=\{canvasNotices\} \/>/);
+  assert.match(seatMapSource, /kind: "error", alert: true, text: actionError/);
   assert.match(seatMapSource, /aria-label=\{`\$\{activeMode\.label\} mode`\}/);
-  assert.match(seatMapSource, /className=\{actionErrorBannerClassName\}/);
-  assert.match(seatMapSource, /className=\{actionNoticeBannerClassName\}/);
   // The action notice toast is IN-FLOW inside the top-cluster overlay (a
   // second flex-col row), never absolutely offset over it: any fixed top
   // clearance overlaps the cluster once its filter chips wrap to a second
   // row, and the later-painted toast then intercepts their clicks
   // (PR #404 review). pointer-events-auto is load-bearing — the cluster rail
   // is pointer-events-none and each card opts back in.
-  assert.match(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]{0,1500}?"pointer-events-auto self-center/);
-  assert.doesNotMatch(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]{0,1500}?"[^"]*\babsolute\b[^"]*top-/);
   assert.match(seatMapSource, /className=\{mapMarkerLayerClassName\}/);
   // INV-2: no auto-select - a single match stays in results until an explicit open.
   assert.doesNotMatch(seatMapSource, /singleResultSeat|autoSelectedSearchKeyRef|Auto-selected/);
@@ -1304,10 +1299,12 @@ test("the floor roster is a focusable read-only region with exactly one control"
   assert.match(source, /data-roster-row/);
   assert.match(source, /aria-current=\{/);
   assert.match(source, /role="status"/);
-  // Two ways out and nothing else: Clear search (query empty) and Clear
+  // Three controls and nothing else: Clear search (query empty), Clear
   // filters (a structured filter hid everyone) — each rendered only in its
-  // own zero state.
-  assert.equal((source.match(/<button/g) ?? []).length, 2, "the zero-state Clear search / Clear filters buttons are the roster's only controls");
+  // own zero state — and the row's Copy link icon button (D1-e; deviation 9
+  // holds: an icon button on a static row is not a disclosure).
+  assert.equal((source.match(/<button/g) ?? []).length, 3, "Clear search / Clear filters / Copy link are the roster's only controls");
+  assert.match(source, /aria-label=\{`Copy link for \$\{formatDisplayName\(person\.full_name\)\}`\}/);
   assert.doesNotMatch(source, /disabled/);
   // The viewer switches floors with an announcement, never silently.
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");

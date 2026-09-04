@@ -115,7 +115,6 @@ const PINS = {
   ],
   // Zero-result "Clear search" (≈30px content-sized; only a <p> sits above):
   // 30 + 2×7 = 44 on both surfaces that render it.
-  "components/seat-map/FloorRoster.tsx": ["after:absolute after:-inset-y-[7px]"],
   "components/seat-map/AskPlannerDrawer.tsx": [
     "after:absolute after:-inset-y-2.5",
     "after:absolute after:-inset-y-1"

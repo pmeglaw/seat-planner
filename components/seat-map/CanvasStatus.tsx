@@ -17,7 +17,7 @@ export type CanvasNotice = {
   text: ReactNode;
   /** role="alert" for task-stopping failures; the region's status role otherwise. */
   alert?: boolean;
-  action?: { label: string; onClick: () => void };
+  action?: { label: string; onClick?: () => void; href?: string };
   onDismiss?: () => void;
 };
 
@@ -39,7 +39,11 @@ export function CanvasStatus({ notices }: { notices: CanvasNotice[] }) {
             {notice.title ? <strong>{notice.title}</strong> : null}
             <p>{notice.text}</p>
           </div>
-          {notice.action ? (
+          {notice.action?.href ? (
+            // A full navigation on purpose (the session is gone): the login
+            // page is a sanctioned document load (lib/fullNavigation).
+            <a className="cds-btn cds-btn--ghost cds-btn--sm" href={notice.action.href}>{notice.action.label}</a>
+          ) : notice.action ? (
             <button type="button" className="cds-btn cds-btn--ghost cds-btn--sm" onClick={notice.action.onClick}>{notice.action.label}</button>
           ) : null}
           {notice.onDismiss ? (
