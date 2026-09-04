@@ -1,0 +1,32 @@
+You are Claude Code. Re-brand this app from IBM Carbon blue to Megeredchian Law terracotta.
+
+CONTEXT:
+- App currently uses IBM default blue #0f62fe
+- Need to replace with law firm brand: terracotta #B85C2E (WCAG AA 4.56:1 PASS)
+- Logo colors: bright orange #EB7C35 is LOGO ONLY (fails AA 2.81:1), don't use for UI. Use #B85C2E for UI.
+
+FILES PROVIDED:
+- megeredchian-law-tokens.css (drop-in, already has g10 and g100 overrides)
+- megeredchian-law-tokens.json
+- Logo: image_B2C2B4BB-B467-4CBE-898B-626F017F9642.jpeg
+
+DO THIS:
+
+1. Copy megeredchian-law-tokens.css to src/styles/brand/ and import it AFTER @carbon/styles in globals or _app
+
+2. Wrap layout: header + left rail + inspector = data-carbon-theme="g100", canvas = data-carbon-theme="g10"
+
+3. Replace all IBM blue:
+   - Find #0f62fe, #0353e9, #4589ff, #a6c8ff, --cds-interactive: #0f62fe
+   - Replace with #B85C2E for buttons/borders/interactive/AI, #8F4521 for hover, #E8A07A for links on dark
+   - Use grep to ensure no #0f62fe left in src/
+
+4. Update theme objects if using createTheme: buttonPrimary #B85C2E, buttonPrimaryHover #8F4521, borderInteractive #B85C2E, linkPrimary #8F4521 (g10) / #E8A07A (g100), aiBorderStrong #B85C2E, aiAuraStart rgba(184,92,46,0.10)
+
+5. Header: build custom M mark - back M #5D5C5B, front M #B85C2E overlapping, plus text "MEGEREDCHIAN LAW" Plex Sans Medium 13px uppercase tracking 1.5px
+
+6. Verify: primary buttons terracotta, active nav left border 3px solid #B85C2E, focus rings #B85C2E, AI tile bottom border #B85C2E with aura
+
+DO NOT use #EB7C35 for UI text/buttons, keep g100 dark neutral #161616 and g10 light #f4f4f4.
+
+Build and show me diff.

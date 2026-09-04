@@ -1,0 +1,100 @@
+/* =============================================================================
+   Megeredchian Law — brand token layer (LOCKED; see CLAUDE.md "Brand System")
+
+   Loads AFTER carbon-tokens.css and sp-tokens.css (app/layout.tsx). It re-points
+   Carbon's interactive roles at the firm's terracotta so every --sp-* alias that
+   reads them (sp-tokens.css tier A) inherits the brand without edits. The two
+   asset files stay untouched; this is an override layer, like the sp-* files.
+
+   Values are the hand-off's, verbatim (docs/brand/megeredchian-law-tokens.original.css).
+   Only the SELECTORS differ from the hand-off: this app themes <html> with
+   data-carbon-theme="white" (light) | "g100" (dark) | absent (system, resolved by
+   the asset's prefers-color-scheme guard), never "g10". The three states below
+   mirror carbon-tokens.css exactly so the brand applies in all of them.
+
+   Contrast (WCAG 2.x): #B85C2E on #ffffff 4.56:1 (AA text) · on #161616 3.97:1
+   (non-text ≥ 3:1) · #8F4521 on #ffffff 7.3:1 · #E8A07A on #161616 8.4:1.
+   #EB7C35 (logo orange) is 2.81:1 on white — LOGO MARK ONLY, never UI.
+   ========================================================================== */
+
+:root {
+  --brand-orange-logo: #EB7C35;
+  --brand-terracotta: #B85C2E;
+  --brand-terracotta-hover: #8F4521;
+  --brand-terracotta-active: #7A3A1C;
+  --brand-terracotta-light: #F5DDD1;
+  --brand-terracotta-lighter: #FBE8DC;
+  --brand-charcoal: #5D5C5B;
+  --brand-charcoal-dark: #3F3E3D;
+  --brand-paper: #FFFBF7;
+}
+
+/* LIGHT — bare :root (system-light) and the forced light attribute */
+:root,
+:root[data-carbon-theme="white"] {
+  --cds-button-primary: #B85C2E;
+  --cds-button-primary-hover: #8F4521;
+  --cds-button-primary-active: #7A3A1C;
+  --cds-border-interactive: #B85C2E;
+  --cds-interactive: #B85C2E;
+  --cds-link-primary: #8F4521;
+  --cds-link-primary-hover: #7A3A1C;
+  --cds-focus: #B85C2E;
+  --cds-background-brand: #B85C2E;
+  --cds-ai-border-strong: #B85C2E;
+  --cds-ai-border-start: rgba(184,92,46,0.64);
+  --cds-ai-border-end: #B85C2E;
+  --cds-ai-aura-start: rgba(184,92,46,0.06);
+  --cds-ai-aura-start-sm: rgba(184,92,46,0.12);
+  --cds-ai-aura-end: transparent;
+}
+
+/* DARK — system-dark (no attribute, OS prefers dark) … */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-carbon-theme="white"]):not([data-carbon-theme="g10"]) {
+    --cds-button-primary: #B85C2E;
+    --cds-button-primary-hover: #8F4521;
+    --cds-button-primary-active: #7A3A1C;
+    --cds-border-interactive: #B85C2E;
+    --cds-interactive: #B85C2E;
+    --cds-link-primary: #E8A07A;
+    --cds-link-primary-hover: #F5DDD1;
+    --cds-focus: #B85C2E;
+    --cds-background-brand: #B85C2E;
+    --cds-ai-border-strong: #B85C2E;
+    --cds-ai-border-start: rgba(184,92,46,0.64);
+    --cds-ai-border-end: #B85C2E;
+    --cds-ai-aura-start: rgba(184,92,46,0.10);
+    --cds-ai-aura-start-sm: rgba(184,92,46,0.16);
+  }
+}
+
+/* … and the forced dark attribute */
+:root[data-carbon-theme="g100"] {
+  --cds-button-primary: #B85C2E;
+  --cds-button-primary-hover: #8F4521;
+  --cds-button-primary-active: #7A3A1C;
+  --cds-border-interactive: #B85C2E;
+  --cds-interactive: #B85C2E;
+  --cds-link-primary: #E8A07A;
+  --cds-link-primary-hover: #F5DDD1;
+  --cds-focus: #B85C2E;
+  --cds-background-brand: #B85C2E;
+  --cds-ai-border-strong: #B85C2E;
+  --cds-ai-border-start: rgba(184,92,46,0.64);
+  --cds-ai-border-end: #B85C2E;
+  --cds-ai-aura-start: rgba(184,92,46,0.10);
+  --cds-ai-aura-start-sm: rgba(184,92,46,0.16);
+}
+
+/* -----------------------------------------------------------------------------
+   Tier-C zone tokens (sp-tokens.css §5/§7c) point at the Carbon PALETTE, not at
+   the --cds-* roles above, so they need their own brand values. Theme-invariant,
+   like the zone itself: the Gray 100 header and dark panels in both themes.
+   -------------------------------------------------------------------------- */
+:root {
+  --sp-shell-current-bar:     #B85C2E;   /* 3px current-section bar; was blue 50. 3.97:1 on gray 100 */
+  --sp-panel-dark-link:       #E8A07A;   /* links in Help / History / Account; was blue 40 */
+  --sp-panel-dark-link-hover: #F5DDD1;   /* was blue 30 */
+  --sp-ai-border-end:         #B85C2E;   /* AI label gradient end; was blue 40 */
+}

@@ -39,10 +39,15 @@ const SCAN_ROOTS = ["app", "components", "lib"];
 const SCAN_FILES = ["tailwind.config.ts"];
 const EXCLUDED_DIRS = new Set(["app/concepts", "app/fonts"]);
 
-// The skill assets: copied verbatim, the only files allowed to hold a hex.
+// The skill assets: copied verbatim, the only files allowed to hold a hex —
+// plus the LOCKED brand layer (CLAUDE.md "Brand System"), which by design holds
+// the firm's hex values and re-points Carbon's interactive roles at them.
 const ASSET_BASENAMES = new Set(["carbon-tokens.css", "carbon-components.css"]);
-// The semantic layer: the only non-asset file allowed to reference `--cds-*`.
-const CDS_BRIDGE_BASENAMES = new Set([...ASSET_BASENAMES, "sp-tokens.css"]);
+const BRAND_FILE = "app/styles/brand/megeredchian-law-tokens.css";
+const HEX_ALLOWED_BASENAMES = new Set([...ASSET_BASENAMES, path.posix.basename(BRAND_FILE)]);
+// The semantic layer: the only non-asset file allowed to reference `--cds-*` —
+// and the brand layer, whose whole job is overriding `--cds-*` roles.
+const CDS_BRIDGE_BASENAMES = new Set([...HEX_ALLOWED_BASENAMES, "sp-tokens.css"]);
 
 function collectFiles(root) {
   const abs = path.join(repoRoot, root);
@@ -117,7 +122,7 @@ const HEX_LEDGER = {
 test("no hex literal outside the two asset files (ledger only shrinks)", () => {
   const actual = {};
   for (const rel of files) {
-    if (ASSET_BASENAMES.has(path.posix.basename(rel))) continue;
+    if (HEX_ALLOWED_BASENAMES.has(path.posix.basename(rel))) continue;
     const n = countMatches(scannable(rel), HEX);
     if (n > 0) actual[rel] = n;
   }
@@ -201,6 +206,7 @@ test("app/layout.tsx imports the stylesheets in the contracted order", () => {
     "./globals.css",
     "./styles/carbon-tokens.css",
     "./styles/sp-tokens.css",
+    "./styles/brand/megeredchian-law-tokens.css", // brand AFTER the token files, BEFORE components
     "./styles/carbon-components.css",
     "./styles/sp-components.css",
     "./styles/phase4-bridge.css",
@@ -326,4 +332,49 @@ test("no shadow-[var( arbitrary class (Tailwind v3 drops it silently)", () => {
     if (n > 0) offenders.push(`${rel}: ${n}`);
   }
   assert.deepEqual(offenders, [], offenders.join("\n"));
+});
+
+
+// ---------------------------------------------------------------------------
+// Brand layer (LOCKED — CLAUDE.md "Brand System"). The firm's terracotta is
+// the primary-action colour in every theme state; IBM blue is never the
+// primary; the logo orange never appears as a UI colour.
+// ---------------------------------------------------------------------------
+test("brand layer: terracotta is the primary in all three theme states, blue is not", () => {
+  const css = stripCssComments(read(BRAND_FILE));
+  const blocks = [
+    /:root,\s*:root\[data-carbon-theme="white"\]\s*\{([^}]*)\}/, // light
+    /@media \(prefers-color-scheme: dark\)\s*\{\s*:root:not\(\[data-carbon-theme="white"\]\)[^{]*\{([^}]*)\}/, // system-dark
+    /:root\[data-carbon-theme="g100"\]\s*\{([^}]*)\}/, // forced dark
+  ];
+  for (const re of blocks) {
+    const m = css.match(re);
+    assert.ok(m, `brand block missing: ${re}`);
+    assert.match(m[1], /--cds-button-primary:\s*#B85C2E/i);
+    assert.match(m[1], /--cds-button-primary-hover:\s*#8F4521/i);
+    assert.match(m[1], /--cds-focus:\s*#B85C2E/i);
+    assert.match(m[1], /--cds-border-interactive:\s*#B85C2E/i);
+  }
+  assert.match(css.match(blocks[0])[1], /--cds-link-primary:\s*#8F4521/i, "light links are #8F4521");
+  assert.match(css.match(blocks[2])[1], /--cds-link-primary:\s*#E8A07A/i, "dark links are #E8A07A");
+  assert.doesNotMatch(css, /#0f62fe|#0353e9|#4589ff|#a6c8ff|#78a9ff/i, "no IBM blue in the brand layer");
+  // The logo orange is declared once, as --brand-orange-logo, and assigned to nothing else.
+  const logoUses = [...css.matchAll(/#EB7C35/gi)].length;
+  assert.equal(logoUses, 1, "#EB7C35 is LOGO ONLY (2.81:1 on white) — declared once as --brand-orange-logo, never assigned to a UI role");
+});
+
+test("brand layer: the zone tokens that bypass --cds-* roles are re-pointed", () => {
+  const css = stripCssComments(read(BRAND_FILE));
+  assert.match(css, /--sp-shell-current-bar:\s*#B85C2E/i);
+  assert.match(css, /--sp-panel-dark-link:\s*#E8A07A/i);
+  assert.match(css, /--sp-ai-border-end:\s*#B85C2E/i);
+});
+
+test("logo orange #EB7C35 appears nowhere in app/ or components/ except the brand declaration", () => {
+  const offenders = [];
+  for (const rel of files) {
+    if (rel === BRAND_FILE) continue;
+    if (countMatches(scannable(rel), /#EB7C35/gi) > 0) offenders.push(rel);
+  }
+  assert.deepEqual(offenders, [], "#EB7C35 is the logo mark only — it fails AA (2.81:1) as a UI colour");
 });
