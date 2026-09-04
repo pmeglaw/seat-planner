@@ -172,7 +172,7 @@ export function ResultsPanel({
                   onClick={() => onShowOnMap(result.seatId as string)}
                   aria-label={`Show ${result.title} on the map`}
                   title={`Show ${result.title} on the map`}
-                  className="relative my-1 mr-1 flex shrink-0 items-center self-center whitespace-nowrap rounded-lg border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-button-primary)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                  className="relative my-1 mr-1 flex shrink-0 items-center self-center whitespace-nowrap rounded-lg border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-link)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 >
                   Show on map
                 </button>
@@ -187,12 +187,12 @@ export function ResultsPanel({
           <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">{emptyDescription}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {searchActive && (
-              <button type="button" onClick={onClearSearch} className="relative rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+              <button type="button" onClick={onClearSearch} className="relative rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-link)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
                 Clear search
               </button>
             )}
             {structuredFiltersActive && (
-              <button type="button" onClick={onClearFilters} className="relative rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+              <button type="button" onClick={onClearFilters} className="relative rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-link)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
                 Clear filters
               </button>
             )}

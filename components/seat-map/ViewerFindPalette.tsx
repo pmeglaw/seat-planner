@@ -366,7 +366,7 @@ export function ViewerFindPalette({
                 onClick={() => onClearSearch()}
                 // ≈30px content-sized; the 7px vertical expansion reaches 44
                 // (only the <p> above it is adjacent — touch-target-source pin).
-                className="relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+                className="relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-link)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
               >
                 Clear search
               </button>

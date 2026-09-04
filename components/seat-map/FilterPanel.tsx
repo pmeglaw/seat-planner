@@ -78,7 +78,7 @@ export function ActiveFilterChips({
       {chips.map(chip => (
         <span key={chip.id} className="inline-flex max-w-full items-center gap-1 bg-[var(--sp-layer-01)] py-0.5 pl-2 pr-1 text-xs font-semibold text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-border-interactive)]">
           <span className="shrink-0 text-[var(--sp-text-helper)]">{chip.label}</span>
-          <span className="min-w-0 truncate text-[var(--sp-button-primary)]">{chip.value}</span>
+          <span className="min-w-0 truncate text-[var(--sp-link)]">{chip.value}</span>
           <button
             type="button"
             onClick={() => onRemove(chip.id)}
