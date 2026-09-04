@@ -64,3 +64,26 @@ test("readFloorParam pulls the raw floor param; withFloorParam sets and clears i
   assert.equal(deepLink.withFloorParam("?floor=2", null), "");
   assert.equal(deepLink.FLOOR_PARAM, "floor");
 });
+
+// ?dept= / ?zone= / ?status= / ?position= (PHASE1IA B3; Position ruled in
+// 2026-09-04): one param per structured filter, "all" = absent.
+test("readFilterParams reads the four filter params; missing or blank = all", () => {
+  assert.deepEqual(deepLink.readFilterParams("?dept=Litigation&zone=North&status=assigned&position=Attorney&seat=W08"), {
+    department: "Litigation",
+    position: "Attorney",
+    zone: "North",
+    status: "assigned"
+  });
+  assert.deepEqual(deepLink.readFilterParams("?dept=%20&floor=2"), { department: "all", position: "all", zone: "all", status: "all" });
+  assert.deepEqual(deepLink.readFilterParams(""), { department: "all", position: "all", zone: "all", status: "all" });
+  assert.deepEqual(deepLink.FILTER_PARAMS, { department: "dept", position: "position", zone: "zone", status: "status" });
+});
+
+test("withFilterParams writes only non-default filters and preserves the other params", () => {
+  assert.equal(
+    deepLink.withFilterParams("?floor=2&seat=W08", { department: "Litigation", position: "all", zone: "all", status: "assigned" }),
+    "?floor=2&seat=W08&dept=Litigation&status=assigned"
+  );
+  assert.equal(deepLink.withFilterParams("?dept=Litigation&position=Attorney", { department: "all", position: "all", zone: "all", status: "all" }), "");
+  assert.equal(deepLink.withFilterParams("?dept=Old&floor=2", { department: "New", position: "all", zone: "all", status: "all" }), "?dept=New&floor=2");
+});

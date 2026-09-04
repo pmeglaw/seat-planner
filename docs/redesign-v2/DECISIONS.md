@@ -631,6 +631,16 @@ the per-breakpoint design mandate is withdrawn. Reopens on first laptop use. (PH
 **Trade-off:** a 48px empty square at the left of the header on three routes. Invisible in practice (the header is one dark band), and cheaper than a control that opens an empty panel.
 **Would change if:** Reception or Management grow filters of their own — then the panel has content there and the hamburger appears, with no layout shift.
 
+### D0 — Phase 4 confirmations (2026-09-03 / 2026-09-04, shell PR 2; owner rulings — confirmations and amendments, not deviations)
+
+- **Route-group move confirmed (2026-09-03):** `app/page.tsx` → `app/(shell)/page.tsx`; the one shell mounts on `/` (PHASE1IA B2). The viewer's own header, surface tabs, theme toggle and account menu retire.
+- **Tenant row = the PR 2 / PR 3 seam (2026-09-03):** a provisional 48px row under the header holds SeatMap's bar tenants and the viewer search until PR 3's control row (PHASE4BUILD §1.8).
+- **D0-c / ruling 21 amended — Position is the fourth filter group (2026-09-04):** Department · Zone · Status · Position; `?position=` joins B3 beside `?dept=` / `?zone=` / `?status=`. Same panel pattern, one more category — not a deviation (PHASE4BUILD §1.12).
+- **D0-d confirmed (2026-09-04):** header is text only; the hand-off's M-mark is available as a later owner-requested change (PHASE4BUILD §1.13).
+- **D0-h mechanics (2026-09-04):** `/admin` shows the reserved slot at `lg`+ until PR 3 registers admin filters; below `lg` the panel carries the section links everywhere.
+- **Skip-link copy (2026-09-04):** the shipped per-route labels stay (PHASE2UX §1.7 amendment; PHASE4BUILD §1.10).
+- **`getDraftStatusAction` (2026-09-04):** the one sanctioned new server action — read-only, admin-only, no RPC / migration / revalidatePath (PHASE4BUILD §1.9).
+
 ---
 
 ### D1 — Map (`/`, viewer)

@@ -57,12 +57,12 @@ export default async function ReceptionPage() {
   const people = buildReceptionDirectory(employees, seats.map(withNullNotes));
 
   return (
-    // pl-12 clears the fixed rail; the svh calc offsets the AppTopBar the
-    // shell renders above this pane (both live in the (shell) layout now).
-    <main className="reception-theme flex min-h-[calc(100svh-var(--sp-chrome-height))] flex-col bg-[var(--sp-background)] pl-12 text-[var(--sp-text-primary)] lg:h-[calc(100svh-var(--sp-chrome-height))] lg:min-h-0 lg:overflow-hidden">
+    // The persistent shell (app/(shell)/layout.tsx) owns the fixed header and
+    // sizes this pane as a flex column (viewport-height at lg): flex-1 fills it.
+    <main className="flex min-h-0 flex-1 flex-col bg-[var(--sp-background)] text-[var(--sp-text-primary)] lg:overflow-hidden">
       {/* Skip-link landing: focusable zero-height marker (the link itself is
-          the persistent rail's first focusable — AppShell maps this route to
-          #reception-main). */}
+          the shell header's first focusable — shellNavConfig maps this route
+          to #reception-main). */}
       <div id="reception-main" tabIndex={-1} className="outline-none" />
       {/* Desktop: the document never scrolls (viewer-map contract) — the
           directory scrolls inside this focusable region instead (tabIndex +

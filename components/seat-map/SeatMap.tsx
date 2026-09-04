@@ -152,7 +152,11 @@ const GUARDED_NAVIGATION_HREFS = [
 type GuardedNavigationHref = (typeof GUARDED_NAVIGATION_HREFS)[number];
 
 function isGuardedNavigationHref(href: string): href is GuardedNavigationHref {
-  return (GUARDED_NAVIGATION_HREFS as readonly string[]).includes(href);
+  const hrefs = GUARDED_NAVIGATION_HREFS as readonly string[];
+  // The shell's History switch keeps the view (?floor= / ?seat=) on the
+  // other mode's map (redesign-v2 PR 2), so a guarded destination may carry
+  // a query the closed set does not spell out — match the pathname too.
+  return hrefs.includes(href) || hrefs.includes(href.split("?")[0]);
 }
 
 type MapViewMode = "overview" | "detail";
@@ -458,6 +462,14 @@ export function SeatMap({
     applyRestoredDraftPayload,
     handleStaleDraft
   });
+  const maxDraftUpdatedAt = useMemo(
+    () => localSeats.reduce<string | null>((max, seat) => (seat.updated_at && (!max || seat.updated_at > max) ? seat.updated_at : max), null),
+    [localSeats]
+  );
+  const liveDraftStatus = useMemo(
+    () => ({ changeCount: publishSummary.totalChangeCount, lastEditAt: maxDraftUpdatedAt }),
+    [publishSummary.totalChangeCount, maxDraftUpdatedAt]
+  );
 
   // Filter/search values, everything derived from them, and their handlers
   // live in their own hook (M4 step 4). The structured facets (department /
@@ -605,10 +617,13 @@ export function SeatMap({
     // list learns about them.
     guard: (href, label) => (isGuardedNavigationHref(href) ? beforeGuardedNavigation(href, label) : true),
     openAskPlanner: openAskPlannerDrawer,
-    // Live drawer state → the rail AI item's active treatment (parity with
-    // the bar's Ask Planner tenant; flows through AppShell's own channel,
-    // not the register-once handlers).
-    askPlannerOpen
+    // Live drawer state → the shell's Ask Planner channel (PR 3 consumer;
+    // flows through AppShell's own channel, not the register-once handlers).
+    askPlannerOpen,
+    // Live draft status → the shell's mode indicator ("Draft — N changes")
+    // and the History panel's status line (PHASE2UX §1.5): the count is the
+    // publish review's own total, the last edit the newest draft updated_at.
+    draftStatus: liveDraftStatus
   });
   // Top-bar-first chrome: this surface's bar tenants (undo/redo/kebab, the
   // floor identity, Ask Planner + publish) render into AppTopBar's slot
@@ -2462,7 +2477,7 @@ export function SeatMap({
       // The two greiges differ — workspace #ECE8E0 against page #F7F6F2 — so
       // it read as the page running out rather than as workspace. 80px is the
       // exact sub-lg chrome above the map, derived from the classes: the 36px
-      // bar (--sp-chrome-height) plus the 44px in-flow canvas search row
+      // shell chrome (--sp-shell-header-h ×2, see below) plus the 44px in-flow canvas search row
       // (`lg:hidden`, h-9 input = 36px + pb-2 = 8px; its `block` label
       // collapses to the input, so there is no extra baseline strut — measured
       // in Chromium at 360/390/430/640/860/1023). An exact height also keeps
@@ -2477,16 +2492,19 @@ export function SeatMap({
       // The band variant budgets 40px more below lg (84 = 44px search row +
       // 40px band) so the viewport + band still sum to the screen and the
       // viewport stays the one vertical scroll owner (#197).
+      // PHASE 4 BRIDGE: the chrome above this surface is the shell header
+      // PLUS the provisional tenant row of the same height (PR 2 seam); PR 3
+      // removes the row and this budget drops back to one header height.
       ? [
         statusBandVisible
-          ? "min-h-[300px] h-[calc(100svh-var(--sp-chrome-height)-84px)]"
-          : "min-h-[300px] h-[calc(100svh-var(--sp-chrome-height)-44px)]",
+          ? "min-h-[300px] h-[calc(100svh-2*var(--sp-shell-header-h)-84px)]"
+          : "min-h-[300px] h-[calc(100svh-2*var(--sp-shell-header-h)-44px)]",
         "overflow-auto sm:flex sm:items-center sm:justify-center sm:overflow-hidden"
       ].join(" ")
-      // The sm cap budgets the stacked chrome above the map: the bar
-      // (--sp-chrome-height, token-derived so a bar resize can't strand a
-      // hardcoded sum again — the 36→40px bump caught exactly that) plus the
-      // 44px canvas search row. The row once read as ~52 (an estimate), which
+      // The sm cap budgets the stacked chrome above the map: the shell header
+      // plus the provisional tenant row (--sp-shell-header-h twice — token-
+      // derived so a chrome resize can't strand a hardcoded sum again; the
+      // 36→40px bump caught exactly that) plus the 44px canvas search row. The row once read as ~52 (an estimate), which
       // left an 8px sliver of page below the map — the small version of the
       // band the overview branch above exists to close. Below lg the pan
       // viewport is the one vertical scroll owner (#197), so the page itself
@@ -2496,8 +2514,8 @@ export function SeatMap({
       : [
         "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px]",
         statusBandVisible
-          ? "sm:max-h-[calc(100svh-var(--sp-chrome-height)-84px)]"
-          : "sm:max-h-[calc(100svh-var(--sp-chrome-height)-44px)]",
+          ? "sm:max-h-[calc(100svh-2*var(--sp-shell-header-h)-84px)]"
+          : "sm:max-h-[calc(100svh-2*var(--sp-shell-header-h)-44px)]",
         "lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden"
       ].join(" "),
     mapViewMode === "detail" && surface === "plan" && !addSeatMode ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
@@ -3060,14 +3078,10 @@ export function SeatMap({
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
        which would capture any sticky descendant so it never pins.
-       pl-12 clears the v12 left rail, which is position:fixed and does not
-       participate in this flex column; the chrome-h calcs offset the
-       persistent AppTopBar the same way the sub-pages do.
-       min-h in svh, not screen-height (100lvh): below lg the map viewport is
-       sized in svh, and on a mobile browser with a collapsing URL bar lvh runs
-       past svh — the root would stretch below the map's bottom edge and reopen
-       the dead band that height exists to close. */
-    <div className="flex min-h-[calc(100svh-var(--sp-chrome-height))] flex-col overflow-x-clip bg-[var(--sp-background)] text-[var(--sp-text-primary)] pl-12 lg:h-[calc(100vh-var(--sp-chrome-height))] lg:min-h-0 lg:overflow-hidden">
+       The persistent shell sizes its content pane as a flex column
+       (viewport-height at lg), so this root fills it with flex-1 and never
+       subtracts chrome itself (redesign-v2 PR 2). */
+    <div className="flex min-h-0 flex-1 flex-col overflow-x-clip bg-[var(--sp-background)] text-[var(--sp-text-primary)] lg:overflow-hidden">
       {/* The chrome is the (shell) layout's persistent AppShell (AppTopBar +
           rail) — this surface plugs its unsaved-edits veto and Ask Planner
           opener into it via useAppShellNavigation (see the registration near
@@ -3086,7 +3100,7 @@ export function SeatMap({
           {shellSlots.right && createPortal(barActionCluster, shellSlots.right)}
         </>
       ) : (
-        <header className="sp-zone-chrome sticky top-0 z-50 flex h-[var(--sp-chrome-height)] shrink-0 items-center border-b border-[var(--sp-border-subtle)] bg-[var(--sp-background)] pl-3 text-[var(--sp-text-primary)]" data-chrome="dark">
+        <header className="sp-zone-chrome sticky top-0 z-50 flex h-[var(--sp-shell-header-h)] shrink-0 items-center border-b border-[var(--sp-border-subtle)] bg-[var(--sp-background)] pl-3 text-[var(--sp-text-primary)]" data-chrome="dark">
           <div className="flex min-w-0 shrink-0 items-center gap-2">
             <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
               {/* Brand monogram straight on the dark bar — the 2026 mark carries its own contrast. */}
@@ -3682,7 +3696,7 @@ export function SeatMap({
           role="status"
           aria-live="polite"
           aria-label={`${activeMode.label} mode`}
-          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-01)] p-4 shadow-sp motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[var(--sp-chrome-height)] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-01)] p-4 shadow-sp motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[calc(2*var(--sp-shell-header-h))] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="text-xs font-semibold text-[var(--sp-link)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--sp-text-primary)]">{activeMode.message}</p>

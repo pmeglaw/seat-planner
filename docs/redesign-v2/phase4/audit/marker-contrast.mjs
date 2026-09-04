@@ -152,9 +152,14 @@ for (const theme of ["light", "dark"]) {
   await page.keyboard.press("Escape"); await page.keyboard.press("Escape");
   await page.locator("#viewer-seat-search").fill("");
   await page.waitForTimeout(300);
-  // Filtered-out: open "Filter seating" and press the first real Zone chip; non-matching markers dim.
-  await page.getByRole("button", { name: /^Filter seating/ }).click();
-  const zoneChip = page.locator('#viewer-filter-panel [role="group"][aria-label="Zone"] button[aria-pressed]').nth(1);
+  // Filtered-out: open the shell's left panel (hamburger) and check the first Zone item; non-matching markers dim.
+  // The open state is a remembered per-user preference: a second theme pass
+  // finds it already open, so toggle until the host carries data-open.
+  for (let i = 0; i < 2 && !(await page.locator("#shell-left-panel[data-open]").count()); i += 1) {
+    await page.locator('#shell-header button[aria-controls="shell-left-panel"]').click();
+    await page.waitForTimeout(400);
+  }
+  const zoneChip = page.locator('#shell-left-panel fieldset').filter({ hasText: "Zone" }).locator('input[type="checkbox"]').first();
   if (await zoneChip.count()) {
     await zoneChip.click();
     await page.waitForTimeout(500);

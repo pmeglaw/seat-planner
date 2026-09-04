@@ -13,7 +13,7 @@ const { VIEWER_SEAT_COLUMNS, withNullNotes } = await importTsModule("lib/viewerS
 // Every published-layer viewer surface. Admin pages read draft + published for
 // editing and are entitled to notes; they are deliberately not listed.
 const VIEWER_SEAT_READERS = [
-  "../app/page.tsx",
+  "../app/(shell)/page.tsx",
   "../app/my-seat/page.tsx",
   "../app/(shell)/reception/page.tsx"
 ];

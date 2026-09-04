@@ -24,7 +24,7 @@ export default async function AdminManagementPage({
 
   if (!isAdmin) {
     return (
-      <main className="admin-theme flex min-h-[calc(100svh-var(--sp-chrome-height))] items-center justify-center bg-[var(--sp-background)] p-6">
+      <main className="flex min-h-0 flex-1 items-center justify-center bg-[var(--sp-background)] p-6">
         <section className="max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-6 shadow-sp">
           <h1 className="text-lg font-semibold text-[var(--sp-text-primary)]">Admin access required</h1>
           <p className="mt-2 text-sm text-[var(--sp-text-secondary)]">
@@ -74,12 +74,12 @@ export default async function AdminManagementPage({
   }
 
   return (
-    // pl-12 clears the v12 left rail — position:fixed, mounted by the (shell)
-    // layout's persistent AppShell along with the AppTopBar above this
-    // pane (hence the svh calc: bar height comes off the pane's min-height).
-    // The skip link itself lives in the rail (AppShell maps this route to
+    // The persistent shell (app/(shell)/layout.tsx) owns the fixed header and
+    // sizes this pane as a flex column (viewport-height at lg), so the page
+    // fills it with flex-1 and never subtracts chrome itself. The skip link
+    // lives in the shell header (shellNavConfig maps this route to
     // #admin-subpage-main); this page owns the landing marker below.
-    <div className="admin-theme flex min-h-[calc(100svh-var(--sp-chrome-height))] flex-col bg-[var(--sp-background)] pl-12 lg:h-[calc(100svh-var(--sp-chrome-height))] lg:min-h-0 lg:overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col bg-[var(--sp-background)] lg:overflow-hidden">
       {/* Skip-link landing: focusable zero-height marker; the next Tab enters
           the panel content. */}
       <div id="admin-subpage-main" tabIndex={-1} className="outline-none" />

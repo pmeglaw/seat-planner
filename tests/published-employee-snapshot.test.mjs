@@ -13,7 +13,7 @@ const migrationSql = await readFile(
   new URL("../supabase/migrations/20260708230000_published_employee_snapshot.sql", import.meta.url),
   "utf8"
 );
-const viewerSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+const viewerSource = await readFile(new URL("../app/(shell)/page.tsx", import.meta.url), "utf8");
 const adminSource = await readFile(new URL("../app/(shell)/admin/page.tsx", import.meta.url), "utf8");
 // The publish-review dialog markup and hook (R-02a extraction) — where the
 // employee-detail diff is computed and rendered now.

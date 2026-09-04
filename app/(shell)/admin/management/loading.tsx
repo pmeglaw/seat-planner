@@ -1,14 +1,13 @@
 // Content-pane loading state for /admin/management. The persistent shell
-// keeps the rail and the AppTopBar mounted while this streams, so the
-// skeleton renders no chrome of its own — just the section's content shapes
-// (summary cards + directory table wash), offset for the fixed rail (pl-12)
-// and for the bar already above it (the svh calc).
+// keeps the header and panels mounted while this streams, so the skeleton
+// renders no chrome of its own — just the section's content shapes (summary
+// cards + directory table wash), sized by the shell's flex content pane.
 export default function AdminManagementLoading() {
   return (
     <div
       role="status"
       aria-busy="true"
-      className="admin-theme flex min-h-[calc(100svh-var(--sp-chrome-height))] flex-col bg-[var(--sp-background)] pl-12 text-[var(--sp-text-primary)]"
+      className="flex min-h-0 flex-1 flex-col bg-[var(--sp-background)] text-[var(--sp-text-primary)]"
     >
       <span className="sr-only">Loading management…</span>
       <div aria-hidden="true" className="flex-1 animate-pulse p-6 motion-reduce:animate-none">

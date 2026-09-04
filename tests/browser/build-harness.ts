@@ -25,6 +25,7 @@ const ACTION_EXPORTS = [
   "resetDraftToPublishedAction",
   "restoreDraftSnapshotAction",
   "getPublishHistoryAction",
+  "getDraftStatusAction",
   "askPlannerAction",
   "createEmployeeAction",
   "updateEmployeeAction",
@@ -99,10 +100,10 @@ const ENTRY = `
   import { AppShell } from "@/components/ui/AppShell";
   import { SeatMap } from "@/components/seat-map/SeatMap";
   let root;
-  // The rail lives in the persistent AppShell now (app/(shell)/layout.tsx),
-  // so the harness composes the same pair production does — the specs that
-  // drive rail items (the guarded Viewer link) exercise the real
-  // SeatMap -> useAppShellNavigation -> AppRail wiring.
+  // The shell lives in the persistent AppShell (app/(shell)/layout.tsx), so
+  // the harness composes the same pair production does — the specs that
+  // drive the shell (the guarded History mode switch) exercise the real
+  // SeatMap -> useAppShellNavigation -> AppShell wiring.
   window.__mountSeatMap = props => {
     root = root ?? createRoot(document.getElementById("root"));
     root.render(

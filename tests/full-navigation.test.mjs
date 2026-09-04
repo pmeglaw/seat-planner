@@ -97,7 +97,7 @@ test("the sanctioned-caller list stays accurate: only the documented modules imp
     "components/auth/LoginForm.tsx",
     "components/auth/UpdatePasswordForm.tsx",
     "components/seat-map/SeatMap.tsx",
-    "components/ui/AppRail.tsx"
+    "components/ui/useShellNavigation.ts"
   ]);
 });
 

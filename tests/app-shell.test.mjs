@@ -7,353 +7,301 @@ import {
   React,
   configureContext,
   setPathname,
+  setViewportWidth,
   fireEvent,
   act,
   cleanup,
   screen,
   within,
-  flushFrames
+  flushFrames,
+  waitFor
 } from "./helpers/renderComponent.mjs";
 
-// Persistent-shell tests (nav-lag fix + top-bar-first chrome): AppShell is the
-// ONE mount point for the chrome — AppTopBar on EVERY shell route, the rail
-// hanging below it — created by app/(shell)/layout.tsx and kept alive across
-// client-side navigations. These pin the properties the fixes exist for: the
-// rail AND bar must NOT remount when the route changes, normal navigation
-// stays on the client router, a skewed tab downgrades to a full document
-// load, surface handlers (SeatMap's unsaved-edits veto / Ask Planner opener)
-// reach the rail through the registration context, and surface bar content
-// reaches the bar through the slots context (portals).
+// Persistent-shell tests (nav-lag fix, redesign-v2 PR 2 shell): AppShell is
+// the ONE mount point for the chrome — the Phase 3 header, the left filter
+// panel, the Help / History / Account panels and the provisional tenant row —
+// created by app/(shell)/layout.tsx and kept alive across client-side
+// navigations. These pin: nothing remounts on a route change (same DOM
+// nodes), navigation stays on the client router, a skewed tab downgrades to
+// a document load, surface handlers reach the shell through registration
+// (guard veto, live draft status, filter groups), tenants reach the tenant
+// row through portals, and the panels' open / close / focus contracts.
 
 let AppShell;
 let useAppShellNavigation;
 let useAppShellSlots;
+let useAppShellFilters;
 before(async () => {
-  ({ AppShell, useAppShellNavigation, useAppShellSlots } = await loadComponent("@/components/ui/AppShell"));
+  ({ AppShell, useAppShellNavigation, useAppShellSlots, useAppShellFilters } = await loadComponent("@/components/ui/AppShell"));
 });
 
 let pushed;
 let assigned;
+let draftStatusCalls;
 const quietDetector = { check: async () => false, isSkewed: () => false };
 beforeEach(() => {
   pushed = [];
   assigned = [];
+  draftStatusCalls = 0;
+  setViewportWidth(1280);
   configureContext({
     router: { push: href => pushed.push(href) },
     navigation: { assign: href => assigned.push(href) },
-    pathname: "/admin"
+    pathname: "/admin",
+    actions: {
+      getDraftStatusAction: async () => ((draftStatusCalls += 1), { changeCount: 7, lastEditAt: null, publishedAt: "2026-09-02T21:12:00Z" }),
+      getPublishHistoryAction: async () => []
+    }
   });
+  try {
+    window.localStorage.clear();
+  } catch {
+    // no storage in this environment
+  }
 });
 afterEach(() => cleanup());
 
-function shellElement({ pathname, children = null, skewDetector = quietDetector, isAdmin = true } = {}) {
+const SHELL = { publishedAt: "2026-09-02T21:12:00Z", mySeat: { label: "L02", floor: "3" } };
+
+function shellElement({ pathname, children = null, skewDetector = quietDetector, isAdmin = true, initialShell = SHELL } = {}) {
   if (pathname) setPathname(pathname);
-  return React.createElement(
-    AppShell,
-    { email: "jane@example.com", isAdmin, skewDetector },
-    children
-  );
+  return React.createElement(AppShell, { email: "jane@example.com", userId: "u1", isAdmin, skewDetector, initialShell }, children);
 }
 
-const nav = () => screen.getByRole("navigation", { name: "Admin sections" });
-const bar = () => screen.getByRole("banner");
+const header = () => screen.getByRole("banner");
 const slot = name => document.querySelector(`[data-topbar-slot="${name}"]`);
+const leftHost = () => document.getElementById("shell-left-panel");
+const panelsHost = () => document.getElementById("shell-panels");
 
-test("every shell surface mounts ONE top bar with the account menu — map included", async () => {
+test("every shell route mounts ONE header with the section links, indicator and utilities — / included", async () => {
   await renderElement(shellElement({ pathname: "/admin" }));
-  assert.ok(nav());
-  assert.ok(bar(), "AppTopBar renders on the map too (top-bar-first chrome)");
+  assert.equal(screen.getAllByRole("banner").length, 1);
+  assert.equal(header().id, "shell-header");
   assert.equal(screen.getByRole("link", { name: "Seat map" }).getAttribute("aria-current"), "page");
-  assert.ok(
-    screen.getByRole("button", { name: "Account — jane@example.com" }),
-    "the account menu lives in the bar's right cluster"
-  );
-  assert.ok(slot("left") && slot("center") && slot("right"), "the map surface gets all three bar slots");
+  assert.ok(screen.getByRole("button", { name: "Help" }) && screen.getByRole("button", { name: "History" }) && screen.getByRole("button", { name: "Account" }));
+  assert.ok(slot("left") && slot("center") && slot("right"), "the tenant row exposes all three slots");
   assert.equal(screen.getByRole("link", { name: "Skip to seat map" }).getAttribute("href"), "#planning-canvas");
+  cleanup();
+  await renderElement(shellElement({ pathname: "/", isAdmin: false }));
+  assert.equal(screen.getAllByRole("banner").length, 1);
+  assert.equal(screen.getByRole("link", { name: "Skip to seat map" }).getAttribute("href"), "#viewer-seat-map");
+  assert.equal(screen.getByRole("link", { name: "Seat map" }).getAttribute("href"), "/");
+  assert.ok(screen.getByRole("button", { name: /Published · Sep 2, 2026/ }), "a viewer reads the published date");
 });
 
-test("sub-pages keep the bar, show a section title, and wire the skip link", async () => {
+test("sub-pages: skip target, aria-current, reserved hamburger slot, draft count fetched once", async () => {
   await renderElement(shellElement({ pathname: "/admin/settings" }));
-  assert.ok(bar());
   assert.equal(screen.getByRole("link", { name: "Settings" }).getAttribute("aria-current"), "page");
   assert.equal(screen.getByRole("link", { name: "Skip to content" }).getAttribute("href"), "#admin-subpage-main");
-  assert.ok(screen.getByText("Settings", { selector: "div" }), "sub-pages show their section title in the bar center");
-  // The center slot stays MOUNTED beside the title — swapping it out raced
-  // React's portal cleanup on navigation (see the crash-regression test
-  // below) — it just sits empty here.
+  assert.equal(screen.queryByRole("button", { name: "Filters" }), null, "no filters registered → reserved slot (D0-h at lg+)");
+  assert.ok(header().querySelector(".sp-header-slot--reserved"));
   assert.ok(slot("center"), "the center slot element must exist on every route");
-  assert.ok(screen.getByRole("button", { name: "Account — jane@example.com" }));
+  await waitFor(() => screen.getByRole("button", { name: /Draft — 7 changes/ }));
+  assert.equal(draftStatusCalls, 1, "the shell asks once per mount on an admin sub-page");
 });
 
-test("the skip link is the bar's first focusable — the document's first tab stop — then the rail toggle", async () => {
-  await renderElement(shellElement({ pathname: "/admin/settings" }));
-  const skipLink = screen.getByRole("link", { name: "Skip to content" });
-  const focusable = bar().querySelectorAll("a, button, input, [tabindex]");
-  assert.equal(focusable[0], skipLink, "the skip link must be the first focusable element inside the bar");
-  assert.equal(
-    focusable[1],
-    screen.getByRole("button", { name: "Expand navigation" }),
-    "the rail toggle sits in the bar's corner cell, right after the skip link"
-  );
-  assert.ok(bar().compareDocumentPosition(nav()) & Node.DOCUMENT_POSITION_FOLLOWING, "the bar precedes the rail in DOM order");
-});
-
-// The corner toggle (owner call 2026-08-14): the hamburger lives in the
-// bar's w-12 corner cell, directly above the rail column it controls —
-// AppShell owns the state, so the two chrome pieces stay in step.
-test("the bar's corner toggle expands and collapses the rail", async () => {
-  await renderElement(shellElement({ pathname: "/admin" }));
-  const toggle = screen.getByRole("button", { name: "Expand navigation" });
-  assert.equal(toggle.getAttribute("aria-controls"), "app-rail");
-  assert.ok(nav().className.includes("w-12"));
-
-  await act(async () => fireEvent.click(toggle));
-
-  assert.equal(toggle.getAttribute("aria-expanded"), "true");
-  assert.ok(nav().className.includes("w-[208px]"), "expanding must widen the rail overlay");
-
-  await act(async () => fireEvent.keyDown(window, { key: "Escape" }));
-
-  assert.ok(nav().className.includes("w-12"), "Escape must collapse the rail");
-  assert.equal(document.activeElement, toggle, "Escape must return focus to the corner toggle");
-});
-
-test("reception maps to its own active item and skip target", async () => {
-  await renderElement(shellElement({ pathname: "/reception" }));
+test("reception maps to its own active item and skip target; viewers never fetch the draft status", async () => {
+  await renderElement(shellElement({ pathname: "/reception", isAdmin: false }));
   assert.equal(screen.getByRole("link", { name: "Reception" }).getAttribute("aria-current"), "page");
   assert.equal(screen.getByRole("link", { name: "Skip to content" }).getAttribute("href"), "#reception-main");
-});
-
-test("a viewer-role session gets the role-safe rail flavor and keeps the bar", async () => {
-  await renderElement(shellElement({ pathname: "/reception", isAdmin: false }));
-  assert.ok(screen.getByRole("navigation", { name: "Sections" }));
   assert.equal(screen.queryByRole("link", { name: "Management" }), null);
-  assert.ok(bar());
-  assert.ok(screen.getByRole("button", { name: "Account — jane@example.com" }));
+  await flushFrames();
+  assert.equal(draftStatusCalls, 0, "the viewer shell never calls the admin-only action (two-layer rule)");
 });
 
 // The heart of the nav-lag fix: a route change re-renders the shell with a
-// new pathname, it must NOT remount it. Node identity across the transition
-// is the strongest observable — a remounted rail (or bar) is a NEW element,
-// which is exactly the blank-flash bug (each page mounting its own chrome)
-// this guards against.
-test("the rail and bar persist across a route change — same DOM nodes, updated active item", async () => {
+// new pathname, it must NOT remount it. Node identity is the strongest
+// observable — a remounted header is a NEW element, which is exactly the
+// blank-flash bug this guards against.
+test("header, left host, panels host and tenant slots persist across /admin → /admin/management → /reception → / — same DOM nodes", async () => {
   const utils = await renderElement(shellElement({ pathname: "/admin" }));
-  const railBefore = nav();
-  const barBefore = bar();
-  const centerBefore = slot("center");
-  assert.ok(centerBefore, "map surface exposes the center slot");
-
-  setPathname("/admin/management");
-  await act(async () => utils.rerender(shellElement({})));
-
-  assert.equal(nav(), railBefore, "the rail must be the same mounted node after navigation");
-  assert.equal(bar(), barBefore, "the bar must be the same mounted node after navigation");
-  assert.equal(screen.getByRole("link", { name: "Management" }).getAttribute("aria-current"), "page");
-  assert.equal(screen.getByRole("link", { name: "Seat map" }).getAttribute("aria-current"), null);
-  assert.equal(slot("center"), centerBefore, "the center slot must be the SAME element across navigation — stable containers are what keep portal teardown safe");
+  const before = { header: header(), left: leftHost(), panels: panelsHost(), center: slot("center") };
+  for (const pathname of ["/admin/management", "/reception", "/"]) {
+    setPathname(pathname);
+    await act(async () => utils.rerender(shellElement({})));
+    assert.equal(header(), before.header, `${pathname}: the header must be the same mounted node`);
+    assert.equal(leftHost(), before.left, `${pathname}: the left panel host must persist`);
+    assert.equal(panelsHost(), before.panels, `${pathname}: the panels host must persist`);
+    assert.equal(slot("center"), before.center, `${pathname}: the center slot must be the SAME element — stable containers keep portal teardown safe`);
+  }
+  assert.equal(screen.getByRole("link", { name: "Seat map" }).getAttribute("aria-current"), "page");
 });
 
-test("normal navigation through the shell is client-side (router.push, no document load)", async () => {
+test("normal navigation is client-side; a skewed tab uses assignLocation", async () => {
   await renderElement(shellElement({ pathname: "/admin" }));
   await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" })));
   assert.deepEqual(pushed, ["/admin/management"]);
-  assert.deepEqual(assigned, [], "an un-skewed click must never become a full document load");
-});
-
-test("a skewed tab navigates via assignLocation instead of the client router", async () => {
-  await renderElement(
-    shellElement({ pathname: "/admin", skewDetector: { check: async () => true, isSkewed: () => true } })
-  );
+  assert.deepEqual(assigned, []);
+  cleanup();
+  pushed = [];
+  await renderElement(shellElement({ pathname: "/admin", skewDetector: { check: async () => true, isSkewed: () => true } }));
   await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" })));
   assert.deepEqual(assigned, ["/admin/management"]);
-  assert.deepEqual(pushed, [], "a skewed tab must not soft-navigate");
+  assert.deepEqual(pushed, []);
 });
 
-// Registration contract: a surface plugs its guard/opener in on mount and the
-// rail routes through them; unmounting restores plain navigation. This is how
-// SeatMap's unsaved-edits dialog keeps intercepting rail clicks now that the
-// rail outlives the page.
-function Registrar({ guard, opener, askPlannerOpen }) {
-  useAppShellNavigation({ guard, openAskPlanner: opener, askPlannerOpen });
+// Registration contract: a surface plugs its guard in on mount and the shell
+// routes every link through it; unmounting restores plain navigation.
+function Registrar({ guard, opener, askPlannerOpen, draftStatus }) {
+  useAppShellNavigation({ guard, openAskPlanner: opener, askPlannerOpen, draftStatus });
   return null;
 }
 
-test("a registered guard vetoes rail navigation; unregistering restores it", async () => {
+test("a registered guard vetoes header navigation; unregistering restores it", async () => {
   const calls = [];
   const utils = await renderElement(
-    shellElement({
-      pathname: "/admin",
-      children: React.createElement(Registrar, {
-        guard: (href, label) => {
-          calls.push([href, label]);
-          return false;
-        }
-      })
-    })
+    shellElement({ pathname: "/admin", children: React.createElement(Registrar, { guard: (href, label) => (calls.push([href, label]), false) }) })
   );
-
   await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" })));
   assert.deepEqual(calls, [["/admin/management", "Management"]]);
-  assert.deepEqual(pushed, [], "a vetoing guard must block the client navigation");
-
-  // Unmount the registering surface (page swap): navigation is plain again.
+  assert.deepEqual(pushed, []);
   await act(async () => utils.rerender(shellElement({})));
   await act(async () => fireEvent.click(screen.getByRole("link", { name: "Management" })));
   assert.deepEqual(pushed, ["/admin/management"]);
 });
 
-test("a registered Ask Planner opener turns the AI item into an in-place button", async () => {
-  let opened = 0;
-  await renderElement(
-    shellElement({
-      pathname: "/admin",
-      children: React.createElement(Registrar, { guard: () => true, opener: () => (opened += 1) })
-    })
-  );
-  const aiButton = screen.getByRole("button", { name: /Ask Planner/ });
-  await act(async () => fireEvent.click(aiButton));
-  assert.equal(opened, 1);
-  assert.deepEqual(pushed, []);
+test("Ask Planner opener / open-state registration is a safe no-op in the PR 2 shell", async () => {
+  await renderElement(shellElement({ pathname: "/admin", children: React.createElement(Registrar, { guard: () => true, opener: () => {}, askPlannerOpen: true }) }));
+  assert.equal(screen.queryByRole("button", { name: /Ask Planner/ }), null, "the shell renders no AI entry (PR 3's control row does)");
 });
 
-// The live drawer-state channel (chrome-unification 2026-08-20): a registered
-// surface's askPlannerOpen flag re-renders the rail AI item into its active
-// treatment, and flipping it back deactivates — the parity that keeps both
-// Ask Planner entry points honest about the drawer being open.
-test("a registered askPlannerOpen flag drives the rail AI item's active state", async () => {
-  const registrar = open =>
-    React.createElement(Registrar, { guard: () => true, opener: () => {}, askPlannerOpen: open });
-  const utils = await renderElement(shellElement({ pathname: "/admin", children: registrar(true) }));
-  assert.equal(screen.getByRole("button", { name: /Ask Planner/ }).getAttribute("aria-expanded"), "true");
-
-  await act(async () => utils.rerender(shellElement({ pathname: "/admin", children: registrar(false) })));
-  assert.equal(screen.getByRole("button", { name: /Ask Planner/ }).getAttribute("aria-expanded"), "false");
+test("a registered live draftStatus drives the indicator and suppresses the fetch", async () => {
+  await renderElement(shellElement({ pathname: "/admin", children: React.createElement(Registrar, { guard: () => true, draftStatus: { changeCount: 4, lastEditAt: null } }) }));
+  assert.ok(screen.getByRole("button", { name: /Draft — 4 changes/ }));
+  await flushFrames();
+  assert.equal(draftStatusCalls, 0, "a live value means no round-trip");
 });
 
-test("without a registered opener, the AI item is a plain link to /admin?ask-planner=open", async () => {
-  await renderElement(shellElement({ pathname: "/admin/management" }));
-  assert.equal(
-    screen.getByRole("link", { name: /Ask Planner/ }).getAttribute("href"),
-    "/admin?ask-planner=open"
-  );
-});
-
-// Slots contract (top-bar-first chrome): a surface portals live bar content
-// into the slot elements the bar registers — this is how SeatMap's undo/redo,
-// floor identity, and publish cluster reach the persistent bar.
+// Slots contract: a surface portals tenant content into the tenant row's
+// slot elements — SeatMap's undo/redo, floor, publish cluster and the viewer
+// search reach the persistent row this way until PR 3 builds the control row.
 function SlotSurface({ label, into = "right" }) {
   const slots = useAppShellSlots();
   if (!slots?.[into]) return null;
   return createPortal(React.createElement("button", { type: "button" }, label), slots[into]);
 }
 
-test("a surface portals bar content through the slots context, and it unmounts with the surface", async () => {
-  const utils = await renderElement(
-    shellElement({ pathname: "/admin", children: React.createElement(SlotSurface, { label: "Portaled action" }) })
-  );
-  const portaled = screen.getByRole("button", { name: "Portaled action" });
-  assert.ok(bar().contains(portaled), "portaled content must land inside the bar");
-
-  await act(async () => utils.rerender(shellElement({})));
-  assert.equal(screen.queryByRole("button", { name: "Portaled action" }), null, "slot content leaves with its surface");
-});
-
-// Account menu in the bar (moved from the rail with the top-bar-first
-// chrome): identity + sign-out semantics, and the persistent-chrome focus
-// guarantees the rail's account cell used to give.
-test("the bar's account menu surfaces email, role, and a POST sign-out form", async () => {
-  await renderElement(shellElement({ pathname: "/admin/management" }));
-  const trigger = screen.getByRole("button", { name: "Account — jane@example.com" });
-
-  await act(async () => fireEvent.click(trigger));
-  await flushFrames();
-
-  const menu = screen.getByRole("menu", { name: "Account" });
-  assert.ok(within(menu).getByText("jane@example.com"));
-  assert.ok(within(menu).getByText("Admin"));
-  const signOut = within(menu).getByRole("menuitem", { name: "Sign out" });
-  assert.equal(signOut.getAttribute("type"), "submit");
-  const form = signOut.closest("form");
-  assert.equal(form?.getAttribute("action"), "/auth/signout");
-  assert.equal(form?.getAttribute("method"), "post");
-});
-
-test("opening the account menu focuses its first item; Escape closes and refocuses the trigger", async () => {
-  await renderElement(shellElement({ pathname: "/admin/management" }));
-  const trigger = screen.getByRole("button", { name: "Account — jane@example.com" });
-  await act(async () => fireEvent.click(trigger));
-  await flushFrames();
-  const menu = screen.getByRole("menu", { name: "Account" });
-  assert.equal(document.activeElement, within(menu).getAllByRole("menuitem")[0]);
-
-  await act(async () => fireEvent.keyDown(menu, { key: "Escape" }));
-  await flushFrames();
-
-  assert.equal(screen.queryByRole("menu", { name: "Account" }), null);
-  assert.equal(document.activeElement, trigger);
-});
-
-// A route commit (back/forward with the menu open) unmounts the menu's
-// focused menuitem. Every other dismissal restores focus to the trigger;
-// this path must too, or keyboard focus falls to <body> (the guarantee the
-// old rail account cell gave, carried by AccountMenu's autoCloseKey).
-test("a route commit that closes the account menu returns focus to the trigger", async () => {
-  const utils = await renderElement(shellElement({ pathname: "/admin" }));
-  const trigger = screen.getByRole("button", { name: "Account — jane@example.com" });
-  await act(async () => fireEvent.click(trigger));
-  await flushFrames();
-  const menu = screen.getByRole("menu", { name: "Account" });
-  assert.equal(document.activeElement, within(menu).getAllByRole("menuitem")[0]);
-
+test("a surface portals into the tenant row; the row hides while empty and the content leaves with its surface", async () => {
+  const utils = await renderElement(shellElement({ pathname: "/admin", children: React.createElement(SlotSurface, { label: "Portaled action" }) }));
+  const row = document.querySelector("[data-shell-tenants]");
+  await waitFor(() => assert.equal(row.hidden, false, "the row shows once a tenant lands"));
+  assert.ok(row.contains(screen.getByRole("button", { name: "Portaled action" })));
+  assert.ok(!header().contains(screen.getByRole("button", { name: "Portaled action" })), "tenants live BELOW the header, not in it");
   setPathname("/admin/management");
   await act(async () => utils.rerender(shellElement({})));
-
-  assert.equal(screen.queryByRole("menu", { name: "Account" }), null, "the route commit must close the menu");
-  assert.equal(document.activeElement, trigger, "focus must land back on the account trigger, not <body>");
+  assert.equal(screen.queryByRole("button", { name: "Portaled action" }), null);
+  await waitFor(() => assert.equal(row.hidden, true, "no tenants → the row hides"));
+  assert.ok(slot("center"), "the slots survive the transition (portal-teardown contract)");
 });
 
-// Crash regression (caught live 2026-08-14, e2e-auth nav-shell): navigating
-// off the map unmounts the surface AND switches the bar center to a section
-// title in the SAME commit. When the title REPLACED the center slot element,
-// React's portal cleanup tried to remove its children from the deleted
-// container and threw NotFoundError (removeChild) into the route error
-// boundary on every rail navigation. The slot must stay mounted so the
-// portal tears down against a live container.
-test("a center-slot portal survives navigating off the map — no removeChild crash", async () => {
-  const utils = await renderElement(
-    shellElement({
-      pathname: "/admin",
-      children: React.createElement(SlotSurface, { label: "Centered identity", into: "center" })
-    })
-  );
-  assert.ok(bar().contains(screen.getByRole("button", { name: "Centered identity" })));
+// --- Right panels ------------------------------------------------------------
 
-  // The exact crashing transition: surface unmounts + center switches to the
-  // section title in one commit. rerender throws here if the container was
-  // deleted out from under the portal.
+test("History opens from its utility as a complementary landmark; opening Account swaps; Esc closes and returns focus", async () => {
+  await renderElement(shellElement({ pathname: "/admin/management" }));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "History" })));
+  assert.ok(screen.getByRole("complementary", { name: "History" }));
+  assert.equal(screen.getByRole("button", { name: "History" }).getAttribute("aria-expanded"), "true");
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Account" })));
+  assert.equal(screen.queryByRole("complementary", { name: "History" }), null, "one panel at a time");
+  const account = screen.getByRole("complementary", { name: "Account" });
+  assert.ok(within(account).getByRole("button", { name: "Sign out" }).closest('form[action="/auth/signout"][method="post"]'));
+  await act(async () => fireEvent.keyDown(account, { key: "Escape" }));
+  assert.equal(screen.queryByRole("complementary", { name: "Account" }), null);
+  assert.equal(document.activeElement, screen.getByRole("button", { name: "Account" }), "Esc returns focus to the utility");
+});
+
+test("the mode indicator opens History; a route commit closes the open panel", async () => {
+  const utils = await renderElement(shellElement({ pathname: "/admin", children: React.createElement(Registrar, { guard: () => true, draftStatus: { changeCount: 2, lastEditAt: null } }) }));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: /Draft — 2 changes/ })));
+  assert.ok(screen.getByRole("complementary", { name: "History" }));
   setPathname("/admin/management");
   await act(async () => utils.rerender(shellElement({})));
-
-  assert.equal(screen.queryByRole("button", { name: "Centered identity" }), null, "portal content leaves with its surface");
-  assert.ok(screen.getByText("Management", { selector: "div" }), "the section title renders beside the (empty) slot");
-  assert.ok(slot("center"), "the center slot survives the transition");
+  assert.equal(screen.queryByRole("complementary", { name: "History" }), null);
 });
 
-test("useAppShellNavigation and useAppShellSlots are safe no-ops without a shell ancestor (standalone mounts)", async () => {
+test("the History switch navigates to the other mode through the guard, keeping ?floor= and ?seat=", async () => {
+  const calls = [];
+  window.history.replaceState(null, "", "/admin?floor=2&seat=N01&ask-planner=open");
+  try {
+    await renderElement(shellElement({ pathname: "/admin", children: React.createElement(Registrar, { guard: (href, label) => (calls.push([href, label]), true), draftStatus: { changeCount: 0, lastEditAt: null } }) }));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "History" })));
+    const modeSwitch = screen.getByRole("group", { name: "Mode" });
+    await act(async () => fireEvent.click(within(modeSwitch).getByRole("button", { name: "Published" })));
+    assert.deepEqual(calls, [["/?floor=2&seat=N01", "the published map"]]);
+    assert.deepEqual(pushed, ["/?floor=2&seat=N01"]);
+    assert.equal(screen.queryByRole("complementary", { name: "History" }), null, "the panel closes on switch");
+  } finally {
+    window.history.replaceState(null, "", "/");
+  }
+});
+
+test("a vetoed switch stays put", async () => {
+  await renderElement(shellElement({ pathname: "/admin", children: React.createElement(Registrar, { guard: () => false, draftStatus: { changeCount: 1, lastEditAt: null } }) }));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "History" })));
+  await act(async () => fireEvent.click(within(screen.getByRole("group", { name: "Mode" })).getByRole("button", { name: "Published" })));
+  assert.deepEqual(pushed, []);
+  assert.deepEqual(assigned, []);
+});
+
+// --- Left panel ----------------------------------------------------------------
+
+function FilterSurface({ spec }) {
+  useAppShellFilters(spec);
+  return null;
+}
+const FILTERS = {
+  groups: [{ id: "department", label: "Department", state: "ready", items: [{ id: "Litigation", label: "Litigation", count: 3, checked: false }] }],
+  appliedCount: 0,
+  onToggle: () => {},
+  onClearGroup: () => {},
+  onClearAll: () => {}
+};
+
+test("registered filters give the header a hamburger; it opens the left panel, Esc closes it and refocuses the hamburger; the choice is remembered per user", async () => {
+  await renderElement(shellElement({ pathname: "/", isAdmin: false, children: React.createElement(FilterSurface, { spec: FILTERS }) }));
+  const hamburger = await waitFor(() => screen.getByRole("button", { name: "Filters" }));
+  assert.equal(leftHost().getAttribute("data-open"), null);
+  await act(async () => fireEvent.click(hamburger));
+  await flushFrames();
+  assert.equal(leftHost().getAttribute("data-open"), "true");
+  assert.ok(within(screen.getByRole("complementary", { name: "Filters" })).getByRole("checkbox", { name: /Litigation/ }));
+  assert.equal(hamburger.getAttribute("aria-expanded"), "true");
+  assert.ok(document.querySelector("[data-shell-content]").className.includes("pl-[var(--sp-panel-left-w)]"), "the open panel pushes the content pane");
+  assert.equal(window.localStorage.getItem("seat-planner:left-panel-open:u1"), "true");
+  await act(async () => fireEvent.keyDown(screen.getByRole("complementary", { name: "Filters" }), { key: "Escape" }));
+  assert.equal(leftHost().getAttribute("data-open"), null);
+  assert.equal(document.activeElement, hamburger);
+  assert.equal(window.localStorage.getItem("seat-planner:left-panel-open:u1"), "false");
+});
+
+test("a route commit closes the left panel; unregistering the filters retires the hamburger", async () => {
+  const utils = await renderElement(shellElement({ pathname: "/", isAdmin: false, children: React.createElement(FilterSurface, { spec: FILTERS }) }));
+  const hamburger = await waitFor(() => screen.getByRole("button", { name: "Filters" }));
+  await act(async () => fireEvent.click(hamburger));
+  await flushFrames();
+  assert.equal(leftHost().getAttribute("data-open"), "true");
+  setPathname("/reception");
+  await act(async () => utils.rerender(shellElement({ isAdmin: false })));
+  assert.equal(leftHost().getAttribute("data-open"), null);
+  await waitFor(() => assert.equal(screen.queryByRole("button", { name: "Filters" }), null));
+});
+
+test("below the header-nav breakpoint the hamburger exists everywhere and the panel carries the section links", async () => {
+  setViewportWidth(1024);
+  await renderElement(shellElement({ pathname: "/admin/settings" }));
+  const hamburger = await waitFor(() => screen.getByRole("button", { name: "Filters" }));
+  await act(async () => fireEvent.click(hamburger));
+  const nav = within(screen.getByRole("complementary", { name: "Sections" })).getByRole("navigation", { name: "Sections" });
+  assert.equal(within(nav).getByRole("link", { name: "Settings" }).getAttribute("aria-current"), "page");
+  await waitFor(() => screen.getByRole("button", { name: "Draft · 7" }), "the indicator compacts below the breakpoint");
+});
+
+test("useAppShellNavigation, useAppShellSlots and useAppShellFilters are safe no-ops without a shell ancestor", async () => {
   function Standalone() {
-    const slots = useAppShellSlots();
-    assert.equal(slots, null, "no shell ancestor → null slots (surfaces render their fallback)");
+    assert.equal(useAppShellSlots(), null);
     return null;
   }
   await renderElement(
-    React.createElement(
-      React.Fragment,
-      null,
-      React.createElement(Registrar, { guard: () => false }),
-      React.createElement(Standalone)
-    )
+    React.createElement(React.Fragment, null, React.createElement(Registrar, { guard: () => false }), React.createElement(FilterSurface, { spec: FILTERS }), React.createElement(Standalone))
   );
-  // Nothing further to assert beyond "did not throw": standalone component
-  // tests mount SeatMap without the shell, and both hooks must tolerate that.
 });

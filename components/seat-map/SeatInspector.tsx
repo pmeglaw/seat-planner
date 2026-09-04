@@ -1059,7 +1059,7 @@ export function SeatInspector({
       // (panel:bottom-auto; the base max-h-[60vh] cap stays as the overflow
       // fence) — a read-only card holding only identity + contact must not
       // stretch a full empty column (owner ruling 2026-08-20).
-      className={`fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] text-[var(--sp-text-primary)] shadow-sp panel:inset-x-auto ${canEdit ? `${panelBottomClassName} panel:max-h-none` : "panel:bottom-auto"} panel:right-3 panel:top-[calc(var(--sp-chrome-height)+0.75rem)] panel:z-40 panel:w-[332px] panel:max-w-[calc(100vw-1.5rem)]`}
+      className={`fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] text-[var(--sp-text-primary)] shadow-sp panel:inset-x-auto ${canEdit ? `${panelBottomClassName} panel:max-h-none` : "panel:bottom-auto"} panel:right-3 panel:top-[calc(2*var(--sp-shell-header-h)+0.75rem)] panel:z-40 panel:w-[332px] panel:max-w-[calc(100vw-1.5rem)]`}
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-4 pb-3 pt-3">
         <div className="flex items-center justify-between gap-2">

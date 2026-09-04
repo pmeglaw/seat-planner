@@ -59,3 +59,33 @@ export function withTabParam(search: string, tab: string, defaultTab: string): s
   else params.set(TAB_PARAM, tab);
   return serialize(params);
 }
+
+// ?dept= / ?zone= / ?status= / ?position= on the viewer (PHASE1IA B3, the
+// filter-panel URL state; ?position= joined by owner ruling 2026-09-04). The
+// four structured filters of the left panel are shareable, one param each,
+// "all" = absent so the bare URL stays canonical. Read raw; the viewer
+// matches values against its option lists the same way it matches a typed
+// facet (departmentKey / zoneKey), so an unknown value simply filters to
+// nothing and the count says so.
+export const FILTER_PARAMS = { department: "dept", position: "position", zone: "zone", status: "status" } as const;
+
+export type FilterParamValues = Record<keyof typeof FILTER_PARAMS, string>;
+
+export function readFilterParams(search: string): FilterParamValues {
+  const params = new URLSearchParams(search);
+  const read = (key: keyof typeof FILTER_PARAMS) => {
+    const value = params.get(FILTER_PARAMS[key])?.trim();
+    return value ? value : "all";
+  };
+  return { department: read("department"), position: read("position"), zone: read("zone"), status: read("status") };
+}
+
+export function withFilterParams(search: string, values: FilterParamValues): string {
+  const params = new URLSearchParams(search);
+  for (const key of Object.keys(FILTER_PARAMS) as Array<keyof typeof FILTER_PARAMS>) {
+    const value = values[key];
+    if (value && value !== "all") params.set(FILTER_PARAMS[key], value);
+    else params.delete(FILTER_PARAMS[key]);
+  }
+  return serialize(params);
+}

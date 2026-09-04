@@ -45,7 +45,7 @@ export default function AdminError({
   }, []);
 
   return (
-    <main className="admin-theme flex min-h-[calc(100svh-var(--sp-chrome-height))] items-center justify-center bg-[var(--sp-background)] p-6 text-[var(--sp-text-primary)]">
+    <main className="flex min-h-0 flex-1 items-center justify-center bg-[var(--sp-background)] p-6 text-[var(--sp-text-primary)]">
       <section className="w-full max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-6 shadow-sp">
         <h1
           ref={headingRef}

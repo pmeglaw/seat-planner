@@ -432,7 +432,7 @@ export function DiscardDraftDialog({
 }) {
   const discardDraftDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
+    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
       <section
         ref={discardDraftDialogFocusRef}
         tabIndex={-1}

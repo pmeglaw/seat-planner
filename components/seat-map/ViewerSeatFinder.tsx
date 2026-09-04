@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
-import { findSeatIdByParam, readFloorParam, readSeatParam, withFloorParam, withSeatParam } from "@/lib/deepLink";
+import { findSeatIdByParam, readFilterParams, readFloorParam, readSeatParam, withFilterParams, withFloorParam, withSeatParam } from "@/lib/deepLink";
 import { departmentKey } from "@/lib/departments";
 import { DEFAULT_FLOOR, floorOf, type FloorId } from "@/lib/floorIds";
 import {
@@ -18,7 +18,7 @@ import {
 } from "@/lib/floors";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { createPortal } from "react-dom";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { normalizeSeat } from "@/lib/seatNormalize";
@@ -41,8 +41,8 @@ import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } 
 import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { buildViewerPaletteBrowse, getSeatZone, zoneKey } from "@/lib/viewerFindPalette";
 import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
-import { AccountMenu, accountMenuItemClassName } from "@/components/ui/AccountMenu";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useAppShellFilters, useAppShellSlots, type ShellFilterSpec } from "@/components/ui/AppShell";
+import { buildViewerFilterGroups } from "@/lib/viewerFilterGroups";
 import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorRoster, focusFloorRoster } from "@/components/seat-map/FloorRoster";
 import { FloorSelector } from "@/components/seat-map/FloorSelector";
@@ -63,15 +63,9 @@ type ViewerSeatFinderProps = {
   employees: Employee[];
   departmentOptions?: DepartmentOption[];
   zoneOptions?: ZoneOption[];
-  // Only admins get the Admin chrome shortcut; for viewers it is a guaranteed
-  // dead end, so the server page passes their role down as a render gate.
-  showAdminShortcut?: boolean;
   // Pre-formatted "last publish" date from the server page (viewer-safe copy
   // for the old PUBLISHED/READ-ONLY badge pair).
   lastPublishedLabel?: string | null;
-  // Signed-in identity for the account menu (email + role + sign out).
-  accountEmail?: string | null;
-  accountRoleLabel?: string;
   // Multi-floor (PR-2): the server's view of where to land — the floor a
   // ?seat=/?floor= asks for, and the signed-in person's own floor. The
   // remembered floor is client-only and slots in between (lib/floors
@@ -103,31 +97,6 @@ const VIEWER_NAMES_VISIBLE_STORAGE_KEY = "seat-planner:viewer-names-visible";
 // roster floor has no map to pan, so the viewport carries none there).
 const VIEWER_ROSTER_REGION_ID = "viewer-floor-roster";
 const MAP_VIEWPORT_LABEL = "Office seat map. Drag to pan. Seat markers are read-only buttons.";
-
-// The surface-shortcut glyphs, hoisted because each is drawn twice: once in
-// the bar (sm and up) and once inside the account menu (below sm), where the
-// same three destinations live after the bar runs out of room. One definition
-// so the two copies can never drift into different icons for one destination.
-const ReceptionGlyph = (
-  <svg aria-hidden="true" viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-    <path d="M4 11V9.5a6 6 0 0 1 12 0V11" />
-    <path d="M4 11h2v3.5H4.6A.6.6 0 0 1 4 13.9V11ZM16 11h-2v3.5h1.4a.6.6 0 0 0 .6-.6V11Z" />
-    <path d="M16 14.5v1a2 2 0 0 1-2 2h-2.5" />
-  </svg>
-);
-const ViewerGlyph = (
-  <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-    <circle cx="12" cy="12" r="8.2" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-const AdminGlyph = (
-  <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-    <circle cx="9" cy="7" r="3.1" />
-    <path d="M3.5 20v-1.4a4.6 4.6 0 0 1 4.6-4.6h1.6a4.6 4.6 0 0 1 2.3.6" />
-    <path d="M14.5 18.4l2 2 4.2-4.6" />
-  </svg>
-);
 
 // Keys the browser translates into native scrolling of the focused viewport
 // (mirrors SeatMap.tsx's VIEWPORT_NATIVE_SCROLL_KEYS, fix commit 49dc74f).
@@ -197,10 +166,7 @@ export function ViewerSeatFinder({
   employees,
   departmentOptions = [],
   zoneOptions = [],
-  showAdminShortcut = false,
   lastPublishedLabel = null,
-  accountEmail = null,
-  accountRoleLabel = "Viewer",
   landing
 }: ViewerSeatFinderProps) {
   const [search, setSearch] = useState("");
@@ -322,6 +288,8 @@ export function ViewerSeatFinder({
   // whole field — magnifier, clear button, kbd hint — as "inside".
   const searchFieldRef = useRef<HTMLDivElement | null>(null);
   const paletteRef = useRef<HTMLDivElement | null>(null);
+  // The persistent shell's tenant-row slots (null in standalone harnesses).
+  const shellSlots = useAppShellSlots();
   // One-shot: set when Escape hands focus back to the field from inside the
   // palette, consumed by the field's onFocus. Without it the hand-back is
   // indistinguishable from a user focusing the field, so onFocus re-opened the
@@ -1198,6 +1166,68 @@ export function ViewerSeatFinder({
     });
   }
 
+  // --- Shell registration (redesign-v2 PR 2) --------------------------------
+  // The four structured filters are URL state (PHASE1IA B3: ?dept= ?zone=
+  // ?status= ?position=): read once after hydration (like ?floor=), then
+  // mirrored with a shallow replaceState — the same pattern as ?seat= below.
+  const [filtersHydrated, setFiltersHydrated] = useState(false);
+  useEffect(() => {
+    const fromUrl = readFilterParams(window.location.search);
+    setDepartment(fromUrl.department);
+    setPosition(fromUrl.position);
+    setZone(fromUrl.zone);
+    setStatus(fromUrl.status);
+    setFiltersHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!filtersHydrated) return;
+    const current = window.location.search;
+    const next = withFilterParams(current, { department, position, zone, status });
+    if (next !== current) window.history.replaceState(window.history.state, "", `${window.location.pathname}${next}${window.location.hash}`);
+  }, [filtersHydrated, department, position, zone, status]);
+
+  // The left panel's four groups (Department · Zone · Status · Position, owner
+  // ruling 2026-09-04) with per-floor counts; single-select semantics kept —
+  // re-checking the checked item clears the group. The roster floor hides the
+  // seat facets and says why; on the plan the floor-aware match summary (Q5)
+  // rides the note so a filter never returns an unchanged map in silence.
+  const filterGroups = useMemo(
+    () =>
+      buildViewerFilterGroups({
+        surface,
+        floorSeats,
+        floorPeople: rosterPeople,
+        departments,
+        positions,
+        zones,
+        seatZone: getSeatZone,
+        seatDepartment: getSeatDepartment,
+        selected: { department, position, zone, status }
+      }),
+    [department, departments, floorSeats, position, positions, rosterPeople, status, surface, zone, zones]
+  );
+  const shellFilterSpec = useMemo<ShellFilterSpec>(() => {
+    const setters: Record<string, (value: string) => void> = { department: setDepartment, position: setPosition, zone: setZone, status: setStatus };
+    const values: Record<string, string> = { department, position, zone, status };
+    return {
+      groups: filterGroups,
+      appliedCount: structuredFilterCount,
+      note:
+        surface === "roster"
+          ? `Zone and status are seat facts — ${floorMeta.tag} has no seats yet.`
+          : structuredFiltersActive && departmentSummary.text
+            ? departmentSummary.text
+            : undefined,
+      noteAction: surface === "plan" && structuredFiltersActive ? departmentSummaryAction : undefined,
+      onToggle: (groupId, itemId) => setters[groupId]?.(values[groupId] === itemId ? "all" : itemId),
+      onClearGroup: groupId => setters[groupId]?.("all"),
+      onClearAll: clearStructuredFilters
+    };
+    // clearStructuredFilters is a stable function declaration of this render scope.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [department, departmentSummary.text, departmentSummaryAction, filterGroups, floorMeta.tag, position, status, structuredFilterCount, structuredFiltersActive, surface, zone]);
+  useAppShellFilters(shellSlots ? shellFilterSpec : null);
+
   const activeFilterChips: ActiveFilterChip[] = [
     searchActive ? { id: "search", label: "Search", value: searchResults.query, removeLabel: `Remove search filter ${searchResults.query}` } : null,
     department !== "all" ? { id: "department", label: "Department", value: department, removeLabel: `Remove department filter ${department}` } : null,
@@ -1353,99 +1383,7 @@ export function ViewerSeatFinder({
   // screen column exactly as the lone viewport used to.
   const mapStageClassName = "relative flex min-w-0 flex-col lg:min-h-0 lg:flex-1";
 
-  // Type-floor Ruling 3 (2026-08-24): w-16, not w-12 — the 12px label
-  // ("Reception" ≈ 56px) must fit; widen the tab, never truncate the word.
-  // That ruling still governs wherever the word is drawn, which is lg and up.
-  // Below lg the tab drops to w-11 (44px, the touch floor) and shows the MARK alone — marks are exempt
-  // from the type floor, so this is not the w-12 truncation the ruling refused;
-  // it is the other branch of it. Three 64px tabs plus a usable search field do
-  // not fit under 1024px (measured 2026-09-01), and clipping the word was never
-  // on the table. The label rides `sr-only lg:not-sr-only`, not
-  // `hidden lg:block`, so the accessible name survives the visual collapse —
-  // sr-only is position:absolute, so it leaves the flex column entirely and the
-  // icon centres itself in the narrow cell.
-  const chromeSurfaceShortcut = "relative flex h-9 w-11 shrink-0 flex-col items-center justify-center gap-0.5 border-b-2 text-xs font-medium tracking-[0.02em] transition-colors duration-150 after:absolute after:-inset-y-1 after:inset-x-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)] lg:w-16";
-  const chromeSurfaceShortcutLabel = "sr-only lg:not-sr-only";
-
-  // Below `sm` even the marks do not fit, so the destinations fold into the
-  // account menu instead of being clipped. `sm:hidden` on each row, matched by
-  // `hidden sm:flex` on the bar cluster: exactly one copy of each destination
-  // is rendered at any width, so neither the tab order nor the accessibility
-  // tree ever sees a duplicate. AccountMenu's roving focus skips the copies
-  // CSS has hidden (see menuItems() there).
-  const surfaceMenuItems = accountEmail ? (
-    <>
-      <Link
-        href="/reception"
-        prefetch={false}
-        role="menuitem"
-        tabIndex={-1}
-        className={cx(accountMenuItemClassName, "sm:hidden")}
-      >
-        {ReceptionGlyph}
-        Reception
-      </Link>
-      {showAdminShortcut && (
-        <>
-          <Link
-            href="/"
-            prefetch={false}
-            aria-current="page"
-            role="menuitem"
-            tabIndex={-1}
-            className={cx(accountMenuItemClassName, "sm:hidden")}
-          >
-            {ViewerGlyph}
-            Viewer
-          </Link>
-          <Link
-            href="/admin"
-            prefetch={false}
-            role="menuitem"
-            tabIndex={-1}
-            className={cx(accountMenuItemClassName, "sm:hidden")}
-          >
-            {AdminGlyph}
-            Admin
-          </Link>
-        </>
-      )}
-    </>
-  ) : null;
-
-  return (
-    /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
-       which captures the sticky header so it never pins to the viewport. */
-    <div className="shell-theme flex min-h-[100svh] flex-col overflow-x-clip bg-[var(--sp-background)] text-[var(--sp-text-primary)] lg:h-screen lg:min-h-0 lg:overflow-hidden">
-      <a
-        href="#viewer-seat-map"
-        data-chrome="dark"
-        className="sp-zone-chrome sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--sp-interactive)] focus:bg-[var(--sp-background)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--sp-text-primary)] focus:outline-none"
-      >
-        Skip to seat map
-      </a>
-      {/* z-50 matches the admin bar: sticky activates the z-index, which must
-          outrank z-40 workspace overlays that follow in DOM order. */}
-      <header className="sp-zone-chrome sticky top-0 z-50 flex h-9 shrink-0 items-center border-b border-[var(--sp-border-subtle)] bg-[var(--sp-background)] pl-3 text-[var(--sp-text-primary)]" data-chrome="dark">
-        <div className="flex min-w-0 shrink-0 items-center gap-2">
-          <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
-            <Image src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
-          </span>
-          {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
-          <div aria-hidden="true" translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
-            Megeredchian Law <span className="font-normal text-[var(--sp-text-helper)]">· Seat Planner</span>
-          </div>
-        </div>
-
-        {/* Divider tracks the bar (was 22px in a 40px bar — same 0.55 ratio). */}
-        <span aria-hidden="true" className="mx-2.5 hidden h-[26px] w-px shrink-0 bg-[var(--sp-border-subtle)] lg:block" />
-
-        {/* Filter and Search are two DISTINCT controls (was one shared 26px box
-            capped at 340px for BOTH). Finding your own seat or looking up a
-            person is the paramount job on this surface, so search gets its own
-            field and the width; Filter keeps the pairing by sitting immediately
-            to its LEFT with the dropdown anchored to itself. Both Carbon `sm` =
-            Carbon `md` = 40px inside the 48px bar (owner, 2026-07-22). */}
+  const filterControl = (
         <div ref={filterRootRef} className="relative mr-1.5 flex h-7 shrink-0 items-stretch border border-[var(--sp-border-subtle)] bg-[var(--sp-field)] lg:mr-2">
           <button
             ref={filterTriggerRef}
@@ -1503,10 +1441,8 @@ export function ViewerSeatFinder({
             </div>
           )}
         </div>
-
-        {/* Medium cap, 340 -> 420px on lg — matching the admin bar so the two
-            surfaces read as one shell. Finding your seat is still the paramount
-            job here, but 480 made the field the loudest thing in the row. */}
+  );
+  const searchField = (
         <div
           ref={searchFieldRef}
           role="search"
@@ -1651,74 +1587,28 @@ export function ViewerSeatFinder({
             ) : null}
           </label>
         </div>
+  );
 
-        {/* The shortcuts leave the bar below `sm` and reappear inside the
-            account menu (`surfaceMenuItems`). Measured 2026-09-01: three 64px
-            tabs, the theme label and the avatar make the bar's intrinsic
-            content 472px wide in a 320px viewport, and the shell's
-            `overflow-x: clip` made the surplus unreachable rather than
-            scrollable — Admin, the theme toggle and the avatar were off-screen,
-            and keyboard focus landed on controls the user could not see. Only
-            one copy of each destination is ever rendered, so nothing is
-            duplicated in the accessibility tree. */}
-        <div className="ml-auto flex h-full shrink-0 items-center">
-          <div className="hidden h-full items-center sm:flex">
-            {/* Reception is NOT admin equipment (unlike the surface tabs below):
-                the front-desk directory is read-only and role-safe, so every
-                signed-in user gets the shortcut (owner ruling 2026-08-05 —
-                viewers have no rail, this is their entry point). */}
-            {accountEmail && (
-              <Link
-                href="/reception"
-                // prefetch off on force-dynamic targets, same rationale as
-                // AppRail's prefetch={false} note: dynamic prefetches are pure
-                // serverless flood and collided with in-flight navigations.
-                prefetch={false}
-                aria-label="Open reception directory"
-                title="Reception — front-desk call routing"
-                className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]")}
-              >
-                {ReceptionGlyph}
-                <span className={chromeSurfaceShortcutLabel}>Reception</span>
-              </Link>
-            )}
-            {/* Surface tabs are admin equipment (2026-07-16 regrade, review 2):
-                non-admin staff would otherwise see one dead "tab" implying a
-                missing sibling. Their chrome ends at the account chip; surface
-                identity lives in the crumb and the menu's role line. */}
-            {showAdminShortcut && (
-              <div className="flex h-full items-center">
-                <span
-                  aria-current="page"
-                  title="Viewer — published map"
-                  className={cx(chromeSurfaceShortcut, "border-[var(--sp-interactive)] text-white")}
-                >
-                  {ViewerGlyph}
-                  <span className={chromeSurfaceShortcutLabel}>Viewer</span>
-                </span>
-                <Link
-                  href="/admin"
-                  prefetch={false}
-                  aria-label="Open admin surface"
-                  title="Admin — draft editing surface"
-                  className={cx(chromeSurfaceShortcut, "border-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]")}
-                >
-                  {AdminGlyph}
-                  <span className={chromeSurfaceShortcutLabel}>Admin</span>
-                </Link>
-              </div>
-            )}
-          </div>
-          <ThemeToggle />
-          {/* Account menu (identity + sign out); decorative fallback keeps
-              unauthenticated prototype embeds rendering. */}
-          {accountEmail ? (
-            <AccountMenu email={accountEmail} roleLabel={accountRoleLabel} navItems={surfaceMenuItems} />
-          ) : (
-            <span aria-hidden="true" className="mx-2.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-interactive)] text-[11px] font-semibold text-[var(--sp-text-on-color)]">V</span>
-          )}
+  return (
+    /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
+       which captures the sticky header so it never pins to the viewport. */
+    <div className="flex min-h-0 flex-1 flex-col overflow-x-clip bg-[var(--sp-background)] text-[var(--sp-text-primary)] lg:overflow-hidden">
+      {/* In the shell (app/(shell)/layout.tsx) this surface has NO header of
+          its own: the search field portals into the provisional tenant row
+          (PHASE 4 BRIDGE, removed by PR 3's control row) and the four filter
+          groups register with the left panel (useAppShellFilters above).
+          The standalone fallback row below keeps harnesses that mount this
+          component without AppShell (the jsdom tier) fully controllable —
+          the old Filter popover lives on there only, until PR 3 retires
+          FilterPanel. */}
+      {shellSlots?.left ? (
+        createPortal(searchField, shellSlots.left)
+      ) : (
+        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2">
+          {filterControl}
+          {searchField}
         </div>
-      </header>
+      )}
 
       {/* No matting, and no reserved gutter either (v12 Find palette): the
           stage column runs to the window edges at every width now that nothing

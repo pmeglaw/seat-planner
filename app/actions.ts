@@ -10,6 +10,7 @@ import type { DraftSnapshot } from "@/lib/draftHistory";
 import { answerMapOperationsQuestion } from "@/lib/mapOperationsAgent";
 import { assessPublishEnvironment } from "@/lib/publishGuard";
 import { resolvePublishHistoryProfiles, type PublishEventRecord } from "@/lib/publishHistory";
+import { buildPublishChangeSummary } from "@/lib/publishSummary";
 import { buildNextSeatLabel } from "@/lib/seatLabels";
 import { canDeleteDraftSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { buildSeatSwapPlan, type SeatSwapPlan } from "@/lib/seatSwap";
@@ -1051,6 +1052,67 @@ export async function getPublishHistoryAction(limit = 10) {
   if (profilesError) throw new Error(profilesError.message);
 
   return resolvePublishHistoryProfiles(events, (profiles ?? []) as Array<{ id: string; email: string | null }>);
+}
+
+// Shell mode indicator on admin sub-pages (redesign-v2 PR 2, PHASE2UX §1.5
+// / D2 "the count travels"): /admin/management and /admin/settings load no
+// seat data, so the persistent shell asks for the draft's pending change
+// count once per mount there. On /admin SeatMap pushes its live count into
+// the shell instead and this is never called. The ONE sanctioned new server
+// action of the redesign (owner ruling 2026-09-04): read-only, admin-only
+// (the draft layer is never exposed to viewers — the viewer shell never
+// calls it), no RPC, no migration, no revalidatePath. Same six paged reads
+// as app/(shell)/admin/page.tsx so the count matches the publish review's
+// exactly (buildPublishChangeSummary, live employees vs the snapshot).
+export async function getDraftStatusAction(): Promise<{ changeCount: number; lastEditAt: string | null; publishedAt: string | null }> {
+  const supabase = await requireAdmin();
+  const [draftSeats, publishedSeats, employees, publishedEmployees] = await Promise.all([
+    fetchAllRows<SeatWithEmployee>(
+      (from, to) =>
+        supabase
+          .from("seats")
+          .select("*, employee:employees(*)", { count: "exact" })
+          .eq("layer", "draft")
+          .order("label")
+          .range(from, to),
+      { label: "draft seats" }
+    ),
+    fetchAllRows<SeatWithEmployee>(
+      (from, to) =>
+        supabase
+          .from("seats")
+          .select("*, employee:employees(*)", { count: "exact" })
+          .eq("layer", "published")
+          .order("label")
+          .range(from, to),
+      { label: "published seats" }
+    ),
+    fetchAllRows<Employee>(
+      (from, to) =>
+        supabase
+          .from("employees")
+          .select("*", { count: "exact" })
+          .eq("active", true)
+          .order("full_name")
+          .order("id")
+          .range(from, to),
+      { label: "employees" }
+    ),
+    fetchAllRows<Employee>(
+      (from, to) =>
+        supabase
+          .from("published_employees")
+          .select("*", { count: "exact" })
+          .order("full_name")
+          .order("id")
+          .range(from, to),
+      { label: "published employees" }
+    )
+  ]);
+  const summary = buildPublishChangeSummary(draftSeats, publishedSeats, { employees, publishedEmployees });
+  const latest = (rows: SeatWithEmployee[]) =>
+    rows.reduce<string | null>((max, seat) => (seat.updated_at && (!max || seat.updated_at > max) ? seat.updated_at : max), null);
+  return { changeCount: summary.totalChangeCount, lastEditAt: latest(draftSeats), publishedAt: latest(publishedSeats) };
 }
 
 export type PublishSeatMapResult =

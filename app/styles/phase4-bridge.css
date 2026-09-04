@@ -19,7 +19,7 @@
    2. Retired --sp-* names still consumed by the shipped components (PHASE3DS
       §5 "Retired names", groups 2–4). Each alias points at its replacement so
       no var() is undefined while old components sit on the new tokens. Group 2
-      (--sp-chrome-*) leaves with PR 2, group 3 (marker / legend / selection /
+      (--sp-chrome-*) LEFT with PR 2, group 3 (marker / legend / selection /
       ai / editor / publish / trail / wash) with PR 3, group 4 (tag / table /
       extension / identity) with PR 4. The token test asserts every alias here
       references a defined --sp-* name (or a literal) and is gone once its
@@ -55,11 +55,6 @@
   --sp-ai-panel-border: var(--sp-ai-border-start);
   --sp-ai-row: var(--sp-layer-hover);
   --sp-ai-text: var(--sp-ai-label-text);
-  --sp-chrome-heading: var(--sp-text-primary);
-  --sp-chrome-height: var(--sp-shell-header-h);
-  --sp-chrome-info: var(--sp-layer-02);
-  --sp-chrome-info-text: var(--sp-text-primary);
-  --sp-chrome-scrim: var(--sp-overlay);
   --sp-editor-clean-bg: var(--sp-status-neutral-surface);
   --sp-editor-clean-border: var(--sp-status-neutral-mark);
   --sp-editor-clean-text: var(--sp-status-neutral-text);

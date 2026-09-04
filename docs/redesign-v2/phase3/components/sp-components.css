@@ -145,9 +145,18 @@
 }
 .sp-header .cds-header-nav a:is(:active, [data-state="pressed"]) { background: var(--sp-shell-bg-pressed); }
 .sp-header .cds-header-nav a[data-state="hover"] { background: var(--sp-shell-bg-hover); color: var(--sp-shell-text); }
+/* the CURRENT link takes no hover fill (owner ruling 2026-09-04, Phase 4 PR 2): it is not a
+   destination, so a hover affordance promises nothing — and the terracotta current bar
+   stays at its resting 3.97:1 on gray 100 instead of 2.77:1 on the asset's gray-90-hover
+   (the fifth hover-surface instance, PHASE3DS §3). Other links keep the asset's hover. */
+.sp-header .cds-header-nav a[aria-current="page"]:is(:hover, [data-state="hover"]) { background: var(--sp-shell-bg); color: var(--sp-shell-text); }
 
-/* the indicator is centred on x=960 by the header, not by the nav */
-.sp-header-center { position: absolute; left: 50%; top: 0; height: 100%; transform: translateX(-50%); display: flex; align-items: center; }
+/* the indicator is centred in the header's FREE RUN — the space between the last
+   section link and the first utility — not at the page midpoint (owner ruling
+   2026-09-04, Phase 4 PR 2: one fluid rule correct at every width for both roles;
+   at 1920 the admin's four links put it at x = 1227, the viewer's two at 1127; below the 1055 nav fold the compact form centres between name and utils).
+   PHASE2UX §1.2 row 4 and PHASE1IA ruling 23 amended: "centred" = centred in the run. */
+.sp-header-center { flex: 1 1 auto; min-width: 0; height: 100%; display: flex; align-items: center; justify-content: center; }
 .sp-header .cds-header-utils .sp-has-tooltip { display: flex; height: 100%; }
 
 /* hamburger / reserved slot — 48×48 at x 0–48 on every route; empty on sub-pages at lg+ (D0-h) */

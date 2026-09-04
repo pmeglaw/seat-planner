@@ -30,7 +30,11 @@ const shellSurfaces = [["shell rest g100", P.g100], ["shell hover #333333", P.ho
 const panelSurfaces = [["panel g100", P.g100], ["panel layer g90", P.g90], ["panel row hover #333333", P.hoverG90], ["panel pressed g80", P.g80]];
 for (const m of [{ name: "text gray-10", hex: P.g10 }, { name: "secondary gray-30", hex: P.g30 }, { name: "helper gray-40", hex: P.g40 }]) marks(gated, "shell", m, "text", shellSurfaces);
 for (const m of [{ name: "mode Published ■ gray-10", hex: P.g10 }, { name: "mode Draft ◇ orange-40", hex: P.o40 }, { name: "mode Not published □ gray-40", hex: P.g40 }, { name: "mode Error ⊗ red-50", hex: P.r50 }, { name: "focus white", hex: P.white }]) marks(gated, "shell", m, "graphic", shellSurfaces);
-add(gated, "shell · current bar blue-50 on shell g100", P.b50, P.g100, "graphic");
+// Brand layer (DECISIONS §6 no. 16): the current bar is terracotta, and the CURRENT link takes no
+// hover fill (owner ruling 2026-09-04), so the bar's hover surface is still g100 — both pairs measured.
+const BRAND = { terracotta: "#b85c2e" };
+add(gated, "shell · current bar terracotta on shell g100 (rest)", BRAND.terracotta, P.g100, "graphic");
+add(gated, "shell · current bar terracotta on shell g100 (hovered current link — no hover fill)", BRAND.terracotta, P.g100, "graphic");
 add(gated, "shell · nav link gray-30 on shell g100", P.g30, P.g100, "text");
 add(gated, "shell · nav link gray-30 on shell hover", P.g30, P.hoverG90, "text");
 add(gated, "shell · nav link gray-10 on shell pressed g80", P.g10, P.g80, "text");

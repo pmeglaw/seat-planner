@@ -805,7 +805,7 @@ export function AdminManagementPanel({
   }
 
   return (
-    <main className="admin-theme flex-1 bg-[var(--sp-background)] px-4 pb-12 pt-6 text-[var(--sp-text-primary)] sm:px-8">
+    <main className="flex-1 bg-[var(--sp-background)] px-4 pb-12 pt-6 text-[var(--sp-text-primary)] sm:px-8">
       <div className="mx-auto max-w-[1240px] space-y-4">
         <header className="pb-1">
           <h1 className="text-[22px] font-semibold leading-tight text-[var(--sp-text-primary)]">Management</h1>
@@ -1307,7 +1307,7 @@ export function AdminManagementPanel({
       </div>
 
       {employeeDialogOpen && (
-        <div className="fixed inset-0 z-[65] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[65] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={employeeDialogFocusRef}
             tabIndex={-1}
@@ -1419,7 +1419,7 @@ export function AdminManagementPanel({
       )}
 
       {managementConfirm && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={managementConfirmDialogFocusRef}
             tabIndex={-1}

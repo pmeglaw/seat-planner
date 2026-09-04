@@ -7,7 +7,7 @@ export default function AdminSettingsLoading() {
     <div
       role="status"
       aria-busy="true"
-      className="admin-theme min-h-[calc(100svh-var(--sp-chrome-height))] bg-[var(--sp-background)] pl-12 text-[var(--sp-text-primary)]"
+      className="flex min-h-0 flex-1 flex-col bg-[var(--sp-background)] text-[var(--sp-text-primary)]"
     >
       <span className="sr-only">Loading settings…</span>
       <div aria-hidden="true" className="mx-auto w-full max-w-[760px] animate-pulse px-6 pb-12 pt-6 motion-reduce:animate-none">

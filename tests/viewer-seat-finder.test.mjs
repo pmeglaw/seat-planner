@@ -230,41 +230,9 @@ test("no server action fires from any viewer interaction", async () => {
   assert.deepEqual(actionCalls, [], "the viewer surface must never invoke a server action");
 });
 
-test("the admin shortcut is gated on the role the server page passes down", async () => {
-  await renderViewer({ showAdminShortcut: false });
-  assert.equal(screen.queryByRole("link", { name: "Open admin surface" }), null);
-  cleanup();
-
-  await renderViewer({ showAdminShortcut: true });
-  assert.ok(screen.getByRole("link", { name: "Open admin surface" }));
-});
-
-// Below `sm` the bar's surface shortcuts fold into the account menu (the bar's
-// intrinsic content measured 472px in a 320px viewport, 2026-09-01). jsdom has
-// no layout, so both copies exist here; what this pins is that the menu copy
-// is a real menuitem the roving focus can reach, and that it is gated on the
-// same role flag as the bar copy — a non-admin must not find an Admin row in
-// the menu that the bar refused to draw.
-test("the account menu folds the surface shortcuts in as menu items, role-gated like the bar", async () => {
-  await renderViewer({ accountEmail: "jane@example.com", accountRoleLabel: "Viewer", showAdminShortcut: false });
-  const trigger = screen.getByRole("button", { name: "Account — jane@example.com" });
-  fireEvent.click(trigger);
-  await flushFrames();
-  let menu = screen.getByRole("menu", { name: "Account" });
-  let names = within(menu).getAllByRole("menuitem").map(item => item.textContent?.trim());
-  assert.deepEqual(names, ["Reception", "My seat", "Sign out"]);
-  assert.ok(document.activeElement === within(menu).getAllByRole("menuitem")[0], "opening focuses the first rendered item");
-  cleanup();
-
-  await renderViewer({ accountEmail: "jane@example.com", accountRoleLabel: "Admin", showAdminShortcut: true });
-  fireEvent.click(screen.getByRole("button", { name: "Account — jane@example.com" }));
-  await flushFrames();
-  menu = screen.getByRole("menu", { name: "Account" });
-  names = within(menu).getAllByRole("menuitem").map(item => item.textContent?.trim());
-  assert.deepEqual(names, ["Reception", "Viewer", "Admin", "My seat", "Sign out"]);
-  fireEvent.keyDown(menu, { key: "ArrowDown" });
-  assert.ok(document.activeElement === within(menu).getAllByRole("menuitem")[1], "arrow keys rove through the folded items");
-});
+// The viewer's own chrome (surface tabs, account menu, theme toggle) retired
+// with its header in redesign-v2 PR 2 — the shell provides all of it; see
+// tests/viewer-shell.test.mjs for the in-shell registration.
 
 // --- Search -----------------------------------------------------------------
 

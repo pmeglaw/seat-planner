@@ -233,9 +233,11 @@ test("a dirty inspector intercepts the viewer link with the unsaved-edits dialog
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
   await dirtyInspectorNotes(page);
 
-  // AppRail's Viewer item is a <Link> (prefetch + pre-hydration nav); the
-  // onNavigate guard intercepts it via preventDefault in the item's onClick.
-  await page.locator('a[aria-label="Open viewer surface"]').dispatchEvent("click");
+  // The shell's cross-surface exit to the published map is the History
+  // panel's mode switch (redesign-v2 PR 2): open History from its utility,
+  // press "Published" — AppShell routes it through the registered guard.
+  await page.locator('#shell-header button[aria-label="History"]').click();
+  await page.locator('#shell-panel-history [role="group"][aria-label="Mode"] button', { hasText: "Published" }).click();
   await expect(page.locator("#inspector-unsaved-title")).toBeAttached();
   // The click must not have navigated the harness away.
   expect(page.url()).toContain("harness.html");
