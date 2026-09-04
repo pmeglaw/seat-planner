@@ -1,6 +1,6 @@
 # Seat Planner redesign — Phase 4: code
 
-**Status: in progress — PR 0 #512 merged (v1.74.0). PR 1 #513 (tokens + CSS landing) open. PR 2–6 not started.** Inputs, in reading order:
+**Status: in progress — PR 0 #512 merged (v1.74.0). PR 1 #513 merged (v1.74.1). 1b #514 merged (v1.74.2). PR 2 shell open (`feat/phase4-shell`). PR 3–6 not started.** Inputs, in reading order:
 `CLAUDE.md` / `AGENTS.md`; `phase3/PHASE3DS.md` §5 (20 obligations with landing files, landing files by PR, retired
 names) and §7 (what Phase 3 learned); `PHASE2UX.md` §3 (component checklist), §5 (nine obligations), the per-screen
 decision logs and the wireframes under `wireframes/`; `PHASE1IA.md` §B–§C; `DECISIONS.md` D0–D6 + §6 (deviations
@@ -279,10 +279,12 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 | PR | GitHub | Branch | Tag | Scope | Status |
 |---|---|---|---|---|---|
 | 0 | #512 | `docs/phase4-triage` | v1.74.0 | `TEST-TRIAGE.md`; this scaffold; `tests/phase4-token-layer-source.test.mjs` | merged |
-| 1 | #513 | `feat/phase4-tokens` | — | tokens + CSS landing (P3-1, 2 boot half, 3, 19, 20); `app/styles/` ×4 + `phase4-bridge.css`; group-1 sweep 297 sites / 29 files; theme three-state; `tailwind.config.ts`; DECISIONS D4 confirmation + D1-h / D1-i; `screenshots/pr1/`; preview-walk fix (§1.6) + `audit/marker-contrast.mjs` | open |
-| 1b | — | `feat/brand-terracotta` | v1.74.2 | brand layer: `app/styles/brand/megeredchian-law-tokens.css` (+ `.json`), `public/Logo-Megeredchian-Law.jpg`, `docs/brand/`, CLAUDE.md "Brand System", DECISIONS §6 no. 16, token test brand rules | open |
-| 2 | — | — | — | shell (P3-2, 6, 9, 10; P2-2; route-group move on confirmation) | not started |
-| 3 | — | — | — | map (P3-4, 5, 7, 11–14; P2-1, 3, 4, 9); split 3a / 3b if the diff passes ~1,500 lines | not started |
+| 1 | #513 | `feat/phase4-tokens` | v1.74.1 | tokens + CSS landing (P3-1, 2 boot half, 3, 19, 20); `app/styles/` ×4 + `phase4-bridge.css`; group-1 sweep 297 sites / 29 files; theme three-state; `tailwind.config.ts`; DECISIONS D4 confirmation + D1-h / D1-i; `screenshots/pr1/`; preview-walk fix (§1.6) + `audit/marker-contrast.mjs` | merged |
+| 1b | #514 | `feat/brand-terracotta` | v1.74.2 | brand layer: `app/styles/brand/megeredchian-law-tokens.css` (+ `.json`), `public/Logo-Megeredchian-Law.jpg`, `docs/brand/`, CLAUDE.md "Brand System", DECISIONS §6 no. 16, token test brand rules | merged |
+| 2 | — | `feat/phase4-shell` | — | shell (P3-2 radio, 6, 9, 10; P2-2; route-group move of `/` confirmed 2026-09-03; Position kept as the fourth filter group, owner ruling 2026-09-04; group-2 sweep; provisional tenant row = PR 2/PR 3 seam) | open |
+| 3 | — | — | — | map (P3-4, 5, 7, 11–14; P2-1, 3, 4, 9); **remove the provisional tenant row** (PR 2 seam — SeatMap's bar tenants + viewer search move into the map control row, PHASE2UX §1M.3); retire `FilterPanel` / `ActiveFilterChips`; split 3a / 3b if the diff passes ~1,500 lines | not started |
 | 4 | — | — | — | Management + Settings (P3-15, 16, 17; P2-6, 7, 8) | not started |
 | 5 | — | — | — | Reception, route surfaces, `/login` + `/my-seat` confirmed unchanged (P3-18; P2-5) | not started |
 | 6 | — | — | v2.0.0 | close-out: this file complete; PHASE1IA §D delivered; DECISIONS reconciled; `CLAUDE.md` "Design system" rewritten; `app/concepts/` + `docs/design-system/` marked superseded (not deleted) | not started |
+
+Next: PR 2 plan — shell; route-group proposal for `/` confirmed by the owner 2026-09-03; Position filter ruled in 2026-09-04.
