@@ -109,12 +109,9 @@ const HEX = /#[0-9a-fA-F]{3,8}(?![\w-])/g;
 // only go down or out; it may never appear.
 const HEX_LEDGER = {
   "app/global-error.tsx": 10, // PR 5 (route cards)
-  "app/globals.css": 271, // PR 1 (the --sp-* block is replaced wholesale)
-  "app/layout.tsx": 1, // PR 1 (themeColor meta)
-  "components/auth/LoginForm.tsx": 6, // PR 1 sweep — login layout unchanged (D4)
+  "app/layout.tsx": 1, // themeColor meta: gray 100, the header colour — Next's Viewport wants a string (owner, PR 1)
   "components/seat-map/SeatSheet.tsx": 12, // PR 3 (inspector)
-  "components/ui/design-system.tsx": 54, // PR 1 (primitive palette → tokens)
-  "tailwind.config.ts": 3, // PR 1 (re-pointed at the new names)
+  "components/ui/design-system.tsx": 53, // PR 3 (markerStateClassRecipes; the primitives were re-tokenised in PR 1)
 };
 
 test("no hex literal outside the two asset files (ledger only shrinks)", () => {
@@ -141,14 +138,108 @@ test("no hex literal outside the two asset files (ledger only shrinks)", () => {
 // Rule 2 — `--cds-*` only through the semantic layer.
 // ---------------------------------------------------------------------------
 
+// The one sanctioned exception: next/font/local emits a hashed family name, so
+// the Phase 4 bridge re-points the asset's two font tokens at the variables
+// app/layout.tsx exposes (PHASE4BUILD §1.3). Exactly these names, in exactly
+// this file, as declarations only.
+const BRIDGE_FILE = "app/styles/phase4-bridge.css";
+const CDS_FONT_BRIDGE = new Set(["--cds-font-sans", "--cds-font-mono"]);
+
 test("no --cds- reference outside sp-tokens.css and the two asset files", () => {
   const offenders = [];
   for (const rel of files) {
     if (CDS_BRIDGE_BASENAMES.has(path.posix.basename(rel))) continue;
-    const n = countMatches(scannable(rel), /--cds-[a-z0-9-]+/g);
-    if (n > 0) offenders.push(`${rel}: ${n}`);
+    for (const chunk of scannable(rel)) {
+      for (const m of chunk.matchAll(/--cds-[a-z0-9-]+/g)) {
+        if (rel === BRIDGE_FILE && CDS_FONT_BRIDGE.has(m[0])) continue;
+        offenders.push(`${rel}: ${m[0]}`);
+      }
+    }
   }
   assert.deepEqual(offenders, [], `--cds-* must be consumed via --sp-* names:\n${offenders.join("\n")}`);
+});
+
+test("the font bridge re-points both Carbon font tokens at next/font's variables", () => {
+  const css = stripCssComments(read(BRIDGE_FILE));
+  assert.match(css, /--cds-font-sans:\s*var\(--font-sans\)/);
+  assert.match(css, /--cds-font-mono:\s*var\(--font-mono\)/);
+  const layout = read("app/layout.tsx");
+  assert.match(layout, /variable:\s*"--font-sans"/);
+  assert.match(layout, /variable:\s*"--font-mono"/);
+  // The variables must be on <html> for :root to see them.
+  assert.match(layout, /<html[^>]*className=\{`\$\{plexSans\.variable\} \$\{plexMono\.variable\}`\}/);
+});
+
+// ---------------------------------------------------------------------------
+// The four design-system files land unchanged (PHASE3DS §7: "the CSS is the
+// deliverable"). The only edit is the Google Fonts @import line leaving
+// carbon-tokens.css (fonts are vendored via next/font/local).
+// ---------------------------------------------------------------------------
+
+const PHASE3 = "docs/redesign-v2/phase3";
+const SHIPPED = {
+  "app/styles/carbon-tokens.css": `${PHASE3}/tokens/carbon-tokens.css`,
+  "app/styles/sp-tokens.css": `${PHASE3}/tokens/sp-tokens.css`,
+  "app/styles/carbon-components.css": `${PHASE3}/components/carbon-components.css`,
+  "app/styles/sp-components.css": `${PHASE3}/components/sp-components.css`,
+};
+
+test("the four design-system files are byte-identical to the Phase 3 deliverable (minus the @import line)", () => {
+  for (const [shipped, source] of Object.entries(SHIPPED)) {
+    const expected = read(source)
+      .split("\n")
+      .filter(line => !/^@import url\("https:\/\/fonts\.googleapis\.com/.test(line))
+      .join("\n");
+    assert.equal(read(shipped), expected, `${shipped} differs from ${source}`);
+  }
+  assert.doesNotMatch(read("app/styles/carbon-tokens.css"), /@import/, "no @import may remain in the shipped asset");
+});
+
+test("app/layout.tsx imports the stylesheets in the contracted order", () => {
+  const layout = read("app/layout.tsx");
+  const order = [
+    "./globals.css",
+    "./styles/carbon-tokens.css",
+    "./styles/sp-tokens.css",
+    "./styles/carbon-components.css",
+    "./styles/sp-components.css",
+    "./styles/phase4-bridge.css",
+  ];
+  const positions = order.map(spec => layout.indexOf(`import "${spec}";`));
+  for (let i = 0; i < order.length; i += 1) {
+    assert.ok(positions[i] >= 0, `layout.tsx must import ${order[i]}`);
+    if (i > 0) assert.ok(positions[i] > positions[i - 1], `${order[i]} must load after ${order[i - 1]}`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// The bridge: every retired alias references a defined --sp-* name (or a
+// literal), and an alias whose group has been swept must be gone.
+// ---------------------------------------------------------------------------
+
+function definedSpNames() {
+  const names = new Set();
+  for (const m of stripCssComments(read("app/styles/sp-tokens.css")).matchAll(/^\s*(--sp-[a-z0-9-]+)\s*:/gm)) names.add(m[1]);
+  return names;
+}
+
+test("every bridge alias resolves to a defined --sp-* name and none survives its sweep", () => {
+  const defined = definedSpNames();
+  const css = stripCssComments(read(BRIDGE_FILE));
+  const problems = [];
+  for (const m of css.matchAll(/^\s*(--sp-[a-z0-9-]+)\s*:\s*([^;]+);/gm)) {
+    const [, alias, value] = m;
+    assert.ok(!defined.has(alias), `${alias} is defined in sp-tokens.css — it is not a retired name and does not belong in the bridge`);
+    for (const ref of value.matchAll(/var\((--[a-z0-9-]+)\)/g)) {
+      if (!defined.has(ref[1])) problems.push(`${alias} → ${ref[1]} is not defined in sp-tokens.css`);
+    }
+    for (const group of SWEPT) {
+      for (const re of RETIRED[group]) {
+        if (new RegExp(re.source).test(alias)) problems.push(`${alias} was swept in PR ${group} and must leave the bridge`);
+      }
+    }
+  }
+  assert.deepEqual(problems, [], problems.join("\n"));
 });
 
 // ---------------------------------------------------------------------------
@@ -200,7 +291,7 @@ const RETIRED = {
 // Sweep PRs that have merged. PR 1 adds 1, PR 2 adds 2, PR 3 adds 3, PR 4
 // adds 4. Until a group is swept its names are still the shipped vocabulary
 // and the rule stays silent for them.
-const SWEPT = new Set([]);
+const SWEPT = new Set([1]);
 
 test("retired --sp-* names are gone once their sweep PR has merged", () => {
   const offenders = [];

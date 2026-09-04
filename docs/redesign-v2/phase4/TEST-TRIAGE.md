@@ -105,6 +105,7 @@ dialog, side panel or tearsheet re-enumerates it.
 | `virtualized-directory` | contract | windowing maths; `stepFocusIndex` skips disabled rows | re-point (`ResultsPanel` retires with the shipped viewer header; the palette + Management keep the hook) | 3, 4 |
 | `seat-clusters` | mixed | cluster maths; "the admin map never swaps markers for cluster pills" | **decide in the PR 3 plan**: cluster pills are not in `map-published.html`. Default: retire with the viewer's cluster layer; raised under "Open for the owner" | 3 |
 | `floors` | contract | registry order, landing-floor precedence, `?seat=` beats `?floor=`, roster grouping | re-point | 3 |
+| `marker-contrast` (+ `scripts/marker-contrast.mjs`) — **missed by the PR 0 survey** | look-pinning over a contrast obligation | marker marks ≥ floor on the hovered surface, both themes; 36 state pairs differ on a non-hue channel — measured from the OLD `--sp-marker-*` values in `globals.css` | **retired in PR 1**: the values it measured left with the token block; the obligation is carried by the generated 192-pair contrast suite (pill states × surfaces, both themes) and Phase 3's two-signal marks (`.sp-seat-mark`, §1.4) | 1 |
 | `published-employee-snapshot` | guardrail | viewer reads the snapshot only; publish RPC replaces it atomically | keep (route-group move in PR 2 edits the path only) | 2 |
 | `publish-guard`, `map-operations-agent`, the six `*-transaction-safety`, `floor-ids`, `seed-migration-replay`, `backup-script-safety`, `viewer-seat-columns`, `measure-shared` | guardrail / contract | server, SQL and tooling — no UI coupling | keep | — |
 
@@ -125,7 +126,7 @@ dialog, side panel or tearsheet re-enumerates it.
 | PR | New / kept whole | Re-pointed | Rewritten | Retired |
 |---|---|---|---|---|
 | 0 | `phase4-token-layer-source` (new) | — | — | — |
-| 1 | — | `pending-state-source` (`Button`) | `auth-theme-source`, `focus-brand-contrast-source` (tokens half), `type-floor-source` (ledger form), `theme` (attribute derivation) | `elevation-shadow-tokens-source` (build rule carried to PR 0's test), `color-twin-drift-source`, `e2e/publish-ready-badge-contrast.spec.ts` |
+| 1 | — | `accessibility-source` (two token pins), `ask-planner-ai-source` (dim rules + bridge), `phase4-token-layer-source` (`SWEPT` {1}) — `pending-state-source` and `type-floor-source` needed no change (the sweep left counts and classes intact) | `auth-theme-source`, `focus-brand-contrast-source` (tokens half), `theme` (three-state derivation) | `elevation-shadow-tokens-source` (build rule carried to PR 0's test), `color-twin-drift-source`, `e2e/publish-ready-badge-contrast.spec.ts`, `marker-contrast` + its script |
 | 2 | — | `auth-session-source`, `full-navigation`, `status-label-source` (panel), `nav-shell.spec.ts`, `published-employee-snapshot` (path) | `accessibility-source` (shell half), `filter-feedback-source` (left panel), `focus-brand-contrast-source` (panels half), `role-fitted-tabs-source`, `shell-viewport-height-source`, `touch-target-source` (shell rows), `theme` (toggle), `app-shell`, `app-top-bar` | `app-rail.test.mjs` (three contracts moved first) |
 | 3 | — | `ask-planner-followup-source`, `focus-handoff-source`, `seat-creation-ui-source`, `seat-map-escape-source`, `session-expiry-source`, `viewer-keyboard-parity-source`, `dialog-initial-focus`, `names-visibility-toggle`, `seat-marker-memo`, `floors`, `draft-concurrency`, `virtualized-directory`, the three `browser/*` specs, `publish-flow.spec.ts`, `draft-dialogs.spec.ts` | `accessibility-source` (map half), `ask-planner-ai-source`, `desktop-seat-marker-system-source`, `filter-feedback-source` (control row), `pill-crowding-scale-source`, `tailwind-arbitrary-alpha-source`, `touch-target-source` (map rows), `type-floor-source` (rows), `viewer-find-palette-source`, `seat-inspector`, `seat-map-components`, `map-status-band`, `floor-roster`, `viewer-seat-finder`, `viewer-find-palette-component`, `dialog-error-placement` (census) | `office-room-wash` and `seat-clusters` **if** the owner confirms the PR 3 defaults; `close-icon-source` loses its two map consumers |
 | 4 | — | `action-input-validation-source`, `bulk-destructive-action-safety-source` (+ the single-call-site anchor from `settings-tiles`), `admin-management-panel`, `data-utilities-panel`, `draft-concurrency`, `virtualized-directory` | `management-detail-source`, `management-directory-map-link-source`, `settings-affordance-source`, `touch-target-source` / `type-floor-source` (rows), `dialog-error-placement` (census) | `settings-tiles-source`, `close-icon-source` |
@@ -153,12 +154,19 @@ app are byte-identical to `docs/redesign-v2/phase3/` modulo the removed `@import
 
 ## 7. Flags surfaced by the triage (for the PR that owns them)
 
-- **PR 1 — login inherits the system.** `LoginForm.tsx` uses two retired names (`--sp-status-danger-mark`,
-  `--sp-link-on-field`) and six hex literals; the sweep touches it mechanically. D4 says `/login` is unchanged in
-  design, but `--sp-button-primary` becomes blue 60 system-wide, so the login primary changes colour. Raised in
-  PR 1's "Open for the owner"; default: accept (tokens are one layer, D4 rules layout not hue).
-- **PR 3 — two shipped map layers the wireframes do not draw**: office-room washes (`MapWashLayer`, `--sp-wash-zone`)
-  and viewer cluster pills (`seat-clusters`). Defaults above; owner item in PR 3.
+- **PR 1 — login inherits the system.** RULED 2026-09-03 (DECISIONS D4 confirmation): D4 rules the layout
+  only; the primary going Blue 60 is the token layer working. `LoginForm.tsx` swept mechanically in PR 1;
+  `login-form.test.mjs` untouched.
+- **PR 3 — two shipped map layers the wireframes do not draw.** RULED 2026-09-03 (DECISIONS D1-h, D1-i): room
+  washes + zone wash retire in PR 3 (`MapWashLayer`, `lib/officeRoomWash`, `lib/zoneWash`, `--sp-wash-zone`,
+  `office-room-wash.test.mjs` together); cluster pills deleted in PR 3 (`lib/seatClusters.ts` is imported by
+  nothing; it and `seat-clusters.test.mjs` go).
+- **PR 3 plan check (owner, 2026-09-03).** The shipped map renders private offices (N13, N14, NE09, NE10, SE05,
+  SE06, S01, S02) as nameplate cards — code, name, job title — not as 28px pills (`isOfficePlateSeat` in
+  `SeatMarker.tsx`). The Phase 2 map wireframes and PHASE2UX do not mention private offices (grepped
+  2026-09-03), so the PR 3 plan raises it under "Open for the owner" with the default that keeps the pill
+  rule: name pill on the office seat, code via tooltip, title in the inspector. The card is never carried
+  forward silently.
 - **PR 4 — a guardrail loses an anchor by ruling.** `bulk-destructive-action-safety-source` and `data-utilities-panel`
   drop their Settings Reset-draft assertions because ruling 22 removes the feature; `resetDraftToPublishedAction`'s
   single call site (SeatMap Discard) is pinned instead.

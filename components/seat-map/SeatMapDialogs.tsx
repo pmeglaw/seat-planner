@@ -49,11 +49,11 @@ function SeatFloorTag({ tag }: { tag: string | null }) {
 }
 
 const PUBLISH_DIFF_TAG_STYLES: Record<PublishDiffRowKind, { label: string; className: string }> = {
-  assigned: { label: "Assigned", className: "border-[var(--sp-status-success-border)] bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]" },
-  added: { label: "Added", className: "border-[var(--sp-status-success-border)] bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]" },
-  vacated: { label: "Vacated", className: "border-[var(--sp-status-danger-border)] bg-[var(--sp-status-danger-surface)] text-[var(--admin-diff-vacated-text)]" },
-  removed: { label: "Removed", className: "border-[var(--sp-status-danger-border)] bg-[var(--sp-status-danger-surface)] text-[var(--admin-diff-vacated-text)]" },
-  reassigned: { label: "Reassigned", className: "border-[var(--sp-status-pending-border)] bg-[var(--sp-status-pending-surface)] text-[var(--sp-status-pending-text)]" },
+  assigned: { label: "Assigned", className: "border-[var(--sp-status-success-mark)] bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]" },
+  added: { label: "Added", className: "border-[var(--sp-status-success-mark)] bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]" },
+  vacated: { label: "Vacated", className: "border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] text-[var(--sp-status-error-text)]" },
+  removed: { label: "Removed", className: "border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] text-[var(--sp-status-error-text)]" },
+  reassigned: { label: "Reassigned", className: "border-[var(--sp-status-draft-mark)] bg-[var(--sp-status-draft-surface)] text-[var(--sp-status-draft-text)]" },
   updated: { label: "Updated", className: "border-[var(--sp-editor-neutral-border)] bg-[var(--sp-editor-neutral-bg)] text-[var(--sp-text-helper)]" }
 };
 
@@ -99,7 +99,7 @@ export function VacateConfirmDialog({
     if (actionError && !pending) vacateErrorRef.current?.focus();
   }, [actionError, pending]);
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
       <section
         ref={vacateConfirmDialogFocusRef}
         tabIndex={-1}
@@ -107,7 +107,7 @@ export function VacateConfirmDialog({
         aria-modal="true"
         aria-labelledby="vacate-seat-confirm-title"
         aria-describedby="vacate-seat-confirm-description"
-        className="w-full max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel focus-visible:outline-none"
+        className="w-full max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp focus-visible:outline-none"
       >
         <h2 id="vacate-seat-confirm-title" className="text-base font-semibold">
           Vacate {formatSeatCode(label)}?
@@ -164,7 +164,7 @@ export function DeleteSeatConfirmDialog({
     if (actionError && !pending) deleteErrorRef.current?.focus();
   }, [actionError, pending]);
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
       <section
         ref={deleteSeatDialogFocusRef}
         tabIndex={-1}
@@ -325,14 +325,14 @@ export function PublishReviewDialog({
                     publishes in ONE call, and the review says which plan each
                     change lands on. A floor with no changes has no group. */}
                 {groupByFloor(publishDiffRows).map(group => (
-                  <div key={group.floor} role="rowgroup" className="border-b border-[var(--sp-border-soft)] last:border-b-0">
-                    <div role="row" className="grid grid-cols-[1fr] border-b border-[var(--sp-border-soft)] bg-[var(--sp-background)]">
+                  <div key={group.floor} role="rowgroup" className="border-b border-[var(--sp-border-subtle)] last:border-b-0">
+                    <div role="row" className="grid grid-cols-[1fr] border-b border-[var(--sp-border-subtle)] bg-[var(--sp-background)]">
                       <span role="cell" aria-colspan={4} className="px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]">
                         {group.label} · {group.items.length} {group.items.length === 1 ? "change" : "changes"}
                       </span>
                     </div>
                     {group.items.map(row => (
-                      <div key={row.key} className="border-b border-[var(--sp-border-soft)] last:border-b-0">
+                      <div key={row.key} className="border-b border-[var(--sp-border-subtle)] last:border-b-0">
                         <div role="row" className="grid grid-cols-[64px_1fr_1fr_96px] items-center">
                           <span role="cell" translate="no" className="px-3 py-2 font-mono text-xs font-semibold text-[var(--sp-text-primary)]">{row.label}</span>
                           <span role="cell" className="flex min-w-0 items-center gap-1.5 px-2.5 py-2 text-[12.5px] text-[var(--sp-text-helper)]">
@@ -446,7 +446,7 @@ export function DiscardDraftDialog({
             onCancel();
           }
         }}
-        className="w-full max-w-lg overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel focus-visible:outline-none"
+        className="w-full max-w-lg overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp focus-visible:outline-none"
       >
         <h2 id="discard-draft-title" className="text-base font-semibold">Discard all draft changes?</h2>
         <p id="discard-draft-description" className="mt-2 text-sm leading-5 text-[var(--sp-text-secondary)]">
@@ -495,7 +495,7 @@ export function InspectorGuardDialog({
 }) {
   const inspectorGuardDialogFocusRef = useDialogFocus<HTMLElement>();
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[60] sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[60] sm:items-center">
       <section
         ref={inspectorGuardDialogFocusRef}
         tabIndex={-1}
@@ -553,7 +553,7 @@ export function SwapConfirmDialog({
     if (actionError && !pending) swapErrorRef.current?.focus();
   }, [actionError, pending]);
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
       <section
         ref={swapConfirmDialogFocusRef}
         tabIndex={-1}
@@ -580,14 +580,14 @@ export function SwapConfirmDialog({
 
         <div className="mt-4 grid gap-2">
           <div className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] p-3">
-            <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Source</div>
+            <div className="text-xs font-semibold text-[var(--sp-text-secondary)]">Source</div>
             <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapSourceSeat.label}<SeatFloorTag tag={crossFloorTag(swapSourceSeat, swapTargetSeat)} /></div>
-            <div className="text-sm text-[var(--sp-text-helper)]">{seatPersonLabel(swapSourceSeat)}</div>
+            <div className="text-sm text-[var(--sp-text-secondary)]">{seatPersonLabel(swapSourceSeat)}</div>
           </div>
           <div className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-accent)] p-3">
-            <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Target</div>
+            <div className="text-xs font-semibold text-[var(--sp-text-secondary)]">Target</div>
             <div className="mt-1 text-sm font-semibold text-[var(--sp-text-primary)]">{swapTargetSeat.label}<SeatFloorTag tag={crossFloorTag(swapTargetSeat, swapSourceSeat)} /></div>
-            <div className="text-sm text-[var(--sp-text-helper)]">{seatPersonLabel(swapTargetSeat)}</div>
+            <div className="text-sm text-[var(--sp-text-secondary)]">{seatPersonLabel(swapTargetSeat)}</div>
           </div>
         </div>
 
@@ -658,7 +658,7 @@ export function MoveEmployeeConfirmDialog({
     </div>
   ) : null;
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-50 sm:items-center">
       <section
         ref={moveEmployeeConfirmDialogFocusRef}
         tabIndex={-1}

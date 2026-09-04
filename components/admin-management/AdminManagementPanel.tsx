@@ -852,7 +852,7 @@ export function AdminManagementPanel({
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={[
-                  "px-4 py-[9px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]",
+                  "px-4 py-[9px] text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]",
                   activeTab === tab.id
                     ? "border border-b-2 border-[var(--sp-border-subtle)] border-b-[var(--sp-button-primary)] bg-[var(--sp-layer-01)] font-semibold text-[var(--sp-text-primary)]"
                     : "border-b border-[var(--sp-border-subtle)] text-[var(--sp-text-secondary)] hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)]"
@@ -961,7 +961,7 @@ export function AdminManagementPanel({
                         const displayName = formatDisplayName(employee.full_name);
                         // Background lives on the cells (not the <tr>) so it paints
                         // reliably under border-collapse in every browser.
-                        const cellClass = ["px-3 py-2 align-middle transition-colors", isSelected ? "bg-[var(--sp-brand-wash)]" : "group-hover/row:bg-[var(--sp-background)]"].join(" ");
+                        const cellClass = ["px-3 py-2 align-middle transition-colors", isSelected ? "bg-[var(--sp-layer-hover)]" : "group-hover/row:bg-[var(--sp-background)]"].join(" ");
                         return (
                           <tr
                             key={employee.id}
@@ -982,7 +982,7 @@ export function AdminManagementPanel({
                           >
                             <td className={[cellClass, "pl-4"].join(" ")}>
                               <div className="flex items-center gap-2.5">
-                                <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--sp-brand-subtle)] text-xs font-bold text-[var(--sp-brand-text)]">{getInitials(employee.full_name)}</span>
+                                <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--sp-layer-hover)] text-xs font-bold text-[var(--sp-text-primary)]">{getInitials(employee.full_name)}</span>
                                 {/* Contract #13: the name is the map affordance —
                                     a real link so it is shareable and middle-clickable.
                                     Unseated people have nothing to show, so they stay text. */}
@@ -1008,8 +1008,8 @@ export function AdminManagementPanel({
                             <td className={cellClass}>
                               {/* Assigned mirrors the map legend's green chip — the
                                   orange-soft family reads as a warning here. */}
-                              <span className={["inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium", isAssigned ? "border-[var(--sp-status-success-border)] bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)]"].join(" ")}>
-                                <span aria-hidden="true" className={["h-1.5 w-1.5 shrink-0 rounded-full", isAssigned ? "bg-[var(--sp-status-success-strong)]" : "bg-[var(--sp-status-neutral-mark)]"].join(" ")} />
+                              <span className={["inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium", isAssigned ? "border-[var(--sp-status-success-mark)] bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)]"].join(" ")}>
+                                <span aria-hidden="true" className={["h-1.5 w-1.5 shrink-0 rounded-full", isAssigned ? "bg-[var(--sp-status-success-mark)]" : "bg-[var(--sp-status-neutral-mark)]"].join(" ")} />
                                 {isAssigned ? "Assigned" : "Unassigned"}
                               </span>
                             </td>
@@ -1081,7 +1081,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteDepartment(row.name)}
                         disabled={pending}
                         aria-label={`Delete ${row.name}`}
-                        className="relative inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2 hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-strong)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                        className="relative inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2 hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-error-mark)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -1132,7 +1132,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteZone(name)}
                         disabled={pending}
                         aria-label={`Delete ${name}`}
-                        className="relative inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2 hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-strong)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                        className="relative inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2 hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-error-mark)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -1212,10 +1212,10 @@ export function AdminManagementPanel({
             {publishHistoryState.status === "loaded" && publishHistoryState.events.length > 0 && (
               <>
                 {latestPublish && (
-                  <div className="mt-4 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 shadow-elevation-2">
+                  <div className="mt-4 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 shadow-sp">
                     <div className="flex items-center gap-2">
                       <div className="text-xs font-semibold tracking-normal text-[var(--sp-text-secondary)]">Latest publish</div>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--sp-status-success-surface)] px-2 py-0.5 text-xs font-medium text-[var(--sp-status-success-strong)] ring-1 ring-[color-mix(in_srgb,var(--sp-status-success-strong)_30%,transparent)]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--sp-status-success-surface)] px-2 py-0.5 text-xs font-medium text-[var(--sp-status-success-mark)] ring-1 ring-[color-mix(in_srgb,var(--sp-status-success-mark)_30%,transparent)]">
                         <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                         Latest
                       </span>
@@ -1282,7 +1282,7 @@ export function AdminManagementPanel({
                         <div>
                           <div className="text-xs font-semibold tracking-normal text-[var(--sp-text-secondary)] md:hidden">State</div>
                           {index === 0 ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--sp-status-success-surface)] px-2 py-1 text-xs font-semibold tracking-normal text-[var(--sp-status-success-strong)] ring-1 ring-[color-mix(in_srgb,var(--sp-status-success-strong)_30%,transparent)]">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--sp-status-success-surface)] px-2 py-1 text-xs font-semibold tracking-normal text-[var(--sp-status-success-mark)] ring-1 ring-[color-mix(in_srgb,var(--sp-status-success-mark)_30%,transparent)]">
                               <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                               Latest
                             </span>
@@ -1321,7 +1321,7 @@ export function AdminManagementPanel({
                 closeEmployeeDialog();
               }
             }}
-            className="max-h-[90vh] w-full max-w-[560px] overflow-y-auto overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel"
+            className="max-h-[90vh] w-full max-w-[560px] overflow-y-auto overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -1433,7 +1433,7 @@ export function AdminManagementPanel({
                 closeManagementConfirm();
               }
             }}
-            className="w-full max-w-lg overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-panel"
+            className="w-full max-w-lg overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp"
           >
             <div className="flex items-start justify-between gap-3">
               <div>

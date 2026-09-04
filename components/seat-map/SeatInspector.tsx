@@ -338,7 +338,7 @@ function ContactFacts({ rows, canEdit }: { rows: ContactFactRow[]; canEdit: bool
               {row.label === "Email" ? (
                 <a
                   href={`mailto:${row.value}`}
-                  className="block truncate text-[13px] font-medium text-[var(--sp-brand-text)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+                  className="block truncate text-[13px] font-medium text-[var(--sp-link)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
                 >
                   {row.value}
                 </a>
@@ -353,7 +353,7 @@ function ContactFacts({ rows, canEdit }: { rows: ContactFactRow[]; canEdit: bool
               onClick={() => copyExtension(row.value)}
               aria-label={`Copy extension ${row.value}`}
               title={copiedValue === row.value ? "Copied" : `Copy extension ${row.value}`}
-              className="relative flex h-8 w-8 shrink-0 items-center justify-center bg-[var(--sp-background)] text-[var(--sp-brand-text)] transition after:absolute after:-inset-x-1.5 after:-inset-y-[5px] hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+              className="relative flex h-8 w-8 shrink-0 items-center justify-center bg-[var(--sp-background)] text-[var(--sp-link-hover)] transition after:absolute after:-inset-x-1.5 after:-inset-y-[5px] hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
             >
               {copiedValue === row.value ? <CheckGlyph /> : <CopyGlyph />}
               {/* Live confirmation for screen readers (and the ct test's
@@ -634,9 +634,9 @@ export function SeatInspector({
   const avatarStatusDotClass = effectiveStatus === "assigned"
     ? "bg-[var(--sp-status-success-mark)]"
     : effectiveStatus === "reserved"
-      ? "bg-[var(--sp-status-pending-mark)]"
+      ? "bg-[var(--sp-status-draft-mark)]"
       : effectiveStatus === "unavailable"
-        ? "bg-[var(--sp-status-danger-mark)]"
+        ? "bg-[var(--sp-status-error-mark)]"
         : "bg-[var(--sp-status-neutral-mark)]";
   const fieldErrorMap = fieldErrors.reduce<Partial<Record<SeatInspectorField, string>>>((current, error) => {
     current[error.field] = error.message;
@@ -665,7 +665,7 @@ export function SeatInspector({
   const occupantRoleLabel = hasCurrentAssignment
     ? [selectedSeat.employee?.position, selectedSeat.employee?.department].filter(Boolean).join(" · ") || "Employee"
     : "Unassigned";
-  const fieldErrorClassName = "border-[var(--sp-status-danger-mark)] focus:border-[var(--sp-status-danger-mark)] focus:ring-[color-mix(in_srgb,var(--sp-status-danger-mark)_40%,transparent)]";
+  const fieldErrorClassName = "border-[var(--sp-status-error-mark)] focus:border-[var(--sp-status-error-mark)] focus:ring-[color-mix(in_srgb,var(--sp-status-error-mark)_40%,transparent)]";
   const warningSurfaceClassName = "border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)] text-[var(--sp-editor-dirty-text)]";
   const neutralPillClassName = "bg-[var(--sp-editor-neutral-bg)] text-[var(--sp-editor-neutral-text)] ring-[var(--sp-editor-neutral-border)]";
   const successPillClassName = "bg-[var(--sp-editor-clean-bg)] text-[var(--sp-editor-clean-text)] ring-[var(--sp-editor-clean-border)]";
@@ -1031,7 +1031,7 @@ export function SeatInspector({
   // panel (#200) — same pattern as FilterPanel's selectClassName. Field-01
   // treatment: --sp-field/--sp-field-border (the pair's 3:1 boundary
   // note lives in globals.css).
-  const fieldClassName = "mt-1 w-full border border-[var(--sp-field-border)] bg-[var(--sp-field)] px-3 py-2 text-sm font-medium text-[var(--sp-text-primary)] outline-none transition placeholder:text-[var(--sp-text-helper)] focus:border-[var(--sp-brand)] focus:ring-2 focus:ring-[color:var(--sp-brand-border)] disabled:bg-[var(--sp-background)] disabled:text-[var(--sp-text-helper)] [&>option]:bg-[var(--sp-layer-01)] [&>option]:text-[var(--sp-text-primary)]";
+  const fieldClassName = "mt-1 w-full border border-[var(--sp-field-border)] bg-[var(--sp-field)] px-3 py-2 text-sm font-medium text-[var(--sp-text-primary)] outline-none transition placeholder:text-[var(--sp-text-helper)] focus:border-[var(--sp-interactive)] focus:ring-2 focus:ring-[color:var(--sp-border-interactive)] disabled:bg-[var(--sp-background)] disabled:text-[var(--sp-text-helper)] [&>option]:bg-[var(--sp-layer-01)] [&>option]:text-[var(--sp-text-primary)]";
   const saveDisabledReason = pending
     ? "Save is unavailable while the current draft change is finishing."
     : !isDirty
@@ -1059,7 +1059,7 @@ export function SeatInspector({
       // (panel:bottom-auto; the base max-h-[60vh] cap stays as the overflow
       // fence) — a read-only card holding only identity + contact must not
       // stretch a full empty column (owner ruling 2026-08-20).
-      className={`fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] text-[var(--sp-text-primary)] shadow-elevation-4 panel:inset-x-auto ${canEdit ? `${panelBottomClassName} panel:max-h-none` : "panel:bottom-auto"} panel:right-3 panel:top-[calc(var(--sp-chrome-height)+0.75rem)] panel:z-40 panel:w-[332px] panel:max-w-[calc(100vw-1.5rem)]`}
+      className={`fixed inset-x-3 bottom-3 z-[80] flex max-h-[60vh] flex-col overflow-hidden border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] text-[var(--sp-text-primary)] shadow-sp panel:inset-x-auto ${canEdit ? `${panelBottomClassName} panel:max-h-none` : "panel:bottom-auto"} panel:right-3 panel:top-[calc(var(--sp-chrome-height)+0.75rem)] panel:z-40 panel:w-[332px] panel:max-w-[calc(100vw-1.5rem)]`}
     >
       <div className="sticky top-0 z-20 flex flex-col gap-2.5 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-4 pb-3 pt-3">
         <div className="flex items-center justify-between gap-2">
@@ -1129,7 +1129,7 @@ export function SeatInspector({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="bg-[var(--sp-layer-01)] px-3 py-1.5 font-semibold text-[var(--sp-editor-dirty-text)] ring-1 ring-[var(--sp-editor-dirty-border)] transition hover:bg-[var(--sp-background)] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-pending-mark)]"
+                    className="bg-[var(--sp-layer-01)] px-3 py-1.5 font-semibold text-[var(--sp-editor-dirty-text)] ring-1 ring-[var(--sp-editor-dirty-border)] transition hover:bg-[var(--sp-background)] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-draft-mark)]"
                   >
                     Clear selection
                   </button>
@@ -1137,7 +1137,7 @@ export function SeatInspector({
                     <button
                       type="button"
                       onClick={onClearSearchContext}
-                      className="bg-[var(--sp-layer-01)] px-3 py-1.5 font-semibold text-[var(--sp-editor-dirty-text)] ring-1 ring-[var(--sp-editor-dirty-border)] transition hover:bg-[var(--sp-background)] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-pending-mark)]"
+                      className="bg-[var(--sp-layer-01)] px-3 py-1.5 font-semibold text-[var(--sp-editor-dirty-text)] ring-1 ring-[var(--sp-editor-dirty-border)] transition hover:bg-[var(--sp-background)] active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-draft-mark)]"
                     >
                       {searchMismatchClearLabel}
                     </button>
@@ -1152,7 +1152,7 @@ export function SeatInspector({
                 tabIndex={-1}
                 role="alert"
                 aria-labelledby="seat-inspector-error-title"
-                className="mx-4 mt-3 border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-xs text-[var(--sp-editor-error-text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-mark)]"
+                className="mx-4 mt-3 border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-xs text-[var(--sp-editor-error-text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-error-mark)]"
               >
                 <h3 id="seat-inspector-error-title" className="font-bold text-[var(--sp-editor-error-text)]">Review inspector fields</h3>
                 <p className="mt-1 font-medium leading-5">{localError}</p>
@@ -1163,7 +1163,7 @@ export function SeatInspector({
                         <button
                           type="button"
                           onClick={() => focusInspectorField(error.field)}
-                          className="text-left font-bold underline decoration-[var(--sp-editor-error-border)] underline-offset-2 transition hover:text-[var(--sp-status-danger-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-danger-mark)]"
+                          className="text-left font-bold underline decoration-[var(--sp-editor-error-border)] underline-offset-2 transition hover:text-[var(--sp-status-error-mark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-status-error-mark)]"
                         >
                           {error.message}
                         </button>
@@ -1216,7 +1216,7 @@ export function SeatInspector({
                         setEmployeeComboboxOpen(current => !current);
                         employeeInputRef.current?.focus();
                       }}
-                      className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-xs text-[var(--sp-text-helper)] transition after:absolute after:-inset-2 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)]"
+                      className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-xs text-[var(--sp-text-helper)] transition after:absolute after:-inset-2 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-interactive)]"
                     >
                       <ChevronDownIcon />
                     </button>
@@ -1224,7 +1224,7 @@ export function SeatInspector({
                       <div
                         id="seat-inspector-employee-listbox"
                         role="listbox"
-                        className="absolute z-50 mt-1 max-h-[min(16rem,40vh)] w-full overflow-auto border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] p-1 shadow-elevation-3"
+                        className="absolute z-50 mt-1 max-h-[min(16rem,40vh)] w-full overflow-auto border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] p-1 shadow-sp"
                       >
                         {filteredEmployeeOptions.length > 0 ? filteredEmployeeOptions.map((option, index) => (
                           <button
@@ -1237,11 +1237,11 @@ export function SeatInspector({
                             onMouseEnter={() => setActiveEmployeeIndex(index)}
                             onClick={() => selectEmployee(option.employee)}
                             className={[
-                              "flex w-full items-start gap-3 px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]",
+                              "flex w-full items-start gap-3 px-3 py-2 text-left transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]",
                               index === activeEmployeeIndex ? "bg-[var(--sp-background)] text-[var(--sp-text-primary)]" : "text-[var(--sp-text-secondary)] hover:bg-[var(--sp-layer-hover)]"
                             ].join(" ")}
                           >
-                            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--sp-brand-subtle)] text-[11px] font-bold text-[var(--sp-brand-text)]">
+                            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--sp-layer-hover)] text-[11px] font-bold text-[var(--sp-link-hover)]">
                               {buildInitials(option.employee.full_name) || "?"}
                             </span>
                             <span className="min-w-0 flex-1">
@@ -1421,7 +1421,7 @@ export function SeatInspector({
                           aria-label={`Delete custom seat ${selectedSeat.label}`}
                           aria-describedby="seat-inspector-delete-help"
                           title={deleteHelpText}
-                          className="mt-3 min-w-0 w-full gap-2 whitespace-normal leading-tight !border-[var(--sp-editor-danger-border)] !bg-transparent !text-[var(--sp-editor-error-text)] !shadow-none hover:!border-[var(--sp-status-danger-strong)] hover:!bg-[var(--sp-editor-error-bg)] disabled:!border-[var(--sp-border-subtle)] disabled:!bg-[var(--sp-background)] disabled:!text-[var(--sp-text-helper)] disabled:hover:!bg-[var(--sp-background)]"
+                          className="mt-3 min-w-0 w-full gap-2 whitespace-normal leading-tight !border-[var(--sp-editor-danger-border)] !bg-transparent !text-[var(--sp-editor-error-text)] !shadow-none hover:!border-[var(--sp-status-error-mark)] hover:!bg-[var(--sp-editor-error-bg)] disabled:!border-[var(--sp-border-subtle)] disabled:!bg-[var(--sp-background)] disabled:!text-[var(--sp-text-helper)] disabled:hover:!bg-[var(--sp-background)]"
                         >
                           <TrashGlyph />
                           Delete seat
@@ -1458,7 +1458,7 @@ export function SeatInspector({
                     {activityEntries.length > 0 ? (
                       <ul>
                         {activityEntries.map((entry, index) => (
-                          <li key={`${entry}-${index}`} className="border-b border-[var(--sp-border-soft)] py-1.5 text-[12px] leading-4 text-[var(--sp-text-helper)] last:border-b-0">
+                          <li key={`${entry}-${index}`} className="border-b border-[var(--sp-border-subtle)] py-1.5 text-[12px] leading-4 text-[var(--sp-text-helper)] last:border-b-0">
                             <span className="font-medium text-[var(--sp-text-secondary)]">{entry}</span>
                             <span className="ml-1.5">· this session</span>
                           </li>
@@ -1565,7 +1565,7 @@ export function SeatInspector({
         edits, because a transient surface earns less trust than this panel. */}
 
     {moveConflict && (
-      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay-base)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
+      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
         <section
           ref={moveConflictDialogFocusRef}
           tabIndex={-1}

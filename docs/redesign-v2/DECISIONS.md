@@ -856,6 +856,19 @@ Ghost button in the control row, every role. Seated → own floor, own seat sele
 #### D1-g · Status band kept; names toggle moves to the control row
 The 40px band (legend · counts · zoom/fit) already ships and Q2 dissolved its geometric objection. It stays as the map's footer; the names toggle moves up to the control row (PHASE1IA B4). Height budget at 1920 × 889: 48 header + 48 control row + 40 band → plan 753px tall, 1660 wide, wholly visible.
 
+### D1 — Phase 4 amendments (2026-09-03, owner rulings on the PR 0 triage flags)
+
+#### D1-h · Decorative reinforcement removed; facts carried by pills and counts
+The private-office room tint and the zone-filter frame with its pill fills retire (Phase 4 PR 3). Filter and
+search hits render as the pill highlight (`--sp-highlight` surface, interactive edge), non-matches quiet, count
+and Clear in the control row and status band — the Phase 2 treatment already covers every job the washes did.
+`MapWashLayer`, `lib/officeRoomWash`, `lib/zoneWash`, `--sp-wash-zone` and `office-room-wash.test.mjs` retire
+together. Not a deviation: nothing in Carbon asks for a wash.
+
+#### D1-i · Unused module removed
+`lib/seatClusters.ts` is imported by nothing; it and `seat-clusters.test.mjs` are deleted in Phase 4 PR 3. No
+design content.
+
 ---
 
 ### D2 — Admin (`/admin`)
@@ -1163,6 +1176,10 @@ name-less and the primary ships disabled pre-hydration.
 
 **States:** already-signed-in (continue / sign out, rather than a form that silently replaces the
 session); invalid credentials; magic-link sent; reset requested; and a submitting state on the primary.
+
+**Confirmed 2026-09-03 (Phase 4 PR 1, owner ruling):** D4 rules the login *layout* unchanged; the login inherits
+the token layer, so the primary renders Blue 60 with the rest of the system. `LoginForm.tsx` swept mechanically
+(retired names and the six SVG `#fff` attributes → tokens); `login-form.test.mjs` untouched.
 
 ---
 

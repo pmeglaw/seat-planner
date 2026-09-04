@@ -1,8 +1,18 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { THEME_DARK, THEME_MEDIA_QUERY, THEME_STORAGE_KEY } from "@/lib/theme";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+// Stylesheet order is a contract (redesign-v2 PHASE3DS §5 item 3, Phase 4 PR 1):
+// the Tailwind preflight in globals.css sits UNDER the design system, then the
+// two skill assets (never edited), the product semantic layer, the hand-built
+// components, and last the temporary Phase 4 bridge (font variables + retired
+// aliases, deleted per sweep PR).
 import "./globals.css";
+import "./styles/carbon-tokens.css";
+import "./styles/sp-tokens.css";
+import "./styles/carbon-components.css";
+import "./styles/sp-components.css";
+import "./styles/phase4-bridge.css";
 
 // The woff2 files are vendored in app/fonts (see its README for provenance).
 // next/font/google self-hosts too, but it downloads the binaries from
@@ -34,25 +44,22 @@ const plexMono = localFont({
   display: "swap"
 });
 
-// App-wide theme boot (Reception handoff): html[data-theme] set to THEME_DARK
-// is THE global theme switch — today only Reception's --r-* tokens react, so
-// every other surface renders identically until it grows dark tokens. Runs
-// synchronously before paint to avoid a light flash; suppressHydrationWarning
-// on <html> covers the server-markup mismatch this deliberately creates. The
-// stored choice replays first; empty storage seeds from the OS (owner decision
-// 2026-08-19); THEME_LIGHT stored by the toggle is an explicit choice. Key/value
-// literals are interpolated from lib/theme.ts at build time so the boot replay
-// and ThemeToggle can never disagree.
-const THEME_BOOT_SCRIPT =
-  `try{var t=localStorage.getItem('${THEME_STORAGE_KEY}');if(t==='${THEME_DARK}'||(!t&&matchMedia('${THEME_MEDIA_QUERY}').matches))document.documentElement.dataset.theme='${THEME_DARK}'}catch(e){}`;
+// App-wide theme boot: replays the stored choice onto html[data-theme] and the
+// derived html[data-carbon-theme] before paint (lib/theme.ts owns the script
+// and the derivation; see its header for the three-state model). An empty
+// store sets nothing — "system" — and the design system's OS-preference guard
+// renders dark for a dark OS. suppressHydrationWarning on <html> covers the
+// server-markup mismatch this deliberately creates.
 
 export const metadata: Metadata = {
   title: "Seat Planner",
   description: "Internal interactive office seating map"
 };
 
-// Matches the dark top chrome (the chrome zone's --sp-background) so mobile browser UI blends
-// with the bar it sits against (#200).
+// Gray 100 — the header colour in both themes (PHASE3DS tier C) — so mobile
+// browser UI blends with the bar it sits against (#200). The one hex outside
+// the token files: Next's Viewport wants a string (ledgered in
+// tests/phase4-token-layer-source.test.mjs).
 export const viewport: Viewport = {
   themeColor: "#161616"
 };

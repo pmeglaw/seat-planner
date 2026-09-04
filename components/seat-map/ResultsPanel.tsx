@@ -96,7 +96,7 @@ export function ResultsPanel({
   return (
     <aside
       aria-labelledby="admin-results-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-elevation-3 panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[calc(var(--sp-chrome-height)_+_12px)] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-sp panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[calc(var(--sp-chrome-height)_+_12px)] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
     >
       <div className="flex items-center justify-between gap-2 border-b border-[var(--sp-border-subtle)] px-4 py-3">
         <h2 id="admin-results-title" className="text-sm font-semibold text-[var(--sp-text-primary)]">Results</h2>
@@ -109,10 +109,10 @@ export function ResultsPanel({
           onClick={onExpandCollapsedSeat}
           aria-label={`View details for ${collapsedSeatLabel}`}
           title={`View details for ${collapsedSeatLabel}`}
-          className="relative mx-2 mt-2 flex shrink-0 items-center justify-between gap-2 border border-[var(--sp-border-subtle)] bg-[var(--sp-brand-subtle)] px-2.5 py-2 text-left transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-border-strong)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+          className="relative mx-2 mt-2 flex shrink-0 items-center justify-between gap-2 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-hover)] px-2.5 py-2 text-left transition after:absolute after:-inset-y-1.5 after:inset-x-0 hover:border-[var(--sp-border-strong)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
         >
           <span className="min-w-0 truncate text-xs font-semibold text-[var(--sp-text-primary)]">{collapsedSeatLabel} selected</span>
-          <span className="shrink-0 text-xs font-semibold text-[var(--sp-brand-text)]">View details</span>
+          <span className="shrink-0 text-xs font-semibold text-[var(--sp-link)]">View details</span>
         </button>
       )}
 
@@ -136,7 +136,7 @@ export function ResultsPanel({
               key={result.key}
               data-vindex={segment.index}
               data-vpinned={segment.pinned ? "" : undefined}
-              className="group flex items-stretch gap-1 border border-transparent transition hover:border-[var(--sp-border-subtle)] hover:bg-[var(--sp-brand-subtle)]"
+              className="group flex items-stretch gap-1 border border-transparent transition hover:border-[var(--sp-border-subtle)] hover:bg-[var(--sp-layer-hover)]"
             >
               <button
                 type="button"
@@ -172,7 +172,7 @@ export function ResultsPanel({
                   onClick={() => onShowOnMap(result.seatId as string)}
                   aria-label={`Show ${result.title} on the map`}
                   title={`Show ${result.title} on the map`}
-                  className="relative my-1 mr-1 flex shrink-0 items-center self-center whitespace-nowrap rounded-lg border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-button-primary)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-wash)] hover:text-[var(--sp-brand-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                  className="relative my-1 mr-1 flex shrink-0 items-center self-center whitespace-nowrap rounded-lg border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-button-primary)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] hover:text-[var(--sp-link-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 >
                   Show on map
                 </button>
@@ -187,17 +187,17 @@ export function ResultsPanel({
           <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">{emptyDescription}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {searchActive && (
-              <button type="button" onClick={onClearSearch} className="relative rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+              <button type="button" onClick={onClearSearch} className="relative rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
                 Clear search
               </button>
             )}
             {structuredFiltersActive && (
-              <button type="button" onClick={onClearFilters} className="relative rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+              <button type="button" onClick={onClearFilters} className="relative rounded-lg border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
                 Clear filters
               </button>
             )}
             {searchActive && structuredFiltersActive && (
-              <button type="button" onClick={onClearAll} className="relative rounded-lg border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-brand-text)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-brand)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
+              <button type="button" onClick={onClearAll} className="relative rounded-lg border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-link-hover)] transition after:absolute after:-inset-y-2 after:inset-x-0 hover:border-[var(--sp-interactive)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
                 Clear all
               </button>
             )}

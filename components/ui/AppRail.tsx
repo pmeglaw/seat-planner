@@ -74,11 +74,11 @@ export type AppRailProps = {
 // chrome text token, not text-white — one hovered foreground across the
 // chrome (see components/ui/adminChrome.ts doctrine).
 const ITEM =
-  "relative flex h-10 w-full items-center overflow-hidden text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
+  "relative flex h-10 w-full items-center overflow-hidden text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]";
 const ITEM_IDLE = "text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]";
 // Active: #262626 surface + inset 3px #FF5715 left edge (contract #3) — the
 // vertical-chrome active marker (adminChrome.ts doctrine).
-const ITEM_ACTIVE = "bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)] shadow-[inset_3px_0_0_var(--sp-brand)]";
+const ITEM_ACTIVE = "bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)] shadow-[inset_3px_0_0_var(--sp-interactive)]";
 const CELL = "flex w-12 shrink-0 items-center justify-center";
 const LABEL_BASE = "whitespace-nowrap text-[12.5px] transition-opacity duration-150";
 
@@ -253,7 +253,7 @@ export function AppRail({
           // its own overflow-hidden (see ITEM), scoped to that item's box —
           // the rail box itself stays unclipped.
           "sp-zone-chrome fixed bottom-0 left-0 top-[var(--sp-chrome-height)] z-[80] flex flex-col border-r border-[var(--sp-border-subtle)] bg-[var(--sp-background)] transition-[width] duration-150 ease-out",
-          open ? "w-[208px] shadow-rail-overlay" : "w-12"
+          open ? "w-[208px] shadow-sp" : "w-12"
         ].join(" ")}
       >
         {/* No toggle row: the hamburger lives in AppTopBar's corner cell,

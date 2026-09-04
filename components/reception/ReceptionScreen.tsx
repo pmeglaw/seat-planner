@@ -151,7 +151,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
       <div className="mt-5 grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_372px]">
         {/* Results list */}
         <section aria-label="Directory" className="border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)]">
-          <div className="flex items-center justify-between border-b border-[var(--sp-border-hairline)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
+          <div className="flex items-center justify-between border-b border-[var(--sp-border-subtle-00)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
             <span aria-live="polite">{countLabel}</span>
             <span>Ext</span>
           </div>
@@ -174,9 +174,9 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                     onMouseDown={keepInputFocus}
                     onClick={() => lock(person)}
                     className={[
-                      "flex cursor-pointer items-center gap-3 border-b border-[var(--sp-border-hairline-soft)] px-4 py-2.5 last:border-b-0",
+                      "flex cursor-pointer items-center gap-3 border-b border-[var(--sp-border-subtle-00)] px-4 py-2.5 last:border-b-0",
                       isActive
-                        ? "bg-[var(--sp-layer-selected)] shadow-[inset_3px_0_0_var(--sp-accent)]"
+                        ? "bg-[var(--sp-layer-selected)] shadow-[inset_3px_0_0_var(--sp-interactive)]"
                         : "hover:bg-[var(--sp-layer-hover)]"
                     ].join(" ")}
                   >
@@ -255,7 +255,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
               </div>
 
               {fallback.length > 0 && (
-                <div className="mt-4 border-t border-[var(--sp-border-hairline)] pt-3">
+                <div className="mt-4 border-t border-[var(--sp-border-subtle-00)] pt-3">
                   <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
                     If no answer — same department
                   </h3>
@@ -266,7 +266,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                           type="button"
                           onMouseDown={keepInputFocus}
                           onClick={() => lock(colleague)}
-                          className="flex w-full items-center justify-between gap-3 py-1.5 text-left hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-accent)]"
+                          className="flex w-full items-center justify-between gap-3 py-1.5 text-left hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-interactive)]"
                         >
                           <span className="truncate text-[13px] text-[var(--sp-text-primary)]">{colleague.name}</span>
                           <span className="shrink-0 font-mono text-[14px] font-semibold text-[var(--sp-text-primary)]">
@@ -298,17 +298,17 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
 
           {recentPeople.length > 0 && (
             <section aria-label="Recent lookups" className="border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)]">
-              <h3 className="border-b border-[var(--sp-border-hairline)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
+              <h3 className="border-b border-[var(--sp-border-subtle-00)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sp-text-helper)]">
                 Recent lookups
               </h3>
               <ul>
                 {recentPeople.map(person => (
-                  <li key={person.id} className="border-b border-[var(--sp-border-hairline-soft)] last:border-b-0">
+                  <li key={person.id} className="border-b border-[var(--sp-border-subtle-00)] last:border-b-0">
                     <button
                       type="button"
                       onMouseDown={keepInputFocus}
                       onClick={() => lock(person)}
-                      className="flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-accent)]"
+                      className="flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]"
                     >
                       <span
                         aria-hidden="true"

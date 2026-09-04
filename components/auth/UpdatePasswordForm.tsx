@@ -168,7 +168,7 @@ export function UpdatePasswordForm() {
           className={[
             "mt-4 p-3 text-sm",
             messageType === "error"
-              ? "bg-[var(--sp-status-danger-surface)] text-[var(--sp-status-danger-text)]"
+              ? "bg-[var(--sp-status-error-surface)] text-[var(--sp-status-error-text)]"
               : "bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-text)]"
           ].join(" ")}
         >

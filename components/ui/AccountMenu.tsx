@@ -28,7 +28,7 @@ type AccountMenuProps = {
 /** Exported so a host passing `navItems` styles them as this menu's own rows
  *  rather than inventing a second look inside the same popover. */
 export const accountMenuItemClassName =
-  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--sp-chrome-heading)] transition hover:bg-white/10 hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-brand)]";
+  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--sp-chrome-heading)] transition hover:bg-white/10 hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]";
 
 const menuItemClassName = accountMenuItemClassName;
 
@@ -155,7 +155,7 @@ export function AccountMenu({ email, roleLabel, autoCloseKey, navItems }: Accoun
         // chrome's ring-inset doctrine (adminChrome.ts): an inset ring on a
         // 26px circle would eat the monogram; the offset halo reads cleanly
         // against the dark bar.
-        className="relative flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-brand-mark)] text-xs font-semibold text-[var(--sp-text-on-brand)] transition after:absolute after:-inset-[9px] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-background)]"
+        className="relative flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-status-draft-mark)] text-xs font-semibold text-[var(--sp-text-on-color)] transition after:absolute after:-inset-[9px] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-interactive)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-background)]"
       >
         {initial}
       </button>
@@ -179,7 +179,7 @@ export function AccountMenu({ email, roleLabel, autoCloseKey, navItems }: Accoun
             // avatar centered ends at 33px, +1px gap) so a chrome-h change
             // can't strand the menu — it used to be a hardcoded pixel
             // literal (tests/app-top-bar.test.mjs pins the token form).
-            className="absolute right-0 top-[calc(var(--sp-chrome-height)-6px)] z-50 w-60 border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] py-1 shadow-elevation-3"
+            className="absolute right-0 top-[calc(var(--sp-chrome-height)-6px)] z-50 w-60 border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] py-1 shadow-sp"
           >
             <div className="border-b border-white/10 px-3 pb-2 pt-1.5">
               <div className="truncate text-[12.5px] font-medium text-[var(--sp-text-primary)]">{email}</div>

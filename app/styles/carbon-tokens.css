@@ -1,0 +1,562 @@
+/* =============================================================================
+   IBM Design Language — token layer
+   Framework-agnostic CSS custom properties. White theme + Gray 100 theme.
+
+   Values resolved against Carbon v11 source (@carbon/colors, @carbon/themes,
+   @carbon/type, @carbon/layout, @carbon/motion) and ibm.com/design/language.
+
+   HOW TO USE
+   1. Load this file first, before any of your own CSS.
+   2. Theme switching:
+        <html data-carbon-theme="white">   forces light
+        <html data-carbon-theme="g100">    forces dark
+        no attribute                       follows prefers-color-scheme
+   3. Never write a raw hex in component CSS. Reach for a --cds-* token.
+      If no token fits, the design probably needs revisiting before the CSS does.
+   ========================================================================== */
+
+
+/* -----------------------------------------------------------------------------
+   1. PALETTE — the raw 10x10. Do not consume these directly in components.
+   -------------------------------------------------------------------------- */
+:root {
+  --blue-100:#001141; --blue-90:#001d6c; --blue-80:#002d9c; --blue-70:#0043ce;
+  --blue-60:#0f62fe;  --blue-50:#4589ff; --blue-40:#78a9ff; --blue-30:#a6c8ff;
+  --blue-20:#d0e2ff;  --blue-10:#edf5ff;
+
+  --cyan-100:#061727; --cyan-90:#012749; --cyan-80:#003a6d; --cyan-70:#00539a;
+  --cyan-60:#0072c3;  --cyan-50:#1192e8; --cyan-40:#33b1ff; --cyan-30:#82cfff;
+  --cyan-20:#bae6ff;  --cyan-10:#e5f6ff;
+
+  --teal-100:#081a1c; --teal-90:#022b30; --teal-80:#004144; --teal-70:#005d5d;
+  --teal-60:#007d79;  --teal-50:#009d9a; --teal-40:#08bdba; --teal-30:#3ddbd9;
+  --teal-20:#9ef0f0;  --teal-10:#d9fbfb;
+
+  --green-100:#071908; --green-90:#022d0d; --green-80:#044317; --green-70:#0e6027;
+  --green-60:#198038;  --green-50:#24a148; --green-40:#42be65; --green-30:#6fdc8c;
+  --green-20:#a7f0ba;  --green-10:#defbe6;
+
+  --yellow-100:#1c1500; --yellow-90:#302400; --yellow-80:#483700; --yellow-70:#684e00;
+  --yellow-60:#8e6a00;  --yellow-50:#b28600; --yellow-40:#d2a106; --yellow-30:#f1c21b;
+  --yellow-20:#fddc69;  --yellow-10:#fcf4d6;
+
+  --orange-100:#231000; --orange-90:#3e1a00; --orange-80:#5e2900; --orange-70:#8a3800;
+  --orange-60:#ba4e00;  --orange-50:#eb6200; --orange-40:#ff832b; --orange-30:#ffb784;
+  --orange-20:#ffd9be;  --orange-10:#fff2e8;
+
+  --red-100:#2d0709; --red-90:#520408; --red-80:#750e13; --red-70:#a2191f;
+  --red-60:#da1e28;  --red-50:#fa4d56; --red-40:#ff8389; --red-30:#ffb3b8;
+  --red-20:#ffd7d9;  --red-10:#fff1f1;
+
+  --magenta-100:#2a0a18; --magenta-90:#510224; --magenta-80:#740937; --magenta-70:#9f1853;
+  --magenta-60:#d02670;  --magenta-50:#ee5396; --magenta-40:#ff7eb6; --magenta-30:#ffafd2;
+  --magenta-20:#ffd6e8;  --magenta-10:#fff0f7;
+
+  --purple-100:#1c0f30; --purple-90:#31135e; --purple-80:#491d8b; --purple-70:#6929c4;
+  --purple-60:#8a3ffc;  --purple-50:#a56eff; --purple-40:#be95ff; --purple-30:#d4bbff;
+  --purple-20:#e8daff;  --purple-10:#f6f2ff;
+
+  --gray-100:#161616; --gray-90:#262626; --gray-80:#393939; --gray-70:#525252;
+  --gray-60:#6f6f6f;  --gray-50:#8d8d8d; --gray-40:#a8a8a8; --gray-30:#c6c6c6;
+  --gray-20:#e0e0e0;  --gray-10:#f4f4f4;
+
+  --cool-gray-100:#121619; --cool-gray-90:#21272a; --cool-gray-80:#343a3f;
+  --cool-gray-70:#4d5358;  --cool-gray-60:#697077; --cool-gray-50:#878d96;
+  --cool-gray-40:#a2a9b0;  --cool-gray-30:#c1c7cd; --cool-gray-20:#dde1e6;
+  --cool-gray-10:#f2f4f8;
+
+  --white-0:#ffffff; --black-100:#000000;
+
+  /* paired hover steps — hover is a palette step, never an alpha */
+  --white-hover:#e8e8e8;  --gray-10-hover:#e8e8e8; --gray-20-hover:#d1d1d1;
+  --gray-30-hover:#b5b5b5; --gray-40-hover:#999999; --gray-50-hover:#7a7a7a;
+  --gray-60-hover:#5e5e5e; --gray-70-hover:#636363; --gray-80-hover:#474747;
+  --gray-90-hover:#333333; --gray-100-hover:#292929;
+  --blue-60-hover:#0050e6; --blue-70-hover:#0053ff; --red-60-hover:#b81922;
+  --green-50-hover:#208e3f;
+}
+
+/* -----------------------------------------------------------------------------
+   2. THEME TOKENS — White theme (default)
+   -------------------------------------------------------------------------- */
+:root {
+  --cds-background:               #ffffff;
+  --cds-background-hover:         rgba(141,141,141,.12);
+  --cds-background-active:        rgba(141,141,141,.50);
+  --cds-background-selected:      rgba(141,141,141,.20);
+  --cds-background-selected-hover:rgba(141,141,141,.32);
+  --cds-background-inverse:       #393939;
+  --cds-background-brand:         #0f62fe;
+
+  --cds-layer-01:            #f4f4f4;
+  --cds-layer-02:            #ffffff;
+  --cds-layer-03:            #f4f4f4;
+  --cds-layer-hover-01:      #e8e8e8;
+  --cds-layer-hover-02:      #e8e8e8;
+  --cds-layer-hover-03:      #e8e8e8;
+  --cds-layer-active-01:     #c6c6c6;
+  --cds-layer-active-02:     #c6c6c6;
+  --cds-layer-selected-01:   #e0e0e0;
+  --cds-layer-selected-02:   #e0e0e0;
+  --cds-layer-selected-hover-01:#d1d1d1;
+  --cds-layer-selected-inverse: #161616;
+  --cds-layer-accent-01:     #e0e0e0;
+  --cds-layer-accent-hover-01:#d1d1d1;
+  --cds-layer-accent-active-01:#a8a8a8;
+
+  --cds-field-01:            #f4f4f4;
+  --cds-field-02:            #ffffff;
+  --cds-field-hover-01:      #e8e8e8;
+  --cds-field-hover-02:      #e8e8e8;
+
+  --cds-border-subtle-00:    #e0e0e0;
+  --cds-border-subtle-01:    #c6c6c6;
+  --cds-border-subtle-02:    #e0e0e0;
+  --cds-border-strong-01:    #8d8d8d;
+  --cds-border-strong-02:    #8d8d8d;
+  --cds-border-tile-01:      #c6c6c6;
+  --cds-border-tile-02:      #a8a8a8;
+  --cds-border-inverse:      #161616;
+  --cds-border-interactive:  #0f62fe;
+  --cds-border-disabled:     #c6c6c6;
+
+  --cds-text-primary:        #161616;
+  --cds-text-secondary:      #525252;
+  --cds-text-placeholder:    rgba(22,22,22,.40);
+  --cds-text-helper:         #6f6f6f;
+  --cds-text-error:          #da1e28;
+  --cds-text-inverse:        #ffffff;
+  --cds-text-on-color:       #ffffff;
+  --cds-text-on-color-disabled:#8d8d8d;
+  --cds-text-disabled:       rgba(22,22,22,.25);
+
+  --cds-link-primary:        #0f62fe;
+  --cds-link-primary-hover:  #0043ce;
+  --cds-link-secondary:      #0043ce;
+  --cds-link-visited:        #8a3ffc;
+  --cds-link-inverse:        #78a9ff;
+
+  --cds-icon-primary:        #161616;
+  --cds-icon-secondary:      #525252;
+  --cds-icon-inverse:        #ffffff;
+  --cds-icon-on-color:       #ffffff;
+  --cds-icon-disabled:       rgba(22,22,22,.25);
+  --cds-icon-interactive:    #0f62fe;
+
+  --cds-support-error:       #da1e28;
+  --cds-support-success:     #24a148;
+  --cds-support-warning:     #f1c21b;
+  --cds-support-info:        #0043ce;
+  --cds-support-caution-major:#ff832b;
+  --cds-support-warning-strong:#b28600; /* yellow 50 — yellow 30 fails 3:1 on light */
+  --cds-support-error-subtle:  #fff1f1;
+  --cds-support-success-subtle:#defbe6;
+  --cds-support-warning-subtle:#fcf4d6;
+  --cds-support-info-subtle:   #edf5ff;
+
+  --cds-focus:               #0f62fe;
+  --cds-focus-inset:         #ffffff;
+  --cds-focus-inverse:       #ffffff;
+  --cds-interactive:         #0f62fe;
+  --cds-highlight:           #d0e2ff;
+  --cds-overlay:             rgba(22,22,22,.50);
+  --cds-toggle-off:          #8d8d8d;
+  --cds-shadow:              rgba(0,0,0,.30);
+  --cds-skeleton-background: #e8e8e8;
+  --cds-skeleton-element:    #c6c6c6;
+
+  --cds-button-primary:        #0f62fe;
+  --cds-button-primary-hover:  #0050e6;
+  --cds-button-primary-active: #002d9c;
+  --cds-button-secondary:        #393939;
+  --cds-button-secondary-hover:  #474747;
+  --cds-button-secondary-active: #6f6f6f;
+  --cds-button-tertiary:        #0f62fe;
+  --cds-button-tertiary-hover:  #0050e6;
+  --cds-button-tertiary-active: #002d9c;
+  --cds-button-danger-primary:  #da1e28;
+  --cds-button-danger-hover:    #b81922;
+  --cds-button-danger-active:   #750e13;
+  --cds-button-disabled:        #c6c6c6;
+
+  color-scheme: light;
+}
+
+/* --- Gray 100 theme, applied two ways ------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-carbon-theme="white"]):not([data-carbon-theme="g10"]) {
+    --cds-background:               #161616;
+    --cds-background-hover:         rgba(141,141,141,.16);
+    --cds-background-active:        rgba(141,141,141,.40);
+    --cds-background-selected:      rgba(141,141,141,.24);
+    --cds-background-selected-hover:rgba(141,141,141,.32);
+    --cds-background-inverse:       #f4f4f4;
+    --cds-background-brand:         #0f62fe;
+
+    --cds-layer-01:            #262626;
+    --cds-layer-02:            #393939;
+    --cds-layer-03:            #525252;
+    --cds-layer-hover-01:      #333333;
+    --cds-layer-hover-02:      #474747;
+    --cds-layer-hover-03:      #636363;
+    --cds-layer-active-01:     #525252;
+    --cds-layer-active-02:     #6f6f6f;
+    --cds-layer-selected-01:   #393939;
+    --cds-layer-selected-02:   #525252;
+    --cds-layer-selected-hover-01:#474747;
+    --cds-layer-selected-inverse: #f4f4f4;
+    --cds-layer-accent-01:     #393939;
+    --cds-layer-accent-hover-01:#474747;
+    --cds-layer-accent-active-01:#6f6f6f;
+
+    --cds-field-01:            #262626;
+    --cds-field-02:            #393939;
+    --cds-field-hover-01:      #333333;
+    --cds-field-hover-02:      #474747;
+
+    --cds-border-subtle-00:    #393939;
+    --cds-border-subtle-01:    #525252;
+    --cds-border-subtle-02:    #6f6f6f;
+    --cds-border-strong-01:    #6f6f6f;
+    --cds-border-strong-02:    #8d8d8d;
+    --cds-border-tile-01:      #525252;
+    --cds-border-tile-02:      #6f6f6f;
+    --cds-border-inverse:      #f4f4f4;
+    --cds-border-interactive:  #4589ff;
+    --cds-border-disabled:     rgba(141,141,141,.50);
+
+    --cds-text-primary:        #f4f4f4;
+    --cds-text-secondary:      #c6c6c6;
+    --cds-text-placeholder:    rgba(244,244,244,.40);
+    --cds-text-helper:         #a8a8a8;
+    --cds-text-error:          #ff8389;
+    --cds-text-inverse:        #161616;
+    --cds-text-on-color:       #ffffff;
+    --cds-text-on-color-disabled:rgba(255,255,255,.25);
+    --cds-text-disabled:       rgba(244,244,244,.25);
+
+    --cds-link-primary:        #78a9ff;
+    --cds-link-primary-hover:  #a6c8ff;
+    --cds-link-secondary:      #a6c8ff;
+    --cds-link-visited:        #be95ff;
+    --cds-link-inverse:        #0f62fe;
+
+    --cds-icon-primary:        #f4f4f4;
+    --cds-icon-secondary:      #c6c6c6;
+    --cds-icon-inverse:        #161616;
+    --cds-icon-on-color:       #ffffff;
+    --cds-icon-disabled:       rgba(244,244,244,.25);
+    --cds-icon-interactive:    #ffffff;
+
+    --cds-support-error:       #fa4d56;
+    --cds-support-success:     #42be65;
+    --cds-support-warning:     #f1c21b;
+    --cds-support-info:        #4589ff;
+    --cds-support-caution-major:#ff832b;
+    --cds-support-warning-strong:#f1c21b; /* yellow 30 is fine on dark */
+    --cds-support-error-subtle:  #262626;
+    --cds-support-success-subtle:#262626;
+    --cds-support-warning-subtle:#262626;
+    --cds-support-info-subtle:   #262626;
+
+    --cds-focus:               #ffffff;
+    --cds-focus-inset:         #161616;
+    --cds-focus-inverse:       #0f62fe;
+    --cds-interactive:         #4589ff;
+    --cds-highlight:           #001d6c;
+    --cds-overlay:             rgba(0,0,0,.65);
+    --cds-toggle-off:          #6f6f6f;
+    --cds-shadow:              rgba(0,0,0,.80);
+    --cds-skeleton-background: #292929;
+    --cds-skeleton-element:    #393939;
+
+    --cds-button-primary:        #0f62fe;
+    --cds-button-primary-hover:  #0050e6;
+    --cds-button-primary-active: #002d9c;
+    --cds-button-secondary:        #6f6f6f;
+    --cds-button-secondary-hover:  #5e5e5e;
+    --cds-button-secondary-active: #393939;
+    --cds-button-tertiary:        #ffffff;
+    --cds-button-tertiary-hover:  #f4f4f4;
+    --cds-button-tertiary-active: #c6c6c6;
+    --cds-button-danger-primary:  #da1e28;
+    --cds-button-danger-hover:    #b81922;
+    --cds-button-danger-active:   #750e13;
+    --cds-button-disabled:        rgba(244,244,244,.25);
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-carbon-theme="g100"] {
+  --cds-background:               #161616;
+  --cds-background-hover:         rgba(141,141,141,.16);
+  --cds-background-active:        rgba(141,141,141,.40);
+  --cds-background-selected:      rgba(141,141,141,.24);
+  --cds-background-selected-hover:rgba(141,141,141,.32);
+  --cds-background-inverse:       #f4f4f4;
+  --cds-background-brand:         #0f62fe;
+
+  --cds-layer-01:            #262626;
+  --cds-layer-02:            #393939;
+  --cds-layer-03:            #525252;
+  --cds-layer-hover-01:      #333333;
+  --cds-layer-hover-02:      #474747;
+  --cds-layer-hover-03:      #636363;
+  --cds-layer-active-01:     #525252;
+  --cds-layer-active-02:     #6f6f6f;
+  --cds-layer-selected-01:   #393939;
+  --cds-layer-selected-02:   #525252;
+  --cds-layer-selected-hover-01:#474747;
+  --cds-layer-selected-inverse: #f4f4f4;
+  --cds-layer-accent-01:     #393939;
+  --cds-layer-accent-hover-01:#474747;
+  --cds-layer-accent-active-01:#6f6f6f;
+
+  --cds-field-01:            #262626;
+  --cds-field-02:            #393939;
+  --cds-field-hover-01:      #333333;
+  --cds-field-hover-02:      #474747;
+
+  --cds-border-subtle-00:    #393939;
+  --cds-border-subtle-01:    #525252;
+  --cds-border-subtle-02:    #6f6f6f;
+  --cds-border-strong-01:    #6f6f6f;
+  --cds-border-strong-02:    #8d8d8d;
+  --cds-border-tile-01:      #525252;
+  --cds-border-tile-02:      #6f6f6f;
+  --cds-border-inverse:      #f4f4f4;
+  --cds-border-interactive:  #4589ff;
+  --cds-border-disabled:     rgba(141,141,141,.50);
+
+  --cds-text-primary:        #f4f4f4;
+  --cds-text-secondary:      #c6c6c6;
+  --cds-text-placeholder:    rgba(244,244,244,.40);
+  --cds-text-helper:         #a8a8a8;
+  --cds-text-error:          #ff8389;
+  --cds-text-inverse:        #161616;
+  --cds-text-on-color:       #ffffff;
+  --cds-text-on-color-disabled:rgba(255,255,255,.25);
+  --cds-text-disabled:       rgba(244,244,244,.25);
+
+  --cds-link-primary:        #78a9ff;
+  --cds-link-primary-hover:  #a6c8ff;
+  --cds-link-secondary:      #a6c8ff;
+  --cds-link-visited:        #be95ff;
+  --cds-link-inverse:        #0f62fe;
+
+  --cds-icon-primary:        #f4f4f4;
+  --cds-icon-secondary:      #c6c6c6;
+  --cds-icon-inverse:        #161616;
+  --cds-icon-on-color:       #ffffff;
+  --cds-icon-disabled:       rgba(244,244,244,.25);
+  --cds-icon-interactive:    #ffffff;
+
+  --cds-support-error:       #fa4d56;
+  --cds-support-success:     #42be65;
+  --cds-support-warning:     #f1c21b;
+  --cds-support-info:        #4589ff;
+  --cds-support-caution-major:#ff832b;
+  --cds-support-warning-strong:#f1c21b; /* yellow 30 is fine on dark */
+  --cds-support-error-subtle:  #262626;
+  --cds-support-success-subtle:#262626;
+  --cds-support-warning-subtle:#262626;
+  --cds-support-info-subtle:   #262626;
+
+  --cds-focus:               #ffffff;
+  --cds-focus-inset:         #161616;
+  --cds-focus-inverse:       #0f62fe;
+  --cds-interactive:         #4589ff;
+  --cds-highlight:           #001d6c;
+  --cds-overlay:             rgba(0,0,0,.65);
+  --cds-toggle-off:          #6f6f6f;
+  --cds-shadow:              rgba(0,0,0,.80);
+  --cds-skeleton-background: #292929;
+  --cds-skeleton-element:    #393939;
+
+  --cds-button-primary:        #0f62fe;
+  --cds-button-primary-hover:  #0050e6;
+  --cds-button-primary-active: #002d9c;
+  --cds-button-secondary:        #6f6f6f;
+  --cds-button-secondary-hover:  #5e5e5e;
+  --cds-button-secondary-active: #393939;
+  --cds-button-tertiary:        #ffffff;
+  --cds-button-tertiary-hover:  #f4f4f4;
+  --cds-button-tertiary-active: #c6c6c6;
+  --cds-button-danger-primary:  #da1e28;
+  --cds-button-danger-hover:    #b81922;
+  --cds-button-danger-active:   #750e13;
+  --cds-button-disabled:        rgba(244,244,244,.25);
+
+  color-scheme: dark;
+}
+
+/* -----------------------------------------------------------------------------
+   3. SPACE — 8px mini unit. These are the only spacing values permitted.
+   -------------------------------------------------------------------------- */
+:root {
+  --cds-spacing-01: 2px;   --cds-spacing-02: 4px;   --cds-spacing-03: 8px;
+  --cds-spacing-04: 12px;  --cds-spacing-05: 16px;  --cds-spacing-06: 24px;
+  --cds-spacing-07: 32px;  --cds-spacing-08: 40px;  --cds-spacing-09: 48px;
+  --cds-spacing-10: 64px;  --cds-spacing-11: 80px;  --cds-spacing-12: 96px;
+  --cds-spacing-13: 160px;
+
+  /* fixed element sizes — heights come from here, never from padding math */
+  --cds-size-xs: 24px; --cds-size-sm: 32px; --cds-size-md: 40px;
+  --cds-size-lg: 48px; --cds-size-xl: 64px; --cds-size-2xl: 80px;
+
+  --cds-icon-size-01: 16px; --cds-icon-size-02: 20px;
+  --cds-icon-size-03: 24px; --cds-icon-size-04: 32px;
+
+  --cds-grid-gutter: 32px;
+  --cds-grid-gutter-condensed: 2px;
+  --cds-grid-margin: 16px;
+  --cds-grid-margin-max: 24px;
+
+  --cds-radius: 0;              /* IBM UI is square. Keep it that way. */
+  --cds-touch-target-min: 44px;
+}
+
+/* Breakpoints, for reference in media queries:
+   sm 320px (4 col) · md 672px (8 col) · lg 1056px (16 col)
+   xlg 1312px (16 col) · max 1584px (16 col, 24px margin) */
+
+/* -----------------------------------------------------------------------------
+   4. TYPE — the fixed (productive) set. Use these, not ad-hoc sizes.
+   -------------------------------------------------------------------------- */
+:root {
+  --cds-font-sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --cds-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --cds-font-serif:"IBM Plex Serif", Georgia, serif;
+
+  --cds-weight-light: 300;
+  --cds-weight-regular: 400;
+  --cds-weight-semibold: 600;
+}
+
+.cds-label-01          { font:400 12px/16px var(--cds-font-sans); letter-spacing:.32px; }
+.cds-helper-text-01    { font:400 12px/16px var(--cds-font-sans); letter-spacing:.32px; }
+.cds-code-01           { font:400 12px/16px var(--cds-font-mono); letter-spacing:.32px; }
+.cds-code-02           { font:400 14px/20px var(--cds-font-mono); letter-spacing:.32px; }
+.cds-body-compact-01   { font:400 14px/18px var(--cds-font-sans); letter-spacing:.16px; }
+.cds-body-01           { font:400 14px/20px var(--cds-font-sans); letter-spacing:.16px; }
+.cds-body-compact-02   { font:400 16px/22px var(--cds-font-sans); }
+.cds-body-02           { font:400 16px/24px var(--cds-font-sans); }
+.cds-heading-compact-01{ font:600 14px/18px var(--cds-font-sans); letter-spacing:.16px; }
+.cds-heading-01        { font:600 14px/20px var(--cds-font-sans); letter-spacing:.16px; }
+.cds-heading-compact-02{ font:600 16px/22px var(--cds-font-sans); }
+.cds-heading-02        { font:600 16px/24px var(--cds-font-sans); }
+.cds-heading-03        { font:400 20px/28px var(--cds-font-sans); }
+.cds-heading-04        { font:400 28px/36px var(--cds-font-sans); }
+.cds-heading-05        { font:400 32px/40px var(--cds-font-sans); }
+.cds-heading-06        { font:300 42px/50px var(--cds-font-sans); }
+.cds-heading-07        { font:300 54px/64px var(--cds-font-sans); }
+
+/* -----------------------------------------------------------------------------
+   5. MOTION
+   -------------------------------------------------------------------------- */
+:root {
+  --cds-ease-productive-standard: cubic-bezier(0.2, 0, 0.38, 0.9);
+  --cds-ease-productive-entrance: cubic-bezier(0, 0, 0.38, 0.9);
+  --cds-ease-productive-exit:     cubic-bezier(0.2, 0, 1, 0.9);
+  --cds-ease-expressive-standard: cubic-bezier(0.4, 0.14, 0.3, 1);
+  --cds-ease-expressive-entrance: cubic-bezier(0, 0, 0.3, 1);
+  --cds-ease-expressive-exit:     cubic-bezier(0.4, 0.14, 1, 1);
+
+  --cds-duration-fast-01: 70ms;      /* buttons, toggles */
+  --cds-duration-fast-02: 110ms;     /* fades, hover color */
+  --cds-duration-moderate-01: 150ms; /* small expansion */
+  --cds-duration-moderate-02: 240ms; /* panels, toasts, modals */
+  --cds-duration-slow-01: 400ms;     /* large expansion */
+  --cds-duration-slow-02: 700ms;     /* background dimming */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cds-duration-fast-01: 1ms;      --cds-duration-fast-02: 1ms;
+    --cds-duration-moderate-01: 1ms;  --cds-duration-moderate-02: 1ms;
+    --cds-duration-slow-01: 1ms;      --cds-duration-slow-02: 1ms;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   6. PRODUCT SEMANTIC LAYER  — write your own; this is the shape it should take.
+
+   Product meaning maps onto the system here, and ONLY here. Components consume
+   the product tokens, never the --cds-* ones directly. Two payoffs: a reviewer
+   can read intent off the name, and when Carbon v12 renames tokens to the DTCG
+   spec, exactly one file changes.
+
+   The states below are an illustrative set for a resource-status product.
+   Replace the names with your own domain's; keep the discipline.
+   -------------------------------------------------------------------------- */
+:root {
+  /* geometry — every value from the fixed ladder or a mini-unit multiple */
+  --item-size-sm: 24px;
+  --item-size-md: 32px;
+  --item-size-lg: 48px;
+  --item-gap: var(--cds-spacing-03);
+  --item-row-gap: var(--cds-spacing-05);
+  --item-group-gap: var(--cds-spacing-07);
+
+  /* states — each carries a fill AND a border, because colour alone
+     may never be the only signal. Add an icon or texture per state too. */
+  --state-idle-bg:        var(--cds-background);
+  --state-idle-border:    var(--cds-border-strong-01);
+  --state-idle-text:      var(--cds-text-secondary);
+
+  --state-active-bg:      var(--cds-layer-selected-01);
+  --state-active-border:  var(--cds-border-inverse);
+  --state-active-text:    var(--cds-text-primary);
+
+  --state-pending-bg:     var(--cds-support-warning-subtle);
+  --state-pending-border: var(--cds-support-warning-strong); /* NOT yellow 30 on light */
+  --state-pending-text:   var(--cds-text-primary);
+
+  --state-disabled-bg:     var(--cds-layer-01);
+  --state-disabled-border: var(--cds-border-subtle-01);
+  --state-disabled-text:   var(--cds-text-secondary);
+  --state-disabled-hatch:  var(--cds-border-subtle-01); /* pattern, not just colour */
+
+  --state-error-bg:       var(--cds-support-error-subtle);
+  --state-error-border:   var(--cds-support-error);
+  --state-error-text:     var(--cds-text-error);
+
+  --state-draft-bg:       var(--cds-layer-01);
+  --state-draft-border:   var(--cds-border-subtle-01);
+  --state-draft-text:     var(--cds-text-helper);   /* gray 60 = draft, per Carbon */
+
+  --state-selected-bg:     var(--cds-background-brand);
+  --state-selected-border: var(--cds-border-inverse);
+  --state-selected-text:   var(--cds-text-on-color);
+
+  /* shell */
+  --shell-header-h: 48px;
+  --shell-panel-w:  256px;
+  --shell-rail-w:   48px;
+  --shell-toolbar-h: 40px;
+}
+
+/* -----------------------------------------------------------------------------
+   7. TWO UTILITIES WORTH HAVING GLOBALLY
+   -------------------------------------------------------------------------- */
+
+/* Carbon's focus ring: 2px, inset, never removed, never rounded. */
+.cds-focus-ring:focus-visible,
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: var(--cds-spacing-01) solid var(--cds-focus);
+  outline-offset: calc(-1 * var(--cds-spacing-01));
+}
+
+/* Touch clearance without growing the visual icon. */
+.cds-touch-target {
+  position: relative;
+}
+.cds-touch-target::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  inline-size: var(--cds-touch-target-min);
+  block-size: var(--cds-touch-target-min);
+  transform: translate(-50%, -50%);
+}

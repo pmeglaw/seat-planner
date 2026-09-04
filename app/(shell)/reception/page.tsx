@@ -71,7 +71,7 @@ export default async function ReceptionPage() {
         role="region"
         aria-label="Reception directory"
         tabIndex={0}
-        className="flex-1 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-accent)] lg:min-h-0 lg:overflow-y-auto"
+        className="flex-1 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)] lg:min-h-0 lg:overflow-y-auto"
       >
         <ReceptionScreen people={people} />
       </div>

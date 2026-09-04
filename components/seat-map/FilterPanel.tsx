@@ -76,7 +76,7 @@ export function ActiveFilterChips({
   return (
     <div aria-label="Active filters" className={["sp-zone-base flex flex-wrap items-center gap-1.5", className].filter(Boolean).join(" ")}>
       {chips.map(chip => (
-        <span key={chip.id} className="inline-flex max-w-full items-center gap-1 bg-[var(--sp-layer-01)] py-0.5 pl-2 pr-1 text-xs font-semibold text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-brand-border)]">
+        <span key={chip.id} className="inline-flex max-w-full items-center gap-1 bg-[var(--sp-layer-01)] py-0.5 pl-2 pr-1 text-xs font-semibold text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-border-interactive)]">
           <span className="shrink-0 text-[var(--sp-text-helper)]">{chip.label}</span>
           <span className="min-w-0 truncate text-[var(--sp-button-primary)]">{chip.value}</span>
           <button
@@ -94,7 +94,7 @@ export function ActiveFilterChips({
         <button
           type="button"
           onClick={onClearAll}
-          className="relative inline-flex min-h-6 items-center border border-[var(--sp-brand-border)] bg-[var(--sp-brand-wash)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-brand-text)] transition after:absolute after:-inset-y-[3px] after:inset-x-0 hover:bg-[rgba(255,87,21,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+          className="relative inline-flex min-h-6 items-center border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-link-hover)] transition after:absolute after:-inset-y-[3px] after:inset-x-0 hover:bg-[color-mix(in_srgb,var(--sp-interactive)_16%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
         >
           Clear all
         </button>
@@ -113,7 +113,7 @@ export function ActiveFilterChips({
 // otherwise paint over its own select and swallow the click that opens the
 // native picker — the control rides above the pseudo (PR-2 / F-SP-4).
 const darkSelectClassName =
-  "relative z-[1] mt-1 w-full min-w-0 cursor-pointer appearance-none border border-white/20 bg-white/[0.06] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2012%208%22%20fill=%22none%22%3E%3Cpolyline%20points=%221,1.5%206,6.5%2011,1.5%22%20stroke=%22%239a9a9a%22%20stroke-width=%221.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[length:12px_8px] bg-[position:right_8px_center] bg-no-repeat px-2.5 py-1.5 pr-8 text-sm text-[var(--sp-text-primary)] outline-none transition hover:border-white/30 focus:border-[var(--sp-brand)] focus:ring-2 focus:ring-[color:var(--sp-brand-border)] [&>option]:bg-[var(--sp-background-hover)] [&>option]:text-[var(--sp-text-primary)]";
+  "relative z-[1] mt-1 w-full min-w-0 cursor-pointer appearance-none border border-white/20 bg-white/[0.06] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2012%208%22%20fill=%22none%22%3E%3Cpolyline%20points=%221,1.5%206,6.5%2011,1.5%22%20stroke=%22%239a9a9a%22%20stroke-width=%221.4%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[length:12px_8px] bg-[position:right_8px_center] bg-no-repeat px-2.5 py-1.5 pr-8 text-sm text-[var(--sp-text-primary)] outline-none transition hover:border-white/30 focus:border-[var(--sp-interactive)] focus:ring-2 focus:ring-[color:var(--sp-border-interactive)] [&>option]:bg-[var(--sp-background-hover)] [&>option]:text-[var(--sp-text-primary)]";
 
 export function FilterPanel({
   department,
@@ -168,7 +168,7 @@ export function FilterPanel({
           returnFocusAfterClose(returnFocusRef);
         }
       }}
-      className="w-full border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-3 text-[var(--sp-text-primary)] shadow-elevation-4"
+      className="w-full border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-3 text-[var(--sp-text-primary)] shadow-sp"
     >
       <ActiveFilterChips chips={activeStructuredChips} onRemove={onRemoveActiveChip} onClearAll={onClearFilters} className="mb-3" />
 
@@ -226,8 +226,8 @@ export function FilterPanel({
                   className={[
                     "relative max-w-full truncate rounded-full border px-2.5 py-1 text-xs font-semibold transition after:absolute after:-inset-x-[3px] after:-inset-y-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
                     active
-                      ? "border-[var(--sp-brand)] bg-[rgba(255,87,21,0.15)] text-[var(--sp-brand)]"
-                      : "border-white/20 bg-white/[0.06] text-[var(--sp-text-primary)] hover:border-[var(--sp-brand)]"
+                      ? "border-[var(--sp-interactive)] bg-[color-mix(in_srgb,var(--sp-interactive)_15%,transparent)] text-[var(--sp-interactive)]"
+                      : "border-white/20 bg-white/[0.06] text-[var(--sp-text-primary)] hover:border-[var(--sp-interactive)]"
                   ].join(" ")}
                 >
                   {choice.label}
@@ -272,7 +272,7 @@ export function FilterPanel({
           <button
             type="button"
             onClick={matchSummaryAction.onClick}
-            className="relative inline-flex items-center min-h-6 border border-[var(--sp-brand-border)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-brand-text)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
+            className="relative inline-flex items-center min-h-6 border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-link-hover)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
           >
             {matchSummaryAction.label}
           </button>

@@ -49,7 +49,7 @@ export function MapZoomControl({
       className={horizontal
         // In-band row: flat border, no elevation — the band is layer-00 chrome.
         ? "pointer-events-auto flex items-center border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)]"
-        : "pointer-events-auto flex flex-col border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-elevation-2"}
+        : "pointer-events-auto flex flex-col border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-sp"}
     >
       <span
         aria-live="polite"

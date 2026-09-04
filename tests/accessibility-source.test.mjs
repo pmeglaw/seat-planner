@@ -374,8 +374,8 @@ test("publish review summarizes draft changes before publish", async () => {
   assert.match(dialogsSource, /Published now/);
   assert.match(dialogsSource, /After publish/);
   assert.match(dialogsSource, /--sp-status-success-surface/);
-  assert.match(dialogsSource, /--admin-diff-vacated-text/);
-  assert.match(dialogsSource, /--sp-status-pending-surface/);
+  assert.match(dialogsSource, /--sp-status-error-text/);
+  assert.match(dialogsSource, /--sp-status-draft-surface/);
   assert.match(dialogsSource, /People details/);
   assert.match(source, /Publish review blocked: Save or discard the selected seat edits before publishing/);
   assert.match(source, /Save or discard the selected seat edits before publishing/);

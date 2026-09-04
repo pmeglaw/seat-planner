@@ -56,10 +56,10 @@ const KIND_LABELS: Record<ViewerSearchResultKind, string> = {
 };
 
 function resultKindClass(kind: ViewerSearchResultKind) {
-  if (kind === "person") return "bg-[var(--sp-status-neutral-surface)] text-[var(--sp-status-neutral-strong)] ring-[color-mix(in_srgb,var(--sp-status-neutral-strong)_30%,transparent)]";
+  if (kind === "person") return "bg-[var(--sp-status-neutral-surface)] text-[var(--sp-status-neutral-mark)] ring-[color-mix(in_srgb,var(--sp-status-neutral-mark)_30%,transparent)]";
   if (kind === "seat") return "sp-zone-chrome bg-[var(--sp-background)] text-white ring-[var(--sp-background)]";
-  if (kind === "department") return "bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-strong)] ring-[color-mix(in_srgb,var(--sp-status-success-strong)_30%,transparent)]";
-  return "bg-[var(--sp-status-pending-surface)] text-[var(--sp-status-pending-text)] ring-[color-mix(in_srgb,var(--sp-status-pending-text)_30%,transparent)]";
+  if (kind === "department") return "bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-mark)] ring-[color-mix(in_srgb,var(--sp-status-success-mark)_30%,transparent)]";
+  return "bg-[var(--sp-status-draft-surface)] text-[var(--sp-status-draft-text)] ring-[color-mix(in_srgb,var(--sp-status-draft-text)_30%,transparent)]";
 }
 
 // Eyebrow rows. The mock draws these at #8E8276, which measures 3.75:1 on
@@ -276,7 +276,7 @@ export function ViewerFindPalette({
       className={cx(
         // Floats (contract #2): fixed, above the floating map cards, and it
         // reserves no stage width — the map behind it never reflows.
-        "fixed z-[70] flex flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-elevation-4",
+        "fixed z-[70] flex flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-sp",
         // Below the panel tier the measured width is null and these own the box.
         frame?.width === null ? "right-3" : "",
         "motion-safe:animate-[sp-panel-in_150ms_ease-out]"
@@ -318,8 +318,8 @@ export function ViewerFindPalette({
                       // row, and the two causes are kept separately
                       // announceable on purpose (accessibility-source).
                       className={cx(
-                        "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]",
-                        selected ? "border-[var(--sp-brand-border)] bg-[var(--sp-brand-subtle)]" : "border-transparent"
+                        "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]",
+                        selected ? "border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)]" : "border-transparent"
                       )}
                     >
                       <span className="min-w-0">
@@ -366,7 +366,7 @@ export function ViewerFindPalette({
                 onClick={() => onClearSearch()}
                 // ≈30px content-sized; the 7px vertical expansion reaches 44
                 // (only the <p> above it is adjacent — touch-target-source pin).
-                className="relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-brand-border)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+                className="relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-button-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
               >
                 Clear search
               </button>
@@ -421,8 +421,8 @@ export function ViewerFindPalette({
                       className={cx(
                         "relative inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-xs font-semibold transition after:absolute after:-inset-x-[3px] after:-inset-y-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
                         pinned
-                          ? "border-[var(--sp-brand)] bg-[var(--sp-brand-wash)] text-[var(--sp-brand-text)]"
-                          : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)] hover:border-[var(--sp-brand-border)]"
+                          ? "border-[var(--sp-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link-hover)]"
+                          : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)] hover:border-[var(--sp-border-interactive)]"
                       )}
                     >
                       {chip.name}
@@ -504,7 +504,7 @@ export function ViewerFindPalette({
                     // subtitle to the 12px floor, growing the row ~40→44px —
                     // an accepted cost (~10% fewer names per screen), chosen
                     // over tightening leading to hold 40.
-                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border border-transparent px-2 py-1.5 text-left transition hover:border-[var(--sp-brand-border)] hover:bg-[var(--sp-brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border border-transparent px-2 py-1.5 text-left transition hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
                   >
                     <span aria-hidden="true" className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-background)] text-[10px] font-bold text-[var(--sp-text-secondary)]">
                       {buildInitials(row.title) || "?"}
