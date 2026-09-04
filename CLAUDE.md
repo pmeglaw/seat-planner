@@ -99,7 +99,7 @@ Styling is a layered token system loaded in a fixed order from `app/layout.tsx`:
 
 ### Brand System (LOCKED — do not change without owner approval, 2026-09-03)
 
-**Logo:** `public/Logo-Megeredchian-Law.jpg`. Logo orange **#EB7C35** (235,124,53) is the **MARK ONLY** — 2.81:1 on white **fails WCAG AA**. Never a button, text, link, border or focus colour. Charcoal #5D5C5B is the logo's secondary; `--brand-charcoal`.
+**Logo:** `public/Logo-Megeredchian-Law.jpg` (lock-up, 1206×509 JPEG) and `public/brand/mark-1024.png` (mark alone, 1024×1024 PNG) — both RASTER renders (3D bevels, glow), reference assets only: neither is a UI mark. Any in-app mark is a flat inline SVG in `--brand-charcoal` + `--brand-terracotta` from a vector source (not yet supplied). Logo orange **#EB7C35** (235,124,53) is the **MARK ONLY** — 2.81:1 on white **fails WCAG AA**. Never a button, text, link, border or focus colour. Charcoal #5D5C5B is the logo's secondary; `--brand-charcoal`.
 
 **Primary UI colour — terracotta #B85C2E** (184,92,46): 4.56:1 on white (AA text), 3.97:1 on #161616 (non-text ≥ 3:1). Hover **#8F4521**, active **#7A3A1C**, tints #F5DDD1 / #FBE8DC. Links: light theme **#8F4521**, dark theme **#E8A07A**.
 
