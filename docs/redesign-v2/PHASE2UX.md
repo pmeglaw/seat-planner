@@ -221,6 +221,12 @@ Would change if: D0's reopen conditions, or a fifth per-mode control that will n
   the 1920 row (it fits with 270px to spare today).
 ```
 
+**Amended 2026-09-04 (owner ruling O1, Phase 4 PR 3a) — private offices follow the pill rule.** The wireframes draw
+every seat as the same marker and never mention private offices; the shipped map rendered N13 N14 NE09 NE10 SE05 SE06
+S01 S02 as nameplate cards (code + name + title). Ruled: the office seat is the same name pill as every other seat, the
+seat code is the tier-C tooltip, the job title is the inspector's. The card retired with the room washes (D1-h). Not a
+deviation — this makes explicit what the wireframes implied.
+
 ### 1M.2 Geometry at 1920 × 889 (the measured viewport)
 
 | Region | y | Notes |
@@ -255,6 +261,10 @@ Find me. Totals: published ≈ 1096, draft ≈ 1650 with gaps — fits 1920 with
 - **Ask Planner** (tertiary) carries the highlight-count badge while highlights exist (re-entry point, D1-c). **Hidden** for viewers, absent in Published mode.
 - **⋯** holds *Discard draft changes* only (danger, divider above, disabled when nothing to discard). Reset zoom lives on the canvas zoom control.
 - **Names** toggle: switch with label "Names", `aria-pressed`; Hidden on a roster floor.
+
+*Built 2026-09-04 (Phase 4 PR 3a): `components/seat-map/MapControlRow.tsx` on both surfaces; Publish always present,
+disabled at zero with the reason beside it; ⋯ holds Discard only; Names in the row; Add seat and Names Hidden on a roster
+floor. Below the nav fold the row wraps (owner ruling O6).*
 
 ### 1M.4 Search (D1-d)
 
