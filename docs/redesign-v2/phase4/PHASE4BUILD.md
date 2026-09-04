@@ -295,6 +295,20 @@ the tooltip while the menu is open on hover (`.cds-overflow[data-open] .sp-toolt
 **Not a design decision** — the pattern and the copy ("More actions" = the accessible name) already exist ·
 **Would change if** the asset gains a tooltip on `.cds-overflow`.
 
+### 1.25 PR 3a — one Redo that did nothing (observed once, not reproduced; raised, not fixed)
+
+**Screen** `/admin` · **Observed** in one of thirteen rig runs of move → Ctrl Z → Ctrl Shift Z (the first run after a
+fresh `supabase db reset` + seed + `next start`): the undo applied, the row's Redo read "Redo · Ctrl Shift Z", then
+Ctrl Shift Z, Ctrl Y and a click on the Redo button all left the draft at "no changes" with BOTH stacks disabled and
+no notice on screen 90 s later (`screenshots/pr3a-smoke/05-redo.png` of that run). Nine further trials at 300 /
+1500 / 4000 ms after the undo all redid ("Redid Move … · Undo …" in the canvas status) · **Reading** a dropped
+history is what a stale-draft rejection does by design (`draft-history.spec.ts` "stale-draft rejection on Undo drops
+the history and explains why") — the explanation is what the capture lacks, and the rig did not record notices in
+that run · **Not changed here** — the fence is load-bearing (`lib/draftConcurrency.ts`) and the behaviour is not
+reproducible on demand · **Open for the owner** whether to (a) keep the rig's redo step capturing every `role=status`
+/ `role=alert` text for 5 s after the press (done in `probe-redo.mjs`) and re-run it on the next PR, or (b) treat as a
+3b item beside the MLS02 inline-status work (PHASE3DS §1.16: MLS02 = inline `role=status`, never a toast).
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
